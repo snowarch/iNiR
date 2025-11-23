@@ -19,13 +19,15 @@ Use it as inspiration, as a base to hack on, or just to see how ii can be pushed
 
 All screenshots are taken from my actual Niri session with this config:
 
-![Overview / workspaces on Niri](./preview1.png)
-![Sidebars and AltSwitcher](./preview2.png)
-![Settings, global search and theming](./preview3.png)
+<p align="center">
+  <img src="./preview1.png" alt="Overview / workspaces on Niri" width="32%" />
+  <img src="./preview2.png" alt="Sidebars and AltSwitcher" width="32%" />
+  <img src="./preview3.png" alt="Settings, global search and theming" width="32%" />
+</p>
 
 ---
 
-## What this setup does
+## Features
 
 Here’s the high‑level picture of what I’ve changed and added on top of upstream ii.
 
