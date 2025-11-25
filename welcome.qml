@@ -25,10 +25,15 @@ ApplicationWindow {
     property bool showNextTime: false
     visible: true
     onClosing: {
-        Quickshell.execDetached(["notify-send", Translation.tr("Welcome app"), Translation.tr("Enjoy! You can reopen the welcome app any time with <tt>Super+Shift+Alt+/</tt>. To open the settings app, hit <tt>Super+I</tt>"), "-a", "Shell"]);
+        Quickshell.execDetached([
+            "notify-send",
+            Translation.tr("Welcome app"),
+            Translation.tr("Enjoy! Press <tt>Super+G</tt> for the overlay and <tt>Alt+Tab</tt> to switch windows.\nOpen Settings from the right sidebar (<tt>Super+N</tt>)."),
+            "-a", "Shell"
+        ]);
         Qt.quit();
     }
-    title: Translation.tr("illogical-impulse Welcome")
+    title: Translation.tr("ii on Niri - Welcome")
 
     Component.onCompleted: {
         MaterialThemeLoader.reapplyTheme();
@@ -53,11 +58,6 @@ ApplicationWindow {
         }
     }
 
-    Process {
-        id: translationProc
-        property string locale: ""
-        command: [Directories.aiTranslationScriptPath, translationProc.locale]
-    }
 
     ColumnLayout {
         anchors {
@@ -79,7 +79,7 @@ ApplicationWindow {
                     leftMargin: 12
                 }
                 color: Appearance.colors.colOnLayer0
-                text: Translation.tr("Hi there! First things first...")
+                text: Translation.tr("Welcome to ii on Niri")
                 font {
                     family: Appearance.font.family.title
                     pixelSize: Appearance.font.pixelSize.title
@@ -120,7 +120,7 @@ ApplicationWindow {
                     }
 
                     StyledToolTip {
-                        text: Translation.tr("Tip: Close a window with Super+Q")
+                        text: Translation.tr("Tip: Close windows with Mod+Q")
                     }
                 }
             }
@@ -139,58 +139,105 @@ ApplicationWindow {
                 id: contentColumn
                 anchors.fill: parent
 
-                ContentSection {
-                    Layout.fillWidth: true
-                    icon: "language"
-                    title: Translation.tr("Language")
 
-                    ContentSubsection {
-                        title: Translation.tr("Select language")
-                        ConfigSelectionArray {
-                            id: languageSelector
-                            currentValue: Config.options.language.ui
-                            onSelected: newValue => {
-                                Config.options.language.ui = newValue;
+                ContentSection {
+                    icon: "keyboard"
+                    title: Translation.tr("Keybinds (ii on Niri)")
+
+                    component ShortcutRow: RowLayout {
+                        required property var keys
+                        required property string desc
+                        spacing: 6
+                        RowLayout {
+                            Layout.minimumWidth: 150
+                            spacing: 2
+                            Repeater {
+                                model: keys
+                                delegate: RowLayout {
+                                    spacing: 2
+                                    KeyboardKey { key: modelData }
+                                    StyledText {
+                                        visible: index < keys.length - 1
+                                        text: "+"
+                                        color: Appearance.colors.colSubtext
+                                        font.pixelSize: Appearance.font.pixelSize.smaller
+                                    }
+                                }
                             }
-                            options: [
-                                {
-                                    displayName: Translation.tr("Auto (System)"),
-                                    value: "auto"
-                                },
-                                ...Translation.allAvailableLanguages.map(lang => {
-                                    return {
-                                        displayName: lang,
-                                        value: lang
-                                    };
-                                })]
+                        }
+                        StyledText {
+                            text: desc
+                            color: Appearance.colors.colOnLayer1
+                            font.pixelSize: Appearance.font.pixelSize.small
                         }
                     }
 
-                    NoticeBox {
+                    GridLayout {
                         Layout.fillWidth: true
-                        text: Translation.tr("Language not listed or incomplete translations?\nYou can choose to generate translations for it with Gemini.\n1. Open the left sidebar with Super+A, set model to Gemini (if it isn't already)\n2. Type /key, hit Enter and follow the instructions\n3. Type /key YOUR_API_KEY\n4. Type the locale of your language below and press Generate")
+                        columns: 2
+                        columnSpacing: 24
+                        rowSpacing: 6
+
+                        ShortcutRow { keys: ["Super"]; desc: Translation.tr("Overview (tap)") }
+                        ShortcutRow { keys: ["Alt", "Tab"]; desc: Translation.tr("Switch windows") }
+                        ShortcutRow { keys: ["Super", "G"]; desc: Translation.tr("ii overlay") }
+                        ShortcutRow { keys: ["Mod", "V"]; desc: Translation.tr("Clipboard manager") }
+                        ShortcutRow { keys: ["Mod", "Q"]; desc: Translation.tr("Close window") }
+                        ShortcutRow { keys: ["Ctrl", "Alt", "T"]; desc: Translation.tr("Wallpaper selector") }
+                        ShortcutRow { keys: ["Mod", "Alt", "L"]; desc: Translation.tr("Lock screen") }
+                        ShortcutRow { keys: ["Mod", "Tab"]; desc: Translation.tr("Niri overview") }
                     }
+                }
+
+
+                ContentSection {
+                    icon: "overview_key"
+                    title: Translation.tr("Quick setup")
 
                     ContentSubsection {
-                        title: Translation.tr("Generate translation with Gemini")
-                        
+                        title: Translation.tr("Overview & overlay")
+
                         ConfigRow {
-                            MaterialTextArea {
-                                id: localeInput
-                                Layout.fillWidth: true
-                                placeholderText: Translation.tr("Locale code, e.g. fr_FR, de_DE, zh_CN...")
-                                text: Config.options.language.ui === "auto" ? Qt.locale().name : Config.options.language.ui
+                            ConfigSwitch {
+                                buttonIcon: "overview_key"
+                                text: Translation.tr("Enable overview grid")
+                                checked: Config.options.overview.enable
+                                onCheckedChanged: {
+                                    Config.options.overview.enable = checked;
+                                }
                             }
-                            RippleButtonWithIcon {
-                                id: generateTranslationBtn
-                                Layout.fillHeight: true
-                                nerdIcon: ""
-                                enabled: !translationProc.running || (translationProc.locale !== localeInput.text.trim())
-                                mainText: enabled ? Translation.tr("Generate\nTypically takes 2 minutes") : Translation.tr("Generating...\nDon't close this window!")
-                                onClicked: {
-                                    translationProc.locale = localeInput.text.trim();
-                                    translationProc.running = false;
-                                    translationProc.running = true;
+                            ConfigSwitch {
+                                buttonIcon: "opacity"
+                                text: Translation.tr("Darken screen behind overlay")
+                                checked: Config.options.overlay.darkenScreen
+                                onCheckedChanged: {
+                                    Config.options.overlay.darkenScreen = checked;
+                                }
+                            }
+                        }
+
+                        ConfigRow {
+                            ConfigSpinBox {
+                                icon: "loupe"
+                                text: Translation.tr("Overview scale (%)")
+                                value: Config.options.overview.scale * 100
+                                from: 50
+                                to: 150
+                                stepSize: 5
+                                onValueChanged: {
+                                    Config.options.overview.scale = value / 100;
+                                }
+                            }
+                            ConfigSpinBox {
+                                icon: "opacity"
+                                text: Translation.tr("Overlay scrim dim (%)")
+                                value: Config.options.overlay.scrimDim
+                                from: 0
+                                to: 100
+                                stepSize: 5
+                                enabled: Config.options.overlay.darkenScreen
+                                onValueChanged: {
+                                    Config.options.overlay.scrimDim = value;
                                 }
                             }
                         }
@@ -317,7 +364,7 @@ ApplicationWindow {
                                             key: "Ctrl"
                                         }
                                         KeyboardKey {
-                                            key: "󰖳"
+                                            key: "Alt"
                                         }
                                         StyledText {
                                             Layout.alignment: Qt.AlignVCenter
@@ -334,7 +381,7 @@ ApplicationWindow {
 
                     NoticeBox {
                         Layout.fillWidth: true
-                        text: Translation.tr("Change any time later with /dark, /light, /wallpaper in the launcher\nIf the shell's colors aren't changing:\n    1. Open the right sidebar with Super+N\n    2. Click \"Reload Hyprland & Quickshell\" in the top-right corner")
+                        text: Translation.tr("Change anytime with /dark, /light, /wallpaper in the overview search.\nIf colors don't update, reload ii from the right sidebar (Super+N).")
                     }
                 }
 
@@ -409,75 +456,56 @@ ApplicationWindow {
 
                     Flow {
                         Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.maximumWidth: 720
                         spacing: 5
 
                         RippleButtonWithIcon {
-                            materialIcon: "keyboard_alt"
+                            materialIcon: "tune"
+                            mainText: Translation.tr("Open Settings")
                             onClicked: {
-                                Quickshell.execDetached(["qs", "-p", Quickshell.shellPath(""), "ipc", "call", "cheatsheet", "toggle"]);
-                            }
-                            mainContentComponent: Component {
-                                RowLayout {
-                                    spacing: 10
-                                    StyledText {
-                                        font.pixelSize: Appearance.font.pixelSize.small
-                                        text: Translation.tr("Keybinds")
-                                        color: Appearance.colors.colOnSecondaryContainer
-                                    }
-                                    RowLayout {
-                                        spacing: 3
-                                        KeyboardKey {
-                                            key: "󰖳"
-                                        }
-                                        StyledText {
-                                            Layout.alignment: Qt.AlignVCenter
-                                            text: "+"
-                                        }
-                                        KeyboardKey {
-                                            key: "/"
-                                        }
-                                    }
-                                }
+                                Quickshell.execDetached(["qs", "-p", Quickshell.shellPath("settings.qml")]);
                             }
                         }
-
+                        RippleButtonWithIcon {
+                            materialIcon: "article"
+                            mainText: Translation.tr("Niri Wiki")
+                            onClicked: {
+                                Qt.openUrlExternally("https://github.com/YaLTeR/niri/wiki");
+                            }
+                        }
                         RippleButtonWithIcon {
                             materialIcon: "help"
-                            mainText: Translation.tr("Usage")
+                            mainText: Translation.tr("ii Wiki")
                             onClicked: {
                                 Qt.openUrlExternally("https://end-4.github.io/dots-hyprland-wiki/en/ii-qs/02usage/");
-                            }
-                        }
-                        RippleButtonWithIcon {
-                            materialIcon: "construction"
-                            mainText: Translation.tr("Configuration")
-                            onClicked: {
-                                Qt.openUrlExternally("https://end-4.github.io/dots-hyprland-wiki/en/ii-qs/03config/");
                             }
                         }
                     }
                 }
 
                 ContentSection {
-                    icon: "monitoring"
-                    title: Translation.tr("Useless buttons")
+                    icon: "link"
+                    title: Translation.tr("Links")
 
                     Flow {
                         Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.maximumWidth: 720
                         spacing: 5
 
                         RippleButtonWithIcon {
                             nerdIcon: "󰊤"
-                            mainText: Translation.tr("GitHub")
+                            mainText: "GitHub (ii on Niri)"
                             onClicked: {
-                                Qt.openUrlExternally("https://github.com/end-4/dots-hyprland");
+                                Qt.openUrlExternally("https://github.com/snowarch/quickshell-ii-niri");
                             }
                         }
                         RippleButtonWithIcon {
                             materialIcon: "favorite"
-                            mainText: "Funny number"
+                            mainText: Translation.tr("Original ii by end-4")
                             onClicked: {
-                                Qt.openUrlExternally("https://github.com/sponsors/end-4");
+                                Qt.openUrlExternally("https://github.com/end-4/dots-hyprland");
                             }
                         }
                     }

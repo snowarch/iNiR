@@ -12,6 +12,7 @@ SpinBox {
     property real baseHeight: 35
     property real radius: Appearance.rounding.small
     property real innerButtonRadius: Appearance.rounding.unsharpen
+    hoverEnabled: true
     editable: true
 
     opacity: root.enabled ? 1 : 0.4

@@ -147,7 +147,7 @@ ContentPage {
                                     key: "Ctrl"
                                 }
                                 KeyboardKey {
-                                    key: "󰖳"
+                                    key: "Alt"
                                 }
                                 StyledText {
                                     Layout.alignment: Qt.AlignVCenter

@@ -59,10 +59,28 @@ post_process() {
     "$SCRIPT_DIR/code/material-code-set-color.sh" &
 }
 
+get_max_monitor_resolution() {
+    local width=1920
+    local height=1080
+    # Try Niri first
+    if command -v niri >/dev/null 2>&1 && niri msg outputs >/dev/null 2>&1; then
+        # Parse niri msg outputs for resolution (e.g., "  Current mode: 1920x1080@60.000")
+        local res=$(niri msg outputs 2>/dev/null | grep -oP 'Current mode: \K\d+x\d+' | sort -t'x' -k1 -nr | head -1)
+        if [[ -n "$res" ]]; then
+            width=$(echo "$res" | cut -d'x' -f1)
+            height=$(echo "$res" | cut -d'x' -f2)
+        fi
+    # Fallback to Hyprland
+    elif command -v hyprctl >/dev/null 2>&1; then
+        width="$(hyprctl monitors -j 2>/dev/null | jq '([.[].width] | max)' | xargs)"
+        height="$(hyprctl monitors -j 2>/dev/null | jq '([.[].height] | max)' | xargs)"
+    fi
+    echo "$width $height"
+}
+
 check_and_prompt_upscale() {
     local img="$1"
-    min_width_desired="$(hyprctl monitors -j | jq '([.[].width] | max)' | xargs)" # max monitor width
-    min_height_desired="$(hyprctl monitors -j | jq '([.[].height] | max)' | xargs)" # max monitor height
+    read min_width_desired min_height_desired <<< "$(get_max_monitor_resolution)"
 
     if command -v identify &>/dev/null && [ -f "$img" ]; then
         local img_width img_height
@@ -325,8 +343,7 @@ switch() {
     deactivate
 
     # Pass screen width, height, and wallpaper path to post_process
-    max_width_desired="$(hyprctl monitors -j | jq '([.[].width] | min)' | xargs)"
-    max_height_desired="$(hyprctl monitors -j | jq '([.[].height] | min)' | xargs)"
+    read max_width_desired max_height_desired <<< "$(get_max_monitor_resolution)"
     post_process "$max_width_desired" "$max_height_desired" "$imgpath"
 }
 

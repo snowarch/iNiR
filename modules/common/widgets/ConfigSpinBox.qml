@@ -11,6 +11,8 @@ RowLayout {
     property alias stepSize: spinBoxWidget.stepSize
     property alias from: spinBoxWidget.from
     property alias to: spinBoxWidget.to
+    // Expose hover state for tooltips and other helpers
+    property alias hovered: spinBoxWidget.hovered
     // Integración con buscador global de Settings
     property bool enableSettingsSearch: true
     property int settingsSearchOptionId: -1

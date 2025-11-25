@@ -445,6 +445,11 @@ if [ -f "$NIRI_CONFIG" ]; then
         echo "    Mod+Shift+X hotkey-overlay-title=\"Region OCR\" {"
         echo "        spawn \"qs\" \"-c\" \"ii\" \"ipc\" \"call\" \"region\" \"ocr\";"
         echo "    }"
+        echo
+        echo "    // Wallpaper selector"
+        echo "    Ctrl+Alt+T hotkey-overlay-title=\"Wallpaper Selector\" {"
+        echo "        spawn \"qs\" \"-c\" \"ii\" \"ipc\" \"call\" \"wallpaperSelector\" \"toggle\";"
+        echo "    }"
         echo "}"
       } >> "$NIRI_CONFIG"
       log INFO "Added ii configuration and keybinds to $NIRI_CONFIG."
