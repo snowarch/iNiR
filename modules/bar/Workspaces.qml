@@ -145,7 +145,7 @@ Item {
         anchors.fill: parent
         acceptedButtons: Qt.BackButton
         onPressed: (event) => {
-            if (event.button === Qt.BackButton) {
+            if (event.button === Qt.BackButton && CompositorService.isHyprland) {
                 Hyprland.dispatch(`togglespecialworkspace`);
             } 
         }

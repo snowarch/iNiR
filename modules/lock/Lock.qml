@@ -167,7 +167,12 @@ Scope {
     function initIfReady() {
         if (!Config.ready || !Persistent.ready) return;
         if (Config.options.lock.launchOnStartup && Persistent.isNewHyprlandInstance) {
-            Hyprland.dispatch("global quickshell:lock")
+            // Launch lock screen on startup
+            if (CompositorService.isHyprland) {
+                Hyprland.dispatch("global quickshell:lock")
+            } else {
+                GlobalStates.screenLocked = true
+            }
         } else {
             KeyringStorage.fetchKeyringData();
         }
