@@ -244,14 +244,21 @@ Scope {
         }
     }
 
+    function getFocusedMonitorName() {
+        if (CompositorService.isNiri) return NiriService.currentOutput
+        if (CompositorService.isHyprland && Hyprland.focusedMonitor) return Hyprland.focusedMonitor.name
+        return ""
+    }
+
     function toggleClipboard() {
         if (GlobalStates.overviewOpen && overviewScope.dontAutoCancelSearch) {
             GlobalStates.overviewOpen = false;
             return;
         }
+        const focusedName = getFocusedMonitorName()
         for (let i = 0; i < overviewVariants.instances.length; i++) {
             let panelWindow = overviewVariants.instances[i];
-            if (panelWindow.modelData.name == Hyprland.focusedMonitor.name) {
+            if (panelWindow.modelData.name == focusedName) {
                 overviewScope.dontAutoCancelSearch = true;
                 panelWindow.setSearchingText(Config.options.search.prefix.clipboard);
                 GlobalStates.overviewOpen = true;
@@ -265,9 +272,10 @@ Scope {
             GlobalStates.overviewOpen = false;
             return;
         }
+        const focusedName = getFocusedMonitorName()
         for (let i = 0; i < overviewVariants.instances.length; i++) {
             let panelWindow = overviewVariants.instances[i];
-            if (panelWindow.modelData.name == Hyprland.focusedMonitor.name) {
+            if (panelWindow.modelData.name == focusedName) {
                 overviewScope.dontAutoCancelSearch = true;
                 panelWindow.setSearchingText(Config.options.search.prefix.emojis);
                 GlobalStates.overviewOpen = true;
