@@ -203,15 +203,14 @@ v gen_firstrun
 v dedup_and_sort_listfile "${INSTALLED_LISTFILE}" "${INSTALLED_LISTFILE}"
 
 #####################################################################################
-# Setup environment variables
+# Setup environment variables for all shells
 #####################################################################################
 echo -e "${STY_CYAN}Setting up environment variables...${STY_RST}"
 
-# Create shell profile snippet for ii environment
+# Create POSIX shell profile snippet (bash, zsh, sh)
 II_ENV_FILE="${XDG_CONFIG_HOME}/ii-niri-env.sh"
 cat > "${II_ENV_FILE}" << 'ENVEOF'
 # ii-niri environment variables
-# Source this file in your .bashrc/.zshrc or add to your shell profile
 export ILLOGICAL_IMPULSE_VIRTUAL_ENV="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/.venv"
 
 # Qt theming - use Kvantum for consistent look with KDE apps
@@ -219,8 +218,28 @@ export QT_STYLE_OVERRIDE=kvantum
 export QT_QPA_PLATFORMTHEME=kde
 ENVEOF
 
-# Add to fish config if fish is used
-if [[ -d "${XDG_CONFIG_HOME}/fish" ]]; then
+# Auto-add to bash
+if [[ -f "$HOME/.bashrc" ]]; then
+  if ! grep -q "ii-niri-env.sh" "$HOME/.bashrc" 2>/dev/null; then
+    echo "" >> "$HOME/.bashrc"
+    echo "# ii-niri environment" >> "$HOME/.bashrc"
+    echo "[ -f \"\${XDG_CONFIG_HOME:-\$HOME/.config}/ii-niri-env.sh\" ] && source \"\${XDG_CONFIG_HOME:-\$HOME/.config}/ii-niri-env.sh\"" >> "$HOME/.bashrc"
+    log_success "Bash environment configured"
+  fi
+fi
+
+# Auto-add to zsh
+if [[ -f "$HOME/.zshrc" ]]; then
+  if ! grep -q "ii-niri-env.sh" "$HOME/.zshrc" 2>/dev/null; then
+    echo "" >> "$HOME/.zshrc"
+    echo "# ii-niri environment" >> "$HOME/.zshrc"
+    echo "[ -f \"\${XDG_CONFIG_HOME:-\$HOME/.config}/ii-niri-env.sh\" ] && source \"\${XDG_CONFIG_HOME:-\$HOME/.config}/ii-niri-env.sh\"" >> "$HOME/.zshrc"
+    log_success "Zsh environment configured"
+  fi
+fi
+
+# Fish config (different syntax)
+if [[ -d "${XDG_CONFIG_HOME}/fish" ]] || command -v fish &>/dev/null; then
   FISH_CONF="${XDG_CONFIG_HOME}/fish/conf.d/ii-niri-env.fish"
   mkdir -p "$(dirname "$FISH_CONF")"
   cat > "${FISH_CONF}" << 'FISHEOF'
@@ -234,7 +253,17 @@ FISHEOF
   log_success "Fish environment configured"
 fi
 
-log_success "Environment file created: $II_ENV_FILE"
+# Also add to environment.d for systemd user sessions (affects all apps)
+ENVD_DIR="${XDG_CONFIG_HOME}/environment.d"
+mkdir -p "$ENVD_DIR"
+cat > "${ENVD_DIR}/ii-niri.conf" << 'ENVDEOF'
+ILLOGICAL_IMPULSE_VIRTUAL_ENV=${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/.venv
+QT_STYLE_OVERRIDE=kvantum
+QT_QPA_PLATFORMTHEME=kde
+ENVDEOF
+log_success "Systemd environment.d configured"
+
+log_success "Environment variables configured for all shells"
 
 #####################################################################################
 # Set default wallpaper and generate initial theme
