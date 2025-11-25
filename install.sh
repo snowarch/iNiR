@@ -260,68 +260,33 @@ show_banner() {
 }
 
 # =============================================================================
-# PACKAGE DEFINITIONS (based on illogical-impulse meta-packages)
+# PACKAGE DEFINITIONS
+# =============================================================================
+# Uses illogical-impulse metapackages from end-4's AUR when available.
+# These bundle all dependencies and are conflict-free.
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# CORE: Niri compositor
+# NIRI: Compositor (not in original end-4, Niri-specific)
 # -----------------------------------------------------------------------------
 NIRI_PKGS=(
   niri
-)
-
-# -----------------------------------------------------------------------------
-# CORE: Quickshell dependencies (from illogical-impulse-quickshell-git)
-# -----------------------------------------------------------------------------
-QUICKSHELL_DEPS=(
-  # Qt6 core
-  qt6-declarative
-  qt6-base
-  qt6-svg
-  qt6-wayland
-  # Qt6 extras for ii
-  qt6-5compat
-  qt6-imageformats
-  qt6-multimedia
-  qt6-positioning
-  qt6-quicktimeline
-  qt6-sensors
-  qt6-tools
-  qt6-translations
-  qt6-virtualkeyboard
-  # Qt6 effects (required for blur/dim)
-  qt6-shadertools
-  qt6-quick3d
-  # System libs
-  jemalloc
-  libpipewire
-  libxcb
-  wayland
-  libdrm
-  mesa
-  # KDE integration
-  kirigami
-  kdialog
-  syntax-highlighting
-)
-
-QUICKSHELL_AUR=(
-  google-breakpad
-  qt6-avif-image-plugin
-  illogical-impulse-quickshell-git  # pinned version for ii
-)
-
-# -----------------------------------------------------------------------------
-# CORE: XDG portals (from illogical-impulse-portal)
-# -----------------------------------------------------------------------------
-PORTAL_PKGS=(
-  xdg-desktop-portal
-  xdg-desktop-portal-gtk
   xdg-desktop-portal-gnome
 )
 
-PORTAL_AUR=(
-  xdg-desktop-portal-hyprland  # needed for some ii features
+# -----------------------------------------------------------------------------
+# METAPACKAGES: illogical-impulse bundles from AUR
+# These are the PREFERRED way to install - they handle all deps correctly
+# -----------------------------------------------------------------------------
+II_METAPKGS=(
+  illogical-impulse-quickshell-git  # Quickshell pinned + all Qt6 deps
+  illogical-impulse-portal          # XDG portals
+  illogical-impulse-fonts-themes    # Fonts, GTK themes, icons, cursors
+  illogical-impulse-screencapture   # grim, slurp, wf-recorder, etc
+  illogical-impulse-widgets         # fuzzel, hyprpicker, matugen, etc
+  illogical-impulse-toolkit         # ydotool, wtype, python-evdev
+  illogical-impulse-python          # Python deps for scripts
+  illogical-impulse-kde             # KDE/Qt integration
 )
 
 # -----------------------------------------------------------------------------
@@ -364,86 +329,11 @@ AUDIO_PKGS=(
   libdbusmenu-gtk3
 )
 
-# -----------------------------------------------------------------------------
-# CORE: Toolkit for input simulation
-# -----------------------------------------------------------------------------
-TOOLKIT_PKGS=(
-  upower
-  wtype
-  ydotool
-  python-evdev
-  python-pillow
-)
-
-# -----------------------------------------------------------------------------
-# OPTIONAL: Screenshot and recording
-# -----------------------------------------------------------------------------
-SCREENCAPTURE_PKGS=(
-  grim
-  slurp
-  swappy
-  tesseract
-  tesseract-data-eng
-  wf-recorder
-  imagemagick
-)
-
-# -----------------------------------------------------------------------------
-# OPTIONAL: Widget dependencies
-# -----------------------------------------------------------------------------
-WIDGET_PKGS=(
-  fuzzel
-  glib2
-  songrec
-  translate-shell
-)
-
-WIDGET_AUR=(
-  hyprpicker  # color picker
-)
-
-# -----------------------------------------------------------------------------
-# FONTS (from illogical-impulse-fonts-themes)
-# -----------------------------------------------------------------------------
-FONTS_PKGS=(
-  fontconfig
-  ttf-dejavu
-  ttf-liberation
-)
-
-FONTS_AUR=(
-  matugen-bin
-  otf-space-grotesk
-  ttf-jetbrains-mono-nerd
-  ttf-material-symbols-variable-git
-  ttf-readex-pro
-  ttf-rubik-vf
-  ttf-gabarito-git
-  ttf-roboto-flex
-  ttf-twemoji
-)
-
-# -----------------------------------------------------------------------------
-# THEMING: GTK, Qt, icons, cursors (from illogical-impulse-fonts-themes)
-# -----------------------------------------------------------------------------
-THEMING_PKGS=(
-  libadwaita
-  gnome-themes-extra
-  gsettings-desktop-schemas
-  dconf
-  breeze
-  xsettingsd
-  qt6ct
-  kde-gtk-config
-)
-
-THEMING_AUR=(
-  adw-gtk-theme-git  # CORRECT package for adw-gtk3
-  whitesur-icon-theme-git  # Icon theme
-  capitaine-cursors  # Cursor theme
-  breeze-plus
-  darkly-bin
-)
+# NOTE: The following are included via illogical-impulse metapackages:
+# - illogical-impulse-toolkit: ydotool, wtype, python-evdev, upower
+# - illogical-impulse-screencapture: grim, slurp, wf-recorder, tesseract, swappy
+# - illogical-impulse-widgets: fuzzel, hyprpicker, songrec, translate-shell
+# - illogical-impulse-fonts-themes: all fonts, icons, cursors, GTK themes
 
 # =============================================================================
 # THEMING CONFIGURATION
@@ -562,11 +452,8 @@ install_core() {
   log INFO "Niri compositor..."
   install_pkgs "${NIRI_PKGS[@]}"
   
-  log INFO "Quickshell and Qt6 dependencies..."
-  install_pkgs "${QUICKSHELL_DEPS[@]}" "${QUICKSHELL_AUR[@]}"
-  
-  log INFO "XDG portals..."
-  install_pkgs "${PORTAL_PKGS[@]}" "${PORTAL_AUR[@]}"
+  log INFO "illogical-impulse metapackages (Quickshell, fonts, tools, etc)..."
+  install_pkgs "${II_METAPKGS[@]}"
   
   log INFO "Polkit authentication..."
   install_pkgs "${POLKIT_PKGS[@]}"
@@ -576,28 +463,13 @@ install_core() {
   
   log INFO "Audio stack..."
   install_pkgs "${AUDIO_PKGS[@]}"
-  
-  log INFO "Input tools..."
-  install_pkgs "${TOOLKIT_PKGS[@]}"
 }
 
 install_optional() {
-  log STEP "Optional components"
+  log STEP "Optional configuration"
   
-  if confirm "Install screenshot/recording tools?"; then
-    install_pkgs "${SCREENCAPTURE_PKGS[@]}"
-  fi
-  
-  if confirm "Install widget dependencies (fuzzel, hyprpicker)?"; then
-    install_pkgs "${WIDGET_PKGS[@]}" "${WIDGET_AUR[@]}"
-  fi
-  
-  if confirm "Install fonts (JetBrains Mono, Material Symbols, etc)?"; then
-    install_pkgs "${FONTS_PKGS[@]}" "${FONTS_AUR[@]}"
-  fi
-  
-  if confirm "Install theming (GTK, icons, cursors)?"; then
-    install_pkgs "${THEMING_PKGS[@]}" "${THEMING_AUR[@]}"
+  # Metapackages already include fonts/icons/themes, just need to configure
+  if confirm "Configure GTK theming (icons, cursors, dark mode)?"; then
     configure_gtk_theming
   fi
 }
