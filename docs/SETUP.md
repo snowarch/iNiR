@@ -7,6 +7,7 @@ How the `./setup` script works and what it does.
 ## Commands
 
 ```bash
+./setup                 # Interactive TUI mode
 ./setup install         # Full install (deps + setup + files)
 ./setup install -y      # Non-interactive (skip prompts)
 ./setup install-deps    # Only install packages

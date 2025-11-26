@@ -40,4 +40,7 @@ depends=(
   
   # Terminal (foot is lightweight, change to your preference)
   foot
+  
+  # TUI for setup script
+  gum
 )

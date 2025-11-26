@@ -11,6 +11,7 @@ source ./sdata/lib/environment-variables.sh
 source ./sdata/lib/functions.sh
 source ./sdata/lib/package-installers.sh
 source ./sdata/lib/dist-determine.sh
+source ./sdata/lib/tui.sh
 
 prevent_sudo_or_root
 set -e
@@ -50,8 +51,22 @@ ${STY_BOLD}${STY_CYAN}Repository: https://github.com/snowarch/quickshell-ii-niri
 #####################################################################################
 # Parse subcommand
 #####################################################################################
+
+# If no arguments, launch TUI
+if [ $# -eq 0 ]; then
+    tui_main_menu
+    RET=$?
+    if [ $RET -eq 1 ]; then
+        set -- "install"
+    elif [ $RET -eq 2 ]; then
+        set -- "update"
+    else
+        exit 0
+    fi
+fi
+
 case $1 in
-  ""|help|--help|-h)
+  help|--help|-h)
     showhelp_global
     exit 0
     ;;

@@ -34,6 +34,7 @@ Essential packages for Niri + ii to function.
 | `gnome-keyring` | Secrets storage |
 | `dolphin` | File manager |
 | `foot` | Terminal |
+| `gum` | TUI for setup script |
 
 ---
 
