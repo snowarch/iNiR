@@ -267,7 +267,7 @@ log_success "Environment variables configured"
 # Set default wallpaper and generate initial theme
 #####################################################################################
 DEFAULT_WALLPAPER="${II_TARGET}/assets/wallpapers/qs-niri.jpg"
-if [[ -f "${DEFAULT_WALLPAPER}" ]]; then
+if [[ "${INSTALL_FIRSTRUN}" == true && -f "${DEFAULT_WALLPAPER}" ]]; then
   echo -e "${STY_CYAN}Setting default wallpaper...${STY_RST}"
   
   # Ensure output directories exist for matugen
@@ -306,8 +306,10 @@ fi
 # Reset first run marker
 #####################################################################################
 QUICKSHELL_FIRST_RUN_FILE="${XDG_STATE_HOME}/quickshell/user/first_run.txt"
-if [[ -f "${QUICKSHELL_FIRST_RUN_FILE}" ]]; then
-  x rm -f "${QUICKSHELL_FIRST_RUN_FILE}"
+if [[ "${INSTALL_FIRSTRUN}" == true ]]; then
+  if [[ -f "${QUICKSHELL_FIRST_RUN_FILE}" ]]; then
+    x rm -f "${QUICKSHELL_FIRST_RUN_FILE}"
+  fi
 fi
 
 #####################################################################################

@@ -142,8 +142,8 @@ Scope {
                     const screenName = root.modelData && root.modelData.name;
                     if (!screenName || screenName !== NiriService.currentOutput)
                         return;
-                    const targetIdx = ov.switchWorkspaceIndex - 1;
-                    if (targetIdx < 0)
+                    const targetIdx = ov.switchWorkspaceIndex;
+                    if (!targetIdx || targetIdx <= 0)
                         return;
                     NiriService.switchToWorkspace(targetIdx);
                 } else if (CompositorService.isHyprland) {

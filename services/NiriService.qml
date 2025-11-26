@@ -283,15 +283,17 @@ Singleton {
 
         root.workspaces = updatedWorkspaces
 
-        focusedWorkspaceId = data.id
-        focusedWorkspaceIndex = Object.values(updatedWorkspaces).findIndex(w => w.id === data.id)
-
-        if (focusedWorkspaceIndex >= 0) {
-            const ws = Object.values(updatedWorkspaces)[focusedWorkspaceIndex]
-            currentOutput = ws.output || ""
-        }
-
         allWorkspaces = Object.values(updatedWorkspaces).sort((a, b) => a.idx - b.idx)
+
+        focusedWorkspaceIndex = allWorkspaces.findIndex(w => w.is_focused)
+        if (focusedWorkspaceIndex >= 0) {
+            const focusedWs = allWorkspaces[focusedWorkspaceIndex]
+            focusedWorkspaceId = focusedWs.id
+            currentOutput = focusedWs.output || ""
+        } else {
+            focusedWorkspaceIndex = 0
+            focusedWorkspaceId = ""
+        }
 
         updateCurrentOutputWorkspaces()
     }
@@ -569,27 +571,27 @@ Singleton {
                     })
     }
 
-    function moveWindowToWorkspace(windowId, workspaceIdx, focus) {
-        // workspaceIdx should be the Niri 1-based idx from workspace.idx
-        // Optimized: Send move command directly with window_id specified
-        // This is faster than focus-then-move approach
-        const moveResult = send({
-            "Action": {
-                "MoveWindowToWorkspace": {
-                    "window_id": windowId,  // Specify window directly instead of using focused window
-                    "reference": {
-                        "Index": workspaceIdx  // Niri uses 1-based indices
-                    },
-                    "focus": focus === undefined ? true : focus
-                }
-            }
-        })
-        
-        if (!moveResult) {
-            console.warn("[NiriService] Failed to move window", windowId, "to workspace", workspaceIdx)
-        }
-        
-        return moveResult
+    function moveWindowToWorkspace(windowId, workspaceIndex, focus) {
+        // First focus the target window so MoveWindowToWorkspace acts on it.
+        send({
+                  "Action": {
+                      "FocusWindow": {
+                          "id": windowId
+                      }
+                  }
+              })
+
+        return send({
+                        "Action": {
+                            "MoveWindowToWorkspace": {
+                                "window_id": null,
+                                "reference": {
+                                    "Index": workspaceIndex
+                                },
+                                "focus": focus === undefined ? false : focus
+                            }
+                        }
+                    })
     }
 
     function closeWindow(windowId) {

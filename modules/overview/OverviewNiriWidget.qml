@@ -435,36 +435,11 @@ Item {
             implicitWidth: workspaceColumnLayout.implicitWidth
             implicitHeight: workspaceColumnLayout.implicitHeight
 
-    // Debounced properties for performance
-    property var _debouncedWindows: []
-    property var _debouncedWorkspaces: []
-
-    Timer {
-        id: modelDebounceTimer
-        interval: 50 // 50ms debounce
-        repeat: false
-        onTriggered: {
-            _debouncedWindows = NiriService.windows || []
-            _debouncedWorkspaces = root.workspacesForOutput || []
-        }
-    }
-
-    Connections {
-        target: NiriService
-        function onWindowsChanged() { modelDebounceTimer.restart() }
-        function onCurrentOutputWorkspacesChanged() { modelDebounceTimer.restart() }
-    }
-
-    Component.onCompleted: {
-        _debouncedWindows = NiriService.windows || []
-        _debouncedWorkspaces = root.workspacesForOutput || []
-    }
-
             Repeater {
                 model: ScriptModel {
                     values: {
-                        const wins = root._debouncedWindows || []
-                        const wsList = root._debouncedWorkspaces || []
+                        const wins = NiriService.windows || []
+                        const wsList = root.workspacesForOutput || []
                         if (wsList.length === 0 || wins.length === 0)
                             return []
 
@@ -568,15 +543,15 @@ Item {
                     Behavior on x {
                         enabled: !windowItem.Drag.active
                         NumberAnimation {
-                            duration: 80  // Reduced from 140ms for snappier response
-                            easing.type: Easing.OutCubic
+                            duration: 140
+                            easing.type: Easing.InOutQuad
                         }
                     }
                     Behavior on y {
                         enabled: !windowItem.Drag.active
                         NumberAnimation {
-                            duration: 80  // Reduced from 140ms for snappier response
-                            easing.type: Easing.OutCubic
+                            duration: 140
+                            easing.type: Easing.InOutQuad
                         }
                     }
 
@@ -598,17 +573,21 @@ Item {
 
                     property bool hovered: false
                     property bool pressed: false
+                    readonly property bool isFocused: !!windowData && (windowData.is_focused
+                                                                         || (NiriService.activeWindow
+                                                                             && NiriService.activeWindow.id === windowData.id))
 
                     Rectangle {
                         anchors.fill: parent
                         radius: Appearance.rounding.small
                         color: "transparent"
-                        border.width: windowData.is_focused ? 2 : 0
-                        border.color: windowData.is_focused ? Appearance.colors.colLayer2Active : "transparent"
+                        border.width: windowItem.isFocused ? 2 : 0
+                        border.color: windowItem.isFocused ? Appearance.colors.colLayer2Active : "transparent"
 
                         // Fondo de hover/pressed (sin contenido de ventana)
                         Rectangle {
                             anchors.fill: parent
+                            anchors.margins: windowItem.isFocused ? 2 : 0  // Account for parent border
                             radius: Appearance.rounding.small
                             color: windowItem.pressed
                                    ? ColorUtils.transparentize(Appearance.colors.colLayer2Active, 0.45)
@@ -703,13 +682,6 @@ Item {
                                 if (movedToOtherWorkspace) {
                                     // Drop válido en otro workspace: mover ventana allí
                                     NiriService.moveWindowToWorkspace(windowData.id, targetWorkspace, true)
-                                    
-                                    // Close overview immediately for instant feedback
-                                    // User can configure to keep it open if desired
-                                    const closeAfterMove = Config.options.overview?.closeAfterWindowMove !== false
-                                    if (closeAfterMove) {
-                                        GlobalStates.overviewOpen = false
-                                    }
                                 } else {
                                     // Drop fuera de cualquier workspace diferente o mismo workspace: efecto imán
                                     windowItem.x = Qt.binding(function() { return windowItem.baseX + windowItem.tileMargin })

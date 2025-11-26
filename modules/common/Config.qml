@@ -479,6 +479,7 @@ Singleton {
                 property int focusAnimationDurationMs: 180
                 property int scrollWorkspaceSteps: 2
                 property bool keepOverviewOpenOnWindowClick: true
+                property bool closeAfterWindowMove: true
             }
 
             // Settings for the custom Alt-Tab switcher in ii

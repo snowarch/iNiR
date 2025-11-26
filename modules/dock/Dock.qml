@@ -107,8 +107,9 @@ Scope { // Scope
                         MultiEffect {
                             anchors.fill: dockVisualBackground
                             source: dockVisualBackground
-                            visible: !Config.options.dock.showBackground && Config.options.dock.enableBlurGlass
-                            blurEnabled: true
+                            visible: !Config.options.dock.showBackground
+                                     && Config.options.dock.enableBlurGlass
+                            blurEnabled: visible && !Config.options.performance.lowPower
                             blur: 0.4
                             blurMax: 64
                             saturation: 1.0

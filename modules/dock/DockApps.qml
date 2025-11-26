@@ -52,7 +52,10 @@ Item {
 
                 // Group open windows by appId (case-insensitive)
                 const openMap = new Map();
-                for (const toplevel of ToplevelManager.toplevels.values) {
+                const allToplevels = CompositorService.sortedToplevels && CompositorService.sortedToplevels.length
+                        ? CompositorService.sortedToplevels
+                        : ToplevelManager.toplevels.values;
+                for (const toplevel of allToplevels) {
                     if (ignoredRegexes.some(re => re.test(toplevel.appId))) {
                         continue;
                     }
@@ -278,7 +281,7 @@ Item {
                                 ScreencopyView {
                                     id: screencopyView
                                     // Evitar warnings cuando el compositor no soporta screencopy (ej. Niri)
-                                    captureSource: (CompositorService.isHyprland && previewPopup)
+                                    captureSource: (CompositorService.isHyprland && previewPopup.show)
                                                   ? windowButton.modelData
                                                   : null
                                     live: true
