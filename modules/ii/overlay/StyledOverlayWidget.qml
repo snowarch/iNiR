@@ -91,6 +91,9 @@ AbstractOverlayWidget {
     opacity: (GlobalStates.overlayOpen || !clickthrough)
              ? panelBaseOpacity
              : panelBaseOpacity * (Config.options.overlay.clickthroughOpacity ?? 0.8)
+    Behavior on opacity {
+        animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+    }
 
     // Guarded states & registration funcs
     property bool open: Persistent.states.overlay.open
@@ -226,6 +229,9 @@ AbstractOverlayWidget {
                 color: root.fancyBorders ? "transparent" : Appearance.colors.colLayer1
                 // border.color: Appearance.colors.colOutlineVariant
                 // border.width: 1
+                Behavior on opacity {
+                    animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+                }
                 
                 RowLayout {
                     id: titleBarRow

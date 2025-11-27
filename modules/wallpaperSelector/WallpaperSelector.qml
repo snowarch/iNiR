@@ -55,6 +55,16 @@ Scope {
                 anchors {
                     fill: parent
                 }
+                // Subtle scale + fade when opening the wallpaper selector
+                transformOrigin: Item.Top
+                scale: GlobalStates.wallpaperSelectorOpen ? 1.0 : 0.97
+                opacity: GlobalStates.wallpaperSelectorOpen ? 1.0 : 0.0
+                Behavior on scale {
+                    animation: Appearance.animation.elementMoveEnter.numberAnimation.createObject(this)
+                }
+                Behavior on opacity {
+                    animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+                }
             }
         }
     }

@@ -142,6 +142,17 @@ Scope {
                 anchors.centerIn: parent
                 spacing: 15
 
+                // Subtle open animation for the session dialog
+                transformOrigin: Item.Center
+                scale: GlobalStates.sessionOpen ? 1.0 : 0.97
+                opacity: GlobalStates.sessionOpen ? 1.0 : 0.0
+                Behavior on scale {
+                    animation: Appearance.animation.elementMoveEnter.numberAnimation.createObject(this)
+                }
+                Behavior on opacity {
+                    animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+                }
+
                 Keys.onPressed: (event) => {
                     if (event.key === Qt.Key_Escape) {
                         sessionRoot.hide();

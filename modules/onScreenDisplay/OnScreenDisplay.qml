@@ -119,6 +119,17 @@ Scope {
                 id: columnLayout
                 anchors.horizontalCenter: parent.horizontalCenter
 
+                // Subtle open animation for the OSD, sliding from the bar edge
+                transformOrigin: !Config.options.bar.bottom ? Item.Top : Item.Bottom
+                scale: GlobalStates.osdVolumeOpen ? 1.0 : 0.96
+                opacity: GlobalStates.osdVolumeOpen ? 1.0 : 0.0
+                Behavior on scale {
+                    animation: Appearance.animation.elementMoveEnter.numberAnimation.createObject(this)
+                }
+                Behavior on opacity {
+                    animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+                }
+
                 Item {
                     id: osdValuesWrapper
                     // Extra space for shadow

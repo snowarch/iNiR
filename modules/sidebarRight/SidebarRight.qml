@@ -82,6 +82,12 @@ Scope {
             }
 
             sourceComponent: SidebarRightContent {}
+
+            // Subtle fade when sidebar becomes visible
+            opacity: GlobalStates.sidebarRightOpen ? 1 : 0
+            Behavior on opacity {
+                animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+            }
         }
 
         // Fallback focus when becoming visible (for compositors without CompositorFocusGrab behavior)

@@ -52,7 +52,12 @@ Scope {
                     const a = clamped / 100
                     return Qt.rgba(0, 0, 0, a)
                 }
-                visible: GlobalStates.overviewOpen
+                opacity: GlobalStates.overviewOpen ? 1 : 0
+                visible: opacity > 0.001
+
+                Behavior on opacity {
+                    animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+                }
             }
 
             MouseArea {
@@ -157,6 +162,8 @@ Scope {
             Column {
                 id: columnLayout
                 visible: GlobalStates.overviewOpen
+                transformOrigin: Item.Top
+                scale: GlobalStates.overviewOpen ? 1.0 : 0.97
                 anchors {
                     horizontalCenter: parent.horizontalCenter
                     top: parent.top
@@ -183,6 +190,10 @@ Scope {
                     }
                 }
                 spacing: -8
+
+                Behavior on scale {
+                    animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+                }
 
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Escape) {

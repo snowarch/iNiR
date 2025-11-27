@@ -367,6 +367,12 @@ Item {
                                 topRightRadius: workspace.topRightRadius
                                 bottomLeftRadius: workspace.bottomLeftRadius
                                 bottomRightRadius: workspace.bottomRightRadius
+                                Behavior on opacity {
+                                    NumberAnimation {
+                                        duration: 140
+                                        easing.type: Easing.InOutQuad
+                                    }
+                                }
                             }
 
                             // Border Overlay
@@ -588,7 +594,8 @@ Item {
                         // Fondo de hover/pressed (sin contenido de ventana)
                         Rectangle {
                             anchors.fill: parent
-                            anchors.margins: windowItem.isFocused ? 2 : 0  // Account for parent border
+                            // When focused, inset slightly so hover/press highlight doesn't cover the focus border
+                            anchors.margins: windowItem.isFocused ? 2 : 0
                             radius: Appearance.rounding.small
                             color: windowItem.pressed
                                    ? ColorUtils.transparentize(Appearance.colors.colLayer2Active, 0.45)

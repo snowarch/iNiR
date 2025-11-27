@@ -111,6 +111,12 @@ Scope { // Scope
                     animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
                 }
 
+                // Subtle fade when sidebar becomes visible
+                opacity: GlobalStates.sidebarLeftOpen ? 1 : 0
+                Behavior on opacity {
+                    animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+                }
+
                 Keys.onPressed: (event) => {
                     if (event.key === Qt.Key_Escape) {
                         sidebarRoot.hide();
