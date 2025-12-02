@@ -330,15 +330,17 @@ WBarAttachedPanelContent {
                 visible: Config.options.waffles.widgetsPanel.showMedia && MprisController.activePlayer !== null
                 color: "transparent"
 
-                // Scroll to change volume
+                // Scroll to change player volume
                 MouseArea {
                     anchors.fill: parent
                     acceptedButtons: Qt.NoButton
                     onWheel: wheel => {
+                        if (!MprisController.activePlayer?.volumeSupported) return
+                        const step = 0.05
                         if (wheel.angleDelta.y > 0)
-                            Audio.incrementVolume()
+                            MprisController.activePlayer.volume = Math.min(1, MprisController.activePlayer.volume + step)
                         else if (wheel.angleDelta.y < 0)
-                            Audio.decrementVolume()
+                            MprisController.activePlayer.volume = Math.max(0, MprisController.activePlayer.volume - step)
                     }
                 }
 

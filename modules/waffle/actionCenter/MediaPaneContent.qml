@@ -18,15 +18,17 @@ Rectangle {
 
     readonly property var activePlayer: MprisController.activePlayer
 
-    // Scroll to change volume
+    // Scroll to change player volume
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.NoButton
         onWheel: wheel => {
+            if (!root.activePlayer?.volumeSupported) return
+            const step = 0.05
             if (wheel.angleDelta.y > 0)
-                Audio.incrementVolume()
+                root.activePlayer.volume = Math.min(1, root.activePlayer.volume + step)
             else if (wheel.angleDelta.y < 0)
-                Audio.decrementVolume()
+                root.activePlayer.volume = Math.max(0, root.activePlayer.volume - step)
         }
     }
 
