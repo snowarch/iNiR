@@ -6,15 +6,19 @@ import Quickshell
 import qs
 import qs.services
 import qs.modules.common
+import qs.modules.common.models
 import qs.modules.common.functions
+import qs.modules.common.widgets
 import qs.modules.waffle.looks
 
 BodyRectangle {
     id: root
 
     required property string searchText
+    property real menuScale: Config.options.waffles?.startMenu?.scale ?? 1.0
 
-    // Size inherited from parent container
+    // Sync search text to LauncherSearch service
+    onSearchTextChanged: LauncherSearch.query = searchText
 
     function navigateUp() {
         if (resultsView.currentIndex > 0) {
@@ -34,10 +38,19 @@ BodyRectangle {
         }
     }
 
-    ListView {
-        id: resultsView
+    ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 16
+        anchors.margins: 12
+        spacing: 8
+
+        TagStrip {
+            Layout.fillWidth: true
+        }
+
+        ListView {
+            id: resultsView
+            Layout.fillWidth: true
+            Layout.fillHeight: true
         clip: true
         spacing: 4
         highlightMoveDuration: 100
@@ -46,8 +59,8 @@ BodyRectangle {
         keyNavigationEnabled: true
 
         Connections {
-            target: root
-            function onSearchTextChanged() {
+            target: LauncherSearch
+            function onResultsChanged() {
                 if (resultsView.count > 0) resultsView.currentIndex = 0
             }
         }
@@ -58,11 +71,7 @@ BodyRectangle {
         Keys.onEnterPressed: if (currentItem) currentItem.clicked()
 
         model: ScriptModel {
-            values: {
-                if (!root.searchText || root.searchText.length === 0)
-                    return []
-                return AppSearch.fuzzyQuery(root.searchText).slice(0, 8)
-            }
+            values: LauncherSearch.results.slice(0, 10)
         }
 
         highlight: Rectangle {
@@ -80,10 +89,8 @@ BodyRectangle {
             checked: resultsView.currentIndex === index
 
             onClicked: {
-                if (modelData.execute) {
-                    modelData.execute()
-                    GlobalStates.searchOpen = false
-                }
+                modelData.execute()
+                GlobalStates.searchOpen = false
             }
 
             Keys.onReturnPressed: clicked()
@@ -95,12 +102,22 @@ BodyRectangle {
                 anchors.rightMargin: 16
                 spacing: 16
 
-                Image {
+                // Icon based on iconType
+                Loader {
                     Layout.preferredWidth: 32
                     Layout.preferredHeight: 32
-                    source: Quickshell.iconPath(modelData.icon || modelData.name, "application-x-executable")
-                    sourceSize: Qt.size(32, 32)
-                    fillMode: Image.PreserveAspectFit
+                    sourceComponent: {
+                        switch (resultItem.modelData.iconType) {
+                            case LauncherSearchResult.IconType.System:
+                                return systemIconComp
+                            case LauncherSearchResult.IconType.Material:
+                                return materialIconComp
+                            case LauncherSearchResult.IconType.Text:
+                                return textIconComp
+                            default:
+                                return systemIconComp
+                        }
+                    }
                 }
 
                 ColumnLayout {
@@ -109,15 +126,17 @@ BodyRectangle {
 
                     WText {
                         Layout.fillWidth: true
-                        text: modelData.name || ""
+                        text: resultItem.modelData.name
                         font.pixelSize: Looks.font.pixelSize.large
+                        font.family: resultItem.modelData.fontType === LauncherSearchResult.FontType.Monospace 
+                            ? "monospace" : Looks.font.family.ui
                         elide: Text.ElideRight
                     }
 
                     WText {
                         Layout.fillWidth: true
-                        visible: modelData.description && modelData.description.length > 0
-                        text: modelData.description || ""
+                        visible: resultItem.modelData.comment.length > 0
+                        text: resultItem.modelData.comment
                         color: Looks.colors.fg1
                         font.pixelSize: Looks.font.pixelSize.small
                         elide: Text.ElideRight
@@ -125,19 +144,48 @@ BodyRectangle {
                 }
 
                 WText {
-                    text: Translation.tr("App")
+                    text: resultItem.modelData.type
                     color: Looks.colors.fg1
                     font.pixelSize: Looks.font.pixelSize.small
                 }
             }
+
+            Component {
+                id: systemIconComp
+                Image {
+                    source: Quickshell.iconPath(resultItem.modelData.iconName, "application-x-executable")
+                    sourceSize: Qt.size(32, 32)
+                    fillMode: Image.PreserveAspectFit
+                }
+            }
+
+            Component {
+                id: materialIconComp
+                MaterialSymbol {
+                    text: resultItem.modelData.iconName
+                    iconSize: 28
+                    color: Looks.colors.fg
+                }
+            }
+
+            Component {
+                id: textIconComp
+                WText {
+                    text: resultItem.modelData.iconName
+                    font.pixelSize: Math.round(28 * root.menuScale)
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
         }
 
-        // Empty state
-        WText {
-            anchors.centerIn: parent
-            visible: resultsView.count === 0 && root.searchText.length > 0
-            text: Translation.tr("No results found")
-            color: Looks.colors.fg1
+            // Empty state
+            WText {
+                anchors.centerIn: parent
+                visible: resultsView.count === 0 && root.searchText.length > 0
+                text: Translation.tr("No results found")
+                color: Looks.colors.fg1
+            }
         }
     }
 }

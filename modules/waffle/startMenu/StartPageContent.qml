@@ -16,8 +16,9 @@ Item {
     signal allAppsClicked()
     property list<string> pinnedApps: Config.options.dock?.pinnedApps ?? []
 
-    // Size preset
+    // Size preset and scale
     property string sizePreset: Config.options.waffles?.startMenu?.sizePreset ?? "normal"
+    property real menuScale: Config.options.waffles?.startMenu?.scale ?? 1.0
     
     // Calculate dimensions based on preset and content
     property int pinnedCount: Math.min(pinnedApps.length, maxPinned)
@@ -77,7 +78,7 @@ Item {
                         contentItem: RowLayout {
                             id: allAppsRow
                             spacing: 2
-                            WText { text: Translation.tr("All apps"); font.pixelSize: 10 }
+                            WText { text: Translation.tr("All apps"); font.pixelSize: Math.round(10 * root.menuScale) }
                             FluentIcon { icon: "chevron-right"; implicitSize: 10 }
                         }
                         onClicked: root.allAppsClicked()
@@ -99,7 +100,7 @@ Item {
 
                 // Recommended
                 ColumnLayout {
-                    visible: root.showRecommended && root.recentApps.length > 0
+                    visible: root.showRecommended && (root.recentApps?.length ?? 0) > 0
                     Layout.fillWidth: true
                     spacing: 6
                     WText {
@@ -139,7 +140,7 @@ Item {
                         id: userRow
                         spacing: 6
                         WUserAvatar { sourceSize: Qt.size(24, 24) }
-                        WText { text: SystemInfo.username; font.pixelSize: 11 }
+                        WText { text: SystemInfo.username; font.pixelSize: Math.round(11 * root.menuScale) }
                     }
                 }
                 Item { Layout.fillWidth: true }
@@ -163,11 +164,14 @@ Item {
     function getRecentApps() {
         const seen = new Set()
         const recent = []
-        for (const tl of ToplevelManager.toplevels.values) {
-            if (!seen.has(tl.appId) && recent.length < root.maxRecent) {
-                seen.add(tl.appId)
-                const entry = DesktopEntries.heuristicLookup(tl.appId)
-                recent.push({ appId: tl.appId, name: entry?.name ?? tl.appId })
+        // Use NiriService.windows for Niri compositor
+        const windowList = CompositorService.isNiri ? (NiriService.windows ?? []) : []
+        for (const w of windowList) {
+            const appId = w.app_id ?? ""
+            if (appId && !seen.has(appId) && recent.length < root.maxRecent) {
+                seen.add(appId)
+                const entry = DesktopEntries.heuristicLookup(appId)
+                recent.push({ appId: appId, name: entry?.name ?? appId })
             }
         }
         return recent
@@ -191,7 +195,7 @@ Item {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.preferredWidth: root.buttonSize - 6
                 text: appBtn.de?.name ?? appBtn.appId
-                font.pixelSize: 9
+                font.pixelSize: Math.round(9 * root.menuScale)
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
                 maximumLineCount: 2
@@ -214,7 +218,7 @@ Item {
                 source: Quickshell.iconPath(AppSearch.guessIcon(recBtn.appId), "application-x-executable")
                 sourceSize: Qt.size(20, 20)
             }
-            WText { Layout.fillWidth: true; text: recBtn.appName; font.pixelSize: 10; elide: Text.ElideRight }
+            WText { Layout.fillWidth: true; text: recBtn.appName; font.pixelSize: Math.round(10 * root.menuScale); elide: Text.ElideRight }
         }
     }
 }
