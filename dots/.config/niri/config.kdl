@@ -160,10 +160,11 @@ animations {
 
 environment {
     XDG_CURRENT_DESKTOP "niri"
+    XDG_MENU_PREFIX "plasma-"  // Required for Dolphin file associations
     QT_QPA_PLATFORM "wayland"
     ELECTRON_OZONE_PLATFORM_HINT "auto"
-    QT_QPA_PLATFORMTHEME "gtk3"
-    QT_QPA_PLATFORMTHEME_QT6 "gtk3"
+    QT_QPA_PLATFORMTHEME "kde"
+    QT_STYLE_OVERRIDE "Breeze"
     
     // Quickshell Python virtual environment
     ILLOGICAL_IMPULSE_VIRTUAL_ENV "$HOME/.local/state/quickshell/.venv"
