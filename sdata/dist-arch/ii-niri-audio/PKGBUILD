@@ -8,7 +8,7 @@ depends=(
   pipewire
   pipewire-pulse
   pipewire-alsa
-  pipewire-jack
+  jack  # Accepts pipewire-jack OR jack2
   wireplumber
   playerctl
   libdbusmenu-gtk3

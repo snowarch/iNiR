@@ -27,9 +27,8 @@ depends=(
   xdg-desktop-portal-gtk
   xdg-desktop-portal-gnome
   
-  # Polkit (mate-polkit works well with Niri)
+  # Polkit - any agent works (mate-polkit, gnome-polkit, lxpolkit, etc)
   polkit
-  mate-polkit
   
   # Network
   networkmanager
