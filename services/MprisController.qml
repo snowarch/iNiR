@@ -9,6 +9,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Mpris
+import qs
 import qs.modules.common
 
 /**
@@ -178,8 +179,20 @@ Singleton {
 			}
 		}
 
-		function playPause(): void { root.togglePlaying(); }
-		function previous(): void { root.previous(); }
-		function next(): void { root.next(); }
+		function playPause(): void {
+			GlobalStates.osdMediaAction = root.isPlaying ? "pause" : "play";
+			root.togglePlaying();
+			GlobalStates.osdMediaOpen = true;
+		}
+		function previous(): void {
+			GlobalStates.osdMediaAction = "previous";
+			root.previous();
+			GlobalStates.osdMediaOpen = true;
+		}
+		function next(): void {
+			GlobalStates.osdMediaAction = "next";
+			root.next();
+			GlobalStates.osdMediaOpen = true;
+		}
 	}
 }

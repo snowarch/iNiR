@@ -75,7 +75,7 @@ Scope {
             }
 
             // Unlock the keyring if configured to do so
-            if (Config.options.lock.security.unlockKeyring) root.unlockKeyring();
+            if (Config.options.lock.security.unlockKeyring) root.unlockKeyring(); // Async
 
             // Unlock the screen before exiting, or the compositor will display a
             // fallback lock you can't interact with.
@@ -88,6 +88,12 @@ Scope {
 
             // Reset
             lockContext.reset();
+
+            // Post-unlock actions: activate idle inhibitor if requested
+            if (lockContext.alsoInhibitIdle) {
+                lockContext.alsoInhibitIdle = false;
+                Idle.toggleInhibit(true);
+            }
         }
     }
 

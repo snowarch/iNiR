@@ -7,6 +7,9 @@ AGENTS.md
 *.swp
 *~
 
+# Docs (internal)
+docs/OPTIMIZATION.md
+
 # Python
 __pycache__/
 *.pyc

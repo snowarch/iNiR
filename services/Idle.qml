@@ -19,9 +19,13 @@ Singleton {
     onSuspendTimeoutChanged: _restartSwayidle()
     onInhibitChanged: _restartSwayidle()
 
-    function toggleInhibit() {
-        inhibit = !inhibit
-        Persistent.states.idle.inhibit = inhibit
+    function toggleInhibit(active = null) {
+        if (active !== null) {
+            inhibit = active;
+        } else {
+            inhibit = !inhibit;
+        }
+        Persistent.states.idle.inhibit = inhibit;
     }
 
     function _restartSwayidle() {

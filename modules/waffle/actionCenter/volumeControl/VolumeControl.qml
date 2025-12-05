@@ -35,14 +35,16 @@ Item {
                     id: flickable
                     Layout.fillHeight: true
                     Layout.fillWidth: true
-
-                    contentHeight: contentLayout.implicitHeight
+                    contentHeight: contentLoader.item?.implicitHeight ?? 0
                     contentWidth: width
                     clip: true
 
-                    AudioChoices {
-                        id: contentLayout
+                    Loader {
+                        id: contentLoader
                         width: flickable.width
+                        active: true
+                        asynchronous: true
+                        sourceComponent: AudioChoicesComponent {}
                     }
                 }
             }
@@ -80,7 +82,7 @@ Item {
         }
     }
 
-    component AudioChoices: ColumnLayout {
+    component AudioChoicesComponent: ColumnLayout {
         spacing: 4
 
         SectionText {
@@ -88,9 +90,7 @@ Item {
         }
 
         Repeater {
-            model: ScriptModel {
-                values: root.output ? Audio.outputDevices : Audio.inputDevices
-            }
+            model: root.output ? Audio.outputDevices : Audio.inputDevices
             delegate: WChoiceButton {
                 required property var modelData
                 icon.name: WIcons.audioDeviceIcon(modelData)
@@ -107,8 +107,6 @@ Item {
             visible: EasyEffects.available && root.output
             color: Looks.colors.bg2Hover
         }
-
-        ////////////////////////////////////////////////////////////
 
         SectionText {
             visible: EasyEffects.available && root.output
@@ -133,10 +131,7 @@ Item {
             color: Looks.colors.bg2Hover
         }
 
-        ////////////////////////////////////////////////////////////
-
         SectionText {
-            visible: EasyEffects.available
             text: Translation.tr("Volume mixer")
         }
 
@@ -147,9 +142,7 @@ Item {
         }
 
         Repeater {
-            model: ScriptModel {
-                values: root.output ? Audio.outputAppNodes : Audio.inputAppNodes
-            }
+            model: root.output ? Audio.outputAppNodes : Audio.inputAppNodes
             delegate: VolumeEntry {
                 required property var modelData
                 node: modelData

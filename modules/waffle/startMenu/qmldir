@@ -6,3 +6,4 @@ SearchPageContent 1.0 SearchPageContent.qml
 SearchBar 1.0 SearchBar.qml
 AllAppsContent 1.0 AllAppsContent.qml
 TagStrip 1.0 TagStrip.qml
+WSearchResultButton 1.0 WSearchResultButton.qml

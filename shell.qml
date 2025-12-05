@@ -39,6 +39,7 @@ import qs.modules.waffle.onScreenDisplay as WaffleOSDModule
 import qs.modules.waffle.startMenu
 import qs.modules.waffle.widgets
 import qs.modules.waffle.backdrop as WaffleBackdropModule
+import qs.modules.waffle.notificationPopup as WaffleNotificationPopupModule
 
 import QtQuick
 import Quickshell
@@ -151,6 +152,7 @@ ShellRoot {
     PanelLoader { identifier: "wOnScreenDisplay"; component: WaffleOSDModule.WaffleOSD {} }
     PanelLoader { identifier: "wWidgets"; component: WaffleWidgets {} }
     PanelLoader { identifier: "wBackdrop"; extraCondition: Config.options?.waffles?.background?.backdrop?.enable ?? true; component: WaffleBackdropModule.WaffleBackdrop {} }
+    PanelLoader { identifier: "wNotificationPopup"; component: WaffleNotificationPopupModule.WaffleNotificationPopup {} }
     // Waffle Clipboard - handles IPC when panelFamily === "waffle"
     LazyLoader { active: Config.ready && Config.options?.panelFamily === "waffle"; component: WaffleClipboardModule.WaffleClipboard {} }
     // Waffle AltSwitcher - handles IPC when panelFamily === "waffle"
@@ -163,6 +165,7 @@ ShellRoot {
     ToastManager {}
 
     // === PanelLoader Component ===
+    // Uses LazyLoader - panels load when active and enabled
     component PanelLoader: LazyLoader {
         required property string identifier
         property bool extraCondition: true
@@ -182,10 +185,10 @@ ShellRoot {
             "iiWallpaperSelector", "iiClipboard"
         ],
         "waffle": [
-            "wBar", "wBackground", "wBackdrop", "wStartMenu", "wActionCenter", "wNotificationCenter", "wOnScreenDisplay", "wWidgets",
+            "wBar", "wBackground", "wBackdrop", "wStartMenu", "wActionCenter", "wNotificationCenter", "wNotificationPopup", "wOnScreenDisplay", "wWidgets",
             // Shared modules that work with waffle
             // Note: wAltSwitcher is always loaded when waffle is active (not in this list)
-            "iiCheatsheet", "iiLock", "iiNotificationPopup", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit", 
+            "iiCheatsheet", "iiLock", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit", 
             "iiRegionSelector", "iiSessionScreen", "iiWallpaperSelector", "iiClipboard"
         ]
     })

@@ -14,8 +14,8 @@ Rectangle {
     color: Appearance.colors.colLayer1
     clip: true
     implicitHeight: collapsed ? collapsedBottomWidgetGroupRow.implicitHeight : bottomWidgetGroupRow.implicitHeight
-    property int selectedTab: Persistent.states.sidebar.bottomGroup.tab
-    property bool collapsed: Persistent.states.sidebar.bottomGroup.collapsed
+    property int selectedTab: Persistent.states?.sidebar?.bottomGroup?.tab ?? 0
+    property bool collapsed: Persistent.states?.sidebar?.bottomGroup?.collapsed ?? false
     property var tabs: [
         {"type": "calendar", "name": Translation.tr("Calendar"), "icon": "calendar_month", "widget": calendarWidget}, 
         {"type": "todo", "name": Translation.tr("To Do"), "icon": "done_outline", "widget": todoWidget},

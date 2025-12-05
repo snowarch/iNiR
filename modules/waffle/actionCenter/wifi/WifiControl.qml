@@ -75,7 +75,7 @@ Item {
                     spacing: 4
 
                     model: ScriptModel {
-                        values: Network.friendlyWifiNetworks
+                        values: Network.wifiNetworks
                     }
                     delegate: WWifiNetworkItem {
                         required property WifiAccessPoint modelData

@@ -189,10 +189,20 @@ MouseArea {
     }
 
     // Key presses
+    property bool ctrlHeld: false
     Keys.onPressed: event => {
         root.context.resetClearTimer();
+        if (event.key === Qt.Key_Control) {
+            root.ctrlHeld = true;
+        }
         if (event.key === Qt.Key_Escape) {
             root.context.currentText = "";
+        }
+        forceFieldFocus();
+    }
+    Keys.onReleased: event => {
+        if (event.key === Qt.Key_Control) {
+            root.ctrlHeld = false;
         }
         forceFieldFocus();
     }
@@ -242,7 +252,7 @@ MouseArea {
             inputMethodHints: Qt.ImhSensitiveData
 
             onTextChanged: root.context.currentText = this.text
-            onAccepted: root.context.tryUnlock()
+            onAccepted: root.context.tryUnlock(root.ctrlHeld)
             Connections {
                 target: root.context
                 function onCurrentTextChanged() {
@@ -309,7 +319,7 @@ MouseArea {
                 iconSize: 24
                 text: {
                     if (root.context.targetAction === LockContext.ActionEnum.Unlock) {
-                        return "arrow_right_alt";
+                        return root.ctrlHeld ? "emoji_food_beverage" : "arrow_right_alt";
                     } else if (root.context.targetAction === LockContext.ActionEnum.Poweroff) {
                         return "power_settings_new";
                     } else if (root.context.targetAction === LockContext.ActionEnum.Reboot) {

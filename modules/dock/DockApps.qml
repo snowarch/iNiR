@@ -27,15 +27,25 @@ Item {
     
     property var dockItems: []
     
+    // Cache compiled regexes - only recompile when config changes
+    property var _cachedIgnoredRegexes: []
+    property var _lastIgnoredRegexStrings: []
+    
+    function _getIgnoredRegexes(): list<var> {
+        const ignoredRegexStrings = Config.options?.dock?.ignoredAppRegexes ?? [];
+        // Check if we need to recompile
+        if (JSON.stringify(ignoredRegexStrings) !== JSON.stringify(_lastIgnoredRegexStrings)) {
+            const systemIgnored = ["^$", "^portal$", "^x-run-dialog$", "^kdialog$", "^org.freedesktop.impl.portal.*"];
+            const allIgnored = ignoredRegexStrings.concat(systemIgnored);
+            _cachedIgnoredRegexes = allIgnored.map(pattern => new RegExp(pattern, "i"));
+            _lastIgnoredRegexStrings = ignoredRegexStrings.slice();
+        }
+        return _cachedIgnoredRegexes;
+    }
+    
     function rebuildDockItems() {
-        const pinnedApps = Config.options?.dock.pinnedApps ?? [];
-
-        // Compile ignored app regexes once
-        const ignoredRegexStrings = Config.options?.dock.ignoredAppRegexes ?? [];
-        // Add common filepickers/portals to ignore list to prevent lag
-        const systemIgnored = ["^$", "^portal$", "^x-run-dialog$", "^kdialog$", "^org.freedesktop.impl.portal.*"];
-        const allIgnored = ignoredRegexStrings.concat(systemIgnored);
-        const ignoredRegexes = allIgnored.map(pattern => new RegExp(pattern, "i"));
+        const pinnedApps = Config.options?.dock?.pinnedApps ?? [];
+        const ignoredRegexes = _getIgnoredRegexes();
 
         // Group open windows by appId (case-insensitive)
         const openMap = new Map();

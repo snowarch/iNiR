@@ -21,9 +21,8 @@ Scope {
         }
 
         exclusiveZone: 0
-        implicitWidth: sidebarWidth
+        implicitWidth: screen?.width ?? 1920
         WlrLayershell.namespace: "quickshell:sidebarRight"
-        // Allow keyboard focus on the right sidebar window (similar to SidebarLeft)
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
         color: "transparent"
 
@@ -38,11 +37,6 @@ Scope {
             id: grab
             windows: [ sidebarRoot ]
             active: CompositorService.isHyprland && sidebarRoot.visible
-            onActiveChanged: {
-                if (active && sidebarContentLoader.item && sidebarContentLoader.item.focusActiveItem) {
-                    sidebarContentLoader.item.focusActiveItem()
-                }
-            }
             onCleared: () => {
                 if (!active) sidebarRoot.hide()
             }
@@ -62,14 +56,13 @@ Scope {
 
         Loader {
             id: sidebarContentLoader
-            active: GlobalStates.sidebarRightOpen || Config?.options.sidebar.keepRightSidebarLoaded
+            active: GlobalStates.sidebarRightOpen || (Config?.options?.sidebar?.keepRightSidebarLoaded ?? true)
             anchors {
                 top: parent.top
                 right: parent.right
                 bottom: parent.bottom
-                topMargin: Appearance.sizes.hyprlandGapsOut
-                bottomMargin: Appearance.sizes.hyprlandGapsOut
-                rightMargin: Appearance.sizes.hyprlandGapsOut
+                margins: Appearance.sizes.hyprlandGapsOut
+                leftMargin: Appearance.sizes.elevationMargin
             }
             width: sidebarWidth - Appearance.sizes.hyprlandGapsOut - Appearance.sizes.elevationMargin
             height: parent.height - Appearance.sizes.hyprlandGapsOut * 2
@@ -82,22 +75,7 @@ Scope {
             }
 
             sourceComponent: SidebarRightContent {}
-
-            // Subtle fade when sidebar becomes visible
-            opacity: GlobalStates.sidebarRightOpen ? 1 : 0
-            Behavior on opacity {
-                animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
-            }
         }
-
-        // Fallback focus when becoming visible (for compositors without CompositorFocusGrab behavior)
-        onVisibleChanged: {
-            if (visible && sidebarContentLoader.item && sidebarContentLoader.item.focusActiveItem) {
-                Qt.callLater(() => sidebarContentLoader.item.focusActiveItem())
-            }
-        }
-
-
     }
 
     IpcHandler {

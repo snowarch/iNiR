@@ -393,7 +393,8 @@
     "workspaceSpacing": 5
   },
   "performance": {
-    "lowPower": false
+    "lowPower": false,
+    "reduceAnimations": false
   },
   "policies": {
     "ai": 0,
@@ -671,6 +672,8 @@
       "toggles": [
         "network",
         "bluetooth",
+        "audio",
+        "mic",
         "easyEffects",
         "powerProfile",
         "idleInhibitor",
@@ -678,7 +681,6 @@
         "darkMode",
         "antiFlashbang",
         "cloudflareWarp",
-        "mic",
         "musicRecognition",
         "notifications",
         "onScreenKeyboard",

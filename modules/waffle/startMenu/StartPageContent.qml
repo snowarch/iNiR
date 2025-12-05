@@ -134,6 +134,7 @@ Item {
                 anchors.leftMargin: 12
                 anchors.rightMargin: 12
                 WBorderlessButton {
+                    id: userBtn
                     implicitWidth: userRow.implicitWidth + 12
                     implicitHeight: 32
                     contentItem: RowLayout {
@@ -142,19 +143,44 @@ Item {
                         WUserAvatar { sourceSize: Qt.size(24, 24) }
                         WText { text: SystemInfo.username; font.pixelSize: Math.round(11 * root.menuScale) }
                     }
+                    onClicked: userMenu.open()
+                    WToolTip { text: SystemInfo.username }
+                    WMenu {
+                        id: userMenu
+                        y: -implicitHeight - 4
+                        Action { 
+                            icon.name: "person"
+                            text: Translation.tr("Account settings")
+                            onTriggered: {
+                                Quickshell.execDetached(["gnome-control-center", "user-accounts"])
+                                GlobalStates.searchOpen = false
+                            }
+                        }
+                        Action { 
+                            icon.name: "lock-closed"
+                            text: Translation.tr("Lock")
+                            onTriggered: Session.lock()
+                        }
+                        Action { 
+                            icon.name: "arrow-exit"
+                            text: Translation.tr("Sign out")
+                            onTriggered: Session.logout()
+                        }
+                    }
                 }
                 Item { Layout.fillWidth: true }
                 WBorderlessButton {
                     implicitWidth: 32; implicitHeight: 32
                     contentItem: FluentIcon { anchors.centerIn: parent; icon: "power"; implicitSize: 16 }
                     onClicked: pwrMenu.open()
+                    WToolTip { text: Translation.tr("Power") }
                     WMenu {
                         id: pwrMenu
                         y: -implicitHeight - 4
-                        Action { text: Translation.tr("Lock"); onTriggered: Session.lock() }
-                        Action { text: Translation.tr("Sleep"); onTriggered: Session.suspend() }
-                        Action { text: Translation.tr("Shut down"); onTriggered: Session.poweroff() }
-                        Action { text: Translation.tr("Restart"); onTriggered: Session.reboot() }
+                        Action { icon.name: "lock-closed"; text: Translation.tr("Lock"); onTriggered: Session.lock() }
+                        Action { icon.name: "weather-moon"; text: Translation.tr("Sleep"); onTriggered: Session.suspend() }
+                        Action { icon.name: "power"; text: Translation.tr("Shut down"); onTriggered: Session.poweroff() }
+                        Action { icon.name: "arrow-counterclockwise"; text: Translation.tr("Restart"); onTriggered: Session.reboot() }
                     }
                 }
             }

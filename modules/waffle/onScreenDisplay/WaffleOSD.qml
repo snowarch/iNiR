@@ -24,6 +24,11 @@ Scope {
             sourceUrl: "BrightnessOSD.qml",
             globalStateValue: "osdBrightnessOpen"
         },
+        {
+            id: "media",
+            sourceUrl: "MediaOSD.qml",
+            globalStateValue: "osdMediaOpen"
+        },
     ]
 
     function triggerBrightnessOsd() {
@@ -34,6 +39,11 @@ Scope {
     function triggerVolumeOSD() {
         root.currentIndicator = "volume";
         GlobalStates.osdVolumeOpen = true;
+    }
+
+    function triggerMediaOSD() {
+        root.currentIndicator = "media";
+        GlobalStates.osdMediaOpen = true;
     }
 
     // Listen to brightness changes
@@ -57,6 +67,9 @@ Scope {
         }
     }
 
+    // Media OSD is triggered via IPC only (not on every track change)
+    // See services/MprisController.qml IpcHandler
+
     // Open when global state changes
     Connections {
         target: GlobalStates
@@ -68,6 +81,12 @@ Scope {
         function onOsdVolumeOpenChanged() {
             if (GlobalStates.osdVolumeOpen)
                 panelLoader.active = true;
+        }
+        function onOsdMediaOpenChanged() {
+            if (GlobalStates.osdMediaOpen) {
+                root.currentIndicator = "media";
+                panelLoader.active = true;
+            }
         }
     }
 

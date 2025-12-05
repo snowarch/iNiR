@@ -1,4 +1,5 @@
 import qs
+import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 import QtQuick
@@ -105,17 +106,52 @@ Item {
         }
 
         Loader {
-            active: Config.options.bar.utilButtons.showMicToggle
-            visible: Config.options.bar.utilButtons.showMicToggle
+            active: Config.options.bar.utilButtons.showMicToggle || Audio.micBeingAccessed
+            visible: active
             sourceComponent: CircleUtilButton {
+                id: micButton
                 Layout.alignment: Qt.AlignVCenter
+                
+                readonly property bool isMuted: Pipewire.defaultAudioSource?.audio?.muted ?? false
+                readonly property bool isInUse: Audio.micBeingAccessed
+                
                 onClicked: Quickshell.execDetached(["wpctl", "set-mute", "@DEFAULT_SOURCE@", "toggle"])
-                MaterialSymbol {
-                    horizontalAlignment: Qt.AlignHCenter
-                    fill: 0
-                    text: Pipewire.defaultAudioSource?.audio?.muted ? "mic_off" : "mic"
-                    iconSize: Appearance.font.pixelSize.large
-                    color: Appearance.colors.colOnLayer2
+                
+                Item {
+                    anchors.fill: parent
+                    
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        horizontalAlignment: Qt.AlignHCenter
+                        fill: micButton.isInUse ? 1 : 0
+                        text: micButton.isMuted ? "mic_off" : "mic"
+                        iconSize: Appearance.font.pixelSize.large
+                        color: micButton.isInUse && !micButton.isMuted 
+                            ? Appearance.colors.colError 
+                            : Appearance.colors.colOnLayer2
+                    }
+                    
+                    // Recording indicator dot
+                    Rectangle {
+                        visible: micButton.isInUse && !micButton.isMuted
+                        width: 6
+                        height: 6
+                        radius: 3
+                        color: Appearance.colors.colError
+                        anchors {
+                            top: parent.top
+                            right: parent.right
+                            topMargin: 0
+                            rightMargin: 0
+                        }
+                        
+                        SequentialAnimation on opacity {
+                            running: micButton.isInUse && !micButton.isMuted
+                            loops: Animation.Infinite
+                            NumberAnimation { to: 0.4; duration: 800 }
+                            NumberAnimation { to: 1.0; duration: 800 }
+                        }
+                    }
                 }
             }
         }

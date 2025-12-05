@@ -164,6 +164,21 @@ BACKDROP_RULES
         'ipc" "call" "region" "search|    Mod+Shift+A { spawn "qs" "-c" "ii" "ipc" "call" "region" "search"; }'
         'ipc" "call" "wallpaperSelector" "toggle|    Ctrl+Alt+T { spawn "qs" "-c" "ii" "ipc" "call" "wallpaperSelector" "toggle"; }'
         'ipc" "call" "settings" "open|    Mod+Comma { spawn "qs" "-c" "ii" "ipc" "call" "settings" "open"; }'
+        # Audio/Brightness/Media keys (with OSD support)
+        'ipc" "call" "audio" "volumeUp|    XF86AudioRaiseVolume allow-when-locked=true { spawn "qs" "-c" "ii" "ipc" "call" "audio" "volumeUp"; }'
+        'ipc" "call" "audio" "volumeDown|    XF86AudioLowerVolume allow-when-locked=true { spawn "qs" "-c" "ii" "ipc" "call" "audio" "volumeDown"; }'
+        'ipc" "call" "audio" "mute|    XF86AudioMute allow-when-locked=true { spawn "qs" "-c" "ii" "ipc" "call" "audio" "mute"; }'
+        'ipc" "call" "audio" "micMute|    XF86AudioMicMute allow-when-locked=true { spawn "qs" "-c" "ii" "ipc" "call" "audio" "micMute"; }'
+        'ipc" "call" "brightness" "increment|    XF86MonBrightnessUp { spawn "qs" "-c" "ii" "ipc" "call" "brightness" "increment"; }'
+        'ipc" "call" "brightness" "decrement|    XF86MonBrightnessDown { spawn "qs" "-c" "ii" "ipc" "call" "brightness" "decrement"; }'
+        'ipc" "call" "mpris" "playPause|    XF86AudioPlay { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "playPause"; }'
+        'ipc" "call" "mpris" "next|    XF86AudioNext { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "next"; }'
+        'ipc" "call" "mpris" "previous|    XF86AudioPrev { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "previous"; }'
+        # Keyboard alternatives for media
+        'Mod+Shift+M.*audio.*mute|    Mod+Shift+M { spawn "qs" "-c" "ii" "ipc" "call" "audio" "mute"; }'
+        'Mod+Shift+P.*mpris.*playPause|    Mod+Shift+P { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "playPause"; }'
+        'Mod+Shift+N.*mpris.*next|    Mod+Shift+N { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "next"; }'
+        'Mod+Shift+B.*mpris.*previous|    Mod+Shift+B { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "previous"; }'
       )
       
       KEYBINDS_ADDED=0
@@ -187,6 +202,15 @@ BACKDROP_RULES
       
       if [[ $KEYBINDS_ADDED -gt 0 ]]; then
         log_success "Added $KEYBINDS_ADDED missing ii keybinds to Niri config"
+      fi
+      
+      # Migrate: Replace old wpctl volume keybinds with ii IPC (for OSD support)
+      if grep -q 'XF86AudioRaiseVolume.*wpctl' "$NIRI_CONFIG" 2>/dev/null; then
+        echo -e "${STY_CYAN}Migrating volume keybinds to use ii IPC (enables OSD)...${STY_RST}"
+        sed -i 's|XF86AudioRaiseVolume.*{.*spawn "wpctl".*}|XF86AudioRaiseVolume allow-when-locked=true { spawn "qs" "-c" "ii" "ipc" "call" "audio" "volumeUp"; }|' "$NIRI_CONFIG"
+        sed -i 's|XF86AudioLowerVolume.*{.*spawn "wpctl".*}|XF86AudioLowerVolume allow-when-locked=true { spawn "qs" "-c" "ii" "ipc" "call" "audio" "volumeDown"; }|' "$NIRI_CONFIG"
+        sed -i 's|XF86AudioMute.*{.*spawn "wpctl".*}|XF86AudioMute allow-when-locked=true { spawn "qs" "-c" "ii" "ipc" "call" "audio" "mute"; }|' "$NIRI_CONFIG"
+        log_success "Volume keybinds migrated to ii IPC"
       fi
       
       # Migrate: Add //off to animations block if missing (required for GameMode toggle)
