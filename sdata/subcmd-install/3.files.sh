@@ -822,14 +822,42 @@ if ! ${quiet:-false}; then
     echo ""
   fi
 
+  # REBOOT WARNING (first install only)
+  if [[ "${IS_UPDATE}" != "true" ]]; then
+    echo ""
+    printf "${STY_RED}${STY_BOLD}"
+    cat << 'REBOOT'
+╔══════════════════════════════════════════════════════════════╗
+║                                                              ║
+║     ██████╗ ███████╗██████╗  ██████╗  ██████╗ ████████╗      ║
+║     ██╔══██╗██╔════╝██╔══██╗██╔═══██╗██╔═══██╗╚══██╔══╝      ║
+║     ██████╔╝█████╗  ██████╔╝██║   ██║██║   ██║   ██║         ║
+║     ██╔══██╗██╔══╝  ██╔══██╗██║   ██║██║   ██║   ██║         ║
+║     ██║  ██║███████╗██████╔╝╚██████╔╝╚██████╔╝   ██║         ║
+║     ╚═╝  ╚═╝╚══════╝╚═════╝  ╚═════╝  ╚═════╝    ╚═╝         ║
+║                                                              ║
+║          REBOOT YOUR SYSTEM. SERIOUSLY. DO IT NOW.           ║
+║                                                              ║
+╚══════════════════════════════════════════════════════════════╝
+REBOOT
+    printf "${STY_RST}"
+    echo ""
+    echo -e "${STY_YELLOW}Environment variables, user groups, and systemd services${STY_RST}"
+    echo -e "${STY_YELLOW}won't take effect until you reboot. Don't skip this.${STY_RST}"
+    echo ""
+  fi
+
   # Next steps
   echo -e "${STY_CYAN}${STY_BOLD}┌─ Next Steps${STY_RST}"
   echo -e "${STY_CYAN}│${STY_RST}"
-  echo -e "${STY_CYAN}│${STY_RST}  ${STY_BOLD}1.${STY_RST} Log out and select ${STY_BOLD}Niri${STY_RST} at your display manager"
-  echo -e "${STY_CYAN}│${STY_RST}  ${STY_BOLD}2.${STY_RST} ii will start automatically with your session"
-  echo -e "${STY_CYAN}│${STY_RST}"
-  echo -e "${STY_CYAN}│${STY_RST}  Or reload now if already in Niri:"
-  echo -e "${STY_CYAN}│${STY_RST}  ${STY_FAINT}$ niri msg action load-config-file${STY_RST}"
+  if [[ "${IS_UPDATE}" != "true" ]]; then
+    echo -e "${STY_CYAN}│${STY_RST}  ${STY_BOLD}1.${STY_RST} ${STY_RED}${STY_BOLD}REBOOT${STY_RST} your system"
+    echo -e "${STY_CYAN}│${STY_RST}  ${STY_BOLD}2.${STY_RST} Select ${STY_BOLD}Niri${STY_RST} at your display manager"
+    echo -e "${STY_CYAN}│${STY_RST}  ${STY_BOLD}3.${STY_RST} ii will start automatically with your session"
+  else
+    echo -e "${STY_CYAN}│${STY_RST}  ${STY_BOLD}1.${STY_RST} Log out and log back in, or reload Niri:"
+    echo -e "${STY_CYAN}│${STY_RST}  ${STY_FAINT}$ niri msg action load-config-file${STY_RST}"
+  fi
   echo -e "${STY_CYAN}│${STY_RST}"
   echo -e "${STY_CYAN}└──────────────────────────────${STY_RST}"
   echo ""
@@ -856,7 +884,7 @@ if ! ${quiet:-false}; then
   if [[ "${IS_UPDATE}" == "true" ]]; then
     echo -e "${STY_GREEN}Done. Hot reload should kick in any second now.${STY_RST}"
   else
-    echo -e "${STY_GREEN}Enjoy your new desktop!${STY_RST}"
+    echo -e "${STY_GREEN}Now reboot and enjoy your new desktop!${STY_RST}"
   fi
   echo ""
 

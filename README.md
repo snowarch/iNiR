@@ -2,6 +2,17 @@
 
 A Quickshell shell for Niri. Fork of end-4's illogical-impulse, butchered to work on a different compositor.
 
+> [!CAUTION]
+> **Stop. Read this before you clone.**
+>
+> This is a personal project. Not a product. Not a "just works" experience.
+>
+> If you're here because "it looks pretty" and you have no idea what Niri is, what Quickshell does, or why there are 6000+ settings to tweak - **this is not for you**. Go install KDE or something.
+>
+> I make no promises about stability. Things break. I push changes when I feel like it. Your system, your responsibility. If you brick something, that's a you problem.
+>
+> Still here? Cool. You've been warned. Proceed at your own risk.
+
 > **Heads up:** almost everything here is configurable. Modules, colors, fonts, animations - if something bugs you, there's probably a toggle for it. Hit `Super+,` for settings before you rage-quit.
 
 | Overview | Uglydesktop |
