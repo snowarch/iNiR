@@ -329,6 +329,11 @@ Item { // Bar content region
                 invertSide: Config?.options.bar.bottom
             }
 
+            // Timer indicator
+            TimerIndicator {
+                Layout.alignment: Qt.AlignVCenter
+            }
+
             Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true

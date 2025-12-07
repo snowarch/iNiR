@@ -48,16 +48,16 @@ MouseArea {
             
             switch (target) {
                 case "backdrop":
-                    Config.options.background.backdrop.useMainWallpaper = false;
-                    Config.options.background.backdrop.wallpaperPath = filePath;
+                    Config.setNestedValue("background.backdrop.useMainWallpaper", false);
+                    Config.setNestedValue("background.backdrop.wallpaperPath", filePath);
                     break;
                 case "waffle":
-                    Config.options.waffles.background.useMainWallpaper = false;
-                    Config.options.waffles.background.wallpaperPath = filePath;
+                    Config.setNestedValue("waffles.background.useMainWallpaper", false);
+                    Config.setNestedValue("waffles.background.wallpaperPath", filePath);
                     break;
                 case "waffle-backdrop":
-                    Config.options.waffles.background.backdrop.useMainWallpaper = false;
-                    Config.options.waffles.background.backdrop.wallpaperPath = filePath;
+                    Config.setNestedValue("waffles.background.backdrop.useMainWallpaper", false);
+                    Config.setNestedValue("waffles.background.backdrop.wallpaperPath", filePath);
                     break;
                 default: // "main"
                     Wallpapers.select(filePath, root.useDarkMode);
@@ -209,7 +209,7 @@ MouseArea {
                             { icon: "movie", name: "Videos", path: Directories.videos }, 
                             { icon: "", name: "---", path: "INTENTIONALLY_INVALID_DIR" }, 
                             { icon: "wallpaper", name: "Wallpapers", path: `${Directories.pictures}/Wallpapers` }, 
-                            ...(Config.options.policies.weeb === 1 ? [{ icon: "favorite", name: "Homework", path: `${Directories.pictures}/homework` }] : []),
+                            ...((Config.options?.policies?.weeb ?? 0) === 1 ? [{ icon: "favorite", name: "Homework", path: `${Directories.pictures}/homework` }] : []),
                         ]
                         delegate: RippleButton {
                             id: quickDirButton
@@ -315,7 +315,12 @@ MouseArea {
 
                         function activateCurrent() {
                             const filePath = grid.model.get(currentIndex, "filePath")
-                            root.selectWallpaperPath(filePath);
+                            const isDir = grid.model.get(currentIndex, "fileIsDir")
+                            if (isDir) {
+                                Wallpapers.setDirectory(filePath);
+                            } else {
+                                root.selectWallpaperPath(filePath);
+                            }
                         }
 
                         model: Wallpapers.folderModel
@@ -335,15 +340,19 @@ MouseArea {
                             })
                             width: grid.cellWidth
                             height: grid.cellHeight
-                            colBackground: (index === grid?.currentIndex || containsMouse) ? Appearance.colors.colPrimary : (filePath === Config.options.background.wallpaperPath) ? Appearance.colors.colSecondaryContainer : ColorUtils.transparentize(Appearance.colors.colPrimaryContainer)
-                            colText: (index === grid.currentIndex || containsMouse) ? Appearance.colors.colOnPrimary : (filePath === Config.options.background.wallpaperPath) ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer0
+                            colBackground: (index === grid?.currentIndex || containsMouse) ? Appearance.colors.colPrimary : (filePath === (Config.options?.background?.wallpaperPath ?? "")) ? Appearance.colors.colSecondaryContainer : ColorUtils.transparentize(Appearance.colors.colPrimaryContainer)
+                            colText: (index === grid.currentIndex || containsMouse) ? Appearance.colors.colOnPrimary : (filePath === (Config.options?.background?.wallpaperPath ?? "")) ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer0
 
                             onEntered: {
                                 grid.currentIndex = index;
                             }
                             
                             onActivated: {
-                                root.selectWallpaperPath(filePath);
+                                if (fileIsDir) {
+                                    Wallpapers.setDirectory(filePath);
+                                } else {
+                                    root.selectWallpaperPath(filePath);
+                                }
                             }
                         }
 
@@ -374,7 +383,7 @@ MouseArea {
                             altAction: () => {
                                 Wallpapers.openFallbackPicker(root.useDarkMode);
                                 GlobalStates.wallpaperSelectorOpen = false;
-                                Config.options.wallpaperSelector.useSystemFileDialog = true
+                                Config.setNestedValue("wallpaperSelector.useSystemFileDialog", true)
                             }
                             text: "open_in_new"
                             StyledToolTip {

@@ -18,7 +18,6 @@ BarButton {
     }
 
     contentItem: Item {
-        // anchors.centerIn: parent
         implicitHeight: contentLayout.implicitHeight
         implicitWidth: contentLayout.implicitWidth
         Row {
@@ -37,12 +36,36 @@ BarButton {
                     text: DateTime.date
                 }
             }
+
+            // Notification badge - Windows 11 style (simple, no effects)
+            Rectangle {
+                id: notifBadge
+                readonly property int count: Notifications.list.length
+                readonly property bool showCount: Config.options?.waffles?.bar?.notifications?.showUnreadCount ?? true
+                visible: count > 0 && !Notifications.silent && showCount
+                anchors.verticalCenter: parent.verticalCenter
+                width: count > 9 ? 18 : (count > 0 ? 16 : 0)
+                height: 16
+                radius: 8
+                color: Looks.colors.accent
+
+                WText {
+                    anchors.centerIn: parent
+                    text: notifBadge.count > 9 ? "9+" : String(notifBadge.count)
+                    font.pixelSize: 10
+                    font.weight: Font.DemiBold
+                    color: Looks.colors.accentFg
+                }
+            }
+
+            // Silent mode indicator
             FluentIcon {
                 visible: Notifications.silent
                 anchors.verticalCenter: parent.verticalCenter
                 icon: "alert-snooze"
-                implicitSize: 18
-                filled: true
+                implicitSize: 16
+                monochrome: true
+                color: Looks.colors.subfg
             }
         }
     }
@@ -50,6 +73,13 @@ BarButton {
     BarToolTip {
         id: tooltip
         extraVisibleCondition: root.shouldShowTooltip
-        text: `${Qt.locale().toString(DateTime.clock.date, "dddd, MMMM d, yyyy")}\n\n${Qt.locale().toString(DateTime.clock.date, "ddd hh:mm AP")}`
+        text: {
+            const dateStr = Qt.locale().toString(DateTime.clock.date, "dddd, MMMM d, yyyy")
+            const timeStr = Qt.locale().toString(DateTime.clock.date, "ddd hh:mm AP")
+            const notifStr = Notifications.list.length > 0 
+                ? "\n" + Translation.tr("%1 notification(s)").arg(Notifications.list.length)
+                : ""
+            return dateStr + "\n\n" + timeStr + notifStr
+        }
     }
 }

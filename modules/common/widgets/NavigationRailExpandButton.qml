@@ -5,10 +5,9 @@ import qs.modules.common.widgets
 
 RippleButton {
     id: root
-    Layout.alignment: Qt.AlignLeft
+    Layout.alignment: Qt.AlignHCenter
     implicitWidth: 40
     implicitHeight: 40
-    Layout.leftMargin: 8
     downAction: () => {
         parent.expanded = !parent.expanded;
     }

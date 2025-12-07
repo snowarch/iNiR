@@ -274,6 +274,7 @@ Singleton {
                 property string terminal: "ghostty" // This is only for shell actions
                 property string volumeMixer: `~/.config/quickshell/ii/scripts/launch_first_available.sh "pavucontrol-qt" "pavucontrol"`
                 property string discord: "discord" // Shell command to launch Discord client
+                property string update: "foot -e sudo pacman -Syu" // Command to run system updates
             }
 
             property JsonObject background: JsonObject {
@@ -801,6 +802,13 @@ Singleton {
                 property int stronglyAdviseUpdateThreshold: 200
             }
             property JsonObject waffles: JsonObject {
+                property JsonObject modules: JsonObject {
+                    property bool sidebarLeft: false
+                    property bool sidebarRight: false
+                    property bool dock: false
+                    property bool mediaControls: false
+                    property bool screenCorners: false
+                }
                 property JsonObject tweaks: JsonObject {
                     property bool smootherMenuAnimations: true
                     property bool switchHandlePositionFix: true

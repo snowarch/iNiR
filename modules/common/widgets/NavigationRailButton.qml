@@ -4,6 +4,7 @@ import qs.modules.common.functions
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Quickshell
 
 TabButton {
     id: root
@@ -30,6 +31,31 @@ TabButton {
     background: null
     PointingHandInteraction {}
 
+    // Primary colored bubble tooltip that appears to the right when collapsed
+    ToolTip {
+        id: hoverBubble
+        visible: !root.expanded && root.hovered
+        delay: 0
+        x: root.width + 4
+        y: (root.height - height) / 2
+        padding: 0
+        background: Rectangle {
+            color: Appearance.colors.colPrimary
+            radius: Appearance.rounding.full
+            implicitWidth: bubbleText.implicitWidth + 24
+            implicitHeight: root.baseHighlightHeight
+        }
+        contentItem: StyledText {
+            id: bubbleText
+            text: root.buttonText
+            font.pixelSize: Appearance.font.pixelSize.small
+            font.weight: Font.Medium
+            color: Appearance.colors.colOnPrimary
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+        }
+    }
+
     // Real stuff
     contentItem: Item {
         id: buttonContent
@@ -48,7 +74,8 @@ TabButton {
             anchors.top: itemIconBackground.top
             anchors.left: itemIconBackground.left
             anchors.bottom: itemIconBackground.bottom
-            implicitWidth: root.visualWidth
+            // When collapsed, only show icon area; when expanded, show full width with text
+            implicitWidth: root.expanded ? root.visualWidth : root.baseSize
             radius: Appearance.rounding.full
             color: toggled ? 
                 root.showToggledHighlight ?
@@ -65,10 +92,6 @@ TabButton {
                     anchors.left: buttonContent.left
                     anchors.bottom: buttonContent.bottom
                 }
-                PropertyChanges {
-                    target: itemBackground
-                    implicitWidth: root.visualWidth
-                }
             }
             transitions: Transition {
                 AnchorAnimation {
@@ -76,9 +99,10 @@ TabButton {
                     easing.type: Appearance.animation.elementMoveFast.type
                     easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
                 }
-                PropertyAnimation {
-                    target: itemBackground
-                    property: "implicitWidth"
+            }
+
+            Behavior on implicitWidth {
+                NumberAnimation {
                     duration: Appearance.animation.elementMove.duration
                     easing.type: Appearance.animation.elementMove.type
                     easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
@@ -116,34 +140,23 @@ TabButton {
 
         StyledText {
             id: itemText
+            // Only show text when expanded - when collapsed, use PopupToolTip instead
+            visible: root.expanded
+            opacity: root.expanded ? 1 : 0
             anchors {
-                top: itemIconBackground.bottom
-                topMargin: 2
-                horizontalCenter: itemIconBackground.horizontalCenter
-            }
-            states: State {
-                name: "expanded"
-                when: root.expanded
-                AnchorChanges {
-                    target: itemText
-                    anchors {
-                        top: undefined
-                        horizontalCenter: undefined
-                        left: itemIconBackground.right
-                        verticalCenter: itemIconBackground.verticalCenter
-                    }
-                }
-            }
-            transitions: Transition {
-                AnchorAnimation {
-                    duration: Appearance.animation.elementMoveFast.duration
-                    easing.type: Appearance.animation.elementMoveFast.type
-                    easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
-                }
+                left: itemIconBackground.right
+                verticalCenter: itemIconBackground.verticalCenter
             }
             text: buttonText
             font.pixelSize: Appearance.font.pixelSize.small
             color: Appearance.colors.colOnLayer1
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: Appearance.animation.elementMoveFast.duration
+                    easing.type: Appearance.animation.elementMoveFast.type
+                }
+            }
         }
     }
 

@@ -12,27 +12,6 @@ RippleButton {
     property bool enableSettingsSearch: true
     property int settingsSearchOptionId: -1
 
-    property real _settingsSearchBaseScale: 1.0
-
-    SequentialAnimation {
-        id: settingsSearchHighlightAnim
-        running: false
-        loops: 3
-
-        PropertyAnimation {
-            target: root
-            property: "scale"
-            to: 1.03
-            duration: 90
-        }
-        PropertyAnimation {
-            target: root
-            property: "scale"
-            to: 1.0
-            duration: 90
-        }
-    }
-
     Layout.fillWidth: true
     implicitHeight: contentItem.implicitHeight + 8 * 2
     font.pixelSize: Appearance.font.pixelSize.small
@@ -59,31 +38,8 @@ RippleButton {
     }
 
     function focusFromSettingsSearch() {
-        var flick = null;
-        var p = root.parent;
-        while (p) {
-            if (p.hasOwnProperty("contentY") && p.hasOwnProperty("contentHeight")) {
-                flick = p;
-                break;
-            }
-            p = p.parent;
-        }
-
-        if (flick) {
-            var y = 0;
-            var n = root;
-            while (n && n !== flick) {
-                y += n.y || 0;
-                n = n.parent;
-            }
-            var maxY = Math.max(0, flick.contentHeight - flick.height);
-            var target = Math.max(0, Math.min(y - 60, maxY));
-            flick.contentY = target;
-        }
+        // Focus is handled by the settings search system
         root.forceActiveFocus();
-        settingsSearchHighlightAnim.stop();
-        root.scale = _settingsSearchBaseScale;
-        settingsSearchHighlightAnim.start();
     }
 
     Component.onCompleted: {

@@ -41,7 +41,7 @@ Singleton {
     property string notepadPath: FileUtils.trimFileProtocol(`${Directories.state}/user/notepad.txt`)
     property string notesPath: FileUtils.trimFileProtocol(`${Directories.state}/user/notes.txt`)
     property string conflictCachePath: FileUtils.trimFileProtocol(`${Directories.cache}/conflict-killer`)
-    property string notificationsPath: FileUtils.trimFileProtocol(`${Directories.cache}/notifications/notifications.json`)
+    property string notificationsPath: FileUtils.trimFileProtocol(`${Directories.state}/user/notifications.json`)
     property string generatedMaterialThemePath: FileUtils.trimFileProtocol(`${Directories.state}/user/generated/colors.json`)
     property string generatedWallpaperCategoryPath: FileUtils.trimFileProtocol(`${Directories.state}/user/generated/wallpaper/category.txt`)
     property string cliphistDecode: FileUtils.trimFileProtocol(`/tmp/quickshell/media/cliphist`)
@@ -55,6 +55,7 @@ Singleton {
     // Cleanup on init
     Component.onCompleted: {
         Quickshell.execDetached(["mkdir", "-p", `${shellConfig}`])
+        Quickshell.execDetached(["mkdir", "-p", FileUtils.trimFileProtocol(`${state}/user`)])
         Quickshell.execDetached(["mkdir", "-p", `${favicons}`])
         Quickshell.execDetached(["bash", "-c", `rm -rf '${coverArt}'; mkdir -p '${coverArt}'`])
         Quickshell.execDetached(["bash", "-c", `rm -rf '${booruPreviews}'; mkdir -p '${booruPreviews}'`])

@@ -15,7 +15,7 @@ import Qt5Compat.GraphicalEffects
 Item {
     id: root
     property bool vertical: false
-    property bool borderless: Config.options.bar.borderless
+    property bool borderless: Config.options?.bar?.borderless ?? false
     readonly property HyprlandMonitor monitor: CompositorService.isHyprland ? Hyprland.monitorFor(root.QsWindow.window?.screen) : null
     readonly property Toplevel activeWindow: ToplevelManager.activeToplevel
     readonly property var wsConfig: Config.options?.bar.workspaces ?? {}
@@ -73,10 +73,15 @@ Item {
     function doUpdateWorkspaceOccupied() {
         if (CompositorService.isNiri) {
             const wsList = NiriService.currentOutputWorkspaces || []
+            const windows = NiriService.windows || []
             const base = workspaceGroup * root.workspacesShown
             workspaceOccupied = Array.from({ length: root.workspacesShown }, (_, i) => {
                 const targetNumber = base + i + 1
-                return wsList.some(ws => ws.idx === targetNumber)
+                // Find workspace with this idx
+                const ws = wsList.find(w => w.idx === targetNumber)
+                if (!ws) return false
+                // Check if any windows are on this workspace
+                return windows.some(win => win.workspace_id === ws.id)
             })
         } else {
             workspaceOccupied = Array.from({ length: root.workspacesShown }, (_, i) => {
@@ -110,6 +115,9 @@ Item {
         function onCurrentOutputWorkspacesChanged() {
             updateWorkspaceOccupied();
         }
+        function onWindowsChanged() {
+            updateWorkspaceOccupied();
+        }
     }
     onWorkspaceGroupChanged: {
         updateWorkspaceOccupied();
@@ -118,33 +126,47 @@ Item {
     implicitWidth: root.vertical ? Appearance.sizes.verticalBarWidth : (root.workspaceButtonWidth * root.workspacesShown)
     implicitHeight: root.vertical ? (root.workspaceButtonWidth * root.workspacesShown) : Appearance.sizes.barHeight
 
-    // Scroll to switch workspaces
+    // Scroll behavior: "workspace" = switch workspaces, "column" = cycle windows left/right in same workspace
+    readonly property string scrollBehavior: wsConfig.scrollBehavior ?? "workspace"
+
+    // Scroll to switch workspaces or cycle columns - uses horizontal scroll direction for Niri's scrolling model
     WheelHandler {
         onWheel: (event) => {
+            // Use horizontal delta if available (touchpad horizontal scroll), otherwise use vertical
+            const deltaX = event.angleDelta.x
             const deltaY = event.angleDelta.y
-            if (deltaY === 0)
+            
+            // Prefer horizontal scroll for natural left/right navigation
+            // Fall back to vertical scroll (inverted: scroll up = left, scroll down = right)
+            const delta = deltaX !== 0 ? deltaX : -deltaY
+            if (delta === 0)
                 return
-            const direction = deltaY < 0 ? 1 : -1
+            
+            // Positive delta = scroll right = next
+            // Negative delta = scroll left = previous
+            const direction = delta > 0 ? 1 : -1
 
             if (CompositorService.isNiri) {
-                const wsList = NiriService.getCurrentOutputWorkspaceNumbers()
-                if (!wsList || wsList.length < 2)
-                    return
-                const currentNumber = NiriService.getCurrentWorkspaceNumber()
-                const currentIndex = wsList.indexOf(currentNumber)
-                const validIndex = currentIndex === -1 ? 0 : currentIndex
-                const nextIndex = direction > 0
-                        ? Math.min(validIndex + 1, wsList.length - 1)
-                        : Math.max(validIndex - 1, 0)
-                if (nextIndex === validIndex)
-                    return
-                const nextNumber = wsList[nextIndex]
-                // nextNumber is already the Niri idx (1-based) on this output.
-                NiriService.switchToWorkspace(nextNumber)
+                if (root.scrollBehavior === "column") {
+                    // Cycle through columns (windows side by side) in the same workspace
+                    if (direction > 0) {
+                        NiriService.focusColumnRight()
+                    } else {
+                        NiriService.focusColumnLeft()
+                    }
+                } else {
+                    // Default: switch workspaces
+                    // Niri uses Up/Down for workspace navigation (vertical scrolling model)
+                    if (direction > 0) {
+                        NiriService.focusWorkspaceDown()  // Next workspace
+                    } else {
+                        NiriService.focusWorkspaceUp()    // Previous workspace
+                    }
+                }
             } else if (CompositorService.isHyprland) {
-                if (deltaY < 0)
+                if (direction > 0)
                     Hyprland.dispatch(`workspace r+1`);
-                else if (deltaY > 0)
+                else
                     Hyprland.dispatch(`workspace r-1`);
             }
         }

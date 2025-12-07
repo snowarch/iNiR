@@ -82,9 +82,9 @@ Item {
                 Layout.fillWidth: true
                 visible: active
                 active: {
-                    const configQuickSliders = Config.options.sidebar.quickSliders
-                    if (!configQuickSliders.enable) return false
-                    if (!configQuickSliders.showMic && !configQuickSliders.showVolume && !configQuickSliders.showBrightness) return false;
+                    const configQuickSliders = Config.options?.sidebar?.quickSliders
+                    if (!configQuickSliders?.enable) return false
+                    if (!configQuickSliders?.showMic && !configQuickSliders?.showVolume && !configQuickSliders?.showBrightness) return false;
                     return true;
                 }
                 sourceComponent: QuickSliders {}
@@ -193,7 +193,7 @@ Item {
         Layout.alignment: item?.Layout.alignment ?? Qt.AlignHCenter
         Layout.fillWidth: item?.Layout.fillWidth ?? false
         visible: active
-        active: Config.options.sidebar.quickToggles.style === styleName
+        active: (Config.options?.sidebar?.quickToggles?.style ?? "classic") === styleName
         Connections {
             target: quickPanelImplLoader.item
             function onOpenAudioOutputDialog() {
@@ -264,7 +264,7 @@ Item {
 
             QuickToggleButton {
                 toggled: root.editMode
-                visible: Config.options.sidebar.quickToggles.style === "android"
+                visible: (Config.options?.sidebar?.quickToggles?.style ?? "classic") === "android"
                 buttonIcon: "edit"
                 onClicked: root.editMode = !root.editMode
                 StyledToolTip {

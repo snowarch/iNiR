@@ -28,7 +28,7 @@ StyledPopup {
 
             StyledText {
                 anchors.verticalCenter: parent.verticalCenter
-                text: "Battery"
+                text: Translation.tr("Battery")
                 font {
                     weight: Font.Medium
                     pixelSize: Appearance.font.pixelSize.normal

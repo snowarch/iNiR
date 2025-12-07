@@ -157,8 +157,8 @@ MouseArea { // Notification group area
                 image: root?.multipleNotifications ? "" : notificationGroup?.notifications[0]?.image ?? ""
                 appIcon: root.notificationGroup?.appIcon
                 summary: root.notificationGroup?.notifications[root.notificationCount - 1]?.summary
-                urgency: root.notifications.some(n => n.urgency === NotificationUrgency.Critical.toString()) ? 
-                    NotificationUrgency.Critical : NotificationUrgency.Normal
+                // Use pre-calculated hasCritical from service
+                urgency: root.notificationGroup?.hasCritical ? NotificationUrgency.Critical : NotificationUrgency.Normal
             }
 
             ColumnLayout { // Content

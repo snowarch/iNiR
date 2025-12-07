@@ -22,8 +22,8 @@ ContentPage {
             "iiWallpaperSelector", "iiAltSwitcher", "iiClipboard"
         ],
         "waffle": [
-            "wBar", "wBackground", "wStartMenu", "wActionCenter", "wNotificationCenter", "wOnScreenDisplay", "wWidgets",
-            "iiBackdrop", "iiCheatsheet", "iiLock", "iiNotificationPopup", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit", 
+            "wBar", "wBackground", "wStartMenu", "wActionCenter", "wNotificationCenter", "wNotificationPopup", "wOnScreenDisplay", "wWidgets",
+            "iiBackdrop", "iiCheatsheet", "iiLock", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit", 
             "iiRegionSelector", "iiSessionScreen", "iiWallpaperSelector", "iiAltSwitcher", "iiClipboard"
         ]
     })
@@ -421,6 +421,14 @@ ContentPage {
         }
 
         ConfigSwitch {
+            buttonIcon: "notifications_active"
+            text: Translation.tr("Notification Popups")
+            checked: modulesPage.isPanelEnabled("wNotificationPopup")
+            onCheckedChanged: modulesPage.setPanelEnabled("wNotificationPopup", checked)
+            StyledToolTip { text: Translation.tr("Toast notifications that appear on screen (Windows 11 style)") }
+        }
+
+        ConfigSwitch {
             buttonIcon: "volume_up"
             text: Translation.tr("OSD")
             checked: modulesPage.isPanelEnabled("wOnScreenDisplay")
@@ -544,14 +552,6 @@ ContentPage {
             checked: modulesPage.isPanelEnabled("iiClipboard")
             onCheckedChanged: modulesPage.setPanelEnabled("iiClipboard", checked)
             StyledToolTip { text: Translation.tr("Clipboard manager with history") }
-        }
-
-        ConfigSwitch {
-            buttonIcon: "notifications"
-            text: Translation.tr("Notification Popups")
-            checked: modulesPage.isPanelEnabled("iiNotificationPopup")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiNotificationPopup", checked)
-            StyledToolTip { text: Translation.tr("Toast notifications that appear on screen") }
         }
 
         ConfigSwitch {

@@ -18,7 +18,7 @@
         "extraBackgroundTint": true,
         "fakeScreenRounding": 0,
         "palette": {
-            "type": "scheme-rainbow"
+            "type": "angel"
         },
         "transparency": {
             "automatic": true,

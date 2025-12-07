@@ -11,7 +11,8 @@ Scope {
     id: root
     
     Loader {
-        active: PolkitService.active
+        // Only activate if Polkit module is available AND there's an active auth request
+        active: PolkitService.available && PolkitService.active
         sourceComponent: Variants {
             model: Quickshell.screens
             delegate: PanelWindow {

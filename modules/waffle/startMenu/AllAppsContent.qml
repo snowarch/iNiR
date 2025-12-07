@@ -12,6 +12,20 @@ WPanelPageColumn {
     id: root
     signal back()
 
+    property string filterText: ""
+
+    function navigateUp() {
+        if (appsList.currentIndex > 0) appsList.currentIndex--
+    }
+
+    function navigateDown() {
+        if (appsList.currentIndex < appsList.count - 1) appsList.currentIndex++
+    }
+
+    function activateCurrent() {
+        if (appsList.currentItem) appsList.currentItem.clicked()
+    }
+
     WPanelSeparator {}
 
     BodyRectangle {
@@ -45,17 +59,63 @@ WPanelPageColumn {
                 }
             }
 
+            // Search filter
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: 36
+                radius: height / 2
+                color: Looks.colors.inputBg
+                border.width: 1
+                border.color: Looks.colors.bg2Border
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 12
+                    anchors.rightMargin: 12
+                    spacing: 8
+
+                    FluentIcon { icon: "search"; implicitSize: 14 }
+
+                    WTextInput {
+                        id: filterInput
+                        Layout.fillWidth: true
+                        focus: true
+                        onTextChanged: root.filterText = text
+
+                        Keys.onUpPressed: root.navigateUp()
+                        Keys.onDownPressed: root.navigateDown()
+                        Keys.onReturnPressed: root.activateCurrent()
+                        Keys.onEnterPressed: root.activateCurrent()
+                        Keys.onEscapePressed: root.back()
+
+                        WText {
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: Looks.colors.accentUnfocused
+                            text: Translation.tr("Filter apps...")
+                            visible: filterInput.text.length === 0
+                            font.pixelSize: Looks.font.pixelSize.normal
+                        }
+                    }
+                }
+            }
+
             ListView {
                 id: appsList
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 clip: true
                 spacing: 2
+                currentIndex: 0
+                highlightMoveDuration: 100
 
                 model: ScriptModel {
-                    values: DesktopEntries.applications.values
-                        .filter(e => !e.noDisplay)
-                        .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
+                    values: {
+                        const filter = root.filterText.toLowerCase().trim()
+                        return DesktopEntries.applications.values
+                            .filter(e => !e.noDisplay && (filter.length === 0 || (e.name || "").toLowerCase().includes(filter)))
+                            .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
+                    }
                 }
 
                 section.property: "modelData.name"
@@ -75,15 +135,26 @@ WPanelPageColumn {
                     }
                 }
 
+                highlight: Rectangle {
+                    color: Looks.colors.bg1
+                    radius: Looks.radius.small
+                }
+
                 delegate: WBorderlessButton {
                     id: appItem
                     required property var modelData
+                    required property int index
                     width: appsList.width
                     implicitHeight: 44
+                    checked: appsList.currentIndex === index
 
                     onClicked: {
                         modelData.execute()
                         GlobalStates.searchOpen = false
+                    }
+
+                    onHoveredChanged: {
+                        if (hovered) appsList.currentIndex = index
                     }
 
                     contentItem: RowLayout {
@@ -99,6 +170,13 @@ WPanelPageColumn {
                             elide: Text.ElideRight
                         }
                     }
+                }
+
+                WText {
+                    anchors.centerIn: parent
+                    visible: appsList.count === 0
+                    text: Translation.tr("No apps found")
+                    color: Looks.colors.fg1
                 }
             }
         }

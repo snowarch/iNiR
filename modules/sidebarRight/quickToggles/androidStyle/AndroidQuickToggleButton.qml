@@ -174,26 +174,28 @@ GroupButton {
 
         function toggleEnabled() {
             const index = root.buttonIndex;
-            const toggleList = Config.options.sidebar.quickToggles.android.toggles;
+            const toggleList = Config.options?.sidebar?.quickToggles?.android?.toggles ?? [];
             const buttonType = root.buttonData.type;
             if (!toggleList.find(toggle => toggle.type === buttonType)) {
                 toggleList.push({ type: buttonType, size: 1 });
             } else {
                 toggleList.splice(index, 1);
             }
+            Config.setNestedValue("sidebar.quickToggles.android.toggles", toggleList);
         }
 
         function toggleSize() {
             const index = root.buttonIndex;
-            const toggleList = Config.options.sidebar.quickToggles.android.toggles;
+            const toggleList = Config.options?.sidebar?.quickToggles?.android?.toggles ?? [];
             const buttonType = root.buttonData.type;
             if (!toggleList.find(toggle => toggle.type === buttonType)) return;
             toggleList[index].size = 3 - toggleList[index].size; // Alternate between 1 and 2
+            Config.setNestedValue("sidebar.quickToggles.android.toggles", toggleList);
         }
 
         function movePositionBy(offset) {
             const index = root.buttonIndex;
-            const toggleList = Config.options.sidebar.quickToggles.android.toggles;
+            const toggleList = Config.options?.sidebar?.quickToggles?.android?.toggles ?? [];
             const buttonType = root.buttonData.type;
             const targetIndex = index + offset;
             if (!toggleList.find(toggle => toggle.type === buttonType)) return;
@@ -201,6 +203,7 @@ GroupButton {
             const temp = toggleList[index];
             toggleList[index] = toggleList[targetIndex];
             toggleList[targetIndex] = temp;
+            Config.setNestedValue("sidebar.quickToggles.android.toggles", toggleList);
         }
 
         onReleased: (event) => {
@@ -215,7 +218,7 @@ GroupButton {
         }
         onWheel: (event) => {
             const index = root.buttonIndex;
-            const toggleList = Config.options.sidebar.quickToggles.android.toggles;
+            const toggleList = Config.options?.sidebar?.quickToggles?.android?.toggles ?? [];
             const buttonType = root.buttonData.type;
             if (event.angleDelta.y < 0) { // Move to right
                 movePositionBy(1);

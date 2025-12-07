@@ -3,16 +3,88 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
+import Quickshell.Io
 
 /**
  * Keybinds for Niri compositor with ii shell.
- * These match defaults/niri/config.kdl
+ * Dynamically parses user's ~/.config/niri/config.kdl
+ * Falls back to defaults if parsing fails.
  */
 Singleton {
     id: root
+    
     property var keybinds: ({
         children: defaultKeybinds
     })
+    
+    property bool loaded: false
+    property string configPath: ""
+    property string errorMessage: ""
+
+    readonly property string parserScript: Qt.resolvedUrl("../scripts/parse_niri_keybinds.py").toString().replace("file://", "")
+
+    // Reload keybinds from config
+    function reload(): void {
+        keybindParser.running = true
+    }
+
+    Process {
+        id: keybindParser
+        command: ["python3", root.parserScript]
+        
+        stdout: StdioCollector {
+            id: stdoutCollector
+        }
+        
+        onExited: (exitCode, exitStatus) => {
+            const output = stdoutCollector.text?.trim() ?? ""
+            if (exitCode === 0 && output.length > 0) {
+                try {
+                    const result = JSON.parse(output)
+                    if (!result) {
+                        console.warn("[NiriKeybinds] Empty result, using defaults")
+                        return
+                    }
+                    if (result.error) {
+                        console.warn("[NiriKeybinds] Parser error:", result.error)
+                        root.errorMessage = result.error
+                    } else if (result.children && result.children.length > 0) {
+                        root.keybinds = result
+                        root.configPath = result.configPath ?? ""
+                        root.loaded = true
+                        console.info("[NiriKeybinds] Loaded", result.children.length, "categories from", root.configPath)
+                    } else {
+                        console.warn("[NiriKeybinds] No keybinds found, using defaults")
+                    }
+                } catch (e) {
+                    console.warn("[NiriKeybinds] JSON parse error, using defaults:", e)
+                    root.errorMessage = "Failed to parse keybinds"
+                }
+            } else if (exitCode !== 0) {
+                console.warn("[NiriKeybinds] Parser failed (exit", exitCode + "), using defaults")
+                root.errorMessage = "Parser script failed"
+            } else {
+                console.info("[NiriKeybinds] No output from parser, using defaults")
+            }
+        }
+    }
+
+    // Watch for config changes
+    FileView {
+        id: configWatcher
+        path: Quickshell.env("HOME") + "/.config/niri/config.kdl"
+        watchChanges: true
+        
+        onFileChanged: {
+            console.info("[NiriKeybinds] Config changed, reloading...")
+            root.reload()
+        }
+    }
+
+    Component.onCompleted: {
+        // Initial load
+        reload()
+    }
 
     readonly property var defaultKeybinds: [
         {
@@ -106,8 +178,4 @@ Singleton {
             ]}]
         }
     ]
-
-    Component.onCompleted: {
-        console.info("[NiriKeybinds] Loaded", defaultKeybinds.length, "keybind categories")
-    }
 }

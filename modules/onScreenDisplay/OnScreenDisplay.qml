@@ -28,11 +28,23 @@ Scope {
             id: "brightness",
             sourceUrl: "indicators/BrightnessIndicator.qml"
         },
+        {
+            id: "media",
+            sourceUrl: "indicators/MediaIndicator.qml"
+        },
     ]
 
     function triggerOsd() {
         if (!initialized) return;
         GlobalStates.osdVolumeOpen = true;
+        osdTimeout.restart();
+    }
+
+    function triggerMediaOsd() {
+        if (!initialized) return;
+        if (!MprisController.activePlayer) return;
+        root.currentIndicator = "media";
+        GlobalStates.osdMediaOpen = true;
         osdTimeout.restart();
     }
 
@@ -45,11 +57,14 @@ Scope {
 
     Timer {
         id: osdTimeout
-        interval: Config.options.osd.timeout
+        interval: root.currentIndicator === "media" 
+            ? (Config.options?.osd?.timeout ?? 2000) + 1500  // Longer for media
+            : (Config.options?.osd?.timeout ?? 2000)
         repeat: false
         running: false
         onTriggered: {
             GlobalStates.osdVolumeOpen = false;
+            GlobalStates.osdMediaOpen = false;
             root.protectionMessage = "";
         }
     }
@@ -90,9 +105,12 @@ Scope {
         }
     }
 
+    // Media OSD is triggered via IPC only (not on every track change)
+    // See services/MprisController.qml IpcHandler
+
     Loader {
         id: osdLoader
-        active: GlobalStates.osdVolumeOpen
+        active: GlobalStates.osdVolumeOpen || GlobalStates.osdMediaOpen
 
         sourceComponent: PanelWindow {
             id: osdRoot
@@ -108,8 +126,8 @@ Scope {
             WlrLayershell.namespace: "quickshell:onScreenDisplay"
             WlrLayershell.layer: WlrLayer.Overlay
             anchors {
-                top: !Config.options.bar.bottom
-                bottom: Config.options.bar.bottom
+                top: !(Config.options?.bar?.bottom ?? false)
+                bottom: Config.options?.bar?.bottom ?? false
             }
             mask: Region {
                 item: osdValuesWrapper
@@ -131,7 +149,7 @@ Scope {
                 anchors.horizontalCenter: parent.horizontalCenter
 
                 // Subtle open animation for the OSD, sliding from the bar edge
-                transformOrigin: !Config.options.bar.bottom ? Item.Top : Item.Bottom
+                transformOrigin: !(Config.options?.bar?.bottom ?? false) ? Item.Top : Item.Bottom
                 scale: GlobalStates.osdVolumeOpen ? 1.0 : 0.96
                 opacity: GlobalStates.osdVolumeOpen ? 1.0 : 0.0
                 Behavior on scale {

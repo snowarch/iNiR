@@ -1,5 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
+import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.waffle.looks
@@ -11,7 +13,49 @@ Rectangle {
 
     color: Looks.colors.bg0
     implicitHeight: 48
-    
+
+    // Right-click context menu anchor (invisible, positioned at click)
+    Item {
+        id: contextMenuAnchor
+        width: 1
+        height: 1
+    }
+
+    // Right-click context menu
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.RightButton
+        z: -1  // Below other elements so they can handle their own right-clicks
+        onClicked: (mouse) => {
+            contextMenuAnchor.x = mouse.x
+            contextMenuAnchor.y = 0
+            taskbarContextMenu.active = true
+        }
+    }
+
+    BarMenu {
+        id: taskbarContextMenu
+        anchorItem: contextMenuAnchor
+
+        model: [
+            {
+                iconName: "pulse",
+                text: Translation.tr("Task Manager"),
+                action: () => {
+                    Quickshell.execDetached(["missioncenter"])
+                }
+            },
+            { type: "separator" },
+            {
+                iconName: "settings",
+                text: Translation.tr("Taskbar settings"),
+                action: () => {
+                    Quickshell.execDetached(["qs", "-c", "ii", "ipc", "call", "settings", "open"])
+                }
+            }
+        ]
+    }
+
     Rectangle {
         id: border
         anchors {
@@ -70,6 +114,7 @@ Rectangle {
             sourceComponent: WidgetsButton {}
         }
         Tray {}
+        TimerButton {}
         UpdatesButton {}
         SystemButton {}
         TimeButton {}

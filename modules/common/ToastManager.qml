@@ -125,6 +125,12 @@ Scope {
             
             WlrLayershell.layer: WlrLayer.Overlay
             WlrLayershell.namespace: "quickshell:toast-manager"
+            WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+            
+            // Only capture input on actual toast area
+            mask: Region {
+                item: toastColumn
+            }
             
             implicitHeight: toastColumn.implicitHeight + 20
             color: "transparent"

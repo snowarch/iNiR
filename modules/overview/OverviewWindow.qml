@@ -43,7 +43,7 @@ Item { // Window
     property bool hovered: false
     property bool pressed: false
 
-    property bool centerIcons: Config.options.overview.centerIcons
+    property bool centerIcons: Config.options?.overview?.centerIcons ?? false
     property real iconGapRatio: 0.06
     property real iconToWindowRatio: centerIcons ? 0.35 : 0.15
     property real xwaylandIndicatorToIconRatio: 0.35
@@ -120,9 +120,9 @@ Item { // Window
             }
             property var iconSize: {
                 var size = baseSize * (root.compactMode ? root.iconToWindowRatioCompact : root.iconToWindowRatio);
-                const ov = Config.options.overview;
-                const min = ov && ov.iconMinSize !== undefined ? ov.iconMinSize : 0;
-                const max = ov && ov.iconMaxSize !== undefined ? ov.iconMaxSize : 0;
+                const ov = Config.options?.overview;
+                const min = ov?.iconMinSize ?? 0;
+                const max = ov?.iconMaxSize ?? 0;
                 if (min > 0) size = Math.max(size, min);
                 if (max > 0) size = Math.min(size, max);
                 return size;

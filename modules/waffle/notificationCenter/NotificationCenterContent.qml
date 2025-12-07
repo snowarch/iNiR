@@ -18,11 +18,14 @@ WBarAttachedPanelContent {
     revealFromLeft: false
 
     property bool collapsed: false
+    readonly property int notificationCount: Notifications.list.length
+    readonly property bool hasNotifications: notificationCount > 0
 
     contentItem: ColumnLayout {
         id: contentLayout
         spacing: 12
 
+        // Notification area
         Item {
             id: notificationArea
             Layout.fillWidth: true
@@ -38,6 +41,7 @@ WBarAttachedPanelContent {
             }
         }
 
+        // Calendar pane
         WPane {
             id: calendarPane
             Layout.fillWidth: true
@@ -67,6 +71,22 @@ WBarAttachedPanelContent {
                     Layout.fillWidth: true
                 }
             }
+        }
+    }
+
+    // Keyboard shortcuts
+    Keys.onPressed: event => {
+        if (event.key === Qt.Key_Escape) {
+            root.close()
+            event.accepted = true
+        } else if (event.key === Qt.Key_Delete && root.hasNotifications) {
+            // Delete key clears all notifications
+            Notifications.discardAllNotifications()
+            event.accepted = true
+        } else if (event.key === Qt.Key_D && (event.modifiers & Qt.ControlModifier)) {
+            // Ctrl+D toggles Do Not Disturb
+            Notifications.silent = !Notifications.silent
+            event.accepted = true
         }
     }
 }

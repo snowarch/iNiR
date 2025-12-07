@@ -51,6 +51,7 @@ WButton {
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
             shown: root.checked
+            fade: root.animateChoiceHighlight
             sourceComponent: Rectangle {
                 implicitWidth: 3
                 implicitHeight: 3

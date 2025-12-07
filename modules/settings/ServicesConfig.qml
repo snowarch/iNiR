@@ -232,6 +232,49 @@ ContentPage {
     }
 
     ContentSection {
+        icon: "system_update"
+        title: Translation.tr("Updates")
+
+        ConfigSpinBox {
+            icon: "av_timer"
+            text: Translation.tr("Check interval") + ` (${value}m)`
+            value: Config.options?.updates?.checkInterval ?? 120
+            from: 15
+            to: 1440
+            stepSize: 15
+            onValueChanged: Config.setNestedValue("updates.checkInterval", value)
+        }
+
+        ConfigSpinBox {
+            icon: "notifications"
+            text: Translation.tr("Show icon threshold")
+            value: Config.options?.updates?.adviseUpdateThreshold ?? 10
+            from: 1
+            to: 200
+            stepSize: 5
+            onValueChanged: Config.setNestedValue("updates.adviseUpdateThreshold", value)
+        }
+
+        ConfigSpinBox {
+            icon: "warning"
+            text: Translation.tr("Warning threshold")
+            value: Config.options?.updates?.stronglyAdviseUpdateThreshold ?? 50
+            from: 10
+            to: 500
+            stepSize: 10
+            onValueChanged: Config.setNestedValue("updates.stronglyAdviseUpdateThreshold", value)
+        }
+
+        MaterialTextArea {
+            Layout.fillWidth: true
+            placeholderText: Translation.tr("Update command")
+            text: Config.options?.apps?.update ?? ""
+            wrapMode: TextEdit.Wrap
+            onTextChanged: Config.setNestedValue("apps.update", text)
+        }
+    }
+
+    ContentSection {
         icon: "weather_mix"
         title: Translation.tr("Weather")
         ConfigRow {

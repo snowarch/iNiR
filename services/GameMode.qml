@@ -104,8 +104,19 @@ Singleton {
         return widthMatch && heightMatch
     }
 
-    // Auto-detection: check focused window
+    // Debounce timer for fullscreen checks
+    Timer {
+        id: checkDebounce
+        interval: 300
+        onTriggered: root._doCheckFullscreen()
+    }
+
+    // Auto-detection: check focused window (debounced)
     function checkFullscreen() {
+        checkDebounce.restart()
+    }
+
+    function _doCheckFullscreen() {
         if (!autoDetect || !CompositorService.isNiri) {
             _autoActive = false
             return
@@ -221,11 +232,28 @@ Singleton {
         }
     }
 
+    // Track last niri animation state to avoid redundant updates
+    property bool _lastNiriAnimState: true
+    
+    // Debounce timer for niri animation changes
+    Timer {
+        id: niriAnimDebounce
+        interval: 500
+        onTriggered: {
+            const shouldEnable = !root.active
+            if (shouldEnable !== root._lastNiriAnimState) {
+                root._lastNiriAnimState = shouldEnable
+                root.setNiriAnimations(shouldEnable)
+            }
+        }
+    }
+
     // React to active changes for Niri animations
     onActiveChanged: {
         console.log("[GameMode] Active:", active, "(manual:", _manualActive, "auto:", _autoActive, ")")
         if (CompositorService.isNiri && controlNiriAnimations) {
-            setNiriAnimations(!active)
+            niriAnimDebounce.restart()
         }
+        // Note: Appearance.animationsEnabled reacts to GameMode.active automatically via binding
     }
 }

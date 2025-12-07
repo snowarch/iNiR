@@ -1,5 +1,6 @@
 module qs.modules.waffle.looks
 singleton Looks 1.0 Looks.qml
+singleton WIcons 1.0 WIcons.qml
 FluentIcon 1.0 FluentIcon.qml
 WButton 1.0 WButton.qml
 WBorderedButton 1.0 WBorderedButton.qml
@@ -14,12 +15,13 @@ WStackView 1.0 WStackView.qml
 WMenu 1.0 WMenu.qml
 WMenuItem 1.0 WMenuItem.qml
 WPane 1.0 WPane.qml
-WIcons 1.0 WIcons.qml
 WAppIcon 1.0 WAppIcon.qml
 WUserAvatar 1.0 WUserAvatar.qml
 WProgressBar 1.0 WProgressBar.qml
 WIndeterminateProgressBar 1.0 WIndeterminateProgressBar.qml
 WChoiceButton 1.0 WChoiceButton.qml
+WListView 1.0 WListView.qml
+WScrollBar 1.0 WScrollBar.qml
 WBarAttachedPanelContent 1.0 WBarAttachedPanelContent.qml
 WFadeLoader 1.0 WFadeLoader.qml
 WPanelIconButton 1.0 WPanelIconButton.qml

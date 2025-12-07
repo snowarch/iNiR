@@ -11,7 +11,7 @@ Singleton {
     property string firstRunFileContent: "This file is just here to confirm you've been greeted :>"
     property string firstRunNotifSummary: "Welcome!"
     property string firstRunNotifBody: "Hit Super+/ for a list of keybinds"
-    property string defaultWallpaperPath: FileUtils.trimFileProtocol(`${Directories.assetsPath}/images/default_wallpaper.png`)
+    property string defaultWallpaperPath: FileUtils.trimFileProtocol(`${Directories.assetsPath}/wallpapers/Angel1.png`)
     property string welcomeQmlPath: FileUtils.trimFileProtocol(Quickshell.shellPath("welcome.qml"))
 
     function load() {
@@ -25,9 +25,9 @@ Singleton {
         Quickshell.execDetached(["bash", "-c", `echo '${root.firstRunFileContent}' > '${root.firstRunFilePath}'`])
     }
 
-    function handleFirstRun() {
+    function handleFirstRun(): void {
         Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, root.defaultWallpaperPath])
-        Quickshell.execDetached(["bash", "-c", `qs -p '${root.welcomeQmlPath}'`])
+        Quickshell.execDetached(["qs", "-p", root.welcomeQmlPath])
     }
 
     FileView {

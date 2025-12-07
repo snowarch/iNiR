@@ -79,14 +79,46 @@ Singleton {
         }
     }
 
-    // Estado de silencio / "No molestar" controlado desde la UI (toggle y quick toggle)
+    // Estado de silencio / "No molestar" - synced with config
     property bool silent: false
+    
+    Connections {
+        target: Config
+        function onReadyChanged() {
+            if (Config.ready) {
+                root.silent = Config.options?.notifications?.silent ?? false
+            }
+        }
+        function onOptionsChanged() {
+            root.silent = Config.options?.notifications?.silent ?? false
+        }
+    }
+    
+    onSilentChanged: {
+        if (Config.ready && Config.options?.notifications?.silent !== silent) {
+            Config.setNestedValue("notifications.silent", silent)
+        }
+    }
     property int unread: 0
     property var filePath: Directories.notificationsPath
     property list<Notif> list: []
-    property var popupList: list.filter((notif) => notif.popup);
+    // Cached lists - updated via debounce timer
+    property var popupList: []
+    property var _cachedGroupsByAppName: ({})
+    property var _cachedPopupGroupsByAppName: ({})
+    property var _cachedAppNameList: []
+    property var _cachedPopupAppNameList: []
+    property bool _groupsDirty: true
+    
     property bool popupInhibited: (GlobalStates?.sidebarRightOpen ?? false) || (GlobalStates?.waffleNotificationCenterOpen ?? false) || silent
     property var latestTimeForApp: ({})
+    
+    // Debounce timer for group updates (16ms = 1 frame at 60fps)
+    Timer {
+        id: groupUpdateTimer
+        interval: 16
+        onTriggered: root._updateGroups()
+    }
     Component {
         id: notifComponent
         Notif {}
@@ -101,49 +133,66 @@ Singleton {
     }
     
     onListChanged: {
+        root._groupsDirty = true
+        groupUpdateTimer.restart()
+    }
+    
+    function _updateGroups() {
+        if (!_groupsDirty) return
+        _groupsDirty = false
+        
+        // Update popupList
+        root.popupList = root.list.filter((notif) => notif.popup)
+        
         // Update latest time for each app
+        const newLatestTime = {}
         root.list.forEach((notif) => {
-            if (!root.latestTimeForApp[notif.appName] || notif.time > root.latestTimeForApp[notif.appName]) {
-                root.latestTimeForApp[notif.appName] = Math.max(root.latestTimeForApp[notif.appName] || 0, notif.time);
+            if (!newLatestTime[notif.appName] || notif.time > newLatestTime[notif.appName]) {
+                newLatestTime[notif.appName] = notif.time
             }
-        });
-        // Remove apps that no longer have notifications
-        Object.keys(root.latestTimeForApp).forEach((appName) => {
-            if (!root.list.some((notif) => notif.appName === appName)) {
-                delete root.latestTimeForApp[appName];
-            }
-        });
+        })
+        root.latestTimeForApp = newLatestTime
+        
+        // Update groups
+        root._cachedGroupsByAppName = _groupsForListOptimized(root.list)
+        root._cachedPopupGroupsByAppName = _groupsForListOptimized(root.popupList)
+        root._cachedAppNameList = _appNameListForGroups(root._cachedGroupsByAppName)
+        root._cachedPopupAppNameList = _appNameListForGroups(root._cachedPopupGroupsByAppName)
     }
-
-    function appNameListForGroups(groups) {
-        return Object.keys(groups).sort((a, b) => {
-            // Sort by time, descending
-            return groups[b].time - groups[a].time;
-        });
-    }
-
-    function groupsForList(list) {
-        const groups = {};
-        list.forEach((notif) => {
-            if (!groups[notif.appName]) {
-                groups[notif.appName] = {
-                    appName: notif.appName,
+    
+    function _groupsForListOptimized(list) {
+        const groups = {}
+        for (let i = 0; i < list.length; i++) {
+            const notif = list[i]
+            const appName = notif.appName
+            if (!groups[appName]) {
+                groups[appName] = {
+                    appName: appName,
                     appIcon: notif.appIcon,
                     notifications: [],
-                    time: 0
-                };
+                    time: 0,
+                    hasCritical: false  // Pre-calculate hasCritical
+                }
             }
-            groups[notif.appName].notifications.push(notif);
-            // Always set to the latest time in the group
-            groups[notif.appName].time = latestTimeForApp[notif.appName] || notif.time;
-        });
-        return groups;
+            groups[appName].notifications.push(notif)
+            groups[appName].time = root.latestTimeForApp[appName] || notif.time
+            // Check critical urgency
+            if (notif.urgency === "Critical") {
+                groups[appName].hasCritical = true
+            }
+        }
+        return groups
+    }
+    
+    function _appNameListForGroups(groups) {
+        return Object.keys(groups).sort((a, b) => groups[b].time - groups[a].time)
     }
 
-    property var groupsByAppName: groupsForList(root.list)
-    property var popupGroupsByAppName: groupsForList(root.popupList)
-    property var appNameList: appNameListForGroups(root.groupsByAppName)
-    property var popupAppNameList: appNameListForGroups(root.popupGroupsByAppName)
+    // Public API - use cached values
+    property var groupsByAppName: _cachedGroupsByAppName
+    property var popupGroupsByAppName: _cachedPopupGroupsByAppName
+    property var appNameList: _cachedAppNameList
+    property var popupAppNameList: _cachedPopupAppNameList
 
     // Rate limiting sencillo para evitar spam de notificaciones
     property double _lastIngressSec: 0
@@ -178,31 +227,33 @@ Singleton {
     }
 
     function _timeoutForNotification(notification) {
-        // 1) La app define un timeout explícito (> 0): lo respetamos tal cual
-        if (notification.expireTimeout > 0) {
+        const ignoreApp = Config.options?.notifications?.ignoreAppTimeout ?? false;
+        
+        // 1) La app define un timeout explícito (> 0): respetarlo solo si no ignoramos
+        if (!ignoreApp && notification.expireTimeout > 0) {
             return notification.expireTimeout;
         }
 
-        // 2) expireTimeout == 0 => "no expira" según spec freedesktop
-        if (notification.expireTimeout === 0) {
+        // 2) expireTimeout == 0 => "no expira" según spec freedesktop (solo si no ignoramos)
+        if (!ignoreApp && notification.expireTimeout === 0) {
             return 0;
         }
 
-        // 3) expireTimeout < 0 o indefinido: usar defaults por urgencia
+        // 3) Usar defaults por urgencia
         let urgencyStr = "normal";
         if (notification.urgency && notification.urgency.toString) {
             urgencyStr = notification.urgency.toString();
         }
 
         if (urgencyStr === "Low") {
-            return Config?.options.notifications.timeoutLow ?? Config?.options.notifications.timeout ?? 5000;
+            return Config.options?.notifications?.timeoutLow ?? 5000;
         } else if (urgencyStr === "Critical") {
             // Por defecto críticas quedan pegadas (0 = nunca auto-ocultar)
-            return Config?.options.notifications.timeoutCritical ?? 0;
+            return Config.options?.notifications?.timeoutCritical ?? 0;
         }
 
         // Normal / desconocida
-        return Config?.options.notifications.timeoutNormal ?? Config?.options.notifications.timeout ?? 7000;
+        return Config.options?.notifications?.timeoutNormal ?? 7000;
     }
 
 	NotificationServer {
@@ -299,6 +350,7 @@ Singleton {
         const index = root.list.findIndex((notif) => notif.notificationId === id);
         if (root.list[index] != null)
             root.list[index].popup = false;
+        triggerListChange();
         root.timeout(id);
     }
 
@@ -309,6 +361,7 @@ Singleton {
         root.popupList.forEach((notif) => {
             notif.popup = false;
         });
+        triggerListChange();
     }
 
     function attemptInvokeAction(id, notifIdentifier) {
@@ -328,7 +381,8 @@ Singleton {
     }
 
     function triggerListChange() {
-        root.list = root.list.slice(0)
+        root._groupsDirty = true
+        root._updateGroups()
     }
 
     function refresh() {

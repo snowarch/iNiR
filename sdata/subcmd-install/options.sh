@@ -11,6 +11,7 @@ Syntax:
 
 Options:
   -y, --yes           Skip confirmation prompts (auto-yes)
+  -q, --quiet         Minimal output (for scripts/CI)
   --firstrun          Force first-run behavior (backup existing configs)
   --skip-deps         Skip dependency installation
   --skip-setups       Skip service/permission setup
@@ -27,6 +28,7 @@ Options:
 Examples:
   $0 install              Interactive installation
   $0 install -y           Non-interactive installation
+  $0 install -y -q        Non-interactive, quiet (for CI/scripts)
   $0 install --skip-deps  Skip dependencies (if already installed)
   $0 install --no-audio   Skip audio stack (if you use something else)
 "
@@ -34,6 +36,7 @@ Examples:
 
 # Default values
 ask=true
+quiet=false
 INSTALL_FIRSTRUN=""
 SKIP_ALLDEPS=${SKIP_ALLDEPS:-false}
 SKIP_ALLSETUPS=${SKIP_ALLSETUPS:-false}
@@ -54,6 +57,10 @@ while [[ $# -gt 0 ]]; do
   case $1 in
     -y|--yes)
       ask=false
+      shift
+      ;;
+    -q|--quiet)
+      quiet=true
       shift
       ;;
     --firstrun)

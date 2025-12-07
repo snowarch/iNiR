@@ -48,7 +48,7 @@ AppButton {
             {
                 text: Translation.tr("Settings"),
                 action: () => {
-                    Quickshell.execDetached(["qs", "-p", Quickshell.shellPath("settings.qml")]);
+                    Quickshell.execDetached(["qs", "-c", "ii", "ipc", "call", "settings", "open"]);
                 }
             },
             {

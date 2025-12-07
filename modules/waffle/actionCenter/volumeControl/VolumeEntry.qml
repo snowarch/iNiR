@@ -6,49 +6,73 @@ import Quickshell.Services.Pipewire
 import qs
 import qs.services
 import qs.modules.common
-import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.waffle.looks
-import qs.modules.waffle.actionCenter
 
 RowLayout {
     id: root
     required property PwNode node
-    property alias icon: iconButton.iconName
-    property alias monochrome: iconButton.monochrome
-    monochrome: false
+    property string icon: ""
+    property bool monochrome: false
 
-    PwObjectTracker { // Necessary for useful info to be present in 'node'
+    // Cache icon path to avoid repeated lookups
+    readonly property string cachedIconPath: {
+        if (root.monochrome) return "";
+        const props = root.node?.properties;
+        if (!props) return "";
+        const iconName = props["application.icon-name"] ?? "";
+        const nodeName = props["node.name"] ?? "";
+        let guessed = AppSearch.guessIcon(iconName);
+        if (guessed && AppSearch.iconExists(guessed))
+            return Quickshell.iconPath(guessed, "");
+        guessed = AppSearch.guessIcon(nodeName);
+        if (guessed && AppSearch.iconExists(guessed))
+            return Quickshell.iconPath(guessed, "");
+        return "";
+    }
+
+    PwObjectTracker {
         objects: [root.node]
     }
 
-    WPanelIconButton {
-        id: iconButton
-        iconName: WIcons.audioAppIcon(root.node)
-        onClicked: root.node.audio.muted = !root.node?.audio.muted
+    spacing: 8
 
-        FluentIcon {
-            id: muteIcon
-            visible: root.node?.audio.muted ?? false
-            anchors {
-                bottom: parent.bottom
-                right: parent.right
-                margins: -1
-            }
-            implicitSize: 16
-            icon: "speaker-mute"
-        }
+    // App icon
+    Image {
+        id: appIcon
+        Layout.alignment: Qt.AlignVCenter
+        visible: !root.monochrome && root.cachedIconPath !== "" && status === Image.Ready
+        sourceSize: Qt.size(24, 24)
+        width: 24
+        height: 24
+        asynchronous: true
+        cache: true
+        source: root.cachedIconPath
+    }
 
-        WToolTip {
-            extraVisibleCondition: iconButton.shouldShowTooltip
-            text: Audio.appNodeDisplayName(root.node)
-        }
+    // Fallback fluent icon
+    FluentIcon {
+        Layout.alignment: Qt.AlignVCenter
+        visible: root.monochrome || root.cachedIconPath === "" || appIcon.status !== Image.Ready
+        icon: root.icon || "speaker"
+        implicitSize: 20
     }
 
     WSlider {
         Layout.fillWidth: true
-        Layout.rightMargin: 10
         value: root.node?.audio.volume ?? 0
         onMoved: root.node.audio.volume = value
+    }
+
+    WBorderlessButton {
+        implicitWidth: 28
+        implicitHeight: 28
+        onClicked: root.node.audio.muted = !root.node?.audio.muted
+        contentItem: FluentIcon {
+            anchors.centerIn: parent
+            icon: root.node?.audio.muted ? "speaker-mute" : "speaker"
+            implicitSize: 16
+            color: root.node?.audio.muted ? Looks.colors.fg1 : Looks.colors.fg
+        }
     }
 }

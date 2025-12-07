@@ -301,7 +301,7 @@ Item {
                                     WText {
                                         id: wsCardText
                                         anchors.centerIn: parent
-                                        text: "WS " + (modelData?.workspaceIdx ?? "")
+                                        text: Translation.tr("WS") + " " + (modelData?.workspaceIdx ?? "")
                                         font.pixelSize: Looks.font.pixelSize.small
                                         color: root.selectedIndex === index ? Looks.colors.accentFg : Looks.colors.subfg
                                     }

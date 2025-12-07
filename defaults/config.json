@@ -21,7 +21,7 @@
     "extraBackgroundTint": true,
     "fakeScreenRounding": 0,
     "palette": {
-      "type": "scheme-rainbow"
+      "type": "angel"
     },
     "transparency": {
       "automatic": true,
@@ -44,11 +44,13 @@
   "apps": {
     "bluetooth": "blueman-manager",
     "discord": "discord",
+    "manageUser": "kcmshell6 kcm_users",
     "network": "nm-connection-editor",
     "networkEthernet": "nm-connection-editor",
     "taskManager": "missioncenter",
     "terminal": "foot",
-    "volumeMixer": "pavucontrol"
+    "volumeMixer": "pavucontrol",
+    "update": "foot -e arch-update"
   },
   "audio": {
     "protection": {
@@ -68,7 +70,7 @@
       "vignetteEnabled": false,
       "vignetteIntensity": 1,
       "vignetteRadius": 0.7,
-      "wallpaperPath": "~/.config/quickshell/ii/assets/wallpapers/qs-niri.jpg",
+      "wallpaperPath": "",
       "hideWallpaper": false
     },
     "effects": {
@@ -89,7 +91,7 @@
       "workspaceZoom": 1.07
     },
     "thumbnailPath": "",
-    "wallpaperPath": "~/.config/quickshell/ii/assets/wallpapers/qs-niri.jpg",
+    "wallpaperPath": "",
     "widgets": {
       "clock": {
         "cookie": {
@@ -240,6 +242,7 @@
         "9",
         "10"
       ],
+      "scrollBehavior": "workspace",
       "showAppIcons": false,
       "showNumberDelay": 300,
       "shown": 5,
@@ -251,6 +254,7 @@
     "critical": 5,
     "full": 101,
     "low": 20,
+    "notifyFull": true,
     "suspend": 3
   },
   "closeConfirm": {
@@ -393,7 +397,8 @@
     "workspaceSpacing": 5
   },
   "performance": {
-    "lowPower": false
+    "lowPower": false,
+    "reduceAnimations": false
   },
   "policies": {
     "ai": 0,
@@ -595,7 +600,8 @@
     "showItemId": false,
     "invertPinnedItems": true,
     "pinnedItems": [],
-    "filterPassive": true
+    "filterPassive": true,
+    "extraProblematicApps": []
   },
   "updates": {
     "checkInterval": 120,
@@ -603,6 +609,9 @@
     "stronglyAdviseUpdateThreshold": 200
   },
   "waffles": {
+    "settings": {
+      "useMaterialStyle": false
+    },
     "tweaks": {
       "smootherMenuAnimations": true,
       "switchHandlePositionFix": true
@@ -671,6 +680,8 @@
       "toggles": [
         "network",
         "bluetooth",
+        "audio",
+        "mic",
         "easyEffects",
         "powerProfile",
         "idleInhibitor",
@@ -678,7 +689,6 @@
         "darkMode",
         "antiFlashbang",
         "cloudflareWarp",
-        "mic",
         "musicRecognition",
         "notifications",
         "onScreenKeyboard",

@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Notifications
 import qs.services
 import qs.modules.common
@@ -17,6 +18,9 @@ MouseArea {
     property string groupExpandControlMessage: ""
     signal groupExpandToggle
     hoverEnabled: true
+
+    readonly property bool isCritical: notification?.urgency === NotificationUrgency.Critical
+    readonly property bool hasImage: notification?.image !== ""
 
     implicitHeight: contentItem.implicitHeight
     implicitWidth: contentItem.implicitWidth
@@ -40,7 +44,7 @@ MouseArea {
             id: notificationContent
             anchors.fill: parent
             anchors.margins: contentItem.padding
-            spacing: 19
+            spacing: 12
 
             // Header
             SingleNotificationHeader {
@@ -62,14 +66,14 @@ MouseArea {
                         top: parent.top
                         left: parent.left
                     }
-                    active: root.notification.image != ""
+                    active: root.notification?.image != ""
                     sourceComponent: StyledImage {
                         readonly property int size: 48
                         width: size
                         height: size
                         sourceSize.width: size
                         sourceSize.height: size
-                        source: root.notification.image
+                        source: root.notification?.image ?? ""
                         fillMode: Image.PreserveAspectFit
                     }
                 }
@@ -89,15 +93,6 @@ MouseArea {
                     }
                     BodyText {
                         Layout.leftMargin: imageLoader.active ? imageLoader.width + actualContent.spacing : 0
-                        // onLineLaidOut: (line) => {
-                        //     if (!imageLoader.active) return;
-                        //     const dodgeDistance = imageLoader.width + actualContent.spacing;
-                        //     // print(line.y, dodgeDistance)
-                        //     if (summaryText.height + line.y > dodgeDistance) {
-                        //         line.x -= dodgeDistance;
-                        //         line.width += dodgeDistance;
-                        //     }
-                        // }
                     }
                 }
             }
@@ -115,6 +110,8 @@ MouseArea {
     }
 
     component SingleNotificationHeader: RowLayout {
+        spacing: 8
+
         ExpandButton {
             Layout.topMargin: -2
         }
@@ -123,7 +120,48 @@ MouseArea {
             Layout.fillWidth: true
         }
 
+        // Copy button
         NotificationHeaderButton {
+            id: copyHeaderBtn
+            Layout.rightMargin: 2
+            opacity: root.containsMouse ? 1 : 0
+            icon.name: copyHeaderBtn.copied ? "checkmark" : "copy"
+            implicitSize: 12
+            property bool copied: false
+
+            onClicked: {
+                copyHeaderProcess.running = true
+            }
+
+            Process {
+                id: copyHeaderProcess
+                command: ["wl-copy", root.notification?.body ?? ""]
+                onExited: (code, status) => {
+                    if (code === 0) {
+                        copyHeaderBtn.copied = true
+                        copyHeaderTimer.restart()
+                    }
+                }
+            }
+
+            Timer {
+                id: copyHeaderTimer
+                interval: 1500
+                onTriggered: copyHeaderBtn.copied = false
+            }
+
+            WToolTip {
+                text: copyHeaderBtn.copied ? Translation.tr("Copied!") : Translation.tr("Copy")
+                visible: parent.hovered
+            }
+
+            Behavior on opacity {
+                animation: Looks.transition.opacity.createObject(this)
+            }
+        }
+
+        NotificationHeaderButton {
+            id: dismissHeaderBtn
             Layout.rightMargin: 4
             opacity: root.containsMouse ? 1 : 0
             icon.name: "dismiss"
@@ -133,12 +171,27 @@ MouseArea {
                     Notifications.discardNotification(root.notification?.notificationId);
                 });
             }
+
+            WToolTip {
+                text: Translation.tr("Dismiss")
+                visible: dismissHeaderBtn.hovered
+            }
+
+            Behavior on opacity {
+                animation: Looks.transition.opacity.createObject(this)
+            }
         }
     }
 
     component ActionsRow: RowLayout {
         visible: root.expanded && root.notification.actions.length > 0
-        uniformCellSizes: true
+        opacity: visible ? 1 : 0
+        spacing: 6
+        
+        Behavior on opacity {
+            NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
+        }
+
         Repeater {
             id: actionRepeater
             model: root.notification.actions
@@ -146,16 +199,25 @@ MouseArea {
                 id: actionButton
                 Layout.fillHeight: true
                 required property var modelData
+                required property int index
                 Layout.fillWidth: true
-                verticalPadding: 16
+                verticalPadding: 10
                 horizontalPadding: 12
                 text: modelData.text
                 implicitHeight: actionButtonText.implicitHeight + verticalPadding * 2
-                onClicked: modelData.invoke()
+                // First action is primary
+                colBackground: index === 0 ? Looks.colors.accent : Looks.colors.bg2
+                colBackgroundHover: index === 0 ? Looks.colors.accentHover : Looks.colors.bg2Hover
+                colBackgroundActive: index === 0 ? Looks.colors.accentActive : Looks.colors.bg2Active
+                
+                onClicked: Notifications.attemptInvokeAction(root.notification?.notificationId, modelData.identifier)
+                
                 contentItem: WText {
                     id: actionButtonText
                     text: actionButton.text
-                    font.pixelSize: Looks.font.pixelSize.large
+                    font.pixelSize: Looks.font.pixelSize.normal
+                    font.weight: index === 0 ? Looks.font.weight.strong : Looks.font.weight.regular
+                    color: index === 0 ? Looks.colors.accentFg : Looks.colors.fg
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.Wrap
                 }
@@ -166,8 +228,10 @@ MouseArea {
     component SummaryText: WText {
         Layout.fillWidth: true
         elide: Text.ElideRight
-        text: root.notification?.summary
+        text: root.notification?.summary ?? ""
         font.pixelSize: Looks.font.pixelSize.large
+        font.weight: Looks.font.weight.strong
+        color: root.isCritical ? Looks.colors.danger : Looks.colors.fg
     }
 
     component BodyText: WText {
@@ -176,17 +240,19 @@ MouseArea {
         elide: Text.ElideRight
         verticalAlignment: Text.AlignTop
         wrapMode: Text.Wrap
-        maximumLineCount: root.expanded ? 100 : 1
+        maximumLineCount: root.expanded ? 100 : 2
         text: {
+            const body = root.notification?.body ?? ""
+            const appName = root.notification?.appName ?? root.notification?.summary ?? ""
             if (root.expanded)
-                return `<style>img{max-width:${summaryText.width}px; align: right}</style>` + `${NotificationUtils.processNotificationBody(root.notification.body, root.notification.appName || root.notification.summary).replace(/\n/g, "<br/>")}`;
-            return NotificationUtils.processNotificationBody(root.notification.body, root.notification.appName || root.notification.summary).replace(/\n/g, "<br/>");
+                return `<style>img{max-width:${summaryText.width}px; align: right}</style>` + `${NotificationUtils.processNotificationBody(body, appName).replace(/\n/g, "<br/>")}`;
+            return NotificationUtils.processNotificationBody(body, appName).replace(/\n/g, "<br/>");
         }
         color: Looks.colors.subfg
         textFormat: root.expanded ? Text.RichText : Text.StyledText
         onLinkActivated: link => {
             Qt.openUrlExternally(link);
-            GlobalStates.sidebarRightOpen = false;
+            GlobalStates.waffleNotificationCenterOpen = false;
         }
     }
 
@@ -203,14 +269,32 @@ MouseArea {
                 id: expandButtonRow
                 anchors.centerIn: parent
                 spacing: 8
+                
+                // Critical indicator
+                Rectangle {
+                    visible: root.isCritical
+                    implicitWidth: 6
+                    implicitHeight: 6
+                    radius: 3
+                    color: Looks.colors.danger
+
+                    SequentialAnimation on opacity {
+                        running: root.isCritical
+                        loops: Animation.Infinite
+                        NumberAnimation { to: 0.4; duration: 600 }
+                        NumberAnimation { to: 1; duration: 600 }
+                    }
+                }
+
                 WText {
                     color: expandButton.colForeground
                     text: NotificationUtils.getFriendlyNotifTimeString(root.notification?.time)
+                    font.pixelSize: Looks.font.pixelSize.small
                 }
                 FluentIcon {
-                    Layout.rightMargin: 12
+                    Layout.rightMargin: 8
                     icon: "chevron-down"
-                    implicitSize: 18
+                    implicitSize: 14
                     rotation: root.expanded ? -180 : 0
                     color: expandButton.colForeground
                     Behavior on rotation {
@@ -224,8 +308,8 @@ MouseArea {
     component GroupExpandButton: AcrylicButton {
         id: groupExpandButton
         visible: root.groupExpandControlMessage !== ""
-        horizontalPadding: 10
-        implicitHeight: 24
+        horizontalPadding: 12
+        implicitHeight: 28
         implicitWidth: expandButtonText.implicitWidth + horizontalPadding * 2
         onClicked: root.groupExpandToggle()
         contentItem: Item {
@@ -233,6 +317,7 @@ MouseArea {
                 id: expandButtonText
                 anchors.centerIn: parent
                 text: root.groupExpandControlMessage
+                font.pixelSize: Looks.font.pixelSize.small
             }
         }
     }

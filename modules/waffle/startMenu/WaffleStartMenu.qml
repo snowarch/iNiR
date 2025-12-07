@@ -49,9 +49,9 @@ Scope {
             property int minH: preset === "mini" ? 200 : preset === "compact" ? 280 : 300
 
             anchors {
-                bottom: Config.options.waffles.bar.bottom
-                top: !Config.options.waffles.bar.bottom
-                left: Config.options.waffles.bar.leftAlignApps
+                bottom: Config.options?.waffles?.bar?.bottom ?? true
+                top: !(Config.options?.waffles?.bar?.bottom ?? true)
+                left: Config.options?.waffles?.bar?.leftAlignApps ?? false
             }
 
             implicitWidth: Math.max(minW, content.implicitWidth)
@@ -71,6 +71,7 @@ Scope {
                 onClosed: {
                     GlobalStates.searchOpen = false
                     panelLoader.active = false
+                    LauncherSearch.query = ""
                 }
             }
         }

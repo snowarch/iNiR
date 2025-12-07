@@ -64,7 +64,7 @@ Also sets up:
 
 - **Environment variables** - Creates `~/.config/ii-niri-env.sh` with `ILLOGICAL_IMPULSE_VIRTUAL_ENV`
 - **Fish config** - If fish is installed, creates `~/.config/fish/conf.d/ii-niri-env.fish`
-- **Default wallpaper** - Sets `qs-niri.jpg` as the initial wallpaper
+- **Default wallpaper** - Sets `Angel1.png` as the initial wallpaper
 - **Initial theme** - Runs matugen to generate colors from the default wallpaper
 
 ---

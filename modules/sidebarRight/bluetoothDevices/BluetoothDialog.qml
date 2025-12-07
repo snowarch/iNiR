@@ -72,7 +72,7 @@ WindowDialog {
         DialogButton {
             buttonText: Translation.tr("Details")
             onClicked: {
-                Quickshell.execDetached(["bash", "-c", `${Config.options.apps.bluetooth}`]);
+                Quickshell.execDetached([Config.options?.apps?.bluetooth ?? "blueman-manager"]);
                 GlobalStates.sidebarRightOpen = false;
             }
         }

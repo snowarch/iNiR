@@ -12,6 +12,11 @@ StyledPopup {
         return (kb / (1024 * 1024)).toFixed(1) + " GB";
     }
 
+    // Helper function to format temperature
+    function formatTemp(temp) {
+        return temp + "°C"
+    }
+
     component ResourceItem: RowLayout {
         id: resourceItem
         required property string icon
@@ -96,30 +101,24 @@ StyledPopup {
         }
 
         Column {
-            visible: ResourceUsage.swapTotal > 0
             anchors.top: parent.top
             spacing: 8
 
             ResourceHeaderItem {
-                icon: "swap_horiz"
-                label: "Swap"
+                icon: "thermostat"
+                label: Translation.tr("Temperature")
             }
             Column {
                 spacing: 4
                 ResourceItem {
-                    icon: "clock_loader_60"
-                    label: Translation.tr("Used:")
-                    value: root.formatKB(ResourceUsage.swapUsed)
+                    icon: "memory"
+                    label: "CPU:"
+                    value: root.formatTemp(ResourceUsage.cpuTemp)
                 }
                 ResourceItem {
-                    icon: "check_circle"
-                    label: Translation.tr("Free:")
-                    value: root.formatKB(ResourceUsage.swapFree)
-                }
-                ResourceItem {
-                    icon: "empty_dashboard"
-                    label: Translation.tr("Total:")
-                    value: root.formatKB(ResourceUsage.swapTotal)
+                    icon: "videocam"
+                    label: "GPU:"
+                    value: root.formatTemp(ResourceUsage.gpuTemp)
                 }
             }
         }

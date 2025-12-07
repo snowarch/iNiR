@@ -9,6 +9,7 @@ import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.functions
+import qs.modules.common.widgets
 import qs.modules.waffle.looks
 
 WBarAttachedPanelContent {
@@ -74,20 +75,20 @@ WBarAttachedPanelContent {
                             implicitSize: 16
                         }
                         onClicked: {
-                            Quickshell.execDetached(["qs", "-p", Quickshell.shellPath("settings.qml")])
+                            Quickshell.execDetached(["qs", "-c", "ii", "ipc", "call", "settings", "open"])
                             GlobalStates.waffleWidgetsOpen = false
                         }
                     }
                 }
             }
 
-            WPanelSeparator { visible: Config.options.waffles.widgetsPanel.showDateTime }
+            WPanelSeparator { visible: Config.options.waffles?.widgetsPanel?.showDateTime }
 
             // Date & Time widget
             BodyRectangle {
                 Layout.fillWidth: true
                 implicitHeight: dateTimeContent.implicitHeight + 32
-                visible: Config.options.waffles.widgetsPanel.showDateTime
+                visible: Config.options.waffles?.widgetsPanel?.showDateTime
 
                 RowLayout {
                     id: dateTimeContent
@@ -127,13 +128,13 @@ WBarAttachedPanelContent {
                 }
             }
 
-            WPanelSeparator { visible: Config.options.waffles.widgetsPanel.showWeather && Weather.data.temp !== undefined && Weather.data.temp !== "" }
+            WPanelSeparator { visible: Config.options.waffles?.widgetsPanel?.showWeather && Weather.data.temp !== undefined && Weather.data.temp !== "" }
 
             // Weather widget
             BodyRectangle {
                 Layout.fillWidth: true
                 implicitHeight: weatherContent.implicitHeight + 32
-                visible: Config.options.waffles.widgetsPanel.showWeather && Weather.data.temp !== undefined && Weather.data.temp !== ""
+                visible: Config.options.waffles?.widgetsPanel?.showWeather && Weather.data.temp !== undefined && Weather.data.temp !== ""
 
                 ColumnLayout {
                     id: weatherContent
@@ -158,7 +159,7 @@ WBarAttachedPanelContent {
                                 font.weight: Font.DemiBold
                             }
                             WText {
-                                text: Config.options.waffles.widgetsPanel.weatherHideLocation ? Translation.tr("Weather") : (Weather.data.city || "")
+                                text: Config.options.waffles?.widgetsPanel?.weatherHideLocation ? Translation.tr("Weather") : (Weather.data.city || "")
                                 color: Looks.colors.fg1
                             }
                         }
@@ -209,13 +210,13 @@ WBarAttachedPanelContent {
                 }
             }
 
-            WPanelSeparator { visible: Config.options.waffles.widgetsPanel.showSystem }
+            WPanelSeparator { visible: Config.options.waffles?.widgetsPanel?.showSystem }
 
             // System Resources widget
             BodyRectangle {
                 Layout.fillWidth: true
                 implicitHeight: sysContent.implicitHeight + 32
-                visible: Config.options.waffles.widgetsPanel.showSystem
+                visible: Config.options.waffles?.widgetsPanel?.showSystem
 
                 ColumnLayout {
                     id: sysContent
@@ -248,7 +249,7 @@ WBarAttachedPanelContent {
                         spacing: 4
                         RowLayout {
                             Layout.fillWidth: true
-                            WText { text: "CPU"; font.pixelSize: Looks.font.pixelSize.small }
+                            WText { text: Translation.tr("CPU"); font.pixelSize: Looks.font.pixelSize.small }
                             Item { Layout.fillWidth: true }
                             WText {
                                 text: Math.round(ResourceUsage.cpuUsage * 100) + "%"
@@ -272,7 +273,7 @@ WBarAttachedPanelContent {
                         spacing: 4
                         RowLayout {
                             Layout.fillWidth: true
-                            WText { text: "RAM"; font.pixelSize: Looks.font.pixelSize.small }
+                            WText { text: Translation.tr("RAM"); font.pixelSize: Looks.font.pixelSize.small }
                             Item { Layout.fillWidth: true }
                             WText {
                                 readonly property string used: (ResourceUsage.memoryUsed / (1024 * 1024)).toFixed(1)
@@ -299,7 +300,7 @@ WBarAttachedPanelContent {
                         visible: ResourceUsage.swapTotal > 1
                         RowLayout {
                             Layout.fillWidth: true
-                            WText { text: "Swap"; font.pixelSize: Looks.font.pixelSize.small }
+                            WText { text: Translation.tr("Swap"); font.pixelSize: Looks.font.pixelSize.small }
                             Item { Layout.fillWidth: true }
                             WText {
                                 readonly property string used: (ResourceUsage.swapUsed / (1024 * 1024)).toFixed(1)
@@ -321,14 +322,14 @@ WBarAttachedPanelContent {
                 }
             }
 
-            WPanelSeparator { visible: Config.options.waffles.widgetsPanel.showMedia && MprisController.activePlayer !== null }
+            WPanelSeparator { visible: Config.options.waffles?.widgetsPanel?.showMedia && MprisController.activePlayer !== null }
 
             // Media widget (if playing)
             BodyRectangle {
                 id: mediaWidget
                 Layout.fillWidth: true
                 implicitHeight: mediaContent.implicitHeight
-                visible: Config.options.waffles.widgetsPanel.showMedia && MprisController.activePlayer !== null
+                visible: Config.options.waffles?.widgetsPanel?.showMedia && MprisController.activePlayer !== null
                 color: "transparent"
 
                 // Volume feedback overlay
@@ -538,13 +539,13 @@ WBarAttachedPanelContent {
                 }
             }
 
-            WPanelSeparator { visible: Config.options.waffles.widgetsPanel.showQuickActions }
+            WPanelSeparator { visible: Config.options.waffles?.widgetsPanel?.showQuickActions }
 
             // Quick actions
             BodyRectangle {
                 Layout.fillWidth: true
                 implicitHeight: actionsContent.implicitHeight + 32
-                visible: Config.options.waffles.widgetsPanel.showQuickActions
+                visible: Config.options.waffles?.widgetsPanel?.showQuickActions
 
                 ColumnLayout {
                     id: actionsContent
@@ -584,7 +585,7 @@ WBarAttachedPanelContent {
                             iconName: "settings"
                             label: Translation.tr("Settings")
                             onClicked: {
-                                Quickshell.execDetached(["qs", "-p", Quickshell.shellPath("settings.qml")])
+                                Quickshell.execDetached(["qs", "-c", "ii", "ipc", "call", "settings", "open"])
                                 GlobalStates.waffleWidgetsOpen = false
                             }
                         }

@@ -21,6 +21,7 @@ depends=(
   git
   wl-clipboard
   libnotify
+  pacman-contrib  # checkupdates for update notifications
   
   # XDG Portals for Niri
   xdg-desktop-portal
@@ -37,7 +38,7 @@ depends=(
   # File manager
   dolphin
   
-  # Terminal (foot is lightweight, change to your preference)
+  # Terminal - foot is default, change in niri config if you prefer another
   foot
   
   # TUI for setup script

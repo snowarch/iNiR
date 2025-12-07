@@ -214,7 +214,7 @@ RippleButton {
                 }
             }
             Loader { // Clipboard image preview
-                Layout.fillWidth: true
+                // Don't use Layout.fillWidth - let the image determine its own size
                 active: root.cliphistRawString && Cliphist.entryIsImage(root.cliphistRawString)
                 sourceComponent: CliphistImage {
                     entry: root.cliphistRawString

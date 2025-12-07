@@ -11,6 +11,24 @@ Singleton {
     id: root
 
     property string query: ""
+    property string _debouncedQuery: ""
+    
+    // Debounce timer for search - prevents lag while typing
+    Timer {
+        id: debounceTimer
+        interval: 80  // 80ms debounce - fast enough to feel responsive
+        onTriggered: root._debouncedQuery = root.query
+    }
+    
+    onQueryChanged: {
+        // Immediate update for empty query (instant clear)
+        if (query === "") {
+            _debouncedQuery = ""
+            debounceTimer.stop()
+        } else {
+            debounceTimer.restart()
+        }
+    }
 
     function ensurePrefix(prefix: string): void {
         const prefixes = [
@@ -95,7 +113,7 @@ Singleton {
         id: mathTimer
         interval: Config.options?.search?.nonAppResultDelay ?? 150
         onTriggered: {
-            let expr = root.query
+            let expr = root._debouncedQuery
             const mathPrefix = Config.options?.search?.prefix?.math ?? "="
             if (expr.startsWith(mathPrefix)) {
                 expr = expr.slice(mathPrefix.length)
@@ -120,7 +138,8 @@ Singleton {
     }
 
     property list<var> results: {
-        if (root.query === "") return []
+        const q = root._debouncedQuery
+        if (q === "") return []
 
         const clipboardPrefix = Config.options?.search?.prefix?.clipboard ?? ";"
         const emojisPrefix = Config.options?.search?.prefix?.emojis ?? ":"
@@ -131,8 +150,8 @@ Singleton {
         const appPrefix = Config.options?.search?.prefix?.app ?? "/"
 
         // Clipboard search
-        if (root.query.startsWith(clipboardPrefix)) {
-            const searchStr = StringUtils.cleanPrefix(root.query, clipboardPrefix)
+        if (q.startsWith(clipboardPrefix)) {
+            const searchStr = StringUtils.cleanPrefix(q, clipboardPrefix)
             return Cliphist.fuzzyQuery(searchStr).map(entry => {
                 return resultComp.createObject(null, {
                     rawValue: entry,
@@ -147,8 +166,8 @@ Singleton {
         }
 
         // Emoji search
-        if (root.query.startsWith(emojisPrefix)) {
-            const searchStr = StringUtils.cleanPrefix(root.query, emojisPrefix)
+        if (q.startsWith(emojisPrefix)) {
+            const searchStr = StringUtils.cleanPrefix(q, emojisPrefix)
             return Emojis.fuzzyQuery(searchStr).map(entry => {
                 const emoji = entry.match(/^\s*(\S+)/)?.[1] ?? ""
                 return resultComp.createObject(null, {
@@ -168,10 +187,10 @@ Singleton {
 
         // Build results
         let result = []
-        const startsWithNumber = /^\d/.test(root.query)
-        const startsWithMath = root.query.startsWith(mathPrefix)
-        const startsWithShell = root.query.startsWith(shellPrefix)
-        const startsWithWeb = root.query.startsWith(webPrefix)
+        const startsWithNumber = /^\d/.test(q)
+        const startsWithMath = q.startsWith(mathPrefix)
+        const startsWithShell = q.startsWith(shellPrefix)
+        const startsWithWeb = q.startsWith(webPrefix)
 
         // Math result (priority if starts with number or =)
         const mathObj = resultComp.createObject(null, {
@@ -190,14 +209,14 @@ Singleton {
 
         // Shell command
         const cmdObj = resultComp.createObject(null, {
-            name: StringUtils.cleanPrefix(root.query, shellPrefix).replace("file://", ""),
+            name: StringUtils.cleanPrefix(q, shellPrefix).replace("file://", ""),
             verb: Translation.tr("Run"),
             type: Translation.tr("Command"),
             fontType: LauncherSearchResult.FontType.Monospace,
             iconName: "terminal",
             iconType: LauncherSearchResult.IconType.Material,
             execute: () => {
-                let cmd = root.query.replace("file://", "")
+                let cmd = q.replace("file://", "")
                 cmd = StringUtils.cleanPrefix(cmd, shellPrefix)
                 Quickshell.execDetached(["bash", "-c", cmd])
             }
@@ -209,15 +228,15 @@ Singleton {
 
         // Web search
         const webObj = resultComp.createObject(null, {
-            name: StringUtils.cleanPrefix(root.query, webPrefix),
+            name: StringUtils.cleanPrefix(q, webPrefix),
             verb: Translation.tr("Search"),
             type: Translation.tr("Web"),
             iconName: "travel_explore",
             iconType: LauncherSearchResult.IconType.Material,
             execute: () => {
-                const q = StringUtils.cleanPrefix(root.query, webPrefix)
+                const searchQuery = StringUtils.cleanPrefix(q, webPrefix)
                 const baseUrl = Config.options?.search?.engineBaseUrl ?? "https://www.google.com/search?q="
-                Qt.openUrlExternally(baseUrl + encodeURIComponent(q))
+                Qt.openUrlExternally(baseUrl + encodeURIComponent(searchQuery))
             }
         })
 
@@ -226,9 +245,10 @@ Singleton {
         }
 
         // Apps
-        const appResults = AppSearch.fuzzyQuery(StringUtils.cleanPrefix(root.query, appPrefix)).map(entry => {
+        const appResults = AppSearch.fuzzyQuery(StringUtils.cleanPrefix(q, appPrefix)).map(entry => {
             return resultComp.createObject(null, {
                 type: Translation.tr("App"),
+                id: entry.id ?? entry.name ?? "",
                 name: entry.name,
                 iconName: entry.icon,
                 iconType: LauncherSearchResult.IconType.System,
@@ -251,14 +271,14 @@ Singleton {
         // Actions
         const actionResults = root.searchActions.map(action => {
             const actionStr = `${actionPrefix}${action.action}`
-            if (actionStr.startsWith(root.query) || root.query.startsWith(actionStr)) {
+            if (actionStr.startsWith(q) || q.startsWith(actionStr)) {
                 return resultComp.createObject(null, {
-                    name: root.query.startsWith(actionStr) ? root.query : actionStr,
+                    name: q.startsWith(actionStr) ? q : actionStr,
                     verb: Translation.tr("Run"),
                     type: Translation.tr("Action"),
                     iconName: "settings_suggest",
                     iconType: LauncherSearchResult.IconType.Material,
-                    execute: () => action.execute(root.query.split(" ").slice(1).join(" "))
+                    execute: () => action.execute(q.split(" ").slice(1).join(" "))
                 })
             }
             return null

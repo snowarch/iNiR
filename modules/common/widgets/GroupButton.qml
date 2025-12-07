@@ -104,7 +104,7 @@ Button {
         }
         onClicked: (event) => {
             if (event.button != Qt.LeftButton) return;
-            root.click()
+            root.clicked()
         }
         onCanceled: (event) => {
             root.down = false

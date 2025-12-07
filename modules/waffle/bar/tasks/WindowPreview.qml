@@ -93,7 +93,7 @@ Button {
                 id: screencopyView
                 anchors.centerIn: parent
                 captureSource: root.toplevel
-                live: root.toplevel != null
+                live: root.toplevel !== null && root.toplevel !== undefined
                 paintCursor: true
                 constraintSize: Qt.size(root.previewWidthConstraint, root.previewHeightConstraint)
                 visible: screencopyView.valid

@@ -7,13 +7,15 @@ Item {
     id: root
     required property string iconName
     required property double percentage
-    property int warningThreshold: 100
+    property real warningThreshold: 100
+    property real cautionThreshold: 0  // 0 = disabled
     property bool shown: true
     clip: true
     visible: width > 0 && height > 0
     implicitWidth: resourceRowLayout.x < 0 ? 0 : resourceRowLayout.implicitWidth
     implicitHeight: Appearance.sizes.barHeight
     property bool warning: percentage * 100 >= warningThreshold
+    property bool caution: cautionThreshold > 0 && percentage * 100 >= cautionThreshold && !warning
 
     RowLayout {
         id: resourceRowLayout
@@ -29,8 +31,10 @@ Item {
             lineWidth: Appearance.rounding.unsharpen
             value: percentage
             implicitSize: 20
-            colPrimary: root.warning ? Appearance.colors.colError : Appearance.colors.colOnSecondaryContainer
-            accountForLightBleeding: !root.warning
+            colPrimary: root.warning ? Appearance.colors.colError : 
+                        root.caution ? Appearance.m3colors.m3tertiary :
+                        Appearance.colors.colOnSecondaryContainer
+            accountForLightBleeding: !root.warning && !root.caution
             enableAnimation: false
 
             Item {

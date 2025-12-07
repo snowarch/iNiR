@@ -39,7 +39,7 @@ The bare minimum to not crash immediately:
 | Package | Why |
 |---------|-----|
 | `niri` | The compositor. Obviously. |
-| `quickshell-git` | The shell runtime. **Must be the AUR version**, not the one in Arch repos. |
+| `quickshell-git` | The shell runtime. **Must be the AUR version**, not the one in Arch repos. See note below. |
 | `wl-clipboard` | Copy/paste. |
 | `cliphist` | Clipboard history. |
 | `pipewire` + `wireplumber` | Audio. |
@@ -47,6 +47,8 @@ The bare minimum to not crash immediately:
 | `matugen` | Material You colors from wallpaper. |
 
 For everything else, check [PACKAGES.md](PACKAGES.md). It's organized by category so you can skip what you don't need.
+
+> **Note on quickshell-git:** The AUR package may not include all optional modules. If you see errors about missing modules (like `Quickshell.Services.Polkit`), ii-niri will still work - those features will just be disabled. For full functionality, you can rebuild quickshell with all service modules enabled.
 
 ### 2. Clone the repo
 

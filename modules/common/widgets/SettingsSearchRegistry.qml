@@ -12,6 +12,18 @@ Singleton {
     property var entries: []
     property int _nextId: 0
 
+    // Genera keywords automáticos a partir del texto
+    function _generateKeywords(label: string, section: string, description: string): list<string> {
+        var text = (label + " " + section + " " + description).toLowerCase();
+        var words = text.split(/[\s\-_:,\.]+/).filter(w => w.length > 2);
+        var unique = [];
+        for (var i = 0; i < words.length; i++) {
+            if (unique.indexOf(words[i]) === -1)
+                unique.push(words[i]);
+        }
+        return unique;
+    }
+
     function registerOption(meta) {
         if (!meta || !meta.control)
             return -1;
@@ -21,7 +33,10 @@ Singleton {
         var section = meta.section || "";
         var label = meta.label || "";
         var description = meta.description || "";
-        var keywords = meta.keywords || [];
+        var providedKeywords = meta.keywords || [];
+        
+        var autoKeywords = _generateKeywords(label, section, description);
+        var allKeywords = providedKeywords.concat(autoKeywords);
 
         var id = _nextId++;
         var entry = {
@@ -32,7 +47,7 @@ Singleton {
             section: section,
             label: label,
             description: description,
-            keywords: keywords
+            keywords: allKeywords
         };
 
         entries = entries.concat([entry]);
@@ -55,12 +70,35 @@ Singleton {
         _nextId = 0;
     }
 
+    // Simple highlight using indexOf (no regex backreferences)
+    function highlightTerms(text: string, terms: list<string>): string {
+        if (!text || !terms || terms.length === 0)
+            return text;
+        
+        var result = text;
+        for (var i = 0; i < terms.length; i++) {
+            var term = terms[i];
+            if (term.length < 2) continue;
+            
+            var lowerResult = result.toLowerCase();
+            var lowerTerm = term.toLowerCase();
+            var idx = lowerResult.indexOf(lowerTerm);
+            if (idx >= 0) {
+                var before = result.substring(0, idx);
+                var match = result.substring(idx, idx + term.length);
+                var after = result.substring(idx + term.length);
+                result = before + '<b>' + match + '</b>' + after;
+            }
+        }
+        return result;
+    }
+
     function buildResults(query) {
         var q = String(query || "").toLowerCase().trim();
         if (!q.length)
             return [];
 
-        var terms = q.split(/\s+/);
+        var terms = q.split(/\s+/).filter(t => t.length > 0);
         var out = [];
 
         for (var i = 0; i < entries.length; ++i) {
@@ -73,6 +111,7 @@ Singleton {
 
             var score = 0;
             var matchCount = 0;
+            var matchedTerms = [];
 
             for (var j = 0; j < terms.length; ++j) {
                 var term = terms[j];
@@ -86,23 +125,24 @@ Singleton {
                     continue;
 
                 matchCount++;
+                matchedTerms.push(term);
 
                 if (labelIdx === 0) score += 1000;
-                else if (labelIdx > 0) score += 500 - labelIdx;
+                else if (labelIdx > 0) score += 500 - Math.min(labelIdx, 100);
 
                 if (descIdx === 0) score += 300;
-                else if (descIdx > 0) score += 150 - descIdx;
+                else if (descIdx > 0) score += 150 - Math.min(descIdx, 50);
 
                 if (sectIdx === 0) score += 200;
-                else if (sectIdx > 0) score += 100 - sectIdx;
+                else if (sectIdx > 0) score += 100 - Math.min(sectIdx, 50);
 
                 if (pageIdx === 0) score += 100;
-                else if (pageIdx > 0) score += 50 - pageIdx;
+                else if (pageIdx > 0) score += 50 - Math.min(pageIdx, 25);
 
                 if (kwIdx >= 0) score += 400;
             }
 
-            if (matchCount === 0)
+            if (matchCount < terms.length)
                 continue;
 
             var sectionGroup = "";
@@ -120,23 +160,24 @@ Singleton {
                 pageName: e.pageName,
                 section: sectionGroup,
                 label: e.label,
+                labelHighlighted: highlightTerms(e.label, matchedTerms),
                 description: e.description,
+                descriptionHighlighted: highlightTerms(e.description, matchedTerms),
                 score: score,
-                matchCount: matchCount
+                matchCount: matchCount,
+                matchedTerms: matchedTerms
             });
         }
 
         out.sort(function(a, b) {
-            if (a.matchCount !== b.matchCount)
-                return b.matchCount - a.matchCount;
             if (a.score !== b.score)
                 return b.score - a.score;
-
             var pa = (a.pageIndex !== undefined && a.pageIndex >= 0) ? a.pageIndex : 9999;
             var pb = (b.pageIndex !== undefined && b.pageIndex >= 0) ? b.pageIndex : 9999;
             return pa - pb;
         });
-        return out;
+        
+        return out.slice(0, 50);
     }
 
     function focusOption(optionId) {
@@ -155,5 +196,15 @@ Singleton {
                 return;
             }
         }
+    }
+    
+    function getControlById(optionId) {
+        for (var i = 0; i < entries.length; ++i) {
+            var e = entries[i];
+            if (e.id === optionId) {
+                return e.control;
+            }
+        }
+        return null;
     }
 }

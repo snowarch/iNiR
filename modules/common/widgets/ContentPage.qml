@@ -26,7 +26,7 @@ StyledFlickable {
             right: parent.right
             margins: 20
         }
-        spacing: 30
+        spacing: 16
     }
 
 }

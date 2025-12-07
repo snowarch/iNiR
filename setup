@@ -150,6 +150,12 @@ case ${SUBCMD_NAME} in
     detect_distro
     pause
     export IS_UPDATE=true
+    
+    # Also check for new dependencies
+    if [[ "${SKIP_ALLDEPS}" != true ]]; then
+      source ${SUBCMD_DIR}/1.deps-router.sh
+    fi
+    
     if [[ "${SKIP_ALLFILES}" != true ]]; then
       source ${SUBCMD_DIR}/3.files.sh
     fi

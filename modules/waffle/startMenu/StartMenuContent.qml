@@ -10,94 +10,107 @@ import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.waffle.looks
 
-Item {
+WBarAttachedPanelContent {
     id: root
-    signal closed
 
     property bool searching: false
-    property string searchText: ""
+    property string searchText: LauncherSearch.query
     property bool showAllApps: false
 
-    // Size comes from the pane content
-    implicitWidth: pane.implicitWidth + 24
-    implicitHeight: pane.implicitHeight + 24
+    StartMenuContext { id: context }
 
-    function close() {
-        root.closed()
+    Keys.onPressed: event => {
+        if (event.key === Qt.Key_Escape) return;
+
+        if (event.key === Qt.Key_Backspace) {
+            searchBar.forceFocus();
+            const text = searchBar.text;
+            const pos = searchBar.searchInput?.cursorPosition ?? text.length;
+            if (pos > 0) {
+                if (event.modifiers & Qt.ControlModifier) {
+                    const left = text.slice(0, pos);
+                    const match = left.match(/(\s*\S+)\s*$/);
+                    const deleteLen = match ? match[0].length : 1;
+                    searchBar.text = text.slice(0, pos - deleteLen) + text.slice(pos);
+                } else {
+                    searchBar.text = text.slice(0, pos - 1) + text.slice(pos);
+                }
+            }
+            event.accepted = true;
+            return;
+        }
+
+        if (event.text && event.text.length === 1 && 
+            event.key !== Qt.Key_Enter && event.key !== Qt.Key_Return && 
+            event.key !== Qt.Key_Delete && event.text.charCodeAt(0) >= 0x20) {
+            if (!searchBar.searchInput?.activeFocus) {
+                searchBar.forceFocus();
+                searchBar.text += event.text;
+                event.accepted = true;
+                context.setCurrentIndex(0);
+            }
+        }
+
+        if (event.key === Qt.Key_Down) {
+            const maxIndex = Math.max(0, LauncherSearch.results.length - 1);
+            context.setCurrentIndex(Math.min(context.currentIndex + 1, maxIndex));
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Up) {
+            context.setCurrentIndex(Math.max(context.currentIndex - 1, 0));
+            event.accepted = true;
+        }
     }
 
-    // Get radius from preset
-    property string preset: Config.options.waffles?.startMenu?.sizePreset ?? "normal"
-    property int customRadius: preset === "mini" ? 20 : preset === "compact" ? 14 : 8
-
-    WPane {
-        id: pane
-        anchors.centerIn: parent
-        radius: root.customRadius
-
-        contentItem: ColumnLayout {
-            spacing: 0
-            
+    contentItem: WPane {
+        contentItem: WPanelPageColumn {
             SearchBar {
                 id: searchBar
                 Layout.fillWidth: true
-                Synchronizer on searching {
-                    property alias target: root.searching
-                }
-                Synchronizer on text {
-                    property alias source: root.searchText
-                }
-                Component.onCompleted: Qt.callLater(() => searchBar.forceActiveFocus())
-                
-                onNavigateUp: {
-                    if (root.searching && searchPage.navigateUp) {
-                        searchPage.navigateUp()
-                    }
-                }
-                onNavigateDown: {
-                    if (root.searching && searchPage.navigateDown) {
-                        searchPage.navigateDown()
-                    }
-                }
-                onAccepted: {
-                    if (root.searching && searchPage.activateCurrent) {
-                        searchPage.activateCurrent()
-                    }
-                }
+                implicitWidth: 600
+                horizontalPadding: root.searching ? 16 : 24
+                Synchronizer on searching { property alias target: root.searching }
+                focus: true
+                text: root.searchText
+                onTextChanged: LauncherSearch.query = text
+                onAccepted: context.accepted()
             }
             
-            // Fixed size container - always uses startPage dimensions
             Item {
-                id: pageContainer
+                implicitHeight: 520
+                implicitWidth: 600
                 Layout.fillWidth: true
-                implicitWidth: startPage.implicitWidth
-                implicitHeight: startPage.implicitHeight
                 clip: true
 
-                // Start page - always loaded, hidden when searching
-                StartPageContent {
-                    id: startPage
+                Loader {
+                    id: startPageLoader
                     anchors.fill: parent
-                    visible: !root.searching && !root.showAllApps
-                    onAllAppsClicked: root.showAllApps = true
+                    active: !root.searching && !root.showAllApps
+                    opacity: active ? 1 : 0
+                    visible: opacity > 0
+                    sourceComponent: StartPageContent {
+                        onAllAppsClicked: root.showAllApps = true
+                    }
+                    Behavior on opacity { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
                 }
 
-                // Search page - always loaded, shown when searching
-                SearchPageContent {
-                    id: searchPage
+                Loader {
+                    id: searchPageLoader
                     anchors.fill: parent
-                    visible: root.searching
-                    searchText: root.searchText
+                    active: root.searching
+                    opacity: active ? 1 : 0
+                    visible: opacity > 0
+                    sourceComponent: SearchPageContent { context: context }
+                    Behavior on opacity { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
                 }
 
-                // All apps - loaded on demand
                 Loader {
                     id: allAppsLoader
                     anchors.fill: parent
                     active: root.showAllApps
-                    sourceComponent: AllAppsContent {
-                        onBack: root.showAllApps = false
-                    }
+                    opacity: active ? 1 : 0
+                    visible: opacity > 0
+                    sourceComponent: AllAppsContent { onBack: root.showAllApps = false }
+                    Behavior on opacity { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
                 }
             }
         }

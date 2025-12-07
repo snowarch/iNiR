@@ -5,7 +5,7 @@ import QtQuick.Layouts
 
 MouseArea {
     id: root
-    property bool borderless: Config.options.bar.borderless
+    property bool borderless: Config.options?.bar?.borderless ?? false
     property bool alwaysShowAllResources: false
     implicitWidth: rowLayout.implicitWidth + rowLayout.anchors.leftMargin + rowLayout.anchors.rightMargin
     implicitHeight: Appearance.sizes.barHeight
@@ -22,27 +22,28 @@ MouseArea {
         Resource {
             iconName: "memory"
             percentage: ResourceUsage.memoryUsedPercentage
-            warningThreshold: Config.options.bar.resources.memoryWarningThreshold
+            warningThreshold: Config.options?.bar?.resources?.memoryWarningThreshold ?? 90
         }
 
         Resource {
-            iconName: "swap_horiz"
-            percentage: ResourceUsage.swapUsedPercentage
-            shown: (Config.options.bar.resources.alwaysShowSwap && percentage > 0) || 
+            iconName: "thermostat"
+            percentage: ResourceUsage.tempPercentage
+            shown: (Config.options?.bar?.resources?.alwaysShowTemp ?? true) || 
                 (MprisController.activePlayer?.trackTitle == null) ||
                 root.alwaysShowAllResources
             Layout.leftMargin: shown ? 6 : 0
-            warningThreshold: Config.options.bar.resources.swapWarningThreshold
+            cautionThreshold: Config.options?.bar?.resources?.tempCautionThreshold ?? 65
+            warningThreshold: Config.options?.bar?.resources?.tempWarningThreshold ?? 80
         }
 
         Resource {
             iconName: "planner_review"
             percentage: ResourceUsage.cpuUsage
-            shown: Config.options.bar.resources.alwaysShowCpu || 
+            shown: (Config.options?.bar?.resources?.alwaysShowCpu ?? false) || 
                 !(MprisController.activePlayer?.trackTitle?.length > 0) ||
                 root.alwaysShowAllResources
             Layout.leftMargin: shown ? 6 : 0
-            warningThreshold: Config.options.bar.resources.cpuWarningThreshold
+            warningThreshold: Config.options?.bar?.resources?.cpuWarningThreshold ?? 90
         }
 
     }

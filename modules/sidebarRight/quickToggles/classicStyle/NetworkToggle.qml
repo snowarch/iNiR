@@ -13,7 +13,7 @@ QuickToggleButton {
     buttonIcon: Network.materialSymbol
     onClicked: Network.toggleWifi()
     altAction: () => {
-        Quickshell.execDetached(["bash", "-c", `${Network.ethernet ? Config.options.apps.networkEthernet : Config.options.apps.network}`])
+        Quickshell.execDetached([Network.ethernet ? (Config.options?.apps?.networkEthernet ?? "nm-connection-editor") : (Config.options?.apps?.network ?? "nm-connection-editor")])
         GlobalStates.sidebarRightOpen = false
     }
     StyledToolTip {

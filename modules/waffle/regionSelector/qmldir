@@ -1,0 +1,3 @@
+module qs.modules.waffle.regionSelector
+
+WOptionsToolbar 1.0 WOptionsToolbar.qml

@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import qs.modules.common
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Pipewire
 
 /**
@@ -18,6 +19,9 @@ Singleton {
     readonly property real hardMaxValue: 2.00 // People keep joking about setting volume to 5172% so...
     property string audioTheme: Config.options.sounds.theme
     property real value: sink?.audio.volume ?? 0
+    property bool micBeingAccessed: Pipewire.links.values.filter(link =>
+        !link.source.isStream && !link.source.isSink && link.target.isStream
+    ).length > 0
     function friendlyDeviceName(node) {
         return node ? (node.nickname || node.description || Translation.tr("Unknown")) : Translation.tr("Unknown");
     }
@@ -132,5 +136,26 @@ Singleton {
             oggPath
         ];
         Quickshell.execDetached(command);
+    }
+
+    // IPC handlers for external control (keybinds, etc.)
+    IpcHandler {
+        target: "audio"
+
+        function volumeUp(): void {
+            root.incrementVolume();
+        }
+
+        function volumeDown(): void {
+            root.decrementVolume();
+        }
+
+        function mute(): void {
+            root.toggleMute();
+        }
+
+        function micMute(): void {
+            root.toggleMicMute();
+        }
     }
 }

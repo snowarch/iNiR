@@ -14,26 +14,26 @@ import QtQuick
 Singleton {
     id: root
 
-    property int focusTime: Config.options.time.pomodoro.focus
-    property int breakTime: Config.options.time.pomodoro.breakTime
-    property int longBreakTime: Config.options.time.pomodoro.longBreak
-    property int cyclesBeforeLongBreak: Config.options.time.pomodoro.cyclesBeforeLongBreak
+    property int focusTime: Config.options?.time?.pomodoro?.focus ?? 1500
+    property int breakTime: Config.options?.time?.pomodoro?.breakTime ?? 300
+    property int longBreakTime: Config.options?.time?.pomodoro?.longBreak ?? 900
+    property int cyclesBeforeLongBreak: Config.options?.time?.pomodoro?.cyclesBeforeLongBreak ?? 4
 
-    property bool pomodoroRunning: Persistent.states.timer.pomodoro.running
-    property bool pomodoroBreak: Persistent.states.timer.pomodoro.isBreak
-    property bool pomodoroLongBreak: Persistent.states.timer.pomodoro.isBreak && (pomodoroCycle + 1 == cyclesBeforeLongBreak);
-    property int pomodoroLapDuration: pomodoroLongBreak ? longBreakTime : pomodoroBreak ? breakTime : focusTime // This is a binding that's to be kept
-    property int pomodoroSecondsLeft: pomodoroLapDuration // Reasonable init value, to be changed
-    property int pomodoroCycle: Persistent.states.timer.pomodoro.cycle
+    property bool pomodoroRunning: Persistent.states?.timer?.pomodoro?.running ?? false
+    property bool pomodoroBreak: Persistent.states?.timer?.pomodoro?.isBreak ?? false
+    property bool pomodoroLongBreak: pomodoroBreak && (pomodoroCycle + 1 == cyclesBeforeLongBreak)
+    property int pomodoroLapDuration: pomodoroLongBreak ? longBreakTime : pomodoroBreak ? breakTime : focusTime
+    property int pomodoroSecondsLeft: pomodoroLapDuration
+    property int pomodoroCycle: Persistent.states?.timer?.pomodoro?.cycle ?? 0
 
-    property bool stopwatchRunning: Persistent.states.timer.stopwatch.running
+    property bool stopwatchRunning: Persistent.states?.timer?.stopwatch?.running ?? false
     property int stopwatchTime: 0
-    property int stopwatchStart: Persistent.states.timer.stopwatch.start
-    property var stopwatchLaps: Persistent.states.timer.stopwatch.laps
+    property int stopwatchStart: Persistent.states?.timer?.stopwatch?.start ?? 0
+    property var stopwatchLaps: Persistent.states?.timer?.stopwatch?.laps ?? []
 
     // Countdown Timer
-    property bool countdownRunning: Persistent.states.timer.countdown.running
-    property int countdownDuration: Persistent.states.timer.countdown.duration
+    property bool countdownRunning: Persistent.states?.timer?.countdown?.running ?? false
+    property int countdownDuration: Persistent.states?.timer?.countdown?.duration ?? 300
     property int countdownSecondsLeft: countdownDuration
 
     // General

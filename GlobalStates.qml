@@ -17,6 +17,8 @@ Singleton {
     property bool mediaControlsOpen: false
     property bool osdBrightnessOpen: false
     property bool osdVolumeOpen: false
+    property bool osdMediaOpen: false
+    property string osdMediaAction: "play" // "play", "pause", "next", "previous"
     property bool oskOpen: false
     property bool overlayOpen: false
     property bool overviewOpen: false

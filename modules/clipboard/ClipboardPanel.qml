@@ -32,27 +32,29 @@ Scope {
     }
 
     function updateFilteredModel() {
-        console.log("[ClipboardPanel] Updating filtered model from", Cliphist.entries.length, "entries")
+        // Cache entries locally to avoid repeated property lookups
+        const entries = Cliphist.entries
+        const entryCount = entries.length
+        
         filteredClipboardModel.clear()
 
         const trimmedSearch = searchText.trim().toLowerCase()
+        const hasSearch = trimmedSearch.length > 0
 
-        for (let i = 0; i < Cliphist.entries.length; i++) {
-            const entry = Cliphist.entries[i]
-            if (trimmedSearch.length === 0) {
-                filteredClipboardModel.append({
-                    "rawEntry": entry
-                })
+        // Build filtered list
+        for (let i = 0; i < entryCount; i++) {
+            const entry = entries[i]
+            if (!hasSearch) {
+                filteredClipboardModel.append({ "rawEntry": entry })
             } else {
                 const content = formatCliphistName(entry).toLowerCase()
                 if (content.includes(trimmedSearch)) {
-                    filteredClipboardModel.append({
-                        "rawEntry": entry
-                    })
+                    filteredClipboardModel.append({ "rawEntry": entry })
                 }
             }
         }
 
+        // Update count once at the end (avoids binding re-evaluations)
         totalCount = filteredClipboardModel.count
 
         if (totalCount > 0 && typeof listView !== "undefined" && listView) {

@@ -108,11 +108,27 @@ Scope {
                 WlrLayershell.layer: WlrLayer.Overlay
                 exclusionMode: ExclusionMode.Ignore
 
-                CloseConfirmContent {
+                Loader {
                     anchors.fill: parent
-                    targetWindow: root.targetWindow
-                    onConfirm: root.confirmClose()
-                    onCancel: root.cancel()
+                    sourceComponent: Config.options?.panelFamily === "waffle" ? waffleContent : iiContent
+                    
+                    Component {
+                        id: iiContent
+                        CloseConfirmContent {
+                            targetWindow: root.targetWindow
+                            onConfirm: root.confirmClose()
+                            onCancel: root.cancel()
+                        }
+                    }
+                    
+                    Component {
+                        id: waffleContent
+                        WCloseConfirmContent {
+                            targetWindow: root.targetWindow
+                            onConfirm: root.confirmClose()
+                            onCancel: root.cancel()
+                        }
+                    }
                 }
             }
         }

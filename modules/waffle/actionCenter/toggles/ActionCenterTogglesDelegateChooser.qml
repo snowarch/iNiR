@@ -30,6 +30,16 @@ DelegateChooser {
         }
     }
     DelegateChoice {
+        roleValue: "audio"
+        ActionCenterToggleButton {
+            toggleModel: AudioToggle {}
+            icon: WIcons.volumeIcon ?? "speaker"
+            menu: Component {
+                VolumeControl {}
+            }
+        }
+    }
+    DelegateChoice {
         roleValue: "bluetooth"
         ActionCenterToggleButton {
             toggleModel: BluetoothToggle {}

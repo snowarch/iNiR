@@ -95,10 +95,20 @@ Singleton {
         }
     }
 
+    // Debounce timer for fetchOutputs
+    Timer {
+        id: fetchOutputsDebounce
+        interval: 200
+        onTriggered: {
+            if (CompositorService.isNiri)
+                fetchOutputsProcess.running = true
+        }
+    }
+
     function fetchOutputs() {
         if (!CompositorService.isNiri)
             return
-        fetchOutputsProcess.running = true
+        fetchOutputsDebounce.restart()
     }
 
     function updateDisplayScales() {

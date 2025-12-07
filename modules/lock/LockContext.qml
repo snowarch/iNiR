@@ -1,5 +1,6 @@
 import qs
 import qs.modules.common
+import qs.services
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -21,6 +22,7 @@ Scope {
     property bool showFailure: false
     property bool fingerprintsConfigured: false
     property var targetAction: LockContext.ActionEnum.Unlock
+    property bool alsoInhibitIdle: false
 
     function resetTargetAction() {
         root.targetAction = LockContext.ActionEnum.Unlock;
@@ -58,7 +60,8 @@ Scope {
         passwordClearTimer.restart();
     }
 
-    function tryUnlock() {
+    function tryUnlock(alsoInhibitIdle = false) {
+        root.alsoInhibitIdle = alsoInhibitIdle;
         root.unlockInProgress = true;
         pam.start();
     }
@@ -78,7 +81,7 @@ Scope {
     Process {
         id: fingerprintCheckProc
         running: true
-        command: ["bash", "-c", "fprintd-list $(whoami)"]
+        command: ["fish", "-c", "fprintd-list (whoami)"]
         stdout: StdioCollector {
             id: fingerprintOutputCollector
             onStreamFinished: {
@@ -87,7 +90,7 @@ Scope {
         }
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0) {
-                // console.warn("[LockContext] fprintd-list command exited with error:", exitCode, exitStatus);
+                // fprintd not installed or no fingerprints configured
                 root.fingerprintsConfigured = false;
             }
         }

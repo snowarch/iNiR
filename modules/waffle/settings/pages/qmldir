@@ -1,0 +1,11 @@
+module qs.modules.waffle.settings.pages
+
+WQuickPage 1.0 WQuickPage.qml
+WGeneralPage 1.0 WGeneralPage.qml
+WBarPage 1.0 WBarPage.qml
+WBackgroundPage 1.0 WBackgroundPage.qml
+WThemesPage 1.0 WThemesPage.qml
+WInterfacePage 1.0 WInterfacePage.qml
+WModulesPage 1.0 WModulesPage.qml
+WWaffleStylePage 1.0 WWaffleStylePage.qml
+WAboutPage 1.0 WAboutPage.qml

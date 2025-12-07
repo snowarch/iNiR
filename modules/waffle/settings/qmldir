@@ -1,0 +1,12 @@
+module qs.modules.waffle.settings
+
+WSettingsPage 1.0 WSettingsPage.qml
+WSettingsCard 1.0 WSettingsCard.qml
+WSettingsRow 1.0 WSettingsRow.qml
+WSettingsSwitch 1.0 WSettingsSwitch.qml
+WSettingsSpinBox 1.0 WSettingsSpinBox.qml
+WSettingsDropdown 1.0 WSettingsDropdown.qml
+WSettingsButton 1.0 WSettingsButton.qml
+WSettingsNavItem 1.0 WSettingsNavItem.qml
+WSettingsContent 1.0 WSettingsContent.qml
+WKeybindRow 1.0 WKeybindRow.qml

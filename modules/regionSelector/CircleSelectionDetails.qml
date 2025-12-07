@@ -9,7 +9,7 @@ Item {
     required property color color
     required property color overlayColor
     required property list<point> points
-    property int strokeWidth: Config.options.regionSelector.circle.strokeWidth
+    property int strokeWidth: Config.options?.regionSelector?.circle?.strokeWidth ?? 2
 
     function updatePoints() {
         if (!root.dragging) return;

@@ -11,64 +11,50 @@ import qs.modules.waffle.looks
 
 RowLayout {
     id: root
-    spacing: 4
-
+    property StartMenuContext context
+    
     WPanelIconButton {
-        implicitWidth: 32
-        implicitHeight: 32
+        implicitWidth: 36
+        implicitHeight: 36
         iconName: "arrow-left"
         onClicked: LauncherSearch.query = ""
     }
-
     ListView {
         id: tagListView
         Layout.fillWidth: true
-        Layout.preferredHeight: 32
+        Layout.fillHeight: true
         orientation: Qt.Horizontal
         spacing: 4
-        clip: true
-
-        model: [
-            { name: Translation.tr("All"), prefix: "" },
-            { name: Translation.tr("Apps"), prefix: Config.options?.search?.prefix?.app ?? "/" },
-            { name: Translation.tr("Actions"), prefix: Config.options?.search?.prefix?.action ?? ">" },
-            { name: Translation.tr("Clipboard"), prefix: Config.options?.search?.prefix?.clipboard ?? ";" },
-            { name: Translation.tr("Emojis"), prefix: Config.options?.search?.prefix?.emojis ?? ":" },
-            { name: Translation.tr("Math"), prefix: Config.options?.search?.prefix?.math ?? "=" },
-            { name: Translation.tr("Commands"), prefix: Config.options?.search?.prefix?.shellCommand ?? "$" },
-            { name: Translation.tr("Web"), prefix: Config.options?.search?.prefix?.webSearch ?? "?" },
-        ]
-
+        model: root.context?.categories ?? []
         delegate: WBorderedButton {
             id: tagButton
             required property var modelData
-            required property int index
-
             border.width: 1
             radius: height / 2
-            implicitWidth: tagText.implicitWidth + 20
-            implicitHeight: 28
-
+            implicitWidth: tagButtonText.implicitWidth + 12 * 2
+            implicitHeight: 32
             checked: {
-                if (modelData.prefix !== "") {
-                    return LauncherSearch.query.startsWith(modelData.prefix)
+                if (modelData.prefix != "") {
+                    return LauncherSearch.query.startsWith(modelData.prefix);
+                } else {
+                    return !tagListView.model.some(i => (i.prefix != "" && LauncherSearch.query.startsWith(i.prefix)))
                 }
-                // "All" is checked when no prefix matches
-                const prefixes = tagListView.model.filter(m => m.prefix !== "").map(m => m.prefix)
-                return !prefixes.some(p => LauncherSearch.query.startsWith(p))
             }
-
             contentItem: Item {
                 WText {
-                    id: tagText
+                    id: tagButtonText
                     anchors.centerIn: parent
-                    text: tagButton.modelData.name
                     color: tagButton.fgColor
-                    font.pixelSize: Looks.font.pixelSize.small
+                    text: tagButton.modelData.name
+                    font.pixelSize: Looks.font.pixelSize.large
                 }
             }
-
-            onClicked: LauncherSearch.ensurePrefix(modelData.prefix)
+            onClicked: LauncherSearch.ensurePrefix(tagButton.modelData.prefix)
         }
+    }
+    WPanelIconButton {
+        implicitWidth: 36
+        implicitHeight: 36
+        iconName: "more-horizontal"
     }
 }

@@ -1,6 +1,7 @@
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
+import qs.services
 import QtQuick
 import Quickshell
 import Quickshell.Services.SystemTray
@@ -11,33 +12,30 @@ MouseArea {
     id: root
     required property SystemTrayItem item
     property bool targetMenuOpen: false
-    property bool isSpotifyItem: {
-        const id = (item?.id ?? "").toLowerCase();
-        const title = (item?.title ?? "").toLowerCase();
-        return id.indexOf("spotify") !== -1 || title.indexOf("spotify") !== -1;
-    }
+    // Check if this is a problematic app that needs special handling
+    property bool isProblematicApp: TrayService.getProblematicAppInfo(item) !== null
 
     signal menuOpened(qsWindow: var)
     signal menuClosed()
 
     hoverEnabled: true
-    acceptedButtons: Qt.LeftButton | Qt.RightButton
+    acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
     implicitWidth: 20
     implicitHeight: 20
     onPressed: (event) => {
         switch (event.button) {
         case Qt.LeftButton: {
-            const id = (item.id || "").toLowerCase();
-            const title = (item.title || "").toLowerCase();
-
-            // Caso especial: Spotify → lanzar/mostrar usando el launcher
-            if (id.indexOf("spotify") !== -1 || title.indexOf("spotify") !== -1) {
-                Quickshell.execDetached(["bash", "-lc", "gtk-launch \"spotify-launcher\" || spotify-launcher &"]);
-            } else {
+            // Use smart activate for problematic apps (Spotify, Discord, etc.)
+            // Falls back to normal activate() if not a known problematic app
+            if (!TrayService.smartActivate(item)) {
                 item.activate();
             }
             break;
         }
+        case Qt.MiddleButton:
+            // Middle click: try secondary activate (useful for some apps)
+            item.secondaryActivate();
+            break;
         case Qt.RightButton:
             if (item.hasMenu) menu.open();
             break;
@@ -54,7 +52,7 @@ MouseArea {
         tooltip.text = tooltipTitle.length > 0 ? tooltipTitle
                 : (title.length > 0 ? title : id);
         if (tooltipDescription.length > 0) tooltip.text += " • " + tooltipDescription;
-        if (Config.options.bar.tray.showItemId) tooltip.text += "\n[" + id + "]";
+        if (Config.options?.bar?.tray?.showItemId) tooltip.text += "\n[" + id + "]";
     }
 
     Loader {
@@ -68,12 +66,12 @@ MouseArea {
             trayItemMenuHandle: root.item.menu
             anchor {
                 window: root.QsWindow.window
-                rect.x: root.x + (Config.options.bar.vertical ? 0 : QsWindow.window?.width)
-                rect.y: root.y + (Config.options.bar.vertical ? QsWindow.window?.height : 0)
+                rect.x: root.x + ((Config.options?.bar?.vertical ?? false) ? 0 : QsWindow.window?.width)
+                rect.y: root.y + ((Config.options?.bar?.vertical ?? false) ? QsWindow.window?.height : 0)
                 rect.height: root.height
                 rect.width: root.width
-                edges: Config.options.bar.bottom ? (Edges.Top | Edges.Left) : (Edges.Bottom | Edges.Right)
-                gravity: Config.options.bar.bottom ? (Edges.Top | Edges.Left) : (Edges.Bottom | Edges.Right)
+                edges: (Config.options?.bar?.bottom ?? false) ? (Edges.Top | Edges.Left) : (Edges.Bottom | Edges.Right)
+                gravity: (Config.options?.bar?.bottom ?? false) ? (Edges.Top | Edges.Left) : (Edges.Bottom | Edges.Right)
             }
             onMenuOpened: (window) => root.menuOpened(window);
             onMenuClosed: {
@@ -85,25 +83,15 @@ MouseArea {
 
     IconImage {
         id: trayIcon
-        visible: !Config.options.bar.tray.monochromeIcons
-        source: {
-            const id = (root.item.id || "").toLowerCase();
-            const title = (root.item.title || "").toLowerCase();
-
-            // Caso especial: Spotify → resolver explícitamente vía Quickshell.iconPath
-            if (id.indexOf("spotify") !== -1 || title.indexOf("spotify") !== -1) {
-                return Quickshell.iconPath("spotify", "image-missing");
-            }
-
-            return root.item.icon;
-        }
+        visible: !(Config.options?.bar?.tray?.monochromeIcons ?? false)
+        source: root.item?.icon ?? ""
         anchors.centerIn: parent
         width: parent.width
         height: parent.height
     }
 
     Loader {
-        active: Config.options.bar.tray.monochromeIcons
+        active: Config.options?.bar?.tray?.monochromeIcons ?? false
         anchors.centerIn: parent
         width: root.width
         height: root.height
@@ -112,13 +100,7 @@ MouseArea {
                 id: tintedIcon
                 visible: false
                 anchors.fill: parent
-                source: {
-                    const id = (root.item.id || "").toLowerCase();
-                    const title = (root.item.title || "").toLowerCase();
-                    if (id.indexOf("spotify") !== -1 || title.indexOf("spotify") !== -1)
-                        return Quickshell.iconPath("spotify", "image-missing");
-                    return root.item.icon;
-                }
+                source: root.item?.icon ?? ""
             }
             Desaturate {
                 id: desaturatedIcon
@@ -139,7 +121,7 @@ MouseArea {
         id: tooltip
         extraVisibleCondition: root.containsMouse
         alternativeVisibleCondition: extraVisibleCondition
-        anchorEdges: (!Config.options.bar.bottom && !Config.options.bar.vertical) ? Edges.Bottom : Edges.Top
+        anchorEdges: (!(Config.options?.bar?.bottom ?? false) && !(Config.options?.bar?.vertical ?? false)) ? Edges.Bottom : Edges.Top
     }
 
 }

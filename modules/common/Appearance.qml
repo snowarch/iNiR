@@ -47,7 +47,7 @@ Singleton {
 
     // Master switches for effects and animations
     property bool effectsEnabled: !Config.options?.performance?.lowPower && !_gameModeDisablesEffects
-    property bool animationsEnabled: !_gameModeDisablesAnimations
+    property bool animationsEnabled: !_gameModeDisablesAnimations && !(Config.options?.performance?.reduceAnimations ?? false)
 
     onEffectsEnabledChanged: console.log("[Appearance] effectsEnabled:", effectsEnabled, "gameModeActive:", _gameModeActive)
     onAnimationsEnabledChanged: console.log("[Appearance] animationsEnabled:", animationsEnabled)

@@ -6,9 +6,11 @@
 function try { "$@" || sleep 0; }
 
 function v(){
-  echo -e "####################################################"
-  echo -e "${STY_BLUE}[$0]: Next command:${STY_RST}"
-  echo -e "${STY_GREEN}$*${STY_RST}"
+  if ! ${quiet:-false}; then
+    echo -e "####################################################"
+    echo -e "${STY_BLUE}[$0]: Next command:${STY_RST}"
+    echo -e "${STY_GREEN}$*${STY_RST}"
+  fi
   local execute=true
   if $ask;then
     while true;do
@@ -38,7 +40,9 @@ function v(){
     done
   fi
   if $execute;then x "$@";else
-    echo -e "${STY_YELLOW}[$0]: Skipped \"$*\"${STY_RST}"
+    if ! ${quiet:-false}; then
+      echo -e "${STY_YELLOW}[$0]: Skipped \"$*\"${STY_RST}"
+    fi
   fi
 }
 
@@ -79,7 +83,7 @@ function x(){
     esac
   done
   case $cmdstatus in
-    0) echo -e "${STY_BLUE}[$0]: Command \"${STY_GREEN}$*${STY_BLUE}\" finished.${STY_RST}";;
+    0) if ! ${quiet:-false}; then echo -e "${STY_BLUE}[$0]: Command \"${STY_GREEN}$*${STY_BLUE}\" finished.${STY_RST}"; fi;;
     1) echo -e "${STY_RED}[$0]: Command \"${STY_GREEN}$*${STY_RED}\" failed. Exiting...${STY_RST}";exit 1;;
     2) echo -e "${STY_RED}[$0]: Command \"${STY_GREEN}$*${STY_RED}\" failed but ignored.${STY_RST}";;
   esac
@@ -111,23 +115,31 @@ function command_exists() {
 }
 
 function log_info() {
-  echo -e "${STY_BLUE}[INFO]${STY_RST} $1"
+  if ! ${quiet:-false}; then
+    echo -e "${STY_BLUE}[INFO]${STY_RST} $1"
+  fi
 }
 
 function log_success() {
-  echo -e "${STY_GREEN}[OK]${STY_RST} $1"
+  if ! ${quiet:-false}; then
+    echo -e "${STY_GREEN}[OK]${STY_RST} $1"
+  fi
 }
 
 function log_warning() {
+  # Warnings always shown
   echo -e "${STY_YELLOW}[WARN]${STY_RST} $1"
 }
 
 function log_error() {
+  # Errors always shown
   echo -e "${STY_RED}[ERROR]${STY_RST} $1" >&2
 }
 
 function log_header() {
-  echo -e "\n${STY_PURPLE}=== $1 ===${STY_RST}"
+  if ! ${quiet:-false}; then
+    echo -e "\n${STY_PURPLE}=== $1 ===${STY_RST}"
+  fi
 }
 
 # File operations for 3.files.sh
@@ -175,7 +187,7 @@ rsync_dir__sync(){
 function install_file(){
   local s=$1
   local t=$2
-  if [ -f $t ];then
+  if [ -f $t ] && ! ${quiet:-false}; then
     echo -e "${STY_YELLOW}[$0]: \"$t\" will be overwritten.${STY_RST}"
   fi
   v cp_file $s $t
@@ -185,17 +197,25 @@ function install_file__auto_backup(){
   local s=$1
   local t=$2
   if [ -f $t ];then
-    echo -e "${STY_YELLOW}[$0]: \"$t\" exists.${STY_RST}"
+    if ! ${quiet:-false}; then
+      echo -e "${STY_YELLOW}[$0]: \"$t\" exists.${STY_RST}"
+    fi
     if ${INSTALL_FIRSTRUN};then
-      echo -e "${STY_BLUE}[$0]: First run - backing up.${STY_RST}"
+      if ! ${quiet:-false}; then
+        echo -e "${STY_BLUE}[$0]: First run - backing up.${STY_RST}"
+      fi
       v mv $t $t.old
       v cp_file $s $t
     else
-      echo -e "${STY_BLUE}[$0]: Not first run - saving as .new${STY_RST}"
+      if ! ${quiet:-false}; then
+        echo -e "${STY_BLUE}[$0]: Not first run - saving as .new${STY_RST}"
+      fi
       v cp_file $s $t.new
     fi
   else
-    echo -e "${STY_GREEN}[$0]: \"$t\" does not exist.${STY_RST}"
+    if ! ${quiet:-false}; then
+      echo -e "${STY_GREEN}[$0]: \"$t\" does not exist.${STY_RST}"
+    fi
     v cp_file $s $t
   fi
 }
@@ -203,7 +223,7 @@ function install_file__auto_backup(){
 function install_dir(){
   local s=$1
   local t=$2
-  if [ -d $t ];then
+  if [ -d $t ] && ! ${quiet:-false}; then
     echo -e "${STY_YELLOW}[$0]: \"$t\" will be merged.${STY_RST}"
   fi
   rsync_dir $s $t
@@ -212,7 +232,7 @@ function install_dir(){
 function install_dir__sync(){
   local s=$1
   local t=$2
-  if [ -d $t ];then
+  if [ -d $t ] && ! ${quiet:-false}; then
     echo -e "${STY_YELLOW}[$0]: \"$t\" will be synced (--delete).${STY_RST}"
   fi
   rsync_dir__sync $s $t
@@ -222,9 +242,13 @@ function install_dir__skip_existed(){
   local s=$1
   local t=$2
   if [ -d $t ];then
-    echo -e "${STY_BLUE}[$0]: \"$t\" exists, skipping.${STY_RST}"
+    if ! ${quiet:-false}; then
+      echo -e "${STY_BLUE}[$0]: \"$t\" exists, skipping.${STY_RST}"
+    fi
   else
-    echo -e "${STY_YELLOW}[$0]: \"$t\" does not exist.${STY_RST}"
+    if ! ${quiet:-false}; then
+      echo -e "${STY_YELLOW}[$0]: \"$t\" does not exist.${STY_RST}"
+    fi
     v rsync_dir $s $t
   fi
 }

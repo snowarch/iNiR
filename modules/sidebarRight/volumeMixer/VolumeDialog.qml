@@ -30,7 +30,7 @@ WindowDialog {
         DialogButton {
             buttonText: Translation.tr("Details")
             onClicked: {
-                Quickshell.execDetached(["bash", "-c", `${Config.options.apps.volumeMixer}`]);
+                Quickshell.execDetached([Config.options?.apps?.volumeMixer ?? "pavucontrol"]);
                 GlobalStates.sidebarRightOpen = false;
             }
         }

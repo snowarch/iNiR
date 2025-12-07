@@ -289,7 +289,7 @@ Rectangle {
                         StyledText {
                             Layout.alignment: Qt.AlignVCenter
                             verticalAlignment: Text.AlignVCenter
-                            text: "Next page"
+                            text: Translation.tr("Next page")
                             color: Appearance.m3colors.m3onSurface
                         }
                         MaterialSymbol {

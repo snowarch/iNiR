@@ -160,10 +160,11 @@ animations {
 
 environment {
     XDG_CURRENT_DESKTOP "niri"
+    XDG_MENU_PREFIX "plasma-"  // Required for Dolphin file associations
     QT_QPA_PLATFORM "wayland"
     ELECTRON_OZONE_PLATFORM_HINT "auto"
-    QT_QPA_PLATFORMTHEME "gtk3"
-    QT_QPA_PLATFORMTHEME_QT6 "gtk3"
+    QT_QPA_PLATFORMTHEME "kde"
+    QT_STYLE_OVERRIDE "Darkly"
     
     // Quickshell Python virtual environment
     ILLOGICAL_IMPULSE_VIRTUAL_ENV "$HOME/.local/state/quickshell/.venv"
@@ -172,6 +173,9 @@ environment {
 // ============================================================================
 // STARTUP
 // ============================================================================
+
+// Import XDG_MENU_PREFIX to systemd for Dolphin file associations (must be first)
+spawn-at-startup "bash" "-c" "systemctl --user import-environment XDG_MENU_PREFIX && kbuildsycoca6"
 
 spawn-at-startup "bash" "-c" "wl-paste --watch cliphist store &"
 spawn-at-startup "/usr/lib/mate-polkit/polkit-mate-authentication-agent-1"
@@ -270,10 +274,32 @@ binds {
     Ctrl+Print { screenshot-screen; }
     Alt+Print { screenshot-window; }
     
-    // Media keys
-    XF86AudioRaiseVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.05+"; }
-    XF86AudioLowerVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.05-"; }
-    XF86AudioMute allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle"; }
+    // ========================================================================
+    // HARDWARE KEYS - Audio, Brightness, Media
+    // ========================================================================
+    // These use ii IPC so the OSD (On Screen Display) shows feedback
+    
+    // Volume (hardware keys)
+    XF86AudioRaiseVolume allow-when-locked=true { spawn "qs" "-c" "ii" "ipc" "call" "audio" "volumeUp"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn "qs" "-c" "ii" "ipc" "call" "audio" "volumeDown"; }
+    XF86AudioMute allow-when-locked=true { spawn "qs" "-c" "ii" "ipc" "call" "audio" "mute"; }
+    XF86AudioMicMute allow-when-locked=true { spawn "qs" "-c" "ii" "ipc" "call" "audio" "micMute"; }
+    
+    // Brightness (hardware keys)
+    XF86MonBrightnessUp { spawn "qs" "-c" "ii" "ipc" "call" "brightness" "increment"; }
+    XF86MonBrightnessDown { spawn "qs" "-c" "ii" "ipc" "call" "brightness" "decrement"; }
+    
+    // Media playback (hardware keys)
+    XF86AudioPlay { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "playPause"; }
+    XF86AudioPause { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "playPause"; }
+    XF86AudioNext { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "next"; }
+    XF86AudioPrev { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "previous"; }
+    
+    // Keyboard alternatives for media (for keyboards without media keys)
+    Mod+Shift+M { spawn "qs" "-c" "ii" "ipc" "call" "audio" "mute"; }
+    Mod+Shift+P { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "playPause"; }
+    Mod+Shift+N { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "next"; }
+    Mod+Shift+B { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "previous"; }
 }
 
 // Layer rules for ii backdrop visibility during Niri overview

@@ -20,7 +20,7 @@ ContentPage {
         MaterialTextArea {
             Layout.fillWidth: true
             placeholderText: Translation.tr("Crosshair code (in Valorant's format)")
-            text: Config.options.crosshair.code
+            text: Config.options?.crosshair?.code ?? ""
             wrapMode: TextEdit.Wrap
             onTextChanged: {
                 Config.options.crosshair.code = text;
@@ -43,7 +43,7 @@ ContentPage {
                 materialIcon: "open_in_new"
                 mainText: Translation.tr("Open editor")
                 onClicked: {
-                    Qt.openUrlExternally(`https://www.vcrdb.net/builder?c=${Config.options.crosshair.code}`);
+                    Qt.openUrlExternally(`https://www.vcrdb.net/builder?c=${Config.options?.crosshair?.code ?? ""}`);
                 }
                 StyledToolTip {
                     text: "www.vcrdb.net"
@@ -564,6 +564,18 @@ ContentPage {
                 checked: Config.options.lock.blur.enable
                 onCheckedChanged: {
                     Config.options.lock.blur.enable = checked;
+                }
+            }
+
+            ConfigSpinBox {
+                icon: "blur_linear"
+                text: Translation.tr("Blur radius")
+                value: Config.options?.lock?.blur?.radius ?? 100
+                from: 0
+                to: 200
+                stepSize: 10
+                onValueChanged: {
+                    Config.setNestedValue("lock.blur.radius", value);
                 }
             }
 

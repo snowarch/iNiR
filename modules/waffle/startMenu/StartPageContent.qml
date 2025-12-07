@@ -10,165 +10,111 @@ import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.waffle.looks
 
-Item {
+WPanelPageColumn {
     id: root
 
     signal allAppsClicked()
+    
     property list<string> pinnedApps: Config.options.dock?.pinnedApps ?? []
-
-    // Size preset and scale
-    property string sizePreset: Config.options.waffles?.startMenu?.sizePreset ?? "normal"
-    property real menuScale: Config.options.waffles?.startMenu?.scale ?? 1.0
-    
-    // Calculate dimensions based on preset and content
-    property int pinnedCount: Math.min(pinnedApps.length, maxPinned)
-    property int columns: {
-        if (sizePreset === "wide") return 10
-        if (sizePreset === "large") return 8
-        if (sizePreset === "mini") return 3
-        if (sizePreset === "compact") return 4
-        return 6
-    }
-    
-    property int iconSize: sizePreset === "mini" ? 26 : sizePreset === "compact" ? 28 : sizePreset === "large" ? 36 : 32
-    property int buttonSize: iconSize + 36
-    property int maxPinned: sizePreset === "mini" ? 9 : sizePreset === "compact" ? 12 : sizePreset === "large" ? 32 : sizePreset === "wide" ? 30 : 18
-    property bool showRecommended: sizePreset !== "mini"
-    property int maxRecent: sizePreset === "mini" ? 0 : sizePreset === "compact" ? 4 : 6
     property var recentApps: getRecentApps()
 
-    // Explicit size calculation
-    property int gridWidth: columns * buttonSize + (columns - 1) * 2
-    property int gridRows: Math.ceil(pinnedCount / columns)
-    property int gridHeight: gridRows * buttonSize + (gridRows - 1) * 2
-    
-    implicitWidth: Math.max(gridWidth + 32, showRecommended ? 320 : 0)
-    implicitHeight: content.implicitHeight
+    WPanelSeparator {}
 
-    ColumnLayout {
-        id: content
-        anchors.fill: parent
-        anchors.margins: 0
-        spacing: 0
+    BodyRectangle {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
 
-        WPanelSeparator {}
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 16
+            spacing: 12
 
-        BodyRectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: bodyCol.implicitHeight + 24
+            // Pinned header
+            RowLayout {
+                Layout.fillWidth: true
+                WText {
+                    text: Translation.tr("Pinned")
+                    font.pixelSize: Looks.font.pixelSize.large
+                    font.weight: Font.DemiBold
+                }
+                Item { Layout.fillWidth: true }
+                WBorderlessButton {
+                    implicitHeight: 28
+                    implicitWidth: allAppsRow.implicitWidth + 16
+                    contentItem: RowLayout {
+                        id: allAppsRow
+                        spacing: 4
+                        WText { text: Translation.tr("All apps"); font.pixelSize: Looks.font.pixelSize.normal }
+                        FluentIcon { icon: "chevron-right"; implicitSize: 12 }
+                    }
+                    onClicked: root.allAppsClicked()
+                }
+            }
 
+            // Pinned grid - 6 columns like Windows 11
+            Grid {
+                Layout.fillWidth: true
+                columns: 6
+                rowSpacing: 4
+                columnSpacing: 4
+                
+                Repeater {
+                    model: root.pinnedApps.slice(0, 18)
+                    delegate: AppButton {
+                        required property string modelData
+                        appId: modelData
+                    }
+                }
+            }
+
+            Item { Layout.fillHeight: true }
+
+            // Recommended section
             ColumnLayout {
-                id: bodyCol
-                anchors.fill: parent
-                anchors.margins: 12
-                spacing: 10
+                Layout.fillWidth: true
+                visible: (root.recentApps?.length ?? 0) > 0
+                spacing: 12
 
-                // Header
                 RowLayout {
                     Layout.fillWidth: true
-                    WText {
-                        text: Translation.tr("Pinned")
-                        font.pixelSize: Looks.font.pixelSize.large
-                        font.weight: Font.DemiBold
-                    }
-                    Item { Layout.fillWidth: true }
-                    WBorderlessButton {
-                        implicitHeight: 24
-                        implicitWidth: allAppsRow.implicitWidth + 10
-                        contentItem: RowLayout {
-                            id: allAppsRow
-                            spacing: 2
-                            WText { text: Translation.tr("All apps"); font.pixelSize: Math.round(10 * root.menuScale) }
-                            FluentIcon { icon: "chevron-right"; implicitSize: 10 }
-                        }
-                        onClicked: root.allAppsClicked()
-                    }
-                }
-
-                // Pinned grid
-                Grid {
-                    columns: root.columns
-                    spacing: 2
-                    Repeater {
-                        model: root.pinnedApps.slice(0, root.pinnedCount)
-                        delegate: AppButton {
-                            required property string modelData
-                            appId: modelData
-                        }
-                    }
-                }
-
-                // Recommended
-                ColumnLayout {
-                    visible: root.showRecommended && (root.recentApps?.length ?? 0) > 0
-                    Layout.fillWidth: true
-                    spacing: 6
                     WText {
                         text: Translation.tr("Recommended")
                         font.pixelSize: Looks.font.pixelSize.large
                         font.weight: Font.DemiBold
                     }
-                    Flow {
-                        Layout.fillWidth: true
-                        spacing: 4
-                        Repeater {
-                            model: root.recentApps
-                            delegate: RecButton {
-                                required property var modelData
-                                appId: modelData.appId
-                                appName: modelData.name
-                            }
+                    Item { Layout.fillWidth: true }
+                }
+
+                Grid {
+                    Layout.fillWidth: true
+                    columns: 2
+                    rowSpacing: 4
+                    columnSpacing: 16
+
+                    Repeater {
+                        model: root.recentApps.slice(0, 6)
+                        delegate: RecButton {
+                            required property var modelData
+                            appId: modelData.appId
+                            appName: modelData.name
                         }
-                    }
-                }
-            }
-        }
-
-        WPanelSeparator {}
-
-        FooterRectangle {
-            Layout.fillWidth: true
-            implicitHeight: 52
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: 12
-                anchors.rightMargin: 12
-                WBorderlessButton {
-                    implicitWidth: userRow.implicitWidth + 12
-                    implicitHeight: 32
-                    contentItem: RowLayout {
-                        id: userRow
-                        spacing: 6
-                        WUserAvatar { sourceSize: Qt.size(24, 24) }
-                        WText { text: SystemInfo.username; font.pixelSize: Math.round(11 * root.menuScale) }
-                    }
-                }
-                Item { Layout.fillWidth: true }
-                WBorderlessButton {
-                    implicitWidth: 32; implicitHeight: 32
-                    contentItem: FluentIcon { anchors.centerIn: parent; icon: "power"; implicitSize: 16 }
-                    onClicked: pwrMenu.open()
-                    WMenu {
-                        id: pwrMenu
-                        y: -implicitHeight - 4
-                        Action { text: Translation.tr("Lock"); onTriggered: Session.lock() }
-                        Action { text: Translation.tr("Sleep"); onTriggered: Session.suspend() }
-                        Action { text: Translation.tr("Shut down"); onTriggered: Session.poweroff() }
-                        Action { text: Translation.tr("Restart"); onTriggered: Session.reboot() }
                     }
                 }
             }
         }
     }
 
+    WPanelSeparator {}
+
+    StartFooter { Layout.fillWidth: true }
+
     function getRecentApps() {
         const seen = new Set()
         const recent = []
-        // Use NiriService.windows for Niri compositor
         const windowList = CompositorService.isNiri ? (NiriService.windows ?? []) : []
         for (const w of windowList) {
             const appId = w.app_id ?? ""
-            if (appId && !seen.has(appId) && recent.length < root.maxRecent) {
+            if (appId && !seen.has(appId) && recent.length < 6) {
                 seen.add(appId)
                 const entry = DesktopEntries.heuristicLookup(appId)
                 recent.push({ appId: appId, name: entry?.name ?? appId })
@@ -181,21 +127,22 @@ Item {
         id: appBtn
         required property string appId
         readonly property var de: DesktopEntries.heuristicLookup(appId)
-        implicitWidth: root.buttonSize
-        implicitHeight: root.buttonSize
+        implicitWidth: 88
+        implicitHeight: 76
         onClicked: { if (de) de.execute(); GlobalStates.searchOpen = false }
+        
         contentItem: ColumnLayout {
-            spacing: 2
+            spacing: 4
             Image {
                 Layout.alignment: Qt.AlignHCenter
                 source: Quickshell.iconPath(AppSearch.guessIcon(appBtn.appId), "application-x-executable")
-                sourceSize: Qt.size(root.iconSize, root.iconSize)
+                sourceSize: Qt.size(32, 32)
             }
             WText {
                 Layout.alignment: Qt.AlignHCenter
-                Layout.preferredWidth: root.buttonSize - 6
+                Layout.preferredWidth: 80
                 text: appBtn.de?.name ?? appBtn.appId
-                font.pixelSize: Math.round(9 * root.menuScale)
+                font.pixelSize: Looks.font.pixelSize.small
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
                 maximumLineCount: 2
@@ -210,15 +157,186 @@ Item {
         required property string appId
         required property string appName
         readonly property var de: DesktopEntries.heuristicLookup(appId)
-        implicitWidth: 140; implicitHeight: 36
+        implicitWidth: 260
+        implicitHeight: 44
         onClicked: { if (de) de.execute(); GlobalStates.searchOpen = false }
+        
         contentItem: RowLayout {
-            spacing: 6
+            spacing: 10
             Image {
                 source: Quickshell.iconPath(AppSearch.guessIcon(recBtn.appId), "application-x-executable")
-                sourceSize: Qt.size(20, 20)
+                sourceSize: Qt.size(28, 28)
             }
-            WText { Layout.fillWidth: true; text: recBtn.appName; font.pixelSize: Math.round(10 * root.menuScale); elide: Text.ElideRight }
+            WText {
+                Layout.fillWidth: true
+                text: recBtn.appName
+                font.pixelSize: Looks.font.pixelSize.normal
+                elide: Text.ElideRight
+            }
+        }
+    }
+
+
+    component StartFooter: FooterRectangle {
+        implicitHeight: 63
+
+        UserButton {
+            anchors {
+                left: parent.left
+                leftMargin: 52
+                bottom: parent.bottom
+                bottomMargin: 12
+            }
+        }
+
+        PowerButton {
+            anchors {
+                right: parent.right
+                rightMargin: 52
+                bottom: parent.bottom
+                bottomMargin: 12
+            }
+        }
+    }
+
+    component UserButton: WBorderlessButton {
+        id: userButton
+        implicitWidth: userButtonRow.implicitWidth + 24
+        implicitHeight: 40
+
+        contentItem: RowLayout {
+            id: userButtonRow
+            anchors.centerIn: parent
+            spacing: 12
+            WUserAvatar { sourceSize: Qt.size(32, 32) }
+            WText {
+                Layout.alignment: Qt.AlignVCenter
+                text: SystemInfo.username
+            }
+        }
+
+        onClicked: userMenu.open()
+        WToolTip { text: SystemInfo.username }
+
+        Popup {
+            id: userMenu
+            x: -51
+            y: -userMenu.implicitHeight + userButton.implicitHeight / 2 - 10
+            background: null
+            
+            WToolTipContent {
+                id: popupContent
+                horizontalPadding: 10
+                verticalPadding: 7
+                radius: Looks.radius.large
+                realContentItem: Item {
+                    implicitWidth: userMenuContentLayout.implicitWidth
+                    implicitHeight: userMenuContentLayout.implicitHeight
+                    
+                    ColumnLayout {
+                        id: userMenuContentLayout
+                        anchors {
+                            fill: parent
+                            leftMargin: popupContent.horizontalPadding
+                            rightMargin: popupContent.horizontalPadding
+                            topMargin: popupContent.verticalPadding
+                            bottomMargin: popupContent.verticalPadding
+                        }
+                        spacing: 5
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.leftMargin: 6
+                            FluentIcon {
+                                Layout.alignment: Qt.AlignVCenter
+                                implicitSize: 22
+                                icon: "corporation"
+                                monochrome: false
+                            }
+                            WText {
+                                Layout.alignment: Qt.AlignVCenter
+                                text: SystemInfo.hostname ?? "Computer"
+                                font.pixelSize: Looks.font.pixelSize.large
+                                font.weight: Looks.font.weight.strong
+                            }
+                            Item { Layout.fillWidth: true }
+                            WBorderlessButton {
+                                Layout.alignment: Qt.AlignVCenter
+                                implicitHeight: 36
+                                implicitWidth: signOutText.implicitWidth + 20
+                                contentItem: WText {
+                                    id: signOutText
+                                    text: Translation.tr("Sign out")
+                                    font.pixelSize: Looks.font.pixelSize.large
+                                }
+                                onClicked: Session.logout()
+                            }
+                        }
+                        
+                        Item { implicitWidth: 334 }
+                        
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.bottomMargin: 7
+                            Layout.leftMargin: 6
+                            spacing: 12
+                            WUserAvatar { sourceSize: Qt.size(58, 58) }
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignVCenter
+                                spacing: 2
+                                WText {
+                                    text: SystemInfo.username
+                                    font.pixelSize: Looks.font.pixelSize.larger
+                                    font.weight: Looks.font.weight.strong
+                                }
+                                WText {
+                                    color: Looks.colors.fg1
+                                    text: Translation.tr("Local account")
+                                }
+                                WText {
+                                    color: Looks.colors.accent
+                                    text: Translation.tr("Manage my account")
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            Quickshell.execDetached(["bash", "-c", Config.options.apps?.manageUser ?? "kcmshell6 kcm_users"])
+                                            GlobalStates.searchOpen = false
+                                            userMenu.close()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    component PowerButton: WBorderlessButton {
+        id: powerButton
+        implicitWidth: 40
+        implicitHeight: 40
+
+        contentItem: FluentIcon {
+            anchors.centerIn: parent
+            icon: "power"
+            implicitSize: 20
+        }
+
+        WToolTip { text: Translation.tr("Power") }
+        onClicked: powerMenu.open()
+
+        WMenu {
+            id: powerMenu
+            x: -powerMenu.implicitWidth / 2 + powerButton.implicitWidth / 2
+            y: -powerMenu.implicitHeight - 4
+            Action { icon.name: "lock-closed"; text: Translation.tr("Lock"); onTriggered: Session.lock() }
+            Action { icon.name: "weather-moon"; text: Translation.tr("Sleep"); onTriggered: Session.suspend() }
+            Action { icon.name: "power"; text: Translation.tr("Shut down"); onTriggered: Session.poweroff() }
+            Action { icon.name: "arrow-counterclockwise"; text: Translation.tr("Restart"); onTriggered: Session.reboot() }
         }
     }
 }

@@ -125,4 +125,60 @@ Singleton {
         return "bluetooth";
     }
 
+    function fluentFromMaterial(icon) {
+        switch (icon) {
+        case "calculate":
+            return "calculator";
+        case "keyboard_return":
+            return "arrow-enter-left";
+        case "open_in_new":
+            return "open";
+        case "settings_suggest":
+            return "wand";
+        case "terminal":
+            return "app-generic";
+        case "travel_explore":
+            return "globe-search";
+        case "keep":
+            return "pin";
+        case "keep_off":
+            return "pin-off";
+        default:
+            return "apps";
+        }
+    }
+
+    function guessIconForName(name) {
+        const lowerName = name.toLowerCase();
+        if (lowerName.includes("app") || lowerName.includes("desktop"))
+            return "apps";
+        if (lowerName.includes("news"))
+            return "news";
+        if (lowerName.includes("new") || lowerName.includes("create") || lowerName.includes("add"))
+            return "add";
+        if (lowerName.includes("open"))
+            return "open";
+        if (lowerName.includes("friends") || lowerName.includes("contact") || lowerName.includes("family"))
+            return "people";
+        if (lowerName.includes("community"))
+            return "people-team";
+        if (lowerName.includes("library"))
+            return "library";
+        if (lowerName.includes("setting"))
+            return "settings";
+        if (lowerName.includes("gallery"))
+            return "image-copy";
+        if (lowerName.includes("server"))
+            return "server";
+        if (lowerName.includes("picture") || lowerName.includes("photo") || lowerName.includes("image"))
+            return "image";
+        if (lowerName.includes("store") || lowerName.includes("shop"))
+            return "store-microsoft";
+        if (lowerName.includes("record") || lowerName.includes("capture"))
+            return "record";
+        if (lowerName.includes("screen") || lowerName.includes("display") || lowerName.includes("monitor") || lowerName.includes("desktop"))
+            return "desktop";
+
+        return "apps";
+    }
 }

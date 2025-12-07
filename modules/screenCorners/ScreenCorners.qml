@@ -42,8 +42,8 @@ Scope {
             right: cornerWidget.isTopRight || cornerWidget.isBottomRight
         }
         margins {
-            right: (Config.options.interactions.deadPixelWorkaround.enable && cornerPanelWindow.anchors.right) * -1
-            bottom: (Config.options.interactions.deadPixelWorkaround.enable && cornerPanelWindow.anchors.bottom) * -1
+            right: ((Config.options?.interactions?.deadPixelWorkaround?.enable ?? false) && cornerPanelWindow.anchors.right) * -1
+            bottom: ((Config.options?.interactions?.deadPixelWorkaround?.enable ?? false) && cornerPanelWindow.anchors.bottom) * -1
         }
 
         implicitWidth: cornerWidget.implicitWidth
@@ -53,8 +53,8 @@ Scope {
             id: cornerWidget
             anchors.fill: parent
             corner: cornerPanelWindow.corner
-            rightVisualMargin: (Config.options.interactions.deadPixelWorkaround.enable && cornerPanelWindow.anchors.right) * 1
-            bottomVisualMargin: (Config.options.interactions.deadPixelWorkaround.enable && cornerPanelWindow.anchors.bottom) * 1
+            rightVisualMargin: ((Config.options?.interactions?.deadPixelWorkaround?.enable ?? false) && cornerPanelWindow.anchors.right) * 1
+            bottomVisualMargin: ((Config.options?.interactions?.deadPixelWorkaround?.enable ?? false) && cornerPanelWindow.anchors.bottom) * 1
 
             implicitSize: Appearance.rounding.screenRounding
             implicitHeight: Math.max(implicitSize, sidebarCornerOpenInteractionLoader.implicitHeight)
@@ -63,9 +63,11 @@ Scope {
             Loader {
                 id: sidebarCornerOpenInteractionLoader
                 active: {
-                    if (!Config.options.sidebar.cornerOpen.enable) return false;
+                    if (!(Config.options?.sidebar?.cornerOpen?.enable ?? false)) return false;
                     if (cornerPanelWindow.fullscreen) return false;
-                    return (Config.options.sidebar.cornerOpen.bottom == cornerWidget.isBottom);
+                    // Disable corner interactions during GameMode to avoid input capture
+                    if (GameMode.active) return false;
+                    return ((Config.options?.sidebar?.cornerOpen?.bottom ?? false) == cornerWidget.isBottom);
                 }
                 anchors {
                     top: (cornerWidget.isTopLeft || cornerWidget.isTopRight) ? parent.top : undefined
@@ -76,26 +78,26 @@ Scope {
 
                 sourceComponent: FocusedScrollMouseArea {
                     id: mouseArea
-                    implicitWidth: Config.options.sidebar.cornerOpen.cornerRegionWidth
-                    implicitHeight: Config.options.sidebar.cornerOpen.cornerRegionHeight
+                    implicitWidth: Config.options?.sidebar?.cornerOpen?.cornerRegionWidth ?? 20
+                    implicitHeight: Config.options?.sidebar?.cornerOpen?.cornerRegionHeight ?? 20
                     hoverEnabled: true
                     onPositionChanged: {
-                        if (!Config.options.sidebar.cornerOpen.clicklessCornerEnd) return;
-                        const verticalOffset = Config.options.sidebar.cornerOpen.clicklessCornerVerticalOffset;
+                        if (!(Config.options?.sidebar?.cornerOpen?.clicklessCornerEnd ?? false)) return;
+                        const verticalOffset = Config.options?.sidebar?.cornerOpen?.clicklessCornerVerticalOffset ?? 10;
                         const correctX = (cornerWidget.isRight && mouseArea.mouseX >= mouseArea.width - 2) || (cornerWidget.isLeft && mouseArea.mouseX <= 2);
                         const correctY = (cornerWidget.isTop && mouseArea.mouseY > verticalOffset || cornerWidget.isBottom && mouseArea.mouseY < mouseArea.height - verticalOffset);
                         if (correctX && correctY)
                             screenCorners.actionForCorner[cornerPanelWindow.corner]();
                     }
                     onEntered: {
-                        if (Config.options.sidebar.cornerOpen.clickless)
+                        if (Config.options?.sidebar?.cornerOpen?.clickless ?? false)
                             screenCorners.actionForCorner[cornerPanelWindow.corner]();
                     }
                     onPressed: {
                         screenCorners.actionForCorner[cornerPanelWindow.corner]();
                     }
                     onScrollDown: {
-                        if (!Config.options.sidebar.cornerOpen.valueScroll)
+                        if (!(Config.options?.sidebar?.cornerOpen?.valueScroll ?? false))
                             return;
                         if (cornerWidget.isLeft)
                             cornerPanelWindow.brightnessMonitor.setBrightness(cornerPanelWindow.brightnessMonitor.brightness - 0.05);
@@ -106,7 +108,7 @@ Scope {
                         }
                     }
                     onScrollUp: {
-                        if (!Config.options.sidebar.cornerOpen.valueScroll)
+                        if (!(Config.options?.sidebar?.cornerOpen?.valueScroll ?? false))
                             return;
                         if (cornerWidget.isLeft)
                             cornerPanelWindow.brightnessMonitor.setBrightness(cornerPanelWindow.brightnessMonitor.brightness + 0.05);
@@ -117,7 +119,7 @@ Scope {
                         }
                     }
                     onMovedAway: {
-                        if (!Config.options.sidebar.cornerOpen.valueScroll)
+                        if (!(Config.options?.sidebar?.cornerOpen?.valueScroll ?? false))
                             return;
                         if (cornerWidget.isLeft)
                             GlobalStates.osdBrightnessOpen = false;
@@ -126,7 +128,7 @@ Scope {
                     }
 
                     Loader {
-                        active: Config.options.sidebar.cornerOpen.visualize
+                        active: Config.options?.sidebar?.cornerOpen?.visualize ?? false
                         anchors.fill: parent
                         sourceComponent: Rectangle {
                             color: Appearance.colors.colPrimary
@@ -172,8 +174,16 @@ Scope {
                         const wss = NiriService.workspaces;
                         for (let i = 0; i < windows.length; ++i) {
                             const w = windows[i];
+                            // Check if window is fullscreen via is_fullscreen property first
+                            if (w.is_fullscreen === true) {
+                                const ws = wss[w.workspace_id];
+                                if (ws && ws.output === outputName && ws.is_active) {
+                                    return true;
+                                }
+                            }
+                            // Fallback: check by size comparison
                             const ws = wss[w.workspace_id];
-                            if (!ws || ws.output !== outputName)
+                            if (!ws || ws.output !== outputName || !ws.is_active)
                                 continue;
                             const layout = w.layout;
                             const size = layout && layout.tile_size ? layout.tile_size : null;
@@ -185,7 +195,8 @@ Scope {
                                 continue;
                             const areaWindow = ww * wh;
                             const areaOutput = lw * lh;
-                            if (areaWindow >= areaOutput * 0.95) {
+                            // More aggressive threshold for games
+                            if (areaWindow >= areaOutput * 0.90) {
                                 return true;
                             }
                         }

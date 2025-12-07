@@ -6,6 +6,8 @@ QtObject {
     enum FontType { Normal, Monospace }
 
     property string type: ""
+    property string category: "" // For section grouping in results
+    property string id: "" // App ID for pinning
     property var fontType: LauncherSearchResult.FontType.Normal
     property string name: ""
     property string rawValue: ""

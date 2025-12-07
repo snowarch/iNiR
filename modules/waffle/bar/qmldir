@@ -13,5 +13,6 @@ StartButton 1.0 StartButton.qml
 SystemButton 1.0 SystemButton.qml
 TaskViewButton 1.0 TaskViewButton.qml
 TimeButton 1.0 TimeButton.qml
+TimerButton 1.0 TimerButton.qml
 UpdatesButton 1.0 UpdatesButton.qml
 WidgetsButton 1.0 WidgetsButton.qml

@@ -101,9 +101,9 @@ ContentPage {
         title: Translation.tr("Positioning")
 
         ConfigRow {
+            uniform: true
             ContentSubsection {
                 title: Translation.tr("Bar position")
-                Layout.fillWidth: true
 
                 ConfigSelectionArray {
                     currentValue: (Config.options.bar.bottom ? 1 : 0) | (Config.options.bar.vertical ? 2 : 0)
@@ -137,7 +137,6 @@ ContentPage {
             }
             ContentSubsection {
                 title: Translation.tr("Automatically hide")
-                Layout.fillWidth: false
 
                 ConfigSelectionArray {
                     currentValue: Config.options.bar.autoHide.enable
@@ -161,10 +160,9 @@ ContentPage {
         }
 
         ConfigRow {
-            
+            uniform: true
             ContentSubsection {
                 title: Translation.tr("Corner style")
-                Layout.fillWidth: true
 
                 ConfigSelectionArray {
                     currentValue: Config.options.bar.cornerStyle
@@ -193,7 +191,6 @@ ContentPage {
 
             ContentSubsection {
                 title: Translation.tr("Group style")
-                Layout.fillWidth: false
 
                 ConfigSelectionArray {
                     currentValue: Config.options.bar.borderless
@@ -360,6 +357,30 @@ ContentPage {
         visible: root.isIiActive
         icon: "workspaces"
         title: Translation.tr("Workspaces")
+
+        ContentSubsection {
+            title: Translation.tr("Scroll behavior")
+            visible: CompositorService.isNiri
+
+            ConfigSelectionArray {
+                currentValue: Config.options?.bar?.workspaces?.scrollBehavior ?? "workspace"
+                onSelected: newValue => {
+                    Config.setNestedValue("bar.workspaces.scrollBehavior", newValue)
+                }
+                options: [
+                    {
+                        displayName: Translation.tr("Switch workspaces"),
+                        icon: "workspaces",
+                        value: "workspace"
+                    },
+                    {
+                        displayName: Translation.tr("Cycle columns"),
+                        icon: "view_column",
+                        value: "column"
+                    }
+                ]
+            }
+        }
 
         ConfigSwitch {
             buttonIcon: "counter_1"

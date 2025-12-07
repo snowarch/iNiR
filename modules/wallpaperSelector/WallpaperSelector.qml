@@ -82,10 +82,19 @@ Scope {
     }
 
     function toggleWallpaperSelector() {
-        if (Config.options.wallpaperSelector.useSystemFileDialog) {
+        if (Config.options?.wallpaperSelector?.useSystemFileDialog ?? false) {
             Wallpapers.openFallbackPicker(Appearance.m3colors.darkmode);
             return;
         }
+        
+        // Set target based on active family and config
+        if (Config.options?.panelFamily === "waffle") {
+            const useMain = Config.options?.waffles?.background?.useMainWallpaper ?? true
+            Config.setNestedValue("wallpaperSelector.selectionTarget", useMain ? "main" : "waffle")
+        } else {
+            Config.setNestedValue("wallpaperSelector.selectionTarget", "main")
+        }
+        
         GlobalStates.wallpaperSelectorOpen = !GlobalStates.wallpaperSelectorOpen
     }
 

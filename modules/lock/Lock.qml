@@ -4,6 +4,7 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.lock
+import qs.modules.waffle.lock
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -20,11 +21,12 @@ Scope {
         }
     }
     function unlockKeyring() {
+        // Note: unlock.sh is a bash script, so we run it directly
         unlockKeyringProc.exec({
             environment: ({
                 "UNLOCK_PASSWORD": lockContext.currentText
             }),
-            command: ["bash", "-c", Quickshell.shellPath("scripts/keyring/unlock.sh")]
+            command: [Quickshell.shellPath("scripts/keyring/unlock.sh")]
         })
     }
 
@@ -75,7 +77,7 @@ Scope {
             }
 
             // Unlock the keyring if configured to do so
-            if (Config.options.lock.security.unlockKeyring) root.unlockKeyring();
+            if (Config.options?.lock?.security?.unlockKeyring ?? true) root.unlockKeyring(); // Async
 
             // Unlock the screen before exiting, or the compositor will display a
             // fallback lock you can't interact with.
@@ -83,29 +85,100 @@ Scope {
             
             // Refocus last focused window on unlock (hack)
             if (CompositorService.isHyprland) {
-                Quickshell.execDetached(["bash", "-c", `sleep 0.2; hyprctl --batch "dispatch togglespecialworkspace; dispatch togglespecialworkspace"`])
+                Quickshell.execDetached(["fish", "-c", "sleep 0.2; hyprctl --batch 'dispatch togglespecialworkspace; dispatch togglespecialworkspace'"])
             }
 
             // Reset
             lockContext.reset();
+
+            // Post-unlock actions: activate idle inhibitor if requested
+            if (lockContext.alsoInhibitIdle) {
+                lockContext.alsoInhibitIdle = false;
+                Idle.toggleInhibit(true);
+            }
         }
     }
 
+    // Lock surface component - switches between Material (ii) and Windows 11 (waffle) styles
+    // Reactive binding - updates automatically when panelFamily changes (but only when unlocked)
+    readonly property bool useWaffleLock: Config.ready && !GlobalStates.screenLocked 
+        ? (Config.options?.panelFamily === "waffle")
+        : root._cachedUseWaffleLock
+    
+    // Cache the last known value to prevent switching during lock
+    property bool _cachedUseWaffleLock: false
+    
+    onUseWaffleLockChanged: {
+        if (!GlobalStates.screenLocked) {
+            root._cachedUseWaffleLock = root.useWaffleLock
+        }
+    }
+    
+    Component.onCompleted: {
+        // Initialize cache
+        if (Config.ready) {
+            root._cachedUseWaffleLock = Config.options?.panelFamily === "waffle"
+        }
+    }
+    
+    Component {
+        id: iiLockComponent
+        LockSurface {
+            context: lockContext
+        }
+    }
+    
+    Component {
+        id: waffleLockComponent
+        WaffleLockSurface {
+            context: lockContext
+        }
+    }
+    
     WlSessionLock {
         id: lock
         locked: GlobalStates.screenLocked
 
         WlSessionLockSurface {
+            id: lockSurface
             color: "transparent"
+            
             Loader {
-                active: GlobalStates.screenLocked
+                id: lockSurfaceLoader
+                active: GlobalStates.screenLocked && Config.ready
                 anchors.fill: parent
+                // Don't animate opacity - causes issues during hot-reload
                 opacity: active ? 1 : 0
-                Behavior on opacity {
-                    animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
+                sourceComponent: root._cachedUseWaffleLock ? waffleLockComponent : iiLockComponent
+                
+                // Force focus to loaded item
+                onLoaded: {
+                    if (item) {
+                        item.forceActiveFocus()
+                    }
                 }
-                sourceComponent: LockSurface {
-                    context: lockContext
+                
+                // Re-focus when becoming active
+                onActiveChanged: {
+                    if (active && item) {
+                        Qt.callLater(() => {
+                            if (item) item.forceActiveFocus()
+                        })
+                    }
+                }
+            }
+            
+            // Ensure focus is given to lock surface when screen locks
+            Connections {
+                target: GlobalStates
+                function onScreenLockedChanged() {
+                    if (GlobalStates.screenLocked && lockSurfaceLoader.item) {
+                        Qt.callLater(() => {
+                            if (lockSurfaceLoader.item) {
+                                lockSurfaceLoader.item.forceActiveFocus()
+                            }
+                        })
+                    }
                 }
             }
         }
@@ -125,9 +198,9 @@ Scope {
             onShouldPushChanged: {
                 if (shouldPush) {
                     root.saveWindowPositionAndTile();
-                    Quickshell.execDetached(["bash", "-c", `hyprctl keyword monitor ${targetMonitorName}, addreserved, ${verticalMovementDistance}, ${-verticalMovementDistance}, ${horizontalSqueeze}, ${horizontalSqueeze}`])
+                    Quickshell.execDetached(["hyprctl", "keyword", "monitor", `${targetMonitorName}, addreserved, ${verticalMovementDistance}, ${-verticalMovementDistance}, ${horizontalSqueeze}, ${horizontalSqueeze}`])
                 } else {
-                    Quickshell.execDetached(["bash", "-c", `hyprctl keyword monitor ${targetMonitorName}, addreserved, 0, 0, 0, 0`])
+                    Quickshell.execDetached(["hyprctl", "keyword", "monitor", `${targetMonitorName}, addreserved, 0, 0, 0, 0`])
                     root.restoreWindowPositionAndTile();
                 }
             }
@@ -153,8 +226,8 @@ Scope {
                 description: "Locks the screen"
 
                 onPressed: {
-                    if (Config.options.lock.useHyprlock) {
-                        Quickshell.execDetached(["bash", "-c", "pidof hyprlock || hyprlock"]);
+                    if (Config.options?.lock?.useHyprlock ?? false) {
+                        Quickshell.execDetached(["fish", "-c", "pidof hyprlock; or hyprlock"]);
                         return;
                     }
                     GlobalStates.screenLocked = true;
@@ -174,7 +247,7 @@ Scope {
 
     function initIfReady() {
         if (!Config.ready || !Persistent.ready) return;
-        if (Config.options.lock.launchOnStartup && Persistent.isNewHyprlandInstance) {
+        if ((Config.options?.lock?.launchOnStartup ?? false) && Persistent.isNewHyprlandInstance) {
             // Launch lock screen on startup
             if (CompositorService.isHyprland) {
                 Hyprland.dispatch("global quickshell:lock")

@@ -28,13 +28,13 @@ Scope {
     Process {
         id: plasmaIntegrationAvailabilityCheckProc
         running: true
-        command: ["bash", "-c", "command -v plasma-browser-integration-host"]
+        command: ["which", "plasma-browser-integration-host"]
         onExited: (exitCode, exitStatus) => {
             root.hasPlasmaIntegration = (exitCode === 0);
         }
     }
     function isRealPlayer(player) {
-        if (!Config.options.media.filterDuplicatePlayers) {
+        if (!(Config.options?.media?.filterDuplicatePlayers ?? true)) {
             return true;
         }
         return (
@@ -147,15 +147,15 @@ Scope {
                 width: root.widgetWidth
                 height: playerColumnLayout.implicitHeight
 
-                x: Config.options.bar.vertical
-                    ? (Config.options.bar.bottom
+                x: (Config.options?.bar?.vertical ?? false)
+                    ? ((Config.options?.bar?.bottom ?? false)
                         ? (mediaControlsRoot.screen.width - Appearance.sizes.barHeight - width)
                         : Appearance.sizes.barHeight)
                     : ((mediaControlsRoot.screen.width / 2) - (osdWidth / 2) - widgetWidth)
 
-                y: Config.options.bar.vertical
+                y: (Config.options?.bar?.vertical ?? false)
                     ? ((mediaControlsRoot.screen.height / 2) - widgetHeight * 1.5)
-                    : (Config.options.bar.bottom
+                    : ((Config.options?.bar?.bottom ?? false)
                         ? (mediaControlsRoot.screen.height - Appearance.sizes.barHeight - height)
                         : Appearance.sizes.barHeight)
 

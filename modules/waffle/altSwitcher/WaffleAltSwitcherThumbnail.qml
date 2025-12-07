@@ -163,7 +163,7 @@ Item {
             WText {
                 id: wsLabel
                 anchors.centerIn: parent
-                text: "WS " + (root.item?.workspaceIdx ?? "")
+                text: Translation.tr("WS") + " " + (root.item?.workspaceIdx ?? "")
                 font.pixelSize: Looks.font.pixelSize.small
                 color: root.selected ? Looks.colors.accentFg : Looks.colors.subfg
             }

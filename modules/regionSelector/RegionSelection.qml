@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
+import qs.modules.waffle.regionSelector as WaffleRegion
 import qs.services
 import QtQuick
 import QtQuick.Controls
@@ -35,7 +36,7 @@ PanelWindow {
     readonly property bool useNiri: CompositorService.isNiri
 
     property string screenshotDir: Directories.screenshotTemp
-    property string imageSearchEngineBaseUrl: Config.options.search.imageSearch.imageSearchEngineBaseUrl
+    property string imageSearchEngineBaseUrl: Config.options?.search?.imageSearch?.imageSearchEngineBaseUrl ?? "https://lens.google.com/uploadbyurl?url="
     property string fileUploadApiEndpoint: "https://uguu.se/upload"
     property color overlayColor: "#88111111"
     property color brightText: Appearance.m3colors.darkmode ? Appearance.colors.colOnLayer0 : Appearance.colors.colLayer0
@@ -143,11 +144,11 @@ PanelWindow {
     }
 
     property bool isCircleSelection: (root.selectionMode === RegionSelection.SelectionMode.Circle)
-    property bool enableWindowRegions: Config.options.regionSelector.targetRegions.windows && !isCircleSelection
-    property bool enableLayerRegions: Config.options.regionSelector.targetRegions.layers && !isCircleSelection
-    property bool enableContentRegions: Config.options.regionSelector.targetRegions.content
-    property real targetRegionOpacity: Config.options.regionSelector.targetRegions.opacity
-    property real contentRegionOpacity: Config.options.regionSelector.targetRegions.contentRegionOpacity
+    property bool enableWindowRegions: (Config.options?.regionSelector?.targetRegions?.windows ?? true) && !isCircleSelection
+    property bool enableLayerRegions: (Config.options?.regionSelector?.targetRegions?.layers ?? true) && !isCircleSelection
+    property bool enableContentRegions: Config.options?.regionSelector?.targetRegions?.content ?? true
+    property real targetRegionOpacity: Config.options?.regionSelector?.targetRegions?.opacity ?? 0.5
+    property real contentRegionOpacity: Config.options?.regionSelector?.targetRegions?.contentRegionOpacity ?? 0.3
 
     property real targetedRegionX: -1
     property real targetedRegionY: -1
@@ -157,7 +158,7 @@ PanelWindow {
         return (root.targetedRegionX >= 0 && root.targetedRegionY >= 0)
     }
     function setRegionToTargeted() {
-        const padding = Config.options.regionSelector.targetRegions.selectionPadding; // Make borders not cut off n stuff
+        const padding = Config.options?.regionSelector?.targetRegions?.selectionPadding ?? 2; // Make borders not cut off n stuff
         root.regionX = root.targetedRegionX - padding;
         root.regionY = root.targetedRegionY - padding;
         root.regionWidth = root.targetedRegionWidth + padding * 2;
@@ -293,6 +294,7 @@ PanelWindow {
         if (root.regionWidth <= 0 || root.regionHeight <= 0) {
             console.warn("[Region Selector] Invalid region size, skipping snip.");
             root.dismiss();
+            return;
         }
 
         // Clamp region to screen bounds
@@ -322,7 +324,7 @@ PanelWindow {
         }
         switch (root.action) {
             case RegionSelection.SnipAction.Copy:
-                snipProc.command = ["bash", "-c", `${cropToStdout} | wl-copy && ${cleanup}`]
+                snipProc.command = ["bash", "-c", `${cropToStdout} | wl-copy && ${cleanup} && notify-send "Screenshot copied" "${rw}x${rh} region copied to clipboard" -a "Screenshot" -i camera-photo -t 3000`]
                 break;
             case RegionSelection.SnipAction.Edit:
                 snipProc.command = ["bash", "-c", `${cropToStdout} | swappy -f - && ${cleanup}`]
@@ -331,7 +333,7 @@ PanelWindow {
                 snipProc.command = ["bash", "-c", `${cropInPlace} && xdg-open "${root.imageSearchEngineBaseUrl}$(${uploadAndGetUrl(root.screenshotPath)})" && ${cleanup}`]
                 break;
             case RegionSelection.SnipAction.CharRecognition:
-                snipProc.command = ["bash", "-c", `${cropInPlace} && tesseract '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}' stdout -l $(tesseract --list-langs | awk 'NR>1{print $1}' | tr '\\n' '+' | sed 's/\\+$/\\n/') | wl-copy && ${cleanup}`]
+                snipProc.command = ["bash", "-c", `${cropInPlace} && tesseract '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}' stdout -l $(tesseract --list-langs | awk 'NR>1{print $1}' | tr '\\n' '+' | sed 's/\\+$/\\n/') | wl-copy && ${cleanup} && notify-send "Text recognized" "OCR text copied to clipboard" -a "OCR" -i edit-find -t 3000`]
                 break;
             case RegionSelection.SnipAction.Record:
                 snipProc.command = ["bash", "-c", `${Directories.recordScriptPath} --region '${slurpRegion}'`]
@@ -397,7 +399,7 @@ PanelWindow {
                 }
                 // Circle dragging?
                 else if (root.selectionMode === RegionSelection.SelectionMode.Circle) {
-                    const padding = Config.options.regionSelector.circle.padding + Config.options.regionSelector.circle.strokeWidth / 2;
+                    const padding = (Config.options?.regionSelector?.circle?.padding ?? 10) + (Config.options?.regionSelector?.circle?.strokeWidth ?? 2) / 2;
                     const dragPoints = (root.points.length > 0) ? root.points : [{ x: mouseArea.mouseX, y: mouseArea.mouseY }];
                     const maxX = Math.max(...dragPoints.map(p => p.x));
                     const minX = Math.min(...dragPoints.map(p => p.x));
@@ -505,60 +507,98 @@ PanelWindow {
             }
 
             // Controls
-            Row {
+            Item {
                 id: regionSelectionControls
                 z: 9999
+                implicitWidth: controlsLoader.implicitWidth
+                implicitHeight: controlsLoader.implicitHeight
+                opacity: 0
+                
+                readonly property bool useWaffle: Config.options?.panelFamily === "waffle"
+                
+                // Position: waffle = top center, material = bottom center
                 anchors {
                     horizontalCenter: parent.horizontalCenter
-                    bottom: parent.bottom
-                    bottomMargin: -height
+                    top: useWaffle ? parent.top : undefined
+                    bottom: useWaffle ? undefined : parent.bottom
+                    topMargin: useWaffle ? -height : 0
+                    bottomMargin: useWaffle ? 0 : -height
                 }
-                opacity: 0
+                
                 Connections {
                     target: root
                     function onVisibleChanged() {
                         if (!visible) return;
-                        regionSelectionControls.anchors.bottomMargin = 8;
+                        if (regionSelectionControls.useWaffle) {
+                            regionSelectionControls.anchors.topMargin = 16;
+                        } else {
+                            regionSelectionControls.anchors.bottomMargin = 8;
+                        }
                         regionSelectionControls.opacity = 1;
                     }
                 }
                 Behavior on opacity {
                     animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
                 }
+                Behavior on anchors.topMargin {
+                    animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
+                }
                 Behavior on anchors.bottomMargin {
                     animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
                 }
-                spacing: 6
 
-                OptionsToolbar {
-                    action: root.action
-                    selectionMode: root.selectionMode
-                    onActionChanged: root.action = action
-                    onSelectionModeChanged: root.selectionMode = selectionMode
-                    onDismiss: root.dismiss();
+                Loader {
+                    id: controlsLoader
+                    sourceComponent: regionSelectionControls.useWaffle ? waffleControls : materialControls
                 }
-                Item {
-                    anchors {
-                        verticalCenter: parent.verticalCenter
-                    }
-                    implicitWidth: closeFab.implicitWidth
-                    implicitHeight: closeFab.implicitHeight
-                    StyledRectangularShadow {
-                        target: closeFab
-                        radius: closeFab.buttonRadius
-                    }
-                    FloatingActionButton {
-                        id: closeFab
-                        baseSize: 48
-                        iconText: "close"
-                        onClicked: root.dismiss();
-                        StyledToolTip {
-                            text: Translation.tr("Close")
+
+                // Material ii controls
+                Component {
+                    id: materialControls
+                    Row {
+                        spacing: 6
+
+                        OptionsToolbar {
+                            action: root.action
+                            selectionMode: root.selectionMode
+                            onActionChanged: root.action = action
+                            onSelectionModeChanged: root.selectionMode = selectionMode
+                            onDismiss: root.dismiss();
                         }
-                        colBackground: Appearance.colors.colTertiaryContainer
-                        colBackgroundHover: Appearance.colors.colTertiaryContainerHover
-                        colRipple: Appearance.colors.colTertiaryContainerActive
-                        colOnBackground: Appearance.colors.colOnTertiaryContainer
+                        Item {
+                            anchors.verticalCenter: parent.verticalCenter
+                            implicitWidth: closeFab.implicitWidth
+                            implicitHeight: closeFab.implicitHeight
+                            StyledRectangularShadow {
+                                target: closeFab
+                                radius: closeFab.buttonRadius
+                            }
+                            FloatingActionButton {
+                                id: closeFab
+                                baseSize: 48
+                                iconText: "close"
+                                onClicked: root.dismiss();
+                                StyledToolTip {
+                                    text: Translation.tr("Close")
+                                }
+                                colBackground: Appearance.colors.colTertiaryContainer
+                                colBackgroundHover: Appearance.colors.colTertiaryContainerHover
+                                colRipple: Appearance.colors.colTertiaryContainerActive
+                                colOnBackground: Appearance.colors.colOnTertiaryContainer
+                            }
+                        }
+                    }
+                }
+
+                // Waffle (Windows 11) controls
+                Component {
+                    id: waffleControls
+                    WaffleRegion.WOptionsToolbar {
+                        action: root.action
+                        selectionMode: root.selectionMode
+                        onActionChanged: root.action = action
+                        onSelectionModeChanged: root.selectionMode = selectionMode
+                        onDismiss: root.dismiss()
                     }
                 }
             }

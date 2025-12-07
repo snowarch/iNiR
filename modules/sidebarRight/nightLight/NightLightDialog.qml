@@ -57,9 +57,9 @@ WindowDialog {
             iconSize: Appearance.font.pixelSize.larger
             buttonIcon: "night_sight_auto"
             text: Translation.tr("Automatic")
-            checked: Config.options.light.night.automatic
+            checked: Config.options?.light?.night?.automatic ?? false
             onCheckedChanged: {
-                Config.options.light.night.automatic = checked;
+                Config.setNestedValue("light.night.automatic", checked);
             }
         }
 
@@ -74,8 +74,8 @@ WindowDialog {
             from: 6500
             to: 1200
             stopIndicatorValues: [5000, to]
-            value: Config.options.light.night.colorTemperature
-            onMoved: Config.options.light.night.colorTemperature = value
+            value: Config.options?.light?.night?.colorTemperature ?? 4500
+            onMoved: Config.setNestedValue("light.night.colorTemperature", value)
             tooltipContent: `${Math.round(value)}K`
         }
     }
@@ -103,9 +103,9 @@ WindowDialog {
             iconSize: Appearance.font.pixelSize.larger
             buttonIcon: "flash_off"
             text: Translation.tr("Enable")
-            checked: Config.options.light.antiFlashbang.enable
+            checked: Config.options?.light?.antiFlashbang?.enable ?? false
             onCheckedChanged: {
-                Config.options.light.antiFlashbang.enable = checked;
+                Config.setNestedValue("light.antiFlashbang.enable", checked);
             }
             StyledToolTip {
                 text: Translation.tr("Example use case: eroge on one workspace, dark Discord window on another")
