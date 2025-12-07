@@ -616,9 +616,30 @@ if [[ -n "$WEB_BROWSER" ]]; then
 fi
 
 #####################################################################################
-# Set default wallpaper and generate initial theme
+# Copy bundled wallpapers to user's Pictures/Wallpapers (always, don't overwrite)
 #####################################################################################
-DEFAULT_WALLPAPER="${II_TARGET}/assets/wallpapers/Angel1.png"
+USER_WALLPAPERS_DIR="$(xdg-user-dir PICTURES 2>/dev/null || echo "$HOME/Pictures")/Wallpapers"
+if [[ -d "${II_TARGET}/assets/wallpapers" ]]; then
+  mkdir -p "${USER_WALLPAPERS_DIR}"
+  COPIED_COUNT=0
+  for wallpaper in "${II_TARGET}/assets/wallpapers"/*; do
+    if [[ -f "$wallpaper" ]]; then
+      dest="${USER_WALLPAPERS_DIR}/$(basename "$wallpaper")"
+      if [[ ! -f "$dest" ]]; then
+        cp "$wallpaper" "$dest"
+        ((COPIED_COUNT++))
+      fi
+    fi
+  done
+  if [[ $COPIED_COUNT -gt 0 ]]; then
+    log_success "Copied $COPIED_COUNT new wallpapers to ${USER_WALLPAPERS_DIR}"
+  fi
+fi
+
+#####################################################################################
+# Set default wallpaper and generate initial theme (first run only)
+#####################################################################################
+DEFAULT_WALLPAPER="${USER_WALLPAPERS_DIR}/Angel1.png"
 if [[ "${INSTALL_FIRSTRUN}" == true && -f "${DEFAULT_WALLPAPER}" ]]; then
   if ! ${quiet:-false}; then
     echo -e "${STY_CYAN}Setting default wallpaper...${STY_RST}"
@@ -631,30 +652,10 @@ if [[ "${INSTALL_FIRSTRUN}" == true && -f "${DEFAULT_WALLPAPER}" ]]; then
   mkdir -p "${XDG_CONFIG_HOME}/gtk-4.0"
   mkdir -p "${XDG_CONFIG_HOME}/fuzzel"
   
-  # Copy bundled wallpapers to user's Pictures/Wallpapers folder
-  USER_WALLPAPERS_DIR="$(xdg-user-dir PICTURES 2>/dev/null || echo "$HOME/Pictures")/Wallpapers"
-  if [[ -d "${II_TARGET}/assets/wallpapers" ]]; then
-    mkdir -p "${USER_WALLPAPERS_DIR}"
-    if ! ${quiet:-false}; then
-      echo -e "${STY_CYAN}Copying wallpapers to ${USER_WALLPAPERS_DIR}...${STY_RST}"
-    fi
-    # Copy all wallpapers, don't overwrite existing
-    for wallpaper in "${II_TARGET}/assets/wallpapers"/*; do
-      if [[ -f "$wallpaper" ]]; then
-        dest="${USER_WALLPAPERS_DIR}/$(basename "$wallpaper")"
-        if [[ ! -f "$dest" ]]; then
-          cp "$wallpaper" "$dest"
-        fi
-      fi
-    done
-    log_success "Wallpapers copied to ${USER_WALLPAPERS_DIR}"
-  fi
-  
-  # Update config.json with default wallpaper path (use the one in user's folder)
-  USER_DEFAULT_WALLPAPER="${USER_WALLPAPERS_DIR}/Angel1.png"
+  # Update config.json with default wallpaper path
   if [[ -f "${XDG_CONFIG_HOME}/illogical-impulse/config.json" ]]; then
     if command -v jq >/dev/null 2>&1; then
-      jq --arg path "${USER_DEFAULT_WALLPAPER}" '.background.wallpaperPath = $path' \
+      jq --arg path "${DEFAULT_WALLPAPER}" '.background.wallpaperPath = $path' \
         "${XDG_CONFIG_HOME}/illogical-impulse/config.json" > "${XDG_CONFIG_HOME}/illogical-impulse/config.json.tmp" \
         && mv "${XDG_CONFIG_HOME}/illogical-impulse/config.json.tmp" "${XDG_CONFIG_HOME}/illogical-impulse/config.json"
       log_success "Default wallpaper configured"
@@ -668,7 +669,7 @@ if [[ "${INSTALL_FIRSTRUN}" == true && -f "${DEFAULT_WALLPAPER}" ]]; then
       echo -e "${STY_CYAN}Generating theme colors from wallpaper...${STY_RST}"
     fi
     # Use --config to ensure correct config file is used
-    if matugen image "${USER_DEFAULT_WALLPAPER}" --mode dark --config "${XDG_CONFIG_HOME}/matugen/config.toml" 2>&1; then
+    if matugen image "${DEFAULT_WALLPAPER}" --mode dark --config "${XDG_CONFIG_HOME}/matugen/config.toml" 2>&1; then
       log_success "Theme colors generated"
     else
       log_warning "Matugen failed to generate colors. Theme may not work correctly."
