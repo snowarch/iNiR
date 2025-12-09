@@ -25,6 +25,7 @@ Scope {
     property bool useM3Layout: Config.options.altSwitcher && Config.options.altSwitcher.useM3Layout
     property bool centerPanel: Config.options.altSwitcher && Config.options.altSwitcher.panelAlignment === "center"
     property bool compactStyle: Config.options.altSwitcher && Config.options.altSwitcher.compactStyle
+    property bool listStyle: Config.options?.altSwitcher?.preset === "list"
     property bool showOverviewWhileSwitching: Config.options.altSwitcher && Config.options.altSwitcher.showOverviewWhileSwitching
     property bool overviewOpenedByAltSwitcher: false
 
@@ -262,7 +263,7 @@ Scope {
 
         Rectangle {
             id: panel
-            width: root.compactStyle ? compactRow.implicitWidth + 40 : root.panelWidth
+            width: root.listStyle ? 420 : (root.compactStyle ? compactRow.implicitWidth + 40 : root.panelWidth)
             height: root.compactStyle ? 100 : undefined
             color: "transparent"
             border.width: 0
@@ -270,7 +271,7 @@ Scope {
             states: [
                 State {
                     name: "right"
-                    when: !root.centerPanel && !root.compactStyle
+                    when: !root.centerPanel && !root.compactStyle && !root.listStyle
                     AnchorChanges {
                         target: panel
                         anchors.right: parent.right
@@ -283,7 +284,7 @@ Scope {
                 },
                 State {
                     name: "center"
-                    when: root.centerPanel || root.compactStyle
+                    when: root.centerPanel || root.compactStyle || root.listStyle
                     AnchorChanges {
                         target: panel
                         anchors.right: undefined
@@ -298,12 +299,14 @@ Scope {
             
             anchors.verticalCenter: parent.verticalCenter
 
-            implicitHeight: root.compactStyle ? 100 : Math.min(contentColumn.implicitHeight + Appearance.sizes.hyprlandGapsOut * 2,
-                                      parent.height - Appearance.sizes.hyprlandGapsOut * 2)
+            implicitHeight: root.listStyle 
+                ? Math.min(listContent.implicitHeight, parent.height - Appearance.sizes.hyprlandGapsOut * 2)
+                : (root.compactStyle ? 100 : Math.min(contentColumn.implicitHeight + Appearance.sizes.hyprlandGapsOut * 2,
+                                      parent.height - Appearance.sizes.hyprlandGapsOut * 2))
 
             Rectangle {
                 id: panelBackground
-                visible: !root.compactStyle
+                visible: !root.compactStyle && !root.listStyle
                 z: 0
                 anchors.fill: parent
                 radius: Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1
@@ -440,9 +443,182 @@ Scope {
                 }
             }
 
+            // List mode content
+            Rectangle {
+                id: listContent
+                visible: root.listStyle
+                z: 1
+                anchors.centerIn: parent
+                width: 400
+                implicitHeight: listHeader.height + listSeparator.height + listColumn.height
+                radius: Appearance.rounding.large
+                color: Appearance.colors.colSurfaceContainer
+
+                StyledRectangularShadow {
+                    target: listContent
+                    blur: 0.5 * Appearance.sizes.elevationMargin
+                    spread: 0
+                }
+
+                Column {
+                    anchors.fill: parent
+                    spacing: 0
+
+                    RowLayout {
+                        id: listHeader
+                        width: parent.width
+                        height: 44
+
+                        Item { width: 16 }
+                        StyledText {
+                            text: Translation.tr("Switch windows")
+                            font.pixelSize: Appearance.font.pixelSize.larger
+                            font.weight: Font.DemiBold
+                            color: Appearance.colors.colOnLayer1
+                        }
+                        Item { Layout.fillWidth: true }
+                        StyledText {
+                            text: (root.itemSnapshot?.length ?? 0) + " " + Translation.tr("windows")
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: Appearance.colors.colSubtext
+                        }
+                        Item { width: 16 }
+                    }
+
+                    Rectangle {
+                        id: listSeparator
+                        width: parent.width
+                        height: 1
+                        color: Appearance.colors.colLayer0Border
+                    }
+
+                    Column {
+                        id: listColumn
+                        width: parent.width
+                        topPadding: 8
+                        bottomPadding: 8
+                        leftPadding: 8
+                        rightPadding: 8
+                        spacing: 4
+
+                        Repeater {
+                            model: ScriptModel { values: root.itemSnapshot }
+
+                            RippleButton {
+                                id: listTile
+                                required property var modelData
+                                required property int index
+
+                                width: listColumn.width - listColumn.leftPadding - listColumn.rightPadding
+                                implicitHeight: 52
+                                buttonRadius: Appearance.rounding.normal
+                                toggled: listView.currentIndex === index
+
+                                colBackground: "transparent"
+                                colBackgroundHover: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.88)
+                                colBackgroundToggled: Appearance.colors.colPrimaryContainer
+                                colBackgroundToggledHover: ColorUtils.mix(Appearance.colors.colPrimaryContainer, Appearance.colors.colPrimary, 0.9)
+                                colRipple: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.7)
+                                colRippleToggled: ColorUtils.transparentize(Appearance.colors.colOnPrimaryContainer, 0.7)
+
+                                onClicked: {
+                                    listView.currentIndex = index
+                                    if (modelData?.id !== undefined) {
+                                        NiriService.focusWindow(modelData.id)
+                                    }
+                                }
+
+                                contentItem: RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 16
+                                    anchors.rightMargin: 16
+                                    spacing: 12
+
+                                    Rectangle {
+                                        Layout.alignment: Qt.AlignVCenter
+                                        width: 6
+                                        height: 6
+                                        radius: 3
+                                        color: Appearance.colors.colOnPrimaryContainer
+                                        visible: listTile.toggled
+                                    }
+
+                                    IconImage {
+                                        Layout.alignment: Qt.AlignVCenter
+                                        width: 32
+                                        height: 32
+                                        source: Quickshell.iconPath(
+                                            AppSearch.guessIcon(listTile.modelData?.appId ?? listTile.modelData?.appName ?? ""),
+                                            "image-missing"
+                                        )
+                                        implicitSize: 32
+                                    }
+
+                                    ColumnLayout {
+                                        Layout.fillWidth: true
+                                        Layout.alignment: Qt.AlignVCenter
+                                        spacing: 2
+
+                                        StyledText {
+                                            Layout.fillWidth: true
+                                            text: listTile.modelData?.appName ?? listTile.modelData?.title ?? "Window"
+                                            font.pixelSize: Appearance.font.pixelSize.normal
+                                            font.weight: listTile.toggled ? Font.DemiBold : Font.Normal
+                                            color: listTile.toggled ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer1
+                                            elide: Text.ElideRight
+                                        }
+
+                                        StyledText {
+                                            Layout.fillWidth: true
+                                            text: {
+                                                const wsIdx = listTile.modelData?.workspaceIdx
+                                                const title = listTile.modelData?.title
+                                                if (wsIdx && wsIdx > 0 && title && title !== listTile.modelData?.appName)
+                                                    return "WS " + wsIdx + " · " + title
+                                                if (wsIdx && wsIdx > 0)
+                                                    return "WS " + wsIdx
+                                                if (title && title !== listTile.modelData?.appName)
+                                                    return title
+                                                return ""
+                                            }
+                                            visible: text !== ""
+                                            font.pixelSize: Appearance.font.pixelSize.smaller
+                                            color: listTile.toggled 
+                                                ? ColorUtils.transparentize(Appearance.colors.colOnPrimaryContainer, 0.3) 
+                                                : Appearance.colors.colSubtext
+                                            elide: Text.ElideRight
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        Layout.alignment: Qt.AlignVCenter
+                                        visible: (listTile.modelData?.workspaceIdx ?? 0) > 0
+                                        width: wsText.implicitWidth + 12
+                                        height: 22
+                                        radius: Appearance.rounding.small
+                                        color: listTile.toggled 
+                                            ? ColorUtils.transparentize(Appearance.colors.colOnPrimaryContainer, 0.85)
+                                            : Appearance.colors.colLayer2
+
+                                        StyledText {
+                                            id: wsText
+                                            anchors.centerIn: parent
+                                            text: listTile.modelData?.workspaceIdx ?? ""
+                                            font.pixelSize: Appearance.font.pixelSize.smaller
+                                            font.weight: Font.DemiBold
+                                            color: listTile.toggled ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colSubtext
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             ColumnLayout {
                 id: contentColumn
-                visible: !root.compactStyle
+                visible: !root.compactStyle && !root.listStyle
                 z: 1
                 anchors.fill: parent
                 anchors.margins: Appearance.sizes.hyprlandGapsOut

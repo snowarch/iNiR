@@ -66,6 +66,9 @@ ContentPage {
                 onCheckedChanged: {
                     Config.options.overlay.darkenScreen = checked;
                 }
+                StyledToolTip {
+                    text: Translation.tr("Add a dark scrim behind overlay panels for better visibility")
+                }
             }
 
             ConfigSpinBox {
@@ -79,6 +82,9 @@ ContentPage {
                 onValueChanged: {
                     Config.options.overlay.scrimDim = value;
                 }
+                StyledToolTip {
+                    text: Translation.tr("How dark the background scrim should be")
+                }
             }
 
             ConfigSpinBox {
@@ -90,6 +96,9 @@ ContentPage {
                 stepSize: 5
                 onValueChanged: {
                     Config.options.overlay.backgroundOpacity = value / 100;
+                }
+                StyledToolTip {
+                    text: Translation.tr("Opacity of the overlay panel background")
                 }
             }
         }
@@ -104,6 +113,9 @@ ContentPage {
                 onCheckedChanged: {
                     Config.options.overlay.openingZoomAnimation = checked;
                 }
+                StyledToolTip {
+                    text: Translation.tr("Animate overlay panels with a zoom effect when opening")
+                }
             }
 
             ConfigSpinBox {
@@ -116,6 +128,9 @@ ContentPage {
                 onValueChanged: {
                     Config.options.overlay.animationDurationMs = value;
                 }
+                StyledToolTip {
+                    text: Translation.tr("Duration of overlay open/close animations")
+                }
             }
 
             ConfigSpinBox {
@@ -127,6 +142,9 @@ ContentPage {
                 stepSize: 20
                 onValueChanged: {
                     Config.options.overlay.scrimAnimationDurationMs = value;
+                }
+                StyledToolTip {
+                    text: Translation.tr("Duration of the background scrim fade animation")
                 }
             }
         }
@@ -155,154 +173,135 @@ ContentPage {
         ConfigSwitch {
             buttonIcon: "colors"
             text: Translation.tr("Tint app icons")
-            checked: Config.options.altSwitcher ? Config.options.altSwitcher.monochromeIcons : false
-            onCheckedChanged: {
-                if (!Config.options.altSwitcher)
-                    Config.options.altSwitcher = ({})
-                Config.options.altSwitcher.monochromeIcons = checked;
+            checked: Config.options?.altSwitcher?.monochromeIcons ?? false
+            onCheckedChanged: Config.setNestedValue("altSwitcher.monochromeIcons", checked)
+            StyledToolTip {
+                text: Translation.tr("Apply accent color tint to app icons in the switcher")
             }
         }
 
         ConfigSwitch {
             buttonIcon: "movie"
             text: Translation.tr("Enable slide animation")
-            checked: !Config.options.altSwitcher || Config.options.altSwitcher.enableAnimation !== false
-            onCheckedChanged: {
-                if (!Config.options.altSwitcher)
-                    Config.options.altSwitcher = ({})
-                Config.options.altSwitcher.enableAnimation = checked;
+            checked: Config.options?.altSwitcher?.enableAnimation ?? true
+            onCheckedChanged: Config.setNestedValue("altSwitcher.enableAnimation", checked)
+            StyledToolTip {
+                text: Translation.tr("Animate window selection with a slide effect")
             }
         }
 
         ConfigSpinBox {
             icon: "speed"
             text: Translation.tr("Animation duration (ms)")
-            value: Config.options.altSwitcher && Config.options.altSwitcher.animationDurationMs !== undefined
-                   ? Config.options.altSwitcher.animationDurationMs
-                   : 200
+            value: Config.options?.altSwitcher?.animationDurationMs ?? 200
             from: 0
             to: 1000
             stepSize: 25
-            onValueChanged: {
-                if (!Config.options.altSwitcher)
-                    Config.options.altSwitcher = ({})
-                Config.options.altSwitcher.animationDurationMs = value;
+            onValueChanged: Config.setNestedValue("altSwitcher.animationDurationMs", value)
+            StyledToolTip {
+                text: Translation.tr("Duration of the slide animation between windows")
             }
         }
 
         ConfigSwitch {
             buttonIcon: "history"
             text: Translation.tr("Most recently used first")
-            checked: Config.options.altSwitcher && Config.options.altSwitcher.useMostRecentFirst !== false
-            onCheckedChanged: {
-                if (!Config.options.altSwitcher)
-                    Config.options.altSwitcher = ({})
-                Config.options.altSwitcher.useMostRecentFirst = checked;
+            checked: Config.options?.altSwitcher?.useMostRecentFirst ?? true
+            onCheckedChanged: Config.setNestedValue("altSwitcher.useMostRecentFirst", checked)
+            StyledToolTip {
+                text: Translation.tr("Order windows by most recently focused instead of position")
             }
         }
 
         ConfigSpinBox {
             icon: "opacity"
             text: Translation.tr("Background opacity (%)")
-            value: Config.options.altSwitcher && Config.options.altSwitcher.backgroundOpacity !== undefined
-                   ? Math.round(Config.options.altSwitcher.backgroundOpacity * 100)
-                   : 90
+            value: Math.round((Config.options?.altSwitcher?.backgroundOpacity ?? 0.9) * 100)
             from: 10
             to: 100
             stepSize: 5
-            onValueChanged: {
-                if (!Config.options.altSwitcher)
-                    Config.options.altSwitcher = ({})
-                Config.options.altSwitcher.backgroundOpacity = value / 100;
+            onValueChanged: Config.setNestedValue("altSwitcher.backgroundOpacity", value / 100)
+            StyledToolTip {
+                text: Translation.tr("Opacity of the switcher panel background")
             }
         }
 
         ConfigSpinBox {
             icon: "blur_on"
             text: Translation.tr("Blur amount (%)")
-            value: Config.options.altSwitcher && Config.options.altSwitcher.blurAmount !== undefined
-                   ? Math.round(Config.options.altSwitcher.blurAmount * 100)
-                   : 40
+            value: Math.round((Config.options?.altSwitcher?.blurAmount ?? 0.4) * 100)
             from: 0
             to: 100
             stepSize: 5
-            onValueChanged: {
-                if (!Config.options.altSwitcher)
-                    Config.options.altSwitcher = ({})
-                Config.options.altSwitcher.blurAmount = value / 100;
+            onValueChanged: Config.setNestedValue("altSwitcher.blurAmount", value / 100)
+            StyledToolTip {
+                text: Translation.tr("Amount of blur applied to the switcher background")
             }
         }
 
         ConfigSpinBox {
             icon: "opacity"
             text: Translation.tr("Scrim dim (%)")
-            value: Config.options.altSwitcher && Config.options.altSwitcher.scrimDim !== undefined
-                   ? Config.options.altSwitcher.scrimDim
-                   : 35
+            value: Config.options?.altSwitcher?.scrimDim ?? 35
             from: 0
             to: 100
             stepSize: 5
-            onValueChanged: {
-                if (!Config.options.altSwitcher)
-                    Config.options.altSwitcher = ({})
-                Config.options.altSwitcher.scrimDim = value;
+            onValueChanged: Config.setNestedValue("altSwitcher.scrimDim", value)
+            StyledToolTip {
+                text: Translation.tr("How dark the screen behind the switcher should be")
             }
         }
 
         ConfigSpinBox {
             icon: "hourglass_top"
             text: Translation.tr("Auto-hide delay after selection (ms)")
-            value: Config.options.altSwitcher && Config.options.altSwitcher.autoHideDelayMs !== undefined
-                   ? Config.options.altSwitcher.autoHideDelayMs
-                   : 500
+            value: Config.options?.altSwitcher?.autoHideDelayMs ?? 500
             from: 50
             to: 2000
             stepSize: 50
-            onValueChanged: {
-                if (!Config.options.altSwitcher)
-                    Config.options.altSwitcher = ({})
-                Config.options.altSwitcher.autoHideDelayMs = value;
+            onValueChanged: Config.setNestedValue("altSwitcher.autoHideDelayMs", value)
+            StyledToolTip {
+                text: Translation.tr("How long to wait before hiding the switcher after releasing Alt")
             }
         }
 
         ConfigSwitch {
             buttonIcon: "overview_key"
             text: Translation.tr("Show Niri overview while switching")
-            checked: Config.options.altSwitcher && Config.options.altSwitcher.showOverviewWhileSwitching
-            onCheckedChanged: {
-                if (!Config.options.altSwitcher)
-                    Config.options.altSwitcher = ({})
-                Config.options.altSwitcher.showOverviewWhileSwitching = checked;
+            checked: Config.options?.altSwitcher?.showOverviewWhileSwitching ?? false
+            onCheckedChanged: Config.setNestedValue("altSwitcher.showOverviewWhileSwitching", checked)
+            StyledToolTip {
+                text: Translation.tr("Open Niri's native overview alongside the window switcher")
             }
+        }
+
+        ConfigSelectionArray {
+            options: [
+                { displayName: Translation.tr("Default (sidebar)"), icon: "side_navigation", value: "default" },
+                { displayName: Translation.tr("List (centered)"), icon: "list", value: "list" }
+            ]
+            currentValue: Config.options?.altSwitcher?.preset ?? "default"
+            onSelected: (newValue) => Config.options.altSwitcher.preset = newValue
         }
 
         ContentSubsection {
             title: Translation.tr("Layout & alignment")
 
             ConfigSwitch {
+                enabled: Config.options?.altSwitcher?.preset !== "list"
                 buttonIcon: "view_compact"
                 text: Translation.tr("Compact horizontal style (icons only)")
-                checked: Config.options.altSwitcher && Config.options.altSwitcher.compactStyle
-                onCheckedChanged: {
-                    if (!Config.options.altSwitcher)
-                        Config.options.altSwitcher = ({})
-                    Config.options.altSwitcher.compactStyle = checked;
-                }
+                checked: Config.options?.altSwitcher?.compactStyle ?? false
+                onCheckedChanged: Config.setNestedValue("altSwitcher.compactStyle", checked)
                 StyledToolTip {
                     text: Translation.tr("Show only app icons in a horizontal row, similar to macOS Spotlight")
                 }
             }
 
             ConfigSelectionArray {
-                enabled: !Config.options.altSwitcher || !Config.options.altSwitcher.compactStyle
-                currentValue: Config.options.altSwitcher && Config.options.altSwitcher.panelAlignment
-                               ? Config.options.altSwitcher.panelAlignment
-                               : "right"
-                onSelected: newValue => {
-                    if (!Config.options.altSwitcher)
-                        Config.options.altSwitcher = ({})
-                    Config.options.altSwitcher.panelAlignment = newValue;
-                }
+                enabled: !Config.options?.altSwitcher?.compactStyle && Config.options?.altSwitcher?.preset !== "list"
+                currentValue: Config.options?.altSwitcher?.panelAlignment ?? "right"
+                onSelected: newValue => Config.setNestedValue("altSwitcher.panelAlignment", newValue)
                 options: [
                     {
                         displayName: Translation.tr("Align to right edge"),
@@ -318,15 +317,11 @@ ContentPage {
             }
 
             ConfigSwitch {
-                enabled: !Config.options.altSwitcher || !Config.options.altSwitcher.compactStyle
+                enabled: !Config.options?.altSwitcher?.compactStyle && Config.options?.altSwitcher?.preset !== "list"
                 buttonIcon: "styler"
                 text: Translation.tr("Use Material 3 card layout")
-                checked: Config.options.altSwitcher && Config.options.altSwitcher.useM3Layout
-                onCheckedChanged: {
-                    if (!Config.options.altSwitcher)
-                        Config.options.altSwitcher = ({})
-                    Config.options.altSwitcher.useM3Layout = checked;
-                }
+                checked: Config.options?.altSwitcher?.useM3Layout ?? false
+                onCheckedChanged: Config.setNestedValue("altSwitcher.useM3Layout", checked)
             }
         }
     }
@@ -343,6 +338,9 @@ ContentPage {
             onCheckedChanged: {
                 Config.options.dock.enable = checked;
             }
+            StyledToolTip {
+                text: Translation.tr("Show the macOS-style dock at the bottom of the screen")
+            }
         }
 
         ConfigRow {
@@ -354,6 +352,9 @@ ContentPage {
                 onCheckedChanged: {
                     Config.options.dock.hoverToReveal = checked;
                 }
+                StyledToolTip {
+                    text: Translation.tr("Show dock when hovering the bottom edge of the screen")
+                }
             }
             ConfigSwitch {
                 buttonIcon: "keep"
@@ -361,6 +362,9 @@ ContentPage {
                 checked: Config.options.dock.pinnedOnStartup
                 onCheckedChanged: {
                     Config.options.dock.pinnedOnStartup = checked;
+                }
+                StyledToolTip {
+                    text: Translation.tr("Keep dock visible when the shell starts")
                 }
             }
         }
@@ -371,6 +375,9 @@ ContentPage {
             onCheckedChanged: {
                 Config.options.dock.monochromeIcons = checked;
             }
+            StyledToolTip {
+                text: Translation.tr("Apply accent color tint to dock app icons")
+            }
         }
         ConfigSwitch {
             buttonIcon: "widgets"
@@ -379,6 +386,9 @@ ContentPage {
             onCheckedChanged: {
                 Config.options.dock.showBackground = checked;
             }
+            StyledToolTip {
+                text: Translation.tr("Show a semi-transparent background behind the dock")
+            }
         }
         ConfigSwitch {
             buttonIcon: "blur_on"
@@ -386,6 +396,9 @@ ContentPage {
             checked: Config.options.dock.enableBlurGlass
             onCheckedChanged: {
                 Config.options.dock.enableBlurGlass = checked;
+            }
+            StyledToolTip {
+                text: Translation.tr("Apply blur effect to the dock background")
             }
         }
 
@@ -606,6 +619,9 @@ ContentPage {
             stepSize: 1000
             onValueChanged: {
                 Config.options.notifications.timeout = value;
+            }
+            StyledToolTip {
+                text: Translation.tr("Default time before notifications auto-dismiss")
             }
         }
 
@@ -1041,6 +1057,9 @@ ContentPage {
             onValueChanged: {
                 Config.options.osd.timeout = value;
             }
+            StyledToolTip {
+                text: Translation.tr("How long the volume/brightness indicator stays visible")
+            }
         }
     }
 
@@ -1056,6 +1075,9 @@ ContentPage {
             onCheckedChanged: {
                 Config.options.overview.enable = checked;
             }
+            StyledToolTip {
+                text: Translation.tr("Enable the app launcher and workspace overview (Super+Space)")
+            }
         }
         ConfigSwitch {
             buttonIcon: "center_focus_strong"
@@ -1063,6 +1085,9 @@ ContentPage {
             checked: Config.options.overview.centerIcons
             onCheckedChanged: {
                 Config.options.overview.centerIcons = checked;
+            }
+            StyledToolTip {
+                text: Translation.tr("Center app icons in the launcher grid")
             }
         }
         ConfigSpinBox {
@@ -1074,6 +1099,9 @@ ContentPage {
             stepSize: 1
             onValueChanged: {
                 Config.options.overview.scale = value / 100;
+            }
+            StyledToolTip {
+                text: Translation.tr("Scale of workspace previews in the overview")
             }
         }
         ConfigRow {
@@ -1088,6 +1116,9 @@ ContentPage {
                 onValueChanged: {
                     Config.options.overview.rows = value;
                 }
+                StyledToolTip {
+                    text: Translation.tr("Number of rows in the app launcher grid")
+                }
             }
             ConfigSpinBox {
                 icon: "splitscreen_right"
@@ -1098,6 +1129,9 @@ ContentPage {
                 stepSize: 1
                 onValueChanged: {
                     Config.options.overview.columns = value;
+                }
+                StyledToolTip {
+                    text: Translation.tr("Number of columns in the app launcher grid")
                 }
             }
         }
@@ -1421,6 +1455,9 @@ ContentPage {
             checked: Config.options.wallpaperSelector.useSystemFileDialog
             onCheckedChanged: {
                 Config.options.wallpaperSelector.useSystemFileDialog = checked;
+            }
+            StyledToolTip {
+                text: Translation.tr("Use your system's native file picker instead of the built-in one")
             }
         }
     }
