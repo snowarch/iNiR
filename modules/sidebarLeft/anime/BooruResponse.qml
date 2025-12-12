@@ -15,6 +15,10 @@ Rectangle {
     property var responseData
     property var tagInputField
 
+    // Optional hook for the parent view (e.g., WallhavenView) to request auto-scroll
+    // when the user clicks paging buttons.
+    property var onNextPageRequested
+
     property string previewDownloadPath
     property string downloadPath
     property string nsfwPath
@@ -243,12 +247,14 @@ Rectangle {
                     delegate: BooruImage {
                         required property var modelData
                         imageData: modelData
+                        fallbackTags: root.responseData.tags
+                        aspectCrop: root.responseData.provider === "wallhaven"
                         rowHeight: imageRow.rowHeight
                         // Clean layout: no radius, no background. Normal: 50 for single image, normal rounding for multiple
                         imageRadius: root.cleanLayout ? Appearance.rounding.small : (imageRow.modelData.images.length == 1 ? 50 : Appearance.rounding.normal)
                         showBackground: !root.cleanLayout
-                        // Disable hover tooltips for Wallhaven provider to avoid empty bubbles
-                        enableTooltip: root.responseData.provider !== "wallhaven"
+                        // Wallhaven search often lacks per-image tags; BooruImage will fall back to response tags.
+                        enableTooltip: true
                         // Download manually to reduce redundant requests or make sure downloading works
                         manualDownload: ["danbooru", "waifu.im", "t.alcy.cc"].includes(root.responseData.provider)
                         previewDownloadPath: root.previewDownloadPath
@@ -279,6 +285,10 @@ Rectangle {
                     if (clickHandled) return
                     clickHandled = true
                     clickResetTimer.restart()
+
+                    if (root.onNextPageRequested) {
+                        root.onNextPageRequested(root.responseData)
+                    }
                     
                     tagInputField.text = `${responseData.tags.join(" ")} ${parseInt(root.responseData.page) + 1}`
                     tagInputField.accept()

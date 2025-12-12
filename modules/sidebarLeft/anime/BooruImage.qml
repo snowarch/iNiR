@@ -16,7 +16,9 @@ import Quickshell.Hyprland
 Button {
     id: root
     property var imageData
+    property var fallbackTags: []
     property var rowHeight
+    property bool aspectCrop: false
     property bool manualDownload: false
     property string previewDownloadPath
     property string downloadPath
@@ -30,11 +32,23 @@ Button {
     // Allow consumers (e.g. Wallhaven) to opt-out of hover tooltips
     property bool enableTooltip: true
     property bool buttonHovered: false
+
+    readonly property string _tagText: {
+        if (root.imageData && root.imageData.tags && root.imageData.tags.length > 0)
+            return root.imageData.tags
+        if (root.fallbackTags && root.fallbackTags.length > 0)
+            return root.fallbackTags
+        if (root.aspectCrop)
+            return Translation.tr("Loading tags…")
+        return ""
+    }
+
+    hoverEnabled: true
     
     Process {
         id: downloadProcess
         running: false
-        command: ["bash", "-c", `mkdir -p '${root.previewDownloadPath}' && [ -f ${root.filePath} ] || curl -sSL '${root.imageData.preview_url ?? root.imageData.sample_url}' -o '${root.filePath}'`]
+        command: ["/usr/bin/bash", "-c", `mkdir -p '${root.previewDownloadPath}' && [ -f ${root.filePath} ] || curl -sSL '${root.imageData.preview_url ?? root.imageData.sample_url}' -o '${root.filePath}'`]
         onExited: (exitCode, exitStatus) => {
             imageObject.source = `${previewDownloadPath}/${root.fileName}`
         }
@@ -47,8 +61,9 @@ Button {
     }
 
     StyledToolTip {
-        visible: root.enableTooltip && root.imageData && root.imageData.tags && root.imageData.tags.length > 0
-        text: `${StringUtils.wordWrap(root.imageData.tags, root.maxTagStringLineLength)}`
+        extraVisibleCondition: root.enableTooltip && root.imageData && root._tagText.length > 0
+        alternativeVisibleCondition: root.buttonHovered || root.hovered
+        text: `${StringUtils.wordWrap(root._tagText, root.maxTagStringLineLength)}`
     }
 
     padding: 0
@@ -70,7 +85,7 @@ Button {
             anchors.fill: parent
             width: root.rowHeight * modelData.aspect_ratio
             height: root.rowHeight
-            fillMode: Image.PreserveAspectFit
+            fillMode: root.aspectCrop ? Image.PreserveAspectCrop : Image.PreserveAspectFit
             source: modelData.preview_url
             sourceSize.width: root.rowHeight * modelData.aspect_ratio
             sourceSize.height: root.rowHeight
@@ -89,13 +104,35 @@ Button {
             anchors.fill: parent
             acceptedButtons: Qt.RightButton
             hoverEnabled: true
+            propagateComposedEvents: true
             onEntered: root.buttonHovered = true
             onExited: root.buttonHovered = false
-            onClicked: (mouse) => {
-                if (mouse.button === Qt.RightButton) {
-                    contextMenu.active = true
-                    mouse.accepted = true
+            onWheel: wheel => {
+                if (contextMenu.active) {
+                    contextMenu.close()
                 }
+                wheel.accepted = false
+            }
+            onPressed: mouse => {
+                if (mouse.button !== Qt.RightButton)
+                    return
+
+                // Anchor the menu at cursor position instead of image center.
+                // (Coordinates are local to this MouseArea / image contentItem.)
+                menuAnchor.x = mouse.x
+                menuAnchor.y = mouse.y
+
+                // Re-open cleanly if it was already open.
+                if (contextMenu.active) {
+                    contextMenu.close()
+                }
+
+                contextMenu.active = true
+                Qt.callLater(() => {
+                    contextMenu.updateAnchor()
+                    contextMenu.grabFocus()
+                })
+                mouse.accepted = true
             }
         }
 
@@ -108,7 +145,7 @@ Button {
             implicitHeight: buttonSize
             implicitWidth: buttonSize
 
-            buttonRadius: Appearance.rounding.full
+            buttonRadius: buttonSize / 2
             colBackground: ColorUtils.transparentize(Appearance.m3colors.m3surface, 0.3)
             colBackgroundHover: ColorUtils.transparentize(ColorUtils.mix(Appearance.m3colors.m3surface, Appearance.m3colors.m3onSurface, 0.8), 0.2)
             colRipple: ColorUtils.transparentize(ColorUtils.mix(Appearance.m3colors.m3surface, Appearance.m3colors.m3onSurface, 0.6), 0.1)
@@ -125,10 +162,9 @@ Button {
             }
         }
 
-        // Invisible anchor point at center of image for context menu positioning
+        // Invisible anchor point for context menu positioning (set to cursor position on right-click)
         Item {
             id: menuAnchor
-            anchors.centerIn: parent
             width: 1
             height: 1
             z: 1000
@@ -166,7 +202,7 @@ Button {
                     action: () => {
                         const targetPath = root.imageData.is_nsfw ? root.nsfwPath : root.downloadPath;
                         const localPath = `${targetPath}/${root.fileName}`;
-                        Quickshell.execDetached(["bash", "-c", 
+                        Quickshell.execDetached(["/usr/bin/bash", "-c", 
                             `mkdir -p '${targetPath}' && curl '${root.imageData.file_url}' -o '${localPath}' && notify-send '${Translation.tr("Download complete")}' '${localPath}' -a 'Shell'`
                         ])
                         Quickshell.execDetached(["xdg-open", targetPath])
@@ -179,7 +215,7 @@ Button {
                         const targetPath = root.imageData.is_nsfw ? root.nsfwPath : root.downloadPath;
                         const localPath = `${targetPath}/${root.fileName}`;
                         const mode = Appearance.m3colors.darkmode ? "dark" : "light";
-                        Quickshell.execDetached(["bash", "-c",
+                        Quickshell.execDetached(["/usr/bin/bash", "-c",
                             `mkdir -p '${targetPath}' && curl -sSL '${root.imageData.file_url}' -o '${localPath}' && '${Directories.wallpaperSwitchScriptPath}' --image '${localPath}' --mode '${mode}'`
                         ])
                     }

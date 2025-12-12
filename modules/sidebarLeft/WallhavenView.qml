@@ -28,6 +28,14 @@ Item {
     property int pullLoadingGap: 80
     property real normalizedPullDistance: Math.max(0, (1 - Math.exp(-wallhavenResponseListView.verticalOvershoot / 50)) * wallhavenResponseListView.dragging)
 
+    // Used to auto-scroll to the next page section after the request completes.
+    property int _pendingScrollToPage: -1
+    property string _pendingScrollTagsKey: ""
+
+    function _tagsKey(tags) {
+        return (tags || []).join(" ")
+    }
+
     Connections {
         target: Wallhaven
         function onResponseFinished() {
@@ -117,6 +125,41 @@ Item {
         }
     ]
 
+    function parseTagsAndPage(inputText) {
+        const parts = inputText.split(/\s+/).filter(p => p.length > 0)
+        let pageIndex = 1
+        let tags = []
+        let hashParts = null
+
+        for (let i = 0; i < parts.length; ++i) {
+            const part = parts[i]
+
+            if (/^\d+$/.test(part)) {
+                pageIndex = parseInt(part, 10)
+                continue
+            }
+
+            if (part.startsWith("#")) {
+                if (hashParts && hashParts.length > 0) {
+                    const t = hashParts.join("_").replace(/^_+|_+$/g, "")
+                    if (t.length > 0) tags.push(t)
+                }
+                hashParts = [part.substring(1)]
+            } else if (hashParts) {
+                hashParts.push(part)
+            } else {
+                tags.push(part)
+            }
+        }
+
+        if (hashParts && hashParts.length > 0) {
+            const t = hashParts.join("_").replace(/^_+|_+$/g, "")
+            if (t.length > 0) tags.push(t)
+        }
+
+        return { tags, pageIndex }
+    }
+
     function handleInput(inputText) {
         if (inputText.startsWith(root.commandPrefix)) {
             const command = inputText.split(" ")[0].substring(1);
@@ -132,16 +175,13 @@ Item {
             root.handleInput(`${root.commandPrefix}next`);
         }
         else {
-            const tagList = inputText.split(/\s+/).filter(tag => tag.length > 0);
-            let pageIndex = 1;
-            for (let i = 0; i < tagList.length; ++i) {
-                if (/^\d+$/.test(tagList[i])) {
-                    pageIndex = parseInt(tagList[i], 10);
-                    tagList.splice(i, 1);
-                    break;
-                }
-            }
-            Wallhaven.makeRequest(tagList, Persistent.states.booru.allowNsfw, Config.options.sidebar.wallhaven.limit, pageIndex);
+            const parsed = root.parseTagsAndPage(inputText)
+            Wallhaven.makeRequest(
+                parsed.tags,
+                Persistent.states.booru.allowNsfw,
+                Config.options?.sidebar?.wallhaven?.limit ?? Wallhaven.defaultLimit,
+                parsed.pageIndex
+            );
         }
     }
 
@@ -200,8 +240,16 @@ Item {
                 anchors.fill: parent
                 spacing: 10
 
-                touchpadScrollFactor: Config.options.interactions.scrolling.touchpadScrollFactor * 1.4
-                mouseScrollFactor: Config.options.interactions.scrolling.mouseScrollFactor * 1.4
+                touchpadScrollFactor: (Config.options?.interactions?.scrolling?.touchpadScrollFactor ?? 1.0) * 1.4
+                mouseScrollFactor: (Config.options?.interactions?.scrolling?.mouseScrollFactor ?? 1.0) * 1.4
+
+                Behavior on contentY {
+                    enabled: !wallhavenResponseListView.dragging && !wallhavenResponseListView.moving
+                    NumberAnimation {
+                        duration: 120
+                        easing.type: Easing.OutCubic
+                    }
+                }
 
                 property int lastResponseLength: 0
                 property bool userIsScrolling: false
@@ -225,6 +273,24 @@ Item {
                                 wallhavenResponseListView.contentY = wallhavenResponseListView.contentY + root.scrollOnNewResponse
                             }
                             wallhavenResponseListView.lastResponseLength = root.responses.length
+
+                            // If a next-page click requested an auto-scroll, position the new page section.
+                            if (root._pendingScrollToPage > 0) {
+                                for (let i = 0; i < root.responses.length; ++i) {
+                                    const r = root.responses[i]
+                                    if (!r || r.provider !== "wallhaven")
+                                        continue
+                                    if (parseInt(r.page) !== root._pendingScrollToPage)
+                                        continue
+                                    if (root._tagsKey(r.tags) !== root._pendingScrollTagsKey)
+                                        continue
+
+                                    wallhavenResponseListView.positionViewAtIndex(i, ListView.Center)
+                                    root._pendingScrollToPage = -1
+                                    root._pendingScrollTagsKey = ""
+                                    break
+                                }
+                            }
                         }
                     }
                 }
@@ -245,6 +311,13 @@ Item {
                     rowMaxHeight: 300
                     imageSpacing: 4
                     responsePadding: 0
+
+                    onNextPageRequested: (resp) => {
+                        if (!resp)
+                            return
+                        root._pendingScrollToPage = parseInt(resp.page) + 1
+                        root._pendingScrollTagsKey = root._tagsKey(resp.tags)
+                    }
                 }
 
                 onDragEnded: {
@@ -253,6 +326,27 @@ Item {
                         root.pullLoading = true
                         root.handleInput(`${root.commandPrefix}next`)
                     }
+                }
+            }
+
+            MouseArea {
+                z: 2
+                anchors.fill: wallhavenResponseListView
+                acceptedButtons: Qt.NoButton
+                propagateComposedEvents: true
+                onWheel: function(wheelEvent) {
+                    // Ensure wheel works immediately across page boundaries / delegates.
+                    wallhavenResponseListView.forceActiveFocus()
+
+                    const threshold = 120
+                    const delta = wheelEvent.angleDelta.y / threshold
+                    const scrollFactor = Math.abs(wheelEvent.angleDelta.y) >= threshold
+                        ? wallhavenResponseListView.mouseScrollFactor
+                        : wallhavenResponseListView.touchpadScrollFactor
+
+                    const maxY = Math.max(0, wallhavenResponseListView.contentHeight - wallhavenResponseListView.height)
+                    wallhavenResponseListView.contentY = Math.max(0, Math.min(wallhavenResponseListView.contentY - delta * scrollFactor, maxY))
+                    wheelEvent.accepted = true
                 }
             }
 
@@ -271,7 +365,7 @@ Item {
                     shown: true
                     icon: "image"
                     title: Translation.tr("Wallhaven wallpapers")
-                    description: Translation.tr("Type tags and hit Enter to search on wallhaven.cc")
+                    description: Translation.tr("Type tags and hit Enter to search on wallhaven.cc\nUse #tag for multi-word tags (spaces become underscores)")
                     shape: MaterialShape.Shape.Bun
                 }
             }
@@ -292,6 +386,7 @@ Item {
                         { label: Translation.tr("Latest"), sorting: "date_added" },
                         { label: Translation.tr("Random"), sorting: "random" },
                     ]
+
                     delegate: ApiCommandButton {
                         required property var modelData
                         buttonText: modelData.label
@@ -302,7 +397,12 @@ Item {
                             if (modelData.topRange !== undefined) {
                                 Wallhaven.topRange = modelData.topRange
                             }
-                            Wallhaven.makeRequest([], Persistent.states.booru.allowNsfw, Config.options.sidebar.wallhaven.limit, 1)
+                            Wallhaven.makeRequest(
+                                [],
+                                Persistent.states.booru.allowNsfw,
+                                Config.options?.sidebar?.wallhaven?.limit ?? Wallhaven.defaultLimit,
+                                1
+                            )
                         }
                     }
                 }
@@ -418,7 +518,7 @@ Item {
                     padding: 10
                     color: activeFocus ? Appearance.m3colors.m3onSurface : Appearance.m3colors.m3onSurfaceVariant
                     renderType: Text.NativeRendering
-                    placeholderText: Translation.tr('Enter tags, or "%1" for commands').arg(root.commandPrefix)
+                    placeholderText: Translation.tr('Enter tags (use #tag for multi-word), or "%1" for commands').arg(root.commandPrefix)
                     background: null
 
                     onTextChanged: {
@@ -523,7 +623,7 @@ Item {
                 ApiInputBoxIndicator {
                     icon: "image"
                     text: "wallhaven.cc"
-                    tooltipText: Translation.tr("Search wallpapers from wallhaven.cc\nUse %1safe or %2lewd to toggle NSFW (requires API key)\nUse %1top, %1topw, %1latest, %1random for listing modes")
+                    tooltipText: Translation.tr("Search wallpapers from wallhaven.cc\nUse #tag for multi-word tags (spaces become underscores)\nExample: #xenoblade chronicles\nUse %1safe or %2lewd to toggle NSFW (requires API key)\nUse %1top, %1topw, %1latest, %1random for listing modes")
                         .arg(root.commandPrefix).arg(root.commandPrefix)
                 }
 

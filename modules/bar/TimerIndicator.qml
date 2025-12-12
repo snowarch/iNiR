@@ -1,3 +1,4 @@
+import qs
 import QtQuick
 import QtQuick.Layouts
 import qs.modules.common
@@ -11,10 +12,32 @@ import qs.services
 MouseArea {
     id: root
 
-    readonly property bool pomodoroActive: TimerService?.pomodoroRunning ?? false
-    readonly property bool countdownActive: TimerService?.countdownRunning ?? false
-    readonly property bool stopwatchActive: TimerService?.stopwatchRunning ?? false
+    readonly property bool pinnedToBar: Persistent.states?.timer?.pinnedToBar ?? false
+
+    readonly property bool pomodoroRunning: TimerService?.pomodoroRunning ?? false
+    readonly property bool countdownRunning: TimerService?.countdownRunning ?? false
+    readonly property bool stopwatchRunning: TimerService?.stopwatchRunning ?? false
+
+    readonly property bool pomodoroActive: pomodoroRunning || (TimerService?.pomodoroSecondsLeft ?? 0) < (TimerService?.pomodoroLapDuration ?? 0)
+    readonly property bool countdownFinished: !countdownRunning && (TimerService?.countdownSecondsLeft ?? 0) <= 0
+        && (TimerService?.countdownDuration ?? 0) > 0
+
+    readonly property bool countdownActive: !countdownFinished && (countdownRunning
+        || (TimerService?.countdownSecondsLeft ?? 0) < (TimerService?.countdownDuration ?? 0))
+    readonly property bool stopwatchActive: stopwatchRunning || (TimerService?.stopwatchTime ?? 0) > 0 || ((TimerService?.stopwatchLaps?.length ?? 0) > 0)
+
     readonly property bool anyActive: pomodoroActive || countdownActive || stopwatchActive
+
+    readonly property bool showPinnedIdle: pinnedToBar && !anyActive
+
+    readonly property bool currentRunning: {
+        if (root.pomodoroActive) return root.pomodoroRunning
+        if (root.countdownActive) return root.countdownRunning
+        if (root.stopwatchActive) return root.stopwatchRunning
+        return false
+    }
+
+    readonly property bool paused: root.anyActive && !root.currentRunning
 
     readonly property string timeText: {
         if (pomodoroActive) {
@@ -60,14 +83,59 @@ MouseArea {
         return Appearance.colors.colOnLayer1
     }
 
-    visible: anyActive
-    implicitWidth: anyActive ? contentRow.implicitWidth + 16 : 0
+    visible: anyActive || showPinnedIdle
+    implicitWidth: (anyActive || showPinnedIdle) ? contentRow.implicitWidth + 16 : 0
     implicitHeight: Appearance.sizes.barHeight
 
     hoverEnabled: true
     cursorShape: Qt.PointingHandCursor
 
-    onClicked: GlobalStates.sidebarRightOpen = true
+    function openTimerPanel(): void {
+        GlobalStates.sidebarRightOpen = true
+ 
+        if (Persistent?.states?.sidebar?.bottomGroup) {
+            Persistent.states.sidebar.bottomGroup.tab = 3
+            Persistent.states.sidebar.bottomGroup.collapsed = false
+        }
+ 
+        if (Persistent?.states?.timer) {
+            if (root.pomodoroActive) {
+                Persistent.states.timer.tab = 0
+            } else if (root.countdownActive) {
+                Persistent.states.timer.tab = 1
+            } else if (root.stopwatchActive) {
+                Persistent.states.timer.tab = 2
+            }
+        }
+    }
+
+    acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+    onClicked: (mouse) => {
+        if (mouse.button === Qt.LeftButton) {
+            if (mouse.modifiers & (Qt.ControlModifier | Qt.ShiftModifier)) {
+                root.openTimerPanel()
+                return
+            }
+
+            if (!root.anyActive && root.showPinnedIdle) {
+                root.openTimerPanel()
+                return
+            }
+
+            if (root.pomodoroActive) {
+                TimerService.togglePomodoro()
+            } else if (root.countdownActive) {
+                TimerService.toggleCountdown()
+            } else if (root.stopwatchActive) {
+                TimerService.toggleStopwatch()
+            }
+            return
+        }
+
+        if (mouse.button === Qt.RightButton || mouse.button === Qt.MiddleButton) {
+            root.openTimerPanel()
+        }
+    }
 
     Behavior on implicitWidth {
         NumberAnimation {
@@ -81,9 +149,13 @@ MouseArea {
         anchors.centerIn: parent
         width: contentRow.implicitWidth + 12
         height: contentRow.implicitHeight + 8
-        radius: Appearance.rounding.full
-        color: root.containsMouse ? Appearance.colors.colLayer1Hover : Appearance.colors.colLayer1
-        visible: root.anyActive
+        radius: height / 2
+        color: {
+            if (root.paused)
+                return root.containsMouse ? Appearance.colors.colLayer2Hover : Appearance.colors.colLayer2
+            return root.containsMouse ? Appearance.colors.colLayer1Hover : Appearance.colors.colLayer1
+        }
+        visible: root.anyActive || root.showPinnedIdle
 
         Behavior on color {
             ColorAnimation { duration: 100 }
@@ -94,16 +166,16 @@ MouseArea {
         id: contentRow
         anchors.centerIn: parent
         spacing: 4
-        visible: root.anyActive
+        visible: root.anyActive || root.showPinnedIdle
 
         MaterialSymbol {
-            text: root.iconName
+            text: root.showPinnedIdle ? "schedule" : root.iconName
             iconSize: Appearance.font.pixelSize.normal
-            color: root.accentColor
+            color: root.paused ? Appearance.colors.colOnLayer1Inactive : root.accentColor
             Layout.alignment: Qt.AlignVCenter
 
             SequentialAnimation on opacity {
-                running: root.pomodoroActive && !(TimerService?.pomodoroBreak ?? false)
+                running: root.pomodoroActive && root.pomodoroRunning && !(TimerService?.pomodoroBreak ?? false)
                 loops: Animation.Infinite
                 NumberAnimation { to: 0.5; duration: 800; easing.type: Easing.InOutSine }
                 NumberAnimation { to: 1.0; duration: 800; easing.type: Easing.InOutSine }
@@ -111,9 +183,17 @@ MouseArea {
         }
 
         StyledText {
-            text: root.timeText
+            text: root.showPinnedIdle ? Translation.tr("Timer") : root.timeText
             font.pixelSize: Appearance.font.pixelSize.small
-            color: Appearance.colors.colOnLayer1
+            color: root.paused ? Appearance.colors.colOnLayer1Inactive : Appearance.colors.colOnLayer1
+            Layout.alignment: Qt.AlignVCenter
+        }
+
+        MaterialSymbol {
+            visible: root.paused
+            text: "pause"
+            iconSize: Appearance.font.pixelSize.small
+            color: Appearance.colors.colOnLayer1Inactive
             Layout.alignment: Qt.AlignVCenter
         }
     }
@@ -121,5 +201,10 @@ MouseArea {
     // Tooltip
     TimerIndicatorTooltip {
         hoverTarget: root
+        pomodoroActive: root.pomodoroActive
+        countdownActive: root.countdownActive
+        stopwatchActive: root.stopwatchActive
+        paused: root.paused
+        pinnedIdle: root.showPinnedIdle
     }
 }

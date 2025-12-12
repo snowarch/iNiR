@@ -1,3 +1,4 @@
+import qs
 import QtQuick
 import QtQuick.Layouts
 import qs.services
@@ -49,7 +50,22 @@ BarButton {
 
     visible: anyActive
 
-    onClicked: GlobalStates.waffleWidgetsOpen = !GlobalStates.waffleWidgetsOpen
+    onClicked: {
+        if (root.pomodoroActive) {
+            TimerService.togglePomodoro()
+        } else if (root.countdownActive) {
+            TimerService.toggleCountdown()
+        } else if (root.stopwatchActive) {
+            TimerService.toggleStopwatch()
+        }
+    }
+
+    altAction: () => {
+        GlobalStates.waffleWidgetsOpen = true
+        if (Persistent?.states?.sidebar?.bottomGroup) {
+            Persistent.states.sidebar.bottomGroup.tab = 3
+        }
+    }
 
     contentItem: Item {
         anchors.fill: parent

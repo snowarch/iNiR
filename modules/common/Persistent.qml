@@ -158,6 +158,8 @@ Singleton {
             }
 
             property JsonObject timer: JsonObject {
+                property bool pinnedToBar: false
+                property int tab: 0
                 property JsonObject pomodoro: JsonObject {
                     property bool running: false
                     property int start: 0

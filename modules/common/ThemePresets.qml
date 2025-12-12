@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import qs.modules.common
 import qs.services
 
@@ -1013,11 +1014,13 @@ Singleton {
         
         const outputPath = Directories.generatedMaterialThemePath;
         const jsonStr = JSON.stringify(colorsJson, null, 2);
-        
-        // Write JSON using echo - escape for shell
-        const escapedJson = jsonStr.replace(/'/g, "'\\''");
-        Quickshell.execDetached(["/bin/sh", "-c", `echo '${escapedJson}' > "${outputPath}"`]);
-        
+
+        colorsJsonFileView.path = Qt.resolvedUrl(outputPath)
+        colorsJsonFileView.setText(jsonStr)
         console.log("[ThemePresets] colors.json written to:", outputPath);
+    }
+
+    FileView {
+        id: colorsJsonFileView
     }
 }

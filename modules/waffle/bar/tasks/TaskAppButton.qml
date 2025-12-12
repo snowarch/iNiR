@@ -172,7 +172,7 @@ AppButton {
                 implicitWidth: 4
                 implicitHeight: 3
                 radius: height / 2
-                color: Looks.colors.fg2
+                color: Looks.colors.fg1
                 opacity: 0.5
             }
         }

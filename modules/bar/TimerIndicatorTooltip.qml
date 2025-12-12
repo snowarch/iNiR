@@ -7,9 +7,13 @@ import qs.services
 StyledPopup {
     id: root
 
-    readonly property bool pomodoroActive: TimerService?.pomodoroRunning ?? false
-    readonly property bool countdownActive: TimerService?.countdownRunning ?? false
-    readonly property bool stopwatchActive: TimerService?.stopwatchRunning ?? false
+    property bool pomodoroActive: TimerService?.pomodoroRunning ?? false
+    property bool countdownActive: TimerService?.countdownRunning ?? false
+    property bool stopwatchActive: TimerService?.stopwatchRunning ?? false
+
+    property bool paused: false
+
+    property bool pinnedIdle: false
 
     readonly property string timeDisplay: {
         if (pomodoroActive) {
@@ -36,6 +40,7 @@ StyledPopup {
     }
 
     readonly property string modeText: {
+        if (pinnedIdle) return Translation.tr("Timer")
         if (pomodoroActive) {
             const isLongBreak = TimerService?.pomodoroLongBreak ?? false
             const isBreak = TimerService?.pomodoroBreak ?? false
@@ -47,6 +52,12 @@ StyledPopup {
         if (stopwatchActive) return Translation.tr("Stopwatch")
         return ""
     }
+
+    readonly property string statusText: root.paused ? Translation.tr("Paused") : ""
+
+    readonly property string hintText: pinnedIdle
+        ? Translation.tr("Click to open timer settings")
+        : ""
 
     readonly property string iconName: {
         if (pomodoroActive) return (TimerService?.pomodoroBreak ?? false) ? "coffee" : "target"
@@ -72,16 +83,24 @@ StyledPopup {
 
             StyledText {
                 anchors.verticalCenter: parent.verticalCenter
-                text: root.modeText
+                text: root.statusText.length > 0 ? `${root.modeText} • ${root.statusText}` : root.modeText
                 font.weight: Font.Medium
                 color: Appearance.colors.colOnSurfaceVariant
             }
+        }
+
+        StyledText {
+            visible: root.hintText.length > 0
+            text: root.hintText
+            color: Appearance.colors.colOnSurfaceVariant
+            font.pixelSize: Appearance.font.pixelSize.small
         }
 
         // Time display row
         RowLayout {
             spacing: 5
             Layout.fillWidth: true
+            visible: !root.pinnedIdle
 
             MaterialSymbol {
                 text: "schedule"

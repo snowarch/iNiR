@@ -71,7 +71,7 @@ Singleton {
             }
 
             Quickshell.execDetached(["notify-send", "Pomodoro", notificationMessage, "-a", "Shell"]);
-            if (Config.options.sounds.pomodoro) {
+            if (Config.options?.sounds?.pomodoro ?? false) {
                 Audio.playSystemSound("alarm-clock-elapsed")
             }
 
@@ -155,7 +155,7 @@ Singleton {
         if (countdownSecondsLeft <= 0 && countdownRunning) {
             Persistent.states.timer.countdown.running = false;
             Quickshell.execDetached(["notify-send", "Timer", Translation.tr("Time's up!"), "-a", "Shell", "-i", "alarm-symbolic"]);
-            if (Config.options.sounds.pomodoro) {
+            if (Config.options?.sounds?.timer ?? false) {
                 Audio.playSystemSound("alarm-clock-elapsed");
             }
         }

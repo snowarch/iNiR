@@ -260,7 +260,12 @@ Loader {
 
             MouseArea {
                 anchors.fill: parent
-                onClicked: root.close()
+                acceptedButtons: Qt.AllButtons
+                propagateComposedEvents: false
+                onPressed: event => {
+                    root.close()
+                    event.accepted = true
+                }
             }
         }
     }

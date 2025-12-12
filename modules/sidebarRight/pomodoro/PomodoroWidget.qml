@@ -7,7 +7,7 @@ import QtQuick.Layouts
 
 Item {
     id: root
-    property int currentTab: 0
+    property int currentTab: Persistent.states?.timer?.tab ?? 0
     property var tabButtonList: [
         {"name": Translation.tr("Pomodoro"), "icon": "search_activity"},
         {"name": Translation.tr("Timer"), "icon": "hourglass_empty"},
@@ -51,30 +51,54 @@ Item {
         anchors.fill: parent
         spacing: 0
 
-        SecondaryTabBar {
-            id: tabBar
+        RowLayout {
             Layout.fillWidth: true
-            currentIndex: currentTab
-            onCurrentIndexChanged: currentTab = currentIndex
+            spacing: 6
 
-            background: Item {
-                WheelHandler {
-                    onWheel: (event) => {
-                        if (event.angleDelta.y < 0)
-                            tabBar.currentIndex = Math.min(tabBar.currentIndex + 1, root.tabButtonList.length - 1)
-                        else if (event.angleDelta.y > 0)
-                            tabBar.currentIndex = Math.max(tabBar.currentIndex - 1, 0)
+            SecondaryTabBar {
+                id: tabBar
+                Layout.fillWidth: true
+                currentIndex: currentTab
+                onCurrentIndexChanged: {
+                    currentTab = currentIndex
+                    if (Persistent?.states?.timer) {
+                        Persistent.states.timer.tab = currentIndex
                     }
-                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                }
+
+                background: Item {
+                    WheelHandler {
+                        onWheel: (event) => {
+                            if (event.angleDelta.y < 0)
+                                tabBar.currentIndex = Math.min(tabBar.currentIndex + 1, root.tabButtonList.length - 1)
+                            else if (event.angleDelta.y > 0)
+                                tabBar.currentIndex = Math.max(tabBar.currentIndex - 1, 0)
+                        }
+                        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                    }
+                }
+
+                Repeater {
+                    model: root.tabButtonList
+                    delegate: SecondaryTabButton {
+                        selected: (index == currentTab)
+                        buttonText: modelData.name
+                        buttonIcon: modelData.icon
+                    }
                 }
             }
 
-            Repeater {
-                model: root.tabButtonList
-                delegate: SecondaryTabButton {
-                    selected: (index == currentTab)
-                    buttonText: modelData.name
-                    buttonIcon: modelData.icon
+            IconToolbarButton {
+                text: "push_pin"
+                toggled: Persistent.states?.timer?.pinnedToBar ?? false
+                onClicked: {
+                    if (Persistent?.states?.timer) {
+                        Persistent.states.timer.pinnedToBar = !toggled
+                    }
+                }
+
+                StyledToolTip {
+                    text: Translation.tr("Pin timer to bar\nKeeps the timer indicator visible in the bar even when no timer is running")
                 }
             }
         }
@@ -106,7 +130,7 @@ Item {
                 x: tabBar.currentIndex * fullTabSize + (fullTabSize - targetWidth) / 2
 
                 color: Appearance.colors.colPrimary
-                radius: Appearance.rounding.full
+                radius: height / 2
 
                 Behavior on x {
                     enabled: tabIndicator.enableIndicatorAnimation
@@ -138,6 +162,9 @@ Item {
             onCurrentIndexChanged: {
                 tabIndicator.enableIndicatorAnimation = true
                 currentTab = currentIndex
+                if (Persistent?.states?.timer) {
+                    Persistent.states.timer.tab = currentIndex
+                }
             }
 
             // Tabs

@@ -294,6 +294,17 @@ ContentPage {
                 }
             }
             ConfigSwitch {
+                buttonIcon: "hourglass_empty"
+                text: Translation.tr("Timer")
+                checked: Config.options.sounds.timer
+                onCheckedChanged: {
+                    Config.options.sounds.timer = checked;
+                }
+                StyledToolTip {
+                    text: Translation.tr("Play sound when countdown timer ends")
+                }
+            }
+            ConfigSwitch {
                 buttonIcon: "av_timer"
                 text: Translation.tr("Pomodoro")
                 checked: Config.options.sounds.pomodoro

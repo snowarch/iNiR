@@ -13,6 +13,9 @@ MouseArea {
     implicitWidth: row.implicitWidth
     hoverEnabled: true
     
+    readonly property var pinnedApps: TaskbarApps.apps.filter(app => app.pinned && app.toplevels.length === 0)
+    readonly property var runningApps: TaskbarApps.apps.filter(app => app.toplevels.length > 0)
+    
     // Signal to close all context menus before opening a new one
     signal closeAllContextMenus()
 
@@ -34,10 +37,53 @@ MouseArea {
         spacing: 0
 
         Repeater {
-            // TODO: Include only apps (and windows) in current workspace only | wait, does that even make sense in a Hyprland workflow?
             model: ScriptModel {
                 objectProp: "appId"
-                values: TaskbarApps.apps.filter(app => app.appId !== "SEPARATOR")
+                values: root.pinnedApps
+            }
+            delegate: TaskAppButton {
+                required property var modelData
+                appEntry: modelData
+                tasksParent: root
+
+                onHoverPreviewRequested: {
+                    root.showPreviewPopup(appEntry, this)
+                }
+                onHoverPreviewDismissed: {
+                    previewPopup.close()
+                }
+            }
+        }
+
+        Item {
+            visible: root.pinnedApps.length > 0 && root.runningApps.length > 0
+            Layout.preferredWidth: 6
+        }
+
+        Item {
+            visible: root.pinnedApps.length > 0 && root.runningApps.length > 0
+            Layout.fillHeight: true
+            Layout.preferredWidth: 1
+
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                width: 1
+                height: Math.max(0, parent.height - 18)
+                radius: 1
+                color: Looks.colors.bg1Border
+                opacity: 0.6
+            }
+        }
+
+        Item {
+            visible: root.pinnedApps.length > 0 && root.runningApps.length > 0
+            Layout.preferredWidth: 6
+        }
+
+        Repeater {
+            model: ScriptModel {
+                objectProp: "appId"
+                values: root.runningApps
             }
             delegate: TaskAppButton {
                 required property var modelData

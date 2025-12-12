@@ -20,15 +20,94 @@ QtObject {
     property var responses: []
     property int runningRequests: 0
 
+    property var wallpaperTagCache: ({})
+    property var wallpaperTagRequests: ({})
+
     // Basic settings
     readonly property string apiBase: "https://wallhaven.cc/api/v1"
     readonly property string apiSearchEndpoint: apiBase + "/search"
+
+    function _detailUrl(id) {
+        var url = apiBase + "/w/" + encodeURIComponent(id)
+        if (apiKey && apiKey.length > 0) {
+            url += "?apikey=" + encodeURIComponent(apiKey)
+        }
+        return url
+    }
+
+    function _applyTagsToResponses(id, tagsJoined) {
+        // Update any existing response images with this id
+        for (let r = 0; r < responses.length; ++r) {
+            const resp = responses[r]
+            if (!resp || resp.provider !== "wallhaven" || !resp.images)
+                continue
+            let changed = false
+            for (let i = 0; i < resp.images.length; ++i) {
+                const img = resp.images[i]
+                if (img && img.id === id) {
+                    img.tags = tagsJoined
+                    changed = true
+                }
+            }
+            if (changed) {
+                // Re-assign to trigger bindings
+                resp.images = [...resp.images]
+            }
+        }
+    }
+
+    function ensureWallpaperTags(id) {
+        if (!id || id.length === 0)
+            return
+        if (wallpaperTagCache[id] !== undefined)
+            return
+        if (wallpaperTagRequests[id])
+            return
+
+        wallpaperTagRequests[id] = true
+        var url = _detailUrl(id)
+        var xhr = new XMLHttpRequest()
+        xhr.open("GET", url)
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState !== XMLHttpRequest.DONE)
+                return
+
+            wallpaperTagRequests[id] = false
+
+            if (xhr.status === 200) {
+                try {
+                    var payload = JSON.parse(xhr.responseText)
+                    var data = payload.data || {}
+                    var tags = data.tags || []
+                    var joined = ""
+                    if (tags && tags.length > 0) {
+                        joined = tags.map(function(t) { return t.name; }).join(" ")
+                    }
+                    wallpaperTagCache[id] = joined
+                    _applyTagsToResponses(id, joined)
+                } catch (e) {
+                    console.log("[Wallhaven] Failed to parse detail response:", e)
+                    wallpaperTagCache[id] = ""
+                }
+            } else {
+                // Cache empty to avoid retry storms
+                wallpaperTagCache[id] = ""
+            }
+        }
+        try {
+            xhr.send()
+        } catch (e) {
+            console.log("[Wallhaven] Error sending detail request:", e)
+            wallpaperTagRequests[id] = false
+            wallpaperTagCache[id] = ""
+        }
+    }
 
     // Config-driven options
     property string apiKey: Config.options?.sidebar?.wallhaven?.apiKey ?? ""
     property int defaultLimit: Config.options?.sidebar?.wallhaven?.limit ?? 24
     // Reuse global NSFW toggle used by Anime boorus for now
-    property bool allowNsfw: Persistent.states.booru.allowNsfw
+    property bool allowNsfw: Persistent.states?.booru?.allowNsfw ?? false
     // Listing mode: "toplist", "date_added", "random", etc.
     property string sortingMode: "toplist"
     // Toplist range when sortingMode == "toplist": 1d, 3d, 1w, 1M, 3M, 6M, 1y
@@ -131,10 +210,9 @@ QtObject {
                         } else if (item.dimension_x && item.dimension_y) {
                             ratio = item.dimension_x / item.dimension_y
                         }
+                        // Wallhaven search results typically do not include per-wallpaper tags.
+                        // We fill tags via the detail endpoint asynchronously.
                         var tagsJoined = ""
-                        if (item.tags && item.tags.length > 0) {
-                            tagsJoined = item.tags.map(function(t) { return t.name; }).join(" ")
-                        }
                         var purity = item.purity || "sfw"
                         var isNsfw = purity !== "sfw"
                         var fileExt = ""
@@ -159,6 +237,13 @@ QtObject {
                     })
                     newResponse.images = images
                     newResponse.message = images.length > 0 ? "" : failMessage
+
+                    // Fetch real tags per wallpaper (always-on)
+                    for (let i = 0; i < images.length; ++i) {
+                        if (images[i] && images[i].id) {
+                            root.ensureWallpaperTags(images[i].id)
+                        }
+                    }
                 } catch (e) {
                     console.log("[Wallhaven] Failed to parse response:", e)
                     newResponse.message = failMessage
