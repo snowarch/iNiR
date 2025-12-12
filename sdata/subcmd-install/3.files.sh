@@ -371,6 +371,13 @@ elif [[ -f "dots/.config/dolphinrc" ]]; then
   install_file__auto_backup "dots/.config/dolphinrc" "${XDG_CONFIG_HOME}/dolphinrc"
 fi
 
+# Clean Dolphin state file so it respects dolphinrc panel settings on first launch
+# Dolphin stores panel visibility state in dolphinstaterc which overrides dolphinrc
+if [[ -f "${XDG_STATE_HOME:-$HOME/.local/state}/dolphinstaterc" ]]; then
+  rm -f "${XDG_STATE_HOME:-$HOME/.local/state}/dolphinstaterc"
+  log_success "Cleaned Dolphin state for fresh panel layout"
+fi
+
 # Kvantum (Qt theming)
 if [[ -d "dots/.config/Kvantum" ]]; then
   install_dir "dots/.config/Kvantum" "${XDG_CONFIG_HOME}/Kvantum"
