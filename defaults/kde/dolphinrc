@@ -3,6 +3,7 @@ PreviewSize=32
 
 [General]
 GlobalViewProps=false
+LockPanels=false
 ShowFullPath=true
 ShowStatusBar=FullWidth
 Version=202
@@ -16,7 +17,6 @@ Places Icons Static Size=22
 
 [MainWindow]
 MenuBar=Disabled
-ToolBarsMovable=Disabled
 
 [MainWindow][Toolbar mainToolBar]
 ToolButtonStyle=IconOnly
@@ -24,6 +24,8 @@ ToolButtonStyle=IconOnly
 [Panels]
 InformationPanel=false
 TerminalPanel=false
+FoldersPanel=false
+PlacesPanel=true
 
 [PreviewSettings]
 Plugins=ffmpegthumbnailer,appimagethumbnail,audiothumbnail,avif,blenderthumbnail,comicbookthumbnail,cursorthumbnail,djvuthumbnail,ebookthumbnail,exrthumbnail,directorythumbnail,fontthumbnail,heif,imagethumbnail,jpegthumbnail,jxl,kraorathumbnail,windowsexethumbnail,windowsimagethumbnail,mobithumbnail,opendocumentthumbnail,gsthumbnail,rawthumbnail,librsvg,svgthumbnail,ffmpegthumbs,gdk-pixbuf-thumbnailer,gsf-office
