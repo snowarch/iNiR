@@ -79,6 +79,10 @@ Singleton {
                 property bool inhibit: false
             }
 
+            property JsonObject gameMode: JsonObject {
+                property bool manualActive: false
+            }
+
             property JsonObject overlay: JsonObject {
                 property list<string> open: ["crosshair", "recorder", "volumeMixer", "resources"]
                 property JsonObject crosshair: JsonObject {
