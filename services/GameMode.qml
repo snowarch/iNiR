@@ -132,11 +132,22 @@ Singleton {
         function onReadyChanged() {
             if (Persistent.ready) {
                 root._manualActive = Persistent.states?.gameMode?.manualActive ?? false
-                root._initialized = true
-                console.log("[GameMode] Initialized, manual:", root._manualActive)
-                if (CompositorService.isNiri) {
-                    root.checkFullscreen()
-                }
+                console.log("[GameMode] Loaded manual state:", root._manualActive)
+                // Delay initialization to avoid false positives from windows still opening at startup
+                initDelayTimer.start()
+            }
+        }
+    }
+
+    // Delay auto-detection to avoid false positives at startup
+    Timer {
+        id: initDelayTimer
+        interval: 2000 // Wait 2 seconds after startup before enabling auto-detection
+        onTriggered: {
+            root._initialized = true
+            console.log("[GameMode] Initialized (delayed), checking fullscreen...")
+            if (CompositorService.isNiri && root.autoDetect) {
+                root.checkFullscreen()
             }
         }
     }

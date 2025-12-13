@@ -36,12 +36,20 @@ Singleton {
     property int countdownDuration: Persistent.states?.timer?.countdown?.duration ?? 300
     property int countdownSecondsLeft: countdownDuration
 
-    // General
-    Component.onCompleted: {
-        if (!stopwatchRunning)
-            stopwatchReset();
-        if (!countdownRunning)
-            countdownSecondsLeft = countdownDuration;
+    // Initialize when Persistent is ready
+    Connections {
+        target: Persistent
+        function onReadyChanged() {
+            if (Persistent.ready) {
+                // Reset local state if not running (don't write to Persistent, just sync local vars)
+                if (!root.stopwatchRunning) {
+                    root.stopwatchTime = 0
+                }
+                if (!root.countdownRunning) {
+                    root.countdownSecondsLeft = root.countdownDuration
+                }
+            }
+        }
     }
 
     function getCurrentTimeInSeconds() {  // Pomodoro uses Seconds
