@@ -723,7 +723,7 @@ Singleton {
                 // Wallhaven-specific sidebar module options
                 property JsonObject wallhaven: JsonObject {
                     // Enable/disable the Wallhaven tab in the left sidebar
-                    property bool enable: true
+                    property bool enable: false
                     // Default page size for API search
                     property int limit: 24
                     // Optional API key for NSFW & user-specific filters

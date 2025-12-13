@@ -26,12 +26,12 @@ QtObject {
     property int rateLimitedUntilMs: 0
     readonly property bool isRateLimited: nowMs < rateLimitedUntilMs
 
-    readonly property bool _active: (Config.options?.sidebar?.wallhaven?.enable ?? true) && (GlobalStates?.sidebarLeftOpen ?? false)
+    readonly property bool _active: (Config.options?.sidebar?.wallhaven?.enable ?? false) && (GlobalStates?.sidebarLeftOpen ?? false)
 
     property Timer wallhavenClock: Timer {
         interval: 500
         repeat: true
-        running: root._active
+        running: true
         onTriggered: root.nowMs = Date.now()
     }
 
@@ -51,7 +51,7 @@ QtObject {
     property Timer pendingSearchTimer: Timer {
         interval: 300
         repeat: true
-        running: root._active
+        running: root._active || (root.pendingSearch !== null)
         onTriggered: {
             if (!root.pendingSearch)
                 return
@@ -108,6 +108,7 @@ QtObject {
     }
 
     function ensureWallpaperTags(id) {
+        root.nowMs = Date.now()
         if (!id || id.length === 0)
             return
         if (wallpaperTagCache[id] !== undefined)
@@ -122,6 +123,7 @@ QtObject {
     }
 
     function _fetchNextTag(): void {
+        root.nowMs = Date.now()
         if (root.isRateLimited)
             return
         if (root.nowMs < root._nextTagAllowedMs)
@@ -194,7 +196,7 @@ QtObject {
     property Timer tagQueueTimer: Timer {
         interval: 350
         repeat: true
-        running: root._active
+        running: root._active || ((root.tagQueue && root.tagQueue.length > 0))
         onTriggered: root._fetchNextTag()
     }
 
@@ -264,6 +266,7 @@ QtObject {
     }
 
     function makeRequest(tags, nsfw, limit, page) {
+        root.nowMs = Date.now()
         // nsfw/limit/page kept for API parity with Booru.makeRequest
         if (nsfw === undefined)
             nsfw = allowNsfw

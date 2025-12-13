@@ -16,7 +16,7 @@ Item {
     property bool translatorEnabled: (Config.options?.sidebar?.translator?.enable ?? false)
     property bool animeEnabled: (Config.options?.policies?.weeb ?? 0) !== 0
     property bool animeCloset: (Config.options?.policies?.weeb ?? 0) === 2
-    property bool wallhavenEnabled: Config.options.sidebar?.wallhaven?.enable !== false
+    property bool wallhavenEnabled: (Config.options?.sidebar?.wallhaven?.enable ?? false)
     property var tabButtonList: [
         ...(root.aiChatEnabled ? [{"icon": "neurology", "name": Translation.tr("Intelligence")}] : []),
         ...(root.translatorEnabled ? [{"icon": "translate", "name": Translation.tr("Translator")}] : []),
