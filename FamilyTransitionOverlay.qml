@@ -23,14 +23,17 @@ Scope {
     property bool _isWaffle: false
     property bool _phase: false
     property bool _active: false
+    property real _overlayOpacity: 0
 
     Connections {
         target: GlobalStates
         function onFamilyTransitionActiveChanged() {
             if (GlobalStates.familyTransitionActive) {
+                fadeOut.stop()
                 root._isWaffle = GlobalStates.familyTransitionDirection === "left"
                 root._phase = false
                 root._active = true
+                root._overlayOpacity = 1
                 enterTimer.start()
             }
         }
@@ -50,14 +53,18 @@ Scope {
         interval: root.holdDuration
         onTriggered: {
             root._phase = true
-            exitTimer.start()
+            fadeOut.restart()
         }
     }
-    
-    Timer {
-        id: exitTimer
-        interval: root.exitDuration + 80
-        onTriggered: {
+
+    NumberAnimation {
+        id: fadeOut
+        target: root
+        property: "_overlayOpacity"
+        to: 0
+        duration: root.exitDuration
+        easing.type: Easing.InOutCubic
+        onFinished: {
             root._active = false
             root.enterComplete()
         }
@@ -83,69 +90,79 @@ Scope {
             WlrLayershell.layer: WlrLayer.Overlay
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
             
-            implicitWidth: screen?.width ?? 1920
-            implicitHeight: screen?.height ?? 1080
+            width: screen?.width ?? 1920
+            height: screen?.height ?? 1080
+            implicitWidth: width
+            implicitHeight: height
 
-            // Blurred wallpaper background
             Item {
-                id: blurredBg
+                id: content
                 anchors.fill: parent
-                opacity: root._phase ? 0 : 1
-                
-                Behavior on opacity {
-                    NumberAnimation { 
-                        duration: root.exitDuration
-                        easing.type: Easing.OutQuad
-                    }
-                }
 
-                Image {
-                    id: wallpaperImg
-                    anchors.fill: parent
-                    source: {
-                        // Use target family's wallpaper
-                        let path = ""
-                        if (root._isWaffle) {
-                            // Going to Waffle - use waffle wallpaper (or main if shared)
-                            const wBg = Config.options?.waffles?.background ?? {}
-                            const useMain = wBg.useMainWallpaper ?? true
-                            path = useMain 
-                                ? (Config.options?.background?.wallpaperPath ?? "")
-                                : (wBg.wallpaperPath ?? Config.options?.background?.wallpaperPath ?? "")
-                        } else {
-                            // Going to Material - use main wallpaper
-                            path = Config.options?.background?.wallpaperPath ?? ""
-                        }
-                        if (!path) return ""
-                        return path.startsWith("file://") ? path : "file://" + path
-                    }
-                    fillMode: Image.PreserveAspectCrop
-                    visible: false
-                }
+                opacity: root._overlayOpacity
 
-                MultiEffect {
-                    anchors.fill: parent
-                    source: wallpaperImg
-                    visible: wallpaperImg.status === Image.Ready
-                    blurEnabled: true
-                    blur: 0.8
-                    blurMax: 64
-                    saturation: 0.3
-                }
-
-                // Subtle tint overlay (only for Material, Waffle uses clean blur)
                 Rectangle {
                     anchors.fill: parent
-                    color: Appearance.m3colors.m3background
-                    opacity: root._isWaffle ? 0 : 0.3
-                    visible: !root._isWaffle
+                    color: root._isWaffle ? Looks.colors.bg0 : Appearance.m3colors.m3background
+                    opacity: 1
                 }
-            }
 
-            // Family-specific transition effect
-            Loader {
-                anchors.fill: parent
-                sourceComponent: root._isWaffle ? waffleTransition : materialTransition
+                // Blurred wallpaper background
+                Item {
+                    id: blurredBg
+                    anchors.fill: parent
+                    opacity: 1
+
+                    Image {
+                        id: wallpaperImg
+                        anchors.fill: parent
+                        source: {
+                            // Use target family's wallpaper
+                            let path = ""
+                            if (root._isWaffle) {
+                                // Going to Waffle - use waffle wallpaper (or main if shared)
+                                const wBg = Config.options?.waffles?.background ?? {}
+                                const useMain = wBg.useMainWallpaper ?? true
+                                path = useMain 
+                                    ? (Config.options?.background?.wallpaperPath ?? "")
+                                    : (wBg.wallpaperPath ?? Config.options?.background?.wallpaperPath ?? "")
+                            } else {
+                                // Going to Material - use main wallpaper
+                                path = Config.options?.background?.wallpaperPath ?? ""
+                            }
+                            if (!path) return ""
+                            return path.startsWith("file://") ? path : "file://" + path
+                        }
+                        fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
+                        cache: true
+                        visible: false
+                    }
+
+                    MultiEffect {
+                        anchors.fill: parent
+                        source: wallpaperImg
+                        visible: wallpaperImg.status === Image.Ready
+                        blurEnabled: Appearance.effectsEnabled
+                        blur: 0.8
+                        blurMax: 64
+                        saturation: 0.3
+                    }
+
+                    // Subtle tint overlay (only for Material, Waffle uses clean blur)
+                    Rectangle {
+                        anchors.fill: parent
+                        color: Appearance.m3colors.m3background
+                        opacity: root._isWaffle ? 0 : 0.3
+                        visible: !root._isWaffle
+                    }
+                }
+
+                // Family-specific transition effect
+                Loader {
+                    anchors.fill: parent
+                    sourceComponent: root._isWaffle ? waffleTransition : materialTransition
+                }
             }
         }
     }
