@@ -400,13 +400,13 @@ run_update() {
     echo ""
     tui_title "Dependency check"
     echo ""
-    local missing_deps
-    missing_deps=$(get_missing_dependencies)
-    if [[ -n "$missing_deps" ]]; then
-        tui_warn "Missing packages detected: $missing_deps"
+    check_dependencies
+    if [[ ${#doctor_missing_deps[@]} -gt 0 ]]; then
+        tui_warn "Missing packages detected: ${doctor_missing_deps[*]}"
         if ! $ask || tui_confirm "Install missing packages now?"; then
             detect_distro
             SKIP_SYSUPDATE=true
+            ONLY_MISSING_DEPS="${doctor_missing_deps[*]}"
             source ./sdata/subcmd-install/1.deps-router.sh
             tui_success "Dependencies installed"
         else

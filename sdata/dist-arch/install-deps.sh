@@ -12,6 +12,43 @@ if ! command -v pacman >/dev/null 2>&1; then
 fi
 
 #####################################################################################
+# Optional: install only a specific list of missing deps
+#####################################################################################
+if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
+  echo -e "${STY_CYAN}[$0]: Installing missing dependencies only...${STY_RST}"
+
+  local installflags="--needed"
+  $ask || installflags="$installflags --noconfirm"
+
+  local missing_pkgs=()
+  read -r -a missing_pkgs <<<"$ONLY_MISSING_DEPS"
+
+  if [[ ${#missing_pkgs[@]} -gt 0 ]]; then
+    case $SKIP_SYSUPDATE in
+      true) sleep 0;;
+      *) v sudo pacman -Syu;;
+    esac
+
+    if ! command -v yay >/dev/null 2>&1 && ! command -v paru >/dev/null 2>&1; then
+      echo -e "${STY_YELLOW}[$0]: No AUR helper found.${STY_RST}"
+      showfun install-yay
+      v install-yay
+    fi
+
+    if command -v yay >/dev/null 2>&1; then
+      AUR_HELPER="yay"
+    elif command -v paru >/dev/null 2>&1; then
+      AUR_HELPER="paru"
+    fi
+
+    v $AUR_HELPER -S $installflags "${missing_pkgs[@]}"
+  fi
+
+  unset ONLY_MISSING_DEPS
+  return 0
+fi
+
+#####################################################################################
 # System update
 #####################################################################################
 case $SKIP_SYSUPDATE in

@@ -249,6 +249,18 @@ run_doctor_with_fixes() {
     
     tui_step 1 10 "Checking dependencies"
     check_dependencies
+
+    if [[ ${#doctor_missing_deps[@]} -gt 0 ]]; then
+        detect_distro
+        if [[ "$OS_GROUP_ID" == "arch" ]]; then
+            if ! $ask || tui_confirm "Install missing dependencies now?"; then
+                SKIP_SYSUPDATE=true
+                ONLY_MISSING_DEPS="${doctor_missing_deps[*]}"
+                source ./sdata/subcmd-install/1.deps-router.sh
+                check_dependencies
+            fi
+        fi
+    fi
     
     tui_step 2 10 "Checking critical files"
     check_critical_files
@@ -276,7 +288,6 @@ run_doctor_with_fixes() {
     
     tui_step 10 10 "Checking Quickshell"
     check_quickshell_loads
-    start_shell_if_needed
     
     echo ""
     tui_divider
