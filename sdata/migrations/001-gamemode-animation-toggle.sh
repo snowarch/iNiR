@@ -10,7 +10,7 @@ MIGRATION_TARGET_FILE="~/.config/niri/config.kdl"
 MIGRATION_REQUIRED=false
 
 migration_check() {
-  local config="${XDG_CONFIG_HOME}/niri/config.kdl"
+  local config="${XDG_CONFIG_HOME:-$HOME/.config}/niri/config.kdl"
   [[ -f "$config" ]] && ! grep -qE '^\s*(//)?off' "$config"
 }
 
@@ -19,7 +19,7 @@ migration_preview() {
 }
 
 migration_diff() {
-  local config="${XDG_CONFIG_HOME}/niri/config.kdl"
+  local config="${XDG_CONFIG_HOME:-$HOME/.config}/niri/config.kdl"
   echo "Will add '//off' after 'animations {' line"
   echo ""
   echo "Before:"
@@ -32,7 +32,7 @@ migration_diff() {
 }
 
 migration_apply() {
-  local config="${XDG_CONFIG_HOME}/niri/config.kdl"
+  local config="${XDG_CONFIG_HOME:-$HOME/.config}/niri/config.kdl"
   
   if ! migration_check; then
     return 0  # Already has //off or file doesn't exist

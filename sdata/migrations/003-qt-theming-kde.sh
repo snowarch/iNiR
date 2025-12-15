@@ -10,7 +10,7 @@ MIGRATION_TARGET_FILE="~/.config/niri/config.kdl"
 MIGRATION_REQUIRED=false
 
 migration_check() {
-  local config="${XDG_CONFIG_HOME}/niri/config.kdl"
+  local config="${XDG_CONFIG_HOME:-$HOME/.config}/niri/config.kdl"
   [[ -f "$config" ]] && grep -q 'QT_QPA_PLATFORMTHEME "gtk3"' "$config"
 }
 
@@ -21,7 +21,7 @@ migration_preview() {
 }
 
 migration_diff() {
-  local config="${XDG_CONFIG_HOME}/niri/config.kdl"
+  local config="${XDG_CONFIG_HOME:-$HOME/.config}/niri/config.kdl"
   echo "Current:"
   grep "QT_QPA_PLATFORMTHEME" "$config" 2>/dev/null || echo "  (not set)"
   echo ""
@@ -31,7 +31,7 @@ migration_diff() {
 }
 
 migration_apply() {
-  local config="${XDG_CONFIG_HOME}/niri/config.kdl"
+  local config="${XDG_CONFIG_HOME:-$HOME/.config}/niri/config.kdl"
   
   if ! migration_check; then
     return 0

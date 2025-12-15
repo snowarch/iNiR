@@ -42,23 +42,61 @@ Singleton {
         property string themeName: ""
         command: ["gsettings", "set", "org.gnome.desktop.interface", "icon-theme", gsettingsSetProc.themeName]
         onExited: (exitCode, exitStatus) => {
-            // Best-effort KDE sync
-            kdeGlobalsSedProc.themeName = gsettingsSetProc.themeName
-            kdeGlobalsSedProc.running = true
+            // Sync to KDE/Qt apps via kdeglobals
+            kdeGlobalsUpdateProc.themeName = gsettingsSetProc.themeName
+            kdeGlobalsUpdateProc.running = true
         }
     }
 
+    // Update kdeglobals [Icons] section properly
     Process {
-        id: kdeGlobalsSedProc
+        id: kdeGlobalsUpdateProc
         property string themeName: ""
         command: [
-            "sed",
-            "-i",
-            `s/^Theme=.*/Theme=${kdeGlobalsSedProc.themeName}/`,
-            `${FileUtils.trimFileProtocol(Directories.home)}/.config/kdeglobals`
+            "/usr/bin/python3",
+            "-c",
+            `
+import configparser
+import os
+
+config_path = os.path.expanduser("~/.config/kdeglobals")
+theme = "${kdeGlobalsUpdateProc.themeName}"
+
+config = configparser.ConfigParser()
+config.optionxform = str  # Preserve case
+
+if os.path.exists(config_path):
+    config.read(config_path)
+
+if "Icons" not in config:
+    config["Icons"] = {}
+
+config["Icons"]["Theme"] = theme
+
+with open(config_path, "w") as f:
+    config.write(f, space_around_delimiters=False)
+`
         ]
         onExited: (exitCode, exitStatus) => {
-            // Restart shell (same as previous behavior but without chaining)
+            // Also update plasma icon theme via kwriteconfig if available
+            kwriteconfigProc.themeName = kdeGlobalsUpdateProc.themeName
+            kwriteconfigProc.running = true
+        }
+    }
+
+    // Use kwriteconfig6 for better KDE integration (if available)
+    Process {
+        id: kwriteconfigProc
+        property string themeName: ""
+        command: [
+            "/usr/bin/kwriteconfig6",
+            "--file", "kdeglobals",
+            "--group", "Icons",
+            "--key", "Theme",
+            kwriteconfigProc.themeName
+        ]
+        onExited: (exitCode, exitStatus) => {
+            // Restart shell
             Quickshell.execDetached(["qs", "kill", "-c", "ii"])
             restartDelay.start()
         }

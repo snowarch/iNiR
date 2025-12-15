@@ -8,406 +8,422 @@
 # Migration System Configuration
 #####################################################################################
 MIGRATIONS_DIR="${REPO_ROOT}/sdata/migrations"
-MIGRATIONS_STATE_FILE="${XDG_CONFIG_HOME}/illogical-impulse/migrations.json"
-MIGRATIONS_BACKUP_DIR="${XDG_CONFIG_HOME}/illogical-impulse/backups"
-VERSION_FILE="${XDG_CONFIG_HOME}/illogical-impulse/version"
-
-# Current version - update this with each release
-CURRENT_VERSION="2.0.0"
-
-#####################################################################################
-# Version Management
-#####################################################################################
-# Note: get_installed_version() and set_installed_version() are defined in versioning.sh
-# which is sourced before this file. Those functions use JSON format with commit tracking.
-# The VERSION_FILE variable below is kept for backwards compatibility with old installs.
+MIGRATIONS_STATE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/illogical-impulse/migrations.json"
+MIGRATIONS_BACKUP_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/illogical-impulse/backups"
 
 #####################################################################################
 # Migration State Management
 #####################################################################################
 init_migrations_state() {
-  mkdir -p "$(dirname "$MIGRATIONS_STATE_FILE")"
+    mkdir -p "$(dirname "$MIGRATIONS_STATE_FILE")"
 
-  if [[ -f "$MIGRATIONS_STATE_FILE" ]] && command -v jq &>/dev/null; then
-    if ! jq empty "$MIGRATIONS_STATE_FILE" &>/dev/null; then
-      echo '{"applied": [], "skipped": []}' > "$MIGRATIONS_STATE_FILE"
+    if [[ -f "$MIGRATIONS_STATE_FILE" ]] && command -v jq &>/dev/null; then
+        if ! jq empty "$MIGRATIONS_STATE_FILE" &>/dev/null; then
+            echo '{"applied": [], "skipped": []}' > "$MIGRATIONS_STATE_FILE"
+        fi
+        return 0
     fi
-    return 0
-  fi
 
-  if [[ ! -f "$MIGRATIONS_STATE_FILE" ]]; then
-    echo '{"applied": [], "skipped": []}' > "$MIGRATIONS_STATE_FILE"
-  fi
+    if [[ ! -f "$MIGRATIONS_STATE_FILE" ]]; then
+        echo '{"applied": [], "skipped": []}' > "$MIGRATIONS_STATE_FILE"
+    fi
 }
 
 is_migration_applied() {
-  local migration_id="$1"
-  init_migrations_state
-  if command -v jq &>/dev/null; then
-    jq -e ".applied | index(\"$migration_id\")" "$MIGRATIONS_STATE_FILE" &>/dev/null
-  else
-    grep -q "\"$migration_id\"" "$MIGRATIONS_STATE_FILE" 2>/dev/null
-  fi
+    local migration_id="$1"
+    init_migrations_state
+    if command -v jq &>/dev/null; then
+        jq -e ".applied | index(\"$migration_id\")" "$MIGRATIONS_STATE_FILE" &>/dev/null
+    else
+        grep -q "\"$migration_id\"" "$MIGRATIONS_STATE_FILE" 2>/dev/null
+    fi
 }
 
 is_migration_skipped() {
-  local migration_id="$1"
-  init_migrations_state
-  if command -v jq &>/dev/null; then
-    jq -e ".skipped | index(\"$migration_id\")" "$MIGRATIONS_STATE_FILE" &>/dev/null
-  else
-    false
-  fi
+    local migration_id="$1"
+    init_migrations_state
+    if command -v jq &>/dev/null; then
+        jq -e ".skipped | index(\"$migration_id\")" "$MIGRATIONS_STATE_FILE" &>/dev/null
+    else
+        false
+    fi
 }
 
 mark_migration_applied() {
-  local migration_id="$1"
-  init_migrations_state
-  if command -v jq &>/dev/null; then
-    local tmp=$(mktemp)
-    jq ".applied += [\"$migration_id\"] | .applied |= unique" "$MIGRATIONS_STATE_FILE" > "$tmp"
-    mv "$tmp" "$MIGRATIONS_STATE_FILE"
-  fi
+    local migration_id="$1"
+    init_migrations_state
+    if command -v jq &>/dev/null; then
+        local tmp=$(mktemp)
+        jq ".applied += [\"$migration_id\"] | .applied |= unique" "$MIGRATIONS_STATE_FILE" > "$tmp"
+        mv "$tmp" "$MIGRATIONS_STATE_FILE"
+    fi
 }
 
 mark_migration_skipped() {
-  local migration_id="$1"
-  init_migrations_state
-  if command -v jq &>/dev/null; then
-    local tmp=$(mktemp)
-    jq ".skipped += [\"$migration_id\"] | .skipped |= unique" "$MIGRATIONS_STATE_FILE" > "$tmp"
-    mv "$tmp" "$MIGRATIONS_STATE_FILE"
-  fi
+    local migration_id="$1"
+    init_migrations_state
+    if command -v jq &>/dev/null; then
+        local tmp=$(mktemp)
+        jq ".skipped += [\"$migration_id\"] | .skipped |= unique" "$MIGRATIONS_STATE_FILE" > "$tmp"
+        mv "$tmp" "$MIGRATIONS_STATE_FILE"
+    fi
 }
 
 #####################################################################################
 # Backup System
 #####################################################################################
 create_backup() {
-  local file="$1"
-  local backup_name="$2"
-  
-  if [[ ! -f "$file" ]]; then
-    return 1
-  fi
-  
-  local timestamp=$(date +%Y-%m-%d-%H%M%S)
-  local backup_dir="${MIGRATIONS_BACKUP_DIR}/${timestamp}"
-  mkdir -p "$backup_dir"
-  
-  local filename=$(basename "$file")
-  cp "$file" "${backup_dir}/${backup_name:-$filename}"
-  
-  echo "$backup_dir"
-}
-
-list_backups() {
-  if [[ -d "$MIGRATIONS_BACKUP_DIR" ]]; then
-    ls -1t "$MIGRATIONS_BACKUP_DIR" 2>/dev/null | head -20
-  fi
-}
-
-restore_backup() {
-  local backup_timestamp="$1"
-  local backup_dir="${MIGRATIONS_BACKUP_DIR}/${backup_timestamp}"
-  
-  if [[ ! -d "$backup_dir" ]]; then
-    echo -e "${STY_RED}Backup not found: $backup_timestamp${STY_RST}"
-    return 1
-  fi
-  
-  echo -e "${STY_CYAN}Restoring from backup: $backup_timestamp${STY_RST}"
-  
-  for file in "$backup_dir"/*; do
-    local filename=$(basename "$file")
-    local target=""
+    local file="$1"
+    local backup_name="$2"
     
-    case "$filename" in
-      niri-config.kdl) target="${XDG_CONFIG_HOME}/niri/config.kdl" ;;
-      config.json) target="${XDG_CONFIG_HOME}/illogical-impulse/config.json" ;;
-      *) continue ;;
-    esac
-    
-    if [[ -n "$target" ]]; then
-      cp "$file" "$target"
-      echo -e "${STY_GREEN}  Restored: $target${STY_RST}"
+    if [[ ! -f "$file" ]]; then
+        return 1
     fi
-  done
-  
-  echo -e "${STY_GREEN}Backup restored successfully${STY_RST}"
+    
+    local timestamp=$(date +%Y-%m-%d-%H%M%S)
+    local backup_dir="${MIGRATIONS_BACKUP_DIR}/${timestamp}"
+    mkdir -p "$backup_dir"
+    
+    local filename=$(basename "$file")
+    cp "$file" "${backup_dir}/${backup_name:-$filename}"
+    
+    echo "$backup_dir"
 }
 
 #####################################################################################
 # Migration Discovery
 #####################################################################################
 list_available_migrations() {
-  if [[ ! -d "$MIGRATIONS_DIR" ]]; then
-    return
-  fi
-  
-  for migration_file in "$MIGRATIONS_DIR"/*.sh; do
-    if [[ -f "$migration_file" ]]; then
-      basename "$migration_file" .sh
+    if [[ ! -d "$MIGRATIONS_DIR" ]]; then
+        return
     fi
-  done | sort -V
+    
+    for migration_file in "$MIGRATIONS_DIR"/*.sh; do
+        if [[ -f "$migration_file" ]]; then
+            basename "$migration_file" .sh
+        fi
+    done | sort -V
+}
+
+# Check if a migration is actually needed (runs the check function)
+is_migration_needed() {
+    local migration_id="$1"
+    
+    load_migration "$migration_id" 2>/dev/null || return 1
+    
+    if type migration_check &>/dev/null; then
+        migration_check 2>/dev/null
+        return $?
+    fi
+    
+    # No check function = always needed
+    return 0
+}
+
+# Get real status of a migration (checks actual config, not just JSON)
+get_migration_real_status() {
+    local migration_id="$1"
+    
+    # First check JSON state
+    if is_migration_skipped "$migration_id"; then
+        echo "skipped"
+        return
+    fi
+    
+    if is_migration_applied "$migration_id"; then
+        echo "applied"
+        return
+    fi
+    
+    # Check if actually needed
+    if is_migration_needed "$migration_id"; then
+        echo "pending"
+    else
+        # Config already has the changes, auto-mark as applied
+        mark_migration_applied "$migration_id"
+        echo "auto-applied"
+    fi
 }
 
 get_pending_migrations() {
-  local pending=()
-  
-  for migration_id in $(list_available_migrations); do
-    # Skip if already applied or skipped
-    if is_migration_applied "$migration_id" || is_migration_skipped "$migration_id"; then
-      continue
-    fi
+    local pending=()
     
-    # Load migration and check if it's actually needed
-    load_migration "$migration_id" 2>/dev/null || continue
+    for migration_id in $(list_available_migrations); do
+        local status=$(get_migration_real_status "$migration_id")
+        if [[ "$status" == "pending" ]]; then
+            pending+=("$migration_id")
+        fi
+    done
     
-    # If migration_check exists and returns false, skip it (already done)
-    if type migration_check &>/dev/null; then
-      if ! migration_check 2>/dev/null; then
-        # Migration not needed - auto-mark as applied
-        mark_migration_applied "$migration_id"
-        continue
-      fi
-    fi
-    
-    pending+=("$migration_id")
-  done
-  
-  echo "${pending[@]}"
+    echo "${pending[@]}"
 }
 
 count_pending_migrations() {
-  local count=0
-  for migration_id in $(list_available_migrations); do
-    # Skip if already applied or skipped
-    if is_migration_applied "$migration_id" || is_migration_skipped "$migration_id"; then
-      continue
-    fi
-    
-    # Load migration and check if it's actually needed
-    load_migration "$migration_id" 2>/dev/null || continue
-    
-    # If migration_check exists and returns false, skip it
-    if type migration_check &>/dev/null; then
-      if ! migration_check 2>/dev/null; then
-        mark_migration_applied "$migration_id"
-        continue
-      fi
-    fi
-    
-    ((count++))
-  done
-  echo "$count"
+    local count=0
+    for migration_id in $(list_available_migrations); do
+        local status=$(get_migration_real_status "$migration_id")
+        if [[ "$status" == "pending" ]]; then
+            ((count++))
+        fi
+    done
+    echo "$count"
 }
 
 #####################################################################################
 # Migration Execution
 #####################################################################################
 load_migration() {
-  local migration_id="$1"
-  local migration_file="${MIGRATIONS_DIR}/${migration_id}.sh"
-  
-  if [[ ! -f "$migration_file" ]]; then
-    echo -e "${STY_RED}Migration not found: $migration_id${STY_RST}"
-    return 1
-  fi
-  
-  # Reset migration variables
-  MIGRATION_ID=""
-  MIGRATION_TITLE=""
-  MIGRATION_DESCRIPTION=""
-  MIGRATION_TARGET_FILE=""
-  MIGRATION_REQUIRED=false
-  
-  source "$migration_file"
-}
-
-show_migration_preview() {
-  local migration_id="$1"
-  
-  load_migration "$migration_id" || return 1
-  
-  echo ""
-  echo -e "${STY_CYAN}${STY_BOLD}┌─ Migration: ${MIGRATION_ID}${STY_RST}"
-  echo -e "${STY_CYAN}│${STY_RST}"
-  echo -e "${STY_CYAN}│${STY_RST}  ${STY_BOLD}Title:${STY_RST} ${MIGRATION_TITLE}"
-  echo -e "${STY_CYAN}│${STY_RST}  ${STY_BOLD}File:${STY_RST}  ${MIGRATION_TARGET_FILE}"
-  echo -e "${STY_CYAN}│${STY_RST}"
-  echo -e "${STY_CYAN}│${STY_RST}  ${MIGRATION_DESCRIPTION}"
-  echo -e "${STY_CYAN}│${STY_RST}"
-  
-  if type migration_preview &>/dev/null; then
-    echo -e "${STY_CYAN}│${STY_RST}  ${STY_BOLD}Changes:${STY_RST}"
-    migration_preview | while IFS= read -r line; do
-      echo -e "${STY_CYAN}│${STY_RST}    $line"
-    done
-    echo -e "${STY_CYAN}│${STY_RST}"
-  fi
-  
-  echo -e "${STY_CYAN}└──────────────────────────────${STY_RST}"
+    local migration_id="$1"
+    local migration_file="${MIGRATIONS_DIR}/${migration_id}.sh"
+    
+    if [[ ! -f "$migration_file" ]]; then
+        return 1
+    fi
+    
+    # Reset migration variables
+    MIGRATION_ID=""
+    MIGRATION_TITLE=""
+    MIGRATION_DESCRIPTION=""
+    MIGRATION_TARGET_FILE=""
+    MIGRATION_REQUIRED=false
+    
+    # Unset previous functions
+    unset -f migration_check migration_preview migration_diff migration_apply 2>/dev/null
+    
+    source "$migration_file"
 }
 
 apply_migration() {
-  local migration_id="$1"
-  local force="${2:-false}"
-  
-  load_migration "$migration_id" || return 1
-  
-  # Check if already applied
-  if is_migration_applied "$migration_id" && [[ "$force" != "true" ]]; then
-    echo -e "${STY_YELLOW}Migration already applied: $migration_id${STY_RST}"
-    return 0
-  fi
-  
-  # Check if target file exists
-  local target_file="${MIGRATION_TARGET_FILE/#\~/$HOME}"
-  if [[ -n "$target_file" && ! -f "$target_file" ]]; then
-    echo -e "${STY_YELLOW}Target file not found, skipping: $target_file${STY_RST}"
-    mark_migration_skipped "$migration_id"
-    return 0
-  fi
-  
-  # Create backup
-  if [[ -n "$target_file" && -f "$target_file" ]]; then
-    local backup_dir=$(create_backup "$target_file" "$(basename "$target_file")")
-    echo -e "${STY_BLUE}Backup created: $backup_dir${STY_RST}"
-  fi
-  
-  # Apply migration
-  if type migration_apply &>/dev/null; then
-    if migration_apply; then
-      mark_migration_applied "$migration_id"
-      echo -e "${STY_GREEN}✓ Migration applied: $migration_id${STY_RST}"
-      return 0
-    else
-      echo -e "${STY_RED}✗ Migration failed: $migration_id${STY_RST}"
-      if [[ -n "$backup_dir" ]]; then
-        echo -e "${STY_YELLOW}  Restoring from backup...${STY_RST}"
-        cp "${backup_dir}/$(basename "$target_file")" "$target_file"
-      fi
-      return 1
+    local migration_id="$1"
+    local force="${2:-false}"
+    
+    load_migration "$migration_id" || return 1
+    
+    # Check if already applied
+    if is_migration_applied "$migration_id" && [[ "$force" != "true" ]]; then
+        tui_check_ok "Already applied: $MIGRATION_TITLE"
+        return 0
     fi
-  else
-    echo -e "${STY_RED}Migration has no apply function: $migration_id${STY_RST}"
-    return 1
-  fi
+    
+    # Check if target file exists
+    local target_file="${MIGRATION_TARGET_FILE/#\~/$HOME}"
+    if [[ -n "$target_file" && ! -f "$target_file" ]]; then
+        tui_check_skip "Target file not found: $(basename "$target_file")"
+        mark_migration_skipped "$migration_id"
+        return 0
+    fi
+    
+    # Create backup
+    if [[ -n "$target_file" && -f "$target_file" ]]; then
+        local backup_dir=$(create_backup "$target_file" "$(basename "$target_file")")
+        tui_dim "    Backup: $backup_dir"
+    fi
+    
+    # Apply migration
+    if type migration_apply &>/dev/null; then
+        if migration_apply; then
+            mark_migration_applied "$migration_id"
+            tui_check_ok "Applied: $MIGRATION_TITLE"
+            return 0
+        else
+            tui_check_fail "Failed: $MIGRATION_TITLE"
+            if [[ -n "$backup_dir" ]]; then
+                tui_info "Restoring from backup..."
+                cp "${backup_dir}/$(basename "$target_file")" "$target_file"
+            fi
+            return 1
+        fi
+    else
+        tui_check_fail "No apply function: $migration_id"
+        return 1
+    fi
 }
 
 #####################################################################################
-# Interactive Migration UI
+# Interactive Migration UI (Improved Design)
 #####################################################################################
-run_migrations_interactive() {
-  local pending=($(get_pending_migrations))
-  
-  if [[ ${#pending[@]} -eq 0 ]]; then
-    echo -e "${STY_GREEN}No pending migrations.${STY_RST}"
-    return 0
-  fi
-  
-  echo ""
-  echo -e "${STY_PURPLE}${STY_BOLD}╔══════════════════════════════════════════════════════════════╗${STY_RST}"
-  echo -e "${STY_PURPLE}${STY_BOLD}║              ii-niri Configuration Migrations                ║${STY_RST}"
-  echo -e "${STY_PURPLE}${STY_BOLD}╚══════════════════════════════════════════════════════════════╝${STY_RST}"
-  echo ""
-  echo -e "${STY_CYAN}Found ${#pending[@]} pending migration(s).${STY_RST}"
-  echo -e "${STY_CYAN}These will update your config files to support new features.${STY_RST}"
-  echo -e "${STY_CYAN}Your original files will be backed up automatically.${STY_RST}"
-  echo ""
-  
-  for migration_id in "${pending[@]}"; do
-    show_migration_preview "$migration_id"
+show_migration_card() {
+    local migration_id="$1"
+    
+    load_migration "$migration_id" || return 1
+    
+    local target_short=$(basename "${MIGRATION_TARGET_FILE/#\~/$HOME}" 2>/dev/null || echo "N/A")
     
     echo ""
-    echo -e "${STY_YELLOW}Apply this migration?${STY_RST}"
-    echo "  y = Yes, apply"
-    echo "  n = No, skip (won't ask again)"
-    echo "  v = View full diff"
-    echo "  a = Apply all remaining"
-    echo "  q = Quit"
+    if $HAS_GUM; then
+        gum style \
+            --border rounded \
+            --border-foreground "$TUI_ACCENT_DIM" \
+            --padding "0 2" \
+            --margin "0 1" \
+            "$(gum style --foreground "$TUI_ACCENT" --bold "$MIGRATION_TITLE")" \
+            "" \
+            "$(gum style --foreground "$TUI_MUTED" "Target: $target_short")" \
+            "" \
+            "$MIGRATION_DESCRIPTION"
+        
+        if type migration_preview &>/dev/null; then
+            echo ""
+            gum style --foreground "$TUI_MUTED" "  Changes:"
+            migration_preview | while IFS= read -r line; do
+                echo "    $line"
+            done
+        fi
+    else
+        echo -e "  ${STY_FAINT}╭────────────────────────────────────────────────────╮${STY_RST}"
+        echo -e "  ${STY_FAINT}│${STY_RST} ${STY_PURPLE}${STY_BOLD}$MIGRATION_TITLE${STY_RST}"
+        echo -e "  ${STY_FAINT}│${STY_RST}"
+        echo -e "  ${STY_FAINT}│${STY_RST} ${STY_FAINT}Target:${STY_RST} $target_short"
+        echo -e "  ${STY_FAINT}│${STY_RST}"
+        # Word wrap description
+        echo "$MIGRATION_DESCRIPTION" | fold -s -w 50 | while IFS= read -r line; do
+            echo -e "  ${STY_FAINT}│${STY_RST} $line"
+        done
+        
+        if type migration_preview &>/dev/null; then
+            echo -e "  ${STY_FAINT}│${STY_RST}"
+            echo -e "  ${STY_FAINT}│${STY_RST} ${STY_BOLD}Changes:${STY_RST}"
+            migration_preview | while IFS= read -r line; do
+                echo -e "  ${STY_FAINT}│${STY_RST}   $line"
+            done
+        fi
+        echo -e "  ${STY_FAINT}╰────────────────────────────────────────────────────╯${STY_RST}"
+    fi
+}
+
+run_migrations_interactive() {
+    local pending=($(get_pending_migrations))
     
-    while true; do
-      read -p "====> " choice
-      case "$choice" in
-        [yY])
-          apply_migration "$migration_id"
-          break
-          ;;
-        [nN])
-          mark_migration_skipped "$migration_id"
-          echo -e "${STY_YELLOW}Skipped: $migration_id${STY_RST}"
-          break
-          ;;
-        [vV])
-          if type migration_diff &>/dev/null; then
-            load_migration "$migration_id"
-            migration_diff
-          else
-            echo -e "${STY_YELLOW}No diff available for this migration${STY_RST}"
-          fi
-          ;;
-        [aA])
-          apply_migration "$migration_id"
-          for remaining in "${pending[@]}"; do
-            if ! is_migration_applied "$remaining" && ! is_migration_skipped "$remaining"; then
-              apply_migration "$remaining"
-            fi
-          done
-          return 0
-          ;;
-        [qQ])
-          echo -e "${STY_BLUE}Migrations paused. Run './setup migrate' to continue later.${STY_RST}"
-          return 0
-          ;;
-        *)
-          echo -e "${STY_RED}Please enter y/n/v/a/q${STY_RST}"
-          ;;
-      esac
+    if [[ ${#pending[@]} -eq 0 ]]; then
+        tui_success "No pending migrations"
+        return 0
+    fi
+    
+    tui_title "Configuration Migrations"
+    
+    tui_info "${#pending[@]} migration(s) available"
+    tui_subtitle "These update your config files to support new features."
+    tui_subtitle "Original files are backed up automatically."
+    
+    for migration_id in "${pending[@]}"; do
+        show_migration_card "$migration_id"
+        
+        echo ""
+        local choice
+        if $HAS_GUM; then
+            choice=$(gum choose --header "Apply this migration?" \
+                --header.foreground "$TUI_ACCENT" \
+                --cursor.foreground "$TUI_ACCENT" \
+                "Yes, apply" "No, skip" "View diff" "Apply all" "Quit")
+        else
+            echo -e "  ${STY_PURPLE}?${STY_RST} Apply this migration?"
+            echo -e "    ${STY_FAINT}1)${STY_RST} Yes, apply"
+            echo -e "    ${STY_FAINT}2)${STY_RST} No, skip (won't ask again)"
+            echo -e "    ${STY_FAINT}3)${STY_RST} View diff"
+            echo -e "    ${STY_FAINT}4)${STY_RST} Apply all remaining"
+            echo -e "    ${STY_FAINT}5)${STY_RST} Quit"
+            echo ""
+            echo -ne "  ${STY_PURPLE}❯${STY_RST} "
+            read -r selection
+            case "$selection" in
+                1|y|Y) choice="Yes, apply" ;;
+                2|n|N) choice="No, skip" ;;
+                3|v|V) choice="View diff" ;;
+                4|a|A) choice="Apply all" ;;
+                *) choice="Quit" ;;
+            esac
+        fi
+        
+        case "$choice" in
+            "Yes, apply")
+                apply_migration "$migration_id"
+                ;;
+            "No, skip")
+                mark_migration_skipped "$migration_id"
+                tui_check_skip "Skipped: $(load_migration "$migration_id" && echo "$MIGRATION_TITLE")"
+                ;;
+            "View diff")
+                if type migration_diff &>/dev/null; then
+                    load_migration "$migration_id"
+                    echo ""
+                    migration_diff
+                    echo ""
+                else
+                    tui_warn "No diff available"
+                fi
+                # Re-show this migration
+                show_migration_card "$migration_id"
+                ;;
+            "Apply all")
+                apply_migration "$migration_id"
+                for remaining in "${pending[@]}"; do
+                    if ! is_migration_applied "$remaining" && ! is_migration_skipped "$remaining"; then
+                        apply_migration "$remaining"
+                    fi
+                done
+                break
+                ;;
+            *)
+                tui_info "Migrations paused. Run './setup migrate' to continue."
+                return 0
+                ;;
+        esac
     done
-  done
-  
-  echo ""
-  echo -e "${STY_GREEN}All migrations processed.${STY_RST}"
+    
+    echo ""
+    tui_success "All migrations processed"
 }
 
 run_migrations_auto() {
-  local pending=($(get_pending_migrations))
-  
-  for migration_id in "${pending[@]}"; do
-    load_migration "$migration_id"
-    if [[ "$MIGRATION_REQUIRED" == "true" ]]; then
-      apply_migration "$migration_id"
-    fi
-  done
+    local pending=($(get_pending_migrations))
+    
+    for migration_id in "${pending[@]}"; do
+        load_migration "$migration_id"
+        if [[ "$MIGRATION_REQUIRED" == "true" ]]; then
+            apply_migration "$migration_id"
+        fi
+    done
 }
 
 #####################################################################################
-# Migration Status Display
+# Migration Status Display (Improved)
 #####################################################################################
 show_migrations_status() {
-  echo ""
-  echo -e "${STY_CYAN}${STY_BOLD}Migration Status${STY_RST}"
-  echo ""
-  
-  local applied=0
-  local skipped=0
-  local pending=0
-  
-  for migration_id in $(list_available_migrations); do
-    if is_migration_applied "$migration_id"; then
-      echo -e "  ${STY_GREEN}✓${STY_RST} $migration_id"
-      ((applied++))
-    elif is_migration_skipped "$migration_id"; then
-      echo -e "  ${STY_YELLOW}○${STY_RST} $migration_id (skipped)"
-      ((skipped++))
-    else
-      echo -e "  ${STY_BLUE}●${STY_RST} $migration_id (pending)"
-      ((pending++))
-    fi
-  done
-  
-  echo ""
-  echo -e "Applied: $applied | Skipped: $skipped | Pending: $pending"
+    tui_title "Migration Status"
+    
+    local applied=0
+    local skipped=0
+    local pending=0
+    local auto_applied=0
+    
+    for migration_id in $(list_available_migrations); do
+        local status=$(get_migration_real_status "$migration_id")
+        load_migration "$migration_id" 2>/dev/null
+        local title="${MIGRATION_TITLE:-$migration_id}"
+        
+        case "$status" in
+            applied)
+                tui_check_ok "$title"
+                ((applied++))
+                ;;
+            auto-applied)
+                tui_check_ok "$title ${STY_FAINT}(auto-detected)${STY_RST}"
+                ((auto_applied++))
+                ;;
+            skipped)
+                tui_check_skip "$title (skipped)"
+                ((skipped++))
+                ;;
+            pending)
+                tui_check_warn "$title (pending)"
+                ((pending++))
+                ;;
+        esac
+    done
+    
+    echo ""
+    local total=$((applied + auto_applied))
+    tui_key_value "Applied:" "$total"
+    tui_key_value "Skipped:" "$skipped"
+    tui_key_value "Pending:" "$pending"
 }

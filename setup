@@ -60,28 +60,31 @@ quiet=false
 show_help() {
     echo ""
     tui_title "ii-niri setup"
+    
+    tui_key_value "Usage:" "./setup [command] [options]"
     echo ""
-    echo "Usage: ./setup [command] [options]"
+    
+    tui_subtitle "Commands"
+    tui_list_item "(none)      Interactive menu"
+    tui_list_item "install     Full installation (deps + config + files)"
+    tui_list_item "update      Check remote, pull, sync, restart shell"
+    tui_list_item "migrate     Review/apply config migrations"
+    tui_list_item "doctor      Diagnose and fix problems"
+    tui_list_item "rollback    Restore previous snapshot"
     echo ""
-    tui_subtitle "Commands:"
-    echo "  (none)     Interactive menu"
-    echo "  install    Full installation (deps + config + files)"
-    echo "  update     Check remote, pull, sync, restart shell"
-    echo "  migrate    Review/apply config migrations"
-    echo "  doctor     Diagnose and fix problems"
-    echo "  rollback   Restore previous snapshot"
+    
+    tui_subtitle "Options"
+    tui_list_item "-y, --yes     Skip prompts (auto-yes)"
+    tui_list_item "-q, --quiet   Minimal output"
+    tui_list_item "-h, --help    Show this help"
     echo ""
-    tui_subtitle "Options:"
-    echo "  -y, --yes     Skip prompts (auto-yes)"
-    echo "  -q, --quiet   Minimal output"
-    echo "  -h, --help    Show this help"
-    echo ""
-    tui_subtitle "Examples:"
-    echo "  ./setup              # Interactive menu"
-    echo "  ./setup update       # Check for updates and apply"
-    echo "  ./setup migrate      # Review/apply pending migrations"
-    echo "  ./setup doctor       # Fix common issues"
-    echo "  ./setup rollback     # Restore previous state"
+    
+    tui_subtitle "Examples"
+    tui_dim "  ./setup              # Interactive menu"
+    tui_dim "  ./setup update       # Check for updates and apply"
+    tui_dim "  ./setup migrate      # Review/apply pending migrations"
+    tui_dim "  ./setup doctor       # Fix common issues"
+    tui_dim "  ./setup rollback     # Restore previous state"
     echo ""
 }
 
@@ -156,52 +159,53 @@ tui_menu() {
 # Status Command
 ###############################################################################
 show_status() {
-    echo ""
-    tui_title "ii-niri Status"
-    echo ""
-    
     local installed_ver=$(get_installed_version)
     local installed_commit=$(get_installed_commit)
     local repo_ver=$(get_repo_version)
     local repo_commit=$(get_repo_commit)
     
-    tui_table_header "Property" "Value"
-    tui_table_row "Version" "$installed_ver"
-    tui_table_row "Commit" "$installed_commit"
-    tui_table_row "Repo Version" "$repo_ver"
-    tui_table_row "Repo Commit" "$repo_commit"
-    tui_table_footer
+    tui_title "Status"
     
-    echo ""
+    tui_table_header "Property" "Value" 14 36
+    tui_table_row "Version" "$installed_ver" 14 36
+    tui_table_row "Commit" "$installed_commit" 14 36
+    tui_table_row "Repo Version" "$repo_ver" 14 36
+    tui_table_row "Repo Commit" "$repo_commit" 14 36
+    tui_table_footer 14 36
+    
+    tui_title "Health Checks"
     
     # Check shell status
     if pgrep -f "qs.*-c.*ii" &>/dev/null; then
-        tui_success "Shell is running"
+        tui_check_ok "Shell is running"
     else
-        tui_warn "Shell is not running"
+        tui_check_warn "Shell is not running"
     fi
     
     # Check Niri
     if [[ -n "$NIRI_SOCKET" ]]; then
-        tui_success "Niri compositor detected"
+        tui_check_ok "Niri compositor detected"
     else
-        tui_warn "Not running in Niri session"
+        tui_check_warn "Not running in Niri session"
     fi
     
     # Pending migrations
     local pending=$(count_pending_migrations 2>/dev/null || echo "0")
     if [[ "$pending" -gt 0 ]]; then
-        echo ""
-        tui_warn "$pending pending migration(s)"
+        tui_check_warn "$pending pending migration(s)"
         tui_info "Run './setup migrate' to review"
+    else
+        tui_check_ok "No pending migrations"
     fi
     
     # Snapshots
     local snapshot_count=$(list_snapshots 2>/dev/null | wc -l)
     if [[ "$snapshot_count" -gt 0 ]]; then
-        echo ""
-        tui_info "$snapshot_count snapshot(s) available for rollback"
+        tui_check_ok "$snapshot_count snapshot(s) available"
+    else
+        tui_check_skip "No snapshots"
     fi
+    echo ""
 }
 
 ###############################################################################

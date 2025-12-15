@@ -10,8 +10,9 @@ MIGRATION_TARGET_FILE="~/.config/niri/config.kdl"
 MIGRATION_REQUIRED=false
 
 migration_check() {
-  local config="${XDG_CONFIG_HOME}/niri/config.kdl"
-  [[ -f "$config" ]] && grep -q 'Mod+Q.*close-window' "$config"
+  local config="${XDG_CONFIG_HOME:-$HOME/.config}/niri/config.kdl"
+  # Check if there's an uncommented Mod+Q with close-window (not the script version)
+  [[ -f "$config" ]] && grep -v '^\s*//' "$config" | grep -q 'Mod+Q.*close-window;'
 }
 
 migration_preview() {

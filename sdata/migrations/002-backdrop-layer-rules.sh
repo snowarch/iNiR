@@ -9,7 +9,7 @@ MIGRATION_TARGET_FILE="~/.config/niri/config.kdl"
 MIGRATION_REQUIRED=false
 
 migration_check() {
-  local config="${XDG_CONFIG_HOME}/niri/config.kdl"
+  local config="${XDG_CONFIG_HOME:-$HOME/.config}/niri/config.kdl"
   [[ -f "$config" ]] && ! grep -q "quickshell:iiBackdrop" "$config"
 }
 
@@ -37,7 +37,7 @@ DIFF
 }
 
 migration_apply() {
-  local config="${XDG_CONFIG_HOME}/niri/config.kdl"
+  local config="${XDG_CONFIG_HOME:-$HOME/.config}/niri/config.kdl"
   
   if ! migration_check; then
     return 0
