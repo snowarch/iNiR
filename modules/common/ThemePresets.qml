@@ -879,7 +879,7 @@ Singleton {
         return presets[0];
     }
 
-    function applyPreset(id) {
+    function applyPreset(id, applyExternal = true) {
         console.log("[ThemePresets] Applying preset:", id);
         const preset = getPreset(id);
         if (!preset.colors) {
@@ -946,13 +946,15 @@ Singleton {
         m3.m3successContainer = c.m3successContainer;
         m3.m3onSuccessContainer = c.m3onSuccessContainer;
         
-        // Apply to GTK apps (Nautilus, etc)
-        applyGtkTheme(c);
+        if (applyExternal) {
+            // Apply to GTK apps (Nautilus, etc)
+            applyGtkTheme(c);
+        }
         
         return true;
     }
     
-    function applyGtkTheme(c): void {
+    function applyGtkTheme(c) {
         // First, generate colors.json for Vesktop theme generation
         generateColorsJson(c);
         
@@ -971,7 +973,7 @@ Singleton {
         });
     }
     
-    function generateColorsJson(c): void {
+    function generateColorsJson(c) {
         console.log("[ThemePresets] Generating colors.json for Vesktop");
         
         // Generate colors.json in the format expected by system24_palette.py

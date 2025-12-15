@@ -32,31 +32,37 @@ OUTPUT_FILE = Path(
     )
 ).expanduser()
 
+MIDNIGHT_OUTPUT_FILE = Path(
+    os.environ.get(
+        "MIDNIGHT_DMS_CSS",
+        "~/.config/vesktop/themes/ii-midnight.theme.css",
+    )
+).expanduser()
 
-def _resolve_output_files() -> list[Path]:
+
+def _resolve_output_files(env_var: str, default_path: Path) -> list[Path]:
     """Return a list of paths to write the theme to.
 
     Different builds/packaging may use different XDG config folder casing
     (e.g. ~/.config/vesktop vs ~/.config/Vesktop).
-    If SYSTEM24_PALETTE_CSS is set, it remains authoritative.
+    If the env var is set, it remains authoritative.
     """
 
-    explicit = os.environ.get("SYSTEM24_PALETTE_CSS")
+    explicit = os.environ.get(env_var)
     if explicit:
         return [Path(explicit).expanduser()]
 
+    basename = default_path.name
     candidates = [
-        Path("~/.config/vesktop/themes/system24.theme.css").expanduser(),
-        Path("~/.config/Vesktop/themes/system24.theme.css").expanduser(),
+        Path(f"~/.config/vesktop/themes/{basename}").expanduser(),
+        Path(f"~/.config/Vesktop/themes/{basename}").expanduser(),
     ]
 
     existing_dirs = [p for p in candidates if p.parent.exists()]
     if existing_dirs:
-        # If both exist, write to both. If only one exists, write there.
         return existing_dirs
 
-    # Fallback to the historical default
-    return [OUTPUT_FILE]
+    return [default_path]
 
 # Template for the full theme file
 THEME_TEMPLATE = '''/**
@@ -120,6 +126,40 @@ body {{
 {palette_css}
 
 /* Material Design System */
+'''
+
+MIDNIGHT_THEME_TEMPLATE = '''/**
+ * @name ii-midnight
+ * @description dank-discord / midnight style theme using ii-niri Material You colors.
+ * @author ii-niri (Material palette injection)
+ * @version 2.2.0
+ * @source https://github.com/end-4/ii-niri
+ */
+
+/*
+ * Base theme import:
+ * - Prefer your local copy (if you have it in the same folder).
+ * - Fallback to remote so the theme works on fresh installs.
+ */
+@import url('dank-discord.css');
+@import url('https://refact0r.github.io/midnight-discord/build/midnight.css');
+
+/* Material You Palette - Auto-generated */
+{palette_css}
+
+/*
+ * Reduce hover/active highlight.
+ * The base theme can still style hover states, but the strong accent overlay is removed.
+ */
+:root, :root:root, body, #app-mount {{
+    --hover: transparent;
+    --active: transparent;
+    --active-2: transparent;
+    --message-hover: transparent;
+    --border-hover: var(--border);
+    --border-light: var(--border);
+    --button-border: var(--border);
+}}
 '''
 
 
@@ -316,26 +356,35 @@ def _build_palette(colors: Dict[str, str]) -> Dict[str, str]:
     return palette
 
 
-def _write_palette(palette: Dict[str, str]) -> None:
-    """Write the complete theme file with embedded palette."""
-    output_files = _resolve_output_files()
-    for out in output_files:
-        _ensure_parent(out)
-    
-    # Build palette CSS block
-    # Apply variables to multiple roots to cover Discord/Vesktop variations.
+def _build_palette_css(palette: Dict[str, str]) -> str:
     palette_lines = [":root, :root:root, body, #app-mount {"]
     for key in sorted(palette.keys()):
         palette_lines.append(f"    {key}: {palette[key]};")
     palette_lines.append("}")
-    palette_css = "\n".join(palette_lines)
-    
-    # Generate full theme with embedded palette
-    content = THEME_TEMPLATE.format(palette_css=palette_css)
-    
-    for out in output_files:
+    return "\n".join(palette_lines)
+
+
+def _write_palette(palette: Dict[str, str]) -> None:
+    """Write the complete theme files with embedded palette."""
+    palette_css = _build_palette_css(palette)
+
+    system24_outputs = _resolve_output_files("SYSTEM24_PALETTE_CSS", OUTPUT_FILE)
+    midnight_outputs = _resolve_output_files("MIDNIGHT_DMS_CSS", MIDNIGHT_OUTPUT_FILE)
+
+    for out in (system24_outputs + midnight_outputs):
+        _ensure_parent(out)
+
+    system24_content = THEME_TEMPLATE.format(palette_css=palette_css)
+    midnight_content = MIDNIGHT_THEME_TEMPLATE.format(palette_css=palette_css)
+
+    for out in system24_outputs:
         with out.open("w", encoding="utf-8") as fh:
-            fh.write(content)
+            fh.write(system24_content)
+        print(f"Generated: {out}")
+
+    for out in midnight_outputs:
+        with out.open("w", encoding="utf-8") as fh:
+            fh.write(midnight_content)
         print(f"Generated: {out}")
 
 

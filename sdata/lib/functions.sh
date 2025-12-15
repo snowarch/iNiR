@@ -208,9 +208,8 @@ function install_file__auto_backup(){
       v cp_file $s $t
     else
       if ! ${quiet:-false}; then
-        echo -e "${STY_BLUE}[$0]: Not first run - saving as .new${STY_RST}"
+        echo -e "${STY_BLUE}[$0]: Not first run - preserving existing file${STY_RST}"
       fi
-      v cp_file $s $t.new
     fi
   else
     if ! ${quiet:-false}; then

@@ -184,78 +184,13 @@ case "${SKIP_NIRI}" in
     NIRI_CONFIG="${XDG_CONFIG_HOME}/niri/config.kdl"
     
     # First install: copy our default config
-    # Update: preserve user's config, save new defaults as .new for reference
+    # Update: preserve user's config; new options are handled via migrations
     if [[ -f "defaults/niri/config.kdl" ]]; then
       install_file__auto_backup "defaults/niri/config.kdl" "${XDG_CONFIG_HOME}/niri/config.kdl"
       log_success "Niri config installed (defaults)"
     elif [[ -d "dots/.config/niri" ]]; then
       install_file__auto_backup "dots/.config/niri/config.kdl" "${XDG_CONFIG_HOME}/niri/config.kdl"
       log_success "Niri config installed (dots)"
-    fi
-    
-    # Show hint about .new file if this is an update
-    if [[ "${IS_UPDATE}" == "true" && -f "${NIRI_CONFIG}.new" ]] && ! ${quiet:-false}; then
-      echo -e "${STY_YELLOW}Note: New Niri config saved as ${NIRI_CONFIG}.new${STY_RST}"
-      echo -e "${STY_YELLOW}Compare with: diff ~/.config/niri/config.kdl ~/.config/niri/config.kdl.new${STY_RST}"
-    fi
-    
-    ###########################################################################
-    # MIGRATIONS - Only run on fresh install, NOT on update
-    # Users can run './setup migrate' to apply these interactively
-    ###########################################################################
-    if [[ "${SKIP_MIGRATIONS}" != "true" && "${IS_UPDATE}" != "true" && -f "$NIRI_CONFIG" ]]; then
-      if ! ${quiet:-false}; then
-        echo -e "${STY_CYAN}Applying first-install migrations...${STY_RST}"
-      fi
-      
-      # These are REQUIRED for ii-niri to work, so we apply them on first install
-      # On updates, users can choose via './setup migrate'
-      
-      # Backdrop layer-rules (required for overview)
-      if ! grep -q "quickshell:iiBackdrop" "$NIRI_CONFIG" 2>/dev/null; then
-        cat >> "$NIRI_CONFIG" << 'BACKDROP_RULES'
-
-// ============================================================================
-// Layer rules added by ii-niri (required for backdrop in overview)
-// ============================================================================
-layer-rule {
-    match namespace="quickshell:iiBackdrop"
-    place-within-backdrop true
-    opacity 1.0
-}
-
-layer-rule {
-    match namespace="quickshell:wBackdrop"
-    place-within-backdrop true
-    opacity 1.0
-}
-BACKDROP_RULES
-        log_success "Backdrop layer-rules added"
-        mark_migration_applied "002-backdrop-layer-rules"
-      fi
-      
-      # GameMode animation toggle
-      if ! grep -qE '^\s*(//)?off' "$NIRI_CONFIG" 2>/dev/null; then
-        python3 << 'MIGRATE_ANIMATIONS'
-import re
-import os
-
-config_path = os.path.expanduser("~/.config/niri/config.kdl")
-with open(config_path, 'r') as f:
-    content = f.read()
-
-animations_match = re.search(r'^animations\s*\{([^}]*)\}', content, re.MULTILINE | re.DOTALL)
-if animations_match:
-    block_content = animations_match.group(1)
-    if '//off' not in block_content and 'off' not in block_content:
-        new_block = 'animations {\n    //off' + block_content + '}'
-        content = content[:animations_match.start()] + new_block + content[animations_match.end():]
-        with open(config_path, 'w') as f:
-            f.write(content)
-MIGRATE_ANIMATIONS
-        log_success "GameMode animation toggle added"
-        mark_migration_applied "001-gamemode-animation-toggle"
-      fi
     fi
     ;;
 esac
@@ -349,6 +284,7 @@ if [[ -d "dots/.config/vesktop/themes" ]]; then
   # Migrate: Remove old theme files from previous versions
   OLD_VESKTOP_THEMES=(
     "midnight-ii.theme.css"
+    "dms-midnight.theme.css"
     "system24-ii.theme.css"
     "system24-palette.css"
     "ii-palette.css"
@@ -393,6 +329,13 @@ if [[ -f "defaults/config.json" ]]; then
 elif [[ -f "dots/.config/illogical-impulse/config.json" ]]; then
   # Fallback to dots (legacy)
   install_file__auto_backup "dots/.config/illogical-impulse/config.json" "${XDG_CONFIG_HOME}/illogical-impulse/config.json"
+fi
+
+#####################################################################################
+# Apply required migrations automatically
+#####################################################################################
+if [[ "${SKIP_MIGRATIONS}" != "true" ]]; then
+  run_migrations_auto
 fi
 
 #####################################################################################
@@ -804,29 +747,6 @@ fi
 
 # Skip the rest of the summary in quiet mode
 if ! ${quiet:-false}; then
-
-  # Check for .new files that need manual review
-  # Note: kdeglobals.new and dolphinrc.new are no longer created (always overwritten)
-  NEW_FILES=()
-  for f in "${XDG_CONFIG_HOME}/niri/config.kdl.new" \
-           "${XDG_CONFIG_HOME}/illogical-impulse/config.json.new"; do
-    if [[ -f "$f" ]]; then
-      NEW_FILES+=("$f")
-    fi
-  done
-
-  if [[ ${#NEW_FILES[@]} -gt 0 ]]; then
-    echo -e "${STY_YELLOW}${STY_BOLD}┌─ Files to Review${STY_RST}"
-    echo -e "${STY_YELLOW}│${STY_RST}"
-    echo -e "${STY_YELLOW}│${STY_RST}  New defaults saved as .new (your config preserved):"
-    for f in "${NEW_FILES[@]}"; do
-      echo -e "${STY_YELLOW}│${STY_RST}    ${STY_FAINT}${f}${STY_RST}"
-    done
-    echo -e "${STY_YELLOW}│${STY_RST}"
-    echo -e "${STY_YELLOW}│${STY_RST}  Compare with: ${STY_FAINT}diff <file> <file>.new${STY_RST}"
-    echo -e "${STY_YELLOW}└──────────────────────────${STY_RST}"
-    echo ""
-  fi
 
   # Show warnings if any
   if [[ ${#WARNINGS[@]} -gt 0 ]]; then

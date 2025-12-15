@@ -12,6 +12,26 @@ cleanup() {
     rm -rf /tmp/buildyay /tmp/buildparu 2>/dev/null
     exit 130
 }
+
+###############################################################################
+# Migrate
+###############################################################################
+run_migrate() {
+    echo ""
+    tui_title "ii-niri Migrations"
+    echo ""
+
+    # Always apply REQUIRED migrations first
+    run_migrations_auto
+
+    local pending=$(count_pending_migrations 2>/dev/null || echo "0")
+    if [[ "$pending" -gt 0 ]]; then
+        tui_warn "$pending pending migration(s)"
+        run_migrations_interactive
+    else
+        tui_success "No pending migrations"
+    fi
+}
 trap cleanup INT
 trap 'rm -rf /tmp/buildyay /tmp/buildparu 2>/dev/null' EXIT TERM
 
@@ -47,6 +67,7 @@ show_help() {
     echo "  (none)     Interactive menu"
     echo "  install    Full installation (deps + config + files)"
     echo "  update     Check remote, pull, sync, restart shell"
+    echo "  migrate    Review/apply config migrations"
     echo "  doctor     Diagnose and fix problems"
     echo "  rollback   Restore previous snapshot"
     echo ""
@@ -58,6 +79,7 @@ show_help() {
     tui_subtitle "Examples:"
     echo "  ./setup              # Interactive menu"
     echo "  ./setup update       # Check for updates and apply"
+    echo "  ./setup migrate      # Review/apply pending migrations"
     echo "  ./setup doctor       # Fix common issues"
     echo "  ./setup rollback     # Restore previous state"
     echo ""
@@ -112,7 +134,7 @@ tui_menu() {
     local choice
     if $is_installed; then
         choice=$(tui_choose "What would you like to do?" \
-            "Update" "Doctor" "Rollback" "Reinstall" "Status" "Help" "Exit")
+            "Update" "Migrate" "Doctor" "Rollback" "Reinstall" "Status" "Help" "Exit")
     else
         choice=$(tui_choose "What would you like to do?" \
             "Install" "Help" "Exit")
@@ -121,6 +143,7 @@ tui_menu() {
     case "$choice" in
         Install|Reinstall) run_install ;;
         Update) run_update ;;
+        Migrate) run_migrate ;;
         Doctor) run_doctor ;;
         Rollback) run_rollback ;;
         Status) show_status; read -p "Press Enter to continue..." ;;
@@ -170,7 +193,7 @@ show_status() {
     if [[ "$pending" -gt 0 ]]; then
         echo ""
         tui_warn "$pending pending migration(s)"
-        tui_info "Run './setup update' to review"
+        tui_info "Run './setup migrate' to review"
     fi
     
     # Snapshots
@@ -320,9 +343,14 @@ run_update() {
     local pending=$(count_pending_migrations)
     if [[ "$pending" -gt 0 ]]; then
         echo ""
-        tui_warn "$pending optional migration(s) available"
-        if $ask && tui_confirm "Review and apply?"; then
-            run_migrations_interactive
+        # Always apply REQUIRED migrations automatically, then offer optional migrations.
+        run_migrations_auto
+        pending=$(count_pending_migrations)
+        if [[ "$pending" -gt 0 ]]; then
+            tui_warn "$pending optional migration(s) available"
+            if $ask && tui_confirm "Review and apply?"; then
+                run_migrations_interactive
+            fi
         fi
     fi
     
@@ -363,6 +391,7 @@ while [[ $# -gt 0 ]]; do
     case $1 in
         install) COMMAND="install"; shift ;;
         update) COMMAND="update"; shift ;;
+        migrate) COMMAND="migrate"; shift ;;
         doctor) COMMAND="doctor"; shift ;;
         rollback) COMMAND="rollback"; shift ;;
         status) COMMAND="status"; shift ;;
@@ -379,6 +408,7 @@ done
 case "$COMMAND" in
     install) run_install ;;
     update) run_update ;;
+    migrate) run_migrate ;;
     doctor) run_doctor ;;
     rollback) run_rollback ;;
     status) show_status ;;
