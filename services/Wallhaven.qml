@@ -17,9 +17,14 @@ QtObject {
 
     signal responseFinished()
 
+    signal tagSuggestion(string query, var suggestions)
+
     property string failMessage: Translation.tr("That didn't work. Tips:\n- Check your query and NSFW settings\n- Make sure your Wallhaven API key is set if you want NSFW")
     property var responses: []
     property int runningRequests: 0
+
+    property string _lastTagSuggestionQuery: ""
+    property var _lastTagSuggestions: ([])
 
     // Wallhaven rate limiting (HTTP 429) can trigger easily when paging quickly.
     // Keep a simple cooldown to prevent request spam and make UI behavior predictable.
@@ -79,12 +84,261 @@ QtObject {
     readonly property string apiBase: "https://wallhaven.cc/api/v1"
     readonly property string apiSearchEndpoint: apiBase + "/search"
 
+    property var defaultUserAgent: Config.options?.networking?.userAgent || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+
+    property string tagSuggestionBase: "https://wallhaven.cc/tag/search"
+    property int tagSuggestionCacheMs: 5 * 60 * 1000
+    property var _tagSuggestionCache: ({})
+    property var currentTagRequest: null
+
+    // Cache + queue for counts (meta.total) per tag id
+    property int tagCountCacheMs: 10 * 60 * 1000
+    property var _tagCountCache: ({}) // id -> { ts, total }
+    property var _tagCountRequests: ({}) // id -> bool
+    property var _tagCountQueue: ([])
+
+    property Timer _tagCountTimer: Timer {
+        interval: 350
+        repeat: true
+        running: root._active || (root._tagCountQueue && root._tagCountQueue.length > 0)
+        onTriggered: root._fetchNextTagCount()
+    }
+
     function _detailUrl(id) {
         var url = apiBase + "/w/" + encodeURIComponent(id)
         if (apiKey && apiKey.length > 0) {
             url += "?apikey=" + encodeURIComponent(apiKey)
         }
         return url
+    }
+
+    function _decodeHtmlEntities(text) {
+        if (!text)
+            return ""
+        return text
+            .replace(/&amp;/g, "&")
+            .replace(/&quot;/g, "\"")
+            .replace(/&#039;/g, "'")
+            .replace(/&lt;/g, "<")
+            .replace(/&gt;/g, ">")
+    }
+
+    function _parseTagSuggestionsFromHtml(html) {
+        const results = []
+        if (!html || html.length === 0)
+            return results
+
+        // Match links to /tag/<id> and capture the visible name.
+        // Keep this regex intentionally permissive; Wallhaven HTML changes.
+        const patterns = [
+            // Most robust: capture the entire anchor contents (can include nested spans/icons), then strip tags.
+            new RegExp('href=["\'](?:https?:\\/\\/wallhaven\\.cc)?\\/tag\\/(\\d+)["\'][^>]*>([\\s\\S]*?)<\\/a>', 'g'),
+            // href=/tag/123 ... </a>
+            new RegExp('href=(?:https?:\\/\\/wallhaven\\.cc)?\\/tag\\/(\\d+)[^>]*>([\\s\\S]*?)<\\/a>', 'g')
+        ]
+
+        for (let p = 0; p < patterns.length; ++p) {
+            const re = patterns[p]
+            let m = null
+            while ((m = re.exec(html)) !== null) {
+                const id = (m[1] || "").trim()
+                const rawInner = (m[2] || "")
+                const innerText = rawInner.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
+                const name = root._decodeHtmlEntities(innerText)
+                if (!name)
+                    continue
+                if (results.find(x => x.id === id || x.name === name))
+                    continue
+                results.push({ id: id, name: name })
+                if (results.length >= 10)
+                    break
+            }
+            if (results.length > 0)
+                break
+        }
+
+        return results
+    }
+
+    function _queueTagCount(id) {
+        root.nowMs = Date.now()
+        if (!id || id.length === 0)
+            return
+        const cached = root._tagCountCache[id]
+        if (cached && (root.nowMs - (cached.ts || 0) < root.tagCountCacheMs))
+            return
+        if (root._tagCountRequests[id])
+            return
+        if (root._tagCountQueue.indexOf(id) !== -1)
+            return
+        root._tagCountQueue = [...root._tagCountQueue, id]
+    }
+
+    function _fetchNextTagCount(): void {
+        root.nowMs = Date.now()
+        if (root.isRateLimited)
+            return
+        if (root.nowMs < root._nextTagAllowedMs)
+            return
+        if (!root._tagCountQueue || root._tagCountQueue.length === 0)
+            return
+
+        const id = root._tagCountQueue[0]
+        root._tagCountQueue = root._tagCountQueue.slice(1)
+        if (!id || id.length === 0)
+            return
+        if (root._tagCountRequests[id])
+            return
+
+        root._tagCountRequests[id] = true
+        root._nextTagAllowedMs = root.nowMs + root.minTagIntervalMs
+
+        const url = root.apiSearchEndpoint + "?q=" + encodeURIComponent("id:" + id) + "&page=1&per_page=1&categories=111&purity=100&sorting=date_added&order=desc" + ((apiKey && apiKey.length > 0) ? ("&apikey=" + encodeURIComponent(apiKey)) : "")
+        var xhr = new XMLHttpRequest()
+        xhr.open("GET", url)
+        try {
+            xhr.setRequestHeader("User-Agent", defaultUserAgent)
+        } catch (e) {
+        }
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState !== XMLHttpRequest.DONE)
+                return
+
+            root._tagCountRequests[id] = false
+
+            if (xhr.status === 200) {
+                try {
+                    const payload = JSON.parse(xhr.responseText)
+                    const meta = payload.meta || {}
+                    const total = meta.total !== undefined ? parseInt(meta.total) : 0
+                    root._tagCountCache[id] = { ts: root.nowMs, total: total }
+
+                    // Re-emit last suggestions if they include this id
+                    if (root._lastTagSuggestions && root._lastTagSuggestions.length > 0) {
+                        let changed = false
+                        const updated = root._lastTagSuggestions.map(s => {
+                            if (s && s.id === id) {
+                                const next = {
+                                    id: s.id,
+                                    name: s.name,
+                                    count: total
+                                }
+                                changed = true
+                                return next
+                            }
+                            return s
+                        })
+                        if (changed) {
+                            root._lastTagSuggestions = updated
+                            root.tagSuggestion(root._lastTagSuggestionQuery, updated)
+                        }
+                    }
+                } catch (e) {
+                    console.log("[Wallhaven] Failed to parse tag count response:", e)
+                }
+            } else if (xhr.status === 429) {
+                root.rateLimitedUntilMs = root.nowMs + 30000
+                // requeue
+                root._tagCountRequests[id] = false
+                if (root._tagCountQueue.indexOf(id) === -1) {
+                    root._tagCountQueue = [...root._tagCountQueue, id]
+                }
+            }
+        }
+        try {
+            xhr.send()
+        } catch (e) {
+            console.log("[Wallhaven] Error sending tag count request:", e)
+            root._tagCountRequests[id] = false
+        }
+    }
+
+    function triggerTagSearch(query, preferQuoted) {
+        root.nowMs = Date.now()
+        const q = (query || "").trim()
+        if (q.length === 0)
+            return
+
+        if (preferQuoted === undefined)
+            preferQuoted = true
+
+        if (currentTagRequest) {
+            currentTagRequest.abort()
+        }
+
+        const cached = root._tagSuggestionCache[q]
+        if (cached && (root.nowMs - (cached.ts || 0) < root.tagSuggestionCacheMs)) {
+            root.tagSuggestion(q, cached.items || [])
+            return
+        }
+
+        const searchQ = preferQuoted ? ("\"" + q + "\"") : q
+        const url = root.tagSuggestionBase + "?q=" + encodeURIComponent(searchQ)
+        var xhr = new XMLHttpRequest()
+        currentTagRequest = xhr
+        xhr.open("GET", url)
+        try {
+            xhr.setRequestHeader("User-Agent", defaultUserAgent)
+        } catch (e) {
+            // Ignore if platform disallows setting UA
+        }
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState !== XMLHttpRequest.DONE)
+                return
+
+            if (currentTagRequest === xhr) {
+                currentTagRequest = null
+            }
+
+            if (xhr.status !== 200) {
+                console.log("[Wallhaven] Tag suggestion request failed:", xhr.status, url)
+                root.tagSuggestion(q, [])
+                return
+            }
+
+            try {
+                const html = xhr.responseText || ""
+                const results = root._parseTagSuggestionsFromHtml(html)
+                // Fallback: wallhaven tag search sometimes responds better without quotes.
+                if (results.length === 0 && preferQuoted) {
+                    Qt.callLater(() => root.triggerTagSearch(q, false))
+                    return
+                }
+
+                // Attach counts if cached and queue count fetches for missing
+                const enriched = results.map(s => {
+                    const id = s?.id ?? ""
+                    if (id.length === 0)
+                        return s
+                    const cachedCount = root._tagCountCache[id]
+                    if (cachedCount && (root.nowMs - (cachedCount.ts || 0) < root.tagCountCacheMs)) {
+                        return {
+                            id: s.id,
+                            name: s.name,
+                            count: cachedCount.total
+                        }
+                    }
+                    root._queueTagCount(id)
+                    return s
+                })
+
+                root._tagSuggestionCache[q] = { ts: root.nowMs, items: enriched }
+                root._lastTagSuggestionQuery = q
+                root._lastTagSuggestions = enriched
+                root.tagSuggestion(q, enriched)
+            } catch (e) {
+                console.log("[Wallhaven] Failed to parse tag suggestions:", e)
+                root.tagSuggestion(q, [])
+            }
+        }
+
+        try {
+            xhr.send()
+        } catch (e) {
+            console.log("[Wallhaven] Error sending tag suggestion request:", e)
+            currentTagRequest = null
+            root.tagSuggestion(q, [])
+        }
     }
 
     function _applyTagsToResponses(id, tagsJoined) {

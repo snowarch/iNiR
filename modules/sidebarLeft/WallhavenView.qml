@@ -21,6 +21,7 @@ Item {
     property string nsfwPath: Directories.booruDownloadsNsfw
     property string commandPrefix: "/"
     property real scrollOnNewResponse: 100
+    property int tagSuggestionDelay: 210
     property var suggestionQuery: ""
     property var suggestionList: []
 
@@ -64,6 +65,14 @@ Item {
         function onResponseFinished() {
             pullLoading = false
             root._tryScrollToPendingPage()
+        }
+    }
+
+    Connections {
+        target: Wallhaven
+        function onTagSuggestion(query, suggestions) {
+            root.suggestionQuery = query
+            root.suggestionList = suggestions
         }
     }
 
@@ -158,27 +167,26 @@ Item {
         for (let i = 0; i < parts.length; ++i) {
             const part = parts[i]
 
-            if (/^\d+$/.test(part)) {
-                pageIndex = parseInt(part, 10)
-                continue
-            }
-
             if (part.startsWith("#")) {
                 if (hashParts && hashParts.length > 0) {
-                    const t = hashParts.join("_").replace(/^_+|_+$/g, "")
-                    if (t.length > 0) tags.push(t)
+                    const phrase = hashParts.join(" ").trim()
+                    if (phrase.length > 0) tags.push("\"" + phrase + "\"")
                 }
                 hashParts = [part.substring(1)]
             } else if (hashParts) {
                 hashParts.push(part)
             } else {
+                if (/^\d+$/.test(part)) {
+                    pageIndex = parseInt(part, 10)
+                    continue
+                }
                 tags.push(part)
             }
         }
 
         if (hashParts && hashParts.length > 0) {
-            const t = hashParts.join("_").replace(/^_+|_+$/g, "")
-            if (t.length > 0) tags.push(t)
+            const phrase = hashParts.join(" ").trim()
+            if (phrase.length > 0) tags.push("\"" + phrase + "\"")
         }
 
         return { tags, pageIndex }
@@ -230,6 +238,8 @@ Item {
             }
         }
     }
+
+    // (Tag suggestion handling follows Anime.qml pattern: searchTimer + FlowButtonGroup acceptTag)
 
     ColumnLayout {
         id: columnLayout
@@ -484,6 +494,99 @@ Item {
             }
         }
 
+        DescriptionBox {
+            text: ""
+            showArrows: root.suggestionList.length > 1
+        }
+
+        FlowButtonGroup {
+            id: tagSuggestions
+            visible: root.suggestionList.length > 0 && tagInputField.text.length > 0 && !tagInputField.text.startsWith(root.commandPrefix)
+            property int selectedIndex: 0
+            Layout.fillWidth: true
+            spacing: 5
+
+            Repeater {
+                id: tagSuggestionRepeater
+                model: {
+                    tagSuggestions.selectedIndex = 0
+                    return root.suggestionList.slice(0, 10)
+                }
+                delegate: ApiCommandButton {
+                    id: tagButton
+                    colBackground: tagSuggestions.selectedIndex === index ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colSecondaryContainer
+                    bounce: false
+                    contentItem: RowLayout {
+                        anchors.centerIn: parent
+                        spacing: 5
+                        StyledText {
+                            Layout.fillWidth: false
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: Appearance.colors.colOnSecondaryContainer
+                            horizontalAlignment: Text.AlignRight
+                            text: "#" + (modelData.name ?? "")
+                        }
+                        StyledText {
+                            Layout.fillWidth: false
+                            visible: modelData.count !== undefined
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            color: Appearance.colors.colOnSecondaryContainer
+                            horizontalAlignment: Text.AlignLeft
+                            text: modelData.count ?? ""
+                        }
+                    }
+                    onHoveredChanged: {
+                        if (tagButton.hovered) {
+                            tagSuggestions.selectedIndex = index
+                        }
+                    }
+                    onClicked: {
+                        tagSuggestions.acceptSuggestion(modelData)
+                    }
+                }
+            }
+
+            function acceptSuggestion(suggestion) {
+                const raw = tagInputField.text.trim()
+                const words = raw.length > 0 ? raw.split(/\s+/) : []
+
+                const tagName = suggestion?.name ?? ""
+                const tagId = suggestion?.id ?? ""
+                if (tagName.length === 0)
+                    return
+
+                // Wallhaven exact tag search: id:<id> (cannot be combined).
+                // Always use it when available to ensure exactness and avoid space/paren tokenization.
+                if (tagId.length > 0) {
+                    tagInputField.text = "id:" + tagId + " "
+                    tagInputField.cursorPosition = tagInputField.text.length
+                    tagInputField.forceActiveFocus()
+                    return
+                }
+
+                // Otherwise, keep Anime-like behavior: replace last token, preserving '#'
+                if (words.length > 0) {
+                    const last = words[words.length - 1]
+                    const keepHash = last.startsWith("#")
+                    const needsHash = keepHash || (/\s+/.test(tagName))
+                    words[words.length - 1] = (needsHash ? "#" : "") + tagName
+                } else {
+                    words.push("#" + tagName)
+                }
+                const updatedText = words.join(" ") + " "
+                tagInputField.text = updatedText
+                tagInputField.cursorPosition = tagInputField.text.length
+                tagInputField.forceActiveFocus()
+            }
+
+            function acceptSelectedTag() {
+                if (tagSuggestions.selectedIndex >= 0 && tagSuggestions.selectedIndex < tagSuggestionRepeater.count) {
+                    const s = root.suggestionList[tagSuggestions.selectedIndex]
+                    tagSuggestions.acceptSuggestion(s)
+                }
+            }
+        }
+
         Rectangle {
             id: tagInputContainer
             property real columnSpacing: 5
@@ -514,15 +617,42 @@ Item {
                     padding: 10
                     color: activeFocus ? Appearance.m3colors.m3onSurface : Appearance.m3colors.m3onSurfaceVariant
                     renderType: Text.NativeRendering
-                    placeholderText: Translation.tr('Enter tags (use #tag for multi-word), or "%1" for commands').arg(root.commandPrefix)
+                    placeholderText: Translation.tr('Enter tags (use #tag for autocomplete / multi-word), or "%1" for commands').arg(root.commandPrefix)
                     background: null
+
+                    property Timer searchTimer: Timer {
+                        interval: root.tagSuggestionDelay
+                        repeat: false
+                        onTriggered: {
+                            const inputText = tagInputField.text
+                            const trimmed = (inputText || "").trim()
+                            if (trimmed.length === 0)
+                                return
+                            if (trimmed.startsWith("id:"))
+                                return
+                            // If user is typing a multi-word tag fragment after '#', use the whole fragment.
+                            const hashIdx = trimmed.lastIndexOf("#")
+                            let q = ""
+                            if (hashIdx !== -1) {
+                                q = trimmed.substring(hashIdx + 1).trim()
+                            } else {
+                                const words = trimmed.split(/\s+/)
+                                q = words.length > 0 ? words[words.length - 1] : ""
+                            }
+                            if (q.length < 2)
+                                return
+                            Wallhaven.triggerTagSearch(q)
+                        }
+                    }
 
                     onTextChanged: {
                         if (tagInputField.text.length === 0) {
                             root.suggestionQuery = ""
                             root.suggestionList = []
+                            searchTimer.stop()
                             return
                         }
+
                         if (tagInputField.text.startsWith(root.commandPrefix)) {
                             root.suggestionQuery = tagInputField.text
                             root.suggestionList = root.allCommands.filter(cmd => cmd.name.startsWith(tagInputField.text.substring(1))).map(cmd => {
@@ -531,10 +661,11 @@ Item {
                                     description: `${cmd.description}`,
                                 }
                             })
-                        } else {
-                            root.suggestionQuery = ""
-                            root.suggestionList = []
+                            searchTimer.stop()
+                            return
                         }
+
+                        searchTimer.restart()
                     }
 
                     function accept() {
@@ -544,14 +675,26 @@ Item {
 
                     Keys.onPressed: (event) => {
                         if (event.key === Qt.Key_Tab) {
-                            commandSuggestions.acceptSelectedCommand();
-                            event.accepted = true;
+                            if (!tagInputField.text.startsWith(root.commandPrefix) && root.suggestionList.length > 0) {
+                                tagSuggestions.acceptSelectedTag()
+                            } else {
+                                commandSuggestions.acceptSelectedCommand()
+                            }
+                            event.accepted = true
                         } else if (event.key === Qt.Key_Up) {
-                            commandSuggestions.selectedIndex = Math.max(0, commandSuggestions.selectedIndex - 1);
-                            event.accepted = true;
+                            if (!tagInputField.text.startsWith(root.commandPrefix) && root.suggestionList.length > 0) {
+                                tagSuggestions.selectedIndex = Math.max(0, tagSuggestions.selectedIndex - 1)
+                            } else {
+                                commandSuggestions.selectedIndex = Math.max(0, commandSuggestions.selectedIndex - 1)
+                            }
+                            event.accepted = true
                         } else if (event.key === Qt.Key_Down) {
-                            commandSuggestions.selectedIndex = Math.min(root.suggestionList.length - 1, commandSuggestions.selectedIndex + 1);
-                            event.accepted = true;
+                            if (!tagInputField.text.startsWith(root.commandPrefix) && root.suggestionList.length > 0) {
+                                tagSuggestions.selectedIndex = Math.min(root.suggestionList.length - 1, tagSuggestions.selectedIndex + 1)
+                            } else {
+                                commandSuggestions.selectedIndex = Math.min(root.suggestionList.length - 1, commandSuggestions.selectedIndex + 1)
+                            }
+                            event.accepted = true
                         } else if ((event.key === Qt.Key_Enter || event.key === Qt.Key_Return)) {
                             if (event.modifiers & Qt.ShiftModifier) {
                                 tagInputField.insert(tagInputField.cursorPosition, "\n")
@@ -564,7 +707,7 @@ Item {
                             }
                         }
                     }
-                }
+                 }
 
                 RippleButton {
                     id: sendButton
@@ -619,7 +762,7 @@ Item {
                 ApiInputBoxIndicator {
                     icon: "image"
                     text: "wallhaven.cc"
-                    tooltipText: Translation.tr("Search wallpapers from wallhaven.cc\nUse #tag for multi-word tags (spaces become underscores)\nExample: #xenoblade chronicles\nUse %1safe or %2lewd to toggle NSFW (requires API key)\nUse %1top, %1topw, %1latest, %1random for listing modes")
+                    tooltipText: Translation.tr("Search wallpapers from wallhaven.cc\nUse #tag for tag autocomplete and multi-word searches\nExample: #xenoblade chronicles\nTip: Tab/Enter accepts the selected suggestion\nUse %1safe or %2lewd to toggle NSFW (requires API key)\nUse %1top, %1topw, %1latest, %1random for listing modes")
                         .arg(root.commandPrefix).arg(root.commandPrefix)
                 }
 
