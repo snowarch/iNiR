@@ -30,7 +30,7 @@ doctor_fix() {
 
 check_dependencies() {
     local missing=()
-    local cmds=("qs:quickshell-git" "niri:niri" "nmcli:networkmanager" "wpctl:wireplumber" "jq:jq" "matugen:matugen-bin" "wlsunset:wlsunset" "dunstify:dunst")
+    local cmds=("qs:quickshell-git" "niri:niri" "nmcli:networkmanager" "wpctl:wireplumber" "jq:jq" "matugen:matugen-bin" "wlsunset:wlsunset" "dunstify:dunst" "fish:fish" "easyeffects:easyeffects")
     
     for item in "${cmds[@]}"; do
         local cmd="${item%%:*}"
