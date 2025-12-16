@@ -13,6 +13,7 @@ Singleton {
     readonly property bool isAutoTheme: currentTheme === "auto"
     readonly property bool isStandaloneSettingsWindow: (Quickshell.env("QS_NO_RELOAD_POPUP") ?? "") === "1"
     readonly property bool defaultApplyExternal: !isStandaloneSettingsWindow
+    readonly property bool vesktopEnabled: (Config.options?.appearance?.wallpaperTheming?.enableVesktop ?? true) !== false
 
     onCurrentThemeChanged: {
         if (Config.ready) {
@@ -41,6 +42,15 @@ Singleton {
         if (isAutoTheme) {
             console.log("[ThemeService] Delegating to MaterialThemeLoader");
             MaterialThemeLoader.reapplyTheme();
+
+            if (applyExternal && vesktopEnabled) {
+                Qt.callLater(() => {
+                    Quickshell.execDetached([
+                        "/usr/bin/python3",
+                        Directories.scriptPath + "/colors/system24_palette.py"
+                    ]);
+                });
+            }
         } else {
             console.log("[ThemeService] Applying manual theme:", currentTheme);
             ThemePresets.applyPreset(currentTheme, applyExternal);
