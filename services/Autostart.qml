@@ -58,6 +58,31 @@ Singleton {
         }
     }
 
+    // Desktop autostart launches are serialized to avoid races caused by reusing one Process
+    // instance (desktopId/command being overwritten while it is running).
+    property var _pendingDesktopLaunches: []
+
+    function _enqueueDesktopLaunch(desktopId: string): void {
+        root._pendingDesktopLaunches.push(desktopId)
+        root._startNextDesktopLaunch()
+    }
+
+    function _startNextDesktopLaunch(): void {
+        if (startDesktopProc.running)
+            return
+        if (root._pendingDesktopLaunches.length === 0)
+            return
+
+        const next = String(root._pendingDesktopLaunches[0] || "").trim()
+        if (next.length === 0) {
+            root._pendingDesktopLaunches.shift()
+            root._startNextDesktopLaunch()
+            return
+        }
+
+        startDesktopProc.start(next)
+    }
+
     function startDesktop(desktopId) {
         if (!desktopId)
             return;
@@ -66,19 +91,31 @@ Singleton {
         if (id.length === 0)
             return;
 
-        startDesktopProc.desktopId = id
-        startDesktopProc.running = true
+        root._enqueueDesktopLaunch(id)
     }
 
     Process {
         id: startDesktopProc
         property string desktopId: ""
-        command: ["gtk-launch", startDesktopProc.desktopId]
+
+        function start(desktopId: string): void {
+            this.desktopId = desktopId
+            exec(["gtk-launch", this.desktopId])
+        }
+
         onExited: (exitCode, exitStatus) => {
-            if (exitCode !== 0 && startDesktopProc.desktopId.length > 0) {
-                Quickshell.execDetached([startDesktopProc.desktopId])
+            const id = startDesktopProc.desktopId
+            if (exitCode !== 0 && id.length > 0) {
+                console.warn("[Autostart] gtk-launch failed for", id, "exit", exitCode, exitStatus)
+                // Best-effort fallback: try executing the id directly.
+                Quickshell.execDetached([id])
             }
+
             startDesktopProc.desktopId = ""
+
+            if (root._pendingDesktopLaunches.length > 0)
+                root._pendingDesktopLaunches.shift()
+            root._startNextDesktopLaunch()
         }
     }
 

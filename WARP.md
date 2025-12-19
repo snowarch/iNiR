@@ -139,6 +139,36 @@ This pattern is intentional:
 - Most UI work lives in `modules/`.
 - Most backend state/IO lives in `services/` singletons.
 
+### Module architecture (how most panels are built)
+Most panel modules follow a common shape:
+- A top-level `Scope {}` (Quickshell) that owns state and IPC.
+- One or more `PanelWindow {}` instances created either:
+  - per-monitor via `Variants { model: Quickshell.screens ... }` (e.g. bars and overview), or
+  - as a single overlay window toggled by a `Loader`/`LazyLoader`.
+- Visibility is usually driven by a `GlobalStates.*Open` boolean (instead of creating/destroying windows directly).
+- “Click outside to close” behavior is handled by:
+  - `CompositorFocusGrab` (Hyprland-only), plus
+  - a fallback full-screen `MouseArea` hit-test on Niri.
+
+Concrete examples:
+- Bar (Material ii): `modules/bar/Bar.qml` creates a per-screen `PanelWindow` under `WlrLayershell.namespace: "quickshell:bar"` and supports auto-hide behavior.
+- Overview: `modules/overview/Overview.qml` is a full-screen overlay per screen and integrates with compositor state (`CompositorService` + `NiriService`).
+- Overlay: `modules/ii/overlay/Overlay.qml` keeps the window loaded for instant open and uses a `mask` region based on `OverlayContext.clickableWidgets`.
+- Sidebars: `modules/sidebarLeft/SidebarLeft.qml` and `modules/sidebarRight/SidebarRight.qml` are panel windows that toggle via IPC and close-on-backdrop-click.
+- Region tools: `modules/regionSelector/RegionSelector.qml` is per-screen, driven by `GlobalStates.regionSelectorOpen` and exposes IPC functions (`region.screenshot/search/ocr/record/...`).
+
+### Waffle family modules (Windows 11-style)
+The waffle family is still the same shell process, but uses its own panel windows and state flags. Most waffle panels follow:
+- A full-screen click-outside overlay window + the actual panel window.
+- `GlobalStates.<wafflePanel>Open` booleans for visibility.
+
+Examples:
+- Start menu: `modules/waffle/startMenu/WaffleStartMenu.qml` (IPC target: `search`).
+- Action center: `modules/waffle/actionCenter/WaffleActionCenter.qml` (IPC target: `wactionCenter`).
+- Taskbar: `modules/waffle/bar/WaffleBar.qml` (IPC target: `wbar`).
+
+The core “look & feel” building blocks for waffle live under `modules/waffle/looks/` (acrylic rectangles, Fluent icons, W* widgets), and are widely reused by waffle submodules.
+
 ### Config system (JSON-backed singleton)
 `modules/common/Config.qml` is a `pragma Singleton` that:
 - Persists JSON via `Quickshell.Io.FileView` + a large `JsonAdapter` schema.
