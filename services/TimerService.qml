@@ -89,18 +89,38 @@ Singleton {
     property int countdownDuration: Persistent.states?.timer?.countdown?.duration ?? 300
     property int countdownSecondsLeft: countdownDuration
 
+    function _timerStateReady(): bool {
+        // Be strict: our functions below assume the nested objects exist.
+        return !!(Persistent.ready
+                  && Persistent.states?.timer
+                  && Persistent.states.timer.pomodoro
+                  && Persistent.states.timer.stopwatch
+                  && Persistent.states.timer.countdown)
+    }
+
     // Initialize when Persistent is ready
     Connections {
         target: Persistent
         function onReadyChanged() {
-            if (Persistent.ready) {
-                // Reset local state if not running (don't write to Persistent, just sync local vars)
-                if (!root.stopwatchRunning) {
-                    root.stopwatchTime = 0
-                }
-                if (!root.countdownRunning) {
-                    root.countdownSecondsLeft = root.countdownDuration
-                }
+            if (!Persistent.ready)
+                return
+
+            // Reset local state if not running (don't write to Persistent, just sync local vars)
+            if (!root.stopwatchRunning) {
+                root.stopwatchTime = 0
+            } else {
+                // Refresh from persisted start
+                root.stopwatchTime = root.getCurrentTimeIn10ms() - root.stopwatchStart
+            }
+
+            if (!root.countdownRunning) {
+                root.countdownSecondsLeft = root.countdownDuration
+            } else {
+                root.refreshCountdown()
+            }
+
+            if (root.pomodoroRunning) {
+                root.refreshPomodoro()
             }
         }
     }
@@ -115,6 +135,9 @@ Singleton {
 
     // Pomodoro
     function refreshPomodoro() {
+        if (!root._timerStateReady())
+            return
+
         // Work <-> break ?
         if (getCurrentTimeInSeconds() >= Persistent.states.timer.pomodoro.start + pomodoroLapDuration) {
             // Reset counts
@@ -153,6 +176,9 @@ Singleton {
     }
 
     function togglePomodoro() {
+        if (!root._timerStateReady())
+            return
+
         Persistent.states.timer.pomodoro.running = !pomodoroRunning;
         if (Persistent.states.timer.pomodoro.running) {
             // Start/Resume
@@ -161,6 +187,9 @@ Singleton {
     }
 
     function resetPomodoro() {
+        if (!root._timerStateReady())
+            return
+
         Persistent.states.timer.pomodoro.running = false;
         Persistent.states.timer.pomodoro.isBreak = false;
         Persistent.states.timer.pomodoro.start = getCurrentTimeInSeconds();
@@ -189,30 +218,47 @@ Singleton {
     }
 
     function stopwatchPause() {
+        if (!root._timerStateReady())
+            return
+
         Persistent.states.timer.stopwatch.running = false;
     }
 
     function stopwatchResume() {
+        if (!root._timerStateReady())
+            return
+
         if (stopwatchTime === 0) Persistent.states.timer.stopwatch.laps = [];
         Persistent.states.timer.stopwatch.running = true;
         Persistent.states.timer.stopwatch.start = getCurrentTimeIn10ms() - stopwatchTime;
     }
 
     function stopwatchReset() {
+        if (!root._timerStateReady()) {
+            stopwatchTime = 0;
+            return
+        }
+
         stopwatchTime = 0;
         Persistent.states.timer.stopwatch.laps = [];
         Persistent.states.timer.stopwatch.running = false;
     }
 
     function stopwatchRecordLap() {
+        if (!root._timerStateReady())
+            return
+
         Persistent.states.timer.stopwatch.laps.push(stopwatchTime);
     }
 
     // Countdown Timer
     function refreshCountdown() {
+        if (!root._timerStateReady())
+            return
+
         const elapsed = getCurrentTimeInSeconds() - Persistent.states.timer.countdown.start;
         countdownSecondsLeft = Math.max(0, countdownDuration - elapsed);
-        
+
         if (countdownSecondsLeft <= 0 && countdownRunning) {
             Persistent.states.timer.countdown.running = false;
             Quickshell.execDetached(["notify-send", "Timer", Translation.tr("Time's up!"), "-a", "Shell", "-i", "alarm-symbolic"]);
@@ -231,6 +277,9 @@ Singleton {
     }
 
     function toggleCountdown(): void {
+        if (!root._timerStateReady())
+            return
+
         Persistent.states.timer.countdown.running = !countdownRunning;
         if (Persistent.states.timer.countdown.running) {
             Persistent.states.timer.countdown.start = getCurrentTimeInSeconds() - (countdownDuration - countdownSecondsLeft);
@@ -238,14 +287,26 @@ Singleton {
     }
 
     function resetCountdown(): void {
+        if (!root._timerStateReady()) {
+            countdownSecondsLeft = countdownDuration
+            return
+        }
+
         Persistent.states.timer.countdown.running = false;
         countdownSecondsLeft = countdownDuration;
         Persistent.states.timer.countdown.start = getCurrentTimeInSeconds();
     }
 
     function setCountdownDuration(seconds: int): void {
-        Persistent.states.timer.countdown.duration = seconds;
         countdownDuration = seconds;
+
+        if (!root._timerStateReady()) {
+            if (!countdownRunning)
+                countdownSecondsLeft = seconds
+            return
+        }
+
+        Persistent.states.timer.countdown.duration = seconds;
         if (!countdownRunning) {
             countdownSecondsLeft = seconds;
         }
