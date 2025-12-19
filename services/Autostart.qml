@@ -295,26 +295,110 @@ Singleton {
         }
     }
 
+    // User systemd unit deletion
+    //
+    // Goals:
+    // - No `bash -lc` string concatenation for unit names/paths (avoid injection / quoting bugs).
+    // - Only delete units we created (marker line `# ii-autostart`).
+    // - Serialize delete operations to avoid overlapping `systemctl --user ...` calls.
+    property var _pendingServiceDeletes: []
+
+    function _enqueueServiceDelete(unitName: string): void {
+        root._pendingServiceDeletes.push(unitName)
+        root._startNextServiceDelete()
+    }
+
+    function _startNextServiceDelete(): void {
+        if (systemdDeleteProc.running)
+            return
+        if (root._pendingServiceDeletes.length === 0)
+            return
+
+        const next = root._pendingServiceDeletes[0]
+        const unitName = String(next || "").trim()
+        if (unitName.length === 0) {
+            root._pendingServiceDeletes.shift()
+            root._startNextServiceDelete()
+            return
+        }
+
+        // Safety: don't allow paths here (only unit filenames).
+        if (unitName.indexOf("/") !== -1 || unitName.indexOf("\\") !== -1) {
+            console.warn("[Autostart] Refusing to delete suspicious unit name:", unitName)
+            root._pendingServiceDeletes.shift()
+            root._startNextServiceDelete()
+            return
+        }
+
+        systemdDeleteProc.start(unitName)
+    }
+
     Process {
         id: systemdDeleteProc
-        function remove(name) {
-            if (!name || name.length === 0)
-                return;
-            const home = Quickshell.env("HOME")
-            const dir = `${home}/.config/systemd/user`
-            console.log("[Autostart] Deleting user service", name)
-            const cmd = "systemctl --user disable --now '" + name
-                + "' 2>/dev/null || true; "
-                // Only remove units that were created by ii Autostart (marker comment)
-                + "if grep -q '^# ii-autostart' '" + dir + "/" + name + "' 2>/dev/null; then "
-                + "rm -f '" + dir + "/" + name + "' 2>/dev/null || true; "
-                + "fi; "
-                + "systemctl --user daemon-reload"
-            exec(["bash", "-lc", cmd])
+
+        // Phases: disable -> checkMarker -> rm -> reload
+        //
+        // Notes:
+        // - `disable` is best-effort (may fail if unit doesn't exist or isn't enabled).
+        // - `checkMarker` uses grep exit code to decide whether the unit is ii-managed.
+        // - `reload` runs regardless (even if we didn't delete a file) so systemd forgets removed units.
+        property string _phase: ""
+        property string _unitName: ""
+        property string _unitPath: ""
+
+        readonly property string _unitDir: FileUtils.trimFileProtocol(Directories.home) + "/.config/systemd/user"
+
+        function start(unitName: string): void {
+            _unitName = unitName
+            _unitPath = _unitDir + "/" + unitName
+
+            console.log("[Autostart] Deleting user service", _unitName)
+
+            _phase = "disable"
+            exec(["systemctl", "--user", "disable", "--now", _unitName])
         }
+
         onExited: (exitCode, exitStatus) => {
-            console.log("[Autostart] systemdDeleteProc exited with", exitCode, exitStatus)
-            refreshSystemdUnits()
+            // Disable may fail if service isn't enabled/running; proceed regardless.
+            if (_phase === "disable") {
+                _phase = "checkMarker"
+                exec(["grep", "-q", "^# ii-autostart", _unitPath])
+                return
+            }
+
+            // grep exit code: 0 = found, 1 = not found, 2 = error
+            if (_phase === "checkMarker") {
+                if (exitCode === 0) {
+                    _phase = "rm"
+                    exec(["rm", "-f", _unitPath])
+                } else {
+                    _phase = "reload"
+                    exec(["systemctl", "--user", "daemon-reload"])
+                }
+                return
+            }
+
+            if (_phase === "rm") {
+                _phase = "reload"
+                exec(["systemctl", "--user", "daemon-reload"])
+                return
+            }
+
+            if (_phase === "reload") {
+                console.log("[Autostart] systemdDeleteProc finished", _unitName)
+
+                // Clear state
+                _phase = ""
+                _unitName = ""
+                _unitPath = ""
+
+                // Advance queue
+                if (root._pendingServiceDeletes.length > 0)
+                    root._pendingServiceDeletes.shift()
+
+                refreshSystemdUnits()
+                root._startNextServiceDelete()
+            }
         }
     }
 
@@ -363,7 +447,7 @@ Singleton {
     function deleteUserService(name) {
         if (!name || name.length === 0)
             return;
-        systemdDeleteProc.remove(name)
+        root._enqueueServiceDelete(String(name).trim())
     }
 
     Component.onCompleted: {

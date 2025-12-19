@@ -67,6 +67,11 @@ Docs:
 - IPC targets/functions: `docs/IPC.md`
 - Default keybinds: `docs/KEYBINDS.md`
 
+Quick IPC target index (grep implementation via `rg -n 'target: "<name>"'`):
+- Core: `overview`, `overlay`, `clipboard`, `altSwitcher`, `region`, `session`, `lock`, `settings`, `cheatsheet`, `closeConfirm`
+- System: `audio`, `brightness`, `mpris`, `gamemode`, `notifications`, `minimize`, `bar`, `wallpaperSelector`, `mediaControls`, `osk`, `osd`, `osdVolume`, `zoom`
+- Waffle-only: `search`, `wactionCenter`, `wnotificationCenter`, `wwidgets`, `wbar`, `taskview`
+
 ### QML formatting / linting
 There’s a `.qmlformat.ini` in the repo; you can try Qt’s tools if they’re available:
 
@@ -173,6 +178,17 @@ If you change code and don’t see it reflected at runtime:
 - Ensure you’re editing the files actually being loaded (either develop directly in `~/.config/quickshell/ii/`, or run `./setup update` to sync).
 - Restart the shell: `qs kill -c ii && qs -c ii`.
 
+### Autostart (user systemd units)
+The autostart system is implemented in `services/Autostart.qml` and can:
+- Launch `.desktop` entries via `gtk-launch`.
+- Launch shell commands (`bash -lc ...`).
+- Manage per-user systemd units under `~/.config/systemd/user/`.
+
+Important implementation notes for contributors:
+- Unit creation is serialized to avoid races between directory creation, file writes, and `systemctl --user daemon-reload` / `enable --now`.
+- Unit deletion avoids shell interpolation and only deletes units that contain the `# ii-autostart` marker header.
+- Deletion operations are also serialized to avoid overlapping `systemctl` operations.
+
 ## Repo layout (high level)
 - `modules/`: UI modules (Material ii + Waffle family modules live under separate namespaces).
 - `services/`: singleton backends (compositor state, theming, notifications, clipboard integration, etc.).
@@ -181,6 +197,11 @@ If you change code and don’t see it reflected at runtime:
 - `defaults/`: default/preset resources (e.g. AI prompt presets in `defaults/ai/`).
 - `translations/`: translation JSON + tooling.
 - `dots/`: config files that `./setup install` can copy into `~/.config/` (Niri config, matugen templates, etc.).
+
+## Other docs worth knowing exist
+- `docs/LIMITATIONS.md`: compositor/feature caveats (Niri vs inherited Hyprland behaviors).
+- `docs/OPTIMIZATION.md`: repo-specific QML/Quickshell performance notes (typed props, qualified lookups, LazyLoader semantics).
+- `docs/VESKTOP.md`: how Vesktop/Discord theming regen works + manual regen commands.
 
 ## Project-specific preferences
 - Prefer that **Waybar does not autostart** when KDE starts (avoid adding Waybar autostart changes under `dots/` unless explicitly requested).
