@@ -36,7 +36,10 @@ input {
         repeat-delay 250
         repeat-rate 50
     }
-    
+    touchpad {
+        tap
+        tap-button-map "left-right-middle"
+    }
     mouse {
         accel-profile "flat"
     }
