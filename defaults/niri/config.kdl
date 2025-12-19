@@ -281,7 +281,13 @@ binds {
     XF86AudioLowerVolume allow-when-locked=true { spawn "qs" "-c" "ii" "ipc" "call" "audio" "volumeDown"; }
     XF86AudioMute allow-when-locked=true { spawn "qs" "-c" "ii" "ipc" "call" "audio" "mute"; }
     XF86AudioMicMute allow-when-locked=true { spawn "qs" "-c" "ii" "ipc" "call" "audio" "micMute"; }
+
+    // Music control (playerctl)
+    Ctrl+Mod+Space { spawn "playerctl" "play-pause"; }
+    Mod+Alt+N { spawn "playerctl" "next"; }
+    Mod+Alt+P { spawn "playerctl" "previous"; }
 }
+
 
 // Layer rules for ii backdrop visibility during Niri overview
 layer-rule {
