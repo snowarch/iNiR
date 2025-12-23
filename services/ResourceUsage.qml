@@ -146,7 +146,7 @@ Singleton {
         id: detectTempSensors
         // Detect CPU: k10temp (AMD), coretemp (Intel), cpu_thermal (ARM)
         // Detect GPU: amdgpu (AMD), nvidia (NVIDIA), nouveau (NVIDIA open)
-        command: ["bash", "-c", `
+        command: ["/usr/bin/bash", "-c", `
             for hwmon in /sys/class/hwmon/hwmon*; do
                 name=$(cat $hwmon/name 2>/dev/null)
                 case "$name" in
@@ -183,7 +183,7 @@ Singleton {
 
     Process {
         id: findCpuMaxFreqProc
-        command: ["bash", "-c", "lscpu | grep 'CPU max MHz' | awk '{print $4}'"]
+        command: ["/usr/bin/bash", "-c", "/usr/bin/lscpu | /usr/bin/grep 'CPU max MHz' | /usr/bin/awk '{print $4}'"]
         running: false
         stdout: StdioCollector {
             id: outputCollector

@@ -49,7 +49,7 @@ Singleton {
     // Control
     function enableWifi(enabled = true): void {
         const cmd = enabled ? "on" : "off";
-        enableWifiProc.exec(["nmcli", "radio", "wifi", cmd]);
+        enableWifiProc.exec(["/usr/bin/nmcli", "radio", "wifi", cmd]);
     }
 
     function toggleWifi(): void {
@@ -65,23 +65,23 @@ Singleton {
         accessPoint.askingPassword = false;
         root.wifiConnectTarget = accessPoint;
         // We use this instead of `nmcli connection up SSID` because this also creates a connection profile
-        connectProc.exec(["nmcli", "dev", "wifi", "connect", accessPoint.ssid])
+        connectProc.exec(["/usr/bin/nmcli", "dev", "wifi", "connect", accessPoint.ssid])
 
     }
 
     function disconnectWifiNetwork(): void {
-        if (active) disconnectProc.exec(["nmcli", "connection", "down", active.ssid]);
+        if (active) disconnectProc.exec(["/usr/bin/nmcli", "connection", "down", active.ssid]);
     }
 
     function openPublicWifiPortal() {
-        Quickshell.execDetached(["xdg-open", "https://nmcheck.gnome.org/"]) // From some StackExchange thread, seems to work
+        Quickshell.execDetached(["/usr/bin/xdg-open", "https://nmcheck.gnome.org/"]) // From some StackExchange thread, seems to work
     }
 
     function changePassword(network: WifiAccessPoint, password: string, username = ""): void {
         // TODO: enterprise wifi with username
         network.askingPassword = false;
         changePasswordProc.exec({
-            "command": ["nmcli", "connection", "modify", network.ssid, "wifi-sec.psk", password]
+            "command": ["/usr/bin/nmcli", "connection", "modify", network.ssid, "wifi-sec.psk", password]
         })
     }
 
@@ -132,7 +132,7 @@ Singleton {
 
     Process {
         id: rescanProcess
-        command: ["nmcli", "dev", "wifi", "list", "--rescan", "yes"]
+        command: ["/usr/bin/nmcli", "dev", "wifi", "list", "--rescan", "yes"]
         stdout: SplitParser {
             onRead: {
                 wifiScanning = false;
@@ -157,7 +157,7 @@ Singleton {
     Process {
         id: subscriber
         running: true
-        command: ["nmcli", "monitor"]
+        command: ["/usr/bin/nmcli", "monitor"]
         // Auto-restart if the monitor process dies (can happen after lockscreen/suspend)
         onRunningChanged: if (!running) running = true
         stdout: SplitParser {
@@ -168,7 +168,7 @@ Singleton {
     Process {
         id: updateConnectionType
         property string buffer
-        command: ["sh", "-c", "nmcli -t -f TYPE,STATE d status && nmcli -t -f CONNECTIVITY g"]
+        command: ["/usr/bin/sh", "-c", "/usr/bin/nmcli -t -f TYPE,STATE d status\n/usr/bin/nmcli -t -f CONNECTIVITY g"]
         running: false
         function startCheck() {
             buffer = "";
@@ -217,7 +217,7 @@ Singleton {
 
     Process {
         id: updateNetworkName
-        command: ["sh", "-c", "nmcli -t -f NAME c show --active | head -1"]
+        command: ["/usr/bin/sh", "-c", "/usr/bin/nmcli -t -f NAME c show --active | head -1"]
         running: false
         stdout: SplitParser {
             onRead: data => {
@@ -229,7 +229,7 @@ Singleton {
     Process {
         id: updateNetworkStrength
         running: false
-        command: ["sh", "-c", "nmcli -f IN-USE,SIGNAL,SSID device wifi | awk '/^\\*/{if (NR!=1) {print $2}}'"]
+        command: ["/usr/bin/sh", "-c", "/usr/bin/nmcli -f IN-USE,SIGNAL,SSID device wifi | awk '/^\\*/{if (NR!=1) {print $2}}'"]
         stdout: SplitParser {
             onRead: data => {
                 root.networkStrength = parseInt(data);
@@ -239,7 +239,7 @@ Singleton {
 
     Process {
         id: wifiStatusProcess
-        command: ["nmcli", "radio", "wifi"]
+        command: ["/usr/bin/nmcli", "radio", "wifi"]
         Component.onCompleted: running = true
         environment: ({
             LANG: "C",
@@ -255,10 +255,10 @@ Singleton {
     Process {
         id: getNetworks
         running: false
-        command: ["nmcli", "-g", "ACTIVE,SIGNAL,FREQ,SSID,BSSID,SECURITY", "d", "w"]
+        command: ["/usr/bin/nmcli", "-g", "ACTIVE,SIGNAL,FREQ,SSID,BSSID,SECURITY", "d", "w"]
         environment: ({
             LANG: "C",
-            LC_ALL: "C"
+            LC_ALL: "C",
         })
         stdout: StdioCollector {
             onStreamFinished: {

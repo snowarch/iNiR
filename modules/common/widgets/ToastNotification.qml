@@ -2,11 +2,14 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
-import Qt5Compat.GraphicalEffects
+import Qt5Compat.GraphicalEffects as GE
 import qs.modules.common
+import qs.modules.common.functions
 
 Item {
     id: root
+
+    readonly property bool auroraEverywhere: (Config.options?.bar?.blurBackground?.enabled ?? false) && !(Config.options?.bar?.showBackground ?? true)
     
     property string title: ""
     property string message: ""
@@ -29,7 +32,7 @@ Item {
         width: contentLayout.implicitWidth + 32
         height: contentLayout.implicitHeight + 20
         radius: Appearance.rounding.normal
-        color: Appearance.colors.colLayer1
+        color: root.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colLayer1, Appearance.aurora.popupSurfaceTransparentize) : Appearance.colors.colLayer1
         border.width: 1
         border.color: root.isError ? Appearance.colors.colError : Appearance.colors.colOutlineVariant
         
@@ -169,7 +172,7 @@ Item {
     }
     
     layer.enabled: Appearance.effectsEnabled
-    layer.effect: DropShadow {
+    layer.effect: GE.DropShadow {
         horizontalOffset: 0
         verticalOffset: 4
         radius: Appearance.rounding.small

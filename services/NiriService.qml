@@ -75,7 +75,7 @@ Singleton {
 
     Process {
         id: fetchOutputsProcess
-        command: ["niri", "msg", "-j", "outputs"]
+        command: ["/usr/bin/niri", "msg", "-j", "outputs"]
 
         stdout: StdioCollector {
             id: fetchOutputsCollector

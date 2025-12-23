@@ -12,8 +12,14 @@ import qs.modules.common.functions
 StyledImage {
     id: root
 
-    property bool generateThumbnail: true
+    property bool generateThumbnail: false
     required property string sourcePath
+    property bool fallbackToDownscaledSource: true
+    readonly property string sourceUrl: {
+        if (!sourcePath || sourcePath.length === 0) return "";
+        const resolved = String(Qt.resolvedUrl(sourcePath));
+        return resolved.startsWith("file://") ? resolved : ("file://" + resolved);
+    }
     property string thumbnailSizeName: Images.thumbnailSizeNameForDimensions(sourceSize.width, sourceSize.height)
     property string thumbnailPath: {
         if (sourcePath.length == 0) return;
@@ -22,7 +28,7 @@ StyledImage {
         const md5Hash = Qt.md5(`file://${encodedUrlWithoutFileProtocol}`);
         return `${Directories.genericCache}/thumbnails/${thumbnailSizeName}/${md5Hash}.png`;
     }
-    source: thumbnailPath
+    source: ""
 
     asynchronous: true
     smooth: true
@@ -35,27 +41,36 @@ StyledImage {
 
     onStatusChanged: {
         if (status === Image.Error) {
-            root.source = Qt.resolvedUrl(root.sourcePath);
+            root.source = "";
         }
     }
 
-    onSourceSizeChanged: {
-        if (!root.generateThumbnail) return;
-        thumbnailGeneration.running = false;
-        thumbnailGeneration.running = true;
-    }
-    Process {
-        id: thumbnailGeneration
-        command: {
-            const maxSize = Images.thumbnailSizes[root.thumbnailSizeName];
-            return ["bash", "-c", 
-                `[ -f '${FileUtils.trimFileProtocol(root.thumbnailPath)}' ] && exit 0 || { magick '${root.sourcePath}' -resize ${maxSize}x${maxSize} '${FileUtils.trimFileProtocol(root.thumbnailPath)}' && exit 1; }`
-            ]
+    onThumbnailPathChanged: {
+        if (!thumbnailPath || thumbnailPath.length === 0) {
+            root.source = "";
+            return;
         }
-        onExited: (exitCode, exitStatus) => {
-            if (exitCode === 1) { // Force reload if thumbnail had to be generated
+        thumbnailProbe.reload();
+    }
+
+    Component.onCompleted: {
+        if (thumbnailPath && thumbnailPath.length > 0) {
+            thumbnailProbe.reload();
+        }
+    }
+
+    FileView {
+        id: thumbnailProbe
+        path: thumbnailPath && thumbnailPath.length > 0 ? Qt.resolvedUrl(thumbnailPath) : ""
+        onLoaded: {
+            // Only set source when file exists to avoid QML Image warning spam
+            root.source = root.thumbnailPath;
+        }
+        onLoadFailed: (error) => {
+            if (root.fallbackToDownscaledSource && root.sourceUrl.length > 0) {
+                root.source = root.sourceUrl;
+            } else {
                 root.source = "";
-                root.source = root.thumbnailPath; // Force reload
             }
         }
     }

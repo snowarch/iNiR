@@ -53,7 +53,7 @@ Rectangle {
 
     Process {
         id: decodeImageProcess
-        command: ["bash", "-c", `[ -f ${imageDecodeFilePath} ] || echo '${StringUtils.shellSingleQuoteEscape(root.entry)}' | ${Cliphist.cliphistBinary} decode > '${imageDecodeFilePath}'`]
+        command: ["/usr/bin/bash", "-c", `[ -f '${imageDecodeFilePath}' ] || echo '${StringUtils.shellSingleQuoteEscape(root.entry)}' | ${Cliphist.cliphistBinary} decode > '${imageDecodeFilePath}'`]
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0) {
                 root.source = imageDecodeFilePath;
@@ -65,7 +65,7 @@ Rectangle {
     }
 
     Component.onDestruction: {
-        Quickshell.execDetached(["bash", "-c", `[ -f '${imageDecodeFilePath}' ] && rm -f '${imageDecodeFilePath}'`]);
+        Quickshell.execDetached(["/usr/bin/bash", "-c", `[ -f '${imageDecodeFilePath}' ] && /usr/bin/rm -f '${imageDecodeFilePath}'`]);
     }
 
     layer.enabled: true

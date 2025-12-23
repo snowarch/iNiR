@@ -20,6 +20,10 @@ import qs.services
 Singleton {
     id: root
 
+    function _log(...args): void {
+        if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
+    }
+
     // Public API
     property bool active: _manualActive || _autoActive
     property bool autoDetect: Config.options?.gameMode?.autoDetect ?? true
@@ -58,26 +62,26 @@ Singleton {
         function activate(): void { root.activate() }
         function deactivate(): void { root.deactivate() }
         function status(): void { 
-            console.log("[GameMode] Status - active:", root.active, "manual:", root._manualActive, "auto:", root._autoActive)
+            root._log("[GameMode] Status - active:", root.active, "manual:", root._manualActive, "auto:", root._autoActive)
         }
     }
 
     function toggle() {
         _manualActive = !_manualActive
         _saveState()
-        console.log("[GameMode] Toggled manually:", _manualActive)
+        root._log("[GameMode] Toggled manually:", _manualActive)
     }
 
     function activate() {
         _manualActive = true
         _saveState()
-        console.log("[GameMode] Activated manually")
+        root._log("[GameMode] Activated manually")
     }
 
     function deactivate() {
         _manualActive = false
         _saveState()
-        console.log("[GameMode] Deactivated manually")
+        root._log("[GameMode] Deactivated manually")
     }
 
     function _saveState() {
@@ -187,7 +191,7 @@ Singleton {
         
         if (shouldBeActive !== wasActive) {
             _autoActive = shouldBeActive
-            console.log("[GameMode] Auto-detect:", _autoActive ? "fullscreen detected" : "no fullscreen")
+            root._log("[GameMode] Auto-detect:", _autoActive ? "fullscreen detected" : "no fullscreen")
         }
     }
 
@@ -198,32 +202,32 @@ Singleton {
 
         onLoaded: {
             const content = stateReader.text()
-            if (content.trim() === "1") {
-                root._manualActive = true
-                console.log("[GameMode] Restored manual state: active")
-            } else {
-                root._manualActive = false
-            }
+            root._manualActive = (content.trim() === "1")
             root._initialized = true
-            console.log("[GameMode] Initialized, manual:", root._manualActive)
+            root._log("[GameMode] Initialized, manual:", root._manualActive)
         }
 
         onLoadFailed: (error) => {
             // File doesn't exist yet, that's fine
             root._manualActive = false
             root._initialized = true
-            console.log("[GameMode] Initialized (no saved state)")
+            root._log("[GameMode] Initialized (no saved state)")
         }
     }
 
     // State persistence - write via process
     Process {
         id: saveProcess
-        command: ["bash", "-c", "mkdir -p ~/.local/state/quickshell/user && echo " + (root._manualActive ? "1" : "0") + " > " + root._stateFile]
-        onExited: console.log("[GameMode] State saved:", root._manualActive)
+        command: [
+            "/usr/bin/bash",
+            "-c",
+            "mkdir -p ~/.local/state/quickshell/user\n" +
+            "echo " + (root._manualActive ? "1" : "0") + " > " + root._stateFile
+        ]
+        onExited: root._log("[GameMode] State saved:", root._manualActive)
     }
 
-    // React to window changes - only on focus change, not every window update
+    // React to window changes
     Connections {
         target: NiriService
         enabled: CompositorService.isNiri && root._initialized
@@ -231,15 +235,15 @@ Singleton {
         function onActiveWindowChanged() {
             root.checkFullscreen()
         }
-        
+
         function onWindowsChanged() {
-            // Update hasAnyFullscreenWindow when windows change
             root.hasAnyFullscreenWindow = root.checkAnyFullscreenWindow()
         }
     }
 
     // Periodic check as fallback (less frequent)
     Timer {
+        id: fallbackTimer
         interval: root.checkInterval
         running: root.autoDetect && CompositorService.isNiri && root._initialized
         repeat: true
@@ -248,12 +252,9 @@ Singleton {
 
     // Initial setup
     Component.onCompleted: {
-        console.log("[GameMode] Service starting...")
-        // Ensure state directory exists and load state
-        Quickshell.execDetached(["mkdir", "-p", Quickshell.env("HOME") + "/.local/state/quickshell/user"])
-        
-        // Load saved state after short delay
-        initTimer.start()
+        root._log("[GameMode] Service starting...")
+        Quickshell.execDetached(["/usr/bin/mkdir", "-p", Quickshell.env("HOME") + "/.local/state/quickshell/user"])
+        initTimer.restart()
     }
 
     Timer {
@@ -273,11 +274,16 @@ Singleton {
 
     function setNiriAnimations(enabled) {
         if (!controlNiriAnimations) return
-        
-        // Use sed to toggle "off" line in animations block
-        niriAnimProcess.command = enabled
-            ? ["bash", "-c", "sed -i '/^animations {/,/^}/ s/^\\([ \\t]*\\)off$/\\1\\/\\/off/' " + niriConfigPath + " && niri msg action reload-config"]
-            : ["bash", "-c", "sed -i '/^animations {/,/^}/ s/^\\([ \\t]*\\)\\/\\/off$/\\1off/' " + niriConfigPath + " && niri msg action reload-config"]
+
+        const sedExpr = enabled
+            ? "sed -i '/^animations {/,/^}/ s/^\\([ \\t]*\\)off$/\\1\\/\\/off/' \"" + niriConfigPath + "\"\n"
+            : "sed -i '/^animations {/,/^}/ s/^\\([ \\t]*\\)\\/\\/off$/\\1off/' \"" + niriConfigPath + "\"\n"
+
+        niriAnimProcess.command = [
+            "/usr/bin/bash",
+            "-c",
+            sedExpr + "/usr/bin/niri msg action reload-config"
+        ]
         niriAnimProcess.running = true
     }
 
@@ -285,25 +291,24 @@ Singleton {
         id: niriAnimProcess
         onExited: (code, status) => {
             if (code === 0) {
-                console.log("[GameMode] Niri animations updated")
+                root._log("[GameMode] Niri animations updated")
             }
-            // Clear suppress after delay
             suppressClearTimer.restart()
         }
     }
-    
+
     Timer {
         id: suppressClearTimer
         interval: 2000
         onTriggered: {
-            console.log("[GameMode] Clearing suppressNiriToast")
+            root._log("[GameMode] Clearing suppressNiriToast")
             root.suppressNiriToast = false
         }
     }
 
     // Track last niri animation state to avoid redundant updates
     property bool _lastNiriAnimState: true
-    
+
     // Debounce timer for niri animation changes
     Timer {
         id: niriAnimDebounce
@@ -319,9 +324,8 @@ Singleton {
 
     // React to active changes for Niri animations
     onActiveChanged: {
-        console.log("[GameMode] Active:", active, "(manual:", _manualActive, "auto:", _autoActive, ")")
+        root._log("[GameMode] Active:", active, "(manual:", _manualActive, "auto:", _autoActive, ")")
         if (CompositorService.isNiri && controlNiriAnimations) {
-            // Suppress toast IMMEDIATELY when state changes
             root.suppressNiriToast = true
             niriAnimDebounce.restart()
         }

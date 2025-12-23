@@ -10,6 +10,8 @@ import Quickshell.Io
 Singleton {
     id: root
 
+    readonly property bool _debugDedupe: Quickshell.env("QS_LAUNCHER_DEDUPE_DEBUG") === "1"
+
     property string query: ""
     property string _debouncedQuery: ""
     
@@ -76,7 +78,7 @@ Singleton {
             action: "superpaste",
             execute: args => {
                 if (!/^(\d+)/.test(args.trim())) {
-                    Quickshell.execDetached(["notify-send", Translation.tr("Superpaste"), 
+                    Quickshell.execDetached(["/usr/bin/notify-send", Translation.tr("Superpaste"), 
                         Translation.tr("Usage: >superpaste NUM[i]\nExamples: >superpaste 4i (last 4 images), >superpaste 7 (last 7 entries)"), 
                         "-a", "Shell"])
                     return
@@ -218,7 +220,7 @@ Singleton {
             execute: () => {
                 let cmd = q.replace("file://", "")
                 cmd = StringUtils.cleanPrefix(cmd, shellPrefix)
-                Quickshell.execDetached(["bash", "-c", cmd])
+                Quickshell.execDetached(["/usr/bin/bash", "-c", cmd])
             }
         })
 
@@ -245,8 +247,26 @@ Singleton {
         }
 
         // Apps
-        const appResults = AppSearch.fuzzyQuery(StringUtils.cleanPrefix(q, appPrefix)).map(entry => {
-            return resultComp.createObject(null, {
+        const appQuery = StringUtils.cleanPrefix(q, appPrefix)
+        const appEntries = AppSearch.fuzzyQuery(appQuery)
+
+        // Dedupe by display name. Some systems have multiple desktop entries for the same app
+        // (e.g. Flatpak + system), which otherwise shows up as duplicated results.
+        const seenAppNames = new Set();
+        const appResults = []
+        for (let i = 0; i < appEntries.length; i++) {
+            const entry = appEntries[i]
+            const nameKey = (entry?.name ?? "").trim().toLowerCase()
+            if (nameKey.length === 0) continue
+            if (seenAppNames.has(nameKey)) {
+                if (root._debugDedupe) {
+                    console.log(`[LauncherSearch] dedupe: skipping duplicate app name='${entry?.name ?? ""}' id='${entry?.id ?? ""}' query='${appQuery}'`)
+                }
+                continue
+            }
+            seenAppNames.add(nameKey)
+
+            appResults.push(resultComp.createObject(null, {
                 type: Translation.tr("App"),
                 id: entry.id ?? entry.name ?? "",
                 name: entry.name,
@@ -261,11 +281,11 @@ Singleton {
                         entry.execute()
                     } else {
                         const terminal = Config.options?.apps?.terminal ?? "foot"
-                        Quickshell.execDetached(["bash", "-c", `${terminal} -e '${entry.command?.join(" ") ?? ""}'`])
+                        Quickshell.execDetached(["/usr/bin/bash", "-c", `${terminal} -e '${entry.command?.join(" ") ?? ""}'`])
                     }
                 }
-            })
-        })
+            }))
+        }
         result = result.concat(appResults)
 
         // Actions

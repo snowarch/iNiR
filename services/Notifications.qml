@@ -18,6 +18,11 @@ import qs.services
  */
 Singleton {
 	id: root
+
+    function _log(...args): void {
+        if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
+    }
+
     property bool _initialized: false
     component Notif: QtObject {
         id: wrapper
@@ -74,7 +79,7 @@ Singleton {
                 return
             }
             const notifObject = root.list[index];
-            console.log("[Notifications] Timer triggered for ID: " + notificationId + ", transient: " + notifObject.isTransient);
+            root._log("[Notifications] Timer triggered for ID: " + notificationId + ", transient: " + notifObject.isTransient);
             if (notifObject.isTransient) root.discardNotification(notificationId);
             else root.timeoutNotification(notificationId);
             destroy()
@@ -115,10 +120,10 @@ Singleton {
     property bool popupInhibited: (GlobalStates?.sidebarRightOpen ?? false) || (GlobalStates?.waffleNotificationCenterOpen ?? false) || silent
     property var latestTimeForApp: ({})
     
-    // Debounce timer for group updates (16ms = 1 frame at 60fps)
+    // Debounce timer for group updates (50ms)
     Timer {
         id: groupUpdateTimer
-        interval: 16
+        interval: 50
         onTriggered: root._updateGroups()
     }
     Component {
@@ -423,8 +428,8 @@ Singleton {
         }
 
         if (appIcon && appIcon.length > 0) {
-            const cmd = "gtk-launch \"" + appIcon + "\" || \"" + appIcon + "\"";
-            Quickshell.execDetached(["bash", "-lc", cmd]);
+            const cmd = "/usr/bin/gtk-launch \"" + appIcon + "\" || \"" + appIcon + "\"";
+            Quickshell.execDetached(["/usr/bin/bash", "-lc", cmd]);
         }
     }
 
@@ -487,7 +492,7 @@ Singleton {
         for (let i = 0; i < tests.length; ++i) {
             const t = tests[i];
             Quickshell.execDetached([
-                "notify-send",
+                "/usr/bin/notify-send",
                 "-h", "int:transient:1",
                 "-a", "Quickshell ii",
                 "-i", t.icon,

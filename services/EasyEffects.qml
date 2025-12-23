@@ -65,7 +65,7 @@ Singleton {
     Process {
         id: whichProc
         running: false
-        command: ["which", "easyeffects"]
+        command: ["/usr/bin/which", "easyeffects"]
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0) {
                 root.available = true
@@ -78,7 +78,7 @@ Singleton {
     Process {
         id: flatpakInfoProc
         running: false
-        command: ["flatpak", "info", "com.github.wwmm.easyeffects"]
+        command: ["/usr/bin/flatpak", "info", "com.github.wwmm.easyeffects"]
         onExited: (exitCode, exitStatus) => {
             root.available = (exitCode === 0)
         }
@@ -87,7 +87,7 @@ Singleton {
     Process {
         id: pidofProc
         running: false
-        command: ["pidof", "easyeffects"]
+        command: ["/usr/bin/pidof", "easyeffects"]
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0) {
                 root.active = true
@@ -100,7 +100,7 @@ Singleton {
     Process {
         id: flatpakPsProc
         running: false
-        command: ["flatpak", "ps", "--columns=application"]
+        command: ["/usr/bin/flatpak", "ps", "--columns=application"]
         stdout: StdioCollector {
             id: flatpakPsCollector
             onStreamFinished: {
@@ -113,7 +113,7 @@ Singleton {
     Process {
         id: pkillProc
         running: false
-        command: ["pkill", "easyeffects"]
+        command: ["/usr/bin/pkill", "easyeffects"]
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0) {
                 flatpakKillProc.running = true
@@ -124,6 +124,6 @@ Singleton {
     Process {
         id: flatpakKillProc
         running: false
-        command: ["flatpak", "kill", "com.github.wwmm.easyeffects"]
+        command: ["/usr/bin/flatpak", "kill", "com.github.wwmm.easyeffects"]
     }
 }

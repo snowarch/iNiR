@@ -11,6 +11,26 @@ Item {
     id: root
     property alias currentIndex: tabBar.currentIndex
     required property var tabButtonList
+    property real maxWidth: -1
+    property int compactThreshold: 4
+    readonly property bool compactMode: (root.tabButtonList?.length ?? 0) >= root.compactThreshold
+
+    function ensureCurrentVisible() {
+        if (!flick.interactive) return;
+        if (!activeIndicator.targetItem) return;
+
+        const leftEdge = groupContainer.padding + activeIndicator.targetItem.x;
+        const rightEdge = groupContainer.padding + activeIndicator.targetItem.x + activeIndicator.targetItem.width;
+        const viewLeft = flick.contentX;
+        const viewRight = flick.contentX + flick.width;
+
+        if (leftEdge < viewLeft) {
+            flick.contentX = Math.max(0, leftEdge - 8);
+        }
+        else if (rightEdge > viewRight) {
+            flick.contentX = Math.max(0, rightEdge - flick.width + 8);
+        }
+    }
 
     function incrementCurrentIndex() {
         tabBar.incrementCurrentIndex()
@@ -23,54 +43,96 @@ Item {
     }
 
     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-    implicitWidth: contentItem.implicitWidth
+    Layout.minimumWidth: 0
+    implicitWidth: root.maxWidth > 0 ? Math.min(groupContainer.implicitWidth, root.maxWidth) : groupContainer.implicitWidth
     implicitHeight: 40
 
-    Row {
-        id: contentItem
-        z: 1
-        anchors.centerIn: parent
-        spacing: 4
+    Flickable {
+        id: flick
+        anchors.fill: parent
+        clip: true
+        interactive: contentWidth > width
+        boundsBehavior: Flickable.StopAtBounds
+        flickableDirection: Flickable.HorizontalFlick
 
-        Repeater {
-            model: root.tabButtonList
-            delegate: ToolbarTabButton {
-                required property int index
-                required property var modelData
-                current: index == root.currentIndex
-                text: modelData.name
-                materialSymbol: modelData.icon
-                onClicked: {
-                    root.setCurrentIndex(index)
+        contentWidth: groupContainer.implicitWidth
+        contentHeight: height
+
+        Item {
+            width: Math.max(flick.width, groupContainer.implicitWidth)
+            height: flick.height
+
+            Item {
+                id: groupContainer
+                z: 0
+                anchors.verticalCenter: parent.verticalCenter
+                readonly property real padding: 4
+                implicitWidth: contentItem.implicitWidth + padding * 2
+                height: 40
+                x: flick.contentWidth > flick.width ? 0 : Math.max(0, (flick.width - width) / 2)
+
+                Rectangle {
+                    id: groupBackground
+                    anchors.fill: parent
+                    radius: height / 2
+                    color: Appearance.colors.colSurfaceContainer
+                }
+
+                Rectangle {
+                    id: activeIndicator
+                    z: 1
+                    color: Appearance.colors.colSecondaryContainer
+                    implicitWidth: targetItem ? targetItem.implicitWidth : 0
+                    implicitHeight: targetItem ? targetItem.implicitHeight : 0
+                    radius: height / 2
+                    // Animation
+                    property Item targetItem: tabRepeater.itemAt(root.currentIndex)
+                    AnimatedTabIndexPair {
+                        id: leftBound
+                        idx1Duration: 50
+                        idx2Duration: 200
+                        index: activeIndicator.targetItem ? (groupContainer.padding + activeIndicator.targetItem.x) : 0
+                    }
+                    AnimatedTabIndexPair {
+                        id: rightBound
+                        idx1Duration: 50
+                        idx2Duration: 200
+                        index: activeIndicator.targetItem ? (groupContainer.padding + activeIndicator.targetItem.x + activeIndicator.targetItem.width) : 0
+                    }
+                    x: root.currentIndex >= 0 && activeIndicator.targetItem ? Math.min(leftBound.idx1, leftBound.idx2) : 0
+                    width: root.currentIndex >= 0 && activeIndicator.targetItem ? (Math.max(rightBound.idx1, rightBound.idx2) - x) : 0
+                }
+
+                Row {
+                    id: contentItem
+                    z: 2
+                    spacing: 4
+                    x: groupContainer.padding
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    Repeater {
+                        id: tabRepeater
+                        model: root.tabButtonList
+                        delegate: ToolbarTabButton {
+                            required property int index
+                            required property var modelData
+                            current: index == root.currentIndex
+                            showLabel: !root.compactMode || current
+                            text: modelData.name
+                            materialSymbol: modelData.icon
+                            onClicked: {
+                                root.setCurrentIndex(index)
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 
-    Rectangle {
-        id: activeIndicator
-        z: 0
-        color: Appearance.colors.colSecondaryContainer
-        implicitWidth: targetItem ? targetItem.implicitWidth : 0
-        implicitHeight: targetItem ? targetItem.implicitHeight : 0
-        radius: height / 2
-        // Animation
-        property Item targetItem: (contentItem.children.length > root.currentIndex && root.currentIndex >= 0) ? contentItem.children[root.currentIndex] : null
-        AnimatedTabIndexPair {
-            id: leftBound
-            idx1Duration: 50
-            idx2Duration: 200
-            index: activeIndicator.targetItem ? activeIndicator.targetItem.x : 0
-        }
-        AnimatedTabIndexPair {
-            id: rightBound
-            idx1Duration: 50
-            idx2Duration: 200
-            index: activeIndicator.targetItem ? (activeIndicator.targetItem.x + activeIndicator.targetItem.width) : 0
-        }
-        x: root.currentIndex >= 0 && activeIndicator.targetItem ? Math.min(leftBound.idx1, leftBound.idx2) : 0
-        width: root.currentIndex >= 0 && activeIndicator.targetItem ? (Math.max(rightBound.idx1, rightBound.idx2) - x) : 0
-    }
+    onCurrentIndexChanged: Qt.callLater(root.ensureCurrentVisible)
+    onWidthChanged: Qt.callLater(root.ensureCurrentVisible)
+    Component.onCompleted: Qt.callLater(root.ensureCurrentVisible)
 
     MouseArea {
         anchors.fill: parent
@@ -84,6 +146,7 @@ Item {
             else {
                 root.decrementCurrentIndex();
             }
+            Qt.callLater(root.ensureCurrentVisible)
         }
     }
 

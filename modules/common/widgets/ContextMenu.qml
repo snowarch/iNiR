@@ -54,12 +54,25 @@ Loader {
 
         Component.onCompleted: {
             openAnim.start();
+            Qt.callLater(() => keyHandler.forceActiveFocus());
             if (CompositorService.isNiri && root.closeOnFocusLost) {
                 clickOutsideBackdrop.visible = true;
             }
         }
         Component.onDestruction: {
             clickOutsideBackdrop.visible = false;
+        }
+
+        Item {
+            id: keyHandler
+            anchors.fill: parent
+            focus: true
+            Keys.onPressed: event => {
+                if (event.key === Qt.Key_Escape) {
+                    root.close();
+                    event.accepted = true;
+                }
+            }
         }
 
         anchor {
@@ -74,13 +87,6 @@ Loader {
             active: root.closeOnFocusLost && CompositorService.isHyprland
             windows: [popupWindow]
             onCleared: root.focusCleared();
-        }
-
-        Keys.onPressed: event => {
-            if (event.key === Qt.Key_Escape) {
-                root.close();
-                event.accepted = true;
-            }
         }
 
         Timer {

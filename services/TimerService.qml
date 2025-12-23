@@ -131,7 +131,7 @@ Singleton {
                 notificationMessage = Translation.tr(`🔴 Focus: %1 minutes`).arg(Math.floor(focusTime / 60));
             }
 
-            Quickshell.execDetached(["notify-send", "Pomodoro", notificationMessage, "-a", "Shell"]);
+            Quickshell.execDetached(["/usr/bin/notify-send", "Pomodoro", notificationMessage, "-a", "Shell"]);
             if (Config.options?.sounds?.pomodoro ?? false) {
                 Audio.playSystemSound("alarm-clock-elapsed")
             }
@@ -175,7 +175,7 @@ Singleton {
 
     Timer {
         id: stopwatchTimer
-        interval: 10
+        interval: 33
         running: root.stopwatchRunning
         repeat: true
         onTriggered: refreshStopwatch()
@@ -215,7 +215,7 @@ Singleton {
         
         if (countdownSecondsLeft <= 0 && countdownRunning) {
             Persistent.states.timer.countdown.running = false;
-            Quickshell.execDetached(["notify-send", "Timer", Translation.tr("Time's up!"), "-a", "Shell", "-i", "alarm-symbolic"]);
+            Quickshell.execDetached(["/usr/bin/notify-send", "Timer", Translation.tr("Time's up!"), "-a", "Shell", "-i", "alarm-symbolic"]);
             if (Config.options?.sounds?.timer ?? false) {
                 Audio.playSystemSound("alarm-clock-elapsed");
             }

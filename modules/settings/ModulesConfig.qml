@@ -50,524 +50,540 @@ ContentPage {
         Config.options.enabledPanels = [...defaultPanels[family]]
     }
 
-    CollapsibleSection {
+    SettingsCardSection {
         expanded: true
         icon: "extension"
         title: Translation.tr("Shell Modules")
 
-        StyledText {
-            Layout.fillWidth: true
-            text: Translation.tr("Enable or disable shell modules. Changes apply live.")
-            color: Appearance.colors.colSubtext
-            font.pixelSize: Appearance.font.pixelSize.smaller
-            wrapMode: Text.WordWrap
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
-
-            RippleButton {
+        SettingsGroup {
+            StyledText {
                 Layout.fillWidth: true
-                implicitHeight: 36
-                buttonRadius: Appearance.rounding.small
-                colBackground: Appearance.colors.colLayer1
-                colBackgroundHover: Appearance.colors.colLayer1Hover
-                colRipple: Appearance.colors.colLayer1Active
+                text: Translation.tr("Enable or disable shell modules. Changes apply live.")
+                color: Appearance.colors.colSubtext
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                wrapMode: Text.WordWrap
+            }
 
-                RowLayout {
-                    anchors.centerIn: parent
-                    spacing: 8
-                    MaterialSymbol {
-                        text: "restart_alt"
-                        iconSize: Appearance.font.pixelSize.normal
-                        color: Appearance.m3colors.m3onSurface
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                RippleButton {
+                    Layout.fillWidth: true
+                    implicitHeight: 36
+                    buttonRadius: Appearance.rounding.small
+                    colBackground: Appearance.colors.colLayer1
+                    colBackgroundHover: Appearance.colors.colLayer1Hover
+                    colRipple: Appearance.colors.colLayer1Active
+
+                    RowLayout {
+                        anchors.centerIn: parent
+                        spacing: 8
+                        MaterialSymbol {
+                            text: "restart_alt"
+                            iconSize: Appearance.font.pixelSize.normal
+                            color: Appearance.m3colors.m3onSurface
+                        }
+                        StyledText {
+                            text: Translation.tr("Reset to defaults")
+                            font.pixelSize: Appearance.font.pixelSize.small
+                        }
                     }
-                    StyledText {
-                        text: Translation.tr("Reset to defaults")
-                        font.pixelSize: Appearance.font.pixelSize.small
-                    }
+
+                    onClicked: modulesPage.resetToDefaults()
                 }
-
-                onClicked: modulesPage.resetToDefaults()
             }
         }
     }
 
-    CollapsibleSection {
+    SettingsCardSection {
         expanded: true
         icon: "style"
         title: Translation.tr("Panel Style")
 
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
-
-            RippleButton {
+        SettingsGroup {
+            RowLayout {
                 Layout.fillWidth: true
-                implicitHeight: 64
-                buttonRadius: Appearance.rounding.small
-                colBackground: !modulesPage.isWaffle ? Appearance.colors.colPrimaryContainer : Appearance.colors.colLayer1
-                colBackgroundHover: !modulesPage.isWaffle ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colLayer1Hover
-                colRipple: !modulesPage.isWaffle ? Appearance.colors.colPrimaryContainerActive : Appearance.colors.colLayer1Active
+                spacing: 8
 
-                ColumnLayout {
-                    anchors.centerIn: parent
-                    spacing: 4
-                    MaterialSymbol {
-                        Layout.alignment: Qt.AlignHCenter
-                        text: "dashboard"
-                        iconSize: Appearance.font.pixelSize.larger
-                        color: !modulesPage.isWaffle ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                RippleButton {
+                    Layout.fillWidth: true
+                    implicitHeight: 64
+                    buttonRadius: Appearance.rounding.small
+                    colBackground: !modulesPage.isWaffle ? Appearance.colors.colPrimaryContainer : Appearance.colors.colLayer1
+                    colBackgroundHover: !modulesPage.isWaffle ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colLayer1Hover
+                    colRipple: !modulesPage.isWaffle ? Appearance.colors.colPrimaryContainerActive : Appearance.colors.colLayer1Active
+
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        spacing: 4
+                        MaterialSymbol {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: "dashboard"
+                            iconSize: Appearance.font.pixelSize.larger
+                            color: !modulesPage.isWaffle ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                        }
+                        StyledText {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: "Material (ii)"
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: !modulesPage.isWaffle ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                        }
                     }
-                    StyledText {
-                        Layout.alignment: Qt.AlignHCenter
-                        text: "Material (ii)"
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: !modulesPage.isWaffle ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
-                    }
-                }
 
-                onClicked: {
-                    Config.options.panelFamily = "ii"
-                    Config.options.enabledPanels = [...modulesPage.defaultPanels["ii"]]
-                }
-            }
-
-            RippleButton {
-                Layout.fillWidth: true
-                implicitHeight: 64
-                buttonRadius: Appearance.rounding.small
-                colBackground: modulesPage.isWaffle ? Appearance.colors.colPrimaryContainer : Appearance.colors.colLayer1
-                colBackgroundHover: modulesPage.isWaffle ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colLayer1Hover
-                colRipple: modulesPage.isWaffle ? Appearance.colors.colPrimaryContainerActive : Appearance.colors.colLayer1Active
-
-                ColumnLayout {
-                    anchors.centerIn: parent
-                    spacing: 4
-                    MaterialSymbol {
-                        Layout.alignment: Qt.AlignHCenter
-                        text: "window"
-                        iconSize: Appearance.font.pixelSize.larger
-                        color: modulesPage.isWaffle ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
-                    }
-                    StyledText {
-                        Layout.alignment: Qt.AlignHCenter
-                        text: "Windows 11 (Waffle)"
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: modulesPage.isWaffle ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                    onClicked: {
+                        Config.options.panelFamily = "ii"
+                        Config.options.enabledPanels = [...modulesPage.defaultPanels["ii"]]
                     }
                 }
 
-                onClicked: {
-                    Config.options.panelFamily = "waffle"
-                    Config.options.enabledPanels = [...modulesPage.defaultPanels["waffle"]]
+                RippleButton {
+                    Layout.fillWidth: true
+                    implicitHeight: 64
+                    buttonRadius: Appearance.rounding.small
+                    colBackground: modulesPage.isWaffle ? Appearance.colors.colPrimaryContainer : Appearance.colors.colLayer1
+                    colBackgroundHover: modulesPage.isWaffle ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colLayer1Hover
+                    colRipple: modulesPage.isWaffle ? Appearance.colors.colPrimaryContainerActive : Appearance.colors.colLayer1Active
+
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        spacing: 4
+                        MaterialSymbol {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: "window"
+                            iconSize: Appearance.font.pixelSize.larger
+                            color: modulesPage.isWaffle ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                        }
+                        StyledText {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: "Windows 11 (Waffle)"
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: modulesPage.isWaffle ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                        }
+                    }
+
+                    onClicked: {
+                        Config.options.panelFamily = "waffle"
+                        Config.options.enabledPanels = [...modulesPage.defaultPanels["waffle"]]
+                    }
                 }
             }
         }
     }
 
     // ==================== MATERIAL II ====================
-    CollapsibleSection {
+    SettingsCardSection {
         visible: !modulesPage.isWaffle
         expanded: true
         icon: "dashboard"
         title: Translation.tr("Core")
 
-        ConfigSwitch {
-            buttonIcon: "toolbar"
-            text: Translation.tr("Bar")
-            checked: modulesPage.isPanelEnabled("iiBar")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiBar", checked)
-            StyledToolTip { text: Translation.tr("Horizontal bar with clock, workspaces, system tray and utilities") }
-        }
+        SettingsGroup {
+            SettingsSwitch {
+                buttonIcon: "toolbar"
+                text: Translation.tr("Bar")
+                checked: modulesPage.isPanelEnabled("iiBar")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiBar", checked)
+                StyledToolTip { text: Translation.tr("Horizontal bar with clock, workspaces, system tray and utilities") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "view_column"
-            text: Translation.tr("Vertical Bar")
-            checked: modulesPage.isPanelEnabled("iiVerticalBar")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiVerticalBar", checked)
-            StyledToolTip { text: Translation.tr("Vertical bar layout (alternative to horizontal bar)") }
-        }
+            SettingsSwitch {
+                buttonIcon: "view_column"
+                text: Translation.tr("Vertical Bar")
+                checked: modulesPage.isPanelEnabled("iiVerticalBar")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiVerticalBar", checked)
+                StyledToolTip { text: Translation.tr("Vertical bar layout (alternative to horizontal bar)") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "wallpaper"
-            text: Translation.tr("Background")
-            checked: modulesPage.isPanelEnabled("iiBackground")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiBackground", checked)
-            StyledToolTip { text: Translation.tr("Desktop wallpaper with parallax effect and widgets") }
-        }
+            SettingsSwitch {
+                buttonIcon: "wallpaper"
+                text: Translation.tr("Background")
+                checked: modulesPage.isPanelEnabled("iiBackground")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiBackground", checked)
+                StyledToolTip { text: Translation.tr("Desktop wallpaper with parallax effect and widgets") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "blur_on"
-            text: Translation.tr("Niri Overview Backdrop")
-            checked: modulesPage.isPanelEnabled("iiBackdrop")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiBackdrop", checked)
-            StyledToolTip { text: Translation.tr("Blurred wallpaper shown in Niri's native overview (Mod+Tab)") }
-        }
+            SettingsSwitch {
+                buttonIcon: "blur_on"
+                text: Translation.tr("Niri Overview Backdrop")
+                checked: modulesPage.isPanelEnabled("iiBackdrop")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiBackdrop", checked)
+                StyledToolTip { text: Translation.tr("Blurred wallpaper shown in Niri's native overview (Mod+Tab)") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "search"
-            text: Translation.tr("Overview")
-            checked: modulesPage.isPanelEnabled("iiOverview")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiOverview", checked)
-            StyledToolTip { text: Translation.tr("App launcher, search and workspace grid (Super+Space)") }
-        }
+            SettingsSwitch {
+                buttonIcon: "search"
+                text: Translation.tr("Overview")
+                checked: modulesPage.isPanelEnabled("iiOverview")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiOverview", checked)
+                StyledToolTip { text: Translation.tr("App launcher, search and workspace grid (Super+Space)") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "widgets"
-            text: Translation.tr("Overlay")
-            checked: modulesPage.isPanelEnabled("iiOverlay")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiOverlay", checked)
-            StyledToolTip { text: Translation.tr("Floating image and widgets panel (Super+G)") }
-        }
+            SettingsSwitch {
+                buttonIcon: "widgets"
+                text: Translation.tr("Overlay")
+                checked: modulesPage.isPanelEnabled("iiOverlay")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiOverlay", checked)
+                StyledToolTip { text: Translation.tr("Floating image and widgets panel (Super+G)") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "left_panel_open"
-            text: Translation.tr("Left Sidebar")
-            checked: modulesPage.isPanelEnabled("iiSidebarLeft")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiSidebarLeft", checked)
-            StyledToolTip { text: Translation.tr("AI assistant, translator, image browser") }
-        }
+            SettingsSwitch {
+                buttonIcon: "left_panel_open"
+                text: Translation.tr("Left Sidebar")
+                checked: modulesPage.isPanelEnabled("iiSidebarLeft")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiSidebarLeft", checked)
+                StyledToolTip { text: Translation.tr("AI assistant, translator, image browser") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "right_panel_open"
-            text: Translation.tr("Right Sidebar")
-            checked: modulesPage.isPanelEnabled("iiSidebarRight")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiSidebarRight", checked)
-            StyledToolTip { text: Translation.tr("Quick settings, notifications, calendar, system info") }
+            SettingsSwitch {
+                buttonIcon: "right_panel_open"
+                text: Translation.tr("Right Sidebar")
+                checked: modulesPage.isPanelEnabled("iiSidebarRight")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiSidebarRight", checked)
+                StyledToolTip { text: Translation.tr("Quick settings, notifications, calendar, system info") }
+            }
         }
     }
 
-    CollapsibleSection {
+    SettingsCardSection {
         visible: !modulesPage.isWaffle
         expanded: false
         icon: "notifications"
         title: Translation.tr("Feedback")
 
-        ConfigSwitch {
-            buttonIcon: "notifications"
-            text: Translation.tr("Notification Popups")
-            checked: modulesPage.isPanelEnabled("iiNotificationPopup")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiNotificationPopup", checked)
-            StyledToolTip { text: Translation.tr("Toast notifications that appear on screen") }
-        }
+        SettingsGroup {
+            SettingsSwitch {
+                buttonIcon: "notifications"
+                text: Translation.tr("Notification Popups")
+                checked: modulesPage.isPanelEnabled("iiNotificationPopup")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiNotificationPopup", checked)
+                StyledToolTip { text: Translation.tr("Toast notifications that appear on screen") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "volume_up"
-            text: Translation.tr("OSD")
-            checked: modulesPage.isPanelEnabled("iiOnScreenDisplay")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiOnScreenDisplay", checked)
-            StyledToolTip { text: Translation.tr("On-screen display for volume and brightness changes") }
-        }
+            SettingsSwitch {
+                buttonIcon: "volume_up"
+                text: Translation.tr("OSD")
+                checked: modulesPage.isPanelEnabled("iiOnScreenDisplay")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiOnScreenDisplay", checked)
+                StyledToolTip { text: Translation.tr("On-screen display for volume and brightness changes") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "music_note"
-            text: Translation.tr("Media Controls")
-            checked: modulesPage.isPanelEnabled("iiMediaControls")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiMediaControls", checked)
-            StyledToolTip { text: Translation.tr("Floating media player controls") }
+            SettingsSwitch {
+                buttonIcon: "music_note"
+                text: Translation.tr("Media Controls")
+                checked: modulesPage.isPanelEnabled("iiMediaControls")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiMediaControls", checked)
+                StyledToolTip { text: Translation.tr("Floating media player controls") }
+            }
         }
     }
 
-    CollapsibleSection {
+    SettingsCardSection {
         visible: !modulesPage.isWaffle
         expanded: false
         icon: "build"
         title: Translation.tr("Utilities")
 
-        ConfigSwitch {
-            buttonIcon: "lock"
-            text: Translation.tr("Lock Screen")
-            checked: modulesPage.isPanelEnabled("iiLock")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiLock", checked)
-            StyledToolTip { text: Translation.tr("Custom lock screen with clock and password input") }
-        }
+        SettingsGroup {
+            SettingsSwitch {
+                buttonIcon: "lock"
+                text: Translation.tr("Lock Screen")
+                checked: modulesPage.isPanelEnabled("iiLock")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiLock", checked)
+                StyledToolTip { text: Translation.tr("Custom lock screen with clock and password input") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "power_settings_new"
-            text: Translation.tr("Session Screen")
-            checked: modulesPage.isPanelEnabled("iiSessionScreen")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiSessionScreen", checked)
-            StyledToolTip { text: Translation.tr("Power menu: lock, logout, suspend, reboot, shutdown") }
-        }
+            SettingsSwitch {
+                buttonIcon: "power_settings_new"
+                text: Translation.tr("Session Screen")
+                checked: modulesPage.isPanelEnabled("iiSessionScreen")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiSessionScreen", checked)
+                StyledToolTip { text: Translation.tr("Power menu: lock, logout, suspend, reboot, shutdown") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "admin_panel_settings"
-            text: Translation.tr("Polkit Agent")
-            checked: modulesPage.isPanelEnabled("iiPolkit")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiPolkit", checked)
-            StyledToolTip { text: Translation.tr("Password prompt for administrative actions") }
-        }
+            SettingsSwitch {
+                buttonIcon: "admin_panel_settings"
+                text: Translation.tr("Polkit Agent")
+                checked: modulesPage.isPanelEnabled("iiPolkit")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiPolkit", checked)
+                StyledToolTip { text: Translation.tr("Password prompt for administrative actions") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "screenshot_region"
-            text: Translation.tr("Region Selector")
-            checked: modulesPage.isPanelEnabled("iiRegionSelector")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiRegionSelector", checked)
-            StyledToolTip { text: Translation.tr("Screen capture, OCR text extraction, color picker") }
-        }
+            SettingsSwitch {
+                buttonIcon: "screenshot_region"
+                text: Translation.tr("Region Selector")
+                checked: modulesPage.isPanelEnabled("iiRegionSelector")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiRegionSelector", checked)
+                StyledToolTip { text: Translation.tr("Screen capture, OCR text extraction, color picker") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "image"
-            text: Translation.tr("Wallpaper Selector")
-            checked: modulesPage.isPanelEnabled("iiWallpaperSelector")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiWallpaperSelector", checked)
-            StyledToolTip { text: Translation.tr("File picker for changing wallpaper") }
-        }
+            SettingsSwitch {
+                buttonIcon: "image"
+                text: Translation.tr("Wallpaper Selector")
+                checked: modulesPage.isPanelEnabled("iiWallpaperSelector")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiWallpaperSelector", checked)
+                StyledToolTip { text: Translation.tr("File picker for changing wallpaper") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "keyboard"
-            text: Translation.tr("Cheatsheet")
-            checked: modulesPage.isPanelEnabled("iiCheatsheet")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiCheatsheet", checked)
-            StyledToolTip { text: Translation.tr("Keyboard shortcuts reference overlay") }
-        }
+            SettingsSwitch {
+                buttonIcon: "keyboard"
+                text: Translation.tr("Cheatsheet")
+                checked: modulesPage.isPanelEnabled("iiCheatsheet")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiCheatsheet", checked)
+                StyledToolTip { text: Translation.tr("Keyboard shortcuts reference overlay") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "keyboard_alt"
-            text: Translation.tr("On-Screen Keyboard")
-            checked: modulesPage.isPanelEnabled("iiOnScreenKeyboard")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiOnScreenKeyboard", checked)
-            StyledToolTip { text: Translation.tr("Virtual keyboard for touch input") }
-        }
+            SettingsSwitch {
+                buttonIcon: "keyboard_alt"
+                text: Translation.tr("On-Screen Keyboard")
+                checked: modulesPage.isPanelEnabled("iiOnScreenKeyboard")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiOnScreenKeyboard", checked)
+                StyledToolTip { text: Translation.tr("Virtual keyboard for touch input") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "tab"
-            text: Translation.tr("Alt-Tab Switcher")
-            checked: modulesPage.isPanelEnabled("iiAltSwitcher")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiAltSwitcher", checked)
-            StyledToolTip { text: Translation.tr("Window switcher popup") }
-        }
+            SettingsSwitch {
+                buttonIcon: "tab"
+                text: Translation.tr("Alt-Tab Switcher")
+                checked: modulesPage.isPanelEnabled("iiAltSwitcher")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiAltSwitcher", checked)
+                StyledToolTip { text: Translation.tr("Window switcher popup") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "content_paste"
-            text: Translation.tr("Clipboard History")
-            checked: modulesPage.isPanelEnabled("iiClipboard")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiClipboard", checked)
-            StyledToolTip { text: Translation.tr("Clipboard manager with history") }
+            SettingsSwitch {
+                buttonIcon: "content_paste"
+                text: Translation.tr("Clipboard History")
+                checked: modulesPage.isPanelEnabled("iiClipboard")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiClipboard", checked)
+                StyledToolTip { text: Translation.tr("Clipboard manager with history") }
+            }
         }
     }
 
-    CollapsibleSection {
+    SettingsCardSection {
         visible: !modulesPage.isWaffle
         expanded: false
         icon: "more_horiz"
         title: Translation.tr("Optional")
 
-        ConfigSwitch {
-            buttonIcon: "dock_to_bottom"
-            text: Translation.tr("Dock")
-            checked: modulesPage.isPanelEnabled("iiDock")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiDock", checked)
-            StyledToolTip { text: Translation.tr("macOS-style dock with pinned and running apps") }
-        }
+        SettingsGroup {
+            SettingsSwitch {
+                buttonIcon: "dock_to_bottom"
+                text: Translation.tr("Dock")
+                checked: modulesPage.isPanelEnabled("iiDock")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiDock", checked)
+                StyledToolTip { text: Translation.tr("macOS-style dock with pinned and running apps") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "rounded_corner"
-            text: Translation.tr("Screen Corners")
-            checked: modulesPage.isPanelEnabled("iiScreenCorners")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiScreenCorners", checked)
-            StyledToolTip { text: Translation.tr("Rounded corner overlays for screens without hardware rounding") }
-        }
+            SettingsSwitch {
+                buttonIcon: "rounded_corner"
+                text: Translation.tr("Screen Corners")
+                checked: modulesPage.isPanelEnabled("iiScreenCorners")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiScreenCorners", checked)
+                StyledToolTip { text: Translation.tr("Rounded corner overlays for screens without hardware rounding") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "center_focus_strong"
-            text: Translation.tr("Crosshair")
-            checked: modulesPage.isPanelEnabled("iiCrosshair")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiCrosshair", checked)
-            StyledToolTip { text: Translation.tr("Gaming crosshair overlay for games without built-in crosshair") }
+            SettingsSwitch {
+                buttonIcon: "center_focus_strong"
+                text: Translation.tr("Crosshair")
+                checked: modulesPage.isPanelEnabled("iiCrosshair")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiCrosshair", checked)
+                StyledToolTip { text: Translation.tr("Gaming crosshair overlay for games without built-in crosshair") }
+            }
         }
     }
 
     // ==================== WAFFLE ====================
-    CollapsibleSection {
+    SettingsCardSection {
         visible: modulesPage.isWaffle
         expanded: true
         icon: "window"
         title: Translation.tr("Waffle Core")
 
-        ConfigSwitch {
-            buttonIcon: "toolbar"
-            text: Translation.tr("Taskbar")
-            checked: modulesPage.isPanelEnabled("wBar")
-            onCheckedChanged: modulesPage.setPanelEnabled("wBar", checked)
-            StyledToolTip { text: Translation.tr("Windows 11 style taskbar with app icons and system tray") }
-        }
+        SettingsGroup {
+            SettingsSwitch {
+                buttonIcon: "toolbar"
+                text: Translation.tr("Taskbar")
+                checked: modulesPage.isPanelEnabled("wBar")
+                onCheckedChanged: modulesPage.setPanelEnabled("wBar", checked)
+                StyledToolTip { text: Translation.tr("Windows 11 style taskbar with app icons and system tray") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "wallpaper"
-            text: Translation.tr("Background")
-            checked: modulesPage.isPanelEnabled("wBackground")
-            onCheckedChanged: modulesPage.setPanelEnabled("wBackground", checked)
-            StyledToolTip { text: Translation.tr("Desktop wallpaper") }
-        }
+            SettingsSwitch {
+                buttonIcon: "wallpaper"
+                text: Translation.tr("Background")
+                checked: modulesPage.isPanelEnabled("wBackground")
+                onCheckedChanged: modulesPage.setPanelEnabled("wBackground", checked)
+                StyledToolTip { text: Translation.tr("Desktop wallpaper") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "grid_view"
-            text: Translation.tr("Start Menu")
-            checked: modulesPage.isPanelEnabled("wStartMenu")
-            onCheckedChanged: modulesPage.setPanelEnabled("wStartMenu", checked)
-            StyledToolTip { text: Translation.tr("Windows 11 style start menu with search and pinned apps (Super+Space)") }
-        }
+            SettingsSwitch {
+                buttonIcon: "grid_view"
+                text: Translation.tr("Start Menu")
+                checked: modulesPage.isPanelEnabled("wStartMenu")
+                onCheckedChanged: modulesPage.setPanelEnabled("wStartMenu", checked)
+                StyledToolTip { text: Translation.tr("Windows 11 style start menu with search and pinned apps (Super+Space)") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "toggle_on"
-            text: Translation.tr("Action Center")
-            checked: modulesPage.isPanelEnabled("wActionCenter")
-            onCheckedChanged: modulesPage.setPanelEnabled("wActionCenter", checked)
-            StyledToolTip { text: Translation.tr("Quick settings panel with toggles and sliders") }
-        }
+            SettingsSwitch {
+                buttonIcon: "toggle_on"
+                text: Translation.tr("Action Center")
+                checked: modulesPage.isPanelEnabled("wActionCenter")
+                onCheckedChanged: modulesPage.setPanelEnabled("wActionCenter", checked)
+                StyledToolTip { text: Translation.tr("Quick settings panel with toggles and sliders") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "notifications"
-            text: Translation.tr("Notification Center")
-            checked: modulesPage.isPanelEnabled("wNotificationCenter")
-            onCheckedChanged: modulesPage.setPanelEnabled("wNotificationCenter", checked)
-            StyledToolTip { text: Translation.tr("Notification panel with calendar") }
-        }
+            SettingsSwitch {
+                buttonIcon: "notifications"
+                text: Translation.tr("Notification Center")
+                checked: modulesPage.isPanelEnabled("wNotificationCenter")
+                onCheckedChanged: modulesPage.setPanelEnabled("wNotificationCenter", checked)
+                StyledToolTip { text: Translation.tr("Notification panel with calendar") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "notifications_active"
-            text: Translation.tr("Notification Popups")
-            checked: modulesPage.isPanelEnabled("wNotificationPopup")
-            onCheckedChanged: modulesPage.setPanelEnabled("wNotificationPopup", checked)
-            StyledToolTip { text: Translation.tr("Toast notifications that appear on screen (Windows 11 style)") }
-        }
+            SettingsSwitch {
+                buttonIcon: "notifications_active"
+                text: Translation.tr("Notification Popups")
+                checked: modulesPage.isPanelEnabled("wNotificationPopup")
+                onCheckedChanged: modulesPage.setPanelEnabled("wNotificationPopup", checked)
+                StyledToolTip { text: Translation.tr("Toast notifications that appear on screen (Windows 11 style)") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "volume_up"
-            text: Translation.tr("OSD")
-            checked: modulesPage.isPanelEnabled("wOnScreenDisplay")
-            onCheckedChanged: modulesPage.setPanelEnabled("wOnScreenDisplay", checked)
-            StyledToolTip { text: Translation.tr("On-screen display for volume and brightness") }
-        }
+            SettingsSwitch {
+                buttonIcon: "volume_up"
+                text: Translation.tr("OSD")
+                checked: modulesPage.isPanelEnabled("wOnScreenDisplay")
+                onCheckedChanged: modulesPage.setPanelEnabled("wOnScreenDisplay", checked)
+                StyledToolTip { text: Translation.tr("On-screen display for volume and brightness") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "widgets"
-            text: Translation.tr("Widgets Panel")
-            checked: modulesPage.isPanelEnabled("wWidgets")
-            onCheckedChanged: modulesPage.setPanelEnabled("wWidgets", checked)
-            StyledToolTip { text: Translation.tr("Windows 11 style widgets sidebar") }
+            SettingsSwitch {
+                buttonIcon: "widgets"
+                text: Translation.tr("Widgets Panel")
+                checked: modulesPage.isPanelEnabled("wWidgets")
+                onCheckedChanged: modulesPage.setPanelEnabled("wWidgets", checked)
+                StyledToolTip { text: Translation.tr("Windows 11 style widgets sidebar") }
+            }
         }
     }
 
-    CollapsibleSection {
+    SettingsCardSection {
         visible: modulesPage.isWaffle
         expanded: false
         icon: "share"
         title: Translation.tr("Shared Modules")
 
-        StyledText {
-            Layout.fillWidth: true
-            text: Translation.tr("Modules shared with Material ii style")
-            color: Appearance.colors.colSubtext
-            font.pixelSize: Appearance.font.pixelSize.smaller
-            wrapMode: Text.WordWrap
-        }
+        SettingsGroup {
+            StyledText {
+                Layout.fillWidth: true
+                text: Translation.tr("Modules shared with Material ii style")
+                color: Appearance.colors.colSubtext
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                wrapMode: Text.WordWrap
+            }
 
-        ConfigSwitch {
-            buttonIcon: "blur_on"
-            text: Translation.tr("Niri Overview Backdrop")
-            checked: modulesPage.isPanelEnabled("iiBackdrop")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiBackdrop", checked)
-            StyledToolTip { text: Translation.tr("Blurred wallpaper shown in Niri's native overview (Mod+Tab)") }
-        }
+            SettingsSwitch {
+                buttonIcon: "blur_on"
+                text: Translation.tr("Niri Overview Backdrop")
+                checked: modulesPage.isPanelEnabled("iiBackdrop")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiBackdrop", checked)
+                StyledToolTip { text: Translation.tr("Blurred wallpaper shown in Niri's native overview (Mod+Tab)") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "search"
-            text: Translation.tr("Overview")
-            checked: modulesPage.isPanelEnabled("iiOverview")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiOverview", checked)
-            StyledToolTip { text: Translation.tr("Workspace grid (used by Start Menu)") }
-        }
+            SettingsSwitch {
+                buttonIcon: "search"
+                text: Translation.tr("Overview")
+                checked: modulesPage.isPanelEnabled("iiOverview")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiOverview", checked)
+                StyledToolTip { text: Translation.tr("Workspace grid (used by Start Menu)") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "widgets"
-            text: Translation.tr("Overlay")
-            checked: modulesPage.isPanelEnabled("iiOverlay")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiOverlay", checked)
-            StyledToolTip { text: Translation.tr("Floating image and widgets panel (Super+G)") }
-        }
+            SettingsSwitch {
+                buttonIcon: "widgets"
+                text: Translation.tr("Overlay")
+                checked: modulesPage.isPanelEnabled("iiOverlay")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiOverlay", checked)
+                StyledToolTip { text: Translation.tr("Floating image and widgets panel (Super+G)") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "lock"
-            text: Translation.tr("Lock Screen")
-            checked: modulesPage.isPanelEnabled("iiLock")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiLock", checked)
-            StyledToolTip { text: Translation.tr("Custom lock screen with clock and password input") }
-        }
+            SettingsSwitch {
+                buttonIcon: "lock"
+                text: Translation.tr("Lock Screen")
+                checked: modulesPage.isPanelEnabled("iiLock")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiLock", checked)
+                StyledToolTip { text: Translation.tr("Custom lock screen with clock and password input") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "power_settings_new"
-            text: Translation.tr("Session Screen")
-            checked: modulesPage.isPanelEnabled("iiSessionScreen")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiSessionScreen", checked)
-            StyledToolTip { text: Translation.tr("Power menu: lock, logout, suspend, reboot, shutdown") }
-        }
+            SettingsSwitch {
+                buttonIcon: "power_settings_new"
+                text: Translation.tr("Session Screen")
+                checked: modulesPage.isPanelEnabled("iiSessionScreen")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiSessionScreen", checked)
+                StyledToolTip { text: Translation.tr("Power menu: lock, logout, suspend, reboot, shutdown") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "admin_panel_settings"
-            text: Translation.tr("Polkit Agent")
-            checked: modulesPage.isPanelEnabled("iiPolkit")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiPolkit", checked)
-            StyledToolTip { text: Translation.tr("Password prompt for administrative actions") }
-        }
+            SettingsSwitch {
+                buttonIcon: "admin_panel_settings"
+                text: Translation.tr("Polkit Agent")
+                checked: modulesPage.isPanelEnabled("iiPolkit")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiPolkit", checked)
+                StyledToolTip { text: Translation.tr("Password prompt for administrative actions") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "screenshot_region"
-            text: Translation.tr("Region Selector")
-            checked: modulesPage.isPanelEnabled("iiRegionSelector")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiRegionSelector", checked)
-            StyledToolTip { text: Translation.tr("Screen capture, OCR text extraction, color picker") }
-        }
+            SettingsSwitch {
+                buttonIcon: "screenshot_region"
+                text: Translation.tr("Region Selector")
+                checked: modulesPage.isPanelEnabled("iiRegionSelector")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiRegionSelector", checked)
+                StyledToolTip { text: Translation.tr("Screen capture, OCR text extraction, color picker") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "image"
-            text: Translation.tr("Wallpaper Selector")
-            checked: modulesPage.isPanelEnabled("iiWallpaperSelector")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiWallpaperSelector", checked)
-            StyledToolTip { text: Translation.tr("File picker for changing wallpaper") }
-        }
+            SettingsSwitch {
+                buttonIcon: "image"
+                text: Translation.tr("Wallpaper Selector")
+                checked: modulesPage.isPanelEnabled("iiWallpaperSelector")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiWallpaperSelector", checked)
+                StyledToolTip { text: Translation.tr("File picker for changing wallpaper") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "keyboard"
-            text: Translation.tr("Cheatsheet")
-            checked: modulesPage.isPanelEnabled("iiCheatsheet")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiCheatsheet", checked)
-            StyledToolTip { text: Translation.tr("Keyboard shortcuts reference overlay") }
-        }
+            SettingsSwitch {
+                buttonIcon: "keyboard"
+                text: Translation.tr("Cheatsheet")
+                checked: modulesPage.isPanelEnabled("iiCheatsheet")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiCheatsheet", checked)
+                StyledToolTip { text: Translation.tr("Keyboard shortcuts reference overlay") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "keyboard_alt"
-            text: Translation.tr("On-Screen Keyboard")
-            checked: modulesPage.isPanelEnabled("iiOnScreenKeyboard")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiOnScreenKeyboard", checked)
-            StyledToolTip { text: Translation.tr("Virtual keyboard for touch input") }
-        }
+            SettingsSwitch {
+                buttonIcon: "keyboard_alt"
+                text: Translation.tr("On-Screen Keyboard")
+                checked: modulesPage.isPanelEnabled("iiOnScreenKeyboard")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiOnScreenKeyboard", checked)
+                StyledToolTip { text: Translation.tr("Virtual keyboard for touch input") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "tab"
-            text: Translation.tr("Alt-Tab Switcher")
-            checked: modulesPage.isPanelEnabled("iiAltSwitcher")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiAltSwitcher", checked)
-            StyledToolTip { text: Translation.tr("Window switcher popup") }
-        }
+            SettingsSwitch {
+                buttonIcon: "tab"
+                text: Translation.tr("Alt-Tab Switcher")
+                checked: modulesPage.isPanelEnabled("iiAltSwitcher")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiAltSwitcher", checked)
+                StyledToolTip { text: Translation.tr("Window switcher popup") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "content_paste"
-            text: Translation.tr("Clipboard History")
-            checked: modulesPage.isPanelEnabled("iiClipboard")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiClipboard", checked)
-            StyledToolTip { text: Translation.tr("Clipboard manager with history") }
-        }
+            SettingsSwitch {
+                buttonIcon: "content_paste"
+                text: Translation.tr("Clipboard History")
+                checked: modulesPage.isPanelEnabled("iiClipboard")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiClipboard", checked)
+                StyledToolTip { text: Translation.tr("Clipboard manager with history") }
+            }
 
-        ConfigSwitch {
-            buttonIcon: "center_focus_strong"
-            text: Translation.tr("Crosshair")
-            checked: modulesPage.isPanelEnabled("iiCrosshair")
-            onCheckedChanged: modulesPage.setPanelEnabled("iiCrosshair", checked)
-            StyledToolTip { text: Translation.tr("Gaming crosshair overlay") }
+            SettingsSwitch {
+                buttonIcon: "center_focus_strong"
+                text: Translation.tr("Crosshair")
+                checked: modulesPage.isPanelEnabled("iiCrosshair")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiCrosshair", checked)
+                StyledToolTip { text: Translation.tr("Gaming crosshair overlay") }
+            }
         }
     }
 }

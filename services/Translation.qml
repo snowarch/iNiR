@@ -69,6 +69,7 @@ Singleton {
         id: generatedTranslationFileView
         translationsDir: root.generatedTranslationsDir
         languageCode: root.languageCode
+        isGenerated: true
         onContentLoaded: (data) => {
             root.generatedTranslations = data;
             root.isLoading = false;
@@ -96,7 +97,7 @@ Singleton {
         required property string translationsDir
         signal languagesScanned(var languages)
 
-        command: ["find", translationScanner.translationsDir, "-name", "*.json", "-exec", "basename", "{}", ".json", ";"]
+        command: ["/usr/bin/find", translationScanner.translationsDir, "-name", "*.json", "-exec", "/usr/bin/basename", "{}", ".json", ";"]
         running: false
 
         stdout: StdioCollector {
@@ -138,9 +139,16 @@ Singleton {
         id: translationReader
         required property string translationsDir
         property string languageCode: root.languageCode
+        property bool isGenerated: false
         signal contentLoaded(var data)
 
         function reread() { // Proper reload in case the file was incorrect before
+            const langs = translationReader.isGenerated ? root.availableGeneratedLanguages : root.availableLanguages;
+            if (!(langs ?? []).includes(translationReader.languageCode)) {
+                translationReader.path = "";
+                translationReader.contentLoaded({});
+                return;
+            }
             translationReader.path = "";
             translationReader.path = `${translationReader.translationsDir}/${translationReader.languageCode}.json`;
             translationReader.reload();

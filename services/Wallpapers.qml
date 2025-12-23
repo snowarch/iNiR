@@ -16,6 +16,56 @@ import Quickshell.Io
 Singleton {
     id: root
 
+    readonly property bool isWaffleFamily: (Config.options?.panelFamily ?? "ii") === "waffle"
+    readonly property bool useBackdropWallpaper: isWaffleFamily
+        ? (Config.options?.waffles?.background?.backdrop?.hideWallpaper ?? false)
+        : (Config.options?.background?.backdrop?.hideWallpaper ?? false)
+
+    readonly property string effectiveWallpaperPath: {
+        function isVideoFile(path: string): bool {
+            return path.endsWith(".mp4") || path.endsWith(".webm") || path.endsWith(".mkv") || path.endsWith(".avi") || path.endsWith(".mov")
+        }
+
+        if (useBackdropWallpaper) {
+            if (isWaffleFamily) {
+                const wBackdrop = Config.options?.waffles?.background?.backdrop ?? {}
+                const useBackdropOwn = !(wBackdrop.useMainWallpaper ?? true)
+                if (useBackdropOwn && wBackdrop.wallpaperPath)
+                    return wBackdrop.wallpaperPath
+
+                const wBg = Config.options?.waffles?.background ?? {}
+                const useMainForWaffle = wBg.useMainWallpaper ?? true
+                const base = useMainForWaffle ? (Config.options?.background?.wallpaperPath ?? "") : (wBg.wallpaperPath || (Config.options?.background?.wallpaperPath ?? ""))
+                return base
+            }
+
+            const iiBackdrop = Config.options?.background?.backdrop ?? {}
+            const useMain = iiBackdrop.useMainWallpaper ?? true
+            const mainPath = Config.options?.background?.wallpaperPath ?? ""
+            const backdropPath = iiBackdrop.wallpaperPath || ""
+            return useMain ? mainPath : (backdropPath || mainPath)
+        }
+
+        if (isWaffleFamily) {
+            const wBg = Config.options?.waffles?.background ?? {}
+            const useMain = wBg.useMainWallpaper ?? true
+            if (useMain) {
+                const mainWp = Config.options?.background?.wallpaperPath ?? ""
+                return isVideoFile(mainWp) ? (Config.options?.background?.thumbnailPath ?? mainWp) : mainWp
+            }
+            return wBg.wallpaperPath || (Config.options?.background?.wallpaperPath ?? "")
+        }
+
+        const mainWp = Config.options?.background?.wallpaperPath ?? ""
+        return isVideoFile(mainWp) ? (Config.options?.background?.thumbnailPath ?? mainWp) : mainWp
+    }
+
+    readonly property string effectiveWallpaperUrl: {
+        const path = root.effectiveWallpaperPath
+        if (!path || path.length === 0) return ""
+        return path.startsWith("file://") ? path : ("file://" + path)
+    }
+
     property string thumbgenScriptPath: `${FileUtils.trimFileProtocol(Directories.scriptPath)}/thumbnails/thumbgen-venv.sh`
     property string generateThumbnailsMagickScriptPath: `${FileUtils.trimFileProtocol(Directories.scriptPath)}/thumbnails/generate-thumbnails-magick.sh`
     property alias directory: folderModel.folder
@@ -29,6 +79,9 @@ Singleton {
     property list<string> wallpapers: [] // List of absolute file paths (without file://)
     readonly property bool thumbnailGenerationRunning: thumbgenProc.running
     property real thumbnailGenerationProgress: 0
+    property string _thumbgenPendingSize: ""
+    property url _thumbgenPendingDirectory: ""
+    property string _thumbgenLastRequestedKey: ""
 
     signal changed()
     signal thumbnailGenerated(directory: string)
@@ -49,10 +102,11 @@ Singleton {
     }
 
     function apply(path, darkMode = Appearance.m3colors.darkmode) {
-        if (!path || path.length === 0) return
+        const normalizedPath = FileUtils.trimFileProtocol(String(path ?? ""))
+        if (!normalizedPath || normalizedPath.length === 0) return
         applyProc.exec([
             Directories.wallpaperSwitchScriptPath,
-            "--image", path,
+            "--image", normalizedPath,
             "--mode", (darkMode ? "dark" : "light")
         ])
         root.changed()
@@ -63,9 +117,9 @@ Singleton {
         property string filePath: ""
         property bool darkMode: Appearance.m3colors.darkmode
         function select(filePath, darkMode = Appearance.m3colors.darkmode) {
-            selectProc.filePath = filePath
+            selectProc.filePath = FileUtils.trimFileProtocol(String(filePath ?? ""))
             selectProc.darkMode = darkMode
-            selectProc.exec(["test", "-d", FileUtils.trimFileProtocol(filePath)])
+            selectProc.exec(["/usr/bin/test", "-d", FileUtils.trimFileProtocol(selectProc.filePath)])
         }
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0) {
@@ -96,7 +150,7 @@ Singleton {
             validateDirProc.nicePath = FileUtils.trimFileProtocol(path).replace(/\/+$/, "")
             if (/^\/*$/.test(validateDirProc.nicePath)) validateDirProc.nicePath = "/";
             validateDirProc._pendingFileCheck = false
-            validateDirProc.exec(["test", "-d", validateDirProc.nicePath])
+            validateDirProc.exec(["/usr/bin/test", "-d", validateDirProc.nicePath])
         }
         onExited: (exitCode, exitStatus) => {
             if (!validateDirProc._pendingFileCheck) {
@@ -105,7 +159,7 @@ Singleton {
                     return
                 }
                 validateDirProc._pendingFileCheck = true
-                validateDirProc.exec(["test", "-f", validateDirProc.nicePath])
+                validateDirProc.exec(["/usr/bin/test", "-f", validateDirProc.nicePath])
                 return
             }
             if (exitCode === 0) {
@@ -131,8 +185,14 @@ Singleton {
         id: folderModel
         folder: Qt.resolvedUrl(root.defaultFolder)
         caseSensitive: false
-        nameFilters: root.extensions.map(ext => `*${searchQuery.split(" ").filter(s => s.length > 0).map(s => `*${s}*`)}*.${ext}`)
-        showDirs: true
+        nameFilters: {
+            const q = (root.searchQuery ?? "").trim();
+            if (q.length === 0) return [];
+            const parts = q.split(/\s+/).filter(s => s.length > 0).map(s => `*${s}*`).join("");
+            return root.extensions.map(ext => `*${parts}*.${ext}`);
+        }
+        // FolderListModel applies nameFilters to dirs too; when searching, hide dirs to avoid "everything disappeared".
+        showDirs: (root.searchQuery ?? "").trim().length === 0
         showDotAndDotDot: false
         showOnlyReadable: true
         sortField: FolderListModel.Time
@@ -150,18 +210,37 @@ Singleton {
     function generateThumbnail(size: string) {
         // console.log("[Wallpapers] Updating thumbnails")
         if (!["normal", "large", "x-large", "xx-large"].includes(size)) throw new Error("Invalid thumbnail size");
-        thumbgenProc.directory = root.directory
-        thumbgenProc._size = size
-        thumbgenProc.running = false
-        thumbgenFallbackProc.running = false
-        thumbgenProc.command = [
-            thumbgenScriptPath,
-            "--size", size,
-            "--machine_progress",
-            "-d", FileUtils.trimFileProtocol(root.directory)
-        ]
-        root.thumbnailGenerationProgress = 0
-        thumbgenProc.running = true
+        root._thumbgenPendingSize = size
+        root._thumbgenPendingDirectory = root.directory
+        thumbgenDebounce.restart()
+    }
+
+    Timer {
+        id: thumbgenDebounce
+        interval: 250
+        repeat: false
+        onTriggered: {
+            const dir = root._thumbgenPendingDirectory
+            const size = root._thumbgenPendingSize
+            const key = `${FileUtils.trimFileProtocol(dir)}|${size}`
+            if (key === root._thumbgenLastRequestedKey && root.thumbnailGenerationRunning) return
+            root._thumbgenLastRequestedKey = key
+
+            thumbgenProc.directory = dir
+            thumbgenProc._size = size
+            thumbgenProc.running = false
+            thumbgenFallbackProc.running = false
+            thumbgenProc.command = [
+                "/usr/bin/bash",
+                thumbgenScriptPath,
+                "--size", size,
+                "--machine_progress",
+                "--only_images",
+                "-d", FileUtils.trimFileProtocol(dir)
+            ]
+            root.thumbnailGenerationProgress = 0
+            thumbgenProc.running = true
+        }
     }
     Process {
         id: thumbgenProc
@@ -186,6 +265,7 @@ Singleton {
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0) {
                 thumbgenFallbackProc.command = [
+                    "/usr/bin/bash",
                     generateThumbnailsMagickScriptPath,
                     "--size", thumbgenProc._size,
                     "-d", FileUtils.trimFileProtocol(thumbgenProc.directory)

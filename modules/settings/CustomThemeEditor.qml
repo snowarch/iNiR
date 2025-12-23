@@ -26,7 +26,7 @@ ColumnLayout {
 
     Process {
         id: ensureDirProcess
-        command: ["mkdir", "-p", root.themesDir]
+        command: ["/usr/bin/mkdir", "-p", root.themesDir]
         onExited: (exitCode) => {
             if (exitCode === 0) loadThemesList()
         }
@@ -38,7 +38,7 @@ ColumnLayout {
 
     Process {
         id: listThemesProcess
-        command: ["bash", "-c", `ls -1 "${root.themesDir}"/*.json 2>/dev/null | xargs -I{} basename {} .json`]
+        command: ["/usr/bin/bash", "-c", `/usr/bin/ls -1 "${root.themesDir}"/*.json 2>/dev/null | /usr/bin/xargs -I{} /usr/bin/basename {} .json`]
         stdout: SplitParser {
             onRead: data => {
                 if (data.trim()) {
@@ -55,7 +55,7 @@ ColumnLayout {
         const jsonStr = JSON.stringify(Config.options.appearance.customTheme, null, 2)
         const escaped = jsonStr.replace(/'/g, "'\\''")
         const filePath = `${root.themesDir}/${name}.json`
-        saveThemeProcess.command = ["bash", "-c", `printf '%s' '${escaped}' > "${filePath}"`]
+        saveThemeProcess.command = ["/usr/bin/bash", "-c", `printf '%s' '${escaped}' > "${filePath}"`]
         saveThemeProcess.running = true
     }
 
@@ -101,7 +101,7 @@ ColumnLayout {
     }
 
     function deleteTheme(name) {
-        deleteThemeProcess.command = ["rm", "-f", `${root.themesDir}/${name}.json`]
+        deleteThemeProcess.command = ["/usr/bin/rm", "-f", `${root.themesDir}/${name}.json`]
         deleteThemeProcess.running = true
     }
 

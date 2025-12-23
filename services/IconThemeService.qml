@@ -13,37 +13,88 @@ Singleton {
     property string currentTheme: ""
 
     property bool _initialized: false
+    property bool _restartQueued: false
 
     function ensureInitialized(): void {
         if (root._initialized)
             return;
         root._initialized = true;
+        currentThemeProc.running = false
         currentThemeProc.running = true
+        listThemesProc.running = false
         listThemesProc.running = true
+        
+        // Restore saved theme on first initialization
+        if (Config.ready && Config.options?.appearance?.iconTheme) {
+            const savedTheme = Config.options.appearance.iconTheme
+            if (savedTheme && String(savedTheme).trim().length > 0) {
+                console.log("[IconThemeService] Restoring saved icon theme:", String(savedTheme).trim())
+                // Apply saved theme without triggering restart
+                gsettingsSetProc.themeName = String(savedTheme).trim()
+                gsettingsSetProc.skipRestart = true
+                gsettingsSetProc.running = false
+                gsettingsSetProc.running = true
+            }
+        }
     }
 
     function setTheme(themeName) {
         if (!themeName || String(themeName).trim().length === 0)
             return;
 
-        gsettingsSetProc.themeName = String(themeName).trim()
+        const themeStr = String(themeName).trim()
+        console.log("[IconThemeService] Setting icon theme:", themeStr)
+
+        // Update UI immediately; actual system change follows via gsettings.
+        root.currentTheme = themeStr
+
+        gsettingsSetProc.themeName = themeStr
+        gsettingsSetProc.skipRestart = false
+        gsettingsSetProc.running = false
         gsettingsSetProc.running = true
+        
+        // Persist to config.json
+        Config.setNestedValue('appearance.iconTheme', themeStr)
+
+        // Ensure config is written before we do any restart.
+        Config.flushWrites()
     }
 
     Timer {
         id: restartDelay
-        interval: 300
+        interval: 250
         repeat: false
-        onTriggered: Quickshell.execDetached(["qs", "-c", "ii"])
+        onTriggered: {
+            root._restartQueued = false
+            console.log("[IconThemeService] Restarting shell now...")
+            // IMPORTANT: do NOT kill the current shell and then rely on its own timers.
+            // Run a single external command that kills and relaunches.
+            Quickshell.execDetached([
+                "/usr/bin/bash",
+                "-lc",
+                "/usr/bin/qs kill -c ii 2>/dev/null; /usr/bin/qs -c ii >/dev/null 2>&1 & disown"
+            ])
+        }
+    }
+
+    function queueRestart(): void {
+        if (root._restartQueued)
+            return;
+        root._restartQueued = true
+        restartDelay.restart()
     }
 
     Process {
         id: gsettingsSetProc
         property string themeName: ""
-        command: ["gsettings", "set", "org.gnome.desktop.interface", "icon-theme", gsettingsSetProc.themeName]
+        property bool skipRestart: false
+        command: ["/usr/bin/gsettings", "set", "org.gnome.desktop.interface", "icon-theme", gsettingsSetProc.themeName]
         onExited: (exitCode, exitStatus) => {
+            console.log("[IconThemeService] gsettings set exited:", exitCode, "theme:", gsettingsSetProc.themeName)
             // Sync to KDE/Qt apps via kdeglobals
             kdeGlobalsUpdateProc.themeName = gsettingsSetProc.themeName
+            kdeGlobalsUpdateProc.skipRestart = gsettingsSetProc.skipRestart
+            kdeGlobalsUpdateProc.running = false
             kdeGlobalsUpdateProc.running = true
         }
     }
@@ -52,6 +103,7 @@ Singleton {
     Process {
         id: kdeGlobalsUpdateProc
         property string themeName: ""
+        property bool skipRestart: false
         command: [
             "/usr/bin/python3",
             "-c",
@@ -80,7 +132,16 @@ with open(config_path, "w") as f:
         onExited: (exitCode, exitStatus) => {
             // Also update plasma icon theme via kwriteconfig if available
             kwriteconfigProc.themeName = kdeGlobalsUpdateProc.themeName
+            kwriteconfigProc.skipRestart = kdeGlobalsUpdateProc.skipRestart
+
+            kwriteconfigProc.running = false
             kwriteconfigProc.running = true
+
+            // Restart shell if user actively changed theme.
+            // Do not depend on kwriteconfig6 succeeding.
+            if (!kdeGlobalsUpdateProc.skipRestart) {
+                root.queueRestart()
+            }
         }
     }
 
@@ -88,6 +149,7 @@ with open(config_path, "w") as f:
     Process {
         id: kwriteconfigProc
         property string themeName: ""
+        property bool skipRestart: false
         command: [
             "/usr/bin/kwriteconfig6",
             "--file", "kdeglobals",
@@ -96,15 +158,13 @@ with open(config_path, "w") as f:
             kwriteconfigProc.themeName
         ]
         onExited: (exitCode, exitStatus) => {
-            // Restart shell
-            Quickshell.execDetached(["qs", "kill", "-c", "ii"])
-            restartDelay.start()
+            console.log("[IconThemeService] kwriteconfig exited:", exitCode, "theme:", kwriteconfigProc.themeName)
         }
     }
 
     Process {
         id: currentThemeProc
-        command: ["gsettings", "get", "org.gnome.desktop.interface", "icon-theme"]
+        command: ["/usr/bin/gsettings", "get", "org.gnome.desktop.interface", "icon-theme"]
         stdout: SplitParser {
             onRead: line => {
                 root.currentTheme = line.trim().replace(/'/g, "")
@@ -115,7 +175,7 @@ with open(config_path, "w") as f:
     Process {
         id: listThemesProc
         command: [
-            "find",
+            "/usr/bin/find",
             "/usr/share/icons",
             `${FileUtils.trimFileProtocol(Directories.home)}/.local/share/icons`,
             "-maxdepth",

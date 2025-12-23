@@ -19,7 +19,7 @@ Singleton {
     }
 
     function enableNextTime() {
-        Quickshell.execDetached(["rm", "-f", root.firstRunFilePath])
+        Quickshell.execDetached(["/usr/bin/rm", "-f", root.firstRunFilePath])
     }
     function disableNextTime() {
         firstRunFileView.setText(root.firstRunFileContent)
@@ -27,7 +27,7 @@ Singleton {
 
     function handleFirstRun(): void {
         Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, root.defaultWallpaperPath])
-        Quickshell.execDetached(["qs", "-p", root.welcomeQmlPath])
+        Quickshell.execDetached(["/usr/bin/qs", "-p", root.welcomeQmlPath])
     }
 
     FileView {

@@ -34,7 +34,7 @@ Singleton {
     onIsLowAndNotChargingChanged: {
         if (!root.available || !isLowAndNotCharging) return;
         Quickshell.execDetached([
-            "notify-send", 
+            "/usr/bin/notify-send", 
             Translation.tr("Low battery"), 
             Translation.tr("Consider plugging in your device"), 
             "-u", "critical",
@@ -48,7 +48,7 @@ Singleton {
     onIsCriticalAndNotChargingChanged: {
         if (!root.available || !isCriticalAndNotCharging) return;
         Quickshell.execDetached([
-            "notify-send", 
+            "/usr/bin/notify-send", 
             Translation.tr("Critically low battery"), 
             Translation.tr("Please charge!\nAutomatic suspend triggers at %1%").arg(Config.options?.battery?.suspend ?? 5), 
             "-u", "critical",
@@ -69,7 +69,7 @@ Singleton {
 
     Process {
         id: suspendSystemctl
-        command: ["systemctl", "suspend"]
+        command: ["/usr/bin/systemctl", "suspend"]
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0) {
                 suspendLoginctl.running = true
@@ -79,13 +79,13 @@ Singleton {
 
     Process {
         id: suspendLoginctl
-        command: ["loginctl", "suspend"]
+        command: ["/usr/bin/loginctl", "suspend"]
     }
 
     onIsFullAndChargingChanged: {
         if (!root.available || !isFullAndCharging) return;
         Quickshell.execDetached([
-            "notify-send",
+            "/usr/bin/notify-send",
             Translation.tr("Battery full"),
             Translation.tr("Please unplug the charger"),
             "-a", "Shell",

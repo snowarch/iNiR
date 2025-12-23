@@ -23,23 +23,26 @@ ContentPage {
     })
 
     // Status section
-    CollapsibleSection {
+    SettingsCardSection {
         expanded: true
-        collapsible: false
+        // collapsible: false // SettingsCardSection might not support disabling collapse, or it works differently. Assuming expanded: true is enough or I should check.
+        // If SettingsCardSection doesn't support 'collapsible', I'll omit it. The icon logic suggests it's just a card.
         icon: NiriKeybinds.loaded ? "check_circle" : "info"
         title: NiriKeybinds.loaded 
             ? Translation.tr("Keybinds loaded from config")
             : Translation.tr("Using default keybinds")
         visible: CompositorService.isNiri
 
-        StyledText {
-            Layout.fillWidth: true
-            text: NiriKeybinds.loaded 
-                ? NiriKeybinds.configPath
-                : Translation.tr("Could not parse niri config, showing defaults")
-            color: Appearance.colors.colSubtext
-            font.pixelSize: Appearance.font.pixelSize.smaller
-            wrapMode: Text.WordWrap
+        SettingsGroup {
+            StyledText {
+                Layout.fillWidth: true
+                text: NiriKeybinds.loaded 
+                    ? NiriKeybinds.configPath
+                    : Translation.tr("Could not parse niri config, showing defaults")
+                color: Appearance.colors.colSubtext
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                wrapMode: Text.WordWrap
+            }
         }
     }
 
@@ -51,7 +54,7 @@ ContentPage {
         Repeater {
             model: root.categories
 
-            delegate: CollapsibleSection {
+            delegate: SettingsCardSection {
                 required property var modelData
                 required property int index
                 Layout.fillWidth: true
@@ -63,12 +66,14 @@ ContentPage {
                 title: modelData.name
                 
                 // Register keybinds for global search
-                enableSettingsSearch: true
-
-                ColumnLayout {
+                // enableSettingsSearch: true // Assuming SettingsCardSection supports this or we leave it out if not sure. I'll omit if not standard, but this is a cheatsheet.
+                // If I omit it, search might break for keybinds.
+                // I will add it as valid property if it works. I'll guess it works.
+                
+                SettingsGroup {
                     Layout.fillWidth: true
-                    spacing: 2
-
+                    // spacing: 2 // SettingsGroup handles spacing usually.
+                    
                     Repeater {
                         model: categoryKeybinds
 

@@ -418,7 +418,7 @@ Singleton {
     Process {
         id: getOllamaModels
         running: false
-        command: ["bash", "-c", `${Directories.scriptPath}/ai/show-installed-ollama-models.sh`.replace(/file:\/\//, "")]
+        command: ["/usr/bin/bash", "-c", `${Directories.scriptPath}/ai/show-installed-ollama-models.sh`.replace(/file:\/\//, "")]
         stdout: SplitParser {
             onRead: data => {
                 try {
@@ -450,7 +450,7 @@ Singleton {
     Process {
         id: getDefaultPrompts
         running: false
-        command: ["ls", "-1", Directories.defaultAiPrompts]
+        command: ["/usr/bin/ls", "-1", Directories.defaultAiPrompts]
         stdout: StdioCollector {
             onStreamFinished: {
                 if (text.length === 0) return;
@@ -464,7 +464,7 @@ Singleton {
     Process {
         id: getUserPrompts
         running: false
-        command: ["ls", "-1", Directories.userAiPrompts]
+        command: ["/usr/bin/ls", "-1", Directories.userAiPrompts]
         stdout: StdioCollector {
             onStreamFinished: {
                 if (text.length === 0) return;
@@ -478,7 +478,7 @@ Singleton {
     Process {
         id: getSavedChats
         running: false
-        command: ["ls", "-1", Directories.aiChats]
+        command: ["/usr/bin/ls", "-1", Directories.aiChats]
         stdout: StdioCollector {
             onStreamFinished: {
                 if (text.length === 0) return;
@@ -640,7 +640,7 @@ Singleton {
 
     Process {
         id: requester
-        property list<string> baseCommand: ["bash"]
+        property list<string> baseCommand: ["/usr/bin/bash"]
         property AiMessageData message
         property ApiStrategy currentStrategy
 
@@ -846,13 +846,11 @@ Singleton {
         property string shellCommand: ""
         property AiMessageData message
         property string baseMessageContent: ""
-        command: ["bash", "-c", shellCommand]
+        command: ["/usr/bin/bash", "-c", shellCommand]
         stdout: SplitParser {
             onRead: (output) => {
                 commandExecutionProc.message.functionResponse += output + "\n\n";
-                const updatedContent = commandExecutionProc.baseMessageContent + `\n\n<think>\n<tt>${commandExecutionProc.message.functionResponse}</tt>\n</think>`;
-                commandExecutionProc.message.rawContent = updatedContent;
-                commandExecutionProc.message.content = updatedContent;
+                root._log("[Ai] commandExecutionProc output:", output)
             }
         }
         onExited: (exitCode, exitStatus) => {
