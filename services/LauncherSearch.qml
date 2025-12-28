@@ -4,6 +4,7 @@ import qs.modules.common
 import qs.modules.common.models
 import qs.modules.common.functions
 import QtQuick
+import Qt.labs.folderlistmodel
 import Quickshell
 import Quickshell.Io
 
@@ -108,6 +109,36 @@ Singleton {
             }
         },
     ]
+
+    // Load user action scripts from ~/.config/illogical-impulse/actions/
+    property var userActionScripts: {
+        const actions = [];
+        for (let i = 0; i < userActionsFolder.count; i++) {
+            const fileName = userActionsFolder.get(i, "fileName");
+            const filePath = userActionsFolder.get(i, "filePath");
+            if (fileName && filePath) {
+                const actionName = fileName.replace(/\.[^/.]+$/, ""); // strip extension
+                actions.push({
+                    action: actionName,
+                    execute: ((path) => (args) => {
+                        Quickshell.execDetached([path, ...(args ? args.split(" ") : [])]);
+                    })(FileUtils.trimFileProtocol(filePath.toString()))
+                });
+            }
+        }
+        return actions;
+    }
+
+    FolderListModel {
+        id: userActionsFolder
+        folder: Qt.resolvedUrl(Directories.userActions)
+        showDirs: false
+        showHidden: false
+        sortField: FolderListModel.Name
+    }
+
+    // Combined built-in and user actions
+    property var allActions: searchActions.concat(userActionScripts)
 
     property string mathResult: ""
 
@@ -288,8 +319,8 @@ Singleton {
         }
         result = result.concat(appResults)
 
-        // Actions
-        const actionResults = root.searchActions.map(action => {
+        // Actions (built-in + user scripts)
+        const actionResults = root.allActions.map(action => {
             const actionStr = `${actionPrefix}${action.action}`
             if (actionStr.startsWith(q) || q.startsWith(actionStr)) {
                 return resultComp.createObject(null, {
