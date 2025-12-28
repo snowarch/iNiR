@@ -14,34 +14,25 @@ Item {
         {"name": Translation.tr("Stopwatch"), "icon": "timer"}
     ]
 
-    // These are keybinds for stopwatch, timer and pomodoro
     Keys.onPressed: (event) => {
-        if ((event.key === Qt.Key_PageDown || event.key === Qt.Key_PageUp) && event.modifiers === Qt.NoModifier) { // Switch tabs
+        if ((event.key === Qt.Key_PageDown || event.key === Qt.Key_PageUp) && event.modifiers === Qt.NoModifier) {
             if (event.key === Qt.Key_PageDown) {
                 currentTab = Math.min(currentTab + 1, root.tabButtonList.length - 1)
             } else if (event.key === Qt.Key_PageUp) {
                 currentTab = Math.max(currentTab - 1, 0)
             }
             event.accepted = true
-        } else if (event.key === Qt.Key_Space || event.key === Qt.Key_S) { // Pause/resume with Space or S
-            if (currentTab === 0) {
-                TimerService.togglePomodoro()
-            } else if (currentTab === 1) {
-                TimerService.toggleCountdown()
-            } else {
-                TimerService.toggleStopwatch()
-            }
+        } else if (event.key === Qt.Key_Space || event.key === Qt.Key_S) {
+            if (currentTab === 0) TimerService.togglePomodoro()
+            else if (currentTab === 1) TimerService.toggleCountdown()
+            else TimerService.toggleStopwatch()
             event.accepted = true
-        } else if (event.key === Qt.Key_R) { // Reset with R
-            if (currentTab === 0) {
-                TimerService.resetPomodoro()
-            } else if (currentTab === 1) {
-                TimerService.resetCountdown()
-            } else {
-                TimerService.stopwatchReset()
-            }
+        } else if (event.key === Qt.Key_R) {
+            if (currentTab === 0) TimerService.resetPomodoro()
+            else if (currentTab === 1) TimerService.resetCountdown()
+            else TimerService.stopwatchReset()
             event.accepted = true
-        } else if (event.key === Qt.Key_L) { // Record lap with L
+        } else if (event.key === Qt.Key_L) {
             TimerService.stopwatchRecordLap()
             event.accepted = true
         }
@@ -51,13 +42,16 @@ Item {
         anchors.fill: parent
         spacing: 0
 
-        RowLayout {
+        // Tab bar row with pin button
+        Item {
             Layout.fillWidth: true
-            spacing: 6
+            implicitHeight: tabBar.height
 
             SecondaryTabBar {
                 id: tabBar
-                Layout.fillWidth: true
+                anchors.left: parent.left
+                anchors.right: pinButton.left
+                anchors.rightMargin: 6
                 currentIndex: currentTab
                 onCurrentIndexChanged: {
                     currentTab = currentIndex
@@ -89,6 +83,9 @@ Item {
             }
 
             IconToolbarButton {
+                id: pinButton
+                anchors.right: parent.right
+                anchors.verticalCenter: tabBar.verticalCenter
                 text: "push_pin"
                 toggled: Persistent.states?.timer?.pinnedToBar ?? false
                 onClicked: {
@@ -103,7 +100,7 @@ Item {
             }
         }
 
-        Item { // Tab indicator
+        Item {
             id: tabIndicator
             Layout.fillWidth: true
             height: 3
@@ -118,17 +115,13 @@ Item {
             Rectangle {
                 id: indicator
                 property int tabCount: root.tabButtonList.length
-                property real fullTabSize: root.width / tabCount;
-                property real targetWidth: tabBar.contentItem.children[0].children[tabBar.currentIndex].tabContentWidth
+                property real fullTabSize: tabBar.width / tabCount
+                property real targetWidth: tabBar.contentItem?.children[0]?.children[tabBar.currentIndex]?.tabContentWidth ?? 50
 
                 implicitWidth: targetWidth
-                anchors {
-                    top: parent.top
-                    bottom: parent.bottom
-                }
-
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
                 x: tabBar.currentIndex * fullTabSize + (fullTabSize - targetWidth) / 2
-
                 color: Appearance.colors.colPrimary
                 radius: height / 2
 
@@ -136,7 +129,6 @@ Item {
                     enabled: tabIndicator.enableIndicatorAnimation
                     animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
                 }
-
                 Behavior on implicitWidth {
                     enabled: tabIndicator.enableIndicatorAnimation
                     animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
@@ -144,8 +136,7 @@ Item {
             }
         }
 
-        Rectangle { // Tabbar bottom border
-            id: tabBarBottomBorder
+        Rectangle {
             Layout.fillWidth: true
             height: 1
             color: Appearance.colors.colOutlineVariant
@@ -167,7 +158,6 @@ Item {
                 }
             }
 
-            // Tabs
             PomodoroTimer {}
             CountdownTimer {}
             Stopwatch {}
