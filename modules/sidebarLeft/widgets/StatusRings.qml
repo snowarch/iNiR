@@ -166,6 +166,7 @@ Item {
 
             StyledToolTip {
                 text: tip
+                extraVisibleCondition: false
                 alternativeVisibleCondition: hoverArea.containsMouse && tip !== ""
             }
         }

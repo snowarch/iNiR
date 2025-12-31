@@ -286,6 +286,7 @@ Item {
 
         StyledToolTip {
             text: tip
+            extraVisibleCondition: false
             alternativeVisibleCondition: statHover.containsMouse && tip !== ""
         }
     }
