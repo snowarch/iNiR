@@ -1,0 +1,8 @@
+module qs.modules.ii.widgetBar
+
+WidgetBar 1.0 WidgetBar.qml
+MediaWidget 1.0 MediaWidget.qml
+WeatherWidget 1.0 WeatherWidget.qml
+CalendarWidget 1.0 CalendarWidget.qml
+QuickNavWidget 1.0 QuickNavWidget.qml
+WidgetCard 1.0 WidgetCard.qml

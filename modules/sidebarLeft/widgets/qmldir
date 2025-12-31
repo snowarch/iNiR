@@ -1,0 +1,12 @@
+module qs.modules.sidebarLeft.widgets
+
+GlanceHeader 1.0 GlanceHeader.qml
+ContextCard 1.0 ContextCard.qml
+QuickNote 1.0 QuickNote.qml
+StatusRings 1.0 StatusRings.qml
+WeekStrip 1.0 WeekStrip.qml
+ControlsCard 1.0 ControlsCard.qml
+QuickLaunch 1.0 QuickLaunch.qml
+MediaPlayerWidget 1.0 MediaPlayerWidget.qml
+CryptoWidget 1.0 CryptoWidget.qml
+DraggableWidgetContainer 1.0 DraggableWidgetContainer.qml

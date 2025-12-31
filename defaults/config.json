@@ -513,6 +513,51 @@
       "enable": true,
       "limit": 24,
       "apiKey": ""
+    },
+    "widgets": {
+      "enable": true,
+      "media": true,
+      "week": true,
+      "context": true,
+      "note": true,
+      "launch": true,
+      "controls": true,
+      "status": true,
+      "crypto": false,
+      "widgetOrder": ["media", "week", "context", "note", "launch", "controls", "status", "crypto"],
+      "spacing": 8,
+      "crypto_settings": {
+        "refreshInterval": 60,
+        "coins": ["bitcoin", "ethereum"]
+      },
+      "glance": {
+        "showVolume": true,
+        "showGameMode": true,
+        "showDnd": true
+      },
+      "statusRings": {
+        "showCpu": true,
+        "showRam": true,
+        "showDisk": true,
+        "showTemp": true,
+        "showBattery": true
+      },
+      "controlsCard": {
+        "showDarkMode": true,
+        "showDnd": true,
+        "showNightLight": true,
+        "showGameMode": true,
+        "showNetwork": true,
+        "showBluetooth": true,
+        "showSettings": true,
+        "showLock": true
+      },
+      "quickLaunch": [
+        { "icon": "folder", "name": "Files", "cmd": "/usr/bin/nautilus" },
+        { "icon": "terminal", "name": "Terminal", "cmd": "/usr/bin/kitty" },
+        { "icon": "web", "name": "Browser", "cmd": "/usr/bin/firefox" },
+        { "icon": "code", "name": "Code", "cmd": "/usr/bin/code" }
+      ]
     }
   },
   "sounds": {

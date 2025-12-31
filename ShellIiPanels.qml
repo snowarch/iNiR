@@ -17,6 +17,7 @@ import qs.modules.sidebarRight
 import qs.modules.verticalBar
 import qs.modules.wallpaperSelector
 import qs.modules.ii.overlay
+import qs.modules.ii.widgetBar
 import "modules/clipboard" as ClipboardModule
 
 import QtQuick
@@ -51,6 +52,7 @@ Item {
     PanelLoader { identifier: "iiSidebarRight"; component: SidebarRight {} }
     PanelLoader { identifier: "iiVerticalBar"; extraCondition: Config.options?.bar?.vertical ?? false; component: VerticalBar {} }
     PanelLoader { identifier: "iiWallpaperSelector"; component: WallpaperSelector {} }
+    PanelLoader { identifier: "iiWidgetBar"; extraCondition: Config.options?.widgetBar?.enable ?? true; component: WidgetBar {} }
 
     PanelLoader { identifier: "iiClipboard"; component: ClipboardModule.ClipboardPanel {} }
 }
