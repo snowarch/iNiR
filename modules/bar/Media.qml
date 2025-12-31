@@ -58,11 +58,9 @@ Item {
                 height: volumeRow.height + 8
                 radius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.verysmall
                 color: Appearance.inirEverywhere ? Appearance.inir.colLayer2
-                     : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipSurface 
                      : Appearance.colors.colLayer3
                 border.width: 1
                 border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder
-                            : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder 
                             : Appearance.colors.colLayer3Hover
 
                 Row {

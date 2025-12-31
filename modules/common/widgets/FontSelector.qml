@@ -76,10 +76,12 @@ Item {
         padding: 8
         
         background: Rectangle {
-            color: Appearance.colors.colLayer2
-            radius: Appearance.rounding.normal
+            color: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                 : Appearance.colors.colLayer2Base
+            radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
             border.width: 1
-            border.color: Appearance.colors.colLayer2Hover ?? Appearance.m3colors.m3outlineVariant
+            border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder
+                        : Appearance.colors.colLayer0Border
         }
 
         ColumnLayout {
