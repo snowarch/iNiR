@@ -22,12 +22,14 @@ StyledImage {
     }
     property string thumbnailSizeName: Images.thumbnailSizeNameForDimensions(sourceSize.width, sourceSize.height)
     property string thumbnailPath: {
-        if (sourcePath.length == 0) return;
+        if (sourcePath.length == 0) return "";
         const resolvedUrlWithoutFileProtocol = FileUtils.trimFileProtocol(`${Qt.resolvedUrl(sourcePath)}`);
         const encodedUrlWithoutFileProtocol = resolvedUrlWithoutFileProtocol.split("/").map(part => encodeURIComponent(part)).join("/");
         const md5Hash = Qt.md5(`file://${encodedUrlWithoutFileProtocol}`);
         return `${Directories.genericCache}/thumbnails/${thumbnailSizeName}/${md5Hash}.png`;
     }
+    
+    // Try thumbnail first, fall back to source
     source: ""
 
     asynchronous: true
@@ -40,38 +42,28 @@ StyledImage {
     }
 
     onStatusChanged: {
-        if (status === Image.Error) {
-            root.source = "";
+        if (status === Image.Error && source === thumbnailPath) {
+            // Thumbnail failed, try fallback
+            if (fallbackToDownscaledSource && sourceUrl.length > 0) {
+                source = sourceUrl;
+            } else {
+                source = "";
+            }
         }
     }
 
     onThumbnailPathChanged: {
         if (!thumbnailPath || thumbnailPath.length === 0) {
-            root.source = "";
+            source = "";
             return;
         }
-        thumbnailProbe.reload();
+        // Try to load thumbnail - if it fails, onStatusChanged handles fallback
+        source = thumbnailPath;
     }
 
     Component.onCompleted: {
         if (thumbnailPath && thumbnailPath.length > 0) {
-            thumbnailProbe.reload();
-        }
-    }
-
-    FileView {
-        id: thumbnailProbe
-        path: thumbnailPath && thumbnailPath.length > 0 ? Qt.resolvedUrl(thumbnailPath) : ""
-        onLoaded: {
-            // Only set source when file exists to avoid QML Image warning spam
-            root.source = root.thumbnailPath;
-        }
-        onLoadFailed: (error) => {
-            if (root.fallbackToDownscaledSource && root.sourceUrl.length > 0) {
-                root.source = root.sourceUrl;
-            } else {
-                root.source = "";
-            }
+            source = thumbnailPath;
         }
     }
 }
