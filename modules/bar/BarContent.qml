@@ -59,12 +59,14 @@ Item { // Bar content region
     // Background
     Rectangle {
         id: barBackground
+        readonly property bool auroraEverywhere: Appearance.auroraEverywhere
+        readonly property bool floatingStyle: auroraEverywhere || Config.options.bar.cornerStyle === 1 || Config.options.bar.cornerStyle === 3
+        
         anchors {
             fill: parent
-            margins: (Config.options.bar.cornerStyle === 1 || Config.options.bar.cornerStyle === 3) ? (Appearance.sizes.hyprlandGapsOut) : 0
+            margins: floatingStyle ? Appearance.sizes.hyprlandGapsOut : 0
         }
-        readonly property bool auroraEverywhere: Appearance.auroraEverywhere
-        readonly property real barMargin: (Config.options.bar.cornerStyle === 1 || Config.options.bar.cornerStyle === 3) ? Appearance.sizes.hyprlandGapsOut : 0
+        readonly property real barMargin: floatingStyle ? Appearance.sizes.hyprlandGapsOut : 0
         readonly property bool isBottom: Config.options?.bar?.bottom ?? false
 
         readonly property QtObject blendedColors: root.blendedColors
@@ -73,8 +75,8 @@ Item { // Bar content region
             : auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
             : (!Config.options.bar.showBackground ? "transparent" : (root.cardStyleEverywhere ? Appearance.colors.colLayer1 : (Config.options.bar.cornerStyle === 3 ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)))
         radius: root.inirEverywhere ? Appearance.inir.roundingNormal
-            : (Config.options.bar.cornerStyle === 1 || Config.options.bar.cornerStyle === 3) ? (Config.options.bar.cornerStyle === 3 ? Appearance.rounding.normal : Appearance.rounding.windowRounding) : 0
-        border.width: root.inirEverywhere ? 1 : ((Config.options.bar.cornerStyle === 1 || Config.options.bar.cornerStyle === 3) ? 1 : 0)
+            : floatingStyle ? (Config.options.bar.cornerStyle === 3 ? Appearance.rounding.normal : Appearance.rounding.windowRounding) : 0
+        border.width: root.inirEverywhere ? 1 : (floatingStyle ? 1 : 0)
         border.color: root.inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colLayer0Border
 
         clip: true

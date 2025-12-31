@@ -76,7 +76,9 @@ Item {
                     id: groupBackground
                     anchors.fill: parent
                     radius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : height / 2
-                    color: Appearance.inirEverywhere ? "transparent" : Appearance.colors.colSurfaceContainer
+                    color: Appearance.inirEverywhere ? "transparent" 
+                         : Appearance.auroraEverywhere ? "transparent"
+                         : Appearance.colors.colSurfaceContainer
                     border.width: Appearance.inirEverywhere ? 1 : 0
                     border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
                 }
@@ -85,12 +87,12 @@ Item {
                     id: activeIndicator
                     z: 1
                     color: Appearance.inirEverywhere ? ColorUtils.transparentize(Appearance.inir.colPrimary, 0.85) 
-                        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface 
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                         : Appearance.colors.colSecondaryContainer
                     border.width: Appearance.inirEverywhere ? 1 : 0
                     border.color: Appearance.inirEverywhere ? Appearance.inir.colBorderAccent : "transparent"
                     implicitWidth: targetItem ? targetItem.implicitWidth : 0
-                    implicitHeight: targetItem ? (Appearance.inirEverywhere ? 28 : targetItem.implicitHeight) : 0
+                    implicitHeight: targetItem ? (Appearance.inirEverywhere ? 28 : (Appearance.auroraEverywhere ? 32 : targetItem.implicitHeight)) : 0
                     radius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : height / 2
                     anchors.verticalCenter: parent.verticalCenter
                     // Animation

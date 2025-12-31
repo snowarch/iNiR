@@ -20,7 +20,7 @@ Item {
     property alias radius: background.radius
 
     Loader {
-        active: root.enableShadow && !Appearance.inirEverywhere
+        active: root.enableShadow && !Appearance.inirEverywhere && !Appearance.auroraEverywhere
         anchors.fill: background
         sourceComponent: StyledRectangularShadow {
             target: background
@@ -28,15 +28,14 @@ Item {
         }
     }
 
-    GlassBackground {
+    Rectangle {
         id: background
         anchors.fill: parent
-        fallbackColor: Appearance.m3colors.m3surfaceContainer
-        inirColor: Appearance.inir.colLayer2
-        auroraTransparency: Appearance.aurora.tooltipTransparentize
-        border.width: (Appearance.inirEverywhere || Appearance.auroraEverywhere) ? 1 : 0
-        border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder 
-            : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder : "transparent"
+        color: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+             : Appearance.auroraEverywhere ? "transparent"
+             : Appearance.m3colors.m3surfaceContainer
+        border.width: Appearance.inirEverywhere ? 1 : 0
+        border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
         implicitHeight: 56
         implicitWidth: toolbarLayout.implicitWidth + root.padding * 2
         radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : (height / 2)

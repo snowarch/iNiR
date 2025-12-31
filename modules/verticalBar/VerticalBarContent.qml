@@ -20,7 +20,8 @@ Item { // Bar content region
     property var brightnessMonitor: Brightness.getMonitorForScreen(screen)
     readonly property bool cardStyleEverywhere: (Config.options?.dock?.cardStyle ?? false) && (Config.options?.sidebar?.cardStyle ?? false) && (Config.options?.bar?.cornerStyle === 3)
     readonly property color separatorColor: Appearance.colors.colOutlineVariant
-    readonly property bool blurBackground: Config.options?.bar?.blurBackground?.enabled ?? false
+    readonly property bool blurBackground: Appearance.auroraEverywhere || (Config.options?.bar?.blurBackground?.enabled ?? false)
+    readonly property bool inirEverywhere: Appearance.inirEverywhere
 
     readonly property string wallpaperUrl: Wallpapers.effectiveWallpaperUrl
 
@@ -68,7 +69,7 @@ Item { // Bar content region
 
         clip: true
 
-        layer.enabled: root.blurBackground
+        layer.enabled: root.blurBackground && !root.inirEverywhere
         layer.effect: GE.OpacityMask {
             maskSource: Rectangle {
                 width: barBackground.width
