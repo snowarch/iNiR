@@ -162,8 +162,9 @@ MouseArea {
 
     StyledRectangularShadow {
         target: wallpaperGridBackground
+        visible: !Appearance.inirEverywhere
     }
-    Rectangle {
+    GlassBackground {
         id: wallpaperGridBackground
         anchors {
             fill: parent
@@ -171,10 +172,14 @@ MouseArea {
         }
         focus: true
         Keys.forwardTo: [root]
-        border.width: 1
-        border.color: Appearance.colors.colLayer0Border
-        color: Appearance.colors.colLayer0
-        radius: Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1
+        border.width: (Appearance.inirEverywhere || Appearance.auroraEverywhere) ? 1 : 1
+        border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder 
+            : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder : Appearance.colors.colLayer0Border
+        fallbackColor: Appearance.colors.colLayer0
+        inirColor: Appearance.inir.colLayer0
+        auroraTransparency: Appearance.aurora.overlayTransparentize
+        radius: Appearance.inirEverywhere ? Appearance.inir.roundingLarge 
+            : (Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1)
 
         property int calculatedRows: Math.ceil(grid.count / grid.columns)
 
