@@ -47,8 +47,9 @@ Item {
         color: "transparent"
         border.color: root.color
         border.width: 2
-        // radius: root.standardRounding
-        radius: 0 // TODO: figure out how to make the overlay thing work with rounding
+        // Rounding disabled: QML border-based overlay doesn't support inner radius
+        // Would need ShaderEffect or multiple rectangles to implement properly
+        radius: 0
     }
 
     StyledText {

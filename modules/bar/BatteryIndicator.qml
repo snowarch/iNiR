@@ -41,7 +41,15 @@ MouseArea {
                     fill: 1
                     text: "bolt"
                     iconSize: Appearance.font.pixelSize.smaller
-                    visible: isCharging && percentage < 1 // TODO: animation
+                    opacity: (isCharging && percentage < 1) ? 1 : 0
+                    visible: opacity > 0
+                    
+                    Behavior on opacity {
+                        NumberAnimation { 
+                            duration: Appearance.animation.elementMoveFast.duration
+                            easing.type: Easing.OutCubic
+                        }
+                    }
                 }
                 StyledText {
                     Layout.alignment: Qt.AlignVCenter

@@ -38,7 +38,7 @@ Singleton {
     function applyContentTransparency(col) {
         return ColorUtils.applyAlpha(col, 1 - root.contentTransparency)
     }
-    lightColors: QtObject { // TODO: figure out transparency
+    lightColors: QtObject {
         id: lightColors
         property color bgPanelFooter: "#EEEEEE"
         property color bgPanelBody: "#F2F2F2"

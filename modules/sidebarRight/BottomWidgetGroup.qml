@@ -194,8 +194,9 @@ Rectangle {
         StackLayout {
             id: tabStack
             Layout.fillWidth: true
-            // Take the highest one, because the TODO list has no implicit height. This way the heigth of the calendar is used when it's initially loaded with the TODO list
-            height: Math.max(...tabStack.children.map(child => child.tabLoader?.implicitHeight || 0)) // TODO: make this less stupid
+            // Use max height of all tabs to prevent layout jumps when switching
+            // (TodoWidget has no implicit height, so we use Calendar's height as reference)
+            height: Math.max(...tabStack.children.map(child => child.tabLoader?.implicitHeight || 0))
             Layout.alignment: Qt.AlignVCenter
             property int realIndex: root.selectedTab
             property int animationDuration: Appearance.animation.elementMoveFast.duration * 1.5
@@ -221,7 +222,7 @@ Rectangle {
 
             Repeater {
                 model: tabs
-                Item { // TODO: make behavior on y also act for the item that's switched to
+                Item {
                     id: tabItem
                     property int tabIndex: index
                     property string tabType: modelData.type
@@ -229,10 +230,21 @@ Rectangle {
                     property var tabLoader: tabLoader
                     // Opacity: show up only when being animated to
                     opacity: (tabStack.currentIndex === tabItem.tabIndex && tabStack.realIndex === tabItem.tabIndex) ? 1 : 0
-                    // Y: starts animating when user selects a different tab
+                    // Y: animate both outgoing and incoming tabs
                     y: (tabStack.realIndex === tabItem.tabIndex) ? 0 : (tabStack.realIndex < tabItem.tabIndex) ? animDistance : -animDistance
-                    Behavior on opacity { NumberAnimation { duration: tabStack.animationDuration / 2; easing.type: Easing.OutCubic } }
-                    Behavior on y { NumberAnimation { duration: tabStack.animationDuration; easing.type: Easing.OutExpo } }
+                    Behavior on opacity { 
+                        NumberAnimation { 
+                            duration: tabStack.animationDuration / 2
+                            easing.type: Easing.OutCubic 
+                        } 
+                    }
+                    Behavior on y { 
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation { 
+                            duration: tabStack.animationDuration
+                            easing.type: Easing.OutExpo 
+                        } 
+                    }
                     Loader {
                         id: tabLoader
                         anchors.fill: parent
