@@ -111,9 +111,8 @@ WSettingsPage {
         id: globalStyleCard
 
         readonly property bool cardsEverywhere: (Config.options?.dock?.cardStyle ?? false) && (Config.options?.sidebar?.cardStyle ?? false) && (Config.options?.bar?.cornerStyle === 3)
-        readonly property bool auroraEverywhere: (Config.options?.bar?.blurBackground?.enabled ?? false) && !(Config.options?.bar?.showBackground ?? true)
 
-        readonly property string derivedStyle: cardsEverywhere ? "cards" : (auroraEverywhere ? "aurora" : "material")
+        readonly property string derivedStyle: cardsEverywhere ? "cards" : "material"
         readonly property string currentStyle: (Config.options?.appearance?.globalStyle && Config.options.appearance.globalStyle.length > 0)
             ? Config.options.appearance.globalStyle
             : derivedStyle
@@ -124,8 +123,6 @@ WSettingsPage {
                 Config.setNestedValue("dock.cardStyle", true)
                 Config.setNestedValue("sidebar.cardStyle", true)
                 Config.setNestedValue("bar.cornerStyle", 3)
-                Config.setNestedValue("bar.blurBackground.enabled", false)
-                Config.setNestedValue("bar.showBackground", true)
                 Config.setNestedValue("appearance.transparency.enable", false)
                 return;
             }
@@ -134,8 +131,6 @@ WSettingsPage {
                 Config.setNestedValue("dock.cardStyle", false)
                 Config.setNestedValue("sidebar.cardStyle", false)
                 if ((Config.options?.bar?.cornerStyle ?? 1) === 3) Config.setNestedValue("bar.cornerStyle", 1)
-                Config.setNestedValue("bar.showBackground", false)
-                Config.setNestedValue("bar.blurBackground.enabled", true)
                 Config.setNestedValue("appearance.transparency.enable", true)
                 return;
             }
@@ -144,7 +139,6 @@ WSettingsPage {
             Config.setNestedValue("dock.cardStyle", false)
             Config.setNestedValue("sidebar.cardStyle", false)
             if ((Config.options?.bar?.cornerStyle ?? 1) === 3) Config.setNestedValue("bar.cornerStyle", 1)
-            Config.setNestedValue("bar.blurBackground.enabled", false)
             Config.setNestedValue("appearance.transparency.enable", false)
         }
 

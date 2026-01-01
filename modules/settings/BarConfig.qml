@@ -204,29 +204,9 @@ ContentPage {
                 buttonIcon: "layers"
                 text: Translation.tr("Show bar background")
                 checked: Config.options.bar.showBackground
-                onCheckedChanged: {
-                    Config.options.bar.showBackground = checked;
-                    if (checked) {
-                        Config.setNestedValue("bar.blurBackground.enabled", false)
-                    }
-                }
+                onCheckedChanged: Config.options.bar.showBackground = checked
                 StyledToolTip {
-                    text: Translation.tr("Show a semi-transparent background behind the bar")
-                }
-            }
-
-            SettingsSwitch {
-                buttonIcon: "blur_on"
-                text: Translation.tr("Blur bar background")
-                checked: Config.options?.bar?.blurBackground?.enabled ?? false
-                onCheckedChanged: {
-                    Config.setNestedValue("bar.blurBackground.enabled", checked)
-                    if (checked) {
-                        Config.options.bar.showBackground = false;
-                    }
-                }
-                StyledToolTip {
-                    text: Translation.tr("Uses a blurred wallpaper background effect similar to the Media Controls popup")
+                    text: Translation.tr("Show a background behind the bar")
                 }
             }
 

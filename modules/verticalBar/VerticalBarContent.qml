@@ -20,8 +20,8 @@ Item { // Bar content region
     property var brightnessMonitor: Brightness.getMonitorForScreen(screen)
     readonly property bool cardStyleEverywhere: (Config.options?.dock?.cardStyle ?? false) && (Config.options?.sidebar?.cardStyle ?? false) && (Config.options?.bar?.cornerStyle === 3)
     readonly property color separatorColor: Appearance.colors.colOutlineVariant
-    readonly property bool blurBackground: Appearance.auroraEverywhere || (Config.options?.bar?.blurBackground?.enabled ?? false)
     readonly property bool inirEverywhere: Appearance.inirEverywhere
+    readonly property bool auroraEverywhere: Appearance.auroraEverywhere
 
     readonly property string wallpaperUrl: Wallpapers.effectiveWallpaperUrl
 
@@ -57,19 +57,24 @@ Item { // Bar content region
     // Background
     Rectangle {
         id: barBackground
+        readonly property bool floatingStyle: root.auroraEverywhere || Config.options.bar.cornerStyle === 1 || Config.options.bar.cornerStyle === 3
+        
         anchors {
             fill: parent
-            margins: (Config.options.bar.cornerStyle === 1 || Config.options.bar.cornerStyle === 3) ? (Appearance.sizes.hyprlandGapsOut) : 0 // idk why but +1 is needed
+            margins: floatingStyle ? Appearance.sizes.hyprlandGapsOut : 0
         }
-        color: root.blurBackground ? ColorUtils.applyAlpha((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
-            : (!Config.options.bar.showBackground ? "transparent" : (root.cardStyleEverywhere ? Appearance.colors.colLayer1 : (Config.options.bar.cornerStyle === 3 ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)))
-        radius: (Config.options.bar.cornerStyle === 1 || Config.options.bar.cornerStyle === 3) ? (Config.options.bar.cornerStyle === 3 ? Appearance.rounding.normal : Appearance.rounding.windowRounding) : 0
-        border.width: ((Config.options.bar.cornerStyle === 1 || Config.options.bar.cornerStyle === 3) ? 1 : 0)
-        border.color: root.blurBackground ? (root.blendedColors?.colLayer0Border ?? Appearance.colors.colLayer0Border) : Appearance.colors.colLayer0Border
+        visible: Config.options.bar.showBackground
+        color: root.inirEverywhere ? Appearance.inir.colLayer0
+            : root.auroraEverywhere ? ColorUtils.applyAlpha((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
+            : (root.cardStyleEverywhere ? Appearance.colors.colLayer1 : (Config.options.bar.cornerStyle === 3 ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0))
+        radius: root.inirEverywhere ? Appearance.inir.roundingNormal
+            : floatingStyle ? (Config.options.bar.cornerStyle === 3 ? Appearance.rounding.normal : Appearance.rounding.windowRounding) : 0
+        border.width: root.inirEverywhere ? 1 : (floatingStyle ? 1 : 0)
+        border.color: root.inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colLayer0Border
 
         clip: true
 
-        layer.enabled: root.blurBackground && !root.inirEverywhere
+        layer.enabled: root.auroraEverywhere && !root.inirEverywhere
         layer.effect: GE.OpacityMask {
             maskSource: Rectangle {
                 width: barBackground.width
@@ -84,7 +89,7 @@ Item { // Bar content region
             y: -barBackground.y
             width: root.width
             height: root.height
-            visible: root.blurBackground
+            visible: root.auroraEverywhere && !root.inirEverywhere
             source: root.wallpaperUrl
             fillMode: Image.PreserveAspectCrop
             cache: true
@@ -97,7 +102,7 @@ Item { // Bar content region
 
             Rectangle {
                 anchors.fill: parent
-                color: ColorUtils.transparentize((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), (Config.options?.bar?.blurBackground?.overlayOpacity ?? Appearance.aurora.overlayTransparentize))
+                color: ColorUtils.transparentize((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
             }
         }
     }

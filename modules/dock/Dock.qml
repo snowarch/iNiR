@@ -159,13 +159,11 @@ Scope {
                                 anchors.leftMargin: root.isLeft ? Appearance.sizes.hyprlandGapsOut : (root.isVertical ? Appearance.sizes.elevationMargin : 0)
                                 anchors.rightMargin: root.position === "right" ? Appearance.sizes.hyprlandGapsOut : (root.isVertical ? Appearance.sizes.elevationMargin : 0)
 
-                                visible: (Config.options?.dock?.showBackground ?? true) || (Config.options?.dock?.enableBlurGlass ?? false) || auroraEverywhere
+                                visible: Config.options?.dock?.showBackground ?? true
                                 color: auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
                                     : inirEverywhere ? Appearance.inir.colLayer1
-                                    : ((Config.options?.dock?.showBackground ?? true)
-                                        ? (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
-                                        : Qt.rgba(Appearance.colors.colLayer0.r, Appearance.colors.colLayer0.g, Appearance.colors.colLayer0.b, 0.22))
-                                border.width: inirEverywhere ? 1 : ((Config.options?.dock?.showBackground ?? true) || auroraEverywhere) ? 1 : 0
+                                    : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
+                                border.width: inirEverywhere ? 1 : 1
                                 border.color: inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colLayer0Border
                                 radius: inirEverywhere ? Appearance.inir.roundingNormal : cardStyle ? Appearance.rounding.normal : Appearance.rounding.large
 
@@ -203,16 +201,6 @@ Scope {
                                         color: ColorUtils.transparentize((dockVisualBackground.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
                                     }
                                 }
-                            }
-
-                            MultiEffect {
-                                anchors.fill: dockVisualBackground
-                                source: dockVisualBackground
-                                visible: !(Config.options?.dock?.showBackground ?? true) && (Config.options?.dock?.enableBlurGlass ?? false) && Appearance.effectsEnabled
-                                blurEnabled: visible
-                                blur: 0.4
-                                blurMax: 64
-                                saturation: 1.0
                             }
 
                             RowLayout {

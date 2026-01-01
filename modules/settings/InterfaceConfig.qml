@@ -415,22 +415,9 @@ ContentPage {
                 buttonIcon: "widgets"
                 text: Translation.tr("Show dock background")
                 checked: Config.options.dock.showBackground
-                onCheckedChanged: {
-                    Config.options.dock.showBackground = checked;
-                }
+                onCheckedChanged: Config.options.dock.showBackground = checked
                 StyledToolTip {
-                    text: Translation.tr("Show a semi-transparent background behind the dock")
-                }
-            }
-            SettingsSwitch {
-                buttonIcon: "blur_on"
-                text: Translation.tr("Enable dock blur glass")
-                checked: Config.options.dock.enableBlurGlass
-                onCheckedChanged: {
-                    Config.options.dock.enableBlurGlass = checked;
-                }
-                StyledToolTip {
-                    text: Translation.tr("Apply blur effect to the dock background")
+                    text: Translation.tr("Show a background behind the dock")
                 }
             }
 
@@ -941,66 +928,105 @@ ContentPage {
                 }
             }
 
-            SettingsSwitch {
-                buttonIcon: "translate"
-                text: Translation.tr('Enable translator')
-                checked: Config.options.sidebar.translator.enable
-                onCheckedChanged: {
-                    Config.options.sidebar.translator.enable = checked;
+            ContentSubsection {
+                title: Translation.tr("Left sidebar tabs")
+                tooltip: Translation.tr("Choose which tabs appear in the left sidebar")
+
+                SettingsSwitch {
+                    buttonIcon: "widgets"
+                    text: Translation.tr("Widgets")
+                    checked: Config.options.sidebar?.widgets?.enable ?? true
+                    onCheckedChanged: Config.setNestedValue("sidebar.widgets.enable", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Dashboard with clock, weather, media controls and quick actions")
+                    }
                 }
-                StyledToolTip {
-                    text: Translation.tr("Show the translator widget in the sidebar")
+
+                SettingsSwitch {
+                    buttonIcon: "neurology"
+                    text: Translation.tr("AI Chat")
+                    readonly property int currentAiPolicy: Config.options?.policies?.ai ?? 0
+                    checked: currentAiPolicy !== 0
+                    onCheckedChanged: {
+                        // Preserve "Local only" (2) if it was set, otherwise use "Yes" (1)
+                        const newValue = checked ? (currentAiPolicy === 2 ? 2 : 1) : 0
+                        Config.setNestedValue("policies.ai", newValue)
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Chat with AI assistants (OpenAI, Gemini, local models)")
+                    }
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "translate"
+                    text: Translation.tr("Translator")
+                    checked: Config.options.sidebar?.translator?.enable ?? false
+                    onCheckedChanged: Config.setNestedValue("sidebar.translator.enable", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Translate text between languages")
+                    }
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "bookmark_heart"
+                    text: Translation.tr("Anime")
+                    readonly property int currentWeebPolicy: Config.options?.policies?.weeb ?? 0
+                    checked: currentWeebPolicy !== 0
+                    onCheckedChanged: {
+                        // Preserve "Closet" (2) if it was set, otherwise use "Yes" (1)
+                        const newValue = checked ? (currentWeebPolicy === 2 ? 2 : 1) : 0
+                        Config.setNestedValue("policies.weeb", newValue)
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Browse anime artwork from booru sites")
+                    }
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "image"
+                    text: Translation.tr("Wallhaven")
+                    checked: Config.options.sidebar?.wallhaven?.enable ?? true
+                    onCheckedChanged: Config.setNestedValue("sidebar.wallhaven.enable", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Browse and download wallpapers from Wallhaven")
+                    }
                 }
             }
 
-            SettingsSwitch {
-                buttonIcon: "image"
-                text: Translation.tr('Enable Wallhaven sidebar')
-                checked: Config.options.sidebar?.wallhaven?.enable ?? true
-                onCheckedChanged: {
-                    if (!Config.options.sidebar.wallhaven) Config.options.sidebar.wallhaven = ({})
-                    Config.options.sidebar.wallhaven.enable = checked;
-                }
-                StyledToolTip {
-                    text: Translation.tr("Show the Wallhaven wallpaper browser in the sidebar")
-                }
-            }
+            ContentSubsection {
+                title: Translation.tr("Wallhaven")
+                visible: Config.options.sidebar?.wallhaven?.enable ?? true
 
-            ConfigSpinBox {
-                icon: "format_list_numbered"
-                text: Translation.tr("Wallhaven results per page")
-                value: Config.options.sidebar?.wallhaven?.limit ?? 24
-                from: 12
-                to: 72
-                stepSize: 4
-                onValueChanged: {
-                    if (!Config.options.sidebar.wallhaven) Config.options.sidebar.wallhaven = ({})
-                    Config.options.sidebar.wallhaven.limit = value;
+                ConfigSpinBox {
+                    icon: "format_list_numbered"
+                    text: Translation.tr("Results per page")
+                    value: Config.options.sidebar?.wallhaven?.limit ?? 24
+                    from: 12
+                    to: 72
+                    stepSize: 4
+                    onValueChanged: Config.setNestedValue("sidebar.wallhaven.limit", value)
+                    StyledToolTip {
+                        text: Translation.tr("Number of wallpapers to fetch per request")
+                    }
                 }
-                StyledToolTip {
-                    text: Translation.tr("Number of wallpapers to fetch per request")
-                }
-            }
 
-            ConfigRow {
-                MaterialSymbol {
-                    text: "key"
-                    iconSize: Appearance.font.pixelSize.larger
-                    color: Appearance.colors.colOnSecondaryContainer
-                }
-                StyledText {
-                    text: Translation.tr("API key")
-                    font.pixelSize: Appearance.font.pixelSize.small
-                    color: Appearance.colors.colOnSecondaryContainer
-                }
-                MaterialTextField {
-                    Layout.preferredWidth: 180
-                    placeholderText: "••••••"
-                    text: Config.options.sidebar?.wallhaven?.apiKey ?? ""
-                    echoMode: TextInput.Password
-                    onTextChanged: {
-                        if (!Config.options.sidebar.wallhaven) Config.options.sidebar.wallhaven = ({})
-                        Config.options.sidebar.wallhaven.apiKey = text
+                ConfigRow {
+                    MaterialSymbol {
+                        text: "key"
+                        iconSize: Appearance.font.pixelSize.larger
+                        color: Appearance.colors.colOnSecondaryContainer
+                    }
+                    StyledText {
+                        text: Translation.tr("API key")
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        color: Appearance.colors.colOnSecondaryContainer
+                    }
+                    MaterialTextField {
+                        Layout.preferredWidth: 180
+                        placeholderText: "••••••"
+                        text: Config.options.sidebar?.wallhaven?.apiKey ?? ""
+                        echoMode: TextInput.Password
+                        onTextChanged: Config.setNestedValue("sidebar.wallhaven.apiKey", text)
                     }
                 }
             }

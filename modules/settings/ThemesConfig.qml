@@ -73,9 +73,8 @@ ContentPage {
         SettingsGroup {
             id: globalStyleGroup
             readonly property bool cardsEverywhere: Config.options.dock.cardStyle && Config.options.sidebar.cardStyle && (Config.options.bar.cornerStyle === 3)
-            readonly property bool auroraEverywhere: (Config.options.bar.blurBackground.enabled) && !Config.options.bar.showBackground
 
-            readonly property string derivedStyle: cardsEverywhere ? "cards" : (auroraEverywhere ? "aurora" : "material")
+            readonly property string derivedStyle: cardsEverywhere ? "cards" : "material"
             readonly property string currentStyle: (Config.options.appearance.globalStyle && Config.options.appearance.globalStyle.length > 0)
                 ? Config.options.appearance.globalStyle
                 : derivedStyle
@@ -86,8 +85,6 @@ ContentPage {
                     Config.options.dock.cardStyle = true;
                     Config.options.sidebar.cardStyle = true;
                     Config.options.bar.cornerStyle = 3;
-                    Config.setNestedValue("bar.blurBackground.enabled", false)
-                    Config.options.bar.showBackground = true;
                     Config.setNestedValue("appearance.transparency.enable", false)
                     return;
                 }
@@ -96,8 +93,6 @@ ContentPage {
                     Config.options.dock.cardStyle = false;
                     Config.options.sidebar.cardStyle = false;
                     if (Config.options.bar.cornerStyle === 3) Config.options.bar.cornerStyle = 1;
-                    Config.options.bar.showBackground = false;
-                    Config.setNestedValue("bar.blurBackground.enabled", true)
                     Config.setNestedValue("appearance.transparency.enable", true)
                     return;
                 }
@@ -106,8 +101,6 @@ ContentPage {
                     Config.options.dock.cardStyle = false;
                     Config.options.sidebar.cardStyle = false;
                     if (Config.options.bar.cornerStyle === 3) Config.options.bar.cornerStyle = 1;
-                    Config.options.bar.showBackground = true;
-                    Config.setNestedValue("bar.blurBackground.enabled", false)
                     Config.setNestedValue("appearance.transparency.enable", false)
                     return;
                 }
@@ -116,7 +109,6 @@ ContentPage {
                 Config.options.dock.cardStyle = false;
                 Config.options.sidebar.cardStyle = false;
                 if (Config.options.bar.cornerStyle === 3) Config.options.bar.cornerStyle = 1;
-                Config.setNestedValue("bar.blurBackground.enabled", false)
                 Config.setNestedValue("appearance.transparency.enable", false)
             }
 
