@@ -21,7 +21,6 @@ Item { // Player instance
     property string artFilePath: `${artDownloadLocation}/${artFileName}`
     property color artDominantColor: ColorUtils.mix((colorQuantizer?.colors[0] ?? Appearance.colors.colPrimary), Appearance.colors.colPrimaryContainer, 0.8) || Appearance.m3colors.m3secondaryContainer
     property bool downloaded: false
-    property int _artCacheBuster: 0  // Force Image reload
     property int _downloadRetryCount: 0
     readonly property int _maxRetries: 3
     property list<real> visualizerPoints: []
@@ -29,7 +28,7 @@ Item { // Player instance
     property int visualizerSmoothing: 2 // Number of points to average for smoothing
     property real radius
 
-    property string displayedArtFilePath: root.downloaded ? Qt.resolvedUrl(artFilePath) + "?v=" + _artCacheBuster : ""
+    property string displayedArtFilePath: root.downloaded ? Qt.resolvedUrl(artFilePath) : ""
 
     // Inir colors
     readonly property color jiraColText: Appearance.inir.colText
@@ -117,7 +116,6 @@ Item { // Player instance
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0) {
                 root.downloaded = true
-                root._artCacheBuster++
                 root._downloadRetryCount = 0
             } else {
                 root.downloaded = false
@@ -144,7 +142,6 @@ Item { // Player instance
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0) {
                 root.downloaded = true
-                root._artCacheBuster++
                 root._downloadRetryCount = 0
             } else {
                 root.downloaded = false

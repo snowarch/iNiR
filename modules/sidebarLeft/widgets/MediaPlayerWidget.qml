@@ -24,8 +24,7 @@ Item {
     property string artFileName: player?.trackArtUrl ? Qt.md5(player.trackArtUrl) : ""
     property string artFilePath: artFileName ? `${artDownloadLocation}/${artFileName}` : ""
     property bool downloaded: false
-    property int _artCacheBuster: 0  // Force Image reload
-    property string displayedArtFilePath: downloaded ? Qt.resolvedUrl(artFilePath) + "?v=" + _artCacheBuster : ""
+    property string displayedArtFilePath: downloaded ? Qt.resolvedUrl(artFilePath) : ""
     property list<real> visualizerPoints: []
     property int _downloadRetryCount: 0
     readonly property int _maxRetries: 3
@@ -86,7 +85,6 @@ Item {
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0) {
                 root.downloaded = true
-                root._artCacheBuster++
                 root._downloadRetryCount = 0
             } else {
                 root.downloaded = false
@@ -111,7 +109,6 @@ Item {
         onExited: (exitCode) => {
             if (exitCode === 0) {
                 root.downloaded = true
-                root._artCacheBuster++
                 root._downloadRetryCount = 0
             } else {
                 root.downloaded = false

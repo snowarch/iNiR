@@ -101,10 +101,9 @@ StyledOverlayWidget {
         property string artFileName: artUrl ? Qt.md5(artUrl) : ""
         property string artFilePath: artUrl && artUrl.length > 0 ? (artDownloadLocation + "/" + artFileName) : ""
         property bool downloaded: false
-        property int _artCacheBuster: 0
         property int _downloadRetryCount: 0
         readonly property int _maxRetries: 3
-        property string displayedArtFilePath: downloaded && artFilePath.length > 0 ? Qt.resolvedUrl(artFilePath) + "?v=" + _artCacheBuster : ""
+        property string displayedArtFilePath: downloaded && artFilePath.length > 0 ? Qt.resolvedUrl(artFilePath) : ""
 
         function checkAndDownloadArt() {
             if (!artUrl || artUrl.length === 0) {
@@ -159,7 +158,6 @@ StyledOverlayWidget {
             onExited: (exitCode, exitStatus) => {
                 if (exitCode === 0) {
                     musicContent.downloaded = true
-                    musicContent._artCacheBuster++
                     musicContent._downloadRetryCount = 0
                 } else {
                     musicContent.downloaded = false
@@ -186,7 +184,6 @@ StyledOverlayWidget {
             onExited: (exitCode, exitStatus) => {
                 if (exitCode === 0) {
                     musicContent.downloaded = true
-                    musicContent._artCacheBuster++
                     musicContent._downloadRetryCount = 0
                 } else {
                     musicContent.downloaded = false

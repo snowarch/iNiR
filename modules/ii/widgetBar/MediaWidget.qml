@@ -20,10 +20,9 @@ Rectangle {
     property string artFileName: player?.trackArtUrl ? Qt.md5(player.trackArtUrl) : ""
     property string artFilePath: artFileName ? `${artDownloadLocation}/${artFileName}` : ""
     property bool downloaded: false
-    property int _artCacheBuster: 0
     property int _downloadRetryCount: 0
     readonly property int _maxRetries: 3
-    property string displayedArtFilePath: downloaded ? Qt.resolvedUrl(artFilePath) + "?v=" + _artCacheBuster : ""
+    property string displayedArtFilePath: downloaded ? Qt.resolvedUrl(artFilePath) : ""
     
     color: "transparent"
     implicitHeight: hasPlayer ? contentColumn.implicitHeight : placeholderHeight
@@ -77,7 +76,6 @@ Rectangle {
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0) {
                 root.downloaded = true
-                root._artCacheBuster++
                 root._downloadRetryCount = 0
             } else {
                 root.downloaded = false
@@ -102,7 +100,6 @@ Rectangle {
         onExited: (exitCode) => {
             if (exitCode === 0) {
                 root.downloaded = true
-                root._artCacheBuster++
                 root._downloadRetryCount = 0
             } else {
                 root.downloaded = false

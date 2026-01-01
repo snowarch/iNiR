@@ -28,12 +28,11 @@ Item {
         0.8
     ) || Appearance.m3colors.m3secondaryContainer
     property bool downloaded: false
-    property int _artCacheBuster: 0
     property int _downloadRetryCount: 0
     readonly property int _maxRetries: 3
     property real radius: Appearance.rounding.large
 
-    property string displayedArtFilePath: root.downloaded ? Qt.resolvedUrl(artFilePath) + "?v=" + _artCacheBuster : ""
+    property string displayedArtFilePath: root.downloaded ? Qt.resolvedUrl(artFilePath) : ""
 
     function checkAndDownloadArt() {
         if (!artUrl || artUrl.length === 0) {
@@ -89,7 +88,6 @@ Item {
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0) {
                 root.downloaded = true
-                root._artCacheBuster++
                 root._downloadRetryCount = 0
             } else {
                 root.downloaded = false
@@ -116,7 +114,6 @@ Item {
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0) {
                 root.downloaded = true
-                root._artCacheBuster++
                 root._downloadRetryCount = 0
             } else {
                 root.downloaded = false
