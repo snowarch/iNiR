@@ -383,6 +383,15 @@ ContentPage {
                             { displayName: Translation.tr("Empty workspace"), icon: "desktop_windows", value: false }
                         ]
                     }
+                    SettingsSwitch {
+                        buttonIcon: "desktop_windows"
+                        text: Translation.tr("Show on desktop")
+                        checked: Config.options?.dock?.showOnDesktop ?? true
+                        onCheckedChanged: Config.setNestedValue('dock.showOnDesktop', checked)
+                        StyledToolTip {
+                            text: Translation.tr("Show dock when no window is focused")
+                        }
+                    }
                 }
             }
 
@@ -1281,6 +1290,14 @@ ContentPage {
                 }
 
                 SettingsSwitch {
+                    buttonIcon: "cloud"
+                    text: Translation.tr("Show weather in context card")
+                    checked: Config.options?.sidebar?.widgets?.contextShowWeather ?? true
+                    onCheckedChanged: Config.setNestedValue("sidebar.widgets.contextShowWeather", checked)
+                    enabled: Config.options?.sidebar?.widgets?.context ?? true
+                }
+
+                SettingsSwitch {
                     buttonIcon: "edit_note"
                     text: Translation.tr("Quick note")
                     checked: Config.options?.sidebar?.widgets?.note ?? true
@@ -1292,6 +1309,182 @@ ContentPage {
                     text: Translation.tr("Quick launch")
                     checked: Config.options?.sidebar?.widgets?.launch ?? true
                     onCheckedChanged: Config.setNestedValue("sidebar.widgets.launch", checked)
+                }
+
+                // Quick launch apps editor
+                ColumnLayout {
+                    id: quickLaunchEditor
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 40
+                    Layout.topMargin: 4
+                    spacing: 4
+                    visible: Config.options?.sidebar?.widgets?.launch ?? true
+
+                    property var shortcuts: Config.options?.sidebar?.widgets?.quickLaunch ?? [
+                        { icon: "folder", name: "Files", cmd: "/usr/bin/nautilus" },
+                        { icon: "terminal", name: "Terminal", cmd: "/usr/bin/kitty" },
+                        { icon: "web", name: "Browser", cmd: "/usr/bin/firefox" },
+                        { icon: "code", name: "Code", cmd: "/usr/bin/code" }
+                    ]
+
+                    property int pendingIndex: -1
+                    property string pendingKey: ""
+                    property string pendingValue: ""
+
+                    Timer {
+                        id: saveTimer
+                        interval: 500
+                        onTriggered: {
+                            const idx = quickLaunchEditor.pendingIndex
+                            const key = quickLaunchEditor.pendingKey
+                            const val = quickLaunchEditor.pendingValue
+                            if (idx >= 0 && idx < quickLaunchEditor.shortcuts.length) {
+                                const newShortcuts = JSON.parse(JSON.stringify(quickLaunchEditor.shortcuts))
+                                newShortcuts[idx][key] = val
+                                Config.setNestedValue("sidebar.widgets.quickLaunch", newShortcuts)
+                            }
+                        }
+                    }
+
+                    function queueUpdate(index, key, value) {
+                        pendingIndex = index
+                        pendingKey = key
+                        pendingValue = value
+                        saveTimer.restart()
+                    }
+
+                    function removeShortcut(index) {
+                        const newShortcuts = shortcuts.filter((_, i) => i !== index)
+                        Config.setNestedValue("sidebar.widgets.quickLaunch", newShortcuts)
+                    }
+
+                    function addShortcut() {
+                        const newShortcuts = [...shortcuts, { icon: "apps", name: "", cmd: "" }]
+                        Config.setNestedValue("sidebar.widgets.quickLaunch", newShortcuts)
+                    }
+
+                    Repeater {
+                        model: quickLaunchEditor.shortcuts.length
+
+                        delegate: Rectangle {
+                            id: launchItem
+                            required property int index
+                            readonly property var itemData: quickLaunchEditor.shortcuts[index] ?? {}
+                            Layout.fillWidth: true
+                            implicitHeight: 40
+                            radius: SettingsMaterialPreset.groupRadius
+                            color: Appearance.colors.colLayer2
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 8
+                                anchors.rightMargin: 6
+                                spacing: 6
+
+                                MaterialSymbol {
+                                    text: launchItem.itemData.icon ?? "apps"
+                                    iconSize: 20
+                                    color: Appearance.colors.colPrimary
+                                }
+
+                                TextInput {
+                                    Layout.preferredWidth: 60
+                                    text: launchItem.itemData.icon ?? ""
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    font.family: Appearance.font.family.main
+                                    color: Appearance.colors.colSubtext
+                                    selectByMouse: true
+                                    clip: true
+                                    onTextEdited: quickLaunchEditor.queueUpdate(launchItem.index, "icon", text)
+
+                                    Text {
+                                        anchors.fill: parent
+                                        text: "icon"
+                                        color: Appearance.colors.colOutline
+                                        font: parent.font
+                                        visible: !parent.text && !parent.activeFocus
+                                    }
+                                }
+
+                                Rectangle { width: 1; Layout.fillHeight: true; Layout.topMargin: 8; Layout.bottomMargin: 8; color: Appearance.colors.colOutlineVariant }
+
+                                TextInput {
+                                    Layout.preferredWidth: 70
+                                    text: launchItem.itemData.name ?? ""
+                                    font.pixelSize: Appearance.font.pixelSize.small
+                                    font.family: Appearance.font.family.main
+                                    color: Appearance.colors.colOnLayer1
+                                    selectByMouse: true
+                                    clip: true
+                                    onTextEdited: quickLaunchEditor.queueUpdate(launchItem.index, "name", text)
+
+                                    Text {
+                                        anchors.fill: parent
+                                        text: Translation.tr("Name")
+                                        color: Appearance.colors.colOutline
+                                        font: parent.font
+                                        visible: !parent.text && !parent.activeFocus
+                                    }
+                                }
+
+                                Rectangle { width: 1; Layout.fillHeight: true; Layout.topMargin: 8; Layout.bottomMargin: 8; color: Appearance.colors.colOutlineVariant }
+
+                                TextInput {
+                                    Layout.fillWidth: true
+                                    text: launchItem.itemData.cmd ?? ""
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    font.family: Appearance.font.family.monospace
+                                    color: Appearance.colors.colSubtext
+                                    selectByMouse: true
+                                    clip: true
+                                    onTextEdited: quickLaunchEditor.queueUpdate(launchItem.index, "cmd", text)
+
+                                    Text {
+                                        anchors.fill: parent
+                                        text: Translation.tr("Command")
+                                        color: Appearance.colors.colOutline
+                                        font: parent.font
+                                        visible: !parent.text && !parent.activeFocus
+                                    }
+                                }
+
+                                RippleButton {
+                                    implicitWidth: 28; implicitHeight: 28
+                                    buttonRadius: Appearance.rounding.full
+                                    colBackground: "transparent"
+                                    colBackgroundHover: Appearance.colors.colErrorContainer
+                                    colRipple: Appearance.colors.colError
+                                    onClicked: quickLaunchEditor.removeShortcut(launchItem.index)
+
+                                    contentItem: MaterialSymbol {
+                                        anchors.centerIn: parent
+                                        text: "close"
+                                        iconSize: 14
+                                        color: Appearance.colors.colSubtext
+                                    }
+
+                                    StyledToolTip { text: Translation.tr("Remove") }
+                                }
+                            }
+                        }
+                    }
+
+                    RippleButton {
+                        Layout.fillWidth: true
+                        implicitHeight: 32
+                        buttonRadius: SettingsMaterialPreset.groupRadius
+                        colBackground: "transparent"
+                        colBackgroundHover: Appearance.colors.colLayer2Hover
+                        colRipple: Appearance.colors.colLayer2Active
+                        onClicked: quickLaunchEditor.addShortcut()
+
+                        contentItem: RowLayout {
+                            anchors.centerIn: parent
+                            spacing: 6
+                            MaterialSymbol { text: "add"; iconSize: 16; color: Appearance.colors.colPrimary }
+                            StyledText { text: Translation.tr("Add shortcut"); font.pixelSize: Appearance.font.pixelSize.smaller; color: Appearance.colors.colSubtext }
+                        }
+                    }
                 }
 
                 SettingsSwitch {

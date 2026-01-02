@@ -241,6 +241,30 @@ ApplicationWindow {
         {
             pageIndex: 4,
             pageName: pages[4].name,
+            section: Translation.tr("Global Style"),
+            label: Translation.tr("Global Style"),
+            description: Translation.tr("Material, Cards, Aurora glass effect, Inir TUI style"),
+            keywords: ["global", "style", "aurora", "inir", "material", "cards", "glass", "tui", "transparency", "blur"]
+        },
+        {
+            pageIndex: 4,
+            pageName: pages[4].name,
+            section: Translation.tr("Global Style"),
+            label: Translation.tr("Aurora"),
+            description: Translation.tr("Glass effect with wallpaper blur behind panels"),
+            keywords: ["aurora", "glass", "blur", "transparency", "style"]
+        },
+        {
+            pageIndex: 4,
+            pageName: pages[4].name,
+            section: Translation.tr("Global Style"),
+            label: Translation.tr("Inir"),
+            description: Translation.tr("TUI-inspired style with accent borders"),
+            keywords: ["inir", "tui", "terminal", "borders", "style"]
+        },
+        {
+            pageIndex: 4,
+            pageName: pages[4].name,
             section: Translation.tr("Theme Presets"),
             label: Translation.tr("Theme Presets"),
             description: Translation.tr("Predefined color themes like Gruvbox, Catppuccin, Nord, Dracula"),
@@ -270,7 +294,15 @@ ApplicationWindow {
             section: Translation.tr("Dock"),
             label: Translation.tr("Dock"),
             description: Translation.tr("Dock position and behaviour"),
-            keywords: ["dock", "position", "pinned", "hover"]
+            keywords: ["dock", "position", "pinned", "hover", "reveal", "desktop", "show"]
+        },
+        {
+            pageIndex: 5,
+            pageName: pages[5].name,
+            section: Translation.tr("Dock"),
+            label: Translation.tr("Show on desktop"),
+            description: Translation.tr("Show dock when no window is focused"),
+            keywords: ["dock", "desktop", "show", "focus", "window", "empty"]
         },
         {
             pageIndex: 5,
@@ -559,6 +591,7 @@ ApplicationWindow {
     // Pending spotlight data
     property int pendingSpotlightOptionId: -1
     property string pendingSpotlightLabel: ""
+    property string pendingSpotlightSection: ""
     property int pendingSpotlightPageIndex: -1
     property var spotlightFlickable: null
     
@@ -579,6 +612,7 @@ ApplicationWindow {
         // Store spotlight target info
         pendingSpotlightOptionId = (entry.optionId !== undefined) ? entry.optionId : -1;
         pendingSpotlightLabel = entry.label || "";
+        pendingSpotlightSection = entry.section || "";
         pendingSpotlightPageIndex = entry.pageIndex;
         
         // Navigate to page (this triggers page load if needed)
@@ -611,13 +645,40 @@ ApplicationWindow {
             control = SettingsSearchRegistry.getControlById(pendingSpotlightOptionId);
         }
         
-        // Fallback: search by label+pageIndex in registry
-        if (!control && pendingSpotlightLabel.length > 0) {
+        // Fallback: search in registry by various criteria
+        if (!control && (pendingSpotlightLabel.length > 0 || pendingSpotlightSection.length > 0)) {
+            var labelLower = pendingSpotlightLabel.toLowerCase();
+            var sectionLower = pendingSpotlightSection.toLowerCase();
+            // Remove page name prefix from section if present (e.g., "Themes › Global Style" -> "Global Style")
+            var sectionParts = sectionLower.split(" › ");
+            var sectionOnly = sectionParts.length > 1 ? sectionParts[sectionParts.length - 1] : sectionLower;
+            
             for (var i = 0; i < SettingsSearchRegistry.entries.length; i++) {
                 var e = SettingsSearchRegistry.entries[i];
-                if (e.pageIndex === pendingSpotlightPageIndex && e.label === pendingSpotlightLabel) {
-                    control = e.control;
-                    break;
+                if (e.pageIndex === pendingSpotlightPageIndex) {
+                    var eLabelLower = (e.label || "").toLowerCase();
+                    var eSectionLower = (e.section || "").toLowerCase();
+                    
+                    // Exact label match
+                    if (eLabelLower === labelLower) {
+                        control = e.control;
+                        break;
+                    }
+                    // Section title match (for SettingsCardSection)
+                    if (eSectionLower === sectionOnly || eSectionLower === labelLower) {
+                        control = e.control;
+                        break;
+                    }
+                    // Label contains search term
+                    if (labelLower.length > 2 && eLabelLower.indexOf(labelLower) >= 0) {
+                        control = e.control;
+                        break;
+                    }
+                    // Keywords contain search term
+                    if (e.keywords && e.keywords.some(k => k.toLowerCase() === labelLower)) {
+                        control = e.control;
+                        break;
+                    }
                 }
             }
         }
@@ -628,9 +689,10 @@ ApplicationWindow {
             spotlightRetryCount++;
             spotlightPageLoadTimer.restart();
         } else {
-            // Give up after max retries
+            // Give up after max retries - clear pending data
             pendingSpotlightOptionId = -1;
             pendingSpotlightLabel = "";
+            pendingSpotlightSection = "";
             pendingSpotlightPageIndex = -1;
         }
     }
@@ -1132,22 +1194,23 @@ ApplicationWindow {
                         preloadTimer.start()
                     }
                     
-                    // Preload all pages asynchronously for search
+                    // Preload all pages for search - faster interval
                     Timer {
                         id: preloadTimer
-                        interval: 300
+                        interval: 100
                         repeat: true
                         onTriggered: {
-                            while (pagesStack.preloadIndex < root.pages.length) {
+                            // Load 2 pages per tick for faster indexing
+                            for (var i = 0; i < 2 && pagesStack.preloadIndex < root.pages.length; i++) {
                                 if (!pagesStack.visitedPages[pagesStack.preloadIndex]) {
                                     pagesStack.visitedPages[pagesStack.preloadIndex] = true
                                     pagesStack.visitedPagesChanged()
-                                    pagesStack.preloadIndex++
-                                    return // Load one page per tick
                                 }
                                 pagesStack.preloadIndex++
                             }
-                            preloadTimer.stop()
+                            if (pagesStack.preloadIndex >= root.pages.length) {
+                                preloadTimer.stop()
+                            }
                         }
                     }
 
@@ -1198,9 +1261,12 @@ ApplicationWindow {
                         anchors.top: parent.top
                         anchors.topMargin: 8
                         radius: Appearance.rounding.normal
-                        color: Appearance.colors.colLayer1
+                        color: Appearance.auroraEverywhere ? Appearance.colors.colLayer1Base
+                            : Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                            : Appearance.colors.colLayer1
                         border.width: 1
-                        border.color: Appearance.m3colors.m3outlineVariant
+                        border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder 
+                            : Appearance.m3colors.m3outlineVariant
 
                         layer.enabled: true
                         layer.effect: DropShadow {
@@ -1283,7 +1349,7 @@ ApplicationWindow {
                                     // Text content
                                     ColumnLayout {
                                         Layout.fillWidth: true
-                                        spacing: 0
+                                        spacing: 2
 
                                         Text {
                                             Layout.fillWidth: true
@@ -1300,15 +1366,38 @@ ApplicationWindow {
                                             elide: Text.ElideRight
                                         }
 
-                                        StyledText {
+                                        // Breadcrumb path with arrows
+                                        Row {
                                             Layout.fillWidth: true
-                                            text: resultItem.modelData.pageName + (resultItem.modelData.section ? " › " + resultItem.modelData.section : "")
-                                            font.pixelSize: Appearance.font.pixelSize.smaller
-                                            color: resultItem.ListView.isCurrentItem 
-                                                ? Appearance.colors.colOnPrimaryContainer 
-                                                : Appearance.colors.colSubtext
-                                            elide: Text.ElideRight
-                                            opacity: 0.8
+                                            spacing: 4
+                                            
+                                            StyledText {
+                                                text: resultItem.modelData.pageName || ""
+                                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                                color: resultItem.ListView.isCurrentItem 
+                                                    ? Appearance.colors.colOnPrimaryContainer 
+                                                    : Appearance.colors.colSubtext
+                                                opacity: 0.9
+                                            }
+                                            MaterialSymbol {
+                                                visible: resultItem.modelData.section && resultItem.modelData.section !== resultItem.modelData.pageName
+                                                text: "chevron_right"
+                                                iconSize: Appearance.font.pixelSize.smaller
+                                                color: resultItem.ListView.isCurrentItem 
+                                                    ? Appearance.colors.colOnPrimaryContainer 
+                                                    : Appearance.colors.colSubtext
+                                                opacity: 0.6
+                                                anchors.verticalCenter: parent.verticalCenter
+                                            }
+                                            StyledText {
+                                                visible: resultItem.modelData.section && resultItem.modelData.section !== resultItem.modelData.pageName
+                                                text: resultItem.modelData.section || ""
+                                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                                color: resultItem.ListView.isCurrentItem 
+                                                    ? Appearance.colors.colOnPrimaryContainer 
+                                                    : Appearance.colors.colSubtext
+                                                opacity: 0.9
+                                            }
                                         }
                                     }
 
