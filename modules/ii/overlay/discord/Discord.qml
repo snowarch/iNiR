@@ -4,6 +4,7 @@ import Quickshell
 import qs
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.common.functions
 import qs.modules.ii.overlay
 import qs.services
 

@@ -1,4 +1,5 @@
 import qs.modules.common.widgets
+import qs.modules.common.functions
 import qs
 import qs.services
 import QtQuick
