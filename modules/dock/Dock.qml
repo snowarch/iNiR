@@ -131,7 +131,7 @@ Scope {
 
                             StyledRectangularShadow {
                                 target: dockVisualBackground
-                                visible: Config.options?.dock?.showBackground ?? true
+                                visible: (Config.options?.dock?.showBackground ?? true) && !Appearance.gameModeMinimal
                             }
 
                             Rectangle {
@@ -139,6 +139,7 @@ Scope {
                                 property bool cardStyle: Config.options?.dock?.cardStyle ?? false
                                 readonly property bool auroraEverywhere: Appearance.auroraEverywhere
                                 readonly property bool inirEverywhere: Appearance.inirEverywhere
+                                readonly property bool gameModeMinimal: Appearance.gameModeMinimal
                                 readonly property string wallpaperUrl: Wallpapers.effectiveWallpaperUrl
 
                                 ColorQuantizer {
@@ -159,7 +160,7 @@ Scope {
                                 anchors.leftMargin: root.isLeft ? Appearance.sizes.hyprlandGapsOut : (root.isVertical ? Appearance.sizes.elevationMargin : 0)
                                 anchors.rightMargin: root.position === "right" ? Appearance.sizes.hyprlandGapsOut : (root.isVertical ? Appearance.sizes.elevationMargin : 0)
 
-                                visible: Config.options?.dock?.showBackground ?? true
+                                visible: (Config.options?.dock?.showBackground ?? true) && !gameModeMinimal
                                 color: auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
                                     : inirEverywhere ? Appearance.inir.colLayer1
                                     : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
@@ -168,7 +169,7 @@ Scope {
                                 radius: inirEverywhere ? Appearance.inir.roundingNormal : cardStyle ? Appearance.rounding.normal : Appearance.rounding.large
 
                                 clip: true
-                                layer.enabled: auroraEverywhere && !inirEverywhere
+                                layer.enabled: auroraEverywhere && !inirEverywhere && !gameModeMinimal
                                 layer.effect: GE.OpacityMask {
                                     maskSource: Rectangle {
                                         width: dockVisualBackground.width
@@ -187,13 +188,13 @@ Scope {
                                         : (root.isTop ? 0 : (-(dockRoot.screen?.height ?? 1080) + dockVisualBackground.height + Appearance.sizes.hyprlandGapsOut))
                                     width: dockRoot.screen?.width ?? 1920
                                     height: dockRoot.screen?.height ?? 1080
-                                    visible: dockVisualBackground.auroraEverywhere && !dockVisualBackground.inirEverywhere
+                                    visible: dockVisualBackground.auroraEverywhere && !dockVisualBackground.inirEverywhere && !dockVisualBackground.gameModeMinimal
                                     source: dockVisualBackground.wallpaperUrl
                                     fillMode: Image.PreserveAspectCrop
                                     cache: true
                                     asynchronous: true
 
-                                    layer.enabled: Appearance.effectsEnabled
+                                    layer.enabled: Appearance.effectsEnabled && !dockVisualBackground.gameModeMinimal
                                     layer.effect: StyledBlurEffect { source: dockBlurredWallpaper }
 
                                     Rectangle {

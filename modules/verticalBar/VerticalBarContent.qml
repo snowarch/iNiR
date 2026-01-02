@@ -22,6 +22,7 @@ Item { // Bar content region
     readonly property color separatorColor: Appearance.colors.colOutlineVariant
     readonly property bool inirEverywhere: Appearance.inirEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
+    readonly property bool gameModeMinimal: Appearance.gameModeMinimal
 
     readonly property string wallpaperUrl: Wallpapers.effectiveWallpaperUrl
 
@@ -47,7 +48,7 @@ Item { // Bar content region
 
     // Background shadow
     Loader {
-        active: Config.options.bar.showBackground && (Config.options.bar.cornerStyle === 1 || Config.options.bar.cornerStyle === 3)
+        active: Config.options.bar.showBackground && (Config.options.bar.cornerStyle === 1 || Config.options.bar.cornerStyle === 3) && !root.gameModeMinimal
         anchors.fill: barBackground
         sourceComponent: StyledRectangularShadow {
             anchors.fill: undefined // The loader's anchors act on this, and this should not have any anchor
@@ -63,7 +64,7 @@ Item { // Bar content region
             fill: parent
             margins: floatingStyle ? Appearance.sizes.hyprlandGapsOut : 0
         }
-        visible: Config.options.bar.showBackground
+        visible: Config.options.bar.showBackground && !root.gameModeMinimal
         color: root.inirEverywhere ? Appearance.inir.colLayer0
             : root.auroraEverywhere ? ColorUtils.applyAlpha((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
             : (root.cardStyleEverywhere ? Appearance.colors.colLayer1 : (Config.options.bar.cornerStyle === 3 ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0))
@@ -74,7 +75,7 @@ Item { // Bar content region
 
         clip: true
 
-        layer.enabled: root.auroraEverywhere && !root.inirEverywhere
+        layer.enabled: root.auroraEverywhere && !root.inirEverywhere && !root.gameModeMinimal
         layer.effect: GE.OpacityMask {
             maskSource: Rectangle {
                 width: barBackground.width
@@ -89,13 +90,13 @@ Item { // Bar content region
             y: -barBackground.y
             width: root.width
             height: root.height
-            visible: root.auroraEverywhere && !root.inirEverywhere
+            visible: root.auroraEverywhere && !root.inirEverywhere && !root.gameModeMinimal
             source: root.wallpaperUrl
             fillMode: Image.PreserveAspectCrop
             cache: true
             asynchronous: true
 
-            layer.enabled: Appearance.effectsEnabled
+            layer.enabled: Appearance.effectsEnabled && !root.gameModeMinimal
             layer.effect: StyledBlurEffect {
                 source: blurredWallpaper
             }

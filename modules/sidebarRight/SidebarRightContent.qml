@@ -63,6 +63,7 @@ Item {
 
     StyledRectangularShadow {
         target: sidebarRightBackground
+        visible: !Appearance.inirEverywhere && !Appearance.gameModeMinimal
     }
     Rectangle {
         id: sidebarRightBackground
@@ -72,6 +73,8 @@ Item {
         implicitWidth: sidebarWidth - Appearance.sizes.hyprlandGapsOut * 2
         property bool cardStyle: Config.options.sidebar?.cardStyle ?? false
         readonly property bool auroraEverywhere: Appearance.auroraEverywhere
+        readonly property bool inirEverywhere: Appearance.inirEverywhere
+        readonly property bool gameModeMinimal: Appearance.gameModeMinimal
         readonly property string wallpaperUrl: Wallpapers.effectiveWallpaperUrl
 
         ColorQuantizer {
@@ -86,14 +89,18 @@ Item {
             color: ColorUtils.mix(sidebarRightBackground.wallpaperDominantColor, Appearance.colors.colPrimaryContainer, 0.8) || Appearance.m3colors.m3secondaryContainer
         }
 
-        color: auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1) : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
-        border.width: 1
-        border.color: Appearance.colors.colLayer0Border
-        radius: cardStyle ? Appearance.rounding.normal : (Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1)
+        color: gameModeMinimal ? "transparent"
+            : inirEverywhere ? Appearance.inir.colLayer0
+            : auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
+            : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
+        border.width: gameModeMinimal ? 0 : (inirEverywhere ? 1 : 1)
+        border.color: inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colLayer0Border
+        radius: inirEverywhere ? Appearance.inir.roundingNormal
+            : cardStyle ? Appearance.rounding.normal : (Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1)
 
         clip: true
 
-        layer.enabled: auroraEverywhere
+        layer.enabled: auroraEverywhere && !inirEverywhere && !gameModeMinimal
         layer.effect: GE.OpacityMask {
             maskSource: Rectangle {
                 width: sidebarRightBackground.width
@@ -108,7 +115,7 @@ Item {
             y: -Appearance.sizes.hyprlandGapsOut
             width: root.screenWidth ?? 1920
             height: root.screenHeight ?? 1080
-            visible: sidebarRightBackground.auroraEverywhere
+            visible: sidebarRightBackground.auroraEverywhere && !sidebarRightBackground.inirEverywhere && !sidebarRightBackground.gameModeMinimal
             source: sidebarRightBackground.wallpaperUrl
             fillMode: Image.PreserveAspectCrop
             cache: true

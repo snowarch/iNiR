@@ -59,6 +59,7 @@ Item {
 
     StyledRectangularShadow {
         target: sidebarLeftBackground
+        visible: !Appearance.gameModeMinimal
     }
     Rectangle {
         id: sidebarLeftBackground
@@ -68,6 +69,7 @@ Item {
         implicitWidth: sidebarWidth - Appearance.sizes.hyprlandGapsOut * 2
         property bool cardStyle: Config.options.sidebar?.cardStyle ?? false
         readonly property bool auroraEverywhere: Appearance.auroraEverywhere
+        readonly property bool gameModeMinimal: Appearance.gameModeMinimal
         readonly property string wallpaperUrl: Wallpapers.effectiveWallpaperUrl
 
         ColorQuantizer {
@@ -82,14 +84,16 @@ Item {
             color: ColorUtils.mix(sidebarLeftBackground.wallpaperDominantColor, Appearance.colors.colPrimaryContainer, 0.8) || Appearance.m3colors.m3secondaryContainer
         }
 
-        color: auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1) : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
-        border.width: 1
+        color: gameModeMinimal ? "transparent"
+             : auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1) 
+             : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
+        border.width: gameModeMinimal ? 0 : 1
         border.color: Appearance.colors.colLayer0Border
         radius: cardStyle ? Appearance.rounding.normal : (Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1)
 
         clip: true
 
-        layer.enabled: auroraEverywhere
+        layer.enabled: auroraEverywhere && !gameModeMinimal
         layer.effect: GE.OpacityMask {
             maskSource: Rectangle {
                 width: sidebarLeftBackground.width
@@ -104,13 +108,13 @@ Item {
             y: -Appearance.sizes.hyprlandGapsOut
             width: root.screenWidth
             height: root.screenHeight
-            visible: sidebarLeftBackground.auroraEverywhere
+            visible: sidebarLeftBackground.auroraEverywhere && !sidebarLeftBackground.gameModeMinimal
             source: sidebarLeftBackground.wallpaperUrl
             fillMode: Image.PreserveAspectCrop
             cache: true
             asynchronous: true
 
-            layer.enabled: Appearance.effectsEnabled
+            layer.enabled: Appearance.effectsEnabled && !sidebarLeftBackground.gameModeMinimal
             layer.effect: StyledBlurEffect {
                 source: sidebarLeftBlurredWallpaper
             }

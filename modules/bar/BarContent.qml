@@ -48,7 +48,7 @@ Item { // Bar content region
 
     // Background shadow
     Loader {
-        active: !root.inirEverywhere && Config.options.bar.showBackground && (Config.options.bar.cornerStyle === 1 || Config.options.bar.cornerStyle === 3) && Config.options.bar.floatStyleShadow
+        active: !root.inirEverywhere && !Appearance.gameModeMinimal && Config.options.bar.showBackground && (Config.options.bar.cornerStyle === 1 || Config.options.bar.cornerStyle === 3) && Config.options.bar.floatStyleShadow
         anchors.fill: barBackground
         sourceComponent: StyledRectangularShadow {
             anchors.fill: undefined // The loader's anchors act on this, and this should not have any anchor
@@ -59,6 +59,7 @@ Item { // Bar content region
     Rectangle {
         id: barBackground
         readonly property bool auroraEverywhere: Appearance.auroraEverywhere
+        readonly property bool gameModeMinimal: Appearance.gameModeMinimal
         readonly property bool floatingStyle: auroraEverywhere || Config.options.bar.cornerStyle === 1 || Config.options.bar.cornerStyle === 3
         
         anchors {
@@ -70,7 +71,7 @@ Item { // Bar content region
 
         readonly property QtObject blendedColors: root.blendedColors
         
-        visible: Config.options.bar.showBackground
+        visible: Config.options.bar.showBackground && !gameModeMinimal
         color: root.inirEverywhere ? Appearance.inir.colLayer0
             : auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
             : (root.cardStyleEverywhere ? Appearance.colors.colLayer1 : (Config.options.bar.cornerStyle === 3 ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0))
@@ -81,7 +82,7 @@ Item { // Bar content region
 
         clip: true
 
-        layer.enabled: auroraEverywhere && !root.inirEverywhere
+        layer.enabled: auroraEverywhere && !root.inirEverywhere && !gameModeMinimal
         layer.effect: GE.OpacityMask {
             maskSource: Rectangle {
                 width: barBackground.width
@@ -96,7 +97,7 @@ Item { // Bar content region
             y: barBackground.isBottom ? -(root.screen?.height ?? 1080) + barBackground.height + barBackground.barMargin : -barBackground.barMargin
             width: root.screen?.width ?? 1920
             height: root.screen?.height ?? 1080
-            visible: barBackground.auroraEverywhere && !root.inirEverywhere
+            visible: barBackground.auroraEverywhere && !root.inirEverywhere && !barBackground.gameModeMinimal
             source: root.wallpaperUrl
             fillMode: Image.PreserveAspectCrop
             cache: true
