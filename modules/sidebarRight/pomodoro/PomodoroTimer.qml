@@ -81,14 +81,27 @@ Item {
                     anchors.centerIn: parent
                     horizontalAlignment: Text.AlignHCenter
                     text: TimerService.pomodoroRunning ? Translation.tr("Pause") : (TimerService.pomodoroSecondsLeft === TimerService.focusTime) ? Translation.tr("Start") : Translation.tr("Resume")
-                    color: TimerService.pomodoroRunning ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnPrimary
+                    color: TimerService.pomodoroRunning 
+                        ? (Appearance.inirEverywhere ? Appearance.inir.colText
+                            : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer2 : Appearance.colors.colOnSecondaryContainer)
+                        : Appearance.colors.colOnPrimary
                 }
                 implicitHeight: 35
                 implicitWidth: 90
                 font.pixelSize: Appearance.font.pixelSize.larger
                 onClicked: TimerService.togglePomodoro()
-                colBackground: TimerService.pomodoroRunning ? Appearance.colors.colSecondaryContainer : Appearance.colors.colPrimary
-                colBackgroundHover: TimerService.pomodoroRunning ? Appearance.colors.colSecondaryContainer : Appearance.colors.colPrimary
+                colBackground: TimerService.pomodoroRunning 
+                    ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colSecondaryContainer)
+                    : Appearance.colors.colPrimary
+                colBackgroundHover: TimerService.pomodoroRunning 
+                    ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover : Appearance.colors.colSecondaryContainerHover)
+                    : Appearance.colors.colPrimaryHover
+                colRipple: TimerService.pomodoroRunning 
+                    ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colSecondaryContainerActive)
+                    : Appearance.colors.colPrimaryActive
             }
 
             RippleButton {
@@ -99,15 +112,23 @@ Item {
                 enabled: (TimerService.pomodoroSecondsLeft < TimerService.pomodoroLapDuration) || TimerService.pomodoroCycle > 0 || TimerService.pomodoroBreak
 
                 font.pixelSize: Appearance.font.pixelSize.larger
-                colBackground: Appearance.colors.colErrorContainer
-                colBackgroundHover: Appearance.colors.colErrorContainerHover
-                colRipple: Appearance.colors.colErrorContainerActive
+                colBackground: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                    : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
+                    : Appearance.colors.colErrorContainer
+                colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                    : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover
+                    : Appearance.colors.colErrorContainerHover
+                colRipple: Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
+                    : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
+                    : Appearance.colors.colErrorContainerActive
 
                 contentItem: StyledText {
                     anchors.centerIn: parent
                     horizontalAlignment: Text.AlignHCenter
                     text: Translation.tr("Reset")
-                    color: Appearance.colors.colOnErrorContainer
+                    color: Appearance.inirEverywhere ? Appearance.inir.colText
+                        : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer2
+                        : Appearance.colors.colOnErrorContainer
                 }
             }
         }

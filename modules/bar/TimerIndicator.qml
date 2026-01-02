@@ -31,9 +31,9 @@ MouseArea {
     readonly property bool showPinnedIdle: pinnedToBar && !anyActive
 
     readonly property bool currentRunning: {
-        if (root.pomodoroActive) return root.pomodoroRunning
-        if (root.countdownActive) return root.countdownRunning
-        if (root.stopwatchActive) return root.stopwatchRunning
+        if (root.pomodoroActive) return root.pomodoroRunning && !(TimerService?.pomodoroPaused ?? false)
+        if (root.countdownActive) return root.countdownRunning && !(TimerService?.countdownPaused ?? false)
+        if (root.stopwatchActive) return root.stopwatchRunning && !(TimerService?.stopwatchPaused ?? false)
         return false
     }
 
@@ -84,7 +84,7 @@ MouseArea {
     }
 
     visible: anyActive || showPinnedIdle
-    implicitWidth: (anyActive || showPinnedIdle) ? contentRow.implicitWidth + 16 : 0
+    implicitWidth: (anyActive || showPinnedIdle) ? pill.width + 4 : 0
     implicitHeight: Appearance.sizes.barHeight
 
     hoverEnabled: true
@@ -112,11 +112,6 @@ MouseArea {
     acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
     onClicked: (mouse) => {
         if (mouse.button === Qt.LeftButton) {
-            if (mouse.modifiers & (Qt.ControlModifier | Qt.ShiftModifier)) {
-                root.openTimerPanel()
-                return
-            }
-
             if (!root.anyActive && root.showPinnedIdle) {
                 root.openTimerPanel()
                 return
@@ -146,38 +141,47 @@ MouseArea {
 
     // Background pill
     Rectangle {
+        id: pill
         anchors.centerIn: parent
         width: contentRow.implicitWidth + 12
         height: contentRow.implicitHeight + 8
         radius: height / 2
+        scale: root.pressed ? 0.95 : 1.0
         color: {
-            if (root.paused)
-                return root.containsMouse 
-                    ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover 
-                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer2Hover) 
-                    : (Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colLayer2)
-            return root.containsMouse 
-                ? (Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover 
-                    : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer1Hover) 
-                : (Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colLayer1)
+            if (root.pressed) {
+                if (Appearance.inirEverywhere) return Appearance.inir.colLayer2Active
+                if (Appearance.auroraEverywhere) return Appearance.aurora.colSubSurfaceActive
+                return Appearance.colors.colLayer1Active
+            }
+            if (root.paused) {
+                // Always show dark background when paused (like hover state)
+                if (Appearance.inirEverywhere) return root.containsMouse ? Appearance.inir.colLayer2Active : Appearance.inir.colLayer2Hover
+                if (Appearance.auroraEverywhere) return root.containsMouse ? Appearance.aurora.colSubSurfaceActive : Appearance.aurora.colElevatedSurface
+                return root.containsMouse ? Appearance.colors.colLayer2Active : Appearance.colors.colLayer2Hover
+            }
+            if (root.containsMouse) {
+                if (Appearance.inirEverywhere) return Appearance.inir.colLayer1Hover
+                if (Appearance.auroraEverywhere) return Appearance.aurora.colSubSurface
+                return Appearance.colors.colLayer1Hover
+            }
+            return "transparent"
         }
-        visible: root.anyActive || root.showPinnedIdle
 
-        Behavior on color {
-            ColorAnimation { duration: 100 }
-        }
+        Behavior on color { ColorAnimation { duration: 100 } }
+        Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
     }
 
     RowLayout {
         id: contentRow
-        anchors.centerIn: parent
+        anchors.centerIn: pill
         spacing: 4
-        visible: root.anyActive || root.showPinnedIdle
 
         MaterialSymbol {
             text: root.showPinnedIdle ? "schedule" : root.iconName
             iconSize: Appearance.font.pixelSize.normal
-            color: root.paused ? Appearance.inirEverywhere ? Appearance.inir.colTextMuted : Appearance.colors.colOnLayer1Inactive : root.accentColor
+            color: root.paused 
+                ? (Appearance.inirEverywhere ? Appearance.inir.colTextMuted : Appearance.colors.colOnLayer1Inactive) 
+                : root.accentColor
             Layout.alignment: Qt.AlignVCenter
 
             SequentialAnimation on opacity {
@@ -191,7 +195,9 @@ MouseArea {
         StyledText {
             text: root.showPinnedIdle ? Translation.tr("Timer") : root.timeText
             font.pixelSize: Appearance.font.pixelSize.small
-            color: root.paused ? Appearance.inirEverywhere ? Appearance.inir.colTextMuted : Appearance.colors.colOnLayer1Inactive : Appearance.colors.colOnLayer1
+            color: root.paused 
+                ? (Appearance.inirEverywhere ? Appearance.inir.colTextMuted : Appearance.colors.colOnLayer1Inactive) 
+                : Appearance.colors.colOnLayer1
             Layout.alignment: Qt.AlignVCenter
         }
 

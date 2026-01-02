@@ -170,17 +170,20 @@ Singleton {
                 property int tab: 0
                 property JsonObject pomodoro: JsonObject {
                     property bool running: false
+                    property bool paused: false
                     property int start: 0
                     property bool isBreak: false
                     property int cycle: 0
                 }
                 property JsonObject stopwatch: JsonObject {
                     property bool running: false
+                    property bool paused: false
                     property int start: 0
                     property list<var> laps: []
                 }
                 property JsonObject countdown: JsonObject {
                     property bool running: false
+                    property bool paused: false
                     property int start: 0
                     property int duration: 60
                 }

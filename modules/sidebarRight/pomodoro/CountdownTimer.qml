@@ -112,13 +112,25 @@ Item {
                 Layout.preferredWidth: 90
                 onClicked: TimerService.toggleCountdown()
                 enabled: TimerService.countdownDuration > 0
-                colBackground: TimerService.countdownRunning ? Appearance.colors.colSecondaryContainer : Appearance.colors.colPrimary
-                colBackgroundHover: TimerService.countdownRunning ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colPrimaryHover
-                colRipple: TimerService.countdownRunning ? Appearance.colors.colSecondaryContainerActive : Appearance.colors.colPrimaryActive
+                colBackground: TimerService.countdownRunning 
+                    ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colSecondaryContainer)
+                    : Appearance.colors.colPrimary
+                colBackgroundHover: TimerService.countdownRunning 
+                    ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover : Appearance.colors.colSecondaryContainerHover)
+                    : Appearance.colors.colPrimaryHover
+                colRipple: TimerService.countdownRunning 
+                    ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colSecondaryContainerActive)
+                    : Appearance.colors.colPrimaryActive
 
                 contentItem: StyledText {
                     horizontalAlignment: Text.AlignHCenter
-                    color: TimerService.countdownRunning ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnPrimary
+                    color: TimerService.countdownRunning 
+                        ? (Appearance.inirEverywhere ? Appearance.inir.colText
+                            : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer2 : Appearance.colors.colOnSecondaryContainer)
+                        : Appearance.colors.colOnPrimary
                     text: TimerService.countdownRunning ? Translation.tr("Pause") : TimerService.countdownSecondsLeft === TimerService.countdownDuration ? Translation.tr("Start") : Translation.tr("Resume")
                 }
             }
@@ -128,14 +140,22 @@ Item {
                 Layout.preferredWidth: 90
                 onClicked: TimerService.resetCountdown()
                 enabled: TimerService.countdownSecondsLeft < TimerService.countdownDuration || TimerService.countdownRunning
-                colBackground: Appearance.colors.colErrorContainer
-                colBackgroundHover: Appearance.colors.colErrorContainerHover
-                colRipple: Appearance.colors.colErrorContainerActive
+                colBackground: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                    : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
+                    : Appearance.colors.colErrorContainer
+                colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                    : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover
+                    : Appearance.colors.colErrorContainerHover
+                colRipple: Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
+                    : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
+                    : Appearance.colors.colErrorContainerActive
 
                 contentItem: StyledText {
                     horizontalAlignment: Text.AlignHCenter
                     text: Translation.tr("Reset")
-                    color: Appearance.colors.colOnErrorContainer
+                    color: Appearance.inirEverywhere ? Appearance.inir.colText
+                        : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer2
+                        : Appearance.colors.colOnErrorContainer
                 }
             }
         }
