@@ -16,7 +16,19 @@ Add `-y` for non-interactive mode.
 ./setup update
 ```
 
-Checks remote for updates, pulls changes, syncs QML code, restarts shell, and offers pending migrations. Creates a snapshot before updating for easy rollback.
+What happens:
+1. Checks remote for new commits
+2. Creates snapshot (for rollback)
+3. Pulls changes
+4. Syncs QML code, scripts, assets
+5. Syncs Vesktop themes (if present)
+6. Applies required migrations automatically
+7. Offers optional migrations
+8. Restarts shell
+9. Checks for missing system packages
+10. Updates Python venv packages
+
+Your user configs (`config.json`, `config.kdl`) are never touched.
 
 ## Doctor
 

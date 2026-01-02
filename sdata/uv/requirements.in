@@ -1,0 +1,21 @@
+# Python dependencies for ii-niri
+# Edit this file, then run: uv pip compile requirements.in -o requirements.txt
+
+# Thumbnail generation (GnomeDesktop 4.0)
+pygobject
+pycairo
+
+# Color extraction and theming
+pillow
+material-color-utilities
+materialyoucolor
+numpy
+opencv-contrib-python
+
+# System monitoring
+psutil
+
+# CLI tools
+click
+loguru
+tqdm

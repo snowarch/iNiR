@@ -122,17 +122,12 @@ case "${SKIP_QUICKSHELL}" in
     done
     
     # Copy required directories
-    QML_DIRS=(modules services scripts assets translations)
+    QML_DIRS=(modules services scripts assets translations sdata/uv)
     for dir in "${QML_DIRS[@]}"; do
       if [[ -d "${II_SOURCE}/${dir}" ]]; then
         install_dir__sync "${II_SOURCE}/${dir}" "${II_TARGET}/${dir}"
       fi
     done
-    
-    # Copy requirements.txt
-    if [[ -f "${II_SOURCE}/requirements.txt" ]]; then
-      install_file "${II_SOURCE}/requirements.txt" "${II_TARGET}/requirements.txt"
-    fi
     
     # Finalize manifest
     mv "${II_TARGET}/.ii-manifest.new" "${II_TARGET}/.ii-manifest"

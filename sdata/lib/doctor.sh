@@ -109,7 +109,7 @@ check_state_directories() {
 
 check_python_packages() {
     local venv="${XDG_STATE_HOME}/quickshell/.venv"
-    local req="${XDG_CONFIG_HOME}/quickshell/ii/requirements.txt"
+    local req="${XDG_CONFIG_HOME}/quickshell/ii/sdata/uv/requirements.txt"
     
     # Check if venv exists
     if [[ ! -d "$venv" ]]; then

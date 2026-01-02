@@ -8,3 +8,7 @@ materialyoucolor>=2.0.0
 numpy>=1.24.0
 psutil>=5.9.0
 tqdm>=4.65.0
+loguru>=0.7.0
+click>=8.0.0
+pygobject>=3.50.0
+pycairo>=1.26.0

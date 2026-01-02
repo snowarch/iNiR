@@ -324,12 +324,9 @@ run_update() {
         done
         
         # Sync directories
-        for dir in modules services scripts assets translations; do
+        for dir in modules services scripts assets translations sdata/uv; do
             [[ -d "${II_SOURCE}/${dir}" ]] && rsync -a --delete "${II_SOURCE}/${dir}/" "${II_TARGET}/${dir}/"
         done
-        
-        # Sync other files
-        [[ -f "${II_SOURCE}/requirements.txt" ]] && cp -f "${II_SOURCE}/requirements.txt" "${II_TARGET}/"
     fi
     
     # Generate manifest
@@ -418,6 +415,30 @@ run_update() {
         fi
     else
         tui_success "All required commands available"
+    fi
+    
+    # Update Python venv packages
+    echo ""
+    tui_title "Python packages"
+    echo ""
+    local venv_dir="${XDG_STATE_HOME}/quickshell/.venv"
+    local req_file="${REPO_ROOT}/sdata/uv/requirements.txt"
+    
+    if [[ -f "$req_file" ]] && command -v uv &>/dev/null; then
+        if [[ ! -d "$venv_dir/bin" ]]; then
+            tui_info "Creating Python venv..."
+            uv venv --prompt ii-venv "$venv_dir" -p 3.12 2>/dev/null || uv venv --prompt ii-venv "$venv_dir" 2>/dev/null
+        fi
+        
+        if [[ -d "$venv_dir/bin" ]]; then
+            tui_info "Updating Python packages..."
+            source "$venv_dir/bin/activate"
+            uv pip install -q -r "$req_file" 2>/dev/null
+            deactivate
+            tui_success "Python packages updated"
+        fi
+    else
+        tui_success "Python packages (skipped - uv not available)"
     fi
     
     echo ""

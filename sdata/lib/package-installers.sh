@@ -86,13 +86,18 @@ install-python-packages(){
   fi
   
   # Install required packages from requirements.txt
-  local requirements_file="${XDG_CONFIG_HOME}/quickshell/ii/requirements.txt"
+  # Try repo location first (during install), then target location (during doctor)
+  local requirements_file="${REPO_ROOT}/sdata/uv/requirements.txt"
+  if [[ ! -f "$requirements_file" ]]; then
+    requirements_file="${XDG_CONFIG_HOME}/quickshell/ii/sdata/uv/requirements.txt"
+  fi
+  
   if [[ -f "$requirements_file" ]]; then
     source "$venv_dir/bin/activate"
     x uv pip install -r "$requirements_file"
     deactivate
   else
-    log_warning "requirements.txt not found at $requirements_file"
+    log_warning "requirements.txt not found"
   fi
   
   log_success "Python venv ready at $venv_dir"
