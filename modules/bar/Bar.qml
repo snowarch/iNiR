@@ -241,6 +241,12 @@ Scope {
                                         height: cornerSize
                                         clip: true
                                         
+                                        // Solid background matching BarContent
+                                        Rectangle {
+                                            anchors.fill: parent
+                                            color: ColorUtils.applyAlpha((barContent.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
+                                        }
+
                                         // Blur background
                                         Image {
                                             id: blurImg
@@ -263,7 +269,7 @@ Scope {
                                             
                                             Rectangle {
                                                 anchors.fill: parent
-                                                color: ColorUtils.transparentize((hoverRegion.barContent.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
+                                                color: ColorUtils.transparentize((barContent.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
                                             }
                                         }
                                         
