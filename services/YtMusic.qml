@@ -280,7 +280,14 @@ Singleton {
         _checkAvailability.running = true
         _detectDefaultBrowserProc.running = true
         _detectBrowsersProc.running = true
-        _loadData()
+        if (Config.ready) _loadData()
+    }
+
+    Connections {
+        target: Config
+        function onReadyChanged() {
+            if (Config.ready) _loadData()
+        }
     }
 
     function _loadData(): void {

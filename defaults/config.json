@@ -520,6 +520,19 @@
     "tools": {
       "enable": false
     },
+    "ytmusic": {
+      "enable": true,
+      "browser": "firefox",
+      "cookiesPath": "",
+      "recentSearches": [],
+      "queue": [],
+      "cache": {
+        "playlists": [],
+        "albums": [],
+        "artists": [],
+        "liked": []
+      }
+    },
     "wallhaven": {
       "enable": true,
       "limit": 24,
@@ -760,19 +773,6 @@
         "vertical": false,
         "widgetsFactor": 0.7
       },
-    "ytmusic": {
-      "enable": false,
-      "browser": "firefox",
-      "cookiesPath": "",
-      "recentSearches": [],
-      "queue": [],
-      "cache": {
-        "playlists": [],
-        "albums": [],
-        "artists": [],
-        "liked": []
-      }
-    },
     "widgets": {
         "clock": {
           "enable": false
