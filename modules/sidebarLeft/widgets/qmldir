@@ -12,3 +12,6 @@ CryptoWidget 1.0 CryptoWidget.qml
 QuickWallpaper 1.0 QuickWallpaper.qml
 DraggableWidgetContainer 1.0 DraggableWidgetContainer.qml
 WidgetSettingsMenu 1.0 WidgetSettingsMenu.qml
+
+YtMusicPlayerCard 1.0 YtMusicPlayerCard.qml
+YtMusicTrackItem 1.0 YtMusicTrackItem.qml
