@@ -5,6 +5,7 @@ import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Hyprland
 import Quickshell.Services.UPower
+import Qt5Compat.GraphicalEffects as GE
 import qs
 import qs.services
 import qs.modules.common
@@ -57,7 +58,7 @@ Scope {
                 property bool mustShow: hoverRegion.containsMouse || superShow
                 exclusionMode: ExclusionMode.Ignore
                 exclusiveZone: (Config?.options.bar.autoHide.enable && (!mustShow || !Config?.options.bar.autoHide.pushWindows)) ? 0 :
-                    Appearance.sizes.baseVerticalBarWidth + ((((Config.options?.bar?.cornerStyle ?? 0) === 1) || ((Config.options?.bar?.cornerStyle ?? 0) === 3)) ? (Appearance.sizes.hyprlandGapsOut * 2) : 0)
+                    Appearance.sizes.baseVerticalBarWidth + ((Config.options?.bar?.cornerStyle ?? 0) === 1 ? Appearance.sizes.hyprlandGapsOut : 0)
                 WlrLayershell.namespace: "quickshell:verticalBar"
                 // WlrLayershell.layer: WlrLayer.Overlay // TODO enable this when bar can hide when fullscreen
                 implicitWidth: Appearance.sizes.verticalBarWidth + Appearance.rounding.screenRounding
@@ -71,6 +72,14 @@ Scope {
                     right: (Config.options?.bar?.bottom ?? false)
                     top: true
                     bottom: true
+                }
+
+                // Include in focus grab
+                Component.onCompleted: {
+                    GlobalFocusGrab.addPersistent(barRoot);
+                }
+                Component.onDestruction: {
+                    GlobalFocusGrab.removePersistent(barRoot);
                 }
 
                 MouseArea  {
@@ -153,9 +162,23 @@ Scope {
                         }
 
                         sourceComponent: Item {
+                            id: hugDecorators
                             implicitHeight: Appearance.rounding.screenRounding
+
+                            readonly property bool isInir: Appearance.inirEverywhere
+                            readonly property bool isAurora: Appearance.auroraEverywhere
+                            readonly property bool isRight: Config.options?.bar?.bottom ?? false
+                            // Color must match the bar background color exactly
+                            readonly property color solidColor: showBarBackground
+                                ? (isInir ? Appearance.inir.colLayer0
+                                    : isAurora ? Appearance.aurora.colPopupSurface
+                                    : Appearance.colors.colLayer0)
+                                : "transparent"
+
+                            // Top corner - solid for Material/Inir
                             RoundCorner {
                                 id: topCorner
+                                visible: !hugDecorators.isAurora
                                 anchors {
                                     left: parent.left
                                     right: parent.right
@@ -163,33 +186,116 @@ Scope {
                                 }
 
                                 implicitSize: Appearance.rounding.screenRounding
-                                color: showBarBackground ? Appearance.colors.colLayer0 : "transparent"
+                                color: hugDecorators.solidColor
 
                                 corner: RoundCorner.CornerEnum.TopLeft
                                 states: State {
-                                    name: "bottom"
-                                    when: (Config.options?.bar?.bottom ?? false)
+                                    name: "right"
+                                    when: hugDecorators.isRight
                                     PropertyChanges {
                                         topCorner.corner: RoundCorner.CornerEnum.TopRight
                                     }
                                 }
                             }
+
+                            // Bottom corner - solid for Material/Inir
                             RoundCorner {
                                 id: bottomCorner
+                                visible: !hugDecorators.isAurora
                                 anchors {
                                     bottom: parent.bottom
-                                    left: !(Config.options?.bar?.bottom ?? false) ? parent.left : undefined
-                                    right: (Config.options?.bar?.bottom ?? false) ? parent.right : undefined
+                                    left: !hugDecorators.isRight ? parent.left : undefined
+                                    right: hugDecorators.isRight ? parent.right : undefined
                                 }
                                 implicitSize: Appearance.rounding.screenRounding
-                                color: showBarBackground ? Appearance.colors.colLayer0 : "transparent"
+                                color: hugDecorators.solidColor
 
                                 corner: RoundCorner.CornerEnum.BottomLeft
                                 states: State {
-                                    name: "bottom"
-                                    when: (Config.options?.bar?.bottom ?? false)
+                                    name: "right"
+                                    when: hugDecorators.isRight
                                     PropertyChanges {
                                         bottomCorner.corner: RoundCorner.CornerEnum.BottomRight
+                                    }
+                                }
+                            }
+
+                            // Aurora blur corners
+                            Loader {
+                                active: hugDecorators.isAurora
+                                anchors.fill: parent
+                                sourceComponent: Item {
+                                    id: auroraCorners
+
+                                    component AuroraBlurCorner: Item {
+                                        id: blurCorner
+                                        property int corner: RoundCorner.CornerEnum.TopLeft
+                                        property real cornerSize: Appearance.rounding.screenRounding
+
+                                        readonly property bool isLeft: corner === RoundCorner.CornerEnum.TopLeft || corner === RoundCorner.CornerEnum.BottomLeft
+                                        readonly property bool isTop: corner === RoundCorner.CornerEnum.TopLeft || corner === RoundCorner.CornerEnum.TopRight
+
+                                        width: cornerSize
+                                        height: cornerSize
+                                        clip: true
+
+                                        // Solid background matching BarContent
+                                        Rectangle {
+                                            anchors.fill: parent
+                                            color: ColorUtils.applyAlpha((barContent.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
+                                        }
+
+                                        // Blur background
+                                        Image {
+                                            id: blurImg
+                                            // Position relative to screen for vertical bar
+                                            x: hugDecorators.isRight
+                                                ? (-(barRoot.screen?.width ?? 1920) + Appearance.sizes.verticalBarWidth)
+                                                : (-Appearance.sizes.verticalBarWidth)
+                                            y: blurCorner.isTop ? 0 : -(barRoot.screen?.height ?? 1080) + blurCorner.cornerSize
+                                            width: barRoot.screen?.width ?? 1920
+                                            height: barRoot.screen?.height ?? 1080
+                                            source: Wallpapers.effectiveWallpaperUrl
+                                            fillMode: Image.PreserveAspectCrop
+                                            cache: true
+                                            asynchronous: true
+
+                                            layer.enabled: Appearance.effectsEnabled
+                                            layer.effect: StyledBlurEffect {
+                                                source: blurImg
+                                            }
+
+                                            Rectangle {
+                                                anchors.fill: parent
+                                                color: ColorUtils.transparentize((barContent.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
+                                            }
+                                        }
+
+                                        // Mask to corner shape
+                                        layer.enabled: true
+                                        layer.effect: GE.OpacityMask {
+                                            maskSource: RoundCorner {
+                                                width: blurCorner.width
+                                                height: blurCorner.height
+                                                implicitSize: blurCorner.cornerSize
+                                                corner: blurCorner.corner
+                                                color: "white"
+                                            }
+                                        }
+                                    }
+
+                                    AuroraBlurCorner {
+                                        anchors.left: !hugDecorators.isRight ? parent.left : undefined
+                                        anchors.right: hugDecorators.isRight ? parent.right : undefined
+                                        anchors.top: parent.top
+                                        corner: hugDecorators.isRight ? RoundCorner.CornerEnum.TopRight : RoundCorner.CornerEnum.TopLeft
+                                    }
+
+                                    AuroraBlurCorner {
+                                        anchors.left: !hugDecorators.isRight ? parent.left : undefined
+                                        anchors.right: hugDecorators.isRight ? parent.right : undefined
+                                        anchors.bottom: parent.bottom
+                                        corner: hugDecorators.isRight ? RoundCorner.CornerEnum.BottomRight : RoundCorner.CornerEnum.BottomLeft
                                     }
                                 }
                             }

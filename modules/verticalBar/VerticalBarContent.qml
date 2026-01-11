@@ -46,7 +46,7 @@ Item { // Bar content region
         color: root.separatorColor
     }
 
-    // Background shadow
+    // Background shadow - only for floating styles (cornerStyle 1 or 3), NOT for hug mode (0)
     Loader {
         active: Config.options.bar.showBackground && (Config.options.bar.cornerStyle === 1 || Config.options.bar.cornerStyle === 3) && !root.gameModeMinimal
         anchors.fill: barBackground
@@ -58,10 +58,13 @@ Item { // Bar content region
     // Background
     Rectangle {
         id: barBackground
-        readonly property bool floatingStyle: root.auroraEverywhere || Config.options.bar.cornerStyle === 1 || Config.options.bar.cornerStyle === 3
-        
+        // Floating style: cornerStyle 1 (floating) or 3 (card) - NOT 0 (hug)
+        // Aurora style forces floating appearance but hug mode should still work
+        readonly property bool floatingStyle: Config.options.bar.cornerStyle === 1 || Config.options.bar.cornerStyle === 3
+
         anchors {
             fill: parent
+            // Only add margins for floating styles, NOT for hug mode (cornerStyle 0)
             margins: floatingStyle ? Appearance.sizes.hyprlandGapsOut : 0
         }
         visible: Config.options.bar.showBackground && !root.gameModeMinimal
