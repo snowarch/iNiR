@@ -181,6 +181,8 @@ Item {
             source: Wallpapers.effectiveWallpaperUrl
             fillMode: Image.PreserveAspectCrop
             cache: true
+            smooth: true
+            mipmap: true
             asynchronous: true
 
             layer.enabled: Appearance.effectsEnabled
@@ -201,6 +203,9 @@ Item {
             source: root.displayedArtFilePath
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
+            cache: true
+            smooth: true
+            mipmap: true
             opacity: Appearance.inirEverywhere ? 0.15 : (Appearance.auroraEverywhere ? 0.2 : 0.5)
             visible: root.displayedArtFilePath !== ""
 
@@ -445,29 +450,15 @@ Item {
                     RippleButton {
                         id: playPauseButton
                         implicitWidth: 40; implicitHeight: 40
-                        buttonRadius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall
-                            : (root.player?.isPlaying ? Appearance.rounding.normal : Appearance.rounding.full)
-                        colBackground: Appearance.inirEverywhere ? "transparent"
-                            : Appearance.auroraEverywhere ? "transparent"
-                            : (root.player?.isPlaying
-                                ? (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
-                                : (blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer))
+                        buttonRadius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
+                        colBackground: "transparent"
                         colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
                             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                            : (root.player?.isPlaying
-                                ? (blendedColors?.colPrimaryHover ?? Appearance.colors.colPrimaryHover)
-                                : (blendedColors?.colSecondaryContainerHover ?? Appearance.colors.colSecondaryContainerHover))
+                            : Appearance.colors.colLayer1Hover
                         colRipple: Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
                             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
-                            : (root.player?.isPlaying
-                                ? (blendedColors?.colPrimaryActive ?? Appearance.colors.colPrimaryActive)
-                                : (blendedColors?.colSecondaryContainerActive ?? Appearance.colors.colSecondaryContainerActive))
+                            : Appearance.colors.colLayer1Active
                         onClicked: root.player?.togglePlaying()
-
-                        Behavior on buttonRadius {
-                            enabled: Appearance.animationsEnabled && !Appearance.inirEverywhere && !Appearance.auroraEverywhere
-                            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
-                        }
 
                         contentItem: Item {
                             MaterialSymbol {
@@ -476,9 +467,7 @@ Item {
                                 iconSize: 24; fill: 1
                                 color: Appearance.inirEverywhere ? root.inirPrimary
                                     : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer0
-                                    : (root.player?.isPlaying
-                                        ? (blendedColors?.colOnPrimary ?? Appearance.colors.colOnPrimary)
-                                        : (blendedColors?.colOnSecondaryContainer ?? Appearance.colors.colOnSecondaryContainer))
+                                    : Appearance.colors.colOnLayer1
                                 Behavior on color {
                                     enabled: Appearance.animationsEnabled
                                     animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
