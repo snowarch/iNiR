@@ -10,13 +10,38 @@ depends=(
   ydotool
   python-evdev
   python-pillow
-  
+
   # Backlight control
   brightnessctl
   ddcutil
   geoclue
-  
+
   # Idle management
   swayidle
   swaylock
+
+  # Screenshots & screen tools
+  grim
+  slurp
+
+  # Image processing
+  imagemagick
+
+  # Calculator widget
+  libqalculate
+
+  # Bluetooth
+  blueman
+
+  # KDE integration
+  kconfig  # provides kwriteconfig6
+
+  # OCR (optional but used by tools)
+  tesseract
+  tesseract-data-eng
+  tesseract-data-spa
+)
+optdepends=(
+  'hyprpicker: Color picker (Hyprland tool)'
+  'translate-shell: Translation widget'
 )

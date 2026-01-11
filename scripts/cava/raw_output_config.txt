@@ -4,6 +4,10 @@ framerate = 60
 autosens = 1
 bars = 50
 
+[input]
+method = pipewire
+source = auto
+
 [output]
 method = raw
 raw_target = /dev/stdout
@@ -13,4 +17,3 @@ mono_option = average
 
 [smoothing]
 noise_reduction = 20
-

@@ -28,6 +28,7 @@ ShellRoot {
     property var _weatherService: Weather
     property var _powerProfilePersistence: PowerProfilePersistence
     property var _voiceSearchService: VoiceSearch
+    property var _fontSyncService: FontSyncService
 
     Component.onCompleted: {
         root._log("[Shell] Initializing singletons");

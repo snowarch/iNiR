@@ -44,6 +44,13 @@ check_dependencies() {
         "magick:imagemagick"
         "uv:uv"
         "swaylock:swaylock"
+        "cava:cava"
+        "grim:grim"
+        "qalc:libqalculate"
+        "mpv:mpv"
+        "yt-dlp:yt-dlp"
+        "blueman-manager:blueman"
+        "kwriteconfig6:kconfig"
     )
     
     for item in "${cmds[@]}"; do

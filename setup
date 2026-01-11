@@ -47,6 +47,7 @@ source ./sdata/lib/migrations.sh
 source ./sdata/lib/robust-update.sh
 source ./sdata/lib/doctor.sh
 source ./sdata/lib/snapshots.sh
+source ./sdata/lib/uninstall.sh
 
 prevent_sudo_or_root
 
@@ -71,6 +72,7 @@ show_help() {
     tui_list_item "migrate     Review/apply config migrations"
     tui_list_item "doctor      Diagnose and fix problems"
     tui_list_item "rollback    Restore previous snapshot"
+    tui_list_item "uninstall   Remove iNiR from system"
     echo ""
     
     tui_subtitle "Options"
@@ -137,18 +139,19 @@ tui_menu() {
     local choice
     if $is_installed; then
         choice=$(tui_choose "What would you like to do?" \
-            "Update" "Migrate" "Doctor" "Rollback" "Reinstall" "Status" "Help" "Exit")
+            "Update" "Migrate" "Doctor" "Rollback" "Reinstall" "Uninstall" "Status" "Help" "Exit")
     else
         choice=$(tui_choose "What would you like to do?" \
             "Install" "Help" "Exit")
     fi
-    
+
     case "$choice" in
         Install|Reinstall) run_install ;;
         Update) run_update ;;
         Migrate) run_migrate ;;
         Doctor) run_doctor ;;
         Rollback) run_rollback ;;
+        Uninstall) run_uninstall ;;
         Status) show_status; read -p "Press Enter to continue..." ;;
         Help) show_help; read -p "Press Enter to continue..." ;;
         *) exit 0 ;;
@@ -469,6 +472,7 @@ while [[ $# -gt 0 ]]; do
         migrate) COMMAND="migrate"; shift ;;
         doctor) COMMAND="doctor"; shift ;;
         rollback) COMMAND="rollback"; shift ;;
+        uninstall) COMMAND="uninstall"; shift ;;
         status) COMMAND="status"; shift ;;
         -y|--yes) ask=false; shift ;;
         -q|--quiet) quiet=true; shift ;;
@@ -486,6 +490,7 @@ case "$COMMAND" in
     migrate) run_migrate ;;
     doctor) run_doctor ;;
     rollback) run_rollback ;;
+    uninstall) run_uninstall ;;
     status) show_status ;;
     "") tui_menu ;;
 esac

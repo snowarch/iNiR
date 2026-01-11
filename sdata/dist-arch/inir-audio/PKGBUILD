@@ -10,18 +10,25 @@ depends=(
   pipewire-pulse
   pipewire-alsa
   wireplumber
-  
+
   # Media control
   playerctl
   libdbusmenu-gtk3
   pavucontrol
-  
-  # Optional but included
-  cava         # Audio visualizer widget
-  easyeffects  # Audio effects toggle
+
+  # Audio visualizer
+  cava
+
+  # Audio effects
+  easyeffects
+
+  # Media playback
+  mpv
+  yt-dlp
 )
 optdepends=(
   'pipewire-jack: JACK compatibility layer for PipeWire'
   'jack2: Standalone JACK audio server (conflicts with pipewire-jack)'
+  'plasma-browser-integration: Browser media integration for KDE'
 )
 
