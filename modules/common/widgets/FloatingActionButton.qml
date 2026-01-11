@@ -15,10 +15,18 @@ RippleButton {
     implicitWidth: expanded ? (Math.max(contentRowLayout.implicitWidth + 10 * 2, baseSize)) : baseSize
     implicitHeight: baseSize
     buttonRadius: baseSize / 14 * 4
-    colBackground: Appearance.colors.colPrimaryContainer
-    colBackgroundHover: Appearance.colors.colPrimaryContainerHover
-    colRipple: Appearance.colors.colPrimaryContainerActive
-    property color colOnBackground: Appearance.colors.colOnPrimaryContainer
+    colBackground: Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainer
+                 : Appearance.auroraEverywhere ? Appearance.m3colors.m3primaryContainer
+                 : Appearance.colors.colPrimaryContainer
+    colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainerHover
+                      : Appearance.auroraEverywhere ? Appearance.m3colors.m3primaryContainer
+                      : Appearance.colors.colPrimaryContainerHover
+    colRipple: Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainerActive
+             : Appearance.auroraEverywhere ? Appearance.m3colors.m3primaryContainer
+             : Appearance.colors.colPrimaryContainerActive
+    property color colOnBackground: Appearance.inirEverywhere ? Appearance.inir.colOnPrimaryContainer
+                                  : Appearance.auroraEverywhere ? Appearance.m3colors.m3onPrimaryContainer
+                                  : Appearance.colors.colOnPrimaryContainer
     contentItem: Row {
         id: contentRowLayout
         property real horizontalMargins: (root.baseSize - icon.width) / 2
@@ -54,7 +62,7 @@ RippleButton {
                         verticalCenter: parent.verticalCenter
                     }
                     text: root.buttonText
-                    color: Appearance.colors.colOnPrimaryContainer
+                    color: root.colOnBackground
                     font.pixelSize: Appearance.font.pixelSize.small
                     font.weight: 450
                 }
