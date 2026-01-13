@@ -9,8 +9,12 @@
 .kiro/
 .opencode/
 .claude/
+hooks/
 AGENTS.md
 **/AGENTS.md
+CLAUDE.md
+**/CLAUDE.md
+prompts/
 
 # WIP documentation (not for distribution)
 docs/*_IMPLEMENTATION.md
@@ -66,4 +70,3 @@ debug_*.py
 .DS_Store
 Thumbs.db
 *.desktop.bak
-CLAUDE.md
