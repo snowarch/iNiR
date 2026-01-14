@@ -406,16 +406,17 @@ mkdir -p "$FONT_DIR"
 if ! fc-list | grep -qi "Material Symbols"; then
   echo -e "${STY_BLUE}[$0]: Downloading Material Symbols font...${STY_RST}"
   
-  MATERIAL_URL="https://github.com/ArtifexSoftware/mupdf/raw/master/resources/fonts/noto/NotoSans-Regular.ttf"
+  # Direct download from Google Fonts GitHub repo
+  MATERIAL_URL="https://github.com/google/material-design-icons/raw/master/variablefont/MaterialSymbolsOutlined%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf"
   
-  # Try Google's Material Symbols repo
-  curl -fsSL -o "$FONT_DIR/MaterialSymbolsOutlined[FILL,GRAD,opsz,wght].ttf" \
-    "https://github.com/ArtifexSoftware/mupdf/raw/master/resources/fonts/noto/NotoSans-Regular.ttf" 2>/dev/null || {
+  if curl -fsSL -o "$FONT_DIR/MaterialSymbolsOutlined[FILL,GRAD,opsz,wght].ttf" "$MATERIAL_URL"; then
+    fc-cache -f "$FONT_DIR" 2>/dev/null
+    echo -e "${STY_GREEN}[$0]: Material Symbols font installed.${STY_RST}"
+  else
     echo -e "${STY_YELLOW}[$0]: Could not download Material Symbols automatically.${STY_RST}"
-    echo -e "${STY_YELLOW}Please install ttf-material-symbols-variable-git or download from: https://fonts.google.com/icons${STY_RST}"
-  }
-  
-  fc-cache -f "$FONT_DIR" 2>/dev/null
+    echo -e "${STY_YELLOW}Please download from: https://fonts.google.com/icons${STY_RST}"
+    echo -e "${STY_YELLOW}Or on Arch: yay -S ttf-material-symbols-variable-git${STY_RST}"
+  fi
 fi
 
 # JetBrains Mono Nerd Font (if not installed via dnf)
