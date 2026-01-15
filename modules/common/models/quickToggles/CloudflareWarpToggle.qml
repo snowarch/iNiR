@@ -25,7 +25,7 @@ QuickToggleModel {
         fetchActiveState.running = false;
         fetchActiveState.running = true;
     }
-    
+
     mainAction: () => {
         if (!root._daemonRunning) {
             startServiceProc.running = true;
@@ -60,7 +60,7 @@ QuickToggleModel {
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0) {
                 Quickshell.execDetached([root.notifySendPath,
-                    Translation.tr("Cloudflare WARP"), 
+                    Translation.tr("Cloudflare WARP"),
                     Translation.tr("Connection failed. Please inspect manually with the <tt>warp-cli</tt> command")
                     , "-a", "Shell"
                 ])
@@ -78,7 +78,7 @@ QuickToggleModel {
                 connectProc.running = true
             } else {
                 Quickshell.execDetached([root.notifySendPath,
-                    Translation.tr("Cloudflare WARP"), 
+                    Translation.tr("Cloudflare WARP"),
                     Translation.tr("Registration failed. Please inspect manually with the <tt>warp-cli</tt> command"),
                     "-a", "Shell"
                 ])
@@ -90,6 +90,7 @@ QuickToggleModel {
         id: fetchActiveState
         running: false
         command: [root.warpCliPath, "status"]
+
         stdout: StdioCollector {
             id: warpStatusCollector
             onStreamFinished: {
@@ -112,6 +113,15 @@ QuickToggleModel {
                 } else if (out.includes("Disconnected")) {
                     root.toggled = false
                 }
+            }
+        }
+
+        onExited: (exitCode, exitStatus) => {
+            // If warp-cli doesn't exist, process fails silently
+            // Disable toggle in that case
+            if (exitCode !== 0) {
+                root.available = false
+                root._daemonRunning = false
             }
         }
     }

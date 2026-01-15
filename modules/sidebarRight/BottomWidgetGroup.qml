@@ -16,7 +16,7 @@ Rectangle {
     id: root
     radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
     color: Appearance.inirEverywhere ? Appearance.inir.colLayer1
-         : Appearance.auroraEverywhere ? "transparent" 
+         : Appearance.auroraEverywhere ? "transparent"
          : Appearance.colors.colLayer1
     border.width: Appearance.inirEverywhere ? 1 : 0
     border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
@@ -26,7 +26,7 @@ Rectangle {
     property int selectedTab: Persistent.states?.sidebar?.bottomGroup?.tab ?? 0
     property bool collapsed: Persistent.states?.sidebar?.bottomGroup?.collapsed ?? false
     property var allTabs: [
-        {"type": "calendar", "name": Translation.tr("Calendar"), "icon": "calendar_month", "widget": calendarWidget}, 
+        {"type": "calendar", "name": Translation.tr("Calendar"), "icon": "calendar_month", "widget": calendarWidget},
         {"type": "todo", "name": Translation.tr("To Do"), "icon": "done_outline", "widget": todoWidget},
         {"type": "notepad", "name": Translation.tr("Notepad"), "icon": "edit_note", "widget": notepadWidget},
         {"type": "calculator", "name": Translation.tr("Calc"), "icon": "calculate", "widget": calculatorWidget},
@@ -44,7 +44,7 @@ Rectangle {
         root.configVersion // Force dependency
         return Config.options?.sidebar?.right?.enabledWidgets ?? ["calendar", "todo", "notepad", "calculator", "sysmon", "timer"]
     }
-    
+
     property var tabs: allTabs.filter(tab => enabledWidgets.includes(tab.type))
 
     property string currentTabType: ""
@@ -64,13 +64,13 @@ Rectangle {
                 return
             }
         }
-        
+
         // If not found or no previous selection, clamp index
         const currentTab = Persistent.states?.sidebar?.bottomGroup?.tab ?? 0
         if (currentTab >= tabs.length) {
             Persistent.states.sidebar.bottomGroup.tab = Math.max(0, tabs.length - 1)
         }
-        
+
         // Update current type for the new selection (fallback)
         const safeTab = Persistent.states?.sidebar?.bottomGroup?.tab ?? 0
         if (tabs[safeTab]) {
@@ -146,7 +146,7 @@ Rectangle {
         }
 
         spacing: 15
-        
+
         CalendarHeaderButton {
             Layout.margins: 10
             Layout.rightMargin: 0
@@ -190,10 +190,9 @@ Rectangle {
             }
         }
 
-        anchors.fill: parent 
-        height: tabStack.height
+        anchors.fill: parent
         spacing: 10
-        
+
         // Navigation rail
         Item {
             Layout.fillHeight: true
@@ -201,7 +200,7 @@ Rectangle {
             Layout.leftMargin: 10
             Layout.topMargin: 10
             // Original width was tabBar.width (56). We need to account for leftMargin of 5 inside.
-            width: tabBar.implicitWidth + 5 
+            width: tabBar.implicitWidth + 5
 
             // Collapse button (Fixed at top)
             CalendarHeaderButton {
@@ -231,19 +230,19 @@ Rectangle {
                 anchors.bottom: parent.bottom
                 anchors.left: parent.left
                 anchors.right: parent.right
-                
+
                 contentHeight: tabColumn.implicitHeight
                 clip: true
                 interactive: true
-                
+
                 ColumnLayout {
                     id: tabColumn
                     width: parent.width
                     spacing: 0
-                    
+
                     // Spacer to center vertically when content is small
-                    Item { 
-                        Layout.fillHeight: true 
+                    Item {
+                        Layout.fillHeight: true
                         visible: railFlickable.contentHeight < railFlickable.height
                     }
 
@@ -252,7 +251,7 @@ Rectangle {
                         Layout.alignment: Qt.AlignLeft
                         Layout.leftMargin: 5
                         // Override default topMargin of 25 to restore original vertical positioning
-                        Layout.topMargin: 0 
+                        Layout.topMargin: 0
                         currentIndex: root.selectedTab
                         expanded: false
                         Repeater {
@@ -270,8 +269,8 @@ Rectangle {
                     }
 
                     // Spacer to center vertically when content is small
-                    Item { 
-                        Layout.fillHeight: true 
+                    Item {
+                        Layout.fillHeight: true
                         visible: railFlickable.contentHeight < railFlickable.height
                     }
                 }
@@ -348,18 +347,18 @@ Rectangle {
                     opacity: (tabStack.currentIndex === tabItem.tabIndex && tabStack.realIndex === tabItem.tabIndex) ? 1 : 0
                     // Y: animate both outgoing and incoming tabs
                     y: (tabStack.realIndex === tabItem.tabIndex) ? 0 : (tabStack.realIndex < tabItem.tabIndex) ? animDistance : -animDistance
-                    Behavior on opacity { 
-                        NumberAnimation { 
+                    Behavior on opacity {
+                        NumberAnimation {
                             duration: tabStack.animationDuration / 2
-                            easing.type: Easing.OutCubic 
-                        } 
+                            easing.type: Easing.OutCubic
+                        }
                     }
-                    Behavior on y { 
+                    Behavior on y {
                         enabled: Appearance.animationsEnabled
-                        NumberAnimation { 
+                        NumberAnimation {
                             duration: tabStack.animationDuration
-                            easing.type: Easing.OutExpo 
-                        } 
+                            easing.type: Easing.OutExpo
+                        }
                     }
                     Loader {
                         id: tabLoader

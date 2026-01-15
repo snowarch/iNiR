@@ -25,7 +25,7 @@ ContentPage {
 
         SettingsGroup {
             id: themesGroup
-            
+
             property string searchQuery: ""
             property int selectedTab: 0  // 0=All, 1=Dark, 2=Light
             property string selectedTag: ""  // Single active tag filter
@@ -127,7 +127,7 @@ ContentPage {
                             text: "close"
                             iconSize: 12
                             color: Appearance.colors.colSubtext
-                            
+
                             MouseArea {
                                 anchors.fill: parent
                                 anchors.margins: -4
@@ -144,7 +144,7 @@ ContentPage {
                     height: 32
                     radius: 16
                     color: Config.options?.appearance?.softenColors ? Appearance.m3colors.m3primary : Appearance.colors.colLayer1
-                    
+
                     MaterialSymbol {
                         anchors.centerIn: parent
                         text: "opacity"
@@ -164,14 +164,14 @@ ContentPage {
                             ThemeService.regenerateAutoTheme()
                         }
                     }
-                    
+
                     StyledToolTip { text: Translation.tr("Soften colors (less intense)"); visible: softenMouse.containsMouse }
                 }
 
                 // Tab pills
                 Row {
                     spacing: 4
-                    
+
                     Repeater {
                         model: [
                             { icon: "apps", tip: "All" },
@@ -182,20 +182,20 @@ ContentPage {
                         Rectangle {
                             required property var modelData
                             required property int index
-                            
+
                             width: 28
                             height: 28
                             radius: 14
-                            color: themesGroup.selectedTab === index 
-                                ? Appearance.m3colors.m3primary 
+                            color: themesGroup.selectedTab === index
+                                ? Appearance.m3colors.m3primary
                                 : tabMouse.containsMouse ? Appearance.colors.colLayer1Hover : Appearance.colors.colLayer1
 
                             MaterialSymbol {
                                 anchors.centerIn: parent
                                 text: modelData.icon
                                 iconSize: 14
-                                color: themesGroup.selectedTab === index 
-                                    ? Appearance.m3colors.m3onPrimary 
+                                color: themesGroup.selectedTab === index
+                                    ? Appearance.m3colors.m3onPrimary
                                     : Appearance.colors.colOnLayer1
                             }
 
@@ -219,23 +219,23 @@ ContentPage {
                 Layout.fillWidth: true
                 Layout.topMargin: 6
                 spacing: 4
-                
+
                 property bool hovered: false
-                
+
                 Repeater {
                     // Filter tags based on selectedTab (exclude dark/light since we have tabs)
                     model: ThemePresets.availableTags.filter(t => t.id !== "dark" && t.id !== "light")
 
                     Rectangle {
                         required property var modelData
-                        
+
                         readonly property bool isActive: themesGroup.selectedTag === modelData.id
-                        
+
                         width: tagRow.implicitWidth + 12
                         height: 24
                         radius: 12
-                        color: isActive ? Appearance.colors.colPrimaryContainer 
-                             : tagMouse.containsMouse ? Appearance.colors.colLayer1Hover 
+                        color: isActive ? Appearance.colors.colPrimaryContainer
+                             : tagMouse.containsMouse ? Appearance.colors.colLayer1Hover
                              : Appearance.colors.colLayer1
 
                         RowLayout {
@@ -266,7 +266,7 @@ ContentPage {
                         }
                     }
                 }
-                
+
                 // Clear tag button
                 Rectangle {
                     visible: themesGroup.selectedTag.length > 0
@@ -419,7 +419,7 @@ ContentPage {
                         Rectangle {
                             required property var modelData
                             required property int index
-                            
+
                             width: (parent.width - 28) / 8
                             height: 28
                             radius: 6
@@ -698,7 +698,7 @@ ContentPage {
                     from: 0; to: 23
                     value: parseInt((Config.options?.appearance?.themeSchedule?.dayStart ?? "06:00").split(":")[0]) || 6
                     textFromValue: (v) => v.toString().padStart(2, '0')
-                    onValueModified: Config.setNestedValue("appearance.themeSchedule.dayStart", 
+                    onValueModified: Config.setNestedValue("appearance.themeSchedule.dayStart",
                         `${textFromValue(value)}:${dayMinSpin.textFromValue(dayMinSpin.value)}`)
                 }
                 StyledText { text: ":"; font.pixelSize: Appearance.font.pixelSize.large; color: Appearance.colors.colSubtext }
@@ -777,7 +777,7 @@ ContentPage {
                         Layout.fillWidth: true
                         height: 24
                         radius: index === 0 ? 4 : (index === 15 ? 4 : 0)
-                        
+
                         // Preview colors based on current settings
                         color: {
                             const isDark = Appearance.m3colors.darkmode;
@@ -785,13 +785,13 @@ ContentPage {
                             const sat = adj.saturation ?? 0.40;
                             const bright = adj.brightness ?? 0.55;
                             const harmony = adj.harmony ?? 0.15;
-                            
+
                             // Simplified preview - actual generation is more complex
                             if (index === 0) return Appearance.m3colors.m3surfaceContainerLowest;
                             if (index === 7) return Appearance.m3colors.m3onSurfaceVariant;
                             if (index === 8) return Appearance.m3colors.m3outline;
                             if (index === 15) return Appearance.m3colors.m3onBackground;
-                            
+
                             // Semantic colors with approximate hues
                             const hues = [0, 0.98, 0.36, 0.12, 0.58, 0.85, 0.48, 0, 0, 0.98, 0.36, 0.12, 0.58, 0.85, 0.48, 0];
                             const isBright = index >= 9;
@@ -802,7 +802,7 @@ ContentPage {
 
                         StyledToolTip {
                             text: ["black", "red", "green", "yellow", "blue", "magenta", "cyan", "white",
-                                   "bright black", "bright red", "bright green", "bright yellow", 
+                                   "bright black", "bright red", "bright green", "bright yellow",
                                    "bright blue", "bright magenta", "bright cyan", "bright white"][index]
                             visible: previewMouse.containsMouse
                         }
@@ -814,6 +814,14 @@ ContentPage {
                         }
                     }
                 }
+            }
+
+            // Debounce timer for terminal color regeneration
+            // Waits for config to be saved to disk before regenerating
+            Timer {
+                id: terminalColorDebounce
+                interval: 300  // Config write delay is 50ms, add extra buffer for disk I/O
+                onTriggered: ThemeService.regenerateAutoTheme()
             }
 
             // Saturation slider
@@ -830,7 +838,7 @@ ContentPage {
                 onValueChanged: {
                     if (!_ready) return;
                     Config.setNestedValue("appearance.wallpaperTheming.terminalColorAdjustments.saturation", value / 100);
-                    ThemeService.regenerateAutoTheme();
+                    terminalColorDebounce.restart();
                 }
             }
 
@@ -848,7 +856,7 @@ ContentPage {
                 onValueChanged: {
                     if (!_ready) return;
                     Config.setNestedValue("appearance.wallpaperTheming.terminalColorAdjustments.brightness", value / 100);
-                    ThemeService.regenerateAutoTheme();
+                    terminalColorDebounce.restart();
                 }
             }
 
@@ -866,7 +874,7 @@ ContentPage {
                 onValueChanged: {
                     if (!_ready) return;
                     Config.setNestedValue("appearance.wallpaperTheming.terminalColorAdjustments.harmony", value / 100);
-                    ThemeService.regenerateAutoTheme();
+                    terminalColorDebounce.restart();
                 }
             }
 
@@ -1264,7 +1272,7 @@ ContentPage {
                 font.weight: Font.Medium
             }
             IconThemeSelector { mode: "system" }
-            
+
             StyledText {
                 Layout.fillWidth: true
                 Layout.topMargin: 12
