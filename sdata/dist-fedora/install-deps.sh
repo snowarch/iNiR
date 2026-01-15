@@ -583,6 +583,70 @@ fi
 fc-cache -f "$FONT_DIR" 2>/dev/null
 
 #####################################################################################
+# Install CLI tools (starship, eza)
+#####################################################################################
+echo -e "${STY_CYAN}[$0]: Installing CLI tools...${STY_RST}"
+
+# Starship prompt
+if ! command -v starship &>/dev/null; then
+  echo -e "${STY_BLUE}[$0]: Installing Starship prompt...${STY_RST}"
+  mkdir -p ~/.local/bin
+  curl -sS https://starship.rs/install.sh | sh -s -- -y -b ~/.local/bin 2>/dev/null || \
+    echo -e "${STY_YELLOW}[$0]: Could not install Starship.${STY_RST}"
+fi
+
+# Eza (modern ls replacement)
+if ! command -v eza &>/dev/null; then
+  echo -e "${STY_BLUE}[$0]: Installing Eza...${STY_RST}"
+  mkdir -p ~/.local/bin
+  if curl -fsSL -o /tmp/eza.tar.gz \
+    'https://github.com/eza-community/eza/releases/latest/download/eza_x86_64-unknown-linux-musl.tar.gz'; then
+    tar -xzf /tmp/eza.tar.gz -C ~/.local/bin
+    chmod +x ~/.local/bin/eza
+    echo -e "${STY_GREEN}[$0]: Eza installed.${STY_RST}"
+  fi
+  rm -f /tmp/eza.tar.gz
+fi
+
+#####################################################################################
+# Install adw-gtk3 theme
+#####################################################################################
+echo -e "${STY_CYAN}[$0]: Installing GTK themes...${STY_RST}"
+
+if ! rpm -q adw-gtk3-theme &>/dev/null; then
+  v sudo dnf install -y adw-gtk3-theme
+fi
+
+#####################################################################################
+# Install polkit-e (for authentication dialogs)
+#####################################################################################
+echo -e "${STY_CYAN}[$0]: Installing polkit agent...${STY_RST}"
+
+if ! rpm -q polkit-kde &>/dev/null; then
+  v sudo dnf install -y polkit-kde
+fi
+
+#####################################################################################
+# Setup configuration files
+#####################################################################################
+echo -e "${STY_CYAN}[$0]: Setting up configuration files...${STY_RST}"
+
+# GTK configuration
+setup-gtk-config "Bibata-Modern-Classic" "WhiteSur-dark" "adw-gtk3-dark" "Geist"
+
+# Kvantum configuration
+setup-kvantum-config "MaterialAdw"
+
+# Environment variables
+setup-environment-config "Bibata-Modern-Classic"
+
+# Foot terminal configuration
+setup-foot-config
+
+# Fish shell configuration
+setup-fish-config
+
+#####################################################################################
 # Python environment setup
 #####################################################################################
 showfun install-python-packages
@@ -601,16 +665,30 @@ echo "  - quickshell (errornointernet/quickshell)"
 echo "  - niri (yalter/niri)"
 echo ""
 echo -e "${STY_CYAN}Installed from GitHub releases:${STY_RST}"
-echo "  - gum, cliphist, matugen, darkly"
+echo "  - gum, cliphist, matugen, darkly, starship, eza"
+echo ""
+echo -e "${STY_CYAN}Themes configured:${STY_RST}"
+echo "  - GTK: adw-gtk3-dark"
+echo "  - Icons: WhiteSur-dark, MacTahoe"
+echo "  - Cursor: Bibata-Modern-Classic"
+echo "  - Qt/Kvantum: MaterialAdw + Darkly"
 echo ""
 
 # Verify critical commands
 echo -e "${STY_CYAN}Verifying installation:${STY_RST}"
-for cmd in qs niri fish gum; do
-  if command -v "$cmd" &>/dev/null; then
+for cmd in qs niri fish gum matugen cliphist starship eza; do
+  if command -v "$cmd" &>/dev/null || command -v ~/.local/bin/$cmd &>/dev/null; then
     echo -e "  ${STY_GREEN}✓${STY_RST} $cmd"
   else
     echo -e "  ${STY_RED}✗${STY_RST} $cmd (not found)"
   fi
 done
+echo ""
+
+# Detect and show polkit agent path
+POLKIT_AGENT=$(get-polkit-agent 2>/dev/null)
+if [[ -n "$POLKIT_AGENT" ]]; then
+  echo -e "${STY_CYAN}Polkit agent:${STY_RST} $POLKIT_AGENT"
+  echo -e "${STY_YELLOW}Note: Update your niri config spawn-at-startup if different.${STY_RST}"
+fi
 echo ""

@@ -359,7 +359,7 @@ switch() {
     fi
 
     matugen "${matugen_args[@]}"
-    source "${ILLOGICAL_IMPULSE_VIRTUAL_ENV}/bin/activate"
+    source "$(eval echo $ILLOGICAL_IMPULSE_VIRTUAL_ENV)/bin/activate" 2>/dev/null || true
     
     # Generate colors with soften applied (overwrites matugen's colors.json if soften is enabled)
     generate_colors_material_args+=(--json-output "$STATE_DIR/user/generated/colors.json")
@@ -375,7 +375,7 @@ switch() {
     fi
     
     "$SCRIPT_DIR"/applycolor.sh
-    deactivate
+    deactivate 2>/dev/null || true
 
     # Pass screen width, height, and wallpaper path to post_process
     read max_width_desired max_height_desired <<< "$(get_max_monitor_resolution)"
@@ -405,9 +405,9 @@ main() {
 
     detect_scheme_type_from_image() {
         local img="$1"
-        source "$(eval echo $ILLOGICAL_IMPULSE_VIRTUAL_ENV)/bin/activate"
+        source "$(eval echo $ILLOGICAL_IMPULSE_VIRTUAL_ENV)/bin/activate" 2>/dev/null || true
         "$SCRIPT_DIR"/scheme_for_image.py "$img" 2>/dev/null | tr -d '\n'
-        deactivate
+        deactivate 2>/dev/null || true
     }
 
     while [[ $# -gt 0 ]]; do

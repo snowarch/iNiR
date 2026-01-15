@@ -87,15 +87,27 @@ Scope {
         Item {
             id: wizardCard
             anchors.centerIn: parent
-            width: Math.min(780, parent.width - 60)
-            height: Math.min(620, parent.height - 60)
+            width: Math.min(920, parent.width - 80)
+            height: Math.min(720, parent.height - 80)
             focus: true
 
-            // Entrance animation
-            scale: root.wizardVisible ? 1 : 0.9
+            // Entrance animation - using project animation system
+            scale: root.wizardVisible ? 1 : 0.95
             opacity: root.wizardVisible ? 1 : 0
-            Behavior on scale { NumberAnimation { duration: 350; easing.type: Easing.OutCubic } }
-            Behavior on opacity { NumberAnimation { duration: 250 } }
+            Behavior on scale {
+                NumberAnimation {
+                    duration: Appearance.animation.elementMoveEnter.duration
+                    easing.type: Appearance.animation.elementMoveEnter.type
+                    easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
+                }
+            }
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: Appearance.animation.elementMoveEnter.duration
+                    easing.type: Appearance.animation.elementMoveEnter.type
+                    easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
+                }
+            }
 
             // Keyboard navigation
             Keys.onEscapePressed: root.finish()
@@ -114,22 +126,21 @@ Scope {
             Rectangle {
                 id: cardBg
                 anchors.fill: parent
-                clip: true
-                
+
                 radius: Appearance.inirEverywhere ? Appearance.inir.roundingLarge
                       : Appearance.rounding.large
-                
+
                 // Base color
                 color: Appearance.inirEverywhere ? Appearance.inir.colLayer1
                      : Appearance.auroraEverywhere ? "transparent"
                      : Appearance.colors.colLayer1
-                
+
                 border.width: Appearance.inirEverywhere ? 1 : (Appearance.auroraEverywhere ? 0 : 1)
                 border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder
                             : Appearance.colors.colLayer0Border
 
-                Behavior on color { ColorAnimation { duration: 200 } }
-                Behavior on border.color { ColorAnimation { duration: 200 } }
+                Behavior on color { ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+                Behavior on border.color { ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
 
                 // Aurora: Wallpaper blur inside card
                 Image {
@@ -137,17 +148,17 @@ Scope {
                     anchors.fill: parent
                     source: Config.options?.background?.wallpaperPath ?? ""
                     fillMode: Image.PreserveAspectCrop
-                    
+
                     // Position to align with background wallpaper
                     x: -wizardCard.x
                     y: -wizardCard.y
                     width: wizardPanel.width
                     height: wizardPanel.height
-                    
+
                     layer.enabled: Appearance.effectsEnabled
                     layer.effect: FastBlur { radius: 40 }
                 }
-                
+
                 // Aurora: Tinted overlay
                 Rectangle {
                     anchors.fill: parent
@@ -155,12 +166,28 @@ Scope {
                     radius: parent.radius
                     color: ColorUtils.transparentize(Appearance.colors.colLayer1Base, 0.25)
                 }
+
+                // Block clicks from propagating to background MouseArea
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: (event) => event.accepted = true
+                }
+
+                // Clip content to rounded corners
+                layer.enabled: true
+                layer.effect: OpacityMask {
+                    maskSource: Rectangle {
+                        width: cardBg.width
+                        height: cardBg.height
+                        radius: cardBg.radius
+                    }
+                }
             }
 
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: 28
-                spacing: 20
+                anchors.margins: 36
+                spacing: 24
 
                 // Header with step indicator
                 ColumnLayout {
@@ -181,19 +208,24 @@ Scope {
                                 Rectangle {
                                     id: stepCircle
                                     width: 38; height: 38; radius: 19
-                                    
+
                                     color: index < root.currentStep ? Appearance.colors.colPrimary
                                          : index === root.currentStep ? Appearance.colors.colPrimaryContainer
                                          : Appearance.colors.colLayer2
-                                    
+
                                     border.width: index === root.currentStep ? 2 : 0
                                     border.color: Appearance.colors.colPrimary
-                                    
-                                    Behavior on color { ColorAnimation { duration: 200 } }
-                                    Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutBack } }
-                                    Behavior on border.width { NumberAnimation { duration: 150 } }
-                                    
-                                    scale: index === root.currentStep ? 1.15 : 1.0
+
+                                    Behavior on color { ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+                                    Behavior on scale {
+                                        NumberAnimation {
+                                            duration: Appearance.animation.elementMove.duration
+                                            easing.type: Easing.OutBack
+                                        }
+                                    }
+                                    Behavior on border.width { NumberAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+
+                                    scale: index === root.currentStep ? 1.12 : 1.0
 
                                     MaterialSymbol {
                                         anchors.centerIn: parent
@@ -202,8 +234,8 @@ Scope {
                                         color: index < root.currentStep ? Appearance.colors.colOnPrimary
                                              : index === root.currentStep ? Appearance.colors.colOnPrimaryContainer
                                              : Appearance.colors.colOnLayer2
-                                        
-                                        Behavior on iconSize { NumberAnimation { duration: 150 } }
+
+                                        Behavior on iconSize { NumberAnimation { duration: Appearance.animation.elementMoveFast.duration } }
                                     }
                                 }
 
@@ -212,19 +244,25 @@ Scope {
                                     visible: index < root.steps.length - 1
                                     width: 36; height: 4
                                     anchors.verticalCenter: parent.verticalCenter
-                                    
+
                                     Rectangle {
                                         anchors.fill: parent
                                         radius: 2
                                         color: Appearance.colors.colLayer2
                                     }
-                                    
+
                                     Rectangle {
                                         height: parent.height
                                         radius: 2
                                         color: Appearance.colors.colPrimary
                                         width: index < root.currentStep ? parent.width : 0
-                                        Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+                                        Behavior on width {
+                                            NumberAnimation {
+                                                duration: Appearance.animation.elementMove.duration
+                                                easing.type: Appearance.animation.elementMove.type
+                                                easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -260,39 +298,110 @@ Scope {
                     StackLayout {
                         id: stepStack
                         anchors.fill: parent
+                        anchors.topMargin: 8
                         currentIndex: root.currentStep
-                        
-                        // Step transition
+
+                        // Step transition - improved with scale and better easing
                         property int prevStep: 0
                         onCurrentIndexChanged: {
                             stepAnim.direction = currentIndex > prevStep ? 1 : -1
                             stepAnim.restart()
                             prevStep = currentIndex
                         }
-                        
+
                         opacity: 1
+                        scale: 1
                         transform: Translate { id: stepTranslate; x: 0 }
-                        
+
                         ParallelAnimation {
                             id: stepAnim
                             property int direction: 1
-                            
+                            property int moveDuration: Appearance.animation.elementMove.duration
+
+                            // Fade + scale out, then fade + scale in
                             SequentialAnimation {
-                                NumberAnimation { target: stepStack; property: "opacity"; to: 0.3; duration: 80 }
-                                NumberAnimation { target: stepStack; property: "opacity"; to: 1; duration: 150 }
+                                ParallelAnimation {
+                                    NumberAnimation { 
+                                        target: stepStack; property: "opacity"; to: 0
+                                        duration: stepAnim.moveDuration * 0.35
+                                        easing.type: Easing.OutCubic
+                                    }
+                                    NumberAnimation { 
+                                        target: stepStack; property: "scale"; to: 0.96
+                                        duration: stepAnim.moveDuration * 0.35
+                                        easing.type: Easing.OutCubic
+                                    }
+                                }
+                                ParallelAnimation {
+                                    NumberAnimation { 
+                                        target: stepStack; property: "opacity"; to: 1
+                                        duration: stepAnim.moveDuration * 0.65
+                                        easing.type: Easing.OutCubic
+                                    }
+                                    NumberAnimation { 
+                                        target: stepStack; property: "scale"; to: 1
+                                        duration: stepAnim.moveDuration * 0.65
+                                        easing.type: Easing.OutBack
+                                        easing.overshoot: 1.2
+                                    }
+                                }
                             }
+
+                            // Slide animation with improved easing
                             SequentialAnimation {
-                                NumberAnimation { target: stepTranslate; property: "x"; to: stepAnim.direction * -20; duration: 80; easing.type: Easing.InQuad }
-                                PropertyAction { target: stepTranslate; property: "x"; value: stepAnim.direction * 20 }
-                                NumberAnimation { target: stepTranslate; property: "x"; to: 0; duration: 150; easing.type: Easing.OutCubic }
+                                NumberAnimation { 
+                                    target: stepTranslate; property: "x"
+                                    to: stepAnim.direction * -30
+                                    duration: stepAnim.moveDuration * 0.35
+                                    easing.type: Easing.OutCubic
+                                }
+                                PropertyAction { 
+                                    target: stepTranslate; property: "x"
+                                    value: stepAnim.direction * 30
+                                }
+                                NumberAnimation { 
+                                    target: stepTranslate; property: "x"; to: 0
+                                    duration: stepAnim.moveDuration * 0.65
+                                    easing.type: Easing.OutCubic
+                                }
                             }
                         }
 
-                        WelcomeContent {}
-                        ThemeContent {}
-                        LayoutContent {}
-                        FeaturesContent {}
-                        ReadyContent {}
+                        Item {
+                            WelcomeContent {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                anchors.top: parent.top
+                                anchors.bottom: parent.bottom
+                            }
+                        }
+                        Item {
+                            ThemeContent {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                anchors.top: parent.top
+                                anchors.bottom: parent.bottom
+                            }
+                        }
+                        Item {
+                            LayoutContent {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                anchors.top: parent.top
+                                anchors.bottom: parent.bottom
+                            }
+                        }
+                        Item {
+                            FeaturesContent {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                anchors.top: parent.top
+                                anchors.bottom: parent.bottom
+                            }
+                        }
+                        Item {
+                            ReadyContent {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                anchors.top: parent.top
+                                anchors.bottom: parent.bottom
+                            }
+                        }
                     }
                 }
 
@@ -315,7 +424,7 @@ Scope {
                     RowLayout {
                         spacing: 6
                         opacity: 0.6
-                        
+
                         Row {
                             spacing: 2
                             KeyboardKey { key: "←" }
@@ -354,15 +463,16 @@ Scope {
     // ═══════════════════════════════════════════════════════════════════════
 
     component WelcomeContent: ColumnLayout {
-        spacing: 20
+        width: 600
+        spacing: 24
 
-        Item { Layout.fillHeight: true; Layout.maximumHeight: 20 }
+        Item { Layout.fillHeight: true }
 
         MaterialShapeWrappedMaterialSymbol {
             Layout.alignment: Qt.AlignHCenter
             text: "waving_hand"
-            iconSize: 52
-            padding: 16
+            iconSize: 56
+            padding: 18
             shape: MaterialShape.Shape.Cookie4Sided
             color: Appearance.colors.colPrimaryContainer
             colSymbol: Appearance.colors.colOnPrimaryContainer
@@ -372,7 +482,7 @@ Scope {
             Layout.alignment: Qt.AlignHCenter
             text: Translation.tr("Welcome to inir")
             font.family: Appearance.font.family.title
-            font.pixelSize: Appearance.font.pixelSize.hugeass + 4
+            font.pixelSize: Appearance.font.pixelSize.hugeass + 6
         }
 
         StyledText {
@@ -385,9 +495,9 @@ Scope {
         // Keyboard shortcuts
         Rectangle {
             Layout.alignment: Qt.AlignHCenter
-            Layout.topMargin: 16
-            implicitWidth: shortcutsGrid.implicitWidth + 32
-            implicitHeight: shortcutsGrid.implicitHeight + 24
+            Layout.topMargin: 20
+            implicitWidth: shortcutsGrid.implicitWidth + 40
+            implicitHeight: shortcutsGrid.implicitHeight + 28
             radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
             color: Appearance.inirEverywhere ? Appearance.inir.colLayer2
                  : Appearance.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colLayer2, 0.5)
@@ -416,9 +526,9 @@ Scope {
                             spacing: 3
                             Repeater {
                                 model: modelData.keys.split("+")
-                                KeyboardKey { 
+                                KeyboardKey {
                                     required property string modelData
-                                    key: modelData 
+                                    key: modelData
                                 }
                             }
                         }
@@ -436,7 +546,10 @@ Scope {
     }
 
     component ThemeContent: ColumnLayout {
+        width: 600
         spacing: 20
+
+        Item { Layout.fillHeight: true; Layout.maximumHeight: 20 }
 
         // Light/Dark toggle
         RowLayout {
@@ -449,7 +562,7 @@ Scope {
         // Global style selector
         SettingsGroup {
             Layout.fillWidth: true
-            Layout.maximumWidth: 520
+            Layout.maximumWidth: 560
             Layout.alignment: Qt.AlignHCenter
 
             ColumnLayout {
@@ -464,7 +577,7 @@ Scope {
                     StyledText {
                         text: {
                             const style = Config.options?.appearance?.globalStyle ?? "material"
-                            return style === "material" ? "Clean & Solid" 
+                            return style === "material" ? "Clean & Solid"
                                  : style === "cards" ? "Rounded Cards"
                                  : style === "aurora" ? "Glass & Blur"
                                  : "Terminal Style"
@@ -494,7 +607,7 @@ Scope {
         // Wallpaper
         SettingsGroup {
             Layout.fillWidth: true
-            Layout.maximumWidth: 520
+            Layout.maximumWidth: 560
             Layout.alignment: Qt.AlignHCenter
 
             ColumnLayout {
@@ -527,7 +640,7 @@ Scope {
                         anchors.centerIn: parent
                         spacing: 10
                         MaterialSymbol { text: "add_photo_alternate"; iconSize: 22; color: Appearance.colors.colOnPrimaryContainer }
-                        StyledText { 
+                        StyledText {
                             text: Translation.tr("Choose Wallpaper")
                             color: Appearance.colors.colOnPrimaryContainer
                             font.pixelSize: Appearance.font.pixelSize.normal
@@ -541,17 +654,20 @@ Scope {
     }
 
     component LayoutContent: ColumnLayout {
+        width: 600
         spacing: 16
+
+        Item { Layout.fillHeight: true; Layout.maximumHeight: 16 }
 
         GridLayout {
             Layout.alignment: Qt.AlignHCenter
             columns: 2
-            columnSpacing: 16
+            columnSpacing: 20
             rowSpacing: 16
 
             // Bar position
             SettingsGroup {
-                Layout.preferredWidth: 240
+                Layout.preferredWidth: 260
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 8
@@ -573,7 +689,7 @@ Scope {
 
             // Bar style
             SettingsGroup {
-                Layout.preferredWidth: 240
+                Layout.preferredWidth: 260
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 8
@@ -596,7 +712,7 @@ Scope {
 
             // Dock position
             SettingsGroup {
-                Layout.preferredWidth: 240
+                Layout.preferredWidth: 260
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 8
@@ -619,7 +735,7 @@ Scope {
 
             // Panel family
             SettingsGroup {
-                Layout.preferredWidth: 240
+                Layout.preferredWidth: 260
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 8
@@ -643,7 +759,7 @@ Scope {
         // Additional layout options
         SettingsGroup {
             Layout.fillWidth: true
-            Layout.maximumWidth: 500
+            Layout.maximumWidth: 560
             Layout.alignment: Qt.AlignHCenter
 
             ConfigSwitch {
@@ -664,18 +780,21 @@ Scope {
     }
 
     component FeaturesContent: ColumnLayout {
+        width: 640
         spacing: 16
+
+        Item { Layout.fillHeight: true; Layout.maximumHeight: 12 }
 
         RowLayout {
             Layout.fillWidth: true
-            Layout.maximumWidth: 560
+            Layout.maximumWidth: 600
             Layout.alignment: Qt.AlignHCenter
-            spacing: 16
+            spacing: 20
 
             // Left column
             SettingsGroup {
                 Layout.fillWidth: true
-                
+
                 ConfigSwitch {
                     buttonIcon: "auto_awesome"
                     text: Translation.tr("AI Assistant")
@@ -705,7 +824,7 @@ Scope {
             // Right column
             SettingsGroup {
                 Layout.fillWidth: true
-                
+
                 ConfigSwitch {
                     buttonIcon: "dock_to_bottom"
                     text: Translation.tr("Show dock")
@@ -736,7 +855,7 @@ Scope {
         // Extra options
         SettingsGroup {
             Layout.fillWidth: true
-            Layout.maximumWidth: 560
+            Layout.maximumWidth: 600
             Layout.alignment: Qt.AlignHCenter
 
             ConfigSwitch {
@@ -757,15 +876,16 @@ Scope {
     }
 
     component ReadyContent: ColumnLayout {
+        width: 500
         spacing: 24
 
-        Item { Layout.fillHeight: true; Layout.maximumHeight: 30 }
+        Item { Layout.fillHeight: true }
 
         MaterialShapeWrappedMaterialSymbol {
             Layout.alignment: Qt.AlignHCenter
             text: "check_circle"
-            iconSize: 56
-            padding: 18
+            iconSize: 60
+            padding: 20
             shape: MaterialShape.Shape.Circle
             color: Appearance.colors.colPrimaryContainer
             colSymbol: Appearance.colors.colOnPrimaryContainer
@@ -775,7 +895,7 @@ Scope {
             Layout.alignment: Qt.AlignHCenter
             text: Translation.tr("You're all set!")
             font.family: Appearance.font.family.title
-            font.pixelSize: Appearance.font.pixelSize.hugeass + 4
+            font.pixelSize: Appearance.font.pixelSize.hugeass + 6
         }
 
         StyledText {

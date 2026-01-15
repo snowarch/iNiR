@@ -1,8 +1,21 @@
 #!/usr/bin/env bash
 
+# KDE Material You Colors wrapper - optional integration
+# Requires: kde-material-you-colors (pip install kde-material-you-colors)
+# If not installed, this script silently exits
+
 XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 
-color=$(tr -d '\n' < "$XDG_STATE_HOME/quickshell/user/generated/color.txt")
+# Check if kde-material-you-colors is available
+if ! command -v kde-material-you-colors &>/dev/null; then
+    # Not installed, silently exit (KDE theming is optional)
+    exit 0
+fi
+
+color=$(tr -d '\n' < "$XDG_STATE_HOME/quickshell/user/generated/color.txt" 2>/dev/null)
+if [[ -z "$color" ]]; then
+    exit 0
+fi
 
 current_mode=$(gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null | tr -d "'")
 if [[ "$current_mode" == "prefer-dark" ]]; then
@@ -43,6 +56,9 @@ case "$scheme_variant_str" in
         ;;
 esac
 
-source "$(eval echo $ILLOGICAL_IMPULSE_VIRTUAL_ENV)/bin/activate"
-kde-material-you-colors "$mode_flag" --color "$color" -sv "$sv_num"
-deactivate
+# Activate venv if available, run command, deactivate
+if [[ -n "$ILLOGICAL_IMPULSE_VIRTUAL_ENV" ]]; then
+    source "$(eval echo $ILLOGICAL_IMPULSE_VIRTUAL_ENV)/bin/activate" 2>/dev/null || true
+fi
+kde-material-you-colors "$mode_flag" --color "$color" -sv "$sv_num" 2>/dev/null
+deactivate 2>/dev/null || true

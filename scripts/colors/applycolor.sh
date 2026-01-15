@@ -58,7 +58,7 @@ apply_terminal_configs() {
     echo "material_colors.scss not found. Skipping terminal config generation."
     return
   fi
-  
+
   # Get enabled terminals from config
   local enabled_terminals=()
   if [ -f "$CONFIG_FILE" ]; then
@@ -69,7 +69,7 @@ apply_terminal_configs() {
     local enable_wezterm=$(jq -r '.appearance.wallpaperTheming.terminals.wezterm // true' "$CONFIG_FILE")
     local enable_ghostty=$(jq -r '.appearance.wallpaperTheming.terminals.ghostty // true' "$CONFIG_FILE")
     local enable_konsole=$(jq -r '.appearance.wallpaperTheming.terminals.konsole // true' "$CONFIG_FILE")
-    
+
     [[ "$enable_kitty" == "true" ]] && enabled_terminals+=(kitty)
     [[ "$enable_alacritty" == "true" ]] && enabled_terminals+=(alacritty)
     [[ "$enable_foot" == "true" ]] && enabled_terminals+=(foot)
@@ -80,14 +80,21 @@ apply_terminal_configs() {
     # Default: enable all
     enabled_terminals=(kitty alacritty foot wezterm ghostty konsole)
   fi
-  
+
   if [ ${#enabled_terminals[@]} -eq 0 ]; then
     return
   fi
-  
+
   # Run the Python script to generate configs
-  if command -v python3 &>/dev/null; then
-    python3 "$SCRIPT_DIR/generate_terminal_configs.py" \
+  # Use venv python if available, otherwise system python
+  local python_cmd="python3"
+  local venv_python="${ILLOGICAL_IMPULSE_VIRTUAL_ENV:-$HOME/.local/state/quickshell/.venv}/bin/python"
+  if [[ -x "$venv_python" ]]; then
+    python_cmd="$venv_python"
+  fi
+
+  if command -v "$python_cmd" &>/dev/null || [[ -x "$python_cmd" ]]; then
+    "$python_cmd" "$SCRIPT_DIR/generate_terminal_configs.py" \
       --scss "$STATE_DIR/user/generated/material_colors.scss" \
       --terminals "${enabled_terminals[@]}" &>/dev/null &
   fi
@@ -103,19 +110,19 @@ apply_gtk_kde() {
   if [ ! -f "$scss_file" ]; then
     return
   fi
-  
+
   # Extract colors from scss (format: $colorname: #hex;)
   get_color() {
     grep "^\$$1:" "$scss_file" | cut -d: -f2 | tr -d ' ;'
   }
-  
+
   local bg=$(get_color "background")
   local fg=$(get_color "onBackground")
   local primary=$(get_color "primary")
   local on_primary=$(get_color "onPrimary")
   local surface=$(get_color "surface")
   local surface_dim=$(get_color "surfaceDim")
-  
+
   # Call apply-gtk-theme.sh with extracted colors
   "$SCRIPT_DIR/apply-gtk-theme.sh" "$bg" "$fg" "$primary" "$on_primary" "$surface" "$surface_dim"
 }
