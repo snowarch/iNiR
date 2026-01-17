@@ -232,7 +232,7 @@ Loader {
                                         visible: active
                                         Layout.alignment: Qt.AlignVCenter
 
-                                        sourceComponent: menuBtn.modelData.monochromeIcon === false ? iconImageComp : materialIconComp
+                                        sourceComponent: menuBtn.modelData.monochromeIcon === true ? materialIconComp : iconImageComp
 
                                         Component {
                                             id: materialIconComp

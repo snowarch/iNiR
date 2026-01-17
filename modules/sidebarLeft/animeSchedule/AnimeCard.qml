@@ -68,9 +68,9 @@ RippleButton {
         anchorHovered: root.buttonHovered
         
         model: [
-            { text: Translation.tr("Watch"), iconName: "play_circle", action: () => Qt.openUrlExternally(root.getWatchUrl()) },
+            { text: Translation.tr("Watch"), iconName: "play_circle", monochromeIcon: true, action: () => Qt.openUrlExternally(root.getWatchUrl()) },
             { type: "separator" },
-            { text: Translation.tr("Open on AniList"), iconName: "open_in_new", action: () => Qt.openUrlExternally(root.anime?.url ?? "") }
+            { text: Translation.tr("Open on AniList"), iconName: "open_in_new", monochromeIcon: true, action: () => Qt.openUrlExternally(root.anime?.url ?? "") }
         ]
     }
     

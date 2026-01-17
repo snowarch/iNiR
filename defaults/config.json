@@ -211,7 +211,7 @@
       "rightSidebarButton": true,
       "sysTray": true,
       "utilButtons": true,
-      "weather": false,
+      "weather": true,
       "workspaces": true
     },
     "modulesLayout": {
@@ -263,7 +263,7 @@
     "vertical": false,
     "weather": {
       "city": "",
-      "enable": false,
+      "enable": true,
       "enableGPS": false,
       "fetchInterval": 10,
       "useUSCS": false
@@ -536,11 +536,19 @@
           },
           {
             "size": 1,
-            "type": "onScreenKeyboard"
+            "type": "gameMode"
           },
           {
             "size": 1,
-            "type": "idleInhibitor"
+            "type": "nightLight"
+          },
+          {
+            "size": 1,
+            "type": "musicRecognition"
+          },
+          {
+            "size": 1,
+            "type": "cloudflareWarp"
           }
         ]
       },

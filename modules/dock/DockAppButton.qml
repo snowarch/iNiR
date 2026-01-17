@@ -195,6 +195,7 @@ DockButton {
             {
                 iconName: appToplevel.pinned ? "keep_off" : "keep",
                 text: appToplevel.pinned ? Translation.tr("Unpin from dock") : Translation.tr("Pin to dock"),
+                monochromeIcon: true,
                 action: () => {
                     const appId = appToplevel.originalAppId ?? appToplevel.appId;
                     if (Config.options?.dock?.pinnedApps?.indexOf(appId) !== -1) {
@@ -210,6 +211,7 @@ DockButton {
                 {
                     iconName: "close",
                     text: appToplevel.toplevels.length > 1 ? Translation.tr("Close all windows") : Translation.tr("Close window"),
+                    monochromeIcon: true,
                     action: () => {
                         for (let toplevel of appToplevel.toplevels) {
                             toplevel.close()

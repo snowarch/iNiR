@@ -234,31 +234,8 @@ Singleton {
         root._playUrl = root.currentUrl
         root._pendingItem = item
         
-        if (root._mpvPlayer && root._mpvPlayer.isPlaying) {
-            root._fadeVolume = 1.0
-            _fadeOutTimer.start()
-        } else {
-            _stopProc.running = true
-            _playDelayTimer.restart()
-        }
-    }
-    
-    Timer {
-        id: _fadeOutTimer
-        interval: 30
-        repeat: true
-        onTriggered: {
-            root._fadeVolume -= 0.15
-            if (root._fadeVolume <= 0) {
-                stop()
-                root._fadeVolume = 0
-                root._sendIpc(["set_property", "volume", 0])
-                _stopProc.running = true
-                _playDelayTimer.restart()
-            } else {
-                root._sendIpc(["set_property", "volume", Math.round(root._fadeVolume * 100)])
-            }
-        }
+        _stopProc.running = true
+        _playDelayTimer.restart()
     }
     
     function play(item): void {
@@ -1155,7 +1132,13 @@ Singleton {
             "--script=/usr/lib/mpv-mpris/mpris.so",
             "--force-media-title=" + root.currentTitle + (root.currentArtist ? " - " + root.currentArtist : ""),
             "--metadata-codepage=utf-8",
-            "--volume=0",
+            "--volume=100",
+            "--audio-buffer=1",
+            "--initial-audio-sync=yes",
+            "--demuxer-max-bytes=50MiB",
+            "--demuxer-readahead-secs=10",
+            "--cache=yes",
+            "--cache-secs=30",
             "--script-opts=ytdl_hook-ytdl_path=yt-dlp",
             ...(root.googleConnected && root._mpvCookiesFile ? ["--cookies-file=" + root._mpvCookiesFile] : []),
             root._playUrl
@@ -1164,8 +1147,6 @@ Singleton {
             if (running) {
                 root.loading = false
                 Qt.callLater(root._findMpvPlayer)
-                root._fadeVolume = 0
-                _fadeInDelayTimer.start()
             }
         }
         onExited: (code) => {
@@ -1173,28 +1154,6 @@ Singleton {
             root._mpvPlayer = null
             if (code !== 0 && code !== 4 && code !== 9 && code !== 15) {
                 root.error = Translation.tr("Playback failed")
-            }
-        }
-    }
-    
-    Timer {
-        id: _fadeInDelayTimer
-        interval: 300
-        onTriggered: _fadeInTimer.start()
-    }
-    
-    Timer {
-        id: _fadeInTimer
-        interval: 30
-        repeat: true
-        onTriggered: {
-            root._fadeVolume += 0.15
-            if (root._fadeVolume >= 1.0) {
-                stop()
-                root._fadeVolume = 1.0
-                root._sendIpc(["set_property", "volume", 100])
-            } else {
-                root._sendIpc(["set_property", "volume", Math.round(root._fadeVolume * 100)])
             }
         }
     }

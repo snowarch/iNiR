@@ -72,20 +72,54 @@ Item {
     ColumnLayout {
         id: playerColumn
         anchors.fill: parent
-        spacing: 2  // Space between multiple players
+        spacing: 8
 
         Repeater {
             model: ScriptModel {
                 values: root.meaningfulPlayers
             }
-            delegate: PlayerControl {
+            delegate: Item {
                 required property MprisPlayer modelData
                 required property int index
-                player: modelData
-                visualizerPoints: []  // No visualizer in bar popup
+                Layout.fillWidth: true
                 implicitWidth: root.widgetWidth
-                implicitHeight: root.widgetHeight
-                radius: root.popupRounding
+                implicitHeight: root.widgetHeight + (isActive && root.meaningfulPlayers.length > 1 ? 4 : 0)
+                
+                readonly property bool isActive: modelData === MprisController.trackedPlayer
+                
+                Rectangle {
+                    visible: root.meaningfulPlayers.length > 1
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    anchors.margins: Appearance.sizes.elevationMargin
+                    width: 3
+                    radius: 2
+                    color: isActive 
+                        ? (Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
+                        : (Appearance.inirEverywhere ? Appearance.inir.colLayer2 : Appearance.colors.colLayer2)
+                    
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: 150 }
+                    }
+                }
+                
+                PlayerControl {
+                    anchors.fill: parent
+                    anchors.leftMargin: root.meaningfulPlayers.length > 1 ? 6 : 0
+                    player: modelData
+                    visualizerPoints: []
+                    radius: root.popupRounding
+                }
+                
+                MouseArea {
+                    anchors.fill: parent
+                    visible: !isActive && root.meaningfulPlayers.length > 1
+                    onClicked: MprisController.setActivePlayer(modelData)
+                    cursorShape: Qt.PointingHandCursor
+                    z: -1
+                }
             }
         }
 

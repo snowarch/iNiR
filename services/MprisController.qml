@@ -18,8 +18,8 @@ Singleton {
 
 	readonly property bool isYtMusicActive: {
 		if (YtMusic.currentVideoId) return true;
+		if (YtMusic.mpvPlayer) return true;
 		if (!activePlayer) return false;
-		if (YtMusic.mpvPlayer && activePlayer === YtMusic.mpvPlayer) return true;
 		return _isYtMusicMpv(activePlayer);
 	}
 	

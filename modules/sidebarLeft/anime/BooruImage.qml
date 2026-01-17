@@ -211,6 +211,7 @@ Button {
             model: [
                 {
                     iconName: "open_in_new",
+                    monochromeIcon: true,
                     text: Translation.tr("Open file link"),
                     action: () => {
                         if (CompositorService.isHyprland) Hyprland.dispatch("keyword cursor:no_warps true")
@@ -220,6 +221,7 @@ Button {
                 },
                 ...(root.imageData.source && root.imageData.source.length > 0 ? [{
                     iconName: "link",
+                    monochromeIcon: true,
                     text: Translation.tr("Go to source (%1)").arg(StringUtils.getDomain(root.imageData.source)),
                     action: () => {
                         if (CompositorService.isHyprland) Hyprland.dispatch("keyword cursor:no_warps true")
@@ -230,6 +232,7 @@ Button {
                 { type: "separator" },
                 {
                     iconName: "download",
+                    monochromeIcon: true,
                     text: Translation.tr("Download"),
                     action: () => {
                         const targetPath = root.imageData.is_nsfw ? root.nsfwPath : root.downloadPath;
@@ -243,6 +246,7 @@ Button {
                 },
                 {
                     iconName: "wallpaper",
+                    monochromeIcon: true,
                     text: Translation.tr("Set as wallpaper"),
                     action: () => {
                         const targetPath = root.imageData.is_nsfw ? root.nsfwPath : root.downloadPath;

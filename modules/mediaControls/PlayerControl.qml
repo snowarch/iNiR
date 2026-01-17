@@ -19,12 +19,47 @@ Item {
     required property list<real> visualizerPoints
     property real radius: Appearance.rounding.large
     
+    readonly property bool isYtMusicPlayer: {
+        if (!player) return false
+        if (YtMusic.mpvPlayer && player === YtMusic.mpvPlayer) return true
+        const id = (player.identity ?? "").toLowerCase()
+        const entry = (player.desktopEntry ?? "").toLowerCase()
+        if (id !== "mpv" && !id.includes("mpv") && entry !== "mpv" && !entry.includes("mpv")) return false
+        const trackUrl = player.metadata?.["xesam:url"] ?? ""
+        return trackUrl.includes("youtube.com") || trackUrl.includes("youtu.be")
+    }
+    
+    function doTogglePlaying(): void {
+        if (isYtMusicPlayer) {
+            YtMusic.togglePlaying()
+        } else {
+            player?.togglePlaying()
+        }
+    }
+    
+    function doPrevious(): void {
+        if (isYtMusicPlayer) {
+            YtMusic.playPrevious()
+        } else {
+            player?.previous()
+        }
+    }
+    
+    function doNext(): void {
+        if (isYtMusicPlayer) {
+            YtMusic.playNext()
+        } else {
+            player?.next()
+        }
+    }
+    
     // Screen position for aurora glass effect
     property real screenX: 0
     property real screenY: 0
 
+    readonly property string effectiveArtUrl: isYtMusicPlayer ? YtMusic.currentThumbnail : (player?.trackArtUrl ?? "")
     property string artDownloadLocation: Directories.coverArt
-    property string artFileName: player?.trackArtUrl ? Qt.md5(player.trackArtUrl) : ""
+    property string artFileName: effectiveArtUrl ? Qt.md5(effectiveArtUrl) : ""
     property string artFilePath: artFileName ? `${artDownloadLocation}/${artFileName}` : ""
     property bool downloaded: false
     property string displayedArtFilePath: downloaded ? Qt.resolvedUrl(artFilePath) : ""
@@ -32,7 +67,7 @@ Item {
     readonly property int _maxRetries: 3
 
     function checkAndDownloadArt() {
-        if (!player?.trackArtUrl) {
+        if (!effectiveArtUrl) {
             downloaded = false
             _downloadRetryCount = 0
             return
@@ -41,7 +76,7 @@ Item {
     }
 
     function retryDownload() {
-        if (_downloadRetryCount < _maxRetries && player?.trackArtUrl) {
+        if (_downloadRetryCount < _maxRetries && effectiveArtUrl) {
             _downloadRetryCount++
             retryTimer.start()
         }
@@ -52,8 +87,8 @@ Item {
         interval: 1000 * root._downloadRetryCount
         repeat: false
         onTriggered: {
-            if (root.player?.trackArtUrl && !root.downloaded) {
-                coverArtDownloader.targetFile = root.player.trackArtUrl
+            if (root.effectiveArtUrl && !root.downloaded) {
+                coverArtDownloader.targetFile = root.effectiveArtUrl
                 coverArtDownloader.artFilePath = root.artFilePath
                 coverArtDownloader.running = true
             }
@@ -64,12 +99,19 @@ Item {
         _downloadRetryCount = 0
         checkAndDownloadArt()
     }
+    
+    onEffectiveArtUrlChanged: {
+        _downloadRetryCount = 0
+        checkAndDownloadArt()
+    }
 
     Connections {
         target: root.player
         function onTrackArtUrlChanged() {
-            root._downloadRetryCount = 0
-            root.checkAndDownloadArt()
+            if (!root.isYtMusicPlayer) {
+                root._downloadRetryCount = 0
+                root.checkAndDownloadArt()
+            }
         }
     }
 
@@ -82,7 +124,7 @@ Item {
                 root._downloadRetryCount = 0
             } else {
                 root.downloaded = false
-                coverArtDownloader.targetFile = root.player?.trackArtUrl ?? ""
+                coverArtDownloader.targetFile = root.effectiveArtUrl
                 coverArtDownloader.artFilePath = root.artFilePath
                 coverArtDownloader.running = true
             }
@@ -345,7 +387,7 @@ Item {
                 // Title
                 StyledText {
                     Layout.fillWidth: true
-                    text: StringUtils.cleanMusicTitle(root.player?.trackTitle) || "—"
+                    text: StringUtils.cleanMusicTitle(root.isYtMusicPlayer ? YtMusic.currentTitle : root.player?.trackTitle) || "—"
                     font.pixelSize: Appearance.font.pixelSize.large
                     font.weight: Font.Medium
                     color: Appearance.inirEverywhere ? root.inirText : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
@@ -357,7 +399,7 @@ Item {
                 // Artist
                 StyledText {
                     Layout.fillWidth: true
-                    text: root.player?.trackArtist || ""
+                    text: root.isYtMusicPlayer ? YtMusic.currentArtist : (root.player?.trackArtist || "")
                     font.pixelSize: Appearance.font.pixelSize.small
                     color: Appearance.inirEverywhere ? root.inirTextSecondary : (blendedColors?.colSubtext ?? Appearance.colors.colSubtext)
                     elide: Text.ElideRight
@@ -434,7 +476,7 @@ Item {
                         colRipple: Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
                             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
                             : (blendedColors?.colLayer1Active ?? Appearance.colors.colLayer1Active)
-                        onClicked: root.player?.previous()
+                        onClicked: root.doPrevious()
                         contentItem: Item {
                             MaterialSymbol {
                                 anchors.centerIn: parent
@@ -458,7 +500,7 @@ Item {
                         colRipple: Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
                             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
                             : Appearance.colors.colLayer1Active
-                        onClicked: root.player?.togglePlaying()
+                        onClicked: root.doTogglePlaying()
 
                         contentItem: Item {
                             MaterialSymbol {
@@ -487,7 +529,7 @@ Item {
                         colRipple: Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
                             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
                             : (blendedColors?.colLayer1Active ?? Appearance.colors.colLayer1Active)
-                        onClicked: root.player?.next()
+                        onClicked: root.doNext()
                         contentItem: Item {
                             MaterialSymbol {
                                 anchors.centerIn: parent

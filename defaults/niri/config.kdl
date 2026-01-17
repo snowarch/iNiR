@@ -134,27 +134,53 @@ window-rule {
 // ============================================================================
 // ANIMATIONS
 // ============================================================================
+// Tuned to complement quickshell's expressive Material motion curves
+// QS uses ~500ms for main movements, ~400ms enter, ~200ms exit
 
 animations {
     //off
+    
+    // Workspace switch: Match QS elementMove (~500ms, expressive overshoot)
+    // damping-ratio < 1 = overshoot (like QS bezier [0.38, 1.21, 0.22, 1.00])
     workspace-switch {
-        spring damping-ratio=0.92 stiffness=800 epsilon=0.0001
+        spring damping-ratio=0.78 stiffness=600 epsilon=0.0001
     }
     
+    // Window open: Match QS elementMoveEnter (~400ms, emphasized decel)
+    // Lower stiffness = slower start, smooth decel landing
     window-open {
-        spring damping-ratio=0.92 stiffness=900 epsilon=0.0001
+        spring damping-ratio=0.82 stiffness=500 epsilon=0.0001
     }
     
+    // Window close: Match QS elementMoveExit (~200ms, quick accel out)
+    // Higher stiffness = snappier, quick exit
     window-close {
-        spring damping-ratio=0.95 stiffness=1000 epsilon=0.0001
+        spring damping-ratio=0.88 stiffness=900 epsilon=0.0001
     }
     
+    // Horizontal view: Smooth panning with slight overshoot
     horizontal-view-movement {
+        spring damping-ratio=0.80 stiffness=550 epsilon=0.0001
+    }
+    
+    // Window movement: Interactive feel, responsive with gentle settle
+    window-movement {
+        spring damping-ratio=0.85 stiffness=650 epsilon=0.0001
+    }
+    
+    // Column/window resize: Match QS elementResize (~300ms)
+    window-resize {
+        spring damping-ratio=0.88 stiffness=700 epsilon=0.0001
+    }
+    
+    // Config notification: Quick feedback
+    config-notification-open-close {
         spring damping-ratio=0.90 stiffness=800 epsilon=0.0001
     }
     
-    window-movement {
-        spring damping-ratio=0.96 stiffness=850 epsilon=0.0001
+    // Screenshot UI: Snappy like QS fast effects
+    screenshot-ui-open {
+        spring damping-ratio=0.85 stiffness=750 epsilon=0.0001
     }
 }
 
