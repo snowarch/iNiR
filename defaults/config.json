@@ -322,7 +322,8 @@
     ],
     "pinnedOnStartup": true,
     "showBackground": false,
-    "iconSize": 35
+    "iconSize": 35,
+    "separatePinnedFromRunning": true
   },
   "hacks": {
     "arbitraryRaceConditionDelay": 20

@@ -430,6 +430,16 @@ ContentPage {
                 }
             }
 
+            SettingsSwitch {
+                buttonIcon: "splitscreen"
+                text: Translation.tr("Separate pinned from running")
+                checked: Config.options.dock.separatePinnedFromRunning ?? true
+                onCheckedChanged: Config.options.dock.separatePinnedFromRunning = checked
+                StyledToolTip {
+                    text: Translation.tr("Show pinned-only apps on the left, running apps on the right with a separator")
+                }
+            }
+
             ContentSubsection {
                 title: Translation.tr("Appearance")
 
