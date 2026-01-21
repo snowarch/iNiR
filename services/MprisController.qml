@@ -75,10 +75,9 @@ Singleton {
 		if (name.includes('plasma-browser-integration')) return false;
 		// Filter duplicate MPD instances
 		if (name.endsWith('.mpd') && !name.endsWith('MediaPlayer2.mpd')) return false;
-		// Filter YtMusic's mpv player to avoid duplicate display
-		// YtMusic handles its own UI, we don't need to show the raw mpv player
-		if (YtMusic.mpvPlayer && player === YtMusic.mpvPlayer) return false;
-		if (_isYtMusicMpv(player)) return false;
+		// NOTE: Do NOT filter YtMusic's mpv player here!
+		// It needs to be in the players list for MPRIS control to work.
+		// Duplicate filtering happens in UI components (BarMediaPopup, etc.)
 		// Filter media without title (likely GIFs or short videos)
 		// But keep players that are actively playing (track may be changing)
 		const isPlaying = player.playbackState === MprisPlaybackState.Playing;
