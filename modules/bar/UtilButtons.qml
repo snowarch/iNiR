@@ -177,10 +177,18 @@ Item {
                     if (isCasting) {
                         // Stop casting to the monitor
                         Quickshell.execDetached(["niri", "msg", "action", "clear-dynamic-cast-target"])
+
+                        // Send notification with "video off" icon
+                        Quickshell.execDetached(["notify-send", "-i", "camera-video-off", "Screen Casting", "Casting stopped"])
+
                         isCasting = false
                     } else {
                         // Start casting to HDMI-A-1
                         Quickshell.execDetached(["niri", "msg", "action", "set-dynamic-cast-monitor", "HDMI-A-1"])
+
+                        // Send notification with "display" icon
+                        Quickshell.execDetached(["notify-send", "-i", "video-display", "Screen Casting", "Casting started on HDMI-A-1"])
+
                         isCasting = true
                     }
                 }
