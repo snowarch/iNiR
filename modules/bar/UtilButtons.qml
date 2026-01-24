@@ -120,15 +120,15 @@ Item {
             sourceComponent: CircleUtilButton {
                 id: micButton
                 Layout.alignment: Qt.AlignVCenter
-                
+
                 readonly property bool isMuted: Pipewire.defaultAudioSource?.audio?.muted ?? false
                 readonly property bool isInUse: (Privacy.micActive || (Audio?.micBeingAccessed ?? false))
-                
+
                 onClicked: Quickshell.execDetached(["/usr/bin/wpctl", "set-mute", "@DEFAULT_SOURCE@", "toggle"])
-                
+
                 Item {
                     anchors.fill: parent
-                    
+
                     MaterialSymbol {
                         anchors.centerIn: parent
                         horizontalAlignment: Qt.AlignHCenter
@@ -141,7 +141,7 @@ Item {
                              : Appearance.auroraEverywhere ? Appearance.m3colors.m3onSurface
                              : Appearance.colors.colOnLayer2)
                     }
-                    
+
                     Rectangle {
                         visible: micButton.isInUse && !micButton.isMuted
                         width: 6
@@ -149,7 +149,7 @@ Item {
                         radius: 3
                         color: Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError
                         anchors { top: parent.top; right: parent.right }
-                        
+
                         SequentialAnimation on opacity {
                             running: micButton.isInUse && !micButton.isMuted
                             loops: Animation.Infinite
@@ -161,18 +161,67 @@ Item {
             }
         }
 
+// Screen casting control button (Visibility icon)
         Loader {
-            active: root.screenShareActive
+            // Button is active if enabled in config
+            active: Config.options?.bar?.utilButtons?.showScreenRecord ?? false
             visible: active
             sourceComponent: CircleUtilButton {
+                id: screenRecordButton
                 Layout.alignment: Qt.AlignVCenter
-                
-                MaterialSymbol {
-                    horizontalAlignment: Qt.AlignHCenter
-                    fill: 1
-                    text: "visibility"
-                    iconSize: Appearance.font.pixelSize.large
-                    color: Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError
+
+                // Internal state for cyclic toggling, independent of external system sensors
+                property bool isCasting: false
+
+                onClicked: {
+                    if (isCasting) {
+                        // Stop casting to the monitor
+                        Quickshell.execDetached(["niri", "msg", "action", "clear-dynamic-cast-target"])
+                        isCasting = false
+                    } else {
+                        // Start casting to HDMI-A-1
+                        Quickshell.execDetached(["niri", "msg", "action", "set-dynamic-cast-monitor", "HDMI-A-1"])
+                        isCasting = true
+                    }
+                }
+
+                Item {
+                    anchors.fill: parent
+
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        horizontalAlignment: Qt.AlignHCenter
+                        // Fill the icon when casting is active (matches mic button behavior)
+                        fill: screenRecordButton.isCasting ? 1 : 0
+                        text: "visibility"
+                        iconSize: Appearance.font.pixelSize.large
+
+                        // Switch to error color when active
+                        color: screenRecordButton.isCasting
+                            ? (Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError)
+                            : (Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer2)
+                    }
+
+                    // Pulsating indicator dot
+                    Rectangle {
+                        visible: screenRecordButton.isCasting
+                        width: 6
+                        height: 6
+                        radius: 3
+                        color: Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError
+                        anchors {
+                            top: parent.top
+                            right: parent.right
+                        }
+
+                        // Infinite blinking animation
+                        SequentialAnimation on opacity {
+                            running: screenRecordButton.isCasting
+                            loops: Animation.Infinite
+                            NumberAnimation { to: 0.4; duration: 800 }
+                            NumberAnimation { to: 1.0; duration: 800 }
+                        }
+                    }
                 }
             }
         }
