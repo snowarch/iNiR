@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
+import Quickshell.Io
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
@@ -761,6 +762,121 @@ ContentPage {
                 text: Translation.tr("Enable terminal theming")
                 checked: Config.options?.appearance?.wallpaperTheming?.enableTerminal ?? true
                 onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.enableTerminal", checked)
+            }
+
+            // Individual terminal toggles
+            StyledText {
+                Layout.fillWidth: true
+                Layout.topMargin: 12
+                text: Translation.tr("Generate color configs for:")
+                color: Appearance.colors.colSubtext
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                wrapMode: Text.WordWrap
+            }
+
+            ConfigRow {
+                uniform: true
+                visible: Config.options?.appearance?.wallpaperTheming?.enableTerminal ?? true
+
+                ConfigSwitch {
+                    buttonIcon: "terminal"
+                    text: "Kitty"
+                    checked: Config.options?.appearance?.wallpaperTheming?.terminals?.kitty ?? true
+                    onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.terminals.kitty", checked)
+                }
+
+                ConfigSwitch {
+                    buttonIcon: "terminal"
+                    text: "Alacritty"
+                    checked: Config.options?.appearance?.wallpaperTheming?.terminals?.alacritty ?? true
+                    onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.terminals.alacritty", checked)
+                }
+
+                ConfigSwitch {
+                    buttonIcon: "terminal"
+                    text: "Foot"
+                    checked: Config.options?.appearance?.wallpaperTheming?.terminals?.foot ?? true
+                    onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.terminals.foot", checked)
+                }
+            }
+
+            ConfigRow {
+                uniform: true
+                visible: Config.options?.appearance?.wallpaperTheming?.enableTerminal ?? true
+
+                ConfigSwitch {
+                    buttonIcon: "terminal"
+                    text: "WezTerm"
+                    checked: Config.options?.appearance?.wallpaperTheming?.terminals?.wezterm ?? true
+                    onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.terminals.wezterm", checked)
+                }
+
+                ConfigSwitch {
+                    buttonIcon: "terminal"
+                    text: "Ghostty"
+                    checked: Config.options?.appearance?.wallpaperTheming?.terminals?.ghostty ?? true
+                    onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.terminals.ghostty", checked)
+                }
+
+                ConfigSwitch {
+                    buttonIcon: "terminal"
+                    text: "Konsole"
+                    checked: Config.options?.appearance?.wallpaperTheming?.terminals?.konsole ?? true
+                    onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.terminals.konsole", checked)
+                }
+            }
+
+            // Auto-detect button
+            RippleButton {
+                Layout.alignment: Qt.AlignRight
+                Layout.topMargin: 4
+                visible: Config.options?.appearance?.wallpaperTheming?.enableTerminal ?? true
+                implicitWidth: detectRow.implicitWidth + 16
+                implicitHeight: 28
+                buttonRadius: Appearance.rounding.small
+                colBackground: Appearance.colors.colLayer1
+                colBackgroundHover: Appearance.colors.colLayer1Hover
+
+                contentItem: RowLayout {
+                    id: detectRow
+                    anchors.centerIn: parent
+                    spacing: 6
+
+                    MaterialSymbol {
+                        text: "search"
+                        iconSize: 14
+                        color: Appearance.colors.colOnLayer1
+                    }
+
+                    StyledText {
+                        text: Translation.tr("Auto-detect installed")
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                    }
+                }
+
+                onClicked: terminalDetector.running = true
+
+                Process {
+                    id: terminalDetector
+                    command: [
+                        "/usr/bin/bash",
+                        "-c",
+                        "for term in kitty alacritty foot wezterm ghostty konsole; do " +
+                        "if command -v $term &>/dev/null; then echo \"$term:true\"; " +
+                        "else echo \"$term:false\"; fi; done"
+                    ]
+                    onExited: (exitCode, exitStatus) => {
+                        if (exitCode === 0) {
+                            const lines = stdout.trim().split('\n');
+                            lines.forEach(line => {
+                                const [term, installed] = line.split(':');
+                                if (term && installed) {
+                                    Config.setNestedValue(`appearance.wallpaperTheming.terminals.${term}`, installed === 'true');
+                                }
+                            });
+                        }
+                    }
+                }
             }
 
             // Terminal color preview
