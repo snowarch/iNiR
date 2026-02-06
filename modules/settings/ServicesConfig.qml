@@ -329,6 +329,242 @@ ContentPage {
 
     SettingsCardSection {
         expanded: false
+        icon: "deployed_code_update"
+        title: Translation.tr("iNiR Shell Updates")
+
+        SettingsGroup {
+            StyledText {
+                Layout.fillWidth: true
+                text: Translation.tr("Automatically checks the iNiR git repository for new versions and shows a notification in the bar. Click the indicator to update, or right-click to dismiss.")
+                color: Appearance.colors.colOnSurfaceVariant
+                font.pixelSize: Appearance.font.pixelSize.small
+                wrapMode: Text.WordWrap
+            }
+
+            SettingsSwitch {
+                buttonIcon: "toggle_on"
+                text: Translation.tr("Enable shell update checker")
+                checked: Config.options?.shellUpdates?.enabled ?? true
+                onCheckedChanged: Config.setNestedValue("shellUpdates.enabled", checked)
+            }
+
+            ConfigSpinBox {
+                icon: "schedule"
+                text: Translation.tr("Check interval") + ` (${value}m)`
+                value: Config.options?.shellUpdates?.checkIntervalMinutes ?? 360
+                from: 30
+                to: 1440
+                stepSize: 30
+                onValueChanged: Config.setNestedValue("shellUpdates.checkIntervalMinutes", value)
+                enabled: Config.options?.shellUpdates?.enabled ?? true
+                StyledToolTip {
+                    text: Translation.tr("How often to check for iNiR updates (in minutes). Default: 360 (6 hours)")
+                }
+            }
+
+            // Status display
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: statusCol.implicitHeight + 16
+                radius: Appearance.rounding.small
+                color: Appearance.colors.colLayer1
+                visible: Config.options?.shellUpdates?.enabled ?? true
+
+                ColumnLayout {
+                    id: statusCol
+                    anchors.fill: parent
+                    anchors.margins: 8
+                    spacing: 4
+
+                    RowLayout {
+                        spacing: 6
+                        MaterialSymbol {
+                            text: ShellUpdates.hasUpdate ? "update" : ShellUpdates.isChecking ? "sync" : "check_circle"
+                            iconSize: 16
+                            color: ShellUpdates.hasUpdate ? Appearance.m3colors.m3primary
+                                : ShellUpdates.isChecking ? Appearance.colors.colSubtext
+                                : Appearance.m3colors.m3tertiary
+                        }
+                        StyledText {
+                            text: {
+                                if (ShellUpdates.isUpdating) return Translation.tr("Updating...")
+                                if (ShellUpdates.isChecking) return Translation.tr("Checking...")
+                                if (ShellUpdates.hasUpdate) return Translation.tr("Update available: %1 commit(s) behind").arg(ShellUpdates.commitsBehind)
+                                if (ShellUpdates.available) return Translation.tr("Up to date")
+                                return Translation.tr("Not available (no git repo)")
+                            }
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            color: Appearance.colors.colOnLayer1
+                        }
+                    }
+
+                    RowLayout {
+                        visible: ShellUpdates.localCommit.length > 0
+                        spacing: 6
+                        StyledText {
+                            text: Translation.tr("Local: %1").arg(ShellUpdates.localCommit)
+                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            font.family: Appearance.font.family.monospace
+                            color: Appearance.colors.colSubtext
+                        }
+                        StyledText {
+                            visible: ShellUpdates.remoteCommit.length > 0 && ShellUpdates.hasUpdate
+                            text: "→ " + ShellUpdates.remoteCommit
+                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            font.family: Appearance.font.family.monospace
+                            font.weight: Font.DemiBold
+                            color: Appearance.m3colors.m3primary
+                        }
+                    }
+
+                    StyledText {
+                        visible: ShellUpdates.lastError.length > 0
+                        text: ShellUpdates.lastError
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        color: Appearance.m3colors.m3error
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
+                    }
+                }
+            }
+
+            // Action buttons row
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+                visible: Config.options?.shellUpdates?.enabled ?? true
+
+                // Check now button
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 32
+                    radius: Appearance.rounding.small
+                    color: checkMouse.containsMouse ? Appearance.colors.colLayer1Hover : Appearance.colors.colLayer1
+                    opacity: ShellUpdates.isChecking ? 0.5 : 1.0
+
+                    RowLayout {
+                        anchors.centerIn: parent
+                        spacing: 6
+                        MaterialSymbol {
+                            text: "refresh"
+                            iconSize: 16
+                            color: Appearance.colors.colOnLayer1
+                        }
+                        StyledText {
+                            text: ShellUpdates.isChecking ? Translation.tr("Checking...") : Translation.tr("Check Now")
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            color: Appearance.colors.colOnLayer1
+                        }
+                    }
+
+                    MouseArea {
+                        id: checkMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: ShellUpdates.check()
+                    }
+                }
+
+                // Update now button (only when update available)
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 32
+                    radius: Appearance.rounding.small
+                    visible: ShellUpdates.hasUpdate
+                    color: applyMouse.containsMouse ? Qt.darker(Appearance.m3colors.m3primary, 1.1) : Appearance.m3colors.m3primary
+                    opacity: ShellUpdates.isUpdating ? 0.5 : 1.0
+
+                    RowLayout {
+                        anchors.centerIn: parent
+                        spacing: 6
+                        MaterialSymbol {
+                            text: ShellUpdates.isUpdating ? "hourglass_top" : "upgrade"
+                            iconSize: 16
+                            color: Appearance.m3colors.m3onPrimary
+                        }
+                        StyledText {
+                            text: ShellUpdates.isUpdating ? Translation.tr("Updating...") : Translation.tr("Update Now")
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            font.weight: Font.DemiBold
+                            color: Appearance.m3colors.m3onPrimary
+                        }
+                    }
+
+                    MouseArea {
+                        id: applyMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: ShellUpdates.isUpdating ? Qt.BusyCursor : Qt.PointingHandCursor
+                        onClicked: {
+                            if (!ShellUpdates.isUpdating) ShellUpdates.performUpdate()
+                        }
+                    }
+                }
+
+                // Dismiss button (only when update available and not dismissed)
+                Rectangle {
+                    Layout.preferredWidth: 32
+                    Layout.preferredHeight: 32
+                    radius: Appearance.rounding.small
+                    visible: ShellUpdates.hasUpdate && !ShellUpdates.isDismissed
+                    color: dismissSettingsMouse.containsMouse ? Appearance.colors.colLayer1Hover : Appearance.colors.colLayer1
+
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: "notifications_off"
+                        iconSize: 16
+                        color: Appearance.colors.colSubtext
+                    }
+
+                    MouseArea {
+                        id: dismissSettingsMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: ShellUpdates.dismiss()
+                    }
+
+                    StyledToolTip {
+                        text: Translation.tr("Dismiss this update (hide bar indicator)")
+                        visible: dismissSettingsMouse.containsMouse
+                    }
+                }
+
+                // Undismiss button (only when dismissed)
+                Rectangle {
+                    Layout.preferredWidth: 32
+                    Layout.preferredHeight: 32
+                    radius: Appearance.rounding.small
+                    visible: ShellUpdates.isDismissed
+                    color: undismissMouse.containsMouse ? Appearance.colors.colLayer1Hover : Appearance.colors.colLayer1
+
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: "notifications_active"
+                        iconSize: 16
+                        color: Appearance.m3colors.m3primary
+                    }
+
+                    MouseArea {
+                        id: undismissMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: ShellUpdates.undismiss()
+                    }
+
+                    StyledToolTip {
+                        text: Translation.tr("Show bar indicator again")
+                        visible: undismissMouse.containsMouse
+                    }
+                }
+            }
+        }
+    }
+
+    SettingsCardSection {
+        expanded: false
         icon: "cloud"
         title: Translation.tr("Weather")
 

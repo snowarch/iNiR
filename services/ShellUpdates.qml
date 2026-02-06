@@ -33,7 +33,7 @@ Singleton {
     readonly property bool isDismissed: dismissedCommit.length > 0 && remoteCommit === dismissedCommit
 
     // Repo path (where ii is installed)
-    readonly property string repoPath: FileUtils.trimFileProtocol(Quickshell.shellRoot)
+    readonly property string repoPath: FileUtils.trimFileProtocol(Quickshell.shellPath("."))
 
     function check(): void {
         if (!enabled || isChecking || isUpdating) return
@@ -62,10 +62,11 @@ Singleton {
     // Initial check after startup delay
     Timer {
         id: startupDelay
-        interval: 30000  // 30s after shell starts
+        interval: 5000  // 5s after shell starts (quick first check)
         repeat: false
         running: root.enabled && Config.ready
         onTriggered: {
+            print("[ShellUpdates] Starting availability check, repoPath: " + root.repoPath)
             availabilityProc.running = true
         }
     }
@@ -96,6 +97,7 @@ Singleton {
         command: ["git", "-C", root.repoPath, "rev-parse", "--git-dir"]
         onExited: (exitCode, exitStatus) => {
             root.available = (exitCode === 0)
+            print("[ShellUpdates] Git available: " + root.available)
             if (root.available) {
                 root.check()
             }
@@ -195,10 +197,12 @@ Singleton {
                 return
             }
             root.hasUpdate = root.commitsBehind > 0
+            print("[ShellUpdates] Commits behind: " + root.commitsBehind + ", hasUpdate: " + root.hasUpdate)
             if (root.hasUpdate) {
                 latestMessageProc.running = true
             } else {
                 root.isChecking = false
+                print("[ShellUpdates] Up to date (" + root.localCommit + ")")
             }
         }
     }
