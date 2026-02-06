@@ -588,6 +588,74 @@ EOF
   echo -e "${STY_GREEN}Foot terminal configuration set.${STY_RST}"
 }
 
+setup-kitty-config(){
+  echo -e "${STY_BLUE}Setting up Kitty terminal configuration...${STY_RST}"
+
+  mkdir -p ~/.config/kitty
+
+  # Only create if doesn't exist or is minimal
+  if [[ ! -f ~/.config/kitty/kitty.conf ]] || [[ $(wc -l < ~/.config/kitty/kitty.conf) -lt 5 ]]; then
+    cat > ~/.config/kitty/kitty.conf << 'EOF'
+# Kitty terminal configuration for iNiR
+# See https://sw.kovidgoyal.net/kitty/conf/
+
+# Font configuration
+font_family      JetBrainsMono Nerd Font
+font_size        11.0
+adjust_line_height 100%
+
+# Cursor
+cursor_shape beam
+cursor_beam_thickness 1.5
+cursor_blink_interval 0
+
+# Scrollback
+scrollback_lines 10000
+
+# Terminal bell
+enable_audio_bell no
+visual_bell_duration 0.0
+
+# Window
+window_padding_width 25
+hide_window_decorations yes
+confirm_os_window_close 0
+
+# Tab bar
+tab_bar_style powerline
+
+# Performance
+repaint_delay 10
+input_delay 3
+sync_to_monitor yes
+
+# Keyboard shortcuts
+map ctrl+c copy_or_interrupt
+map ctrl+v paste_from_clipboard
+map ctrl+shift+c copy_to_clipboard
+map ctrl+shift+v paste_from_clipboard
+map ctrl+plus change_font_size all +1.0
+map ctrl+minus change_font_size all -1.0
+map ctrl+0 change_font_size all 0
+map ctrl+f show_scrollback
+
+# Include auto-generated color theme
+include current-theme.conf
+EOF
+  else
+    # Existing config - ensure include line is present for theming
+    if ! grep -q "include.*current-theme.conf" ~/.config/kitty/kitty.conf; then
+      echo -e "${STY_YELLOW}Adding current-theme.conf include to existing kitty.conf...${STY_RST}"
+      # Add include at the end of the file
+      echo "" >> ~/.config/kitty/kitty.conf
+      echo "# Include auto-generated color theme" >> ~/.config/kitty/kitty.conf
+      echo "include current-theme.conf" >> ~/.config/kitty/kitty.conf
+    fi
+  fi
+
+  echo -e "${STY_GREEN}Kitty terminal configuration set.${STY_RST}"
+}
+
 setup-fish-config(){
   echo -e "${STY_BLUE}Setting up Fish shell configuration...${STY_RST}"
 

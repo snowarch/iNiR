@@ -176,7 +176,7 @@ Item {
                     ActionTile {
                         tileIcon: "terminal"
                         label: Translation.tr("Terminal")
-                        onClicked: Quickshell.execDetached([Config.options?.apps?.terminal ?? "/usr/bin/foot"])
+                        onClicked: Quickshell.execDetached([Config.options?.apps?.terminal ?? "/usr/bin/kitty"])
                     }
                     ActionTile {
                         tileIcon: "folder"
@@ -306,17 +306,17 @@ Item {
                 ActionButton {
                     btnIcon: "system_update"
                     label: Translation.tr("Check for updates")
-                    onClicked: Quickshell.execDetached([Config.options?.apps?.terminal ?? "/usr/bin/foot", "-e", "fish", "-c", "yay -Syu; read -P 'Press Enter to close...'"])
+                    onClicked: Quickshell.execDetached([Config.options?.apps?.terminal ?? "/usr/bin/kitty", "-e", "fish", "-c", "yay -Syu; read -P 'Press Enter to close...'"])
                 }
                 ActionButton {
                     btnIcon: "cleaning_services"
                     label: Translation.tr("Clean package cache")
-                    onClicked: Quickshell.execDetached([Config.options?.apps?.terminal ?? "/usr/bin/foot", "-e", "fish", "-c", "sudo paccache -rk1; read -P 'Press Enter to close...'"])
+                    onClicked: Quickshell.execDetached([Config.options?.apps?.terminal ?? "/usr/bin/kitty", "-e", "fish", "-c", "sudo paccache -rk1; read -P 'Press Enter to close...'"])
                 }
                 ActionButton {
                     btnIcon: "info"
                     label: Translation.tr("System info")
-                    onClicked: Quickshell.execDetached([Config.options?.apps?.terminal ?? "/usr/bin/foot", "-e", "fish", "-c", "fastfetch; read -P 'Press Enter to close...'"])
+                    onClicked: Quickshell.execDetached([Config.options?.apps?.terminal ?? "/usr/bin/kitty", "-e", "fish", "-c", "fastfetch; read -P 'Press Enter to close...'"])
                 }
             }
 

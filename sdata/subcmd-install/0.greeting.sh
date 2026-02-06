@@ -130,6 +130,33 @@ tui_subtitle "This may take a while depending on your internet speed."
 tui_key_value "Backup location:" "$BACKUP_DIR"
 echo ""
 
+#####################################################################################
+# Terminal Selection
+#####################################################################################
+tui_title "Terminal Selection"
+
+tui_info "Choose your preferred terminal emulator."
+tui_dim "  Both options integrate with the wallpaper theming system."
+echo ""
+
+TERMINAL_CHOICE=$(tui_choose "Select terminal:" "Kitty (Recommended)" "Foot")
+
+case "$TERMINAL_CHOICE" in
+    "Kitty (Recommended)")
+        INSTALL_TERMINAL="kitty"
+        ;;
+    "Foot")
+        INSTALL_TERMINAL="foot"
+        ;;
+    *)
+        INSTALL_TERMINAL="kitty"
+        ;;
+esac
+
+export INSTALL_TERMINAL
+tui_success "Selected: $INSTALL_TERMINAL"
+echo ""
+
 if $ask; then
     if ! tui_confirm "Ready to install?"; then
         echo ""

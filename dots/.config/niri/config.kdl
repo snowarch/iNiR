@@ -221,9 +221,9 @@ binds {
     // ii Cheatsheet
     Mod+Slash { spawn "qs" "-c" "ii" "ipc" "call" "cheatsheet" "toggle"; }
     
-    // Applications (change "foot" to your preferred terminal)
-    Mod+T { spawn "foot"; }
-    Mod+Return { spawn "foot"; }
+    // Applications
+    Mod+T { spawn "kitty"; }
+    Mod+Return { spawn "kitty"; }
     Super+E { spawn "dolphin"; }
     
     // Window management

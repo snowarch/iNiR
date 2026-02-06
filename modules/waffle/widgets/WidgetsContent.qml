@@ -590,7 +590,7 @@ WBarAttachedPanelContent {
                             iconName: "terminal"
                             label: Translation.tr("Terminal")
                             onClicked: {
-                                const cmd = Config.options?.apps?.terminal ?? "foot"
+                                const cmd = Config.options?.apps?.terminal ?? "kitty"
                                 ShellExec.execCmd(cmd)
                                 GlobalStates.waffleWidgetsOpen = false
                             }

@@ -643,8 +643,26 @@ setup-kvantum-config "MaterialAdw"
 # Environment variables
 setup-environment-config "Bibata-Modern-Classic"
 
-# Foot terminal configuration
-setup-foot-config
+# Terminal configuration based on user selection
+INSTALL_TERMINAL="${INSTALL_TERMINAL:-kitty}"
+
+case "$INSTALL_TERMINAL" in
+  kitty)
+    echo -e "${STY_BLUE}Installing Kitty terminal...${STY_RST}"
+    sudo dnf install -y kitty
+    setup-kitty-config
+    ;;
+  foot)
+    echo -e "${STY_BLUE}Installing Foot terminal...${STY_RST}"
+    sudo dnf install -y foot
+    setup-foot-config
+    ;;
+  *)
+    echo -e "${STY_BLUE}Installing Kitty terminal (default)...${STY_RST}"
+    sudo dnf install -y kitty
+    setup-kitty-config
+    ;;
+esac
 
 # Fish shell configuration
 setup-fish-config

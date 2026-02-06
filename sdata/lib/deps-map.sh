@@ -146,6 +146,7 @@ DEPS_MISC_LIBQALCULATE="arch:libqalculate fedora:libqalculate debian:qalc ubuntu
 DEPS_MISC_BRIGHTNESSCTL="arch:brightnessctl fedora:brightnessctl debian:brightnessctl ubuntu:brightnessctl opensuse:brightnessctl void:brightnessctl"
 DEPS_MISC_DOLPHIN="arch:dolphin fedora:dolphin debian:dolphin ubuntu:dolphin opensuse:dolphin void:dolphin"
 DEPS_MISC_FOOT="arch:foot fedora:foot debian:foot ubuntu:foot opensuse:foot void:foot"
+DEPS_MISC_KITTY="arch:kitty fedora:kitty debian:kitty ubuntu:kitty opensuse:kitty void:kitty"
 DEPS_MISC_POLKIT="arch:polkit fedora:polkit debian:policykit-1 ubuntu:policykit-1 opensuse:polkit void:polkit"
 DEPS_MISC_UV="arch:AUR:uv fedora:CARGO:uv debian:CARGO:uv ubuntu:CARGO:uv opensuse:CARGO:uv void:CARGO:uv"
 DEPS_MISC_KCONFIG="arch:kconfig fedora:kf6-kconfig debian:libkf6config-bin ubuntu:libkf6config-bin opensuse:kconfig void:kconfig"

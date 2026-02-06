@@ -19,7 +19,7 @@ BarIconButton {
     tooltipText: Translation.tr("Updates available: %1 packages").arg(Updates.count)
 
     function runUpdate(): void {
-        const cmd = Config.options?.apps?.update ?? "foot -e sudo pacman -Syu"
+        const cmd = Config.options?.apps?.update ?? "kitty -e sudo pacman -Syu"
         ShellExec.execCmd(cmd)
     }
 

@@ -311,7 +311,7 @@ Singleton {
                     if (!entry.runInTerminal) {
                         entry.execute()
                     } else {
-                        const terminal = Config.options?.apps?.terminal ?? "foot"
+                        const terminal = Config.options?.apps?.terminal ?? "kitty"
                         Quickshell.execDetached(["/usr/bin/bash", "-c", `${terminal} -e '${entry.command?.join(" ") ?? ""}'`])
                     }
                 }

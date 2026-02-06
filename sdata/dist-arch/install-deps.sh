@@ -267,6 +267,39 @@ if $INSTALL_FONTS; then
 fi
 
 #####################################################################################
+# Terminal Installation
+#####################################################################################
+echo -e "${STY_CYAN}[$0]: Installing terminal emulator...${STY_RST}"
+
+INSTALL_TERMINAL="${INSTALL_TERMINAL:-kitty}"
+
+installflags="--needed"
+$ask || installflags="$installflags --noconfirm"
+
+case "$INSTALL_TERMINAL" in
+  kitty)
+    echo -e "${STY_BLUE}Installing Kitty terminal...${STY_RST}"
+    v sudo pacman -S $installflags kitty
+    showfun setup-kitty-config
+    v setup-kitty-config
+    ;;
+  foot)
+    echo -e "${STY_BLUE}Installing Foot terminal...${STY_RST}"
+    v sudo pacman -S $installflags foot
+    showfun setup-foot-config
+    v setup-foot-config
+    ;;
+  *)
+    echo -e "${STY_BLUE}Installing Kitty terminal (default)...${STY_RST}"
+    v sudo pacman -S $installflags kitty
+    showfun setup-kitty-config
+    v setup-kitty-config
+    ;;
+esac
+
+echo -e "${STY_GREEN}[$0]: Terminal $INSTALL_TERMINAL installed.${STY_RST}"
+
+#####################################################################################
 # Optional: Python environment setup
 #####################################################################################
 showfun install-python-packages

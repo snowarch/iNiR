@@ -37,7 +37,7 @@ AppButton {
             {
                 text: Translation.tr("Terminal"),
                 action: () => {
-                    const cmd = Config.options?.apps?.terminal ?? "foot"
+                    const cmd = Config.options?.apps?.terminal ?? "kitty"
                     ShellExec.execCmd(cmd)
                 }
             },
