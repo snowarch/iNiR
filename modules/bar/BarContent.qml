@@ -482,6 +482,11 @@ Item { // Bar content region
                 Layout.alignment: Qt.AlignVCenter
             }
 
+            // iNiR shell update indicator
+            ShellUpdateIndicator {
+                Layout.alignment: Qt.AlignVCenter
+            }
+
             Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true

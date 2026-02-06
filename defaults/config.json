@@ -769,6 +769,11 @@
     "filterPassive": true,
     "extraProblematicApps": []
   },
+  "shellUpdates": {
+    "enabled": true,
+    "checkIntervalMinutes": 360,
+    "dismissedCommit": ""
+  },
   "updates": {
     "checkInterval": 120,
     "adviseUpdateThreshold": 75,
