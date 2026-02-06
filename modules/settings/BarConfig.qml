@@ -147,6 +147,21 @@ ContentPage {
                 text: Translation.tr("Card style here doesn't match dock/sidebar. Go to Themes → Global Style for consistency.")
             }
 
+            ConfigSpinBox {
+                icon: "rounded_corner"
+                text: Translation.tr("Custom bar rounding (px)")
+                value: Config.options?.bar?.customRounding ?? -1
+                from: -1
+                to: 50
+                stepSize: 1
+                onValueChanged: {
+                    Config.setNestedValue("bar.customRounding", value);
+                }
+                StyledToolTip {
+                    text: Translation.tr("Override bar corner rounding independently from the global theme.\n-1 = use theme default, 0 = sharp corners, higher = rounder")
+                }
+            }
+
             SettingsDivider {}
 
             ConfigRow {

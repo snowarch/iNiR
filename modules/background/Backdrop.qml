@@ -39,7 +39,7 @@ Variants {
         readonly property var iiBackdrop: Config.options?.background?.backdrop ?? {}
         
         readonly property int backdropBlurRadius: iiBackdrop.blurRadius ?? 32
-        readonly property int videoBlurStrength: Config.options?.background?.effects?.videoBlurStrength ?? 50
+        readonly property int thumbnailBlurStrength: Config.options?.background?.effects?.thumbnailBlurStrength ?? 50
         readonly property int backdropDim: iiBackdrop.dim ?? 35
         readonly property real backdropSaturation: iiBackdrop.saturation ?? 0
         readonly property real backdropContrast: iiBackdrop.contrast ?? 0
@@ -125,9 +125,9 @@ Variants {
                 layer.enabled: Appearance.effectsEnabled && backdropWindow.backdropBlurRadius > 0 && !backdropWindow.useAuroraStyle && !backdropWindow.wallpaperIsGif
                 layer.effect: MultiEffect {
                     blurEnabled: true
-                    // For videos (when using thumbnails), apply videoBlurStrength
-                    blur: backdropWindow.wallpaperIsVideo
-                        ? (backdropWindow.backdropBlurRadius * Math.max(0, Math.min(1, backdropWindow.videoBlurStrength / 100))) / 100.0
+                    // For videos/GIFs (when using thumbnails), apply thumbnailBlurStrength
+                    blur: (backdropWindow.wallpaperIsVideo || backdropWindow.wallpaperIsGif)
+                        ? (backdropWindow.backdropBlurRadius * Math.max(0, Math.min(1, backdropWindow.thumbnailBlurStrength / 100))) / 100.0
                         : backdropWindow.backdropBlurRadius / 100.0
                     blurMax: 64
                     saturation: backdropWindow.backdropSaturation

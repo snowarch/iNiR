@@ -41,7 +41,8 @@ Rectangle {
             : "transparent"
 
     Behavior on color {
-        ColorAnimation { duration: 100 }
+        enabled: Appearance.animationsEnabled
+        animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
     }
 
     MouseArea {

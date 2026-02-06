@@ -354,12 +354,17 @@ switch() {
     pre_process "$mode_flag"
 
     # Check if app and shell theming is enabled in config
+    local enable_apps_shell="true"
+    local enable_terminal="true"
     if [ -f "$SHELL_CONFIG_FILE" ]; then
-        enable_apps_shell=$(jq -r '.appearance.wallpaperTheming.enableAppsAndShell' "$SHELL_CONFIG_FILE")
-        if [ "$enable_apps_shell" == "false" ]; then
-            echo "App and shell theming disabled, skipping matugen and color generation"
-            return
-        fi
+        enable_apps_shell=$(jq -r '.appearance.wallpaperTheming.enableAppsAndShell // true' "$SHELL_CONFIG_FILE")
+        enable_terminal=$(jq -r '.appearance.wallpaperTheming.enableTerminal // true' "$SHELL_CONFIG_FILE")
+    fi
+
+    # Skip entirely only if BOTH app theming AND terminal theming are disabled
+    if [ "$enable_apps_shell" == "false" ] && [ "$enable_terminal" == "false" ]; then
+        echo "Both app/shell and terminal theming disabled, skipping color generation"
+        return
     fi
 
     # Set harmony and related properties from terminalColorAdjustments
@@ -390,19 +395,23 @@ switch() {
     python3 "$SCRIPT_DIR/generate_colors_material.py" "${generate_colors_material_args[@]}" \
         > "$STATE_DIR"/user/generated/material_colors.scss
     
-    # Generate Vesktop theme if enabled
-    enable_vesktop=$(jq -r '.appearance.wallpaperTheming.enableVesktop // true' "$SHELL_CONFIG_FILE" 2>/dev/null || echo "true")
-    if [[ "$enable_vesktop" != "false" ]]; then
-        python3 "$SCRIPT_DIR/system24_palette.py"
-        # Note: Vesktop auto-reloads CSS changes, no manual reload needed
+    # Generate Vesktop theme if enabled (only when app theming is on)
+    if [ "$enable_apps_shell" != "false" ]; then
+        enable_vesktop=$(jq -r '.appearance.wallpaperTheming.enableVesktop // true' "$SHELL_CONFIG_FILE" 2>/dev/null || echo "true")
+        if [[ "$enable_vesktop" != "false" ]]; then
+            python3 "$SCRIPT_DIR/system24_palette.py"
+        fi
     fi
     
+    # Always run applycolor.sh - it has its own checks for enableTerminal and enableAppsAndShell
     "$SCRIPT_DIR"/applycolor.sh
     deactivate 2>/dev/null || true
 
-    # Pass screen width, height, and wallpaper path to post_process
-    read max_width_desired max_height_desired <<< "$(get_max_monitor_resolution)"
-    post_process "$max_width_desired" "$max_height_desired" "$imgpath"
+    # Pass screen width, height, and wallpaper path to post_process (only when app theming is on)
+    if [ "$enable_apps_shell" != "false" ]; then
+        read max_width_desired max_height_desired <<< "$(get_max_monitor_resolution)"
+        post_process "$max_width_desired" "$max_height_desired" "$imgpath"
+    fi
 }
 
 main() {

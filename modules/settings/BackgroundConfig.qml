@@ -113,6 +113,18 @@ ContentPage {
                     ]
                 }
             }
+            
+            SettingsSwitch {
+                buttonIcon: "play_circle"
+                text: Translation.tr("Enable animated wallpapers (videos/GIFs)")
+                checked: Config.options?.background?.enableAnimation ?? true
+                onCheckedChanged: {
+                    Config.setNestedValue("background.enableAnimation", checked);
+                }
+                StyledToolTip {
+                    text: Translation.tr("Play videos and GIFs as wallpaper. When disabled, shows thumbnail instead (better performance)")
+                }
+            }
         }
     }
 
@@ -170,16 +182,16 @@ ContentPage {
             ConfigSpinBox {
                 visible: Config.options.background.effects.enableBlur
                 icon: "blur_circular"
-                text: Translation.tr("Video blur strength (%)")
-                value: Config.options.background.effects.videoBlurStrength
+                text: Translation.tr("Thumbnail blur strength (%)")
+                value: Config.options.background.effects.thumbnailBlurStrength
                 from: 0
                 to: 100
                 stepSize: 5
                 onValueChanged: {
-                    Config.options.background.effects.videoBlurStrength = value;
+                    Config.options.background.effects.thumbnailBlurStrength = value;
                 }
                 StyledToolTip {
-                    text: Translation.tr("Blur strength for video wallpapers (separate from static images)")
+                    text: Translation.tr("Blur strength applied to video/GIF thumbnails when animation is disabled (does not affect videos in playback)")
                 }
             }
 

@@ -238,8 +238,8 @@ color15 {colors.get("term15", "#EBDBB2")}
 
 def fix_alacritty_import_order(config_path):
     """
-    Fix alacritty.toml to have import at the top and comment out hardcoded colors.
-    Creates backup before modifying.
+    Fix alacritty.toml to use [general] import (Alacritty 0.15+) at the top
+    and comment out hardcoded colors. Creates backup before modifying.
     Returns: (modified: bool, message: str)
     """
     try:
@@ -250,113 +250,101 @@ def fix_alacritty_import_order(config_path):
     except PermissionError:
         return False, "Permission denied"
 
-    # Check if import exists
-    import_pattern = r"import\s*=\s*\[.*?colors\.toml.*?\]"
-    has_import = bool(re.search(import_pattern, content))
+    import_line = 'import = ["~/.config/alacritty/colors.toml"]'
+    general_import_pat = r"import\s*=\s*\[.*?colors\.toml.*?\]"
 
-    # Check if hardcoded colors exist
     has_hardcoded_colors = bool(
-        re.search(r"^\[colors\.primary\]", content, re.MULTILINE)
-        or re.search(r"^\[colors\.normal\]", content, re.MULTILINE)
-        or re.search(r"^\[colors\.bright\]", content, re.MULTILINE)
+        re.search(r"^\[colors\.(primary|normal|bright)\]", content, re.MULTILINE)
     )
 
-    # Check if import is at the very top (first non-comment, non-empty line)
+    # Check if [general] with import is already at the top (correct state)
     lines = content.split("\n")
-    first_real_line_idx = None
-    for i, line in enumerate(lines):
-        stripped = line.strip()
-        if stripped and not stripped.startswith("#"):
-            first_real_line_idx = i
-            break
+    top_lines = [l.strip() for l in lines[:10] if l.strip() and not l.strip().startswith("#")]
 
-    import_at_top = False
-    if first_real_line_idx is not None:
-        first_line = lines[first_real_line_idx].strip()
-        import_at_top = bool(re.match(import_pattern, first_line))
-
-    # Determine if fix is needed
-    needs_fix = has_hardcoded_colors or (has_import and not import_at_top)
-
-    if not needs_fix:
+    # Correct state: [general] is first real line, import is second, no hardcoded colors
+    correct = (
+        len(top_lines) >= 2
+        and top_lines[0] == "[general]"
+        and bool(re.match(general_import_pat, top_lines[1]))
+        and not has_hardcoded_colors
+    )
+    if correct:
         return False, "Config is already correct"
 
     # Create backup
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     backup_path = f"{config_path}.backup_{timestamp}"
     try:
-        with open(backup_path, "w") as f:
-            f.write(content)
+        Path(backup_path).write_text(content)
     except Exception as e:
         return False, f"Failed to create backup: {e}"
 
-    # Build new content
-    new_lines = []
+    # Build new content: [general] with import at top, then rest of config
+    new_lines = [
+        "# iNiR wallpaper theming - import must be at top to override colors",
+        "[general]",
+        import_line,
+    ]
 
-    # Add import at the very top
-    new_lines.append(
-        "# iNiR wallpaper theming - import must be at top to override colors"
-    )
-    new_lines.append('import = ["~/.config/alacritty/colors.toml"]')
-    new_lines.append("")
-
-    # Process existing lines
+    in_general = False
     in_colors_section = False
+    added_colors_comment = False
 
     for line in lines:
         stripped = line.strip()
 
-        # Skip existing import lines (we added it at top)
-        if re.match(import_pattern, stripped):
+        # Skip old bare import lines and their iNiR comments
+        if re.match(bare_import_pat, stripped):
+            continue
+        if stripped.startswith("# iNiR wallpaper theming"):
             continue
 
-        # Detect color section start
+        # Handle existing [general] section - absorb its non-import content
+        if stripped == "[general]":
+            in_general = True
+            continue
+        if in_general:
+            if stripped.startswith("[") and stripped != "[general]":
+                in_general = False
+                # Fall through to process this line normally
+            elif re.match(general_import_pat, stripped):
+                continue  # Skip - we already added import at top
+            elif stripped:
+                # Move other [general] settings (live_config_reload, etc.) to top
+                new_lines.append(stripped)
+                continue
+            else:
+                continue  # Skip empty lines in old [general]
+
+        # Comment out hardcoded color sections
         if re.match(r"^\[colors\.(primary|normal|bright|cursor|selection)\]", stripped):
-            if not in_colors_section:
+            if not added_colors_comment:
                 in_colors_section = True
+                added_colors_comment = True
                 new_lines.append("")
-                new_lines.append(
-                    "# The following color definitions were commented out by iNiR installer"
-                )
-                new_lines.append(
-                    "# to allow wallpaper theming to work. Colors are now managed via"
-                )
-                new_lines.append("# the import statement at the top of this file.")
-                new_lines.append(
-                    "# If you want to use static colors, remove the import line above."
-                )
+                new_lines.append("# Color definitions commented out by iNiR wallpaper theming")
+                new_lines.append("# Colors are managed via the import in [general] above")
                 new_lines.append("#")
             new_lines.append("# " + line)
             continue
 
-        # Detect color section end (new non-color section starts)
         if in_colors_section:
             if stripped.startswith("[") and not stripped.startswith("[colors"):
                 in_colors_section = False
                 new_lines.append("")
                 new_lines.append(line)
             elif stripped and "=" in stripped:
-                # Color definition line
                 new_lines.append("# " + line)
             else:
-                # Empty line or comment in colors section
                 new_lines.append("# " + line if stripped else "")
             continue
 
-        # Keep all other lines as-is
         new_lines.append(line)
 
-    # Write new content
-    new_content = "\n".join(new_lines)
     try:
-        with open(config_path, "w") as f:
-            f.write(new_content)
+        Path(config_path).write_text("\n".join(new_lines))
     except Exception as e:
-        # Restore backup on failure
-        with open(backup_path, "r") as f:
-            original = f.read()
-        with open(config_path, "w") as f:
-            f.write(original)
+        Path(config_path).write_text(content)
         return False, f"Failed to write config: {e}"
 
     return True, f"Fixed config (backup: {backup_path})"
@@ -413,21 +401,19 @@ white   = '{colors.get("term15", "#EBDBB2")}'
     if os.path.exists(alacritty_conf):
         modified, message = fix_alacritty_import_order(alacritty_conf)
         if modified:
-            print(f"✓ Generated Alacritty config and fixed import order")
-            print(f"  {message}")
+            print(f"✓ Generated Alacritty config ({message})")
         else:
             print(f"✓ Generated Alacritty config ({message})")
     else:
-        # Create new config with import at top
-        if ensure_line_in_file(
-            alacritty_conf,
-            'import = ["~/.config/alacritty/colors.toml"]',
-            r"import\s*=.*colors\.toml",
-            at_top=True,
-        ):
-            print(f"✓ Generated Alacritty config and created new config file")
-        else:
-            print(f"✓ Generated Alacritty config")
+        # Create new config with [general] import at top
+        new_conf = (
+            "# iNiR wallpaper theming\n"
+            "[general]\n"
+            'import = ["~/.config/alacritty/colors.toml"]\n'
+        )
+        Path(alacritty_conf).parent.mkdir(parents=True, exist_ok=True)
+        Path(alacritty_conf).write_text(new_conf)
+        print(f"✓ Generated Alacritty config and created new config file")
 
 
 def generate_foot_config(colors, output_path):
@@ -715,6 +701,81 @@ Wallpaper=
     print(f"✓ Generated Konsole config")
 
 
+def generate_starship_config(colors, output_path):
+    """Generate Starship prompt palette config and auto-integrate"""
+    # Starship uses a TOML palette format
+    config = f"""# Auto-generated by ii wallpaper theming system
+# Do not edit manually - changes will be overwritten
+# This file provides Material You colors to your Starship prompt
+
+[palettes.ii]
+primary = '{colors.get("primary", "#458588")}'
+onPrimary = '{colors.get("onPrimary", "#FFFFFF")}'
+secondary = '{colors.get("secondary", "#83A598")}'
+onSecondary = '{colors.get("onSecondary", "#1D2021")}'
+tertiary = '{colors.get("tertiary", "#D3869B")}'
+onTertiary = '{colors.get("onTertiary", "#1D2021")}'
+surface = '{colors.get("surface", "#1D2021")}'
+onSurface = '{colors.get("onSurface", "#EBDBB2")}'
+background = '{colors.get("term0", "#282828")}'
+foreground = '{colors.get("term7", "#A89984")}'
+black = '{colors.get("term0", "#282828")}'
+red = '{colors.get("term1", "#CC241D")}'
+green = '{colors.get("term2", "#98971A")}'
+yellow = '{colors.get("term3", "#D79921")}'
+blue = '{colors.get("term4", "#458588")}'
+magenta = '{colors.get("term5", "#B16286")}'
+cyan = '{colors.get("term6", "#689D6A")}'
+white = '{colors.get("term7", "#A89984")}'
+bright_black = '{colors.get("term8", "#928374")}'
+bright_red = '{colors.get("term9", "#FB4934")}'
+bright_green = '{colors.get("term10", "#B8BB26")}'
+bright_yellow = '{colors.get("term11", "#FABD2F")}'
+bright_blue = '{colors.get("term12", "#83A598")}'
+bright_magenta = '{colors.get("term13", "#D3869B")}'
+bright_cyan = '{colors.get("term14", "#8EC07C")}'
+bright_white = '{colors.get("term15", "#EBDBB2")}'
+"""
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    with open(output_path, "w") as f:
+        f.write(config)
+
+    # Auto-integrate into starship.toml
+    home = os.path.expanduser("~")
+    starship_conf = f"{home}/.config/starship.toml"
+    
+    # Check if starship.toml exists
+    if os.path.exists(starship_conf):
+        content = Path(starship_conf).read_text()
+        
+        # Check if palette_name is already set to ii
+        if 'palette = "ii"' in content:
+            print(f"✓ Generated Starship palette (already using ii palette)")
+        else:
+            # Add palette directive if not present
+            if 'palette =' not in content:
+                # Add at top of file
+                new_content = 'palette = "ii"\n\n' + content
+                Path(starship_conf).write_text(new_content)
+                print(f"✓ Generated Starship palette and set as active")
+            else:
+                print(f"✓ Generated Starship palette (using different palette, change to 'palette = \"ii\"' to use)")
+        
+        # Add source directive for palette file if not present
+        palette_source = f'"$HOME/.config/starship/ii-palette.toml"'
+        if palette_source not in content and 'ii-palette.toml' not in content:
+            # Prepend the source at the very top
+            source_line = f'# Import ii Material You palette\n# source = {palette_source}\n\n'
+            # Note: Starship doesn't support source/include, so we need to append the palette directly
+            # We'll append the palette content to starship.toml if palettes.ii section doesn't exist
+            if '[palettes.ii]' not in content:
+                with open(starship_conf, 'a') as f:
+                    f.write('\n' + config)
+                print(f"  → Appended ii palette to starship.toml")
+    else:
+        print(f"✓ Generated Starship palette (starship.toml not found - create it and add 'palette = \"ii\"')")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Generate terminal color configs from material_colors.scss"
@@ -731,7 +792,7 @@ def main():
         "--terminals",
         type=str,
         nargs="+",
-        choices=["kitty", "alacritty", "foot", "wezterm", "ghostty", "konsole", "all"],
+        choices=["kitty", "alacritty", "foot", "wezterm", "ghostty", "konsole", "starship", "all"],
         default=["all"],
         help="Which terminals to generate configs for",
     )
@@ -749,7 +810,7 @@ def main():
     terminals = (
         args.terminals
         if "all" not in args.terminals
-        else ["kitty", "alacritty", "foot", "wezterm", "ghostty", "konsole"]
+        else ["kitty", "alacritty", "foot", "wezterm", "ghostty", "konsole", "starship"]
     )
 
     # Generate configs for requested terminals
@@ -772,6 +833,9 @@ def main():
         generate_konsole_config(
             colors, f"{home}/.local/share/konsole/ii-auto.colorscheme"
         )
+
+    if "starship" in terminals:
+        generate_starship_config(colors, f"{home}/.config/starship/ii-palette.toml")
 
 
 if __name__ == "__main__":

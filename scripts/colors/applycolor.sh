@@ -43,10 +43,39 @@ apply_term() {
 
   sed -i "s/\$alpha/$term_alpha/g" "$STATE_DIR"/user/generated/terminal/sequences.txt
 
-  for file in /dev/pts/*; do
-    if [[ $file =~ ^/dev/pts/[0-9]+$ ]]; then
+  # Only write OSC sequences to PTYs that have an interactive shell (fish, bash, zsh, etc.)
+  # Writing to non-shell PTYs (quickshell, IDE, cat, etc.) can crash those processes
+  local seq_file="$STATE_DIR/user/generated/terminal/sequences.txt"
+  local shell_pids
+  shell_pids=$(pgrep -x "fish|bash|zsh|nu|elvish|xonsh" 2>/dev/null || true)
+
+  if [[ -z "$shell_pids" ]]; then
+    return
+  fi
+
+  # Build a set of safe PTY numbers from interactive shells
+  local safe_pts=()
+  for pid in $shell_pids; do
+    # Get the controlling terminal of the shell process
+    local tty_nr
+    tty_nr=$(readlink /proc/"$pid"/fd/0 2>/dev/null || true)
+    if [[ "$tty_nr" =~ ^/dev/pts/([0-9]+)$ ]]; then
+      local pts_num="${BASH_REMATCH[1]}"
+      # Avoid duplicates
+      local already=false
+      for existing in "${safe_pts[@]}"; do
+        [[ "$existing" == "$pts_num" ]] && already=true && break
+      done
+      $already || safe_pts+=("$pts_num")
+    fi
+  done
+
+  # Write sequences only to PTYs with interactive shells
+  for pts_num in "${safe_pts[@]}"; do
+    local pts_file="/dev/pts/$pts_num"
+    if [[ -w "$pts_file" ]]; then
       {
-      cat "$STATE_DIR"/user/generated/terminal/sequences.txt >"$file"
+        cat "$seq_file" > "$pts_file"
       } & disown || true
     fi
   done
@@ -54,39 +83,45 @@ apply_term() {
 
 apply_terminal_configs() {
   # Generate terminal-specific config files (Kitty, Alacritty, Foot, WezTerm, Ghostty, Konsole)
+  local log_file="$STATE_DIR/user/generated/terminal_colors.log"
+  
   if [ ! -f "$STATE_DIR/user/generated/material_colors.scss" ]; then
-    echo "material_colors.scss not found. Skipping terminal config generation."
+    echo "[terminal-colors] material_colors.scss not found. Skipping." | tee -a "$log_file" 2>/dev/null
     return
   fi
 
-  # Get enabled terminals from config
+  # Get enabled terminals from config, but only if actually installed
   local enabled_terminals=()
   if [ -f "$CONFIG_FILE" ]; then
-    # Check which terminal config generators are enabled
     local enable_kitty=$(jq -r '.appearance.wallpaperTheming.terminals.kitty // true' "$CONFIG_FILE")
     local enable_alacritty=$(jq -r '.appearance.wallpaperTheming.terminals.alacritty // true' "$CONFIG_FILE")
     local enable_foot=$(jq -r '.appearance.wallpaperTheming.terminals.foot // true' "$CONFIG_FILE")
     local enable_wezterm=$(jq -r '.appearance.wallpaperTheming.terminals.wezterm // true' "$CONFIG_FILE")
     local enable_ghostty=$(jq -r '.appearance.wallpaperTheming.terminals.ghostty // true' "$CONFIG_FILE")
     local enable_konsole=$(jq -r '.appearance.wallpaperTheming.terminals.konsole // true' "$CONFIG_FILE")
+    local enable_starship=$(jq -r '.appearance.wallpaperTheming.terminals.starship // true' "$CONFIG_FILE")
 
-    [[ "$enable_kitty" == "true" ]] && enabled_terminals+=(kitty)
-    [[ "$enable_alacritty" == "true" ]] && enabled_terminals+=(alacritty)
-    [[ "$enable_foot" == "true" ]] && enabled_terminals+=(foot)
-    [[ "$enable_wezterm" == "true" ]] && enabled_terminals+=(wezterm)
-    [[ "$enable_ghostty" == "true" ]] && enabled_terminals+=(ghostty)
-    [[ "$enable_konsole" == "true" ]] && enabled_terminals+=(konsole)
+    # Only add terminals that are both enabled AND installed
+    [[ "$enable_kitty" == "true" ]] && command -v kitty &>/dev/null && enabled_terminals+=(kitty)
+    [[ "$enable_alacritty" == "true" ]] && command -v alacritty &>/dev/null && enabled_terminals+=(alacritty)
+    [[ "$enable_foot" == "true" ]] && command -v foot &>/dev/null && enabled_terminals+=(foot)
+    [[ "$enable_wezterm" == "true" ]] && command -v wezterm &>/dev/null && enabled_terminals+=(wezterm)
+    [[ "$enable_ghostty" == "true" ]] && command -v ghostty &>/dev/null && enabled_terminals+=(ghostty)
+    [[ "$enable_konsole" == "true" ]] && command -v konsole &>/dev/null && enabled_terminals+=(konsole)
+    [[ "$enable_starship" == "true" ]] && command -v starship &>/dev/null && enabled_terminals+=(starship)
   else
-    # Default: enable all
-    enabled_terminals=(kitty alacritty foot wezterm ghostty konsole)
+    # Default: only generate for installed terminals + starship
+    for term in kitty alacritty foot wezterm ghostty konsole starship; do
+      command -v "$term" &>/dev/null && enabled_terminals+=("$term")
+    done
   fi
 
   if [ ${#enabled_terminals[@]} -eq 0 ]; then
+    echo "[terminal-colors] No enabled terminals found installed. Skipping." >> "$log_file" 2>/dev/null
     return
   fi
 
   # Run the Python script to generate configs
-  # Use venv python if available, otherwise system python
   local python_cmd="python3"
   local venv_python="${ILLOGICAL_IMPULSE_VIRTUAL_ENV:-$HOME/.local/state/quickshell/.venv}/bin/python"
   if [[ -x "$venv_python" ]]; then
@@ -94,10 +129,79 @@ apply_terminal_configs() {
   fi
 
   if command -v "$python_cmd" &>/dev/null || [[ -x "$python_cmd" ]]; then
+    echo "[terminal-colors] Generating configs for: ${enabled_terminals[*]}" >> "$log_file" 2>/dev/null
     "$python_cmd" "$SCRIPT_DIR/generate_terminal_configs.py" \
       --scss "$STATE_DIR/user/generated/material_colors.scss" \
-      --terminals "${enabled_terminals[@]}" &>/dev/null &
+      --terminals "${enabled_terminals[@]}" >> "$log_file" 2>&1
+
+    # Reload running terminals so colors update in real-time
+    reload_terminal_colors "${enabled_terminals[@]}" >> "$log_file" 2>&1 &
+  else
+    echo "[terminal-colors] ERROR: Python not found ($python_cmd). Cannot generate terminal configs." >> "$log_file" 2>/dev/null
   fi
+}
+
+reload_terminal_colors() {
+  local terminals=("$@")
+  local home="$HOME"
+
+  for term in "${terminals[@]}"; do
+    case "$term" in
+      kitty)
+        # Kitty: reload colors via remote control (works if allow_remote_control is enabled)
+        if pgrep -x kitty &>/dev/null; then
+          kitty @ set-colors --all "$home/.config/kitty/current-theme.conf" 2>/dev/null && \
+            echo "[terminal-colors] Kitty: reloaded via remote control" || \
+            echo "[terminal-colors] Kitty: remote control not available (enable allow_remote_control in kitty.conf for live reload)"
+        fi
+        ;;
+      foot)
+        # Foot: SIGUSR1 triggers config reload
+        if pgrep -x foot &>/dev/null; then
+          pkill -USR1 foot 2>/dev/null && \
+            echo "[terminal-colors] Foot: sent SIGUSR1 reload signal"
+        fi
+        ;;
+      alacritty)
+        # Alacritty: auto-reloads on config file change (built-in file watcher)
+        # Just touch the main config to trigger the watcher if import didn't trigger it
+        if pgrep -x alacritty &>/dev/null && [ -f "$home/.config/alacritty/alacritty.toml" ]; then
+          touch "$home/.config/alacritty/alacritty.toml" 2>/dev/null
+          echo "[terminal-colors] Alacritty: touched config to trigger auto-reload"
+        fi
+        ;;
+      wezterm)
+        # WezTerm: auto-reloads on config change (built-in file watcher)
+        # Touch config to ensure watcher triggers
+        if pgrep -x wezterm &>/dev/null && [ -f "$home/.config/wezterm/wezterm.lua" ]; then
+          touch "$home/.config/wezterm/wezterm.lua" 2>/dev/null
+          echo "[terminal-colors] WezTerm: touched config to trigger auto-reload"
+        fi
+        ;;
+      ghostty)
+        # Ghostty: does NOT support SIGUSR1 reload (as of v1.x)
+        # Config reload is only via Ctrl+Shift+, keyboard shortcut
+        # Colors will apply on next new window/tab or manual reload
+        if pgrep -x ghostty &>/dev/null; then
+          echo "[terminal-colors] Ghostty: config updated (press Ctrl+Shift+, to reload, or open new window)"
+        fi
+        ;;
+      konsole)
+        # Konsole: Use qdbus to reload profile if available
+        if pgrep -x konsole &>/dev/null; then
+          # Try to reload via DBus (works in some versions)
+          if command -v qdbus6 &>/dev/null; then
+            for session in $(qdbus6 org.kde.konsole 2>/dev/null | grep -E '/Sessions/[0-9]+$'); do
+              qdbus6 org.kde.konsole "$session" org.kde.konsole.Session.setProfile "ii-auto" 2>/dev/null
+            done
+            echo "[terminal-colors] Konsole: attempted profile reload via DBus"
+          else
+            echo "[terminal-colors] Konsole: colors will apply on next new tab/session"
+          fi
+        fi
+        ;;
+    esac
+  done
 }
 
 apply_qt() {

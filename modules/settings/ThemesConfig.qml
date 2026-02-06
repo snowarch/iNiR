@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
+import Quickshell.Io
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
@@ -74,6 +75,28 @@ ContentPage {
                     return aFav - bFav
                 })
                 return result
+            }
+
+            // Double-click hint
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.bottomMargin: 4
+                spacing: 6
+
+                MaterialSymbol {
+                    text: "touch_app"
+                    iconSize: 16
+                    color: Appearance.m3colors.m3tertiary
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Translation.tr("Double-click a theme to apply it reliably. A single click may not always trigger the full color generation.")
+                    font.pixelSize: Appearance.font.pixelSize.smallest
+                    color: Appearance.colors.colSubtext
+                    opacity: 0.8
+                    wrapMode: Text.WordWrap
+                }
             }
 
             // Compact search + filter row
@@ -763,6 +786,136 @@ ContentPage {
                 onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.enableTerminal", checked)
             }
 
+            // Individual terminal toggles
+            StyledText {
+                Layout.fillWidth: true
+                Layout.topMargin: 12
+                text: Translation.tr("Generate color configs for:")
+                color: Appearance.colors.colSubtext
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                wrapMode: Text.WordWrap
+            }
+
+            ConfigRow {
+                uniform: true
+                visible: Config.options?.appearance?.wallpaperTheming?.enableTerminal ?? true
+
+                ConfigSwitch {
+                    buttonIcon: "terminal"
+                    text: "Kitty"
+                    checked: Config.options?.appearance?.wallpaperTheming?.terminals?.kitty ?? true
+                    onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.terminals.kitty", checked)
+                }
+
+                ConfigSwitch {
+                    buttonIcon: "terminal"
+                    text: "Alacritty"
+                    checked: Config.options?.appearance?.wallpaperTheming?.terminals?.alacritty ?? true
+                    onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.terminals.alacritty", checked)
+                }
+
+                ConfigSwitch {
+                    buttonIcon: "terminal"
+                    text: "Foot"
+                    checked: Config.options?.appearance?.wallpaperTheming?.terminals?.foot ?? true
+                    onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.terminals.foot", checked)
+                }
+            }
+
+            ConfigRow {
+                uniform: true
+                visible: Config.options?.appearance?.wallpaperTheming?.enableTerminal ?? true
+
+                ConfigSwitch {
+                    buttonIcon: "terminal"
+                    text: "WezTerm"
+                    checked: Config.options?.appearance?.wallpaperTheming?.terminals?.wezterm ?? true
+                    onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.terminals.wezterm", checked)
+                }
+
+                ConfigSwitch {
+                    buttonIcon: "terminal"
+                    text: "Ghostty"
+                    checked: Config.options?.appearance?.wallpaperTheming?.terminals?.ghostty ?? true
+                    onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.terminals.ghostty", checked)
+                }
+
+                ConfigSwitch {
+                    buttonIcon: "terminal"
+                    text: "Konsole"
+                    checked: Config.options?.appearance?.wallpaperTheming?.terminals?.konsole ?? true
+                    onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.terminals.konsole", checked)
+                }
+            }
+
+            ConfigRow {
+                uniform: true
+                visible: Config.options?.appearance?.wallpaperTheming?.enableTerminal ?? true
+
+                ConfigSwitch {
+                    buttonIcon: "rocket_launch"
+                    text: "Starship"
+                    checked: Config.options?.appearance?.wallpaperTheming?.terminals?.starship ?? true
+                    onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.terminals.starship", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Starship prompt palette - use 'palette = \"ii\"' in starship.toml")
+                    }
+                }
+            }
+
+            // Auto-detect button
+            RippleButton {
+                Layout.alignment: Qt.AlignRight
+                Layout.topMargin: 4
+                visible: Config.options?.appearance?.wallpaperTheming?.enableTerminal ?? true
+                implicitWidth: detectRow.implicitWidth + 16
+                implicitHeight: 28
+                buttonRadius: Appearance.rounding.small
+                colBackground: Appearance.colors.colLayer1
+                colBackgroundHover: Appearance.colors.colLayer1Hover
+
+                contentItem: RowLayout {
+                    id: detectRow
+                    anchors.centerIn: parent
+                    spacing: 6
+
+                    MaterialSymbol {
+                        text: "search"
+                        iconSize: 14
+                        color: Appearance.colors.colOnLayer1
+                    }
+
+                    StyledText {
+                        text: Translation.tr("Auto-detect installed")
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                    }
+                }
+
+                onClicked: terminalDetector.running = true
+
+                Process {
+                    id: terminalDetector
+                    command: [
+                        "/usr/bin/bash",
+                        "-c",
+                        "for term in kitty alacritty foot wezterm ghostty konsole starship; do " +
+                        "if command -v $term &>/dev/null; then echo \"$term:true\"; " +
+                        "else echo \"$term:false\"; fi; done"
+                    ]
+                    onExited: (exitCode, exitStatus) => {
+                        if (exitCode === 0) {
+                            const lines = stdout.trim().split('\n');
+                            lines.forEach(line => {
+                                const [term, installed] = line.split(':');
+                                if (term && installed) {
+                                    Config.setNestedValue(`appearance.wallpaperTheming.terminals.${term}`, installed === 'true');
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+
             // Terminal color preview
             RowLayout {
                 Layout.fillWidth: true
@@ -911,6 +1064,48 @@ ContentPage {
                     brightnessSpinBox.value = 55;  // 0.55 * 100
                     harmonySpinBox.value = 15;     // 0.15 * 100
                     // Note: ThemeService.regenerateAutoTheme() is called by onValueChanged
+                }
+            }
+
+            // Apply Now button - triggers terminal color application to all open terminals
+            RippleButton {
+                Layout.alignment: Qt.AlignRight
+                Layout.topMargin: 4
+                visible: Config.options?.appearance?.wallpaperTheming?.enableTerminal ?? true
+                implicitWidth: applyNowRow.implicitWidth + 20
+                implicitHeight: 36
+                buttonRadius: Appearance.rounding.small
+                colBackground: Appearance.colors.colPrimaryContainer
+                colBackgroundHover: Appearance.colors.colPrimaryContainerHover
+                colRipple: Appearance.colors.colPrimaryContainerActive
+
+                contentItem: RowLayout {
+                    id: applyNowRow
+                    anchors.centerIn: parent
+                    spacing: 8
+
+                    MaterialSymbol {
+                        text: "sync"
+                        iconSize: 16
+                        color: Appearance.colors.colOnPrimaryContainer
+                    }
+
+                    StyledText {
+                        text: Translation.tr("Apply to open terminals")
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        color: Appearance.colors.colOnPrimaryContainer
+                    }
+                }
+
+                onClicked: applyTerminalColorsProcess.running = true
+
+                StyledToolTip {
+                    text: Translation.tr("Apply current colors to all open terminal windows without restarting them")
+                }
+
+                Process {
+                    id: applyTerminalColorsProcess
+                    command: ["/usr/bin/bash", Directories.scriptPath + "/colors/applycolor.sh"]
                 }
             }
         }

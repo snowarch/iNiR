@@ -296,8 +296,8 @@ Item {
                 anchors.fill: parent
                 anchors.margins: 1
                 source: wallpaperSource
-                blurEnabled: true
-                blur: 0.4
+                blurEnabled: Appearance.effectsEnabled
+                blur: Appearance.effectsEnabled ? 0.4 : 0
                 blurMax: 32
                 saturation: 0.6
                 

@@ -65,11 +65,8 @@ Item {
         radius: Appearance.rounding.small
 
         Behavior on color {
-            ColorAnimation {
-                duration: Appearance.animation?.elementMoveFast?.duration ?? 200
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: Appearance.animationCurves?.expressiveEffects ?? [0.34, 0.80, 0.34, 1.00, 1, 1]
-            }
+            enabled: Appearance.animationsEnabled
+            animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
         }
     }
 

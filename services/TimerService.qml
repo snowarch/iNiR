@@ -28,27 +28,13 @@ Singleton {
         root.cyclesBeforeLongBreak = Config.options?.time?.pomodoro?.cyclesBeforeLongBreak ?? 4
     }
 
-    // Sync pomodoro config from Config.options.time.pomodoro
-    Connections {
-        target: Config.options?.time?.pomodoro ?? null
-        function onFocusChanged() { root._syncPomodoroConfig() }
-        function onBreakTimeChanged() { root._syncPomodoroConfig() }
-        function onLongBreakChanged() { root._syncPomodoroConfig() }
-        function onCyclesBeforeLongBreakChanged() { root._syncPomodoroConfig() }
-    }
-
-    // Re-sync when Config becomes ready or options change
+    // Sync pomodoro config on ANY config change (reliable - survives object recreation after file reload)
     Connections {
         target: Config
+        function onConfigChanged() { root._syncPomodoroConfig() }
         function onReadyChanged() {
             if (Config.ready) root._syncPomodoroConfig()
         }
-    }
-
-    // Also sync when time object changes (in case pomodoro object is recreated)
-    Connections {
-        target: Config.options?.time ?? null
-        function onPomodoroChanged() { root._syncPomodoroConfig() }
     }
 
     Component.onCompleted: {

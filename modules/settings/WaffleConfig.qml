@@ -86,6 +86,18 @@ ContentPage {
                 checked: Config.options?.waffles?.background?.hideWhenFullscreen ?? true
                 onCheckedChanged: Config.setNestedValue("waffles.background.hideWhenFullscreen", checked)
             }
+            
+            SettingsSwitch {
+                buttonIcon: "play_circle"
+                text: Translation.tr("Enable animated wallpapers (videos/GIFs)")
+                checked: Config.options?.waffles?.background?.enableAnimation ?? true
+                onCheckedChanged: {
+                    Config.setNestedValue("waffles.background.enableAnimation", checked);
+                }
+                StyledToolTip {
+                    text: Translation.tr("Play videos and GIFs as wallpaper. When disabled, shows thumbnail instead (better performance)")
+                }
+            }
         }
     }
 

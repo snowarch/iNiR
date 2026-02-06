@@ -66,7 +66,8 @@
         "foot": true,
         "wezterm": true,
         "ghostty": true,
-        "konsole": true
+        "konsole": true,
+        "starship": true
       }
     },
     "typography": {
@@ -114,13 +115,14 @@
       "wallpaperPath": "",
       "hideWallpaper": false
     },
+    "enableAnimation": true,
     "effects": {
       "blurRadius": 22,
       "blurStatic": 0,
       "dim": 30,
       "dynamicDim": 20,
       "enableBlur": true,
-      "videoBlurStrength": 70
+      "thumbnailBlurStrength": 70
     },
     "hideWhenFullscreen": true,
     "parallax": {
@@ -184,6 +186,7 @@
     "borderless": true,
     "bottom": false,
     "cornerStyle": 2,
+    "customRounding": -1,
     "edgeModulesLayout": {
       "leftOrder": [
         "leftSidebarButton",
@@ -765,6 +768,11 @@
     "pinnedItems": [],
     "filterPassive": true,
     "extraProblematicApps": []
+  },
+  "shellUpdates": {
+    "enabled": true,
+    "checkIntervalMinutes": 360,
+    "dismissedCommit": ""
   },
   "updates": {
     "checkInterval": 120,

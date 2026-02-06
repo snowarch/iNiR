@@ -142,6 +142,11 @@ OFFICIAL_PACKAGES=(
   
   # Theming
   matugen
+  
+  # Icon themes - fallbacks from official repos (always available)
+  hicolor-icon-theme
+  adwaita-icon-theme
+  papirus-icon-theme
 )
 
 installflags="--needed"

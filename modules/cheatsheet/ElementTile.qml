@@ -86,11 +86,8 @@ RippleButton {
 
         // Color transition animation for theme changes
         Behavior on color {
-            ColorAnimation {
-                duration: Appearance.animation.elementMoveFast.duration
-                easing.type: Appearance.animation.elementMoveFast.type
-                easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
-            }
+            enabled: Appearance.animationsEnabled
+            animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
         }
 
         StyledText {
@@ -118,11 +115,8 @@ RippleButton {
 
         // Color transition animation for theme changes
         Behavior on color {
-            ColorAnimation {
-                duration: Appearance.animation.elementMoveFast.duration
-                easing.type: Appearance.animation.elementMoveFast.type
-                easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
-            }
+            enabled: Appearance.animationsEnabled
+            animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
         }
 
         StyledText {

@@ -241,6 +241,11 @@ FEDORA_FONT_PKGS=(
   
   # Qt theming
   kvantum
+
+  # Icon themes - fallbacks (always available from repos)
+  hicolor-icon-theme
+  adwaita-icon-theme
+  papirus-icon-theme
 )
 
 installflags=""

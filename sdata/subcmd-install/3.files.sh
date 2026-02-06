@@ -626,6 +626,20 @@ if [[ "${INSTALL_FIRSTRUN}" == true && -f "${DEFAULT_WALLPAPER}" ]]; then
         bash "${II_TARGET}/scripts/colors/apply-gtk-theme.sh" 2>/dev/null || true
         log_success "Qt Darkly theme colors generated"
       fi
+
+      # Generate terminal color configs (foot, alacritty, kitty, ghostty, etc.)
+      local python_cmd="${ILLOGICAL_IMPULSE_VIRTUAL_ENV}/bin/python"
+      local gen_script="${II_TARGET}/scripts/colors/generate_terminal_configs.py"
+      local scss_file="${XDG_STATE_HOME}/quickshell/user/generated/material_colors.scss"
+      if [[ -f "$gen_script" && -f "$scss_file" ]]; then
+        if [[ -x "$python_cmd" ]]; then
+          "$python_cmd" "$gen_script" --scss "$scss_file" 2>/dev/null || true
+          log_success "Terminal color configs generated"
+        elif command -v python3 &>/dev/null; then
+          python3 "$gen_script" --scss "$scss_file" 2>/dev/null || true
+          log_success "Terminal color configs generated"
+        fi
+      fi
     else
       log_warning "Matugen failed to generate colors. Theme may not work correctly."
     fi

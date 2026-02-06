@@ -292,6 +292,11 @@ DEBIAN_CORE_PKGS=(
   cmake
   ninja-build
   pkg-config
+
+  # Icon themes - fallbacks (always available from repos)
+  hicolor-icon-theme
+  adwaita-icon-theme
+  papirus-icon-theme
 )
 
 # Qt6 packages - ONLY dev packages, runtime libs are auto-installed as dependencies

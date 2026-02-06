@@ -215,7 +215,10 @@ Item {
                             border.color: Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
                             z: 2
 
-                            Behavior on border.width { NumberAnimation { duration: 150 } }
+                            Behavior on border.width {
+                                enabled: Appearance.animationsEnabled
+                                animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+                            }
                         }
 
                         Rectangle {
@@ -263,7 +266,10 @@ Item {
                                 visible: wallpaperDelegate.isCurrentWallpaper
                                 scale: wallpaperDelegate.isCurrentWallpaper ? 1 : 0
 
-                                Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack } }
+                                Behavior on scale {
+                                    enabled: Appearance.animationsEnabled
+                                    animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+                                }
 
                                 MaterialSymbol {
                                     anchors.centerIn: parent

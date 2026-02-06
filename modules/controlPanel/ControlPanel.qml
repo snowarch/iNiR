@@ -71,21 +71,47 @@ Scope {
             width: root.panelWidth
             height: item?.implicitHeight ? Math.min(item.implicitHeight, root.maxPanelHeight) : root.maxPanelHeight
 
-            // Slide + fade animation
+            // Smooth scale + slide + fade animation (GPU-accelerated)
+            opacity: GlobalStates.controlPanelOpen ? 1 : 0
+            scale: GlobalStates.controlPanelOpen ? 1.0 : 0.92
             transform: Translate {
-                y: GlobalStates.controlPanelOpen ? 0 : -20
+                y: GlobalStates.controlPanelOpen ? 0 : -40
                 Behavior on y {
                     enabled: Appearance.animationsEnabled
                     NumberAnimation {
-                        duration: 200
-                        easing.type: Easing.OutCubic
+                        duration: GlobalStates.controlPanelOpen ?
+                            (Appearance.animation?.elementMoveEnter?.duration ?? 400) :
+                            (Appearance.animation?.elementMoveExit?.duration ?? 200)
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: GlobalStates.controlPanelOpen ?
+                            (Appearance.animationCurves?.emphasizedDecel ?? [0.05, 0.7, 0.1, 1, 1, 1]) :
+                            (Appearance.animationCurves?.emphasizedAccel ?? [0.3, 0, 0.8, 0.15, 1, 1])
                     }
                 }
             }
-            opacity: GlobalStates.controlPanelOpen ? 1 : 0
+            Behavior on scale {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation {
+                    duration: GlobalStates.controlPanelOpen ?
+                        (Appearance.animation?.elementMoveEnter?.duration ?? 400) :
+                        (Appearance.animation?.elementMoveExit?.duration ?? 200)
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: GlobalStates.controlPanelOpen ?
+                        (Appearance.animationCurves?.emphasizedDecel ?? [0.05, 0.7, 0.1, 1, 1, 1]) :
+                        (Appearance.animationCurves?.emphasizedAccel ?? [0.3, 0, 0.8, 0.15, 1, 1])
+                }
+            }
             Behavior on opacity {
                 enabled: Appearance.animationsEnabled
-                NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
+                NumberAnimation {
+                    duration: GlobalStates.controlPanelOpen ?
+                        (Appearance.animation?.elementMoveEnter?.duration ?? 400) :
+                        (Appearance.animation?.elementMoveExit?.duration ?? 200)
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: GlobalStates.controlPanelOpen ?
+                        (Appearance.animationCurves?.emphasizedDecel ?? [0.05, 0.7, 0.1, 1, 1, 1]) :
+                        (Appearance.animationCurves?.emphasizedAccel ?? [0.3, 0, 0.8, 0.15, 1, 1])
+                }
             }
 
             focus: GlobalStates.controlPanelOpen

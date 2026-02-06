@@ -98,6 +98,11 @@ Item { // Bar content region
         
         // Radius logic per global style and corner style
         radius: {
+            // Custom rounding override (-1 means use theme default)
+            const customRounding = Config.options?.bar?.customRounding ?? -1
+            if (customRounding >= 0) {
+                return customRounding
+            }
             if (root.inirEverywhere) {
                 // Inir: use inir rounding for Float/Card, 0 for Hug/Rect
                 if (cornerStyle === 1 || cornerStyle === 3) {
@@ -474,6 +479,11 @@ Item { // Bar content region
 
             // Timer indicator
             TimerIndicator {
+                Layout.alignment: Qt.AlignVCenter
+            }
+
+            // iNiR shell update indicator
+            ShellUpdateIndicator {
                 Layout.alignment: Qt.AlignVCenter
             }
 

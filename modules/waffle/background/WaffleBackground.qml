@@ -24,9 +24,33 @@ Variants {
         readonly property var wEffects: wBg.effects ?? {}
 
         // Wallpaper source
-        readonly property string wallpaperSource: {
+        readonly property string wallpaperSourceRaw: {
             if (wBg.useMainWallpaper ?? true) return Config.options?.background?.wallpaperPath ?? "";
             return wBg.wallpaperPath || Config.options?.background?.wallpaperPath || "";
+        }
+        
+        readonly property string wallpaperThumbnail: {
+            if (wBg.useMainWallpaper ?? true) return Config.options?.background?.thumbnailPath ?? "";
+            return wBg.thumbnailPath || Config.options?.background?.thumbnailPath || "";
+        }
+        
+        readonly property bool enableAnimation: wBg.enableAnimation ?? Config.options?.background?.enableAnimation ?? true
+        
+        readonly property bool wallpaperIsVideo: {
+            const lowerPath = wallpaperSourceRaw.toLowerCase();
+            return lowerPath.endsWith(".mp4") || lowerPath.endsWith(".webm") || lowerPath.endsWith(".mkv") || lowerPath.endsWith(".avi") || lowerPath.endsWith(".mov");
+        }
+        
+        readonly property bool wallpaperIsGif: {
+            return wallpaperSourceRaw.toLowerCase().endsWith(".gif");
+        }
+        
+        // Effective source: use thumbnail if animation disabled for videos/GIFs
+        readonly property string wallpaperSource: {
+            if (!panelRoot.enableAnimation && (panelRoot.wallpaperIsVideo || panelRoot.wallpaperIsGif)) {
+                return panelRoot.wallpaperThumbnail || panelRoot.wallpaperSourceRaw;
+            }
+            return panelRoot.wallpaperSourceRaw;
         }
 
         readonly property string wallpaperUrl: {
@@ -34,15 +58,6 @@ Variants {
             if (!path) return "";
             if (path.startsWith("file://")) return path;
             return "file://" + path;
-        }
-        
-        readonly property bool wallpaperIsVideo: {
-            const lowerPath = wallpaperSource.toLowerCase();
-            return lowerPath.endsWith(".mp4") || lowerPath.endsWith(".webm") || lowerPath.endsWith(".mkv") || lowerPath.endsWith(".avi") || lowerPath.endsWith(".mov");
-        }
-        
-        readonly property bool wallpaperIsGif: {
-            return wallpaperSource.toLowerCase().endsWith(".gif");
         }
 
         screen: modelData
@@ -101,38 +116,38 @@ Variants {
             anchors.fill: parent
             clip: true
 
-            // Static Image (for non-animated, non-video wallpapers)
+            // Static Image (for non-animated wallpapers OR thumbnails when animation disabled)
             Image {
                 id: wallpaper
                 anchors.fill: parent
                 fillMode: Image.PreserveAspectCrop
-                source: panelRoot.wallpaperUrl && !panelRoot.wallpaperIsGif && !panelRoot.wallpaperIsVideo
+                source: panelRoot.wallpaperUrl && ((!panelRoot.wallpaperIsGif && !panelRoot.wallpaperIsVideo) || !panelRoot.enableAnimation)
                     ? panelRoot.wallpaperUrl
                     : ""
                 asynchronous: true
                 cache: true
-                visible: !panelRoot.wallpaperIsGif && !panelRoot.wallpaperIsVideo && status === Image.Ready && !blurEffect.visible
+                visible: ((!panelRoot.wallpaperIsGif && !panelRoot.wallpaperIsVideo) || !panelRoot.enableAnimation) && status === Image.Ready && !blurEffect.visible
             }
             
-            // Animated GIF support
+            // Animated GIF support (only when animation enabled)
             AnimatedImage {
                 id: gifWallpaper
                 anchors.fill: parent
                 fillMode: Image.PreserveAspectCrop
-                source: panelRoot.wallpaperIsGif ? panelRoot.wallpaperUrl : ""
+                source: (panelRoot.wallpaperIsGif && panelRoot.enableAnimation) ? panelRoot.wallpaperUrl : ""
                 asynchronous: true
                 cache: true
-                visible: panelRoot.wallpaperIsGif && !blurEffect.visible
+                visible: panelRoot.wallpaperIsGif && panelRoot.enableAnimation && !blurEffect.visible
                 playing: visible
             }
 
-            // Video wallpaper (Qt Multimedia - native)
+            // Video wallpaper (Qt Multimedia - only when animation enabled)
             Video {
                 id: videoWallpaper
                 anchors.fill: parent
-                visible: panelRoot.wallpaperIsVideo && !blurEffect.visible
+                visible: panelRoot.wallpaperIsVideo && panelRoot.enableAnimation && !blurEffect.visible
                 source: {
-                    if (!panelRoot.wallpaperIsVideo) return "";
+                    if (!panelRoot.wallpaperIsVideo || !panelRoot.enableAnimation) return "";
                     const url = panelRoot.wallpaperUrl;
                     if (!url) return "";
                     // Qt Multimedia needs file:// URL format
@@ -144,13 +159,13 @@ Variants {
                 autoPlay: true
                 
                 onPlaybackStateChanged: {
-                    if (playbackState === MediaPlayer.StoppedState && visible && panelRoot.wallpaperIsVideo) {
+                    if (playbackState === MediaPlayer.StoppedState && visible && panelRoot.wallpaperIsVideo && panelRoot.enableAnimation) {
                         play()
                     }
                 }
                 
                 onVisibleChanged: {
-                    if (visible && panelRoot.wallpaperIsVideo) {
+                    if (visible && panelRoot.wallpaperIsVideo && panelRoot.enableAnimation) {
                         play()
                     } else {
                         pause()

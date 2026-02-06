@@ -61,9 +61,16 @@ Variants {
         // Wallpaper
         readonly property string wallpaperPathRaw: bgRoot.backgroundOptions.wallpaperPath ?? ""
         readonly property string wallpaperThumbnailPath: bgRoot.backgroundOptions.thumbnailPath ?? bgRoot.wallpaperPathRaw
+        readonly property bool enableAnimation: bgRoot.backgroundOptions.enableAnimation ?? true
         property bool wallpaperIsVideo: wallpaperPathRaw.endsWith(".mp4") || wallpaperPathRaw.endsWith(".webm") || wallpaperPathRaw.endsWith(".mkv") || wallpaperPathRaw.endsWith(".avi") || wallpaperPathRaw.endsWith(".mov")
         property bool wallpaperIsGif: wallpaperPathRaw.toLowerCase().endsWith(".gif")
-        property string wallpaperPath: bgRoot.wallpaperPathRaw
+        // Effective path: use thumbnail if animation is disabled for videos/GIFs
+        property string wallpaperPath: {
+            if (!bgRoot.enableAnimation && (bgRoot.wallpaperIsVideo || bgRoot.wallpaperIsGif)) {
+                return bgRoot.wallpaperThumbnailPath;
+            }
+            return bgRoot.wallpaperPathRaw;
+        }
         property bool wallpaperSafetyTriggered: {
             const enabled = bgRoot.workSafetyEnableOptions.wallpaper ?? false;
             const fileKeywords = bgRoot.workSafetyTriggerOptions.fileKeywords ?? [];
@@ -237,12 +244,12 @@ Variants {
                 width: useParallax ? (bgRoot.wallpaperWidth / bgRoot.wallpaperToScreenRatio * bgRoot.effectiveWallpaperScale) : bgRoot.screen.width
                 height: useParallax ? (bgRoot.wallpaperHeight / bgRoot.wallpaperToScreenRatio * bgRoot.effectiveWallpaperScale) : bgRoot.screen.height
 
-                // Static wallpaper (non-GIF, non-video images)
+                // Static wallpaper (non-GIF, non-video images OR thumbnails when animation disabled)
                 StyledImage {
                     id: wallpaper
                     anchors.fill: parent
-                    visible: opacity > 0 && !blurLoader.active && !bgRoot.backdropActive && !bgRoot.wallpaperIsGif && !bgRoot.wallpaperIsVideo
-                    opacity: (status === Image.Ready && !bgRoot.wallpaperIsVideo && !bgRoot.wallpaperIsGif) ? 1 : 0
+                    visible: opacity > 0 && !blurLoader.active && !bgRoot.backdropActive && (!bgRoot.wallpaperIsGif || !bgRoot.enableAnimation) && (!bgRoot.wallpaperIsVideo || !bgRoot.enableAnimation)
+                    opacity: (status === Image.Ready && ((!bgRoot.wallpaperIsVideo && !bgRoot.wallpaperIsGif) || !bgRoot.enableAnimation)) ? 1 : 0
                     Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.InOutQuad } }
                     cache: true
                     smooth: true
@@ -258,31 +265,31 @@ Variants {
                     }
                 }
 
-                // Animated GIF wallpaper
+                // Animated GIF wallpaper (only when animation enabled)
                 AnimatedImage {
                     id: gifWallpaper
                     anchors.fill: parent
-                    visible: opacity > 0 && !blurLoader.active && !bgRoot.backdropActive && bgRoot.wallpaperIsGif
-                    opacity: (status === AnimatedImage.Ready && bgRoot.wallpaperIsGif) ? 1 : 0
+                    visible: opacity > 0 && !blurLoader.active && !bgRoot.backdropActive && bgRoot.wallpaperIsGif && bgRoot.enableAnimation
+                    opacity: (status === AnimatedImage.Ready && bgRoot.wallpaperIsGif && bgRoot.enableAnimation) ? 1 : 0
                     Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.InOutQuad } }
                     cache: true
-                    playing: visible && !GlobalStates.screenLocked
+                    playing: visible && !GlobalStates.screenLocked && !Appearance._gameModeActive
                     asynchronous: true
-                    source: (bgRoot.wallpaperSafetyTriggered || !bgRoot.wallpaperIsGif) ? "" : bgRoot.wallpaperPath
+                    source: (bgRoot.wallpaperSafetyTriggered || !bgRoot.wallpaperIsGif || !bgRoot.enableAnimation) ? "" : bgRoot.wallpaperPathRaw
                     fillMode: Image.PreserveAspectCrop
                     // No sourceSize for GIFs - let Qt handle native size for performance
                 }
 
-                // Video wallpaper (Qt Multimedia - native, lighter than mpvpaper)
+                // Video wallpaper (Qt Multimedia - only when animation enabled)
                 Video {
                     id: videoWallpaper
                     anchors.fill: parent
-                    visible: opacity > 0 && !blurLoader.active && !bgRoot.backdropActive && bgRoot.wallpaperIsVideo
-                    opacity: bgRoot.wallpaperIsVideo ? 1 : 0
+                    visible: opacity > 0 && !blurLoader.active && !bgRoot.backdropActive && bgRoot.wallpaperIsVideo && bgRoot.enableAnimation
+                    opacity: (bgRoot.wallpaperIsVideo && bgRoot.enableAnimation) ? 1 : 0
                     Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.InOutQuad } }
                     source: {
-                        if (bgRoot.wallpaperSafetyTriggered || !bgRoot.wallpaperIsVideo) return "";
-                        const path = bgRoot.wallpaperPath;
+                        if (bgRoot.wallpaperSafetyTriggered || !bgRoot.wallpaperIsVideo || !bgRoot.enableAnimation) return "";
+                        const path = bgRoot.wallpaperPathRaw;
                         if (!path) return "";
                         // Qt Multimedia needs file:// URL format
                         return path.startsWith("file://") ? path : ("file://" + path);
@@ -293,13 +300,13 @@ Variants {
                     autoPlay: true
                     
                     onPlaybackStateChanged: {
-                        if (playbackState === MediaPlayer.StoppedState && visible && !GlobalStates.screenLocked) {
+                        if (playbackState === MediaPlayer.StoppedState && visible && !GlobalStates.screenLocked && !Appearance._gameModeActive) {
                             play()
                         }
                     }
                     
                     onVisibleChanged: {
-                        if (visible && !GlobalStates.screenLocked && bgRoot.wallpaperIsVideo) {
+                        if (visible && !GlobalStates.screenLocked && bgRoot.wallpaperIsVideo && !Appearance._gameModeActive) {
                             play()
                         } else {
                             pause()
@@ -309,9 +316,21 @@ Variants {
                     Connections {
                         target: GlobalStates
                         function onScreenLockedChanged() {
-                            if (GlobalStates.screenLocked) {
+                            if (GlobalStates.screenLocked || Appearance._gameModeActive) {
                                 videoWallpaper.pause()
                             } else if (videoWallpaper.visible && bgRoot.wallpaperIsVideo) {
+                                videoWallpaper.play()
+                            }
+                        }
+                    }
+
+                    // Pause/resume video during GameMode for performance
+                    Connections {
+                        target: GameMode
+                        function onActiveChanged() {
+                            if (GameMode.active) {
+                                videoWallpaper.pause()
+                            } else if (videoWallpaper.visible && bgRoot.wallpaperIsVideo && !GlobalStates.screenLocked) {
                                 videoWallpaper.play()
                             }
                         }

@@ -163,10 +163,16 @@ Singleton {
 		if (name.startsWith('org.mpris.MediaPlayer2.playerctld')) return false;
 		
 		// Handle plasma-browser-integration (KDE Plasma)
+		// Don't filter browsers playing YouTube/YT Music content
 		if (hasPlasmaIntegration) {
-			if (name.startsWith('org.mpris.MediaPlayer2.firefox')) return false;
-			if (name.startsWith('org.mpris.MediaPlayer2.chromium')) return false;
-			if (name.startsWith('org.mpris.MediaPlayer2.chrome')) return false;
+			const isBrowser = name.startsWith('org.mpris.MediaPlayer2.firefox') ||
+				name.startsWith('org.mpris.MediaPlayer2.chromium') ||
+				name.startsWith('org.mpris.MediaPlayer2.chrome');
+			if (isBrowser) {
+				const trackUrl = player.metadata?.["xesam:url"] ?? "";
+				const isYouTube = trackUrl.includes("youtube.com") || trackUrl.includes("youtu.be") || trackUrl.includes("music.youtube.com");
+				if (!isYouTube) return false;
+			}
 		}
 		
 		// Filter duplicate MPD instances
@@ -486,8 +492,6 @@ Singleton {
 		const urlStr = url.toString();
 		// Filter out data URIs that are too large (can cause crashes)
 		if (urlStr.startsWith("data:") && urlStr.length > 100000) return "";
-		// Filter out invalid protocols
-		if (urlStr.startsWith("file://") && !urlStr.includes("/tmp/") && !urlStr.includes("/cache/")) return "";
 		return urlStr;
 	}
 
