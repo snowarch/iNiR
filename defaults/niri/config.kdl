@@ -253,9 +253,9 @@ binds {
     // ii Panel family (cycle between Material ii and Waffle styles)
     Mod+Shift+W { spawn "qs" "-c" "ii" "ipc" "call" "panelFamily" "cycle"; }
     
-    // Applications
-    Mod+T { spawn "kitty"; }
-    Mod+Return { spawn "kitty"; }
+    // Applications (uses configured terminal from Settings)
+    Mod+T { spawn "bash" "-c" "$HOME/.config/quickshell/ii/scripts/launch-terminal.sh"; }
+    Mod+Return { spawn "bash" "-c" "$HOME/.config/quickshell/ii/scripts/launch-terminal.sh"; }
     Super+E { spawn "dolphin"; }
     
     // Window management
