@@ -101,10 +101,61 @@ apply_terminal_configs() {
     echo "[terminal-colors] Generating configs for: ${enabled_terminals[*]}" >> "$log_file" 2>/dev/null
     "$python_cmd" "$SCRIPT_DIR/generate_terminal_configs.py" \
       --scss "$STATE_DIR/user/generated/material_colors.scss" \
-      --terminals "${enabled_terminals[@]}" >> "$log_file" 2>&1 &
+      --terminals "${enabled_terminals[@]}" >> "$log_file" 2>&1
+
+    # Reload running terminals so colors update in real-time
+    reload_terminal_colors "${enabled_terminals[@]}" >> "$log_file" 2>&1 &
   else
     echo "[terminal-colors] ERROR: Python not found ($python_cmd). Cannot generate terminal configs." >> "$log_file" 2>/dev/null
   fi
+}
+
+reload_terminal_colors() {
+  local terminals=("$@")
+  local home="$HOME"
+
+  for term in "${terminals[@]}"; do
+    case "$term" in
+      kitty)
+        # Kitty: reload colors via remote control (works if allow_remote_control is enabled)
+        if pgrep -x kitty &>/dev/null; then
+          kitty @ set-colors --all "$home/.config/kitty/current-theme.conf" 2>/dev/null && \
+            echo "[terminal-colors] Kitty: reloaded via remote control" || \
+            echo "[terminal-colors] Kitty: remote control not available (enable allow_remote_control in kitty.conf for live reload)"
+        fi
+        ;;
+      foot)
+        # Foot: SIGUSR1 triggers config reload
+        if pgrep -x foot &>/dev/null; then
+          pkill -USR1 foot 2>/dev/null && \
+            echo "[terminal-colors] Foot: sent SIGUSR1 reload signal"
+        fi
+        ;;
+      alacritty)
+        # Alacritty: auto-reloads on config file change (built-in file watcher)
+        # Just touch the main config to trigger the watcher if import didn't trigger it
+        if pgrep -x alacritty &>/dev/null && [ -f "$home/.config/alacritty/alacritty.toml" ]; then
+          touch "$home/.config/alacritty/alacritty.toml" 2>/dev/null
+          echo "[terminal-colors] Alacritty: touched config to trigger auto-reload"
+        fi
+        ;;
+      wezterm)
+        # WezTerm: auto-reloads on config change (built-in file watcher)
+        echo "[terminal-colors] WezTerm: auto-reloads on config change"
+        ;;
+      ghostty)
+        # Ghostty: reload config via SIGUSR1
+        if pgrep -x ghostty &>/dev/null; then
+          pkill -USR1 ghostty 2>/dev/null && \
+            echo "[terminal-colors] Ghostty: sent SIGUSR1 reload signal"
+        fi
+        ;;
+      konsole)
+        # Konsole: no live reload mechanism, colors apply on new tab/session
+        echo "[terminal-colors] Konsole: colors will apply on next new tab/session"
+        ;;
+    esac
+  done
 }
 
 apply_qt() {

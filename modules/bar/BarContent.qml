@@ -100,7 +100,7 @@ Item { // Bar content region
         radius: {
             // Custom rounding override (-1 means use theme default)
             const customRounding = Config.options?.bar?.customRounding ?? -1
-            if (customRounding >= 0 && (floatingStyle || (root.inirEverywhere && (cornerStyle === 1 || cornerStyle === 3)))) {
+            if (customRounding >= 0) {
                 return customRounding
             }
             if (root.inirEverywhere) {

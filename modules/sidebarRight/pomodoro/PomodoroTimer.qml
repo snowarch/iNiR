@@ -133,143 +133,127 @@ Item {
             }
         }
 
-        // Customization controls - only visible when timer is not running
-        ColumnLayout {
-            Layout.fillWidth: true
-            Layout.topMargin: 16
-            spacing: 6
+        // Settings toggle button - shows when timer is NOT running
+        IconToolbarButton {
+            Layout.alignment: Qt.AlignHCenter
+            Layout.topMargin: 8
             visible: !TimerService.pomodoroRunning
-            opacity: visible ? 1 : 0
-            Behavior on opacity {
-                enabled: Appearance.animationsEnabled
-                NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
-            }
+            text: settingsPanel.visible ? "expand_less" : "tune"
+            onClicked: settingsPanel.visible = !settingsPanel.visible
 
-            // Focus time row
-            RowLayout {
+            StyledToolTip {
+                text: Translation.tr("Customize durations and sound")
+            }
+        }
+
+        // Collapsible settings panel
+        ColumnLayout {
+            id: settingsPanel
+            Layout.fillWidth: true
+            Layout.topMargin: 4
+            spacing: 2
+            visible: false
+            clip: true
+
+            // Helper component for time adjustment rows
+            component TimeRow: RowLayout {
+                property string label
+                property int currentValue
+                property int minValue
+                property int step
+                property int maxValue
+                property string configPath
+
                 Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                spacing: 6
+                Layout.leftMargin: 8
+                Layout.rightMargin: 8
+                spacing: 4
 
                 RippleButton {
-                    implicitWidth: 28; implicitHeight: 28
+                    implicitWidth: 26; implicitHeight: 26
                     buttonRadius: Appearance.rounding.full
-                    colBackground: Appearance.colors.colLayer2
-                    colBackgroundHover: Appearance.colors.colLayer2Hover
-                    colRipple: Appearance.colors.colLayer2Active
-                    enabled: TimerService.focusTime > 300
-                    onClicked: Config.setNestedValue("time.pomodoro.focus", TimerService.focusTime - 300)
-                    contentItem: MaterialSymbol { anchors.centerIn: parent; text: "remove"; iconSize: 16; color: Appearance.colors.colOnLayer2 }
+                    colBackground: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
+                        : Appearance.colors.colLayer2
+                    colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover
+                        : Appearance.colors.colLayer2Hover
+                    colRipple: Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
+                        : Appearance.colors.colLayer2Active
+                    enabled: currentValue > minValue
+                    onClicked: Config.setNestedValue(configPath, currentValue - step)
+                    contentItem: MaterialSymbol {
+                        anchors.centerIn: parent; text: "remove"; iconSize: 14
+                        color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer2
+                    }
                 }
                 StyledText {
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
-                    text: Translation.tr("Focus: %1 min").arg(TimerService.focusTime / 60)
-                    font.pixelSize: Appearance.font.pixelSize.small
+                    text: label
+                    font.pixelSize: Appearance.font.pixelSize.smaller
                     color: Appearance.colors.colSubtext
                 }
                 RippleButton {
-                    implicitWidth: 28; implicitHeight: 28
+                    implicitWidth: 26; implicitHeight: 26
                     buttonRadius: Appearance.rounding.full
-                    colBackground: Appearance.colors.colLayer2
-                    colBackgroundHover: Appearance.colors.colLayer2Hover
-                    colRipple: Appearance.colors.colLayer2Active
-                    enabled: TimerService.focusTime < 7200
-                    onClicked: Config.setNestedValue("time.pomodoro.focus", TimerService.focusTime + 300)
-                    contentItem: MaterialSymbol { anchors.centerIn: parent; text: "add"; iconSize: 16; color: Appearance.colors.colOnLayer2 }
+                    colBackground: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
+                        : Appearance.colors.colLayer2
+                    colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover
+                        : Appearance.colors.colLayer2Hover
+                    colRipple: Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
+                        : Appearance.colors.colLayer2Active
+                    enabled: currentValue < maxValue
+                    onClicked: Config.setNestedValue(configPath, currentValue + step)
+                    contentItem: MaterialSymbol {
+                        anchors.centerIn: parent; text: "add"; iconSize: 14
+                        color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer2
+                    }
                 }
             }
 
-            // Break time row
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                spacing: 6
-
-                RippleButton {
-                    implicitWidth: 28; implicitHeight: 28
-                    buttonRadius: Appearance.rounding.full
-                    colBackground: Appearance.colors.colLayer2
-                    colBackgroundHover: Appearance.colors.colLayer2Hover
-                    colRipple: Appearance.colors.colLayer2Active
-                    enabled: TimerService.breakTime > 60
-                    onClicked: Config.setNestedValue("time.pomodoro.breakTime", TimerService.breakTime - 60)
-                    contentItem: MaterialSymbol { anchors.centerIn: parent; text: "remove"; iconSize: 16; color: Appearance.colors.colOnLayer2 }
-                }
-                StyledText {
-                    Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    text: Translation.tr("Break: %1 min").arg(TimerService.breakTime / 60)
-                    font.pixelSize: Appearance.font.pixelSize.small
-                    color: Appearance.colors.colSubtext
-                }
-                RippleButton {
-                    implicitWidth: 28; implicitHeight: 28
-                    buttonRadius: Appearance.rounding.full
-                    colBackground: Appearance.colors.colLayer2
-                    colBackgroundHover: Appearance.colors.colLayer2Hover
-                    colRipple: Appearance.colors.colLayer2Active
-                    enabled: TimerService.breakTime < 1800
-                    onClicked: Config.setNestedValue("time.pomodoro.breakTime", TimerService.breakTime + 60)
-                    contentItem: MaterialSymbol { anchors.centerIn: parent; text: "add"; iconSize: 16; color: Appearance.colors.colOnLayer2 }
-                }
+            TimeRow {
+                label: Translation.tr("Focus: %1 min").arg(TimerService.focusTime / 60)
+                currentValue: TimerService.focusTime; minValue: 300; maxValue: 7200; step: 300
+                configPath: "time.pomodoro.focus"
             }
-
-            // Long break time row
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                spacing: 6
-
-                RippleButton {
-                    implicitWidth: 28; implicitHeight: 28
-                    buttonRadius: Appearance.rounding.full
-                    colBackground: Appearance.colors.colLayer2
-                    colBackgroundHover: Appearance.colors.colLayer2Hover
-                    colRipple: Appearance.colors.colLayer2Active
-                    enabled: TimerService.longBreakTime > 300
-                    onClicked: Config.setNestedValue("time.pomodoro.longBreak", TimerService.longBreakTime - 300)
-                    contentItem: MaterialSymbol { anchors.centerIn: parent; text: "remove"; iconSize: 16; color: Appearance.colors.colOnLayer2 }
-                }
-                StyledText {
-                    Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    text: Translation.tr("Long break: %1 min").arg(TimerService.longBreakTime / 60)
-                    font.pixelSize: Appearance.font.pixelSize.small
-                    color: Appearance.colors.colSubtext
-                }
-                RippleButton {
-                    implicitWidth: 28; implicitHeight: 28
-                    buttonRadius: Appearance.rounding.full
-                    colBackground: Appearance.colors.colLayer2
-                    colBackgroundHover: Appearance.colors.colLayer2Hover
-                    colRipple: Appearance.colors.colLayer2Active
-                    enabled: TimerService.longBreakTime < 3600
-                    onClicked: Config.setNestedValue("time.pomodoro.longBreak", TimerService.longBreakTime + 300)
-                    contentItem: MaterialSymbol { anchors.centerIn: parent; text: "add"; iconSize: 16; color: Appearance.colors.colOnLayer2 }
-                }
+            TimeRow {
+                label: Translation.tr("Break: %1 min").arg(TimerService.breakTime / 60)
+                currentValue: TimerService.breakTime; minValue: 60; maxValue: 1800; step: 60
+                configPath: "time.pomodoro.breakTime"
+            }
+            TimeRow {
+                label: Translation.tr("Long break: %1 min").arg(TimerService.longBreakTime / 60)
+                currentValue: TimerService.longBreakTime; minValue: 300; maxValue: 3600; step: 300
+                configPath: "time.pomodoro.longBreak"
+            }
+            TimeRow {
+                label: Translation.tr("Cycles: %1").arg(TimerService.cyclesBeforeLongBreak)
+                currentValue: TimerService.cyclesBeforeLongBreak; minValue: 2; maxValue: 8; step: 1
+                configPath: "time.pomodoro.cyclesBeforeLongBreak"
             }
 
             // Sound toggle
             RowLayout {
                 Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                Layout.topMargin: 4
-                spacing: 6
+                Layout.leftMargin: 8
+                Layout.rightMargin: 8
+                Layout.topMargin: 2
+                spacing: 4
 
                 MaterialSymbol {
                     text: (Config.options?.sounds?.pomodoro ?? false) ? "volume_up" : "volume_off"
-                    iconSize: 16
+                    iconSize: 14
                     color: Appearance.colors.colSubtext
                 }
                 StyledText {
                     Layout.fillWidth: true
-                    text: Translation.tr("Sound notification")
-                    font.pixelSize: Appearance.font.pixelSize.small
+                    text: Translation.tr("Sound")
+                    font.pixelSize: Appearance.font.pixelSize.smaller
                     color: Appearance.colors.colSubtext
                 }
                 Switch {

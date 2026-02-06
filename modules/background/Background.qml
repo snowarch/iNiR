@@ -273,7 +273,7 @@ Variants {
                     opacity: (status === AnimatedImage.Ready && bgRoot.wallpaperIsGif && bgRoot.enableAnimation) ? 1 : 0
                     Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.InOutQuad } }
                     cache: true
-                    playing: visible && !GlobalStates.screenLocked
+                    playing: visible && !GlobalStates.screenLocked && !Appearance._gameModeActive
                     asynchronous: true
                     source: (bgRoot.wallpaperSafetyTriggered || !bgRoot.wallpaperIsGif || !bgRoot.enableAnimation) ? "" : bgRoot.wallpaperPathRaw
                     fillMode: Image.PreserveAspectCrop
@@ -300,13 +300,13 @@ Variants {
                     autoPlay: true
                     
                     onPlaybackStateChanged: {
-                        if (playbackState === MediaPlayer.StoppedState && visible && !GlobalStates.screenLocked) {
+                        if (playbackState === MediaPlayer.StoppedState && visible && !GlobalStates.screenLocked && !Appearance._gameModeActive) {
                             play()
                         }
                     }
                     
                     onVisibleChanged: {
-                        if (visible && !GlobalStates.screenLocked && bgRoot.wallpaperIsVideo) {
+                        if (visible && !GlobalStates.screenLocked && bgRoot.wallpaperIsVideo && !Appearance._gameModeActive) {
                             play()
                         } else {
                             pause()
@@ -316,9 +316,21 @@ Variants {
                     Connections {
                         target: GlobalStates
                         function onScreenLockedChanged() {
-                            if (GlobalStates.screenLocked) {
+                            if (GlobalStates.screenLocked || Appearance._gameModeActive) {
                                 videoWallpaper.pause()
                             } else if (videoWallpaper.visible && bgRoot.wallpaperIsVideo) {
+                                videoWallpaper.play()
+                            }
+                        }
+                    }
+
+                    // Pause/resume video during GameMode for performance
+                    Connections {
+                        target: GameMode
+                        function onActiveChanged() {
+                            if (GameMode.active) {
+                                videoWallpaper.pause()
+                            } else if (videoWallpaper.visible && bgRoot.wallpaperIsVideo && !GlobalStates.screenLocked) {
                                 videoWallpaper.play()
                             }
                         }

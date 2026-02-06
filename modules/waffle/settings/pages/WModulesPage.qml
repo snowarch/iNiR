@@ -119,9 +119,9 @@ WSettingsPage {
         }
 
         WSettingsSwitch {
-            label: Translation.tr("Task View") + " ⚠️"
+            label: Translation.tr("Task View")
             icon: "desktop"
-            description: Translation.tr("Experimental - Work in progress")
+            description: Translation.tr("Overview of all workspaces and windows. Supports carousel and centered focus modes.")
             checked: root.isPanelEnabled("wTaskView")
             onCheckedChanged: root.setPanelEnabled("wTaskView", checked)
         }

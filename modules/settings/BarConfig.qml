@@ -148,7 +148,6 @@ ContentPage {
             }
 
             ConfigSpinBox {
-                visible: root.isFloatStyle || root.isCardStyle
                 icon: "rounded_corner"
                 text: Translation.tr("Custom bar rounding (px)")
                 value: Config.options?.bar?.customRounding ?? -1
