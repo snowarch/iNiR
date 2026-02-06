@@ -141,6 +141,7 @@ Scope {
                 opacity: root.cheatsheetOpen ? 1 : 0
                 
                 Behavior on opacity {
+                    enabled: Appearance.animationsEnabled
                     NumberAnimation {
                         duration: Appearance.animation?.elementMoveEnter?.duration ?? 400
                         easing.type: Easing.BezierSpline
@@ -157,10 +158,12 @@ Scope {
                 opacity: root.cheatsheetOpen ? 1 : 0
 
                 Behavior on color {
+                    enabled: Appearance.animationsEnabled
                     animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
                 }
                 
                 Behavior on opacity {
+                    enabled: Appearance.animationsEnabled
                     NumberAnimation {
                         duration: Appearance.animation?.elementMoveEnter?.duration ?? 400
                         easing.type: Easing.BezierSpline
@@ -200,9 +203,11 @@ Scope {
             radius: Appearance.rounding?.windowRounding ?? 18
 
             Behavior on color {
+                enabled: Appearance.animationsEnabled
                 animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
             }
             Behavior on border.color {
+                enabled: Appearance.animationsEnabled
                 animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
             }
 
@@ -215,6 +220,7 @@ Scope {
             opacity: root.cheatsheetOpen ? 1 : 0
             
             Behavior on scale {
+                enabled: Appearance.animationsEnabled
                 NumberAnimation {
                     duration: root.cheatsheetOpen ? 
                         (Appearance.animation?.elementMoveEnter?.duration ?? 400) :
@@ -227,6 +233,7 @@ Scope {
             }
             
             Behavior on opacity {
+                enabled: Appearance.animationsEnabled
                 NumberAnimation {
                     duration: root.cheatsheetOpen ? 
                         (Appearance.animation?.elementMoveEnter?.duration ?? 400) :
@@ -249,6 +256,7 @@ Scope {
                     Layout.fillHeight: true
                     implicitWidth: navRail.expanded ? 150 : 60
                     Behavior on implicitWidth {
+                        enabled: Appearance.animationsEnabled
                         animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
                     }
 
@@ -316,6 +324,7 @@ Scope {
                                 opacity: visible ? 1 : 0
 
                                 Behavior on opacity {
+                                    enabled: Appearance.animationsEnabled
                                     NumberAnimation {
                                         duration: 180
                                         easing.type: Easing.BezierSpline

@@ -117,11 +117,8 @@ Item {
                         color: Appearance.colors.colOnLayer2
                         rotation: root.collapsed ? 0 : 180
                         Behavior on rotation {
-                            NumberAnimation {
-                                duration: Appearance.animation.elementMoveFast.duration
-                                easing.type: Appearance.animation.elementMoveFast.type
-                                easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
-                            }
+                            enabled: Appearance.animationsEnabled
+                            animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
                         }
                     }
 

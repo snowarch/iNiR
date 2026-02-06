@@ -50,11 +50,8 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
 
                     Behavior on color {
-                        ColorAnimation {
-                            duration: Appearance.animation.elementMoveFast.duration
-                            easing.type: Appearance.animation.elementMoveFast.type
-                            easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
-                        }
+                        enabled: Appearance.animationsEnabled
+                        animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
                     }
                 }
 

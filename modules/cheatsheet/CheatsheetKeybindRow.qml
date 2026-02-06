@@ -32,7 +32,10 @@ Item {
         anchors.fill: rowContent
         color: hovered ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover : Appearance.colors.colLayer2Hover) : "transparent"
         radius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.verysmall
-        Behavior on color { ColorAnimation { duration: 100 } }
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
+        }
     }
     
     MouseArea {
