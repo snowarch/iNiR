@@ -596,13 +596,12 @@ setup-kitty-config(){
   # Only create if doesn't exist or is minimal
   if [[ ! -f ~/.config/kitty/kitty.conf ]] || [[ $(wc -l < ~/.config/kitty/kitty.conf) -lt 5 ]]; then
     cat > ~/.config/kitty/kitty.conf << 'EOF'
-# Kitty terminal configuration for iNiR
-# See https://sw.kovidgoyal.net/kitty/conf/
+# iNiR wallpaper theming - colors from quickshell
+include current-theme.conf
 
 # Font configuration
 font_family      JetBrainsMono Nerd Font
 font_size        11.0
-adjust_line_height 100%
 
 # Cursor
 cursor_shape beam
@@ -621,6 +620,10 @@ window_padding_width 25
 hide_window_decorations yes
 confirm_os_window_close 0
 
+# Transparency and blur (Wayland)
+background_opacity 0.85
+background_blur 32
+
 # Tab bar
 tab_bar_style powerline
 
@@ -638,18 +641,21 @@ map ctrl+plus change_font_size all +1.0
 map ctrl+minus change_font_size all -1.0
 map ctrl+0 change_font_size all 0
 map ctrl+f show_scrollback
-
-# Include auto-generated color theme
-include current-theme.conf
 EOF
   else
     # Existing config - ensure include line is present for theming
     if ! grep -q "include.*current-theme.conf" ~/.config/kitty/kitty.conf; then
       echo -e "${STY_YELLOW}Adding current-theme.conf include to existing kitty.conf...${STY_RST}"
-      # Add include at the end of the file
+      # Add include at the TOP of the file so colors take priority
+      sed -i '1i include current-theme.conf' ~/.config/kitty/kitty.conf
+    fi
+    # Add transparency if not present
+    if ! grep -q "background_opacity" ~/.config/kitty/kitty.conf; then
+      echo -e "${STY_YELLOW}Adding transparency settings to kitty.conf...${STY_RST}"
       echo "" >> ~/.config/kitty/kitty.conf
-      echo "# Include auto-generated color theme" >> ~/.config/kitty/kitty.conf
-      echo "include current-theme.conf" >> ~/.config/kitty/kitty.conf
+      echo "# Transparency and blur (Wayland)" >> ~/.config/kitty/kitty.conf
+      echo "background_opacity 0.85" >> ~/.config/kitty/kitty.conf
+      echo "background_blur 32" >> ~/.config/kitty/kitty.conf
     fi
   fi
 

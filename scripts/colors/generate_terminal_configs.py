@@ -138,6 +138,28 @@ color15 {colors.get("term15", "#EBDBB2")}
     else:
         print(f"✓ Generated Kitty config (already integrated)")
 
+    # Live reload kitty colors via socket
+    import subprocess
+
+    socket_path = "/tmp/kitty-socket"
+    if os.path.exists(socket_path):
+        try:
+            subprocess.run(
+                [
+                    "kitten",
+                    "@",
+                    "--to",
+                    f"unix:{socket_path}",
+                    "set-colors",
+                    "--all",
+                    output_path,
+                ],
+                capture_output=True,
+                timeout=2,
+            )
+        except Exception:
+            pass
+
 
 def fix_alacritty_import_order(config_path):
     """
