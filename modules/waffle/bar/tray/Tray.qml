@@ -34,18 +34,30 @@ RowLayout {
         }
 
         onClicked: {
-            root.overflowOpen = !root.overflowOpen;
+            if (!root.overflowOpen) {
+                trayOverflowLayout.active = true;
+                root.overflowOpen = true;
+            } else {
+                trayOverflowLayout.close();
+                root.overflowOpen = false;
+            }
         }
 
         TrayOverflowMenu {
             id: trayOverflowLayout
-            trayParent: root
-            active: root.overflowOpen
-            onActiveChanged: if (active !== root.overflowOpen) root.overflowOpen = active
+            property var trayRoot: root  // Explicit reference to parent Tray
+            trayParent: trayRoot
+            
+            onActiveChanged: {
+                // Sync state back to parent when popup closes
+                if (!active && trayRoot) {
+                    trayRoot.overflowOpen = false;
+                }
+            }
         }
 
         BarToolTip {
-            extraVisibleCondition: overflowButton.shouldShowTooltip
+            extraVisibleCondition: overflowButton.shouldShowTooltip && !root.overflowOpen
             text: Translation.tr("Show hidden icons")
         }
 

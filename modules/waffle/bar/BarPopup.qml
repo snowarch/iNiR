@@ -17,6 +17,7 @@ Loader {
     property bool noSmoothClosing: !(Config.options?.waffles?.tweaks?.smootherMenuAnimations ?? true)
     property bool closeOnFocusLost: true
     property bool closeOnHoverLost: true  // Close when mouse leaves both popup and anchor
+    property int closeOnHoverLostDelay: 300  // Delay in ms before closing on hover lost
     property bool anchorHovered: false  // Set by parent to indicate if anchor button is hovered
     signal focusCleared()
     
@@ -44,7 +45,7 @@ Loader {
         item?.anchor.updateAnchor();
     }
 
-    active: false
+    active: false  // Default value, can be overridden by binding from parent
     visible: active
     sourceComponent: PopupWindow {
         id: popupWindow
@@ -86,7 +87,7 @@ Loader {
         // Same pattern as TaskPreview - only runs when conditions are met
         Timer {
             id: closeTimer
-            interval: 300
+            interval: root.closeOnHoverLostDelay
             running: root.closeOnHoverLost && popupWindow.visible && !popupWindow.popupContainsMouse && !root.anchorHovered
             onTriggered: {
                 root.close();

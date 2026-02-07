@@ -221,6 +221,7 @@ AppButton {
         id: contextMenu
         anchorHovered: root.hovered
         noSmoothClosing: false // On the real thing this is always smooth
+        closeOnHoverLostDelay: 500  // Slower close to give time to click
 
         model: [
             ...((root.desktopEntry?.actions.length > 0) ? root.desktopEntry.actions.map(action =>({

@@ -10,6 +10,10 @@ import Quickshell.Io
  * iNiR shell update checker service.
  * Periodically checks the git repo for new commits and exposes
  * update state to UI widgets. Separate from system Updates service.
+ * 
+ * NOTE: The config directory (~/.config/quickshell/ii) is NOT a git repo.
+ * Users clone the repo elsewhere, run ./setup install, which copies files.
+ * The actual repo location is stored in version.json during installation.
  */
 Singleton {
     id: root
@@ -32,8 +36,10 @@ Singleton {
     readonly property bool showUpdate: hasUpdate && !isDismissed && !isUpdating
     readonly property bool isDismissed: dismissedCommit.length > 0 && remoteCommit === dismissedCommit
 
-    // Repo path (where ii is installed)
-    readonly property string repoPath: FileUtils.trimFileProtocol(Quickshell.shellPath("."))
+    // Repo path - try to get from version.json, fallback to config dir
+    readonly property string configDir: FileUtils.trimFileProtocol(Quickshell.shellPath("."))
+    property string repoPath: configDir  // Will be updated after reading version.json
+    property bool repoPathLoaded: false
 
     function check(): void {
         if (!enabled || isChecking || isUpdating) return
@@ -74,7 +80,39 @@ Singleton {
         repeat: false
         running: root.enabled && Config.ready
         onTriggered: {
-            print("[ShellUpdates] Starting availability check, repoPath: " + root.repoPath)
+            print("[ShellUpdates] Loading repo path from version.json...")
+            loadRepoPathProc.running = true
+        }
+    }
+    
+    // Load repo path from version.json
+    Process {
+        id: loadRepoPathProc
+        running: false
+        command: ["cat", root.configDir + "/../illogical-impulse/version.json"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const json = JSON.parse(text ?? "{}")
+                    if (json.repo_path && json.repo_path.length > 0) {
+                        root.repoPath = json.repo_path
+                        print("[ShellUpdates] Using repo path from version.json: " + root.repoPath)
+                    } else {
+                        print("[ShellUpdates] No repo_path in version.json, using config dir: " + root.configDir)
+                    }
+                } catch (e) {
+                    print("[ShellUpdates] Failed to parse version.json: " + e)
+                    print("[ShellUpdates] Using config dir as fallback: " + root.configDir)
+                }
+                root.repoPathLoaded = true
+            }
+        }
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0) {
+                print("[ShellUpdates] version.json not found, using config dir: " + root.configDir)
+                root.repoPathLoaded = true
+            }
+            // Now check git availability
             availabilityProc.running = true
         }
     }

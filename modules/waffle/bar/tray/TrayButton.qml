@@ -63,7 +63,7 @@ BarIconButton {
         anchors.centerIn: parent
         width: 16
         height: 16
-        source: TrayService.getSafeIcon(root.item)
+        source: root.item?.icon ?? ""
     }
 
     // Tinted icon (same style as WAppIcon)
@@ -78,7 +78,7 @@ BarIconButton {
                 id: tintedIcon
                 visible: false
                 anchors.fill: parent
-                source: TrayService.getSafeIcon(root.item)
+                source: root.item?.icon ?? ""
             }
             Desaturate {
                 id: desaturatedIcon

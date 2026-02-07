@@ -36,6 +36,7 @@ Rectangle {
     BarMenu {
         id: taskbarContextMenu
         anchorItem: contextMenuAnchor
+        closeOnHoverLostDelay: 500  // Slower close to give time to click
 
         model: [
             {

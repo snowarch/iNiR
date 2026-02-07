@@ -76,6 +76,7 @@ set_installed_version() {
     local commit="${2:-$(get_repo_commit)}"
     local source="${3:-git}"
     local timestamp=$(date -Iseconds)
+    local repo_path="${REPO_ROOT:-}"
     
     mkdir -p "$(dirname "$VERSION_FILE_LOCAL")"
     
@@ -85,14 +86,16 @@ set_installed_version() {
             --arg c "$commit" \
             --arg t "$timestamp" \
             --arg s "$source" \
-            '{version: $v, commit: $c, installed_at: $t, source: $s}' > "$VERSION_FILE_LOCAL"
+            --arg r "$repo_path" \
+            '{version: $v, commit: $c, installed_at: $t, source: $s, repo_path: $r}' > "$VERSION_FILE_LOCAL"
     else
         cat > "$VERSION_FILE_LOCAL" << EOF
 {
   "version": "$version",
   "commit": "$commit",
   "installed_at": "$timestamp",
-  "source": "$source"
+  "source": "$source",
+  "repo_path": "$repo_path"
 }
 EOF
     fi
