@@ -416,6 +416,23 @@ ContentPage {
                             color: Appearance.m3colors.m3primary
                         }
                     }
+                    
+                    // Branch info
+                    RowLayout {
+                        visible: ShellUpdates.currentBranch.length > 0
+                        spacing: 4
+                        MaterialSymbol {
+                            text: "account_tree"
+                            iconSize: Appearance.font.pixelSize.smallest
+                            color: Appearance.colors.colSubtext
+                        }
+                        StyledText {
+                            text: ShellUpdates.currentBranch
+                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            font.family: Appearance.font.family.monospace
+                            color: Appearance.colors.colSubtext
+                        }
+                    }
 
                     StyledText {
                         visible: ShellUpdates.lastError.length > 0

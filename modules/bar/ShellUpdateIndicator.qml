@@ -165,6 +165,11 @@ MouseArea {
                 valueColor: Appearance.m3colors.m3primary
             }
             InfoRow {
+                icon: "account_tree"
+                label: Translation.tr("Branch:")
+                value: ShellUpdates.currentBranch || "main"
+            }
+            InfoRow {
                 icon: "commit"
                 label: Translation.tr("Behind:")
                 value: ShellUpdates.commitsBehind.toString()
