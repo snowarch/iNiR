@@ -659,10 +659,10 @@ ContentPage {
                     onCheckedChanged: Config.options.bar.utilButtons.showScreenSnip = checked
                 }
                 SettingsSwitch {
-                    buttonIcon: "colorize"
-                    text: Translation.tr("Color picker")
-                    checked: Config.options.bar.utilButtons.showColorPicker
-                    onCheckedChanged: Config.options.bar.utilButtons.showColorPicker = checked
+                    buttonIcon: "videocam"
+                    text: Translation.tr("Screen record")
+                    checked: Config.options.bar.utilButtons.showScreenRecord
+                    onCheckedChanged: Config.options.bar.utilButtons.showScreenRecord = checked
                 }
             }
 
@@ -678,11 +678,23 @@ ContentPage {
                     }
                 }
                 SettingsSwitch {
+                    buttonIcon: "colorize"
+                    text: Translation.tr("Color picker")
+                    checked: Config.options.bar.utilButtons.showColorPicker
+                    onCheckedChanged: Config.options.bar.utilButtons.showColorPicker = checked
+                }
+            }
+
+            ConfigRow {
+                uniform: true
+                SettingsSwitch {
                     buttonIcon: "edit_note"
                     text: Translation.tr("Notepad")
                     checked: Config.options.bar.utilButtons.showNotepad
                     onCheckedChanged: Config.options.bar.utilButtons.showNotepad = checked
                 }
+                // Empty slot for future button
+                Item { Layout.fillWidth: true }
             }
             
             StyledText {
