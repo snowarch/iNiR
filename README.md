@@ -2,6 +2,10 @@
   <img src="https://github.com/user-attachments/assets/da6beb4a-ccee-40ba-a372-5eea77b595f8" alt="iNiR" width="800">
 </p>
 
+<p align="center">
+  🌐 <b>Languages:</b> <a href="README.md">English</a> | <a href="README.es.md">Español</a> | <a href="README.ru.md">Русский</a>
+</p>
+
 <h1 align="center">iNiR</h1>
 
 <p align="center">
