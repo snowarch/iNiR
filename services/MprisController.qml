@@ -24,6 +24,10 @@ Singleton {
 			}
 		}
 		players = newList;
+		// Keep trackedPlayer consistent with filtered list
+		if (trackedPlayer && !players.includes(trackedPlayer)) {
+			trackedPlayer = players[0] ?? null;
+		}
 	}
 	
 	// Display players with YtMusic duplicate filtering - USE THIS IN UI WIDGETS
@@ -42,14 +46,16 @@ Singleton {
 	property MprisPlayer activePlayer: {
 		// Touch version to create dependency
 		const _ = _playbackStateVersion;
+		// Only consider tracked if it survived filtering
+		const tracked = players.includes(trackedPlayer) ? trackedPlayer : null;
 		// If tracked player is actively playing, use it
-		if (trackedPlayer?.isPlaying) return trackedPlayer;
+		if (tracked?.isPlaying) return tracked;
 		// Otherwise, find any player that IS playing (iterate to ensure reactivity)
 		for (let i = 0; i < players.length; i++) {
 			if (players[i]?.isPlaying) return players[i];
 		}
 		// Fallback to tracked or first player (even if paused)
-		return trackedPlayer ?? players[0] ?? null;
+		return tracked ?? players[0] ?? null;
 	}
 
 	readonly property bool isYtMusicActive: {
@@ -146,6 +152,25 @@ Singleton {
 		if (!Config.options?.media?.filterDuplicatePlayers) return true;
 		const name = player?.dbusName ?? "";
 		if (!name) return false;
+
+		// Explicitly drop X/Twitter media noise early (url/title/album)
+		const rawUrl = player?.metadata?.["xesam:url"] ?? "";
+		const lowerUrl = rawUrl.toLowerCase();
+		const lowerTitle = (player?.trackTitle ?? "").toLowerCase();
+		const lowerAlbum = (player?.trackAlbum ?? "").toLowerCase();
+		if (lowerUrl.includes("x.com") || lowerUrl.includes("twitter.com") ||
+			lowerTitle.includes("x.com") || lowerTitle.includes("twitter.com") ||
+			lowerAlbum.includes("x.com") || lowerAlbum.includes("twitter.com")) {
+			return false;
+		}
+		// Additional heuristic: browser titles like "... on X: ..." or "... / X" (no url present)
+		const isBrowserPlayerName = name.includes("firefox") || name.includes("chrome") || name.includes("chromium") ||
+			name.includes("brave") || name.includes("vivaldi") || name.includes("opera");
+		if (isBrowserPlayerName) {
+			if (lowerTitle.includes(" on x:") || lowerTitle.includes(" / x")) {
+				return false;
+			}
+		}
 		
 		// mpv handling - prefer YtMusic.mpvPlayer when available
 		if (name === "org.mpris.MediaPlayer2.mpv" || name.startsWith("org.mpris.MediaPlayer2.mpv.instance")) {
@@ -171,8 +196,23 @@ Singleton {
 			if (isBrowser) {
 				const trackUrl = player.metadata?.["xesam:url"] ?? "";
 				const isYouTube = trackUrl.includes("youtube.com") || trackUrl.includes("youtu.be") || trackUrl.includes("music.youtube.com");
+				const ytPathOk = /youtube\.com\/(watch|live|shorts)\b/.test(trackUrl) || trackUrl.includes("youtu.be/");
+				// Ignore hover/previews: if not playing and no progress/length, skip
+				const hasProgress = (player.position ?? 0) > 0 || (player.length ?? 0) > 0;
 				if (!isYouTube) return false;
+				if (!ytPathOk) return false;
+				if (!player.isPlaying && !hasProgress) return false;
 			}
+		}
+		// plasma-browser-integration publishes its own name; block non-YouTube content even if integration not detected
+		if (name === 'org.mpris.MediaPlayer2.plasma-browser-integration') {
+			const trackUrl = player.metadata?.["xesam:url"] ?? "";
+			const isYouTube = trackUrl.includes("youtube.com") || trackUrl.includes("youtu.be") || trackUrl.includes("music.youtube.com");
+			const ytPathOk = /youtube\.com\/(watch|live|shorts)\b/.test(trackUrl) || trackUrl.includes("youtu.be/");
+			const hasProgress = (player.position ?? 0) > 0 || (player.length ?? 0) > 0;
+			if (!isYouTube) return false;
+			if (!ytPathOk) return false;
+			if (!player.isPlaying && !hasProgress) return false;
 		}
 		
 		// Filter duplicate MPD instances
@@ -199,16 +239,23 @@ Singleton {
 		
 		// Enhanced GIF/short media detection
 		const trackUrl = player.metadata?.["xesam:url"] ?? "";
+		const mimeType = player.metadata?.["xesam:mimeType"] ?? "";
 		const trackLength = player.length ?? 0;
 		
 		// Filter very short media (< 5 seconds) - likely GIFs or ads
 		if (trackLength > 0 && trackLength < 5) return false;
+		// Block explicit image/gif mime types even if length unknown
+		const mimeLower = mimeType.toLowerCase();
+		if (mimeLower.includes("image/gif") || mimeLower.includes("image/webp")) return false;
 		
 		// Filter known GIF/image hosting patterns
 		if (trackUrl) {
 			const urlLower = trackUrl.toLowerCase();
+			// Explicit extensions
+			if (urlLower.match(/\.(gif|gifv|webp)(\?|#|$)/)) return false;
 			// Common GIF/image hosts
 			if (urlLower.includes("giphy.com")) return false;
+			if (urlLower.includes("x.com")) return false;
 			if (urlLower.includes("tenor.com")) return false;
 			if (urlLower.includes("imgur.com") && (urlLower.endsWith(".gif") || urlLower.endsWith(".gifv"))) return false;
 			if (urlLower.includes("gfycat.com")) return false;
@@ -223,6 +270,15 @@ Singleton {
 		                        name.includes("brave") || name.includes("vivaldi") || name.includes("opera");
 		if (isBrowserPlayer && trackLength > 0 && trackLength < 15 && !trackUrl.includes("youtube.com") && !trackUrl.includes("youtu.be")) {
 			return false;
+		}
+		// Ignore YouTube hover cards with zero progress (no playback yet)
+		if (isBrowserPlayer && (trackUrl.includes("youtube.com") || trackUrl.includes("youtu.be"))) {
+			const ytPathOk = /youtube\.com\/(watch|live|shorts)\b/.test(trackUrl) || trackUrl.includes("youtu.be/");
+			if (!ytPathOk) return false;
+			if (!player.isPlaying) {
+				const hasProgress = (player.position ?? 0) > 0 || (player.length ?? 0) > 0;
+				if (!hasProgress) return false;
+			}
 		}
 		
 		return true;
@@ -344,7 +400,8 @@ Singleton {
 			target: modelData;
 
 			Component.onCompleted: {
-				if (root.trackedPlayer == null || modelData.isPlaying) {
+				// Only track if it's a real player
+				if (isRealPlayer(modelData) && (root.trackedPlayer == null || modelData.isPlaying)) {
 					root.trackedPlayer = modelData;
 				}
 				// Rebuild player list when new player is added
@@ -377,7 +434,7 @@ Singleton {
 				// Increment version to force activePlayer re-evaluation
 				root._playbackStateVersion++;
 				// Update tracked player if this one started playing
-				if (modelData.isPlaying && root.trackedPlayer !== modelData) {
+				if (modelData.isPlaying && root.trackedPlayer !== modelData && isRealPlayer(modelData)) {
 					root.trackedPlayer = modelData;
 				}
 				// Rebuild on playback state change (affects filtering)
@@ -474,11 +531,15 @@ Singleton {
 	}
 
 	function setActivePlayer(player: MprisPlayer): void {
-		const players = Mpris.players.values
-		const targetPlayer = player ?? players[0] ?? null;
+		// Only allow players that survived filtering
+		const filtered = players;
+		let targetPlayer = player;
+		if (!targetPlayer || !filtered.includes(targetPlayer)) {
+			targetPlayer = filtered[0] ?? null;
+		}
 
 		if (targetPlayer && this.activePlayer) {
-			this.__reverse = players.indexOf(targetPlayer) < players.indexOf(this.activePlayer);
+			this.__reverse = filtered.indexOf(targetPlayer) < filtered.indexOf(this.activePlayer);
 		} else {
 			this.__reverse = false;
 		}
