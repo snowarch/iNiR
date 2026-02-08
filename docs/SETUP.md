@@ -1,5 +1,21 @@
 # Setup & Updates
 
+## Interactive Menu
+
+```bash
+./setup
+```
+
+Running `./setup` without arguments launches an interactive menu with all available commands. The menu provides:
+
+- Visual command selection
+- Current version and update status
+- Pending migrations indicator
+- Health checks (shell running, Niri detected)
+- Snapshot availability
+
+This is the recommended way to use the setup script if you're unsure which command to run.
+
 ## Install
 
 ```bash
@@ -59,8 +75,11 @@ Restore a previous snapshot if something breaks after an update. Shows available
 | `./setup` | Interactive menu |
 | `./setup install` | Full installation |
 | `./setup update` | Check remote, pull, sync, restart |
+| `./setup migrate` | Review and apply config migrations |
 | `./setup doctor` | Diagnose and auto-fix |
 | `./setup rollback` | Restore previous snapshot |
+| `./setup my-changes` | View and restore user modifications |
+| `./setup uninstall` | Remove iNiR from system |
 
 Options: `-y` (skip prompts), `-q` (quiet), `-h` (help)
 
@@ -86,12 +105,153 @@ Some features need config changes (new keybinds, layer rules, etc). After `updat
 
 ## Uninstall
 
-```bash
-# Stop ii from starting
-# Comment out in ~/.config/niri/config.kdl:
-# spawn-at-startup "qs" "-c" "ii"
+### Automated Uninstall (Recommended)
 
-# Remove configs
+```bash
+./setup uninstall
+```
+
+The uninstall script intelligently removes iNiR while preserving shared resources and user data:
+
+**What it does:**
+- Creates automatic backup before removal
+- Removes iNiR-exclusive files and directories
+- Asks before removing shared configs (Niri, GTK, themes)
+- Detects if you're in a Niri session (preserves compositor config)
+- Detects other Quickshell configs (preserves shared resources)
+- Lists installed packages with removal recommendations
+- Shows commands to revert system changes (groups, modules)
+
+**Interactive mode:**
+```bash
+./setup uninstall
+```
+
+Asks before removing each shared config. Recommended for most users.
+
+**Quick mode:**
+```bash
+./setup uninstall -y
+```
+
+Removes only iNiR-exclusive files, keeps all shared configs and packages.
+
+### Files Removed Automatically
+
+The following are removed without prompting (iNiR-exclusive):
+
+```
+~/.config/quickshell/ii/                         # Shell configuration
+~/.config/illogical-impulse/                     # User preferences
+~/.local/state/quickshell/user/                  # Notifications, todo
+~/.cache/quickshell/ii/                          # Cache
+~/.local/bin/ii_super_overview_daemon.py         # Super daemon
+~/.config/systemd/user/ii-super-overview.service # Daemon service
+~/.config/vesktop/themes/system24.theme.css      # Vesktop theme
+~/.config/vesktop/themes/ii-colors.css           # Vesktop colors
+```
+
+### Shared Configs (Asked Before Removal)
+
+These may be used by other applications. The script asks before removing:
+
+| Path | Type | Default Action |
+|------|------|----------------|
+| `~/.config/niri/config.kdl` | Essential | Keep (especially if in Niri session) |
+| `~/.config/matugen/` | Optional | Ask (remove if matugen not installed) |
+| `~/.config/fuzzel/` | Optional | Ask (remove if fuzzel not installed) |
+| `~/.config/Kvantum/` | Optional | Ask (remove if Kvantum not installed) |
+| `~/.config/kdeglobals` | Optional | Ask |
+| `~/.config/dolphinrc` | Optional | Ask (remove if Dolphin not installed) |
+| `~/.config/gtk-3.0/gtk.css` | Optional | Ask |
+| `~/.config/gtk-4.0/gtk.css` | Optional | Ask |
+| `~/.config/fontconfig/` | Essential | Keep |
+| `~/.local/share/color-schemes/Darkly.colors` | iNiR default | Remove |
+
+### Installed Packages
+
+The script lists packages installed by iNiR but does not remove them automatically. Review the output and remove manually if not needed by other applications.
+
+**Core packages:**
+- `quickshell` - Shell framework (safe to remove if no other QS configs)
+- `niri` - Wayland compositor (keep if using Niri)
+
+**System tools:**
+- `cliphist`, `fuzzel`, `swaylock`, `grim`, `slurp`
+- `wl-clipboard`, `brightnessctl`, `playerctl`, `dunst`
+
+**Optional tools:**
+- `matugen`, `cava`, `easyeffects`
+
+The script provides distro-specific removal commands (pacman, dnf, apt) with safety recommendations.
+
+### System Changes Not Reverted
+
+The following system changes are not automatically reverted. The script shows commands to revert them manually if desired:
+
+- User groups: `video`, `i2c`, `input`
+- i2c-dev module: `/etc/modules-load.d/i2c-dev.conf`
+- ydotool service
+
+### Backup Location
+
+Backups are saved to:
+```
+~/.local/share/inir-uninstall-backup-YYYYMMDD-HHMMSS/
+```
+
+To restore from backup:
+```bash
+cp -r ~/.local/share/inir-uninstall-backup-*/quickshell-ii ~/.config/quickshell/ii
+cp -r ~/.local/share/inir-uninstall-backup-*/illogical-impulse ~/.config/illogical-impulse
+```
+
+### Manual Uninstall (Fallback)
+
+If the automated script fails or is unavailable:
+
+```bash
+# Stop services
+qs kill -c ii
+systemctl --user disable --now ii-super-overview.service 2>/dev/null
+
+# Remove iNiR-exclusive files
 rm -rf ~/.config/quickshell/ii
 rm -rf ~/.config/illogical-impulse
+rm -rf ~/.local/state/quickshell/user
+rm -rf ~/.cache/quickshell/ii
+rm -f ~/.local/bin/ii_super_overview_daemon.py
+rm -f ~/.config/systemd/user/ii-super-overview.service
+rm -f ~/.config/vesktop/themes/system24.theme.css
+rm -f ~/.config/vesktop/themes/ii-colors.css
+rm -f ~/.config/Vesktop/themes/system24.theme.css
+rm -f ~/.config/Vesktop/themes/ii-colors.css
+
+# Remove shared configs (review before running)
+# rm -rf ~/.config/niri/config.kdl  # Only if not using Niri
+# rm -rf ~/.config/matugen
+# rm -rf ~/.config/fuzzel
+# rm -rf ~/.config/Kvantum
+# rm -f ~/.config/kdeglobals
+# rm -f ~/.config/dolphinrc
+# rm -f ~/.config/gtk-3.0/gtk.css
+# rm -f ~/.config/gtk-4.0/gtk.css
+# rm -f ~/.local/share/color-schemes/Darkly.colors
+
+# Remove Quickshell shared resources (only if no other QS configs)
+# rm -rf ~/.local/state/quickshell/.venv
+# rm -rf ~/.local/state/quickshell/themes
+
+# Comment out spawn-at-startup in ~/.config/niri/config.kdl:
+# spawn-at-startup "qs" "-c" "ii"
+```
+
+### Reinstalling
+
+To reinstall iNiR after uninstalling:
+
+```bash
+git clone https://github.com/snowarch/inir.git
+cd inir
+./setup install
 ```
