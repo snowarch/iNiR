@@ -1,0 +1,3 @@
+[submodule "modules/common/widgets/shapes"]
+	path = modules/common/widgets/shapes
+	url = https://github.com/end-4/rounded-polygon-qmljs.git
