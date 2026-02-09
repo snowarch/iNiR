@@ -60,7 +60,6 @@ Item {
     property real dragStartY: 0
     property real dragCurrentX: 0        // Current mouse position (in listView coords)
     property real dragCurrentY: 0
-    property bool dragFromLongPress: false
 
     // How far mouse must move during long-press before it's cancelled
     readonly property real dragThreshold: 18
@@ -178,7 +177,6 @@ Item {
         dragStartY = 0
         dragCurrentX = 0
         dragCurrentY = 0
-        dragFromLongPress = false
     }
 
     function _applyReorder(fromIdx: int, toIdx: int): void {
@@ -512,50 +510,56 @@ Item {
             // Scale effect when being dragged
             // Merge active-app highlight scale with drag elevation scale
             // (overrides the base DockAppButton scale property)
-            scale: isBeingDragged ? 1.1
+            scale: isBeingDragged ? 1.08
                  : appToplevel.toplevels.find(t => t.activated === true) !== undefined ? 1.05
                  : 1.0
 
-            // Dragged item becomes semi-transparent; others dim slightly
-            opacity: isBeingDragged ? 0.75
-                   : (root.dragActive && !isDropTarget ? 0.55 : 1.0)
+            // Dragged item lifts slightly; others dim just enough to signal drag mode
+            opacity: isBeingDragged ? 0.8
+                   : root.dragActive ? 0.85 : 1.0
             Behavior on opacity {
                 enabled: Appearance.animationsEnabled
                 NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
             }
 
-            // ─── Ghost placeholder at drop position ──────────────────
-            // Tri-style aware: material=solid subtle, aurora=glass, inir=bordered
+            // ─── Insertion line at drop gap ───────────────────────────
+            // Thin accent line centered in the gap that displacement opens.
+            // Direction-aware: shows at the edge facing the gap so it
+            // visually marks the exact insertion point.
             Rectangle {
-                id: dropGhost
+                id: insertionLine
                 visible: dockDelegate.isDropTarget && !dockDelegate.isSeparator
                 z: 50
-                anchors.centerIn: parent
 
-                width: parent.width - 4
-                height: parent.height - 4
-                radius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall
-                      : Appearance.rounding.normal
+                // Which direction the item is being dragged
+                readonly property bool forward: root.dragIndex >= 0
+                    && root.dragIndex < root.dropTargetIndex
 
-                color: Appearance.inirEverywhere
-                    ? ColorUtils.transparentize(Appearance.inir.colPrimary, 0.85)
-                    : Appearance.auroraEverywhere
-                        ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.88)
-                        : ColorUtils.transparentize(Appearance.colors.colPrimary, 0.85)
+                // Horizontal dock → vertical line; vertical dock → horizontal line
+                width: root.vertical ? (parent.width * 0.55) : 3
+                height: root.vertical ? 3 : (parent.height * 0.55)
+                radius: 1.5
 
-                border.width: Appearance.inirEverywhere ? 1 : 0
-                border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+                // Position: center the line in the spacing gap at the correct edge
+                x: root.vertical
+                    ? (parent.width - width) / 2
+                    : (forward
+                        ? parent.width + (listView.spacing - width) / 2
+                        : -(listView.spacing + width) / 2)
+                y: root.vertical
+                    ? (forward
+                        ? parent.height + (listView.spacing - height) / 2
+                        : -(listView.spacing + height) / 2)
+                    : (parent.height - height) / 2
 
-                opacity: dockDelegate.isDropTarget ? 1 : 0
-                scale: dockDelegate.isDropTarget ? 1 : 0.8
+                color: Appearance.inirEverywhere ? Appearance.inir.colPrimary
+                     : Appearance.colors.colPrimary
+
+                opacity: dockDelegate.isDropTarget ? 0.9 : 0
 
                 Behavior on opacity {
                     enabled: Appearance.animationsEnabled
-                    NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
-                }
-                Behavior on scale {
-                    enabled: Appearance.animationsEnabled
-                    NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
                 }
             }
 
