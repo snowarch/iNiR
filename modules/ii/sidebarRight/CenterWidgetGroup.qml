@@ -12,13 +12,13 @@ Rectangle {
     readonly property bool cardStyle: Config.options?.sidebar?.cardStyle ?? false
 
     radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-    color: cardStyle
-        ? (Appearance.inirEverywhere ? Appearance.inir.colLayer1
-            : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-            : Appearance.colors.colLayer1)
-        : "transparent"
+    color: cardStyle ? "transparent"
+        :(Appearance.inirEverywhere ? Appearance.inir.colLayer1
+        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+        : Appearance.colors.colLayer1)
+
     border.width: Appearance.inirEverywhere?1:0
-    border.color: cardStyle && Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+    border.color: Appearance.inir.colBorder
 
     NotificationList {
         anchors.fill: parent

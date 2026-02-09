@@ -79,7 +79,7 @@ Item {
         color: gameModeMinimal ? "transparent"
             : inirEverywhere ? (cardStyle ? Appearance.inir.colLayer1 : Appearance.inir.colLayer0)
             : auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
-            : (cardStyle ? Appearance.colors.colLayer0 : Appearance.colors.colLayer1)
+            : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
         border.width: gameModeMinimal ? 0 : (inirEverywhere ? 1 : 1)
         border.color: inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colLayer0Border
         radius: inirEverywhere ? (cardStyle ? Appearance.inir.roundingLarge : Appearance.inir.roundingNormal)
