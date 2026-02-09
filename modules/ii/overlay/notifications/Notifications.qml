@@ -9,7 +9,7 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.ii.overlay
-import qs.modules.sidebarRight.notifications
+import qs.modules.ii.sidebarRight.notifications
 
 StyledOverlayWidget {
     id: root

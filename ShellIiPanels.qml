@@ -14,7 +14,7 @@ import qs.modules.regionSelector
 import qs.modules.screenCorners
 import qs.modules.sessionScreen
 import qs.modules.sidebarLeft
-import qs.modules.sidebarRight
+import qs.modules.ii.sidebarRight
 import qs.modules.tilingOverlay
 import qs.modules.verticalBar
 import qs.modules.wallpaperSelector

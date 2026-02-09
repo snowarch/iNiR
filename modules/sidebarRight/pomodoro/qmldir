@@ -1,5 +1,0 @@
-module qs.modules.sidebarRight.pomodoro
-CountdownTimer 1.0 CountdownTimer.qml
-PomodoroTimer 1.0 PomodoroTimer.qml
-PomodoroWidget 1.0 PomodoroWidget.qml
-Stopwatch 1.0 Stopwatch.qml
