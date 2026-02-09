@@ -4,10 +4,14 @@
 
 # Function to reload kitty terminal colors
 function reload_kitty
-    # Try to reload kitty config via remote control
-    if test -S /tmp/kitty
+    # Try standard socket paths in order of preference
+    if test -S /tmp/kitty-socket
+        kitty @ --to unix:/tmp/kitty-socket load-config 2>/dev/null
+        and echo "Kitty theme reloaded via /tmp/kitty-socket"
+        or echo "Failed to reload kitty via /tmp/kitty-socket"
+    else if test -S /tmp/kitty
         kitty @ --to unix:/tmp/kitty load-config 2>/dev/null
-        and echo "Kitty theme reloaded"
+        and echo "Kitty theme reloaded via /tmp/kitty"
         or echo "Failed to reload kitty via /tmp/kitty"
     else
         # Try alternative socket locations
