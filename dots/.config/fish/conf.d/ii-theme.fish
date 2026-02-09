@@ -96,21 +96,22 @@ __ii_setup_fish_colors
 
 # Function to reload kitty terminal colors
 function __ii_reload_kitty_theme
-    # Try to reload kitty config via remote control using the standard socket path
-    if test -S /tmp/kitty-socket
-        kitty @ --to unix:/tmp/kitty-socket load-config 2>/dev/null
-        echo "Kitty theme reloaded via /tmp/kitty-socket"
-    else if test -S /tmp/kitty
-        kitty @ --to unix:/tmp/kitty load-config 2>/dev/null
-        echo "Kitty theme reloaded via /tmp/kitty"
-    else
-        # Try alternative socket locations
-        for socket in /tmp/kitty-*
-            if test -S $socket
-                kitty @ --to unix:$socket load-config 2>/dev/null
-                echo "Kitty theme reloaded via $socket"
-            end
+    # Find kitty socket dynamically (handles PID-suffixed sockets)
+    set -l found_socket ""
+    
+    # Check for sockets in order of preference
+    for socket in /tmp/kitty-socket /tmp/kitty /tmp/kitty-socket-* /tmp/kitty-*
+        if test -S "$socket"
+            set found_socket "$socket"
+            break
         end
+    end
+    
+    if test -n "$found_socket"
+        kitty @ --to "unix:$found_socket" load-config 2>/dev/null
+        echo "Kitty theme reloaded via $found_socket"
+    else
+        echo "No kitty socket found"
     end
 end
 

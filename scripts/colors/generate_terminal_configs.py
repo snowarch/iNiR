@@ -140,18 +140,28 @@ color15 {colors.get("term15", "#EBDBB2")}
 
     # Live reload kitty colors via remote control socket
     import subprocess
+    import glob
 
-    socket_path = "/tmp/kitty-socket"
-    if os.path.exists(socket_path):
-        try:
-            subprocess.run(
-                ["kitten", "@", "--to", f"unix:{socket_path}", "set-colors", "--all", output_path],
-                capture_output=True,
-                timeout=2,
-            )
-            print(f"  → Live-reloaded Kitty colors via socket")
-        except Exception:
-            pass
+    # Find kitty socket dynamically (handles PID-suffixed sockets like kitty-socket-12345)
+    socket_paths = (
+        ["/tmp/kitty-socket", "/tmp/kitty"]
+        + glob.glob("/tmp/kitty-socket-*")
+        + glob.glob("/tmp/kitty-*")
+    )
+
+    for socket_path in socket_paths:
+        if os.path.exists(socket_path):
+            try:
+                # Use load-config instead of set-colors to reload full theme including tabs
+                subprocess.run(
+                    ["kitten", "@", "--to", f"unix:{socket_path}", "load-config"],
+                    capture_output=True,
+                    timeout=2,
+                )
+                print(f"  → Live-reloaded Kitty config via {socket_path}")
+                break
+            except Exception:
+                continue
 
 
 def fix_alacritty_import_order(config_path):
@@ -177,7 +187,9 @@ def fix_alacritty_import_order(config_path):
 
     # Check if [general] with import is already at the top (correct state)
     lines = content.split("\n")
-    top_lines = [l.strip() for l in lines[:10] if l.strip() and not l.strip().startswith("#")]
+    top_lines = [
+        l.strip() for l in lines[:10] if l.strip() and not l.strip().startswith("#")
+    ]
 
     # Correct state: [general] is first real line, import is second, no hardcoded colors
     correct = (
@@ -240,8 +252,12 @@ def fix_alacritty_import_order(config_path):
                 in_colors_section = True
                 added_colors_comment = True
                 new_lines.append("")
-                new_lines.append("# Color definitions commented out by iNiR wallpaper theming")
-                new_lines.append("# Colors are managed via the import in [general] above")
+                new_lines.append(
+                    "# Color definitions commented out by iNiR wallpaper theming"
+                )
+                new_lines.append(
+                    "# Colors are managed via the import in [general] above"
+                )
                 new_lines.append("#")
             new_lines.append("# " + line)
             continue
@@ -653,37 +669,43 @@ bright_white = '{colors.get("term15", "#EBDBB2")}'
     # Auto-integrate into starship.toml
     home = os.path.expanduser("~")
     starship_conf = f"{home}/.config/starship.toml"
-    
+
     # Check if starship.toml exists
     if os.path.exists(starship_conf):
         content = Path(starship_conf).read_text()
-        
+
         # Check if palette_name is already set to ii
         if 'palette = "ii"' in content:
             print(f"✓ Generated Starship palette (already using ii palette)")
         else:
             # Add palette directive if not present
-            if 'palette =' not in content:
+            if "palette =" not in content:
                 # Add at top of file
                 new_content = 'palette = "ii"\n\n' + content
                 Path(starship_conf).write_text(new_content)
                 print(f"✓ Generated Starship palette and set as active")
             else:
-                print(f"✓ Generated Starship palette (using different palette, change to 'palette = \"ii\"' to use)")
-        
+                print(
+                    f"✓ Generated Starship palette (using different palette, change to 'palette = \"ii\"' to use)"
+                )
+
         # Add source directive for palette file if not present
         palette_source = f'"$HOME/.config/starship/ii-palette.toml"'
-        if palette_source not in content and 'ii-palette.toml' not in content:
+        if palette_source not in content and "ii-palette.toml" not in content:
             # Prepend the source at the very top
-            source_line = f'# Import ii Material You palette\n# source = {palette_source}\n\n'
+            source_line = (
+                f"# Import ii Material You palette\n# source = {palette_source}\n\n"
+            )
             # Note: Starship doesn't support source/include, so we need to append the palette directly
             # We'll append the palette content to starship.toml if palettes.ii section doesn't exist
-            if '[palettes.ii]' not in content:
-                with open(starship_conf, 'a') as f:
-                    f.write('\n' + config)
+            if "[palettes.ii]" not in content:
+                with open(starship_conf, "a") as f:
+                    f.write("\n" + config)
                 print(f"  → Appended ii palette to starship.toml")
     else:
-        print(f"✓ Generated Starship palette (starship.toml not found - create it and add 'palette = \"ii\"')")
+        print(
+            f"✓ Generated Starship palette (starship.toml not found - create it and add 'palette = \"ii\"')"
+        )
 
 
 def main():
@@ -702,7 +724,16 @@ def main():
         "--terminals",
         type=str,
         nargs="+",
-        choices=["kitty", "alacritty", "foot", "wezterm", "ghostty", "konsole", "starship", "all"],
+        choices=[
+            "kitty",
+            "alacritty",
+            "foot",
+            "wezterm",
+            "ghostty",
+            "konsole",
+            "starship",
+            "all",
+        ],
         default=["all"],
         help="Which terminals to generate configs for",
     )

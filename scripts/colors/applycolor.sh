@@ -151,14 +151,20 @@ reload_terminal_colors() {
         # Kitty: reload config via remote control (works if allow_remote_control is enabled)
         # Using load-config instead of set-colors to reload tab bar colors and full theme
         if pgrep -x kitty &>/dev/null; then
-          # Try to reload via socket if available
-          if [ -S /tmp/kitty-socket ]; then
-            kitty @ --to unix:/tmp/kitty-socket load-config 2>/dev/null && \
-              echo "[terminal-colors] Kitty: reloaded config via /tmp/kitty-socket" || \
-              echo "[terminal-colors] Kitty: failed to reload via socket"
-          elif [ -S /tmp/kitty ]; then
-            kitty @ --to unix:/tmp/kitty load-config 2>/dev/null && \
-              echo "[terminal-colors] Kitty: reloaded config via /tmp/kitty" || \
+          # Find kitty socket dynamically (handles PID-suffixed sockets)
+          local kitty_socket=""
+          
+          # Check for sockets in order of preference
+          for socket in /tmp/kitty-socket /tmp/kitty /tmp/kitty-socket-* /tmp/kitty-*; do
+            if [ -S "$socket" ]; then
+              kitty_socket="$socket"
+              break
+            fi
+          done
+          
+          if [ -n "$kitty_socket" ]; then
+            kitty @ --to "unix:$kitty_socket" load-config 2>/dev/null && \
+              echo "[terminal-colors] Kitty: reloaded config via $kitty_socket" || \
               echo "[terminal-colors] Kitty: failed to reload via socket"
           else
             # Fallback: try without socket (uses default)
