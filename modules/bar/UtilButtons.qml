@@ -139,9 +139,8 @@ Item {
                 Layout.alignment: Qt.AlignVCenter
                 onClicked: {
                     GlobalStates.sidebarRightOpen = true
-                    // Ensure bottom widget group is expanded and focused on Notepad tab (index 2)
                     Persistent.states.sidebar.bottomGroup.collapsed = false
-                    Persistent.states.sidebar.bottomGroup.tab = 2
+                    Persistent.states.sidebar.bottomGroup.tab = Persistent?.states?.sidebar?.bottomGroup.tabs.findIndex(t => t.type === "notepad")
                 }
                 MaterialSymbol {
                     horizontalAlignment: Qt.AlignHCenter

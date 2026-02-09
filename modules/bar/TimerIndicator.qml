@@ -94,7 +94,7 @@ MouseArea {
         GlobalStates.sidebarRightOpen = true
 
         if (Persistent?.states?.sidebar?.bottomGroup) {
-            Persistent.states.sidebar.bottomGroup.tab = 3
+            Persistent.states.sidebar.bottomGroup.tab = Persistent?.states?.sidebar?.bottomGroup.tabs.findIndex(t => t.type === "timer")
             Persistent.states.sidebar.bottomGroup.collapsed = false
         }
 

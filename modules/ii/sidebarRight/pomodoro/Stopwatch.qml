@@ -169,26 +169,26 @@ Item {
                     TimerService.toggleStopwatch()
                 }
 
-                colBackground: TimerService.stopwatchRunning
-                                    ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2
-                                        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colSecondaryContainer)
-                                    : Appearance.colors.colPrimary
-                                colBackgroundHover: TimerService.stopwatchRunning
-                                    ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
-                                        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover : Appearance.colors.colSecondaryContainerHover)
-                                    : Appearance.colors.colPrimaryHover
-                                colRipple: TimerService.stopwatchRunning
-                                    ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
-                                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colSecondaryContainerActive)
-                                    : Appearance.colors.colPrimaryActive
+                colBackground: !TimerService.stopwatchPaused
+                    ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colSecondaryContainer)
+                    : Appearance.colors.colPrimary
+                colBackgroundHover: !TimerService.stopwatchPaused
+                    ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover : Appearance.colors.colSecondaryContainerHover)
+                    : Appearance.colors.colPrimaryHover
+                colRipple: !TimerService.stopwatchPaused
+                    ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colSecondaryContainerActive)
+                    : Appearance.colors.colPrimaryActive
 
                 contentItem: StyledText {
                     horizontalAlignment: Text.AlignHCenter
-                    color: TimerService.stopwatchRunning
+                    color: !TimerService.stopwatchPaused
                         ? (Appearance.inirEverywhere ? Appearance.inir.colText
                             : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer2 : Appearance.colors.colOnSecondaryContainer)
                         : Appearance.colors.colOnPrimary
-                    text: TimerService.stopwatchRunning ? Translation.tr("Pause") : TimerService.stopwatchTime === 0 ? Translation.tr("Start") : Translation.tr("Resume")
+                    text: !TimerService.stopwatchPaused ? Translation.tr("Pause") : TimerService.stopwatchTime === 0 ? Translation.tr("Start") : Translation.tr("Resume")
                 }
             }
 
@@ -198,36 +198,36 @@ Item {
                 font.pixelSize: Appearance.font.pixelSize.larger
 
                 onClicked: {
-                    if (TimerService.stopwatchRunning)
+                    if (!TimerService.stopwatchPaused)
                         TimerService.stopwatchRecordLap()
                     else
                         TimerService.stopwatchReset()
                 }
                 enabled: TimerService.stopwatchTime > 0 || Persistent.states.timer.stopwatch.laps.length > 0
 
-                colBackground: TimerService.stopwatchRunning
-                        ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2
-                            : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colLayer2)
-                        : (Appearance.inirEverywhere ? Appearance.inir.colLayer2
-                            : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colErrorContainer)
-                    colBackgroundHover: TimerService.stopwatchRunning
-                        ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
-                            : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover : Appearance.colors.colLayer2Hover)
-                        : (Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
-                            : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover : Appearance.colors.colErrorContainerHover)
-                    colRipple: TimerService.stopwatchRunning
-                        ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
-                            : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer2Active)
-                        : (Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
-                            : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colErrorContainerActive)
+                colBackground: !TimerService.stopwatchPaused
+                    ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colLayer2)
+                    : (Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colErrorContainer)
+                colBackgroundHover: !TimerService.stopwatchPaused
+                    ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover : Appearance.colors.colLayer2Hover)
+                    : (Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover : Appearance.colors.colErrorContainerHover)
+                colRipple: !TimerService.stopwatchPaused
+                    ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer2Active)
+                    : (Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colErrorContainerActive)
 
                 contentItem: StyledText {
                     horizontalAlignment: Text.AlignHCenter
-                    text: TimerService.stopwatchRunning ? Translation.tr("Lap") : Translation.tr("Reset")
-                    color: TimerService.stopwatchRunning
-                                            ? (Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer2)
-                                            : (Appearance.inirEverywhere ? Appearance.inir.colText
-                                                : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer2 : Appearance.colors.colOnErrorContainer)
+                    text: !TimerService.stopwatchPaused ? Translation.tr("Lap") : Translation.tr("Reset")
+                    color: !TimerService.stopwatchPaused
+                        ? (Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer2)
+                        : (Appearance.inirEverywhere ? Appearance.inir.colText
+                            : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer2 : Appearance.colors.colOnErrorContainer)
                 }
             }
         }

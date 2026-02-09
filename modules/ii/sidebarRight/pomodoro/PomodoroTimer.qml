@@ -53,7 +53,7 @@ Item {
             Rectangle {
                 radius: Appearance.rounding.full
                 color: Appearance.colors.colLayer2
-                
+
                 anchors {
                     right: parent.right
                     bottom: parent.bottom
