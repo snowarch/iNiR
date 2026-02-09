@@ -4,8 +4,16 @@ import qs.modules.common
 Rectangle {
     id: root
 
-    radius: Appearance.rounding.normal
-    color: Appearance.colors.colLayer1
+    readonly property bool cardStyle: Config.options?.sidebar?.cardStyle ?? false
+
+    radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+    color: cardStyle
+        ? (Appearance.inirEverywhere ? Appearance.inir.colLayer1
+            : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+            : Appearance.colors.colLayer1)
+        : "transparent"
+    border.width: Appearance.inirEverywhere?1:0
+    border.color: cardStyle && Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
 
     signal openAudioOutputDialog()
     signal openAudioInputDialog()

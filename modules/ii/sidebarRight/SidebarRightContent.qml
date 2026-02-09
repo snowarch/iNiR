@@ -1,13 +1,17 @@
 import qs
 import qs.services
 import qs.modules.common
+import qs.modules.common.models
 import qs.modules.common.widgets
+import qs.modules.common.functions
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Bluetooth
 import Quickshell.Hyprland
+import QtQuick.Effects
+import Qt5Compat.GraphicalEffects as GE
 
 import qs.modules.ii.sidebarRight.quickToggles
 import qs.modules.ii.sidebarRight.quickToggles.classicStyle
@@ -46,6 +50,7 @@ Item {
 
     StyledRectangularShadow {
         target: sidebarRightBackground
+        visible: !Appearance.inirEverywhere && !Appearance.gameModeMinimal
     }
     Rectangle {
         id: sidebarRightBackground
@@ -53,10 +58,66 @@ Item {
         anchors.fill: parent
         implicitHeight: parent.height - Appearance.sizes.hyprlandGapsOut * 2
         implicitWidth: sidebarWidth - Appearance.sizes.hyprlandGapsOut * 2
-        color: Appearance.colors.colLayer0
-        border.width: 1
-        border.color: Appearance.colors.colLayer0Border
-        radius: Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1
+        property bool cardStyle: Config.options.sidebar?.cardStyle ?? false
+        readonly property bool auroraEverywhere: Appearance.auroraEverywhere
+        readonly property bool inirEverywhere: Appearance.inirEverywhere
+        readonly property bool gameModeMinimal: Appearance.gameModeMinimal
+        readonly property string wallpaperUrl: Wallpapers.effectiveWallpaperUrl
+
+        ColorQuantizer {
+            id: sidebarRightWallpaperQuantizer
+            source: sidebarRightBackground.wallpaperUrl
+            depth: 0
+            rescaleSize: 10
+        }
+
+        readonly property color wallpaperDominantColor: (sidebarRightWallpaperQuantizer?.colors?.[0] ?? Appearance.colors.colPrimary)
+        readonly property QtObject blendedColors: AdaptedMaterialScheme {
+            color: ColorUtils.mix(sidebarRightBackground.wallpaperDominantColor, Appearance.colors.colPrimaryContainer, 0.8) || Appearance.m3colors.m3secondaryContainer
+        }
+
+        color: gameModeMinimal ? "transparent"
+            : inirEverywhere ? (cardStyle ? Appearance.inir.colLayer1 : Appearance.inir.colLayer0)
+            : auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
+            : (cardStyle ? Appearance.colors.colLayer0 : Appearance.colors.colLayer1)
+        border.width: gameModeMinimal ? 0 : (inirEverywhere ? 1 : 1)
+        border.color: inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colLayer0Border
+        radius: inirEverywhere ? (cardStyle ? Appearance.inir.roundingLarge : Appearance.inir.roundingNormal)
+            : cardStyle ? Appearance.rounding.normal : (Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1)
+
+        clip: true
+
+        layer.enabled: auroraEverywhere && !inirEverywhere && !gameModeMinimal
+        layer.effect: GE.OpacityMask {
+            maskSource: Rectangle {
+                width: sidebarRightBackground.width
+                height: sidebarRightBackground.height
+                radius: sidebarRightBackground.radius
+            }
+        }
+
+        Image {
+            id: sidebarRightBlurredWallpaper
+            x: -(root.screenWidth - sidebarRightBackground.width - Appearance.sizes.hyprlandGapsOut)
+            y: -Appearance.sizes.hyprlandGapsOut
+            width: root.screenWidth ?? 1920
+            height: root.screenHeight ?? 1080
+            visible: sidebarRightBackground.auroraEverywhere && !sidebarRightBackground.inirEverywhere && !sidebarRightBackground.gameModeMinimal
+            source: sidebarRightBackground.wallpaperUrl
+            fillMode: Image.PreserveAspectCrop
+            cache: true
+            asynchronous: true
+
+            layer.enabled: Appearance.effectsEnabled
+            layer.effect: StyledBlurEffect {
+                source: sidebarRightBlurredWallpaper
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                color: ColorUtils.transparentize((sidebarRightBackground.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
+            }
+        }
 
         ColumnLayout {
             anchors.fill: parent
@@ -103,6 +164,7 @@ Item {
             }
 
             BottomWidgetGroup {
+                id: bottomWidgetGroup
                 Layout.alignment: Qt.AlignHCenter
                 Layout.fillHeight: false
                 Layout.fillWidth: true
@@ -129,6 +191,7 @@ Item {
         shownPropertyString: "showBluetoothDialog"
         dialog: BluetoothDialog {}
         onShownChanged: {
+            if (!Bluetooth.defaultAdapter) return
             if (!shown) {
                 Bluetooth.defaultAdapter.discovering = false;
             } else {
@@ -217,7 +280,9 @@ Item {
                 bottom: parent.bottom
                 left: parent.left
             }
-            color: Appearance.colors.colLayer1
+            color: sidebarRightBackground.auroraEverywhere
+                ? Appearance.aurora.colSubSurface
+                : Appearance.colors.colLayer1
             radius: height / 2
             implicitWidth: uptimeRow.implicitWidth + 24
             implicitHeight: uptimeRow.implicitHeight + 8
@@ -252,7 +317,9 @@ Item {
                 bottom: parent.bottom
                 right: parent.right
             }
-            color: Appearance.colors.colLayer1
+            color: sidebarRightBackground.auroraEverywhere
+                ? Appearance.aurora.colSubSurface
+                : Appearance.colors.colLayer1
             padding: 4
 
             QuickToggleButton {

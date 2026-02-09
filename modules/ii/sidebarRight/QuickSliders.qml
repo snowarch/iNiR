@@ -17,8 +17,18 @@ Rectangle {
 
     implicitWidth: contentItem.implicitWidth + root.horizontalPadding * 2
     implicitHeight: contentItem.implicitHeight + root.verticalPadding * 2
-    radius: Appearance.rounding.normal
-    color: Appearance.colors.colLayer1
+
+    readonly property bool cardStyle: Config.options?.sidebar?.cardStyle ?? false
+
+    radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+    color: cardStyle
+        ? (Appearance.inirEverywhere ? Appearance.inir.colLayer1
+            : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+            : Appearance.colors.colLayer1)
+        : "transparent"
+    border.width: Appearance.inirEverywhere?1:0
+    border.color: cardStyle && Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+
     property real verticalPadding: 4
     property real horizontalPadding: 12
 
@@ -97,7 +107,13 @@ Rectangle {
                 rightMargin: quickSlider.nearFull ? 14 : 8
             }
             iconSize: 20
-            color: nearFull ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSecondaryContainer
+            color: nearFull
+                ? (Appearance.inirEverywhere ? Appearance.inir.colOnPrimary
+                 : Appearance.auroraEverywhere ? Appearance.m3colors.m3onPrimary
+                 : Appearance.colors.colOnPrimary)
+                : (Appearance.inirEverywhere ? Appearance.inir.colOnSecondaryContainer
+                 : Appearance.auroraEverywhere ? Appearance.m3colors.m3onSecondaryContainer
+                 : Appearance.colors.colOnSecondaryContainer)
             text: quickSlider.materialSymbol
 
             Behavior on color {

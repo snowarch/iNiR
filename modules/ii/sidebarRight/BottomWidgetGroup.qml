@@ -1,59 +1,114 @@
-pragma ComponentBehavior: Bound
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.common.functions
 import qs.services
 import qs.modules.ii.sidebarRight.calendar
 import qs.modules.ii.sidebarRight.todo
 import qs.modules.ii.sidebarRight.pomodoro
+import qs.modules.ii.sidebarRight.notepad
+import qs.modules.ii.sidebarRight.calculator
+import qs.modules.ii.sidebarRight.sysmon
 import QtQuick
 import QtQuick.Layouts
+// import Qt5Compat.GraphicalEffects // Might not be available, using standard Rectangle gradient instead
 
 Rectangle {
     id: root
-    radius: Appearance.rounding.normal
-    color: Appearance.colors.colLayer1
+
+    readonly property bool cardStyle: Config.options?.sidebar?.cardStyle ?? false
+
+    radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+    color: (!cardStyle||Appearance.auroraEverywhere)?"transparent"
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+        : Appearance.colors.colLayer1
+    border.width: cardStyle && Appearance.inirEverywhere ? 1 : 0
+    border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
     clip: true
-    implicitHeight: collapsed ? collapsedBottomWidgetGroupRow.implicitHeight : 350
-    property int selectedTab: Persistent.states.sidebar.bottomGroup.tab
-    property int previousIndex: -1
-    property bool collapsed: Persistent.states.sidebar.bottomGroup.collapsed
-    property var tabs: [
-        {
-            "type": "calendar",
-            "name": Translation.tr("Calendar"),
-            "icon": "calendar_month",
-            "widget": "calendar/CalendarWidget.qml"
-        },
-        {
-            "type": "todo",
-            "name": Translation.tr("To Do"),
-            "icon": "done_outline",
-            "widget": "todo/TodoWidget.qml"
-        },
-        {
-            "type": "timer",
-            "name": Translation.tr("Timer"),
-            "icon": "schedule",
-            "widget": "pomodoro/PomodoroWidget.qml"
-        },
+    visible: tabs.length > 0
+    implicitHeight: visible ? (collapsed ? collapsedBottomWidgetGroupRow.implicitHeight : bottomWidgetGroupRow.implicitHeight) : 0
+    property int selectedTab: Persistent.states?.sidebar?.bottomGroup?.tab ?? 0
+    property bool collapsed: Persistent.states?.sidebar?.bottomGroup?.collapsed ?? false
+    property var allTabs: [
+        {"type": "calendar", "name": Translation.tr("Calendar"), "icon": "calendar_month", "widget": calendarWidget},
+        {"type": "todo", "name": Translation.tr("To Do"), "icon": "done_outline", "widget": todoWidget},
+        {"type": "notepad", "name": Translation.tr("Notepad"), "icon": "edit_note", "widget": notepadWidget},
+        {"type": "calculator", "name": Translation.tr("Calc"), "icon": "calculate", "widget": calculatorWidget},
+        {"type": "sysmon", "name": Translation.tr("System"), "icon": "monitor_heart", "widget": sysMonWidget},
+        {"type": "timer", "name": Translation.tr("Timer"), "icon": "schedule", "widget": pomodoroWidget},
     ]
+
+    property int configVersion: 0
+    Connections {
+        target: Config
+        function onConfigChanged() { root.configVersion++ }
+    }
+
+    readonly property var enabledWidgets: {
+        root.configVersion // Force dependency
+        return Config.options?.sidebar?.right?.enabledWidgets ?? ["calendar", "todo", "notepad", "calculator", "sysmon", "timer"]
+    }
+
+    property var tabs: allTabs.filter(tab => enabledWidgets.includes(tab.type))
+
+    property string currentTabType: ""
+    onSelectedTabChanged: {
+        if (tabs[selectedTab]) currentTabType = tabs[selectedTab].type
+    }
+
+    onTabsChanged: {
+        // Try to restore previous selection by type
+        if (currentTabType) {
+            const newIndex = tabs.findIndex(t => t.type === currentTabType)
+            if (newIndex !== -1) {
+                const currentTab = Persistent.states?.sidebar?.bottomGroup?.tab ?? 0
+                if (currentTab !== newIndex) {
+                    Persistent.states.sidebar.bottomGroup.tab = newIndex
+                }
+                return
+            }
+        }
+
+        // If not found or no previous selection, clamp index
+        const currentTab = Persistent.states?.sidebar?.bottomGroup?.tab ?? 0
+        if (currentTab >= tabs.length) {
+            Persistent.states.sidebar.bottomGroup.tab = Math.max(0, tabs.length - 1)
+        }
+
+        // Update current type for the new selection (fallback)
+        const safeTab = Persistent.states?.sidebar?.bottomGroup?.tab ?? 0
+        if (tabs[safeTab]) {
+            currentTabType = tabs[safeTab].type
+        }
+    }
 
     Behavior on implicitHeight {
         NumberAnimation {
             duration: Appearance.animation.elementMove.duration
             easing.type: Appearance.animation.elementMove.type
-            easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
+                easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
+        }
+    }
+
+    function focusActiveItem() {
+        // Find the current tab item in the StackLayout and force focus on its loaded widget
+        for (var i = 0; i < tabStack.children.length; i++) {
+            var child = tabStack.children[i]
+            if (child.tabIndex === root.selectedTab && child.tabLoader && child.tabLoader.item) {
+                child.tabLoader.item.forceActiveFocus()
+                break
+            }
         }
     }
 
     function setCollapsed(state) {
-        Persistent.states.sidebar.bottomGroup.collapsed = state;
+        Persistent.states.sidebar.bottomGroup.collapsed = state
         if (collapsed) {
-            bottomWidgetGroupRow.opacity = 0;
-        } else {
-            collapsedBottomWidgetGroupRow.opacity = 0;
+            bottomWidgetGroupRow.opacity = 0
         }
-        collapseCleanFadeTimer.start();
+        else {
+            collapsedBottomWidgetGroupRow.opacity = 0
+        }
+        collapseCleanFadeTimer.start()
     }
 
     Timer {
@@ -61,21 +116,21 @@ Rectangle {
         interval: Appearance.animation.elementMove.duration / 2
         repeat: false
         onTriggered: {
-            if (collapsed)
-                collapsedBottomWidgetGroupRow.opacity = 1;
-            else
-                bottomWidgetGroupRow.opacity = 1;
+            if(collapsed) collapsedBottomWidgetGroupRow.opacity = 1
+            else bottomWidgetGroupRow.opacity = 1
         }
     }
 
-    Keys.onPressed: event => {
-        if ((event.key === Qt.Key_PageDown || event.key === Qt.Key_PageUp) && event.modifiers === Qt.ControlModifier) {
-            if (event.key === Qt.Key_PageDown) {
-                root.selectedTab = Math.min(root.selectedTab + 1, root.tabs.length - 1);
-            } else if (event.key === Qt.Key_PageUp) {
-                root.selectedTab = Math.max(root.selectedTab - 1, 0);
+    // Scroll navigation for tabs
+    WheelHandler {
+        target: root
+        orientation: Qt.Vertical
+        onWheel: (event) => {
+            if (event.angleDelta.y < 0) {
+                Persistent.states.sidebar.bottomGroup.tab = Math.min(root.selectedTab + 1, root.tabs.length - 1)
+            } else if (event.angleDelta.y > 0) {
+                Persistent.states.sidebar.bottomGroup.tab = Math.max(root.selectedTab - 1, 0)
             }
-            event.accepted = true;
         }
     }
 
@@ -100,24 +155,26 @@ Rectangle {
             Layout.rightMargin: 0
             forceCircle: true
             downAction: () => {
-                root.setCollapsed(false);
+                root.setCollapsed(false)
             }
-            contentItem: MaterialSymbol {
-                text: "keyboard_arrow_up"
-                iconSize: Appearance.font.pixelSize.larger
-                horizontalAlignment: Text.AlignHCenter
-                color: Appearance.colors.colOnLayer1
+            contentItem: Item {
+                MaterialSymbol {
+                    anchors.centerIn: parent
+                    text: "keyboard_arrow_up"
+                    iconSize: Appearance.font.pixelSize.larger
+                    color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+                }
             }
         }
 
         StyledText {
-            property int remainingTasks: Todo.list.filter(task => !task.done).length
+            property int remainingTasks: Todo.list.filter(task => !task.done).length;
             Layout.margins: 10
             Layout.leftMargin: 0
             // text: `${DateTime.collapsedCalendarFormat}   •   ${remainingTasks} task${remainingTasks > 1 ? "s" : ""}`
             text: Translation.tr("%1   •   %2 tasks").arg(DateTime.collapsedCalendarFormat).arg(remainingTasks)
             font.pixelSize: Appearance.font.pixelSize.large
-            color: Appearance.colors.colOnLayer1
+            color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
         }
     }
 
@@ -137,8 +194,7 @@ Rectangle {
         }
 
         anchors.fill: parent
-        // implicitHeight: tabStack.implicitHeight
-        spacing: 20
+        spacing: 10
 
         // Navigation rail
         Item {
@@ -146,134 +202,230 @@ Rectangle {
             Layout.fillWidth: false
             Layout.leftMargin: 10
             Layout.topMargin: 10
-            implicitWidth: tabBar.implicitWidth
-            // Navigation rail buttons
-            NavigationRailTabArray {
-                id: tabBar
-                anchors.verticalCenter: parent.verticalCenter
+            // Original width was tabBar.width (56). We need to account for leftMargin of 5 inside.
+            width: tabBar.implicitWidth + 5
+
+            // Collapse button (Fixed at top)
+            CalendarHeaderButton {
+                id: collapseBtn
                 anchors.left: parent.left
-                anchors.leftMargin: 5
-                currentIndex: root.selectedTab
-                expanded: false
-                Repeater {
-                    model: root.tabs
-                    NavigationRailButton {
-                        required property int index
-                        required property var modelData
-                        showToggledHighlight: false
-                        toggled: root.selectedTab == index
-                        buttonText: modelData.name
-                        buttonIcon: modelData.icon
-                        onPressed: {
-                            root.selectedTab = index;
-                            Persistent.states.sidebar.bottomGroup.tab = index;
-                        }
+                anchors.top: parent.top
+                anchors.leftMargin: 0
+                forceCircle: true
+                downAction: () => {
+                    root.setCollapsed(true)
+                }
+                contentItem: Item {
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: "keyboard_arrow_down"
+                        iconSize: Appearance.font.pixelSize.larger
+                        color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
                     }
                 }
             }
-            // Collapse button
-            CalendarHeaderButton {
+
+            // Scrollable tab buttons
+            Flickable {
+                id: railFlickable
+                anchors.top: collapseBtn.bottom
+                anchors.topMargin: 10
+                anchors.bottom: parent.bottom
                 anchors.left: parent.left
-                anchors.top: parent.top
-                forceCircle: true
-                downAction: () => {
-                    root.setCollapsed(true);
+                anchors.right: parent.right
+
+                contentHeight: tabColumn.implicitHeight
+                clip: true
+                interactive: true
+
+                ColumnLayout {
+                    id: tabColumn
+                    width: parent.width
+                    spacing: 0
+
+                    // Spacer to center vertically when content is small
+                    Item {
+                        Layout.fillHeight: true
+                        visible: railFlickable.contentHeight < railFlickable.height
+                    }
+
+                    NavigationRailTabArray {
+                        id: tabBar
+                        Layout.alignment: Qt.AlignLeft
+                        Layout.leftMargin: 5
+                        // Override default topMargin of 25 to restore original vertical positioning
+                        Layout.topMargin: 0
+                        currentIndex: root.selectedTab
+                        expanded: false
+                        Repeater {
+                            model: root.tabs
+                            NavigationRailButton {
+                                showToggledHighlight: false
+                                toggled: root.selectedTab == index
+                                buttonText: modelData.name
+                                buttonIcon: modelData.icon
+                                onPressed: {
+                                    Persistent.states.sidebar.bottomGroup.tab = index
+                                }
+                            }
+                        }
+                    }
+
+                    // Spacer to center vertically when content is small
+                    Item {
+                        Layout.fillHeight: true
+                        visible: railFlickable.contentHeight < railFlickable.height
+                    }
                 }
-                contentItem: MaterialSymbol {
-                    text: "keyboard_arrow_down"
-                    iconSize: Appearance.font.pixelSize.larger
-                    horizontalAlignment: Text.AlignHCenter
-                    color: Appearance.colors.colOnLayer1
+            }
+
+            // Gradient fades - Top
+            Rectangle {
+                anchors.top: railFlickable.top
+                anchors.left: railFlickable.left
+                anchors.right: railFlickable.right
+                height: 20
+                visible: railFlickable.contentY > 0 && !Appearance.auroraEverywhere
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: Appearance.inirEverywhere ? Appearance.inir.colLayer1 : Appearance.colors.colLayer1 }
+                    GradientStop { position: 1.0; color: "transparent" }
+                }
+            }
+
+            // Gradient fades - Bottom
+            Rectangle {
+                anchors.bottom: railFlickable.bottom
+                anchors.left: railFlickable.left
+                anchors.right: railFlickable.right
+                height: 20
+                visible: railFlickable.contentHeight > railFlickable.height && railFlickable.contentY < (railFlickable.contentHeight - railFlickable.height) && !Appearance.auroraEverywhere
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: "transparent" }
+                    GradientStop { position: 1.0; color: Appearance.inirEverywhere ? Appearance.inir.colLayer1 : Appearance.colors.colLayer1 }
                 }
             }
         }
 
         // Content area
-        Item {
+        StackLayout {
+            id: tabStack
             Layout.fillWidth: true
-            Layout.fillHeight: true
-            // implicitHeight: tabStack.implicitHeight
+            // Use fixed/max height to prevent jumps, relying on internal scrolling if needed
+            // height: Math.min(500, Math.max(300, ...tabStack.children.map(child => child.tabLoader?.item?.implicitHeight || child.tabLoader?.implicitHeight || 300)))
+            // Restore implicit height behavior as requested ("como lo era originalmente")
+            // Added min 300 to prevent collapse during dynamic tab switching, ONLY if there are tabs
+            height: (tabs.length > 0) ? Math.max(300, ...tabStack.children.map(child => child.tabLoader?.item?.implicitHeight || child.tabLoader?.implicitHeight || 0)) : 0
+            Layout.alignment: Qt.AlignVCenter
+            property int realIndex: root.selectedTab
+            property int animationDuration: Appearance.animation.elementMoveFast.duration * 1.5
+            currentIndex: root.selectedTab
 
-            Loader {
-                id: tabStack
-                anchors.fill: parent
-                anchors.bottomMargin: -anchors.topMargin
-
-                Component.onCompleted: {
-                    tabStack.source = root.tabs[root.selectedTab].widget;
+            // Switch the tab on halfway of the anim duration
+            Connections {
+                target: root
+                function onSelectedTabChanged() {
+                    delayedStackSwitch.start()
+                    tabStack.realIndex = root.selectedTab
+                    Qt.callLater(() => root.focusActiveItem())
                 }
+            }
+            Timer {
+                id: delayedStackSwitch
+                interval: tabStack.animationDuration / 2
+                repeat: false
+                onTriggered: {
+                    tabStack.currentIndex = root.selectedTab
+                }
+            }
 
-                Connections {
-                    target: root
-                    function onSelectedTabChanged() {
-                        if (root.currentTab > root.previousIndex)
-                            tabSwitchBehavior.animation.down = true;
-                        else if (root.currentTab < root.previousIndex)
-                            tabSwitchBehavior.animation.down = false;
-                        tabStack.source = root.tabs[root.selectedTab].widget;
+            Repeater {
+                model: tabs
+                Item {
+                    id: tabItem
+                    property int tabIndex: index
+                    property string tabType: modelData.type
+                    property int animDistance: 5
+                    property var tabLoader: tabLoader
+                    // Opacity: show up only when being animated to
+                    opacity: (tabStack.currentIndex === tabItem.tabIndex && tabStack.realIndex === tabItem.tabIndex) ? 1 : 0
+                    // Y: animate both outgoing and incoming tabs
+                    y: (tabStack.realIndex === tabItem.tabIndex) ? 0 : (tabStack.realIndex < tabItem.tabIndex) ? animDistance : -animDistance
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: tabStack.animationDuration / 2
+                            easing.type: Easing.OutCubic
+                        }
                     }
-                }
-
-                Behavior on source {
-                    id: tabSwitchBehavior
-                    animation: TabSwitchAnim {
-                        id: upAnim
-                        down: true
+                    Behavior on y {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation {
+                            duration: tabStack.animationDuration
+                            easing.type: Easing.OutExpo
+                        }
+                    }
+                    Loader {
+                        id: tabLoader
+                        anchors.fill: parent
+                        sourceComponent: modelData.widget
+                        focus: root.selectedTab === tabItem.tabIndex
                     }
                 }
             }
         }
     }
 
-    component TabSwitchAnim: SequentialAnimation {
-        id: switchAnim
-        property bool down: false
-        ParallelAnimation {
-            PropertyAnimation {
-                target: tabStack
-                properties: "opacity"
-                to: 0
-                duration: Appearance.animation.elementMoveFast.duration
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
-            }
-            PropertyAnimation {
-                target: tabStack.anchors
-                properties: "topMargin"
-                to: 10 * (switchAnim.down ? -1 : 1)
-                duration: Appearance.animation.elementMoveFast.duration
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
-            }
+    // Calendar component
+    Component {
+        id: calendarWidget
+
+        CalendarWidget {
+            anchors.fill: parent
+            anchors.margins: 5
         }
-        PropertyAction {
-            target: tabStack
-            property: "source"
-            value: root.tabs[root.selectedTab].widget
-        } // The source change happens here
-        ParallelAnimation {
-            PropertyAnimation {
-                target: tabStack.anchors
-                properties: "topMargin"
-                from: 10 * -(switchAnim.down ? -1 : 1)
-                to: 0
-                duration: Appearance.animation.elementMoveFast.duration
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
-            }
-            PropertyAnimation {
-                target: tabStack
-                properties: "opacity"
-                to: 1
-                duration: Appearance.animation.elementMoveFast.duration
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
-            }
+    }
+
+    // To Do component
+    Component {
+        id: todoWidget
+        TodoWidget {
+            anchors.fill: parent
+            anchors.margins: 5
         }
-        ScriptAction {
-            script: {
-                root.previousIndex = root.selectedTab;
-            }
+    }
+
+    // Notepad component
+    Component {
+        id: notepadWidget
+        NotepadWidget {
+            anchors.fill: parent
+            anchors.margins: 5
+        }
+    }
+
+    // Calculator component
+    Component {
+        id: calculatorWidget
+        CalculatorWidget {
+            anchors.fill: parent
+            anchors.margins: 5
+        }
+    }
+
+    // SysMon component
+    Component {
+        id: sysMonWidget
+        SysMonWidget {
+            anchors.fill: parent
+            anchors.margins: 5
+        }
+    }
+
+    // Pomodoro component
+    Component {
+        id: pomodoroWidget
+        PomodoroWidget {
+            anchors.fill: parent
+            anchors.margins: 5
         }
     }
 }

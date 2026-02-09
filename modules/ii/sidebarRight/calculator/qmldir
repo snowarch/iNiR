@@ -1,0 +1,2 @@
+module qs.modules.sidebarRight.calculator
+CalculatorWidget 1.0 CalculatorWidget.qml
