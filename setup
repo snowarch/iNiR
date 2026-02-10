@@ -55,6 +55,7 @@ prevent_sudo_or_root
 # Defaults
 ask=true
 quiet=false
+local_update=false
 
 ###############################################################################
 # Help
@@ -80,12 +81,14 @@ show_help() {
     tui_subtitle "Options"
     tui_list_item "-y, --yes     Skip prompts (auto-yes)"
     tui_list_item "-q, --quiet   Minimal output"
+    tui_list_item "--local       Update from local repo (skip git pull)"
     tui_list_item "-h, --help    Show this help"
     echo ""
 
     tui_subtitle "Examples"
     tui_dim "  ./setup              # Interactive menu"
     tui_dim "  ./setup update       # Check for updates and apply"
+    tui_dim "  ./setup update --local  # Sync from local repo only"
     tui_dim "  ./setup migrate      # Review/apply pending migrations"
     tui_dim "  ./setup doctor       # Fix common issues"
     tui_dim "  ./setup rollback     # Restore previous state"
@@ -481,59 +484,73 @@ restore_single_user_mod() {
 ###############################################################################
 run_update() {
     echo ""
-    tui_title "Checking for updates..."
-    echo ""
     
-    if check_remote_updates; then
-        show_pending_commits
+    if $local_update; then
+        tui_title "Local update - syncing from repo..."
+        echo ""
+        tui_info "Skipping remote check, using local repository state"
+        echo ""
         
-        if $ask; then
-            if ! tui_confirm "Pull and apply these updates?"; then
-                echo "Cancelled."
-                return 0
-            fi
-        fi
-        
-        # Create snapshot BEFORE pulling
-        tui_info "Creating snapshot..."
-        local remote_commit=$(get_remote_commit)
-        local snapshot_id=$(create_snapshot "update" "Before update to ${remote_commit}" "$remote_commit")
-        tui_success "Snapshot: $snapshot_id"
-        
-        # Pull changes
-        tui_info "Pulling changes..."
-        if ! git -C "$REPO_ROOT" pull --ff-only origin 2>/dev/null; then
-            tui_error "Git pull failed. You may have local changes."
-            tui_info "Try: git stash && ./setup update"
-            return 1
-        fi
-        tui_success "Changes pulled"
-    else
-        # Check if local repo is ahead of installed
-        local installed_ver=$(get_installed_version)
-        local installed_commit=$(get_installed_commit)
-        local repo_ver=$(get_repo_version)
+        # Create snapshot before local update
         local repo_commit=$(get_repo_commit)
+        tui_info "Creating snapshot..."
+        local snapshot_id=$(create_snapshot "update" "Before local update to ${repo_commit}" "$repo_commit")
+        tui_success "Snapshot: $snapshot_id"
+    else
+        tui_title "Checking for updates..."
+        echo ""
         
-        if [[ "$installed_ver" == "0.0.0" ]] && [[ -f "${XDG_CONFIG_HOME}/illogical-impulse/installed_true" ]]; then
-            tui_info "Detected existing installation without version tracking"
-        elif [[ "$installed_commit" == "$repo_commit" ]]; then
-            tui_success "Already up to date ($installed_ver)"
+        if check_remote_updates; then
+            show_pending_commits
             
-            local pending=$(count_pending_migrations)
-            if [[ "$pending" -gt 0 ]]; then
-                echo ""
-                tui_warn "$pending pending migration(s) available"
-                if $ask && tui_confirm "Apply migrations now?"; then
-                    run_migrations_interactive
+            if $ask; then
+                if ! tui_confirm "Pull and apply these updates?"; then
+                    echo "Cancelled."
+                    return 0
                 fi
             fi
-            return 0
-        else
-            # Local repo ahead of installed - create snapshot
+            
+            # Create snapshot BEFORE pulling
             tui_info "Creating snapshot..."
-            local snapshot_id=$(create_snapshot "update" "Before sync to ${repo_commit}" "$repo_commit")
+            local remote_commit=$(get_remote_commit)
+            local snapshot_id=$(create_snapshot "update" "Before update to ${remote_commit}" "$remote_commit")
             tui_success "Snapshot: $snapshot_id"
+            
+            # Pull changes
+            tui_info "Pulling changes..."
+            if ! git -C "$REPO_ROOT" pull --ff-only origin 2>/dev/null; then
+                tui_error "Git pull failed. You may have local changes."
+                tui_info "Try: git stash && ./setup update"
+                return 1
+            fi
+            tui_success "Changes pulled"
+        else
+            # Check if local repo is ahead of installed
+            local installed_ver=$(get_installed_version)
+            local installed_commit=$(get_installed_commit)
+            local repo_ver=$(get_repo_version)
+            local repo_commit=$(get_repo_commit)
+            
+            if [[ "$installed_ver" == "0.0.0" ]] && [[ -f "${XDG_CONFIG_HOME}/illogical-impulse/installed_true" ]]; then
+                tui_info "Detected existing installation without version tracking"
+            elif [[ "$installed_commit" == "$repo_commit" ]]; then
+                tui_success "Already up to date ($installed_ver)"
+                
+                local pending=$(count_pending_migrations)
+                if [[ "$pending" -gt 0 ]]; then
+                    echo ""
+                    tui_warn "$pending pending migration(s) available"
+                    if $ask && tui_confirm "Apply migrations now?"; then
+                        run_migrations_interactive
+                    fi
+                fi
+                return 0
+            else
+                # Local repo ahead of installed - create snapshot
+                tui_info "Creating snapshot..."
+                local snapshot_id=$(create_snapshot "update" "Before sync to ${repo_commit}" "$repo_commit")
+                tui_success "Snapshot: $snapshot_id"
+            fi
         fi
     fi
     
@@ -612,6 +629,47 @@ run_update() {
     set_installed_version "$repo_ver" "$repo_commit" "update"
     
     tui_success "Files synced"
+    
+    # Verify sync
+    echo ""
+    tui_info "Verifying sync..."
+    local verify_errors=0
+    
+    # Check that all QML files from source exist in target
+    for qml in "${II_SOURCE}"/*.qml; do
+        [[ -f "$qml" ]] || continue
+        local qml_name=$(basename "$qml")
+        if [[ ! -f "${II_TARGET}/${qml_name}" ]]; then
+            tui_error "Missing: ${qml_name}"
+            ((verify_errors++))
+        fi
+    done
+    
+    # Check key directories
+    for dir in modules services scripts assets translations; do
+        if [[ -d "${II_SOURCE}/${dir}" ]] && [[ ! -d "${II_TARGET}/${dir}" ]]; then
+            tui_error "Missing directory: ${dir}/"
+            ((verify_errors++))
+        fi
+    done
+    
+    # Compare file counts for key directories
+    for dir in modules services scripts; do
+        if [[ -d "${II_SOURCE}/${dir}" ]] && [[ -d "${II_TARGET}/${dir}" ]]; then
+            local src_count=$(find "${II_SOURCE}/${dir}" -type f 2>/dev/null | wc -l)
+            local tgt_count=$(find "${II_TARGET}/${dir}" -type f 2>/dev/null | wc -l)
+            if [[ "$src_count" -ne "$tgt_count" ]]; then
+                tui_warn "File count mismatch in ${dir}/ (source: $src_count, target: $tgt_count)"
+                ((verify_errors++))
+            fi
+        fi
+    done
+    
+    if [[ $verify_errors -eq 0 ]]; then
+        tui_success "Verification passed - all files synced correctly"
+    else
+        tui_warn "Verification found $verify_errors issue(s) - check output above"
+    fi
 
     # Update Vesktop themes (themes live outside the quickshell/ii tree)
     if [[ -d "${REPO_ROOT}/dots/.config/vesktop/themes" ]]; then
@@ -639,7 +697,22 @@ run_update() {
 
         tui_success "Vesktop themes updated"
     fi
-    
+
+    # Update Kitty config
+    if [[ -d "${REPO_ROOT}/dots/.config/kitty" ]]; then
+        echo ""
+        tui_info "Updating Kitty config..."
+
+        mkdir -p "${XDG_CONFIG_HOME}/kitty"
+
+        # Sync kitty config files
+        for kitty_file in "${REPO_ROOT}/dots/.config/kitty"/*; do
+            [[ -f "$kitty_file" ]] && cp -f "$kitty_file" "${XDG_CONFIG_HOME}/kitty/$(basename "$kitty_file")"
+        done
+
+        tui_success "Kitty config updated"
+    fi
+
     # Migrations
     local pending=$(count_pending_migrations)
     if [[ "$pending" -gt 0 ]]; then
@@ -742,6 +815,7 @@ while [[ $# -gt 0 ]]; do
         my-changes) COMMAND="my-changes"; shift ;;
         uninstall) COMMAND="uninstall"; shift ;;
         status) COMMAND="status"; shift ;;
+        --local) local_update=true; shift ;;
         -y|--yes) ask=false; shift ;;
         -q|--quiet) quiet=true; shift ;;
         -h|--help) show_help; exit 0 ;;
