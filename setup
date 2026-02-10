@@ -182,8 +182,16 @@ show_status() {
     
     tui_title "Health Checks"
     
-    # Check shell status
-    if pgrep -f "qs.*-c.*ii" &>/dev/null; then
+    # Check shell status (look for exact "qs" process with "-c ii" in cmdline)
+    local qs_check_pid=$(pgrep -x "qs" 2>/dev/null | while read pid; do
+        # /proc/PID/cmdline uses null bytes as separators, convert to newlines for grep
+        if tr '\0' '\n' < /proc/$pid/cmdline 2>/dev/null | grep -qx "\-c" && \
+           tr '\0' '\n' < /proc/$pid/cmdline 2>/dev/null | grep -qx "ii"; then
+            echo $pid
+            break
+        fi
+    done)
+    if [[ -n "$qs_check_pid" ]]; then
         tui_check_ok "Shell is running"
     else
         tui_check_warn "Shell is not running"

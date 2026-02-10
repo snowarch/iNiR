@@ -253,49 +253,167 @@ check_quickshell_loads() {
         doctor_pass "Quickshell (skipped - no display)"
         return 0
     fi
+
+    # Check if quickshell is actually running (not swayidle or other processes)
+    # Use pgrep -x to match exact command name "qs", then verify it's the right instance
+    local qs_pid=$(pgrep -x "qs" 2>/dev/null | while read pid; do
+        # Check if this process has "-c" and "ii" in its cmdline (null-separated)
+        # Convert null bytes to newlines and check for both patterns
+        if tr '\0' '\n' < /proc/$pid/cmdline 2>/dev/null | grep -qx "\-c" && \
+           tr '\0' '\n' < /proc/$pid/cmdline 2>/dev/null | grep -qx "ii"; then
+            echo $pid
+            break
+        fi
+    done)
     
-    # If already running, just check it's responsive
-    if pgrep -f "qs.*-c.*ii" &>/dev/null; then
-        doctor_pass "Quickshell running"
-        return 0
+    if [[ -n "$qs_pid" ]]; then
+        # Process exists - check if it's responsive/stuck
+        # Check if process is in uninterruptible sleep (D state) or zombie (Z state)
+        local proc_state=$(cat /proc/$qs_pid/stat 2>/dev/null | awk '{print $3}')
+        
+        # Check if quickshell socket exists (look for any socket in the quickshell directory)
+        local socket_ok=false
+        local socket_count=$(find /run/user/$(id -u)/quickshell/ -name "*.sock" 2>/dev/null | wc -l)
+        if [[ "$socket_count" -gt 0 ]]; then
+            socket_ok=true
+        fi
+        
+        # Check if process has been running long enough (not stuck in startup)
+        local proc_runtime=$(ps -o etimes= -p $qs_pid 2>/dev/null | tr -d ' ')
+        
+        # Only restart if process is definitely stuck (zombie or uninterruptible sleep)
+        if [[ "$proc_state" == "D" ]] || [[ "$proc_state" == "Z" ]]; then
+            echo -e "${STY_YELLOW}Quickshell process is stuck (state: $proc_state), restarting...${STY_RST}"
+            kill -9 $qs_pid 2>/dev/null || true
+            sleep 1
+        elif [[ -n "$proc_runtime" ]] && [[ "$proc_runtime" -lt 3 ]]; then
+            # Process started very recently - give it time to initialize
+            echo -e "${STY_FAINT}Quickshell starting up, waiting for initialization...${STY_RST}"
+            sleep 3
+            # Re-check after waiting
+            local new_qs_pid=$(pgrep -x "qs" 2>/dev/null | while read pid; do
+                if tr '\0' '\n' < /proc/$pid/cmdline 2>/dev/null | grep -qx "\-c" && \
+                   tr '\0' '\n' < /proc/$pid/cmdline 2>/dev/null | grep -qx "ii"; then
+                    echo $pid
+                    break
+                fi
+            done)
+            if [[ -n "$new_qs_pid" ]]; then
+                doctor_pass "Quickshell running"
+                return 0
+            else
+                echo -e "${STY_YELLOW}Quickshell crashed during startup${STY_RST}"
+            fi
+        elif [[ "$socket_ok" == false ]] && [[ -n "$proc_runtime" ]] && [[ "$proc_runtime" -gt 30 ]]; then
+            # Running for 30+ seconds but no socket files at all - likely crashed/hung
+            # Be conservative here - only restart after significant time without sockets
+            echo -e "${STY_YELLOW}Quickshell running but no IPC sockets found after 30s, restarting...${STY_RST}"
+            kill -9 $qs_pid 2>/dev/null || true
+            pkill -x "qs" 2>/dev/null || true
+            sleep 1
+        else
+            # Process exists, not stuck, and either has sockets or hasn't been running long enough to be sure it's broken
+            doctor_pass "Quickshell running"
+            return 0
+        fi
     fi
-    
-    # Not running - try to start and check for errors
+
+    # Not running - clean up any orphaned processes first
+    echo -e "${STY_FAINT}Quickshell not running, cleaning up...${STY_RST}"
+    qs kill -c ii 2>/dev/null || true
+    pkill -x "qs" 2>/dev/null || true
+    sleep 1
+
     echo -e "${STY_FAINT}Starting quickshell...${STY_RST}"
-    
-    # Start in background and capture initial output
+
+    # Start in background and capture output
     local logfile="/tmp/qs-doctor-$$.log"
     nohup qs -c ii >"$logfile" 2>&1 &
     local qs_pid=$!
     disown
-    
-    # Wait a bit for startup
-    sleep 2
-    
-    # Check if it's still running
-    if ! kill -0 "$qs_pid" 2>/dev/null; then
-        # Crashed - check why
-        local output=$(cat "$logfile" 2>/dev/null)
-        rm -f "$logfile"
-        
-        if echo "$output" | grep -qE "(could not connect to display|no Qt platform plugin)"; then
-            doctor_fail "Quickshell cannot connect to display"
-            return 1
+
+    # Poll for up to 10 seconds (increased from 2)
+    local attempts=0
+    local max_attempts=20
+    local started=false
+
+    while [[ $attempts -lt $max_attempts ]]; do
+        sleep 0.5
+        ((attempts++))
+
+        # Check if process is still alive
+        if ! kill -0 "$qs_pid" 2>/dev/null; then
+            # Process died, collect logs
+            break
         fi
-        
-        local errors=$(echo "$output" | grep -E "(ERROR|error:)" | head -1)
-        if [[ -n "$errors" ]]; then
-            doctor_fail "Quickshell crashed: $errors"
-            return 1
+
+        # Check if quickshell actually started successfully
+        # It should be in process list AND have created its socket
+        local check_qs_pid=$(pgrep -x "qs" 2>/dev/null | while read pid; do
+            if tr '\0' '\n' < /proc/$pid/cmdline 2>/dev/null | grep -qx "\-c" && \
+               tr '\0' '\n' < /proc/$pid/cmdline 2>/dev/null | grep -qx "ii"; then
+                echo $pid
+                break
+            fi
+        done)
+        if [[ -n "$check_qs_pid" ]]; then
+            started=true
+            break
         fi
-        
-        doctor_fail "Quickshell crashed on startup"
+    done
+
+    # If it started, verify it's still running
+    if $started; then
+        sleep 1  # Give it a moment to stabilize
+        local verify_qs_pid=$(pgrep -x "qs" 2>/dev/null | while read pid; do
+            if tr '\0' '\n' < /proc/$pid/cmdline 2>/dev/null | grep -qx "\-c" && \
+               tr '\0' '\n' < /proc/$pid/cmdline 2>/dev/null | grep -qx "ii"; then
+                echo $pid
+                break
+            fi
+        done)
+        if [[ -n "$verify_qs_pid" ]]; then
+            rm -f "$logfile"
+            doctor_pass "Quickshell started"
+            return 0
+        fi
+    fi
+
+    # Failed to start - analyze the logs
+    local output=$(cat "$logfile" 2>/dev/null)
+    rm -f "$logfile"
+
+    # Show the last 20 lines of output for debugging
+    if [[ -n "$output" ]]; then
+        echo ""
+        echo -e "${STY_YELLOW}Last startup messages:${STY_RST}"
+        echo "$output" | tail -20 | sed 's/^/  /'
+        echo ""
+    fi
+
+    # Check for specific error patterns (exclude DEBUG messages)
+    if echo "$output" | grep -vE "^\s*DEBUG" | grep -qE "(could not connect to display|no Qt platform plugin|qt.qpa.plugin)"; then
+        doctor_fail "Quickshell cannot connect to display"
+        echo -e "    ${STY_FAINT}Are you running in a graphical session?${STY_RST}"
         return 1
     fi
-    
-    rm -f "$logfile"
-    doctor_pass "Quickshell started"
-    return 0
+
+    # QML errors - look for actual import/module failures and type errors
+    if echo "$output" | grep -vE "^\s*DEBUG" | grep -qE "(module.*not found|import.*failed|TypeError|qml.*Error:)"; then
+        local qml_error=$(echo "$output" | grep -vE "^\s*DEBUG" | grep -E "(module.*not found|import.*failed|TypeError|qml.*Error:)" | head -1)
+        doctor_fail "Quickshell QML error: $qml_error"
+        return 1
+    fi
+
+    # General errors - exclude DEBUG/INFO lines and SyntaxError in debug context
+    if echo "$output" | grep -vE "^\s*(DEBUG|INFO)" | grep -qE "\b(ERROR|error:)\b"; then
+        local error_line=$(echo "$output" | grep -vE "^\s*(DEBUG|INFO)" | grep -E "\b(ERROR|error:)\b" | head -1)
+        doctor_fail "Quickshell error: $error_line"
+        return 1
+    fi
+
+    doctor_fail "Quickshell crashed on startup (check logs with: qs log -c ii)"
+    return 1
 }
 
 check_matugen_colors() {
