@@ -13,6 +13,7 @@ Singleton {
     property bool available: false
     property bool searching: false
     property bool loading: false
+    property bool libraryLoading: false
     property string error: ""
     
     property string currentTitle: ""
@@ -37,7 +38,7 @@ Singleton {
     property var recentSearches: []
     property var queue: []
     property var playlists: []
-    property var likedSongs: []
+    property list<var> likedSongs: []
     property string lastLikedSync: ""
     property bool syncingLiked: false
     
@@ -56,7 +57,7 @@ Singleton {
     property string googleError: ""
     property string googleBrowser: "firefox"
     property string customCookiesPath: ""
-    property var detectedBrowsers: []
+    property list<string> detectedBrowsers: []
     property var ytMusicPlaylists: []
     property string defaultBrowser: ""
     property bool autoConnectAttempted: false
