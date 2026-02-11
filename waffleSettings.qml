@@ -77,7 +77,7 @@ ApplicationWindow {
     
     visible: true
     onClosing: Qt.quit()
-    title: "illogical-impulse Settings"
+    title: "Settings — illogical-impulse"
     
     Component.onCompleted: {
         Config.readWriteDelay = 0

@@ -5,6 +5,32 @@ All notable changes to iNiR will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.9.0] - 2026-02-11
+
+### Added
+- **Shell update overlay**: New layer-shell panel with commit log, changelog preview, and local modifications detection
+- **Shell update details**: Click bar indicator to open detailed overlay instead of direct update
+- **Weather manual location**: City name input, manual lat/lon coordinates, and GPS support via geoclue
+- **Weather geocoding**: Forward geocoding (city → coords) and reverse geocoding (coords → display name) via Nominatim
+- **Waffle themes redesign**: Theme cards with live color preview circles, quick-apply, inline rename, import/export
+- **WWaffleStylePage options**: Start menu scale slider, clock format options, bar sizing controls (height, icon size, corner radius), desktop peek section
+- **Waffle pages icon audit**: Replaced generic icons with descriptive FluentIcons across all settings pages
+- **Ko-fi funding**: Added ko_fi to FUNDING.yml
+
+### Changed
+- **Waffle settings isolation**: Waffle family always opens its own Win11-style settings window, simplified IPC toggle logic
+- **Win11 visual polish**: Redesigned waffle settings widgets with shadows, compact sizing, animated transitions using Looks.transition tokens
+- **Weather priority**: Manual coords > manual city > GPS > IP auto-detect
+- **ShellUpdates service**: Added overlay state management, manifest parsing, IPC handlers (toggle/open/close/check/update/dismiss)
+
+### Fixed
+- **Config schema sync**: Added 6 missing altSwitcher properties, enableAnimation for WaffleBackground, noVisualUi and taskView.closeOnSelect defaults
+- **Settings bugs**: Fixed BarConfig layout property name, WaffleConfig bindings and spacing
+- **YtMusic persistence**: Connection state and resolvedBrowserArg now persist across restarts
+- **YtMusic cookies**: Always use --cookies-from-browser instead of intermediate cookie files, resolve Firefox fork profile paths
+- **YtMusic debugging**: Added stderr capture and logging for mpv, converted shell commands to proper array-based Process commands
+- **Waffle start menu overflow**: Added clip, Flickable wrapper, min/max height constraints, reduced recommended items from 6 to 4
+
 ## [2.8.2] - 2026-02-09
 
 ### Added

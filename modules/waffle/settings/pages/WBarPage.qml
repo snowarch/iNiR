@@ -43,11 +43,11 @@ WSettingsPage {
     WSettingsCard {
         visible: root.isWaffleActive
         title: Translation.tr("Position & Layout")
-        icon: "options"
+        icon: "panel-left-expand"
         
         WSettingsSwitch {
             label: Translation.tr("Bottom position")
-            icon: "options"
+            icon: "caret-down"
             description: Translation.tr("Place taskbar at bottom of screen")
             checked: Config.options?.waffles?.bar?.bottom ?? true
             onCheckedChanged: Config.setNestedValue("waffles.bar.bottom", checked)
@@ -55,7 +55,7 @@ WSettingsPage {
         
         WSettingsSwitch {
             label: Translation.tr("Left-align apps")
-            icon: "options"
+            icon: "chevron-left"
             description: Translation.tr("Align taskbar apps to the left instead of center")
             checked: Config.options?.waffles?.bar?.leftAlignApps ?? false
             onCheckedChanged: Config.setNestedValue("waffles.bar.leftAlignApps", checked)
@@ -100,7 +100,7 @@ WSettingsPage {
         WSettingsSpinBox {
             visible: Config.options?.waffles?.bar?.desktopPeek?.hoverPeek ?? false
             label: Translation.tr("Hover delay")
-            icon: "options"
+            icon: "pulse"
             suffix: "ms"
             from: 100; to: 2000; stepSize: 100
             value: Config.options?.waffles?.bar?.desktopPeek?.hoverDelay ?? 500
@@ -111,11 +111,11 @@ WSettingsPage {
     WSettingsCard {
         visible: root.isWaffleActive
         title: Translation.tr("Clock & Notifications")
-        icon: "options"
+        icon: "alert"
         
         WSettingsSwitch {
             label: Translation.tr("Show seconds")
-            icon: "options"
+            icon: "pulse"
             description: Translation.tr("Display seconds in taskbar clock")
             checked: Config.options?.time?.secondPrecision ?? false
             onCheckedChanged: Config.setNestedValue("time.secondPrecision", checked)
@@ -137,7 +137,7 @@ WSettingsPage {
         
         WSettingsSpinBox {
             label: Translation.tr("Check interval")
-            icon: "options"
+            icon: "arrow-clockwise"
             suffix: "m"
             from: 15; to: 1440; stepSize: 15
             value: Config.options?.updates?.checkInterval ?? 120
@@ -155,7 +155,7 @@ WSettingsPage {
         
         WSettingsSpinBox {
             label: Translation.tr("Warning threshold")
-            icon: "warning"
+            icon: "alert"
             description: Translation.tr("Show warning color when packages exceed this")
             from: 10; to: 500; stepSize: 10
             value: Config.options?.updates?.stronglyAdviseUpdateThreshold ?? 50

@@ -20,7 +20,7 @@ Item {
     property int currentPage: 0
     property string searchText: ""
     property var searchResults: []
-    property bool navExpanded: width > 800
+    property bool navExpanded: width > 760
     
     // Complete search index with all individual options + targetLabel for spotlight
     property var searchIndex: [
@@ -284,11 +284,11 @@ Item {
         // Navigation sidebar
         Rectangle {
             Layout.fillHeight: true
-            Layout.preferredWidth: root.navExpanded ? 280 : 64
+            Layout.preferredWidth: root.navExpanded ? 240 : 56
             color: Looks.colors.bgPanelFooterBase
             
             Behavior on Layout.preferredWidth {
-                NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                animation: Looks.transition.resize.createObject(this)
             }
             
             ColumnLayout {
@@ -301,60 +301,46 @@ Item {
                 // Header with app name (expanded)
                 RowLayout {
                     Layout.fillWidth: true
-                    Layout.bottomMargin: 8
-                    spacing: 12
+                    Layout.bottomMargin: 4
+                    spacing: 10
                     visible: root.navExpanded
-                    
-                    Rectangle {
-                        width: 32
-                        height: 32
-                        radius: Looks.radius.medium
-                        color: Looks.colors.accent
-                        
-                        FluentIcon {
-                            anchors.centerIn: parent
-                            icon: "settings"
-                            implicitSize: 18
-                            color: Looks.colors.accentFg
-                        }
-                    }
                     
                     WText {
                         Layout.fillWidth: true
+                        Layout.leftMargin: 4
                         text: Translation.tr("Settings")
-                        font.pixelSize: Looks.font.pixelSize.larger
-                        font.weight: Font.DemiBold
+                        font.pixelSize: Looks.font.pixelSize.normal
+                        font.weight: Looks.font.weight.regular
+                        color: Looks.colors.subfg
                     }
                     
                     WBorderlessButton {
-                        implicitWidth: 32
-                        implicitHeight: 32
+                        implicitWidth: 28
+                        implicitHeight: 28
                         onClicked: root.closeRequested()
                         
                         contentItem: FluentIcon {
                             anchors.centerIn: parent
                             icon: "dismiss"
-                            implicitSize: 16
-                            color: Looks.colors.fg
+                            implicitSize: 14
+                            color: Looks.colors.subfg
                         }
                     }
                 }
                 
                 // Header icon (collapsed)
-                Rectangle {
+                Item {
                     visible: !root.navExpanded
                     Layout.preferredWidth: 40
-                    Layout.preferredHeight: 40
+                    Layout.preferredHeight: 28
                     Layout.alignment: Qt.AlignHCenter
-                    Layout.bottomMargin: 8
-                    radius: Looks.radius.medium
-                    color: Looks.colors.accent
+                    Layout.bottomMargin: 4
                     
                     FluentIcon {
                         anchors.centerIn: parent
                         icon: "settings"
-                        implicitSize: 20
-                        color: Looks.colors.accentFg
+                        implicitSize: 16
+                        color: Looks.colors.subfg
                     }
                 }
                 
@@ -369,9 +355,9 @@ Item {
                     border.width: searchInput.activeFocus ? 2 : 1
                     border.color: searchInput.activeFocus ? Looks.colors.accent : Looks.colors.bg2Border
                     
-                    Behavior on border.color {
-                        ColorAnimation { duration: 120 }
-                    }
+                      Behavior on border.color {
+                          animation: Looks.transition.color.createObject(this)
+                      }
                     
                     RowLayout {
                         anchors {
@@ -530,9 +516,9 @@ Item {
                                 return "transparent";
                             }
                             
-                            Behavior on color {
-                                ColorAnimation { duration: 80 }
-                            }
+                              Behavior on color {
+                                  animation: Looks.transition.color.createObject(this)
+                              }
                             
                             MouseArea {
                                 id: resultMouse
@@ -602,9 +588,9 @@ Item {
                                         : Looks.colors.subfg
                                     opacity: resultMouse.containsMouse || resultDelegate.ListView.isCurrentItem ? 1 : 0
                                     
-                                    Behavior on opacity {
-                                        NumberAnimation { duration: 80 }
-                                    }
+                                      Behavior on opacity {
+                                          animation: Looks.transition.opacity.createObject(this)
+                                      }
                                 }
                             }
                         }
@@ -674,21 +660,21 @@ Item {
                 // Expand/collapse button
                 WBorderlessButton {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 40
+                    Layout.preferredHeight: 36
                     
                     contentItem: RowLayout {
-                        spacing: 12
+                        spacing: 10
                         
                         Item {
-                            implicitWidth: 24
-                            implicitHeight: 24
-                            Layout.leftMargin: root.navExpanded ? 8 : 12
+                            implicitWidth: 20
+                            implicitHeight: 20
+                            Layout.leftMargin: root.navExpanded ? 12 : 14
                             
                             FluentIcon {
                                 anchors.centerIn: parent
                                 icon: root.navExpanded ? "panel-left-contract" : "panel-left-expand"
-                                implicitSize: 20
-                                color: Looks.colors.fg
+                                implicitSize: 16
+                                color: Looks.colors.subfg
                             }
                         }
                         
@@ -697,6 +683,7 @@ Item {
                             Layout.fillWidth: true
                             text: Translation.tr("Collapse")
                             font.pixelSize: Looks.font.pixelSize.normal
+                            color: Looks.colors.subfg
                         }
                     }
                     
@@ -775,9 +762,9 @@ Item {
                         visible: index === root.currentPage && status === Loader.Ready
                         opacity: visible ? 1 : 0
                         
-                        Behavior on opacity {
-                            NumberAnimation { duration: 120; easing.type: Easing.OutQuad }
-                        }
+                          Behavior on opacity {
+                              animation: Looks.transition.opacity.createObject(this)
+                          }
                     }
                 }
             }

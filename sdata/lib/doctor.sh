@@ -40,6 +40,7 @@ check_dependencies() {
         "nmcli:NetworkManager"
         "wpctl:WirePlumber"
         "jq:jq"
+        "rsync:rsync"
         "matugen:matugen"
         "wlsunset:wlsunset"
         "dunstify:dunst"
@@ -48,6 +49,8 @@ check_dependencies() {
         "swaylock:swaylock"
         "grim:grim"
         "mpv:mpv"
+        "cliphist:cliphist"
+        "wl-copy:wl-clipboard"
     )
     
     # Optional but recommended
@@ -57,6 +60,11 @@ check_dependencies() {
         "cava:cava"
         "qalc:qalculate"
         "yt-dlp:yt-dlp"
+        "socat:socat"
+        "brightnessctl:brightnessctl"
+        "slurp:slurp"
+        "wf-recorder:wf-recorder"
+        "tesseract:tesseract"
         "blueman-manager:Blueman"
         "kwriteconfig6:KConfig"
     )
@@ -496,7 +504,6 @@ run_doctor_with_fixes() {
     
     tui_step 11 11 "Checking theme colors"
     check_matugen_colors
-    check_quickshell_loads
     
     echo ""
     tui_divider

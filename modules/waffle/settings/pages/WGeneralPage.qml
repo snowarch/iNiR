@@ -86,7 +86,7 @@ WSettingsPage {
         
         WSettingsSwitch {
             label: Translation.tr("Show seconds")
-            icon: "options"
+            icon: "pulse"
             description: Translation.tr("Display seconds in clock")
             checked: Config.options?.time?.secondPrecision ?? false
             onCheckedChanged: Config.setNestedValue("time.secondPrecision", checked)
@@ -113,8 +113,8 @@ WSettingsPage {
     }
     
     WSettingsCard {
-        title: Translation.tr("Window Management")
-        icon: "desktop"
+        title: Translation.tr("Windows & Sounds")
+        icon: "speaker-2-filled"
         
         WSettingsSwitch {
             label: Translation.tr("Confirm before closing")
@@ -123,11 +123,6 @@ WSettingsPage {
             checked: Config.options?.closeConfirm?.enabled ?? false
             onCheckedChanged: Config.setNestedValue("closeConfirm.enabled", checked)
         }
-    }
-    
-    WSettingsCard {
-        title: Translation.tr("Sounds")
-        icon: "speaker-2-filled"
         
         WSettingsSwitch {
             label: Translation.tr("Battery sounds")
@@ -209,7 +204,7 @@ WSettingsPage {
         
         WSettingsSwitch {
             label: Translation.tr("Disable effects")
-            icon: "options"
+            icon: "eye-off"
             description: Translation.tr("Turn off blur and shadows in game mode")
             checked: Config.options?.gameMode?.disableEffects ?? true
             onCheckedChanged: Config.setNestedValue("gameMode.disableEffects", checked)
@@ -225,7 +220,7 @@ WSettingsPage {
 
         WSettingsSwitch {
             label: Translation.tr("Hide reload toasts")
-            icon: "alert_off"
+            icon: "alert-off"
             description: Translation.tr("Suppress reload notifications when Game Mode is active")
             checked: Config.options?.gameMode?.disableReloadToasts ?? true
             onCheckedChanged: Config.setNestedValue("gameMode.disableReloadToasts", checked)

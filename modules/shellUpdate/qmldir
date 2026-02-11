@@ -1,0 +1,2 @@
+module qs.modules.shellUpdate
+ShellUpdateOverlay 1.0 ShellUpdateOverlay.qml

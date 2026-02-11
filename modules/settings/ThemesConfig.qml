@@ -9,7 +9,6 @@ import qs.modules.common.widgets
 
 ContentPage {
     id: root
-    forceWidth: true
     settingsPageIndex: 4
     settingsPageName: Translation.tr("Themes")
 

@@ -24,7 +24,9 @@ depends=(
 
   # Media playback
   mpv
+  mpv-mpris
   yt-dlp
+  socat
 )
 optdepends=(
   'pipewire-jack: JACK compatibility layer for PipeWire'

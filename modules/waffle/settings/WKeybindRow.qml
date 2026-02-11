@@ -25,19 +25,13 @@ Item {
     implicitHeight: 40
     
     // Highlight animation for search focus
-    SequentialAnimation {
-        id: highlightAnim
-        running: false
-        loops: 2
-        
-        ParallelAnimation {
-            NumberAnimation { target: highlightOverlay; property: "opacity"; to: 0.15; duration: 150 }
-            NumberAnimation { target: root; property: "scale"; to: 1.01; duration: 150 }
-        }
-        ParallelAnimation {
-            NumberAnimation { target: highlightOverlay; property: "opacity"; to: 0; duration: 150 }
-            NumberAnimation { target: root; property: "scale"; to: 1.0; duration: 150 }
-        }
+    Behavior on opacity {
+        enabled: Looks.transition?.opacity !== undefined
+        animation: Looks.transition.opacity.createObject(this)
+    }
+    Behavior on scale {
+        enabled: Looks.transition?.resize !== undefined
+        animation: Looks.transition.resize.createObject(this)
     }
     
     function focusFromSettingsSearch(): void {

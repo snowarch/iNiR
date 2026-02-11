@@ -17,13 +17,7 @@ Item {
     property bool enableSettingsSearch: true
     property int settingsSearchOptionId: -1
 
-    Layout.fillWidth: false
-    Layout.alignment: Qt.AlignHCenter
-    Layout.maximumWidth: SettingsMaterialPreset.maxContentWidth
-    Layout.preferredWidth: {
-        const parentWidth = root.parent ? root.parent.width : SettingsMaterialPreset.maxContentWidth
-        return Math.min(SettingsMaterialPreset.maxContentWidth, parentWidth)
-    }
+    Layout.fillWidth: true
     implicitHeight: card.implicitHeight
 
     function _findSettingsContext() {
@@ -81,6 +75,28 @@ Item {
         target: card
     }
 
+    // Subtle left accent bar when expanded
+    Rectangle {
+        id: accentBar
+        anchors {
+            left: card.left
+            top: card.top
+            bottom: card.bottom
+            leftMargin: 0
+            topMargin: SettingsMaterialPreset.cardRadius
+            bottomMargin: SettingsMaterialPreset.cardRadius
+        }
+        width: 2
+        radius: 1
+        color: Appearance.m3colors.m3primary
+        opacity: root.expanded ? 0.6 : 0
+        z: 1
+
+        Behavior on opacity {
+            animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+        }
+    }
+
     Rectangle {
         id: card
 
@@ -121,17 +137,39 @@ Item {
                     anchors.rightMargin: SettingsMaterialPreset.headerPaddingX
                     spacing: 8
 
-                    OptionalMaterialSymbol {
-                        icon: root.icon
-                        iconSize: Appearance.font.pixelSize.hugeass
+                    // Icon with expand-state color
+                    Loader {
+                        active: root.icon && root.icon.length > 0
+                        visible: active
+                        Layout.alignment: Qt.AlignVCenter
+
+                        readonly property color _iconColor: root.expanded
+                            ? Appearance.m3colors.m3primary
+                            : Appearance.colors.colOnSurfaceVariant
+
+                        sourceComponent: MaterialSymbol {
+                            text: root.icon
+                            iconSize: Appearance.font.pixelSize.hugeass
+                            color: parent._iconColor
+
+                            Behavior on color {
+                                animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
+                            }
+                        }
                     }
 
                     StyledText {
                         text: root.title
                         font.pixelSize: Appearance.font.pixelSize.larger
                         font.weight: Font.Medium
-                        color: Appearance.colors.colOnSecondaryContainer
+                        color: root.expanded
+                            ? Appearance.colors.colOnSecondaryContainer
+                            : Appearance.colors.colOnSurfaceVariant
                         Layout.fillWidth: true
+
+                        Behavior on color {
+                            animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
+                        }
                     }
 
                     MaterialSymbol {

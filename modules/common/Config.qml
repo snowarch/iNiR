@@ -109,7 +109,7 @@ Singleton {
                 "iiBar", "iiBackground", "iiCheatsheet", "iiControlPanel", "iiDock", "iiLock", "iiMediaControls",
                 "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard", "iiOverlay",
                 "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners", "iiSessionScreen",
-                "iiSidebarLeft", "iiSidebarRight", "iiVerticalBar", "iiWallpaperSelector", "iiAltSwitcher", "iiClipboard"
+                "iiSidebarLeft", "iiSidebarRight", "iiVerticalBar", "iiWallpaperSelector", "iiAltSwitcher", "iiClipboard", "iiShellUpdate"
             ]
             property string panelFamily: "ii" // "ii" or "waffle"
             property bool familyTransitionAnimation: true // Show animated overlay when switching families
@@ -234,6 +234,7 @@ Singleton {
                         property bool wezterm: true
                         property bool ghostty: true
                         property bool konsole: true
+                        property bool starship: true
                     }
                     property JsonObject terminalGenerationProps: JsonObject {
                         property real harmony: 0.6
@@ -397,6 +398,7 @@ Singleton {
                 property string wallpaperPath: ""
                 property string thumbnailPath: ""
                 property string fillMode: "fill" // "fill", "fit", "center", "tile"
+                property bool enableAnimation: true // Enable animated wallpapers (video/gif). When disabled, shows thumbnail instead (better performance)
                 property bool hideWhenFullscreen: true
                 property JsonObject effects: JsonObject {
                     property bool enableBlur: false
@@ -540,6 +542,10 @@ Singleton {
                     property bool enable: false
                     property bool useUSCS: false // Instead of metric (SI) units
                     property int fetchInterval: 10 // minutes
+                    property string city: "" // Manual city name (e.g. "Buenos Aires"). Empty = auto-detect
+                    property bool enableGPS: false // Use geoclue GPS if available
+                    property real manualLat: 0 // Manual latitude (e.g. -34.6037)
+                    property real manualLon: 0 // Manual longitude (e.g. -58.3816)
                 }
                 property JsonObject indicators: JsonObject {
                     property JsonObject notifications: JsonObject {
@@ -765,6 +771,8 @@ Singleton {
             }
 
             property JsonObject regionSelector: JsonObject {
+                property int borderSize: 4
+                property int numSize: 48
                 property JsonObject targetRegions: JsonObject {
                     property bool windows: true
                     property bool layers: false
@@ -874,6 +882,8 @@ Singleton {
                     property bool hideSyncBanner: false
                     property string browser: "firefox"
                     property string cookiesPath: ""
+                    property bool connected: false
+                    property string resolvedBrowserArg: ""
                     property bool shuffleMode: false
                     property int repeatMode: 0
                     property list<string> recentSearches: []
@@ -1037,6 +1047,10 @@ Singleton {
                 property bool centerTitle: true
             }
 
+            property JsonObject settingsUi: JsonObject {
+                property bool overlayMode: false // true = layer shell overlay (live preview), false = separate window (default)
+            }
+
             property JsonObject hacks: JsonObject {
                 property int arbitraryRaceConditionDelay: 20 // milliseconds
             }
@@ -1052,6 +1066,11 @@ Singleton {
                 property int checkInterval: 120
                 property int adviseUpdateThreshold: 75
                 property int stronglyAdviseUpdateThreshold: 200
+            }
+            property JsonObject shellUpdates: JsonObject {
+                property bool enabled: true
+                property int checkIntervalMinutes: 360
+                property string dismissedCommit: ""
             }
             property JsonObject welcomeWizard: JsonObject {
                 property bool completed: false
@@ -1071,22 +1090,33 @@ Singleton {
                     property bool switchHandlePositionFix: true
                 }
                 property JsonObject altSwitcher: JsonObject {
-                    property string preset: "thumbnails"
+                    property string preset: "default"
                     property bool noVisualUi: false
-                    property bool autoHide: true
-                    property int autoHideDelayMs: 500
-                    property bool closeOnFocus: true
+                    property bool monochromeIcons: false
+                    property bool enableAnimation: true
+                    property int animationDurationMs: 300
+                    property real backgroundOpacity: 1.0
+                    property real blurAmount: 0.0
+                    property int scrimDim: 0
+                    property int autoHideDelayMs: 300
+                    property bool showOverviewWhileSwitching: false
+                    property bool compactStyle: false
+                    property string panelAlignment: "center"
+                    property bool useM3Layout: false
                     property bool useMostRecentFirst: true
+                    property bool quickSwitch: true
+                    property bool autoHide: true
+                    property bool closeOnFocus: true
                     property int thumbnailWidth: 280
                     property int thumbnailHeight: 180
                     property real scrimOpacity: 0.4
-                    property bool showOverviewWhileSwitching: false
                 }
                 property JsonObject background: JsonObject {
                     property string wallpaperPath: "" // Empty = use main wallpaper
                     property string thumbnailPath: "" // Thumbnail for animated wallpapers (video/gif)
                     property bool useMainWallpaper: true
                     property bool enableAnimation: true // Enable animated wallpapers (video/gif)
+                    property bool hideWhenFullscreen: true
                     property JsonObject effects: JsonObject {
                         property bool enableBlur: false
                         property int blurRadius: 32

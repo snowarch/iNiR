@@ -24,42 +24,18 @@ Item {
     signal clicked()
     
     Layout.fillWidth: true
-    implicitHeight: Math.max(48, contentRow.implicitHeight + 16)
+    Layout.leftMargin: 16
+    Layout.rightMargin: 16
+    implicitHeight: Math.max(48, contentRow.implicitHeight + 14)
     
     // Highlight animation for search focus
-    SequentialAnimation {
-        id: highlightAnim
-        running: false
-        loops: 2
-        
-        ParallelAnimation {
-            NumberAnimation {
-                target: highlightOverlay
-                property: "opacity"
-                to: 0.15
-                duration: 150
-            }
-            NumberAnimation {
-                target: root
-                property: "scale"
-                to: 1.01
-                duration: 150
-            }
-        }
-        ParallelAnimation {
-            NumberAnimation {
-                target: highlightOverlay
-                property: "opacity"
-                to: 0
-                duration: 150
-            }
-            NumberAnimation {
-                target: root
-                property: "scale"
-                to: 1.0
-                duration: 150
-            }
-        }
+    Behavior on opacity {
+        enabled: Looks.transition?.opacity !== undefined
+        animation: Looks.transition.opacity.createObject(this)
+    }
+    Behavior on scale {
+        enabled: Looks.transition?.resize !== undefined
+        animation: Looks.transition.resize.createObject(this)
     }
     
     function _findSettingsContext(): var {
@@ -171,6 +147,20 @@ Item {
         onClicked: root.clicked()
     }
     
+    // Bottom separator
+    Rectangle {
+        anchors {
+            bottom: parent.bottom
+            left: parent.left
+            right: parent.right
+            leftMargin: root.icon !== "" ? 40 : 12
+            rightMargin: 12
+        }
+        height: 1
+        color: Looks.colors.bg2Border
+        opacity: 0.35
+    }
+    
     RowLayout {
         id: contentRow
         anchors {
@@ -183,8 +173,8 @@ Item {
         FluentIcon {
             visible: root.icon !== ""
             icon: root.icon
-            implicitSize: 20
-            color: Looks.colors.fg
+            implicitSize: 16
+            color: Looks.colors.subfg
         }
         
         ColumnLayout {

@@ -10,7 +10,6 @@ import qs.modules.common.widgets
 import qs.modules.common.functions
 
 ContentPage {
-    forceWidth: true
     settingsPageIndex: 0
     settingsPageName: Translation.tr("Quick")
 

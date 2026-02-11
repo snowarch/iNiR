@@ -18,6 +18,8 @@ Item {
     signal textEdited(string newText)
 
     Layout.fillWidth: true
+    Layout.leftMargin: 16
+    Layout.rightMargin: 16
     implicitHeight: contentColumn.implicitHeight + 16
 
     ColumnLayout {
@@ -38,8 +40,8 @@ Item {
             FluentIcon {
                 visible: root.icon !== ""
                 icon: root.icon
-                implicitSize: 20
-                color: Looks.colors.fg
+                implicitSize: 16
+                color: Looks.colors.subfg
             }
 
             ColumnLayout {

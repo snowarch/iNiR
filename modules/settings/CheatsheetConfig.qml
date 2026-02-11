@@ -8,7 +8,6 @@ import qs.modules.common.widgets
 
 ContentPage {
     id: root
-    forceWidth: true
     settingsPageIndex: 8
     settingsPageName: Translation.tr("Shortcuts")
 

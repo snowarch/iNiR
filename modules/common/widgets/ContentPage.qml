@@ -5,8 +5,6 @@ import qs.modules.common.widgets
 
 StyledFlickable {
     id: root
-    property real baseWidth: 600
-    property bool forceWidth: false
     property real bottomContentPadding: 100
     // Metadatos opcionales para páginas de Settings
     property int settingsPageIndex: -1
@@ -15,18 +13,29 @@ StyledFlickable {
     default property alias data: contentColumn.data
 
     clip: true
-    contentHeight: contentColumn.implicitHeight + root.bottomContentPadding // Add some padding at the bottom
+    contentHeight: contentColumn.implicitHeight + root.bottomContentPadding
     implicitWidth: contentColumn.implicitWidth
-    
+
+    // Responsive horizontal margins: more breathing room on wider containers
+    readonly property real _horizontalMargin: {
+        const w = root.width
+        if (w > 1200) return 48
+        if (w > 900) return 32
+        if (w > 600) return 24
+        return 16
+    }
+
     ColumnLayout {
         id: contentColumn
         anchors {
             top: parent.top
             left: parent.left
             right: parent.right
-            margins: 20
+            topMargin: 20
+            bottomMargin: 20
+            leftMargin: root._horizontalMargin
+            rightMargin: root._horizontalMargin
         }
-        spacing: 16
+        spacing: SettingsMaterialPreset.pageSpacing
     }
-
 }

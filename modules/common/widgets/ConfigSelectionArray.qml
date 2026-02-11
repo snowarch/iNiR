@@ -113,7 +113,9 @@ Flow {
                     var prev = root.children[index - 1]
                     var thisIsOnNewLine = prev && prev.y !== paletteButton.y
                     paletteButton.leftmost = thisIsOnNewLine
-                    prev.rightmost = thisIsOnNewLine
+                    if (prev && prev.hasOwnProperty("rightmost")) {
+                        prev.rightmost = thisIsOnNewLine
+                    }
                 }
             }
             leftmost: index === 0

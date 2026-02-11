@@ -28,6 +28,8 @@ WSettingsPage {
         Item {
             Layout.fillWidth: true
             Layout.preferredHeight: 180
+            Layout.leftMargin: 4
+            Layout.rightMargin: 4
             Layout.bottomMargin: 12
 
             Rectangle {
@@ -224,7 +226,7 @@ WSettingsPage {
         
         WSettingsSwitch {
             label: Translation.tr("Left-align apps")
-            icon: "options"
+            icon: "chevron-left"
             description: Translation.tr("Align taskbar apps to the left instead of center")
             checked: Config.options?.waffles?.bar?.leftAlignApps ?? false
             onCheckedChanged: Config.setNestedValue("waffles.bar.leftAlignApps", checked)

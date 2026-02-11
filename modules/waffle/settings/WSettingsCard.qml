@@ -23,6 +23,12 @@ Rectangle {
     border.width: 1
     border.color: Looks.colors.bg2Border
     
+    // Subtle shadow for card elevation
+    WRectangularShadow {
+        target: root
+        opacity: 0.4
+    }
+    
     ColumnLayout {
         id: mainColumn
         anchors {
@@ -35,12 +41,13 @@ Rectangle {
         Item {
             visible: root.title !== ""
             Layout.fillWidth: true
-            implicitHeight: headerRow.implicitHeight + 20
+            implicitHeight: 44
             
             MouseArea {
                 anchors.fill: parent
                 enabled: root.collapsible
                 cursorShape: root.collapsible ? Qt.PointingHandCursor : Qt.ArrowCursor
+                hoverEnabled: root.collapsible
                 onClicked: if (root.collapsible) root.expanded = !root.expanded
             }
             
@@ -53,39 +60,38 @@ Rectangle {
                     leftMargin: 16
                     rightMargin: 16
                 }
-                spacing: 12
+                spacing: 10
                 
                 FluentIcon {
                     visible: root.icon !== ""
                     icon: root.icon
-                    implicitSize: 20
-                    color: Looks.colors.fg
+                    implicitSize: 14
+                    color: Looks.colors.accent
+                    opacity: 0.85
                 }
                 
                 WText {
                     Layout.fillWidth: true
                     text: root.title
-                    font.pixelSize: Looks.font.pixelSize.large
+                    font.pixelSize: Looks.font.pixelSize.small
                     font.weight: Looks.font.weight.regular
+                    color: Looks.colors.subfg
+                    font.capitalization: Font.AllUppercase
+                    font.letterSpacing: 0.5
                 }
                 
                 FluentIcon {
                     visible: root.collapsible
                     icon: root.expanded ? "chevron-up" : "chevron-down"
-                    implicitSize: 16
+                    implicitSize: 12
                     color: Looks.colors.subfg
+                    
+                    rotation: root.expanded ? 0 : 180
+                    Behavior on rotation {
+                        animation: Looks.transition.resize.createObject(this)
+                    }
                 }
             }
-        }
-        
-        // Separator
-        Rectangle {
-            visible: root.title !== "" && root.expanded && contentColumn.children.length > 0
-            Layout.fillWidth: true
-            Layout.leftMargin: 16
-            Layout.rightMargin: 16
-            height: 1
-            color: Looks.colors.bg2Border
         }
         
         // Content
@@ -93,9 +99,11 @@ Rectangle {
             id: contentColumn
             visible: root.expanded
             Layout.fillWidth: true
-            Layout.margins: 16
-            Layout.topMargin: root.title !== "" ? 12 : 16
-            spacing: 8
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
+            Layout.topMargin: root.title !== "" ? 0 : 4
+            Layout.bottomMargin: 6
+            spacing: 0
         }
     }
 }

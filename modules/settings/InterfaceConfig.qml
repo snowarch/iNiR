@@ -7,7 +7,6 @@ import qs.modules.common.widgets
 
 ContentPage {
     id: root
-    forceWidth: true
     settingsPageIndex: 5
     settingsPageName: Translation.tr("Interface")
 
@@ -899,12 +898,12 @@ ContentPage {
                 ConfigSpinBox {
                     icon: "border_style"
                     text: Translation.tr("Border size (px)")
-                    value: Config.options.region.borderSize
+                    value: Config.options.regionSelector.borderSize
                     from: 1
                     to: 10
                     stepSize: 1
                     onValueChanged: {
-                        Config.options.region.borderSize = value;
+                        Config.setNestedValue("regionSelector.borderSize", value);
                     }
                     StyledToolTip {
                         text: Translation.tr("Thickness of the selection region border")
@@ -913,12 +912,12 @@ ContentPage {
                 ConfigSpinBox {
                     icon: "format_size"
                     text: Translation.tr("Numbers size (px)")
-                    value: Config.options.region.numSize
+                    value: Config.options.regionSelector.numSize
                     from: 10
                     to: 100
                     stepSize: 2
                     onValueChanged: {
-                        Config.options.region.numSize = value;
+                        Config.setNestedValue("regionSelector.numSize", value);
                     }
                     StyledToolTip {
                         text: Translation.tr("Font size of the region index numbers")
@@ -1163,12 +1162,6 @@ ContentPage {
                     buttonIcon: "calendar_month"
                     text: Translation.tr("Calendar")
                     Component.onCompleted: checked = rightSidebarWidgets.isEnabled("calendar")
-                    Connections {
-                        target: Config
-                        function onConfigChanged() {
-                            checked = rightSidebarWidgets.isEnabled("calendar")
-                        }
-                    }
                     onClicked: {
                         // checked ya fue invertido por ConfigSwitch.onClicked
                         rightSidebarWidgets.setWidget("calendar", checked)
@@ -1179,12 +1172,6 @@ ContentPage {
                     buttonIcon: "done_outline"
                     text: Translation.tr("To Do")
                     Component.onCompleted: checked = rightSidebarWidgets.isEnabled("todo")
-                    Connections {
-                        target: Config
-                        function onConfigChanged() {
-                            checked = rightSidebarWidgets.isEnabled("todo")
-                        }
-                    }
                     onClicked: {
                         rightSidebarWidgets.setWidget("todo", checked)
                     }
@@ -1194,12 +1181,6 @@ ContentPage {
                     buttonIcon: "edit_note"
                     text: Translation.tr("Notepad")
                     Component.onCompleted: checked = rightSidebarWidgets.isEnabled("notepad")
-                    Connections {
-                        target: Config
-                        function onConfigChanged() {
-                            checked = rightSidebarWidgets.isEnabled("notepad")
-                        }
-                    }
                     onClicked: {
                         rightSidebarWidgets.setWidget("notepad", checked)
                     }
@@ -1209,12 +1190,6 @@ ContentPage {
                     buttonIcon: "calculate"
                     text: Translation.tr("Calculator")
                     Component.onCompleted: checked = rightSidebarWidgets.isEnabled("calculator")
-                    Connections {
-                        target: Config
-                        function onConfigChanged() {
-                            checked = rightSidebarWidgets.isEnabled("calculator")
-                        }
-                    }
                     onClicked: {
                         rightSidebarWidgets.setWidget("calculator", checked)
                     }
@@ -1224,12 +1199,6 @@ ContentPage {
                     buttonIcon: "monitor_heart"
                     text: Translation.tr("System Monitor")
                     Component.onCompleted: checked = rightSidebarWidgets.isEnabled("sysmon")
-                    Connections {
-                        target: Config
-                        function onConfigChanged() {
-                            checked = rightSidebarWidgets.isEnabled("sysmon")
-                        }
-                    }
                     onClicked: {
                         rightSidebarWidgets.setWidget("sysmon", checked)
                     }
@@ -1239,12 +1208,6 @@ ContentPage {
                     buttonIcon: "schedule"
                     text: Translation.tr("Timer")
                     Component.onCompleted: checked = rightSidebarWidgets.isEnabled("timer")
-                    Connections {
-                        target: Config
-                        function onConfigChanged() {
-                            checked = rightSidebarWidgets.isEnabled("timer")
-                        }
-                    }
                     onClicked: {
                         rightSidebarWidgets.setWidget("timer", checked)
                     }
@@ -2815,6 +2778,82 @@ ContentPage {
                 }
                 StyledToolTip {
                     text: Translation.tr("Use your system's native file picker instead of the built-in one")
+                }
+            }
+        }
+    }
+
+    SettingsCardSection {
+        expanded: false
+        icon: "web_asset"
+        title: Translation.tr("Settings UI")
+
+        SettingsGroup {
+            StyledText {
+                Layout.fillWidth: true
+                text: Translation.tr("Choose how the Settings window opens. Overlay mode renders settings as a layer on top of the shell, so you can see changes to the bar, sidebars, and background in real time.")
+                color: Appearance.colors.colOnSurfaceVariant
+                font.pixelSize: Appearance.font.pixelSize.small
+                wrapMode: Text.WordWrap
+            }
+
+            SettingsSwitch {
+                buttonIcon: "layers"
+                text: Translation.tr("Overlay mode (live preview)")
+                checked: Config.options?.settingsUi?.overlayMode ?? false
+                onCheckedChanged: Config.setNestedValue("settingsUi.overlayMode", checked)
+                StyledToolTip {
+                    text: Translation.tr("When enabled, Settings opens as a floating overlay inside the shell instead of a separate window. This lets you preview changes instantly.\nRequires a shell restart to take effect.")
+                }
+            }
+
+            // Visual hint showing current mode
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: modeHintRow.implicitHeight + 16
+                radius: Appearance.rounding.small
+                color: Appearance.colors.colSurfaceContainerLow
+                border.width: 1
+                border.color: Appearance.colors.colLayer0Border
+
+                RowLayout {
+                    id: modeHintRow
+                    anchors {
+                        fill: parent
+                        margins: 8
+                    }
+                    spacing: 8
+
+                    MaterialSymbol {
+                        text: (Config.options?.settingsUi?.overlayMode ?? false) ? "layers" : "open_in_new"
+                        iconSize: Appearance.font.pixelSize.huge
+                        color: Appearance.m3colors.m3primary
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 2
+
+                        StyledText {
+                            text: (Config.options?.settingsUi?.overlayMode ?? false)
+                                ? Translation.tr("Overlay mode")
+                                : Translation.tr("Window mode")
+                            font {
+                                pixelSize: Appearance.font.pixelSize.small
+                                weight: Font.Medium
+                            }
+                            color: Appearance.colors.colOnSurface
+                        }
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: (Config.options?.settingsUi?.overlayMode ?? false)
+                                ? Translation.tr("Settings will open as a floating panel over the shell. Press Esc or click outside to close.")
+                                : Translation.tr("Settings will open as a separate application window (current behavior).")
+                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            color: Appearance.colors.colSubtext
+                            wrapMode: Text.WordWrap
+                        }
+                    }
                 }
             }
         }

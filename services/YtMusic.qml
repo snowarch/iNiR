@@ -13,6 +13,7 @@ Singleton {
     property bool available: false
     property bool searching: false
     property bool loading: false
+    property bool libraryLoading: false
     property string error: ""
     
     property string currentTitle: ""
@@ -37,7 +38,7 @@ Singleton {
     property var recentSearches: []
     property var queue: []
     property var playlists: []
-    property var likedSongs: []
+    property list<var> likedSongs: []
     property string lastLikedSync: ""
     property bool syncingLiked: false
     
@@ -56,7 +57,7 @@ Singleton {
     property string googleError: ""
     property string googleBrowser: "firefox"
     property string customCookiesPath: ""
-    property var detectedBrowsers: []
+    property list<string> detectedBrowsers: []
     property var ytMusicPlaylists: []
     property string defaultBrowser: ""
     property bool autoConnectAttempted: false
@@ -549,10 +550,7 @@ Singleton {
         root.googleBrowser = browser || "firefox"
         root.googleError = ""
         root.googleChecking = true
-        if (root.customCookiesPath) {
-            root.customCookiesPath = ""
-            Config.setNestedValue('sidebar.ytmusic.cookiesPath', "")
-        }
+        root._resolvedBrowserArg = ""
         Config.setNestedValue('sidebar.ytmusic.browser', root.googleBrowser)
         _checkGoogleConnection()
     }
@@ -570,10 +568,12 @@ Singleton {
         root.googleConnected = false
         root.googleError = ""
         root.ytMusicPlaylists = []
+        Config.setNestedValue('sidebar.ytmusic.connected', false)
+        Config.setNestedValue('sidebar.ytmusic.resolvedBrowserArg', "")
     }
     
     function quickConnect(): void {
-        if (root.googleConnected || root.googleChecking) return
+        if (root.googleConnected) return
         root.googleError = ""
         root.googleChecking = true
         root._quickConnectIndex = 0
@@ -602,34 +602,91 @@ Singleton {
         }
         
         root.googleBrowser = root._browsersToTry[root._quickConnectIndex]
-        _quickConnectProc.running = true
+        root._resolvedBrowserArg = ""
+        if (root._firefoxForks.includes(root.googleBrowser)) {
+            _resolveBrowserArgProcQC._browser = root.googleBrowser
+            _resolveBrowserArgProcQC.running = true
+        } else {
+            root._resolvedBrowserArg = root.googleBrowser
+            _quickConnectCheckProc.running = true
+        }
     }
-    
+
+    // Separate resolver for quickConnect to avoid conflict with main resolver
     Process {
-        id: _quickConnectProc
-        command: ["python3", Directories.scriptPath + "/ytmusic_auth.py", root.googleBrowser]
+        id: _resolveBrowserArgProcQC
+        property string _browser: ""
+        command: ["python3", "-c", `
+import sys, os, glob
+browser = '` + _resolveBrowserArgProcQC._browser + `'
+forks = {"zen":"~/.zen","librewolf":"~/.librewolf","floorp":"~/.floorp","waterfox":"~/.waterfox","firefox":"~/.mozilla/firefox"}
+base = os.path.expanduser(forks.get(browser, "~/.mozilla/firefox"))
+if not os.path.exists(base):
+    print("")
+    sys.exit(0)
+for pattern in ["*.default-release", "*.default"]:
+    for m in glob.glob(os.path.join(base, pattern)):
+        if os.path.isdir(m) and os.path.exists(os.path.join(m, "cookies.sqlite")):
+            print("firefox:" + m)
+            sys.exit(0)
+for item in sorted(os.listdir(base)):
+    p = os.path.join(base, item)
+    if os.path.isdir(p) and os.path.exists(os.path.join(p, "cookies.sqlite")):
+        print("firefox:" + p)
+        sys.exit(0)
+print("")
+`]
+        stdout: SplitParser {
+            onRead: line => {
+                const resolved = line.trim()
+                if (resolved) {
+                    root._resolvedBrowserArg = resolved
+                }
+            }
+        }
+        onExited: {
+            _quickConnectCheckProc.running = true
+        }
+    }
+
+    // Quick connect check — tries each browser with --cookies-from-browser
+    Process {
+        id: _quickConnectCheckProc
+        property string stdOutput: ""
+        command: ["/usr/bin/yt-dlp",
+            "--cookies-from-browser", root._browserArgForYtdlp,
+            "--flat-playlist",
+            "--no-warnings",
+            "-I", "1",
+            "--print", "id",
+            "https://www.youtube.com/feed/history"
+        ]
+        
+        onStarted: { stdOutput = "" }
         
         stdout: SplitParser {
             onRead: line => {
-                try {
-                    const res = JSON.parse(line)
-                    if (res.status === "success") {
-                        root.googleConnected = true
-                        root.googleError = ""
-                        root.customCookiesPath = res.cookies_path
-                        Config.setNestedValue('sidebar.ytmusic.cookiesPath', res.cookies_path)
-                        Config.setNestedValue('sidebar.ytmusic.browser', root.googleBrowser)
-                        root.fetchUserProfile()
-                    } else {
-                        root.googleConnected = false
-                        root.googleError = res.message || Translation.tr("Connection failed.")
-                    }
-                } catch (e) {}
+                _quickConnectCheckProc.stdOutput += line + "\n"
             }
         }
         
         onExited: (code) => {
-            root.googleChecking = false
+            if (code === 0 && _quickConnectCheckProc.stdOutput.trim().length > 0) {
+                root.googleConnected = true
+                root.googleError = ""
+                root.googleChecking = false
+                Config.setNestedValue('sidebar.ytmusic.browser', root.googleBrowser)
+                Config.setNestedValue('sidebar.ytmusic.connected', true)
+                Config.setNestedValue('sidebar.ytmusic.resolvedBrowserArg', root._resolvedBrowserArg)
+                console.log("[YtMusic] QuickConnect succeeded with:", root._browserArgForYtdlp)
+                // Export static cookie file for mpv
+                _exportCookiesProc.running = true
+                root.fetchUserProfile()
+            } else {
+                // Try next browser
+                root._quickConnectIndex++
+                root._tryNextBrowser()
+            }
         }
     }
     
@@ -698,7 +755,8 @@ Singleton {
     function retryConnection(): void {
         root.googleError = ""
         root.googleChecking = true
-        _googleCheckProc.running = true
+        root._resolvedBrowserArg = ""
+        _checkGoogleConnection()
     }
     
     function getBrowserDisplayName(browserId): string {
@@ -833,28 +891,27 @@ Singleton {
     property string _importPlaylistUrl: ""
     property string _importPlaylistName: ""
 
-    readonly property string _cookiesFilePath: Directories.config + "/yt-cookies.txt"
+    readonly property string _cookiesFilePath: Directories.shellConfig + "/yt-cookies.txt"
     readonly property var _firefoxForks: ["zen", "librewolf", "floorp", "waterfox"]
 
-    readonly property string _cookieArgStr: (root.customCookiesPath
-        ? ("--cookies '" + root.customCookiesPath + "'")
-        : (_firefoxForks.includes(root.googleBrowser)
-            ? ("--cookies '" + root._cookiesFilePath + "'")
-            : ("--cookies-from-browser " + root.googleBrowser))) + " --js-runtimes node --remote-components ejs:github"
+    // Resolved browser arg for --cookies-from-browser (e.g. "firefox:/path/to/profile" for forks)
+    // Persisted so it survives restarts without re-resolving
+    property string _resolvedBrowserArg: ""
+
+    // True when _resolvedBrowserArg is ready to use (non-empty or non-firefox-fork)
+    readonly property bool _browserArgReady: root._resolvedBrowserArg !== "" || !root._firefoxForks.includes(root.googleBrowser)
+
+    // ALWAYS use --cookies-from-browser for yt-dlp (fresh cookies, never stale)
+    readonly property string _browserArgForYtdlp: root._resolvedBrowserArg || root.googleBrowser
 
     property var _cookieArgs: [
-        ...(root.customCookiesPath
-            ? ["--cookies", root.customCookiesPath]
-            : (_firefoxForks.includes(root.googleBrowser)
-                ? ["--cookies", root._cookiesFilePath]
-                : ["--cookies-from-browser", root.googleBrowser])),
+        "--cookies-from-browser", root._browserArgForYtdlp,
         "--js-runtimes", "node",
         "--remote-components", "ejs:github"
     ]
 
-    readonly property string _mpvCookiesFile: root.customCookiesPath
-        ? root.customCookiesPath
-        : root._cookiesFilePath
+    // Static cookie file — only used by mpv (which can't use --cookies-from-browser)
+    readonly property string _mpvCookiesFile: root._cookiesFilePath
 
     function _getThumbnailUrl(videoId): string {
         if (!videoId) return ""
@@ -865,9 +922,19 @@ Singleton {
     Connections {
         target: _detectBrowsersProc
         function onRunningChanged() {
-            if (!_detectBrowsersProc.running && root.autoConnectEnabled && !root.autoConnectAttempted) {
+            if (!_detectBrowsersProc.running && root.available && root.autoConnectEnabled && !root.autoConnectAttempted) {
                 root.autoConnectAttempted = true
-                if (root.defaultBrowser && root.detectedBrowsers.includes(root.defaultBrowser)) {
+                console.log("[YtMusic] Browser detection done. Detected:", JSON.stringify(root.detectedBrowsers), "Saved browser:", root.googleBrowser)
+                // If already connected from persisted state, just verify silently
+                if (root.googleConnected && root._browserArgReady) {
+                    console.log("[YtMusic] Already connected (persisted). Verifying silently...")
+                    _googleCheckProc.running = true
+                    return
+                }
+                // If we have a saved browser, use it (don't override with detected[0])
+                if (Config.options?.sidebar?.ytmusic?.browser) {
+                    Qt.callLater(() => root._checkGoogleConnection())
+                } else if (root.defaultBrowser && root.detectedBrowsers.includes(root.defaultBrowser)) {
                     Qt.callLater(() => root._checkGoogleConnection())
                 } else if (root.detectedBrowsers.length > 0) {
                     root.googleBrowser = root.detectedBrowsers[0]
@@ -896,7 +963,20 @@ Singleton {
         if (savedBrowser) {
             root.googleBrowser = savedBrowser
         }
-        Qt.callLater(_checkGoogleConnection)
+        
+        // Restore persisted resolved browser arg (avoids re-resolving on restart)
+        const savedResolvedArg = Config.options?.sidebar?.ytmusic?.resolvedBrowserArg ?? ""
+        if (savedResolvedArg) {
+            root._resolvedBrowserArg = savedResolvedArg
+        }
+        
+        // Restore persisted connection state
+        const wasConnected = Config.options?.sidebar?.ytmusic?.connected ?? false
+        if (wasConnected) {
+            root.googleConnected = true
+        }
+        
+
     }
 
     Process {
@@ -970,6 +1050,56 @@ Singleton {
         Config.setNestedValue('sidebar.ytmusic.playlists', root.playlists)
     }
 
+    function _resolveBrowserArg(): void {
+        if (root._firefoxForks.includes(root.googleBrowser)) {
+            _resolveBrowserArgProc.running = true
+        } else {
+            root._resolvedBrowserArg = root.googleBrowser
+        }
+    }
+
+    // Resolves firefox:/path/to/profile for Firefox forks
+    Process {
+        id: _resolveBrowserArgProc
+        property bool _pendingCheck: false
+        command: ["python3", "-c", `
+import sys, os, glob
+browser = '` + root.googleBrowser + `'
+forks = {"zen":"~/.zen","librewolf":"~/.librewolf","floorp":"~/.floorp","waterfox":"~/.waterfox","firefox":"~/.mozilla/firefox"}
+base = os.path.expanduser(forks.get(browser, "~/.mozilla/firefox"))
+if not os.path.exists(base):
+    print("")
+    sys.exit(0)
+for pattern in ["*.default-release", "*.default"]:
+    for m in glob.glob(os.path.join(base, pattern)):
+        if os.path.isdir(m) and os.path.exists(os.path.join(m, "cookies.sqlite")):
+            print("firefox:" + m)
+            sys.exit(0)
+for item in sorted(os.listdir(base)):
+    p = os.path.join(base, item)
+    if os.path.isdir(p) and os.path.exists(os.path.join(p, "cookies.sqlite")):
+        print("firefox:" + p)
+        sys.exit(0)
+print("")
+`]
+        stdout: SplitParser {
+            onRead: line => {
+                const resolved = line.trim()
+                if (resolved) {
+                    root._resolvedBrowserArg = resolved
+                    Config.setNestedValue('sidebar.ytmusic.resolvedBrowserArg', resolved)
+                    console.log("[YtMusic] Resolved browser arg:", resolved)
+                }
+            }
+        }
+        onExited: {
+            if (_resolveBrowserArgProc._pendingCheck) {
+                _resolveBrowserArgProc._pendingCheck = false
+                _googleCheckProc.running = true
+            }
+        }
+    }
+
     function _checkGoogleConnection(): void {
         if (!root.available) {
             root.googleError = Translation.tr("yt-dlp not available")
@@ -978,13 +1108,32 @@ Singleton {
         }
         root.googleChecking = true
         root.googleError = ""
-        _googleCheckProc.running = true
+        if (root._firefoxForks.includes(root.googleBrowser) && !root._resolvedBrowserArg) {
+            // Need to resolve first, then check
+            _resolveBrowserArgProc._pendingCheck = true
+            root._resolveBrowserArg()
+        } else {
+            root._resolveBrowserArg()
+            _googleCheckProc.running = true
+        }
     }
 
     Timer {
         id: _playDelayTimer
         interval: 200
-        onTriggered: _playProc.running = true
+        onTriggered: {
+            // Refresh static cookie file for mpv before playing
+            if (root.googleConnected) {
+                _refreshCookiesForMpvProc.running = true
+            }
+            _playProc.running = true
+        }
+    }
+
+    // Lightweight cookie refresh for mpv — exports fresh cookies from browser
+    Process {
+        id: _refreshCookiesForMpvProc
+        command: ["python3", Directories.scriptPath + "/ytmusic_auth.py", root.googleBrowser]
     }
 
     Timer {
@@ -1004,9 +1153,28 @@ Singleton {
 
     Process {
         id: _checkAvailability
-        command: ["/usr/bin/which", "yt-dlp"]
+        // Need yt-dlp, mpv and socat (for IPC fallback when MPRIS is absent)
+        command: ["/bin/bash", "-c", "command -v yt-dlp >/dev/null && command -v mpv >/dev/null && command -v socat >/dev/null"]
         onExited: (code) => {
             root.available = (code === 0)
+            console.log("[YtMusic] Dependencies check:", root.available ? "OK" : "FAILED")
+            // If browser detection already finished, trigger auto-connect now
+            if (root.available && !_detectBrowsersProc.running && root.autoConnectEnabled && !root.autoConnectAttempted) {
+                root.autoConnectAttempted = true
+                console.log("[YtMusic] Deps ready + browsers already detected:", JSON.stringify(root.detectedBrowsers))
+                // If already connected from persisted state, just verify silently
+                if (root.googleConnected && root._browserArgReady) {
+                    console.log("[YtMusic] Already connected (persisted). Verifying silently...")
+                    _googleCheckProc.running = true
+                    return
+                }
+                // If we have a saved browser, use it
+                if (Config.options?.sidebar?.ytmusic?.browser) {
+                    Qt.callLater(_checkGoogleConnection)
+                } else if (root.detectedBrowsers.length > 0) {
+                    Qt.callLater(_checkGoogleConnection)
+                }
+            }
         }
     }
 
@@ -1020,7 +1188,7 @@ Singleton {
             "--no-warnings",
             "-I", "1",
             "--print", "id",
-            "https://www.youtube.com/playlist?list=LL"
+            "https://www.youtube.com/feed/history"
         ]
         stdout: SplitParser {
             onRead: line => {
@@ -1032,28 +1200,36 @@ Singleton {
                 _googleCheckProc.errorOutput += line + "\n"
             }
         }
-        onStarted: { errorOutput = ""; stdOutput = "" }
+        onStarted: { 
+            errorOutput = ""; 
+            stdOutput = "";
+            console.log("[YtMusic] Starting connection check with browser:", root.googleBrowser)
+        }
         onExited: (code) => {
-            root.googleChecking = false
+            console.log("[YtMusic] Connection check exited. Code:", code, "Connected:", (code === 0 && stdOutput.trim().length > 0))
             if (code === 0 && stdOutput.trim().length > 0) {
+                root.googleChecking = false
                 root.googleConnected = true
                 root.googleError = ""
-                if (!root.customCookiesPath) {
-                    _exportCookiesProc.running = true
-                }
+                Config.setNestedValue('sidebar.ytmusic.connected', true)
+                Config.setNestedValue('sidebar.ytmusic.resolvedBrowserArg', root._resolvedBrowserArg)
+                console.log("[YtMusic] Successfully connected via --cookies-from-browser:", root._browserArgForYtdlp)
+                // Export static cookie file for mpv use
+                _exportCookiesProc.running = true
             } else {
+                root.googleChecking = false
                 root.googleConnected = false
+                Config.setNestedValue('sidebar.ytmusic.connected', false)
                 const err = errorOutput.toLowerCase()
-                if (err.includes("playlist does not exist") || err.includes("sign in") || err.includes("403")) {
-                    root.googleError = Translation.tr("Not logged in. Sign in to music.youtube.com in %1, then try again.").arg(root.getBrowserDisplayName(root.googleBrowser))
+                console.log("[YtMusic] Connection failed. Error output:", errorOutput.substring(0, 200))
+                if (err.includes("sign in") || err.includes("403") || err.includes("not found")) {
+                    root.googleError = Translation.tr("Could not connect. Log in to music.youtube.com in your browser first.")
                 } else if (err.includes("cookies") || err.includes("browser") || err.includes("keyring")) {
                     root.googleError = Translation.tr("Could not read cookies. Close %1 and try again.").arg(root.getBrowserDisplayName(root.googleBrowser))
                 } else if (err.includes("network") || err.includes("connection") || err.includes("unable to download")) {
                     root.googleError = Translation.tr("Network error. Check your internet connection.")
-                } else if (err.includes("unsupported browser")) {
-                    root.googleError = Translation.tr("%1 is not supported. Try Firefox or Chrome.").arg(root.getBrowserDisplayName(root.googleBrowser))
                 } else {
-                    root.googleError = Translation.tr("Not authenticated. Sign in to YouTube in your browser first.")
+                    root.googleError = Translation.tr("Could not connect. Log in to music.youtube.com in your browser first.")
                 }
             }
         }
@@ -1126,15 +1302,17 @@ Singleton {
         }
     }
 
-    property string ipcSocket: Directories.tempImages + "/../qs-ytmusic-mpv.sock"
+    // Use a short, guaranteed-existing path for the mpv IPC socket to avoid unix socket length issues
+    property string ipcSocket: "/tmp/qs-ytmusic-mpv.sock"
 
     Process {
         id: _stopProc
-        command: ["/usr/bin/pkill", "-f", "qs-ytmusic-mpv"]
+        command: ["/bin/bash", "-c", "pkill -f qs-ytmusic-mpv; rm -f " + root.ipcSocket]
     }
 
     Process {
         id: _playProc
+        property string _stderr: ""
         command: ["/usr/bin/mpv",
             "--no-video",
             "--input-ipc-server=" + root.ipcSocket,
@@ -1155,7 +1333,14 @@ Singleton {
             ] : []),
             root._playUrl
         ]
+        stderr: SplitParser {
+            onRead: line => { _playProc._stderr += line + "\n" }
+        }
 
+        onStarted: {
+            _stderr = ""
+            console.log("[YtMusic] mpv started. URL:", root._playUrl)
+        }
         onRunningChanged: {
             if (running) {
                 root.loading = false
@@ -1163,6 +1348,7 @@ Singleton {
             }
         }
         onExited: (code) => {
+            console.log("[YtMusic] mpv exited. Code:", code, "stderr:", _stderr.substring(0, 500))
             root.loading = false
             root._mpvPlayer = null
             if (code !== 0 && code !== 4 && code !== 9 && code !== 15) {
@@ -1174,8 +1360,12 @@ Singleton {
     Process {
         id: _ytPlaylistsProc
         property var results: []
-        command: ["/bin/bash", "-c",
-            "yt-dlp " + root._cookieArgStr + " --flat-playlist --no-warnings -j 'https://www.youtube.com/feed/playlists'"
+        command: ["/usr/bin/yt-dlp",
+            ...root._cookieArgs,
+            "--flat-playlist",
+            "--no-warnings",
+            "-j",
+            "https://www.youtube.com/feed/playlists"
         ]
         stdout: SplitParser {
             onRead: line => {
@@ -1205,8 +1395,13 @@ Singleton {
     Process {
         id: _importPlaylistProc
         property var items: []
-        command: ["/bin/bash", "-c",
-            "yt-dlp " + root._cookieArgStr + " --flat-playlist --no-warnings --quiet -j '" + root._importPlaylistUrl + "'"
+        command: ["/usr/bin/yt-dlp",
+            ...root._cookieArgs,
+            "--flat-playlist",
+            "--no-warnings",
+            "--quiet",
+            "-j",
+            root._importPlaylistUrl
         ]
         stdout: SplitParser {
             onRead: line => {

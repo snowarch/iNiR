@@ -19,6 +19,7 @@ import qs.modules.tilingOverlay
 import qs.modules.verticalBar
 import qs.modules.wallpaperSelector
 import qs.modules.ii.overlay
+import qs.modules.shellUpdate
 import "modules/clipboard" as ClipboardModule
 
 import QtQuick
@@ -57,4 +58,5 @@ Item {
 
     PanelLoader { identifier: "iiClipboard"; component: ClipboardModule.ClipboardPanel {} }
     PanelLoader { identifier: "iiControlPanel"; component: ControlPanel {} }
+    PanelLoader { identifier: "iiShellUpdate"; component: ShellUpdateOverlay {} }
 }

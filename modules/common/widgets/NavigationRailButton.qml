@@ -65,9 +65,9 @@ TabButton {
             left: parent.left
             right: undefined
         }
-        
+
         implicitWidth: root.visualWidth
-        implicitHeight: root.expanded ? itemIconBackground.implicitHeight : itemIconBackground.implicitHeight + itemText.implicitHeight 
+        implicitHeight: root.expanded ? itemIconBackground.implicitHeight : itemIconBackground.implicitHeight + itemText.implicitHeight
 
         Rectangle {
             id: itemBackground
@@ -77,23 +77,23 @@ TabButton {
             // When collapsed, only show icon area; when expanded, show full width with text
             implicitWidth: root.expanded ? root.visualWidth : root.baseSize
             radius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
-            color: Appearance.inirEverywhere 
-                ? (toggled 
-                    ? (root.showToggledHighlight 
+            color: Appearance.inirEverywhere
+                ? (toggled
+                    ? (root.showToggledHighlight
                         ? (root.down ? Appearance.inir.colLayer2Active : root.hovered ? Appearance.inir.colLayer2Hover : Appearance.inir.colLayer2)
                         : "transparent")
                     : (root.down ? Appearance.inir.colLayer2Active : root.hovered ? Appearance.inir.colLayer2Hover : "transparent"))
                 : Appearance.auroraEverywhere
-                    ? (toggled ? 
+                    ? (toggled ?
                         root.showToggledHighlight ?
                             (root.down ? Appearance.aurora.colSubSurfaceActive : root.hovered ? Appearance.aurora.colSubSurface : Appearance.aurora.colElevatedSurface)
                             : "transparent" :
                         (root.down ? Appearance.aurora.colSubSurfaceActive : root.hovered ? Appearance.aurora.colSubSurface : "transparent"))
-                    : (toggled ? 
+                    : (toggled ?
                         root.showToggledHighlight ?
                             (root.down ? Appearance.colors.colSecondaryContainerActive : root.hovered ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colSecondaryContainer)
-                            : ColorUtils.transparentize(Appearance.colors.colSecondaryContainer) :
-                        (root.down ? Appearance.colors.colLayer1Active : root.hovered ? Appearance.colors.colLayer1Hover : ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 1)))
+                            : (root.down ? Appearance.colors.colLayer1Active : root.hovered ? Appearance.colors.colLayer1Hover : ColorUtils.transparentize(Appearance.m3colors.m3primary, 0.92)) :
+                        (root.down ? Appearance.colors.colLayer1Active : root.hovered ? Appearance.colors.colLayer1Hover : "transparent"))
 
             states: State {
                 name: "expanded"
@@ -142,7 +142,9 @@ TabButton {
                 fill: toggled ? 1 : 0
                 font.weight: (toggled || root.hovered) ? Font.DemiBold : Font.Normal
                 text: buttonIcon
-                color: toggled ? Appearance.m3colors.m3onSecondaryContainer : Appearance.colors.colOnLayer1
+                color: toggled
+                    ? (root.showToggledHighlight ? Appearance.m3colors.m3onSecondaryContainer : Appearance.m3colors.m3primary)
+                    : Appearance.colors.colOnLayer1
 
                 Behavior on color {
                     animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)

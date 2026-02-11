@@ -9,7 +9,6 @@ import qs.modules.common.functions
 /**
  * Compact iNiR shell update indicator for the bar.
  * Shows when a new version is available in the git repo.
- * Follows TimerIndicator pattern for global style support.
  */
 MouseArea {
     id: root
@@ -26,28 +25,22 @@ MouseArea {
         : Appearance.auroraEverywhere ? (Appearance.aurora?.colAccent ?? Appearance.m3colors.m3primary)
         : Appearance.m3colors.m3primary
 
-    readonly property color textColor: {
-        if (Appearance.inirEverywhere) return Appearance.inir?.colText ?? Appearance.colors.colOnLayer1
-        if (Appearance.auroraEverywhere) return Appearance.aurora?.colText ?? Appearance.colors.colOnLayer1
-        return Appearance.colors.colOnLayer1
-    }
-
     onClicked: (mouse) => {
         if (mouse.button === Qt.RightButton) {
             ShellUpdates.dismiss()
         } else {
-            ShellUpdates.performUpdate()
+            ShellUpdates.openOverlay()
         }
     }
 
-    // Background pill (follows TimerIndicator pattern)
+    // Background pill
     Rectangle {
         id: pill
         anchors.centerIn: parent
-        width: contentRow.implicitWidth + 12
+        width: contentRow.implicitWidth + 16
         height: contentRow.implicitHeight + 8
         radius: height / 2
-        scale: root.pressed ? 0.95 : 1.0
+        scale: root.pressed ? 0.93 : (root.containsMouse ? 1.03 : 1.0)
         color: {
             if (root.pressed) {
                 if (Appearance.inirEverywhere) return Appearance.inir.colLayer2Active
@@ -61,27 +54,38 @@ MouseArea {
             }
             if (Appearance.inirEverywhere) return ColorUtils.transparentize(Appearance.inir?.colAccent ?? Appearance.m3colors.m3primary, 0.85)
             if (Appearance.auroraEverywhere) return ColorUtils.transparentize(Appearance.aurora?.colAccent ?? Appearance.m3colors.m3primary, 0.85)
-            return Appearance.colors.colPrimaryContainer
+            return ColorUtils.transparentize(Appearance.m3colors.m3primary, 0.88)
         }
+
+        border.width: Appearance.inirEverywhere ? 1 : 0
+        border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
 
         Behavior on color {
             animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
         }
         Behavior on scale {
-            NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+            NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
         }
     }
 
     RowLayout {
         id: contentRow
         anchors.centerIn: pill
-        spacing: 4
+        spacing: 5
 
         MaterialSymbol {
-            text: "system_update_alt"
+            id: updateIcon
+            text: "upgrade"
             iconSize: Appearance.font.pixelSize.normal
             color: root.accentColor
             Layout.alignment: Qt.AlignVCenter
+
+            SequentialAnimation on opacity {
+                loops: Animation.Infinite
+                running: root.containsMouse
+                NumberAnimation { to: 0.5; duration: 800; easing.type: Easing.InOutSine }
+                NumberAnimation { to: 1.0; duration: 800; easing.type: Easing.InOutSine }
+            }
         }
 
         StyledText {
@@ -90,45 +94,20 @@ MouseArea {
                 : "!"
             font.pixelSize: Appearance.font.pixelSize.smaller
             font.weight: Font.DemiBold
-            color: root.textColor
+            color: root.accentColor
             Layout.alignment: Qt.AlignVCenter
         }
     }
 
-    // Hover popup (follows BatteryPopup / ResourcesPopup pattern)
+    // Hover popup — follows BatteryPopup / ResourcesPopup pattern
     StyledPopup {
         id: updatePopup
         hoverTarget: root
 
-        component InfoRow: RowLayout {
-            id: infoRow
-            required property string icon
-            required property string label
-            required property string value
-            property color valueColor: Appearance.colors.colOnSurfaceVariant
-            spacing: 4
-
-            MaterialSymbol {
-                text: infoRow.icon
-                color: Appearance.colors.colOnSurfaceVariant
-                iconSize: Appearance.font.pixelSize.large
-            }
-            StyledText {
-                text: infoRow.label
-                color: Appearance.colors.colOnSurfaceVariant
-            }
-            StyledText {
-                Layout.fillWidth: true
-                horizontalAlignment: Text.AlignRight
-                color: infoRow.valueColor
-                text: infoRow.value
-            }
-        }
-
         ColumnLayout {
-            spacing: 4
+            spacing: 6
 
-            // Header
+            // Header row — icon + title
             Row {
                 spacing: 5
 
@@ -136,7 +115,7 @@ MouseArea {
                     anchors.verticalCenter: parent.verticalCenter
                     fill: 0
                     font.weight: Font.Medium
-                    text: "system_update_alt"
+                    text: "deployed_code_update"
                     iconSize: Appearance.font.pixelSize.large
                     color: Appearance.colors.colOnSurfaceVariant
                 }
@@ -152,78 +131,146 @@ MouseArea {
                 }
             }
 
-            // Version info rows
-            InfoRow {
-                icon: "tag"
-                label: Translation.tr("Current:")
-                value: ShellUpdates.localCommit || "\u2014"
-            }
-            InfoRow {
-                icon: "upgrade"
-                label: Translation.tr("Available:")
-                value: ShellUpdates.remoteCommit || "\u2014"
-                valueColor: Appearance.m3colors.m3primary
-            }
-            InfoRow {
-                icon: "account_tree"
-                label: Translation.tr("Branch:")
-                value: ShellUpdates.currentBranch || "main"
-            }
-            InfoRow {
-                icon: "commit"
-                label: Translation.tr("Behind:")
-                value: ShellUpdates.commitsBehind.toString()
-                valueColor: ShellUpdates.commitsBehind > 10
-                    ? Appearance.m3colors.m3error
-                    : Appearance.m3colors.m3primary
-            }
-
-            // Latest commit message
+            // Commits behind
             RowLayout {
-                spacing: 4
-                visible: ShellUpdates.latestMessage.length > 0
-                Layout.maximumWidth: 260
+                spacing: 5
+                Layout.fillWidth: true
 
                 MaterialSymbol {
-                    text: "notes"
-                    color: Appearance.colors.colOnSurfaceVariant
+                    text: "download"
                     iconSize: Appearance.font.pixelSize.large
+                    color: Appearance.colors.colOnSurfaceVariant
+                }
+                StyledText {
+                    text: Translation.tr("Behind:")
+                    color: Appearance.colors.colOnSurfaceVariant
                 }
                 StyledText {
                     Layout.fillWidth: true
-                    text: ShellUpdates.latestMessage
-                    font.family: Appearance.font.family.monospace
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                    color: Appearance.colors.colOnSurfaceVariant
-                    elide: Text.ElideRight
-                    maximumLineCount: 1
-                    wrapMode: Text.NoWrap
+                    horizontalAlignment: Text.AlignRight
+                    text: ShellUpdates.commitsBehind > 0
+                        ? (ShellUpdates.commitsBehind + " " + Translation.tr("commit(s)"))
+                        : Translation.tr("Update available")
+                    color: ShellUpdates.commitsBehind > 10
+                        ? (Appearance.m3colors?.m3error ?? Appearance.colors.colOnSurfaceVariant)
+                        : Appearance.colors.colOnSurfaceVariant
+                    font.weight: Font.Medium
                 }
             }
 
-            // Error
+            // Version row
             RowLayout {
-                spacing: 4
+                visible: ShellUpdates.localVersion.length > 0 && ShellUpdates.remoteVersion.length > 0 && ShellUpdates.remoteVersion !== ShellUpdates.localVersion
+                spacing: 5
+                Layout.fillWidth: true
+
+                MaterialSymbol {
+                    text: "tag"
+                    iconSize: Appearance.font.pixelSize.large
+                    color: Appearance.colors.colOnSurfaceVariant
+                }
+                StyledText {
+                    text: Translation.tr("Version:")
+                    color: Appearance.colors.colOnSurfaceVariant
+                }
+                StyledText {
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignRight
+                    text: "v" + ShellUpdates.localVersion + "  →  v" + ShellUpdates.remoteVersion
+                    font {
+                        family: Appearance.font.family.monospace
+                        weight: Font.Medium
+                    }
+                    color: Appearance.colors.colOnSurfaceVariant
+                }
+            }
+
+            // Commit comparison row
+            RowLayout {
+                spacing: 5
+                Layout.fillWidth: true
+
+                MaterialSymbol {
+                    text: "commit"
+                    iconSize: Appearance.font.pixelSize.large
+                    color: Appearance.colors.colOnSurfaceVariant
+                }
+                StyledText {
+                    text: Translation.tr("Commit:")
+                    color: Appearance.colors.colOnSurfaceVariant
+                }
+                StyledText {
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignRight
+                    text: (ShellUpdates.localCommit || "\u2014") +
+                        (ShellUpdates.remoteCommit.length > 0 ? ("  →  " + ShellUpdates.remoteCommit) : "")
+                    font {
+                        family: Appearance.font.family.monospace
+                        weight: Font.Medium
+                    }
+                    color: Appearance.colors.colOnSurfaceVariant
+                }
+            }
+
+            // Branch row
+            RowLayout {
+                visible: ShellUpdates.currentBranch.length > 0
+                spacing: 5
+                Layout.fillWidth: true
+
+                MaterialSymbol {
+                    text: "account_tree"
+                    iconSize: Appearance.font.pixelSize.large
+                    color: Appearance.colors.colOnSurfaceVariant
+                }
+                StyledText {
+                    text: Translation.tr("Branch:")
+                    color: Appearance.colors.colOnSurfaceVariant
+                }
+                StyledText {
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignRight
+                    text: ShellUpdates.currentBranch
+                    font.family: Appearance.font.family.monospace
+                    color: Appearance.colors.colOnSurfaceVariant
+                }
+            }
+
+            // Error display
+            RowLayout {
+                spacing: 5
                 visible: ShellUpdates.lastError.length > 0
-                Layout.maximumWidth: 260
+                Layout.fillWidth: true
+                Layout.maximumWidth: 280
 
                 MaterialSymbol {
                     text: "error"
-                    color: Appearance.m3colors.m3error
+                    color: Appearance.m3colors?.m3error ?? Appearance.colors.colOnSurfaceVariant
                     iconSize: Appearance.font.pixelSize.large
                 }
                 StyledText {
                     Layout.fillWidth: true
                     text: ShellUpdates.lastError
                     font.pixelSize: Appearance.font.pixelSize.smallest
-                    color: Appearance.m3colors.m3error
+                    color: Appearance.m3colors?.m3error ?? Appearance.colors.colOnSurfaceVariant
                     wrapMode: Text.WordWrap
                 }
             }
 
+            // Separator
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 1
+                Layout.topMargin: 2
+                Layout.bottomMargin: 2
+                color: Appearance.inirEverywhere ? (Appearance.inir?.colBorder ?? Appearance.colors.colLayer0Border)
+                    : Appearance.colors.colLayer0Border
+                opacity: 0.5
+            }
+
             // Hint
             StyledText {
-                text: Translation.tr("Click to update \u2022 Right-click to dismiss")
+                text: Translation.tr("Click for details · Right-click to dismiss")
                 font.pixelSize: Appearance.font.pixelSize.smallest
                 color: Appearance.colors.colOnSurfaceVariant
                 opacity: 0.6

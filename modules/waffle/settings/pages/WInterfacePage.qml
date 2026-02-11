@@ -21,7 +21,7 @@ WSettingsPage {
         
         WSettingsSpinBox {
             label: Translation.tr("Normal timeout")
-            icon: "options"
+            icon: "alert"
             description: Translation.tr("How long normal notifications stay visible")
             suffix: "ms"
             from: 1000; to: 30000; stepSize: 1000
@@ -31,7 +31,7 @@ WSettingsPage {
         
         WSettingsSpinBox {
             label: Translation.tr("Low priority timeout")
-            icon: "options"
+            icon: "alert-snooze"
             suffix: "ms"
             from: 1000; to: 30000; stepSize: 1000
             value: Config.options?.notifications?.timeoutLow ?? 5000
@@ -40,7 +40,7 @@ WSettingsPage {
         
         WSettingsSpinBox {
             label: Translation.tr("Critical timeout")
-            icon: "options"
+            icon: "alert"
             description: Translation.tr("0 = never auto-dismiss")
             suffix: "ms"
             from: 0; to: 30000; stepSize: 1000
@@ -50,7 +50,7 @@ WSettingsPage {
         
         WSettingsSwitch {
             label: Translation.tr("Ignore app timeout")
-            icon: "options"
+            icon: "alert-off"
             description: Translation.tr("Always use your timeout settings instead of app-defined ones")
             checked: Config.options?.notifications?.ignoreAppTimeout ?? false
             onCheckedChanged: Config.setNestedValue("notifications.ignoreAppTimeout", checked)
@@ -58,7 +58,7 @@ WSettingsPage {
         
         WSettingsDropdown {
             label: Translation.tr("Popup position")
-            icon: "options"
+            icon: "desktop"
             currentValue: Config.options?.notifications?.position ?? "bottomRight"
             options: [
                 { value: "topLeft", displayName: Translation.tr("Top Left") },
@@ -84,7 +84,7 @@ WSettingsPage {
         
         WSettingsSpinBox {
             label: Translation.tr("OSD timeout")
-            icon: "options"
+            icon: "speaker-2-filled"
             description: Translation.tr("How long volume/brightness OSD stays visible")
             suffix: "ms"
             from: 500; to: 5000; stepSize: 250
@@ -99,7 +99,7 @@ WSettingsPage {
         
         WSettingsSwitch {
             label: Translation.tr("Enable blur")
-            icon: "options"
+            icon: "eye"
             description: Translation.tr("Blur background on lock screen")
             checked: Config.options?.lock?.blur?.enable ?? true
             onCheckedChanged: Config.setNestedValue("lock.blur.enable", checked)
@@ -108,7 +108,7 @@ WSettingsPage {
         WSettingsSpinBox {
             visible: Config.options?.lock?.blur?.enable ?? true
             label: Translation.tr("Blur radius")
-            icon: "options"
+            icon: "eye"
             from: 0; to: 200; stepSize: 10
             value: Config.options?.lock?.blur?.radius ?? 100
             onValueChanged: Config.setNestedValue("lock.blur.radius", value)
@@ -116,21 +116,21 @@ WSettingsPage {
         
         WSettingsSwitch {
             label: Translation.tr("Center clock")
-            icon: "options"
+            icon: "arrow-clockwise"
             checked: Config.options?.lock?.centerClock ?? true
             onCheckedChanged: Config.setNestedValue("lock.centerClock", checked)
         }
         
         WSettingsSwitch {
             label: Translation.tr("Show 'Locked' text")
-            icon: "options"
+            icon: "lock-closed"
             checked: Config.options?.lock?.showLockedText ?? true
             onCheckedChanged: Config.setNestedValue("lock.showLockedText", checked)
         }
     }
     
     WSettingsCard {
-        title: Translation.tr("Screen Corners")
+        title: Translation.tr("Display")
         icon: "desktop"
         
         WSettingsDropdown {
@@ -145,5 +145,6 @@ WSettingsPage {
             ]
             onSelected: newValue => Config.setNestedValue("appearance.fakeScreenRounding", newValue)
         }
+
     }
 }

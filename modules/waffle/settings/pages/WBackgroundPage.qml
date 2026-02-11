@@ -50,7 +50,7 @@ WSettingsPage {
 
         WSettingsSwitch {
             label: Translation.tr("Enable animated wallpapers (videos/GIFs)")
-            icon: "play_circle"
+            icon: "play"
             description: Translation.tr("Play videos and GIFs as wallpaper. When disabled, shows thumbnail instead")
             checked: root.wBg.enableAnimation ?? true
             onCheckedChanged: Config.setNestedValue("waffles.background.enableAnimation", checked)
@@ -58,7 +58,7 @@ WSettingsPage {
 
         WSettingsSwitch {
             label: Translation.tr("Enable blur")
-            icon: "options"
+            icon: "eye"
             description: Translation.tr("Blur wallpaper when windows are open")
             checked: root.wEffects.enableBlur ?? false
             onCheckedChanged: Config.setNestedValue("waffles.background.effects.enableBlur", checked)
@@ -67,7 +67,7 @@ WSettingsPage {
         WSettingsSwitch {
             visible: root.wBg.enableAnimation ?? true
             label: Translation.tr("Blur animated wallpapers (videos/GIFs)")
-            icon: "blur_circular"
+            icon: "eye"
             description: Translation.tr("Apply blur to animated wallpapers. Independent from window blur. May significantly impact performance.")
             checked: root.wEffects.enableAnimatedBlur ?? false
             onCheckedChanged: Config.setNestedValue("waffles.background.effects.enableAnimatedBlur", checked)
@@ -76,7 +76,7 @@ WSettingsPage {
         WSettingsSpinBox {
             visible: root.wEffects.enableBlur ?? false
             label: Translation.tr("Blur radius")
-            icon: "options"
+            icon: "eye"
             description: Translation.tr("Amount of blur applied to wallpaper")
             from: 0; to: 100; stepSize: 5
             value: root.wEffects.blurRadius ?? 32
@@ -86,7 +86,7 @@ WSettingsPage {
         WSettingsSpinBox {
             visible: root.wEffects.enableAnimatedBlur ?? false
             label: Translation.tr("Animated blur strength")
-            icon: "blur_circular"
+            icon: "eye"
             description: Translation.tr("Blur intensity for animated wallpapers (0-100%)")
             suffix: "%"
             from: 0; to: 100; stepSize: 5
@@ -96,7 +96,7 @@ WSettingsPage {
         
         WSettingsSpinBox {
             label: Translation.tr("Dim overlay")
-            icon: "options"
+            icon: "dark-theme"
             description: Translation.tr("Darken the wallpaper")
             suffix: "%"
             from: 0; to: 100; stepSize: 5
@@ -106,7 +106,7 @@ WSettingsPage {
         
         WSettingsSpinBox {
             label: Translation.tr("Extra dim with windows")
-            icon: "options"
+            icon: "dark-theme"
             description: Translation.tr("Additional dim when windows are present")
             suffix: "%"
             from: 0; to: 100; stepSize: 5
@@ -130,7 +130,7 @@ WSettingsPage {
         WSettingsSwitch {
             visible: root.wBackdrop.enable ?? true
             label: Translation.tr("Enable animated wallpapers (videos/GIFs)")
-            icon: "play_circle"
+            icon: "play"
             description: Translation.tr("Play videos and GIFs in backdrop (may impact performance)")
             checked: root.wBackdrop.enableAnimation ?? false
             onCheckedChanged: Config.setNestedValue("waffles.background.backdrop.enableAnimation", checked)
@@ -139,7 +139,7 @@ WSettingsPage {
         WSettingsSwitch {
             visible: (root.wBackdrop.enable ?? true) && (root.wBackdrop.enableAnimation ?? false)
             label: Translation.tr("Blur animated wallpapers (videos/GIFs)")
-            icon: "blur_circular"
+            icon: "eye"
             description: Translation.tr("Apply blur to animated wallpapers in backdrop. May significantly impact performance.")
             checked: root.wBackdrop.enableAnimatedBlur ?? false
             onCheckedChanged: Config.setNestedValue("waffles.background.backdrop.enableAnimatedBlur", checked)
@@ -168,7 +168,7 @@ WSettingsPage {
         WSettingsSwitch {
             visible: root.wBackdrop.enable ?? true
             label: Translation.tr("Hide main wallpaper")
-            icon: "options"
+            icon: "eye-off"
             description: Translation.tr("Show only backdrop, hide main wallpaper")
             checked: root.wBackdrop.hideWallpaper ?? false
             onCheckedChanged: Config.setNestedValue("waffles.background.backdrop.hideWallpaper", checked)
@@ -177,7 +177,7 @@ WSettingsPage {
         WSettingsSpinBox {
             visible: root.wBackdrop.enable ?? true
             label: Translation.tr("Backdrop blur")
-            icon: "options"
+            icon: "eye"
             description: Translation.tr("Amount of blur for backdrop layer")
             from: 0; to: 100; stepSize: 5
             value: root.wBackdrop.blurRadius ?? 64
@@ -187,7 +187,7 @@ WSettingsPage {
         WSettingsSpinBox {
             visible: root.wBackdrop.enable ?? true
             label: Translation.tr("Backdrop dim")
-            icon: "options"
+            icon: "dark-theme"
             description: Translation.tr("Darken the backdrop layer")
             suffix: "%"
             from: 0; to: 100; stepSize: 5
@@ -198,7 +198,7 @@ WSettingsPage {
         WSettingsSpinBox {
             visible: root.wBackdrop.enable ?? true
             label: Translation.tr("Backdrop saturation")
-            icon: "options"
+            icon: "eyedropper"
             description: Translation.tr("Increase color intensity")
             suffix: "%"
             from: -100; to: 100; stepSize: 10
@@ -209,7 +209,7 @@ WSettingsPage {
         WSettingsSpinBox {
             visible: root.wBackdrop.enable ?? true
             label: Translation.tr("Backdrop contrast")
-            icon: "options"
+            icon: "auto"
             description: Translation.tr("Increase light/dark difference")
             suffix: "%"
             from: -100; to: 100; stepSize: 10

@@ -36,17 +36,31 @@ PanelWindow {
     property string screenshotDir: Directories.screenshotTemp
     property string imageSearchEngineBaseUrl: Config.options?.search?.imageSearch?.imageSearchEngineBaseUrl ?? "https://lens.google.com/uploadbyurl?url="
     property string fileUploadApiEndpoint: Config.options?.search?.imageSearch?.fileUploadApiEndpoint ?? "https://0x0.st"
-    property color overlayColor: "#88111111"
-    property color brightText: Appearance.m3colors.darkmode ? Appearance.colors.colOnLayer0 : Appearance.colors.colLayer0
-    property color brightSecondary: Appearance.m3colors.darkmode ? Appearance.colors.colSecondary : Appearance.colors.colOnSecondary
-    property color brightTertiary: Appearance.m3colors.darkmode ? Appearance.colors.colTertiary : Qt.lighter(Appearance.colors.colPrimary)
-    property color selectionBorderColor: ColorUtils.mix(brightText, brightSecondary, 0.5)
-    property color selectionFillColor: "#33ffffff"
+
+    // Tri-style color support
+    property color overlayColor: Appearance.inirEverywhere ? "#88000000"
+        : Appearance.auroraEverywhere ? "#66000000" : "#88111111"
+    property color brightText: Appearance.inirEverywhere ? Appearance.inir.colText
+        : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer0
+        : (Appearance.m3colors.darkmode ? Appearance.colors.colOnLayer0 : Appearance.colors.colLayer0)
+    property color brightSecondary: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
+        : Appearance.auroraEverywhere ? Appearance.aurora.colTextSecondary
+        : (Appearance.m3colors.darkmode ? Appearance.colors.colSecondary : Appearance.colors.colOnSecondary)
+    property color brightTertiary: Appearance.inirEverywhere ? Appearance.inir.colPrimary
+        : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
+        : (Appearance.m3colors.darkmode ? Appearance.colors.colTertiary : Qt.lighter(Appearance.colors.colPrimary))
+    property color selectionBorderColor: Appearance.inirEverywhere ? Appearance.inir.colBorder
+        : Appearance.auroraEverywhere ? Appearance.aurora.colPopupBorder
+        : ColorUtils.mix(brightText, brightSecondary, 0.5)
+    property color selectionFillColor: Appearance.inirEverywhere ? ColorUtils.transparentize(Appearance.inir.colPrimary, 0.8)
+        : Appearance.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.8)
+        : "#33ffffff"
     property color windowBorderColor: brightSecondary
     property color windowFillColor: ColorUtils.transparentize(windowBorderColor, 0.85)
     property color imageBorderColor: brightTertiary
     property color imageFillColor: ColorUtils.transparentize(imageBorderColor, 0.85)
-    property color onBorderColor: "#ff000000"
+    property color onBorderColor: Appearance.inirEverywhere ? Appearance.inir.colText
+        : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer0 : "#ff000000"
     readonly property var windows: useNiri
         ? (NiriService.windows || [])
         : [...HyprlandData.windowList].sort((a, b) => {

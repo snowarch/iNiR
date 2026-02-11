@@ -58,11 +58,11 @@ WSettingsPage {
 
     WSettingsCard {
         title: Translation.tr("Default Terminal")
-        icon: "window-terminal"
+        icon: "terminal"
 
         WSettingsDropdown {
             label: Translation.tr("Terminal emulator")
-            icon: "window-terminal"
+            icon: "terminal"
             description: Translation.tr("Used by shell actions, keybinds, and update commands")
             currentValue: Config.options?.apps?.terminal ?? "kitty"
             options: [

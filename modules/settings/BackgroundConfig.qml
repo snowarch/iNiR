@@ -7,7 +7,6 @@ import qs.modules.common.widgets
 
 ContentPage {
     id: root
-    forceWidth: true
     settingsPageIndex: 3
     settingsPageName: Translation.tr("Background")
 

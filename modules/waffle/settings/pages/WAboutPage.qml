@@ -61,10 +61,10 @@ WSettingsPage {
             color: Looks.colors.bg2Border
         }
         
-        WSettingsRow {
-            label: Translation.tr("Version")
-            description: "2.0.0-niri"
-        }
+          WSettingsRow {
+              label: Translation.tr("Version")
+              description: ShellUpdates.localVersion || "unknown"
+          }
         
         WSettingsRow {
             label: Translation.tr("Framework")

@@ -1,11 +1,12 @@
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import qs.services
 import qs.modules.common
+import qs.modules.common.functions
 import qs.modules.common.widgets
 
 ContentPage {
-    forceWidth: true
     settingsPageIndex: 6
     settingsPageName: Translation.tr("Services")
 
@@ -335,7 +336,7 @@ ContentPage {
         SettingsGroup {
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("Automatically checks the iNiR git repository for new versions and shows a notification in the bar. Click the indicator to update, or right-click to dismiss.")
+                text: Translation.tr("Automatically checks the iNiR git repository for new versions and shows a notification in the bar.")
                 color: Appearance.colors.colOnSurfaceVariant
                 font.pixelSize: Appearance.font.pixelSize.small
                 wrapMode: Text.WordWrap
@@ -362,103 +363,260 @@ ContentPage {
                 }
             }
 
-            // Status display
+            // Status card with visual states
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: statusCol.implicitHeight + 16
-                radius: Appearance.rounding.small
-                color: Appearance.colors.colSurfaceContainerLow
+                Layout.preferredHeight: statusCardCol.implicitHeight + 24
+                radius: Appearance.rounding.normal
                 visible: Config.options?.shellUpdates?.enabled ?? true
 
-                ColumnLayout {
-                    id: statusCol
-                    anchors.fill: parent
-                    anchors.margins: 8
-                    spacing: 4
+                color: {
+                    if (ShellUpdates.hasUpdate) return ColorUtils.transparentize(Appearance.m3colors.m3primary, 0.92)
+                    if (ShellUpdates.lastError.length > 0) return ColorUtils.transparentize(Appearance.m3colors.m3error, 0.92)
+                    return Appearance.colors.colSurfaceContainerLow
+                }
+                border.width: 1
+                border.color: {
+                    if (ShellUpdates.hasUpdate) return ColorUtils.transparentize(Appearance.m3colors.m3primary, 0.7)
+                    if (ShellUpdates.lastError.length > 0) return ColorUtils.transparentize(Appearance.m3colors.m3error, 0.7)
+                    return Appearance.colors.colLayer0Border
+                }
 
+                Behavior on color { animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this) }
+                Behavior on border.color { animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this) }
+
+                ColumnLayout {
+                    id: statusCardCol
+                    anchors {
+                        fill: parent
+                        margins: 12
+                    }
+                    spacing: 10
+
+                    // Status header with icon
                     RowLayout {
-                        spacing: 6
-                        MaterialSymbol {
-                            text: ShellUpdates.hasUpdate ? "update" : ShellUpdates.isChecking ? "sync" : "check_circle"
-                            iconSize: Appearance.font.pixelSize.normal
-                            color: ShellUpdates.hasUpdate ? Appearance.m3colors.m3primary
-                                : ShellUpdates.isChecking ? Appearance.colors.colSubtext
-                                : Appearance.m3colors.m3tertiary
-                        }
-                        StyledText {
-                            text: {
-                                if (ShellUpdates.isUpdating) return Translation.tr("Updating...")
-                                if (ShellUpdates.isChecking) return Translation.tr("Checking...")
-                                if (ShellUpdates.hasUpdate) return Translation.tr("Update available: %1 commit(s) behind").arg(ShellUpdates.commitsBehind)
-                                if (ShellUpdates.available) return Translation.tr("Up to date")
-                                return Translation.tr("Not available (no git repo)")
+                        spacing: 10
+                        Layout.fillWidth: true
+
+                        Rectangle {
+                            width: 40
+                            height: 40
+                            radius: Appearance.rounding.small
+                            color: {
+                                if (ShellUpdates.hasUpdate) return ColorUtils.transparentize(Appearance.m3colors.m3primary, 0.8)
+                                if (ShellUpdates.isChecking || ShellUpdates.isUpdating) return ColorUtils.transparentize(Appearance.colors.colSubtext, 0.85)
+                                if (ShellUpdates.lastError.length > 0) return ColorUtils.transparentize(Appearance.m3colors.m3error, 0.8)
+                                return ColorUtils.transparentize(Appearance.m3colors.m3tertiary, 0.85)
                             }
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                            color: Appearance.colors.colOnSurface
+
+                            MaterialSymbol {
+                                anchors.centerIn: parent
+                                text: {
+                                    if (ShellUpdates.isUpdating) return "hourglass_top"
+                                    if (ShellUpdates.isChecking) return "sync"
+                                    if (ShellUpdates.hasUpdate) return "upgrade"
+                                    if (ShellUpdates.lastError.length > 0) return "error"
+                                    if (ShellUpdates.available) return "check_circle"
+                                    return "cloud_off"
+                                }
+                                iconSize: Appearance.font.pixelSize.huge
+                                color: {
+                                    if (ShellUpdates.hasUpdate) return Appearance.m3colors.m3primary
+                                    if (ShellUpdates.lastError.length > 0) return Appearance.m3colors.m3error
+                                    if (ShellUpdates.available) return Appearance.m3colors.m3tertiary
+                                    return Appearance.colors.colSubtext
+                                }
+                            }
+                        }
+
+                        ColumnLayout {
+                            spacing: 2
+                            Layout.fillWidth: true
+
+                            StyledText {
+                                text: {
+                                    if (ShellUpdates.isUpdating) return Translation.tr("Updating…")
+                                    if (ShellUpdates.isChecking) return Translation.tr("Checking for updates…")
+                                    if (ShellUpdates.hasUpdate) return Translation.tr("Update available")
+                                    if (ShellUpdates.lastError.length > 0) return Translation.tr("Error")
+                                    if (ShellUpdates.available) return Translation.tr("Up to date")
+                                    return Translation.tr("Not available")
+                                }
+                                font {
+                                    pixelSize: Appearance.font.pixelSize.normal
+                                    weight: Font.DemiBold
+                                }
+                                color: {
+                                    if (ShellUpdates.hasUpdate) return Appearance.m3colors.m3primary
+                                    if (ShellUpdates.lastError.length > 0) return Appearance.m3colors.m3error
+                                    return Appearance.colors.colOnSurface
+                                }
+                            }
+
+                            StyledText {
+                                visible: ShellUpdates.hasUpdate
+                                text: Translation.tr("%1 commit(s) behind on %2").arg(ShellUpdates.commitsBehind).arg(ShellUpdates.currentBranch || "main")
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                color: Appearance.colors.colSubtext
+                            }
+
+                            StyledText {
+                                visible: !ShellUpdates.hasUpdate && !ShellUpdates.isChecking && !ShellUpdates.isUpdating && ShellUpdates.lastError.length === 0 && ShellUpdates.available
+                                text: ShellUpdates.currentBranch.length > 0
+                                    ? Translation.tr("Branch: %1").arg(ShellUpdates.currentBranch)
+                                    : ""
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                color: Appearance.colors.colSubtext
+                            }
                         }
                     }
 
+                    // Version comparison row
                     RowLayout {
                         visible: ShellUpdates.localCommit.length > 0
-                        spacing: 6
-                        StyledText {
-                            text: Translation.tr("Local: %1").arg(ShellUpdates.localCommit)
-                            font.pixelSize: Appearance.font.pixelSize.smallest
-                            font.family: Appearance.font.family.monospace
-                            color: Appearance.colors.colSubtext
+                        spacing: 8
+                        Layout.fillWidth: true
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            implicitHeight: localCommitCol.implicitHeight + 12
+                            radius: Appearance.rounding.small
+                            color: Appearance.colors.colLayer2
+                            border.width: 1
+                            border.color: Appearance.colors.colLayer0Border
+
+                            ColumnLayout {
+                                id: localCommitCol
+                                anchors {
+                                    fill: parent
+                                    margins: 6
+                                }
+                                spacing: 2
+
+                                StyledText {
+                                    text: Translation.tr("Current")
+                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                    color: Appearance.colors.colSubtext
+                                }
+                                StyledText {
+                                    text: ShellUpdates.localCommit || "—"
+                                    font {
+                                        pixelSize: Appearance.font.pixelSize.smaller
+                                        family: Appearance.font.family.monospace
+                                        weight: Font.Medium
+                                    }
+                                    color: Appearance.colors.colOnSurface
+                                }
+                            }
                         }
-                        StyledText {
-                            visible: ShellUpdates.remoteCommit.length > 0 && ShellUpdates.hasUpdate
-                            text: "→ " + ShellUpdates.remoteCommit
-                            font.pixelSize: Appearance.font.pixelSize.smallest
-                            font.family: Appearance.font.family.monospace
-                            font.weight: Font.DemiBold
+
+                        MaterialSymbol {
+                            visible: ShellUpdates.hasUpdate && ShellUpdates.remoteCommit.length > 0
+                            text: "arrow_forward"
+                            iconSize: Appearance.font.pixelSize.normal
                             color: Appearance.m3colors.m3primary
                         }
-                    }
-                    
-                    // Branch info
-                    RowLayout {
-                        visible: ShellUpdates.currentBranch.length > 0
-                        spacing: 4
-                        MaterialSymbol {
-                            text: "account_tree"
-                            iconSize: Appearance.font.pixelSize.smallest
-                            color: Appearance.colors.colSubtext
-                        }
-                        StyledText {
-                            text: ShellUpdates.currentBranch
-                            font.pixelSize: Appearance.font.pixelSize.smallest
-                            font.family: Appearance.font.family.monospace
-                            color: Appearance.colors.colSubtext
+
+                        Rectangle {
+                            visible: ShellUpdates.hasUpdate && ShellUpdates.remoteCommit.length > 0
+                            Layout.fillWidth: true
+                            implicitHeight: remoteCommitCol.implicitHeight + 12
+                            radius: Appearance.rounding.small
+                            color: ColorUtils.transparentize(Appearance.m3colors.m3primary, 0.88)
+                            border.width: 1
+                            border.color: ColorUtils.transparentize(Appearance.m3colors.m3primary, 0.7)
+
+                            ColumnLayout {
+                                id: remoteCommitCol
+                                anchors {
+                                    fill: parent
+                                    margins: 6
+                                }
+                                spacing: 2
+
+                                StyledText {
+                                    text: Translation.tr("Available")
+                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                    color: Appearance.m3colors.m3primary
+                                    opacity: 0.8
+                                }
+                                StyledText {
+                                    text: ShellUpdates.remoteCommit || "—"
+                                    font {
+                                        pixelSize: Appearance.font.pixelSize.smaller
+                                        family: Appearance.font.family.monospace
+                                        weight: Font.DemiBold
+                                    }
+                                    color: Appearance.m3colors.m3primary
+                                }
+                            }
                         }
                     }
 
-                    StyledText {
-                        visible: ShellUpdates.lastError.length > 0
-                        text: ShellUpdates.lastError
-                        font.pixelSize: Appearance.font.pixelSize.smallest
-                        color: Appearance.m3colors.m3error
-                        wrapMode: Text.WordWrap
+                    // Latest commit message
+                    RowLayout {
+                        visible: ShellUpdates.latestMessage.length > 0 && ShellUpdates.hasUpdate
+                        spacing: 6
                         Layout.fillWidth: true
+
+                        MaterialSymbol {
+                            text: "notes"
+                            iconSize: Appearance.font.pixelSize.smaller
+                            color: Appearance.colors.colSubtext
+                            Layout.alignment: Qt.AlignTop
+                        }
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: ShellUpdates.latestMessage
+                            font {
+                                pixelSize: Appearance.font.pixelSize.smallest
+                                family: Appearance.font.family.monospace
+                            }
+                            color: Appearance.colors.colSubtext
+                            wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                            maximumLineCount: 3
+                            elide: Text.ElideRight
+                        }
+                    }
+
+                    // Error display
+                    RowLayout {
+                        visible: ShellUpdates.lastError.length > 0
+                        spacing: 6
+                        Layout.fillWidth: true
+
+                        MaterialSymbol {
+                            text: "warning"
+                            iconSize: Appearance.font.pixelSize.smaller
+                            color: Appearance.m3colors.m3error
+                            Layout.alignment: Qt.AlignTop
+                        }
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: ShellUpdates.lastError
+                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            color: Appearance.m3colors.m3error
+                            wrapMode: Text.WordWrap
+                        }
                     }
                 }
             }
 
-            // Action buttons row
+            // Action buttons
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 6
+                spacing: 8
                 visible: Config.options?.shellUpdates?.enabled ?? true
 
                 RippleButton {
                     Layout.fillWidth: true
-                    implicitHeight: 32
+                    implicitHeight: 36
                     buttonRadius: Appearance.rounding.small
                     colBackground: Appearance.colors.colSurfaceContainerLow
                     colBackgroundHover: Appearance.colors.colLayer1Hover
                     colRipple: Appearance.colors.colLayer1Active
-                    opacity: ShellUpdates.isChecking ? 0.5 : 1.0
+                    enabled: !ShellUpdates.isChecking && !ShellUpdates.isUpdating
+                    opacity: enabled ? 1.0 : 0.5
                     onClicked: ShellUpdates.check()
 
                     contentItem: RowLayout {
@@ -470,7 +628,7 @@ ContentPage {
                             color: Appearance.colors.colOnSurface
                         }
                         StyledText {
-                            text: ShellUpdates.isChecking ? Translation.tr("Checking...") : Translation.tr("Check Now")
+                            text: ShellUpdates.isChecking ? Translation.tr("Checking…") : Translation.tr("Check Now")
                             font.pixelSize: Appearance.font.pixelSize.smaller
                             color: Appearance.colors.colOnSurface
                         }
@@ -479,14 +637,40 @@ ContentPage {
 
                 RippleButton {
                     Layout.fillWidth: true
-                    implicitHeight: 32
+                    implicitHeight: 36
+                    buttonRadius: Appearance.rounding.small
+                    colBackground: Appearance.colors.colSurfaceContainerLow
+                    colBackgroundHover: Appearance.colors.colLayer1Hover
+                    colRipple: Appearance.colors.colLayer1Active
+                    onClicked: ShellUpdates.openOverlay()
+
+                    contentItem: RowLayout {
+                        anchors.centerIn: parent
+                        spacing: 6
+                        MaterialSymbol {
+                            text: "open_in_new"
+                            iconSize: Appearance.font.pixelSize.normal
+                            color: Appearance.colors.colOnSurface
+                        }
+                        StyledText {
+                            text: Translation.tr("Open Details")
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            color: Appearance.colors.colOnSurface
+                        }
+                    }
+                }
+
+                RippleButton {
+                    Layout.fillWidth: true
+                    implicitHeight: 36
                     visible: ShellUpdates.hasUpdate
                     buttonRadius: Appearance.rounding.small
                     colBackground: Appearance.m3colors.m3primary
                     colBackgroundHover: Appearance.colors.colPrimaryHover
                     colRipple: Appearance.colors.colPrimaryActive
-                    opacity: ShellUpdates.isUpdating ? 0.5 : 1.0
-                    onClicked: { if (!ShellUpdates.isUpdating) ShellUpdates.performUpdate() }
+                    enabled: !ShellUpdates.isUpdating
+                    opacity: enabled ? 1.0 : 0.5
+                    onClicked: ShellUpdates.performUpdate()
 
                     contentItem: RowLayout {
                         anchors.centerIn: parent
@@ -497,17 +681,19 @@ ContentPage {
                             color: Appearance.m3colors.m3onPrimary
                         }
                         StyledText {
-                            text: ShellUpdates.isUpdating ? Translation.tr("Updating...") : Translation.tr("Update Now")
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                            font.weight: Font.DemiBold
+                            text: ShellUpdates.isUpdating ? Translation.tr("Updating…") : Translation.tr("Update Now")
+                            font {
+                                pixelSize: Appearance.font.pixelSize.smaller
+                                weight: Font.DemiBold
+                            }
                             color: Appearance.m3colors.m3onPrimary
                         }
                     }
                 }
 
                 RippleButton {
-                    implicitWidth: 32
-                    implicitHeight: 32
+                    implicitWidth: 36
+                    implicitHeight: 36
                     visible: ShellUpdates.hasUpdate && !ShellUpdates.isDismissed
                     buttonRadius: Appearance.rounding.small
                     colBackground: Appearance.colors.colSurfaceContainerLow
@@ -523,13 +709,13 @@ ContentPage {
                     }
 
                     StyledToolTip {
-                        text: Translation.tr("Dismiss this update (hide bar indicator)")
+                        text: Translation.tr("Dismiss update (hide bar indicator)")
                     }
                 }
 
                 RippleButton {
-                    implicitWidth: 32
-                    implicitHeight: 32
+                    implicitWidth: 36
+                    implicitHeight: 36
                     visible: ShellUpdates.isDismissed
                     buttonRadius: Appearance.rounding.small
                     colBackground: Appearance.colors.colSurfaceContainerLow
@@ -560,7 +746,7 @@ ContentPage {
         SettingsGroup {
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("Location is detected automatically. Weather data provided by wttr.in.")
+                text: Translation.tr("Set a city name or coordinates for precise location. Leave empty to auto-detect from IP. Data provided by wttr.in.")
                 color: Appearance.colors.colOnSurfaceVariant
                 font.pixelSize: Appearance.font.pixelSize.small
                 wrapMode: Text.WordWrap
@@ -581,15 +767,127 @@ ContentPage {
                 enabled: Config.options?.bar?.weather?.enable ?? false
             }
 
+            // Manual location
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 4
+                enabled: Config.options?.bar?.weather?.enable ?? false
+
+                StyledText {
+                    text: Translation.tr("City (leave empty to auto-detect)")
+                    color: Appearance.colors.colOnSurfaceVariant
+                    font.pixelSize: Appearance.font.pixelSize.small
+                }
+
+                TextField {
+                    id: weatherCityInput
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("e.g. Buenos Aires, London, Tokyo")
+                    font.pixelSize: Appearance.font.pixelSize.small
+                    color: Appearance.m3colors.m3onSurface
+                    placeholderTextColor: Appearance.colors.colSubtext
+                    text: Config.options?.bar?.weather?.city ?? ""
+                    background: Rectangle {
+                        color: Appearance.colors.colLayer1
+                        radius: Appearance.rounding.small
+                        border.width: weatherCityInput.activeFocus ? 2 : 1
+                        border.color: weatherCityInput.activeFocus ? Appearance.m3colors.m3primary : Appearance.colors.colLayer0Border
+                    }
+                    onTextEdited: Config.setNestedValue("bar.weather.city", text)
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 4
+                enabled: Config.options?.bar?.weather?.enable ?? false
+
+                StyledText {
+                    text: Translation.tr("Manual coordinates (optional, overrides city)")
+                    color: Appearance.colors.colOnSurfaceVariant
+                    font.pixelSize: Appearance.font.pixelSize.small
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    TextField {
+                        id: weatherLatInput
+                        Layout.fillWidth: true
+                        placeholderText: Translation.tr("Latitude (e.g. -34.6037)")
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        color: Appearance.m3colors.m3onSurface
+                        placeholderTextColor: Appearance.colors.colSubtext
+                        text: {
+                            const v = Config.options?.bar?.weather?.manualLat ?? 0;
+                            return v !== 0 ? String(v) : "";
+                        }
+                        background: Rectangle {
+                            color: Appearance.colors.colLayer1
+                            radius: Appearance.rounding.small
+                            border.width: weatherLatInput.activeFocus ? 2 : 1
+                            border.color: weatherLatInput.activeFocus ? Appearance.m3colors.m3primary : Appearance.colors.colLayer0Border
+                        }
+                        onTextEdited: {
+                            const num = parseFloat(text);
+                            Config.setNestedValue("bar.weather.manualLat", isNaN(num) ? 0 : num);
+                        }
+                    }
+
+                    TextField {
+                        id: weatherLonInput
+                        Layout.fillWidth: true
+                        placeholderText: Translation.tr("Longitude (e.g. -58.3816)")
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        color: Appearance.m3colors.m3onSurface
+                        placeholderTextColor: Appearance.colors.colSubtext
+                        text: {
+                            const v = Config.options?.bar?.weather?.manualLon ?? 0;
+                            return v !== 0 ? String(v) : "";
+                        }
+                        background: Rectangle {
+                            color: Appearance.colors.colLayer1
+                            radius: Appearance.rounding.small
+                            border.width: weatherLonInput.activeFocus ? 2 : 1
+                            border.color: weatherLonInput.activeFocus ? Appearance.m3colors.m3primary : Appearance.colors.colLayer0Border
+                        }
+                        onTextEdited: {
+                            const num = parseFloat(text);
+                            Config.setNestedValue("bar.weather.manualLon", isNaN(num) ? 0 : num);
+                        }
+                    }
+                }
+            }
+
+            SettingsSwitch {
+                buttonIcon: "my_location"
+                text: Translation.tr("Use GPS location (requires geoclue)")
+                checked: Config.options?.bar?.weather?.enableGPS ?? false
+                onCheckedChanged: Config.setNestedValue("bar.weather.enableGPS", checked)
+                enabled: Config.options?.bar?.weather?.enable ?? false
+                StyledToolTip {
+                    text: Translation.tr("Uses GPS when no manual location is set")
+                }
+            }
+
+            // Current detected location display
+            StyledText {
+                Layout.fillWidth: true
+                visible: (Config.options?.bar?.weather?.enable ?? false) && Weather.location.valid
+                text: Translation.tr("Current location:") + " " + (Weather.location.name || (Weather.location.lat + ", " + Weather.location.lon))
+                color: Appearance.colors.colOnSurfaceVariant
+                font.pixelSize: Appearance.font.pixelSize.small
+                font.italic: true
+                wrapMode: Text.WordWrap
+            }
+
             SettingsSwitch {
                 buttonIcon: "thermometer"
                 text: Translation.tr("Use Fahrenheit (°F)")
                 checked: Config.options?.bar?.weather?.useUSCS ?? false
                 onCheckedChanged: Config.setNestedValue("bar.weather.useUSCS", checked)
                 enabled: Config.options?.bar?.weather?.enable ?? false
-                StyledToolTip {
-                    text: Translation.tr("May take a moment to update")
-                }
             }
 
             ConfigSpinBox {

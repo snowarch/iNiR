@@ -8,6 +8,7 @@
 import qs.modules.common
 import qs.modules.altSwitcher
 import qs.modules.closeConfirm
+import qs.modules.settings
 
 import QtQuick
 import Quickshell
@@ -62,11 +63,11 @@ ShellRoot {
     function migrateEnabledPanels() {
         if (_migrationDone) return;
         _migrationDone = true;
-        
+
         const family = Config.options?.panelFamily ?? "ii";
         let panels = [...(Config.options?.enabledPanels ?? [])];
         let changed = false;
-        
+
         // Ensure all base panels for current family are present (adds new panels from updates)
         const basePanels = root.panelFamilies[family] ?? [];
         for (const panel of basePanels) {
@@ -76,12 +77,12 @@ ShellRoot {
                 changed = true;
             }
         }
-        
+
         if (family === "waffle") {
             // If waffle family has iiBackdrop but not wBackdrop, migrate
             const hasIiBackdrop = panels.includes("iiBackdrop");
             const hasWBackdrop = panels.includes("wBackdrop");
-            
+
             if (hasIiBackdrop && !hasWBackdrop) {
                 root._log("[Shell] Migrating enabledPanels: replacing iiBackdrop with wBackdrop for waffle family");
                 panels = panels.filter(p => p !== "iiBackdrop");
@@ -89,23 +90,42 @@ ShellRoot {
                 changed = true;
             }
         }
-        
+
         if (changed) {
             Config.options.enabledPanels = panels;
         }
     }
 
-    // IPC for settings - open as separate window using execDetached
+    // IPC for settings - overlay mode or separate window based on config
+    // Note: waffle family ALWAYS uses its own window (waffleSettings.qml), never the Material overlay
     IpcHandler {
         target: "settings"
         function open(): void {
-            // Use waffle settings if enabled and panel family is waffle
-            const settingsPath = (Config.options?.panelFamily === "waffle" && Config.options?.waffles?.settings?.useMaterialStyle !== true)
-                ? Quickshell.shellPath("waffleSettings.qml")
-                : Quickshell.shellPath("settings.qml")
-            // -n = no daemon (standalone window), -p = path to QML file
-            Quickshell.execDetached(["/usr/bin/qs", "-n", "-p", settingsPath])
+            const isWaffle = Config.options?.panelFamily === "waffle"
+                && Config.options?.waffles?.settings?.useMaterialStyle !== true
+
+            if (isWaffle) {
+                // Waffle always opens its own Win11-style settings window
+                Quickshell.execDetached(["/usr/bin/qs", "-n", "-p",
+                    Quickshell.shellPath("waffleSettings.qml")])
+            } else if (Config.options?.settingsUi?.overlayMode ?? false) {
+                // ii overlay mode — toggle inline panel
+                GlobalStates.settingsOverlayOpen = !GlobalStates.settingsOverlayOpen
+            } else {
+                // ii window mode (default) — launch separate process
+                Quickshell.execDetached(["/usr/bin/qs", "-n", "-p",
+                    Quickshell.shellPath("settings.qml")])
+            }
         }
+        function toggle(): void {
+            open()
+        }
+    }
+
+    // Settings overlay panel (loaded only when overlay mode is enabled)
+    LazyLoader {
+        active: Config.ready && (Config.options?.settingsUi?.overlayMode ?? false)
+        component: SettingsOverlay {}
     }
 
     // === Panel Loaders ===
@@ -135,10 +155,10 @@ ShellRoot {
     property list<string> families: ["ii", "waffle"]
     property var panelFamilies: ({
         "ii": [
-            "iiBar", "iiBackground", "iiBackdrop", "iiCheatsheet", "iiControlPanel", "iiDock", "iiLock", 
-            "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard", 
-            "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners", 
-            "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar", 
+            "iiBar", "iiBackground", "iiBackdrop", "iiCheatsheet", "iiControlPanel", "iiDock", "iiLock",
+            "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard",
+            "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners",
+            "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar",
             "iiWallpaperSelector", "iiClipboard"
         ],
         "waffle": [
@@ -146,7 +166,7 @@ ShellRoot {
             // Shared modules that work with waffle
             // Note: wTaskView is experimental and NOT included by default
             // Note: wAltSwitcher is always loaded when waffle is active (not in this list)
-            "iiCheatsheet", "iiControlPanel", "iiLock", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit", 
+            "iiCheatsheet", "iiControlPanel", "iiLock", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit",
             "iiRegionSelector", "iiScreenCorners", "iiSessionScreen", "iiTilingOverlay", "iiWallpaperSelector", "iiClipboard"
         ]
     })
@@ -177,7 +197,7 @@ ShellRoot {
         const currentIndex = families.indexOf(currentFamily)
         const nextIndex = (currentIndex + 1) % families.length
         const nextFamily = families[nextIndex]
-        
+
         // Determine direction: ii -> waffle = left, waffle -> ii = right
         const direction = nextIndex > currentIndex ? "left" : "right"
         root.startFamilyTransition(nextFamily, direction)
@@ -195,14 +215,14 @@ ShellRoot {
 
     function startFamilyTransition(targetFamily: string, direction: string) {
         if (_transitionInProgress) return
-        
+
         // If animation is disabled, switch instantly
         if (!(Config.options?.familyTransitionAnimation ?? true)) {
             Config.options.panelFamily = targetFamily
             root._ensureFamilyPanels(targetFamily)
             return
         }
-        
+
         _transitionInProgress = true
         _pendingFamily = targetFamily
         GlobalStates.familyTransitionDirection = direction

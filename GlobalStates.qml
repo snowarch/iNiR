@@ -24,6 +24,7 @@ Singleton {
     property bool overviewOpen: false
     property bool altSwitcherOpen: false
     property bool clipboardOpen: false
+    property bool settingsOverlayOpen: false
     property bool regionSelectorOpen: false
     property bool screenLocked: false
     property bool screenLockContainsCharacters: false
@@ -39,7 +40,7 @@ Singleton {
         if (!wallpaperSelectorOpen) {
             wallpaperSelectionTarget = "main";
             // Also reset Config target if it was set
-            if (Config.options?.wallpaperSelector?.selectionTarget && 
+            if (Config.options?.wallpaperSelector?.selectionTarget &&
                 Config.options.wallpaperSelector.selectionTarget !== "main") {
                 Config.options.wallpaperSelector.selectionTarget = "main";
             }
@@ -164,6 +165,6 @@ Singleton {
 
         function zoomOut(): void {
             screenZoom = Math.max(screenZoom - 0.4, 1)
-        } 
+        }
 	}
 }

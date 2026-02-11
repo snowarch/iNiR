@@ -109,11 +109,29 @@ WSettingsRow {
                     color: delegateItem.highlighted ? Looks.colors.bg2Hover : "transparent"
                 }
                 
-                contentItem: WText {
-                    text: delegateItem.modelData.displayName
-                    font.pixelSize: Looks.font.pixelSize.normal
-                    verticalAlignment: Text.AlignVCenter
-                    leftPadding: 8
+                contentItem: RowLayout {
+                    spacing: 6
+                    
+                    FluentIcon {
+                        Layout.leftMargin: 8
+                        icon: "checkmark"
+                        implicitSize: 12
+                        color: Looks.colors.fg
+                        visible: delegateItem.index === combo.currentIndex
+                    }
+                    
+                    Item {
+                        Layout.leftMargin: 8
+                        implicitWidth: 12
+                        visible: delegateItem.index !== combo.currentIndex
+                    }
+                    
+                    WText {
+                        Layout.fillWidth: true
+                        text: delegateItem.modelData.displayName
+                        font.pixelSize: Looks.font.pixelSize.normal
+                        verticalAlignment: Text.AlignVCenter
+                    }
                 }
             }
         }

@@ -209,7 +209,20 @@ def extract_cookies_with_copy(browser, output_path):
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 def verify_connection(output_path):
-    """Verify that the cookies work by checking access to liked videos."""
+    """Verify that the cookies work by checking for auth tokens in the cookie file,
+    then confirming with a lightweight yt-dlp call to the user's feed."""
+    # Fast check: look for Google auth cookies in the file
+    try:
+        with open(output_path, "r") as f:
+            content = f.read()
+        auth_tokens = ["__Secure-3PSID", "SAPISID", "LOGIN_INFO"]
+        has_auth = any(token in content for token in auth_tokens)
+        if not has_auth:
+            return False
+    except:
+        return False
+
+    # Network check: verify cookies actually work (feed/history requires login)
     cmd = [
         "yt-dlp",
         "--cookies", output_path,
@@ -217,7 +230,7 @@ def verify_connection(output_path):
         "-I", "1",
         "--print", "id",
         "--no-warnings",
-        "https://www.youtube.com/playlist?list=LL"
+        "https://www.youtube.com/feed/history"
     ]
 
     try:

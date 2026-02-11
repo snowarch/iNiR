@@ -26,6 +26,8 @@ inir-docs/
 .gemini/
 GEMINI.md
 opencode.json
+.roo/
+Session.md
 
 # WIP documentation (not for distribution)
 docs/*_IMPLEMENTATION.md
@@ -60,6 +62,7 @@ tmp/
 # Session files (personal dev data)
 session-*.md
 session-ses_*.md
+docs-site/
 
 # Credentials and cookies (NEVER commit)
 yt-cookies.txt

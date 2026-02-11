@@ -30,31 +30,23 @@ Flickable {
             top: parent.top
             left: parent.left
             right: parent.right
-            margins: 24
+            topMargin: 32
+            leftMargin: 32
+            rightMargin: 32
+            bottomMargin: 24
         }
-        spacing: 16
+        spacing: 12
         
         // Page header
         ColumnLayout {
             Layout.fillWidth: true
-            Layout.bottomMargin: 8
-            spacing: 4
+            Layout.bottomMargin: 12
+            spacing: 6
             
-            RowLayout {
-                spacing: 12
-                
-                FluentIcon {
-                    visible: root.pageIcon !== ""
-                    icon: root.pageIcon
-                    implicitSize: 28
-                    color: Looks.colors.fg
-                }
-                
-                WText {
-                    text: root.pageTitle
-                    font.pixelSize: Looks.font.pixelSize.larger + 4
-                    font.weight: Looks.font.weight.strong
-                }
+            WText {
+                text: root.pageTitle
+                font.pixelSize: Looks.font.pixelSize.xlarger + 4
+                font.weight: Looks.font.weight.strong
             }
             
             WText {

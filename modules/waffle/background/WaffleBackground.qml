@@ -4,6 +4,7 @@ import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.functions as CF
+import qs.modules.waffle.looks
 import QtQuick
 import QtQuick.Effects
 import QtMultimedia

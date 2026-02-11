@@ -72,7 +72,7 @@ WSettingsPage {
             spacing: 12
             
             FluentIcon {
-                icon: "warning"
+                icon: "alert"
                 implicitSize: 24
                 color: Looks.colors.accent
             }

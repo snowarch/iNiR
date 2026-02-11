@@ -16,6 +16,16 @@ import Quickshell.Io
  * The actual repo location is stored in version.json during installation.
  */
 Singleton {
+    IpcHandler {
+        target: "shellUpdate"
+        function toggle(): void { root.overlayOpen ? root.closeOverlay() : root.openOverlay() }
+        function open(): void { root.openOverlay() }
+        function close(): void { root.closeOverlay() }
+        function check(): void { root.check() }
+        function performUpdate(): void { root.performUpdate() }
+        function dismiss(): void { root.dismiss() }
+        function undismiss(): void { root.undismiss() }
+    }
     id: root
 
     // Public state
@@ -30,6 +40,20 @@ Singleton {
     property string lastError: ""
     property bool available: false  // git is available and repo exists
 
+    // Overlay state
+    property bool overlayOpen: false
+    property bool isFetchingDetails: false
+    property string commitLog: ""         // Full git log HEAD..origin/branch
+    property string remoteChangelog: ""   // CHANGELOG.md from remote branch
+    property string remoteVersion: ""     // VERSION from remote branch
+    property string localVersion: ""      // Current local VERSION
+    property var localModifications: []   // Files user modified vs manifest
+
+    // Current system info (always available after first check)
+    property string installedCommit: ""   // Commit hash from manifest
+    property string installedDate: ""     // Install/update date from manifest
+    property string recentLocalLog: ""    // Recent local commit history
+
     // Derived
     readonly property bool enabled: Config.options?.shellUpdates?.enabled ?? true
     readonly property int checkIntervalMs: (Config.options?.shellUpdates?.checkIntervalMinutes ?? 360) * 60 * 1000
@@ -41,6 +65,7 @@ Singleton {
     readonly property string configDir: FileUtils.trimFileProtocol(Quickshell.shellPath("."))
     property string repoPath: configDir  // Will be updated after reading version.json
     property bool repoPathLoaded: false
+    readonly property string manifestPath: configDir + "/.ii-manifest"
 
     function check(): void {
         if (!enabled || isChecking || isUpdating) return
@@ -49,13 +74,35 @@ Singleton {
         fetchProc.running = true
     }
 
+    // Fetch detailed info for the overlay (commit log, changelog, local mods)
+    function fetchDetails(): void {
+        if (isFetchingDetails) return
+        root.isFetchingDetails = true
+        root.commitLog = ""
+        root.remoteChangelog = ""
+        root.remoteVersion = ""
+        root.localVersion = ""
+        root.localModifications = []
+        commitLogProc.running = true
+    }
+
+    function openOverlay(): void {
+        root.overlayOpen = true
+        if (hasUpdate) fetchDetails()
+    }
+
+    function closeOverlay(): void {
+        root.overlayOpen = false
+    }
+
     function performUpdate(): void {
         if (isUpdating || !hasUpdate) return
         root.isUpdating = true
         root.lastError = ""
+        root.overlayOpen = false
         // Use execDetached so the update script survives shell restart
         // (./setup update calls qs kill -c ii at the end)
-        Quickshell.execDetached(["bash", root.repoPath + "/setup", "update", "-y", "-q"])
+        Quickshell.execDetached(["/usr/bin/bash", root.repoPath + "/setup", "update", "-y", "-q"])
         print("[ShellUpdates] Update launched (detached)")
         // Shell will be restarted by ./setup update, so just mark state
         root.hasUpdate = false
@@ -68,6 +115,7 @@ Singleton {
         if (remoteCommit.length > 0) {
             Config.setNestedValue("shellUpdates.dismissedCommit", remoteCommit)
         }
+        root.overlayOpen = false
     }
 
     function undismiss(): void {
@@ -181,8 +229,73 @@ Singleton {
             root.available = (exitCode === 0)
             print("[ShellUpdates] Git available: " + root.available)
             if (root.available) {
-                root.check()
+                // Load system info (manifest + local log) before checking for updates
+                manifestInfoProc.running = true
             }
+        }
+    }
+
+    // Step 1b: Parse manifest for installed commit and date
+    Process {
+        id: manifestInfoProc
+        running: false
+        command: [
+            "/usr/bin/bash", "-c",
+            "manifest='" + root.manifestPath + "'; " +
+            "[[ -f \"$manifest\" ]] || exit 1; " +
+            "head -3 \"$manifest\" | grep -E '^# (generated|commit):' | sed 's/^# //'"
+        ]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const lines = (text ?? "").trim().split("\n")
+                for (const line of lines) {
+                    if (line.startsWith("generated: ")) {
+                        root.installedDate = line.substring(11).trim()
+                    } else if (line.startsWith("commit: ")) {
+                        root.installedCommit = line.substring(8).trim()
+                    }
+                }
+                print("[ShellUpdates] Manifest: commit=" + root.installedCommit + " date=" + root.installedDate)
+            }
+        }
+        onExited: (exitCode, exitStatus) => {
+            recentLocalLogProc.running = true
+        }
+    }
+
+    // Step 1c: Get recent local commit history (last 15 commits)
+    Process {
+        id: recentLocalLogProc
+        running: false
+        command: [
+            "git", "-C", root.repoPath, "log",
+            "--pretty=format:%h|%s|%cr|%an",
+            "-15"
+        ]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.recentLocalLog = (text ?? "").trim()
+            }
+        }
+        onExited: (exitCode, exitStatus) => {
+            // Also read local VERSION on startup
+            localVersionStartupProc.running = true
+        }
+    }
+
+    // Step 1d: Read local VERSION on startup
+    Process {
+        id: localVersionStartupProc
+        running: false
+        command: ["cat", root.configDir + "/VERSION"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.localVersion = (text ?? "").trim()
+                print("[ShellUpdates] Local version: " + root.localVersion)
+            }
+        }
+        onExited: (exitCode, exitStatus) => {
+            root.check()
         }
     }
 
@@ -341,6 +454,114 @@ Singleton {
         }
         onExited: (exitCode, exitStatus) => {
             root.isChecking = false
+        }
+    }
+
+    // =========================================================================
+    // Detail fetching (on-demand when overlay opens)
+    // =========================================================================
+
+    // Detail Step 1: Get commit log between local and remote
+    Process {
+        id: commitLogProc
+        running: false
+        command: [
+            "git", "-C", root.repoPath, "log",
+            "--pretty=format:%h|%s|%cr|%an",
+            "HEAD..origin/" + root.currentBranch
+        ]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.commitLog = (text ?? "").trim()
+            }
+        }
+        onExited: (exitCode, exitStatus) => {
+            remoteVersionProc.running = true
+        }
+    }
+
+    // Detail Step 2: Get remote VERSION
+    Process {
+        id: remoteVersionProc
+        running: false
+        command: [
+            "git", "-C", root.repoPath, "show",
+            "origin/" + root.currentBranch + ":VERSION"
+        ]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.remoteVersion = (text ?? "").trim()
+            }
+        }
+        onExited: (exitCode, exitStatus) => {
+            localVersionProc.running = true
+        }
+    }
+
+    // Detail Step 3: Get local VERSION
+    Process {
+        id: localVersionProc
+        running: false
+        command: ["cat", root.configDir + "/VERSION"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.localVersion = (text ?? "").trim()
+            }
+        }
+        onExited: (exitCode, exitStatus) => {
+            remoteChangelogProc.running = true
+        }
+    }
+
+    // Detail Step 4: Get remote CHANGELOG.md (first 200 lines)
+    Process {
+        id: remoteChangelogProc
+        running: false
+        command: [
+            "/usr/bin/bash", "-c",
+            "git -C '" + root.repoPath + "' show 'origin/" + root.currentBranch + ":CHANGELOG.md' 2>/dev/null | head -200"
+        ]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.remoteChangelog = (text ?? "").trim()
+            }
+        }
+        onExited: (exitCode, exitStatus) => {
+            localModsProc.running = true
+        }
+    }
+
+    // Detail Step 5: Detect local modifications via manifest checksums
+    Process {
+        id: localModsProc
+        running: false
+        command: [
+            "/usr/bin/bash", "-c",
+            "manifest='" + root.manifestPath + "'; " +
+            "target='" + root.configDir + "'; " +
+            "[[ -f \"$manifest\" ]] || exit 0; " +
+            "while IFS=: read -r path checksum; do " +
+            "  [[ \"$path\" =~ ^# ]] && continue; " +
+            "  [[ -z \"$path\" || -z \"$checksum\" ]] && continue; " +
+            "  [[ -f \"$target/$path\" ]] || continue; " +
+            "  current=$(sha256sum \"$target/$path\" 2>/dev/null | cut -d' ' -f1); " +
+            "  [[ \"$current\" != \"$checksum\" ]] && echo \"$path\"; " +
+            "done < \"$manifest\""
+        ]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const raw = (text ?? "").trim()
+                if (raw.length > 0) {
+                    root.localModifications = raw.split("\n").filter(l => l.length > 0)
+                } else {
+                    root.localModifications = []
+                }
+                print("[ShellUpdates] Local modifications: " + root.localModifications.length + " file(s)")
+            }
+        }
+        onExited: (exitCode, exitStatus) => {
+            root.isFetchingDetails = false
+            print("[ShellUpdates] Detail fetch complete")
         }
     }
 
