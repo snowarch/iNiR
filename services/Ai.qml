@@ -333,9 +333,7 @@ Singleton {
         root._initialized = true;
 
         getOllamaModels.running = true
-        if ((Config.options?.policies?.ai ?? 0) !== 2) {
-            getOpenRouterModels.running = true
-        }
+        getOpenRouterModels.running = true
         getDefaultPrompts.running = true
         getUserPrompts.running = true
         getSavedChats.running = true
