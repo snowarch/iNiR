@@ -175,40 +175,60 @@ Singleton {
         }
     }
 
+    // Debounce timer for manual location changes (wait for user to finish typing)
+    Timer {
+        id: locationDebounceTimer
+        interval: 1500  // 1.5s after last keystroke
+        repeat: false
+        onTriggered: {
+            root._lastCity = root.configCity;
+            root._lastLat = root.configLat;
+            root._lastLon = root.configLon;
+            root.location = { valid: false, lat: 0, lon: 0, name: "" };
+            root.resolveLocation();
+        }
+    }
+
+    property bool _initialized: false
+
     onEnabledChanged: {
-        if (enabled && Config.ready) {
+        if (enabled && Config.ready && !root._initialized) {
+            root._initialized = true;
             root._retryCount = 0;
             root.location = { valid: false, lat: 0, lon: 0, name: "" };
             resolveLocation();
         }
     }
-    onUseUSCSChanged: fetchWeather()
+    onUseUSCSChanged: {
+        if (root.location.valid) fetchWeather();
+    }
 
-    // Re-resolve when manual location config changes
+    // Re-resolve when manual location config changes (debounced)
+    property string _lastCity: ""
+    property real _lastLat: 0
+    property real _lastLon: 0
+
     onConfigCityChanged: {
-        if (Config.ready && root.enabled) {
-            root.location = { valid: false, lat: 0, lon: 0, name: "" };
-            resolveLocation();
-        }
+        if (!Config.ready || !root.enabled || !root._initialized) return;
+        if (root.configCity === root._lastCity) return;
+        locationDebounceTimer.restart();
     }
     onConfigLatChanged: {
-        if (Config.ready && root.enabled && root.hasManualCoords) {
-            root.location = { valid: false, lat: 0, lon: 0, name: "" };
-            resolveLocation();
-        }
+        if (!Config.ready || !root.enabled || !root._initialized) return;
+        if (root.configLat === root._lastLat) return;
+        if (root.hasManualCoords) locationDebounceTimer.restart();
     }
     onConfigLonChanged: {
-        if (Config.ready && root.enabled && root.hasManualCoords) {
-            root.location = { valid: false, lat: 0, lon: 0, name: "" };
-            resolveLocation();
-        }
+        if (!Config.ready || !root.enabled || !root._initialized) return;
+        if (root.configLon === root._lastLon) return;
+        if (root.hasManualCoords) locationDebounceTimer.restart();
     }
 
     Connections {
         target: Config
         function onReadyChanged() {
-            if (Config.ready && root.enabled) {
-                // Auto-refresh on shell restart: always resolve fresh
+            if (Config.ready && root.enabled && !root._initialized) {
+                root._initialized = true;
                 root._retryCount = 0;
                 root.resolveLocation();
             }
@@ -231,10 +251,14 @@ Singleton {
                     const results = JSON.parse(text);
                     if (Array.isArray(results) && results.length > 0) {
                         const r = results[0];
-                        const lat = parseFloat(r.lat);
-                        const lon = parseFloat(r.lon);
-                        // Build a nice display name from the result
-                        const displayName = r.display_name ? r.display_name.split(",").slice(0, 2).map(s => s.trim()).join(", ") : root.configCity;
+                          const lat = parseFloat(r.lat);
+                          const lon = parseFloat(r.lon);
+                          // Build a nice display name: use name + last segment (country)
+                          let displayName = root.configCity;
+                          if (r.display_name) {
+                              const parts = r.display_name.split(",").map(s => s.trim());
+                              displayName = parts.length > 2 ? parts[0] + ", " + parts[parts.length - 1] : parts.join(", ");
+                          }
                         root.location = { valid: true, lat: lat, lon: lon, name: displayName };
                         console.info("[Weather] Geocoded:", root.configCity, "→", displayName, "(", lat, ",", lon, ")");
                         root.fetchWeather();

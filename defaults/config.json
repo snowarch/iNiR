@@ -123,7 +123,7 @@
       "dim": 30,
       "dynamicDim": 20,
       "enableBlur": true,
-      "thumbnailBlurStrength": 70
+      "videoBlurStrength": 50
     },
     "hideWhenFullscreen": true,
     "parallax": {
