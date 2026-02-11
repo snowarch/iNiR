@@ -145,6 +145,159 @@ def boost_chroma_tone(argb: int, chroma: float = 1, tone: float = 1) -> int:
     return Hct.from_hct(hct.hue, hct.chroma * chroma, hct.tone * tone).to_int()
 
 
+def enforce_terminal_palette_spread(
+    term_colors: dict,
+    term_source_colors: dict,
+    darkmode: bool,
+    primary_color_argb: int,
+) -> None:
+    """Nudge generated terminal colors so they are less bunched together.
+
+    We keep Material You harmonization but ensure: (a) a minimum chroma floor so
+    colors don't all become muted pastels, (b) a tone delta from the background so
+    foreground colors remain legible, and (c) a small hue pull-back towards the
+    original source color if harmonization collapses hues together.
+    """
+
+    if not term_colors:
+        return
+
+    bg_hex = term_colors.get("term0") or term_source_colors.get("term0")
+    if not bg_hex:
+        return
+
+    bg_hct = Hct.from_int(hex_to_argb(bg_hex))
+    anchor_tone = bg_hct.tone
+
+    # Sets of keys to handle differently
+    chroma_keys = {
+        "term1",
+        "term2",
+        "term3",
+        "term4",
+        "term5",
+        "term6",
+        "term9",
+        "term10",
+        "term11",
+        "term12",
+        "term13",
+        "term14",
+    }
+    bright_keys = {
+        "term8",
+        "term9",
+        "term10",
+        "term11",
+        "term12",
+        "term13",
+        "term14",
+        "term15",
+    }
+
+    for key, hex_val in list(term_colors.items()):
+        source_hex = term_source_colors.get(key, hex_val)
+
+        try:
+            hct = Hct.from_int(hex_to_argb(hex_val))
+            source_hct = Hct.from_int(hex_to_argb(source_hex))
+        except Exception:
+            continue
+
+        # 1) Enforce a chroma floor so colors don't all sit near gray
+        if key in chroma_keys:
+            min_chroma = 34 if darkmode else 28
+            # Slightly higher floor for warm slots to keep them lively
+            if key in {"term1", "term3", "term5", "term9", "term11", "term13"}:
+                min_chroma += 4
+            if hct.chroma < min_chroma:
+                hct = Hct.from_hct(hct.hue, min_chroma, hct.tone)
+
+        # 2) Ensure a tone delta from the background so text is readable
+        is_bright = key in bright_keys
+        if key == "term8":
+            delta = 12  # dim bright-black only a bit away from background
+        else:
+            delta = 30 if is_bright else 22
+
+        if darkmode:
+            target_tone = clamp(anchor_tone + delta, 0, 100)
+            if hct.tone < target_tone:
+                hct = Hct.from_hct(hct.hue, hct.chroma, target_tone)
+        else:
+            target_tone = clamp(anchor_tone - delta, 0, 100)
+            if hct.tone > target_tone:
+                hct = Hct.from_hct(hct.hue, hct.chroma, target_tone)
+
+        # 3) If harmonization collapsed hues too close to the primary, pull a bit
+        #    back towards the original slot hue to preserve variety
+        hue_to_primary = difference_degrees(hct.hue, Hct.from_int(primary_color_argb).hue)
+        if hue_to_primary < 10:
+            restored_hue = sanitize_degrees_double(
+                hct.hue + (source_hct.hue - hct.hue) * 0.35
+            )
+            hct = Hct.from_hct(restored_hue, hct.chroma, hct.tone)
+
+        term_colors[key] = argb_to_hex(hct.to_int())
+
+
+def build_material_term_source(material_colors: dict, darkmode: bool) -> dict:
+    """Generate a default 16-color terminal palette from Material colors.
+
+    This avoids the static JSON hue bias (blue-ish) and anchors the palette to
+    the wallpaper-derived Material scheme. Falls back gracefully if keys are
+    missing.
+    """
+
+    def pick(name: str, fallback: str) -> str:
+        return material_colors.get(name, fallback)
+
+    # Core anchors with safe defaults
+    surface = pick("surfaceContainerLow" if darkmode else "surface", "#1E1E1E")
+    surface_high = pick("surfaceContainerHigh" if darkmode else "surfaceBright", "#2A2A2A")
+    on_surface = pick("onSurface", "#E6E1E5")
+    on_surface_var = pick("onSurfaceVariant", "#CAC4D0")
+    primary = pick("primary", "#9A82FF")
+    secondary = pick("secondary", "#89D1C5")
+    tertiary = pick("tertiary", "#F2B8C6")
+    primary_c = pick("primaryContainer", "#4F378A")
+    secondary_c = pick("secondaryContainer", "#4A635E")
+    tertiary_c = pick("tertiaryContainer", "#633B48")
+    on_primary = pick("onPrimary", "#0F0A1C")
+    on_secondary = pick("onSecondary", "#0D1F1A")
+    on_tertiary = pick("onTertiary", "#251420")
+    inverse_primary = pick("inversePrimary", primary)
+    outline = pick("outline", "#928F99")
+    outline_var = pick("outlineVariant", "#49454F")
+
+    return {
+        # Base / bright base
+        "term0": surface,
+        "term8": surface_high,
+        # Accents
+        "term1": primary,
+        "term2": secondary,
+        "term3": tertiary,
+        "term4": primary_c,
+        "term5": secondary_c,
+        "term6": tertiary_c,
+        # Neutral fg/bg
+        "term7": on_surface,
+        "term15": on_surface_var,
+        # Bright accents (on* give pop on dark bg)
+        "term9": on_primary,
+        "term10": on_secondary,
+        "term11": on_tertiary,
+        "term12": inverse_primary,
+        "term13": outline,
+        "term14": outline_var,
+    }
+
+
+def clamp(value: float, low: float, high: float) -> float:
+    return max(low, min(high, value))
+
+
 darkmode = args.mode == "dark"
 transparent = args.transparency == "transparent"
 
@@ -232,9 +385,31 @@ else:
 
 # Terminal Colors
 if args.termscheme is not None:
+    # Start from material-derived defaults to avoid static hue bias (e.g., always blue)
+    term_source_colors = build_material_term_source(material_colors, darkmode)
+
+    # If a term scheme file is provided, use it as a structure and blend with material
+    # anchors so we keep slot intent (reds/greens) but hue-align to the wallpaper.
     with open(args.termscheme, "r") as f:
         json_termscheme = f.read()
-    term_source_colors = json.loads(json_termscheme)["dark" if darkmode else "light"]
+    file_scheme = json.loads(json_termscheme)["dark" if darkmode else "light"]
+
+    # Retint file scheme slots towards corresponding material anchors while keeping
+    # their tone/chroma relationships to preserve semantic spread.
+    for key, val in file_scheme.items():
+        target_hex = term_source_colors.get(key, val)
+        try:
+            base_hct = Hct.from_int(hex_to_argb(val))
+            target_hct = Hct.from_int(hex_to_argb(target_hex))
+        except Exception:
+            term_source_colors[key] = val
+            continue
+
+        # Keep the tone from the file (preserves bright/dim intent), use target hue,
+        # and blend chroma between target and file to avoid washed-out results.
+        blended_chroma = max(base_hct.chroma * 0.5 + target_hct.chroma * 0.5, 18)
+        retinted = Hct.from_hct(target_hct.hue, blended_chroma, base_hct.tone)
+        term_source_colors[key] = argb_to_hex(retinted.to_int())
 
     primary_color_argb = hex_to_argb(material_colors["primary_paletteKeyColor"])
     
@@ -289,6 +464,10 @@ if args.termscheme is not None:
             harmonized = boost_chroma_tone(harmonized, 0.55, 1)
 
         term_colors[color] = argb_to_hex(harmonized)
+
+    enforce_terminal_palette_spread(
+        term_colors, term_source_colors, darkmode, primary_color_argb
+    )
 
 if args.debug == False:
     print(f"$darkmode: {darkmode};")

@@ -1004,7 +1004,8 @@ Singleton {
 
     Process {
         id: _checkAvailability
-        command: ["/usr/bin/which", "yt-dlp"]
+        // Need yt-dlp, mpv and socat (for IPC fallback when MPRIS is absent)
+        command: ["/bin/bash", "-c", "command -v yt-dlp >/dev/null && command -v mpv >/dev/null && command -v socat >/dev/null"]
         onExited: (code) => {
             root.available = (code === 0)
         }
@@ -1126,11 +1127,12 @@ Singleton {
         }
     }
 
-    property string ipcSocket: Directories.tempImages + "/../qs-ytmusic-mpv.sock"
+    // Use a short, guaranteed-existing path for the mpv IPC socket to avoid unix socket length issues
+    property string ipcSocket: "/tmp/qs-ytmusic-mpv.sock"
 
     Process {
         id: _stopProc
-        command: ["/usr/bin/pkill", "-f", "qs-ytmusic-mpv"]
+        command: ["/bin/bash", "-c", "pkill -f qs-ytmusic-mpv; rm -f " + root.ipcSocket]
     }
 
     Process {
