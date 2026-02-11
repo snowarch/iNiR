@@ -552,6 +552,8 @@
       "hideSyncBanner": false,
       "browser": "firefox",
       "cookiesPath": "",
+      "connected": false,
+      "resolvedBrowserArg": "",
       "recentSearches": [],
       "queue": [],
       "playlists": [],

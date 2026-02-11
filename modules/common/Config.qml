@@ -878,6 +878,8 @@ Singleton {
                     property bool hideSyncBanner: false
                     property string browser: "firefox"
                     property string cookiesPath: ""
+                    property bool connected: false
+                    property string resolvedBrowserArg: ""
                     property bool shuffleMode: false
                     property int repeatMode: 0
                     property list<string> recentSearches: []
