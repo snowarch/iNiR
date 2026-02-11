@@ -484,7 +484,13 @@ run_update() {
     tui_title "Checking for updates..."
     echo ""
     
-    if check_remote_updates; then
+    # After a git pull, the setup script re-execs itself so that updated library
+    # code (doctor, migrations, etc.) is loaded fresh. _II_POST_PULL signals that
+    # we already pulled and should skip straight to the sync phase.
+    if [[ "${_II_POST_PULL:-}" == "1" ]]; then
+        unset _II_POST_PULL
+        tui_success "Libraries reloaded after pull"
+    elif check_remote_updates; then
         show_pending_commits
         
         if $ask; then
@@ -508,6 +514,15 @@ run_update() {
             return 1
         fi
         tui_success "Changes pulled"
+
+        # Re-exec to pick up updated library code from the pull.
+        # Without this, functions sourced at startup (doctor, migrations, etc.)
+        # would still be the OLD versions in memory.
+        local reexec_args=("update")
+        $ask || reexec_args+=("-y")
+        $quiet && reexec_args+=("-q")
+        export _II_POST_PULL=1
+        exec "$REPO_ROOT/setup" "${reexec_args[@]}"
     else
         # Check if local repo is ahead of installed
         local installed_ver=$(get_installed_version)
@@ -587,7 +602,7 @@ run_update() {
         done
 
         # Sync directories
-        for dir in modules services scripts assets translations sdata/uv; do
+        for dir in modules services scripts assets translations sdata defaults; do
             [[ -d "${II_SOURCE}/${dir}" ]] && mkdir -p "${II_TARGET}/${dir}" && rsync -a --delete "${II_SOURCE}/${dir}/" "${II_TARGET}/${dir}/"
         done
 

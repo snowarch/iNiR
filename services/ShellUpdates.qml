@@ -55,7 +55,7 @@ Singleton {
         root.lastError = ""
         // Use execDetached so the update script survives shell restart
         // (./setup update calls qs kill -c ii at the end)
-        Quickshell.execDetached(["bash", root.repoPath + "/setup", "update", "-y", "-q"])
+        Quickshell.execDetached(["/usr/bin/bash", root.repoPath + "/setup", "update", "-y", "-q"])
         print("[ShellUpdates] Update launched (detached)")
         // Shell will be restarted by ./setup update, so just mark state
         root.hasUpdate = false
