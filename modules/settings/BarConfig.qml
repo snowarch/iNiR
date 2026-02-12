@@ -226,6 +226,44 @@ ContentPage {
                 }
             }
 
+            ConfigRow {
+                uniform: true
+
+                ContentSubsection {
+                    title: Translation.tr("Left scroll action")
+
+                    ConfigSelectionArray {
+                        currentValue: Config.options?.bar?.leftScrollAction ?? "brightness"
+                        onSelected: newValue => {
+                            Config.setNestedValue("bar.leftScrollAction", newValue)
+                        }
+                        options: [
+                            { displayName: Translation.tr("Brightness"), icon: "light_mode", value: "brightness" },
+                            { displayName: Translation.tr("Volume"), icon: "volume_up", value: "volume" },
+                            { displayName: Translation.tr("Workspaces"), icon: "workspaces", value: "workspace" },
+                            { displayName: Translation.tr("None"), icon: "block", value: "none" }
+                        ]
+                    }
+                }
+
+                ContentSubsection {
+                    title: Translation.tr("Right scroll action")
+
+                    ConfigSelectionArray {
+                        currentValue: Config.options?.bar?.rightScrollAction ?? "volume"
+                        onSelected: newValue => {
+                            Config.setNestedValue("bar.rightScrollAction", newValue)
+                        }
+                        options: [
+                            { displayName: Translation.tr("Brightness"), icon: "light_mode", value: "brightness" },
+                            { displayName: Translation.tr("Volume"), icon: "volume_up", value: "volume" },
+                            { displayName: Translation.tr("Workspaces"), icon: "workspaces", value: "workspace" },
+                            { displayName: Translation.tr("None"), icon: "block", value: "none" }
+                        ]
+                    }
+                }
+            }
+
             ConflictNote {
                 visible: !root.showBackground && root.isBorderless
                 icon: "lightbulb"
@@ -508,6 +546,16 @@ ContentPage {
                 onCheckedChanged: Config.options.bar.workspaces.wrapAround = checked
                 StyledToolTip {
                     text: Translation.tr("Cycle from last to first and vice versa")
+                }
+            }
+
+            SettingsSwitch {
+                buttonIcon: "swap_vert"
+                text: Translation.tr("Invert scroll")
+                checked: Config.options?.bar?.workspaces?.invertScroll ?? false
+                onCheckedChanged: Config.setNestedValue("bar.workspaces.invertScroll", checked)
+                StyledToolTip {
+                    text: Translation.tr("Reverse mouse wheel direction for switching workspaces")
                 }
             }
 

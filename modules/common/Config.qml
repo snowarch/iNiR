@@ -454,6 +454,8 @@ Singleton {
                 property string topLeftIcon: "spark" // Options: "distro" or any icon name in ~/.config/quickshell/ii/assets/icons
                 property bool showBackground: true
                 property bool showScrollHints: true // Show brightness/volume scroll hints on hover
+                property string leftScrollAction: "brightness" // "brightness", "volume", "workspace", "none"
+                property string rightScrollAction: "volume" // "brightness", "volume", "workspace", "none"
                 property JsonObject blurBackground: JsonObject {
                     property bool enabled: false
                     property real overlayOpacity: 0.3
@@ -527,6 +529,7 @@ Singleton {
                 }
                 property JsonObject workspaces: JsonObject {
                     property string scrollBehavior: "workspace" // "workspace" or "column"
+                    property bool invertScroll: false // Invert scroll direction
                     property bool monochromeIcons: true
                     property bool dynamicCount: true // Auto-detect workspace count (Niri)
                     property int shown: 10 // Only used when dynamicCount is false

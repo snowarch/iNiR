@@ -238,6 +238,9 @@
     },
     "screenList": [],
     "showBackground": false,
+    "showScrollHints": true,
+    "leftScrollAction": "brightness",
+    "rightScrollAction": "volume",
     "topLeftIcon": "spark",
     "tray": {
       "filterPassive": true,
@@ -274,6 +277,7 @@
       "monochromeIcons": true,
       "numberMap": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
       "scrollBehavior": "workspace",
+      "invertScroll": false,
       "showAppIcons": false,
       "showNumberDelay": 300,
       "shown": 5,

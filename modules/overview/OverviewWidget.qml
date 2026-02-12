@@ -83,9 +83,12 @@ Item {
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
         enabled: CompositorService.isHyprland
         onWheel: (event) => {
-            const deltaY = event.angleDelta.y
+            let deltaY = event.angleDelta.y
             if (deltaY === 0)
                 return
+
+            if (Config.options?.bar?.workspaces?.invertScroll ?? false)
+                deltaY = -deltaY
 
             // Requerir varios pasos de rueda antes de cambiar de workspace
             root.wheelStepCounter += 1

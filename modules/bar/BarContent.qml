@@ -39,6 +39,47 @@ Item { // Bar content region
     }
 
     readonly property bool inirEverywhere: Appearance.inirEverywhere
+    readonly property string leftAction: Config.options?.bar?.leftScrollAction ?? "brightness"
+    readonly property string rightAction: Config.options?.bar?.rightScrollAction ?? "volume"
+
+    function performScrollAction(action, isUp) {
+        if (action === "brightness") {
+            const step = 0.05;
+            root.brightnessMonitor.setBrightness(root.brightnessMonitor.brightness + (isUp ? step : -step));
+        } else if (action === "volume") {
+            if (isUp) Audio.incrementVolume();
+            else Audio.decrementVolume();
+        } else if (action === "workspace") {
+            let up = isUp;
+            if (Config.options?.bar?.workspaces?.invertScroll ?? false) up = !up;
+
+            if (CompositorService.isNiri) {
+                if (up) NiriService.focusWorkspaceUp();
+                else NiriService.focusWorkspaceDown();
+            } else if (CompositorService.isHyprland) {
+                Hyprland.dispatch(up ? "workspace r-1" : "workspace r+1");
+            }
+        }
+    }
+
+    function closeOSD(action) {
+        if (action === "brightness") GlobalStates.osdBrightnessOpen = false;
+        else if (action === "volume") GlobalStates.osdVolumeOpen = false;
+    }
+
+    function getScrollIcon(action) {
+        if (action === "brightness") return "light_mode";
+        if (action === "volume") return "volume_up";
+        if (action === "workspace") return "workspaces";
+        return "";
+    }
+
+    function getScrollTooltip(action) {
+        if (action === "brightness") return Translation.tr("Scroll to change brightness");
+        if (action === "volume") return Translation.tr("Scroll to change volume");
+        if (action === "workspace") return Translation.tr("Scroll to switch workspaces");
+        return "";
+    }
 
     component VerticalBarSeparator: Rectangle {
         Layout.topMargin: Appearance.sizes.baseBarHeight / 3
@@ -189,9 +230,9 @@ Item { // Bar content region
         implicitWidth: leftSectionRowLayout.implicitWidth
         implicitHeight: Appearance.sizes.baseBarHeight
 
-        onScrollDown: root.brightnessMonitor.setBrightness(root.brightnessMonitor.brightness - 0.05)
-        onScrollUp: root.brightnessMonitor.setBrightness(root.brightnessMonitor.brightness + 0.05)
-        onMovedAway: GlobalStates.osdBrightnessOpen = false
+        onScrollDown: root.performScrollAction(root.leftAction, false)
+        onScrollUp: root.performScrollAction(root.leftAction, true)
+        onMovedAway: root.closeOSD(root.leftAction)
         onPressed: event => {
             if (event.button === Qt.LeftButton)
                 GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen;
@@ -200,9 +241,9 @@ Item { // Bar content region
         // ScrollHint as overlay - at the inner edge of the margin space
         ScrollHint {
             id: leftScrollHint
-            reveal: barLeftSideMouseArea.hovered && (Config.options?.bar?.showScrollHints ?? true)
-            icon: "light_mode"
-            tooltipText: Translation.tr("Scroll to change brightness")
+            reveal: barLeftSideMouseArea.hovered && (Config.options?.bar?.showScrollHints ?? true) && root.leftAction !== "none"
+            icon: root.getScrollIcon(root.leftAction)
+            tooltipText: root.getScrollTooltip(root.leftAction)
             side: "left"
             x: Appearance.rounding.screenRounding - implicitWidth - Appearance.sizes.spacingSmall
             anchors.verticalCenter: parent.verticalCenter
@@ -346,9 +387,9 @@ Item { // Bar content region
         implicitWidth: rightSectionRowLayout.implicitWidth
         implicitHeight: Appearance.sizes.baseBarHeight
 
-        onScrollDown: Audio.decrementVolume();
-        onScrollUp: Audio.incrementVolume();
-        onMovedAway: GlobalStates.osdVolumeOpen = false;
+        onScrollDown: root.performScrollAction(root.rightAction, false)
+        onScrollUp: root.performScrollAction(root.rightAction, true)
+        onMovedAway: root.closeOSD(root.rightAction)
         onPressed: event => {
             if (event.button === Qt.LeftButton) {
                 GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen;
@@ -358,9 +399,9 @@ Item { // Bar content region
         // ScrollHint as overlay - at the inner edge of the margin space
         ScrollHint {
             id: rightScrollHint
-            reveal: barRightSideMouseArea.hovered && (Config.options?.bar?.showScrollHints ?? true)
-            icon: "volume_up"
-            tooltipText: Translation.tr("Scroll to change volume")
+            reveal: barRightSideMouseArea.hovered && (Config.options?.bar?.showScrollHints ?? true) && root.rightAction !== "none"
+            icon: root.getScrollIcon(root.rightAction)
+            tooltipText: root.getScrollTooltip(root.rightAction)
             side: "right"
             x: parent.width - Appearance.rounding.screenRounding + Appearance.sizes.spacingSmall
             anchors.verticalCenter: parent.verticalCenter
