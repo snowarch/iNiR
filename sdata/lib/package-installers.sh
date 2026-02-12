@@ -447,6 +447,22 @@ install-uv(){
   echo -e "${STY_GREEN}uv installed.${STY_RST}"
 }
 
+install-zoxide(){
+  if command -v zoxide &>/dev/null; then
+    echo -e "${STY_GREEN}zoxide already installed.${STY_RST}"
+    return 0
+  fi
+
+  echo -e "${STY_BLUE}Installing zoxide...${STY_RST}"
+
+  curl -sSf https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh 2>/dev/null || {
+    echo -e "${STY_YELLOW}Could not install zoxide.${STY_RST}"
+    return 1
+  }
+
+  echo -e "${STY_GREEN}zoxide installed.${STY_RST}"
+}
+
 #####################################################################################
 # Config File Setup (All distros)
 #####################################################################################
@@ -689,6 +705,12 @@ if status is-interactive
         starship init fish | source
     end
 
+    # zoxide - smarter cd command
+    if command -v zoxide > /dev/null
+        zoxide init fish | source
+        alias cd z
+    end
+
     # Load terminal colors from ii theming
     if test -f ~/.local/state/quickshell/user/generated/terminal/sequences.txt
         cat ~/.local/state/quickshell/user/generated/terminal/sequences.txt
@@ -733,6 +755,15 @@ if command -v starship &> /dev/null; then
     eval "$(starship init bash)"
 elif [[ -x ~/.local/bin/starship ]]; then
     eval "$(~/.local/bin/starship init bash)"
+fi
+
+# zoxide - smarter cd command (replaces cd)
+if command -v zoxide &> /dev/null; then
+    eval "$(zoxide init bash)"
+    alias cd='z'
+elif [[ -x ~/.local/bin/zoxide ]]; then
+    eval "$(~/.local/bin/zoxide init bash)"
+    alias cd='z'
 fi
 
 # Aliases
@@ -785,6 +816,15 @@ if command -v starship &> /dev/null; then
     eval "$(starship init zsh)"
 elif [[ -x ~/.local/bin/starship ]]; then
     eval "$(~/.local/bin/starship init zsh)"
+fi
+
+# zoxide - smarter cd command (replaces cd)
+if command -v zoxide &> /dev/null; then
+    eval "$(zoxide init zsh)"
+    alias cd='z'
+elif [[ -x ~/.local/bin/zoxide ]]; then
+    eval "$(~/.local/bin/zoxide init zsh)"
+    alias cd='z'
 fi
 
 # Aliases
@@ -881,6 +921,7 @@ install-all-tools(){
   install-uv
   install-cliphist
   install-matugen
+  install-zoxide
 
   echo -e "${STY_GREEN}All tools installed.${STY_RST}"
 }
