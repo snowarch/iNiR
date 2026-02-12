@@ -455,12 +455,82 @@ install-zoxide(){
 
   echo -e "${STY_BLUE}Installing zoxide...${STY_RST}"
 
-  curl -sSf https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh 2>/dev/null || {
-    echo -e "${STY_YELLOW}Could not install zoxide.${STY_RST}"
-    return 1
-  }
+  # Try distro package manager first, fallback to official installer
+  case "$OS_GROUP_ID" in
+    arch)
+      # Arch Linux - use pacman (zoxide is in official repos)
+      if command -v pacman &>/dev/null; then
+        sudo pacman -S --needed --noconfirm zoxide 2>/dev/null && {
+          echo -e "${STY_GREEN}zoxide installed via pacman.${STY_RST}"
+          return 0
+        }
+      fi
+      ;;
 
-  echo -e "${STY_GREEN}zoxide installed.${STY_RST}"
+    fedora)
+      # Fedora - use dnf (zoxide is in official repos)
+      if command -v dnf &>/dev/null; then
+        sudo dnf install -y zoxide 2>/dev/null && {
+          echo -e "${STY_GREEN}zoxide installed via dnf.${STY_RST}"
+          return 0
+        }
+      fi
+      ;;
+
+    debian|ubuntu)
+      # Debian/Ubuntu - zoxide is in repos for newer versions
+      if command -v apt &>/dev/null; then
+        sudo apt install -y zoxide 2>/dev/null && {
+          echo -e "${STY_GREEN}zoxide installed via apt.${STY_RST}"
+          return 0
+        }
+      fi
+      ;;
+
+    opensuse)
+      # openSUSE - use zypper
+      if command -v zypper &>/dev/null; then
+        sudo zypper install -y zoxide 2>/dev/null && {
+          echo -e "${STY_GREEN}zoxide installed via zypper.${STY_RST}"
+          return 0
+        }
+      fi
+      ;;
+
+    void)
+      # Void Linux - use xbps
+      if command -v xbps-install &>/dev/null; then
+        sudo xbps-install -Sy zoxide 2>/dev/null && {
+          echo -e "${STY_GREEN}zoxide installed via xbps.${STY_RST}"
+          return 0
+        }
+      fi
+      ;;
+
+    alpine)
+      # Alpine Linux - use apk
+      if command -v apk &>/dev/null; then
+        sudo apk add zoxide 2>/dev/null && {
+          echo -e "${STY_GREEN}zoxide installed via apk.${STY_RST}"
+          return 0
+        }
+      fi
+      ;;
+  esac
+
+  # Fallback: Official installer (works on all Linux distributions)
+  echo -e "${STY_BLUE}Installing zoxide via official installer...${STY_RST}"
+
+  if curl -sSf https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh; then
+    # Add to PATH if installed to ~/.local/bin
+    if [[ -f "$HOME/.local/bin/zoxide" ]]; then
+      export PATH="$HOME/.local/bin:$PATH"
+    fi
+    echo -e "${STY_GREEN}zoxide installed successfully.${STY_RST}"
+  else
+    echo -e "${STY_YELLOW}Failed to install zoxide.${STY_RST}"
+    return 1
+  fi
 }
 
 #####################################################################################
