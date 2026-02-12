@@ -705,10 +705,9 @@ if status is-interactive
         starship init fish | source
     end
 
-    # zoxide - smarter cd command
+    # zoxide - smarter cd command (replaces cd)
     if command -v zoxide > /dev/null
-        zoxide init fish | source
-        alias cd z
+        zoxide init --cmd cd fish | source
     end
 
     # Load terminal colors from ii theming
@@ -759,11 +758,9 @@ fi
 
 # zoxide - smarter cd command (replaces cd)
 if command -v zoxide &> /dev/null; then
-    eval "$(zoxide init bash)"
-    alias cd='z'
+    eval "$(zoxide init --cmd cd bash)"
 elif [[ -x ~/.local/bin/zoxide ]]; then
-    eval "$(~/.local/bin/zoxide init bash)"
-    alias cd='z'
+    eval "$(~/.local/bin/zoxide init --cmd cd bash)"
 fi
 
 # Aliases
@@ -820,11 +817,9 @@ fi
 
 # zoxide - smarter cd command (replaces cd)
 if command -v zoxide &> /dev/null; then
-    eval "$(zoxide init zsh)"
-    alias cd='z'
+    eval "$(zoxide init --cmd cd zsh)"
 elif [[ -x ~/.local/bin/zoxide ]]; then
-    eval "$(~/.local/bin/zoxide init zsh)"
-    alias cd='z'
+    eval "$(~/.local/bin/zoxide init --cmd cd zsh)"
 fi
 
 # Aliases
