@@ -59,10 +59,18 @@ Singleton {
 	}
 
 	readonly property bool isYtMusicActive: {
-		if (YtMusic.currentVideoId) return true;
-		if (YtMusic.mpvPlayer) return true;
 		if (!activePlayer) return false;
-		return _isYtMusicMpv(activePlayer);
+		// YtMusic is "active" only when the active player IS the YtMusic mpv instance
+		if (_isYtMusicMpv(activePlayer)) return true;
+		// Or when YtMusic has a video loaded, mpv is still alive, and no other player is playing
+		if (YtMusic.currentVideoId && YtMusic.mpvPlayer) {
+			const _ = _playbackStateVersion;
+			for (let i = 0; i < players.length; i++) {
+				if (players[i]?.isPlaying && !_isYtMusicMpv(players[i])) return false;
+			}
+			return true;
+		}
+		return false;
 	}
 	
 	property bool hasPlasmaIntegration: false
@@ -430,16 +438,16 @@ Singleton {
 				});
 			}
 
-			function onPlaybackStateChanged() {
-				// Increment version to force activePlayer re-evaluation
-				root._playbackStateVersion++;
-				// Update tracked player if this one started playing
-				if (modelData.isPlaying && root.trackedPlayer !== modelData && isRealPlayer(modelData)) {
-					root.trackedPlayer = modelData;
-				}
-				// Rebuild on playback state change (affects filtering)
-				root._rebuildPlayerList();
+		function onPlaybackStateChanged() {
+			// Increment version to force activePlayer re-evaluation
+			root._playbackStateVersion++;
+			// Update tracked player if this one started playing
+			if (modelData.isPlaying && isRealPlayer(modelData)) {
+				root.trackedPlayer = modelData;
 			}
+			// Rebuild on playback state change (affects filtering)
+			root._rebuildPlayerList();
+		}
 			
 			// Rebuild when track title changes (affects isRealPlayer filter)
 			function onTrackTitleChanged() {
@@ -485,7 +493,7 @@ Singleton {
 	function togglePlaying(): void {
 		if (root.isYtMusicActive && YtMusic.currentVideoId) {
 			YtMusic.togglePlaying();
-		} else if (this.canTogglePlaying) {
+		} else if (this.activePlayer?.canTogglePlaying) {
 			this.activePlayer.togglePlaying();
 		}
 	}
@@ -495,7 +503,7 @@ Singleton {
 		if (root.isYtMusicActive && YtMusic.currentVideoId) {
 			this.__reverse = true;
 			YtMusic.playPrevious();
-		} else if (this.canGoPrevious) {
+		} else if (this.activePlayer?.canGoPrevious) {
 			this.__reverse = true;
 			this.activePlayer.previous();
 		}
@@ -506,7 +514,7 @@ Singleton {
 		if (root.isYtMusicActive && YtMusic.currentVideoId) {
 			this.__reverse = false;
 			YtMusic.playNext();
-		} else if (this.canGoNext) {
+		} else if (this.activePlayer?.canGoNext) {
 			this.__reverse = false;
 			this.activePlayer.next();
 		}
@@ -566,11 +574,7 @@ Singleton {
 		}
 
 		function playPause(): void {
-			if (root.isYtMusicActive && YtMusic.currentVideoId) {
-				YtMusic.togglePlaying();
-			} else {
-				root.togglePlaying();
-			}
+			root.togglePlaying();
 			GlobalStates.osdMediaAction = root.isPlaying ? "pause" : "play";
 			GlobalStates.osdMediaOpen = true;
 		}
