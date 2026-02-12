@@ -54,6 +54,10 @@ Item {
             name: "model",
             description: Translation.tr("Choose model"),
             execute: args => {
+                if (args.length === 0 || !args[0] || args[0] === "get") {
+                    Ai.addMessage(Translation.tr("Usage: %1model MODEL_ID").arg(root.commandPrefix), Ai.interfaceRole);
+                    return;
+                }
                 Ai.setModel(args[0]);
             }
         },
@@ -88,6 +92,10 @@ Item {
             name: "key",
             description: Translation.tr("Set API key"),
             execute: args => {
+                if (args.length === 0) {
+                    Ai.addMessage(Translation.tr("Usage: %1key YOUR_API_KEY\n%1key get").arg(root.commandPrefix), Ai.interfaceRole);
+                    return;
+                }
                 if (args[0] == "get") {
                     Ai.printApiKey();
                 } else {
@@ -767,8 +775,11 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                 ApiInputBoxIndicator {
                     // Model indicator
                     icon: "api"
-                    text: Ai.getModel().name
-                    tooltipText: Translation.tr("Current model: %1\nSet it with %2model MODEL").arg(Ai.getModel().name).arg(root.commandPrefix)
+                    readonly property var _model: Ai.getModel()
+                    text: _model?.name ?? Translation.tr("No model")
+                    tooltipText: _model
+                        ? Translation.tr("Current model: %1\nSet it with %2model MODEL").arg(_model.name).arg(root.commandPrefix)
+                        : Translation.tr("No model selected\nSet it with %1model MODEL").arg(root.commandPrefix)
                 }
 
                 ApiInputBoxIndicator {

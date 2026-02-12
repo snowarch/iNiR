@@ -606,6 +606,11 @@ run_update() {
             [[ -d "${II_SOURCE}/${dir}" ]] && mkdir -p "${II_TARGET}/${dir}" && rsync -a --delete "${II_SOURCE}/${dir}/" "${II_TARGET}/${dir}/"
         done
 
+        # Sync metadata files (needed by shell update overlay)
+        for meta in VERSION CHANGELOG.md; do
+            [[ -f "${II_SOURCE}/${meta}" ]] && cp -f "${II_SOURCE}/${meta}" "${II_TARGET}/${meta}"
+        done
+
         # Cleanup deprecated files
         [[ -f "${II_TARGET}/requirements.txt" ]] && rm -f "${II_TARGET}/requirements.txt"
 

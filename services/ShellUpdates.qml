@@ -5,6 +5,7 @@ import qs.modules.common.functions
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Services.Notifications
 
 /*
  * iNiR shell update checker service.
@@ -25,6 +26,7 @@ Singleton {
         function performUpdate(): void { root.performUpdate() }
         function dismiss(): void { root.dismiss() }
         function undismiss(): void { root.undismiss() }
+        function diagnose(): string { return root.getDiagnostics() }
     }
     id: root
 
@@ -35,10 +37,18 @@ Singleton {
     property string localCommit: ""
     property string remoteCommit: ""
     property string currentBranch: "main"  // Current git branch
+    property string _remoteBranch: "main"  // Resolved remote branch (may differ from currentBranch if not pushed)
     property bool isChecking: false
     property bool isUpdating: false
     property string lastError: ""
     property bool available: false  // git is available and repo exists
+
+    // Notification tracking (prevent spam)
+    property bool initialAvailabilityChecked: false
+    property bool initialUpdateCheckDone: false
+    property bool unavailableNotificationShown: false
+    property int consecutiveFetchErrors: 0
+    property bool fetchErrorNotificationShown: false
 
     // Overlay state
     property bool overlayOpen: false
@@ -58,6 +68,7 @@ Singleton {
     readonly property bool enabled: Config.options?.shellUpdates?.enabled ?? true
     readonly property int checkIntervalMs: (Config.options?.shellUpdates?.checkIntervalMinutes ?? 360) * 60 * 1000
     readonly property string dismissedCommit: Config.options?.shellUpdates?.dismissedCommit ?? ""
+    readonly property string lastNotifiedCommit: Config.options?.shellUpdates?.lastNotifiedCommit ?? ""
     readonly property bool showUpdate: hasUpdate && !isDismissed && !isUpdating
     readonly property bool isDismissed: dismissedCommit.length > 0 && remoteCommit === dismissedCommit
 
@@ -66,6 +77,43 @@ Singleton {
     property string repoPath: configDir  // Will be updated after reading version.json
     property bool repoPathLoaded: false
     readonly property string manifestPath: configDir + "/.ii-manifest"
+
+    // Handler: notify when availability changes to false (after initial check)
+    onAvailableChanged: {
+        if (initialAvailabilityChecked && !available && !unavailableNotificationShown) {
+            unavailableNotificationShown = true
+            Notifications.notify({
+                summary: "iNiR Updates Unavailable",
+                body: "Repository not found. Run './setup doctor' to diagnose the issue.",
+                urgency: NotificationUrgency.Normal,
+                timeout: 10000,
+                appName: "iNiR Shell"
+            })
+            print("[ShellUpdates] Notification sent: Updates unavailable")
+        }
+        // Reset notification flag when available becomes true again
+        if (available) {
+            unavailableNotificationShown = false
+        }
+    }
+
+    // Handler: notify when a new update is detected
+    onHasUpdateChanged: {
+        if (!hasUpdate || !available || !initialUpdateCheckDone || isDismissed) return
+        if (remoteCommit.length === 0 || remoteCommit === lastNotifiedCommit) return
+
+        const version = root.remoteVersion.length > 0 ? (" v" + root.remoteVersion) : ""
+        const commits = root.commitsBehind > 0 ? (root.commitsBehind + " commits behind") : "New version available"
+        Notifications.notify({
+            summary: "iNiR Update Available" + version,
+            body: commits + ". Click the update indicator in the bar or open Settings → Services.",
+            urgency: NotificationUrgency.Normal,
+            timeout: 15000,
+            appName: "iNiR Shell"
+        })
+        Config.setNestedValue("shellUpdates.lastNotifiedCommit", remoteCommit)
+        print("[ShellUpdates] Notification sent: Update available" + version)
+    }
 
     function check(): void {
         if (!enabled || isChecking || isUpdating) return
@@ -96,14 +144,16 @@ Singleton {
     }
 
     function performUpdate(): void {
-        if (isUpdating || !hasUpdate) return
+        if (isUpdating || !hasUpdate || !available) return
         root.isUpdating = true
         root.lastError = ""
         root.overlayOpen = false
         // Use execDetached so the update script survives shell restart
         // (./setup update calls qs kill -c ii at the end)
-        Quickshell.execDetached(["/usr/bin/bash", root.repoPath + "/setup", "update", "-y", "-q"])
-        print("[ShellUpdates] Update launched (detached)")
+        // Must cd to repo dir first — setup expects to run from its own directory
+        Quickshell.execDetached(["/usr/bin/bash", "-c",
+            "cd '" + root.repoPath + "' && ./setup update -y -q"])
+        print("[ShellUpdates] Update launched (detached) from: " + root.repoPath)
         // Shell will be restarted by ./setup update, so just mark state
         root.hasUpdate = false
         root.commitsBehind = 0
@@ -122,6 +172,27 @@ Singleton {
         Config.setNestedValue("shellUpdates.dismissedCommit", "")
     }
 
+    function getDiagnostics(): string {
+        const diag = {
+            available: root.available,
+            repoPath: root.repoPath,
+            repoPathLoaded: root.repoPathLoaded,
+            configDir: root.configDir,
+            versionJsonPath: Directories.shellConfig + "/version.json",
+            gitAvailable: root.available,
+            lastError: root.lastError,
+            consecutiveFetchErrors: root.consecutiveFetchErrors,
+            hasUpdate: root.hasUpdate,
+            commitsBehind: root.commitsBehind,
+            localCommit: root.localCommit,
+            remoteCommit: root.remoteCommit,
+            currentBranch: root.currentBranch,
+            localVersion: root.localVersion,
+            remoteVersion: root.remoteVersion
+        }
+        return JSON.stringify(diag, null, 2)
+    }
+
     // Initial check after startup delay
     Timer {
         id: startupDelay
@@ -134,22 +205,26 @@ Singleton {
         }
     }
 
-    // Load repo path from version.json
+    // Load repo path from version.json (stored in shellConfig dir, NOT in quickshell config dir)
     Process {
         id: loadRepoPathProc
         property bool _handledFallback: false
         running: false
         onRunningChanged: if (running) _handledFallback = false
-        command: ["cat", root.configDir + "/../illogical-impulse/version.json"]
+        command: ["cat", Directories.shellConfig + "/version.json"]
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
                     const json = JSON.parse(text ?? "{}")
+                    // Extract version from version.json (always available even if VERSION file missing)
+                    if (json.version && json.version !== "0.0.0") {
+                        root.localVersion = json.version
+                    }
                     if (json.repo_path && json.repo_path.length > 0) {
                         root.repoPath = json.repo_path
                         print("[ShellUpdates] Using repo path from version.json: " + root.repoPath)
                         root.repoPathLoaded = true
-                        availabilityProc.running = true
+                        validateRepoPathProc.running = true
                         return
                     }
                 } catch (e) {
@@ -169,7 +244,33 @@ Singleton {
         }
     }
 
-    // Search for repository in common locations
+    Process {
+        id: validateRepoPathProc
+        running: false
+        command: [
+            "/usr/bin/bash", "-c",
+            "p='" + root.repoPath + "'; [[ -d \"$p/.git\" && -f \"$p/setup\" && -f \"$p/shell.qml\" ]] && echo OK || echo ''"
+        ]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const ok = ((text ?? "").trim() === "OK")
+                if (ok) {
+                    availabilityProc.running = true
+                } else {
+                    print("[ShellUpdates] repo_path from version.json is invalid, searching for repository...")
+                    searchRepoProc.running = true
+                }
+            }
+        }
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0) {
+                print("[ShellUpdates] Failed to validate repo_path, searching for repository...")
+                searchRepoProc.running = true
+            }
+        }
+    }
+
+    // Search for repository — check config dir (dev), then use `find` on common parent dirs
     Process {
         id: searchRepoProc
         running: false
@@ -177,10 +278,16 @@ Singleton {
             "/usr/bin/bash", "-c",
             // First check if config dir itself is a git repo (dev setup)
             "if [[ -d \"" + root.configDir + "/.git\" ]]; then echo \"" + root.configDir + "\"; exit 0; fi; " +
-            // Then search common clone locations
-            "for dir in ~/inir ~/iNiR ~/Downloads/inir ~/Downloads/iNiR ~/.local/src/inir ~/.local/src/iNiR /tmp/inir /tmp/iNiR; do " +
-            "if [[ -d \"$dir/.git\" ]]; then echo \"$dir\"; exit 0; fi; done; " +
-            "echo ''"
+            // Search for a git repo containing setup + shell.qml (our repo signature)
+            // Check common locations first, then broader search
+            "for dir in ~/illogical-impulse ~/inir ~/iNiR " +
+            "~/.local/src/illogical-impulse ~/.local/src/inir " +
+            "~/Projects/illogical-impulse ~/Projects/inir " +
+            "~/Downloads/illogical-impulse ~/Downloads/inir " +
+            "~/src/illogical-impulse ~/src/inir; do " +
+            "if [[ -d \"$dir/.git\" && -f \"$dir/setup\" && -f \"$dir/shell.qml\" ]]; then echo \"$dir\"; exit 0; fi; done; " +
+            // Last resort: find in home (max depth 3, timeout 2s)
+            "timeout 2 find \"$HOME\" -maxdepth 3 -name setup \\( -path '*/inir/setup' -o -path '*/illogical-impulse/setup' -o -path '*/ii/setup' \\) 2>/dev/null | while read -r f; do [[ -f \"$(dirname \"$f\")/shell.qml\" ]] && dirname \"$f\" && break; done; "
         ]
         stdout: StdioCollector {
             onStreamFinished: {
@@ -188,6 +295,8 @@ Singleton {
                 if (foundPath.length > 0) {
                     root.repoPath = foundPath
                     print("[ShellUpdates] Found repository at: " + root.repoPath)
+                    // Persist found path to version.json to avoid repeated searches
+                    persistRepoPathProc.running = true
                 } else {
                     print("[ShellUpdates] Repository not found, using config dir: " + root.configDir)
                     print("[ShellUpdates] Update feature will not be available")
@@ -198,6 +307,39 @@ Singleton {
         onExited: (exitCode, exitStatus) => {
             // Now check git availability
             availabilityProc.running = true
+        }
+    }
+
+    // Persist found repo path to version.json
+    Process {
+        id: persistRepoPathProc
+        running: false
+        command: [
+            "/usr/bin/bash", "-c",
+            "vfile='" + Directories.shellConfig + "/version.json'; " +
+            "if [[ -f \"$vfile\" ]] && command -v jq &>/dev/null; then " +
+            "  tmp=$(mktemp); " +
+            "  jq --arg p '" + root.repoPath + "' '.repo_path = $p' \"$vfile\" > \"$tmp\" && mv \"$tmp\" \"$vfile\"; " +
+            "  echo 'Updated'; " +
+            "elif [[ -f \"$vfile\" ]] && command -v python3 &>/dev/null; then " +
+            "  tmp=$(mktemp); " +
+            "  python3 -c 'import json,sys; path=sys.argv[1]; repo=sys.argv[2]; " +
+            "\ntry: data=json.load(open(path,\"r\",encoding=\"utf-8\"))" +
+            "\nexcept Exception: data={}" +
+            "\ndata[\"repo_path\"]=repo" +
+            "\njson.dump(data, sys.stdout, ensure_ascii=False, indent=2)' \"$vfile\" '" + root.repoPath + "' > \"$tmp\" " +
+            "    && mv \"$tmp\" \"$vfile\" && echo 'Updated' || echo 'Skipped'; " +
+            "else " +
+            "  echo 'Skipped'; " +
+            "fi"
+        ]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const result = (text ?? "").trim()
+                if (result === "Updated") {
+                    print("[ShellUpdates] Persisted repo_path to version.json: " + root.repoPath)
+                }
+            }
         }
     }
 
@@ -227,6 +369,7 @@ Singleton {
         command: ["git", "-C", root.repoPath, "rev-parse", "--git-dir"]
         onExited: (exitCode, exitStatus) => {
             root.available = (exitCode === 0)
+            root.initialAvailabilityChecked = true
             print("[ShellUpdates] Git available: " + root.available)
             if (root.available) {
                 // Load system info (manifest + local log) before checking for updates
@@ -284,13 +427,21 @@ Singleton {
     }
 
     // Step 1d: Read local VERSION on startup
+    // Try repo path first (VERSION is there), fallback to config dir (dev setup)
     Process {
         id: localVersionStartupProc
         running: false
-        command: ["cat", root.configDir + "/VERSION"]
+        command: [
+            "/usr/bin/bash", "-c",
+            "cat '" + root.repoPath + "/VERSION' 2>/dev/null || cat '" + root.configDir + "/VERSION' 2>/dev/null || echo ''"
+        ]
         stdout: StdioCollector {
             onStreamFinished: {
-                root.localVersion = (text ?? "").trim()
+                const ver = (text ?? "").trim()
+                // Only override if we got a better version than what version.json gave us
+                if (ver.length > 0 && ver !== root.localVersion) {
+                    root.localVersion = ver
+                }
                 print("[ShellUpdates] Local version: " + root.localVersion)
             }
         }
@@ -307,9 +458,28 @@ Singleton {
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0) {
                 root.isChecking = false
-                // Silent fail - network might be down, retry next interval
+                root.consecutiveFetchErrors++
+                print("[ShellUpdates] Fetch failed (attempt " + root.consecutiveFetchErrors + ")")
+
+                // Notify after 3 consecutive failures (persistent problem)
+                if (root.consecutiveFetchErrors >= 3 && !root.fetchErrorNotificationShown) {
+                    root.fetchErrorNotificationShown = true
+                    const title = "iNiR Update Check Failed"
+                    const body = "Cannot reach remote repository. Check your internet connection or run './setup doctor'."
+                    Notifications.notify({
+                        summary: title,
+                        body: body,
+                        urgency: NotificationUrgency.Low,
+                        timeout: 8000,
+                        appName: "iNiR Shell"
+                    })
+                    print("[ShellUpdates] Notification sent: Persistent fetch errors")
+                }
                 return
             }
+            // Success - reset error counters
+            root.consecutiveFetchErrors = 0
+            root.fetchErrorNotificationShown = false
             currentBranchProc.running = true
         }
     }
@@ -369,6 +539,7 @@ Singleton {
                 remoteCommitFallbackProc.running = true
                 return
             }
+            root._remoteBranch = root.currentBranch
             countCommitsProc.running = true
         }
     }
@@ -389,6 +560,7 @@ Singleton {
                 remoteCommitFallback2Proc.running = true
                 return
             }
+            root._remoteBranch = "main"
             countCommitsProc.running = true
         }
     }
@@ -408,6 +580,7 @@ Singleton {
                 root.isChecking = false
                 return
             }
+            root._remoteBranch = "master"
             countCommitsProc.running = true
         }
     }
@@ -416,7 +589,7 @@ Singleton {
     Process {
         id: countCommitsProc
         running: false
-        command: ["git", "-C", root.repoPath, "rev-list", "--count", "HEAD..origin/" + root.currentBranch]
+        command: ["git", "-C", root.repoPath, "rev-list", "--count", "HEAD..origin/" + root._remoteBranch]
         stdout: StdioCollector {
             onStreamFinished: {
                 const count = parseInt((text ?? "0").trim())
@@ -429,6 +602,7 @@ Singleton {
                 root.hasUpdate = root.localCommit !== root.remoteCommit && root.remoteCommit.length > 0
                 root.commitsBehind = root.hasUpdate ? 1 : 0
                 root.isChecking = false
+                root.initialUpdateCheckDone = true
                 return
             }
             root.hasUpdate = root.commitsBehind > 0
@@ -437,6 +611,7 @@ Singleton {
                 latestMessageProc.running = true
             } else {
                 root.isChecking = false
+                root.initialUpdateCheckDone = true
                 print("[ShellUpdates] Up to date (" + root.localCommit + ")")
             }
         }
@@ -446,7 +621,7 @@ Singleton {
     Process {
         id: latestMessageProc
         running: false
-        command: ["git", "-C", root.repoPath, "log", "--oneline", "-1", "origin/" + root.currentBranch]
+        command: ["git", "-C", root.repoPath, "log", "--oneline", "-1", "origin/" + root._remoteBranch]
         stdout: StdioCollector {
             onStreamFinished: {
                 root.latestMessage = (text ?? "").trim()
@@ -454,6 +629,7 @@ Singleton {
         }
         onExited: (exitCode, exitStatus) => {
             root.isChecking = false
+            root.initialUpdateCheckDone = true
         }
     }
 
@@ -468,7 +644,7 @@ Singleton {
         command: [
             "git", "-C", root.repoPath, "log",
             "--pretty=format:%h|%s|%cr|%an",
-            "HEAD..origin/" + root.currentBranch
+            "HEAD..origin/" + root._remoteBranch
         ]
         stdout: StdioCollector {
             onStreamFinished: {
@@ -486,7 +662,7 @@ Singleton {
         running: false
         command: [
             "git", "-C", root.repoPath, "show",
-            "origin/" + root.currentBranch + ":VERSION"
+            "origin/" + root._remoteBranch + ":VERSION"
         ]
         stdout: StdioCollector {
             onStreamFinished: {
@@ -498,11 +674,14 @@ Singleton {
         }
     }
 
-    // Detail Step 3: Get local VERSION
+    // Detail Step 3: Get local VERSION (try repo, then config dir, then version.json)
     Process {
         id: localVersionProc
         running: false
-        command: ["cat", root.configDir + "/VERSION"]
+        command: [
+            "/usr/bin/bash", "-c",
+            "cat '" + root.repoPath + "/VERSION' 2>/dev/null || cat '" + root.configDir + "/VERSION' 2>/dev/null || echo ''"
+        ]
         stdout: StdioCollector {
             onStreamFinished: {
                 root.localVersion = (text ?? "").trim()
@@ -519,7 +698,7 @@ Singleton {
         running: false
         command: [
             "/usr/bin/bash", "-c",
-            "git -C '" + root.repoPath + "' show 'origin/" + root.currentBranch + ":CHANGELOG.md' 2>/dev/null | head -200"
+            "git -C '" + root.repoPath + "' show 'origin/" + root._remoteBranch + ":CHANGELOG.md' 2>/dev/null | head -200"
         ]
         stdout: StdioCollector {
             onStreamFinished: {
@@ -539,13 +718,20 @@ Singleton {
             "/usr/bin/bash", "-c",
             "manifest='" + root.manifestPath + "'; " +
             "target='" + root.configDir + "'; " +
+            "repo='" + root.repoPath + "'; " +
             "[[ -f \"$manifest\" ]] || exit 0; " +
             "while IFS=: read -r path checksum; do " +
             "  [[ \"$path\" =~ ^# ]] && continue; " +
-            "  [[ -z \"$path\" || -z \"$checksum\" ]] && continue; " +
+            "  [[ -z \"$path\" ]] && continue; " +
             "  [[ -f \"$target/$path\" ]] || continue; " +
-            "  current=$(sha256sum \"$target/$path\" 2>/dev/null | cut -d' ' -f1); " +
-            "  [[ \"$current\" != \"$checksum\" ]] && echo \"$path\"; " +
+            "  if [[ -n \"$checksum\" ]]; then " +
+            "    current=$(sha256sum \"$target/$path\" 2>/dev/null | cut -d' ' -f1); " +
+            "    [[ \"$current\" != \"$checksum\" ]] && echo \"$path\"; " +
+            "  elif [[ -d \"$repo/.git\" ]]; then " +
+            "    repo_hash=$(git -C \"$repo\" show HEAD:\"$path\" 2>/dev/null | sha256sum | cut -d' ' -f1); " +
+            "    local_hash=$(sha256sum \"$target/$path\" 2>/dev/null | cut -d' ' -f1); " +
+            "    [[ -n \"$repo_hash\" && \"$repo_hash\" != \"$local_hash\" ]] && echo \"$path\"; " +
+            "  fi; " +
             "done < \"$manifest\""
         ]
         stdout: StdioCollector {

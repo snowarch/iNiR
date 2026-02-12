@@ -10,6 +10,7 @@ import QtQuick.Effects
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
+import Quickshell.Services.Notifications
 
 Scope {
     id: root
@@ -99,13 +100,6 @@ Scope {
 
     onIsOpenChanged: {
         if (!isOpen) modsExpanded = false
-    }
-
-    IpcHandler {
-        target: "shellUpdate"
-        function toggle(): void { ShellUpdates.overlayOpen ? ShellUpdates.closeOverlay() : ShellUpdates.openOverlay() }
-        function open(): void { ShellUpdates.openOverlay() }
-        function close(): void { ShellUpdates.closeOverlay() }
     }
 
     PanelWindow {
@@ -448,6 +442,117 @@ Scope {
                     }
                 }
 
+                // ── Error section (when updates unavailable) ──
+                Rectangle {
+                    visible: !ShellUpdates.available
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 24
+                    Layout.rightMargin: 24
+                    Layout.topMargin: 16
+                    implicitHeight: errorCol.implicitHeight + 28
+                    radius: root.sectionRadius
+                    color: ColorUtils.transparentize(Appearance.m3colors.m3error, 0.92)
+                    border.width: 1
+                    border.color: ColorUtils.transparentize(Appearance.m3colors.m3error, 0.7)
+
+                    ColumnLayout {
+                        id: errorCol
+                        anchors {
+                            fill: parent
+                            margins: 14
+                        }
+                        spacing: 12
+
+                        // Error header
+                        RowLayout {
+                            spacing: 8
+                            MaterialSymbol {
+                                text: "error"
+                                iconSize: Appearance.font.pixelSize.normal
+                                color: Appearance.m3colors.m3error
+                            }
+                            StyledText {
+                                text: Translation.tr("Updates Unavailable")
+                                font {
+                                    pixelSize: Appearance.font.pixelSize.normal
+                                    weight: Font.DemiBold
+                                }
+                                color: Appearance.m3colors.m3error
+                            }
+                        }
+
+                        // Error message
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: Translation.tr("Repository not found. The update system cannot locate the iNiR git repository.")
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: root.textColor
+                            wrapMode: Text.WordWrap
+                        }
+
+                        // Suggested action
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: Translation.tr("Run './setup doctor' in your terminal to diagnose the issue, or use the diagnose command below.")
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: root.subtextColor
+                            wrapMode: Text.WordWrap
+                        }
+
+                        // Diagnose button
+                        RippleButton {
+                            Layout.topMargin: 4
+                            implicitWidth: diagLabel.implicitWidth + 28
+                            implicitHeight: 32
+                            onClicked: {
+                                const diag = ShellUpdates.getDiagnostics()
+                                console.log("[ShellUpdates] Diagnostics:\n" + diag)
+                                Notifications.notify({
+                                    summary: "Update System Diagnostics",
+                                    body: "Diagnostics printed to console. Run: qs log -c ii | tail -50",
+                                    urgency: NotificationUrgency.Normal,
+                                    timeout: 8000,
+                                    appName: "iNiR Shell"
+                                })
+                            }
+
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: height / 2
+                                color: parent.pressed ? Appearance.colors.colLayer1Active
+                                     : parent.hovered ? Appearance.colors.colLayer1Hover
+                                     : "transparent"
+                                border.width: 1
+                                border.color: Appearance.m3colors.m3error
+
+                                Behavior on color {
+                                    enabled: Appearance.animationsEnabled
+                                    animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
+                                }
+                            }
+
+                            RowLayout {
+                                id: diagLabel
+                                anchors.centerIn: parent
+                                spacing: 6
+                                MaterialSymbol {
+                                    text: "bug_report"
+                                    iconSize: Appearance.font.pixelSize.small
+                                    color: Appearance.m3colors.m3error
+                                }
+                                StyledText {
+                                    text: Translation.tr("Run Diagnostics")
+                                    font {
+                                        pixelSize: Appearance.font.pixelSize.small
+                                        weight: Font.Medium
+                                    }
+                                    color: Appearance.m3colors.m3error
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // ── Scrollable content ──
                 ScrollView {
                     Layout.fillWidth: true
@@ -527,9 +632,9 @@ Scope {
                                             color: root.textColor
                                         }
 
-                                    // Current commit (HEAD)
+                                    // Repository commit (git HEAD)
                                     StyledText {
-                                        text: Translation.tr("Current commit")
+                                        text: Translation.tr("Repository")
                                         font.pixelSize: Appearance.font.pixelSize.small
                                         color: root.subtextColor
                                         Layout.alignment: Qt.AlignVCenter
@@ -551,50 +656,6 @@ Scope {
                                                 }
                                                 color: root.accentColor
                                             }
-                                        }
-
-                                    // Installed commit (from manifest)
-                                    StyledText {
-                                        visible: ShellUpdates.installedCommit.length > 0
-                                        text: Translation.tr("Installed commit")
-                                        font.pixelSize: Appearance.font.pixelSize.small
-                                        color: root.subtextColor
-                                        Layout.alignment: Qt.AlignVCenter
-                                    }
-                                    Rectangle {
-                                        visible: ShellUpdates.installedCommit.length > 0
-                                        implicitWidth: instHashLabel.implicitWidth + 20
-                                        implicitHeight: instHashLabel.implicitHeight + 10
-                                        radius: root.pillRadius
-                                        color: ColorUtils.transparentize(root.subtextColor, 0.88)
-
-                                            StyledText {
-                                                id: instHashLabel
-                                                anchors.centerIn: parent
-                                                text: ShellUpdates.installedCommit
-                                                font {
-                                                    pixelSize: Appearance.font.pixelSize.smaller
-                                                    family: Appearance.font.family.monospace
-                                                }
-                                                color: root.subtextColor
-                                            }
-                                        }
-
-                                        // Last updated
-                                        StyledText {
-                                            visible: ShellUpdates.installedDate.length > 0
-                                            text: Translation.tr("Last updated")
-                                            font.pixelSize: Appearance.font.pixelSize.small
-                                            color: root.subtextColor
-                                        }
-                                        StyledText {
-                                            visible: ShellUpdates.installedDate.length > 0
-                                            text: root.formatDate(ShellUpdates.installedDate)
-                                            font {
-                                                pixelSize: Appearance.font.pixelSize.small
-                                                weight: Font.Medium
-                                            }
-                                            color: root.textColor
                                         }
 
                                         // Branch
@@ -1188,6 +1249,7 @@ Scope {
                     // Update button (only when update)
                     RippleButton {
                         visible: root.hasUpdate
+                        enabled: !ShellUpdates.isUpdating
                         implicitWidth: updateBtnContent.implicitWidth + 32
                         implicitHeight: 36
                         onClicked: ShellUpdates.performUpdate()
@@ -1195,13 +1257,19 @@ Scope {
                         Rectangle {
                             anchors.fill: parent
                             radius: height / 2
-                            color: parent.pressed ? Qt.darker(root.accentColor, 1.3)
+                            color: ShellUpdates.isUpdating ? Qt.darker(root.accentColor, 1.2)
+                                 : parent.pressed ? Qt.darker(root.accentColor, 1.3)
                                  : parent.hovered ? Qt.lighter(root.accentColor, 1.1)
                                  : root.accentColor
+                            opacity: ShellUpdates.isUpdating ? 0.7 : 1.0
 
                             Behavior on color {
                                 enabled: Appearance.animationsEnabled
                                 animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
+                            }
+                            Behavior on opacity {
+                                enabled: Appearance.animationsEnabled
+                                animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
                             }
                         }
 
@@ -1210,13 +1278,32 @@ Scope {
                             anchors.centerIn: parent
                             spacing: 6
 
+                            // Spinner when updating
                             MaterialSymbol {
+                                visible: ShellUpdates.isUpdating
+                                text: "progress_activity"
+                                iconSize: Appearance.font.pixelSize.small
+                                color: Appearance.m3colors.m3onPrimary
+
+                                RotationAnimation on rotation {
+                                    running: ShellUpdates.isUpdating
+                                    loops: Animation.Infinite
+                                    from: 0
+                                    to: 360
+                                    duration: 1000
+                                }
+                            }
+
+                            MaterialSymbol {
+                                visible: !ShellUpdates.isUpdating
                                 text: "upgrade"
                                 iconSize: Appearance.font.pixelSize.small
                                 color: Appearance.m3colors.m3onPrimary
                             }
                             StyledText {
-                                text: Translation.tr("Update Now")
+                                text: ShellUpdates.isUpdating
+                                    ? Translation.tr("Updating...")
+                                    : Translation.tr("Update Now")
                                 font {
                                     pixelSize: Appearance.font.pixelSize.small
                                     weight: Font.DemiBold

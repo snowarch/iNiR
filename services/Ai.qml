@@ -19,6 +19,7 @@ Singleton {
     id: root
 
     property bool _initialized: false
+    property var _lastInterfaceMessage: null
 
     property Component aiMessageComponent: AiMessageData {}
     property Component aiModelComponent: AiModel {}
@@ -29,6 +30,122 @@ Singleton {
     readonly property string apiKeyEnvVarName: "API_KEY"
 
     signal responseFinished()
+
+    IpcHandler {
+        target: "ai"
+
+        function ensureInitialized(): void { root.ensureInitialized() }
+        function diagnose(): string {
+            const policy = (Config.options?.policies?.ai ?? 0)
+            const model = root.models?.[root.currentModelId]
+            return JSON.stringify({
+                initialized: root._initialized,
+                policy,
+                currentModelId: root.currentModelId ?? "",
+                currentModelName: model?.name ?? "",
+                currentModelEndpoint: model?.endpoint ?? "",
+                currentModelRequiresKey: !!model?.requires_key,
+                apiKeysLoaded: !!KeyringStorage.loaded,
+                currentModelHasApiKey: !!root.currentModelHasApiKey,
+                modelCount: (root.modelList ?? []).length,
+                modelList: root.modelList ?? [],
+                currentTool: root.currentTool ?? "",
+                temperature: root.temperature,
+                lastInterfaceMessage: root._lastInterfaceMessage ?? "",
+            })
+        }
+
+        function run(inputText: string): void {
+            const text = (inputText ?? "").trim()
+            if (text.length === 0) return
+
+            root.ensureInitialized()
+
+            const prefix = "/"
+            if (!text.startsWith(prefix)) {
+                root.sendUserMessage(text)
+                return
+            }
+
+            const parts = text.split(" ")
+            const command = (parts[0] ?? "").substring(1)
+            const args = parts.slice(1)
+
+            switch (command) {
+                case "attach":
+                    const attachPath = args.join(" ").trim()
+                    if (attachPath.length === 0) {
+                        root.addMessage(Translation.tr("Usage: %1attach PATH").arg(prefix), root.interfaceRole)
+                        break
+                    }
+                    root.attachFile(attachPath)
+                    break
+                case "model":
+                    if (args.length === 0 || !args[0] || args[0] === "get") {
+                        root.addMessage(Translation.tr("Usage: %1model MODEL_ID").arg(prefix), root.interfaceRole)
+                        break
+                    }
+                    root.setModel(args[0])
+                    break
+                case "tool":
+                    if (args.length === 0 || args[0] === "get") {
+                        root.addMessage(Translation.tr("Usage: %1tool TOOL_NAME").arg(prefix), root.interfaceRole)
+                        break
+                    }
+                    if (root.setTool(args[0])) {
+                        root.addMessage(Translation.tr("Tool set to: %1").arg(args[0]), root.interfaceRole)
+                    }
+                    break
+                case "prompt":
+                    if (args.length === 0 || args[0] === "get") {
+                        root.printPrompt()
+                        break
+                    }
+                    root.loadPrompt(args.join(" ").trim())
+                    break
+                case "key":
+                    root.addMessage(
+                        Translation.tr("The /key command is disabled over IPC"),
+                        root.interfaceRole
+                    )
+                    break
+                case "save": {
+                    const joined = args.join(" ").trim()
+                    if (joined.length === 0) {
+                        root.addMessage(Translation.tr("Usage: %1save CHAT_NAME").arg(prefix), root.interfaceRole)
+                        break
+                    }
+                    root.saveChat(joined)
+                    break
+                }
+                case "load": {
+                    const joined = args.join(" ").trim()
+                    if (joined.length === 0) {
+                        root.addMessage(Translation.tr("Usage: %1load CHAT_NAME").arg(prefix), root.interfaceRole)
+                        break
+                    }
+                    root.loadChat(joined)
+                    break
+                }
+                case "clear":
+                    root.clearMessages()
+                    break
+                case "temp":
+                    if (args.length === 0 || args[0] === "get") root.printTemperature()
+                    else root.setTemperature(args[0])
+                    break
+                default:
+                    root.addMessage(Translation.tr("Unknown command: ") + command, root.interfaceRole)
+                    break
+            }
+        }
+
+        function runGet(inputText: string): string {
+            root._lastInterfaceMessage = null
+            run(inputText)
+            return root._lastInterfaceMessage ?? ""
+        }
+    }
 
     property string systemPrompt: {
         let prompt = Config.options?.ai?.systemPrompt ?? "";
@@ -66,7 +183,11 @@ Singleton {
     }
 
     function safeModelName(modelName) {
-        return modelName.replace(/:/g, "_").replace(/ /g, "-").replace(/\//g, "-")
+        return (modelName ?? "")
+            .toLowerCase()
+            .replace(/:/g, "_")
+            .replace(/ /g, "-")
+            .replace(/\//g, "-")
     }
 
     property list<var> defaultPrompts: []
@@ -238,7 +359,11 @@ Singleton {
             "none": [],
         }
     }
-    property list<var> availableTools: Object.keys(root.tools[models[currentModelId]?.api_format])
+    property list<var> availableTools: {
+        const fmt = models[currentModelId]?.api_format
+        const map = fmt ? root.tools[fmt] : null
+        return map ? Object.keys(map) : []
+    }
     property var toolDescriptions: {
         "functions": Translation.tr("Commands, edit configs, search.\nTakes an extra turn to switch to search mode if that's needed"),
         "search": Translation.tr("Gives the model search capabilities (immediately)"),
@@ -317,7 +442,9 @@ Singleton {
         target: Config
         function onReadyChanged() {
             if (!Config.ready) return;
-            (Config.options?.ai?.extraModels ?? []).forEach(model => {
+            const policy = (Config.options?.policies?.ai ?? 0)
+            ;(Config.options?.ai?.extraModels ?? []).forEach(model => {
+                if (policy === 2 && !(model?.endpoint ?? "").includes("localhost")) return
                 const safeModelName = root.safeModelName(model["model"]);
                 root.addModel(safeModelName, model)
             });
@@ -332,8 +459,12 @@ Singleton {
             return;
         root._initialized = true;
 
+        const policy = (Config.options?.policies?.ai ?? 0)
+
         getOllamaModels.running = true
-        getOpenRouterModels.running = true
+        if (policy !== 2) {
+            getOpenRouterModels.running = true
+        }
         getDefaultPrompts.running = true
         getUserPrompts.running = true
         getSavedChats.running = true
@@ -386,11 +517,22 @@ Singleton {
         id: getOllamaModels
         running: false
         command: ["/usr/bin/bash", "-c", `${Directories.scriptPath}/ai/show-installed-ollama-models.sh`.replace(/file:\/\//, "")]
+        property string _stderr: ""
         stdout: SplitParser {
             onRead: data => {
                 try {
                     if (data.length === 0) return;
                     const dataJson = JSON.parse(data);
+
+                    const policy = (Config.options?.policies?.ai ?? 0)
+                    if (policy === 2 && (!dataJson || dataJson.length === 0)) {
+                        root.addMessage(
+                            Translation.tr("No local models available\n\nInstall Ollama or change `policies.ai`"),
+                            root.interfaceRole
+                        )
+                        return
+                    }
+
                     root.modelList = [...root.modelList, ...dataJson];
                     dataJson.forEach(model => {
                         const safeModelName = root.safeModelName(model);
@@ -410,6 +552,22 @@ Singleton {
                 } catch (e) {
                     console.log("Could not fetch Ollama models:", e);
                 }
+            }
+        }
+        stderr: StdioCollector {
+            onStreamFinished: getOllamaModels._stderr = text
+        }
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode === 0) return
+            const policy = (Config.options?.policies?.ai ?? 0)
+            if (policy === 2) {
+                root.addMessage(
+                    Translation.tr("No local models available\n\nInstall Ollama or change `policies.ai`"),
+                    root.interfaceRole
+                )
+            }
+            if (getOllamaModels._stderr && getOllamaModels._stderr.length > 0) {
+                console.log("[Ai] Ollama model loader stderr:", getOllamaModels._stderr.substring(0, 400))
             }
         }
     }
@@ -517,6 +675,7 @@ Singleton {
 
     function addMessage(message, role) {
         if (message.length === 0) return;
+        if (role === root.interfaceRole) root._lastInterfaceMessage = message;
         const aiMessage = aiMessageComponent.createObject(root, {
             "role": role,
             "content": message,
@@ -579,12 +738,21 @@ Singleton {
     }
 
     function setTool(tool) {
-        if (!root.tools[models[currentModelId]?.api_format] || !(tool in root.tools[models[currentModelId]?.api_format])) {
-            root.addMessage(Translation.tr("Invalid tool. Supported tools:\n- %1").arg(root.availableTools.join("\n- ")), root.interfaceRole);
+        const model = models[currentModelId]
+        if (!model) {
+            root.addMessage(
+                Translation.tr("No model selected\n\nUse /model to pick one"),
+                root.interfaceRole
+            )
+            return false;
+        }
+        const fmt = model.api_format
+        if (!root.tools[fmt] || !(tool in root.tools[fmt])) {
+            root.addMessage(Translation.tr("Invalid tool. Supported tools:\n- %1").arg(root.availableTools ? root.availableTools.join("\n- ") : ""), root.interfaceRole);
             return false;
         }
         Config.setNestedValue(["ai", "tool"], tool)
-        return true;
+        return true
     }
     
     function getTemperature() {
@@ -592,17 +760,32 @@ Singleton {
     }
 
     function setTemperature(value) {
-        if (value == NaN || value < 0 || value > 2) {
-            root.addMessage(Translation.tr("Temperature must be between 0 and 2"), Ai.interfaceRole);
+        const num = Number(value)
+        if (Number.isNaN(num)) {
+            root.addMessage(Translation.tr("Temperature must be a number"), Ai.interfaceRole);
             return;
         }
-        Persistent.states.ai.temperature = value;
-        root.temperature = value;
-        root.addMessage(Translation.tr("Temperature set to %1").arg(value), Ai.interfaceRole);
+        const model = models[currentModelId]
+        const max = (model?.api_format === "gemini") ? 2 : 1
+        if (num < 0 || num > max) {
+            root.addMessage(Translation.tr("Temperature must be between 0 and %1").arg(max), Ai.interfaceRole);
+            return;
+        }
+
+        Persistent.states.ai.temperature = num;
+        root.temperature = num;
+        root.addMessage(Translation.tr("Temperature set to %1").arg(num), Ai.interfaceRole);
     }
 
     function setApiKey(key) {
         const model = models[currentModelId];
+        if (!model) {
+            root.addMessage(
+                Translation.tr("No model selected\n\nUse /model to pick one"),
+                root.interfaceRole
+            )
+            return;
+        }
         if (!model.requires_key) {
             root.addMessage(Translation.tr("%1 does not require an API key").arg(model.name), Ai.interfaceRole);
             return;
@@ -618,6 +801,13 @@ Singleton {
 
     function printApiKey() {
         const model = models[currentModelId];
+        if (!model) {
+            root.addMessage(
+                Translation.tr("No model selected\n\nUse /model to pick one"),
+                root.interfaceRole
+            )
+            return;
+        }
         if (model.requires_key) {
             const key = root.apiKeys[model.key_id];
             if (key) {
@@ -665,6 +855,14 @@ Singleton {
         function makeRequest() {
             const model = models[currentModelId];
 
+            if (!model) {
+                root.addMessage(
+                    Translation.tr("No model selected\n\nUse /model to pick one (or enable AI / local models in settings)"),
+                    root.interfaceRole
+                )
+                return
+            }
+
             // Ensure API keys are loaded before making request
             if (model?.requires_key && !KeyringStorage.loaded) {
                 KeyringStorage.fetchKeyringData();
@@ -677,7 +875,9 @@ Singleton {
             requester.currentStrategy.reset(); // Reset strategy state
 
             /* Put API key in environment variable */
-            if (model.requires_key) requester.environment[`${root.apiKeyEnvVarName}`] = root.apiKeys ? (root.apiKeys[model.key_id] ?? "") : ""
+            if (model?.requires_key) {
+                requester.environment[`${root.apiKeyEnvVarName}`] = root.apiKeys ? (root.apiKeys[model.key_id] ?? "") : ""
+            }
 
             /* Build endpoint, request data */
             const endpoint = root.currentApiStrategy.buildEndpoint(model);

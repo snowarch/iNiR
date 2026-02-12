@@ -748,7 +748,8 @@
   "shellUpdates": {
     "enabled": true,
     "checkIntervalMinutes": 360,
-    "dismissedCommit": ""
+    "dismissedCommit": "",
+    "lastNotifiedCommit": ""
   },
   "updates": {
     "checkInterval": 120,

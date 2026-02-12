@@ -1071,6 +1071,7 @@ Singleton {
                 property bool enabled: true
                 property int checkIntervalMinutes: 360
                 property string dismissedCommit: ""
+                property string lastNotifiedCommit: ""
             }
             property JsonObject welcomeWizard: JsonObject {
                 property bool completed: false
