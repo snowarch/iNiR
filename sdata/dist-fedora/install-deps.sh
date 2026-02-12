@@ -76,13 +76,16 @@ fi
 #####################################################################################
 echo -e "${STY_CYAN}[$0]: Installing packages from repositories...${STY_RST}"
 
-# Core system packages (including Quickshell and Niri from COPR)
+  # Core system packages (including Quickshell and Niri from COPR)
 FEDORA_CORE_PKGS=(
   # Quickshell (from COPR - no compilation needed!)
   quickshell
-  
+
   # Niri compositor (from COPR)
   niri
+
+  # zoxide - smart cd replacement
+  zoxide
   
   # Build tools (needed for Python packages like dbus-python, pycairo, pygobject)
   gcc
@@ -686,7 +689,7 @@ echo ""
 
 # Verify critical commands
 echo -e "${STY_CYAN}Verifying installation:${STY_RST}"
-for cmd in qs niri fish gum matugen cliphist starship eza; do
+for cmd in qs niri fish gum matugen cliphist starship eza zoxide; do
   if command -v "$cmd" &>/dev/null || command -v ~/.local/bin/$cmd &>/dev/null; then
     echo -e "  ${STY_GREEN}✓${STY_RST} $cmd"
   else

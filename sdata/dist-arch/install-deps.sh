@@ -129,21 +129,22 @@ done
 #####################################################################################
 echo -e "${STY_CYAN}[$0]: Installing official repo packages...${STY_RST}"
 
-# These packages are now in official Arch repos (extra) - NO AUR, NO COMPILATION!
+  # These packages are now in official Arch repos (extra) - NO AUR, NO COMPILATION!
 OFFICIAL_PACKAGES=(
   # Quickshell (CRITICAL) - NOW IN EXTRA REPO!
   quickshell
-  
+
   # Already in PKGBUILDs but ensure they're installed
   niri
   cliphist
   gum
   starship
   xwayland-satellite
-  
+  zoxide
+
   # Theming
   matugen
-  
+
   # Icon themes - fallbacks from official repos (always available)
   hicolor-icon-theme
   adwaita-icon-theme

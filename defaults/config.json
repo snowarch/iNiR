@@ -756,6 +756,12 @@
     "adviseUpdateThreshold": 75,
     "stronglyAdviseUpdateThreshold": 200
   },
+  "shell": {
+    "zoxide": {
+      "enable": true,
+      "replaceCd": true
+    }
+  },
   "welcomeWizard": {
     "completed": false,
     "skipped": false
