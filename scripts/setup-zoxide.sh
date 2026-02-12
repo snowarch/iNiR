@@ -134,10 +134,9 @@ if status is-interactive
         cat ~/.local/state/quickshell/user/generated/terminal/sequences.txt
     end
 
-    # zoxide - smarter cd command
+    # zoxide - smarter cd command (replaces cd)
     if command -v zoxide > /dev/null
-        zoxide init fish | source
-        alias cd z
+        zoxide init --cmd cd fish | source
     end
 
     # Aliases
@@ -156,10 +155,9 @@ EOF
     # Append zoxide configuration to existing config
     cat >> "$fish_config" << 'EOF'
 
-# zoxide - smarter cd command
+# zoxide - smarter cd command (replaces cd)
 if command -v zoxide > /dev/null
-    zoxide init fish | source
-    alias cd z
+    zoxide init --cmd cd fish | source
 end
 EOF
   fi
@@ -200,13 +198,11 @@ elif [[ -x ~/.local/bin/starship ]]; then
     eval "$(~/.local/bin/starship init bash)"
 fi
 
-# zoxide - smarter cd command (replaces cd with z)
+# zoxide - smarter cd command (replaces cd)
 if command -v zoxide &> /dev/null; then
-    eval "$(zoxide init bash)"
-    alias cd='z'
+    eval "$(zoxide init --cmd cd bash)"
 elif [[ -x ~/.local/bin/zoxide ]]; then
-    eval "$(~/.local/bin/zoxide init bash)"
-    alias cd='z'
+    eval "$(~/.local/bin/zoxide init --cmd cd bash)"
 fi
 
 # Aliases
@@ -224,13 +220,11 @@ EOF
     # Append zoxide configuration
     cat >> "$ii_config" << 'EOF'
 
-# zoxide - smarter cd command (replaces cd with z)
+# zoxide - smarter cd command (replaces cd)
 if command -v zoxide &> /dev/null; then
-    eval "$(zoxide init bash)"
-    alias cd='z'
+    eval "$(zoxide init --cmd cd bash)"
 elif [[ -x ~/.local/bin/zoxide ]]; then
-    eval "$(~/.local/bin/zoxide init bash)"
-    alias cd='z'
+    eval "$(~/.local/bin/zoxide init --cmd cd bash)"
 fi
 EOF
   fi
@@ -279,13 +273,11 @@ elif [[ -x ~/.local/bin/starship ]]; then
     eval "$(~/.local/bin/starship init zsh)"
 fi
 
-# zoxide - smarter cd command (replaces cd with z)
+# zoxide - smarter cd command (replaces cd)
 if command -v zoxide &> /dev/null; then
-    eval "$(zoxide init zsh)"
-    alias cd='z'
+    eval "$(zoxide init --cmd cd zsh)"
 elif [[ -x ~/.local/bin/zoxide ]]; then
-    eval "$(~/.local/bin/zoxide init zsh)"
-    alias cd='z'
+    eval "$(~/.local/bin/zoxide init --cmd cd zsh)"
 fi
 
 # Aliases
@@ -303,13 +295,11 @@ EOF
     # Append zoxide configuration
     cat >> "$ii_config" << 'EOF'
 
-# zoxide - smarter cd command (replaces cd with z)
+# zoxide - smarter cd command (replaces cd)
 if command -v zoxide &> /dev/null; then
-    eval "$(zoxide init zsh)"
-    alias cd='z'
+    eval "$(zoxide init --cmd cd zsh)"
 elif [[ -x ~/.local/bin/zoxide ]]; then
-    eval "$(~/.local/bin/zoxide init zsh)"
-    alias cd='z'
+    eval "$(~/.local/bin/zoxide init --cmd cd zsh)"
 fi
 EOF
   fi
