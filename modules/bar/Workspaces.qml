@@ -175,19 +175,19 @@ Item {
             }
         }
         
-        onWheel: (event) => {
-            wheelStepCounter += 1
-            if (wheelStepCounter < wheelStepsRequired) return
-            wheelStepCounter = 0
-            const deltaX = event.angleDelta.x
-            const deltaY = event.angleDelta.y
-            const delta = deltaX !== 0 ? deltaX : -deltaY
-            if (delta === 0) return
-            
-            const direction = delta > 0 ? 1 : -1
-
-            if (CompositorService.isNiri) {
-                if (root.columnMode) {
+                onWheel: (event) => {
+                    wheelStepCounter += 1
+                    if (wheelStepCounter < wheelStepsRequired) return
+                    wheelStepCounter = 0
+                    const deltaX = event.angleDelta.x
+                    const deltaY = event.angleDelta.y
+                    let delta = deltaX !== 0 ? deltaX : -deltaY
+                    if (delta === 0) return
+                    
+                    if (wsConfig.invertScroll ?? false) delta = -delta
+                    const direction = delta > 0 ? 1 : -1
+        
+                    if (CompositorService.isNiri) {                if (root.columnMode) {
                     // Column mode with wrap-around
                     const windowCount = root.currentWorkspaceWindows.length
                     if (windowCount <= 1) return

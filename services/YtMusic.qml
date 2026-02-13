@@ -1334,6 +1334,8 @@ print("")
         property string _stderr: ""
         command: ["/usr/bin/mpv",
             "--no-video",
+            "--vo=null",
+            "--ytdl-format=bestaudio",
             "--input-ipc-server=" + root.ipcSocket,
             ...(root._hasMpvMpris ? ["--script=/usr/lib/mpv-mpris/mpris.so"] : []),
             "--force-media-title=" + root.currentTitle + (root.currentArtist ? " - " + root.currentArtist : ""),
