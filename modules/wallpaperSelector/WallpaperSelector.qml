@@ -13,12 +13,60 @@ import Quickshell.Hyprland
 Scope {
     id: root
 
+    // Canonical focused screen detection (same pattern as OSD, notifications, brightness)
+    readonly property var focusedScreen: CompositorService.isNiri
+        ? (Quickshell.screens.find(s => s.name === NiriService.currentOutput) ?? Quickshell.screens[0])
+        : (Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0])
+    readonly property string focusedMonitorName: focusedScreen?.name ?? ""
+
+    // Async focused output detection for Niri.
+    // NiriService.currentOutput becomes stale after PanelWindow steals compositor focus.
+    // Querying niri directly gives the real focused output at invocation time.
+    Process {
+        id: niriOutputDetector
+        property string _buffer: ""
+        stdout: SplitParser {
+            onRead: data => {
+                niriOutputDetector._buffer += data + "\n"
+            }
+        }
+        onExited: (code, status) => {
+            let monName = ""
+            if (code === 0 && niriOutputDetector._buffer) {
+                try {
+                    const obj = JSON.parse(niriOutputDetector._buffer)
+                    monName = obj.name || ""
+                } catch(e) {}
+            }
+            niriOutputDetector._buffer = ""
+            if (!monName) monName = root.focusedMonitorName
+            root._openWithMonitor(monName)
+        }
+    }
+
+    function _openWithMonitor(monName) {
+        if (monName) {
+            GlobalStates.wallpaperSelectorTargetMonitor = monName
+            Config.setNestedValue("wallpaperSelector.targetMonitor", monName)
+        }
+        GlobalStates.wallpaperSelectorOpen = true
+    }
+
     Loader {
         id: wallpaperSelectorLoader
         active: GlobalStates.wallpaperSelectorOpen
 
         sourceComponent: PanelWindow {
             id: panelWindow
+            // Show on the target monitor so focus stays correct after close
+            screen: {
+                const targetMon = GlobalStates.wallpaperSelectorTargetMonitor
+                if (targetMon) {
+                    const s = Quickshell.screens.find(s => s.name === targetMon)
+                    if (s) return s
+                }
+                return root.focusedScreen
+            }
             readonly property HyprlandMonitor monitor: CompositorService.isHyprland ? Hyprland.monitorFor(panelWindow.screen) : null
             property bool monitorIsFocused: CompositorService.isHyprland 
                 ? (Hyprland.focusedMonitor?.id == monitor?.id)
@@ -86,22 +134,59 @@ Scope {
             Wallpapers.openFallbackPicker(Appearance.m3colors.darkmode);
             return;
         }
-        
-        // Set target based on active family and config
-        if (Config.options?.panelFamily === "waffle") {
-            const useMain = Config.options?.waffles?.background?.useMainWallpaper ?? true
-            Config.setNestedValue("wallpaperSelector.selectionTarget", useMain ? "main" : "waffle")
-        } else {
-            Config.setNestedValue("wallpaperSelector.selectionTarget", "main")
+
+        // If already open, just close
+        if (GlobalStates.wallpaperSelectorOpen) {
+            GlobalStates.wallpaperSelectorOpen = false
+            return
         }
-        
-        GlobalStates.wallpaperSelectorOpen = !GlobalStates.wallpaperSelectorOpen
+
+        // Check if settings UI explicitly set a target (e.g. from QuickConfig "Change" button)
+        const explicitMonitor = Config.options?.wallpaperSelector?.targetMonitor ?? ""
+        const explicitTarget = Config.options?.wallpaperSelector?.selectionTarget ?? "main"
+        const hasExplicitTarget = explicitMonitor || (explicitTarget !== "main")
+
+        if (!hasExplicitTarget) {
+            // No explicit target: auto-detect based on family
+            if (Config.options?.panelFamily === "waffle") {
+                const useMain = Config.options?.waffles?.background?.useMainWallpaper ?? true
+                Config.setNestedValue("wallpaperSelector.selectionTarget", useMain ? "main" : "waffle")
+            } else {
+                Config.setNestedValue("wallpaperSelector.selectionTarget", "main")
+            }
+            const multiMon = Config.options?.background?.multiMonitor?.enable ?? false
+            if (multiMon) {
+                // For Niri: query focused output asynchronously (NiriService.currentOutput
+                // can be stale after a previous PanelWindow changed compositor focus)
+                if (CompositorService.isNiri && !niriOutputDetector.running) {
+                    niriOutputDetector.exec(["niri", "msg", "-j", "focused-output"])
+                    return
+                }
+                // Hyprland or fallback: use live binding (reliable)
+                _openWithMonitor(root.focusedMonitorName)
+                return
+            }
+        } else if (explicitMonitor) {
+            GlobalStates.wallpaperSelectorTargetMonitor = explicitMonitor
+        }
+
+        GlobalStates.wallpaperSelectorOpen = true
     }
+
+    // Cleanup is handled by GlobalStates.onWallpaperSelectorOpenChanged
 
     IpcHandler {
         target: "wallpaperSelector"
 
         function toggle(): void {
+            root.toggleWallpaperSelector();
+        }
+
+        function toggleOnMonitor(monitorName: string): void {
+            if (monitorName && monitorName.length > 0) {
+                GlobalStates.wallpaperSelectorTargetMonitor = monitorName
+                Config.setNestedValue("wallpaperSelector.targetMonitor", monitorName)
+            }
             root.toggleWallpaperSelector();
         }
 

@@ -35,14 +35,20 @@ Singleton {
     property bool wallpaperSelectorOpen: false
     // Selection targets: "main", "backdrop", "waffle", "waffle-backdrop"
     property string wallpaperSelectionTarget: "main"
+    // Target monitor for wallpaper selector (set before opening, avoids config timing issues)
+    property string wallpaperSelectorTargetMonitor: ""
     onWallpaperSelectorOpenChanged: {
         // Reset selection target when selector closes without selection
         if (!wallpaperSelectorOpen) {
             wallpaperSelectionTarget = "main";
-            // Also reset Config target if it was set
+            wallpaperSelectorTargetMonitor = "";
+            // Also reset Config targets if they were set
             if (Config.options?.wallpaperSelector?.selectionTarget &&
                 Config.options.wallpaperSelector.selectionTarget !== "main") {
-                Config.options.wallpaperSelector.selectionTarget = "main";
+                Config.setNestedValue("wallpaperSelector.selectionTarget", "main")
+            }
+            if (Config.options?.wallpaperSelector?.targetMonitor) {
+                Config.setNestedValue("wallpaperSelector.targetMonitor", "")
             }
         }
     }

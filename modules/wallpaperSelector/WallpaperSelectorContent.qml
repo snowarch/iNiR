@@ -17,6 +17,38 @@ MouseArea {
     property bool useDarkMode: Appearance.m3colors.darkmode
     property string _lastThumbnailSizeName: ""
 
+    // Multi-monitor support — capture focused monitor at open time
+    property string _lockedTarget: ""
+    property string _capturedMonitor: ""
+    readonly property bool multiMonitorActive: Config.options?.background?.multiMonitor?.enable ?? false
+
+    readonly property string selectedMonitor: {
+        if (!multiMonitorActive) return ""
+        if (_lockedTarget) return _lockedTarget
+        return _capturedMonitor
+    }
+
+    Component.onCompleted: {
+        // Read target monitor from GlobalStates (set before opening, no timing issues)
+        const gsTarget = GlobalStates.wallpaperSelectorTargetMonitor ?? ""
+        if (gsTarget && WallpaperListener.screenNames.includes(gsTarget)) {
+            _lockedTarget = gsTarget
+            return
+        }
+        // Fallback: check Config (for settings UI "Change" button via IPC)
+        const configTarget = Config.options?.wallpaperSelector?.targetMonitor ?? ""
+        if (configTarget && WallpaperListener.screenNames.includes(configTarget)) {
+            _lockedTarget = configTarget
+            return
+        }
+        // Last resort: capture focused monitor (may be stale if overlay already took focus)
+        if (CompositorService.isNiri) {
+            _capturedMonitor = NiriService.currentOutput ?? ""
+        } else if (CompositorService.isHyprland) {
+            _capturedMonitor = Hyprland.focusedMonitor?.name ?? ""
+        }
+    }
+
     function updateThumbnails() {
         const totalImageMargin = (Appearance.sizes.wallpaperSelectorItemMargins + Appearance.sizes.wallpaperSelectorItemPadding) * 2
         const thumbnailSizeName = Images.thumbnailSizeNameForDimensions(grid.cellWidth - totalImageMargin, grid.cellHeight - totalImageMargin)
@@ -74,6 +106,10 @@ MouseArea {
                         const thumbnailPath = Wallpapers.getExpectedThumbnailPath(normalizedPath, "large");
                         Config.setNestedValue("background.backdrop.thumbnailPath", thumbnailPath);
                     }
+                    // If using backdrop for colors, regenerate theme colors
+                    if (Config.options?.appearance?.wallpaperTheming?.useBackdropForColors) {
+                        Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--noswitch"])
+                    }
                     break;
                 case "waffle":
                     Config.setNestedValue("waffles.background.useMainWallpaper", false);
@@ -96,7 +132,7 @@ MouseArea {
                     }
                     break;
                 default: // "main"
-                    Wallpapers.select(normalizedPath, root.useDarkMode);
+                    Wallpapers.select(normalizedPath, root.useDarkMode, root.selectedMonitor);
                     break;
             }
             // Reset GlobalStates only (Config resets on its own via defaults)
@@ -303,6 +339,44 @@ MouseArea {
                         Wallpapers.setDirectory(path.length == 0 ? "/" : path);
                     }
                     radius: wallpaperGridBackground.radius - Layout.margins
+                }
+
+                // Multi-monitor indicator
+                Rectangle {
+                    visible: Config.options?.background?.multiMonitor?.enable ?? false
+                    Layout.fillWidth: true
+                    Layout.margins: 4
+                    Layout.topMargin: 0
+                    implicitHeight: visible ? monitorIndicatorText.implicitHeight + 16 : 0
+                    color: Appearance.inirEverywhere ? Appearance.inir.colLayer1
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+                        : Appearance.colors.colLayer1
+                    radius: wallpaperGridBackground.radius - Layout.margins
+                    border.width: Appearance.inirEverywhere ? 1 : 0
+                    border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.margins: Appearance.sizes.spacingSmall
+                        spacing: Appearance.sizes.spacingSmall
+
+                        MaterialSymbol {
+                            text: "monitor"
+                            font.pixelSize: Appearance.font.pixelSize.normal
+                            color: Appearance.colors.colPrimary
+                        }
+
+                        StyledText {
+                            id: monitorIndicatorText
+                            Layout.fillWidth: true
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            font.weight: Font.Medium
+                            text: root.selectedMonitor ?
+                                Translation.tr("Configuring monitor: %1").arg(root.selectedMonitor) :
+                                Translation.tr("Multi-monitor mode active")
+                            color: Appearance.colors.colPrimary
+                        }
+                    }
                 }
 
                 Item {
