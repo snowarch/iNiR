@@ -510,13 +510,21 @@ setup-environment-config(){
 
   echo -e "${STY_BLUE}Setting up environment variables...${STY_RST}"
 
+  # Detect Qt platform theme: use kde if Plasma is installed, qt6ct otherwise
+  local qt_theme="qt6ct"
+  if pacman -Q plasma-desktop &>/dev/null 2>&1 || pacman -Q plasma-workspace &>/dev/null 2>&1 || \
+     dpkg -l plasma-desktop 2>/dev/null | grep -q '^ii' || \
+     rpm -q plasma-desktop &>/dev/null 2>&1; then
+    qt_theme="kde"
+  fi
+
   mkdir -p ~/.config/environment.d
   cat > ~/.config/environment.d/inir.conf << EOF
 # iNiR environment variables
 XCURSOR_THEME=${cursor_theme}
 XCURSOR_SIZE=24
 QT_QPA_PLATFORM=wayland
-QT_QPA_PLATFORMTHEME=kde
+QT_QPA_PLATFORMTHEME=${qt_theme}
 QT_STYLE_OVERRIDE=Darkly
 GTK_THEME=adw-gtk3-dark
 ELECTRON_OZONE_PLATFORM_HINT=auto
