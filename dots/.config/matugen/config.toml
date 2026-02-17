@@ -33,3 +33,25 @@ output_path = '~/.local/state/quickshell/user/generated/color.txt'
 [templates.wallpaper]
 input_path = '~/.config/matugen/templates/wallpaper.txt'
 output_path = '~/.local/state/quickshell/user/generated/wallpaper/path.txt'
+
+# Terminal themes (generated directly by matugen)
+[templates.foot]
+input_path = '~/.config/matugen/templates/terminals/foot.ini'
+output_path = '~/.config/foot/inir-colors.ini'
+
+[templates.kitty]
+input_path = '~/.config/matugen/templates/terminals/kitty.conf'
+output_path = '~/.config/kitty/inir-theme.conf'
+
+[templates.alacritty]
+input_path = '~/.config/matugen/templates/terminals/alacritty.toml'
+output_path = '~/.config/alacritty/inir-theme.toml'
+
+[templates.ghostty]
+input_path = '~/.config/matugen/templates/terminals/ghostty.conf'
+output_path = '~/.config/ghostty/inir-theme.conf'
+
+# Firefox Pywalfox colors
+[templates.pywalfox]
+input_path = '~/.config/matugen/templates/firefox/pywalfox-colors.json'
+output_path = '~/.local/state/quickshell/user/generated/pywalfox-colors.json'
