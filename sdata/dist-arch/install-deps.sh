@@ -202,6 +202,10 @@ OFFICIAL_PACKAGES=(
   # Qt theming (works without Plasma)
   qt6ct
   kvantum
+
+  # KDE Frameworks needed by darkly-bin Qt style (lightweight, NOT Plasma)
+  frameworkintegration
+  kdecoration
 )
 
 installflags="--needed"
