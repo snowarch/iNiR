@@ -555,7 +555,7 @@ pad=25x25
 
 bold-text-in-bright=no
 
-include=~/.config/foot/colors.ini
+include=~/.config/foot/inir-colors.ini
 
 [scrollback]
 lines=10000
@@ -586,11 +586,12 @@ delete-prev-word=Control+BackSpace
 EOF
   else
     # Existing config - ensure include line is present for theming
-    if ! grep -q "include=.*colors.ini" ~/.config/foot/foot.ini; then
-      echo -e "${STY_YELLOW}Adding colors.ini include to existing foot.ini...${STY_RST}"
-      # Add include at the top of the file (before any sections)
-      sed -i '1i include=~/.config/foot/colors.ini' ~/.config/foot/foot.ini
+    if ! grep -q "include=.*inir-colors\.ini" ~/.config/foot/foot.ini; then
+      echo -e "${STY_YELLOW}Adding inir-colors.ini include to existing foot.ini...${STY_RST}"
+      sed -i '1i include=~/.config/foot/inir-colors.ini' ~/.config/foot/foot.ini
     fi
+    # Remove stale colors.ini include if present (legacy matugen terminal template)
+    sed -i '/^include=.*\/colors\.ini$/d' ~/.config/foot/foot.ini
   fi
 
   echo -e "${STY_GREEN}Foot terminal configuration set.${STY_RST}"
