@@ -83,7 +83,6 @@ Qt6 stack and Quickshell runtime.
 
 | Package | Purpose |
 |---------|---------|
-| `quickshell-git` | Quickshell (required) |
 | `google-breakpad` | Crash reporting |
 | `qt6-avif-image-plugin` | AVIF image support |
 
@@ -98,11 +97,18 @@ Audio stack and media controls.
 | `pipewire` | Audio server |
 | `pipewire-pulse` | PulseAudio compat |
 | `pipewire-alsa` | ALSA compat |
-| `pipewire-jack` | JACK compat |
 | `wireplumber` | Session manager |
 | `playerctl` | Media player control |
 | `libdbusmenu-gtk3` | Tray menus |
 | `pavucontrol` | Volume control GUI |
+| `mpv` | Media playback backend |
+| `mpv-mpris` | MPRIS bridge for mpv |
+| `yt-dlp` | YouTube extraction backend |
+| `socat` | IPC fallback for YTMusic control |
+| `cava` | Audio visualizer |
+| `easyeffects` | Audio effects |
+
+`pipewire-jack` and `nodejs` are optional/recommended extras depending on your audio and YTMusic setup.
 
 ---
 
@@ -139,6 +145,12 @@ Input simulation, hardware control, and idle management.
 | `geoclue` | Geolocation |
 | `swayidle` | Idle management (screen off, lock, suspend) |
 | `swaylock` | Screen locker |
+| `blueman` | Bluetooth manager GUI |
+| `fprintd` | Fingerprint authentication (lock screen) |
+| `libqalculate` | Calculator backend |
+| `tesseract` | OCR engine |
+| `tesseract-data-eng` | English OCR data |
+| `tesseract-data-spa` | Spanish OCR data |
 
 ---
 
@@ -157,7 +169,7 @@ Fonts, theming, and utilities.
 | `glib2` | GLib utilities |
 | `translate-shell` | Translation CLI |
 | `kvantum` | Qt theming |
-| `matugen` | Material You colors | Yes |
+| `matugen` | Material You colors |
 
 ### From AUR
 
@@ -186,7 +198,6 @@ Not installed by default, but useful. The shell handles their absence gracefully
 | Package | Purpose | Used by |
 |---------|---------|---------|
 | `warp-cli` | Cloudflare WARP VPN toggle | Quick toggles panel |
-| `blueman` | Bluetooth manager GUI | Bluetooth settings button |
 | `ollama` | Local LLM for AI chat | Sidebar AI assistant |
 | `mpvpaper` | Video wallpapers | Wallpaper selector |
 | `cava` | Audio visualizer | Bar widget (optional) |

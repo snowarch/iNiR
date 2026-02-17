@@ -25,7 +25,7 @@
 ## Features
 
 - **Two panel families** — Material Design or Windows 11 style, switchable on the fly
-- **Three visual styles** — Material (solid), Aurora (glass blur), Inir (TUI-inspired)
+- **Five visual styles** — Material (solid), Cards, Aurora (glass blur), Inir (TUI-inspired), Angel (neo-brutalism glass)
 - **Workspace overview** — Adapted for Niri's scrolling workspace model
 - **Window switcher** — Alt+Tab that works across all workspaces
 - **Region tools** — Screenshots, screen recording, OCR, reverse image search

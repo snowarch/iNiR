@@ -29,7 +29,7 @@
 ## Características
 
 - **Dos familias de paneles** — Estilo Material Design o Windows 11, intercambiables al vuelo
-- **Tres estilos visuales** — Material (sólido), Aurora (desenfoque de vidrio), Inir (inspirado en TUI)
+- **Cinco estilos visuales** — Material (sólido), Cards, Aurora (desenfoque de vidrio), Inir (inspirado en TUI), Angel (neo-brutalismo glass)
 - **Vista general de espacios de trabajo** — Adaptada al modelo de espacios de trabajo deslizantes de Niri
 - **Selector de ventanas** — Alt+Tab que funciona en todos los espacios de trabajo
 - **Herramientas de región** — Capturas de pantalla, grabación de pantalla, OCR, búsqueda inversa de imágenes

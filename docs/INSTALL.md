@@ -39,7 +39,10 @@ The bare minimum to not crash immediately:
 | Package | Why |
 |---------|-----|
 | `niri` | The compositor. Obviously. |
-| `quickshell-git` | The shell runtime. **Must be the AUR version**, not the one in Arch repos. See note below. |
+| `quickshell` | The shell runtime (official repos). Chosen intentionally for faster and more reliable installs. |
+| `syntax-highlighting` | Provides QML module `org.kde.syntaxhighlighting` (required by AiChat code blocks). |
+| `kirigami` | KDE QML components used by shell modules. |
+| `kdialog` | KDE runtime helper used by some dialogs/integrations. |
 | `wl-clipboard` | Copy/paste. |
 | `cliphist` | Clipboard history. |
 | `pipewire` + `wireplumber` | Audio. |
@@ -48,7 +51,15 @@ The bare minimum to not crash immediately:
 
 For everything else, check [PACKAGES.md](PACKAGES.md). It's organized by category so you can skip what you don't need.
 
-> **Note on quickshell-git:** The AUR package may not include all optional modules. If you see errors about missing modules (like `Quickshell.Services.Polkit`), iNiR will still work - those features will just be disabled. For full functionality, you can rebuild quickshell with all service modules enabled.
+> **Note on quickshell package:** iNiR intentionally uses `quickshell` from official repos to avoid long AUR compile times and update-time build failures.
+>
+> **Runtime extras used by features:**
+> - `socat` for YTMusic IPC fallback control
+> - `fprintd` for fingerprint lockscreen support
+>
+> **Important for minimal installs (Arch base / netinstall):**
+> If shell startup fails with `module "org.kde.syntaxhighlighting" is not installed`, install:
+> `syntax-highlighting kirigami kdialog`
 
 ### 2. Clone the repo
 

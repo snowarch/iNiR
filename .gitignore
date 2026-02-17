@@ -13,8 +13,8 @@
 .opencode/
 .claude/
 .cursor/
-.windsurf/
 hooks/
+.qoder/
 AGENTS.md
 **/AGENTS.md
 CLAUDE.md
