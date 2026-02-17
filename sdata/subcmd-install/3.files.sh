@@ -253,6 +253,58 @@ if [[ -f "defaults/starship/starship.toml" ]]; then
   log_success "Starship config installed"
 fi
 
+# Fish shell config (starship init, terminal sequences, aliases)
+if [[ -d "dots/.config/fish" ]]; then
+  # Install config.fish and auto-Niri.fish (first run: overwrite, update: preserve)
+  for fish_file in config.fish auto-Niri.fish; do
+    if [[ -f "dots/.config/fish/${fish_file}" ]]; then
+      install_file__auto_backup "dots/.config/fish/${fish_file}" "${XDG_CONFIG_HOME}/fish/${fish_file}"
+    fi
+  done
+  log_success "Fish shell config installed"
+fi
+
+# Foot terminal config
+if [[ -f "dots/.config/foot/foot.ini" ]]; then
+  install_file__auto_backup "dots/.config/foot/foot.ini" "${XDG_CONFIG_HOME}/foot/foot.ini"
+  log_success "Foot terminal config installed"
+fi
+
+# Kitty terminal config
+if [[ -f "dots/.config/kitty/kitty.conf" ]]; then
+  install_file__auto_backup "dots/.config/kitty/kitty.conf" "${XDG_CONFIG_HOME}/kitty/kitty.conf"
+  log_success "Kitty terminal config installed"
+fi
+
+# Konsole config (if installed)
+if command -v konsole &>/dev/null; then
+  if [[ -f "dots/.config/konsolerc" ]]; then
+    install_file__auto_backup "dots/.config/konsolerc" "${XDG_CONFIG_HOME}/konsolerc"
+  fi
+  if [[ -f "dots/.local/share/konsole/Profile 1.profile" ]]; then
+    mkdir -p "${XDG_DATA_HOME}/konsole"
+    install_file "dots/.local/share/konsole/Profile 1.profile" "${XDG_DATA_HOME}/konsole/Profile 1.profile"
+  fi
+  log_success "Konsole config installed"
+fi
+
+# Electron app Wayland flags (Chrome, VS Code)
+for flagfile in chrome-flags.conf code-flags.conf; do
+  if [[ -f "dots/.config/${flagfile}" ]]; then
+    install_file__auto_backup "dots/.config/${flagfile}" "${XDG_CONFIG_HOME}/${flagfile}"
+  fi
+done
+
+# Darkly Qt style config
+if [[ -f "dots/.config/darklyrc" ]]; then
+  install_file "dots/.config/darklyrc" "${XDG_CONFIG_HOME}/darklyrc"
+fi
+
+# MPV config
+if [[ -f "dots/.config/mpv/mpv.conf" ]]; then
+  install_file__auto_backup "dots/.config/mpv/mpv.conf" "${XDG_CONFIG_HOME}/mpv/mpv.conf"
+fi
+
 # GTK settings
 for gtkver in gtk-3.0 gtk-4.0; do
   if [[ -d "dots/.config/${gtkver}" ]]; then
@@ -433,6 +485,10 @@ cat >> "$HOME/.bashrc" << BEOF
 
 ${BASH_ENV_MARKER}
 export ILLOGICAL_IMPULSE_VIRTUAL_ENV="${VENV_PATH}"
+# Apply terminal color sequences (Material You from wallpaper)
+if [ -f ~/.local/state/quickshell/user/generated/terminal/sequences.txt ]; then
+  cat ~/.local/state/quickshell/user/generated/terminal/sequences.txt
+fi
 # end iNiR
 BEOF
 log_success "Bash environment configured"
@@ -454,6 +510,10 @@ if [[ -f "$HOME/.zshrc" ]]; then
 
 ${BASH_ENV_MARKER}
 export ILLOGICAL_IMPULSE_VIRTUAL_ENV="${VENV_PATH}"
+# Apply terminal color sequences (Material You from wallpaper)
+if [ -f ~/.local/state/quickshell/user/generated/terminal/sequences.txt ]; then
+  cat ~/.local/state/quickshell/user/generated/terminal/sequences.txt
+fi
 # end iNiR
 ZEOF
     log_success "Zsh environment configured"
