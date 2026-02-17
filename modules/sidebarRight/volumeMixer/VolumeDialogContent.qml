@@ -24,9 +24,12 @@ ColumnLayout {
         Layout.topMargin: 8
         implicitHeight: 48
         
-        colBackground: Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colLayer2
-        colBackgroundHover: Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer2Hover
-        colRipple: Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer2Active
+        colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+            : Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colLayer2
+        colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+            : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer2Hover
+        colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+            : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer2Active
         buttonRadius: Appearance.rounding.normal
 
         contentItem: RowLayout {
@@ -69,10 +72,12 @@ ColumnLayout {
         padding: 8
 
         background: Rectangle {
-            color: Appearance.auroraEverywhere ? Appearance.aurora.colPopupSurface : Appearance.colors.colLayer2
-            radius: Appearance.rounding.normal
-            border.width: 1
-            border.color: Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder : Appearance.colors.colOutlineVariant
+            color: Appearance.angelEverywhere ? Appearance.angel.colGlassPopup
+                : Appearance.auroraEverywhere ? Appearance.aurora.colPopupSurface : Appearance.colors.colLayer2
+            radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal : Appearance.rounding.normal
+            border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : 1
+            border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+                : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder : Appearance.colors.colOutlineVariant
         }
 
         ListView {

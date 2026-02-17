@@ -36,19 +36,24 @@ RippleButton {
 
     implicitHeight: rowLayout.implicitHeight + root.buttonVerticalPadding * 2
     implicitWidth: rowLayout.implicitWidth + root.buttonHorizontalPadding * 2
-    buttonRadius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
+    buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
     // M3 consistent colors: transparent by default, layer3 on hover/select, primaryContainer on press
     colBackground: (root.down || root.keyboardDown) 
-        ? (Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive : Appearance.colors.colPrimaryContainerActive)
+        ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+            : Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive : Appearance.colors.colPrimaryContainerActive)
         : ((root.hovered || root.focus || root.isSelected) 
-            ? (Appearance.inirEverywhere ? Appearance.inir.colLayer3 
+            ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                : Appearance.inirEverywhere ? Appearance.inir.colLayer3 
                 : Appearance.auroraEverywhere ? Appearance.colors.colLayer3 
                 : Appearance.colors.colLayer3)
             : "transparent")
-    colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer3Hover 
+    colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer3Hover 
         : Appearance.auroraEverywhere ? Appearance.colors.colLayer3Hover 
         : Appearance.colors.colLayer3Hover
-    colRipple: Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive 
+    colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+        : Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive 
         : Appearance.auroraEverywhere ? Appearance.colors.colLayer3Active 
         : Appearance.colors.colPrimaryContainerActive
 

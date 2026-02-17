@@ -22,13 +22,16 @@ RippleButton {
     buttonRadius: cardRadius
     
     // Theming - aurora/inir/material
-    colBackground: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+    colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2
         : Appearance.auroraEverywhere ? "transparent"
         : Appearance.colors.colLayer1
-    colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+    colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer1Hover
-    colRipple: Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
+    colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
         : Appearance.colors.colLayer1Active
     colBackgroundToggled: colBackgroundHover

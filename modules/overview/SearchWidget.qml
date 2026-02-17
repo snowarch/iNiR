@@ -411,7 +411,8 @@ Item { // Wrapper
         inirColor: Appearance.inir.colLayer1
         auroraTransparency: Appearance.aurora.popupTransparentize
         border.width: auroraEverywhere || inirEverywhere ? 1 : 0
-        border.color: inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colLayer0Border
+        border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+            : inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colLayer0Border
 
         Behavior on implicitHeight {
             id: searchHeightBehavior

@@ -32,14 +32,16 @@ MouseArea {
             fill: 0
             text: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "cloud"
             iconSize: Appearance.font.pixelSize.large
-            color: Appearance.colors.colOnLayer1
+            color: Appearance.angelEverywhere ? Appearance.angel.colText
+                : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
             Layout.alignment: Qt.AlignVCenter
         }
 
         StyledText {
             visible: true
             font.pixelSize: Appearance.font.pixelSize.small
-            color: Appearance.colors.colOnLayer1
+            color: Appearance.angelEverywhere ? Appearance.angel.colText
+                : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
             text: Weather.data?.temp ?? "--°"
             Layout.alignment: Qt.AlignVCenter
         }

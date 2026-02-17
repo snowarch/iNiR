@@ -19,31 +19,39 @@ Scope {
     readonly property bool hasUpdate: ShellUpdates.hasUpdate
     readonly property bool hasLocalMods: ShellUpdates.localModifications.length > 0
     property bool modsExpanded: false
+    property bool suppressOutsideClose: false
 
     // Style-aware tokens (no hardcoded hex fallbacks)
-    readonly property color accentColor: Appearance.inirEverywhere ? (Appearance.inir?.colAccent ?? Appearance.m3colors.m3primary)
+    readonly property color accentColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+        : Appearance.inirEverywhere ? (Appearance.inir?.colAccent ?? Appearance.m3colors.m3primary)
         : Appearance.auroraEverywhere ? (Appearance.aurora?.colAccent ?? Appearance.m3colors.m3primary)
         : Appearance.m3colors.m3primary
 
-    readonly property color layerColor: Appearance.inirEverywhere ? Appearance.inir.colLayer0
+    readonly property color layerColor: Appearance.angelEverywhere ? Appearance.colors.colLayer0Base
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer0
         : Appearance.auroraEverywhere ? (Appearance.aurora?.colSurface ?? Appearance.colors.colLayer0)
         : Appearance.colors.colLayer0
 
-    readonly property color surfaceColor: Appearance.inirEverywhere ? Appearance.inir.colLayer1
+    readonly property color surfaceColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer1
         : Appearance.auroraEverywhere ? (Appearance.aurora?.colSubSurface ?? Appearance.m3colors.m3surfaceContainerLow)
         : Appearance.m3colors.m3surfaceContainerLow
 
-    readonly property color textColor: Appearance.colors.colOnSurface
-    readonly property color subtextColor: Appearance.colors.colSubtext
-    readonly property color borderColor: Appearance.inirEverywhere ? Appearance.inir.colBorder
+    readonly property color textColor: Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnSurface
+    readonly property color subtextColor: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary : Appearance.colors.colSubtext
+    readonly property color borderColor: Appearance.angelEverywhere ? Appearance.angel.colBorder
+        : Appearance.inirEverywhere ? Appearance.inir.colBorder
         : Appearance.colors.colLayer0Border
 
     // Adaptive rounding
-    readonly property real cardRadius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal
+    readonly property real cardRadius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+        : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
         : Appearance.rounding.windowRounding
-    readonly property real sectionRadius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall
+    readonly property real sectionRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
         : Appearance.rounding.small
-    readonly property real pillRadius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : 999
+    readonly property real pillRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : 999
 
     // Parse commit log lines: "hash|subject|relative_date|author"
     function parseCommits(raw) {
@@ -99,7 +107,20 @@ Scope {
     }
 
     onIsOpenChanged: {
-        if (!isOpen) modsExpanded = false
+        if (!isOpen) {
+            modsExpanded = false
+            suppressOutsideClose = false
+            return
+        }
+        suppressOutsideClose = true
+        outsideCloseGuard.restart()
+    }
+
+    Timer {
+        id: outsideCloseGuard
+        interval: 220
+        repeat: false
+        onTriggered: root.suppressOutsideClose = false
     }
 
     PanelWindow {
@@ -198,6 +219,10 @@ Scope {
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton
             onClicked: mouse => {
+                if (root.suppressOutsideClose) {
+                    mouse.accepted = false
+                    return
+                }
                 const localPos = mapToItem(card, mouse.x, mouse.y)
                 if (localPos.x < 0 || localPos.x > card.width || localPos.y < 0 || localPos.y > card.height) {
                     ShellUpdates.closeOverlay()
@@ -210,7 +235,7 @@ Scope {
         StyledRectangularShadow {
             target: card
             radius: card.radius
-            visible: !Appearance.auroraEverywhere
+            visible: Appearance.angelEverywhere || !Appearance.auroraEverywhere
         }
 
         // Main card
@@ -656,6 +681,50 @@ Scope {
                                                 }
                                                 color: root.accentColor
                                             }
+                                        }
+
+                                    // Installed commit (from manifest)
+                                    StyledText {
+                                        visible: ShellUpdates.installedCommit.length > 0
+                                        text: Translation.tr("Installed commit")
+                                        font.pixelSize: Appearance.font.pixelSize.small
+                                        color: root.subtextColor
+                                        Layout.alignment: Qt.AlignVCenter
+                                    }
+                                    Rectangle {
+                                        visible: ShellUpdates.installedCommit.length > 0
+                                        implicitWidth: instHashLabel.implicitWidth + 20
+                                        implicitHeight: instHashLabel.implicitHeight + 10
+                                        radius: root.pillRadius
+                                        color: ColorUtils.transparentize(root.subtextColor, 0.88)
+
+                                            StyledText {
+                                                id: instHashLabel
+                                                anchors.centerIn: parent
+                                                text: ShellUpdates.installedCommit
+                                                font {
+                                                    pixelSize: Appearance.font.pixelSize.smaller
+                                                    family: Appearance.font.family.monospace
+                                                }
+                                                color: root.subtextColor
+                                            }
+                                        }
+
+                                        // Last updated
+                                        StyledText {
+                                            visible: ShellUpdates.installedDate.length > 0
+                                            text: Translation.tr("Last updated")
+                                            font.pixelSize: Appearance.font.pixelSize.small
+                                            color: root.subtextColor
+                                        }
+                                        StyledText {
+                                            visible: ShellUpdates.installedDate.length > 0
+                                            text: root.formatDate(ShellUpdates.installedDate)
+                                            font {
+                                                pixelSize: Appearance.font.pixelSize.small
+                                                weight: Font.Medium
+                                            }
+                                            color: root.textColor
                                         }
 
                                         // Branch

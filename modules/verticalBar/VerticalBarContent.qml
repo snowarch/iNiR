@@ -18,6 +18,55 @@ Item { // Bar content region
 
     property var screen: root.QsWindow.window?.screen
     property var brightnessMonitor: Brightness.getMonitorForScreen(screen)
+
+    // Right-click context menu anchor (invisible, positioned at click)
+    Item {
+        id: barContextMenuAnchor
+        width: 1
+        height: 1
+    }
+
+    // For vertical bar: bottom config means bar is on the RIGHT side
+    // (same config key reused for different meaning in vertical mode)
+    readonly property bool barOnRight: Config.options?.bar?.bottom ?? false
+
+    function openBarContextMenu(clickX, clickY, mouseArea) {
+        // Position anchor at bar edge for correct horizontal popup positioning
+        // If bar on right: anchor at left edge (x=0), popup goes left via popupSide=Edges.Left
+        // If bar on left: anchor at right edge (x=width), popup goes right via popupSide=Edges.Right
+        const mapped = mouseArea.mapToItem(root, clickX, clickY)
+        barContextMenuAnchor.x = root.barOnRight ? 0 : root.width
+        barContextMenuAnchor.y = mapped.y
+        barContextMenu.active = true
+    }
+
+    ContextMenu {
+        id: barContextMenu
+        anchorItem: barContextMenuAnchor
+        popupSide: root.barOnRight ? Edges.Left : Edges.Right
+        closeOnFocusLost: true
+        closeOnHoverLost: true
+
+        model: [
+            {
+                iconName: "browse_activity",
+                monochromeIcon: true,
+                text: Translation.tr("Mission Center"),
+                action: () => {
+                    Session.launchTaskManager()
+                },
+            },
+            { type: "separator" },
+            {
+                iconName: "settings",
+                monochromeIcon: true,
+                text: Translation.tr("Settings"),
+                action: () => {
+                    Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "settings", "open"])
+                },
+            },
+        ]
+    }
     readonly property bool cardStyleEverywhere: (Config.options?.dock?.cardStyle ?? false) && (Config.options?.sidebar?.cardStyle ?? false) && (Config.options?.bar?.cornerStyle === 3)
     readonly property color separatorColor: Appearance.colors.colOutlineVariant
     readonly property bool inirEverywhere: Appearance.inirEverywhere
@@ -46,9 +95,10 @@ Item { // Bar content region
         color: root.separatorColor
     }
 
-    // Background shadow - only for floating styles (cornerStyle 1 or 3), NOT for hug mode (0)
+    // Background shadow - for floating styles or always for angel
     Loader {
-        active: Config.options.bar.showBackground && (Config.options.bar.cornerStyle === 1 || Config.options.bar.cornerStyle === 3) && !root.gameModeMinimal
+        active: (Config.options?.bar?.showBackground ?? true) && !root.gameModeMinimal
+            && (Appearance.angelEverywhere || ((Config.options?.bar?.cornerStyle ?? 0) === 1 || (Config.options?.bar?.cornerStyle ?? 0) === 3))
         anchors.fill: barBackground
         sourceComponent: StyledRectangularShadow {
             anchors.fill: undefined // The loader's anchors act on this, and this should not have any anchor
@@ -60,21 +110,25 @@ Item { // Bar content region
         id: barBackground
         // Floating style: cornerStyle 1 (floating) or 3 (card) - NOT 0 (hug)
         // Aurora style forces floating appearance but hug mode should still work
-        readonly property bool floatingStyle: Config.options.bar.cornerStyle === 1 || Config.options.bar.cornerStyle === 3
+        readonly property bool floatingStyle: (Config.options?.bar?.cornerStyle ?? 0) === 1 || (Config.options?.bar?.cornerStyle ?? 0) === 3
 
         anchors {
             fill: parent
             // Only add margins for floating styles, NOT for hug mode (cornerStyle 0)
             margins: floatingStyle ? Appearance.sizes.hyprlandGapsOut : 0
         }
-        visible: Config.options.bar.showBackground && !root.gameModeMinimal
-        color: root.inirEverywhere ? Appearance.inir.colLayer0
+        visible: (Config.options?.bar?.showBackground ?? true) && !root.gameModeMinimal
+        color: Appearance.angelEverywhere ? ColorUtils.applyAlpha((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
+            : root.inirEverywhere ? Appearance.inir.colLayer0
             : root.auroraEverywhere ? ColorUtils.applyAlpha((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
-            : (root.cardStyleEverywhere ? Appearance.colors.colLayer1 : (Config.options.bar.cornerStyle === 3 ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0))
-        radius: root.inirEverywhere ? Appearance.inir.roundingNormal
-            : floatingStyle ? (Config.options.bar.cornerStyle === 3 ? Appearance.rounding.normal : Appearance.rounding.windowRounding) : 0
-        border.width: root.inirEverywhere ? 1 : (floatingStyle ? 1 : 0)
-        border.color: root.inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colLayer0Border
+            : (root.cardStyleEverywhere ? Appearance.colors.colLayer1 : ((Config.options?.bar?.cornerStyle ?? 0) === 3 ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0))
+        radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+            : root.inirEverywhere ? Appearance.inir.roundingNormal
+            : floatingStyle ? ((Config.options?.bar?.cornerStyle ?? 0) === 3 ? Appearance.rounding.normal : Appearance.rounding.windowRounding) : 0
+        border.width: Appearance.angelEverywhere ? 0 : (root.inirEverywhere ? 1 : (floatingStyle ? 1 : 0))
+        border.color: Appearance.angelEverywhere ? "transparent"
+            : root.inirEverywhere ? Appearance.inir.colBorder
+            : Appearance.colors.colLayer0Border
 
         clip: true
 
@@ -100,14 +154,38 @@ Item { // Bar content region
             asynchronous: true
 
             layer.enabled: Appearance.effectsEnabled && !root.gameModeMinimal
-            layer.effect: StyledBlurEffect {
+            layer.effect: MultiEffect {
                 source: blurredWallpaper
+                anchors.fill: source
+                saturation: Appearance.angelEverywhere
+                    ? Appearance.angel.blurSaturation
+                    : (Appearance.effectsEnabled ? 0.2 : 0)
+                blurEnabled: Appearance.effectsEnabled
+                blurMax: 100
+                blur: Appearance.effectsEnabled ? 1 : 0
             }
 
             Rectangle {
                 anchors.fill: parent
-                color: ColorUtils.transparentize((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
+                color: Appearance.angelEverywhere
+                    ? ColorUtils.transparentize((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.angel.overlayOpacity)
+                    : ColorUtils.transparentize((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
             }
+        }
+
+        // Angel inset glow — top edge
+        Rectangle {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: Appearance.angel.insetGlowHeight
+            visible: Appearance.angelEverywhere
+            color: Appearance.angel.colInsetGlow
+        }
+
+        // Angel partial border
+        AngelPartialBorder {
+            targetRadius: barBackground.radius
         }
     }
 
@@ -125,6 +203,8 @@ Item { // Bar content region
         onPressed: event => {
             if (event.button === Qt.LeftButton)
                 GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen;
+            else if (event.button === Qt.RightButton)
+                root.openBarContextMenu(event.x, event.y, barTopSectionMouseArea)
         }
 
         ColumnLayout { // Content
@@ -167,7 +247,7 @@ Item { // Bar content region
         }
 
     HorizontalBarSeparator {
-            visible: Config.options?.bar.borderless
+            visible: Config.options?.bar?.borderless ?? false
         }
 
         Bar.BarGroup {
@@ -193,7 +273,7 @@ Item { // Bar content region
         }
 
         HorizontalBarSeparator {
-            visible: Config.options?.bar.borderless
+            visible: Config.options?.bar?.borderless ?? false
         }
 
         Bar.BarGroup {
@@ -235,6 +315,8 @@ Item { // Bar content region
         }
         implicitWidth: Appearance.sizes.baseVerticalBarWidth
         implicitHeight: bottomSectionColumnLayout.implicitHeight
+        height: (root.height - middleSection.height) / 2
+        width: Appearance.sizes.verticalBarWidth
         
         onScrollDown: Audio.decrementVolume();
         onScrollUp: Audio.incrementVolume();
@@ -242,6 +324,8 @@ Item { // Bar content region
         onPressed: event => {
             if (event.button === Qt.LeftButton) {
                 GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen;
+            } else if (event.button === Qt.RightButton) {
+                root.openBarContextMenu(event.x, event.y, barBottomSectionMouseArea)
             }
         }
 

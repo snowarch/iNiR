@@ -253,18 +253,20 @@ Item {
                 z: 1
                 implicitWidth: workspaceButtonWidth
                 implicitHeight: workspaceButtonWidth
-                radius: (width / 2)
+                radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : (width / 2)
                 property var previousOccupied: (workspaceOccupied[index-1] && !(!activeWindow?.activated && currentWorkspaceNumber === index))
                 property var rightOccupied: (workspaceOccupied[index+1] && !(!activeWindow?.activated && currentWorkspaceNumber === index+2))
-                property var radiusPrev: previousOccupied ? 0 : (width / 2)
-                property var radiusNext: rightOccupied ? 0 : (width / 2)
+                property var radiusPrev: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : (previousOccupied ? 0 : (width / 2))
+                property var radiusNext: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : (rightOccupied ? 0 : (width / 2))
 
                 topLeftRadius: radiusPrev
                 bottomLeftRadius: root.vertical ? radiusNext : radiusPrev
                 topRightRadius: root.vertical ? radiusPrev : radiusNext
                 bottomRightRadius: radiusNext
                 
-                color: Appearance.auroraEverywhere 
+                color: Appearance.angelEverywhere
+                    ? Appearance.angel.colGlassCard
+                    : Appearance.auroraEverywhere 
                     ? Appearance.aurora.colSubSurface 
                     : ColorUtils.transparentize(Appearance.m3colors.m3secondaryContainer, 0.4)
                 opacity: (workspaceOccupied[index] && !(!activeWindow?.activated && currentWorkspaceNumber === index+1)) ? 1 : 0
@@ -291,8 +293,8 @@ Item {
         z: 2
         visible: !root.columnMode
         // Make active ws indicator, which has a brighter color, smaller to look like it is of the same size as ws occupied highlight
-        radius: Appearance.rounding.full
-        color: Appearance.colors.colPrimary
+        radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : Appearance.rounding.full
+        color: Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.colors.colPrimary
 
         anchors {
             verticalCenter: vertical ? undefined : parent.verticalCenter
@@ -523,8 +525,8 @@ Item {
     Rectangle {
         z: 2
         visible: root.columnMode && root.currentWindowIndex >= 0
-        radius: Appearance.rounding.full
-        color: Appearance.colors.colPrimary
+        radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : Appearance.rounding.full
+        color: Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.colors.colPrimary
 
         anchors {
             verticalCenter: vertical ? undefined : parent.verticalCenter

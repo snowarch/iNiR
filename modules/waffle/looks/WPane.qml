@@ -45,7 +45,7 @@ Item {
         color: Looks.colors.bgPanelFooterBase
         implicitWidth: contentItem.implicitWidth
         implicitHeight: contentItem.implicitHeight
-        layer.enabled: true
+        layer.enabled: Appearance.effectsEnabled
         layer.effect: OpacityMask {
             maskSource: Rectangle {
                 id: contentAreaMask

@@ -29,7 +29,9 @@ Item {
         id: card
         anchors.fill: parent
         implicitHeight: col.implicitHeight + 16
-        radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+        radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+            : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
+            : Appearance.rounding.normal
         color: "transparent"
 
         ColumnLayout {

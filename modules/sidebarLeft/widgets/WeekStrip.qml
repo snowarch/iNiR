@@ -61,17 +61,20 @@ Item {
                                    : Appearance.colors?.colOnLayer1 ?? "white"
     readonly property color colLabel: Appearance.inirEverywhere ? Appearance.inir?.colLabel ?? Appearance.colors?.colPrimary ?? "blue"
                                     : Appearance.colors?.colPrimary ?? "blue"
-    readonly property color colLayer1Hover: Appearance.inirEverywhere ? Appearance.inir?.colLayer1Hover ?? Appearance.colors?.colLayer1Hover ?? "gray"
+    readonly property color colLayer1Hover: Appearance.angelEverywhere ? Appearance.angel?.colGlassCardHover ?? Appearance.colors?.colLayer1Hover ?? "gray"
+                                          : Appearance.inirEverywhere ? Appearance.inir?.colLayer1Hover ?? Appearance.colors?.colLayer1Hover ?? "gray"
                                           : Appearance.auroraEverywhere ? Appearance.aurora?.colSubSurface ?? Appearance.colors?.colLayer1Hover ?? "gray"
                                           : Appearance.colors?.colLayer1Hover ?? "gray"
-    readonly property color colLayer1Active: Appearance.inirEverywhere ? Appearance.inir?.colLayer1Active ?? Appearance.colors?.colLayer1Active ?? "gray"
+    readonly property color colLayer1Active: Appearance.angelEverywhere ? Appearance.angel?.colGlassCardActive ?? Appearance.colors?.colLayer1Active ?? "gray"
+                                           : Appearance.inirEverywhere ? Appearance.inir?.colLayer1Active ?? Appearance.colors?.colLayer1Active ?? "gray"
                                            : Appearance.auroraEverywhere ? Appearance.aurora?.colSubSurfaceActive ?? Appearance.colors?.colLayer1Active ?? "gray"
                                            : Appearance.colors?.colLayer1Active ?? "gray"
     readonly property color colPrimaryContainer: Appearance.inirEverywhere ? Appearance.inir?.colPrimaryContainer ?? Appearance.colors?.colPrimaryContainer ?? "blue"
                                                : Appearance.colors?.colPrimaryContainer ?? "blue"
     readonly property color colPrimaryActive: Appearance.inirEverywhere ? Appearance.inir?.colPrimaryActive ?? Appearance.colors?.colPrimaryContainerActive ?? "blue"
                                             : Appearance.colors?.colPrimaryContainerActive ?? "blue"
-    readonly property real buttonRadius: Appearance.inirEverywhere ? Appearance.inir?.roundingSmall ?? Appearance.rounding?.small ?? 8
+    readonly property real buttonRadius: Appearance.angelEverywhere ? Appearance.angel?.roundingSmall ?? 2
+                                       : Appearance.inirEverywhere ? Appearance.inir?.roundingSmall ?? Appearance.rounding?.small ?? 8
                                        : Appearance.rounding?.small ?? 8
 
     MouseArea {

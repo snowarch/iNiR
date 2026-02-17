@@ -252,8 +252,15 @@ Variants {
                 visible: backdropWindow.useAuroraStyle && status === Image.Ready && !backdropWindow.wallpaperIsGif && !backdropWindow.wallpaperIsVideo
 
                 layer.enabled: Appearance.effectsEnabled
-                layer.effect: StyledBlurEffect {
+                layer.effect: MultiEffect {
                     source: auroraWallpaper
+                    anchors.fill: source
+                    saturation: Appearance.angelEverywhere
+                        ? Appearance.angel.blurSaturation
+                        : (Appearance.effectsEnabled ? 0.2 : 0)
+                    blurEnabled: Appearance.effectsEnabled
+                    blurMax: 100
+                    blur: Appearance.effectsEnabled ? 1 : 0
                 }
             }
             
@@ -271,8 +278,15 @@ Variants {
                 playing: visible && backdropWindow.enableAnimation
 
                 layer.enabled: Appearance.effectsEnabled && backdropWindow.enableAnimatedBlur
-                layer.effect: StyledBlurEffect {
+                layer.effect: MultiEffect {
                     source: auroraGifWallpaper
+                    anchors.fill: source
+                    saturation: Appearance.angelEverywhere
+                        ? Appearance.angel.blurSaturation
+                        : (Appearance.effectsEnabled ? 0.2 : 0)
+                    blurEnabled: Appearance.effectsEnabled
+                    blurMax: 100
+                    blur: Appearance.effectsEnabled ? 1 : 0
                 }
             }
 
@@ -315,8 +329,15 @@ Variants {
                 }
 
                 layer.enabled: Appearance.effectsEnabled && backdropWindow.enableAnimatedBlur
-                layer.effect: StyledBlurEffect {
+                layer.effect: MultiEffect {
                     source: auroraVideoWallpaper
+                    anchors.fill: source
+                    saturation: Appearance.angelEverywhere
+                        ? Appearance.angel.blurSaturation
+                        : (Appearance.effectsEnabled ? 0.2 : 0)
+                    blurEnabled: Appearance.effectsEnabled
+                    blurMax: 100
+                    blur: Appearance.effectsEnabled ? 1 : 0
                 }
             }
 
@@ -341,27 +362,30 @@ Variants {
             // Vignette effect at bar level
             Rectangle {
                 id: barVignette
-                anchors {
-                    left: parent.left
-                    right: parent.right
-                    top: isBarAtTop ? parent.top : undefined
-                    bottom: isBarAtTop ? undefined : parent.bottom
-                }
-                
-                readonly property bool isBarAtTop: !(Config.options?.bar?.bottom ?? false)
+                readonly property bool isVertical: Config.options?.bar?.vertical ?? false
+                readonly property bool isBarAtTop: !isVertical && !(Config.options?.bar?.bottom ?? false)
+                readonly property bool isBarAtLeft: isVertical && !(Config.options?.bar?.bottom ?? false)
                 readonly property bool barVignetteEnabled: Config.options?.bar?.vignette?.enabled ?? false
                 readonly property real barVignetteIntensity: Config.options?.bar?.vignette?.intensity ?? 0.6
                 readonly property real barVignetteRadius: Config.options?.bar?.vignette?.radius ?? 0.5
-                
-                height: Math.max(200, backdropWindow.modelData.height * barVignetteRadius)
+
+                anchors {
+                    left: isVertical ? (isBarAtLeft ? parent.left : undefined) : parent.left
+                    right: isVertical ? (isBarAtLeft ? undefined : parent.right) : parent.right
+                    top: isVertical ? parent.top : (isBarAtTop ? parent.top : undefined)
+                    bottom: isVertical ? parent.bottom : (isBarAtTop ? undefined : parent.bottom)
+                }
+
+                width: isVertical ? Math.max(200, backdropWindow.modelData.width * barVignetteRadius) : undefined
+                height: isVertical ? undefined : Math.max(200, backdropWindow.modelData.height * barVignetteRadius)
                 visible: barVignetteEnabled
                 
                 gradient: Gradient {
-                    orientation: Gradient.Vertical
+                    orientation: barVignette.isVertical ? Gradient.Horizontal : Gradient.Vertical
                     
                     GradientStop { 
                         position: 0.0
-                        color: barVignette.isBarAtTop 
+                        color: (barVignette.isBarAtTop || barVignette.isBarAtLeft)
                             ? Qt.rgba(0, 0, 0, barVignette.barVignetteIntensity)
                             : "transparent"
                     }
@@ -371,7 +395,7 @@ Variants {
                     }
                     GradientStop { 
                         position: 1.0
-                        color: barVignette.isBarAtTop
+                        color: (barVignette.isBarAtTop || barVignette.isBarAtLeft)
                             ? "transparent"
                             : Qt.rgba(0, 0, 0, barVignette.barVignetteIntensity)
                     }

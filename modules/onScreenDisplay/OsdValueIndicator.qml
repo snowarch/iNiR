@@ -34,7 +34,8 @@ Item {
         inirColor: Appearance.inir.colLayer1
         auroraTransparency: Appearance.aurora.popupTransparentize
         border.width: auroraEverywhere || inirEverywhere ? 1 : 0
-        border.color: inirEverywhere ? Appearance.inir.colBorder 
+        border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+            : inirEverywhere ? Appearance.inir.colBorder 
             : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder : Appearance.colors.colLayer0Border
 
         implicitWidth: valueRow.implicitWidth

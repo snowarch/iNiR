@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import Qt5Compat.GraphicalEffects as GE
 import Quickshell
 import Quickshell.Io
@@ -257,24 +258,33 @@ Scope {
                                                 : (-Appearance.sizes.barHeight)
                                             width: barRoot.screen?.width ?? 1920
                                             height: barRoot.screen?.height ?? 1080
-                                            source: Wallpapers.effectiveWallpaperUrl
+                                            source: barContent.wallpaperUrl
                                             fillMode: Image.PreserveAspectCrop
                                             cache: true
                                             asynchronous: true
                                             
                                             layer.enabled: Appearance.effectsEnabled
-                                            layer.effect: StyledBlurEffect {
+                                            layer.effect: MultiEffect {
                                                 source: blurImg
+                                                anchors.fill: source
+                                                saturation: Appearance.angelEverywhere
+                                                    ? Appearance.angel.blurSaturation
+                                                    : (Appearance.effectsEnabled ? 0.2 : 0)
+                                                blurEnabled: Appearance.effectsEnabled
+                                                blurMax: 100
+                                                blur: Appearance.effectsEnabled ? 1 : 0
                                             }
                                             
                                             Rectangle {
                                                 anchors.fill: parent
-                                                color: ColorUtils.transparentize((barContent.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
+                                                color: Appearance.angelEverywhere
+                                                    ? ColorUtils.transparentize((barContent.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.angel.overlayOpacity)
+                                                    : ColorUtils.transparentize((barContent.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
                                             }
                                         }
                                         
                                         // Mask to corner shape
-                                        layer.enabled: true
+                                        layer.enabled: Appearance.auroraEverywhere
                                         layer.effect: GE.OpacityMask {
                                             maskSource: RoundCorner {
                                                 width: blurCorner.width

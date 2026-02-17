@@ -34,14 +34,14 @@ Item {
     readonly property color colText: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0
     readonly property color colTextSecondary: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
     readonly property color colPrimary: Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
-    readonly property color colSurface: Appearance.inirEverywhere ? Appearance.inir.colLayer1 : Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colLayer1
-    readonly property color colSurfaceHover: Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer1Hover
-    readonly property color colLayer2: Appearance.inirEverywhere ? Appearance.inir.colLayer2 : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer2
-    readonly property color colLayer2Hover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer2Hover
-    readonly property color colBorder: Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
-    readonly property int borderWidth: Appearance.inirEverywhere ? 1 : 0
-    readonly property real radiusSmall: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
-    readonly property real radiusNormal: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+    readonly property color colSurface: Appearance.angelEverywhere ? Appearance.angel.colGlassCard : Appearance.inirEverywhere ? Appearance.inir.colLayer1 : Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colLayer1
+    readonly property color colSurfaceHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer1Hover
+    readonly property color colLayer2: Appearance.angelEverywhere ? Appearance.angel.colGlassElevated : Appearance.inirEverywhere ? Appearance.inir.colLayer2 : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer2
+    readonly property color colLayer2Hover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer2Hover
+    readonly property color colBorder: Appearance.angelEverywhere ? Appearance.angel.colCardBorder : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+    readonly property int borderWidth: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : Appearance.inirEverywhere ? 1 : 0
+    readonly property real radiusSmall: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
+    readonly property real radiusNormal: Appearance.angelEverywhere ? Appearance.angel.roundingNormal : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
 
     ColumnLayout {
         anchors.fill: parent

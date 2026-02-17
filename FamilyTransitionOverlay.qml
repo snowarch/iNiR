@@ -238,7 +238,7 @@ Scope {
                     source: `${Looks.iconsPath}/start-here.svg`
                     sourceSize: Qt.size(52, 52)
                     
-                    layer.enabled: true
+                    layer.enabled: Appearance.effectsEnabled
                     layer.effect: MultiEffect {
                         colorization: 1.0
                         colorizationColor: Looks.colors.fg
@@ -345,7 +345,7 @@ Scope {
                         source: Qt.resolvedUrl("assets/icons/illogical-impulse.svg")
                         sourceSize: Qt.size(36, 36)
                         
-                        layer.enabled: true
+                        layer.enabled: Appearance.effectsEnabled
                         layer.effect: MultiEffect {
                             colorization: 1.0
                             colorizationColor: Appearance.colors.colOnPrimaryContainer
@@ -365,7 +365,7 @@ Scope {
                         font.weight: Font.Medium
                         color: Appearance.m3colors.m3onSurface
                         
-                        layer.enabled: true
+                        layer.enabled: Appearance.effectsEnabled
                         layer.effect: MultiEffect {
                             shadowEnabled: true
                             shadowColor: Appearance.m3colors.darkmode ? "#000000" : "#FFFFFF"
@@ -382,7 +382,7 @@ Scope {
                         color: Appearance.m3colors.m3onSurface
                         opacity: 0.7
                         
-                        layer.enabled: true
+                        layer.enabled: Appearance.effectsEnabled
                         layer.effect: MultiEffect {
                             shadowEnabled: true
                             shadowColor: Appearance.m3colors.darkmode ? "#000000" : "#FFFFFF"

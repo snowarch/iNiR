@@ -11,12 +11,18 @@ import QtQuick.Layouts
 
 Rectangle {
     id: root
-    radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-    color: Appearance.inirEverywhere ? Appearance.inir.colLayer1
+    radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+        : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
+        : Appearance.rounding.normal
+    color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
          : Appearance.auroraEverywhere ? "transparent" 
          : Appearance.colors.colLayer1
-    border.width: Appearance.inirEverywhere ? 1 : 0
-    border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+    border.width: Appearance.angelEverywhere ? 0 : (Appearance.inirEverywhere ? 1 : 0)
+    border.color: Appearance.angelEverywhere ? "transparent"
+        : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+
+    AngelPartialBorder { targetRadius: root.radius; coverage: 0.5 }
 
     NotificationList {
         anchors.fill: parent

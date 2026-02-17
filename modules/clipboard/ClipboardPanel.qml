@@ -225,7 +225,7 @@ Scope {
         StyledRectangularShadow {
             target: panelBackground
             radius: panelBackground.radius
-            visible: !Appearance.inirEverywhere && !Appearance.auroraEverywhere
+            visible: Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere)
         }
 
         // Click outside the panel to close
@@ -244,19 +244,26 @@ Scope {
             }
         }
 
-        Rectangle {
+        GlassBackground {
             id: panelBackground
             anchors.centerIn: parent
             width: panelWidth
             height: Math.min(contentColumn.implicitHeight, panelMaxHeight)
-            color: Appearance.inirEverywhere ? Appearance.inir.colLayer1
-                 : Appearance.auroraEverywhere ? Appearance.colors.colLayer2Base
-                 : Appearance.colors.colLayer1
-            border.width: Appearance.auroraEverywhere ? 1 : 1
-            border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder 
+            fallbackColor: Appearance.colors.colLayer1
+            inirColor: Appearance.inir.colLayer1
+            auroraTransparency: Appearance.aurora.popupTransparentize
+            screenX: (window.screen?.width ?? 1920) / 2 - width / 2
+            screenY: (window.screen?.height ?? 1080) / 2 - height / 2
+            screenWidth: window.screen?.width ?? 1920
+            screenHeight: window.screen?.height ?? 1080
+            border.width: Appearance.angelEverywhere ? Appearance.angel.panelBorderWidth
+                : Appearance.auroraEverywhere ? 1 : 1
+            border.color: Appearance.angelEverywhere ? Appearance.angel.colPanelBorder
+                : Appearance.inirEverywhere ? Appearance.inir.colBorder 
                 : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder 
                 : Appearance.colors.colOutlineVariant
-            radius: Appearance.inirEverywhere ? Appearance.inir.roundingLarge : Appearance.rounding.screenRounding
+            radius: Appearance.angelEverywhere ? Appearance.angel.roundingLarge
+                : Appearance.inirEverywhere ? Appearance.inir.roundingLarge : Appearance.rounding.screenRounding
             
             // Entry animation
             opacity: GlobalStates.clipboardOpen ? 1 : 0
@@ -287,7 +294,7 @@ Scope {
                     id: headerToolbar
                     Layout.fillWidth: true
                     enableShadow: false
-                    transparent: Appearance.auroraEverywhere
+                    transparent: Appearance.angelEverywhere || Appearance.auroraEverywhere
 
                     MaterialSymbol {
                         text: "content_paste"
@@ -401,8 +408,10 @@ Scope {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     implicitHeight: Math.min(480, Math.max(160, listView.contentHeight + 20))
-                    radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-                    color: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                    radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+                        : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+                    color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                        : Appearance.inirEverywhere ? Appearance.inir.colLayer2
                         : Appearance.auroraEverywhere ? Appearance.colors.colLayer2Base
                         : Appearance.colors.colLayer2
                     clip: true
@@ -504,8 +513,10 @@ Scope {
                         anchors.right: parent.right
                         anchors.bottom: parent.bottom
                         implicitHeight: hintsColumn.implicitHeight + 16
-                        radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-                        color: Appearance.inirEverywhere ? Appearance.inir.colLayer2 
+                        radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+                            : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+                        color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                            : Appearance.inirEverywhere ? Appearance.inir.colLayer2 
                             : Appearance.auroraEverywhere ? Appearance.colors.colLayer2Base
                             : Appearance.colors.colPrimaryContainer
                         opacity: root.showKeyboardHints ? 1 : 0
@@ -524,7 +535,8 @@ Scope {
                                 Layout.fillWidth: true
                                 text: Translation.tr("↑/↓, J/K: Navigate • Enter: Paste")
                                 font.pixelSize: Appearance.font.pixelSize.smaller
-                                color: Appearance.inirEverywhere ? Appearance.inir.colText 
+                                color: Appearance.angelEverywhere ? Appearance.angel.colText
+                                    : Appearance.inirEverywhere ? Appearance.inir.colText 
                                     : Appearance.auroraEverywhere ? Appearance.m3colors.m3onSurface 
                                     : Appearance.colors.colOnPrimaryContainer
                                 elide: Text.ElideRight
@@ -534,7 +546,8 @@ Scope {
                                 Layout.fillWidth: true
                                 text: Translation.tr("Ctrl+C: Copy • Del: Delete • Shift+Del: Clear all • Esc: Close")
                                 font.pixelSize: Appearance.font.pixelSize.smaller
-                                color: Appearance.inirEverywhere ? Appearance.inir.colText 
+                                color: Appearance.angelEverywhere ? Appearance.angel.colText
+                                    : Appearance.inirEverywhere ? Appearance.inir.colText 
                                     : Appearance.auroraEverywhere ? Appearance.m3colors.m3onSurface 
                                     : Appearance.colors.colOnPrimaryContainer
                                 elide: Text.ElideRight

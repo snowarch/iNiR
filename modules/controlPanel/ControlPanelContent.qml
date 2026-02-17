@@ -22,6 +22,7 @@ Item {
     implicitHeight: background.implicitHeight
     
     readonly property bool inirEverywhere: Appearance.inirEverywhere
+    readonly property bool angelEverywhere: Appearance.angelEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
     
     readonly property string wallpaperUrl: Wallpapers.effectiveWallpaperUrl
@@ -41,7 +42,7 @@ Item {
     // Shadow
     StyledRectangularShadow {
         target: background
-        visible: !root.inirEverywhere && !root.auroraEverywhere && !Appearance.gameModeMinimal
+        visible: (Appearance.angelEverywhere || (!root.inirEverywhere && !root.auroraEverywhere)) && !Appearance.gameModeMinimal
     }
 
     Rectangle {
@@ -55,10 +56,13 @@ Item {
              : root.auroraEverywhere ? ColorUtils.applyAlpha((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
              : Appearance.colors.colLayer0
         
-        radius: root.inirEverywhere ? Appearance.inir.roundingLarge : Appearance.rounding.large
+        radius: root.angelEverywhere ? Appearance.angel.roundingLarge
+            : root.inirEverywhere ? Appearance.inir.roundingLarge
+            : Appearance.rounding.large
         
         border.width: root.inirEverywhere ? 1 : (root.auroraEverywhere ? 1 : 1)
-        border.color: root.inirEverywhere ? Appearance.inir.colBorder 
+        border.color: root.angelEverywhere ? Appearance.angel.colBorder
+                    : root.inirEverywhere ? Appearance.inir.colBorder 
                     : root.auroraEverywhere ? Appearance.aurora.colTooltipBorder 
                     : Appearance.colors.colLayer0Border
         
@@ -86,14 +90,34 @@ Item {
             asynchronous: true
 
             layer.enabled: Appearance.effectsEnabled
-            layer.effect: StyledBlurEffect {
+            layer.effect: MultiEffect {
                 source: blurredWallpaper
+                anchors.fill: source
+                saturation: root.angelEverywhere
+                    ? Appearance.angel.blurSaturation
+                    : (Appearance.effectsEnabled ? 0.2 : 0)
+                blurEnabled: Appearance.effectsEnabled
+                blurMax: 100
+                blur: Appearance.effectsEnabled ? 1 : 0
             }
 
             Rectangle {
                 anchors.fill: parent
-                color: ColorUtils.transparentize((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
+                color: root.angelEverywhere
+                    ? ColorUtils.transparentize((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.angel.overlayOpacity)
+                    : ColorUtils.transparentize((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
             }
+        }
+
+        // Angel inset glow — top edge
+        Rectangle {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: Appearance.angel.insetGlowHeight
+            visible: root.angelEverywhere
+            color: Appearance.angel.colInsetGlow
+            z: 10
         }
 
         // Content

@@ -38,7 +38,8 @@ PanelWindow {
     property string fileUploadApiEndpoint: Config.options?.search?.imageSearch?.fileUploadApiEndpoint ?? "https://0x0.st"
 
     // Tri-style color support
-    property color overlayColor: Appearance.inirEverywhere ? "#88000000"
+    property color overlayColor: Appearance.angelEverywhere ? "#55000000"
+        : Appearance.inirEverywhere ? "#88000000"
         : Appearance.auroraEverywhere ? "#66000000" : "#88111111"
     property color brightText: Appearance.inirEverywhere ? Appearance.inir.colText
         : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer0

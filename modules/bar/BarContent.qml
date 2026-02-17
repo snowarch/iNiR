@@ -17,6 +17,51 @@ Item { // Bar content region
 
     property var screen: root.QsWindow.window?.screen
     property var brightnessMonitor: Brightness.getMonitorForScreen(screen)
+
+    // Right-click context menu anchor (invisible, positioned at click)
+    Item {
+        id: barContextMenuAnchor
+        width: 1
+        height: 1
+    }
+
+    function openBarContextMenu(clickX, clickY, mouseArea) {
+        // Position anchor at bar edge for correct popup positioning
+        // For bar top: anchor at bottom edge (y = height), popup appears below
+        // For bar bottom: anchor at top edge (y = 0), popupAbove makes it appear above
+        const mapped = mouseArea.mapToItem(root, clickX, clickY)
+        barContextMenuAnchor.x = mapped.x
+        barContextMenuAnchor.y = (Config.options?.bar?.bottom ?? false) ? 0 : root.height
+        barContextMenu.active = true
+    }
+
+    ContextMenu {
+        id: barContextMenu
+        anchorItem: barContextMenuAnchor
+        popupAbove: Config.options?.bar?.bottom ?? false
+        closeOnFocusLost: true
+        closeOnHoverLost: true
+
+        model: [
+            {
+                iconName: "browse_activity",
+                monochromeIcon: true,
+                text: Translation.tr("Mission Center"),
+                action: () => {
+                    Session.launchTaskManager()
+                },
+            },
+            { type: "separator" },
+            {
+                iconName: "settings",
+                monochromeIcon: true,
+                text: Translation.tr("Settings"),
+                action: () => {
+                    Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "settings", "open"])
+                },
+            },
+        ]
+    }
     property real useShortenedForm: (Appearance.sizes.barHellaShortenScreenWidthThreshold >= screen?.width) ? 2 : (Appearance.sizes.barShortenScreenWidthThreshold >= screen?.width) ? 1 : 0
     readonly property int baseCenterSideModuleWidth: (useShortenedForm == 2) ? Appearance.sizes.barCenterSideModuleWidthHellaShortened : (useShortenedForm == 1) ? Appearance.sizes.barCenterSideModuleWidthShortened : Appearance.sizes.barCenterSideModuleWidth
     // Both center groups share the same width so workspaces stay perfectly centered
@@ -32,19 +77,26 @@ Item { // Bar content region
         return WallpaperListener.wallpaperUrlForScreen(root.screen)
     }
 
+    readonly property bool _useGlobalQuantizer: root.wallpaperUrl === Wallpapers.effectiveWallpaperUrl
     ColorQuantizer {
         id: wallpaperColorQuantizer
-        source: root.wallpaperUrl
+        source: root._useGlobalQuantizer ? "" : root.wallpaperUrl
         depth: 0 // 2^0 = 1 color
         rescaleSize: 10
     }
 
-    readonly property color wallpaperDominantColor: (wallpaperColorQuantizer?.colors?.[0] ?? Appearance.colors.colPrimary)
-    readonly property QtObject blendedColors: AdaptedMaterialScheme {
+    readonly property color wallpaperDominantColor: root._useGlobalQuantizer
+        ? Appearance.wallpaperDominantColor
+        : (wallpaperColorQuantizer?.colors?.[0] ?? Appearance.colors.colPrimary)
+    AdaptedMaterialScheme {
+        id: _localBlendedColors
         color: ColorUtils.mix(root.wallpaperDominantColor, Appearance.colors.colPrimaryContainer, 0.8) || Appearance.m3colors.m3secondaryContainer
     }
+    readonly property QtObject blendedColors: root._useGlobalQuantizer
+        ? Appearance.wallpaperBlendedColors : _localBlendedColors
 
     readonly property bool inirEverywhere: Appearance.inirEverywhere
+    readonly property bool angelEverywhere: Appearance.angelEverywhere
 
     component VerticalBarSeparator: Rectangle {
         Layout.topMargin: Appearance.sizes.baseBarHeight / 3
@@ -57,11 +109,11 @@ Item { // Bar content region
     // Background shadow
     Loader {
         active: !root.inirEverywhere
-            && !Appearance.auroraEverywhere
+            && (Appearance.angelEverywhere || !Appearance.auroraEverywhere)
             && !Appearance.gameModeMinimal
             && (Config.options?.bar?.showBackground ?? true)
-            && ((Config.options?.bar?.cornerStyle ?? 0) === 1 || (Config.options?.bar?.cornerStyle ?? 0) === 3)
-            && (Config.options?.bar?.floatStyleShadow ?? true)
+            && (Appearance.angelEverywhere || (((Config.options?.bar?.cornerStyle ?? 0) === 1 || (Config.options?.bar?.cornerStyle ?? 0) === 3)
+            && (Config.options?.bar?.floatStyleShadow ?? true)))
         anchors.fill: barBackground
         sourceComponent: StyledRectangularShadow {
             anchors.fill: undefined // The loader's anchors act on this, and this should not have any anchor
@@ -90,6 +142,9 @@ Item { // Bar content region
 
         // Color logic per global style and corner style
         color: {
+            if (root.angelEverywhere) {
+                return ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
+            }
             if (root.inirEverywhere) {
                 return Appearance.inir.colLayer0
             }
@@ -111,6 +166,9 @@ Item { // Bar content region
             if (customRounding >= 0) {
                 return customRounding
             }
+            if (root.angelEverywhere) {
+                return (cornerStyle === 1 || cornerStyle === 3) ? Appearance.angel.roundingNormal : 0
+            }
             if (root.inirEverywhere) {
                 // Inir: use inir rounding for Float/Card, 0 for Hug/Rect
                 if (cornerStyle === 1 || cornerStyle === 3) {
@@ -127,18 +185,17 @@ Item { // Bar content region
 
         // Border logic per global style
         border.width: {
+            if (root.angelEverywhere) return Appearance.angel.panelBorderWidth
             if (root.inirEverywhere) {
-                // Inir always has border for Float/Card
                 return (cornerStyle === 1 || cornerStyle === 3) ? 1 : 0
             }
             if (auroraEverywhere) {
-                // Aurora: border on floating styles
                 return floatingStyle ? 1 : 0
             }
-            // Material: border only on Float/Card
             return floatingStyle ? 1 : 0
         }
         border.color: {
+            if (root.angelEverywhere) return Appearance.angel.colPanelBorder
             if (root.inirEverywhere) {
                 return Appearance.inir.colBorder
             }
@@ -172,14 +229,40 @@ Item { // Bar content region
             asynchronous: true
 
             layer.enabled: Appearance.effectsEnabled
-            layer.effect: StyledBlurEffect {
+            layer.effect: MultiEffect {
                 source: blurredWallpaper
+                anchors.fill: source
+                saturation: root.angelEverywhere
+                    ? (Appearance.angel.blurSaturation * Appearance.angel.colorStrength)
+                    : (Appearance.effectsEnabled ? 0.2 : 0)
+                blurEnabled: Appearance.effectsEnabled
+                blurMax: 100
+                blur: Appearance.effectsEnabled
+                    ? (root.angelEverywhere ? Appearance.angel.blurIntensity : 1)
+                    : 0
             }
 
             Rectangle {
                 anchors.fill: parent
-                color: ColorUtils.transparentize((barBackground.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
+                color: root.angelEverywhere
+                    ? ColorUtils.transparentize((barBackground.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.angel.overlayOpacity * Appearance.angel.panelTransparentize)
+                    : ColorUtils.transparentize((barBackground.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
             }
+        }
+
+        // Angel inset glow — top edge
+        Rectangle {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: Appearance.angel.insetGlowHeight
+            visible: root.angelEverywhere
+            color: Appearance.angel.colInsetGlow
+        }
+
+        // Angel partial border — elegant half-borders
+        AngelPartialBorder {
+            targetRadius: barBackground.radius
         }
     }
 
@@ -201,6 +284,8 @@ Item { // Bar content region
         onPressed: event => {
             if (event.button === Qt.LeftButton)
                 GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen;
+            else if (event.button === Qt.RightButton)
+                root.openBarContextMenu(event.x, event.y, barLeftSideMouseArea)
         }
 
         // ScrollHint as overlay - at the inner edge of the margin space
@@ -358,6 +443,8 @@ Item { // Bar content region
         onPressed: event => {
             if (event.button === Qt.LeftButton) {
                 GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen;
+            } else if (event.button === Qt.RightButton) {
+                root.openBarContextMenu(event.x, event.y, barRightSideMouseArea)
             }
         }
 

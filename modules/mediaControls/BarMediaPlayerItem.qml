@@ -18,7 +18,7 @@ Item { // Player instance - Old style design
     property list<real> visualizerPoints: []
     property real maxVisualizerValue: 1000
     property int visualizerSmoothing: 2
-    property real radius: Appearance.rounding.normal
+    property real radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal : Appearance.rounding.normal
 
     property var artUrl: player?.trackArtUrl
     property string artDownloadLocation: Directories.coverArt
@@ -34,13 +34,16 @@ Item { // Player instance - Old style design
         implicitHeight: 24
 
         property var iconName
-        colBackground: Appearance.inirEverywhere ? "transparent"
+        colBackground: Appearance.angelEverywhere ? "transparent"
+            : Appearance.inirEverywhere ? "transparent"
             : Appearance.auroraEverywhere ? "transparent"
             : ColorUtils.transparentize(blendedColors.colSecondaryContainer, 1)
-        colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+        colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+            : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
             : blendedColors.colSecondaryContainerHover
-        colRipple: Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
+        colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+            : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
             : blendedColors.colSecondaryContainerActive
 
@@ -48,7 +51,8 @@ Item { // Player instance - Old style design
             iconSize: Appearance.font.pixelSize.huge
             fill: 1
             horizontalAlignment: Text.AlignHCenter
-            color: Appearance.inirEverywhere ? Appearance.inir.colText
+            color: Appearance.angelEverywhere ? Appearance.angel.colText
+                : Appearance.inirEverywhere ? Appearance.inir.colText
                 : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer0
                 : blendedColors.colOnSecondaryContainer
             text: iconName
@@ -130,21 +134,26 @@ Item { // Player instance - Old style design
 
     StyledRectangularShadow {
         target: background
-        visible: !Appearance.inirEverywhere && !Appearance.auroraEverywhere
+        visible: Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere)
     }
     Rectangle { // Background
         id: background
         anchors.fill: parent
         anchors.margins: Appearance.sizes.elevationMargin
-        color: Appearance.inirEverywhere ? Appearance.inir.colLayer1
+        color: Appearance.angelEverywhere ? "transparent"
+             : Appearance.inirEverywhere ? Appearance.inir.colLayer1
              : Appearance.auroraEverywhere ? "transparent"
              : ColorUtils.applyAlpha(blendedColors.colLayer0, 1)
-        radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : root.radius
-        border.width: Appearance.inirEverywhere || Appearance.auroraEverywhere ? 1 : 0
-        border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder
+        radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+             : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : root.radius
+        border.width: Appearance.angelEverywhere ? 0 : ((Appearance.inirEverywhere || Appearance.auroraEverywhere) ? 1 : 0)
+        border.color: Appearance.angelEverywhere ? "transparent"
+                    : Appearance.inirEverywhere ? Appearance.inir.colBorder
                     : Appearance.auroraEverywhere ? Appearance.aurora.colPopupBorder
                     : "transparent"
         clip: true
+
+        AngelPartialBorder { targetRadius: background.radius; coverage: 0.5 }
 
         layer.enabled: true
         layer.effect: OpacityMask {
@@ -166,14 +175,25 @@ Item { // Player instance - Old style design
             asynchronous: true
 
             layer.enabled: Appearance.effectsEnabled
-            layer.effect: StyledBlurEffect { source: auroraWallpaper }
+            layer.effect: MultiEffect {
+                source: auroraWallpaper
+                anchors.fill: source
+                saturation: Appearance.angelEverywhere
+                    ? Appearance.angel.blurSaturation
+                    : (Appearance.effectsEnabled ? 0.2 : 0)
+                blurEnabled: Appearance.effectsEnabled
+                blurMax: 100
+                blur: Appearance.effectsEnabled ? 1 : 0
+            }
         }
 
         // Aurora tint overlay
         Rectangle {
             anchors.fill: parent
             visible: Appearance.auroraEverywhere && !Appearance.inirEverywhere
-            color: ColorUtils.transparentize(blendedColors.colLayer0, Appearance.aurora.popupTransparentize)
+            color: Appearance.angelEverywhere
+                ? ColorUtils.transparentize(blendedColors.colLayer0, Appearance.angel.overlayOpacity)
+                : ColorUtils.transparentize(blendedColors.colLayer0, Appearance.aurora.popupTransparentize)
         }
 
         Image {
@@ -190,8 +210,13 @@ Item { // Player instance - Old style design
             visible: root.displayedArtFilePath !== ""
 
             layer.enabled: Appearance.effectsEnabled
-            layer.effect: StyledBlurEffect {
+            layer.effect: MultiEffect {
                 source: blurredArt
+                anchors.fill: source
+                saturation: Appearance.effectsEnabled ? 0.2 : 0
+                blurEnabled: Appearance.effectsEnabled
+                blurMax: 100
+                blur: Appearance.effectsEnabled ? 1 : 0
             }
 
             Rectangle {

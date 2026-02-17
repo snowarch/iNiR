@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtMultimedia
 import Qt5Compat.GraphicalEffects
 import Quickshell
 import Quickshell.Io
@@ -56,19 +57,17 @@ WSettingsPage {
                     return "file://" + wallpaperPath;
                 }
 
-                onWallpaperPathChanged: if (wallpaperIsVideo) Wallpapers.ensureVideoFirstFrame(wallpaperPath)
-
                 // Static image
                 Image {
                     id: wallpaperPreview
                     anchors.fill: parent
                     fillMode: Image.PreserveAspectCrop
-                    source: (!parent.wallpaperIsGif && !parent.wallpaperIsVideo) ? parent.wallpaperUrl : ""
+                    source: parent.wallpaperUrl && !parent.wallpaperIsGif && !parent.wallpaperIsVideo ? parent.wallpaperUrl : ""
                     asynchronous: true
                     cache: false
                     visible: !parent.wallpaperIsGif && !parent.wallpaperIsVideo
 
-                    layer.enabled: true
+                    layer.enabled: Appearance.effectsEnabled
                     layer.effect: OpacityMask {
                         maskSource: Rectangle {
                             width: wallpaperPreview.width
@@ -78,7 +77,7 @@ WSettingsPage {
                     }
                 }
 
-                // GIF (frozen first frame)
+                // Animated GIF
                 AnimatedImage {
                     id: gifPreview
                     anchors.fill: parent
@@ -87,9 +86,9 @@ WSettingsPage {
                     asynchronous: true
                     cache: false
                     visible: parent.wallpaperIsGif
-                    playing: false
+                    playing: visible
 
-                    layer.enabled: true
+                    layer.enabled: Appearance.effectsEnabled
                     layer.effect: OpacityMask {
                         maskSource: Rectangle {
                             width: gifPreview.width
@@ -99,21 +98,32 @@ WSettingsPage {
                     }
                 }
 
-                // Video first-frame (frozen)
-                Image {
+                // Video
+                Video {
                     id: videoPreview
                     anchors.fill: parent
-                    fillMode: Image.PreserveAspectCrop
+                    source: parent.wallpaperIsVideo ? parent.wallpaperUrl : ""
+                    fillMode: VideoOutput.PreserveAspectCrop
                     visible: parent.wallpaperIsVideo
-                    source: {
-                        const ff = Wallpapers.videoFirstFrames[parent.wallpaperPath]
-                        return ff ? (ff.startsWith("file://") ? ff : "file://" + ff) : ""
-                    }
-                    asynchronous: true
-                    cache: false
-                    Component.onCompleted: Wallpapers.ensureVideoFirstFrame(parent.wallpaperPath)
+                    loops: MediaPlayer.Infinite
+                    muted: true
+                    autoPlay: true
 
-                    layer.enabled: true
+                    onPlaybackStateChanged: {
+                        if (playbackState === MediaPlayer.StoppedState && visible) {
+                            play()
+                        }
+                    }
+
+                    onVisibleChanged: {
+                        if (visible) {
+                            play()
+                        } else {
+                            pause()
+                        }
+                    }
+
+                    layer.enabled: Appearance.effectsEnabled
                     layer.effect: OpacityMask {
                         maskSource: Rectangle {
                             width: videoPreview.width

@@ -21,8 +21,8 @@ Item {
         anchors.fill: parent
         anchors.leftMargin: 16
         anchors.rightMargin: 16
-        anchors.topMargin: Appearance.inirEverywhere ? 12 : 0
-        spacing: Appearance.inirEverywhere ? 2 : 4
+        anchors.topMargin: (Appearance.angelEverywhere || Appearance.inirEverywhere) ? 12 : 0
+        spacing: (Appearance.angelEverywhere || Appearance.inirEverywhere) ? 2 : 4
 
         RowLayout {
             Layout.fillWidth: true

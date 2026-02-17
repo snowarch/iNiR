@@ -22,7 +22,9 @@ MouseArea {
         id: batteryProgress
         anchors.centerIn: parent
         value: percentage
-        highlightColor: (isLow && !isCharging) ? (Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.m3colors.m3error) : (Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSecondaryContainer)
+        highlightColor: (isLow && !isCharging)
+            ? (Appearance.angelEverywhere ? Appearance.m3colors.m3error : Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.m3colors.m3error)
+            : (Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSecondaryContainer)
 
         Item {
             anchors.centerIn: parent

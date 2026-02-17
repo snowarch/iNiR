@@ -233,12 +233,14 @@ MouseArea {
         focus: true
         Keys.forwardTo: [root]
         border.width: (Appearance.inirEverywhere || Appearance.auroraEverywhere) ? 1 : 1
-        border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder 
+        border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+            : Appearance.inirEverywhere ? Appearance.inir.colBorder 
             : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder : Appearance.colors.colLayer0Border
         fallbackColor: Appearance.colors.colLayer0
         inirColor: Appearance.inir.colLayer0
         auroraTransparency: Appearance.aurora.overlayTransparentize
-        radius: Appearance.inirEverywhere ? Appearance.inir.roundingLarge 
+        radius: Appearance.angelEverywhere ? Appearance.angel.roundingLarge
+            : Appearance.inirEverywhere ? Appearance.inir.roundingLarge 
             : (Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1)
 
         property int calculatedRows: Math.ceil(grid.count / grid.columns)
@@ -256,7 +258,8 @@ MouseArea {
                 Layout.margins: 4
                 implicitWidth: quickDirColumnLayout.implicitWidth
                 implicitHeight: quickDirColumnLayout.implicitHeight
-                color: Appearance.inirEverywhere ? Appearance.inir.colLayer1
+                color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                    : Appearance.inirEverywhere ? Appearance.inir.colLayer1
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer1
                 radius: wallpaperGridBackground.radius - Layout.margins
 

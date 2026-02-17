@@ -182,9 +182,13 @@ Scope {
                                 color: auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
                                     : inirEverywhere ? Appearance.inir.colLayer1
                                     : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
-                                border.width: inirEverywhere ? 1 : 1
-                                border.color: inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colLayer0Border
-                                radius: inirEverywhere ? Appearance.inir.roundingNormal : cardStyle ? Appearance.rounding.normal : Appearance.rounding.large
+                                border.width: Appearance.angelEverywhere ? Appearance.angel.panelBorderWidth : 1
+                                border.color: Appearance.angelEverywhere ? Appearance.angel.colPanelBorder
+                                    : inirEverywhere ? Appearance.inir.colBorder
+                                    : Appearance.colors.colLayer0Border
+                                radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+                                    : inirEverywhere ? Appearance.inir.roundingNormal
+                                    : cardStyle ? Appearance.rounding.normal : Appearance.rounding.large
 
                                 clip: true
                                 layer.enabled: auroraEverywhere && !inirEverywhere && !gameModeMinimal
@@ -213,12 +217,29 @@ Scope {
                                     asynchronous: true
 
                                     layer.enabled: Appearance.effectsEnabled && !dockVisualBackground.gameModeMinimal
-                                    layer.effect: StyledBlurEffect { source: dockBlurredWallpaper }
+                                    layer.effect: MultiEffect {
+                                        source: dockBlurredWallpaper
+                                        anchors.fill: source
+                                        saturation: Appearance.angelEverywhere
+                                            ? (Appearance.angel.blurSaturation * Appearance.angel.colorStrength)
+                                            : (Appearance.effectsEnabled ? 0.2 : 0)
+                                        blurEnabled: Appearance.effectsEnabled
+                                        blurMax: 100
+                                        blur: Appearance.effectsEnabled
+                                            ? (Appearance.angelEverywhere ? Appearance.angel.blurIntensity : 1)
+                                            : 0
+                                    }
 
                                     Rectangle {
                                         anchors.fill: parent
-                                        color: ColorUtils.transparentize((dockVisualBackground.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
+                                        color: Appearance.angelEverywhere
+                                            ? ColorUtils.transparentize((dockVisualBackground.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.angel.overlayOpacity * Appearance.angel.panelTransparentize)
+                                            : ColorUtils.transparentize((dockVisualBackground.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
                                     }
+                                }
+
+                                AngelPartialBorder {
+                                    targetRadius: dockVisualBackground.radius
                                 }
                             }
 

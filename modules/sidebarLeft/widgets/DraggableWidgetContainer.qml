@@ -410,11 +410,13 @@ Item {
                         z: 10
 
                         color: handleMouseArea.containsMouse || widgetWrapper.isBeingDragged
-                            ? (Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
+                            ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                               : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
                                : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                                : Appearance.colors.colLayer1Hover)
                             : ColorUtils.transparentize(
-                                Appearance.inirEverywhere ? Appearance.inir.colLayer1
+                                Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                                    : Appearance.inirEverywhere ? Appearance.inir.colLayer1
                                     : Appearance.colors.colLayer1, 0.15)
 
                         border.width: Appearance.inirEverywhere ? 1 : 0

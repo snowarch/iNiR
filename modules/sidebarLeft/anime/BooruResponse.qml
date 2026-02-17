@@ -361,9 +361,12 @@ Rectangle {
                 }
 
                 buttonRadius: Appearance.rounding.small
-                colBackground: Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colSurfaceContainerHighest
-                colBackgroundHover: Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colSurfaceContainerHighestHover
-                colRipple: Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colSurfaceContainerHighestActive
+                colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                    : Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colSurfaceContainerHighest
+                colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                    : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colSurfaceContainerHighestHover
+                colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+                    : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colSurfaceContainerHighestActive
 
                 contentItem: Item {
                     anchors.fill: parent

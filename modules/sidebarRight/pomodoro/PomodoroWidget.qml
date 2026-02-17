@@ -15,10 +15,13 @@ Item {
     ]
 
     // Style tokens
-    readonly property color colText: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+    readonly property color colText: Appearance.angelEverywhere ? Appearance.angel.colText
+        : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
     readonly property color colTextSecondary: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
-    readonly property color colPrimary: Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
-    readonly property color colBorder: Appearance.inirEverywhere ? Appearance.inir.colBorder 
+    readonly property color colPrimary: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+        : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
+    readonly property color colBorder: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+        : Appearance.inirEverywhere ? Appearance.inir.colBorder 
         : Appearance.auroraEverywhere ? "transparent"
         : Appearance.colors.colOutlineVariant
 

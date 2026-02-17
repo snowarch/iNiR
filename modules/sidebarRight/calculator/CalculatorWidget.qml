@@ -30,21 +30,29 @@ Item {
     property bool scientificMode: false
 
     // Style tokens
-    readonly property color colText: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+    readonly property color colText: Appearance.angelEverywhere ? Appearance.angel.colText
+        : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
     readonly property color colTextSecondary: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
-    readonly property color colBg: Appearance.inirEverywhere ? Appearance.inir.colLayer0
+    readonly property color colBg: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer0
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer0
-    readonly property color colLayer1: Appearance.inirEverywhere ? Appearance.inir.colLayer1
+    readonly property color colLayer1: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer1
         : Appearance.auroraEverywhere ? "transparent"
         : Appearance.colors.colLayer1
-    readonly property color colLayer2: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+    readonly property color colLayer2: Appearance.angelEverywhere ? Appearance.angel.colGlassElevated
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer2
-    readonly property color colBorder: Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
-    readonly property int borderWidth: Appearance.inirEverywhere ? 1 : 0
-    readonly property real radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-    readonly property real radiusSmall: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
+    readonly property color colBorder: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+        : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+    readonly property int borderWidth: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
+        : Appearance.inirEverywhere ? 1 : 0
+    readonly property real radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+        : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+    readonly property real radiusSmall: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
 
     // Keyboard handling
     Keys.onPressed: (event) => {

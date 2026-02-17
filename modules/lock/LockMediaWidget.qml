@@ -145,22 +145,26 @@ Item {
     readonly property color jiraColLayer1: Appearance.inir.colLayer1
     readonly property color jiraColLayer2: Appearance.inir.colLayer2
 
-    StyledRectangularShadow { target: card; visible: !Appearance.inirEverywhere && !Appearance.auroraEverywhere }
+    StyledRectangularShadow { target: card; visible: Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere) }
 
     Rectangle {
         id: card
         anchors.centerIn: parent
         width: parent.width - Appearance.sizes.elevationMargin
         implicitHeight: 130
-        radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-        color: Appearance.inirEverywhere ? Appearance.inir.colLayer1
+        radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+            : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+        color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+             : Appearance.inirEverywhere ? Appearance.inir.colLayer1
              : Appearance.auroraEverywhere ? ColorUtils.transparentize(blendedColors?.colLayer0 ?? Appearance.colors.colLayer0, 0.7)
              : (blendedColors?.colLayer0 ?? Appearance.colors.colLayer0)
-        border.width: Appearance.inirEverywhere ? 1 : 0
-        border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+        border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
+            : Appearance.inirEverywhere ? 1 : 0
+        border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+            : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
         clip: true
 
-        layer.enabled: true
+        layer.enabled: Appearance.effectsEnabled
         layer.effect: GE.OpacityMask {
             maskSource: Rectangle { width: card.width; height: card.height; radius: card.radius }
         }
@@ -226,7 +230,7 @@ Item {
                 color: "transparent"
                 clip: true
 
-                layer.enabled: true
+                layer.enabled: Appearance.effectsEnabled
                 layer.effect: GE.OpacityMask {
                     maskSource: Rectangle {
                         width: 110

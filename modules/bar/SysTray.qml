@@ -49,7 +49,7 @@ Item {
         const id = (i.id || "").toLowerCase();
         const title = (i.title || "").toLowerCase();
         const isSpotify = id.indexOf("spotify") !== -1 || title.indexOf("spotify") !== -1;
-        return Config.options.bar.tray.pinnedItems.includes(i.id)
+        return (Config.options?.bar?.tray?.pinnedItems ?? []).includes(i.id)
                 && (!smartTray || i.status !== Status.Passive || isSpotify);
     })
     property list<var> itemsNotInUserList: SystemTray.items.values.filter(i => {
@@ -57,11 +57,11 @@ Item {
         const id = (i.id || "").toLowerCase();
         const title = (i.title || "").toLowerCase();
         const isSpotify = id.indexOf("spotify") !== -1 || title.indexOf("spotify") !== -1;
-        return !Config.options.bar.tray.pinnedItems.includes(i.id)
+        return !(Config.options?.bar?.tray?.pinnedItems ?? []).includes(i.id)
                 && (!smartTray || i.status !== Status.Passive || isSpotify);
     })
 
-    property bool invertPins: Config.options.bar.tray.invertPinnedItems
+    property bool invertPins: Config.options?.bar?.tray?.invertPinnedItems ?? false
     property list<var> pinnedItems: invertPins ? itemsNotInUserList : itemsInUserList
     property list<var> unpinnedItems: invertPins ? itemsInUserList : itemsNotInUserList
     onUnpinnedItemsChanged: {
@@ -135,7 +135,9 @@ Item {
                 iconSize: Appearance.font.pixelSize.larger
                 text: "expand_more"
                 horizontalAlignment: Text.AlignHCenter
-                color: root.trayOverflowOpen ? (Appearance.inirEverywhere ? Appearance.inir.colOnSelection : Appearance.colors.colOnSecondaryContainer) : (Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer2)
+                color: root.trayOverflowOpen
+                    ? (Appearance.angelEverywhere ? Appearance.angel.colOnPrimary : Appearance.inirEverywhere ? Appearance.inir.colOnSelection : Appearance.colors.colOnSecondaryContainer)
+                    : (Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer2)
                 rotation: (root.trayOverflowOpen ? 180 : 0) - (90 * root.vertical) + (180 * root.invertSide)
                 Behavior on rotation {
                     animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
@@ -198,7 +200,8 @@ Item {
         StyledText {
             Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
             font.pixelSize: Appearance.font.pixelSize.larger
-            color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+            color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+                : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
             text: "•"
             visible: root.showSeparator && SystemTray.items.values.length > 0
         }

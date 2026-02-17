@@ -20,7 +20,7 @@ Item {
     id: root
     property MprisPlayer player: null
     property list<real> visualizerPoints: []
-    property real radius: Appearance.rounding.large
+    property real radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal : Appearance.rounding.large
     property real screenX: 0
     property real screenY: 0
     
@@ -35,7 +35,7 @@ Item {
     
     StyledRectangularShadow { 
         target: card
-        visible: !Appearance.inirEverywhere && !Appearance.auroraEverywhere 
+        visible: Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere)
     }
     
     Rectangle {
@@ -74,17 +74,25 @@ Item {
             asynchronous: true
             
             layer.enabled: Appearance.effectsEnabled
-            layer.effect: StyledBlurEffect { source: auroraWallpaper }
+            layer.effect: MultiEffect {
+                source: auroraWallpaper
+                anchors.fill: source
+                saturation: Appearance.angelEverywhere
+                    ? Appearance.angel.blurSaturation
+                    : (Appearance.effectsEnabled ? 0.2 : 0)
+                blurEnabled: Appearance.effectsEnabled
+                blurMax: 100
+                blur: Appearance.effectsEnabled ? 1 : 0
+            }
         }
         
         // Aurora tint overlay
         Rectangle {
             anchors.fill: parent
             visible: Appearance.auroraEverywhere && !Appearance.inirEverywhere
-            color: ColorUtils.transparentize(
-                blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base, 
-                Appearance.aurora.popupTransparentize
-            )
+            color: Appearance.angelEverywhere
+                ? ColorUtils.transparentize(blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base, Appearance.angel.overlayOpacity)
+                : ColorUtils.transparentize(blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base, Appearance.aurora.popupTransparentize)
         }
         
         // Cover art background

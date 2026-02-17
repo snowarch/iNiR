@@ -81,9 +81,14 @@ MouseArea {
             anchorHovered: root.containsMouse
             anchor {
                 item: root
-                edges: (Config.options?.bar?.bottom ?? false) ? Edges.Top : Edges.Bottom
-                gravity: (Config.options?.bar?.bottom ?? false) ? Edges.Top : Edges.Bottom
-                adjustment: PopupAdjustment.SlideX
+                edges: (Config.options?.bar?.vertical ?? false)
+                    ? ((Config.options?.bar?.bottom ?? false) ? Edges.Left : Edges.Right)
+                    : ((Config.options?.bar?.bottom ?? false) ? Edges.Top : Edges.Bottom)
+                gravity: (Config.options?.bar?.vertical ?? false)
+                    ? ((Config.options?.bar?.bottom ?? false) ? Edges.Left : Edges.Right)
+                    : ((Config.options?.bar?.bottom ?? false) ? Edges.Top : Edges.Bottom)
+                adjustment: (Config.options?.bar?.vertical ?? false)
+                    ? PopupAdjustment.SlideY : PopupAdjustment.SlideX
             }
             onMenuOpened: (window) => root.menuOpened(window);
             onMenuClosed: {
@@ -133,7 +138,9 @@ MouseArea {
         id: tooltip
         extraVisibleCondition: root.containsMouse
         alternativeVisibleCondition: extraVisibleCondition
-        anchorEdges: (!(Config.options?.bar?.bottom ?? false) && !(Config.options?.bar?.vertical ?? false)) ? Edges.Bottom : Edges.Top
+        anchorEdges: (Config.options?.bar?.vertical ?? false)
+            ? ((Config.options?.bar?.bottom ?? false) ? Edges.Left : Edges.Right)
+            : ((Config.options?.bar?.bottom ?? false) ? Edges.Top : Edges.Bottom)
     }
 
 }

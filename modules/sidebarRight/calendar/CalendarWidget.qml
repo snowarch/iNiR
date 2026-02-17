@@ -92,7 +92,8 @@ Item {
                         anchors.centerIn: parent
                         text: "chevron_left"
                         iconSize: Appearance.font.pixelSize.larger
-                        color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+                        color: Appearance.angelEverywhere ? Appearance.angel.colText
+                            : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
                     }
                 }
             }
@@ -106,7 +107,8 @@ Item {
                         anchors.centerIn: parent
                         text: "chevron_right"
                         iconSize: Appearance.font.pixelSize.larger
-                        color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+                        color: Appearance.angelEverywhere ? Appearance.angel.colText
+                            : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
                     }
                 }
             }

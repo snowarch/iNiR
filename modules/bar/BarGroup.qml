@@ -22,12 +22,16 @@ Item {
             rightMargin: root.vertical ? 4 : 0
         }
         color: (Config.options?.bar?.borderless ?? false) ? "transparent"
-            : (Appearance.inirEverywhere ? Appearance.inir.colLayer1
+            : (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+              : Appearance.inirEverywhere ? Appearance.inir.colLayer1
               : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface 
               : Appearance.colors.colLayer1)
-        border.width: Appearance.inirEverywhere ? 1 : (root.cardStyleEverywhere ? 1 : 0)
-        border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colLayer0Border
-        radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal 
+        border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
+                    : Appearance.inirEverywhere ? 1 : (root.cardStyleEverywhere ? 1 : 0)
+        border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+                    : Appearance.inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colLayer0Border
+        radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+              : Appearance.inirEverywhere ? Appearance.inir.roundingNormal 
               : (root.cardStyleEverywhere ? Appearance.rounding.normal : Appearance.rounding.small)
     }
 

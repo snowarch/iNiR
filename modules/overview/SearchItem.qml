@@ -37,15 +37,19 @@ RippleButton {
 
     implicitHeight: rowLayout.implicitHeight + root.buttonVerticalPadding * 2
     implicitWidth: rowLayout.implicitWidth + root.buttonHorizontalPadding * 2
-    buttonRadius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.normal
+    buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.normal
     colBackground: (root.down || root.keyboardDown) 
-        ? (Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive : Appearance.colors.colPrimaryContainerActive)
+        ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+            : Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive : Appearance.colors.colPrimaryContainerActive)
         : ((root.hovered || root.focus) 
-            ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2 
+            ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                : Appearance.inirEverywhere ? Appearance.inir.colLayer2 
                 : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface 
                 : Appearance.colors.colPrimaryContainer)
             : "transparent")
-    colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover 
+    colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover 
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface 
         : Appearance.colors.colPrimaryContainer
     colRipple: Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive : Appearance.colors.colPrimaryContainerActive

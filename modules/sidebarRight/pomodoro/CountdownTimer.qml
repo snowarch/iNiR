@@ -86,9 +86,12 @@ Item {
                     implicitHeight: 30
                     implicitWidth: 45
                     buttonRadius: Appearance.rounding.small
-                    colBackground: Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colLayer2
-                    colBackgroundHover: Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer2Hover
-                    colRipple: Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer2Active
+                    colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                        : Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colLayer2
+                    colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer2Hover
+                    colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer2Active
                     onClicked: TimerService.setCountdownDuration(modelData.seconds)
 
                     contentItem: StyledText {
@@ -113,22 +116,26 @@ Item {
                 onClicked: TimerService.toggleCountdown()
                 enabled: TimerService.countdownDuration > 0
                 colBackground: TimerService.countdownRunning 
-                    ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                    ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                        : Appearance.inirEverywhere ? Appearance.inir.colLayer2
                         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colSecondaryContainer)
                     : Appearance.colors.colPrimary
                 colBackgroundHover: TimerService.countdownRunning 
-                    ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                    ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
                         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover : Appearance.colors.colSecondaryContainerHover)
                     : Appearance.colors.colPrimaryHover
                 colRipple: TimerService.countdownRunning 
-                    ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
+                    ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+                        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colSecondaryContainerActive)
                     : Appearance.colors.colPrimaryActive
 
                 contentItem: StyledText {
                     horizontalAlignment: Text.AlignHCenter
                     color: TimerService.countdownRunning 
-                        ? (Appearance.inirEverywhere ? Appearance.inir.colText
+                        ? (Appearance.angelEverywhere ? Appearance.angel.colText
+                            : Appearance.inirEverywhere ? Appearance.inir.colText
                             : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer2 : Appearance.colors.colOnSecondaryContainer)
                         : Appearance.colors.colOnPrimary
                     text: TimerService.countdownRunning ? Translation.tr("Pause") : TimerService.countdownSecondsLeft === TimerService.countdownDuration ? Translation.tr("Start") : Translation.tr("Resume")
@@ -140,20 +147,24 @@ Item {
                 Layout.preferredWidth: 90
                 onClicked: TimerService.resetCountdown()
                 enabled: TimerService.countdownSecondsLeft < TimerService.countdownDuration || TimerService.countdownRunning
-                colBackground: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                    : Appearance.inirEverywhere ? Appearance.inir.colLayer2
                     : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
                     : Appearance.colors.colErrorContainer
-                colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                    : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
                     : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover
                     : Appearance.colors.colErrorContainerHover
-                colRipple: Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
+                colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+                    : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
                     : Appearance.colors.colErrorContainerActive
 
                 contentItem: StyledText {
                     horizontalAlignment: Text.AlignHCenter
                     text: Translation.tr("Reset")
-                    color: Appearance.inirEverywhere ? Appearance.inir.colText
+                    color: Appearance.angelEverywhere ? Appearance.angel.colText
+                        : Appearance.inirEverywhere ? Appearance.inir.colText
                         : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer2
                         : Appearance.colors.colOnErrorContainer
                 }

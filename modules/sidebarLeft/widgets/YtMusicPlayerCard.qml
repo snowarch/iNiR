@@ -54,15 +54,18 @@ Item {
         : (blendedColors?.colSubtext ?? Appearance.colors.colSubtext)
     readonly property color colPrimary: Appearance.inirEverywhere ? Appearance.inir.colPrimary
         : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
-    readonly property color colBg: Appearance.inirEverywhere ? Appearance.inir.colLayer1
+    readonly property color colBg: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer1
         : Appearance.auroraEverywhere ? ColorUtils.transparentize(blendedColors?.colLayer0 ?? Appearance.colors.colLayer0, 0.7)
         : (blendedColors?.colLayer0 ?? Appearance.colors.colLayer0)
     readonly property color colLayer2: Appearance.inirEverywhere ? Appearance.inir.colLayer2
         : (blendedColors?.colLayer1 ?? Appearance.colors.colLayer1)
-    readonly property real radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-    readonly property real radiusSmall: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
+    readonly property real radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+        : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+    readonly property real radiusSmall: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
 
-    StyledRectangularShadow { target: card; visible: !Appearance.inirEverywhere && !Appearance.auroraEverywhere }
+    StyledRectangularShadow { target: card; visible: Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere) }
 
     Rectangle {
         id: card
@@ -71,8 +74,9 @@ Item {
         implicitHeight: 140
         radius: root.radius
         color: root.colBg
-        border.width: Appearance.inirEverywhere ? 1 : 0
-        border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+        border.width: (Appearance.angelEverywhere || Appearance.inirEverywhere) ? 1 : 0
+        border.color: Appearance.angelEverywhere ? Appearance.angel.colBorder
+            : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
         clip: true
 
         layer.enabled: true

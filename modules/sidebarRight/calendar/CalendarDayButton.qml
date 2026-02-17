@@ -16,7 +16,8 @@ RippleButton {
     implicitHeight: 38;
 
     toggled: (isToday == 1) && !isHeader  // Headers don't get toggled background
-    buttonRadius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
+    buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
     
     contentItem: StyledText {
         anchors.fill: parent
@@ -24,12 +25,16 @@ RippleButton {
         horizontalAlignment: Text.AlignHCenter
         font.weight: bold ? Font.DemiBold : Font.Normal
         color: isHeader && (isToday == 1) 
-            ? (Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
+            ? (Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
             : (isToday == 1) 
-                ? (Appearance.inirEverywhere ? Appearance.inir.colOnPrimary : Appearance.colors.colOnPrimary)
+                ? (Appearance.angelEverywhere ? Appearance.angel.colOnPrimary
+                    : Appearance.inirEverywhere ? Appearance.inir.colOnPrimary : Appearance.colors.colOnPrimary)
                 : (isToday == 0) 
-                    ? (Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1)
-                    : (Appearance.inirEverywhere ? Appearance.inir.colTextSecondary 
+                    ? (Appearance.angelEverywhere ? Appearance.angel.colText
+                        : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1)
+                    : (Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+                        : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary 
                         : Appearance.auroraEverywhere ? Appearance.colors.colSubtext
                         : Appearance.colors.colOutlineVariant)
 

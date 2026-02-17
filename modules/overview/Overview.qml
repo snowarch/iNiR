@@ -104,7 +104,7 @@ Scope {
                 enabled: CompositorService.isNiri
                 function onActiveWindowChanged() {
                     // Respect keepOverviewOpenOnWindowClick setting
-                    const keepOpen = !Config.options.overview || Config.options.overview.keepOverviewOpenOnWindowClick !== false;
+                    const keepOpen = Config.options?.overview?.keepOverviewOpenOnWindowClick ?? true;
                     // If a window gets focus while overview is open, close it only if not configured to keep open
                     if (GlobalStates.overviewOpen && NiriService.activeWindow && !keepOpen) {
                         GlobalStates.overviewOpen = false;

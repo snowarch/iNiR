@@ -162,13 +162,18 @@ Item {
         id: card
         anchors.fill: parent
         implicitHeight: 160
-        radius: root.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-        color: root.inirEverywhere ? Appearance.inir.colLayer1 
+        radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+             : root.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+        color: Appearance.angelEverywhere ? "transparent"
+             : root.inirEverywhere ? Appearance.inir.colLayer1 
              : root.auroraEverywhere ? ColorUtils.transparentize(root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0, 0.7)
              : (root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0)
-        border.width: root.inirEverywhere ? 1 : 0
-        border.color: root.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+        border.width: Appearance.angelEverywhere ? 0 : (root.inirEverywhere ? 1 : 0)
+        border.color: Appearance.angelEverywhere ? "transparent"
+                    : root.inirEverywhere ? Appearance.inir.colBorder : "transparent"
         clip: true
+
+        AngelPartialBorder { targetRadius: card.radius; coverage: 0.5 }
 
         layer.enabled: true
         layer.effect: GE.OpacityMask {
@@ -220,7 +225,8 @@ Item {
             maxVisualizerValue: 1000
             smoothing: 2
             color: ColorUtils.transparentize(
-                root.inirEverywhere ? root.jiraColPrimary : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary), 
+                Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                : root.inirEverywhere ? root.jiraColPrimary : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary), 
                 0.6
             )
         }
@@ -235,7 +241,8 @@ Item {
                 id: coverArtContainer
                 Layout.preferredWidth: 136
                 Layout.preferredHeight: 136
-                radius: root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
+                radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+                    : root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
                 color: "transparent"
                 clip: true
 
@@ -244,7 +251,8 @@ Item {
                     maskSource: Rectangle { 
                         width: 136
                         height: 136
-                        radius: root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small 
+                        radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+                            : root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small 
                     }
                 }
 
@@ -263,14 +271,16 @@ Item {
 
                 Rectangle {
                     anchors.fill: parent
-                    color: root.inirEverywhere ? root.jiraColLayer2 : (root.blendedColors?.colLayer1 ?? Appearance.colors.colLayer1)
+                    color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                        : root.inirEverywhere ? root.jiraColLayer2 : (root.blendedColors?.colLayer1 ?? Appearance.colors.colLayer1)
                     visible: !root.downloaded
                     
                     MaterialSymbol {
                         anchors.centerIn: parent
                         text: "music_note"
                         iconSize: 48
-                        color: root.inirEverywhere ? root.jiraColTextSecondary : (root.blendedColors?.colSubtext ?? Appearance.colors.colSubtext)
+                        color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+                            : root.inirEverywhere ? root.jiraColTextSecondary : (root.blendedColors?.colSubtext ?? Appearance.colors.colSubtext)
                     }
                 }
             }
@@ -284,7 +294,8 @@ Item {
                     text: StringUtils.cleanMusicTitle(root.effectiveTitle) || "—"
                     font.pixelSize: Appearance.font.pixelSize.normal
                     font.weight: Font.Medium
-                    color: root.inirEverywhere ? root.jiraColText : (root.blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
+                    color: Appearance.angelEverywhere ? Appearance.angel.colText
+                        : root.inirEverywhere ? root.jiraColText : (root.blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
                     elide: Text.ElideRight
                 }
 
@@ -292,7 +303,8 @@ Item {
                     Layout.fillWidth: true
                     text: root.effectiveArtist || ""
                     font.pixelSize: Appearance.font.pixelSize.smaller
-                    color: root.inirEverywhere ? root.jiraColTextSecondary : (root.blendedColors?.colSubtext ?? Appearance.colors.colSubtext)
+                    color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+                        : root.inirEverywhere ? root.jiraColTextSecondary : (root.blendedColors?.colSubtext ?? Appearance.colors.colSubtext)
                     elide: Text.ElideRight
                     visible: text !== ""
                     opacity: 0.7
@@ -312,9 +324,12 @@ Item {
                             configuration: StyledSlider.Configuration.Wavy
                             wavy: root.player?.isPlaying ?? false
                             animateWave: root.player?.isPlaying ?? false
-                            highlightColor: root.inirEverywhere ? root.jiraColPrimary : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
-                            trackColor: root.inirEverywhere ? Appearance.inir.colLayer2 : (root.blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
-                            handleColor: root.inirEverywhere ? root.jiraColPrimary : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
+                            highlightColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                                : root.inirEverywhere ? root.jiraColPrimary : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
+                            trackColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                                : root.inirEverywhere ? Appearance.inir.colLayer2 : (root.blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
+                            handleColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                                : root.inirEverywhere ? root.jiraColPrimary : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
                             value: root.player?.length > 0 ? root.player.position / root.player.length : 0
                             onMoved: root.player.position = value * root.player.length
                             scrollable: true
@@ -327,8 +342,10 @@ Item {
                         sourceComponent: StyledProgressBar {
                             wavy: root.player?.isPlaying ?? false
                             animateWave: root.player?.isPlaying ?? false
-                            highlightColor: root.inirEverywhere ? root.jiraColPrimary : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
-                            trackColor: root.inirEverywhere ? Appearance.inir.colLayer2 : (root.blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
+                            highlightColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                                : root.inirEverywhere ? root.jiraColPrimary : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
+                            trackColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                                : root.inirEverywhere ? Appearance.inir.colLayer2 : (root.blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
                             value: root.player?.length > 0 ? root.player.position / root.player.length : 0
                         }
                     }
@@ -343,7 +360,8 @@ Item {
                         text: StringUtils.friendlyTimeForSeconds(root.player?.position ?? 0)
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         font.family: Appearance.font.family.numbers
-                        color: root.inirEverywhere ? root.jiraColText : (root.blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
+                        color: Appearance.angelEverywhere ? Appearance.angel.colText
+                            : root.inirEverywhere ? root.jiraColText : (root.blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
                     }
 
                     Item { Layout.fillWidth: true }
@@ -352,10 +370,13 @@ Item {
                     RippleButton {
                         implicitWidth: 32
                         implicitHeight: 32
-                        buttonRadius: root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
+                        buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+                            : root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
                         colBackground: "transparent"
-                        colBackgroundHover: root.inirEverywhere ? Appearance.inir.colLayer2Hover : ColorUtils.transparentize(root.blendedColors?.colLayer1 ?? Appearance.colors.colLayer1, 0.5)
-                        colRipple: root.inirEverywhere ? Appearance.inir.colLayer2Active : (root.blendedColors?.colLayer1Active ?? Appearance.colors.colLayer1Active)
+                        colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                            : root.inirEverywhere ? Appearance.inir.colLayer2Hover : ColorUtils.transparentize(root.blendedColors?.colLayer1 ?? Appearance.colors.colLayer1, 0.5)
+                        colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+                            : root.inirEverywhere ? Appearance.inir.colLayer2Active : (root.blendedColors?.colLayer1Active ?? Appearance.colors.colLayer1Active)
                         onClicked: MprisController.previous()
 
                         contentItem: Item {
@@ -364,7 +385,8 @@ Item {
                                 text: "skip_previous"
                                 iconSize: 22
                                 fill: 1
-                                color: root.inirEverywhere ? root.jiraColText : (root.blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
+                                color: Appearance.angelEverywhere ? Appearance.angel.colText
+                                    : root.inirEverywhere ? root.jiraColText : (root.blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
                             }
                         }
 
@@ -375,14 +397,19 @@ Item {
                         id: playPauseButton
                         implicitWidth: 44
                         implicitHeight: 44
-                        buttonRadius: root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
+                        buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+                            : root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
                         colBackground: "transparent"
-                        colBackgroundHover: root.inirEverywhere
+                        colBackgroundHover: Appearance.angelEverywhere
+                            ? Appearance.angel.colGlassCardHover
+                            : root.inirEverywhere
                             ? Appearance.inir.colLayer2Hover
                             : root.auroraEverywhere
                                 ? ColorUtils.transparentize(root.blendedColors?.colLayer1 ?? Appearance.colors.colLayer1, 0.5)
                                 : Appearance.colors.colLayer1Hover
-                        colRipple: root.inirEverywhere
+                        colRipple: Appearance.angelEverywhere
+                            ? Appearance.angel.colGlassCardActive
+                            : root.inirEverywhere
                             ? Appearance.inir.colLayer2Active
                             : root.auroraEverywhere
                                 ? (root.blendedColors?.colLayer1Active ?? Appearance.colors.colLayer1Active)
@@ -395,7 +422,9 @@ Item {
                                 text: root.player?.isPlaying ? "pause" : "play_arrow"
                                 iconSize: 26
                                 fill: 1
-                                color: root.inirEverywhere
+                                color: Appearance.angelEverywhere
+                                    ? Appearance.angel.colPrimary
+                                    : root.inirEverywhere
                                     ? root.jiraColPrimary
                                     : root.auroraEverywhere
                                         ? (root.blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
@@ -409,10 +438,13 @@ Item {
                     RippleButton {
                         implicitWidth: 32
                         implicitHeight: 32
-                        buttonRadius: root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
+                        buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+                            : root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
                         colBackground: "transparent"
-                        colBackgroundHover: root.inirEverywhere ? Appearance.inir.colLayer2Hover : ColorUtils.transparentize(root.blendedColors?.colLayer1 ?? Appearance.colors.colLayer1, 0.5)
-                        colRipple: root.inirEverywhere ? Appearance.inir.colLayer2Active : (root.blendedColors?.colLayer1Active ?? Appearance.colors.colLayer1Active)
+                        colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                            : root.inirEverywhere ? Appearance.inir.colLayer2Hover : ColorUtils.transparentize(root.blendedColors?.colLayer1 ?? Appearance.colors.colLayer1, 0.5)
+                        colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+                            : root.inirEverywhere ? Appearance.inir.colLayer2Active : (root.blendedColors?.colLayer1Active ?? Appearance.colors.colLayer1Active)
                         onClicked: MprisController.next()
 
                         contentItem: Item {
@@ -421,7 +453,8 @@ Item {
                                 text: "skip_next"
                                 iconSize: 22
                                 fill: 1
-                                color: root.inirEverywhere ? root.jiraColText : (root.blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
+                                color: Appearance.angelEverywhere ? Appearance.angel.colText
+                                    : root.inirEverywhere ? root.jiraColText : (root.blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
                             }
                         }
 
@@ -434,7 +467,8 @@ Item {
                         text: StringUtils.friendlyTimeForSeconds(root.player?.length ?? 0)
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         font.family: Appearance.font.family.numbers
-                        color: root.inirEverywhere ? root.jiraColText : (root.blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
+                        color: Appearance.angelEverywhere ? Appearance.angel.colText
+                            : root.inirEverywhere ? root.jiraColText : (root.blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
                     }
                 }
             }

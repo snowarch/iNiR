@@ -201,7 +201,7 @@ Item {
 
     StyledRectangularShadow {
         target: overviewBackground
-        visible: !Appearance.inirEverywhere && !Appearance.auroraEverywhere
+        visible: Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere)
     }
 
     Rectangle {
@@ -212,13 +212,17 @@ Item {
 
         implicitWidth: workspaceColumnLayout.implicitWidth + padding * 2
         implicitHeight: workspaceColumnLayout.implicitHeight + padding * 2
-        radius: Appearance.inirEverywhere ? Appearance.inir.roundingLarge : (Appearance.rounding.large + padding)
+        radius: Appearance.angelEverywhere ? Appearance.angel.roundingLarge
+            : Appearance.inirEverywhere ? Appearance.inir.roundingLarge
+            : (Appearance.rounding.large + padding)
         clip: false
-        color: Appearance.inirEverywhere ? Appearance.inir.colLayer1
+        color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+             : Appearance.inirEverywhere ? Appearance.inir.colLayer1
              : Appearance.auroraEverywhere ? Appearance.aurora.colPopupSurface
              : Appearance.colors.colBackgroundSurfaceContainer
-        border.width: Appearance.inirEverywhere ? 1 : 0
-        border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+        border.width: (Appearance.angelEverywhere || Appearance.inirEverywhere) ? 1 : 0
+        border.color: Appearance.angelEverywhere ? Appearance.angel.colBorder
+            : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
 
         Column {
             id: workspaceColumnLayout
@@ -257,15 +261,19 @@ Item {
                             property bool workspaceExists: workspaceObj !== null
                             property bool isActive: workspaceObj && workspaceObj.is_active
                             property color defaultWorkspaceColor: workspaceExists
-                                ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2 
+                                ? (Appearance.angelEverywhere ? Appearance.angel.colGlassPopup
+                                    : Appearance.inirEverywhere ? Appearance.inir.colLayer2 
                                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface 
                                     : Appearance.colors.colBackgroundSurfaceContainer)
-                                : ColorUtils.transparentize(Appearance.inirEverywhere ? Appearance.inir.colLayer2 
+                                : ColorUtils.transparentize(Appearance.angelEverywhere ? Appearance.angel.colGlassPopup
+                                    : Appearance.inirEverywhere ? Appearance.inir.colLayer2 
                                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface 
                                     : Appearance.colors.colBackgroundSurfaceContainer, 0.3)
                             property color hoveredWorkspaceColor: ColorUtils.mix(defaultWorkspaceColor, 
-                                Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover : Appearance.colors.colLayer1Hover, 0.1)
-                            property color hoveredBorderColor: Appearance.inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colLayer2Hover
+                                Appearance.angelEverywhere ? Appearance.angel.colGlassPopupHover
+                                : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover : Appearance.colors.colLayer1Hover, 0.1)
+                            property color hoveredBorderColor: Appearance.angelEverywhere ? Appearance.angel.colBorderHover
+                                : Appearance.inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colLayer2Hover
                             property bool hoveredWhileDragging: false
 
                             implicitWidth: root.workspaceImplicitWidth
@@ -277,8 +285,10 @@ Item {
                             property bool workspaceAtRight: colIndex === root.overviewColumns - 1
                             property bool workspaceAtTop: row.index === 0
                             property bool workspaceAtBottom: row.index === root.overviewRows - 1
-                            property real largeWorkspaceRadius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.large
-                            property real smallWorkspaceRadius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.verysmall
+                            property real largeWorkspaceRadius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+                                : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.large
+                            property real smallWorkspaceRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+                                : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.verysmall
                             topLeftRadius: (workspaceAtLeft && workspaceAtTop) ? largeWorkspaceRadius : smallWorkspaceRadius
                             topRightRadius: (workspaceAtRight && workspaceAtTop) ? largeWorkspaceRadius : smallWorkspaceRadius
                             bottomLeftRadius: (workspaceAtLeft && workspaceAtBottom) ? largeWorkspaceRadius : smallWorkspaceRadius
@@ -790,12 +800,16 @@ Item {
                 z: root.windowZ + 51
                 width: col.implicitWidth
                 height: col.implicitHeight
-                radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-                color: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+                    : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
+                    : Appearance.rounding.normal
+                color: Appearance.angelEverywhere ? Appearance.angel.colGlassPopup
+                     : Appearance.inirEverywhere ? Appearance.inir.colLayer2
                      : Appearance.auroraEverywhere ? Appearance.colors.colLayer2Base
                      : Appearance.colors.colLayer4
                 border.width: 1
-                border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder
+                border.color: Appearance.angelEverywhere ? Appearance.angel.colBorder
+                    : Appearance.inirEverywhere ? Appearance.inir.colBorder
                     : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder
                     : ColorUtils.transparentize(Appearance.m3colors.m3outline, 0.5)
 

@@ -92,19 +92,27 @@ PopupWindow {
             id: popupBackground
             readonly property real padding: 3
             anchors {
-                left: parent.left
-                right: parent.right
-                verticalCenter: (Config.options?.bar?.vertical ?? false) ? parent.verticalCenter : undefined
-                top: (Config.options?.bar?.vertical ?? false) ? undefined : (Config.options?.bar?.bottom ?? false) ? undefined : parent.top
-                bottom: (Config.options?.bar?.vertical ?? false) ? undefined : (Config.options?.bar?.bottom ?? false) ? parent.bottom : undefined
+                left: (Config.options?.bar?.vertical ?? false)
+                    ? ((Config.options?.bar?.bottom ?? false) ? undefined : parent.left)
+                    : parent.left
+                right: (Config.options?.bar?.vertical ?? false)
+                    ? ((Config.options?.bar?.bottom ?? false) ? parent.right : undefined)
+                    : parent.right
+                top: (Config.options?.bar?.vertical ?? false) ? parent.top
+                    : (Config.options?.bar?.bottom ?? false) ? undefined : parent.top
+                bottom: (Config.options?.bar?.vertical ?? false) ? parent.bottom
+                    : (Config.options?.bar?.bottom ?? false) ? parent.bottom : undefined
                 margins: root.padding
             }
 
-            color: Appearance.inirEverywhere ? Appearance.inir.colLayer1 
+            color: Appearance.angelEverywhere ? Appearance.angel.colGlassPopup
+                : Appearance.inirEverywhere ? Appearance.inir.colLayer1 
                 : Appearance.colors.colLayer0
-            radius: Appearance.inirEverywhere ? Appearance.inir.roundingLarge : Appearance.rounding.windowRounding
+            radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+                : Appearance.inirEverywhere ? Appearance.inir.roundingLarge : Appearance.rounding.windowRounding
             border.width: 1
-            border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder 
+            border.color: Appearance.angelEverywhere ? Appearance.angel.colBorder
+                : Appearance.inirEverywhere ? Appearance.inir.colBorder 
                 : Appearance.colors.colLayer0Border
             clip: true
 

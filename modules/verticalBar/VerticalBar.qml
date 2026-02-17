@@ -5,6 +5,7 @@ import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Hyprland
 import Quickshell.Services.UPower
+import QtQuick.Effects
 import Qt5Compat.GraphicalEffects as GE
 import qs
 import qs.services
@@ -255,13 +256,22 @@ Scope {
                                             asynchronous: true
 
                                             layer.enabled: Appearance.effectsEnabled
-                                            layer.effect: StyledBlurEffect {
+                                            layer.effect: MultiEffect {
                                                 source: blurImg
+                                                anchors.fill: source
+                                                saturation: Appearance.angelEverywhere
+                                                    ? Appearance.angel.blurSaturation
+                                                    : (Appearance.effectsEnabled ? 0.2 : 0)
+                                                blurEnabled: Appearance.effectsEnabled
+                                                blurMax: 100
+                                                blur: Appearance.effectsEnabled ? 1 : 0
                                             }
 
                                             Rectangle {
                                                 anchors.fill: parent
-                                                color: ColorUtils.transparentize((barContent.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
+                                                color: Appearance.angelEverywhere
+                                                    ? ColorUtils.transparentize((barContent.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.angel.overlayOpacity)
+                                                    : ColorUtils.transparentize((barContent.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
                                             }
                                         }
 

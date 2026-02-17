@@ -99,9 +99,10 @@ DockButton {
     implicitHeight: isSeparator ? (vertical ? 8 : separatorSize) : 50
     background.visible: !isSeparator
 
-    // Hover shadow
+    // Hover shadow (disabled for angel — whole dock already has escalonado)
     StyledRectangularShadow {
         target: root.background
+        visible: !Appearance.angelEverywhere
         opacity: root.buttonHovered && !root.isSeparator ? 0.6 : 0
         Behavior on opacity {
             enabled: Appearance.animationsEnabled
@@ -243,9 +244,9 @@ DockButton {
                 action: () => {
                     const appId = appToplevel.originalAppId ?? appToplevel.appId;
                     if (Config.options?.dock?.pinnedApps?.indexOf(appId) !== -1) {
-                        Config.options.dock.pinnedApps = Config.options.dock.pinnedApps.filter(id => id !== appId)
+                        Config.setNestedValue("dock.pinnedApps", (Config.options?.dock?.pinnedApps ?? []).filter(id => id !== appId))
                     } else {
-                        Config.options.dock.pinnedApps = (Config.options?.dock?.pinnedApps ?? []).concat([appId])
+                        Config.setNestedValue("dock.pinnedApps", (Config.options?.dock?.pinnedApps ?? []).concat([appId]))
                     }
                 }
             },
@@ -394,12 +395,16 @@ DockButton {
                                 return index === root.focusedWindowIndex;
                             }
 
-                            radius: Appearance.rounding.full
-                            implicitWidth: isFocusedWindow ? root.countDotWidth : root.countDotHeight
-                            implicitHeight: root.countDotHeight
+                            radius: Appearance.angelEverywhere ? 0 : Appearance.rounding.full
+                            implicitWidth: Appearance.angelEverywhere
+                                ? (isFocusedWindow ? 14 : 6)
+                                : (isFocusedWindow ? root.countDotWidth : root.countDotHeight)
+                            implicitHeight: Appearance.angelEverywhere ? 2 : root.countDotHeight
                             color: isFocusedWindow
-                                   ? (Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
-                                   : ColorUtils.transparentize(Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0, 0.5)
+                                   ? (Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                                   : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
+                                   : ColorUtils.transparentize(Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+                                   : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0, 0.5)
 
                             Behavior on implicitWidth {
                                 NumberAnimation { duration: 120; easing.type: Easing.OutQuad }
@@ -407,13 +412,14 @@ DockButton {
                         }
                     }
 
-                    // Fallback: single dot when showAllDots is off and app is inactive
+                    // Fallback: single indicator when showAllDots is off and app is inactive
                     Rectangle {
                         visible: !root.appIsActive && root.hasWindows && Config.options?.dock?.showAllWindowDots === false
-                        width: 5
-                        height: 5
-                        radius: 2.5
-                        color: ColorUtils.transparentize(Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0, 0.5)
+                        width: Appearance.angelEverywhere ? 6 : 5
+                        height: Appearance.angelEverywhere ? 2 : 5
+                        radius: Appearance.angelEverywhere ? 0 : 2.5
+                        color: ColorUtils.transparentize(Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+                            : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0, 0.5)
                     }
                 }
             }

@@ -19,10 +19,8 @@ Item {
     property bool _cacheLoaded: false
 
     readonly property var coins: Config.options?.sidebar?.widgets?.crypto_settings?.coins ?? []
-    readonly property int refreshInterval: (Config.options?.sidebar?.widgets?.crypto_settings?.refreshInterval ?? 300) * 1000
+    readonly property int refreshInterval: (Config.options?.sidebar?.widgets?.crypto_settings?.refreshInterval ?? 60) * 1000
     readonly property string cachePath: FileUtils.trimFileProtocol(`${Directories.state}/user/crypto_cache.json`)
-
-    property real _cacheTimestamp: 0
 
     // --- File-based cache ---
     FileView {
@@ -39,7 +37,6 @@ Item {
                 if (cached.sparklineData && Object.keys(cached.sparklineData).length > 0) {
                     root.sparklineData = cached.sparklineData
                 }
-                root._cacheTimestamp = cached.timestamp ?? 0
             } catch (e) {
                 // Corrupted cache, ignore
             }
@@ -89,15 +86,13 @@ Item {
 
     on_CacheLoadedChanged: {
         if (root._cacheLoaded && root.coins.length > 0) {
+            // If cache had no data or is stale (>5 min), fetch fresh
             const hasData = Object.keys(root.cryptoData).length > 0
             if (!hasData) {
                 Qt.callLater(() => root.fetchPrices())
             } else {
-                // Only refresh if cache is stale (older than refreshInterval)
-                const age = Date.now() - root._cacheTimestamp
-                if (age > root.refreshInterval) {
-                    refreshDelayTimer.restart()
-                }
+                // Still schedule a background refresh for freshness
+                refreshDelayTimer.restart()
             }
         }
     }

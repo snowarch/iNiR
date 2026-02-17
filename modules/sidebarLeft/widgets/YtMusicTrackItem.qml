@@ -31,11 +31,13 @@ Rectangle {
     implicitHeight: 60
     radius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
     color: root.isCurrentTrack
-        ? (Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainer
+        ? (Appearance.angelEverywhere ? Appearance.angel.colGlassElevated
+            : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainer
             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
             : Appearance.colors.colPrimaryContainer)
         : root.hovered
-            ? (Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
+            ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
                 : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                 : Appearance.colors.colLayer1Hover)
             : "transparent"

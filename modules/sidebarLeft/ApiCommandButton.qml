@@ -14,11 +14,14 @@ GroupButton {
     baseHeight: contentItem.implicitHeight + verticalPadding * 2
     buttonRadius: down ? (Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.verysmall) : (Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.small)
 
-    colBackground: Appearance.inirEverywhere ? Appearance.inir.colLayer2 
+    colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2 
         : Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colLayer2
-    colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover 
+    colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover 
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer2Hover
-    colBackgroundActive: Appearance.inirEverywhere ? Appearance.inir.colLayer2Active 
+    colBackgroundActive: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active 
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer2Active
 
     contentItem: StyledText {

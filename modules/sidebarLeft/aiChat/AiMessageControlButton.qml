@@ -9,9 +9,11 @@ GroupButton {
     property bool activated: false
     toggled: activated
     baseWidth: height
-    colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover 
+    colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover 
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colSecondaryContainerHover
-    colBackgroundActive: Appearance.inirEverywhere ? Appearance.inir.colLayer2Active 
+    colBackgroundActive: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active 
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colSecondaryContainerActive
 
     contentItem: MaterialSymbol {

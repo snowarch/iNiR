@@ -10,6 +10,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
+import QtQuick.Effects
 import Qt5Compat.GraphicalEffects as GE
 
 Item {
@@ -83,6 +84,7 @@ Item {
         implicitHeight: parent.height - Appearance.sizes.hyprlandGapsOut * 2
         implicitWidth: sidebarWidth - Appearance.sizes.hyprlandGapsOut * 2
         property bool cardStyle: Config.options?.sidebar?.cardStyle ?? false
+        readonly property bool angelEverywhere: Appearance.angelEverywhere
         readonly property bool auroraEverywhere: Appearance.auroraEverywhere
         readonly property bool gameModeMinimal: Appearance.gameModeMinimal
         readonly property string wallpaperUrl: {
@@ -107,9 +109,13 @@ Item {
         color: gameModeMinimal ? "transparent"
              : auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
              : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
-        border.width: gameModeMinimal ? 0 : 1
-        border.color: Appearance.colors.colLayer0Border
-        radius: cardStyle ? Appearance.rounding.normal : (Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1)
+        border.width: gameModeMinimal ? 0 : (angelEverywhere ? Appearance.angel.panelBorderWidth : 1)
+        border.color: angelEverywhere ? Appearance.angel.colPanelBorder
+            : Appearance.inirEverywhere ? Appearance.inir.colBorder
+            : Appearance.colors.colLayer0Border
+        radius: angelEverywhere ? Appearance.angel.roundingNormal
+            : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
+            : cardStyle ? Appearance.rounding.normal : (Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1)
 
         clip: true
 
@@ -135,21 +141,51 @@ Item {
             asynchronous: true
 
             layer.enabled: Appearance.effectsEnabled && !sidebarLeftBackground.gameModeMinimal
-            layer.effect: StyledBlurEffect {
+            layer.effect: MultiEffect {
                 source: sidebarLeftBlurredWallpaper
+                anchors.fill: source
+                saturation: sidebarLeftBackground.angelEverywhere
+                    ? (Appearance.angel.blurSaturation * Appearance.angel.colorStrength)
+                    : (Appearance.effectsEnabled ? 0.2 : 0)
+                blurEnabled: Appearance.effectsEnabled
+                blurMax: 100
+                blur: Appearance.effectsEnabled
+                    ? (sidebarLeftBackground.angelEverywhere ? Appearance.angel.blurIntensity : 1)
+                    : 0
             }
 
             Rectangle {
                 anchors.fill: parent
-                color: ColorUtils.transparentize((sidebarLeftBackground.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
+                color: sidebarLeftBackground.angelEverywhere
+                    ? ColorUtils.transparentize((sidebarLeftBackground.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.angel.overlayOpacity * Appearance.angel.panelTransparentize)
+                    : ColorUtils.transparentize((sidebarLeftBackground.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
             }
+        }
+
+        // Angel inset glow — top edge
+        Rectangle {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: Appearance.angel.insetGlowHeight
+            visible: sidebarLeftBackground.angelEverywhere
+            color: Appearance.angel.colInsetGlow
+            z: 10
+        }
+
+        // Angel partial border — elegant half-borders
+        AngelPartialBorder {
+            targetRadius: sidebarLeftBackground.radius
+            z: 10
         }
 
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: sidebarPadding
-            anchors.topMargin: Appearance.inirEverywhere ? sidebarPadding + 6 : sidebarPadding
-            spacing: Appearance.inirEverywhere ? sidebarPadding + 4 : sidebarPadding
+            anchors.topMargin: Appearance.angelEverywhere ? sidebarPadding + 4
+                : Appearance.inirEverywhere ? sidebarPadding + 6 : sidebarPadding
+            spacing: Appearance.angelEverywhere ? sidebarPadding + 2
+                : Appearance.inirEverywhere ? sidebarPadding + 4 : sidebarPadding
 
             Toolbar {
                 Layout.alignment: Qt.AlignHCenter
@@ -168,12 +204,16 @@ Item {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-                color: Appearance.inirEverywhere ? Appearance.inir.colLayer1
+                radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+                    : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+                color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                    : Appearance.inirEverywhere ? Appearance.inir.colLayer1
                      : Appearance.auroraEverywhere ? "transparent"
                      : Appearance.colors.colLayer1
-                border.width: Appearance.inirEverywhere ? 1 : 0
-                border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+                border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
+                    : Appearance.inirEverywhere ? 1 : 0
+                border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+                    : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
 
                 SwipeView {
                     id: swipeView

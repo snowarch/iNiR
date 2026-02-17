@@ -33,7 +33,9 @@ Item {
         anchors.centerIn: parent
         width: parent.width
         implicitHeight: stack.implicitHeight + 16
-        radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+        radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+            : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
+            : Appearance.rounding.normal
         color: "transparent"
 
         StackLayout {

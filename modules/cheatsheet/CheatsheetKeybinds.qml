@@ -118,12 +118,16 @@ StyledFlickable {
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: 200
-            radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-            color: Appearance.inirEverywhere ? Appearance.inir.colLayer1
+            radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+                 : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+            color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                 : Appearance.inirEverywhere ? Appearance.inir.colLayer1
                  : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface 
                  : Appearance.colors.colLayer1
-            border.width: Appearance.inirEverywhere ? 1 : 0
-            border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+            border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
+                        : Appearance.inirEverywhere ? 1 : 0
+            border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+                        : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
             visible: !root.hasResults && root.searchText.length > 0
 
             CheatsheetNoResults {
@@ -136,12 +140,16 @@ StyledFlickable {
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: keybindsColumn.implicitHeight + 16
-            radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-            color: Appearance.inirEverywhere ? Appearance.inir.colLayer1
+            radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+                 : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+            color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                 : Appearance.inirEverywhere ? Appearance.inir.colLayer1
                  : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface 
                  : Appearance.colors.colLayer1
-            border.width: Appearance.inirEverywhere ? 1 : 0
-            border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+            border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
+                        : Appearance.inirEverywhere ? 1 : 0
+            border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+                        : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
             visible: root.hasResults
 
             Column {

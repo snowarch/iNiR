@@ -78,8 +78,10 @@ Item {
                     width: 3
                     radius: 2
                     color: isActive 
-                        ? ((Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
-                        : ((Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.colLayer2 : Appearance.colors.colLayer2)
+                        ? (Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                            : (Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
+                        : (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                            : (Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.colLayer2 : Appearance.colors.colLayer2)
                     
                     Behavior on color {
                         enabled: Appearance.animationsEnabled
@@ -121,15 +123,20 @@ Item {
             Rectangle {
                 id: placeholderBackground
                 anchors.centerIn: parent
-                color: (Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.colLayer1
-                : (Appearance.auroraEverywhere && Appearance.aurora) ? Appearance.aurora.colPopupSurface
+                color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                    : (Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.colLayer1
+                    : (Appearance.auroraEverywhere && Appearance.aurora) ? Appearance.aurora.colPopupSurface
                      : Appearance.colors.colLayer0
-                radius: (Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.roundingNormal : root.popupRounding
-                border.width: (Appearance.inirEverywhere || Appearance.auroraEverywhere) ? 1 : 0
-                border.color: (Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.colBorder
+                radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+                    : (Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.roundingNormal : root.popupRounding
+                border.width: Appearance.angelEverywhere ? 0 : ((Appearance.inirEverywhere || Appearance.auroraEverywhere) ? 1 : 0)
+                border.color: Appearance.angelEverywhere ? "transparent"
+                            : (Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.colBorder
                             : (Appearance.auroraEverywhere && Appearance.aurora) ? Appearance.aurora.colPopupBorder
                             : "transparent"
                 property real padding: 20
+
+                AngelPartialBorder { targetRadius: placeholderBackground.radius; coverage: 0.5 }
                 implicitWidth: placeholderLayout.implicitWidth + padding * 2
                 implicitHeight: placeholderLayout.implicitHeight + padding * 2
 
@@ -140,12 +147,14 @@ Item {
                     StyledText {
                         text: Translation.tr("No active player")
                         font.pixelSize: Appearance.font.pixelSize.large
-                        color: (Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.colText
+                        color: Appearance.angelEverywhere ? Appearance.angel.colText
+                            : (Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.colText
                             : (Appearance.auroraEverywhere && Appearance.aurora) ? Appearance.colors.colOnLayer0
                             : Appearance.colors.colOnLayer0
                     }
                     StyledText {
-                        color: (Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.colTextSecondary
+                        color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+                            : (Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.colTextSecondary
                             : (Appearance.auroraEverywhere && Appearance.aurora) ? Appearance.aurora.colTextSecondary
                             : Appearance.colors.colSubtext
                         text: Translation.tr("Make sure your player has MPRIS support\nor try turning off duplicate player filtering")

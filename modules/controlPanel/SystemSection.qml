@@ -15,12 +15,17 @@ Rectangle {
     readonly property bool inirEverywhere: Appearance.inirEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
 
-    radius: inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
-    color: inirEverywhere ? Appearance.inir.colLayer1
+    radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+        : inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
+    color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+         : inirEverywhere ? Appearance.inir.colLayer1
          : auroraEverywhere ? Appearance.aurora.colSubSurface
          : Appearance.colors.colLayer1
-    border.width: inirEverywhere ? 1 : 0
-    border.color: inirEverywhere ? Appearance.inir.colBorder : "transparent"
+    border.width: Appearance.angelEverywhere ? 0 : (inirEverywhere ? 1 : 0)
+    border.color: Appearance.angelEverywhere ? "transparent"
+        : inirEverywhere ? Appearance.inir.colBorder : "transparent"
+
+    AngelPartialBorder { targetRadius: parent.radius; coverage: 0.45 }
 
     RowLayout {
         id: statsRow
@@ -34,7 +39,8 @@ Rectangle {
             label: "CPU"
             value: (ResourceUsage.cpuUsage ?? 0) * 100
             barColor: ((ResourceUsage.cpuUsage ?? 0) * 100) > 80 ? Appearance.colors.colError 
-                    : (root.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
+                    : (Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                    : root.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
         }
 
         // RAM
@@ -43,7 +49,8 @@ Rectangle {
             label: "RAM"
             value: (ResourceUsage.memoryUsedPercentage ?? 0) * 100
             barColor: (ResourceUsage.memoryUsedPercentage ?? 0) > 0.85 ? Appearance.colors.colError 
-                    : (root.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
+                    : (Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                    : root.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
         }
 
         // Battery (if available)
@@ -55,7 +62,8 @@ Rectangle {
                 value: Battery.percentage ?? 0
                 barColor: (Battery.percentage ?? 0) < 20 ? Appearance.colors.colError 
                         : Battery.charging ? Appearance.colors.colSuccess 
-                        : (root.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
+                        : (Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                        : root.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
             }
         }
     }
@@ -64,7 +72,8 @@ Rectangle {
         id: bar
         property string label
         property real value: 0
-        property color barColor: root.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
+        property color barColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+            : root.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
 
         spacing: 2
 
@@ -73,7 +82,8 @@ Rectangle {
             StyledText {
                 text: bar.label
                 font.pixelSize: Appearance.font.pixelSize.smallest
-                color: root.inirEverywhere ? Appearance.inir.colTextSecondary
+                color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+                     : root.inirEverywhere ? Appearance.inir.colTextSecondary
                      : root.auroraEverywhere ? Appearance.m3colors.m3onSurfaceVariant
                      : Appearance.colors.colSubtext
             }
@@ -82,7 +92,8 @@ Rectangle {
                 text: Math.round(bar.value) + "%"
                 font.pixelSize: Appearance.font.pixelSize.smallest
                 font.family: Appearance.font.family.numbers
-                color: root.inirEverywhere ? Appearance.inir.colText
+                color: Appearance.angelEverywhere ? Appearance.angel.colText
+                     : root.inirEverywhere ? Appearance.inir.colText
                      : root.auroraEverywhere ? Appearance.m3colors.m3onSurface
                      : Appearance.colors.colOnLayer1
             }
@@ -91,15 +102,16 @@ Rectangle {
         Rectangle {
             Layout.fillWidth: true
             height: 4
-            radius: 2
-            color: root.inirEverywhere ? Appearance.inir.colLayer2 
+            radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : 2
+            color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                 : root.inirEverywhere ? Appearance.inir.colLayer2 
                  : root.auroraEverywhere ? ColorUtils.transparentize(Appearance.aurora.colSubSurface, 0.5)
                  : Appearance.colors.colLayer2
 
             Rectangle {
                 width: parent.width * Math.min(1, Math.max(0, bar.value / 100))
                 height: parent.height
-                radius: 2
+                radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : 2
                 color: bar.barColor
 
                 Behavior on width {

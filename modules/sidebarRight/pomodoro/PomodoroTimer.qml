@@ -11,16 +11,20 @@ Item {
     id: root
 
     // Style helpers
-    readonly property color _colLayer: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+    readonly property color _colLayer: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2
         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
         : Appearance.colors.colLayer2
-    readonly property color _colLayerHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+    readonly property color _colLayerHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover
         : Appearance.colors.colLayer2Hover
-    readonly property color _colLayerActive: Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
+    readonly property color _colLayerActive: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
         : Appearance.colors.colLayer2Active
-    readonly property color _colText: Appearance.inirEverywhere ? Appearance.inir.colText
+    readonly property color _colText: Appearance.angelEverywhere ? Appearance.angel.colText
+        : Appearance.inirEverywhere ? Appearance.inir.colText
         : Appearance.colors.colOnLayer2
 
     property bool settingsOpen: false

@@ -26,11 +26,14 @@ Item {
             margins: Appearance.sizes.elevationMargin
         }
         radius: Appearance.rounding.normal
-        color: Appearance.inirEverywhere ? Appearance.inir.colLayer1
+        color: Appearance.angelEverywhere ? Appearance.angel.colGlassPopup
+             : Appearance.inirEverywhere ? Appearance.inir.colLayer1
              : Appearance.auroraEverywhere ? Appearance.aurora.colPopupSurface
              : Appearance.colors.colLayer0
-        border.width: Appearance.auroraEverywhere || Appearance.inirEverywhere ? 1 : 0
-        border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder 
+        border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
+            : Appearance.auroraEverywhere || Appearance.inirEverywhere ? 1 : 0
+        border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+            : Appearance.inirEverywhere ? Appearance.inir.colBorder 
             : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder : "transparent"
         implicitHeight: contentRow.implicitHeight + 24
 
@@ -47,7 +50,8 @@ Item {
                 Layout.preferredWidth: 56
                 Layout.preferredHeight: 56
                 radius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
-                color: Appearance.inirEverywhere ? Appearance.inir.colLayer1
+                color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                     : Appearance.inirEverywhere ? Appearance.inir.colLayer1
                      : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface 
                      : Appearance.colors.colLayer1
                 border.width: Appearance.inirEverywhere ? 1 : 0

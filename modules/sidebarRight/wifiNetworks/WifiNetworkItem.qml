@@ -100,9 +100,12 @@ DialogListItem {
                 DialogButton {
                     Layout.fillWidth: true
                     buttonText: Translation.tr("Open network portal")
-                    colBackground: Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colLayer4
-                    colBackgroundHover: Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer4Hover
-                    colRipple: Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer4Active
+                    colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                        : Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colLayer4
+                    colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer4Hover
+                    colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer4Active
                     onClicked: {
                         Network.openPublicWifiPortal()
                         GlobalStates.sidebarRightOpen = false

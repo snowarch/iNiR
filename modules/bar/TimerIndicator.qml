@@ -149,17 +149,19 @@ MouseArea {
         scale: root.pressed ? 0.95 : 1.0
         color: {
             if (root.pressed) {
+                if (Appearance.angelEverywhere) return Appearance.angel.colGlassCardActive
                 if (Appearance.inirEverywhere) return Appearance.inir.colLayer2Active
                 if (Appearance.auroraEverywhere) return Appearance.aurora.colSubSurfaceActive
                 return Appearance.colors.colLayer1Active
             }
             if (root.paused) {
-                // Always show dark background when paused (like hover state)
+                if (Appearance.angelEverywhere) return root.containsMouse ? Appearance.angel.colGlassCardActive : Appearance.angel.colGlassCardHover
                 if (Appearance.inirEverywhere) return root.containsMouse ? Appearance.inir.colLayer2Active : Appearance.inir.colLayer2Hover
                 if (Appearance.auroraEverywhere) return root.containsMouse ? Appearance.aurora.colSubSurfaceActive : Appearance.aurora.colElevatedSurface
                 return root.containsMouse ? Appearance.colors.colLayer2Active : Appearance.colors.colLayer2Hover
             }
             if (root.containsMouse) {
+                if (Appearance.angelEverywhere) return Appearance.angel.colGlassCard
                 if (Appearance.inirEverywhere) return Appearance.inir.colLayer1Hover
                 if (Appearance.auroraEverywhere) return Appearance.aurora.colSubSurface
                 return Appearance.colors.colLayer1Hover

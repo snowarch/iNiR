@@ -21,7 +21,8 @@ MouseArea {
     cursorShape: Qt.PointingHandCursor
     acceptedButtons: Qt.LeftButton | Qt.RightButton
 
-    readonly property color accentColor: Appearance.inirEverywhere ? (Appearance.inir?.colAccent ?? Appearance.m3colors.m3primary)
+    readonly property color accentColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+        : Appearance.inirEverywhere ? (Appearance.inir?.colAccent ?? Appearance.m3colors.m3primary)
         : Appearance.auroraEverywhere ? (Appearance.aurora?.colAccent ?? Appearance.m3colors.m3primary)
         : Appearance.m3colors.m3primary
 
@@ -39,26 +40,30 @@ MouseArea {
         anchors.centerIn: parent
         width: contentRow.implicitWidth + 16
         height: contentRow.implicitHeight + 8
-        radius: height / 2
+        radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : height / 2
         scale: root.pressed ? 0.93 : (root.containsMouse ? 1.03 : 1.0)
         color: {
             if (root.pressed) {
+                if (Appearance.angelEverywhere) return Appearance.angel.colGlassCardActive
                 if (Appearance.inirEverywhere) return Appearance.inir.colLayer2Active
                 if (Appearance.auroraEverywhere) return Appearance.aurora.colSubSurfaceActive
                 return Appearance.colors.colLayer1Active
             }
             if (root.containsMouse) {
+                if (Appearance.angelEverywhere) return Appearance.angel.colGlassCardHover
                 if (Appearance.inirEverywhere) return Appearance.inir.colLayer1Hover
                 if (Appearance.auroraEverywhere) return Appearance.aurora.colSubSurface
                 return Appearance.colors.colLayer1Hover
             }
+            if (Appearance.angelEverywhere) return ColorUtils.transparentize(Appearance.angel.colPrimary, 0.85)
             if (Appearance.inirEverywhere) return ColorUtils.transparentize(Appearance.inir?.colAccent ?? Appearance.m3colors.m3primary, 0.85)
             if (Appearance.auroraEverywhere) return ColorUtils.transparentize(Appearance.aurora?.colAccent ?? Appearance.m3colors.m3primary, 0.85)
             return ColorUtils.transparentize(Appearance.m3colors.m3primary, 0.88)
         }
 
-        border.width: Appearance.inirEverywhere ? 1 : 0
-        border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+        border.width: (Appearance.angelEverywhere || Appearance.inirEverywhere) ? 1 : 0
+        border.color: Appearance.angelEverywhere ? Appearance.angel.colBorder
+            : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
 
         Behavior on color {
             animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
@@ -263,7 +268,8 @@ MouseArea {
                 Layout.preferredHeight: 1
                 Layout.topMargin: 2
                 Layout.bottomMargin: 2
-                color: Appearance.inirEverywhere ? (Appearance.inir?.colBorder ?? Appearance.colors.colLayer0Border)
+                color: Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
+                    : Appearance.inirEverywhere ? (Appearance.inir?.colBorder ?? Appearance.colors.colLayer0Border)
                     : Appearance.colors.colLayer0Border
                 opacity: 0.5
             }

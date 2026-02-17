@@ -14,12 +14,16 @@ RippleButton {
     implicitHeight: 30
     leftPadding: (implicitHeight - faviconSize) / 2
     rightPadding: 10
-    buttonRadius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
-    colBackground: Appearance.inirEverywhere ? Appearance.inir.colLayer2 
+    buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
+    colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2 
         : Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colSurfaceContainerHighest
-    colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover 
+    colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover 
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colSurfaceContainerHighestHover
-    colRipple: Appearance.inirEverywhere ? Appearance.inir.colLayer2Active 
+    colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active 
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colSurfaceContainerHighestActive
 
     PointingHandInteraction {}

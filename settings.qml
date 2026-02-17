@@ -1867,7 +1867,7 @@ ApplicationWindow {
                         border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder
                             : Appearance.m3colors.m3outlineVariant
 
-                        layer.enabled: true
+                        layer.enabled: Appearance.effectsEnabled
                         layer.effect: DropShadow {
                             color: Qt.rgba(0, 0, 0, 0.3)
                             radius: 12

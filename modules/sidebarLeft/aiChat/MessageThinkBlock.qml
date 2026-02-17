@@ -56,7 +56,8 @@ Item {
 
         Rectangle { // Header background
             id: header
-            color: Appearance.inirEverywhere ? Appearance.inir.colLayer2 
+            color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                : Appearance.inirEverywhere ? Appearance.inir.colLayer2 
                 : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colSurfaceContainerHighest
             Layout.fillWidth: true
             implicitHeight: thinkBlockTitleBarRowLayout.implicitHeight + thinkBlockHeaderPaddingVertical * 2
@@ -101,10 +102,13 @@ Item {
                     implicitWidth: 22
                     implicitHeight: 22
                     colBackground: headerMouseArea.containsMouse 
-                        ? (Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer2Hover)
+                        ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer2Hover)
                         : "transparent"
-                    colBackgroundHover: Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer2Hover
-                    colRipple: Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer2Active
+                    colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer2Hover
+                    colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer2Active
 
                     onClicked: { root.collapsed = !root.collapsed }
                     
@@ -149,7 +153,8 @@ Item {
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 implicitHeight: messageTextBlock.implicitHeight
-                color: Appearance.inirEverywhere ? Appearance.inir.colLayer2 : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colLayer2
+                color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                    : Appearance.inirEverywhere ? Appearance.inir.colLayer2 : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colLayer2
 
                 // Load data for the message at the correct scope
                 property bool editing: root.editing

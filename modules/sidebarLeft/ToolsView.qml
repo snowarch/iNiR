@@ -18,15 +18,19 @@ Item {
     property bool _opaqueRegions: false
 
     // Style tokens
-    readonly property color colText: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+    readonly property color colText: Appearance.angelEverywhere ? Appearance.angel.colText
+        : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
     readonly property color colTextSecondary: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
-    readonly property color colBg: Appearance.inirEverywhere ? Appearance.inir.colLayer1
+    readonly property color colBg: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer1
         : Appearance.auroraEverywhere ? "transparent"
         : Appearance.colors.colLayer1
-    readonly property color colBgHover: Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
+    readonly property color colBgHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer1Hover
-    readonly property real radius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.verysmall
+    readonly property real radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.verysmall
 
     Flickable {
         id: flickable

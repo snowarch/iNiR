@@ -16,12 +16,16 @@ Rectangle {
     readonly property bool inirEverywhere: Appearance.inirEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
 
-    radius: inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-    color: inirEverywhere ? Appearance.inir.colLayer1
+    radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+         : inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+    color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+         : inirEverywhere ? Appearance.inir.colLayer1
          : auroraEverywhere ? Appearance.aurora.colSubSurface
          : Appearance.colors.colLayer1
-    border.width: inirEverywhere ? 1 : 0
-    border.color: inirEverywhere ? Appearance.inir.colBorder : "transparent"
+    border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
+               : inirEverywhere ? 1 : 0
+    border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+               : inirEverywhere ? Appearance.inir.colBorder : "transparent"
 
     ColumnLayout {
         id: wallpaperLayout

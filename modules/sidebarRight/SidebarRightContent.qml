@@ -72,7 +72,8 @@ Item {
         anchors.fill: parent
         implicitHeight: parent.height - Appearance.sizes.hyprlandGapsOut * 2
         implicitWidth: sidebarWidth - Appearance.sizes.hyprlandGapsOut * 2
-        property bool cardStyle: Config.options.sidebar?.cardStyle ?? false
+        property bool cardStyle: Config.options?.sidebar?.cardStyle ?? false
+        readonly property bool angelEverywhere: Appearance.angelEverywhere
         readonly property bool auroraEverywhere: Appearance.auroraEverywhere
         readonly property bool inirEverywhere: Appearance.inirEverywhere
         readonly property bool gameModeMinimal: Appearance.gameModeMinimal
@@ -99,9 +100,12 @@ Item {
             : inirEverywhere ? (cardStyle ? Appearance.inir.colLayer1 : Appearance.inir.colLayer0)
             : auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
             : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
-        border.width: gameModeMinimal ? 0 : (inirEverywhere ? 1 : 1)
-        border.color: inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colLayer0Border
-        radius: inirEverywhere ? (cardStyle ? Appearance.inir.roundingLarge : Appearance.inir.roundingNormal)
+        border.width: gameModeMinimal ? 0 : (angelEverywhere ? Appearance.angel.panelBorderWidth : 1)
+        border.color: angelEverywhere ? Appearance.angel.colPanelBorder
+            : inirEverywhere ? Appearance.inir.colBorder
+            : Appearance.colors.colLayer0Border
+        radius: angelEverywhere ? Appearance.angel.roundingNormal
+            : inirEverywhere ? (cardStyle ? Appearance.inir.roundingLarge : Appearance.inir.roundingNormal)
             : cardStyle ? Appearance.rounding.normal : (Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1)
 
         clip: true
@@ -128,14 +132,42 @@ Item {
             asynchronous: true
 
             layer.enabled: Appearance.effectsEnabled
-            layer.effect: StyledBlurEffect {
+            layer.effect: MultiEffect {
                 source: sidebarRightBlurredWallpaper
+                anchors.fill: source
+                saturation: sidebarRightBackground.angelEverywhere
+                    ? (Appearance.angel.blurSaturation * Appearance.angel.colorStrength)
+                    : (Appearance.effectsEnabled ? 0.2 : 0)
+                blurEnabled: Appearance.effectsEnabled
+                blurMax: 100
+                blur: Appearance.effectsEnabled
+                    ? (sidebarRightBackground.angelEverywhere ? Appearance.angel.blurIntensity : 1)
+                    : 0
             }
 
             Rectangle {
                 anchors.fill: parent
-                color: ColorUtils.transparentize((sidebarRightBackground.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
+                color: sidebarRightBackground.angelEverywhere
+                    ? ColorUtils.transparentize((sidebarRightBackground.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.angel.overlayOpacity * Appearance.angel.panelTransparentize)
+                    : ColorUtils.transparentize((sidebarRightBackground.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
             }
+        }
+
+        // Angel inset glow — top edge
+        Rectangle {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: Appearance.angel.insetGlowHeight
+            visible: sidebarRightBackground.angelEverywhere
+            color: Appearance.angel.colInsetGlow
+            z: 10
+        }
+
+        // Angel partial border — elegant half-borders
+        AngelPartialBorder {
+            targetRadius: sidebarRightBackground.radius
+            z: 10
         }
 
         ColumnLayout {
@@ -296,10 +328,13 @@ Item {
                 bottom: parent.bottom
                 left: parent.left
             }
-            color: sidebarRightBackground.auroraEverywhere
+            color: sidebarRightBackground.angelEverywhere ? Appearance.angel.colGlassCard
+                : sidebarRightBackground.auroraEverywhere
                 ? Appearance.aurora.colSubSurface
                 : Appearance.colors.colLayer1
-            radius: height / 2
+            radius: sidebarRightBackground.angelEverywhere ? Appearance.angel.roundingSmall : height / 2
+            border.width: sidebarRightBackground.angelEverywhere ? Appearance.angel.cardBorderWidth : 0
+            border.color: sidebarRightBackground.angelEverywhere ? Appearance.angel.colCardBorder : "transparent"
             implicitWidth: uptimeRow.implicitWidth + 24
             implicitHeight: uptimeRow.implicitHeight + 8
             
@@ -314,12 +349,12 @@ Item {
                     height: 25
                     source: SystemInfo.distroIcon
                     colorize: true
-                    color: Appearance.colors.colOnLayer0
+                    color: Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer0
                 }
                 StyledText {
                     anchors.verticalCenter: parent.verticalCenter
                     font.pixelSize: Appearance.font.pixelSize.normal
-                    color: Appearance.colors.colOnLayer0
+                    color: Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer0
                     text: Translation.tr("Up %1").arg(DateTime.uptime)
                     textFormat: Text.MarkdownText
                 }
@@ -333,7 +368,8 @@ Item {
                 bottom: parent.bottom
                 right: parent.right
             }
-            color: sidebarRightBackground.auroraEverywhere
+            color: sidebarRightBackground.angelEverywhere ? Appearance.angel.colGlassCard
+                : sidebarRightBackground.auroraEverywhere
                 ? Appearance.aurora.colSubSurface
                 : Appearance.colors.colLayer1
             padding: 4

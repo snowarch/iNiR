@@ -109,7 +109,7 @@ PopupWindow {
             color: Looks.colors.bg1Base
             radius: Looks.radius.large
 
-            layer.enabled: true
+            layer.enabled: Appearance.effectsEnabled
             layer.effect: OpacityMask {
                 maskSource: Rectangle {
                     width: contentItem.width

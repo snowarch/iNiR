@@ -301,7 +301,7 @@ Item {
                 blurMax: 32
                 saturation: 0.6
                 
-                layer.enabled: true
+                layer.enabled: Appearance.effectsEnabled
                 layer.effect: OpacityMask {
                     maskSource: Rectangle {
                         width: thumbnailRect.width - 2

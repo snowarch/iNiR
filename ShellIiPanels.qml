@@ -52,7 +52,7 @@ Item {
     PanelLoader { identifier: "iiSessionScreen"; component: SessionScreen {} }
     PanelLoader { identifier: "iiSidebarLeft"; component: SidebarLeft {} }
     PanelLoader { identifier: "iiSidebarRight"; component: SidebarRight {} }
-    LazyLoader { active: Config.ready; component: TilingOverlay {} }
+    PanelLoader { identifier: "iiTilingOverlay"; component: TilingOverlay {} }
     PanelLoader { identifier: "iiVerticalBar"; extraCondition: Config.options?.bar?.vertical ?? false; component: VerticalBar {} }
     PanelLoader { identifier: "iiWallpaperSelector"; component: WallpaperSelector {} }
 

@@ -62,12 +62,16 @@ Item {
                 anchors.centerIn: parent
                 width: volumeRow.width + 12
                 height: volumeRow.height + 8
-                radius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.verysmall
-                color: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+                      : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.verysmall
+                color: Appearance.angelEverywhere ? Appearance.angel.colGlassPopup
+                     : Appearance.inirEverywhere ? Appearance.inir.colLayer2
                      : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                      : Appearance.colors.colLayer3
-                border.width: Appearance.inirEverywhere || Appearance.auroraEverywhere ? 1 : 0
-                border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder
+                border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
+                            : (Appearance.inirEverywhere || Appearance.auroraEverywhere) ? 1 : 0
+                border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+                            : Appearance.inirEverywhere ? Appearance.inir.colBorder
                             : Appearance.auroraEverywhere ? Appearance.aurora.colPopupBorder
                             : Appearance.colors.colLayer3Hover
 

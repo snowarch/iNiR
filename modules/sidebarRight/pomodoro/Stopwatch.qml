@@ -99,7 +99,8 @@ Item {
                 width: lapsList.width
                 implicitHeight: lapRow.implicitHeight + verticalPadding * 2
                 implicitWidth: lapRow.implicitWidth + horizontalPadding * 2
-                color: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                    : Appearance.inirEverywhere ? Appearance.inir.colLayer2
                     : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colLayer2
                 radius: Appearance.rounding.small
 

@@ -16,12 +16,17 @@ Rectangle {
     readonly property bool inirEverywhere: Appearance.inirEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
 
-    radius: inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-    color: inirEverywhere ? Appearance.inir.colLayer1
+    radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+        : inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+    color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+         : inirEverywhere ? Appearance.inir.colLayer1
          : auroraEverywhere ? Appearance.aurora.colSubSurface
          : Appearance.colors.colLayer1
-    border.width: inirEverywhere ? 1 : 0
-    border.color: inirEverywhere ? Appearance.inir.colBorder : "transparent"
+    border.width: Appearance.angelEverywhere ? 0 : (inirEverywhere ? 1 : 0)
+    border.color: Appearance.angelEverywhere ? "transparent"
+        : inirEverywhere ? Appearance.inir.colBorder : "transparent"
+
+    AngelPartialBorder { targetRadius: parent.radius; coverage: 0.45 }
 
     GridLayout {
         id: actionsGrid
@@ -109,7 +114,8 @@ Rectangle {
 
         ActionTile {
             icon: "power_settings_new"
-            iconColor: root.inirEverywhere ? Appearance.inir.colError
+            iconColor: Appearance.angelEverywhere ? Appearance.m3colors.m3error
+                     : root.inirEverywhere ? Appearance.inir.colError
                      : root.auroraEverywhere ? Appearance.m3colors.m3error
                      : Appearance.colors.colError
             onClicked: {
@@ -124,36 +130,46 @@ Rectangle {
         property string icon
         property bool active: false
         property color iconColor: active 
-            ? (root.inirEverywhere ? Appearance.inir.colOnPrimary 
+            ? (Appearance.angelEverywhere ? Appearance.angel.colOnPrimary
+             : root.inirEverywhere ? Appearance.inir.colOnPrimary 
              : root.auroraEverywhere ? Appearance.m3colors.m3onPrimary
              : Appearance.colors.colOnPrimary)
-            : (root.inirEverywhere ? Appearance.inir.colText 
+            : (Appearance.angelEverywhere ? Appearance.angel.colText
+             : root.inirEverywhere ? Appearance.inir.colText 
              : root.auroraEverywhere ? Appearance.m3colors.m3onSurface
              : Appearance.colors.colOnLayer1)
         signal clicked()
 
         Layout.fillWidth: true
         implicitHeight: 36
-        radius: root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
+        radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+            : root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
         
         color: tileMouseArea.containsMouse 
             ? (active 
-                ? (root.inirEverywhere ? Appearance.inir.colPrimaryHover 
+                ? (Appearance.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimaryHover, 0.35)
+                 : root.inirEverywhere ? Appearance.inir.colPrimaryHover 
                  : root.auroraEverywhere ? Appearance.colors.colPrimaryHover
                  : Appearance.colors.colPrimaryHover)
-                : (root.inirEverywhere ? Appearance.inir.colLayer2Hover 
+                : (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                 : root.inirEverywhere ? Appearance.inir.colLayer2Hover 
                  : root.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
                  : Appearance.colors.colLayer2Hover))
             : (active 
-                ? (root.inirEverywhere ? Appearance.inir.colPrimary 
+                ? (Appearance.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimary, 0.45)
+                 : root.inirEverywhere ? Appearance.inir.colPrimary 
                  : root.auroraEverywhere ? Appearance.m3colors.m3primary
                  : Appearance.colors.colPrimary)
-                : (root.inirEverywhere ? Appearance.inir.colLayer2 
+                : (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                 : root.inirEverywhere ? Appearance.inir.colLayer2 
                  : root.auroraEverywhere ? Appearance.aurora.colSubSurface
                  : Appearance.colors.colLayer2))
 
-        border.width: root.inirEverywhere ? 1 : 0
-        border.color: root.inirEverywhere ? (active ? Appearance.inir.colPrimary : Appearance.inir.colBorderSubtle) : "transparent"
+        border.width: Appearance.angelEverywhere ? 0 : (root.inirEverywhere ? 1 : 0)
+        border.color: Appearance.angelEverywhere ? "transparent"
+            : root.inirEverywhere ? (active ? Appearance.inir.colPrimary : Appearance.inir.colBorderSubtle) : "transparent"
+
+        AngelPartialBorder { targetRadius: parent.radius; coverage: 0.4; borderColor: active ? Appearance.angel.colPrimary : Appearance.angel.colBorderSubtle }
 
         Behavior on color {
             enabled: Appearance.animationsEnabled

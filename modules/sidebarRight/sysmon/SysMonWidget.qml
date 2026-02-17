@@ -17,14 +17,19 @@ Item {
     Component.onDestruction: ResourceUsage.stop()
 
     // Style tokens
-    readonly property color colText: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
-    readonly property color colTextSecondary: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
-    readonly property color colBg: Appearance.inirEverywhere ? Appearance.inir.colLayer0
+    readonly property color colText: Appearance.angelEverywhere ? Appearance.angel.colText
+        : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+    readonly property color colTextSecondary: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+        : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+    readonly property color colBg: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer0
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer0
-    readonly property color colBorder: Appearance.inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colLayer0Border
-    readonly property int borderWidth: Appearance.inirEverywhere ? 1 : (Appearance.auroraEverywhere ? 0 : 1)
-    readonly property real radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+    readonly property color colBorder: Appearance.angelEverywhere ? Appearance.angel.colBorder
+        : Appearance.inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colLayer0Border
+    readonly property int borderWidth: (Appearance.angelEverywhere || Appearance.inirEverywhere) ? 1 : (Appearance.auroraEverywhere ? 0 : 1)
+    readonly property real radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+        : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
 
     ColumnLayout {
         anchors.fill: parent
@@ -44,9 +49,10 @@ Item {
             
             RippleButton {
                 implicitWidth: 28; implicitHeight: 28
-                buttonRadius: 14
+                buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : 14
                 colBackground: "transparent"
-                colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
+                colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                    : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                     : Appearance.colors.colLayer1Hover
                 onClicked: ResourceUsage.ensureRunning()
@@ -216,8 +222,9 @@ Item {
 
             Rectangle {
                 anchors.fill: parent
-                radius: 4
-                color: Appearance.inirEverywhere ? Appearance.inir.colLayer1
+                radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : 4
+                color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                    : Appearance.inirEverywhere ? Appearance.inir.colLayer1
                     : Appearance.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colLayer1, 0.5)
                     : Appearance.colors.colLayer1
             }
@@ -254,7 +261,8 @@ Item {
             Layout.fillWidth: true
             value: progressValue
             highlightColor: progressColor
-            trackColor: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+            trackColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                : Appearance.inirEverywhere ? Appearance.inir.colLayer2
                 : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                 : Appearance.colors.colSecondaryContainer
         }

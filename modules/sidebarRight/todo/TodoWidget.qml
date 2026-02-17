@@ -112,7 +112,8 @@ Item {
             id: tabBarBottomBorder
             Layout.fillWidth: true
             height: 1
-            color: Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colOutlineVariant
+            color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+                : Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colOutlineVariant
         }
 
         SwipeView {

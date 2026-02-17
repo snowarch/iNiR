@@ -67,7 +67,8 @@ ColumnLayout {
         padding: Appearance.sizes.spacingSmall
 
         background: Rectangle {
-            color: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+            color: Appearance.angelEverywhere ? Appearance.angel.colGlassPopup
+                : Appearance.inirEverywhere ? Appearance.inir.colLayer2
                 : Appearance.auroraEverywhere ? Appearance.aurora.colPopupSurface : Appearance.colors.colLayer3
             radius: Appearance.rounding.normal
             border.width: 1

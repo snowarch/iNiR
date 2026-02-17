@@ -464,7 +464,7 @@ Item {
                     border.width: 1
                     border.color: Looks.colors.bg2Border
                     
-                    layer.enabled: true
+                    layer.enabled: Appearance.effectsEnabled
                     layer.effect: DropShadow {
                         color: Looks.colors.shadow
                         radius: 8

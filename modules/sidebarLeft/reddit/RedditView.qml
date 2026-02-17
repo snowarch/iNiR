@@ -57,16 +57,20 @@ Item {
                     buttonText: modelData.text
                     toggled: root.currentSort === index
                     bounce: true
-                    colBackground: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                    colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                        : Appearance.inirEverywhere ? Appearance.inir.colLayer2
                         : Appearance.auroraEverywhere ? "transparent"
                         : Appearance.colors.colLayer1
-                    colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                    colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                         : Appearance.colors.colLayer1Hover
-                    colBackgroundToggled: Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
+                    colBackgroundToggled: Appearance.angelEverywhere ? Appearance.angel.colGlassElevated
+                        : Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                         : Appearance.colors.colSecondaryContainer
-                    colBackgroundToggledHover: Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainerHover
+                    colBackgroundToggledHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                        : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainerHover
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
                         : Appearance.colors.colSecondaryContainerHover
                     
@@ -95,16 +99,20 @@ Item {
                     buttonText: modelData
                     toggled: root.currentSubredditIndex === index
                     bounce: true
-                    colBackground: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                    colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                        : Appearance.inirEverywhere ? Appearance.inir.colLayer2
                         : Appearance.auroraEverywhere ? "transparent"
                         : Appearance.colors.colLayer1
-                    colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                    colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                         : Appearance.colors.colLayer1Hover
-                    colBackgroundToggled: Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
+                    colBackgroundToggled: Appearance.angelEverywhere ? Appearance.angel.colGlassElevated
+                        : Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                         : Appearance.colors.colSecondaryContainer
-                    colBackgroundToggledHover: Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainerHover
+                    colBackgroundToggledHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                        : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainerHover
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
                         : Appearance.colors.colSecondaryContainerHover
                     
@@ -122,12 +130,16 @@ Item {
             id: contentContainer
             Layout.fillWidth: true
             Layout.fillHeight: true
-            radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-            color: Appearance.inirEverywhere ? Appearance.inir.colLayer1
+            radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+                : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+            color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                : Appearance.inirEverywhere ? Appearance.inir.colLayer1
                 : Appearance.auroraEverywhere ? "transparent"
                 : Appearance.colors.colLayer1
-            border.width: Appearance.auroraEverywhere ? 0 : 1
-            border.color: Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
+            border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
+                : Appearance.auroraEverywhere ? 0 : 1
+            border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+                : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
                 : Appearance.colors.colLayer0Border
             clip: true
             

@@ -118,9 +118,11 @@ PopupWindow {
             fallbackColor: Appearance.colors.colSurfaceContainer
             inirColor: Appearance.inir?.colLayer2 ?? Appearance.colors.colSurfaceContainer
             auroraTransparency: Appearance.aurora?.popupTransparentize ?? 0.1
-            radius: Appearance.inirEverywhere ? (Appearance.inir?.roundingNormal ?? 12) : Appearance.rounding.normal
+            radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+                : Appearance.inirEverywhere ? (Appearance.inir?.roundingNormal ?? 12) : Appearance.rounding.normal
             border.width: 1
-            border.color: Appearance.inirEverywhere 
+            border.color: Appearance.angelEverywhere ? Appearance.angel.colBorder
+                : Appearance.inirEverywhere 
                 ? (Appearance.inir?.colBorder ?? "transparent")
                 : Appearance.auroraEverywhere 
                     ? (Appearance.aurora?.colTooltipBorder ?? "transparent")

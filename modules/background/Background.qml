@@ -469,6 +469,49 @@ Variants {
                 }
             }
 
+            // Desktop right-click context menu
+            MouseArea {
+                anchors.fill: parent
+                z: 25
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                onClicked: function(mouse) {
+                    if (mouse.button === Qt.RightButton) {
+                        desktopMenuAnchor.x = mouse.x
+                        desktopMenuAnchor.y = mouse.y
+                        desktopContextMenu.active = true
+                    } else if (desktopContextMenu.active) {
+                        desktopContextMenu.close()
+                    }
+                }
+            }
+
+            Item {
+                id: desktopMenuAnchor
+                z: 26
+                width: 1; height: 1
+            }
+
+            ContextMenu {
+                id: desktopContextMenu
+                z: 27
+                anchorItem: desktopMenuAnchor
+                popupAbove: false
+                closeOnFocusLost: false
+                closeOnHoverLost: true
+                model: [
+                    { text: Translation.tr("Settings"), iconName: "settings", monochromeIcon: true,
+                        action: () => { Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "settings", "open"]) } },
+                    { type: "separator" },
+                    { text: Translation.tr("Change wallpaper"), iconName: "image", monochromeIcon: true,
+                        action: () => { GlobalStates.wallpaperSelectorOpen = true } },
+                    { text: Translation.tr("Screenshot"), iconName: "screenshot_monitor", monochromeIcon: true,
+                        action: () => { GlobalStates.regionSelectorOpen = true } },
+                    { type: "separator" },
+                    { text: Translation.tr("Reload shell"), iconName: "refresh", monochromeIcon: true,
+                        action: () => { Quickshell.reload() } }
+                ]
+            }
+
             WidgetCanvas {
                 id: widgetCanvas
                 z: 20

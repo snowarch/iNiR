@@ -31,7 +31,7 @@ Item {
         smooth: true
         mipmap: true
 
-        layer.enabled: true
+        layer.enabled: Appearance.effectsEnabled
         layer.effect: OpacityMask {
             maskSource: Rectangle {
                 width: root.width

@@ -82,11 +82,13 @@ Item {
                     colBackground: Appearance.inirEverywhere 
                         ? "transparent" 
                         : (isRunning ? Appearance.colors.colPrimaryContainer : "transparent")
-                    colBackgroundHover: Appearance.inirEverywhere 
+                    colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                        : Appearance.inirEverywhere 
                         ? Appearance.inir.colLayer1Hover 
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                         : (isRunning ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colLayer1Hover)
-                    colRipple: Appearance.inirEverywhere 
+                    colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+                        : Appearance.inirEverywhere 
                         ? Appearance.inir.colLayer1Active 
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
                         : (isRunning ? Appearance.colors.colPrimaryContainerActive : Appearance.colors.colLayer1Active)

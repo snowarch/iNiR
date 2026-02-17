@@ -19,7 +19,7 @@ Item {
     id: root
     property MprisPlayer player: null
     property list<real> visualizerPoints: []
-    property real radius: Appearance.rounding.normal
+    property real radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal : Appearance.rounding.normal
     property real screenX: 0
     property real screenY: 0
     
@@ -32,7 +32,7 @@ Item {
     
     StyledRectangularShadow { 
         target: card
-        visible: !Appearance.inirEverywhere && !Appearance.auroraEverywhere 
+        visible: Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere)
     }
     
     Rectangle {

@@ -193,7 +193,8 @@ Item {
                         iconSize: Appearance.font.pixelSize.large
                         color: micButton.isInUse && !micButton.isMuted
                             ? (Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError)
-                            : (Appearance.inirEverywhere ? Appearance.inir.colOnLayer2
+                            : (Appearance.angelEverywhere ? Appearance.angel.colText
+                             : Appearance.inirEverywhere ? Appearance.inir.colOnLayer2
                              : Appearance.auroraEverywhere ? Appearance.m3colors.m3onSurface
                              : Appearance.colors.colOnLayer2)
                     }

@@ -14,13 +14,19 @@ import QtQuick.Layouts
 
 Rectangle {
     id: root
-    radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-    color: Appearance.inirEverywhere ? Appearance.inir.colLayer1
+    radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+        : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
+        : Appearance.rounding.normal
+    color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
          : Appearance.auroraEverywhere ? "transparent"
          : Appearance.colors.colLayer1
-    border.width: Appearance.inirEverywhere ? 1 : 0
-    border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+    border.width: Appearance.angelEverywhere ? 0 : (Appearance.inirEverywhere ? 1 : 0)
+    border.color: Appearance.angelEverywhere ? "transparent"
+        : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
     clip: true
+
+    AngelPartialBorder { targetRadius: root.radius; coverage: 0.5 }
     visible: tabs.length > 0
     implicitHeight: visible ? (collapsed ? collapsedBottomWidgetGroupRow.implicitHeight : bottomWidgetGroupRow.implicitHeight) : 0
     property int selectedTab: Persistent.states?.sidebar?.bottomGroup?.tab ?? 0
@@ -284,7 +290,7 @@ Rectangle {
                 height: 20
                 visible: railFlickable.contentY > 0 && !Appearance.auroraEverywhere
                 gradient: Gradient {
-                    GradientStop { position: 0.0; color: Appearance.inirEverywhere ? Appearance.inir.colLayer1 : Appearance.colors.colLayer1 }
+                    GradientStop { position: 0.0; color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard : Appearance.inirEverywhere ? Appearance.inir.colLayer1 : Appearance.colors.colLayer1 }
                     GradientStop { position: 1.0; color: "transparent" }
                 }
             }
@@ -298,7 +304,7 @@ Rectangle {
                 visible: railFlickable.contentHeight > railFlickable.height && railFlickable.contentY < (railFlickable.contentHeight - railFlickable.height) && !Appearance.auroraEverywhere
                 gradient: Gradient {
                     GradientStop { position: 0.0; color: "transparent" }
-                    GradientStop { position: 1.0; color: Appearance.inirEverywhere ? Appearance.inir.colLayer1 : Appearance.colors.colLayer1 }
+                    GradientStop { position: 1.0; color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard : Appearance.inirEverywhere ? Appearance.inir.colLayer1 : Appearance.colors.colLayer1 }
                 }
             }
         }

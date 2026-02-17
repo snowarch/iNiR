@@ -27,7 +27,8 @@ Item {
         anchors.centerIn: parent
         width: root.vertical ? root.separatorSize : 1
         height: root.vertical ? 1 : root.separatorSize
-        color: Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
+        color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+             : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
              : Appearance.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.7)
              : Appearance.colors.colOutlineVariant
     }

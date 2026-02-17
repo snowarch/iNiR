@@ -45,12 +45,15 @@ Item {
         Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            radius: Appearance.rounding.normal
-            color: Appearance.inirEverywhere ? Appearance.inir.colLayer0
+            radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal : Appearance.rounding.normal
+            color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                : Appearance.inirEverywhere ? Appearance.inir.colLayer0
                 : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                 : Appearance.colors.colLayer0
-            border.width: Appearance.inirEverywhere ? 1 : (Appearance.auroraEverywhere ? 0 : 1)
-            border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colLayer0Border
+            border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
+                : Appearance.inirEverywhere ? 1 : (Appearance.auroraEverywhere ? 0 : 1)
+            border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+                : Appearance.inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colLayer0Border
             clip: true
 
             ScrollView {

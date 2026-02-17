@@ -56,7 +56,7 @@ Item {
             GlanceHeader {
                 id: glanceHeader
                 Layout.fillWidth: true
-                Layout.bottomMargin: 8
+                Layout.bottomMargin: 16
 
                 opacity: root.animateIn ? 1 : 0
                 scale: root.animateIn ? 1 : 0.97

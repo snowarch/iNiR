@@ -13,10 +13,12 @@ RippleButton {
     property bool compact: false
     
     implicitHeight: compact ? 60 : (post.thumbnail ? 90 : 70)
-    buttonRadius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
+    buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
     
     colBackground: "transparent"
-    colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+    colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer2Hover
     

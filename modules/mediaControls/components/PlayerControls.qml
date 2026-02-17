@@ -20,22 +20,22 @@ RowLayout {
     property int playButtonSize: 40
     property int iconSize: 22
     property int playIconSize: 24
-    property real buttonRadius: Appearance.inirEverywhere 
-        ? Appearance.inir.roundingSmall 
+    property real buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall 
         : Appearance.rounding.full
     property real playButtonRadius: buttonRadius
     property color buttonColor: "transparent"
-    property color buttonHoverColor: Appearance.inirEverywhere 
-        ? Appearance.inir.colLayer2Hover 
+    property color buttonHoverColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover 
         : Appearance.colors.colLayer1Hover
-    property color buttonRippleColor: Appearance.inirEverywhere 
-        ? Appearance.inir.colLayer2Active 
+    property color buttonRippleColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active 
         : Appearance.colors.colLayer1Active
-    property color iconColor: Appearance.inirEverywhere 
-        ? Appearance.inir.colText 
+    property color iconColor: Appearance.angelEverywhere ? Appearance.angel.colText
+        : Appearance.inirEverywhere ? Appearance.inir.colText 
         : Appearance.colors.colOnLayer0
-    property color playIconColor: Appearance.inirEverywhere 
-        ? Appearance.inir.colPrimary 
+    property color playIconColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+        : Appearance.inirEverywhere ? Appearance.inir.colPrimary 
         : Appearance.colors.colOnLayer1
     property bool showLabels: true
     

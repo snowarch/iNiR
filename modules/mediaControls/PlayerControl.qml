@@ -17,7 +17,7 @@ Item {
     id: root
     required property MprisPlayer player
     required property list<real> visualizerPoints
-    property real radius: Appearance.rounding.large
+    property real radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal : Appearance.rounding.large
     
     // Use centralized YtMusic detection from MprisController
     readonly property bool isYtMusicPlayer: {
@@ -189,19 +189,22 @@ Item {
     readonly property color inirLayer1: Appearance.inir.colLayer1
     readonly property color inirLayer2: Appearance.inir.colLayer2
 
-    StyledRectangularShadow { target: card; visible: !Appearance.inirEverywhere && !Appearance.auroraEverywhere }
+    StyledRectangularShadow { target: card; visible: Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere) }
 
     Rectangle {
         id: card
         anchors.centerIn: parent
         width: parent.width - Appearance.sizes.elevationMargin
         height: parent.height - Appearance.sizes.elevationMargin
-        radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : root.radius
-        color: Appearance.inirEverywhere ? root.inirLayer1
+        radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+             : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : root.radius
+        color: Appearance.angelEverywhere ? "transparent"
+             : Appearance.inirEverywhere ? root.inirLayer1
              : Appearance.auroraEverywhere ? "transparent"
              : (blendedColors?.colLayer0 ?? Appearance.colors.colLayer0)
-        border.width: Appearance.inirEverywhere || Appearance.auroraEverywhere ? 1 : 0
-        border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder
+        border.width: (Appearance.angelEverywhere || Appearance.inirEverywhere || Appearance.auroraEverywhere) ? 1 : 0
+        border.color: Appearance.angelEverywhere ? Appearance.angel.colBorder
+                    : Appearance.inirEverywhere ? Appearance.inir.colBorder
                     : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder
                     : "transparent"
         clip: true
@@ -227,14 +230,25 @@ Item {
             asynchronous: true
 
             layer.enabled: Appearance.effectsEnabled
-            layer.effect: StyledBlurEffect { source: auroraWallpaper }
+            layer.effect: MultiEffect {
+                source: auroraWallpaper
+                anchors.fill: source
+                saturation: Appearance.angelEverywhere
+                    ? Appearance.angel.blurSaturation
+                    : (Appearance.effectsEnabled ? 0.2 : 0)
+                blurEnabled: Appearance.effectsEnabled
+                blurMax: 100
+                blur: Appearance.effectsEnabled ? 1 : 0
+            }
         }
 
         // Aurora tint overlay
         Rectangle {
             anchors.fill: parent
             visible: Appearance.auroraEverywhere && !Appearance.inirEverywhere
-            color: ColorUtils.transparentize(blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base, Appearance.aurora.popupTransparentize)
+            color: Appearance.angelEverywhere
+                ? ColorUtils.transparentize(blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base, Appearance.angel.overlayOpacity)
+                : ColorUtils.transparentize(blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base, Appearance.aurora.popupTransparentize)
         }
 
         // Cover art background
@@ -297,7 +311,8 @@ Item {
                 id: coverArtContainer
                 Layout.preferredWidth: card.height - 24
                 Layout.preferredHeight: card.height - 24
-                radius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
+                radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+                    : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
                 color: "transparent"
                 clip: true
 
