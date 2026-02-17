@@ -206,6 +206,12 @@ OFFICIAL_PACKAGES=(
   # KDE Frameworks needed by darkly-bin Qt style (lightweight, NOT Plasma)
   frameworkintegration
   kdecoration
+
+  # SDDM login screen (users without another DE need this to log in)
+  sddm
+  qt6-svg
+  qt6-virtualkeyboard
+  qt6-multimedia-ffmpeg
 )
 
 installflags="--needed"

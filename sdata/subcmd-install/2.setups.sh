@@ -179,7 +179,38 @@ function setup_desktop_settings(){
   # Configure Kvantum theme via config file (avoid GUI)
   # kvantummanager --set can open a GUI window, so we write the config directly
   mkdir -p "${XDG_CONFIG_HOME}/Kvantum"
-  echo -e "[General]\ntheme=Colloid-Dark" > "${XDG_CONFIG_HOME}/Kvantum/kvantum.kvconfig"
+  echo -e "[General]\ntheme=MaterialAdw" > "${XDG_CONFIG_HOME}/Kvantum/kvantum.kvconfig"
+
+  # Nautilus dconf defaults (sidebar, mounted volumes, tree view, space info)
+  if command -v dconf &>/dev/null; then
+    dconf write /org/gnome/nautilus/preferences/default-folder-viewer "'list-view'" 2>/dev/null || true
+    dconf write /org/gnome/nautilus/list-view/use-tree-view true 2>/dev/null || true
+    dconf write /org/gnome/nautilus/list-view/default-zoom-level "'small'" 2>/dev/null || true
+    dconf write /org/gnome/nautilus/list-view/default-visible-columns "['name', 'size', 'type', 'date_modified']" 2>/dev/null || true
+    dconf write /org/gnome/nautilus/list-view/default-column-order "['name', 'size', 'type', 'owner', 'group', 'permissions', 'date_modified', 'date_accessed', 'date_created', 'recency', 'detailed_type']" 2>/dev/null || true
+    dconf write /org/gnome/nautilus/preferences/show-hidden-files false 2>/dev/null || true
+    dconf write /org/gnome/nautilus/preferences/date-time-format "'simple'" 2>/dev/null || true
+    # Window size
+    dconf write /org/gnome/nautilus/window-state/initial-size "(1100, 700)" 2>/dev/null || true
+    log_success "Nautilus defaults configured"
+  fi
+
+  # xdg-desktop-portal config for Niri (required for dark mode in GTK4/libadwaita apps)
+  mkdir -p "${XDG_CONFIG_HOME}/xdg-desktop-portal"
+  if [[ -f "dots/.config/xdg-desktop-portal/niri-portals.conf" ]]; then
+    cp "dots/.config/xdg-desktop-portal/niri-portals.conf" "${XDG_CONFIG_HOME}/xdg-desktop-portal/niri-portals.conf"
+  else
+    cat > "${XDG_CONFIG_HOME}/xdg-desktop-portal/niri-portals.conf" << 'PORTAL_EOF'
+[preferred]
+default = gnome;gtk
+org.freedesktop.impl.portal.ScreenCast = gnome
+org.freedesktop.impl.portal.Screenshot = gnome
+org.freedesktop.impl.portal.Access = gtk
+org.freedesktop.impl.portal.FileChooser = gtk
+org.freedesktop.impl.portal.Notification = gtk
+PORTAL_EOF
+  fi
+  log_success "xdg-desktop-portal configured for Niri"
   
   log_success "Desktop settings applied"
 }
@@ -206,6 +237,23 @@ else
   showfun disable_super_daemon_if_present
   v disable_super_daemon_if_present
   log_warning "Skipping legacy Super-tap daemon; use Mod+Space for ii overview. Set II_ENABLE_SUPER_DAEMON=1 to install."
+fi
+
+# SilentSDDM theme (login screen for users without another DE)
+function setup_sddm_theme(){
+  echo -e "${STY_BLUE}Setting up SilentSDDM login theme...${STY_RST}"
+  local sddm_script="${REPO_ROOT}/scripts/sddm/install-silent-sddm.sh"
+  if [[ -f "$sddm_script" ]]; then
+    chmod +x "$sddm_script"
+    bash "$sddm_script" || log_warning "SilentSDDM setup had issues (non-fatal)"
+  else
+    log_warning "SilentSDDM install script not found, skipping"
+  fi
+}
+
+if command -v sddm &>/dev/null || [[ "${INSTALL_FIRSTRUN}" == true ]]; then
+  showfun setup_sddm_theme
+  v setup_sddm_theme
 fi
 
 # Python packages (in venv)
