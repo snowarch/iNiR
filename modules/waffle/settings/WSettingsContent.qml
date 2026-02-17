@@ -328,19 +328,20 @@ Item {
                     }
                 }
                 
-                // Header icon (collapsed)
+                // Header icon (collapsed) — larger, with accent tint
                 Item {
                     visible: !root.navExpanded
-                    Layout.preferredWidth: 40
-                    Layout.preferredHeight: 28
+                    Layout.preferredWidth: 32
+                    Layout.preferredHeight: 32
                     Layout.alignment: Qt.AlignHCenter
-                    Layout.bottomMargin: 4
+                    Layout.bottomMargin: 8
                     
                     FluentIcon {
                         anchors.centerIn: parent
                         icon: "settings"
-                        implicitSize: 16
-                        color: Looks.colors.subfg
+                        implicitSize: 22
+                        color: Looks.colors.accent
+                        opacity: 0.8
                     }
                 }
                 

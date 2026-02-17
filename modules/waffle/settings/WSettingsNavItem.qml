@@ -48,17 +48,19 @@ Button {
     }
     
     contentItem: RowLayout {
-        spacing: 12
+        spacing: root.expanded ? 12 : 0
         
         Item {
             implicitWidth: 20
             implicitHeight: 20
-            Layout.leftMargin: root.expanded ? 14 : 14
+            Layout.leftMargin: root.expanded ? 14 : 0
+            Layout.fillWidth: !root.expanded
+            Layout.alignment: root.expanded ? Qt.AlignVCenter : Qt.AlignCenter
             
             FluentIcon {
                 anchors.centerIn: parent
                 icon: root.navIcon
-                implicitSize: 18
+                implicitSize: root.expanded ? 18 : 20
                 color: root.selected ? Looks.colors.fg : Looks.colors.subfg
                 
                 Behavior on color {
@@ -80,5 +82,10 @@ Button {
                 animation: Looks.transition.color.createObject(this)
             }
         }
+    }
+    
+    WToolTip {
+        visible: !root.expanded && root.hovered
+        text: root.text
     }
 }

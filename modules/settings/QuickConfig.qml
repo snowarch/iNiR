@@ -259,7 +259,7 @@ ContentPage {
                             materialIcon: "folder_open"
                             mainText: Translation.tr("Use current folder")
                             onClicked: {
-                                const currentPath = Config.options.background.wallpaperPath;
+                                const currentPath = Config.options?.background?.wallpaperPath ?? "";
                                 if (currentPath && currentPath.length) {
                                     Wallpapers.setDirectory(FileUtils.parentDirectory(currentPath));
                                 } else {
@@ -354,7 +354,7 @@ ContentPage {
                             const cols = Math.max(1, Math.floor((width - 2 * Appearance.sizes.spacingSmall) / 110))
                             const rows = Math.ceil(itemCount / cols)
                             const cellH = ((width - 2 * Appearance.sizes.spacingSmall) / cols) * 0.67
-                            return Math.min(400, Math.max(120, rows * cellH + 2 * Appearance.sizes.spacingSmall))
+                            return Math.min(280, Math.max(120, rows * cellH + 2 * Appearance.sizes.spacingSmall))
                         }
                         radius: Appearance.rounding.normal
                         color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard

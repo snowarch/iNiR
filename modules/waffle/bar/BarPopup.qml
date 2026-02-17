@@ -75,12 +75,10 @@ Loader {
             onCleared: root.focusCleared();
         }
         
-        // Close on Escape key
-        Keys.onPressed: event => {
-            if (event.key === Qt.Key_Escape) {
-                root.close();
-                event.accepted = true;
-            }
+        // Close on Escape key — handled via Shortcut since PopupWindow is not an Item
+        Shortcut {
+            sequences: [StandardKey.Cancel]
+            onActivated: root.close()
         }
         
         // Timer to close when mouse leaves both popup AND anchor

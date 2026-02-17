@@ -338,15 +338,24 @@ MouseArea {
         id: groupExpandButton
         visible: root.groupExpandControlMessage !== ""
         horizontalPadding: 12
-        implicitHeight: 28
-        implicitWidth: expandButtonText.implicitWidth + horizontalPadding * 2
+        implicitHeight: 30
+        implicitWidth: expandBtnRow.implicitWidth + horizontalPadding * 2
         onClicked: root.groupExpandToggle()
         contentItem: Item {
-            WText {
-                id: expandButtonText
+            RowLayout {
+                id: expandBtnRow
                 anchors.centerIn: parent
-                text: root.groupExpandControlMessage
-                font.pixelSize: Looks.font.pixelSize.small
+                spacing: 6
+                FluentIcon {
+                    icon: "chevron-down"
+                    implicitSize: 10
+                    color: Looks.colors.accent
+                }
+                WText {
+                    text: root.groupExpandControlMessage
+                    font.pixelSize: Looks.font.pixelSize.small
+                    color: Looks.colors.accent
+                }
             }
         }
     }

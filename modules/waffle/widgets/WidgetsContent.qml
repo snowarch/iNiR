@@ -161,8 +161,9 @@ WBarAttachedPanelContent {
                         spacing: 12
 
                         FluentIcon {
-                            icon: "weather-sunny"
+                            icon: Weather.isNightNow() ? "weather-moon" : "weather-sunny"
                             implicitSize: 48
+                            color: Weather.isNightNow() ? Looks.colors.accent : Looks.colors.fg
                         }
 
                         ColumnLayout {
@@ -272,9 +273,9 @@ WBarAttachedPanelContent {
                             }
                         }
                         Rectangle {
-                            Layout.fillWidth: true; height: 4; radius: 2; color: Looks.colors.bg1Base
+                            Layout.fillWidth: true; height: 6; radius: 3; color: Looks.colors.bg1Base
                             Rectangle {
-                                width: parent.width * Math.min(1, ResourceUsage.cpuUsage); height: parent.height; radius: 2
+                                width: parent.width * Math.min(1, ResourceUsage.cpuUsage); height: parent.height; radius: 3
                                 color: ResourceUsage.cpuUsage > 0.8 ? Looks.colors.danger : Looks.colors.accent
                                 Behavior on width {
                                     animation: Looks.transition.resize.createObject(this)
@@ -300,9 +301,9 @@ WBarAttachedPanelContent {
                             }
                         }
                         Rectangle {
-                            Layout.fillWidth: true; height: 4; radius: 2; color: Looks.colors.bg1Base
+                            Layout.fillWidth: true; height: 6; radius: 3; color: Looks.colors.bg1Base
                             Rectangle {
-                                width: parent.width * Math.min(1, ResourceUsage.memoryUsedPercentage); height: parent.height; radius: 2
+                                width: parent.width * Math.min(1, ResourceUsage.memoryUsedPercentage); height: parent.height; radius: 3
                                 color: ResourceUsage.memoryUsedPercentage > 0.9 ? Looks.colors.danger : Looks.colors.accent
                                 Behavior on width {
                                     animation: Looks.transition.resize.createObject(this)
@@ -329,9 +330,9 @@ WBarAttachedPanelContent {
                             }
                         }
                         Rectangle {
-                            Layout.fillWidth: true; height: 4; radius: 2; color: Looks.colors.bg1Base
+                            Layout.fillWidth: true; height: 6; radius: 3; color: Looks.colors.bg1Base
                             Rectangle {
-                                width: parent.width * Math.min(1, ResourceUsage.swapUsedPercentage); height: parent.height; radius: 2
+                                width: parent.width * Math.min(1, ResourceUsage.swapUsedPercentage); height: parent.height; radius: 3
                                 color: ResourceUsage.swapUsedPercentage > 0.8 ? Looks.colors.danger : Looks.colors.accent
                                 Behavior on width {
                                     animation: Looks.transition.resize.createObject(this)
@@ -579,11 +580,13 @@ WBarAttachedPanelContent {
                         font.weight: Font.DemiBold
                     }
 
-                    Flow {
+                    Grid {
                         Layout.fillWidth: true
+                        columns: 3
                         spacing: 8
 
                         QuickActionButton {
+                            width: (parent.width - 16) / 3
                             iconName: "folder"
                             label: Translation.tr("Files")
                             onClicked: {
@@ -593,6 +596,7 @@ WBarAttachedPanelContent {
                         }
 
                         QuickActionButton {
+                            width: (parent.width - 16) / 3
                             iconName: "terminal"
                             label: Translation.tr("Terminal")
                             onClicked: {
@@ -602,6 +606,7 @@ WBarAttachedPanelContent {
                         }
 
                         QuickActionButton {
+                            width: (parent.width - 16) / 3
                             iconName: "settings"
                             label: Translation.tr("Settings")
                             onClicked: {
@@ -611,6 +616,7 @@ WBarAttachedPanelContent {
                         }
 
                         QuickActionButton {
+                            width: (parent.width - 16) / 3
                             iconName: "image"
                             label: Translation.tr("Wallpaper")
                             onClicked: {
@@ -620,6 +626,7 @@ WBarAttachedPanelContent {
                         }
 
                         QuickActionButton {
+                            width: (parent.width - 16) / 3
                             iconName: "screenshot"
                             label: Translation.tr("Screenshot")
                             onClicked: {
@@ -629,6 +636,7 @@ WBarAttachedPanelContent {
                         }
 
                         QuickActionButton {
+                            width: (parent.width - 16) / 3
                             iconName: "power"
                             label: Translation.tr("Session")
                             onClicked: {
@@ -645,25 +653,43 @@ WBarAttachedPanelContent {
         }
     }
 
-    component QuickActionButton: WBorderlessButton {
+    component QuickActionButton: Rectangle {
         id: actionBtn
         required property string iconName
         required property string label
+        signal clicked()
 
-        implicitWidth: 100
         implicitHeight: 64
+        radius: Looks.radius.medium
+        color: actionMa.containsMouse ? Looks.colors.bg2Hover : Looks.colors.bg1Base
+        border.width: actionMa.containsMouse ? 1 : 0
+        border.color: Looks.colors.bg2Border
 
-        contentItem: ColumnLayout {
-            spacing: 4
+        Behavior on color { animation: Looks.transition.color.createObject(this) }
+
+        MouseArea {
+            id: actionMa
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: actionBtn.clicked()
+        }
+
+        ColumnLayout {
+            anchors.centerIn: parent
+            spacing: 6
             FluentIcon {
                 Layout.alignment: Qt.AlignHCenter
                 icon: actionBtn.iconName
                 implicitSize: 22
+                color: actionMa.containsMouse ? Looks.colors.accent : Looks.colors.fg
+                Behavior on color { animation: Looks.transition.color.createObject(this) }
             }
             WText {
                 Layout.alignment: Qt.AlignHCenter
                 text: actionBtn.label
                 font.pixelSize: Looks.font.pixelSize.small
+                color: actionMa.containsMouse ? Looks.colors.fg : Looks.colors.fg1
             }
         }
     }
