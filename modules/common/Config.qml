@@ -106,10 +106,10 @@ Singleton {
 
             // Panel system
             property list<string> enabledPanels: [
-                "iiBar", "iiBackground", "iiCheatsheet", "iiControlPanel", "iiDock", "iiLock", "iiMediaControls",
+                "iiBar", "iiBackground", "iiBackdrop", "iiCheatsheet", "iiControlPanel", "iiDock", "iiLock", "iiMediaControls",
                 "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard", "iiOverlay",
                 "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners", "iiSessionScreen",
-                "iiSidebarLeft", "iiSidebarRight", "iiVerticalBar", "iiWallpaperSelector", "iiAltSwitcher", "iiClipboard", "iiShellUpdate"
+                "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar", "iiWallpaperSelector", "iiClipboard", "iiShellUpdate"
             ]
             property string panelFamily: "ii" // "ii" or "waffle"
             property bool familyTransitionAnimation: true // Show animated overlay when switching families
@@ -140,7 +140,72 @@ Singleton {
 
             property JsonObject appearance: JsonObject {
                 property string theme: "auto" // Theme preset ID: "auto" for wallpaper-based, or preset name like "gruvbox-dark", "catppuccin-mocha", "custom", etc.
-                property string globalStyle: "material" // "material" | "cards" | "aurora" | "inir"
+                property string globalStyle: "material" // "material" | "cards" | "aurora" | "inir" | "angel"
+                property string angelSubStyle: "frost" // "frost" | "neon" | "void"
+                property JsonObject angel: JsonObject {
+                    property JsonObject blur: JsonObject {
+                        property real intensity: 0.25
+                        property real saturation: 0.15
+                        property real overlayOpacity: 0.35
+                        property real noiseOpacity: 0.15
+                        property real vignetteStrength: 0.4
+                    }
+                    property JsonObject transparency: JsonObject {
+                        property real panel: 0.35
+                        property real card: 0.50
+                        property real popup: 0.35
+                        property real tooltip: 0.25
+                    }
+                    property JsonObject escalonado: JsonObject {
+                        property int offsetX: 2
+                        property int offsetY: 2
+                        property int hoverOffsetX: 7
+                        property int hoverOffsetY: 7
+                        property real opacity: 0.40
+                        property real borderOpacity: 0.60
+                        property real hoverOpacity: 0.60
+                    }
+                    property JsonObject escalonadoShadow: JsonObject {
+                        property int offsetX: 4
+                        property int offsetY: 4
+                        property int hoverOffsetX: 10
+                        property int hoverOffsetY: 10
+                        property real opacity: 0.30
+                        property real borderOpacity: 0.50
+                        property real hoverOpacity: 0.50
+                        property bool glass: true
+                        property real glassBlur: 0.15
+                        property real glassOverlay: 0.50
+                    }
+                    property JsonObject border: JsonObject {
+                        property real width: 1.5
+                        property int accentBarHeight: 0
+                        property int accentBarWidth: 0
+                        property real coverage: 0.0
+                        property real opacity: 0.0
+                        property real hoverOpacity: 0.0
+                        property real activeOpacity: 0.0
+                        property int insetGlowHeight: 0
+                        property real insetGlowOpacity: 0.0
+                    }
+                    property JsonObject surface: JsonObject {
+                        property int panelBorderWidth: 0
+                        property int cardBorderWidth: 1
+                        property real panelBorderOpacity: 0.0
+                        property real cardBorderOpacity: 0.30
+                    }
+                    property JsonObject glow: JsonObject {
+                        property real opacity: 0.80
+                        property real strongOpacity: 0.65
+                    }
+                    property JsonObject rounding: JsonObject {
+                        property int small: 10
+                        property int normal: 15
+                        property int large: 25
+                    }
+                    property real colorStrength: 1.0
+                    property string customPreset: ""
+                }
                 property list<string> recentThemes: []  // Last 4 used themes
                 property list<string> favoriteThemes: []  // User's favorite themes
                 property JsonObject themeSchedule: JsonObject {
@@ -156,6 +221,7 @@ Singleton {
                     property int cards: 3
                     property int aurora: 0
                     property int inir: 1
+                    property int angel: 1
                 }
                 property bool extraBackgroundTint: true
                 property bool softenColors: true
@@ -246,7 +312,7 @@ Singleton {
                     property JsonObject terminalColorAdjustments: JsonObject {
                         property real saturation: 0.40  // 0.0 - 1.0
                         property real brightness: 0.55  // 0.0 - 1.0 (lightness for dark mode)
-                        property real harmony: 0.15     // 0.0 - 1.0 (how much to shift towards primary)
+                        property real harmony: 0.40     // 0.0 - 1.0 (how much to shift towards primary)
                     }
                 }
                 property JsonObject palette: JsonObject {
@@ -270,6 +336,7 @@ Singleton {
 
             property JsonObject performance: JsonObject {
                 property bool lowPower: false
+                property bool reduceAnimations: false
             }
 
             property JsonObject powerProfiles: JsonObject {
@@ -565,6 +632,7 @@ Singleton {
                 property int full: 101
                 property bool automaticSuspend: true
                 property int suspend: 3
+                property bool notifyFull: true
             }
 
             property JsonObject closeConfirm: JsonObject {

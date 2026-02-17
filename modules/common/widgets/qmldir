@@ -1,5 +1,8 @@
 AddressBar 1.0 AddressBar.qml
 AddressBreadcrumb 1.0 AddressBreadcrumb.qml
+AngelAccentBar 1.0 AngelAccentBar.qml
+AngelBackground 1.0 AngelBackground.qml
+AngelPartialBorder 1.0 AngelPartialBorder.qml
 ButtonGroup 1.0 ButtonGroup.qml
 CalendarView 1.0 CalendarView.qml
 CavaProcess 1.0 CavaProcess.qml
@@ -27,6 +30,7 @@ DialogButton 1.0 DialogButton.qml
 DialogListItem 1.0 DialogListItem.qml
 DirectoryIcon 1.0 DirectoryIcon.qml
 DragManager 1.0 DragManager.qml
+EscalonadoShadow 1.0 EscalonadoShadow.qml
 FadeLoader 1.0 FadeLoader.qml
 Favicon 1.0 Favicon.qml
 FloatingActionButton 1.0 FloatingActionButton.qml

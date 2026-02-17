@@ -449,8 +449,8 @@ WSettingsPage {
         readonly property bool cardsEverywhere: (Config.options?.dock?.cardStyle ?? false) && (Config.options?.sidebar?.cardStyle ?? false) && (Config.options?.bar?.cornerStyle === 3)
 
         readonly property string derivedStyle: cardsEverywhere ? "cards" : "material"
-        readonly property string currentStyle: (Config.options?.appearance?.globalStyle && Config.options.appearance.globalStyle.length > 0)
-            ? Config.options.appearance.globalStyle
+        readonly property string currentStyle: (Config.options?.appearance?.globalStyle ?? "").length > 0
+            ? Config.options?.appearance?.globalStyle ?? "material"
             : derivedStyle
 
         function _applyGlobalStyle(styleId) {
@@ -471,6 +471,14 @@ WSettingsPage {
                 return;
             }
 
+            if (styleId === "angel") {
+                Config.setNestedValue("dock.cardStyle", false)
+                Config.setNestedValue("sidebar.cardStyle", false)
+                if ((Config.options?.bar?.cornerStyle ?? 1) === 3) Config.setNestedValue("bar.cornerStyle", 1)
+                Config.setNestedValue("appearance.transparency.enable", true)
+                return;
+            }
+
             // material
             Config.setNestedValue("dock.cardStyle", false)
             Config.setNestedValue("sidebar.cardStyle", false)
@@ -481,12 +489,14 @@ WSettingsPage {
         WSettingsDropdown {
             label: Translation.tr("Style")
             icon: "eyedropper"
-            description: Translation.tr("Choose between Material, Cards, and Aurora global styling")
+            description: Translation.tr("Choose between Material, Cards, Aurora, Inir, and Angel global styling")
             currentValue: globalStyleCard.currentStyle
             options: [
                 { value: "material", displayName: Translation.tr("Material") },
                 { value: "cards", displayName: Translation.tr("Cards") },
-                { value: "aurora", displayName: Translation.tr("Aurora") }
+                { value: "aurora", displayName: Translation.tr("Aurora") },
+                { value: "inir", displayName: Translation.tr("Inir") },
+                { value: "angel", displayName: Translation.tr("Angel") }
             ]
             onSelected: newValue => {
                 console.log("[GlobalStyle] selected", newValue)

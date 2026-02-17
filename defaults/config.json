@@ -18,6 +18,8 @@
     "useMostRecentFirst": true
   },
   "appearance": {
+    "globalStyle": "material",
+    "angelSubStyle": "frost",
     "extraBackgroundTint": true,
     "softenColors": true,
     "fakeScreenRounding": 0,
@@ -27,7 +29,8 @@
       "material": 1,
       "cards": 3,
       "aurora": 0,
-      "inir": 1
+      "inir": 1,
+      "angel": 1
     },
     "themeSchedule": {
       "enabled": false,
@@ -39,6 +42,70 @@
     "palette": {
       "type": "auto"
     },
+    "angel": {
+      "blur": {
+        "intensity": 0.25,
+        "saturation": 0.15,
+        "overlayOpacity": 0.35,
+        "noiseOpacity": 0.15,
+        "vignetteStrength": 0.4
+      },
+      "transparency": {
+        "panel": 0.35,
+        "card": 0.5,
+        "popup": 0.35,
+        "tooltip": 0.25
+      },
+      "escalonado": {
+        "offsetX": 2,
+        "offsetY": 2,
+        "hoverOffsetX": 7,
+        "hoverOffsetY": 7,
+        "opacity": 0.4,
+        "borderOpacity": 0.6,
+        "hoverOpacity": 0.6
+      },
+      "escalonadoShadow": {
+        "offsetX": 4,
+        "offsetY": 4,
+        "hoverOffsetX": 10,
+        "hoverOffsetY": 10,
+        "opacity": 0.3,
+        "borderOpacity": 0.5,
+        "hoverOpacity": 0.5,
+        "glass": true,
+        "glassBlur": 0.15,
+        "glassOverlay": 0.5
+      },
+      "border": {
+        "width": 1.5,
+        "accentBarHeight": 0,
+        "accentBarWidth": 0,
+        "coverage": 0.0,
+        "opacity": 0.0,
+        "hoverOpacity": 0.0,
+        "activeOpacity": 0.0,
+        "insetGlowHeight": 0,
+        "insetGlowOpacity": 0.0
+      },
+      "surface": {
+        "panelBorderWidth": 0,
+        "cardBorderWidth": 1,
+        "panelBorderOpacity": 0.0,
+        "cardBorderOpacity": 0.3
+      },
+      "glow": {
+        "opacity": 0.8,
+        "strongOpacity": 0.65
+      },
+      "rounding": {
+        "small": 10,
+        "normal": 15,
+        "large": 25
+      },
+      "colorStrength": 1.0,
+      "customPreset": ""
+    },
     "transparency": {
       "automatic": true,
       "backgroundTransparency": 0.11,
@@ -49,6 +116,7 @@
       "enableAppsAndShell": true,
       "enableQtApps": true,
       "enableTerminal": true,
+      "enableVesktop": true,
       "useBackdropForColors": false,
       "terminalGenerationProps": {
         "forceDarkMode": false,
@@ -59,7 +127,7 @@
       "terminalColorAdjustments": {
         "saturation": 0.4,
         "brightness": 0.55,
-        "harmony": 0.15
+        "harmony": 0.4
       },
       "terminals": {
         "kitty": true,
@@ -194,8 +262,15 @@
     "cornerStyle": 2,
     "customRounding": -1,
     "edgeModulesLayout": {
-      "leftOrder": ["leftSidebarButton", "activeWindow"],
-      "rightOrder": ["rightSidebarButton", "sysTray", "weather"]
+      "leftOrder": [
+        "leftSidebarButton",
+        "activeWindow"
+      ],
+      "rightOrder": [
+        "rightSidebarButton",
+        "sysTray",
+        "weather"
+      ]
     },
     "floatStyleShadow": true,
     "indicators": {
@@ -277,7 +352,18 @@
     "workspaces": {
       "alwaysShowNumbers": true,
       "monochromeIcons": true,
-      "numberMap": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
+      "numberMap": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
       "scrollBehavior": "workspace",
       "showAppIcons": false,
       "showNumberDelay": 300,
@@ -311,7 +397,10 @@
     "hoverToReveal": true,
     "ignoredAppRegexes": [],
     "monochromeIcons": true,
-    "pinnedApps": ["org.gnome.Nautilus", "firefox"],
+    "pinnedApps": [
+      "org.gnome.Nautilus",
+      "firefox"
+    ],
     "pinnedOnStartup": true,
     "showBackground": false,
     "iconSize": 35,
@@ -462,7 +551,9 @@
   },
   "search": {
     "engineBaseUrl": "https://www.google.com/search?q=",
-    "excludedSites": ["quora.com"],
+    "excludedSites": [
+      "quora.com"
+    ],
     "imageSearch": {
       "imageSearchEngineBaseUrl": "https://lens.google.com/uploadbyurl?url=",
       "useCircleSelection": false
@@ -588,7 +679,13 @@
     },
     "reddit": {
       "enable": false,
-      "subreddits": ["unixporn", "linux", "archlinux", "kde", "gnome"],
+      "subreddits": [
+        "unixporn",
+        "linux",
+        "archlinux",
+        "kde",
+        "gnome"
+      ],
       "limit": 25
     },
     "widgets": {
@@ -614,7 +711,10 @@
       "spacing": 8,
       "crypto_settings": {
         "refreshInterval": 300,
-        "coins": ["bitcoin", "ethereum"]
+        "coins": [
+          "bitcoin",
+          "ethereum"
+        ]
       },
       "glance": {
         "showVolume": true,
@@ -882,10 +982,10 @@
       "showQuickActions": true,
       "weatherHideLocation": false
     },
-      "taskView": {
-        "mode": "centered",
-        "closeOnSelect": false
-      }
+    "taskView": {
+      "mode": "centered",
+      "closeOnSelect": false
+    }
   },
   "familyTransitionAnimation": true,
   "panelFamily": "ii",
@@ -909,9 +1009,9 @@
     "iiSessionScreen",
     "iiSidebarLeft",
     "iiSidebarRight",
+    "iiTilingOverlay",
     "iiVerticalBar",
     "iiWallpaperSelector",
-    "iiAltSwitcher",
     "iiClipboard",
     "iiShellUpdate"
   ]
