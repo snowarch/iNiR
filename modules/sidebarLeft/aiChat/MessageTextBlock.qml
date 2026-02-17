@@ -24,7 +24,7 @@ ColumnLayout {
     property list<string> renderedLatexHashes: []
     property string renderedSegmentContent: ""
     property string shownText: ""
-    property bool fadeChunkSplitting: !forceDisableChunkSplitting && !editing && !/\n\|/.test(shownText) && Config.options.sidebar.ai.textFadeIn
+    property bool fadeChunkSplitting: !forceDisableChunkSplitting && !editing && !/\n\|/.test(shownText) && (Config.options?.sidebar?.ai?.textFadeIn ?? false)
 
     Layout.fillWidth: true
 

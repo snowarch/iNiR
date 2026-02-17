@@ -26,8 +26,8 @@ Item {
     property var languages: ["auto"]
 
     // Options
-    property string targetLanguage: Config.options.language.translator.targetLanguage
-    property string sourceLanguage: Config.options.language.translator.sourceLanguage
+    property string targetLanguage: Config.options?.language?.translator?.targetLanguage ?? "en"
+    property string sourceLanguage: Config.options?.language?.translator?.sourceLanguage ?? "auto"
     property string hostLanguage: targetLanguage
 
     // States
@@ -48,7 +48,7 @@ Item {
 
     Timer {
         id: translateTimer
-        interval: Config.options.sidebar.translator.delay
+        interval: Config.options?.sidebar?.translator?.delay ?? 500
         repeat: false
         onTriggered: () => {
             if (root.inputField.text.trim().length > 0) {
@@ -176,8 +176,8 @@ Item {
                             color: searchButton.enabled ? Appearance.colors.colOnLayer1 : Appearance.colors.colSubtext
                         }
                         onClicked: {
-                            let url = Config.options.search.engineBaseUrl + outputCanvas.displayedText;
-                            for (let site of Config.options.search.excludedSites) {
+                            let url = (Config.options?.search?.engineBaseUrl ?? "https://www.google.com/search?q=") + outputCanvas.displayedText;
+                            for (let site of (Config.options?.search?.excludedSites ?? [])) {
                                 url += ` -site:${site}`;
                             }
                             Qt.openUrlExternally(url);

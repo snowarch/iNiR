@@ -27,7 +27,7 @@ RippleButton {
 
     PointingHandInteraction {}
     onClicked: {
-        let url = Config.options.search.engineBaseUrl + root.query;
+        let url = (Config.options?.search?.engineBaseUrl ?? "https://www.google.com/search?q=") + root.query;
         for (let site of (Config?.options?.search.excludedSites ?? [])) {
             url += ` -site:${site}`;
         }
