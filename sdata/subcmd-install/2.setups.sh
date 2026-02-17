@@ -41,30 +41,39 @@ function setup_systemd_services(){
   
   # ydotool service - create user service symlink if needed
   # Check multiple possible locations (varies by distro)
-  local ydotool_system_service=""
-  for path in /usr/lib/systemd/system/ydotool.service /lib/systemd/system/ydotool.service; do
-    if [[ -f "$path" ]]; then
-      ydotool_system_service="$path"
-      break
-    fi
-  done
-  
-  if [[ -n "$ydotool_system_service" ]]; then
-    if [[ ! -e /usr/lib/systemd/user/ydotool.service ]]; then
+  # Some distros (EndeavourOS) ship ydotool as a user unit directly
+  local ydotool_service_found=false
+
+  # Check if user unit already exists (e.g., EndeavourOS packages it as user unit)
+  if [[ -f /usr/lib/systemd/user/ydotool.service ]]; then
+    ydotool_service_found=true
+  else
+    # Look for system unit to symlink as user unit
+    local ydotool_system_service=""
+    for path in /usr/lib/systemd/system/ydotool.service /lib/systemd/system/ydotool.service; do
+      if [[ -f "$path" ]]; then
+        ydotool_system_service="$path"
+        break
+      fi
+    done
+
+    if [[ -n "$ydotool_system_service" ]]; then
       x sudo mkdir -p /usr/lib/systemd/user
       x sudo ln -sf "$ydotool_system_service" /usr/lib/systemd/user/ydotool.service
+      ydotool_service_found=true
     fi
-  else
-    log_warning "ydotool.service not found - ydotool may need manual configuration"
+  fi
+
+  if ! $ydotool_service_found && command -v ydotool &>/dev/null; then
+    log_warning "ydotool installed but no systemd service found - may need manual configuration"
   fi
   
   # Enable ydotool only if service exists
-  if [[ -n "$ydotool_system_service" ]] && [[ ! -z "${DBUS_SESSION_BUS_ADDRESS}" ]]; then
+  if $ydotool_service_found && [[ -n "${DBUS_SESSION_BUS_ADDRESS}" ]]; then
     v systemctl --user daemon-reload
     v systemctl --user enable ydotool --now 2>/dev/null || log_warning "Could not enable ydotool service"
-  elif [[ -n "$ydotool_system_service" ]]; then
-    log_warning "Not in a graphical session. Run this after login:"
-    echo "  systemctl --user enable ydotool --now"
+  elif $ydotool_service_found; then
+    log_info "ydotool service found. Enable after login: systemctl --user enable ydotool --now"
   fi
   
   # Bluetooth (optional)
