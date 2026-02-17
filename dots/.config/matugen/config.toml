@@ -1,16 +1,34 @@
 # Matugen configuration for iNiR
-# MINIMAL: matugen only generates colors.json + wallpaper path tracking.
-# ALL app theming (GTK, terminals, fuzzel, pywalfox, etc.) is handled by
-# generate_colors_material.py → material_colors.scss → applycolor.sh chain.
-# This ensures ONE color algorithm = perfect consistency everywhere.
+# matugen = UI color authority (Material You tokens for shell, GTK, fuzzel, KDE)
+# Terminal colors are handled separately by generate_colors_material.py → applycolor.sh
 
 [config]
 version_check = false
 
-# Colors for Quickshell ii (Material You tokens for the QML shell)
+# Material You tokens for Quickshell (QML shell reads this)
 [templates.m3colors]
 input_path = '~/.config/matugen/templates/colors.json'
 output_path = '~/.local/state/quickshell/user/generated/colors.json'
+
+# GTK4/libadwaita theme (Nautilus, GNOME apps)
+[templates.gtk4]
+input_path = '~/.config/matugen/templates/gtk-4.0/gtk.css'
+output_path = '~/.config/gtk-4.0/gtk.css'
+
+# GTK3 theme (legacy apps)
+[templates.gtk3]
+input_path = '~/.config/matugen/templates/gtk-3.0/gtk.css'
+output_path = '~/.config/gtk-3.0/gtk.css'
+
+# Fuzzel launcher theme
+[templates.fuzzel]
+input_path = '~/.config/matugen/templates/fuzzel/fuzzel_theme.ini'
+output_path = '~/.config/fuzzel/fuzzel_theme.ini'
+
+# KDE source color cache (used by kde-material-you-colors-wrapper)
+[templates.kde_colors]
+input_path = '~/.config/matugen/templates/kde/color.txt'
+output_path = '~/.local/state/quickshell/user/generated/color.txt'
 
 # Wallpaper path tracking
 [templates.wallpaper]

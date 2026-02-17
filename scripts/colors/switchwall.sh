@@ -467,9 +467,6 @@ switch() {
     matugen "${matugen_args[@]}"
     source "$(eval echo $ILLOGICAL_IMPULSE_VIRTUAL_ENV)/bin/activate" 2>/dev/null || true
     
-    # Generate colors with soften applied (overwrites matugen's colors.json if soften is enabled)
-    generate_colors_material_args+=(--json-output "$STATE_DIR/user/generated/colors.json")
-    
     python3 "$SCRIPT_DIR/generate_colors_material.py" "${generate_colors_material_args[@]}" \
         > "$STATE_DIR"/user/generated/material_colors.scss
     

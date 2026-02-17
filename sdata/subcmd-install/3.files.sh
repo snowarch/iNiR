@@ -708,7 +708,7 @@ if [[ "${INSTALL_FIRSTRUN}" == true && -n "${DEFAULT_WALLPAPER}" && -f "${DEFAUL
         local _py=""
         [[ -x "$python_cmd" ]] && _py="$python_cmd" || { command -v python3 &>/dev/null && _py="python3"; }
         if [[ -n "$_py" ]]; then
-          "$_py" "$gen_material" --path "${DEFAULT_WALLPAPER}" --mode dark --json-output "$colors_json" > "$scss_file" 2>/dev/null || true
+          "$_py" "$gen_material" --path "${DEFAULT_WALLPAPER}" --mode dark --termscheme "${II_TARGET}/scripts/colors/terminal/scheme-base.json" --blend_bg_fg > "$scss_file" 2>/dev/null || true
           [[ -s "$scss_file" ]] && log_success "Material colors SCSS generated"
         fi
       fi

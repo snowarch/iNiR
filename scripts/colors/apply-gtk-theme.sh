@@ -1,20 +1,19 @@
 #!/bin/bash
-# Apply theme colors to GTK and KDE apps (for manual presets)
-# Respects Advanced settings from config
-# Usage: apply-gtk-theme.sh <bg> <fg> <primary> <on_primary> <surface> <surface_dim>
+# Apply Qt/KDE theme colors from matugen's colors.json
+# GTK CSS is handled by matugen templates — this script only generates:
+#   - kdeglobals (KDE/Qt app colors for Dolphin, etc.)
+#   - Darkly.colors (Qt style color scheme)
+#   - Pywalfox colors (Firefox theming)
+#   - Vesktop/Discord theme (if enabled)
+# Reads from colors.json (matugen's output) for UI consistency.
 
-BG="${1:-#1e1e2e}"
-FG="${2:-#cdd6f4}"
-PRIMARY="${3:-#cba6f7}"
-ON_PRIMARY="${4:-#1e1e2e}"
-SURFACE="${5:-#1e1e2e}"
-SURFACE_DIM="${6:-#11111b}"
-
-GTK4_CSS="$HOME/.config/gtk-4.0/gtk.css"
-GTK3_CSS="$HOME/.config/gtk-3.0/gtk.css"
+XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
+COLORS_JSON="$XDG_STATE_HOME/quickshell/user/generated/colors.json"
 KDEGLOBALS="$HOME/.config/kdeglobals"
 DARKLY_COLORS="$HOME/.local/share/color-schemes/Darkly.colors"
-SHELL_CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/illogical-impulse/config.json"
+SHELL_CONFIG_FILE="$XDG_CONFIG_HOME/illogical-impulse/config.json"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Read config options
 enable_apps_shell="true"
@@ -28,6 +27,19 @@ fi
 if [[ "$enable_apps_shell" == "false" ]]; then
     exit 0
 fi
+
+# Read colors from matugen's colors.json (UI authority)
+if [[ ! -f "$COLORS_JSON" ]] || ! command -v jq &>/dev/null; then
+    echo "[apply-gtk-theme] colors.json not found or jq missing, skipping"
+    exit 0
+fi
+
+BG=$(jq -r '.background // "#1e1e2e"' "$COLORS_JSON")
+FG=$(jq -r '.on_background // "#cdd6f4"' "$COLORS_JSON")
+PRIMARY=$(jq -r '.primary // "#cba6f7"' "$COLORS_JSON")
+ON_PRIMARY=$(jq -r '.on_primary // "#1e1e2e"' "$COLORS_JSON")
+SURFACE=$(jq -r '.surface // "#1e1e2e"' "$COLORS_JSON")
+SURFACE_DIM=$(jq -r '.surface_dim // "#11111b"' "$COLORS_JSON")
 
 # Helper
 adjust_color() {
@@ -70,30 +82,22 @@ BG_ALT=$(adjust_color "$BG" $bg_alt_delta)
 BG_DARK=$(adjust_color "$BG" $bg_dark_delta)
 FG_INACTIVE=$(adjust_color "$FG" $fg_inactive_delta)
 
-generate_gtk_css() {
+generate_pywalfox() {
+    # Generate pywalfox-compatible JSON from matugen colors for Firefox theming
+    local wallpaper_path=""
+    local wp_file="$XDG_STATE_HOME/quickshell/user/generated/wallpaper/path.txt"
+    [[ -f "$wp_file" ]] && wallpaper_path=$(cat "$wp_file" | tr -d '\n')
+
     cat << EOF
-@define-color accent_color ${PRIMARY};
-@define-color accent_fg_color ${ON_PRIMARY};
-@define-color accent_bg_color ${PRIMARY};
-@define-color window_bg_color ${BG};
-@define-color window_fg_color ${FG};
-@define-color headerbar_bg_color ${SURFACE_DIM};
-@define-color headerbar_fg_color ${FG};
-@define-color view_bg_color ${SURFACE};
-@define-color view_fg_color ${FG};
-@define-color sidebar_bg_color ${BG};
-@define-color sidebar_fg_color ${FG};
-@define-color sidebar_backdrop_color ${BG};
-
-placessidebar, placessidebar list { background-color: ${BG} !important; color: ${FG} !important; }
-placessidebar row:selected { background-color: ${PRIMARY} !important; color: ${ON_PRIMARY} !important; }
-.nautilus-window headerbar, .nautilus-window .view { background-color: ${BG} !important; color: ${FG} !important; }
-
-/* Backdrop (unfocused) state */
-placessidebar:backdrop, placessidebar list:backdrop { background-color: ${BG} !important; color: ${FG} !important; }
-.nautilus-window:backdrop headerbar, .nautilus-window:backdrop .view { background-color: ${BG} !important; color: ${FG} !important; }
-.nautilus-window:backdrop placessidebar { background-color: ${BG} !important; }
-window:backdrop { background-color: ${BG} !important; }
+{
+  "wallpaper": "$wallpaper_path",
+  "alpha": "100",
+  "special": {
+    "background": "$BG",
+    "foreground": "$FG",
+    "cursor": "$PRIMARY"
+  }
+}
 EOF
 }
 
@@ -268,12 +272,7 @@ inactiveForeground=${FG_INACTIVE}
 EOF
 }
 
-# Apply GTK
-mkdir -p "$(dirname "$GTK4_CSS")" "$(dirname "$GTK3_CSS")"
-[[ -L "$GTK4_CSS" ]] && rm "$GTK4_CSS"
-[[ -L "$GTK3_CSS" ]] && rm "$GTK3_CSS"
-generate_gtk_css > "$GTK4_CSS"
-generate_gtk_css > "$GTK3_CSS"
+# GTK CSS is handled by matugen templates — no bash generation needed
 
 # Helper to convert hex to RGB
 hex_to_rgb() {
@@ -418,7 +417,7 @@ inactiveForeground=${fg_inactive_rgb}
 EOF
 }
 
-# Apply KDE if enabled
+# Apply KDE/Qt theming if enabled
 if [[ "$enable_qt_apps" != "false" ]]; then
     generate_kdeglobals > "$KDEGLOBALS"
     
@@ -427,17 +426,9 @@ if [[ "$enable_qt_apps" != "false" ]]; then
     generate_darkly_colors > "$DARKLY_COLORS"
 fi
 
-# Restart Nautilus
+# Generate Pywalfox colors for Firefox theming
+mkdir -p "$XDG_STATE_HOME/quickshell/user/generated"
+generate_pywalfox > "$XDG_STATE_HOME/quickshell/user/generated/pywalfox-colors.json"
+
+# Restart Nautilus so it picks up new GTK CSS from matugen
 nautilus -q 2>/dev/null &
-
-# Regenerate Vesktop theme from current colors (if enabled)
-enable_vesktop="true"
-if [[ -f "$SHELL_CONFIG_FILE" ]] && command -v jq &>/dev/null; then
-    enable_vesktop=$(jq -r '.appearance.wallpaperTheming.enableVesktop // true' "$SHELL_CONFIG_FILE")
-fi
-
-SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
-if [[ "$enable_vesktop" != "false" && -f "$SCRIPT_DIR/system24_palette.py" ]]; then
-    python3 "$SCRIPT_DIR/system24_palette.py"
-    # Note: Vesktop auto-reloads CSS changes, no manual reload needed
-fi

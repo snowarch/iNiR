@@ -377,8 +377,8 @@ urls={colors.get("term4", "#458588")[1:]}
     foot_conf = f"{home}/.config/foot/foot.ini"
     if ensure_line_in_file(
         foot_conf,
-        "include=~/.config/foot/colors.ini",
-        r"include\s*=.*colors\.ini",
+        "include=~/.config/foot/inir-colors.ini",
+        r"include\s*=.*inir-colors\.ini",
         at_top=True,
     ):
         print(f"✓ Generated Foot config and auto-integrated")
@@ -1108,7 +1108,7 @@ def main():
         "--terminals",
         type=str,
         nargs="+",
-        choices=["kitty", "alacritty", "foot", "wezterm", "ghostty", "konsole", "starship", "btop", "lazygit", "yazi", "fuzzel", "pywalfox", "all"],
+        choices=["kitty", "alacritty", "foot", "wezterm", "ghostty", "konsole", "starship", "btop", "lazygit", "yazi", "all"],
         default=["all"],
         help="Which terminals/tools to generate configs for",
     )
@@ -1126,7 +1126,7 @@ def main():
     terminals = (
         args.terminals
         if "all" not in args.terminals
-        else ["kitty", "alacritty", "foot", "wezterm", "ghostty", "konsole", "starship", "btop", "lazygit", "yazi", "fuzzel", "pywalfox"]
+        else ["kitty", "alacritty", "foot", "wezterm", "ghostty", "konsole", "starship", "btop", "lazygit", "yazi"]
     )
 
     # Generate configs for requested terminals
@@ -1137,7 +1137,7 @@ def main():
         generate_alacritty_config(colors, f"{home}/.config/alacritty/colors.toml")
 
     if "foot" in terminals:
-        generate_foot_config(colors, f"{home}/.config/foot/colors.ini")
+        generate_foot_config(colors, f"{home}/.config/foot/inir-colors.ini")
 
     if "wezterm" in terminals:
         generate_wezterm_config(colors, f"{home}/.config/wezterm/colors.lua")
@@ -1162,12 +1162,6 @@ def main():
     if "yazi" in terminals:
         generate_yazi_config(colors, f"{home}/.config/yazi/flavors/ii-auto.yazi/flavor.toml")
 
-    if "fuzzel" in terminals:
-        generate_fuzzel_config(colors, f"{home}/.config/fuzzel/fuzzel_theme.ini")
-
-    if "pywalfox" in terminals:
-        state_dir = os.environ.get("XDG_STATE_HOME", f"{home}/.local/state")
-        generate_pywalfox_config(colors, f"{state_dir}/quickshell/user/generated/pywalfox-colors.json")
 
 
 if __name__ == "__main__":

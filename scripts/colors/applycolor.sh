@@ -115,17 +115,11 @@ apply_terminal_configs() {
     [[ "$enable_btop" == "true" ]] && command -v btop &>/dev/null && enabled_terminals+=(btop)
     [[ "$enable_lazygit" == "true" ]] && command -v lazygit &>/dev/null && enabled_terminals+=(lazygit)
     [[ "$enable_yazi" == "true" ]] && command -v yazi &>/dev/null && enabled_terminals+=(yazi)
-
-    # Always generate fuzzel + pywalfox (no binary check needed)
-    command -v fuzzel &>/dev/null && enabled_terminals+=(fuzzel)
-    enabled_terminals+=(pywalfox)
   else
     # Default: only generate for installed terminals + tools
     for term in kitty alacritty foot wezterm ghostty konsole starship btop lazygit yazi; do
       command -v "$term" &>/dev/null && enabled_terminals+=("$term")
     done
-    command -v fuzzel &>/dev/null && enabled_terminals+=(fuzzel)
-    enabled_terminals+=(pywalfox)
   fi
 
   if [ ${#enabled_terminals[@]} -eq 0 ]; then
@@ -222,25 +216,10 @@ apply_qt() {
 }
 
 apply_gtk_kde() {
-  local scss_file="$STATE_DIR/user/generated/material_colors.scss"
-  if [ ! -f "$scss_file" ]; then
-    return
-  fi
-
-  # Extract colors from scss (format: $colorname: #hex;)
-  get_color() {
-    grep "^\$$1:" "$scss_file" | cut -d: -f2 | tr -d ' ;'
-  }
-
-  local bg=$(get_color "background")
-  local fg=$(get_color "onBackground")
-  local primary=$(get_color "primary")
-  local on_primary=$(get_color "onPrimary")
-  local surface=$(get_color "surface")
-  local surface_dim=$(get_color "surfaceDim")
-
-  # Call apply-gtk-theme.sh with extracted colors
-  "$SCRIPT_DIR/apply-gtk-theme.sh" "$bg" "$fg" "$primary" "$on_primary" "$surface" "$surface_dim"
+  # apply-gtk-theme.sh reads colors.json (matugen's output) directly
+  # It generates: kdeglobals, Darkly.colors, pywalfox colors
+  # GTK CSS is handled by matugen templates
+  "$SCRIPT_DIR/apply-gtk-theme.sh"
 }
 
 # Check if terminal theming is enabled in config
