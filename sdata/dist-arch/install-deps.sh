@@ -197,6 +197,11 @@ OFFICIAL_PACKAGES=(
   hicolor-icon-theme
   adwaita-icon-theme
   papirus-icon-theme
+  breeze-icons
+
+  # Qt theming (works without Plasma)
+  qt6ct
+  kvantum
 )
 
 installflags="--needed"

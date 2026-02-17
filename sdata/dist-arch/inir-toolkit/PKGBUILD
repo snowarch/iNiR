@@ -33,9 +33,6 @@ depends=(
   # Bluetooth
   blueman
 
-  # Fingerprint auth for lock screen (fprintd-list)
-  fprintd
-
   # KDE integration
   kconfig  # provides kwriteconfig6
 
@@ -47,4 +44,5 @@ depends=(
 optdepends=(
   'hyprpicker: Color picker (Hyprland tool)'
   'translate-shell: Translation widget'
+  'fprintd: Fingerprint auth for lock screen (optional hardware)'
 )

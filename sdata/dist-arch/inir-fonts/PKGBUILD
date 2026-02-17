@@ -16,16 +16,14 @@ depends=(
   fuzzel
   glib2
   
-  # Color picker and utilities
-  translate-shell
-  
   # Qt theming
   kvantum
-  # Color picker
-  hyprpicker
-  
-  # Music recognition
-  songrec
+)
+
+optdepends=(
+  'songrec: Music recognition (Shazam-like)'
+  'hyprpicker: Color picker (Hyprland tool — may not work on Niri)'
+  'translate-shell: Translation widget'
 )
 
 # AUR dependencies (installed separately)

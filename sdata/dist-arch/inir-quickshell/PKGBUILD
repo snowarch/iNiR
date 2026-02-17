@@ -41,10 +41,9 @@ depends=(
   kdialog
   syntax-highlighting
   
-  # Qt theming
+  # Qt theming (kvantum is in inir-fonts, qt6ct configures Qt without Plasma)
   qt6ct
-  kde-gtk-config
-  breeze
+  breeze-icons  # lightweight icon theme (no Plasma deps)
 )
 
 # AUR dependencies (installed separately, minimal compilation)

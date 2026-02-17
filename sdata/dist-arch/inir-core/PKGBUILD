@@ -25,7 +25,6 @@ depends=(
   libnotify
   pacman-contrib  # checkupdates for update notifications
   wlsunset
-  dunst
   
   # XDG Portals for Niri
   xdg-desktop-portal
@@ -55,6 +54,8 @@ depends=(
   # X11 compatibility
   xwayland-satellite
   
-  # System monitor
-  mission-center
+)
+optdepends=(
+  'dunst: Notification daemon (conflicts with quickshell notifications — auto-disabled)'
+  'mission-center: System monitor (optional)'
 )
