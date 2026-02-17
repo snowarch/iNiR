@@ -61,7 +61,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
   if [[ ${#missing_pkgs[@]} -gt 0 ]]; then
     case $SKIP_SYSUPDATE in
       true) sleep 0;;
-      *) v sudo pacman -Syu;;
+      *) $ask && v sudo pacman -Syu || v sudo pacman -Syu --noconfirm;;
     esac
 
     if ! command -v yay >/dev/null 2>&1 && ! command -v paru >/dev/null 2>&1; then
@@ -88,7 +88,7 @@ fi
 #####################################################################################
 case $SKIP_SYSUPDATE in
   true) sleep 0;;
-  *) v sudo pacman -Syu;;
+  *) $ask && v sudo pacman -Syu || v sudo pacman -Syu --noconfirm;;
 esac
 
 #####################################################################################
