@@ -115,11 +115,17 @@ apply_terminal_configs() {
     [[ "$enable_btop" == "true" ]] && command -v btop &>/dev/null && enabled_terminals+=(btop)
     [[ "$enable_lazygit" == "true" ]] && command -v lazygit &>/dev/null && enabled_terminals+=(lazygit)
     [[ "$enable_yazi" == "true" ]] && command -v yazi &>/dev/null && enabled_terminals+=(yazi)
+
+    # Always generate fuzzel + pywalfox (no binary check needed)
+    command -v fuzzel &>/dev/null && enabled_terminals+=(fuzzel)
+    enabled_terminals+=(pywalfox)
   else
     # Default: only generate for installed terminals + tools
     for term in kitty alacritty foot wezterm ghostty konsole starship btop lazygit yazi; do
       command -v "$term" &>/dev/null && enabled_terminals+=("$term")
     done
+    command -v fuzzel &>/dev/null && enabled_terminals+=(fuzzel)
+    enabled_terminals+=(pywalfox)
   fi
 
   if [ ${#enabled_terminals[@]} -eq 0 ]; then
