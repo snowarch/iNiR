@@ -28,16 +28,16 @@ if grep -qi "ubuntu" /etc/os-release 2>/dev/null || [[ "$DISTRO_ID_LIKE" == *"ub
   UBUNTU_VERSION=$(grep "^VERSION_ID=" /etc/os-release | cut -d= -f2 | tr -d '"')
   # Some derivatives use UBUNTU_CODENAME
   UBUNTU_CODENAME=$(grep "^UBUNTU_CODENAME=" /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"')
-  echo -e "${STY_CYAN}[$0]: Detected ${DISTRO_NAME:-Ubuntu} (Ubuntu-based)${STY_RST}"
+  tui_info "Detected ${DISTRO_NAME:-Ubuntu} (Ubuntu-based)"
 elif [[ -f /etc/debian_version ]] || [[ "$DISTRO_ID_LIKE" == *"debian"* ]]; then
   IS_DEBIAN=true
   DEBIAN_VERSION=$(cat /etc/debian_version 2>/dev/null || echo "unknown")
-  echo -e "${STY_CYAN}[$0]: Detected ${DISTRO_NAME:-Debian} (Debian-based)${STY_RST}"
+  tui_info "Detected ${DISTRO_NAME:-Debian} (Debian-based)"
 fi
 
 # Detect architecture
 ARCH=$(dpkg --print-architecture)
-echo -e "${STY_CYAN}[$0]: Architecture: ${ARCH}${STY_RST}"
+tui_info "Architecture: ${ARCH}"
 
 #####################################################################################
 # Optional: install only a specific list of missing deps
@@ -117,8 +117,7 @@ fi
 if $IS_UBUNTU; then
   case "$UBUNTU_VERSION" in
     22.04|22.10)
-      echo -e "${STY_YELLOW}[$0]: Ubuntu ${UBUNTU_VERSION} has older Qt6 packages.${STY_RST}"
-      echo -e "${STY_YELLOW}[$0]: Some features may not work. Ubuntu 24.04+ recommended.${STY_RST}"
+      log_warning "Ubuntu ${UBUNTU_VERSION} has older Qt6 packages — Ubuntu 24.04+ recommended"
       ;;
   esac
 fi
@@ -126,8 +125,7 @@ fi
 if $IS_DEBIAN; then
   case "$DEBIAN_VERSION" in
     11*|10*|9*)
-      echo -e "${STY_RED}[$0]: Debian ${DEBIAN_VERSION} does not have Qt6 packages.${STY_RST}"
-      echo -e "${STY_RED}[$0]: Debian 12 (bookworm) or newer is required.${STY_RST}"
+      log_error "Debian ${DEBIAN_VERSION} is too old — Qt6 requires Debian 12 (bookworm) or newer"
       exit 1
       ;;
   esac
@@ -137,11 +135,11 @@ fi
 # System update
 #####################################################################################
 case ${SKIP_SYSUPDATE:-false} in
-  true) 
-    echo -e "${STY_CYAN}[$0]: Skipping system update${STY_RST}"
+  true)
+    log_info "Skipping system update"
     ;;
-  *) 
-    echo -e "${STY_CYAN}[$0]: Updating system...${STY_RST}"
+  *)
+    tui_info "Updating system..."
     v sudo apt update
     v sudo apt upgrade -y
     ;;
@@ -217,9 +215,9 @@ apt_component_enabled() {
 log_repo_context() {
   if ! ${quiet:-false}; then
     if [[ ${#APT_COMPONENTS[@]} -gt 0 ]]; then
-      echo -e "${STY_CYAN}[$0]: APT components: ${APT_COMPONENTS[*]}${STY_RST}"
+      log_info "APT components: ${APT_COMPONENTS[*]}"
     else
-      echo -e "${STY_YELLOW}[$0]: Could not determine APT components from sources lists.${STY_RST}"
+      log_warning "Could not determine APT components from sources lists"
     fi
   fi
 }
@@ -229,7 +227,7 @@ ensure_add_apt_repository() {
     return 0
   fi
 
-  echo -e "${STY_BLUE}[$0]: Installing software-properties-common (add-apt-repository)...${STY_RST}"
+  log_info "Installing software-properties-common..."
   sudo apt install $installflags software-properties-common 2>/dev/null || return 1
   return 0
 }
@@ -245,19 +243,19 @@ ensure_ubuntu_component() {
     return 0
   fi
 
-  echo -e "${STY_YELLOW}[$0]: Ubuntu component '${component}' not enabled. Enabling...${STY_RST}"
+  log_info "Enabling Ubuntu component '${component}'..."
   if ! ensure_add_apt_repository; then
-    echo -e "${STY_YELLOW}[$0]: add-apt-repository unavailable, skipping ${component}.${STY_RST}"
+    log_warning "add-apt-repository unavailable, skipping ${component}"
     return 1
   fi
 
   if ! command -v add-apt-repository &>/dev/null; then
-    echo -e "${STY_YELLOW}[$0]: add-apt-repository still missing, skipping ${component}.${STY_RST}"
+    log_warning "add-apt-repository still missing, skipping ${component}"
     return 1
   fi
 
   v sudo add-apt-repository -y "$component" || {
-    echo -e "${STY_YELLOW}[$0]: Failed to enable ${component}.${STY_RST}"
+    log_warning "Failed to enable ${component}"
     return 1
   }
 
@@ -309,7 +307,7 @@ log_repo_context
 #####################################################################################
 # Install official repository packages
 #####################################################################################
-echo -e "${STY_CYAN}[$0]: Installing packages from official repositories...${STY_RST}"
+tui_info "Installing packages from official repositories..."
 
 # Core system packages
 DEBIAN_CORE_PKGS=(
@@ -506,7 +504,7 @@ if apt_pkg_available kf6-kconfig; then
 fi
 
 # Fix any broken packages first
-echo -e "${STY_BLUE}[$0]: Fixing any broken packages...${STY_RST}"
+log_info "Fixing any broken packages..."
 sudo apt --fix-broken install -y 2>/dev/null || true
 
 # Helper function to install packages with fallback
@@ -518,11 +516,11 @@ install_packages() {
   filter_available_packages "$pkg_array_name"
 
   if [[ ${#pkgs[@]} -eq 0 ]]; then
-    echo -e "${STY_YELLOW}[$0]: No ${description} available in current repositories, skipping.${STY_RST}"
+    log_warning "No ${description} available in current repositories, skipping"
     return 0
   fi
 
-  echo -e "${STY_BLUE}[$0]: Installing ${description}...${STY_RST}"
+  log_info "Installing ${description}..."
 
   # Try to install all at once first
   if sudo apt install $installflags "${pkgs[@]}" 2>/dev/null; then
@@ -530,7 +528,7 @@ install_packages() {
   fi
 
   # If that fails, try one by one (skip unavailable)
-  echo -e "${STY_YELLOW}[$0]: Batch install failed, trying packages individually...${STY_RST}"
+  log_warning "Batch install failed, trying packages individually..."
   local failed_pkgs=()
   for pkg in "${pkgs[@]}"; do
     if ! sudo apt install $installflags "$pkg" 2>/dev/null; then
@@ -539,7 +537,7 @@ install_packages() {
   done
 
   if [[ ${#failed_pkgs[@]} -gt 0 ]]; then
-    echo -e "${STY_YELLOW}[$0]: Could not install: ${failed_pkgs[*]}${STY_RST}"
+    log_warning "Could not install: ${failed_pkgs[*]}"
   fi
 }
 
@@ -579,18 +577,18 @@ install_github_binary() {
   local install_path="${4:-/usr/local/bin}"
   
   if command -v "$name" &>/dev/null; then
-    echo -e "${STY_GREEN}[$0]: $name already installed${STY_RST}"
+    log_success "$name already installed"
     return 0
   fi
   
-  echo -e "${STY_BLUE}[$0]: Installing $name from GitHub releases...${STY_RST}"
+  log_info "Installing $name from GitHub releases..."
   
   local download_url
   download_url=$(curl -s "https://api.github.com/repos/${repo}/releases/latest" | \
     jq -r ".assets[] | select(.name | test(\"${asset_pattern}\")) | .browser_download_url" | head -1)
   
   if [[ -z "$download_url" || "$download_url" == "null" ]]; then
-    echo -e "${STY_YELLOW}[$0]: Could not find $name binary for your architecture${STY_RST}"
+    log_warning "Could not find $name binary for your architecture"
     return 1
   fi
   
@@ -598,7 +596,7 @@ install_github_binary() {
   mkdir -p "$temp_dir"
   
   local filename=$(basename "$download_url")
-  echo -e "${STY_FAINT}Downloading: $filename${STY_RST}"
+  log_info "Downloading: $filename"
   
   if curl -fsSL -o "$temp_dir/$filename" "$download_url"; then
     case "$filename" in
@@ -624,9 +622,9 @@ install_github_binary() {
         ;;
     esac
     sudo chmod +x "$install_path/$name" 2>/dev/null
-    echo -e "${STY_GREEN}[$0]: $name installed successfully${STY_RST}"
+    log_success "$name installed"
   else
-    echo -e "${STY_YELLOW}[$0]: Failed to download $name${STY_RST}"
+    log_warning "Failed to download $name"
     rm -rf "$temp_dir"
     return 1
   fi
@@ -637,11 +635,11 @@ install_github_binary() {
 #####################################################################################
 # Install packages from GitHub releases (precompiled binaries)
 #####################################################################################
-echo -e "${STY_CYAN}[$0]: Installing packages from GitHub releases...${STY_RST}"
+tui_info "Installing packages from GitHub releases..."
 
 # gum - TUI tool (download .deb from GitHub if not in repos)
 if ! command -v gum &>/dev/null; then
-  echo -e "${STY_BLUE}[$0]: Installing gum from GitHub...${STY_RST}"
+  log_info "Installing gum from GitHub..."
   GUM_DEB_URL=$(curl -s "https://api.github.com/repos/charmbracelet/gum/releases/latest" | \
     jq -r ".assets[] | select(.name | test(\"_${ARCH}.deb$\")) | .browser_download_url" | head -1)
   if [[ -n "$GUM_DEB_URL" && "$GUM_DEB_URL" != "null" ]]; then
@@ -649,12 +647,12 @@ if ! command -v gum &>/dev/null; then
     if curl -fsSL -o "$TEMP_DEB" "$GUM_DEB_URL"; then
       sudo dpkg -i "$TEMP_DEB" 2>/dev/null || sudo apt install -f -y
       rm -f "$TEMP_DEB"
-      echo -e "${STY_GREEN}[$0]: gum installed${STY_RST}"
+      log_success "gum installed"
     else
-      echo -e "${STY_YELLOW}[$0]: Failed to download gum${STY_RST}"
+      log_warning "Failed to download gum"
     fi
   else
-    echo -e "${STY_YELLOW}[$0]: Could not find gum .deb for architecture ${ARCH}${STY_RST}"
+    log_warning "Could not find gum .deb for architecture ${ARCH}"
   fi
 fi
 
@@ -668,17 +666,17 @@ install_github_binary "matugen" "InioX/matugen" "x86_64.*tar.gz"
 
 # songrec - music recognition (PPA for Ubuntu, Cargo for Debian)
 if ! command -v songrec &>/dev/null; then
-  echo -e "${STY_BLUE}[$0]: Installing songrec (music recognition)...${STY_RST}"
+  log_info "Installing songrec (music recognition)..."
   
   SONGREC_INSTALLED=false
   
   # Try Ubuntu PPA first (only for Ubuntu)
   if [[ "$IS_UBUNTU" == "true" ]]; then
-    echo -e "${STY_BLUE}[$0]: Trying songrec PPA for Ubuntu...${STY_RST}"
+    log_info "Trying songrec PPA for Ubuntu..."
     if sudo add-apt-repository -y ppa:marin-m/songrec 2>/dev/null; then
       sudo apt update
       if sudo apt install $installflags songrec 2>/dev/null; then
-        echo -e "${STY_GREEN}[$0]: songrec installed from PPA${STY_RST}"
+        log_success "songrec installed from PPA"
         SONGREC_INSTALLED=true
       fi
     fi
@@ -686,7 +684,7 @@ if ! command -v songrec &>/dev/null; then
   
   # Fallback: compile with Cargo
   if [[ "$SONGREC_INSTALLED" == "false" ]]; then
-    echo -e "${STY_BLUE}[$0]: Compiling songrec from source with Cargo...${STY_RST}"
+    log_info "Compiling songrec from source with Cargo..."
     
     # Install build dependencies
     SONGREC_DEPS=(
@@ -701,13 +699,13 @@ if ! command -v songrec &>/dev/null; then
     # Ensure Rust is available
     if command -v cargo &>/dev/null; then
       if cargo install songrec 2>/dev/null; then
-        echo -e "${STY_GREEN}[$0]: songrec installed via Cargo${STY_RST}"
+        log_success "songrec installed via Cargo"
         SONGREC_INSTALLED=true
       else
-        echo -e "${STY_YELLOW}[$0]: songrec build failed${STY_RST}"
+        log_warning "songrec build failed"
       fi
     else
-      echo -e "${STY_YELLOW}[$0]: Cargo not available, skipping songrec${STY_RST}"
+      log_warning "Cargo not available, skipping songrec"
     fi
   fi
 fi
@@ -715,7 +713,7 @@ fi
 # darkly - Qt theme (download .deb from GitHub)
 if ${INSTALL_FONTS:-true}; then
   if ! dpkg -l 2>/dev/null | grep -q darkly; then
-    echo -e "${STY_BLUE}[$0]: Installing darkly theme from GitHub...${STY_RST}"
+    log_info "Installing darkly theme from GitHub..."
     DARKLY_DEB_URL=$(curl -s "https://api.github.com/repos/Bali10050/darkly/releases/latest" | \
       jq -r '.assets[] | select(.name | test("debian.*amd64.deb$")) | .browser_download_url' | head -1)
     
@@ -724,7 +722,7 @@ if ${INSTALL_FONTS:-true}; then
       curl -fsSL -o "$TEMP_DEB" "$DARKLY_DEB_URL"
       sudo dpkg -i "$TEMP_DEB" || sudo apt install -f -y
       rm -f "$TEMP_DEB"
-      echo -e "${STY_GREEN}[$0]: darkly installed${STY_RST}"
+      log_success "darkly installed"
     fi
   fi
 fi
@@ -733,7 +731,7 @@ fi
 if ${INSTALL_FONTS:-true}; then
   THEME_DIR="$HOME/.local/share/themes"
   if [[ ! -d "$THEME_DIR/adw-gtk3" ]]; then
-    echo -e "${STY_BLUE}[$0]: Installing adw-gtk3 theme from GitHub...${STY_RST}"
+    log_info "Installing adw-gtk3 theme from GitHub..."
     mkdir -p "$THEME_DIR"
     
     ADW_GTK3_URL=$(curl -s "https://api.github.com/repos/lassekongo83/adw-gtk3/releases/latest" | \
@@ -745,12 +743,12 @@ if ${INSTALL_FONTS:-true}; then
       
       if curl -fsSL -o "$TEMP_DIR/adw-gtk3.tar.xz" "$ADW_GTK3_URL"; then
         tar -xJf "$TEMP_DIR/adw-gtk3.tar.xz" -C "$THEME_DIR"
-        echo -e "${STY_GREEN}[$0]: adw-gtk3 theme installed${STY_RST}"
+        log_success "adw-gtk3 theme installed"
       fi
       
       rm -rf "$TEMP_DIR"
     else
-      echo -e "${STY_YELLOW}[$0]: Could not find adw-gtk3 release${STY_RST}"
+      log_warning "Could not find adw-gtk3 release"
     fi
   fi
 fi
@@ -758,7 +756,7 @@ fi
 # twemoji-color-font - Twitter emoji font (download .deb from GitHub)
 if ${INSTALL_FONTS:-true}; then
   if ! fc-list | grep -qi "Twemoji"; then
-    echo -e "${STY_BLUE}[$0]: Installing twemoji-color-font from GitHub...${STY_RST}"
+    log_info "Installing twemoji-color-font from GitHub..."
     TWEMOJI_DEB_URL=$(curl -s "https://api.github.com/repos/13rac1/twemoji-color-font/releases/latest" | \
       jq -r '.assets[] | select(.name | test("fonts-twemoji-svginot.*_all.deb$")) | .browser_download_url' | head -1)
     
@@ -767,10 +765,10 @@ if ${INSTALL_FONTS:-true}; then
       if curl -fsSL -o "$TEMP_DEB" "$TWEMOJI_DEB_URL"; then
         sudo dpkg -i "$TEMP_DEB" || sudo apt install -f -y
         rm -f "$TEMP_DEB"
-        echo -e "${STY_GREEN}[$0]: twemoji-color-font installed${STY_RST}"
+        log_success "twemoji-color-font installed"
       fi
     else
-      echo -e "${STY_YELLOW}[$0]: Could not find twemoji-color-font release${STY_RST}"
+      log_warning "Could not find twemoji-color-font release"
     fi
   fi
 fi
@@ -778,7 +776,7 @@ fi
 # swappy - screenshot annotation (not in bookworm, compile from source)
 if ${INSTALL_SCREENCAPTURE:-true}; then
   if ! command -v swappy &>/dev/null; then
-    echo -e "${STY_BLUE}[$0]: Installing swappy from source...${STY_RST}"
+    log_info "Installing swappy from source..."
     sudo apt install $installflags libgtk-3-dev libcairo2-dev libpango1.0-dev scdoc 2>/dev/null || true
     
     SWAPPY_BUILD_DIR="/tmp/swappy-build-$$"
@@ -786,9 +784,9 @@ if ${INSTALL_SCREENCAPTURE:-true}; then
       cd "$SWAPPY_BUILD_DIR"
       if meson setup build && ninja -C build; then
         sudo ninja -C build install
-        echo -e "${STY_GREEN}[$0]: swappy installed${STY_RST}"
+        log_success "swappy installed"
       else
-        echo -e "${STY_YELLOW}[$0]: swappy build failed, skipping${STY_RST}"
+        log_warning "swappy build failed, skipping"
       fi
       cd "${REPO_ROOT}"
       rm -rf "$SWAPPY_BUILD_DIR"
@@ -799,13 +797,13 @@ fi
 #####################################################################################
 # Install Rust toolchain (needed for niri, quickshell, xwayland-satellite)
 #####################################################################################
-echo -e "${STY_CYAN}[$0]: Setting up Rust toolchain...${STY_RST}"
+tui_info "Setting up Rust toolchain..."
 
 # Ensure cargo is in PATH (may have been installed in previous run)
 [[ -f "$HOME/.cargo/env" ]] && source "$HOME/.cargo/env"
 
 if ! command -v cargo &>/dev/null; then
-  echo -e "${STY_BLUE}[$0]: Installing Rust via rustup...${STY_RST}"
+  log_info "Installing Rust via rustup..."
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
   source "$HOME/.cargo/env"
 fi
@@ -813,7 +811,7 @@ fi
 #####################################################################################
 # Install uv (Python package manager) - from official installer
 #####################################################################################
-echo -e "${STY_CYAN}[$0]: Installing uv...${STY_RST}"
+tui_info "Installing uv (Python package manager)..."
 
 # Ensure ~/.local/bin is in PATH (uv installs there)
 export PATH="$HOME/.local/bin:$PATH"
@@ -831,24 +829,24 @@ fi
 #####################################################################################
 # Install Niri (PPA for Ubuntu 25.10+, compile for others)
 #####################################################################################
-echo -e "${STY_CYAN}[$0]: Installing Niri compositor...${STY_RST}"
+tui_info "Installing Niri compositor..."
 
 if ! command -v niri &>/dev/null; then
   # Check for Ubuntu 25.10+ which has PPA available
   if $IS_UBUNTU && [[ "${UBUNTU_VERSION%%.*}" -ge 25 ]]; then
-    echo -e "${STY_GREEN}[$0]: Ubuntu 25.10+ detected - using PPA (no compilation!)${STY_RST}"
+    log_success "Ubuntu 25.10+ detected — using PPA (no compilation!)"
     if ! grep -q "avengemedia/danklinux" /etc/apt/sources.list.d/* 2>/dev/null; then
       if ensure_add_apt_repository; then
         sudo add-apt-repository -y ppa:avengemedia/danklinux || {
-          echo -e "${STY_YELLOW}[$0]: PPA failed, falling back to source compilation${STY_RST}"
+          log_warning "PPA failed, falling back to source compilation"
         }
         sudo apt update
       else
-        echo -e "${STY_YELLOW}[$0]: add-apt-repository unavailable, skipping PPA.${STY_RST}"
+        log_warning "add-apt-repository unavailable, skipping PPA"
       fi
     fi
     if sudo apt install -y niri 2>/dev/null; then
-      echo -e "${STY_GREEN}[$0]: Niri installed from PPA!${STY_RST}"
+      log_success "Niri installed from PPA!"
     fi
   fi
 
@@ -856,18 +854,16 @@ if ! command -v niri &>/dev/null; then
   if ! command -v niri &>/dev/null; then
     if apt_pkg_available niri; then
       if sudo apt install $installflags niri 2>/dev/null; then
-        echo -e "${STY_GREEN}[$0]: Niri installed from distro repositories${STY_RST}"
+        log_success "Niri installed from distro repositories"
       fi
     fi
   fi
   
   # If still not installed, compile from source
   if ! command -v niri &>/dev/null; then
-    echo -e "${STY_YELLOW}[$0]: Niri must be compiled from source.${STY_RST}"
+    log_info "Niri not in repos — compiling from source..."
   
-    # Install Niri build dependencies (from official niri wiki)
-    # https://github.com/YaLTeR/niri/wiki/Getting-Started
-    echo -e "${STY_BLUE}[$0]: Installing Niri build dependencies...${STY_RST}"
+    log_info "Installing Niri build dependencies..."
     
     NIRI_BUILD_DEPS=(
       gcc
@@ -889,7 +885,7 @@ if ! command -v niri &>/dev/null; then
     if apt_pkg_available libdisplay-info-dev; then
       NIRI_BUILD_DEPS+=(libdisplay-info-dev)
     else
-      echo -e "${STY_YELLOW}[$0]: libdisplay-info-dev not in repos, trying backports...${STY_RST}"
+      log_warning "libdisplay-info-dev not in repos, trying backports..."
       # Try to enable backports for bookworm
       if $IS_DEBIAN && [[ "$DEBIAN_VERSION" == 12* ]]; then
         echo "deb http://deb.debian.org/debian bookworm-backports main" | sudo tee /etc/apt/sources.list.d/backports.list
@@ -899,7 +895,7 @@ if ! command -v niri &>/dev/null; then
     fi
     
     sudo apt install $installflags "${NIRI_BUILD_DEPS[@]}" 2>/dev/null || {
-      echo -e "${STY_YELLOW}[$0]: Some niri deps failed, trying individually...${STY_RST}"
+      log_warning "Some niri deps failed, trying individually..."
       for pkg in "${NIRI_BUILD_DEPS[@]}"; do
         sudo apt install $installflags "$pkg" 2>/dev/null || true
       done
@@ -907,39 +903,39 @@ if ! command -v niri &>/dev/null; then
     
     NIRI_BUILD_DIR="/tmp/niri-build-$$"
     
-    echo -e "${STY_BLUE}[$0]: Cloning Niri...${STY_RST}"
+    log_info "Cloning Niri..."
     if git clone https://github.com/YaLTeR/niri.git "$NIRI_BUILD_DIR"; then
-      echo -e "${STY_BLUE}[$0]: Building Niri (this may take a while)...${STY_RST}"
+      log_info "Building Niri (this may take a while)..."
       cd "$NIRI_BUILD_DIR"
       if cargo build --release; then
-        echo -e "${STY_BLUE}[$0]: Installing Niri...${STY_RST}"
+        log_info "Installing Niri..."
         sudo cp target/release/niri /usr/local/bin/
         sudo cp resources/niri.desktop /usr/share/wayland-sessions/ 2>/dev/null || true
         sudo cp resources/niri-portals.conf /usr/share/xdg-desktop-portal/ 2>/dev/null || true
-        echo -e "${STY_GREEN}[$0]: Niri installed successfully!${STY_RST}"
+        log_success "Niri installed!"
       else
-        echo -e "${STY_RED}[$0]: Niri build failed!${STY_RST}"
+        log_error "Niri build failed!"
       fi
       cd "${REPO_ROOT}"
       rm -rf "$NIRI_BUILD_DIR"
     else
-      echo -e "${STY_RED}[$0]: Failed to clone Niri repository${STY_RST}"
+      log_error "Failed to clone Niri repository"
     fi
   fi
 else
-  echo -e "${STY_GREEN}[$0]: Niri already installed.${STY_RST}"
+  log_success "Niri already installed"
 fi
 
 #####################################################################################
 # Install xwayland-satellite
 #####################################################################################
 if ! command -v xwayland-satellite &>/dev/null; then
-  echo -e "${STY_BLUE}[$0]: Installing xwayland-satellite...${STY_RST}"
+  log_info "Installing xwayland-satellite..."
 
   # Try distro repositories first
   if apt_pkg_available xwayland-satellite; then
     if sudo apt install $installflags xwayland-satellite 2>/dev/null; then
-      echo -e "${STY_GREEN}[$0]: xwayland-satellite installed from distro repositories${STY_RST}"
+      log_success "xwayland-satellite installed from distro repositories"
     fi
   fi
 
@@ -961,9 +957,9 @@ if ! command -v xwayland-satellite &>/dev/null; then
     cd "$XWSAT_BUILD_DIR"
     if cargo build --release; then
       sudo cp target/release/xwayland-satellite /usr/local/bin/
-      echo -e "${STY_GREEN}[$0]: xwayland-satellite installed${STY_RST}"
+      log_success "xwayland-satellite installed"
     else
-      echo -e "${STY_YELLOW}[$0]: xwayland-satellite build failed${STY_RST}"
+      log_warning "xwayland-satellite build failed"
     fi
     cd "${REPO_ROOT}"
     rm -rf "$XWSAT_BUILD_DIR"
@@ -974,10 +970,10 @@ fi
 #####################################################################################
 # Install hyprpicker (Wayland color picker - compile from source)
 #####################################################################################
-echo -e "${STY_CYAN}[$0]: Installing hyprpicker...${STY_RST}"
+tui_info "Installing hyprpicker..."
 
 if ! command -v hyprpicker &>/dev/null; then
-  echo -e "${STY_BLUE}[$0]: hyprpicker not found, compiling from source...${STY_RST}"
+  log_info "hyprpicker not found, compiling from source..."
   
   # Install build dependencies
   HYPRPICKER_DEPS=(
@@ -1012,16 +1008,16 @@ if ! command -v hyprpicker &>/dev/null; then
   
   # Compile hyprutils if not available
   if [[ "$HYPRUTILS_INSTALLED" == "false" ]]; then
-    echo -e "${STY_BLUE}[$0]: hyprutils not found, compiling from source...${STY_RST}"
+    log_info "hyprutils not found, compiling from source..."
     HYPRUTILS_BUILD_DIR="/tmp/hyprutils-build-$$"
     
     if git clone --depth 1 https://github.com/hyprwm/hyprutils.git "$HYPRUTILS_BUILD_DIR" 2>/dev/null; then
       cd "$HYPRUTILS_BUILD_DIR"
       if cmake -B build && cmake --build build && sudo cmake --install build; then
-        echo -e "${STY_GREEN}[$0]: hyprutils installed${STY_RST}"
+        log_success "hyprutils installed"
         HYPRUTILS_INSTALLED=true
       else
-        echo -e "${STY_YELLOW}[$0]: hyprutils build failed${STY_RST}"
+        log_warning "hyprutils build failed"
       fi
       cd "${REPO_ROOT}"
       rm -rf "$HYPRUTILS_BUILD_DIR"
@@ -1036,22 +1032,22 @@ if ! command -v hyprpicker &>/dev/null; then
       cd "$HYPRPICKER_BUILD_DIR"
       if cmake -B build && cmake --build build; then
         sudo cp build/hyprpicker /usr/local/bin/
-        echo -e "${STY_GREEN}[$0]: hyprpicker installed${STY_RST}"
+        log_success "hyprpicker installed"
       else
-        echo -e "${STY_YELLOW}[$0]: hyprpicker build failed${STY_RST}"
+        log_warning "hyprpicker build failed"
       fi
       cd "${REPO_ROOT}"
       rm -rf "$HYPRPICKER_BUILD_DIR"
     fi
   else
-    echo -e "${STY_YELLOW}[$0]: Skipping hyprpicker (hyprutils not available)${STY_RST}"
+    log_warning "Skipping hyprpicker (hyprutils not available)"
   fi
 fi
 
 #####################################################################################
 # Install Quickshell (must compile - no prebuilt binaries)
 #####################################################################################
-echo -e "${STY_CYAN}[$0]: Installing Quickshell...${STY_RST}"
+tui_info "Installing Quickshell..."
 
 if ! command -v qs &>/dev/null; then
   # Try distro repositories first (intentional: prefer stable quickshell package)
@@ -1060,11 +1056,9 @@ if ! command -v qs &>/dev/null; then
   fi
 
   if ! command -v qs &>/dev/null; then
-    echo -e "${STY_YELLOW}[$0]: Quickshell must be compiled from source.${STY_RST}"
+    log_info "Quickshell not in repos — compiling from source..."
   
-  # Install Quickshell build dependencies (from official BUILD.md)
-  # https://github.com/quickshell-mirror/quickshell/blob/master/BUILD.md
-  echo -e "${STY_BLUE}[$0]: Installing Quickshell build dependencies...${STY_RST}"
+  log_info "Installing Quickshell build dependencies..."
   
   # Base dependencies (always required)
   QUICKSHELL_BASE_DEPS=(
@@ -1110,8 +1104,8 @@ if ! command -v qs &>/dev/null; then
   done
   
   if ! $SHADERTOOLS_INSTALLED; then
-    echo -e "${STY_YELLOW}[$0]: Qt6 ShaderTools not found in repos - Quickshell may fail to build${STY_RST}"
-    echo -e "${STY_YELLOW}[$0]: Consider upgrading to Debian trixie/sid or Ubuntu 24.04+${STY_RST}"
+    log_warning "Qt6 ShaderTools not found — Quickshell may fail to build"
+    log_warning "Consider upgrading to Debian trixie/sid or Ubuntu 24.04+"
   fi
   
   # cli11 - header-only library, package name varies
@@ -1123,7 +1117,7 @@ if ! command -v qs &>/dev/null; then
   done
   
   sudo apt install $installflags "${QUICKSHELL_BASE_DEPS[@]}" 2>/dev/null || {
-    echo -e "${STY_YELLOW}[$0]: Some quickshell deps failed, trying individually...${STY_RST}"
+    log_warning "Some quickshell deps failed, trying individually..."
     for pkg in "${QUICKSHELL_BASE_DEPS[@]}"; do
       sudo apt install $installflags "$pkg" 2>/dev/null || true
     done
@@ -1131,36 +1125,35 @@ if ! command -v qs &>/dev/null; then
   
   QUICKSHELL_BUILD_DIR="/tmp/quickshell-build-$$"
   
-  echo -e "${STY_BLUE}[$0]: Cloning Quickshell...${STY_RST}"
+  log_info "Cloning Quickshell..."
   if git clone --recursive https://github.com/quickshell-mirror/quickshell.git "$QUICKSHELL_BUILD_DIR"; then
-    echo -e "${STY_BLUE}[$0]: Building Quickshell...${STY_RST}"
+    log_info "Building Quickshell (this may take a while)..."
     cd "$QUICKSHELL_BUILD_DIR"
     if cmake -B build -G Ninja \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_INSTALL_PREFIX=/usr/local \
       -DSERVICE_PIPEWIRE=ON \
       -DSERVICE_PAM=ON && cmake --build build -j$(nproc); then
-      echo -e "${STY_BLUE}[$0]: Installing Quickshell...${STY_RST}"
       sudo cmake --install build
-      echo -e "${STY_GREEN}[$0]: Quickshell installed successfully!${STY_RST}"
+      log_success "Quickshell installed!"
     else
-      echo -e "${STY_RED}[$0]: Quickshell build failed!${STY_RST}"
+      log_error "Quickshell build failed!"
     fi
     cd "${REPO_ROOT}"
     rm -rf "$QUICKSHELL_BUILD_DIR"
   else
-    echo -e "${STY_RED}[$0]: Failed to clone Quickshell repository${STY_RST}"
+    log_error "Failed to clone Quickshell repository"
   fi
   fi
 else
-  echo -e "${STY_GREEN}[$0]: Quickshell already installed.${STY_RST}"
+  log_success "Quickshell already installed"
 fi
 
 #####################################################################################
 # Install cava if not available in repos
 #####################################################################################
 if ! command -v cava &>/dev/null; then
-  echo -e "${STY_BLUE}[$0]: Installing cava from source...${STY_RST}"
+  log_info "Installing cava from source..."
   sudo apt install $installflags \
     libfftw3-dev \
     libasound2-dev \
@@ -1177,9 +1170,9 @@ if ! command -v cava &>/dev/null; then
     cd "$CAVA_BUILD_DIR"
     if ./autogen.sh && ./configure && make -j$(nproc); then
       sudo make install
-      echo -e "${STY_GREEN}[$0]: cava installed${STY_RST}"
+      log_success "cava installed"
     else
-      echo -e "${STY_YELLOW}[$0]: cava build failed, skipping${STY_RST}"
+      log_warning "cava build failed, skipping"
     fi
     cd "${REPO_ROOT}"
     rm -rf "$CAVA_BUILD_DIR"
@@ -1189,14 +1182,14 @@ fi
 #####################################################################################
 # Install critical fonts
 #####################################################################################
-echo -e "${STY_CYAN}[$0]: Installing critical fonts...${STY_RST}"
+tui_info "Installing critical fonts..."
 
 FONT_DIR="$HOME/.local/share/fonts"
 mkdir -p "$FONT_DIR"
 
 # JetBrains Mono Nerd Font
 if ! fc-list | grep -qi "JetBrainsMono Nerd"; then
-  echo -e "${STY_BLUE}[$0]: Downloading JetBrains Mono Nerd Font...${STY_RST}"
+  log_info "Downloading JetBrains Mono Nerd Font..."
   
   NERD_FONTS_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip"
   TEMP_DIR="/tmp/nerdfonts-$$"
@@ -1205,7 +1198,7 @@ if ! fc-list | grep -qi "JetBrainsMono Nerd"; then
   if curl -fsSL -o "$TEMP_DIR/JetBrainsMono.zip" "$NERD_FONTS_URL"; then
     unzip -o "$TEMP_DIR/JetBrainsMono.zip" -d "$FONT_DIR" >/dev/null 2>&1
     fc-cache -f "$FONT_DIR"
-    echo -e "${STY_GREEN}[$0]: JetBrains Mono Nerd Font installed.${STY_RST}"
+    log_success "JetBrains Mono Nerd Font installed"
   fi
   
   rm -rf "$TEMP_DIR"
@@ -1213,24 +1206,24 @@ fi
 
 # Material Symbols fonts (CRITICAL - UI icons)
 if ! fc-list | grep -qi "Material Symbols Rounded"; then
-  echo -e "${STY_BLUE}[$0]: Downloading Material Symbols Rounded font...${STY_RST}"
+  log_info "Downloading Material Symbols Rounded font..."
   
   MATERIAL_URL="https://raw.githubusercontent.com/google/material-design-icons/master/variablefont/MaterialSymbolsRounded%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf"
   
   if curl -fsSL -o "$FONT_DIR/MaterialSymbolsRounded.ttf" "$MATERIAL_URL"; then
-    echo -e "${STY_GREEN}[$0]: Material Symbols Rounded font installed.${STY_RST}"
+    log_success "Material Symbols Rounded font installed"
   else
-    echo -e "${STY_RED}[$0]: CRITICAL - Could not download Material Symbols. UI icons will be broken.${STY_RST}"
+    log_error "CRITICAL: Could not download Material Symbols — UI icons will be broken!"
   fi
 fi
 
 if ! fc-list | grep -qi "Material Symbols Outlined"; then
-  echo -e "${STY_BLUE}[$0]: Downloading Material Symbols Outlined font...${STY_RST}"
+  log_info "Downloading Material Symbols Outlined font..."
   
   MATERIAL_URL="https://raw.githubusercontent.com/google/material-design-icons/master/variablefont/MaterialSymbolsOutlined%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf"
   
   if curl -fsSL -o "$FONT_DIR/MaterialSymbolsOutlined.ttf" "$MATERIAL_URL"; then
-    echo -e "${STY_GREEN}[$0]: Material Symbols Outlined font installed.${STY_RST}"
+    log_success "Material Symbols Outlined font installed"
   fi
 fi
 
@@ -1240,14 +1233,14 @@ fc-cache -f "$FONT_DIR" 2>/dev/null
 #####################################################################################
 # Icon themes (WhiteSur, MacTahoe)
 #####################################################################################
-echo -e "${STY_CYAN}[$0]: Installing icon themes...${STY_RST}"
+tui_info "Installing icon themes..."
 
 ICON_DIR="$HOME/.local/share/icons"
 mkdir -p "$ICON_DIR"
 
 # WhiteSur icon theme
 if [[ ! -d "$ICON_DIR/WhiteSur-dark" ]]; then
-  echo -e "${STY_BLUE}[$0]: Installing WhiteSur icon theme...${STY_RST}"
+  log_info "Installing WhiteSur icon theme..."
   
   TEMP_DIR="/tmp/whitesur-icons-$$"
   mkdir -p "$TEMP_DIR"
@@ -1260,7 +1253,7 @@ if [[ ! -d "$ICON_DIR/WhiteSur-dark" ]]; then
       cp -r src/WhiteSur "$ICON_DIR/WhiteSur-dark" 2>/dev/null || true
     }
     cd - >/dev/null
-    echo -e "${STY_GREEN}[$0]: WhiteSur icon theme installed.${STY_RST}"
+    log_success "WhiteSur icon theme installed"
   fi
   
   rm -rf "$TEMP_DIR"
@@ -1268,7 +1261,7 @@ fi
 
 # MacTahoe icon theme (dock icons)
 if [[ ! -d "$ICON_DIR/MacTahoe" ]]; then
-  echo -e "${STY_BLUE}[$0]: Installing MacTahoe icon theme...${STY_RST}"
+  log_info "Installing MacTahoe icon theme..."
   
   TEMP_DIR="/tmp/mactahoe-icons-$$"
   mkdir -p "$TEMP_DIR"
@@ -1281,7 +1274,7 @@ if [[ ! -d "$ICON_DIR/MacTahoe" ]]; then
       cp -r src/MacTahoe "$ICON_DIR/MacTahoe" 2>/dev/null || true
     }
     cd - >/dev/null
-    echo -e "${STY_GREEN}[$0]: MacTahoe icon theme installed.${STY_RST}"
+    log_success "MacTahoe icon theme installed"
   fi
   
   rm -rf "$TEMP_DIR"
@@ -1290,13 +1283,13 @@ fi
 #####################################################################################
 # Cursor themes (Bibata, Capitaine)
 #####################################################################################
-echo -e "${STY_CYAN}[$0]: Installing cursor themes...${STY_RST}"
+tui_info "Installing cursor themes..."
 
 CURSOR_DIR="$HOME/.local/share/icons"
 
 # Bibata Modern Classic cursor
 if [[ ! -d "$CURSOR_DIR/Bibata-Modern-Classic" ]]; then
-  echo -e "${STY_BLUE}[$0]: Installing Bibata Modern Classic cursor...${STY_RST}"
+  log_info "Installing Bibata Modern Classic cursor..."
   
   BIBATA_URL=$(curl -s "https://api.github.com/repos/ful1e5/Bibata_Cursor/releases/latest" | \
     jq -r '.assets[] | select(.name | test("Bibata-Modern-Classic.tar.xz$")) | .browser_download_url' | head -1)
@@ -1307,7 +1300,7 @@ if [[ ! -d "$CURSOR_DIR/Bibata-Modern-Classic" ]]; then
     
     if curl -fsSL -o "$TEMP_DIR/bibata.tar.xz" "$BIBATA_URL"; then
       tar -xJf "$TEMP_DIR/bibata.tar.xz" -C "$CURSOR_DIR"
-      echo -e "${STY_GREEN}[$0]: Bibata Modern Classic cursor installed.${STY_RST}"
+      log_success "Bibata Modern Classic cursor installed"
     fi
     
     rm -rf "$TEMP_DIR"
@@ -1316,7 +1309,7 @@ fi
 
 # Bibata Modern Ice cursor
 if [[ ! -d "$CURSOR_DIR/Bibata-Modern-Ice" ]]; then
-  echo -e "${STY_BLUE}[$0]: Installing Bibata Modern Ice cursor...${STY_RST}"
+  log_info "Installing Bibata Modern Ice cursor..."
   
   BIBATA_URL=$(curl -s "https://api.github.com/repos/ful1e5/Bibata_Cursor/releases/latest" | \
     jq -r '.assets[] | select(.name | test("Bibata-Modern-Ice.tar.xz$")) | .browser_download_url' | head -1)
@@ -1327,7 +1320,7 @@ if [[ ! -d "$CURSOR_DIR/Bibata-Modern-Ice" ]]; then
     
     if curl -fsSL -o "$TEMP_DIR/bibata.tar.xz" "$BIBATA_URL"; then
       tar -xJf "$TEMP_DIR/bibata.tar.xz" -C "$CURSOR_DIR"
-      echo -e "${STY_GREEN}[$0]: Bibata Modern Ice cursor installed.${STY_RST}"
+      log_success "Bibata Modern Ice cursor installed"
     fi
     
     rm -rf "$TEMP_DIR"
@@ -1336,7 +1329,7 @@ fi
 
 # Capitaine cursors (download from sainnhe fork with extra variants)
 if [[ ! -d "$CURSOR_DIR/capitaine-cursors-light" ]]; then
-  echo -e "${STY_BLUE}[$0]: Installing Capitaine cursors...${STY_RST}"
+  log_info "Installing Capitaine cursors..."
   
   CAPITAINE_URL=$(curl -s "https://api.github.com/repos/sainnhe/capitaine-cursors/releases/latest" | \
     jq -r '.assets[] | select(.name == "Linux.zip") | .browser_download_url' | head -1)
@@ -1355,12 +1348,12 @@ if [[ ! -d "$CURSOR_DIR/capitaine-cursors-light" ]]; then
       for variant in "$TEMP_DIR"/Capitaine\ Cursors*; do
         [[ -d "$variant" ]] && cp -r "$variant" "$CURSOR_DIR/"
       done
-      echo -e "${STY_GREEN}[$0]: Capitaine cursors installed.${STY_RST}"
+      log_success "Capitaine cursors installed"
     fi
     
     rm -rf "$TEMP_DIR"
   else
-    echo -e "${STY_YELLOW}[$0]: Could not find Capitaine cursors release${STY_RST}"
+    log_warning "Could not find Capitaine cursors release"
   fi
 fi
 
@@ -1374,34 +1367,34 @@ v install-python-packages
 # Post-install summary
 #####################################################################################
 echo ""
-echo -e "${STY_GREEN}════════════════════════════════════════════════════════════════${STY_RST}"
-echo -e "${STY_GREEN}  Debian/Ubuntu dependencies installed!${STY_RST}"
-echo -e "${STY_GREEN}════════════════════════════════════════════════════════════════${STY_RST}"
+log_success "════════════════════════════════════════════════════════════════"
+log_success "  Debian/Ubuntu dependencies installed!"
+log_success "════════════════════════════════════════════════════════════════"
 echo ""
 
 if [[ ${#MISSING_REPO_PKGS[@]} -gt 0 ]]; then
-  echo -e "${STY_YELLOW}Packages missing from current repositories:${STY_RST}"
+  log_warning "Packages missing from current repositories:"
   printf '  - %s\n' $(printf "%s\n" "${MISSING_REPO_PKGS[@]}" | awk 'NF{print $1}' | sort -u)
   echo ""
 fi
-echo -e "${STY_CYAN}Installed from GitHub releases (no compilation):${STY_RST}"
+log_info "Installed from GitHub releases (no compilation):"
 echo "  - gum, cliphist, matugen, darkly, songrec (PPA/Cargo)"
 echo "  - twemoji-color-font, adw-gtk3 theme"
 echo "  - Material Symbols fonts, JetBrains Mono Nerd Font"
 echo "  - WhiteSur, MacTahoe icon themes"
 echo "  - Bibata, Capitaine cursor themes"
 echo ""
-echo -e "${STY_CYAN}Compiled from source:${STY_RST}"
+log_info "Compiled from source:"
 echo "  - niri, quickshell, xwayland-satellite, hyprpicker, cava, swappy"
 echo ""
 
 # Verify critical commands
-echo -e "${STY_CYAN}Verifying installation:${STY_RST}"
+tui_info "Verifying installation:"
 for cmd in qs niri fish gum matugen cliphist; do
   if command -v "$cmd" &>/dev/null; then
-    echo -e "  ${STY_GREEN}✓${STY_RST} $cmd"
+    log_success "$cmd"
   else
-    echo -e "  ${STY_RED}✗${STY_RST} $cmd (not found)"
+    log_error "$cmd not found"
   fi
 done
 echo ""
@@ -1413,7 +1406,7 @@ fi
 
 # PATH reminder
 if [[ ":$PATH:" != *":$HOME/.cargo/bin:"* ]] || [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
-  echo -e "${STY_CYAN}Add to your shell config (~/.bashrc or ~/.config/fish/config.fish):${STY_RST}"
+  log_info "Add to your shell config (~/.bashrc or ~/.config/fish/config.fish):"
   echo '  export PATH="$HOME/.cargo/bin:$HOME/.local/bin:$PATH"'
   echo ""
 fi
