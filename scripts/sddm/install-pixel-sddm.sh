@@ -34,6 +34,11 @@ sudo mkdir -p "${THEME_DIR}/assets"
 sudo cp -rf "${THEME_SRC}/." "${THEME_DIR}/"
 log_ok "Theme files installed"
 
+# Transfer ownership to the current user so the sync script can update colors
+# and wallpaper on every wallpaper change without triggering sudo/polkit prompts.
+sudo chown -R "${USER}:${USER}" "${THEME_DIR}"
+log_ok "Theme directory owned by ${USER} — sync requires no sudo"
+
 # Create a placeholder background (symlinked to wallpaper later by sync script)
 if [[ ! -f "${THEME_DIR}/assets/background.png" ]]; then
     log_info "No background.png yet — creating placeholder..."

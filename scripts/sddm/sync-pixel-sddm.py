@@ -3,8 +3,10 @@
 
 Reads generated colors from matugen's colors.json and updates
 the ii-pixel theme.conf with matching colors.
-Reads wallpaper path from iNiR state and updates background symlink.
-Requires sudo to write to /usr/share/sddm/themes/ii-pixel/.
+Reads wallpaper path from iNiR state and updates background image.
+
+Note: install-pixel-sddm.sh transfers ownership of the theme directory to
+the current user at install time, so no sudo/polkit is required here.
 """
 
 import json
@@ -117,19 +119,14 @@ def update_theme_conf(colors):
     content = "\n".join(new_lines)
 
     try:
-        proc = subprocess.run(
-            ["sudo", "tee", THEME_CONF],
-            input=content.encode(),
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-            timeout=5,
-        )
-        if proc.returncode == 0:
-            return True
-        else:
-            print(f"[sddm-pixel] Failed to write theme.conf: {proc.stderr.decode().strip()}")
-            return False
-    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+        with open(THEME_CONF, "w") as f:
+            f.write(content)
+        return True
+    except PermissionError:
+        print(f"[sddm-pixel] Permission denied writing {THEME_CONF}.")
+        print(f"[sddm-pixel] Re-run install-pixel-sddm.sh to fix ownership.")
+        return False
+    except OSError as e:
         print(f"[sddm-pixel] Error writing theme.conf: {e}")
         return False
 
@@ -165,8 +162,10 @@ def update_background(wallpaper_path):
         return False
     if not os.path.isdir(ASSETS_DIR):
         try:
-            subprocess.run(["sudo", "mkdir", "-p", ASSETS_DIR], timeout=5, check=True)
-        except Exception:
+            os.makedirs(ASSETS_DIR, exist_ok=True)
+        except PermissionError:
+            print(f"[sddm-pixel] Permission denied creating {ASSETS_DIR}.")
+            print(f"[sddm-pixel] Re-run install-pixel-sddm.sh to fix ownership.")
             return False
 
     bg_dest = os.path.join(ASSETS_DIR, "background.png")
@@ -181,23 +180,21 @@ def update_background(wallpaper_path):
         src = tmp_frame
 
     try:
-        proc = subprocess.run(
-            ["sudo", "cp", "-f", src, bg_dest],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-            timeout=10,
-        )
+        shutil.copy2(src, bg_dest)
         if ext in VIDEO_EXTENSIONS and os.path.isfile(src):
             os.unlink(src)
-
-        if proc.returncode == 0:
-            print(f"[sddm-pixel] Background updated: {os.path.basename(wallpaper_path)}")
-            return True
-        else:
-            print(f"[sddm-pixel] Failed to copy background: {proc.stderr.decode().strip()}")
-            return False
+        print(f"[sddm-pixel] Background updated: {os.path.basename(wallpaper_path)}")
+        return True
+    except PermissionError:
+        print(f"[sddm-pixel] Permission denied writing to {ASSETS_DIR}.")
+        print(f"[sddm-pixel] Re-run install-pixel-sddm.sh to fix ownership.")
+        if ext in VIDEO_EXTENSIONS and os.path.isfile(src):
+            os.unlink(src)
+        return False
     except Exception as e:
         print(f"[sddm-pixel] Error updating background: {e}")
+        if ext in VIDEO_EXTENSIONS and os.path.isfile(src):
+            os.unlink(src)
         return False
 
 
