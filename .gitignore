@@ -18,6 +18,7 @@ agents/
 .continue/
 .gemini/
 .roo/
+.dory/
 inir-docs/
 context-architect/
 AGENTS.md
@@ -29,6 +30,8 @@ Session.md
 opencode.json
 hooks/
 prompts/
+.cursorrules
+.windsurfrules
 
 # WIP documentation (not for distribution)
 docs/*_IMPLEMENTATION.md
