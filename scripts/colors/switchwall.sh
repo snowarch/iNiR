@@ -328,20 +328,13 @@ switch() {
             # Only check for ffmpeg (needed for thumbnail generation)
             # mpvpaper is no longer needed - Qt Multimedia handles video playback natively
             if ! command -v ffmpeg &> /dev/null; then
-                echo "Missing dependency: ffmpeg"
-                echo "Arch: sudo pacman -S ffmpeg"
-                action=$(notify-send \
+                echo "Missing dependency: ffmpeg (needed for video thumbnail generation)"
+                echo "Install with: sudo pacman -S ffmpeg"
+                notify-send \
                     -a "Wallpaper switcher" \
                     -c "im.error" \
-                    -A "install_arch=Install (Arch)" \
-                    "Can't switch to video wallpaper" \
-                    "Missing dependency: ffmpeg (needed for thumbnail generation)")
-                if [[ "$action" == "install_arch" ]]; then
-                    kitty -1 sudo pacman -S ffmpeg
-                    if command -v ffmpeg &>/dev/null; then
-                        notify-send 'Wallpaper switcher' 'Alright, try again!' -a "Wallpaper switcher"
-                    fi
-                fi
+                    "Can't use video wallpaper" \
+                    "ffmpeg is not installed. Run: sudo pacman -S ffmpeg"
                 exit 0
             fi
 

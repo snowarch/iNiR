@@ -95,27 +95,51 @@ Item {
             interactive: false
             spacing: 4
 
-            // Smooth transitions
             add: Transition {
                 ParallelAnimation {
-                    NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 200; easing.type: Easing.OutCubic }
-                    NumberAnimation { property: "scale"; from: 0.95; to: 1; duration: 200; easing.type: Easing.OutCubic }
+                    NumberAnimation {
+                        property: "opacity"; from: 0; to: 1
+                        duration: Looks.transition.enabled ? Looks.transition.duration.medium : 0
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Looks.transition.easing.bezierCurve.decelerate
+                    }
+                    NumberAnimation {
+                        property: "scale"; from: 0.95; to: 1
+                        duration: Looks.transition.enabled ? Looks.transition.duration.medium : 0
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Looks.transition.easing.bezierCurve.decelerate
+                    }
                 }
             }
-            
+
             remove: Transition {
                 ParallelAnimation {
-                    NumberAnimation { property: "opacity"; to: 0; duration: 150; easing.type: Easing.InCubic }
-                    NumberAnimation { property: "x"; to: 50; duration: 150; easing.type: Easing.InCubic }
+                    NumberAnimation {
+                        property: "opacity"; to: 0
+                        duration: Looks.transition.enabled ? Looks.transition.duration.normal : 0
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Looks.transition.easing.bezierCurve.accelerate
+                    }
+                    NumberAnimation {
+                        property: "x"; to: 50
+                        duration: Looks.transition.enabled ? Looks.transition.duration.normal : 0
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Looks.transition.easing.bezierCurve.accelerate
+                    }
                 }
             }
-            
+
             displaced: Transition {
-                NumberAnimation { properties: "x,y"; duration: 200; easing.type: Easing.OutCubic }
+                NumberAnimation {
+                    properties: "y"
+                    duration: Looks.transition.enabled ? Looks.transition.duration.medium : 0
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Looks.transition.easing.bezierCurve.standard
+                }
             }
 
             Behavior on implicitHeight {
-                NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                animation: Looks.transition.resize.createObject(this)
             }
 
             model: ScriptModel {

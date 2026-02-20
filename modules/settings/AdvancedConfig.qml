@@ -1,11 +1,19 @@
 import QtQuick
+import Quickshell
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.common.functions
 
 ContentPage {
     settingsPageIndex: 7
     settingsPageName: Translation.tr("Advanced")
+
+    Timer {
+        id: colorRegenTimer
+        interval: 1200
+        onTriggered: Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--noswitch"])
+    }
 
     SettingsCardSection {
         expanded: true
@@ -124,6 +132,7 @@ ContentPage {
                 stepSize: 5
                 onValueChanged: {
                     Config.setNestedValue("appearance.wallpaperTheming.terminalColorAdjustments.saturation", value / 100);
+                    colorRegenTimer.restart();
                 }
                 StyledToolTip {
                     text: Translation.tr("Saturation intensity of terminal colors generated from wallpaper. Higher = more vivid, lower = more muted.")
@@ -139,6 +148,7 @@ ContentPage {
                 stepSize: 5
                 onValueChanged: {
                     Config.setNestedValue("appearance.wallpaperTheming.terminalColorAdjustments.brightness", value / 100);
+                    colorRegenTimer.restart();
                 }
                 StyledToolTip {
                     text: Translation.tr("Brightness/lightness of terminal colors generated from wallpaper. Lower = darker colors, higher = brighter.")

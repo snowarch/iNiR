@@ -144,8 +144,10 @@ Singleton {
             }
         }
 
+        const newStr = JSON.stringify(result)
+        if (JSON.stringify(effectivePerMonitor) === newStr) return
         effectivePerMonitor = result
-        console.log("[WallpaperListener] Refreshed effective per-monitor map:", JSON.stringify(result))
+        console.log("[WallpaperListener] Refreshed effective per-monitor map:", newStr)
     }
 
     // Get monitor name for a screen (compositor-agnostic)

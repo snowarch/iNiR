@@ -10,7 +10,7 @@ import qs.modules.waffle.looks
 BodyRectangle {
     id: root
     anchors.fill: parent
-    implicitHeight: 230
+    implicitHeight: contentLayout.implicitHeight + 8
 
     readonly property int notificationCount: Notifications.list.length
     readonly property bool hasNotifications: notificationCount > 0
@@ -116,28 +116,52 @@ BodyRectangle {
         ListView {
             id: notificationListView
             Layout.fillWidth: true
-            Layout.fillHeight: true
+            Layout.preferredHeight: root.hasNotifications ? Math.min(480, contentHeight) : 130
             clip: true
             spacing: 4
             cacheBuffer: 200
 
-            // Smooth transitions
             add: Transition {
                 ParallelAnimation {
-                    NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 200; easing.type: Easing.OutCubic }
-                    NumberAnimation { property: "x"; from: 30; to: 0; duration: 200; easing.type: Easing.OutCubic }
+                    NumberAnimation {
+                        property: "opacity"; from: 0; to: 1
+                        duration: Looks.transition.enabled ? Looks.transition.duration.medium : 0
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Looks.transition.easing.bezierCurve.decelerate
+                    }
+                    NumberAnimation {
+                        property: "y"; from: 10; to: 0
+                        duration: Looks.transition.enabled ? Looks.transition.duration.medium : 0
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Looks.transition.easing.bezierCurve.decelerate
+                    }
                 }
             }
-            
+
             remove: Transition {
                 ParallelAnimation {
-                    NumberAnimation { property: "opacity"; to: 0; duration: 150; easing.type: Easing.InCubic }
-                    NumberAnimation { property: "x"; to: 50; duration: 150; easing.type: Easing.InCubic }
+                    NumberAnimation {
+                        property: "opacity"; to: 0
+                        duration: Looks.transition.enabled ? Looks.transition.duration.normal : 0
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Looks.transition.easing.bezierCurve.accelerate
+                    }
+                    NumberAnimation {
+                        property: "x"; to: 50
+                        duration: Looks.transition.enabled ? Looks.transition.duration.normal : 0
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Looks.transition.easing.bezierCurve.accelerate
+                    }
                 }
             }
-            
+
             displaced: Transition {
-                NumberAnimation { properties: "x,y"; duration: 200; easing.type: Easing.OutCubic }
+                NumberAnimation {
+                    properties: "y"
+                    duration: Looks.transition.enabled ? Looks.transition.duration.medium : 0
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Looks.transition.easing.bezierCurve.standard
+                }
             }
 
             model: Notifications.appNameList

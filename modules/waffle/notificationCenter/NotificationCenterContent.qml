@@ -28,8 +28,12 @@ WBarAttachedPanelContent {
         Item {
             id: notificationArea
             Layout.fillWidth: true
-            Layout.preferredHeight: Math.min(300, notificationPane.implicitHeight)
+            Layout.preferredHeight: Math.min(480, notificationPane.implicitHeight)
             implicitWidth: notificationPane.implicitWidth
+
+            Behavior on Layout.preferredHeight {
+                animation: Looks.transition.resize.createObject(this)
+            }
 
             WPane {
                 id: notificationPane
