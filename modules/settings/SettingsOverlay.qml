@@ -133,6 +133,10 @@ Scope {
         { pageIndex: 5, pageName: overlayPages[5].name, section: Translation.tr("Sidebars"), label: Translation.tr("Sidebars"), description: Translation.tr("Sidebar toggles, sliders and corner open"), keywords: ["sidebar", "quick", "toggles", "sliders", "corner"] },
         { pageIndex: 5, pageName: overlayPages[5].name, section: Translation.tr("Sidebars"), label: Translation.tr("Corner open"), description: Translation.tr("Open sidebar by hovering screen corners"), keywords: ["sidebar", "corner", "open", "hover", "edge", "clickless"] },
         { pageIndex: 5, pageName: overlayPages[5].name, section: Translation.tr("Overview"), label: Translation.tr("Overview"), description: Translation.tr("Overview scale, rows and columns"), keywords: ["overview", "grid", "rows", "columns", "scale"] },
+        { pageIndex: 5, pageName: overlayPages[5].name, section: Translation.tr("Settings UI"), label: Translation.tr("Overlay mode"), description: Translation.tr("Open Settings as floating overlay inside shell for live preview"), keywords: ["settings", "overlay", "mode", "live", "preview", "floating", "window", "layer"] },
+        { pageIndex: 5, pageName: overlayPages[5].name, section: Translation.tr("Settings UI"), label: Translation.tr("Overlay background dim"), description: Translation.tr("Dim amount behind the Settings overlay panel"), keywords: ["settings", "overlay", "dim", "scrim", "background", "dark"] },
+        { pageIndex: 5, pageName: overlayPages[5].name, section: Translation.tr("Settings UI"), label: Translation.tr("Overlay panel opacity"), description: Translation.tr("Background opacity of the Settings overlay panel"), keywords: ["settings", "overlay", "opacity", "transparent", "panel", "background"] },
+        { pageIndex: 5, pageName: overlayPages[5].name, section: Translation.tr("Settings UI"), label: Translation.tr("Overlay blur"), description: Translation.tr("Enhanced glass blur for Settings overlay (aurora/angel only)"), keywords: ["settings", "overlay", "blur", "glass", "aurora", "angel"] },
         // Services (page 6)
         { pageIndex: 6, pageName: overlayPages[6].name, section: Translation.tr("AI"), label: Translation.tr("AI"), description: Translation.tr("System prompt for sidebar AI"), keywords: ["ai", "prompt", "system", "sidebar", "chat"] },
         { pageIndex: 6, pageName: overlayPages[6].name, section: Translation.tr("Music Recognition"), label: Translation.tr("Music Recognition"), description: Translation.tr("Song recognition timeout and interval"), keywords: ["music", "recognition", "song", "timeout", "shazam", "songrec"] },
@@ -144,6 +148,9 @@ Scope {
         { pageIndex: 6, pageName: overlayPages[6].name, section: Translation.tr("Applications"), label: Translation.tr("Default applications"), description: Translation.tr("Terminal, file manager, browser commands"), keywords: ["apps", "applications", "terminal", "browser", "file", "manager", "discord", "default"] },
         // Advanced (page 7)
         { pageIndex: 7, pageName: overlayPages[7].name, section: Translation.tr("Color generation"), label: Translation.tr("Color generation"), description: Translation.tr("Wallpaper-based color theming and palette type"), keywords: ["color", "generation", "theming", "wallpaper", "matugen", "palette"] },
+        { pageIndex: 7, pageName: overlayPages[7].name, section: Translation.tr("Color generation"), label: Translation.tr("Terminal saturation"), description: Translation.tr("Saturation intensity of terminal colors from wallpaper"), keywords: ["terminal", "color", "saturation", "vivid", "muted", "intensity"] },
+        { pageIndex: 7, pageName: overlayPages[7].name, section: Translation.tr("Color generation"), label: Translation.tr("Terminal brightness"), description: Translation.tr("Brightness/lightness of terminal colors from wallpaper"), keywords: ["terminal", "color", "brightness", "lightness", "dark", "light"] },
+        { pageIndex: 7, pageName: overlayPages[7].name, section: Translation.tr("Color generation"), label: Translation.tr("Terminal harmony"), description: Translation.tr("How much to blend terminal colors with the wallpaper palette"), keywords: ["terminal", "color", "harmony", "blend", "palette", "wallpaper"] },
         { pageIndex: 7, pageName: overlayPages[7].name, section: Translation.tr("Performance"), label: Translation.tr("Low power mode"), description: Translation.tr("Reduce resource usage for low-end hardware"), keywords: ["performance", "low", "power", "mode", "reduce", "battery", "laptop"] },
         { pageIndex: 7, pageName: overlayPages[7].name, section: Translation.tr("Interactions"), label: Translation.tr("Scrolling"), description: Translation.tr("Touchpad and mouse scroll speed"), keywords: ["scroll", "touchpad", "mouse", "speed", "fast", "slow", "sensitivity"] },
         // Shortcuts (page 8)
@@ -482,7 +489,7 @@ Scope {
                 id: scrimBg
                 anchors.fill: parent
                 color: Appearance.colors.colScrim
-                opacity: (GlobalStates.settingsOverlayOpen ?? false) ? (Config.options?.overlay?.scrimDim ?? 35) / 100 : 0
+                opacity: (GlobalStates.settingsOverlayOpen ?? false) ? (Config.options?.settingsUi?.overlayAppearance?.scrimDim ?? 35) / 100 : 0
                 visible: opacity > 0
 
                 Behavior on opacity {
@@ -507,6 +514,7 @@ Scope {
 
                 readonly property real maxCardWidth: Math.min(1100, settingsPanel.width * 0.88)
                 readonly property real maxCardHeight: Math.min(850, settingsPanel.height * 0.88)
+                readonly property real panelBgOpacity: Config.options?.settingsUi?.overlayAppearance?.backgroundOpacity ?? 1.0
 
                 anchors.centerIn: parent
                 width: maxCardWidth
@@ -515,8 +523,8 @@ Scope {
                       : Appearance.inirEverywhere ? Appearance.inir.roundingLarge
                       : Appearance.rounding.windowRounding
                 color: Appearance.auroraEverywhere ? "transparent"
-                     : Appearance.inirEverywhere ? Appearance.inir.colLayer0
-                     : Appearance.m3colors.m3background
+                     : Appearance.inirEverywhere ? ColorUtils.applyAlpha(Appearance.inir.colLayer0, panelBgOpacity)
+                     : ColorUtils.applyAlpha(Appearance.m3colors.m3background, panelBgOpacity)
                 clip: true
 
                 border.width: Appearance.angelEverywhere ? Appearance.angel.panelBorderWidth

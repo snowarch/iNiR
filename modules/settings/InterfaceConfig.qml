@@ -2807,6 +2807,47 @@ ContentPage {
                 }
             }
 
+            ContentSubsection {
+                title: Translation.tr("Overlay appearance")
+                visible: Config.options?.settingsUi?.overlayMode ?? false
+
+                ConfigSpinBox {
+                    icon: "water"
+                    text: Translation.tr("Background dim (%)")
+                    value: Config.options?.settingsUi?.overlayAppearance?.scrimDim ?? 35
+                    from: 0
+                    to: 80
+                    stepSize: 5
+                    onValueChanged: Config.setNestedValue("settingsUi.overlayAppearance.scrimDim", value)
+                    StyledToolTip {
+                        text: Translation.tr("How dark the backdrop behind the Settings panel should be (0 = transparent, 80 = very dark)")
+                    }
+                }
+
+                ConfigSpinBox {
+                    icon: "opacity"
+                    text: Translation.tr("Panel background opacity (%)")
+                    value: Math.round((Config.options?.settingsUi?.overlayAppearance?.backgroundOpacity ?? 1.0) * 100)
+                    from: 20
+                    to: 100
+                    stepSize: 5
+                    onValueChanged: Config.setNestedValue("settingsUi.overlayAppearance.backgroundOpacity", value / 100)
+                    StyledToolTip {
+                        text: Translation.tr("Opacity of the Settings panel background. Lower values let the shell show through.")
+                    }
+                }
+
+                ConfigSwitch {
+                    buttonIcon: "blur_on"
+                    text: Translation.tr("Enhanced blur (aurora/angel only)")
+                    checked: Config.options?.settingsUi?.overlayAppearance?.enableBlur ?? false
+                    onCheckedChanged: Config.setNestedValue("settingsUi.overlayAppearance.enableBlur", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Apply extra glass blur behind the Settings panel. Only visible with aurora or angel global style.")
+                    }
+                }
+            }
+
             // Visual hint showing current mode
             Rectangle {
                 Layout.fillWidth: true

@@ -406,6 +406,14 @@
     "separatePinnedFromRunning": true,
     "enableDragReorder": true
   },
+  "settingsUi": {
+    "overlayMode": false,
+    "overlayAppearance": {
+      "scrimDim": 35,
+      "backgroundOpacity": 1.0,
+      "enableBlur": false
+    }
+  },
   "hacks": {
     "arbitraryRaceConditionDelay": 20
   },

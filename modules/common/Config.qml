@@ -1123,6 +1123,11 @@ Singleton {
 
             property JsonObject settingsUi: JsonObject {
                 property bool overlayMode: false // true = layer shell overlay (live preview), false = separate window (default)
+                property JsonObject overlayAppearance: JsonObject {
+                    property int scrimDim: 35           // % dim of the backdrop scrim behind the settings panel (0-100)
+                    property real backgroundOpacity: 1.0 // opacity of the settings panel background itself (0.2-1.0)
+                    property bool enableBlur: false      // extra blur override for glass background (aurora/angel only)
+                }
             }
 
             property JsonObject hacks: JsonObject {
