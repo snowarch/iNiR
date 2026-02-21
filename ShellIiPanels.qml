@@ -91,7 +91,7 @@ Item {
                     id: ripple
                     anchors.fill: parent
                     color: Appearance.colors.colPrimary
-                    duration: 2400
+                    duration: 3000
 
                     Component.onCompleted: {
                         if (Config.options.background.effects.ripple.reload ?? true) {

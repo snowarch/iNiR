@@ -9,7 +9,7 @@ Item {
     property real progress: 0
     property real centerX: 0.5
     property real centerY: 0.5
-    property int duration: 2400
+    property int duration: 3000
     property bool playing: progress > 0 && progress < 1.0
 
     function spawn(x, y) {
@@ -46,7 +46,7 @@ Item {
         from: 0
         to: 1.0
         duration: root.duration
-        easing.type: Easing.OutExpo
+        easing.type: Easing.OutCubic
         onFinished: root.progress = 0
     }
 }
