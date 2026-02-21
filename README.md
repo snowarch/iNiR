@@ -34,8 +34,14 @@
 - **Theme presets** — Gruvbox, Catppuccin, and more, or build your own
 - **GameMode** — Auto-disables effects when fullscreen apps are detected
 - **GUI Settings** — Configure everything without touching JSON
-- **Pixel Fluid Ripple** — Authentic, GPU-accelerated "sparkle" ripple animations for system events
-- **Lenovo Conservation Mode** — Integrated control for Lenovo battery health settings
+- **Fluid Ripple (AOSP Port)** — Authentic Android sparkle-style ripple animations for system events, ported from the Android Open Source Project (Apache 2.0).
+- **Battery Conservation Mode** — Integrated control for battery health settings on supported laptops.
+
+---
+
+## Technical Attributions
+
+This project includes code derived from the **Android Open Source Project (AOSP)**, specifically the Material You ripple shader logic, licensed under the **Apache License 2.0**. Portions of the implementation were adapted for the Qt6/Quickshell pipeline.
 
 ---
 
