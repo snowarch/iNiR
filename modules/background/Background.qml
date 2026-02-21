@@ -162,8 +162,8 @@ Variants {
         // Layer props
         screen: modelData
         exclusionMode: ExclusionMode.Ignore
-        // Only use Overlay when strictly necessary (locked and stable). Otherwise Bottom.
-        WlrLayershell.layer: (GlobalStates.screenLocked && !scaleAnim.running) ? WlrLayer.Overlay : WlrLayer.Bottom
+        // Keep background behind the lock surface. Moving this to Overlay can capture input.
+        WlrLayershell.layer: WlrLayer.Bottom
         WlrLayershell.namespace: "quickshell:background"
         anchors { top: true; bottom: true; left: true; right: true }
         color: {
@@ -477,16 +477,12 @@ Variants {
             // Desktop right-click context menu
             MouseArea {
                 anchors.fill: parent
-                z: 25
-                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                z: 15  // Below WidgetCanvas (z: 20) so widgets can receive input
+                acceptedButtons: Qt.RightButton
                 onClicked: function(mouse) {
-                    if (mouse.button === Qt.RightButton) {
-                        desktopMenuAnchor.x = mouse.x
-                        desktopMenuAnchor.y = mouse.y
-                        desktopContextMenu.active = true
-                    } else if (desktopContextMenu.active) {
-                        desktopContextMenu.close()
-                    }
+                    desktopMenuAnchor.x = mouse.x
+                    desktopMenuAnchor.y = mouse.y
+                    desktopContextMenu.active = true
                 }
             }
 
@@ -520,6 +516,7 @@ Variants {
             WidgetCanvas {
                 id: widgetCanvas
                 z: 20
+                enabled: !GlobalStates.screenLocked  // Disable all widget input during lock
                 readonly property bool useParallax: wallpaperContainer.useParallax && !bgRoot.backdropActive
                 anchors {
                     left: useParallax ? wallpaperContainer.left : parent.left

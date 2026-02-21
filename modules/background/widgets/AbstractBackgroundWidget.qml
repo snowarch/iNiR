@@ -20,8 +20,20 @@ AbstractWidget {
     property string placementStrategy: configEntry.placementStrategy
     property real targetX: Math.max(0, Math.min(configEntry.x, scaledScreenWidth - width))
     property real targetY : Math.max(0, Math.min(configEntry.y, scaledScreenHeight - height))
-    x: targetX
-    y: targetY
+
+    Binding {
+        target: root
+        property: "x"
+        value: root.targetX
+        when: root.placementStrategy !== "free"
+    }
+    Binding {
+        target: root
+        property: "y"
+        value: root.targetY
+        when: root.placementStrategy !== "free"
+    }
+
     visible: opacity > 0
     opacity: (GlobalStates.screenLocked && !visibleWhenLocked) ? 0 : 1
     enabled: !GlobalStates.screenLocked
@@ -34,6 +46,13 @@ AbstractWidget {
     }
 
     draggable: placementStrategy === "free" && !GlobalStates.screenLocked
+    function syncFreePositionFromConfig(): void {
+        if (!Config.ready) return;
+        if (root.placementStrategy !== "free") return;
+        root.x = root.targetX;
+        root.y = root.targetY;
+    }
+
     onReleased: {
         if (GlobalStates.screenLocked) return;
         root.targetX = root.x;
@@ -61,10 +80,16 @@ AbstractWidget {
     property string wallpaperPath: wallpaperIsVideo ? (Config.options?.background?.thumbnailPath ?? "") : (Config.options?.background?.wallpaperPath ?? "")
     
     onWallpaperPathChanged: refreshPlacementIfNeeded()
-    onPlacementStrategyChanged: refreshPlacementIfNeeded()
+    onPlacementStrategyChanged: {
+        syncFreePositionFromConfig()
+        refreshPlacementIfNeeded()
+    }
     Connections {
         target: Config
-        function onReadyChanged() { refreshPlacementIfNeeded() }
+        function onReadyChanged() {
+            refreshPlacementIfNeeded()
+            syncFreePositionFromConfig()
+        }
     }
     function refreshPlacementIfNeeded() {
         if (!Config.ready || (root.placementStrategy === "free" && root.needsColText)) return;
