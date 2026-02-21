@@ -13,7 +13,8 @@ import Quickshell.Wayland
 WindowDialog {
     id: root
     property var screen: root.QsWindow.window?.screen
-    property var brightnessMonitor: Brightness.getMonitorForScreen(screen)
+    // Brightness monitor may be unavailable on some outputs; guard access.
+    property var brightnessMonitor: screen ? Brightness.getMonitorForScreen(screen) : null
     backgroundHeight: 680
 
     WindowDialogTitle {
@@ -169,6 +170,7 @@ WindowDialog {
         Layout.topMargin: -16
         Layout.fillWidth: true
         Layout.fillHeight: true
+        visible: !!root.brightnessMonitor
 
         WindowDialogSlider {
             anchors {
@@ -178,8 +180,8 @@ WindowDialog {
                 rightMargin: 4
             }
             // text: Translation.tr("Brightness")
-            value: root.brightnessMonitor.brightness
-            onMoved: root.brightnessMonitor.setBrightness(value)
+            value: root.brightnessMonitor?.brightness ?? 0
+            onMoved: root.brightnessMonitor?.setBrightness(value)
         }
     }
     

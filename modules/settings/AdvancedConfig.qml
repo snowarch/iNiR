@@ -11,7 +11,7 @@ ContentPage {
 
     Timer {
         id: colorRegenTimer
-        interval: 1200
+        interval: 500  // Reduced for faster terminal color previews
         onTriggered: Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--noswitch"])
     }
 
@@ -123,37 +123,6 @@ ContentPage {
                 }
             }
 
-            ConfigSpinBox {
-                icon: "tonality"
-                text: Translation.tr("Terminal: Color saturation (%)")
-                value: Math.round((Config.options?.appearance?.wallpaperTheming?.terminalColorAdjustments?.saturation ?? 0.40) * 100)
-                from: 0
-                to: 100
-                stepSize: 5
-                onValueChanged: {
-                    Config.setNestedValue("appearance.wallpaperTheming.terminalColorAdjustments.saturation", value / 100);
-                    colorRegenTimer.restart();
-                }
-                StyledToolTip {
-                    text: Translation.tr("Saturation intensity of terminal colors generated from wallpaper. Higher = more vivid, lower = more muted.")
-                }
-            }
-
-            ConfigSpinBox {
-                icon: "wb_sunny"
-                text: Translation.tr("Terminal: Color brightness (%)")
-                value: Math.round((Config.options?.appearance?.wallpaperTheming?.terminalColorAdjustments?.brightness ?? 0.55) * 100)
-                from: 10
-                to: 95
-                stepSize: 5
-                onValueChanged: {
-                    Config.setNestedValue("appearance.wallpaperTheming.terminalColorAdjustments.brightness", value / 100);
-                    colorRegenTimer.restart();
-                }
-                StyledToolTip {
-                    text: Translation.tr("Brightness/lightness of terminal colors generated from wallpaper. Lower = darker colors, higher = brighter.")
-                }
-            }
         }
     }
 

@@ -15,7 +15,7 @@ import qs.modules.common.functions as CF
  * Settings UI as a layer shell overlay panel.
  * Allows users to see live changes to the shell (sidebars, bar, etc.)
  * without opening a separate window. Loaded by the main shell when
- * Config.options.settingsUi.overlayMode is true.
+ * Config.options?.settingsUi?.overlayMode is true.
  */
 Scope {
     id: root
@@ -224,6 +224,10 @@ Scope {
             if (!isWaffleActive) {
                 widgetResults = widgetResults.filter(r => r.pageIndex !== wafflePageIndex);
             }
+            // Prefer real controls (dynamic registry entries with optionId)
+            for (var wr = 0; wr < widgetResults.length; wr++) {
+                widgetResults[wr].score = (widgetResults[wr].score || 0) + 2000;
+            }
             results = results.concat(widgetResults);
         }
 
@@ -233,7 +237,7 @@ Scope {
         var unique = [];
         for (var k = 0; k < results.length; k++) {
             var r = results[k];
-            var key = (r.label || "") + "|" + (r.section || "");
+            var key = String(r.pageIndex) + "|" + String(r.label || "").toLowerCase();
             if (!seen[key]) {
                 seen[key] = { index: unique.length, hasOptionId: r.optionId !== undefined };
                 unique.push(r);
@@ -246,39 +250,47 @@ Scope {
         overlaySearchResults = unique.slice(0, 50);
     }
 
-    // ── Spotlight system (ported from settings.qml) ──
+    // ── Spotlight system (full, aligned with settings.qml) ──
     property int pendingSpotlightOptionId: -1
     property string pendingSpotlightLabel: ""
     property string pendingSpotlightSection: ""
     property int pendingSpotlightPageIndex: -1
+    property bool pendingSpotlightIsSection: false
     property var spotlightFlickable: null
     property real spotlightTargetScrollY: 0
     property int spotlightRetryCount: 0
     property int spotlightMaxRetries: 15
 
     function openOverlaySearchResult(entry) {
+        // Clear search immediately
         overlaySearchText = "";
         if (typeof overlaySearchField !== "undefined" && overlaySearchField) overlaySearchField.text = "";
 
+        // Deactivate any existing spotlight
         deactivateSpotlight();
 
         if (!entry || entry.pageIndex === undefined || entry.pageIndex < 0) return;
 
+        // Store spotlight target info
         pendingSpotlightOptionId = (entry.optionId !== undefined) ? entry.optionId : -1;
         pendingSpotlightLabel = entry.label || "";
         pendingSpotlightSection = entry.section || "";
         pendingSpotlightPageIndex = entry.pageIndex;
+        pendingSpotlightIsSection = (entry.optionId === undefined) && (entry.isSection === true);
 
+        // Navigate to page (this triggers page load if needed)
         if (overlayCurrentPage !== entry.pageIndex) {
             overlayCurrentPage = entry.pageIndex;
         }
 
+        // Always try spotlight (with retry for lazy-loaded widgets)
         if (pendingSpotlightOptionId >= 0 || pendingSpotlightLabel.length > 0) {
             spotlightRetryCount = 0;
             spotlightPageLoadTimer.restart();
         }
     }
 
+    // Timer to wait for page load and widget registration
     Timer {
         id: spotlightPageLoadTimer
         interval: 150
@@ -288,26 +300,67 @@ Scope {
     function trySpotlight() {
         var control = null;
 
+        // Try by optionId first
         if (pendingSpotlightOptionId >= 0) {
             control = SettingsSearchRegistry.getControlById(pendingSpotlightOptionId);
         }
 
+        // Fallback: search in registry by various criteria
+        // IMPORTANT: for static index entries (no optionId), treat as section navigation.
+        // Don't guess a specific control by fuzzy label matching.
         if (!control && (pendingSpotlightLabel.length > 0 || pendingSpotlightSection.length > 0)) {
             var labelLower = pendingSpotlightLabel.toLowerCase();
             var sectionLower = pendingSpotlightSection.toLowerCase();
-            var sectionParts = sectionLower.split(" · ");
+            // Remove page name prefix from sectionGroup if present (supports both delimiters)
+            // e.g., "Themes · Global Style" or "Themes › Global Style" -> "Global Style"
+            var sectionParts = sectionLower.split(/[·›]/).map(p => p.trim()).filter(p => p.length > 0);
             var sectionOnly = sectionParts.length > 1 ? sectionParts[sectionParts.length - 1] : sectionLower;
 
             for (var i = 0; i < SettingsSearchRegistry.entries.length; i++) {
                 var e = SettingsSearchRegistry.entries[i];
-                if (e.pageIndex === pendingSpotlightPageIndex) {
-                    var eLabelLower = (e.label || "").toLowerCase();
-                    var eSectionLower = (e.section || "").toLowerCase();
+                if (e.pageIndex !== pendingSpotlightPageIndex)
+                    continue;
 
-                    if (eLabelLower === labelLower) { control = e.control; break; }
-                    if (eSectionLower === sectionOnly || eSectionLower === labelLower) { control = e.control; break; }
-                    if (labelLower.length > 2 && eLabelLower.indexOf(labelLower) >= 0) { control = e.control; break; }
-                    if (e.keywords && e.keywords.some(k => k.toLowerCase() === labelLower)) { control = e.control; break; }
+                var eLabelLower = (e.label || "").toLowerCase();
+                var eSectionLower = (e.section || "").toLowerCase();
+                var eSectionParts = eSectionLower.split(/[·›]/).map(p => p.trim()).filter(p => p.length > 0);
+                var eSectionOnly = eSectionParts.length > 1 ? eSectionParts[eSectionParts.length - 1] : eSectionLower;
+
+                if (pendingSpotlightIsSection) {
+                    // Prefer matching the section title control.
+                    // Registry section titles commonly appear in e.label (SettingsCardSection/CollapsibleSection).
+                    if (eLabelLower === labelLower || eLabelLower === sectionOnly) {
+                        control = e.control;
+                        break;
+                    }
+                    if (eSectionOnly === sectionOnly || eSectionOnly === labelLower) {
+                        control = e.control;
+                        break;
+                    }
+                } else {
+                    // Exact label match
+                    if (eLabelLower === labelLower) {
+                        control = e.control;
+                        break;
+                    }
+
+                    // Section title match (for SettingsCardSection / CollapsibleSection)
+                    if (eSectionOnly === sectionOnly || eSectionOnly === labelLower) {
+                        control = e.control;
+                        break;
+                    }
+
+                    // Label contains search term
+                    if (labelLower.length > 2 && eLabelLower.indexOf(labelLower) >= 0) {
+                        control = e.control;
+                        break;
+                    }
+
+                    // Keywords contain search term
+                    if (e.keywords && e.keywords.some(k => k.toLowerCase() === labelLower)) {
+                        control = e.control;
+                        break;
+                    }
                 }
             }
         }
@@ -318,20 +371,24 @@ Scope {
             spotlightRetryCount++;
             spotlightPageLoadTimer.restart();
         } else {
+            // Give up after max retries - clear pending data
             pendingSpotlightOptionId = -1;
             pendingSpotlightLabel = "";
             pendingSpotlightSection = "";
             pendingSpotlightPageIndex = -1;
+            pendingSpotlightIsSection = false;
         }
     }
 
     function doSpotlightForControl(control) {
         if (!control) return;
 
+        // Expand the section containing the control and collapse others
         if (typeof SettingsSearchRegistry !== "undefined") {
             SettingsSearchRegistry.expandSectionForControl(control);
         }
 
+        // Find the parent Flickable (ContentPage/StyledFlickable)
         var flick = findParentFlickable(control);
         if (!flick) {
             pendingSpotlightOptionId = -1;
@@ -340,20 +397,30 @@ Scope {
             return;
         }
 
+        // Use mapToItem to get the control's position relative to the Flickable's contentItem
         var posInContent = control.mapToItem(flick.contentItem, 0, 0);
         var controlYInContent = posInContent.y;
+
+        // Calculate target scroll position to center the control in viewport
         var viewportHeight = flick.height;
         var controlHeight = control.height;
         var targetScrollY = controlYInContent - (viewportHeight / 2) + (controlHeight / 2);
+
+        // Clamp to valid scroll range
         var maxScroll = Math.max(0, flick.contentHeight - flick.height);
         targetScrollY = Math.max(0, Math.min(targetScrollY, maxScroll));
 
+        // Store the target scroll position for later verification
         spotlightTargetScrollY = targetScrollY;
+
+        // Scroll to position - set directly to bypass animation
         flick.contentY = targetScrollY;
 
+        // Store references for spotlight calculation
         spotlightTarget = control;
         spotlightFlickable = flick;
 
+        // Wait for layout to update after scroll
         spotlightShowTimer.restart();
     }
 
@@ -372,13 +439,22 @@ Scope {
         var control = spotlightTarget;
         var flick = spotlightFlickable;
 
+        // Check if scroll animation is still running (contentY hasn't reached target)
         var scrollDiff = Math.abs(flick.contentY - spotlightTargetScrollY);
         if (scrollDiff > 2) {
             spotlightShowTimer.restart();
             return;
         }
 
+        // Guard: overlayContentContainer may not be loaded yet
+        if (typeof overlayContentContainer === "undefined" || !overlayContentContainer) {
+            spotlightShowTimer.restart();
+            return;
+        }
+
+        // Use mapToItem directly to get the control's visual position in overlayContentContainer
         var pos = control.mapToItem(overlayContentContainer, 0, 0);
+
         var padding = 8;
         spotlightRect = Qt.rect(
             Math.max(0, pos.x - padding),
@@ -388,19 +464,7 @@ Scope {
         );
         spotlightActive = true;
         pendingSpotlightOptionId = -1;
-    }
-
-    function findParentFlickable(item) {
-        var p = item ? item.parent : null;
-        while (p) {
-            if (p.hasOwnProperty("contentY") &&
-                p.hasOwnProperty("contentHeight") &&
-                p.hasOwnProperty("contentItem")) {
-                return p;
-            }
-            p = p.parent;
-        }
-        return null;
+        pendingSpotlightIsSection = false;
     }
 
     function deactivateSpotlight() {
@@ -409,17 +473,22 @@ Scope {
         spotlightFlickable = null;
         spotlightTargetScrollY = 0;
         pendingSpotlightOptionId = -1;
+        pendingSpotlightIsSection = false;
     }
 
-    // Reset page when panel family changes to avoid showing stale page from other family
-    property string _lastFamily: Config.options?.panelFamily ?? "ii"
-    onSettingsOpenChanged: {
-        var currentFamily = Config.options?.panelFamily ?? "ii";
-        if (currentFamily !== _lastFamily) {
-            _lastFamily = currentFamily;
-            overlayCurrentPage = 0;
+    function findParentFlickable(item) {
+        var p = item ? item.parent : null;
+        while (p) {
+            if (p.hasOwnProperty("contentY") && p.hasOwnProperty("contentHeight") && p.hasOwnProperty("contentItem")) {
+                return p;
+            }
+            p = p.parent;
         }
+        return null;
     }
+
+    property string _lastFamily: Config.options?.panelFamily ?? "ii"
+
     Connections {
         target: Config.options ?? null
         function onPanelFamilyChanged() {
@@ -461,6 +530,20 @@ Scope {
                 right: true
             }
 
+            // Global Escape key shortcut (works regardless of focus)
+            Shortcut {
+                sequences: ["Escape"]
+                onActivated: {
+                    if (root.spotlightActive) {
+                        root.deactivateSpotlight();
+                    } else if (root.overlaySearchText.length > 0) {
+                        root.openOverlaySearchResult({});
+                    } else {
+                        GlobalStates.settingsOverlayOpen = false;
+                    }
+                }
+            }
+
             // Focus grab for Hyprland
             CompositorFocusGrab {
                 id: grab
@@ -488,9 +571,10 @@ Scope {
             Rectangle {
                 id: scrimBg
                 anchors.fill: parent
-                color: Appearance.colors.colScrim
+                color: Appearance.m3colors.m3scrim
                 opacity: (GlobalStates.settingsOverlayOpen ?? false) ? (Config.options?.settingsUi?.overlayAppearance?.scrimDim ?? 35) / 100 : 0
-                visible: opacity > 0
+                // Must remain interactive even when fully transparent (scrimDim = 0)
+                visible: (GlobalStates.settingsOverlayOpen ?? false)
 
                 Behavior on opacity {
                     enabled: Appearance.animationsEnabled
@@ -523,8 +607,8 @@ Scope {
                       : Appearance.inirEverywhere ? Appearance.inir.roundingLarge
                       : Appearance.rounding.windowRounding
                 color: Appearance.auroraEverywhere ? "transparent"
-                     : Appearance.inirEverywhere ? ColorUtils.applyAlpha(Appearance.inir.colLayer0, panelBgOpacity)
-                     : ColorUtils.applyAlpha(Appearance.m3colors.m3background, panelBgOpacity)
+                     : Appearance.inirEverywhere ? CF.ColorUtils.applyAlpha(Appearance.inir.colLayer0, panelBgOpacity)
+                     : CF.ColorUtils.applyAlpha(Appearance.m3colors.m3background, panelBgOpacity)
                 clip: true
 
                 border.width: Appearance.angelEverywhere ? Appearance.angel.panelBorderWidth
@@ -1221,105 +1305,123 @@ Scope {
                                 }
                             }
 
-                            delegate: RippleButton {
-                                id: resultItem
+                            delegate: Column {
+                                id: resultDelegate
                                 required property var modelData
                                 required property int index
-
+                                
                                 width: overlayResultsList.width
-                                implicitHeight: 52
-                                buttonRadius: Appearance.rounding.small
-
-                                colBackground: ListView.isCurrentItem
-                                    ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                                      : Appearance.inirEverywhere ? Appearance.inir.colLayer1
-                                      : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
-                                      : Appearance.colors.colLayer2)
-                                    : "transparent"
-                                colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                                                  : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
-                                                  : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                                                  : Appearance.colors.colLayer2
-
-                                Keys.forwardTo: [overlayResultsList]
-                                onClicked: root.openOverlaySearchResult(modelData)
-
-                                contentItem: RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: 12
-                                    anchors.rightMargin: 12
-                                    spacing: 12
-
-                                    // Page icon
-                                    MaterialSymbol {
-                                        text: {
-                                            var icons = ["instant_mix", "browse", "toast", "texture", "palette",
-                                                        "bottom_app_bar", "settings", "construction", "keyboard",
-                                                        "extension", "window", "info"];
-                                            return icons[resultItem.modelData.pageIndex] || "settings";
-                                        }
-                                        iconSize: 20
-                                        color: resultItem.ListView.isCurrentItem
-                                            ? Appearance.colors.colOnLayer1
-                                            : Appearance.colors.colPrimary
+                                spacing: 0
+                                
+                                // Section header - show when page changes from previous result
+                                Rectangle {
+                                    id: sectionHeader
+                                    width: parent.width
+                                    height: visible ? 24 : 0
+                                    color: "transparent"
+                                    visible: {
+                                        if (resultDelegate.index === 0) return true;
+                                        var prev = root.overlaySearchResults[resultDelegate.index - 1];
+                                        return prev && prev.pageIndex !== resultDelegate.modelData.pageIndex;
                                     }
-
-                                    // Text content
-                                    ColumnLayout {
-                                        Layout.fillWidth: true
-                                        spacing: 1
-
-                                        Text {
-                                            Layout.fillWidth: true
-                                            text: resultItem.modelData.labelHighlighted || resultItem.modelData.label || resultItem.modelData.pageName || ""
-                                            textFormat: Text.StyledText
-                                            font {
-                                                family: Appearance.font.family.main
-                                                pixelSize: Appearance.font.pixelSize.small
-                                                weight: Font.Medium
+                                    
+                                    Row {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        anchors.left: parent.left
+                                        anchors.leftMargin: 8
+                                        spacing: 6
+                                        
+                                        MaterialSymbol {
+                                            text: {
+                                                var icons = ["instant_mix", "browse", "toast", "texture", "palette",
+                                                            "bottom_app_bar", "settings", "construction", "keyboard",
+                                                            "extension", "window", "info"];
+                                                return icons[resultDelegate.modelData.pageIndex] || "settings";
                                             }
-                                            color: resultItem.ListView.isCurrentItem
-                                                ? Appearance.colors.colOnLayer1
-                                                : Appearance.colors.colOnLayer1
-                                            elide: Text.ElideRight
+                                            iconSize: 12
+                                            color: Appearance.colors.colPrimary
+                                            anchors.verticalCenter: parent.verticalCenter
                                         }
-
-                                        // Breadcrumb path
-                                        Row {
-                                            Layout.fillWidth: true
-                                            spacing: 4
-                                            visible: resultItem.modelData.pageName !== undefined
-
-                                            StyledText {
-                                                text: resultItem.modelData.pageName || ""
-                                                font.pixelSize: Appearance.font.pixelSize.smaller
-                                                color: Appearance.colors.colSubtext
-                                                opacity: 0.9
-                                            }
-                                            MaterialSymbol {
-                                                visible: resultItem.modelData.section && resultItem.modelData.section !== resultItem.modelData.pageName
-                                                text: "chevron_right"
-                                                iconSize: Appearance.font.pixelSize.smaller
-                                                color: Appearance.colors.colSubtext
-                                                opacity: 0.6
-                                                anchors.verticalCenter: parent.verticalCenter
-                                            }
-                                            StyledText {
-                                                visible: resultItem.modelData.section && resultItem.modelData.section !== resultItem.modelData.pageName
-                                                text: resultItem.modelData.section || ""
-                                                font.pixelSize: Appearance.font.pixelSize.smaller
-                                                color: Appearance.colors.colSubtext
-                                                opacity: 0.9
-                                            }
+                                        StyledText {
+                                            text: resultDelegate.modelData.pageName || ""
+                                            font.pixelSize: Appearance.font.pixelSize.smaller
+                                            font.weight: Font.DemiBold
+                                            color: Appearance.colors.colPrimary
                                         }
                                     }
+                                }
+                                
+                                RippleButton {
+                                    id: resultItem
+                                    
+                                    width: parent.width
+                                    implicitHeight: 48
+                                    buttonRadius: Appearance.rounding.small
 
-                                    // Arrow
-                                    MaterialSymbol {
-                                        text: "arrow_forward"
-                                        iconSize: 16
-                                        color: Appearance.colors.colSubtext
-                                        opacity: resultItem.hovered || resultItem.ListView.isCurrentItem ? 1 : 0
+                                    colBackground: resultDelegate.ListView.isCurrentItem
+                                        ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                                          : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+                                          : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
+                                          : Appearance.colors.colLayer2)
+                                        : "transparent"
+                                    colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                                                      : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
+                                                      : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+                                                      : Appearance.colors.colLayer2
+
+                                    Keys.forwardTo: [overlayResultsList]
+                                    onClicked: root.openOverlaySearchResult(resultDelegate.modelData)
+
+                                    contentItem: RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 12
+                                        anchors.rightMargin: 12
+                                        spacing: 8
+
+                                        // Section indicator
+                                        Rectangle {
+                                            width: 4
+                                            height: 20
+                                            radius: 2
+                                            color: Appearance.colors.colPrimary
+                                            opacity: resultDelegate.ListView.isCurrentItem ? 1 : 0.5
+                                        }
+
+                                        // Text content
+                                        ColumnLayout {
+                                            Layout.fillWidth: true
+                                            spacing: 1
+
+                                            Text {
+                                                Layout.fillWidth: true
+                                                text: resultDelegate.modelData.labelHighlighted || resultDelegate.modelData.label || resultDelegate.modelData.pageName || ""
+                                                textFormat: Text.StyledText
+                                                font {
+                                                    family: Appearance.font.family.main
+                                                    pixelSize: Appearance.font.pixelSize.small
+                                                    weight: Font.Medium
+                                                }
+                                                color: Appearance.colors.colOnLayer1
+                                                elide: Text.ElideRight
+                                            }
+
+                                            // Section breadcrumb (page is in header)
+                                            StyledText {
+                                                visible: resultDelegate.modelData.section && resultDelegate.modelData.section !== resultDelegate.modelData.pageName
+                                                text: resultDelegate.modelData.section || ""
+                                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                                color: Appearance.colors.colSubtext
+                                                opacity: 0.8
+                                            }
+                                        }
+
+                                        // Arrow
+                                        MaterialSymbol {
+                                            text: "arrow_forward"
+                                            iconSize: 16
+                                            color: Appearance.colors.colSubtext
+                                            opacity: resultItem.hovered || resultDelegate.ListView.isCurrentItem ? 1 : 0
+                                        }
                                     }
                                 }
                             }

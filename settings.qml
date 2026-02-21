@@ -1152,23 +1152,26 @@ ApplicationWindow {
             if (!isWaffleActive) {
                 widgetResults = widgetResults.filter(r => r.pageIndex !== wafflePageIndex);
             }
+            // Prefer real controls (dynamic registry entries with optionId)
+            for (var wr = 0; wr < widgetResults.length; wr++) {
+                widgetResults[wr].score = (widgetResults[wr].score || 0) + 2000;
+            }
             results = results.concat(widgetResults);
         }
 
         // 3. Ordenar por score y eliminar duplicados
         results.sort((a, b) => b.score - a.score);
 
-        // Eliminar duplicados por label+section, preferring entries with optionId
+        // Eliminar duplicados por pageIndex+label, preferring entries with optionId
         var seen = {};
         var unique = [];
         for (var k = 0; k < results.length; k++) {
             var r = results[k];
-            var key = (r.label || "") + "|" + (r.section || "");
+            var key = String(r.pageIndex) + "|" + String(r.label || "").toLowerCase();
             if (!seen[key]) {
                 seen[key] = { index: unique.length, hasOptionId: r.optionId !== undefined };
                 unique.push(r);
             } else if (r.optionId !== undefined && !seen[key].hasOptionId) {
-                // Replace the existing entry (without optionId) with this one (with optionId)
                 unique[seen[key].index] = r;
                 seen[key].hasOptionId = true;
             }
@@ -1182,6 +1185,7 @@ ApplicationWindow {
     property string pendingSpotlightLabel: ""
     property string pendingSpotlightSection: ""
     property int pendingSpotlightPageIndex: -1
+    property bool pendingSpotlightIsSection: false
     property var spotlightFlickable: null
 
     function openSearchResult(entry) {
@@ -1203,6 +1207,7 @@ ApplicationWindow {
         pendingSpotlightLabel = entry.label || "";
         pendingSpotlightSection = entry.section || "";
         pendingSpotlightPageIndex = entry.pageIndex;
+        pendingSpotlightIsSection = (entry.optionId === undefined) && (entry.isSection === true);
 
         // Navigate to page (this triggers page load if needed)
         if (currentPage !== entry.pageIndex) {
@@ -1235,11 +1240,14 @@ ApplicationWindow {
         }
 
         // Fallback: search in registry by various criteria
+        // IMPORTANT: for static index entries (no optionId), treat as section navigation.
+        // Don't guess a specific control by fuzzy label matching.
         if (!control && (pendingSpotlightLabel.length > 0 || pendingSpotlightSection.length > 0)) {
             var labelLower = pendingSpotlightLabel.toLowerCase();
             var sectionLower = pendingSpotlightSection.toLowerCase();
-            // Remove page name prefix from section if present (e.g., "Themes › Global Style" -> "Global Style")
-            var sectionParts = sectionLower.split(" › ");
+            // Remove page name prefix from section if present (supports both delimiters)
+            // e.g., "Themes › Global Style" or "Themes · Global Style" -> "Global Style"
+            var sectionParts = sectionLower.split(/[·›]/).map(p => p.trim()).filter(p => p.length > 0);
             var sectionOnly = sectionParts.length > 1 ? sectionParts[sectionParts.length - 1] : sectionLower;
 
             for (var i = 0; i < SettingsSearchRegistry.entries.length; i++) {
@@ -1248,25 +1256,37 @@ ApplicationWindow {
                     var eLabelLower = (e.label || "").toLowerCase();
                     var eSectionLower = (e.section || "").toLowerCase();
 
-                    // Exact label match
-                    if (eLabelLower === labelLower) {
-                        control = e.control;
-                        break;
-                    }
-                    // Section title match (for SettingsCardSection)
-                    if (eSectionLower === sectionOnly || eSectionLower === labelLower) {
-                        control = e.control;
-                        break;
-                    }
-                    // Label contains search term
-                    if (labelLower.length > 2 && eLabelLower.indexOf(labelLower) >= 0) {
-                        control = e.control;
-                        break;
-                    }
-                    // Keywords contain search term
-                    if (e.keywords && e.keywords.some(k => k.toLowerCase() === labelLower)) {
-                        control = e.control;
-                        break;
+                    if (pendingSpotlightIsSection) {
+                        // Prefer matching the section title control.
+                        if (eLabelLower === labelLower || eLabelLower === sectionOnly) {
+                            control = e.control;
+                            break;
+                        }
+                        if (eSectionLower === sectionOnly || eSectionLower === labelLower) {
+                            control = e.control;
+                            break;
+                        }
+                    } else {
+                        // Exact label match
+                        if (eLabelLower === labelLower) {
+                            control = e.control;
+                            break;
+                        }
+                        // Section title match (for SettingsCardSection)
+                        if (eSectionLower === sectionOnly || eSectionLower === labelLower) {
+                            control = e.control;
+                            break;
+                        }
+                        // Label contains search term
+                        if (labelLower.length > 2 && eLabelLower.indexOf(labelLower) >= 0) {
+                            control = e.control;
+                            break;
+                        }
+                        // Keywords contain search term
+                        if (e.keywords && e.keywords.some(k => k.toLowerCase() === labelLower)) {
+                            control = e.control;
+                            break;
+                        }
                     }
                 }
             }
@@ -1283,6 +1303,7 @@ ApplicationWindow {
             pendingSpotlightLabel = "";
             pendingSpotlightSection = "";
             pendingSpotlightPageIndex = -1;
+            pendingSpotlightIsSection = false;
         }
     }
 

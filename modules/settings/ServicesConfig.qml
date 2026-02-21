@@ -789,7 +789,7 @@ ContentPage {
                     font.pixelSize: Appearance.font.pixelSize.small
                 }
 
-                TextField {
+                MaterialTextField {
                     id: weatherCityInput
                     Layout.fillWidth: true
                     placeholderText: Translation.tr("e.g. Buenos Aires, London, Tokyo")
@@ -822,7 +822,7 @@ ContentPage {
                     Layout.fillWidth: true
                     spacing: 8
 
-                    TextField {
+                    MaterialTextField {
                         id: weatherLatInput
                         Layout.fillWidth: true
                         placeholderText: Translation.tr("Latitude (e.g. -34.6037)")
@@ -845,7 +845,7 @@ ContentPage {
                         }
                     }
 
-                    TextField {
+                    MaterialTextField {
                         id: weatherLonInput
                         Layout.fillWidth: true
                         placeholderText: Translation.tr("Longitude (e.g. -58.3816)")

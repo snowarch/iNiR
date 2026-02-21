@@ -1302,7 +1302,7 @@ ContentPage {
                         Layout.fillWidth: true
                         spacing: 6
 
-                        TextField {
+                        MaterialTextField {
                             id: subInput
                             Layout.fillWidth: true
                             placeholderText: Translation.tr("Add subreddit...")
@@ -1376,7 +1376,7 @@ ContentPage {
                             color: Appearance.colors.colOnLayer1
                         }
 
-                        TextField {
+                        MaterialTextField {
                             Layout.fillWidth: true
                             placeholderText: "https://hianime.to/search?keyword=%s"
                             text: Config.options.sidebar?.animeSchedule?.watchSite ?? ""
@@ -1430,7 +1430,7 @@ ContentPage {
                         font.pixelSize: Appearance.font.pixelSize.small
                         color: Appearance.colors.colOnSecondaryContainer
                     }
-                    TextField {
+                    MaterialTextField {
                         id: wallhavenApiInput
                         Layout.fillWidth: true
                         placeholderText: Translation.tr("Optional - for NSFW content")
@@ -1797,7 +1797,7 @@ ContentPage {
                                     color: Appearance.colors.colPrimary
                                 }
 
-                                TextInput {
+                                MaterialTextField {
                                     Layout.preferredWidth: 60
                                     text: launchItem.itemData.icon ?? ""
                                     font.pixelSize: Appearance.font.pixelSize.smaller
@@ -1818,7 +1818,7 @@ ContentPage {
 
                                 Rectangle { width: 1; Layout.fillHeight: true; Layout.topMargin: 8; Layout.bottomMargin: 8; color: Appearance.colors.colOutlineVariant }
 
-                                TextInput {
+                                MaterialTextField {
                                     Layout.preferredWidth: 70
                                     text: launchItem.itemData.name ?? ""
                                     font.pixelSize: Appearance.font.pixelSize.small
@@ -1839,7 +1839,7 @@ ContentPage {
 
                                 Rectangle { width: 1; Layout.fillHeight: true; Layout.topMargin: 8; Layout.bottomMargin: 8; color: Appearance.colors.colOutlineVariant }
 
-                                TextInput {
+                                MaterialTextField {
                                     Layout.fillWidth: true
                                     text: launchItem.itemData.cmd ?? ""
                                     font.pixelSize: Appearance.font.pixelSize.smaller
@@ -1993,14 +1993,15 @@ ContentPage {
                 }
 
                 // Coin input with autocomplete
-                Item {
+                ConfigRow {
                     Layout.fillWidth: true
                     implicitHeight: coinInput.implicitHeight
 
-                    TextField {
+                    MaterialTextField {
                         id: coinInput
                         width: parent.width
                         placeholderText: Translation.tr("Type to search coins...")
+                        text: ""
                         font.pixelSize: Appearance.font.pixelSize.small
                         color: Appearance.m3colors.m3onSurface
                         placeholderTextColor: Appearance.colors.colSubtext

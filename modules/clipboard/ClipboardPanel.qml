@@ -463,6 +463,10 @@ Scope {
                                 }
                             }
                             query: root.searchText
+
+                            onHoveredChanged: {
+                                if (hovered) listView.currentIndex = index
+                            }
                         }
 
                         function moveNext() {

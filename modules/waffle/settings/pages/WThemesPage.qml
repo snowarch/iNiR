@@ -544,7 +544,7 @@ WSettingsPage {
             ]
             onSelected: newValue => {
                 Config.setNestedValue("appearance.palette.type", newValue)
-                ShellExec.execCmd(`${Directories.wallpaperSwitchScriptPath} --noswitch`)
+                ShellExec.execCmd(`${Directories.wallpaperSwitchScriptPath} --noswitch --type ${newValue}`)
             }
         }
     }

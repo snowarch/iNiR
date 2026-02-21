@@ -302,6 +302,9 @@ Singleton {
                         property bool ghostty: true
                         property bool konsole: true
                         property bool starship: true
+                        property bool btop: true
+                        property bool lazygit: true
+                        property bool yazi: true
                     }
                     property JsonObject terminalGenerationProps: JsonObject {
                         property real harmony: 0.6
@@ -310,9 +313,10 @@ Singleton {
                         property bool forceDarkMode: false
                     }
                     property JsonObject terminalColorAdjustments: JsonObject {
-                        property real saturation: 0.40  // 0.0 - 1.0
-                        property real brightness: 0.55  // 0.0 - 1.0 (lightness for dark mode)
+                        property real saturation: 0.65  // 0.0 - 1.0
+                        property real brightness: 0.60  // 0.0 - 1.0 (lightness for dark mode)
                         property real harmony: 0.40     // 0.0 - 1.0 (how much to shift towards primary)
+                        property real backgroundBrightness: 0.50  // 0.0 - 1.0 (0=darkest, 1=lightest)
                     }
                 }
                 property JsonObject palette: JsonObject {
@@ -506,6 +510,12 @@ Singleton {
                     property bool enable: false
                 }
                 property list<var> wallpapersByMonitor: []
+                property JsonObject autoWallpaper: JsonObject {
+                    property bool enable: false
+                    property int intervalMinutes: 30 // minutes between wallpaper changes
+                    property bool generateColors: true // regenerate theme colors on each change
+                    property string folder: "" // empty = use current wallpaper folder
+                }
             }
 
             property JsonObject bar: JsonObject {
@@ -1158,6 +1168,9 @@ Singleton {
             }
 
             property JsonObject waffles: JsonObject {
+                property JsonObject settings: JsonObject {
+                    property bool useMaterialStyle: false
+                }
                 property JsonObject modules: JsonObject {
                     property bool sidebarLeft: false
                     property bool sidebarRight: false

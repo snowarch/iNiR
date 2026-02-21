@@ -1123,6 +1123,28 @@ ContentPage {
                 }
             }
 
+            // Background brightness slider
+            ConfigSpinBox {
+                id: bgBrightnessSpinBox
+                icon: "contrast"
+                text: Translation.tr("Background Brightness") + " (%)"
+                value: Math.round((Config.options?.appearance?.wallpaperTheming?.terminalColorAdjustments?.backgroundBrightness ?? 0.50) * 100)
+                from: 10
+                to: 90
+                stepSize: 5
+                property bool _ready: false
+                Component.onCompleted: _ready = true
+                onValueChanged: {
+                    if (!_ready) return;
+                    Config.setNestedValue("appearance.wallpaperTheming.terminalColorAdjustments.backgroundBrightness", value / 100);
+                    terminalColorDebounce.restart();
+                }
+
+                StyledToolTip {
+                    text: Translation.tr("Controls terminal background darkness. Lower = darker, higher = lighter. Matches shell surfaces at 50%.")
+                }
+            }
+
             // Reset button
             RippleButton {
                 Layout.alignment: Qt.AlignRight
@@ -1152,9 +1174,10 @@ ContentPage {
 
                 onClicked: {
                     // Update spinbox values directly (this triggers onValueChanged which saves to config)
-                    saturationSpinBox.value = 40;  // 0.40 * 100
-                    brightnessSpinBox.value = 55;  // 0.55 * 100
+                    saturationSpinBox.value = 65;  // 0.65 * 100
+                    brightnessSpinBox.value = 60;  // 0.60 * 100
                     harmonySpinBox.value = 40;     // 0.40 * 100
+                    bgBrightnessSpinBox.value = 50; // 0.50 * 100
                     // Note: ThemeService.regenerateAutoTheme() is called by onValueChanged
                 }
             }

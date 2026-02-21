@@ -184,7 +184,7 @@ ContentPage {
                 currentValue: Config.options.appearance.palette.type
                 onSelected: newValue => {
                     Config.options.appearance.palette.type = newValue;
-                    Quickshell.execDetached(["/usr/bin/bash", "-c", `${Directories.wallpaperSwitchScriptPath} --noswitch`]);
+                    Quickshell.execDetached(["/usr/bin/bash", "-c", `${Directories.wallpaperSwitchScriptPath} --noswitch --type ${newValue}`]);
                 }
                 options: [
                     {
@@ -587,8 +587,8 @@ ContentPage {
                                     border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
                                         : Appearance.inirEverywhere ? 1 : (monitorStack.showingBackdrop ? 2 : 1)
                                     border.color: monitorStack.showingBackdrop
-                                        ? (Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.inirEverywhere ? Appearance.inir.colAccent : Appearance.colors.colPrimary)
-                                        : (Appearance.angelEverywhere ? Appearance.angel.colCardBorder : Appearance.inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colLayer1Border)
+                                        ? (Appearance.angelEverywhere ? (Appearance.angel?.colPrimary ?? Appearance.colors.colPrimary) : Appearance.inirEverywhere ? (Appearance.inir?.colAccent ?? Appearance.colors.colPrimary) : Appearance.colors.colPrimary)
+                                        : (Appearance.angelEverywhere ? (Appearance.angel?.colCardBorder ?? Appearance.colors.colLayer1Border) : Appearance.inirEverywhere ? (Appearance.inir?.colBorder ?? Appearance.colors.colLayer1Border) : Appearance.colors.colLayer1Border)
                                     clip: true
                                     z: monitorStack.showingBackdrop ? 2 : 0
                                     opacity: monitorStack.showingBackdrop ? 1.0 : 0.6
@@ -758,7 +758,7 @@ ContentPage {
                                         visible: !monitorStack.isGif && !monitorStack.isVideo
                                         anchors.fill: parent
                                         fillMode: Image.PreserveAspectCrop
-                                        source: monitorStack.wpPath || ""
+                                        source: (!monitorStack.isGif && !monitorStack.isVideo) ? (monitorStack.wpPath || "") : ""
                                         sourceSize.width: monitorCard.width * 2
                                         sourceSize.height: monitorCard.height * 2
                                         cache: true
@@ -913,8 +913,8 @@ ContentPage {
                          : Appearance.colors.colLayer1
                     border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
                         : Appearance.inirEverywhere ? 1 : (Appearance.auroraEverywhere ? 0 : 1)
-                    border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
-                               : Appearance.inirEverywhere ? Appearance.inir.colBorder
+                    border.color: Appearance.angelEverywhere ? (Appearance.angel?.colCardBorder ?? Appearance.colors.colLayer1Border)
+                               : Appearance.inirEverywhere ? (Appearance.inir?.colBorder ?? Appearance.colors.colLayer1Border)
                                : Appearance.colors.colLayer1Border
                     clip: true
 
@@ -991,7 +991,7 @@ ContentPage {
                                             visible: !splitMonCard.isGif && !splitMonCard.isVideo
                                             anchors.fill: parent
                                             fillMode: Image.PreserveAspectCrop
-                                            source: splitMonCard.wpPath || ""
+                                            source: (!splitMonCard.isGif && !splitMonCard.isVideo) ? (splitMonCard.wpPath || "") : ""
                                             sourceSize.width: splitMonCard.width * 2
                                             sourceSize.height: splitMonCard.height * 2
                                             cache: true

@@ -533,9 +533,9 @@ ContentPage {
                          : Appearance.inirEverywhere ? Appearance.inir.colLayer1
                          : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                          : Appearance.colors.colLayer1
-                    border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : 1
-                    border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
-                               : Appearance.inirEverywhere ? Appearance.inir.colBorder
+                    border.width: Appearance.angelEverywhere ? (Appearance.angel?.cardBorderWidth ?? 1) : 1
+                    border.color: Appearance.angelEverywhere ? (Appearance.angel?.colCardBorder ?? Appearance.colors.colLayer1Border)
+                               : Appearance.inirEverywhere ? (Appearance.inir?.colBorder ?? Appearance.colors.colLayer1Border)
                                : Appearance.colors.colLayer1Border
                     clip: true
 
@@ -703,8 +703,14 @@ ContentPage {
                         Rectangle {
                             Layout.fillWidth: true
                             implicitHeight: 1
-                            color: Appearance.inirEverywhere ? Appearance.inir.colBorder
-                                 : Appearance.colors.colLayer1Border
+                            color: Appearance.inirEverywhere
+                                ? (Appearance.inir?.colBorder
+                                    ?? Appearance.colors?.colLayer1Border
+                                    ?? Appearance.colors?.colLayer0Border
+                                    ?? Appearance.m3colors.m3outlineVariant)
+                                : (Appearance.colors?.colLayer1Border
+                                    ?? Appearance.colors?.colLayer0Border
+                                    ?? Appearance.m3colors.m3outlineVariant)
                             opacity: 0.5
                         }
 
@@ -939,6 +945,19 @@ ContentPage {
                 }
                 StyledToolTip {
                     text: Translation.tr("Play videos and GIFs as wallpaper. When disabled, shows a frozen frame (better performance)")
+                }
+            }
+
+            SettingsSwitch {
+                visible: Config.options?.background?.enableAnimation ?? true
+                buttonIcon: "blur_on"
+                text: Translation.tr("Blur animated wallpapers (videos/GIFs)")
+                checked: Config.options?.background?.effects?.enableAnimatedBlur ?? false
+                onCheckedChanged: {
+                    Config.setNestedValue("background.effects.enableAnimatedBlur", checked);
+                }
+                StyledToolTip {
+                    text: Translation.tr("Apply blur effect to video/GIF wallpapers. Has performance impact - disable if you experience lag")
                 }
             }
         }

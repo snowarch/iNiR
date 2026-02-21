@@ -149,7 +149,7 @@ Singleton {
                 var before = result.substring(0, idx);
                 var match = result.substring(idx, idx + term.length);
                 var after = result.substring(idx + term.length);
-                result = before + '<b>' + match + '</b>' + after;
+                result = before + '<b><u>' + match + '</u></b>' + after;
             }
         }
         return result;

@@ -582,7 +582,7 @@ Singleton {
         // Scale border width for themes like Matrix/Synthwave
         readonly property real borderScale: root._themeMeta.borderWidthScale ?? 1.0
         
-        readonly property color colBorder: ColorUtils.transparentize(root.m3colors.m3outlineVariant, 0.3)
+        readonly property color colBorder: root.m3colors.m3outlineVariant ? ColorUtils.transparentize(root.m3colors.m3outlineVariant, 0.3) : "transparent"
         readonly property color colBorderHover: root.m3colors.m3outlineVariant
         readonly property color colBorderAccent: ColorUtils.transparentize(root.m3colors.m3primary, 0.6)
         readonly property color colBorderFocus: ColorUtils.transparentize(root.m3colors.m3primary, 0.3)
@@ -620,6 +620,9 @@ Singleton {
         readonly property color colOnSecondaryContainer: root.m3colors.m3onSecondaryContainer
         
         readonly property color colTertiary: root.m3colors.m3tertiary
+        
+        // Accent alias for consistency with other styles
+        readonly property color colAccent: root.m3colors.m3primary
         
         // ═══════════════════════════════════════════════════════════════
         // SELECTION (subtle, elegant highlighting)
