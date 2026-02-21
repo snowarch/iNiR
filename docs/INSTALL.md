@@ -48,6 +48,8 @@ The bare minimum to not crash immediately:
 | `pipewire` + `wireplumber` | Audio. |
 | `grim` + `slurp` | Screenshots. |
 | `matugen` | Material You colors from wallpaper. |
+| `plasma-integration` | KDE platform theme plugin (reads kdeglobals for Qt app colors). |
+| `darkly-bin` (AUR) | Darkly Qt style (Material You widget rendering). |
 
 For everything else, check [PACKAGES.md](PACKAGES.md). It's organized by category so you can skip what you don't need.
 

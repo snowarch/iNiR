@@ -466,6 +466,58 @@ ZEOF
     fi
 }
 
+check_qt_theming() {
+    # Check that plasma-integration is installed (required for kde platform theme)
+    # Without it, Darkly style can't read kdeglobals colors → black text on dark bg
+    local plugin_found=false
+    for plugindir in /usr/lib/qt6/plugins/platformthemes /usr/lib64/qt6/plugins/platformthemes \
+                     /usr/lib/x86_64-linux-gnu/qt6/plugins/platformthemes; do
+        if [[ -f "${plugindir}/KDEPlasmaPlatformTheme6.so" ]]; then
+            plugin_found=true
+            break
+        fi
+    done
+
+    if ! $plugin_found; then
+        doctor_fail "plasma-integration not installed (Qt apps will have broken colors)"
+        case "${OS_GROUP_ID:-unknown}" in
+            arch) echo -e "    ${STY_FAINT}Run: sudo pacman -S plasma-integration${STY_RST}" ;;
+            fedora) echo -e "    ${STY_FAINT}Run: sudo dnf install plasma-integration${STY_RST}" ;;
+            debian|ubuntu) echo -e "    ${STY_FAINT}Run: sudo apt install plasma-integration${STY_RST}" ;;
+            *) echo -e "    ${STY_FAINT}Install plasma-integration using your package manager${STY_RST}" ;;
+        esac
+    else
+        # Also check niri config isn't stuck on qt6ct when kde plugin is available
+        local niri_cfg="${XDG_CONFIG_HOME}/niri/config.kdl"
+        if [[ -f "$niri_cfg" ]] && grep -q 'QT_QPA_PLATFORMTHEME "qt6ct"' "$niri_cfg"; then
+            sed -i 's/QT_QPA_PLATFORMTHEME "qt6ct"/QT_QPA_PLATFORMTHEME "kde"/' "$niri_cfg"
+            doctor_fix "Switched QT_QPA_PLATFORMTHEME from qt6ct to kde"
+        else
+            doctor_pass "Qt theming OK (plasma-integration + kde platform)"
+        fi
+    fi
+
+    # Check Darkly style is installed
+    local darkly_found=false
+    for styledir in /usr/lib/qt6/plugins/styles /usr/lib64/qt6/plugins/styles \
+                    /usr/lib/x86_64-linux-gnu/qt6/plugins/styles; do
+        if [[ -f "${styledir}/darkly6.so" ]]; then
+            darkly_found=true
+            break
+        fi
+    done
+
+    if ! $darkly_found; then
+        doctor_fail "Darkly Qt style not installed (Qt apps won't have Material You style)"
+        case "${OS_GROUP_ID:-unknown}" in
+            arch) echo -e "    ${STY_FAINT}Run: yay -S darkly-bin${STY_RST}" ;;
+            *) echo -e "    ${STY_FAINT}Install darkly from: https://github.com/AlessioC31/darkly${STY_RST}" ;;
+        esac
+    else
+        doctor_pass "Darkly Qt style OK"
+    fi
+}
+
 check_niri_config() {
     local niri_cfg="${XDG_CONFIG_HOME}/niri/config.kdl"
     [[ ! -f "$niri_cfg" ]] && { doctor_pass "Niri config (not installed)"; return 0; }
@@ -489,7 +541,7 @@ check_niri_config() {
 ###############################################################################
 
 run_doctor_with_fixes() {
-    local total_steps=15
+    local total_steps=16
     doctor_passed=0
     doctor_failed=0
     doctor_fixed=0
@@ -545,16 +597,19 @@ run_doctor_with_fixes() {
     tui_step 11 $total_steps "Checking theme colors"
     check_matugen_colors
     
-    tui_step 12 $total_steps "Checking conflicting services"
+    tui_step 12 $total_steps "Checking Qt theming"
+    check_qt_theming
+    
+    tui_step 13 $total_steps "Checking conflicting services"
     check_conflicting_services
     
-    tui_step 13 $total_steps "Checking wallpaper health"
+    tui_step 14 $total_steps "Checking wallpaper health"
     check_wallpaper_health
     
-    tui_step 14 $total_steps "Checking environment variables"
+    tui_step 15 $total_steps "Checking environment variables"
     check_environment_vars
     
-    tui_step 15 $total_steps "Checking Niri config"
+    tui_step 16 $total_steps "Checking Niri config"
     check_niri_config
     
     echo ""
