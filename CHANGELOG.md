@@ -5,43 +5,41 @@ All notable changes to iNiR will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.10.2] - 2026-02-17
+## [2.11.0] - 2026-02-21
 
 ### Added
-- **Terminal theming for btop, lazygit, yazi**: Auto-generate Material You color themes for btop++ (system monitor), lazygit (git TUI), and yazi (file manager) — colors sync with wallpaper theme just like terminals
-- **btop theme**: Full color mapping for graphs, boxes, meters, process list; auto-sets `color_theme = "ii-auto"` in btop.conf
-- **lazygit theme**: Merges `gui.theme` section into config.yml safely (borders, selection, commit colors, staged/unstaged indicators)
-- **yazi flavor**: Generates `ii-auto.yazi` flavor with modern `[mgr]`/`[mode]` format — manager, status bar, input, which-key, filetype colors all themed
-- **UI toggles**: Settings → Terminal Colors now shows btop, lazygit, yazi toggles with auto-detect (10 tools total)
-- **Waffle per-monitor wallpaper management**: Full UI in Waffle settings for per-monitor wallpaper selection
-- **Waffle Win11-style wallpaper UI**: Hero section with monitor frame preview + thumbnail grid + overlay action buttons
-- **Angel global style**: New 5th global style (neo-brutalism glass) across all shell surfaces
+- **SDDM Pixel theme**: Material You login screen — session selector, cycling fail messages, wallpaper-synced colors. Auto-applied on fresh install.
+- **Angel global style**: Fifth visual style (neo-brutalism glass) across all shell surfaces
+- **Firefox MaterialFox theming**: Auto-generated Material You colors for Firefox via matugen template
+- **Terminal theming: btop, lazygit, yazi**: 10 TUI tools now auto-theme with wallpaper colors (foot, kitty, alacritty, starship, fuzzel, pywalfox, btop, lazygit, yazi). Individual toggles in Settings.
+- **Terminal color controls**: Saturation and brightness sliders for fine-tuning generated terminal colors
+- **Overlay theming options**: Scrim dim, background opacity, and blur toggle in Settings
+- **Waffle per-monitor wallpaper**: Full UI with monitor frame preview + thumbnail grid in Waffle settings
 
 ### Changed
-- **Arch install: darkly → darkly-bin**: Pre-built binary package replaces source build — saves ~5 minutes on fresh install, same functionality
-- **Waffle settings sidebar collapsed mode**: Centered icons (20px), tooltips on hover, accent-colored header icon
-- **Waffle widgets panel**: Dynamic weather icon (day/night), thicker progress bars (6px), card-style quick action buttons in Grid layout
-- **Waffle notifications**: GroupExpandButton with chevron icon and accent-colored text (Win11-like)
-- **Material QuickConfig**: Wallpaper grid max height reduced 400→280px for less visual bulk
-- **Terminal color detection**: Auto-detect now scans all 10 tools (was 7)
+- **Color pipeline centralized**: Matugen generates `colors.json` only; Python handles all app configs (GTK, KDE, terminals, Vesktop, Fuzzel) — consistent primary color across everything
+- **Qt theming via plasma-integration**: Required dependency for Material You in Qt apps. Migration 011 auto-patches existing installs. New doctor check verifies it's working.
+- **darkly → darkly-bin**: Pre-built binary on Arch saves ~5 min on fresh install
+- **Setup TUI overhaul**: Consistent `log_*/tui_*` branding across Arch, Debian, and Fedora installers
+- **GTK4 dark mode**: Template applies dark mode unconditionally
+- **Dolphin integration**: SingleClick mode + "Open terminal here" context menu via kservicemenurc
+- **quickshell-git conflict**: Installer handles existing `-git` package, prefers official repos; adds ffmpeg as dependency
 
 ### Fixed
-- **Config safety audit (34 fixes)**: 19 unsafe writes in GeneralConfig.qml → `setNestedValue()`; 15 unsafe reads in SidebarLeft → optional chaining + defaults
-- **Waffle config safety**: WModulesPage unsafe write, OSDValue unsafe read
-- **BarPopup warning**: `Keys.onPressed` on non-Item PopupWindow → `Shortcut` component
-- **ActionCenterContent binding loop**: opacity binding loop → `visible` property
-- **WSettingsRow missing animation**: Added `highlightAnim` SequentialAnimation for search focus
-- **QuickConfig "Use current folder"**: Safe config access with optional chaining
-- **Fresh install defaults**: pinnedApps, polkit, GTK-first defaults for non-KDE users
-- **Install deps**: dolphin→nautilus, added missing dependencies
-- **Setup install: 0-byte wallpaper recovery**: Overwrite empty/corrupt wallpapers from failed installs (`-s` check) — fixes matugen crash on re-install
-- **Setup install: version.json created on install**: ShellUpdates service now works from first boot (repo path, version, commit tracked)
-- **Setup install: polkit agent auto-detection**: Detects KDE→GNOME→MATE→LX→LXQt polkit agent instead of hardcoding mate
-- **Setup install: Qt theme detection**: `QT_QPA_PLATFORMTHEME` set to `kde` or `qt6ct` based on Plasma presence
-- **Setup install: shell env vars**: `ILLOGICAL_IMPULSE_VIRTUAL_ENV` written to bash/fish/zsh profiles (not just niri config.kdl)
-- **Setup install: conflict auto-disable**: Dunst and other conflicting services auto-disabled in non-interactive mode
-- **Setup install: dynamic wallpaper selection**: Default wallpaper picks first available file instead of hardcoding a filename
-- **Sound effects enabled by default**: New installs start with notification sounds on (user can disable in welcome wizard or settings)
+- **Terminal colors not updating**: Root cause — venv activation failed in QML `execDetached` context when `ILLOGICAL_IMPULSE_VIRTUAL_ENV` was unset
+- **SDDM Qt5 compatibility**: Full rewrite for SDDM's Qt5 runtime (model roles, easing curves, font loading)
+- **Wallpaper theming**: Stop guessing thumbnails by basename, clear stale paths on video→image switch, kill previous switchwall before starting new
+- **Video first-frame**: `seek(0)` after pause ensures frame display
+- **Qt apps white on dark**: Fixed GTK4 CSS and terminal venv resolution for Nautilus and KDE apps
+- **Waffle notifications**: Expand direction, calendar lag, animation cleanup
+- **Pomodoro timer**: Timer editing no longer requires double-tap
+- **Settings search**: Improved result relevance — dynamic registry results scored higher, section delimiter parsing unified
+- **Capture windows**: No longer trashes clipboard during screenshot
+- **Foot colors**: Switched to `inir-colors.ini`, removed stale `colors.ini` include
+- **Matugen config**: Use user config at `~/.config/matugen/`, not non-existent defaults path
+- **Config safety audit**: 34 fixes — unsafe writes→`setNestedValue()`, unsafe reads→safe defaults
+- **Waffle video backdrop**: Show frozen first frame when animated wallpapers disabled (was showing nothing)
+- **Fresh install**: 0-byte wallpaper recovery, version.json tracking, polkit auto-detection, env vars in all shells, conflict auto-disable, dynamic wallpaper selection
 
 ## [2.10.1] - 2026-02-13
 
