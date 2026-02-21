@@ -492,7 +492,8 @@ switch() {
         [[ "$soften_colors" == "true" ]] && generate_colors_material_args+=(--soften)
     fi
 
-    matugen --config "$CONFIG_DIR/defaults/matugen/config.toml" "${matugen_args[@]}"
+    # Use user's matugen config (installed to ~/.config/matugen/ during setup)
+    matugen --config "$MATUGEN_DIR/config.toml" "${matugen_args[@]}"
     if [[ -n "${ILLOGICAL_IMPULSE_VIRTUAL_ENV:-}" ]]; then
         _ii_venv="$(eval echo "$ILLOGICAL_IMPULSE_VIRTUAL_ENV")"
     else
