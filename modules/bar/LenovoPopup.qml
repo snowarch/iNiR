@@ -40,12 +40,12 @@ StyledPopup {
         // Status description
         StyledText {
             Layout.fillWidth: true
-            text: LenovoService.isActive 
-                ? Translation.tr("Battery protection is active.
-Charging is limited to extend lifespan.") 
-                : Translation.tr("Standard charging mode.
-Battery will charge to 100%.")
-            color: Appearance.colors.colSubtext
+            text: !LenovoService.functional
+                ? Translation.tr("Control node not found. Ensure the 'ideapad_laptop' kernel module is loaded.")
+                : (LenovoService.isActive 
+                    ? Translation.tr("Battery protection is active.\nCharging is limited to extend lifespan.") 
+                    : Translation.tr("Standard charging mode.\nBattery will charge to 100%."))
+            color: !LenovoService.functional ? Appearance.colors.colError : Appearance.colors.colSubtext
             font.pixelSize: Appearance.font.pixelSize.smaller
             wrapMode: Text.WordWrap
             Layout.maximumWidth: 200
@@ -53,6 +53,7 @@ Battery will charge to 100%.")
         
         // Hint
         StyledText {
+            visible: LenovoService.functional
             text: Translation.tr("Click to toggle")
             font.italic: true
             font.pixelSize: 10

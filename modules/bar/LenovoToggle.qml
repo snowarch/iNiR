@@ -19,9 +19,11 @@ MouseArea {
     property real iconSize: Appearance.font.pixelSize.large
     
     // --- State Mapping ---
-    enabled: LenovoService.available
+    enabled: LenovoService.functional
     visible: LenovoService.available
     hoverEnabled: true
+
+    opacity: LenovoService.functional ? 1.0 : 0.5
 
     // --- Dynamic Sizing ---
     // Fixing the "hardcoded" space issue: width is 0 if module is disabled
@@ -31,7 +33,7 @@ MouseArea {
         : 0
 
     // --- Action ---
-    onClicked: LenovoService.toggle()
+    onClicked: if (LenovoService.functional) LenovoService.toggle()
 
     // --- Layout ---
     RowLayout {
@@ -42,25 +44,29 @@ MouseArea {
 
         MaterialSymbol {
             id: symbol
-            text: LenovoService.isActive ? "shield_with_heart" : "shield"
+            text: !LenovoService.functional ? "error" : (LenovoService.isActive ? "shield_with_heart" : "shield")
             iconSize: root.iconSize
             fill: LenovoService.isActive ? 1 : 0
             
-            color: LenovoService.isActive 
-                ? (Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
-                : (Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer2)
+            color: !LenovoService.functional 
+                ? Appearance.colors.colError
+                : (LenovoService.isActive 
+                    ? (Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
+                    : (Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer2))
             
             Behavior on color { ColorAnimation { duration: 200 } }
         }
 
         StyledText {
             visible: !root.compact && root.showLabel
-            text: LenovoService.isActive ? Translation.tr("Conserve") : Translation.tr("Standard")
+            text: !LenovoService.functional ? Translation.tr("Missing") : (LenovoService.isActive ? Translation.tr("Conserve") : Translation.tr("Standard"))
             font.bold: true
             font.pixelSize: Appearance.font.pixelSize.small
-            color: LenovoService.isActive 
-                ? (Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
-                : (Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer2)
+            color: !LenovoService.functional 
+                ? Appearance.colors.colError
+                : (LenovoService.isActive 
+                    ? (Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
+                    : (Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer2))
         }
     }
 
