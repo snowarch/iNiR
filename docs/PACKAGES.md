@@ -170,11 +170,13 @@ Fonts, theming, and utilities.
 | `translate-shell` | Translation CLI |
 | `kvantum` | Qt theming |
 | `matugen` | Material You colors |
+| `plasma-integration` | KDE platform theme plugin (reads kdeglobals for Qt app colors) |
 
 ### From AUR
 
 | Package | Purpose | Required |
 |---------|---------|----------|
+| `darkly-bin` | Darkly Qt style (Material You widget style for Qt apps) | Yes |
 | `ttf-jetbrains-mono-nerd` | JetBrains Mono Nerd | Yes (monospace) |
 | `ttf-material-symbols-variable-git` | Material icons | Yes (UI icons) |
 | `ttf-readex-pro` | Readex Pro font | No (has fallback) |

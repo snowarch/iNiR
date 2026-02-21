@@ -115,6 +115,8 @@ DEPS_THEME_MATUGEN="arch:matugen fedora:CARGO:matugen debian:CARGO:matugen ubunt
 DEPS_THEME_QT6CT="arch:qt6ct fedora:qt6ct debian:qt6ct ubuntu:qt6ct opensuse:qt6ct void:qt6ct"
 DEPS_THEME_KVANTUM="arch:kvantum fedora:kvantum debian:qt6-style-kvantum ubuntu:qt6-style-kvantum opensuse:kvantum-qt6 void:kvantum"
 DEPS_THEME_BREEZE="arch:breeze fedora:breeze-gtk debian:breeze-gtk-theme ubuntu:breeze-gtk-theme opensuse:metatheme-breeze-common void:breeze"
+DEPS_THEME_PLASMA_INTEGRATION="arch:plasma-integration fedora:plasma-integration debian:plasma-integration ubuntu:plasma-integration opensuse:plasma6-integration void:plasma-integration"
+DEPS_THEME_DARKLY="arch:AUR:darkly-bin fedora:COMPILE:https://github.com/AlessioC31/darkly debian:COMPILE:https://github.com/AlessioC31/darkly ubuntu:COMPILE:https://github.com/AlessioC31/darkly opensuse:COMPILE:https://github.com/AlessioC31/darkly void:COMPILE:https://github.com/AlessioC31/darkly"
 
 ###############################################################################
 # Fonts (critical for UI)

@@ -203,14 +203,21 @@ case "${SKIP_NIRI}" in
       fi
 
       # Patch config.kdl: detect QT platform theme
-      if pacman -Q plasma-desktop &>/dev/null 2>&1 || pacman -Q plasma-workspace &>/dev/null 2>&1 || \
-         dpkg -l plasma-desktop 2>/dev/null | grep -q '^ii' || \
-         rpm -q plasma-desktop &>/dev/null 2>&1; then
-        : # Plasma installed — keep "kde" platform theme (already in config)
+      # plasma-integration provides the "kde" QPA platform theme plugin which reads
+      # colors from kdeglobals. Without it, Qt apps can't use KDE color schemes.
+      # We check for plasma-integration (not plasma-desktop) because it can be
+      # installed standalone for KDE theming without the full Plasma desktop.
+      if pacman -Q plasma-integration &>/dev/null 2>&1 || \
+         dpkg -l plasma-integration 2>/dev/null | grep -q '^ii' || \
+         rpm -q plasma-integration &>/dev/null 2>&1; then
+        : # plasma-integration installed — keep "kde" platform theme (reads kdeglobals)
+        log_success "Qt theme: kde (plasma-integration detected)"
       else
-        # No Plasma: switch to qt6ct for Qt theming
+        # No plasma-integration: fall back to qt6ct
+        # NOTE: This is suboptimal — Darkly style won't read kdeglobals colors properly.
+        # The user should install plasma-integration for correct Material You Qt theming.
         sed -i 's/QT_QPA_PLATFORMTHEME "kde"/QT_QPA_PLATFORMTHEME "qt6ct"/' "$NIRI_CFG"
-        log_success "Qt theme: qt6ct (no Plasma detected)"
+        log_warning "Qt theme: qt6ct (plasma-integration not found — install it for proper Qt theming)"
       fi
     fi
     ;;

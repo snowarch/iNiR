@@ -18,6 +18,7 @@ depends=(
   
   # Qt theming
   kvantum
+  plasma-integration
 )
 
 optdepends=(
@@ -27,6 +28,7 @@ optdepends=(
 )
 
 # AUR dependencies (installed separately)
+# darkly-bin (Qt style for Material You colors)
 # matugen (now in official repos)
 # otf-space-grotesk
 # ttf-jetbrains-mono-nerd

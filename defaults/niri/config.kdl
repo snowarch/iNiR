@@ -195,8 +195,8 @@ environment {
     ELECTRON_OZONE_PLATFORM_HINT "auto"
     QT_LOGGING_RULES "quickshell.dbus.properties=false"
     
-    // Qt theming: use kde platform for kdeglobals colors, Darkly for widget style
-    // The installer patches QT_QPA_PLATFORMTHEME to "qt6ct" if Plasma is not installed
+    // Qt theming: kde platform reads colors from kdeglobals (requires plasma-integration pkg)
+    // The installer falls back to qt6ct only if plasma-integration is not installed
     QT_QPA_PLATFORMTHEME "kde"
     QT_STYLE_OVERRIDE "Darkly"
     

@@ -226,9 +226,10 @@ OFFICIAL_PACKAGES=(
   papirus-icon-theme
   breeze-icons
 
-  # Qt theming (works without Plasma)
+  # Qt theming (works without Plasma desktop)
   qt6ct
   kvantum
+  plasma-integration   # Provides QT_QPA_PLATFORMTHEME=kde plugin (reads kdeglobals colors)
 
   # KDE Frameworks needed by darkly-bin Qt style (lightweight, NOT Plasma)
   frameworkintegration
