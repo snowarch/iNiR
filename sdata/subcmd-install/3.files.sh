@@ -231,10 +231,10 @@ if command -v sddm &>/dev/null; then
     local sddm_script="${REPO_ROOT}/scripts/sddm/install-pixel-sddm.sh"
     if [[ -f "$sddm_script" ]]; then
       chmod +x "$sddm_script"
-      local _sddm_auto_apply="ask"
-      if [[ "${ask:-true}" != "true" ]]; then
-        _sddm_auto_apply="no"
-      fi
+      # Fresh install: apply theme automatically (user chose to install iNiR)
+      # Non-interactive (-y): also apply automatically (scripted installs want full setup)
+      # Only "ask" makes sense for updates where user might have another theme
+      local _sddm_auto_apply="yes"
       INIR_SDDM_AUTO_APPLY="${_sddm_auto_apply}" bash "$sddm_script" || log_warning "ii-pixel-sddm setup had issues (non-fatal)"
     else
       log_warning "ii-pixel-sddm install script not found, skipping"
