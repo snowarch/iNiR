@@ -124,7 +124,7 @@ The right sidebar covers everyday essentials:
 ```bash
 git clone https://github.com/snowarch/inir.git
 cd inir
-./setup install
+./setup
 ```
 
 The installer handles dependencies, configs, theming — everything. Just follow the prompts.
@@ -134,7 +134,7 @@ The installer handles dependencies, configs, theming — everything. Just follow
 **Updating:**
 
 ```bash
-./setup update
+./setup
 ```
 
 Your configs stay untouched. New features come as optional migrations. Rollback included if something breaks.
