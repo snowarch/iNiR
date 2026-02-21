@@ -62,3 +62,4 @@ singleton Weather 1.0 Weather.qml
 singleton WindowPreviewService 1.0 WindowPreviewService.qml
 singleton Ydotool 1.0 Ydotool.qml
 singleton YtMusic 1.0 YtMusic.qml
+singleton LenovoService 1.0 LenovoService.qml
