@@ -43,12 +43,119 @@ Item {
 
             ColumnLayout {
                 anchors.centerIn: parent
-                spacing: 0
+                spacing: 4
 
+                // Editable time display with separate minutes and seconds
+                RowLayout {
+                    Layout.alignment: Qt.AlignHCenter
+                    spacing: 0
+                    visible: root.editMode
+
+                    // Minutes input
+                    Rectangle {
+                        id: minutesBox
+                        width: 54
+                        height: 54
+                        color: minutesInput.activeFocus 
+                            ? Appearance.colors.colPrimaryContainer 
+                            : "transparent"
+                        radius: Appearance.rounding.small
+                        border.width: minutesInput.activeFocus ? 2 : 0
+                        border.color: Appearance.colors.colPrimary
+
+                        TextInput {
+                            id: minutesInput
+                            anchors.centerIn: parent
+                            width: parent.width - 8
+                            text: Math.floor(TimerService.countdownDuration / 60).toString().padStart(2, '0')
+                            font.pixelSize: Math.round(38 * Appearance.fontSizeScale)
+                            font.family: Appearance.font.family.main
+                            color: Appearance.m3colors.m3onSurface
+                            horizontalAlignment: Text.AlignHCenter
+                            validator: IntValidator { bottom: 0; top: 99 }
+                            selectByMouse: true
+                            onEditingFinished: {
+                                const mins = parseInt(text) || 0;
+                                const secs = parseInt(secondsInput.text) || 0;
+                                TimerService.setCountdownDuration(mins * 60 + secs);
+                            }
+                            onActiveFocusChanged: {
+                                if (activeFocus) selectAll();
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            acceptedButtons: Qt.NoButton
+                            onWheel: (wheel) => {
+                                const delta = wheel.angleDelta.y > 0 ? 1 : -1;
+                                const currentMins = parseInt(minutesInput.text) || 0;
+                                const newMins = Math.max(0, Math.min(99, currentMins + delta));
+                                const secs = parseInt(secondsInput.text) || 0;
+                                TimerService.setCountdownDuration(newMins * 60 + secs);
+                            }
+                        }
+                    }
+
+                    StyledText {
+                        text: ":"
+                        font.pixelSize: Math.round(38 * Appearance.fontSizeScale)
+                        color: Appearance.m3colors.m3onSurface
+                    }
+
+                    // Seconds input
+                    Rectangle {
+                        id: secondsBox
+                        width: 54
+                        height: 54
+                        color: secondsInput.activeFocus 
+                            ? Appearance.colors.colPrimaryContainer 
+                            : "transparent"
+                        radius: Appearance.rounding.small
+                        border.width: secondsInput.activeFocus ? 2 : 0
+                        border.color: Appearance.colors.colPrimary
+
+                        TextInput {
+                            id: secondsInput
+                            anchors.centerIn: parent
+                            width: parent.width - 8
+                            text: Math.floor(TimerService.countdownDuration % 60).toString().padStart(2, '0')
+                            font.pixelSize: Math.round(38 * Appearance.fontSizeScale)
+                            font.family: Appearance.font.family.main
+                            color: Appearance.m3colors.m3onSurface
+                            horizontalAlignment: Text.AlignHCenter
+                            validator: IntValidator { bottom: 0; top: 59 }
+                            selectByMouse: true
+                            onEditingFinished: {
+                                const mins = parseInt(minutesInput.text) || 0;
+                                const secs = Math.min(59, parseInt(text) || 0);
+                                TimerService.setCountdownDuration(mins * 60 + secs);
+                            }
+                            onActiveFocusChanged: {
+                                if (activeFocus) selectAll();
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            acceptedButtons: Qt.NoButton
+                            onWheel: (wheel) => {
+                                const delta = wheel.angleDelta.y > 0 ? 1 : -1;
+                                const mins = parseInt(minutesInput.text) || 0;
+                                const currentSecs = parseInt(secondsInput.text) || 0;
+                                const newSecs = Math.max(0, Math.min(59, currentSecs + delta));
+                                TimerService.setCountdownDuration(mins * 60 + newSecs);
+                            }
+                        }
+                    }
+                }
+
+                // Static time display when running/paused
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter
+                    visible: !root.editMode
                     text: {
-                        const totalSeconds = root.editMode ? TimerService.countdownDuration : TimerService.countdownSecondsLeft;
+                        const totalSeconds = TimerService.countdownSecondsLeft;
                         const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
                         const seconds = Math.floor(totalSeconds % 60).toString().padStart(2, '0');
                         return `${minutes}:${seconds}`;
@@ -59,7 +166,7 @@ Item {
 
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter
-                    text: root.editMode ? Translation.tr("Scroll to adjust") : TimerService.countdownRunning ? Translation.tr("Running") : Translation.tr("Paused")
+                    text: root.editMode ? Translation.tr("Tap to edit") : TimerService.countdownRunning ? Translation.tr("Running") : Translation.tr("Paused")
                     font.pixelSize: Appearance.font.pixelSize.normal
                     color: Appearance.colors.colSubtext
                 }

@@ -200,17 +200,18 @@ Item {
                     Layout.bottomMargin: 4
                 }
 
-                // Inline component: a single adjustable value row
+                // Inline component: a single adjustable value row with editable input
                 component AdjustRow: RowLayout {
                     id: adjustRow
                     property string icon
                     property string label
-                    property string valueText
-                    property int currentValue
-                    property int minValue
-                    property int maxValue
-                    property int step
+                    property int currentValue  // in seconds
+                    property int minValue      // in seconds
+                    property int maxValue      // in seconds
+                    property int step          // in seconds
                     property string configPath
+                    property bool isMinutes: true  // true = show as minutes, false = show raw value
+                    property bool _editing: false
 
                     Layout.fillWidth: true
                     spacing: 0
@@ -230,48 +231,77 @@ Item {
                     }
 
                     RippleButton {
-                        implicitWidth: 30; implicitHeight: 30
+                        implicitWidth: 28; implicitHeight: 28
                         buttonRadius: Appearance.rounding.full
                         colBackground: "transparent"
                         colBackgroundHover: root._colLayerHover
                         colRipple: root._colLayerActive
                         enabled: adjustRow.currentValue > adjustRow.minValue
-                        onClicked: Config.setNestedValue(adjustRow.configPath, adjustRow.currentValue - adjustRow.step)
+                        onClicked: Config.setNestedValue(adjustRow.configPath, Math.max(adjustRow.minValue, adjustRow.currentValue - adjustRow.step))
                         contentItem: MaterialSymbol {
                             anchors.centerIn: parent
                             text: "remove"
-                            iconSize: 18
+                            iconSize: 16
                             color: enabled ? root._colText : Appearance.colors.colSubtext
                         }
                     }
 
+                    // Editable value box
                     Rectangle {
-                        implicitWidth: 52
-                        implicitHeight: 26
+                        implicitWidth: 56
+                        implicitHeight: 28
                         radius: Appearance.rounding.small
-                        color: root._colLayer
+                        color: adjustRow._editing ? Appearance.colors.colPrimaryContainer : root._colLayer
 
-                        StyledText {
+                        TextInput {
+                            id: valueInput
                             anchors.centerIn: parent
-                            text: adjustRow.valueText
+                            width: parent.width - 8
+                            text: adjustRow.isMinutes ? Math.floor(adjustRow.currentValue / 60).toString() : adjustRow.currentValue.toString()
                             font.pixelSize: Appearance.font.pixelSize.small
                             font.weight: Font.Medium
+                            font.family: Appearance.font.family.main
                             color: root._colText
+                            horizontalAlignment: Text.AlignHCenter
+                            validator: IntValidator { bottom: 1; top: 999 }
+                            selectByMouse: true
+                            onActiveFocusChanged: {
+                                adjustRow._editing = activeFocus;
+                                if (activeFocus) selectAll();
+                            }
+                            onEditingFinished: {
+                                const val = parseInt(text) || 1;
+                                const newValue = adjustRow.isMinutes ? val * 60 : val;
+                                const clamped = Math.max(adjustRow.minValue, Math.min(adjustRow.maxValue, newValue));
+                                Config.setNestedValue(adjustRow.configPath, clamped);
+                            }
+                        }
+
+                        // Unit label
+                        StyledText {
+                            anchors.right: parent.right
+                            anchors.rightMargin: 4
+                            anchors.verticalCenter: parent.verticalCenter
+                            visible: adjustRow.isMinutes
+                            text: "m"
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            color: Appearance.colors.colSubtext
+                            opacity: 0.7
                         }
                     }
 
                     RippleButton {
-                        implicitWidth: 30; implicitHeight: 30
+                        implicitWidth: 28; implicitHeight: 28
                         buttonRadius: Appearance.rounding.full
                         colBackground: "transparent"
                         colBackgroundHover: root._colLayerHover
                         colRipple: root._colLayerActive
                         enabled: adjustRow.currentValue < adjustRow.maxValue
-                        onClicked: Config.setNestedValue(adjustRow.configPath, adjustRow.currentValue + adjustRow.step)
+                        onClicked: Config.setNestedValue(adjustRow.configPath, Math.min(adjustRow.maxValue, adjustRow.currentValue + adjustRow.step))
                         contentItem: MaterialSymbol {
                             anchors.centerIn: parent
                             text: "add"
-                            iconSize: 18
+                            iconSize: 16
                             color: enabled ? root._colText : Appearance.colors.colSubtext
                         }
                     }
@@ -280,33 +310,37 @@ Item {
                 AdjustRow {
                     icon: "target"
                     label: Translation.tr("Focus")
-                    valueText: Translation.tr("%1 min").arg(TimerService.focusTime / 60)
-                    currentValue: TimerService.focusTime; minValue: 300; maxValue: 7200; step: 300
+                    currentValue: TimerService.focusTime
+                    minValue: 60; maxValue: 7200; step: 300
                     configPath: "time.pomodoro.focus"
+                    isMinutes: true
                 }
 
                 AdjustRow {
                     icon: "coffee"
                     label: Translation.tr("Break")
-                    valueText: Translation.tr("%1 min").arg(TimerService.breakTime / 60)
-                    currentValue: TimerService.breakTime; minValue: 60; maxValue: 1800; step: 60
+                    currentValue: TimerService.breakTime
+                    minValue: 60; maxValue: 1800; step: 60
                     configPath: "time.pomodoro.breakTime"
+                    isMinutes: true
                 }
 
                 AdjustRow {
                     icon: "weekend"
                     label: Translation.tr("Long break")
-                    valueText: Translation.tr("%1 min").arg(TimerService.longBreakTime / 60)
-                    currentValue: TimerService.longBreakTime; minValue: 300; maxValue: 3600; step: 300
+                    currentValue: TimerService.longBreakTime
+                    minValue: 60; maxValue: 3600; step: 300
                     configPath: "time.pomodoro.longBreak"
+                    isMinutes: true
                 }
 
                 AdjustRow {
                     icon: "replay"
                     label: Translation.tr("Cycles")
-                    valueText: TimerService.cyclesBeforeLongBreak.toString()
-                    currentValue: TimerService.cyclesBeforeLongBreak; minValue: 2; maxValue: 8; step: 1
+                    currentValue: TimerService.cyclesBeforeLongBreak
+                    minValue: 1; maxValue: 10; step: 1
                     configPath: "time.pomodoro.cyclesBeforeLongBreak"
+                    isMinutes: false
                 }
 
                 // Sound toggle
