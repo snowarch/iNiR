@@ -394,6 +394,8 @@ switch() {
             generate_colors_material_args=(--path "$imgpath")
             # Update wallpaper path in config
             set_wallpaper_path "$imgpath"
+            # Clear video thumbnail path (prevents stale video colors)
+            set_thumbnail_path ""
             remove_restore
         fi
     fi
