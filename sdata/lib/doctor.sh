@@ -193,7 +193,15 @@ check_python_packages() {
     local venv="${XDG_STATE_HOME}/quickshell/.venv"
     local req="${XDG_CONFIG_HOME}/quickshell/ii/sdata/uv/requirements.txt"
     
-    # Check if venv exists
+    # Check for broken venv (e.g. after python update)
+    if [[ -d "$venv/bin" ]]; then
+        if ! "$venv/bin/python" --version &>/dev/null; then
+            doctor_fail "Broken Python venv detected"
+            rm -rf "$venv"
+        fi
+    fi
+
+    # Check if venv exists (or was just removed above)
     if [[ ! -d "$venv" ]]; then
         if command -v uv &>/dev/null; then
             uv venv "$venv" -p 3.12 2>/dev/null || uv venv "$venv" 2>/dev/null

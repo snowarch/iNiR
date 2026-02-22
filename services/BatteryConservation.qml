@@ -18,10 +18,12 @@ Singleton {
         "/sys/bus/platform/drivers/ideapad_acpi/VPC2004:00/conservation_mode",
         "/sys/bus/platform/devices/VPC2004:00/conservation_mode",
         "/sys/devices/platform/ideapad_laptop/conservation_mode",
-        "/sys/bus/platform/devices/VPC2004:00/firmware_node/conservation_mode"
+        "/sys/class/power_supply/BAT0/charge_control_end_threshold",
+        "/sys/class/power_supply/BAT1/charge_control_end_threshold"
     ]
     
     property string nodePath: ""
+    property bool isModernNode: false // Whether we are using charge_control_end_threshold
     
     // --- Public State ---
     property bool isActive: false
@@ -47,7 +49,7 @@ Singleton {
     // 1. Hardware detection: Check for supported hardware
     Process {
         id: hardwareCheck
-        command: ["sh", "-c", "grep -qi 'lenovo' /sys/class/dmi/id/sys_vendor || test -d /sys/bus/platform/devices/VPC2004:00"]
+        command: ["sh", "-c", "grep -qi 'lenovo' /sys/class/dmi/id/sys_vendor || test -d /sys/bus/platform/devices/VPC2004:00 || test -f /sys/class/power_supply/BAT0/charge_control_end_threshold"]
         running: true
         onExited: (code) => {
             root.available = (code === 0);
@@ -58,13 +60,14 @@ Singleton {
     // 2. Node detection: Search for the actual control file
     Process {
         id: findNode
-        command: ["sh", "-c", "find /sys/bus/platform/devices/VPC2004:00/ /sys/bus/platform/drivers/ideapad_acpi/VPC2004:00/ /sys/devices/platform/ideapad_laptop/ -name conservation_mode 2>/dev/null | head -n 1"]
+        command: ["sh", "-c", "find /sys/bus/platform/devices/VPC2004:00/ /sys/bus/platform/drivers/ideapad_acpi/VPC2004:00/ /sys/devices/platform/ideapad_laptop/ /sys/class/power_supply/BAT0/ /sys/class/power_supply/BAT1/ -name 'conservation_mode' -o -name 'charge_control_end_threshold' 2>/dev/null | head -n 1"]
         stdout: StdioCollector {
             id: findCollector
             onStreamFinished: {
                 const found = findCollector.text.trim();
                 if (found !== "") {
                     root.nodePath = found;
+                    root.isModernNode = found.indexOf("charge_control_end_threshold") !== -1;
                     root.functional = true;
                     root.updateStatus();
                 } else {
@@ -81,7 +84,10 @@ Singleton {
         command: ["test", "-f", root.nodePath]
         onExited: (code) => {
             root.functional = (code === 0);
-            if (root.functional) root.updateStatus();
+            if (root.functional) {
+                root.isModernNode = root.nodePath.indexOf("charge_control_end_threshold") !== -1;
+                root.updateStatus();
+            }
         }
     }
 
@@ -92,7 +98,13 @@ Singleton {
             id: outCollector
             onStreamFinished: {
                 const result = outCollector.text.trim();
-                root.isActive = (result === "1");
+                if (root.isModernNode) {
+                    // For threshold nodes, anything less than 100% is considered a form of conservation
+                    // Usually 60 or 80.
+                    root.isActive = (result !== "100");
+                } else {
+                    root.isActive = (result === "1");
+                }
                 root.loading = false;
             }
         }
@@ -100,13 +112,19 @@ Singleton {
 
     Process {
         id: toggleProcess
-        command: ["pkexec", "sh", "-c", `echo ${root.isActive ? "0" : "1"} > ${root.nodePath}`]
+        function getTargetValue() {
+            if (root.isModernNode) {
+                return root.isActive ? "100" : "80"; // Toggle between 80% and 100%
+            }
+            return root.isActive ? "0" : "1";
+        }
+        command: ["pkexec", "sh", "-c", `echo ${getTargetValue()} > ${root.nodePath}`]
         onExited: (exitCode) => {
             if (exitCode === 0) {
                 root.updateStatus();
             } else {
                 root.loading = false;
-                Quickshell.execDetached(["notify-send", "-a", "System", "Battery Conservation", "Failed to update setting. Ensure the required kernel driver is loaded."]);
+                Quickshell.execDetached(["notify-send", "-a", "System", "Battery Conservation", "Failed to update setting. Check permissions or driver support."]);
             }
         }
     }
