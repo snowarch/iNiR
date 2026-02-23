@@ -55,7 +55,7 @@ while true; do
     fi
 
     /usr/bin/ffmpeg -f s16le -ar 44100 -ac 2 -i "$TMP_RAW" -acodec libmp3lame -y -hide_banner -loglevel error "$TMP_MP3" 2>/dev/null
-    RESULT=$(/usr/bin/songrec audio-file-to-recognized-song "$TMP_MP3" 2>/dev/null || true)
+    RESULT=$(/usr/bin/songrec recognize -j "$TMP_MP3" 2>/dev/null || true)
 
     if echo "$RESULT" | /usr/bin/grep -q '"matches": \[' && [ ${#RESULT} -gt $MIN_VALID_RESULT_LENGTH ]; then
         echo "$RESULT"
