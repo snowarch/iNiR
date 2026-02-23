@@ -154,14 +154,14 @@ Scope {
         { pageIndex: 7, pageName: overlayPages[7].name, section: Translation.tr("Performance"), label: Translation.tr("Low power mode"), description: Translation.tr("Reduce resource usage for low-end hardware"), keywords: ["performance", "low", "power", "mode", "reduce", "battery", "laptop"] },
         { pageIndex: 7, pageName: overlayPages[7].name, section: Translation.tr("Interactions"), label: Translation.tr("Scrolling"), description: Translation.tr("Touchpad and mouse scroll speed"), keywords: ["scroll", "touchpad", "mouse", "speed", "fast", "slow", "sensitivity"] },
         // Shortcuts (page 8)
-        { pageIndex: 8, pageName: overlayPages[8].name, section: Translation.tr("Keyboard Shortcuts"), label: Translation.tr("Keyboard Shortcuts"), description: Translation.tr("Niri and ii keybindings reference"), keywords: ["shortcuts", "keybindings", "hotkeys", "keyboard", "cheatsheet", "terminal", "clipboard", "volume", "brightness", "screenshot", "lock", "workspace", "window", "focus", "move", "fullscreen", "floating", "overview", "settings", "wallpaper", "media", "play", "pause"] },
+        { pageIndex: 8, pageName: overlayPages[8].name, section: Translation.tr("Keyboard Shortcuts"), label: Translation.tr("Keyboard Shortcuts"), description: Translation.tr("Niri and inir keybindings reference"), keywords: ["shortcuts", "keybindings", "hotkeys", "keyboard", "cheatsheet", "terminal", "clipboard", "volume", "brightness", "screenshot", "lock", "workspace", "window", "focus", "move", "fullscreen", "floating", "overview", "settings", "wallpaper", "media", "play", "pause"] },
         // Modules (page 9)
         { pageIndex: 9, pageName: overlayPages[9].name, section: Translation.tr("Panel Modules"), label: Translation.tr("Panel Modules"), description: Translation.tr("Enable or disable shell modules"), keywords: ["modules", "panels", "enable", "disable", "bar", "sidebar", "overview"] },
         // Waffle Style (page 10)
         { pageIndex: 10, pageName: overlayPages[10].name, section: Translation.tr("Waffle Taskbar"), label: Translation.tr("Waffle Taskbar"), description: Translation.tr("Windows 11 style taskbar settings"), keywords: ["waffle", "taskbar", "windows", "bottom", "tray"] },
         { pageIndex: 10, pageName: overlayPages[10].name, section: Translation.tr("Waffle Start Menu"), label: Translation.tr("Waffle Start Menu"), description: Translation.tr("Start menu size and behavior"), keywords: ["waffle", "start", "menu", "apps", "pinned"] },
         // About (page 11)
-        { pageIndex: 11, pageName: overlayPages[11].name, section: Translation.tr("About"), label: Translation.tr("About ii"), description: Translation.tr("Version info, credits and links"), keywords: ["about", "version", "credits", "github", "info"] }
+        { pageIndex: 11, pageName: overlayPages[11].name, section: Translation.tr("About"), label: Translation.tr("About inir"), description: Translation.tr("Version info, credits and links"), keywords: ["about", "version", "credits", "github", "info"] }
     ]
 
     function recomputeOverlaySearchResults() {
@@ -487,12 +487,12 @@ Scope {
         return null;
     }
 
-    property string _lastFamily: Config.options?.panelFamily ?? "ii"
+    property string _lastFamily: Config.options?.panelFamily ?? "inir"
 
     Connections {
         target: Config.options ?? null
         function onPanelFamilyChanged() {
-            root._lastFamily = Config.options?.panelFamily ?? "ii";
+            root._lastFamily = Config.options?.panelFamily ?? "inir";
             root.overlayCurrentPage = 0;
         }
     }

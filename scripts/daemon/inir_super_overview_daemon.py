@@ -28,13 +28,13 @@ super_down_global = False
 interaction_since_super_down = False
 tap_handled = False
 
-# Cache of ii's environment so we don't hit /proc on every tap.
+# Cache of inir's environment so we don't hit /proc on every tap.
 II_ENV_CACHE = {}
 II_ENV_PID = None
 
 
 def _find_ii_pid():
-    """Locate the PID of the `qs -c ii` process by inspecting /proc."""
+    """Locate the PID of the `qs -c inir` process by inspecting /proc."""
     proc_root = "/proc"
     for entry in os.listdir(proc_root):
         if not entry.isdigit():
@@ -54,13 +54,13 @@ def _find_ii_pid():
         exe = os.path.basename(args[0])
         if exe != "qs":
             continue
-        if args[1] == "-c" and args[2] == "ii":
+        if args[1] == "-c" and args[2] == "inir":
             return pid
     return None
 
 
 def get_ii_env():
-    """Get relevant environment variables from the running `qs -c ii`
+    """Get relevant environment variables from the running `qs -c inir`
     session to reuse them when calling IPC.
 
     Caches the environment while the PID stays the same to reduce
@@ -70,7 +70,7 @@ def get_ii_env():
     try:
         pid = _find_ii_pid()
         if pid is None:
-            print("[ii-super-daemon] ii not running, cannot import env", flush=True)
+            print("[inir-super-daemon] inir not running, cannot import env", flush=True)
             II_ENV_CACHE = {}
             II_ENV_PID = None
             return {}
@@ -78,7 +78,7 @@ def get_ii_env():
         if II_ENV_PID == pid and II_ENV_CACHE:
             return II_ENV_CACHE
 
-        print(f"[ii-super-daemon] Found ii pid={pid}", flush=True)
+        print(f"[inir-super-daemon] Found inir pid={pid}", flush=True)
         environ_path = f"/proc/{pid}/environ"
         with open(environ_path, "rb") as f:
             raw = f.read().decode("utf-8", errors="ignore")
@@ -92,10 +92,10 @@ def get_ii_env():
                 env_vars[k] = v
         II_ENV_CACHE = env_vars
         II_ENV_PID = pid
-        print(f"[ii-super-daemon] Imported env from ii: {env_vars}", flush=True)
+        print(f"[inir-super-daemon] Imported env from inir: {env_vars}", flush=True)
         return II_ENV_CACHE
     except Exception as e:
-        print(f"[ii-super-daemon] Error reading ii env: {e}", flush=True)
+        print(f"[inir-super-daemon] Error reading inir env: {e}", flush=True)
         return {}
 
 
@@ -107,7 +107,7 @@ def find_keyboard_devices():
             dev = InputDevice(path)
             caps = dev.capabilities().get(ecodes.EV_KEY, [])
         except Exception as e:
-            print(f"[ii-super-daemon] Error inspecting {path}: {e}", flush=True)
+            print(f"[inir-super-daemon] Error inspecting {path}: {e}", flush=True)
             continue
 
         name = (dev.name or "").lower()
@@ -120,15 +120,15 @@ def find_keyboard_devices():
         has_pointer_button = any(code in POINTER_BUTTON_CODES for code in caps)
 
         if has_super:
-            print(f"[ii-super-daemon] Using keyboard device {path} ({dev.name}), has_super={has_super}", flush=True)
+            print(f"[inir-super-daemon] Using keyboard device {path} ({dev.name}), has_super={has_super}", flush=True)
             keyboards.append(path)
 
         if has_pointer_button:
-            print(f"[ii-super-daemon] Using pointer device {path} ({dev.name}), has_pointer_button={has_pointer_button}", flush=True)
+            print(f"[inir-super-daemon] Using pointer device {path} ({dev.name}), has_pointer_button={has_pointer_button}", flush=True)
             pointers.append(path)
 
     if not keyboards:
-        print("[ii-super-daemon] No suitable keyboard devices found", flush=True)
+        print("[inir-super-daemon] No suitable keyboard devices found", flush=True)
 
     return keyboards, pointers
 
@@ -156,17 +156,17 @@ async def monitor_device(path):
                 tap_handled = False
             elif value == key_event.key_up:
                 if super_down and not chord and not interaction_since_super_down and not tap_handled:
-                    # Tap of Super with no other keys or clicks: toggle ii overview
+                    # Tap of Super with no other keys or clicks: toggle inir overview
                     # with a global debounce so multiple devices don't double-trigger.
                     now = time.monotonic()
                     if now - last_toggle_time >= DEBOUNCE_SEC:
                         last_toggle_time = now
                         tap_handled = True
-                        print("[ii-super-daemon] Super tap detected, toggling ii overview", flush=True)
+                        print("[inir-super-daemon] Super tap detected, toggling inir overview", flush=True)
                         try:
                             ii_env = get_ii_env()
                             if not ii_env:
-                                print("[ii-super-daemon] No ii env available, skipping toggle", flush=True)
+                                print("[inir-super-daemon] No inir env available, skipping toggle", flush=True)
                                 super_down = False
                                 super_down_global = False
                                 interaction_since_super_down = False
@@ -179,7 +179,7 @@ async def monitor_device(path):
                                 [
                                     "qs",
                                     "-c",
-                                    "ii",
+                                    "inir",
                                     "ipc",
                                     "call",
                                     "overview",
@@ -190,7 +190,7 @@ async def monitor_device(path):
                                 stderr=subprocess.DEVNULL,
                             )
                         except Exception as e:
-                            print(f"[ii-super-daemon] Error running toggle command: {e}", flush=True)
+                            print(f"[inir-super-daemon] Error running toggle command: {e}", flush=True)
                 super_down = False
                 chord = False
                 super_down_global = False
@@ -230,7 +230,7 @@ async def main():
         keyboard_paths, pointer_paths = find_keyboard_devices()
         if keyboard_paths:
             break
-        print("[ii-super-daemon] No keyboards with Super yet, retrying in 5s", flush=True)
+        print("[inir-super-daemon] No keyboards with Super yet, retrying in 5s", flush=True)
         await asyncio.sleep(5)
 
     tasks = [asyncio.create_task(monitor_device(p)) for p in keyboard_paths]

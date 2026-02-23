@@ -6,7 +6,7 @@ This avoids conflicts with system packages and makes updates more reliable.
 ### Location
 
 - **venv**: `~/.local/state/quickshell/.venv`
-- **env var**: `ILLOGICAL_IMPULSE_VIRTUAL_ENV`
+- **env var**: `INIR_VIRTUAL_ENV`
 
 ### Adding/Removing Packages
 
@@ -34,7 +34,7 @@ Scripts that need these packages should activate the venv first:
 
 ```bash
 #!/usr/bin/env bash
-source $(eval echo $ILLOGICAL_IMPULSE_VIRTUAL_ENV)/bin/activate
+source $(eval echo $INIR_VIRTUAL_ENV)/bin/activate
 python your_script.py "$@"
 deactivate
 ```

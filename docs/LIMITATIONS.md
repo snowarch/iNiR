@@ -6,7 +6,7 @@ Things that don't work, work weirdly, or will bite you when you least expect it.
 
 ## Compositor Support
 
-ii is built for **Niri**. Some features were inherited from the original Hyprland version and don't work on Niri.
+inir is built for **Niri**. Some features were inherited from the original Hyprland version and don't work on Niri.
 
 ### Niri-Only (Works)
 
@@ -49,7 +49,7 @@ ii is built for **Niri**. Some features were inherited from the original Hyprlan
 
 ### Audio
 
-- **PipeWire required**: ii uses PipeWire APIs directly. PulseAudio-only setups won't work.
+- **PipeWire required**: inir uses PipeWire APIs directly. PulseAudio-only setups won't work.
 - **Volume protection**: The "prevent sudden volume spikes" feature can be overzealous after suspend/resume. Disable it in settings if it's annoying.
 
 ### GPS/Weather
@@ -126,18 +126,18 @@ ii is built for **Niri**. Some features were inherited from the original Hyprlan
 
 ### Window Previews
 
-- **No live previews**: Unlike some shells, ii doesn't capture live window thumbnails. You see app icons, not actual window content.
+- **No live previews**: Unlike some shells, inir doesn't capture live window thumbnails. You see app icons, not actual window content.
 - **Workspace snapshots disabled**: The code for workspace screenshots exists but is disabled (too slow/unreliable).
 
 ### Window Matching
 
-- **App ID matching**: ii matches windows by `app_id`. Some apps (especially Electron apps) have weird or missing app IDs, causing icon mismatches.
-- **Quickshell windows**: All ii windows have `app_id: "org.quickshell"`. This is correct, not a bug.
+- **App ID matching**: inir matches windows by `app_id`. Some apps (especially Electron apps) have weird or missing app IDs, causing icon mismatches.
+- **Quickshell windows**: All inir windows have `app_id: "org.quickshell"`. This is correct, not a bug.
 
 ### Backdrop & Wallpaper
 
-- **Separate configs**: Material ii and Waffle have independent backdrop/wallpaper settings. If you enable both families, each manages its own background layer.
-- **Niri layer rules required**: The backdrop uses Niri's `place-within-backdrop` layer rule. If your wallpaper doesn't show in overview, check that your `config.kdl` has the layer rules for `quickshell:iiBackdrop` and `quickshell:wBackdrop`.
+- **Separate configs**: Material inir and Waffle have independent backdrop/wallpaper settings. If you enable both families, each manages its own background layer.
+- **Niri layer rules required**: The backdrop uses Niri's `place-within-backdrop` layer rule. If your wallpaper doesn't show in overview, check that your `config.kdl` has the layer rules for `quickshell:inirBackdrop` and `quickshell:wBackdrop`.
 - **Migration is automatic**: Switching between families auto-migrates your `enabledPanels` config. You shouldn't need to touch it manually.
 
 ---
@@ -152,7 +152,7 @@ ii is built for **Niri**. Some features were inherited from the original Hyprlan
 
 ### Hyprlock Fallback
 
-- `lock.useHyprlock = true` in config makes the lock keybind launch Hyprlock instead of ii's lock screen. Only works on Hyprland.
+- `lock.useHyprlock = true` in config makes the lock keybind launch Hyprlock instead of inir's lock screen. Only works on Hyprland.
 
 ---
 
@@ -160,7 +160,7 @@ ii is built for **Niri**. Some features were inherited from the original Hyprlan
 
 - **Incomplete translations**: Not all strings are translated. English is the fallback.
 - **Auto-detection**: Language is detected from system locale. Override with `language.ui` in config.
-- **Generated translations**: AI-generated translations go to `~/.config/illogical-impulse/translations/`. Quality varies.
+- **Generated translations**: AI-generated translations go to `~/.config/inir/translations/`. Quality varies.
 
 ---
 
@@ -172,7 +172,7 @@ ii is built for **Niri**. Some features were inherited from the original Hyprlan
 
 ### Memory Usage
 
-- ii loads modules lazily, but a fully-loaded shell with all features enabled uses ~200-400MB RAM. Disable panels you don't use in Settings → General → Enabled Panels.
+- inir loads modules lazily, but a fully-loaded shell with all features enabled uses ~200-400MB RAM. Disable panels you don't use in Settings → General → Enabled Panels.
 
 ### Startup Time
 
@@ -184,7 +184,7 @@ ii is built for **Niri**. Some features were inherited from the original Hyprlan
 
 ### Multi-Monitor
 
-- ii spawns UI elements per-screen. Most features work, but some edge cases (like dragging windows between monitors in overview) aren't implemented.
+- inir spawns UI elements per-screen. Most features work, but some edge cases (like dragging windows between monitors in overview) aren't implemented.
 
 ### Touchscreen/Tablet
 
@@ -192,11 +192,11 @@ ii is built for **Niri**. Some features were inherited from the original Hyprlan
 
 ### Wayland-Only
 
-- ii is Wayland-only. No X11 support, no XWayland workarounds for the shell itself. (Your apps can still use XWayland via `xwayland-satellite`.)
+- inir is Wayland-only. No X11 support, no XWayland workarounds for the shell itself. (Your apps can still use XWayland via `xwayland-satellite`.)
 
 ### Config Hot-Reload
 
-- Most config changes apply immediately. Some (like enabling/disabling modules) require restarting ii with `qs kill -c ii && qs -c ii`.
+- Most config changes apply immediately. Some (like enabling/disabling modules) require restarting inir with `qs kill -c inir && qs -c inir`.
 
 ---
 
@@ -204,9 +204,9 @@ ii is built for **Niri**. Some features were inherited from the original Hyprlan
 
 Before opening an issue and making me read your bug report:
 
-1. Check `qs log -c ii` for errors - the answer is usually right there
+1. Check `qs log -c inir` for errors - the answer is usually right there
 2. Verify the feature isn't listed as a known limitation above - yes, you have to actually read this page
-3. Test with a fresh config: `mv ~/.config/illogical-impulse/config.json ~/.config/illogical-impulse/config.json.bak`
+3. Test with a fresh config: `mv ~/.config/inir/config.json ~/.config/inir/config.json.bak`
 4. Include your Niri version (`niri --version`) and Quickshell version (`qs --version`)
 
 If it's still broken after all that, congratulations - you found a real bug. Gold star for you.

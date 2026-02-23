@@ -1,26 +1,26 @@
 # Default Keybinds
 
-These are the default keybinds shipped with ii. They live in `~/.config/niri/config.kdl` after install.
+These are the default keybinds shipped with inir. They live in `~/.config/niri/config.kdl` after install.
 
 Change them. Break them. Make them yours. We won't judge.
 
 ---
 
-## ii Controls
+## inir Controls
 
 | Key | Action |
 |-----|--------|
 | `Mod+Tab` | Niri overview (native compositor) |
-| `Mod+Space` | ii overview (daemon) |
-| `Super+G` | ii overlay (search, widgets) |
-| `Alt+Tab` | ii window switcher (next) |
-| `Alt+Shift+Tab` | ii window switcher (previous) |
+| `Mod+Space` | inir overview (daemon) |
+| `Super+G` | inir overlay (search, widgets) |
+| `Alt+Tab` | inir window switcher (next) |
+| `Alt+Shift+Tab` | inir window switcher (previous) |
 | `Super+V` | Clipboard history |
 | `Super+/` | Cheatsheet |
 | `Super+,` | Settings |
 | `Super+Alt+L` | Lock screen |
 | `Ctrl+Alt+T` | Wallpaper selector |
-| `Mod+Shift+W` | Cycle panel family (ii ↔ waffle) |
+| `Mod+Shift+W` | Cycle panel family (inir ↔ waffle) |
 
 ---
 
@@ -101,24 +101,24 @@ Change them. Break them. Make them yours. We won't judge.
 | `XF86AudioRaiseVolume` | Volume up |
 | `XF86AudioLowerVolume` | Volume down |
 | `XF86AudioMute` | Toggle mute |
-| `XF86AudioPlay` | Play/pause (via ii IPC) |
-| `XF86AudioNext` | Next track (via ii IPC) |
-| `XF86AudioPrev` | Previous track (via ii IPC) |
-| `XF86MonBrightnessUp` | Brightness up (via ii IPC) |
-| `XF86MonBrightnessDown` | Brightness down (via ii IPC) |
+| `XF86AudioPlay` | Play/pause (via inir IPC) |
+| `XF86AudioNext` | Next track (via inir IPC) |
+| `XF86AudioPrev` | Previous track (via inir IPC) |
+| `XF86MonBrightnessUp` | Brightness up (via inir IPC) |
+| `XF86MonBrightnessDown` | Brightness down (via inir IPC) |
 
 ---
 
 ## Customizing
 
-Edit `~/.config/niri/config.kdl` to change keybinds. See [IPC.md](IPC.md) for all available ii targets you can bind.
+Edit `~/.config/niri/config.kdl` to change keybinds. See [IPC.md](IPC.md) for all available inir targets you can bind.
 
 Example (because you're definitely going to ask):
 
 ```kdl
 binds {
     // Your custom binds
-    Super+P { spawn "qs" "-c" "ii" "ipc" "call" "session" "toggle"; }
+    Super+P { spawn "qs" "-c" "inir" "ipc" "call" "session" "toggle"; }
 }
 ```
 

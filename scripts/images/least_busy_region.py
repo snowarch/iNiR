@@ -66,15 +66,15 @@ def find_least_busy_region(image_path, region_width=300, region_height=200, scre
     # Use OpenCV's integral for fast computation
     integral = cv2.integral(arr, sdepth=cv2.CV_64F)[1:,1:]
     integral_sq = cv2.integral(arr**2, sdepth=cv2.CV_64F)[1:,1:]
-    def region_sum(ii, x1, y1, x2, y2):
+    def region_sum(inir, x1, y1, x2, y2):
         # Assume bounds have been checked before calling
-        total = ii[y2, x2]
+        total = inir[y2, x2]
         if x1 > 0:
-            total -= ii[y2, x1-1]
+            total -= inir[y2, x1-1]
         if y1 > 0:
-            total -= ii[y1-1, x2]
+            total -= inir[y1-1, x2]
         if x1 > 0 and y1 > 0:
-            total += ii[y1-1, x1-1]
+            total += inir[y1-1, x1-1]
         return total
     min_var = None
     max_var = None
@@ -146,14 +146,14 @@ def find_largest_region(image_path, screen_width=None, screen_height=None, verbo
     # Use OpenCV's integral for fast computation
     integral = cv2.integral(arr, sdepth=cv2.CV_64F)[1:,1:]
     integral_sq = cv2.integral(arr**2, sdepth=cv2.CV_64F)[1:,1:]
-    def region_sum(ii, x1, y1, x2, y2):
-        total = ii[y2, x2]
+    def region_sum(inir, x1, y1, x2, y2):
+        total = inir[y2, x2]
         if x1 > 0:
-            total -= ii[y2, x1-1]
+            total -= inir[y2, x1-1]
         if y1 > 0:
-            total -= ii[y1-1, x2]
+            total -= inir[y1-1, x2]
         if x1 > 0 and y1 > 0:
-            total += ii[y1-1, x1-1]
+            total += inir[y1-1, x1-1]
         return total
     min_size = 10
     # Determine maximum feasible size respecting padding

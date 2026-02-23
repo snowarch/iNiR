@@ -13,17 +13,17 @@ ContentPage {
     readonly property bool isWaffle: Config.options.panelFamily === "waffle"
 
     readonly property var defaultPanels: ({
-        "ii": [
-            "iiBar", "iiBackground", "iiBackdrop", "iiCheatsheet", "iiControlPanel", "iiDock", "iiLock", 
-            "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard", 
-            "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners", 
-            "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiVerticalBar", 
-            "iiWallpaperSelector", "iiAltSwitcher", "iiClipboard"
+        "inir": [
+            "inirBar", "inirBackground", "inirBackdrop", "inirCheatsheet", "inirControlPanel", "inirDock", "inirLock", 
+            "inirMediaControls", "inirNotificationPopup", "inirOnScreenDisplay", "inirOnScreenKeyboard", 
+            "inirOverlay", "inirOverview", "inirPolkit", "inirRegionSelector", "inirScreenCorners", 
+            "inirSessionScreen", "inirSidebarLeft", "inirSidebarRight", "inirVerticalBar", 
+            "inirWallpaperSelector", "inirAltSwitcher", "inirClipboard"
         ],
         "waffle": [
             "wBar", "wBackground", "wStartMenu", "wActionCenter", "wNotificationCenter", "wNotificationPopup", "wOnScreenDisplay", "wWidgets", "wLock", "wPolkit", "wSessionScreen",
-            "iiBackdrop", "iiCheatsheet", "iiControlPanel", "iiLock", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit", 
-            "iiRegionSelector", "iiSessionScreen", "iiWallpaperSelector", "iiAltSwitcher", "iiClipboard"
+            "inirBackdrop", "inirCheatsheet", "inirControlPanel", "inirLock", "inirOnScreenKeyboard", "inirOverlay", "inirOverview", "inirPolkit", 
+            "inirRegionSelector", "inirSessionScreen", "inirWallpaperSelector", "inirAltSwitcher", "inirClipboard"
         ]
     })
 
@@ -45,7 +45,7 @@ ContentPage {
     }
 
     function resetToDefaults() {
-        const family = Config.options.panelFamily || "ii"
+        const family = Config.options.panelFamily || "inir"
         Config.options.enabledPanels = [...defaultPanels[family]]
     }
 
@@ -124,15 +124,15 @@ ContentPage {
                         }
                         StyledText {
                             Layout.alignment: Qt.AlignHCenter
-                            text: "Material (ii)"
+                            text: "Material (inir)"
                             font.pixelSize: Appearance.font.pixelSize.small
                             color: !modulesPage.isWaffle ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
                         }
                     }
 
                     onClicked: {
-                        Config.options.panelFamily = "ii"
-                        Config.options.enabledPanels = [...modulesPage.defaultPanels["ii"]]
+                        Config.options.panelFamily = "inir"
+                        Config.options.enabledPanels = [...modulesPage.defaultPanels["inir"]]
                     }
                 }
 
@@ -398,7 +398,7 @@ ContentPage {
         }
     }
 
-    // ==================== MATERIAL II ====================
+    // ==================== MATERIAL INIR ====================
     SettingsCardSection {
         visible: !modulesPage.isWaffle
         expanded: true
@@ -409,64 +409,64 @@ ContentPage {
             SettingsSwitch {
                 buttonIcon: "toolbar"
                 text: Translation.tr("Bar")
-                checked: modulesPage.isPanelEnabled("iiBar")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiBar", checked)
+                checked: modulesPage.isPanelEnabled("inirBar")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirBar", checked)
                 StyledToolTip { text: Translation.tr("Horizontal bar with clock, workspaces, system tray and utilities") }
             }
 
             SettingsSwitch {
                 buttonIcon: "view_column"
                 text: Translation.tr("Vertical Bar")
-                checked: modulesPage.isPanelEnabled("iiVerticalBar")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiVerticalBar", checked)
+                checked: modulesPage.isPanelEnabled("inirVerticalBar")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirVerticalBar", checked)
                 StyledToolTip { text: Translation.tr("Vertical bar layout (alternative to horizontal bar)") }
             }
 
             SettingsSwitch {
                 buttonIcon: "wallpaper"
                 text: Translation.tr("Background")
-                checked: modulesPage.isPanelEnabled("iiBackground")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiBackground", checked)
+                checked: modulesPage.isPanelEnabled("inirBackground")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirBackground", checked)
                 StyledToolTip { text: Translation.tr("Desktop wallpaper with parallax effect and widgets") }
             }
 
             SettingsSwitch {
                 buttonIcon: "blur_on"
                 text: Translation.tr("Niri Overview Backdrop")
-                checked: modulesPage.isPanelEnabled("iiBackdrop")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiBackdrop", checked)
+                checked: modulesPage.isPanelEnabled("inirBackdrop")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirBackdrop", checked)
                 StyledToolTip { text: Translation.tr("Blurred wallpaper shown in Niri's native overview (Mod+Tab)") }
             }
 
             SettingsSwitch {
                 buttonIcon: "search"
                 text: Translation.tr("Overview")
-                checked: modulesPage.isPanelEnabled("iiOverview")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiOverview", checked)
+                checked: modulesPage.isPanelEnabled("inirOverview")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirOverview", checked)
                 StyledToolTip { text: Translation.tr("App launcher, search and workspace grid (Super+Space)") }
             }
 
             SettingsSwitch {
                 buttonIcon: "widgets"
                 text: Translation.tr("Overlay")
-                checked: modulesPage.isPanelEnabled("iiOverlay")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiOverlay", checked)
+                checked: modulesPage.isPanelEnabled("inirOverlay")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirOverlay", checked)
                 StyledToolTip { text: Translation.tr("Floating image and widgets panel (Super+G)") }
             }
 
             SettingsSwitch {
                 buttonIcon: "left_panel_open"
                 text: Translation.tr("Left Sidebar")
-                checked: modulesPage.isPanelEnabled("iiSidebarLeft")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiSidebarLeft", checked)
+                checked: modulesPage.isPanelEnabled("inirSidebarLeft")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirSidebarLeft", checked)
                 StyledToolTip { text: Translation.tr("AI assistant, translator, image browser") }
             }
 
             SettingsSwitch {
                 buttonIcon: "right_panel_open"
                 text: Translation.tr("Right Sidebar")
-                checked: modulesPage.isPanelEnabled("iiSidebarRight")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiSidebarRight", checked)
+                checked: modulesPage.isPanelEnabled("inirSidebarRight")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirSidebarRight", checked)
                 StyledToolTip { text: Translation.tr("Quick settings, notifications, calendar, system info") }
             }
         }
@@ -482,24 +482,24 @@ ContentPage {
             SettingsSwitch {
                 buttonIcon: "notifications"
                 text: Translation.tr("Notification Popups")
-                checked: modulesPage.isPanelEnabled("iiNotificationPopup")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiNotificationPopup", checked)
+                checked: modulesPage.isPanelEnabled("inirNotificationPopup")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirNotificationPopup", checked)
                 StyledToolTip { text: Translation.tr("Toast notifications that appear on screen") }
             }
 
             SettingsSwitch {
                 buttonIcon: "volume_up"
                 text: Translation.tr("OSD")
-                checked: modulesPage.isPanelEnabled("iiOnScreenDisplay")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiOnScreenDisplay", checked)
+                checked: modulesPage.isPanelEnabled("inirOnScreenDisplay")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirOnScreenDisplay", checked)
                 StyledToolTip { text: Translation.tr("On-screen display for volume and brightness changes") }
             }
 
             SettingsSwitch {
                 buttonIcon: "music_note"
                 text: Translation.tr("Media Controls")
-                checked: modulesPage.isPanelEnabled("iiMediaControls")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiMediaControls", checked)
+                checked: modulesPage.isPanelEnabled("inirMediaControls")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirMediaControls", checked)
                 StyledToolTip { text: Translation.tr("Floating media player controls") }
             }
         }
@@ -515,72 +515,72 @@ ContentPage {
             SettingsSwitch {
                 buttonIcon: "lock"
                 text: Translation.tr("Lock Screen")
-                checked: modulesPage.isPanelEnabled("iiLock")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiLock", checked)
+                checked: modulesPage.isPanelEnabled("inirLock")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirLock", checked)
                 StyledToolTip { text: Translation.tr("Custom lock screen with clock and password input") }
             }
 
             SettingsSwitch {
                 buttonIcon: "power_settings_new"
                 text: Translation.tr("Session Screen")
-                checked: modulesPage.isPanelEnabled("iiSessionScreen")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiSessionScreen", checked)
+                checked: modulesPage.isPanelEnabled("inirSessionScreen")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirSessionScreen", checked)
                 StyledToolTip { text: Translation.tr("Power menu: lock, logout, suspend, reboot, shutdown") }
             }
 
             SettingsSwitch {
                 buttonIcon: "admin_panel_settings"
                 text: Translation.tr("Polkit Agent")
-                checked: modulesPage.isPanelEnabled("iiPolkit")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiPolkit", checked)
+                checked: modulesPage.isPanelEnabled("inirPolkit")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirPolkit", checked)
                 StyledToolTip { text: Translation.tr("Password prompt for administrative actions") }
             }
 
             SettingsSwitch {
                 buttonIcon: "screenshot_region"
                 text: Translation.tr("Region Selector")
-                checked: modulesPage.isPanelEnabled("iiRegionSelector")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiRegionSelector", checked)
+                checked: modulesPage.isPanelEnabled("inirRegionSelector")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirRegionSelector", checked)
                 StyledToolTip { text: Translation.tr("Screen capture, OCR text extraction, color picker") }
             }
 
             SettingsSwitch {
                 buttonIcon: "image"
                 text: Translation.tr("Wallpaper Selector")
-                checked: modulesPage.isPanelEnabled("iiWallpaperSelector")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiWallpaperSelector", checked)
+                checked: modulesPage.isPanelEnabled("inirWallpaperSelector")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirWallpaperSelector", checked)
                 StyledToolTip { text: Translation.tr("File picker for changing wallpaper") }
             }
 
             SettingsSwitch {
                 buttonIcon: "keyboard"
                 text: Translation.tr("Cheatsheet")
-                checked: modulesPage.isPanelEnabled("iiCheatsheet")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiCheatsheet", checked)
+                checked: modulesPage.isPanelEnabled("inirCheatsheet")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirCheatsheet", checked)
                 StyledToolTip { text: Translation.tr("Keyboard shortcuts reference overlay") }
             }
 
             SettingsSwitch {
                 buttonIcon: "keyboard_alt"
                 text: Translation.tr("On-Screen Keyboard")
-                checked: modulesPage.isPanelEnabled("iiOnScreenKeyboard")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiOnScreenKeyboard", checked)
+                checked: modulesPage.isPanelEnabled("inirOnScreenKeyboard")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirOnScreenKeyboard", checked)
                 StyledToolTip { text: Translation.tr("Virtual keyboard for touch input") }
             }
 
             SettingsSwitch {
                 buttonIcon: "tab"
                 text: Translation.tr("Alt-Tab Switcher")
-                checked: modulesPage.isPanelEnabled("iiAltSwitcher")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiAltSwitcher", checked)
+                checked: modulesPage.isPanelEnabled("inirAltSwitcher")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirAltSwitcher", checked)
                 StyledToolTip { text: Translation.tr("Window switcher popup") }
             }
 
             SettingsSwitch {
                 buttonIcon: "content_paste"
                 text: Translation.tr("Clipboard History")
-                checked: modulesPage.isPanelEnabled("iiClipboard")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiClipboard", checked)
+                checked: modulesPage.isPanelEnabled("inirClipboard")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirClipboard", checked)
                 StyledToolTip { text: Translation.tr("Clipboard manager with history") }
             }
         }
@@ -596,24 +596,24 @@ ContentPage {
             SettingsSwitch {
                 buttonIcon: "dock_to_bottom"
                 text: Translation.tr("Dock")
-                checked: modulesPage.isPanelEnabled("iiDock")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiDock", checked)
+                checked: modulesPage.isPanelEnabled("inirDock")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirDock", checked)
                 StyledToolTip { text: Translation.tr("macOS-style dock with pinned and running apps") }
             }
 
             SettingsSwitch {
                 buttonIcon: "rounded_corner"
                 text: Translation.tr("Screen Corners")
-                checked: modulesPage.isPanelEnabled("iiScreenCorners")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiScreenCorners", checked)
+                checked: modulesPage.isPanelEnabled("inirScreenCorners")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirScreenCorners", checked)
                 StyledToolTip { text: Translation.tr("Rounded corner overlays for screens without hardware rounding") }
             }
 
             SettingsSwitch {
                 buttonIcon: "center_focus_strong"
                 text: Translation.tr("Crosshair")
-                checked: modulesPage.isPanelEnabled("iiCrosshair")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiCrosshair", checked)
+                checked: modulesPage.isPanelEnabled("inirCrosshair")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirCrosshair", checked)
                 StyledToolTip { text: Translation.tr("Gaming crosshair overlay for games without built-in crosshair") }
             }
         }
@@ -702,7 +702,7 @@ ContentPage {
         SettingsGroup {
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("Modules shared with Material ii style")
+                text: Translation.tr("Modules shared with Material inir style")
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 wrapMode: Text.WordWrap
@@ -711,104 +711,104 @@ ContentPage {
             SettingsSwitch {
                 buttonIcon: "blur_on"
                 text: Translation.tr("Niri Overview Backdrop")
-                checked: modulesPage.isPanelEnabled("iiBackdrop")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiBackdrop", checked)
+                checked: modulesPage.isPanelEnabled("inirBackdrop")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirBackdrop", checked)
                 StyledToolTip { text: Translation.tr("Blurred wallpaper shown in Niri's native overview (Mod+Tab)") }
             }
 
             SettingsSwitch {
                 buttonIcon: "search"
                 text: Translation.tr("Overview")
-                checked: modulesPage.isPanelEnabled("iiOverview")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiOverview", checked)
+                checked: modulesPage.isPanelEnabled("inirOverview")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirOverview", checked)
                 StyledToolTip { text: Translation.tr("Workspace grid (used by Start Menu)") }
             }
 
             SettingsSwitch {
                 buttonIcon: "widgets"
                 text: Translation.tr("Overlay")
-                checked: modulesPage.isPanelEnabled("iiOverlay")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiOverlay", checked)
+                checked: modulesPage.isPanelEnabled("inirOverlay")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirOverlay", checked)
                 StyledToolTip { text: Translation.tr("Floating image and widgets panel (Super+G)") }
             }
 
             SettingsSwitch {
                 buttonIcon: "lock"
                 text: Translation.tr("Lock Screen")
-                checked: modulesPage.isPanelEnabled("iiLock")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiLock", checked)
+                checked: modulesPage.isPanelEnabled("inirLock")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirLock", checked)
                 StyledToolTip { text: Translation.tr("Custom lock screen with clock and password input") }
             }
 
             SettingsSwitch {
                 buttonIcon: "power_settings_new"
                 text: Translation.tr("Session Screen")
-                checked: modulesPage.isPanelEnabled("iiSessionScreen")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiSessionScreen", checked)
+                checked: modulesPage.isPanelEnabled("inirSessionScreen")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirSessionScreen", checked)
                 StyledToolTip { text: Translation.tr("Power menu: lock, logout, suspend, reboot, shutdown") }
             }
 
             SettingsSwitch {
                 buttonIcon: "admin_panel_settings"
                 text: Translation.tr("Polkit Agent")
-                checked: modulesPage.isPanelEnabled("iiPolkit")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiPolkit", checked)
+                checked: modulesPage.isPanelEnabled("inirPolkit")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirPolkit", checked)
                 StyledToolTip { text: Translation.tr("Password prompt for administrative actions") }
             }
 
             SettingsSwitch {
                 buttonIcon: "screenshot_region"
                 text: Translation.tr("Region Selector")
-                checked: modulesPage.isPanelEnabled("iiRegionSelector")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiRegionSelector", checked)
+                checked: modulesPage.isPanelEnabled("inirRegionSelector")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirRegionSelector", checked)
                 StyledToolTip { text: Translation.tr("Screen capture, OCR text extraction, color picker") }
             }
 
             SettingsSwitch {
                 buttonIcon: "image"
                 text: Translation.tr("Wallpaper Selector")
-                checked: modulesPage.isPanelEnabled("iiWallpaperSelector")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiWallpaperSelector", checked)
+                checked: modulesPage.isPanelEnabled("inirWallpaperSelector")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirWallpaperSelector", checked)
                 StyledToolTip { text: Translation.tr("File picker for changing wallpaper") }
             }
 
             SettingsSwitch {
                 buttonIcon: "keyboard"
                 text: Translation.tr("Cheatsheet")
-                checked: modulesPage.isPanelEnabled("iiCheatsheet")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiCheatsheet", checked)
+                checked: modulesPage.isPanelEnabled("inirCheatsheet")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirCheatsheet", checked)
                 StyledToolTip { text: Translation.tr("Keyboard shortcuts reference overlay") }
             }
 
             SettingsSwitch {
                 buttonIcon: "keyboard_alt"
                 text: Translation.tr("On-Screen Keyboard")
-                checked: modulesPage.isPanelEnabled("iiOnScreenKeyboard")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiOnScreenKeyboard", checked)
+                checked: modulesPage.isPanelEnabled("inirOnScreenKeyboard")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirOnScreenKeyboard", checked)
                 StyledToolTip { text: Translation.tr("Virtual keyboard for touch input") }
             }
 
             SettingsSwitch {
                 buttonIcon: "tab"
                 text: Translation.tr("Alt-Tab Switcher")
-                checked: modulesPage.isPanelEnabled("iiAltSwitcher")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiAltSwitcher", checked)
+                checked: modulesPage.isPanelEnabled("inirAltSwitcher")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirAltSwitcher", checked)
                 StyledToolTip { text: Translation.tr("Window switcher popup") }
             }
 
             SettingsSwitch {
                 buttonIcon: "content_paste"
                 text: Translation.tr("Clipboard History")
-                checked: modulesPage.isPanelEnabled("iiClipboard")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiClipboard", checked)
+                checked: modulesPage.isPanelEnabled("inirClipboard")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirClipboard", checked)
                 StyledToolTip { text: Translation.tr("Clipboard manager with history") }
             }
 
             SettingsSwitch {
                 buttonIcon: "center_focus_strong"
                 text: Translation.tr("Crosshair")
-                checked: modulesPage.isPanelEnabled("iiCrosshair")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiCrosshair", checked)
+                checked: modulesPage.isPanelEnabled("inirCrosshair")
+                onCheckedChanged: modulesPage.setPanelEnabled("inirCrosshair", checked)
                 StyledToolTip { text: Translation.tr("Gaming crosshair overlay") }
             }
         }

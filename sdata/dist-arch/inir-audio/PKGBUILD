@@ -1,7 +1,7 @@
 pkgname=inir-audio
 pkgver=1.0
 pkgrel=1
-pkgdesc='illogical-impulse on Niri - Audio Dependencies'
+pkgdesc='inir on Niri - Audio Dependencies'
 arch=(any)
 license=(MIT)
 depends=(

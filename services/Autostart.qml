@@ -109,9 +109,9 @@ Singleton {
             + "after=$(grep -m1 '^After=' \"$f\" | cut -d= -f2-); "
             + "desc=${desc//|/ }; wanted=${wanted//|/ }; kind=session; "
             + "printf '%s\n' \"$wanted\" \"$after\" | grep -q 'tray-apps.target' && kind=tray; "
-            + "ii_managed=no; "
-            + "grep -q '^# ii-autostart' \"$f\" 2>/dev/null && ii_managed=yes; "
-            + "echo \"$name|$enabled|$kind|$desc|$wanted|$ii_managed\"; "
+            + "inir_managed=no; "
+            + "grep -q '^# inir-autostart' \"$f\" 2>/dev/null && inir_managed=yes; "
+            + "echo \"$name|$enabled|$kind|$desc|$wanted|$inir_managed\"; "
             + "done"
         ]
         stdout: SplitParser {
@@ -226,8 +226,8 @@ Singleton {
             console.log("[Autostart] Deleting user service", name)
             const cmd = "/usr/bin/systemctl --user disable --now '" + name
                 + "' 2>/dev/null || true; "
-                // Only remove units that were created by ii Autostart (marker comment)
-                + "if grep -q '^# ii-autostart' '" + dir + "/" + name + "' 2>/dev/null; then "
+                // Only remove units that were created by inir Autostart (marker comment)
+                + "if grep -q '^# inir-autostart' '" + dir + "/" + name + "' 2>/dev/null; then "
                 + "/usr/bin/rm -f '" + dir + "/" + name + "' 2>/dev/null || true; "
                 + "fi; "
                 + "/usr/bin/systemctl --user daemon-reload"
@@ -261,7 +261,7 @@ Singleton {
         const homePath = FileUtils.trimFileProtocol(Directories.home)
         const dir = `${homePath}/.config/systemd/user`
         const filePath = `${dir}/${safeName}.service`
-        const text = "# ii-autostart\n"
+        const text = "# inir-autostart\n"
             + "[Unit]\n"
             + "Description=" + desc + "\n"
             + "After=" + afterTarget + "\n"

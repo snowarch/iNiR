@@ -13,7 +13,7 @@ import Quickshell.Services.Notifications
  * Periodically checks the git repo for new commits and exposes
  * update state to UI widgets. Separate from system Updates service.
  *
- * NOTE: The config directory (~/.config/quickshell/ii) is NOT a git repo.
+ * NOTE: The config directory (~/.config/quickshell/inir) is NOT a git repo.
  * Users clone the repo elsewhere, run ./setup install, which copies files.
  * The actual repo location is stored in version.json during installation.
  */
@@ -78,7 +78,7 @@ Singleton {
     readonly property string configDir: FileUtils.trimFileProtocol(Quickshell.shellPath("."))
     property string repoPath: configDir  // Will be updated after reading version.json
     property bool repoPathLoaded: false
-    readonly property string manifestPath: configDir + "/.ii-manifest"
+    readonly property string manifestPath: configDir + "/.inir-manifest"
 
     // Handler: notify when availability changes to false (after initial check)
     onAvailableChanged: {
@@ -138,8 +138,8 @@ Singleton {
 
     function openOverlay(): void {
         const panels = Config.options?.enabledPanels ?? []
-        if (!panels.includes("iiShellUpdate")) {
-            Config.setNestedValue("enabledPanels", [...panels, "iiShellUpdate"])
+        if (!panels.includes("inirShellUpdate")) {
+            Config.setNestedValue("enabledPanels", [...panels, "inirShellUpdate"])
         }
         const panelWasOpen = GlobalStates.controlPanelOpen
         const settingsWasOpen = GlobalStates.settingsOverlayOpen ?? false
@@ -171,7 +171,7 @@ Singleton {
         root.lastError = ""
         root.overlayOpen = false
         // Use execDetached so the update script survives shell restart
-        // (./setup update calls qs kill -c ii at the end)
+        // (./setup update calls qs kill -c inir at the end)
         // Must cd to repo dir first — setup expects to run from its own directory
         Quickshell.execDetached(["/usr/bin/bash", "-c",
             "cd '" + root.repoPath + "' && ./setup update -y -q"])
@@ -304,14 +304,14 @@ Singleton {
             "if [[ -d \"" + root.configDir + "/.git\" ]]; then echo \"" + root.configDir + "\"; exit 0; fi; " +
             // Search for a git repo containing setup + shell.qml (our repo signature)
             // Check common locations first, then broader search
-            "for dir in ~/illogical-impulse ~/inir ~/iNiR " +
-            "~/.local/src/illogical-impulse ~/.local/src/inir " +
-            "~/Projects/illogical-impulse ~/Projects/inir " +
-            "~/Downloads/illogical-impulse ~/Downloads/inir " +
-            "~/src/illogical-impulse ~/src/inir; do " +
+            "for dir in ~/inir ~/inir ~/iNiR " +
+            "~/.local/src/inir ~/.local/src/inir " +
+            "~/Projects/inir ~/Projects/inir " +
+            "~/Downloads/inir ~/Downloads/inir " +
+            "~/src/inir ~/src/inir; do " +
             "if [[ -d \"$dir/.git\" && -f \"$dir/setup\" && -f \"$dir/shell.qml\" ]]; then echo \"$dir\"; exit 0; fi; done; " +
             // Last resort: find in home (max depth 3, timeout 2s)
-            "timeout 2 find \"$HOME\" -maxdepth 3 -name setup \\( -path '*/inir/setup' -o -path '*/illogical-impulse/setup' -o -path '*/ii/setup' \\) 2>/dev/null | while read -r f; do [[ -f \"$(dirname \"$f\")/shell.qml\" ]] && dirname \"$f\" && break; done; "
+            "timeout 2 find \"$HOME\" -maxdepth 3 -name setup \\( -path '*/inir/setup' -o -path '*/inir/setup' -o -path '*/inir/setup' \\) 2>/dev/null | while read -r f; do [[ -f \"$(dirname \"$f\")/shell.qml\" ]] && dirname \"$f\" && break; done; "
         ]
         stdout: StdioCollector {
             onStreamFinished: {

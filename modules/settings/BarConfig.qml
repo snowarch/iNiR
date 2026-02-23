@@ -9,7 +9,7 @@ ContentPage {
     settingsPageIndex: 2
     settingsPageName: Translation.tr("Bar")
 
-    property bool isIiActive: Config.options?.panelFamily !== "waffle"
+    property bool isInirActive: Config.options?.panelFamily !== "waffle"
 
     // Conflict detection helpers
     readonly property bool isCardStyle: Config.options?.bar?.cornerStyle === 3
@@ -67,7 +67,7 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: !root.isIiActive
+        visible: !root.isInirActive
         expanded: true
         icon: "info"
         title: Translation.tr("Not Active")
@@ -75,7 +75,7 @@ ContentPage {
         SettingsGroup {
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("These settings only apply when using the Material (ii) panel style. Go to Modules → Panel Style to switch.")
+                text: Translation.tr("These settings only apply when using the Material (inir) panel style. Go to Modules → Panel Style to switch.")
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.small
                 wrapMode: Text.WordWrap
@@ -87,7 +87,7 @@ ContentPage {
     // APPEARANCE & LAYOUT
     // ═══════════════════════════════════════════════════════════════════
     SettingsCardSection {
-        visible: root.isIiActive
+        visible: root.isInirActive
         expanded: true
         icon: "dashboard"
         title: Translation.tr("Appearance & Layout")
@@ -304,7 +304,7 @@ ContentPage {
     // MODULES (what to show)
     // ═══════════════════════════════════════════════════════════════════
     SettingsCardSection {
-        visible: root.isIiActive
+        visible: root.isInirActive
         expanded: true
         icon: "widgets"
         title: Translation.tr("Modules")
@@ -425,7 +425,7 @@ ContentPage {
     // MEDIA
     // ═══════════════════════════════════════════════════════════════════
     SettingsCardSection {
-        visible: root.isIiActive
+        visible: root.isInirActive
         expanded: false
         icon: "music_note"
         title: Translation.tr("Media")
@@ -459,7 +459,7 @@ ContentPage {
     // WORKSPACES
     // ═══════════════════════════════════════════════════════════════════
     SettingsCardSection {
-        visible: root.isIiActive
+        visible: root.isInirActive
         expanded: false
         icon: "workspaces"
         title: Translation.tr("Workspaces")
@@ -607,7 +607,7 @@ ContentPage {
     // SYSTEM TRAY
     // ═══════════════════════════════════════════════════════════════════
     SettingsCardSection {
-        visible: root.isIiActive
+        visible: root.isInirActive
         expanded: false
         icon: "shelf_auto_hide"
         title: Translation.tr("System Tray")
@@ -656,7 +656,7 @@ ContentPage {
     // UTILITY BUTTONS
     // ═══════════════════════════════════════════════════════════════════
     SettingsCardSection {
-        visible: root.isIiActive
+        visible: root.isInirActive
         expanded: false
         icon: "build"
         title: Translation.tr("Utility Buttons")
@@ -785,7 +785,7 @@ ContentPage {
     // NOTIFICATIONS
     // ═══════════════════════════════════════════════════════════════════
     SettingsCardSection {
-        visible: root.isIiActive
+        visible: root.isInirActive
         expanded: false
         icon: "notifications"
         title: Translation.tr("Notifications")

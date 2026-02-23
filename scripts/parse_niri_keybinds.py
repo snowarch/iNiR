@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Parse niri config.kdl to extract keybinds for ii cheatsheet.
+Parse niri config.kdl to extract keybinds for inir cheatsheet.
 Outputs JSON with categorized keybinds.
 """
 
@@ -164,8 +164,8 @@ ACTION_MAP = {
 IPC_MAP = {
     ('altSwitcher', 'next'): 'Next window',
     ('altSwitcher', 'previous'): 'Previous window',
-    ('overlay', 'toggle'): 'ii Overlay',
-    ('overview', 'toggle'): 'ii Overview',
+    ('overlay', 'toggle'): 'inir Overlay',
+    ('overview', 'toggle'): 'inir Overview',
     ('clipboard', 'toggle'): 'Clipboard',
     ('lock', 'activate'): 'Lock screen',
     ('region', 'screenshot'): 'Screenshot region',
@@ -210,7 +210,7 @@ def generate_comment(action: str) -> str:
     
     # Spawn commands
     if action.startswith('spawn'):
-        # ii IPC calls
+        # inir IPC calls
         ipc_match = re.search(r'ipc.*call.*"(\w+)".*"(\w+)"', action)
         if ipc_match:
             target, func = ipc_match.groups()
@@ -263,11 +263,11 @@ def categorize_keybind(kb: dict) -> str:
     if any(x in comment for x in ['niri overview', 'quit niri', 'inhibit', 'power off', 'hotkey overlay']):
         return 'System'
     
-    # ii Shell
-    if any(x in comment for x in ['ii ', 'clipboard', 'lock screen', 'wallpaper', 'settings', 'cheatsheet', 'panel style']):
-        return 'ii Shell'
+    # inir Shell
+    if any(x in comment for x in ['inir ', 'clipboard', 'lock screen', 'wallpaper', 'settings', 'cheatsheet', 'panel style']):
+        return 'inir Shell'
     if re.search(r'ipc.*call.*(overlay|overview|clipboard|lock|wallpaper|settings|cheatsheet|panelfamily)', action):
-        return 'ii Shell'
+        return 'inir Shell'
     
     # Window Switcher
     if 'window' in comment and ('next' in comment or 'previous' in comment):
@@ -360,7 +360,7 @@ def parse_niri_config(config_path: Path) -> dict:
         })
     
     category_order = [
-        'System', 'ii Shell', 'Window Switcher', 'Screenshots',
+        'System', 'inir Shell', 'Window Switcher', 'Screenshots',
         'Applications', 'Window Management', 'Focus', 'Move Windows',
         'Workspaces', 'Media', 'Brightness', 'Other'
     ]

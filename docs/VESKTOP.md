@@ -4,7 +4,7 @@ iNiR includes automatic Discord/Vesktop theming that syncs with your wallpaper c
 
 ## Included Theme
 
-### ii-system24
+### inir-system24
 A Material Design Discord theme based on [refact0r/system24](https://github.com/refact0r/system24) with Material You colors from your wallpaper.
 
 Features:
@@ -57,10 +57,10 @@ If colors get out of sync, regenerate manually:
 
 ```fish
 # Regenerate theme
-python3 ~/.config/quickshell/ii/scripts/colors/system24_palette.py
+python3 ~/.config/quickshell/inir/scripts/colors/system24_palette.py
 
 # Or trigger a full wallpaper refresh
-~/.config/quickshell/ii/scripts/colors/switchwall.sh --noswitch
+~/.config/quickshell/inir/scripts/colors/switchwall.sh --noswitch
 ```
 
 ## Customization
@@ -98,12 +98,12 @@ Then regenerate the theme.
 - Optional: place a local copy of System24 at `~/.config/vesktop/themes/system24.local.css` (same folder as the theme). If present, iNiR will import it first.
 
 ### Wrong colors
-- Run `python3 ~/.config/quickshell/ii/scripts/colors/system24_palette.py` to regenerate
+- Run `python3 ~/.config/quickshell/inir/scripts/colors/system24_palette.py` to regenerate
 - Check `~/.local/state/quickshell/user/generated/colors.json` exists
 
 ### Debugging generation failures
-- Run `python3 ~/.config/quickshell/ii/scripts/colors/system24_palette.py` in a terminal and check for errors
-- If you're using preset themes (Settings), `apply-gtk-theme.sh` no longer suppresses Python errors, so `qs log -c ii` (or your shell logs) should show failures
+- Run `python3 ~/.config/quickshell/inir/scripts/colors/system24_palette.py` in a terminal and check for errors
+- If you're using preset themes (Settings), `apply-gtk-theme.sh` no longer suppresses Python errors, so `qs log -c inir` (or your shell logs) should show failures
 
 ### Hot-reload not working
 - The theme palette is embedded in the main file, so Ctrl+R should work

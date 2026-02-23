@@ -59,7 +59,7 @@ Singleton {
         }
 
         if (effectiveLockTimeout > 0) {
-            cmd.push("timeout", effectiveLockTimeout.toString(), "/usr/bin/qs -c ii ipc call lock activate")
+            cmd.push("timeout", effectiveLockTimeout.toString(), "/usr/bin/qs -c inir ipc call lock activate")
         }
 
         if (suspendTimeout > 0) {
@@ -67,7 +67,7 @@ Singleton {
         }
 
         if (lockBeforeSleep) {
-            cmd.push("before-sleep", "/usr/bin/qs -c ii ipc call lock activate")
+            cmd.push("before-sleep", "/usr/bin/qs -c inir ipc call lock activate")
         }
 
         console.log("[Idle] Starting swayidle")

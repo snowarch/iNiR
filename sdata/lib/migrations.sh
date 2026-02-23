@@ -8,8 +8,8 @@
 # Migration System Configuration
 #####################################################################################
 MIGRATIONS_DIR="${REPO_ROOT}/sdata/migrations"
-MIGRATIONS_STATE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/illogical-impulse/migrations.json"
-MIGRATIONS_BACKUP_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/illogical-impulse/backups"
+MIGRATIONS_STATE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/inir/migrations.json"
+MIGRATIONS_BACKUP_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/inir/backups"
 
 #####################################################################################
 # Migration State Management

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Sync ii-pixel SDDM theme colors with current Material You palette.
+"""Sync inir-pixel SDDM theme colors with current Material You palette.
 
 Reads generated colors from matugen's colors.json and updates
-the ii-pixel theme.conf with matching colors.
+the inir-pixel theme.conf with matching colors.
 Reads wallpaper path from iNiR state and updates background image.
 
 Note: install-pixel-sddm.sh transfers ownership of the theme directory to
@@ -15,7 +15,7 @@ import shutil
 import subprocess
 import sys
 
-THEME_NAME = "ii-pixel"
+THEME_NAME = "inir-pixel"
 THEME_DIR = f"/usr/share/sddm/themes/{THEME_NAME}"
 THEME_CONF = os.path.join(THEME_DIR, "theme.conf")
 ASSETS_DIR = os.path.join(THEME_DIR, "assets")
@@ -37,7 +37,7 @@ COLORS_JSON = os.path.join(STATE_DIR, "user", "generated", "colors.json")
 
 CONFIG_JSON = os.path.join(
     os.environ.get("XDG_CONFIG_HOME") or os.path.join(_real_home, ".config"),
-    "illogical-impulse",
+    "inir",
     "config.json",
 )
 
@@ -106,7 +106,7 @@ def read_material_shape_chars():
 
 
 def update_theme_conf(colors):
-    """Update ii-pixel theme.conf [General] section with new colors."""
+    """Update inir-pixel theme.conf [General] section with new colors."""
     if not os.path.isfile(THEME_CONF):
         print(f"[sddm-pixel] theme.conf not found: {THEME_CONF}")
         return False

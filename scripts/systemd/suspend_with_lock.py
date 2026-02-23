@@ -5,7 +5,7 @@ import sys
 def main():
     # Attempt to lock the screen using the IPC call
     try:
-        subprocess.Popen(["qs", "-c", "ii", "ipc", "call", "lock", "activate"])
+        subprocess.Popen(["qs", "-c", "inir", "ipc", "call", "lock", "activate"])
     except Exception as e:
         print(f"Failed to lock: {e}")
 

@@ -7,8 +7,8 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
-import qs.modules.ii.overlay
-import qs.modules.ii.sidebarRight.volumeMixer
+import qs.modules.inir.overlay
+import qs.modules.inir.sidebarRight.volumeMixer
 import Quickshell.Services.Mpris
 
 StyledOverlayWidget {

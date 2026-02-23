@@ -26,7 +26,7 @@ Variants {
         screen: modelData
 
         WlrLayershell.layer: WlrLayer.Background
-        WlrLayershell.namespace: "quickshell:iiBackdrop"
+        WlrLayershell.namespace: "quickshell:inirBackdrop"
         WlrLayershell.exclusionMode: ExclusionMode.Ignore
 
         anchors.top: true
@@ -36,21 +36,21 @@ Variants {
 
         color: "transparent"
 
-        // Material ii backdrop config (independent)
-        readonly property var iiBackdrop: Config.options?.background?.backdrop ?? {}
+        // Material inir backdrop config (independent)
+        readonly property var inirBackdrop: Config.options?.background?.backdrop ?? {}
 
-        readonly property int backdropBlurRadius: iiBackdrop.blurRadius ?? 32
+        readonly property int backdropBlurRadius: inirBackdrop.blurRadius ?? 32
         readonly property int thumbnailBlurStrength: Config.options?.background?.effects?.thumbnailBlurStrength ?? 50
-        readonly property bool enableAnimatedBlur: iiBackdrop.enableAnimatedBlur ?? false
-        readonly property int backdropDim: iiBackdrop.dim ?? 35
-        readonly property real backdropSaturation: iiBackdrop.saturation ?? 0
-        readonly property real backdropContrast: iiBackdrop.contrast ?? 0
-        readonly property bool vignetteEnabled: iiBackdrop.vignetteEnabled ?? false
-        readonly property real vignetteIntensity: iiBackdrop.vignetteIntensity ?? 0.5
-        readonly property real vignetteRadius: iiBackdrop.vignetteRadius ?? 0.7
-        readonly property bool useAuroraStyle: iiBackdrop.useAuroraStyle ?? false
-        readonly property real auroraOverlayOpacity: iiBackdrop.auroraOverlayOpacity ?? 0.38
-        readonly property bool enableAnimation: iiBackdrop.enableAnimation ?? false
+        readonly property bool enableAnimatedBlur: inirBackdrop.enableAnimatedBlur ?? false
+        readonly property int backdropDim: inirBackdrop.dim ?? 35
+        readonly property real backdropSaturation: inirBackdrop.saturation ?? 0
+        readonly property real backdropContrast: inirBackdrop.contrast ?? 0
+        readonly property bool vignetteEnabled: inirBackdrop.vignetteEnabled ?? false
+        readonly property real vignetteIntensity: inirBackdrop.vignetteIntensity ?? 0.5
+        readonly property real vignetteRadius: inirBackdrop.vignetteRadius ?? 0.7
+        readonly property bool useAuroraStyle: inirBackdrop.useAuroraStyle ?? false
+        readonly property real auroraOverlayOpacity: inirBackdrop.auroraOverlayOpacity ?? 0.38
+        readonly property bool enableAnimation: inirBackdrop.enableAnimation ?? false
 
         // Per-monitor main wallpaper path (resolves per-monitor when multi-monitor enabled)
         readonly property string _perMonitorMainPath: {
@@ -74,13 +74,13 @@ Variants {
 
         // Raw wallpaper path (before thumbnail substitution)
         readonly property string wallpaperPathRaw: {
-            const useMain = iiBackdrop.useMainWallpaper ?? true;
+            const useMain = inirBackdrop.useMainWallpaper ?? true;
             const mainPath = _perMonitorMainPath;
             // Per-monitor backdrop takes priority, then global backdrop, then main wallpaper
             if (!useMain) {
                 const perMonBd = _perMonitorBackdropPath
                 if (perMonBd) return perMonBd
-                const globalBd = iiBackdrop.wallpaperPath || ""
+                const globalBd = inirBackdrop.wallpaperPath || ""
                 if (globalBd) return globalBd
             }
             return mainPath;

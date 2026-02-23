@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-QUICKSHELL_CONFIG_NAME="ii"
+QUICKSHELL_CONFIG_NAME="inir"
 XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
 XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
@@ -8,7 +8,7 @@ CONFIG_DIR="$XDG_CONFIG_HOME/quickshell/$QUICKSHELL_CONFIG_NAME"
 CACHE_DIR="$XDG_CACHE_HOME/quickshell"
 STATE_DIR="$XDG_STATE_HOME/quickshell"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SHELL_CONFIG_FILE="$XDG_CONFIG_HOME/illogical-impulse/config.json"
+SHELL_CONFIG_FILE="$XDG_CONFIG_HOME/inir/config.json"
 MATUGEN_DIR="$XDG_CONFIG_HOME/matugen"
 terminalscheme="$SCRIPT_DIR/terminal/scheme-base.json"
 
@@ -420,11 +420,11 @@ switch() {
         fi
     fi
     # If useBackdropForColors is enabled, override color source to use backdrop wallpaper
-    # Respects active panel family: ii reads from background.backdrop, waffle from waffles.background.backdrop
+    # Respects active panel family: inir reads from background.backdrop, waffle from waffles.background.backdrop
     if [[ "$color_flag" != "1" ]]; then
         use_backdrop_colors=$(jq -r '.appearance.wallpaperTheming.useBackdropForColors // false' "$SHELL_CONFIG_FILE" 2>/dev/null)
         if [[ "$use_backdrop_colors" == "true" ]]; then
-            local panel_family=$(jq -r '.panelFamily // "ii"' "$SHELL_CONFIG_FILE" 2>/dev/null)
+            local panel_family=$(jq -r '.panelFamily // "inir"' "$SHELL_CONFIG_FILE" 2>/dev/null)
             local backdrop_use_main=""
             local backdrop_path=""
 
@@ -496,17 +496,17 @@ switch() {
 
     # Use user's matugen config (installed to ~/.config/matugen/ during setup)
     matugen --config "$MATUGEN_DIR/config.toml" "${matugen_args[@]}"
-    if [[ -n "${ILLOGICAL_IMPULSE_VIRTUAL_ENV:-}" ]]; then
-        _ii_venv="$(eval echo "$ILLOGICAL_IMPULSE_VIRTUAL_ENV")"
+    if [[ -n "${INIR_VIRTUAL_ENV:-}" ]]; then
+        _inir_venv="$(eval echo "$INIR_VIRTUAL_ENV")"
     else
-        _ii_venv="$HOME/.local/state/quickshell/.venv"
+        _inir_venv="$HOME/.local/state/quickshell/.venv"
     fi
-    source "$_ii_venv/bin/activate" 2>/dev/null || true
-    _ii_python="$_ii_venv/bin/python3"
-    [[ ! -x "$_ii_python" ]] && _ii_python="python3"
+    source "$_inir_venv/bin/activate" 2>/dev/null || true
+    _inir_python="$_inir_venv/bin/python3"
+    [[ ! -x "$_inir_python" ]] && _inir_python="python3"
 
     _scss_tmp="$STATE_DIR/user/generated/material_colors.scss.tmp"
-    if "$_ii_python" "$SCRIPT_DIR/generate_colors_material.py" "${generate_colors_material_args[@]}" \
+    if "$_inir_python" "$SCRIPT_DIR/generate_colors_material.py" "${generate_colors_material_args[@]}" \
         > "$_scss_tmp" 2>/dev/null && [[ -s "$_scss_tmp" ]]; then
         mv "$_scss_tmp" "$STATE_DIR/user/generated/material_colors.scss"
     else
@@ -518,7 +518,7 @@ switch() {
     if [ "$enable_apps_shell" != "false" ]; then
         enable_vesktop=$(jq -r '.appearance.wallpaperTheming.enableVesktop // true' "$SHELL_CONFIG_FILE" 2>/dev/null || echo "true")
         if [[ "$enable_vesktop" != "false" ]]; then
-            "$_ii_python" "$SCRIPT_DIR/system24_palette.py"
+            "$_inir_python" "$SCRIPT_DIR/system24_palette.py"
         fi
     fi
 
@@ -557,8 +557,8 @@ main() {
     detect_scheme_type_from_image() {
         local img="$1"
         local _det_venv
-        if [[ -n "${ILLOGICAL_IMPULSE_VIRTUAL_ENV:-}" ]]; then
-            _det_venv="$(eval echo "$ILLOGICAL_IMPULSE_VIRTUAL_ENV")"
+        if [[ -n "${INIR_VIRTUAL_ENV:-}" ]]; then
+            _det_venv="$(eval echo "$INIR_VIRTUAL_ENV")"
         else
             _det_venv="$HOME/.local/state/quickshell/.venv"
         fi

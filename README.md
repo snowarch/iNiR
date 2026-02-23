@@ -10,7 +10,7 @@
 
 <p align="center">
   <b>A complete desktop shell built on Quickshell for the Niri compositor</b><br>
-  <sub>Originally forked from end-4's illogical-impulse — evolved into its own thing</sub>
+  <sub>Originally forked from end-4's inir — evolved into its own thing</sub>
 </p>
 
 <p align="center">
@@ -25,7 +25,7 @@
 ## Screenshots
 
 <details open>
-<summary><b>Material ii</b> — floating bar, sidebars, Material Design aesthetic</summary>
+<summary><b>Material inir</b> — floating bar, sidebars, Material Design aesthetic</summary>
 
 | | |
 |:---:|:---:|
@@ -65,10 +65,10 @@ Pick a wallpaper and everything adapts — the shell, GTK/Qt apps, terminals, Fi
 
 Switch between them on the fly with `Super+Shift+W`:
 
-- **Material ii** — floating bar (top/bottom, 4 corner styles), sidebars, dock (all 4 positions), control panel, vertical bar variant
+- **Material inir** — floating bar (top/bottom, 4 corner styles), sidebars, dock (all 4 positions), control panel, vertical bar variant
 - **Waffle** — Windows 11-inspired bottom taskbar, start menu, action center, notification center, widget panel, task view
 
-### Sidebars & Widgets (Material ii)
+### Sidebars & Widgets (Material inir)
 
 The left sidebar doubles as an app drawer:
 
@@ -174,8 +174,8 @@ Full list and customization guide: [docs/KEYBINDS.md](docs/KEYBINDS.md)
 ## Troubleshooting
 
 ```bash
-qs log -c ii                    # Check logs — the answer is usually here
-qs kill -c ii && qs -c ii       # Restart the shell
+qs log -c inir                    # Check logs — the answer is usually here
+qs kill -c inir && qs -c inir       # Restart the shell
 ./setup doctor                  # Auto-diagnose and fix common problems
 ./setup rollback                # Undo the last update
 ```
@@ -186,7 +186,7 @@ Check [LIMITATIONS.md](docs/LIMITATIONS.md) before opening an issue — it might
 
 ## Credits
 
-- [**end-4**](https://github.com/end-4/dots-hyprland) — original illogical-impulse for Hyprland, where this all started
+- [**end-4**](https://github.com/end-4/dots-hyprland) — original inir for Hyprland, where this all started
 - [**Quickshell**](https://quickshell.outfoxxed.me/) — the framework powering this shell
 - [**Niri**](https://github.com/YaLTeR/niri) — the scrolling tiling Wayland compositor
 

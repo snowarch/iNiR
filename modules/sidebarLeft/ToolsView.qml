@@ -139,17 +139,17 @@ Item {
                     ActionTile {
                         tileIcon: "screenshot_region"
                         label: Translation.tr("Region")
-                        onClicked: Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "region", "screenshot"])
+                        onClicked: Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "region", "screenshot"])
                     }
                     ActionTile {
                         tileIcon: "videocam"
                         label: Translation.tr("Record")
-                        onClicked: Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "region", "record"])
+                        onClicked: Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "region", "record"])
                     }
                     ActionTile {
                         tileIcon: "text_fields"
                         label: Translation.tr("OCR")
-                        onClicked: Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "region", "ocr"])
+                        onClicked: Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "region", "ocr"])
                     }
                     ActionTile {
                         tileIcon: "colorize"
@@ -190,7 +190,7 @@ Item {
                     ActionTile {
                         tileIcon: "settings"
                         label: Translation.tr("Settings")
-                        onClicked: Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "settings", "open"])
+                        onClicked: Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "settings", "open"])
                     }
                     ActionTile {
                         tileIcon: "tune"
@@ -286,7 +286,7 @@ Item {
                 ActionButton {
                     btnIcon: "restart_alt"
                     label: Translation.tr("Restart shell")
-                    onClicked: Quickshell.execDetached(["/usr/bin/fish", "-c", "qs kill -c ii; qs -c ii -d"])
+                    onClicked: Quickshell.execDetached(["/usr/bin/fish", "-c", "qs kill -c inir; qs -c inir -d"])
                 }
                 ActionButton {
                     btnIcon: "lock"

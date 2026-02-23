@@ -1627,7 +1627,7 @@ ColumnLayout {
                     }
 
                     StyledText {
-                        text: "~/.config/illogical-impulse/themes/"
+                        text: "~/.config/inir/themes/"
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         color: Appearance.colors.colSubtext
                         font.family: Appearance.font.family.monospace

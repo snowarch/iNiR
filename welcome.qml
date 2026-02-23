@@ -911,10 +911,10 @@ Scope {
                     }
                     ConfigSelectionArray {
                         Layout.fillWidth: true
-                        currentValue: Config.options?.panelFamily ?? "ii"
+                        currentValue: Config.options?.panelFamily ?? "inir"
                         onSelected: v => Config.setNestedValue("panelFamily", v)
                         options: [
-                            { displayName: "Material II", icon: "dashboard", value: "ii" },
+                            { displayName: "Material iNiR", icon: "dashboard", value: "inir" },
                             { displayName: "Waffle", icon: "grid_view", value: "waffle" }
                         ]
                     }
@@ -1084,7 +1084,7 @@ Scope {
                 buttonRadius: Appearance.rounding.small
                 colBackground: Appearance.colors.colLayer2
                 colBackgroundHover: Appearance.colors.colLayer2Hover
-                onClicked: Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "settings", "open"])
+                onClicked: Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "settings", "open"])
                 RowLayout {
                     anchors.centerIn: parent
                     spacing: 8

@@ -2,7 +2,7 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-data=$(secret-tool lookup 'application' 'illogical-impulse')
+data=$(secret-tool lookup 'application' 'inir')
 if [[ -z "$data" ]]; then
     if "${SCRIPT_DIR}/is_unlocked.sh"; then
         echo 'not found'

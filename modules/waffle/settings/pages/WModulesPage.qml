@@ -45,12 +45,12 @@ WSettingsPage {
             description: Translation.tr("Changing this will reload the shell")
             currentValue: Config.options?.panelFamily ?? "waffle"
             options: [
-                { value: "ii", displayName: Translation.tr("Material (ii)") },
+                { value: "inir", displayName: Translation.tr("Material (inir)") },
                 { value: "waffle", displayName: Translation.tr("Windows 11 (Waffle)") }
             ]
             onSelected: newValue => {
                 if (newValue !== Config.options?.panelFamily) {
-                    Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "panelFamily", "set", newValue])
+                    Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "panelFamily", "set", newValue])
                 }
             }
         }

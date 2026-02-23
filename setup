@@ -128,7 +128,7 @@ tui_menu() {
     
     # Detect current state
     local is_installed=false
-    [[ -f "${XDG_CONFIG_HOME}/illogical-impulse/installed_true" ]] && is_installed=true
+    [[ -f "${XDG_CONFIG_HOME}/inir/installed_true" ]] && is_installed=true
     
     if $is_installed; then
         show_version_info
@@ -183,7 +183,7 @@ show_status() {
     tui_title "Health Checks"
     
     # Check shell status
-    if pgrep -f "qs.*-c.*ii" &>/dev/null; then
+    if pgrep -f "qs.*-c.*inir" &>/dev/null; then
         tui_check_ok "Shell is running"
     else
         tui_check_warn "Shell is not running"
@@ -390,7 +390,7 @@ run_my_changes() {
 # Helper: Restore all files from a user-mods backup
 restore_all_user_mods() {
     local backup_path="$1"
-    local target="${XDG_CONFIG_HOME}/quickshell/ii"
+    local target="${XDG_CONFIG_HOME}/quickshell/inir"
     local restored=0
 
     # Restore modified files
@@ -422,13 +422,13 @@ restore_all_user_mods() {
 
     echo ""
     tui_success "Restored $restored file(s)"
-    tui_info "Restart the shell to apply changes: qs kill -c ii; qs -c ii"
+    tui_info "Restart the shell to apply changes: qs kill -c inir; qs -c inir"
 }
 
 # Helper: Restore a single file from user-mods backup
 restore_single_user_mod() {
     local backup_path="$1"
-    local target="${XDG_CONFIG_HOME}/quickshell/ii"
+    local target="${XDG_CONFIG_HOME}/quickshell/inir"
 
     # Build list of files
     local files=()
@@ -485,10 +485,10 @@ run_update() {
     echo ""
     
     # After a git pull, the setup script re-execs itself so that updated library
-    # code (doctor, migrations, etc.) is loaded fresh. _II_POST_PULL signals that
+    # code (doctor, migrations, etc.) is loaded fresh. _INIR_POST_PULL signals that
     # we already pulled and should skip straight to the sync phase.
-    if [[ "${_II_POST_PULL:-}" == "1" ]]; then
-        unset _II_POST_PULL
+    if [[ "${_INIR_POST_PULL:-}" == "1" ]]; then
+        unset _INIR_POST_PULL
         tui_success "Libraries reloaded after pull"
     elif check_remote_updates; then
         show_pending_commits
@@ -521,7 +521,7 @@ run_update() {
         local reexec_args=("update")
         $ask || reexec_args+=("-y")
         $quiet && reexec_args+=("-q")
-        export _II_POST_PULL=1
+        export _INIR_POST_PULL=1
         exec "$REPO_ROOT/setup" "${reexec_args[@]}"
     else
         # Check if local repo is ahead of installed
@@ -530,7 +530,7 @@ run_update() {
         local repo_ver=$(get_repo_version)
         local repo_commit=$(get_repo_commit)
         
-        if [[ "$installed_ver" == "0.0.0" ]] && [[ -f "${XDG_CONFIG_HOME}/illogical-impulse/installed_true" ]]; then
+        if [[ "$installed_ver" == "0.0.0" ]] && [[ -f "${XDG_CONFIG_HOME}/inir/installed_true" ]]; then
             tui_info "Detected existing installation without version tracking"
         elif [[ "$installed_commit" == "$repo_commit" ]]; then
             tui_success "Already up to date ($installed_ver)"
@@ -559,24 +559,24 @@ run_update() {
     echo ""
     tui_info "Syncing iNiR..."
     
-    II_SOURCE="${REPO_ROOT}"
-    II_TARGET="${XDG_CONFIG_HOME}/quickshell/ii"
+    INIR_SOURCE="${REPO_ROOT}"
+    INIR_TARGET="${XDG_CONFIG_HOME}/quickshell/inir"
     
     # Check if source and target are the same (dev setup)
-    local src_real=$(realpath "$II_SOURCE" 2>/dev/null || echo "$II_SOURCE")
-    local tgt_real=$(realpath "$II_TARGET" 2>/dev/null || echo "$II_TARGET")
+    local src_real=$(realpath "$INIR_SOURCE" 2>/dev/null || echo "$INIR_SOURCE")
+    local tgt_real=$(realpath "$INIR_TARGET" 2>/dev/null || echo "$INIR_TARGET")
 
     if [[ "$src_real" != "$tgt_real" ]]; then
         # Check for user modifications before syncing
         PRESERVED_MODS_DIR=""
-        if [[ -f "${II_TARGET}/.ii-manifest" ]] && manifest_has_checksums "${II_TARGET}/.ii-manifest"; then
+        if [[ -f "${INIR_TARGET}/.inir-manifest" ]] && manifest_has_checksums "${INIR_TARGET}/.inir-manifest"; then
             echo ""
             tui_info "Checking for local modifications..."
 
             local modified_files_str
             local added_files_str
-            modified_files_str=$(detect_user_modifications "$II_TARGET" "${II_TARGET}/.ii-manifest")
-            added_files_str=$(detect_user_additions "$II_TARGET" "${II_TARGET}/.ii-manifest")
+            modified_files_str=$(detect_user_modifications "$INIR_TARGET" "${INIR_TARGET}/.inir-manifest")
+            added_files_str=$(detect_user_additions "$INIR_TARGET" "${INIR_TARGET}/.inir-manifest")
 
             local mod_count=0
             local add_count=0
@@ -597,22 +597,22 @@ run_update() {
         tui_info "Syncing files..."
 
         # Sync root QML files
-        for qml in "${II_SOURCE}"/*.qml; do
-            [[ -f "$qml" ]] && cp -f "$qml" "${II_TARGET}/$(basename "$qml")"
+        for qml in "${INIR_SOURCE}"/*.qml; do
+            [[ -f "$qml" ]] && cp -f "$qml" "${INIR_TARGET}/$(basename "$qml")"
         done
 
         # Sync directories
         for dir in modules services scripts assets translations sdata defaults dots; do
-            [[ -d "${II_SOURCE}/${dir}" ]] && mkdir -p "${II_TARGET}/${dir}" && rsync -a --delete "${II_SOURCE}/${dir}/" "${II_TARGET}/${dir}/"
+            [[ -d "${INIR_SOURCE}/${dir}" ]] && mkdir -p "${INIR_TARGET}/${dir}" && rsync -a --delete "${INIR_SOURCE}/${dir}/" "${INIR_TARGET}/${dir}/"
         done
 
         # Sync metadata files (needed by shell update overlay)
         for meta in VERSION CHANGELOG.md; do
-            [[ -f "${II_SOURCE}/${meta}" ]] && cp -f "${II_SOURCE}/${meta}" "${II_TARGET}/${meta}"
+            [[ -f "${INIR_SOURCE}/${meta}" ]] && cp -f "${INIR_SOURCE}/${meta}" "${INIR_TARGET}/${meta}"
         done
 
         # Cleanup deprecated files
-        [[ -f "${II_TARGET}/requirements.txt" ]] && rm -f "${II_TARGET}/requirements.txt"
+        [[ -f "${INIR_TARGET}/requirements.txt" ]] && rm -f "${INIR_TARGET}/requirements.txt"
 
         # Show preservation reminder after sync
         if [[ -n "$PRESERVED_MODS_DIR" ]]; then
@@ -623,44 +623,44 @@ run_update() {
     fi
     
     # Generate manifest
-    generate_manifest "$II_SOURCE" "${II_TARGET}/.ii-manifest"
+    generate_manifest "$INIR_SOURCE" "${INIR_TARGET}/.inir-manifest"
     
     # Fix permissions
-    find "$II_TARGET/scripts" \( -name "*.sh" -o -name "*.fish" -o -name "*.py" \) -exec chmod +x {} \; 2>/dev/null || true
+    find "$INIR_TARGET/scripts" \( -name "*.sh" -o -name "*.fish" -o -name "*.py" \) -exec chmod +x {} \; 2>/dev/null || true
     
     # Update version
     set_installed_version "$repo_ver" "$repo_commit" "update"
 
     tui_success "Files synced"
 
-    # Ensure matugen config contains the ii-pixel SDDM sync post_hook template.
+    # Ensure matugen config contains the inir-pixel SDDM sync post_hook template.
     # We only append the missing block (idempotent) to avoid overwriting user templates.
     if command -v matugen >/dev/null 2>&1; then
         local matugen_cfg="${XDG_CONFIG_HOME}/matugen/config.toml"
         if [[ -f "$matugen_cfg" ]]; then
-            if ! grep -q "\[templates\.ii_pixel_sddm_sync\]" "$matugen_cfg" 2>/dev/null; then
+            if ! grep -q "\[templates\.inir_pixel_sddm_sync\]" "$matugen_cfg" 2>/dev/null; then
                 echo "" >> "$matugen_cfg"
                 cat >> "$matugen_cfg" << 'MATUGEN_SDDM_EOF'
 
-# SDDM ii-pixel theme sync (safe no-op if script/theme are not present)
-[templates.ii_pixel_sddm_sync]
+# SDDM inir-pixel theme sync (safe no-op if script/theme are not present)
+[templates.inir_pixel_sddm_sync]
 input_path = '/dev/null'
 output_path = '/dev/null'
-post_hook = 'bash -lc "[[ -x ~/.local/bin/sync-pixel-sddm.py && -d /usr/share/sddm/themes/ii-pixel ]] && nohup python3 ~/.local/bin/sync-pixel-sddm.py >/dev/null 2>&1 &"'
+post_hook = 'bash -lc "[[ -x ~/.local/bin/sync-pixel-sddm.py && -d /usr/share/sddm/themes/inir-pixel ]] && nohup python3 ~/.local/bin/sync-pixel-sddm.py >/dev/null 2>&1 &"'
 MATUGEN_SDDM_EOF
             fi
         fi
     fi
 
-    # Refresh ii-pixel SDDM theme on update (keeps shipped theme in sync with fixes)
+    # Refresh inir-pixel SDDM theme on update (keeps shipped theme in sync with fixes)
     # Intelligent behavior:
     # - interactive mode: installer decides (prompt if another SDDM theme is active)
     # - non-interactive mode: never force-switch Current theme
     if command -v sddm >/dev/null 2>&1; then
-        local sddm_script="${II_TARGET}/scripts/sddm/install-pixel-sddm.sh"
+        local sddm_script="${INIR_TARGET}/scripts/sddm/install-pixel-sddm.sh"
         if [[ -f "$sddm_script" ]]; then
             echo ""
-            tui_info "Refreshing ii-pixel SDDM theme..."
+            tui_info "Refreshing inir-pixel SDDM theme..."
             local _sddm_auto_apply="ask"
             if [[ "$ask" != "true" ]]; then
                 _sddm_auto_apply="no"
@@ -669,7 +669,7 @@ MATUGEN_SDDM_EOF
         fi
     fi
 
-    # Update Vesktop themes (themes live outside the quickshell/ii tree)
+    # Update Vesktop themes (themes live outside the quickshell/inir tree)
     if [[ -d "${REPO_ROOT}/dots/.config/vesktop/themes" ]]; then
         echo ""
         tui_info "Updating Vesktop themes..."
@@ -678,12 +678,12 @@ MATUGEN_SDDM_EOF
         mkdir -p "${XDG_CONFIG_HOME}/Vesktop/themes"
 
         OLD_VESKTOP_THEMES=(
-            "midnight-ii.theme.css"
+            "midnight-inir.theme.css"
             "dms-midnight.theme.css"
-            "system24-ii.theme.css"
+            "system24-inir.theme.css"
             "system24-palette.css"
-            "ii-palette.css"
-            "ii-system24.theme.css"
+            "inir-palette.css"
+            "inir-system24.theme.css"
         )
         for old_theme in "${OLD_VESKTOP_THEMES[@]}"; do
             [[ -f "${XDG_CONFIG_HOME}/vesktop/themes/${old_theme}" ]] && rm -f "${XDG_CONFIG_HOME}/vesktop/themes/${old_theme}"
@@ -715,15 +715,15 @@ MATUGEN_SDDM_EOF
     echo ""
     if [[ -n "$NIRI_SOCKET" ]] || [[ -n "$WAYLAND_DISPLAY" ]]; then
         tui_info "Restarting shell..."
-        qs kill -c ii 2>/dev/null || true
+        qs kill -c inir 2>/dev/null || true
         sleep 1
-        nohup qs -c ii >/dev/null 2>&1 &
+        nohup qs -c inir >/dev/null 2>&1 &
         disown
         tui_success "Shell restarted"
     else
         tui_warn "Not in graphical session - shell restart skipped"
         tui_info "The shell will use new files on next restart"
-        tui_info "Or run: qs kill -c ii && qs -c ii"
+        tui_info "Or run: qs kill -c inir && qs -c inir"
     fi
 
     # Post-update: check for missing dependencies and offer to install them
@@ -756,7 +756,7 @@ MATUGEN_SDDM_EOF
     if [[ -f "$req_file" ]] && command -v uv &>/dev/null; then
         if [[ ! -d "$venv_dir/bin" ]]; then
             tui_info "Creating Python venv..."
-            uv venv --prompt ii-venv "$venv_dir" -p 3.12 2>/dev/null || uv venv --prompt ii-venv "$venv_dir" 2>/dev/null
+            uv venv --prompt inir-venv "$venv_dir" -p 3.12 2>/dev/null || uv venv --prompt inir-venv "$venv_dir" 2>/dev/null
         fi
         
         if [[ -d "$venv_dir/bin" ]]; then

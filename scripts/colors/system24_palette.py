@@ -35,7 +35,7 @@ OUTPUT_FILE = Path(
 MIDNIGHT_OUTPUT_FILE = Path(
     os.environ.get(
         "MIDNIGHT_DMS_CSS",
-        "~/.config/vesktop/themes/ii-midnight.theme.css",
+        "~/.config/vesktop/themes/inir-midnight.theme.css",
     )
 ).expanduser()
 
@@ -129,7 +129,7 @@ body {{
 '''
 
 MIDNIGHT_THEME_TEMPLATE = '''/**
- * @name ii-midnight
+ * @name inir-midnight
  * @description dank-discord / midnight style theme using iNiR Material You colors.
  * @author iNiR (Material palette injection)
  * @version 2.2.0

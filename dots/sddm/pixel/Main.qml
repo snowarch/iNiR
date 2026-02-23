@@ -1,4 +1,4 @@
-// iNiR SDDM pixel theme — exact replica of modules/lock/LockSurface.qml (ii/Material)
+// iNiR SDDM pixel theme — exact replica of modules/lock/LockSurface.qml (inir/Material)
 // States: "clock" (initial) ↔ "login" (password entry), same layout + transitions.
 import QtQuick 2.15
 import QtQuick.Layouts 1.15

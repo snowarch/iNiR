@@ -19,5 +19,5 @@ if status is-interactive
     if command -v eza &>/dev/null
         alias ls 'eza --icons'
     end
-    alias q 'qs -c ii'
+    alias q 'qs -c inir'
 end

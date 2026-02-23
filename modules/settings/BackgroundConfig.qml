@@ -12,10 +12,10 @@ ContentPage {
     settingsPageIndex: 3
     settingsPageName: Translation.tr("Background")
 
-    property bool isIiActive: Config.options?.panelFamily !== "waffle"
+    property bool isInirActive: Config.options?.panelFamily !== "waffle"
 
     SettingsCardSection {
-        visible: !root.isIiActive
+        visible: !root.isInirActive
         expanded: true
         icon: "info"
         title: Translation.tr("Waffle Mode")
@@ -32,7 +32,7 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
+        visible: root.isInirActive
         expanded: false
         icon: "sync_alt"
         title: Translation.tr("Parallax")
@@ -93,7 +93,7 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
+        visible: root.isInirActive
         expanded: false
         icon: "devices"
         title: Translation.tr("Multi-monitor")
@@ -762,7 +762,7 @@ ContentPage {
                                         if (mon) {
                                             Config.setNestedValue("wallpaperSelector.selectionTarget", "main")
                                             Config.setNestedValue("wallpaperSelector.targetMonitor", mon)
-                                            Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "wallpaperSelector", "toggle"])
+                                            Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "wallpaperSelector", "toggle"])
                                         }
                                     }
                                 }
@@ -806,7 +806,7 @@ ContentPage {
                                     }
                                     onClicked: {
                                         Config.setNestedValue("wallpaperSelector.selectionTarget", "backdrop")
-                                        Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "wallpaperSelector", "toggle"])
+                                        Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "wallpaperSelector", "toggle"])
                                     }
                                 }
                                 RippleButtonWithIcon {
@@ -914,7 +914,7 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
+        visible: root.isInirActive
         expanded: false
         icon: "aspect_ratio"
         title: Translation.tr("Wallpaper scaling")
@@ -964,7 +964,7 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
+        visible: root.isInirActive
         expanded: true
         icon: "wallpaper"
         title: Translation.tr("Wallpaper effects")
@@ -1200,7 +1200,7 @@ ContentPage {
                     mainText: Translation.tr("Pick backdrop wallpaper")
                     onClicked: {
                         Config.setNestedValue("wallpaperSelector.selectionTarget", "backdrop")
-                        Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "wallpaperSelector", "toggle"]);
+                        Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "wallpaperSelector", "toggle"]);
                     }
                 }
 
@@ -1320,7 +1320,7 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
+        visible: root.isInirActive
         expanded: false
         icon: "clock_loader_40"
         title: Translation.tr("Widget: Clock")
@@ -1726,7 +1726,7 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
+        visible: root.isInirActive
         expanded: false
         icon: "cloud"
         title: Translation.tr("Widget: Weather")
@@ -1789,7 +1789,7 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
+        visible: root.isInirActive
         expanded: false
         icon: "album"
         title: Translation.tr("Widget: Media Controls")

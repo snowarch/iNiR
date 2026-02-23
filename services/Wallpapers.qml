@@ -18,7 +18,7 @@ Singleton {
     readonly property bool _debugWallpaperUrls: (Quickshell.env("INIR_DEBUG_WALLPAPER_URLS") ?? "") === "1"
 
     // Wallpaper path resolution for aurora/backdrop
-    readonly property bool isWaffleFamily: (Config.options?.panelFamily ?? "ii") === "waffle"
+    readonly property bool isWaffleFamily: (Config.options?.panelFamily ?? "inir") === "waffle"
     readonly property bool useBackdropWallpaper: isWaffleFamily
         ? (Config.options?.waffles?.background?.backdrop?.hideWallpaper ?? false)
         : (Config.options?.background?.backdrop?.hideWallpaper ?? false)
@@ -49,10 +49,10 @@ Singleton {
                 const useMainForWaffle = wBg.useMainWallpaper ?? true
                 return useMainForWaffle ? _resolvedMainWallpaperPath : (wBg.wallpaperPath || _resolvedMainWallpaperPath)
             }
-            const iiBackdrop = Config.options?.background?.backdrop ?? {}
-            const useMain = iiBackdrop.useMainWallpaper ?? true
+            const inirBackdrop = Config.options?.background?.backdrop ?? {}
+            const useMain = inirBackdrop.useMainWallpaper ?? true
             const mainPath = _resolvedMainWallpaperPath
-            return useMain ? mainPath : (iiBackdrop.wallpaperPath || mainPath)
+            return useMain ? mainPath : (inirBackdrop.wallpaperPath || mainPath)
         }
         if (isWaffleFamily) {
             const wBg = Config.options?.waffles?.background ?? {}
@@ -471,7 +471,7 @@ Singleton {
         property string directory
         property string _size: ""
         environment: ({
-            "ILLOGICAL_IMPULSE_VIRTUAL_ENV": Quickshell.env("HOME") + "/.local/state/quickshell/.venv"
+            "INIR_VIRTUAL_ENV": Quickshell.env("HOME") + "/.local/state/quickshell/.venv"
         })
         stdout: SplitParser {
             onRead: data => {

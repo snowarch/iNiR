@@ -52,7 +52,7 @@ ContentPage {
                     Config.setNestedValue("waffles.background.useMainWallpaper", checked);
                     if (checked) Config.setNestedValue("waffles.background.wallpaperPath", "");
                 }
-                StyledToolTip { text: Translation.tr("Share wallpaper with Material ii style") }
+                StyledToolTip { text: Translation.tr("Share wallpaper with Material inir style") }
             }
 
             RippleButtonWithIcon {
@@ -63,7 +63,7 @@ ContentPage {
                 mainText: Translation.tr("Pick main wallpaper")
                 onClicked: {
                     Config.setNestedValue("wallpaperSelector.selectionTarget", "main")
-                    Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "wallpaperSelector", "toggle"]);
+                    Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "wallpaperSelector", "toggle"]);
                 }
             }
 
@@ -75,7 +75,7 @@ ContentPage {
                 mainText: Translation.tr("Pick Waffle wallpaper")
                 onClicked: {
                     Config.setNestedValue("wallpaperSelector.selectionTarget", "waffle")
-                    Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "wallpaperSelector", "toggle"]);
+                    Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "wallpaperSelector", "toggle"]);
                 }
             }
 
@@ -219,7 +219,7 @@ ContentPage {
                 mainText: Translation.tr("Pick backdrop wallpaper")
                 onClicked: {
                     Config.setNestedValue("wallpaperSelector.selectionTarget", "waffle-backdrop")
-                    Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "wallpaperSelector", "toggle"]);
+                    Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "wallpaperSelector", "toggle"]);
                 }
             }
 
@@ -331,7 +331,7 @@ ContentPage {
                 text: Translation.tr("Use Material colors")
                 checked: Config.options?.waffles?.theming?.useMaterialColors ?? false
                 onCheckedChanged: Config.options.waffles.theming.useMaterialColors = checked
-                StyledToolTip { text: Translation.tr("Apply the Material ii color scheme instead of Windows 11 grey") }
+                StyledToolTip { text: Translation.tr("Apply the Material inir color scheme instead of Windows 11 grey") }
             }
 
             ConfigSelectionArray {
@@ -419,7 +419,7 @@ ContentPage {
         SettingsGroup {
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("Settings for switching between Material ii and Waffle panel styles.")
+                text: Translation.tr("Settings for switching between Material inir and Waffle panel styles.")
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.small
                 wrapMode: Text.WordWrap
@@ -505,7 +505,7 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isWaffleActive && root.isPanelEnabled("iiAltSwitcher")
+        visible: root.isWaffleActive && root.isPanelEnabled("inirAltSwitcher")
         expanded: false
         icon: "swap_horiz"
         title: Translation.tr("Alt+Tab Switcher")

@@ -110,7 +110,7 @@ Singleton {
         },
     ]
 
-    // Load user action scripts from ~/.config/illogical-impulse/actions/
+    // Load user action scripts from ~/.config/inir/actions/
     property var userActionScripts: {
         const actions = [];
         for (let i = 0; i < userActionsFolder.count; i++) {

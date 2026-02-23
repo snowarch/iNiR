@@ -25,8 +25,8 @@ migration_preview() {
   echo -e "${STY_RED}- Mod+T { spawn \"<terminal>\"; }${STY_RST}"
   echo -e "${STY_RED}- Mod+Return { spawn \"<terminal>\"; }${STY_RST}"
   echo ""
-  echo -e "${STY_GREEN}+ Mod+T { spawn \"bash\" \"-c\" \"\$HOME/.config/quickshell/ii/scripts/launch-terminal.sh\"; }${STY_RST}"
-  echo -e "${STY_GREEN}+ Mod+Return { spawn \"bash\" \"-c\" \"\$HOME/.config/quickshell/ii/scripts/launch-terminal.sh\"; }${STY_RST}"
+  echo -e "${STY_GREEN}+ Mod+T { spawn \"bash\" \"-c\" \"\$HOME/.config/quickshell/inir/scripts/launch-terminal.sh\"; }${STY_RST}"
+  echo -e "${STY_GREEN}+ Mod+Return { spawn \"bash\" \"-c\" \"\$HOME/.config/quickshell/inir/scripts/launch-terminal.sh\"; }${STY_RST}"
 }
 
 migration_diff() {
@@ -53,7 +53,7 @@ config_path = os.path.expanduser(os.environ.get("XDG_CONFIG_HOME", "~/.config"))
 with open(config_path, "r", encoding="utf-8") as f:
     content = f.read()
 
-script = "$HOME/.config/quickshell/ii/scripts/launch-terminal.sh"
+script = "$HOME/.config/quickshell/inir/scripts/launch-terminal.sh"
 
 # Replace Mod+T with any hardcoded terminal
 content = re.sub(

@@ -1,10 +1,10 @@
 [Desktop Entry]
-Name=ii-pixel
+Name=inir-pixel
 Comment=iNiR SDDM login screen — Material You dynamic colors
 Type=Service
 X-KDE-PluginInfo-Author=iNiR project
 X-KDE-PluginInfo-Email=
-X-KDE-PluginInfo-Name=ii-pixel
+X-KDE-PluginInfo-Name=inir-pixel
 X-KDE-PluginInfo-Version=1.0
 X-KDE-PluginInfo-Website=https://github.com/snowarch/iNiR
 X-KDE-PluginInfo-Category=Plasma Look And Feel

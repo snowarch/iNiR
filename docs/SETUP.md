@@ -121,12 +121,12 @@ Options: `-y` (skip prompts), `-q` (quiet), `-h` (help)
 
 | Source | Destination |
 |--------|-------------|
-| QML code | `~/.config/quickshell/ii/` |
-| User config | `~/.config/illogical-impulse/config.json` |
+| QML code | `~/.config/quickshell/inir/` |
+| User config | `~/.config/inir/config.json` |
 | State files | `~/.local/state/quickshell/user/` |
-| Cache | `~/.cache/quickshell/ii/` |
-| Super daemon | `~/.local/bin/ii_super_overview_daemon.py` |
-| Daemon service | `~/.config/systemd/user/ii-super-overview.service` |
+| Cache | `~/.cache/quickshell/inir/` |
+| Super daemon | `~/.local/bin/inir_super_overview_daemon.py` |
+| Daemon service | `~/.config/systemd/user/inir-super-overview.service` |
 
 ### Compositor & Themes
 
@@ -193,14 +193,14 @@ Removes only iNiR-exclusive files, keeps all shared configs and packages.
 The following are removed without prompting (iNiR-exclusive):
 
 ```
-~/.config/quickshell/ii/                         # Shell configuration
-~/.config/illogical-impulse/                     # User preferences
+~/.config/quickshell/inir/                         # Shell configuration
+~/.config/inir/                     # User preferences
 ~/.local/state/quickshell/user/                  # Notifications, todo
-~/.cache/quickshell/ii/                          # Cache
-~/.local/bin/ii_super_overview_daemon.py         # Super daemon
-~/.config/systemd/user/ii-super-overview.service # Daemon service
+~/.cache/quickshell/inir/                          # Cache
+~/.local/bin/inir_super_overview_daemon.py         # Super daemon
+~/.config/systemd/user/inir-super-overview.service # Daemon service
 ~/.config/vesktop/themes/system24.theme.css      # Vesktop theme
-~/.config/vesktop/themes/ii-colors.css           # Vesktop colors
+~/.config/vesktop/themes/inir-colors.css           # Vesktop colors
 ```
 
 ### Shared Configs (Asked Before Removal)
@@ -254,8 +254,8 @@ Backups are saved to:
 
 To restore from backup:
 ```bash
-cp -r ~/.local/share/inir-uninstall-backup-*/quickshell-ii ~/.config/quickshell/ii
-cp -r ~/.local/share/inir-uninstall-backup-*/illogical-impulse ~/.config/illogical-impulse
+cp -r ~/.local/share/inir-uninstall-backup-*/quickshell-inir ~/.config/quickshell/inir
+cp -r ~/.local/share/inir-uninstall-backup-*/inir ~/.config/inir
 ```
 
 ### Manual Uninstall (Fallback)
@@ -264,20 +264,20 @@ If the automated script fails or is unavailable:
 
 ```bash
 # Stop services
-qs kill -c ii
-systemctl --user disable --now ii-super-overview.service 2>/dev/null
+qs kill -c inir
+systemctl --user disable --now inir-super-overview.service 2>/dev/null
 
 # Remove iNiR-exclusive files
-rm -rf ~/.config/quickshell/ii
-rm -rf ~/.config/illogical-impulse
+rm -rf ~/.config/quickshell/inir
+rm -rf ~/.config/inir
 rm -rf ~/.local/state/quickshell/user
-rm -rf ~/.cache/quickshell/ii
-rm -f ~/.local/bin/ii_super_overview_daemon.py
-rm -f ~/.config/systemd/user/ii-super-overview.service
+rm -rf ~/.cache/quickshell/inir
+rm -f ~/.local/bin/inir_super_overview_daemon.py
+rm -f ~/.config/systemd/user/inir-super-overview.service
 rm -f ~/.config/vesktop/themes/system24.theme.css
-rm -f ~/.config/vesktop/themes/ii-colors.css
+rm -f ~/.config/vesktop/themes/inir-colors.css
 rm -f ~/.config/Vesktop/themes/system24.theme.css
-rm -f ~/.config/Vesktop/themes/ii-colors.css
+rm -f ~/.config/Vesktop/themes/inir-colors.css
 
 # Remove shared configs (review before running)
 # rm -rf ~/.config/niri/config.kdl  # Only if not using Niri
@@ -295,7 +295,7 @@ rm -f ~/.config/Vesktop/themes/ii-colors.css
 # rm -rf ~/.local/state/quickshell/themes
 
 # Comment out spawn-at-startup in ~/.config/niri/config.kdl:
-# spawn-at-startup "qs" "-c" "ii"
+# spawn-at-startup "qs" "-c" "inir"
 ```
 
 ### Reinstalling

@@ -6,7 +6,7 @@ import Quickshell
 import Quickshell.Io
 
 /**
- * Keybinds for Niri compositor with ii shell.
+ * Keybinds for Niri compositor with inir shell.
  * Dynamically parses user's ~/.config/niri/config.kdl
  * Falls back to defaults if parsing fails.
  */
@@ -105,10 +105,10 @@ Singleton {
             ]}]
         },
         {
-            name: "ii Shell",
+            name: "inir Shell",
             children: [{ keybinds: [
-                { mods: ["Super"], key: "Space", comment: "ii Overview" },
-                { mods: ["Super"], key: "G", comment: "ii Overlay" },
+                { mods: ["Super"], key: "Space", comment: "inir Overview" },
+                { mods: ["Super"], key: "G", comment: "inir Overlay" },
                 { mods: ["Super"], key: "V", comment: "Clipboard" },
                 { mods: ["Super"], key: "Comma", comment: "Settings" },
                 { mods: ["Super"], key: "Slash", comment: "Cheatsheet" },

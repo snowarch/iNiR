@@ -85,59 +85,59 @@ function auto_backup_configs(){
 if [[ ! "${SKIP_BACKUP}" == true ]]; then auto_backup_configs; fi
 
 #####################################################################################
-# Install Quickshell config (ii)
+# Install Quickshell config (inir)
 #####################################################################################
 case "${SKIP_QUICKSHELL}" in
   true) sleep 0;;
   *)
-    tui_info "Installing Quickshell ii config..."
+    tui_info "Installing Quickshell inir config..."
 
-    # The ii QML code is in the root of this repo, not in dots/
-    # We copy it to ~/.config/quickshell/ii/
-    II_SOURCE="${REPO_ROOT}"
-    II_TARGET="${XDG_CONFIG_HOME}/quickshell/ii"
+    # The inir QML code is in the root of this repo, not in dots/
+    # We copy it to ~/.config/quickshell/inir/
+    INIR_SOURCE="${REPO_ROOT}"
+    INIR_TARGET="${XDG_CONFIG_HOME}/quickshell/inir"
 
-    v mkdir -p "$II_TARGET"
+    v mkdir -p "$INIR_TARGET"
 
     # Create backup before update (if this is an update)
     if [[ "${IS_UPDATE}" == "true" ]]; then
       log_info "Creating backup before update..."
-      create_update_backup "$II_TARGET" >/dev/null
+      create_update_backup "$INIR_TARGET" >/dev/null
     fi
 
     # Generate manifest BEFORE syncing (to know what should exist)
     log_info "Generating file manifest..."
-    generate_manifest "$II_SOURCE" "${II_TARGET}/.ii-manifest.new"
+    generate_manifest "$INIR_SOURCE" "${INIR_TARGET}/.inir-manifest.new"
 
     # Copy all .qml files from root (auto-detect, no manual list needed)
-    for qml_file in "${II_SOURCE}"/*.qml; do
+    for qml_file in "${INIR_SOURCE}"/*.qml; do
       if [[ -f "$qml_file" ]]; then
-        install_file "$qml_file" "${II_TARGET}/$(basename "$qml_file")"
+        install_file "$qml_file" "${INIR_TARGET}/$(basename "$qml_file")"
       fi
     done
 
     # Copy required directories
     QML_DIRS=(modules services scripts assets translations sdata/uv)
     for dir in "${QML_DIRS[@]}"; do
-      if [[ -d "${II_SOURCE}/${dir}" ]]; then
-        install_dir__sync "${II_SOURCE}/${dir}" "${II_TARGET}/${dir}"
+      if [[ -d "${INIR_SOURCE}/${dir}" ]]; then
+        install_dir__sync "${INIR_SOURCE}/${dir}" "${INIR_TARGET}/${dir}"
       fi
     done
 
     # Finalize manifest
-    mv "${II_TARGET}/.ii-manifest.new" "${II_TARGET}/.ii-manifest"
+    mv "${INIR_TARGET}/.inir-manifest.new" "${INIR_TARGET}/.inir-manifest"
 
     # Cleanup orphan files (files that no longer exist in repo)
     if [[ "${IS_UPDATE}" == "true" ]]; then
       log_info "Cleaning up orphan files..."
-      cleanup_orphans "$II_TARGET" "${II_TARGET}/.ii-manifest"
+      cleanup_orphans "$INIR_TARGET" "${INIR_TARGET}/.inir-manifest"
     fi
 
     # Fix script permissions
     log_info "Setting script permissions..."
-    find "$II_TARGET/scripts" \( -name "*.sh" -o -name "*.fish" -o -name "*.py" \) -exec chmod +x {} \; 2>/dev/null || true
+    find "$INIR_TARGET/scripts" \( -name "*.sh" -o -name "*.fish" -o -name "*.py" \) -exec chmod +x {} \; 2>/dev/null || true
 
-    log_success "Quickshell ii config installed"
+    log_success "Quickshell inir config installed"
 
     # Install Python packages now that requirements.txt is in place
     showfun install-python-packages
@@ -208,7 +208,7 @@ case "${SKIP_NIRI}" in
       # We check for plasma-integration (not plasma-desktop) because it can be
       # installed standalone for KDE theming without the full Plasma desktop.
       if pacman -Q plasma-integration &>/dev/null 2>&1 || \
-         dpkg -l plasma-integration 2>/dev/null | grep -q '^ii' || \
+         dpkg -l plasma-integration 2>/dev/null | grep -q '^inir' || \
          rpm -q plasma-integration &>/dev/null 2>&1; then
         : # plasma-integration installed — keep "kde" platform theme (reads kdeglobals)
         log_success "Qt theme: kde (plasma-integration detected)"
@@ -232,12 +232,12 @@ elif [[ -d "dots/.config/matugen" ]]; then
   log_success "Matugen config installed (dots)"
 fi
 
-# ii-pixel-sddm theme (login screen matching ii lockscreen aesthetic)
+# inir-pixel-sddm theme (login screen matching inir lockscreen aesthetic)
 # This MUST run AFTER matugen config is deployed above, because the distributed
 # matugen config includes the SDDM sync post_hook template.
 if command -v sddm &>/dev/null; then
   function setup_sddm_theme(){
-    tui_info "Setting up ii-pixel-sddm login theme..."
+    tui_info "Setting up inir-pixel-sddm login theme..."
     local sddm_script="${REPO_ROOT}/scripts/sddm/install-pixel-sddm.sh"
     if [[ -f "$sddm_script" ]]; then
       chmod +x "$sddm_script"
@@ -245,9 +245,9 @@ if command -v sddm &>/dev/null; then
       # Non-interactive (-y): also apply automatically (scripted installs want full setup)
       # Only "ask" makes sense for updates where user might have another theme
       local _sddm_auto_apply="yes"
-      INIR_SDDM_AUTO_APPLY="${_sddm_auto_apply}" bash "$sddm_script" || log_warning "ii-pixel-sddm setup had issues (non-fatal)"
+      INIR_SDDM_AUTO_APPLY="${_sddm_auto_apply}" bash "$sddm_script" || log_warning "inir-pixel-sddm setup had issues (non-fatal)"
     else
-      log_warning "ii-pixel-sddm install script not found, skipping"
+      log_warning "inir-pixel-sddm install script not found, skipping"
     fi
   }
   showfun setup_sddm_theme
@@ -403,12 +403,12 @@ if [[ -d "dots/.config/vesktop/themes" ]]; then
 
   # Migrate: Remove old theme files from previous versions
   OLD_VESKTOP_THEMES=(
-    "midnight-ii.theme.css"
+    "midnight-inir.theme.css"
     "dms-midnight.theme.css"
-    "system24-ii.theme.css"
+    "system24-inir.theme.css"
     "system24-palette.css"
-    "ii-palette.css"
-    "ii-system24.theme.css"
+    "inir-palette.css"
+    "inir-system24.theme.css"
   )
   for old_theme in "${OLD_VESKTOP_THEMES[@]}"; do
     if [[ -f "${XDG_CONFIG_HOME}/vesktop/themes/${old_theme}" ]]; then
@@ -441,13 +441,13 @@ if [[ -d "dots/.config/fontconfig" ]]; then
   install_dir__sync "dots/.config/fontconfig" "${XDG_CONFIG_HOME}/fontconfig"
 fi
 
-# illogical-impulse config.json (use defaults for distribution)
+# inir config.json (use defaults for distribution)
 if [[ -f "defaults/config.json" ]]; then
-  v mkdir -p "${XDG_CONFIG_HOME}/illogical-impulse"
-  install_file__auto_backup "defaults/config.json" "${XDG_CONFIG_HOME}/illogical-impulse/config.json"
-elif [[ -f "dots/.config/illogical-impulse/config.json" ]]; then
+  v mkdir -p "${XDG_CONFIG_HOME}/inir"
+  install_file__auto_backup "defaults/config.json" "${XDG_CONFIG_HOME}/inir/config.json"
+elif [[ -f "dots/.config/inir/config.json" ]]; then
   # Fallback to dots (legacy)
-  install_file__auto_backup "dots/.config/illogical-impulse/config.json" "${XDG_CONFIG_HOME}/illogical-impulse/config.json"
+  install_file__auto_backup "dots/.config/inir/config.json" "${XDG_CONFIG_HOME}/inir/config.json"
 fi
 
 #####################################################################################
@@ -479,10 +479,10 @@ tui_info "Configuring environment variables..."
 # Secondary: shell profile files for terminals outside Niri session (SSH, TTY, etc.)
 
 # Verify Niri config has the variable
-if grep -q "ILLOGICAL_IMPULSE_VIRTUAL_ENV" "${XDG_CONFIG_HOME}/niri/config.kdl" 2>/dev/null; then
+if grep -q "INIR_VIRTUAL_ENV" "${XDG_CONFIG_HOME}/niri/config.kdl" 2>/dev/null; then
     log_success "Environment variable configured in Niri config"
 else
-    log_warning "ILLOGICAL_IMPULSE_VIRTUAL_ENV not found in Niri config"
+    log_warning "INIR_VIRTUAL_ENV not found in Niri config"
 fi
 
 # Write shell profile env vars (for SSH, TTY, non-Niri terminals)
@@ -499,7 +499,7 @@ fi
 cat >> "$HOME/.bashrc" << BEOF
 
 ${BASH_ENV_MARKER}
-export ILLOGICAL_IMPULSE_VIRTUAL_ENV="${VENV_PATH}"
+export INIR_VIRTUAL_ENV="${VENV_PATH}"
 # Apply terminal color sequences (Material You from wallpaper)
 if [ -f ~/.local/state/quickshell/user/generated/terminal/sequences.txt ]; then
   cat ~/.local/state/quickshell/user/generated/terminal/sequences.txt
@@ -513,7 +513,7 @@ FISH_CONF_DIR="${XDG_CONFIG_HOME}/fish/conf.d"
 mkdir -p "$FISH_CONF_DIR"
 cat > "${FISH_CONF_DIR}/inir-env.fish" << FEOF
 # iNiR environment — auto-generated by setup install
-set -gx ILLOGICAL_IMPULSE_VIRTUAL_ENV "${VENV_PATH}"
+set -gx INIR_VIRTUAL_ENV "${VENV_PATH}"
 FEOF
 log_success "Fish environment configured"
 
@@ -524,7 +524,7 @@ if [[ -f "$HOME/.zshrc" ]]; then
     cat >> "$HOME/.zshrc" << ZEOF
 
 ${BASH_ENV_MARKER}
-export ILLOGICAL_IMPULSE_VIRTUAL_ENV="${VENV_PATH}"
+export INIR_VIRTUAL_ENV="${VENV_PATH}"
 # Apply terminal color sequences (Material You from wallpaper)
 if [ -f ~/.local/state/quickshell/user/generated/terminal/sequences.txt ]; then
   cat ~/.local/state/quickshell/user/generated/terminal/sequences.txt
@@ -694,13 +694,13 @@ tui_info "Copying wallpapers..."
 #####################################################################################
 # Copy bundled wallpapers to user's Pictures/Wallpapers (always, don't overwrite)
 #####################################################################################
-# Ensure II_TARGET is defined (in case SKIP_QUICKSHELL was set)
-II_TARGET="${II_TARGET:-${XDG_CONFIG_HOME}/quickshell/ii}"
+# Ensure INIR_TARGET is defined (in case SKIP_QUICKSHELL was set)
+INIR_TARGET="${INIR_TARGET:-${XDG_CONFIG_HOME}/quickshell/inir}"
 USER_WALLPAPERS_DIR="$(xdg-user-dir PICTURES 2>/dev/null || echo "$HOME/Pictures")/Wallpapers"
-if [[ -d "${II_TARGET}/assets/wallpapers" ]]; then
+if [[ -d "${INIR_TARGET}/assets/wallpapers" ]]; then
   mkdir -p "${USER_WALLPAPERS_DIR}"
   COPIED_COUNT=0
-  for wallpaper in "${II_TARGET}/assets/wallpapers"/*; do
+  for wallpaper in "${INIR_TARGET}/assets/wallpapers"/*; do
     if [[ -f "$wallpaper" ]]; then
       dest="${USER_WALLPAPERS_DIR}/$(basename "$wallpaper")"
       if [[ ! -f "$dest" ]] || [[ ! -s "$dest" ]]; then
@@ -749,17 +749,17 @@ if [[ "${INSTALL_FIRSTRUN}" == true && -n "${DEFAULT_WALLPAPER}" && -f "${DEFAUL
   mkdir -p "${XDG_CONFIG_HOME}/fuzzel"
 
   # Update config.json with default wallpaper path
-  if [[ -f "${XDG_CONFIG_HOME}/illogical-impulse/config.json" ]]; then
+  if [[ -f "${XDG_CONFIG_HOME}/inir/config.json" ]]; then
     if command -v jq >/dev/null 2>&1; then
       jq --arg path "${DEFAULT_WALLPAPER}" '.background.wallpaperPath = $path' \
-        "${XDG_CONFIG_HOME}/illogical-impulse/config.json" > "${XDG_CONFIG_HOME}/illogical-impulse/config.json.tmp" \
-        && mv "${XDG_CONFIG_HOME}/illogical-impulse/config.json.tmp" "${XDG_CONFIG_HOME}/illogical-impulse/config.json"
+        "${XDG_CONFIG_HOME}/inir/config.json" > "${XDG_CONFIG_HOME}/inir/config.json.tmp" \
+        && mv "${XDG_CONFIG_HOME}/inir/config.json.tmp" "${XDG_CONFIG_HOME}/inir/config.json"
       log_success "Default wallpaper configured"
     fi
   fi
 
   # Generate initial theme colors with matugen
-  export ILLOGICAL_IMPULSE_VIRTUAL_ENV="${XDG_STATE_HOME}/quickshell/.venv"
+  export INIR_VIRTUAL_ENV="${XDG_STATE_HOME}/quickshell/.venv"
   if command -v matugen >/dev/null 2>&1; then
     tui_info "Generating theme colors from wallpaper..."
     # Use --config to ensure correct config file is used
@@ -768,25 +768,25 @@ if [[ "${INSTALL_FIRSTRUN}" == true && -n "${DEFAULT_WALLPAPER}" && -f "${DEFAUL
 
       # Generate material_colors.scss from colors.json (needed by applycolor.sh chain)
       # NOTE: no `local` here — this block is at top-level (sourced file), not inside a function
-      _init_python_cmd="${ILLOGICAL_IMPULSE_VIRTUAL_ENV}/bin/python3"
-      _init_gen_material="${II_TARGET}/scripts/colors/generate_colors_material.py"
+      _init_python_cmd="${INIR_VIRTUAL_ENV}/bin/python3"
+      _init_gen_material="${INIR_TARGET}/scripts/colors/generate_colors_material.py"
       _init_colors_json="${XDG_STATE_HOME}/quickshell/user/generated/colors.json"
       _init_scss_file="${XDG_STATE_HOME}/quickshell/user/generated/material_colors.scss"
       if [[ -f "$_init_gen_material" && -f "$_init_colors_json" ]]; then
         _init_py=""
         [[ -x "$_init_python_cmd" ]] && _init_py="$_init_python_cmd" || { command -v python3 &>/dev/null && _init_py="python3"; }
         if [[ -n "$_init_py" ]]; then
-          "$_init_py" "$_init_gen_material" --path "${DEFAULT_WALLPAPER}" --mode dark --termscheme "${II_TARGET}/scripts/colors/terminal/scheme-base.json" --blend_bg_fg > "$_init_scss_file" 2>/dev/null || true
+          "$_init_py" "$_init_gen_material" --path "${DEFAULT_WALLPAPER}" --mode dark --termscheme "${INIR_TARGET}/scripts/colors/terminal/scheme-base.json" --blend_bg_fg > "$_init_scss_file" 2>/dev/null || true
           [[ -s "$_init_scss_file" ]] && log_success "Material colors SCSS generated"
         fi
       fi
 
       # Run applycolor.sh which handles GTK, KDE, Darkly, and terminal theming
-      if [[ -s "$_init_scss_file" && -f "${II_TARGET}/scripts/colors/applycolor.sh" ]]; then
-        bash "${II_TARGET}/scripts/colors/applycolor.sh" 2>/dev/null || true
+      if [[ -s "$_init_scss_file" && -f "${INIR_TARGET}/scripts/colors/applycolor.sh" ]]; then
+        bash "${INIR_TARGET}/scripts/colors/applycolor.sh" 2>/dev/null || true
         log_success "GTK/KDE/terminal theme colors applied"
-      elif [[ -f "${II_TARGET}/scripts/colors/apply-gtk-theme.sh" ]]; then
-        bash "${II_TARGET}/scripts/colors/apply-gtk-theme.sh" 2>/dev/null || true
+      elif [[ -f "${INIR_TARGET}/scripts/colors/apply-gtk-theme.sh" ]]; then
+        bash "${INIR_TARGET}/scripts/colors/apply-gtk-theme.sh" 2>/dev/null || true
         log_success "Qt Darkly theme colors generated (fallback)"
       fi
     else
@@ -809,9 +809,9 @@ if [[ ! -f "${DARKLY_COLORS_FILE}" ]]; then
 
   # Try to regenerate from existing material colors
   MATERIAL_COLORS="${XDG_STATE_HOME}/quickshell/user/generated/material_colors.scss"
-  if [[ -f "${MATERIAL_COLORS}" && -f "${II_TARGET}/scripts/colors/apply-gtk-theme.sh" ]]; then
+  if [[ -f "${MATERIAL_COLORS}" && -f "${INIR_TARGET}/scripts/colors/apply-gtk-theme.sh" ]]; then
     # Run the apply script which will generate Darkly.colors
-    bash "${II_TARGET}/scripts/colors/apply-gtk-theme.sh" 2>/dev/null || true
+    bash "${INIR_TARGET}/scripts/colors/apply-gtk-theme.sh" 2>/dev/null || true
     if [[ -f "${DARKLY_COLORS_FILE}" ]]; then
       log_success "Darkly color scheme generated for Qt apps"
     fi
@@ -831,7 +831,7 @@ fi
 #####################################################################################
 # Create version.json for ShellUpdates service
 #####################################################################################
-if [[ -n "${II_TARGET}" && -d "${II_TARGET}" ]]; then
+if [[ -n "${INIR_TARGET}" && -d "${INIR_TARGET}" ]]; then
   REPO_VERSION=""
   REPO_COMMIT=""
   if [[ -f "${REPO_ROOT}/VERSION" ]]; then
@@ -840,7 +840,7 @@ if [[ -n "${II_TARGET}" && -d "${II_TARGET}" ]]; then
   if command -v git &>/dev/null && [[ -d "${REPO_ROOT}/.git" ]]; then
     REPO_COMMIT=$(git -C "${REPO_ROOT}" rev-parse --short HEAD 2>/dev/null || echo "")
   fi
-  cat > "${II_TARGET}/version.json" << VEOF
+  cat > "${INIR_TARGET}/version.json" << VEOF
 {
   "version": "${REPO_VERSION:-0.0.0}",
   "commit": "${REPO_COMMIT:-unknown}",
@@ -887,7 +887,7 @@ if ! ${quiet:-false}; then
   _VERIFY_ERRORS=0
   for _crit_file in "shell.qml" "GlobalStates.qml" "modules/common/Config.qml" \
                     "modules/common/Appearance.qml" "services/NiriService.qml"; do
-    if [[ -f "${II_TARGET:-${XDG_CONFIG_HOME}/quickshell/ii}/${_crit_file}" ]]; then
+    if [[ -f "${INIR_TARGET:-${XDG_CONFIG_HOME}/quickshell/inir}/${_crit_file}" ]]; then
       tui_verify_ok "${_crit_file}"
     else
       tui_verify_fail "${_crit_file}" "MISSING"
@@ -899,7 +899,7 @@ if ! ${quiet:-false}; then
   echo ""
   for _cfg_path \
     in "${XDG_CONFIG_HOME}/niri/config.kdl:Niri config" \
-       "${XDG_CONFIG_HOME}/illogical-impulse/config.json:iNiR config" \
+       "${XDG_CONFIG_HOME}/inir/config.json:iNiR config" \
        "${XDG_CONFIG_HOME}/matugen:Matugen config" \
        "${XDG_CONFIG_HOME}/fuzzel:Fuzzel config" \
        "${XDG_STATE_HOME}/quickshell/user/generated/colors.json:Theme colors"; do
@@ -951,7 +951,7 @@ EOF
 
     echo -e "${STY_BLUE}${STY_BOLD}┌─ What was updated${STY_RST}"
     echo -e "${STY_BLUE}│${STY_RST}"
-    echo -e "${STY_BLUE}│${STY_RST}  ${STY_GREEN}✓${STY_RST} Quickshell ii synced to ~/.config/quickshell/ii/"
+    echo -e "${STY_BLUE}│${STY_RST}  ${STY_GREEN}✓${STY_RST} Quickshell inir synced to ~/.config/quickshell/inir/"
     echo -e "${STY_BLUE}│${STY_RST}  ${STY_GREEN}✓${STY_RST} Missing keybinds added to Niri config (if any)"
     echo -e "${STY_BLUE}│${STY_RST}  ${STY_GREEN}✓${STY_RST} Config migrations applied"
     echo -e "${STY_BLUE}│${STY_RST}"
@@ -972,8 +972,8 @@ EOF
 
     echo -e "${STY_BLUE}${STY_BOLD}┌─ What was installed${STY_RST}"
     echo -e "${STY_BLUE}│${STY_RST}"
-    echo -e "${STY_BLUE}│${STY_RST}  ${STY_GREEN}✓${STY_RST} Quickshell ii copied to ~/.config/quickshell/ii/"
-    echo -e "${STY_BLUE}│${STY_RST}  ${STY_GREEN}✓${STY_RST} Niri config with ii keybindings"
+    echo -e "${STY_BLUE}│${STY_RST}  ${STY_GREEN}✓${STY_RST} Quickshell inir copied to ~/.config/quickshell/inir/"
+    echo -e "${STY_BLUE}│${STY_RST}  ${STY_GREEN}✓${STY_RST} Niri config with inir keybindings"
     echo -e "${STY_BLUE}│${STY_RST}  ${STY_GREEN}✓${STY_RST} GTK/Qt theming (Matugen + Kvantum + Darkly)"
     echo -e "${STY_BLUE}│${STY_RST}  ${STY_GREEN}✓${STY_RST} Environment variables for ${DETECTED_SHELL:-your shell}"
     echo -e "${STY_BLUE}│${STY_RST}  ${STY_GREEN}✓${STY_RST} Default wallpaper and color scheme"
@@ -1029,7 +1029,7 @@ REBOOT
   if [[ "${IS_UPDATE}" != "true" ]]; then
     echo -e "${STY_CYAN}│${STY_RST}  ${STY_BOLD}1.${STY_RST} ${STY_RED}${STY_BOLD}REBOOT${STY_RST} your system"
     echo -e "${STY_CYAN}│${STY_RST}  ${STY_BOLD}2.${STY_RST} Select ${STY_BOLD}Niri${STY_RST} at your display manager"
-    echo -e "${STY_CYAN}│${STY_RST}  ${STY_BOLD}3.${STY_RST} ii will start automatically with your session"
+    echo -e "${STY_CYAN}│${STY_RST}  ${STY_BOLD}3.${STY_RST} inir will start automatically with your session"
   else
     echo -e "${STY_CYAN}│${STY_RST}  ${STY_BOLD}1.${STY_RST} Log out and log back in, or reload Niri:"
     echo -e "${STY_CYAN}│${STY_RST}  ${STY_FAINT}$ niri msg action load-config-file${STY_RST}"
@@ -1054,7 +1054,7 @@ REBOOT
   fi
 
   echo -e "${STY_FAINT}Backups saved to: ${BACKUP_DIR}${STY_RST}"
-  echo -e "${STY_FAINT}Logs: qs log -c ii${STY_RST}"
+  echo -e "${STY_FAINT}Logs: qs log -c inir${STY_RST}"
   echo ""
 
   if [[ "${IS_UPDATE}" == "true" ]]; then

@@ -66,7 +66,7 @@ For everything else, check [PACKAGES.md](PACKAGES.md). It's organized by categor
 ### 2. Clone the repo
 
 ```bash
-git clone https://github.com/snowarch/inir.git ~/.config/quickshell/ii
+git clone https://github.com/snowarch/inir.git ~/.config/quickshell/inir
 ```
 
 ### 3. Copy the configs
@@ -76,17 +76,17 @@ cp -r dots/.config/* ~/.config/
 ```
 
 This gives you:
-- Niri config with ii keybindings
+- Niri config with inir keybindings
 - Matugen templates for theming
 - GTK settings
 - Fuzzel config
 
-### 4. Tell Niri to start ii
+### 4. Tell Niri to start inir
 
 Add this to `~/.config/niri/config.kdl`:
 
 ```kdl
-spawn-at-startup "qs" "-c" "ii"
+spawn-at-startup "qs" "-c" "inir"
 ```
 
 ### 5. Restart Niri
@@ -104,15 +104,15 @@ Or log out and back in.
 Check the logs:
 
 ```bash
-qs log -c ii
+qs log -c inir
 ```
 
 If everything went well, you should see:
 - Bar at the top (the thing with the clock)
 - Background/wallpaper (hopefully not a black screen)
 - `Mod+Tab` opens the Niri overview (native)
-- `Mod+Space` (`Super+Space`) toggles the ii overview
-- `Alt+Tab` cycles windows using ii's switcher
+- `Mod+Space` (`Super+Space`) toggles the inir overview
+- `Alt+Tab` cycles windows using inir's switcher
 - `Super+V` opens the clipboard panel
 - `Super+Shift+S` takes a region screenshot
 

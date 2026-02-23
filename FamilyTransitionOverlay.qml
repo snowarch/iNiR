@@ -272,7 +272,7 @@ Scope {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // MATERIAL II - Ripple circle expands from center
+    // MATERIAL INIR - Ripple circle expands from center
     // ═══════════════════════════════════════════════════════════════════════
     Component {
         id: materialTransition
@@ -342,7 +342,7 @@ Scope {
                         anchors.centerIn: parent
                         width: 36
                         height: 36
-                        source: Qt.resolvedUrl("assets/icons/illogical-impulse.svg")
+                        source: Qt.resolvedUrl("assets/icons/inir.svg")
                         sourceSize: Qt.size(36, 36)
                         
                         layer.enabled: Appearance.effectsEnabled
@@ -359,7 +359,7 @@ Scope {
                     
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        text: "Material ii"
+                        text: "Material inir"
                         font.pixelSize: Appearance.font.pixelSize.title
                         font.family: Appearance.font.family.title
                         font.weight: Font.Medium

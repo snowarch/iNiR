@@ -87,7 +87,7 @@ install-python-packages(){
 
   if [[ ! -d "$venv_dir/bin" ]]; then
     x mkdir -p "$(dirname "$venv_dir")"
-    x uv venv --prompt ii-venv "$venv_dir" -p 3.12 || uv venv --prompt ii-venv "$venv_dir" || {
+    x uv venv --prompt inir-venv "$venv_dir" -p 3.12 || uv venv --prompt inir-venv "$venv_dir" || {
       log_warning "Could not create Python venv"
       return 0
     }
@@ -97,7 +97,7 @@ install-python-packages(){
   # Try repo location first (during install), then target location (during doctor)
   local requirements_file="${REPO_ROOT}/sdata/uv/requirements.txt"
   if [[ ! -f "$requirements_file" ]]; then
-    requirements_file="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/ii/sdata/uv/requirements.txt"
+    requirements_file="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/inir/sdata/uv/requirements.txt"
   fi
 
   if [[ -f "$requirements_file" ]]; then
@@ -512,7 +512,7 @@ setup-environment-config(){
   # Detect Qt platform theme: use kde if Plasma is installed, qt6ct otherwise
   local qt_theme="qt6ct"
   if pacman -Q plasma-desktop &>/dev/null 2>&1 || pacman -Q plasma-workspace &>/dev/null 2>&1 || \
-     dpkg -l plasma-desktop 2>/dev/null | grep -q '^ii' || \
+     dpkg -l plasma-desktop 2>/dev/null | grep -q '^inir' || \
      rpm -q plasma-desktop &>/dev/null 2>&1; then
     qt_theme="kde"
   fi
@@ -527,7 +527,7 @@ QT_QPA_PLATFORMTHEME=${qt_theme}
 QT_STYLE_OVERRIDE=Darkly
 GTK_THEME=adw-gtk3-dark
 ELECTRON_OZONE_PLATFORM_HINT=auto
-ILLOGICAL_IMPULSE_VIRTUAL_ENV=\$HOME/.local/state/quickshell/.venv
+INIR_VIRTUAL_ENV=\$HOME/.local/state/quickshell/.venv
 EOF
 
   log_success "Environment configuration set"
@@ -697,7 +697,7 @@ if status is-interactive
         starship init fish | source
     end
 
-    # Load terminal colors from ii theming
+    # Load terminal colors from inir theming
     if test -f ~/.local/state/quickshell/user/generated/terminal/sequences.txt
         cat ~/.local/state/quickshell/user/generated/terminal/sequences.txt
     end
@@ -707,7 +707,7 @@ if status is-interactive
         alias ls 'eza --icons'
     end
     alias clear "printf '\033[2J\033[3J\033[1;1H'"
-    alias q 'qs -c ii'
+    alias q 'qs -c inir'
 
     # Add local bin to PATH
     fish_add_path ~/.local/bin
@@ -723,15 +723,15 @@ setup-bash-config(){
   log_info "Setting up Bash shell configuration..."
 
   local bashrc="$HOME/.bashrc"
-  local ii_config="$HOME/.config/ii/bashrc"
+  local ii_config="$HOME/.config/inir/bashrc"
 
-  mkdir -p ~/.config/ii
+  mkdir -p ~/.config/inir
 
-  # Create ii bash config
+  # Create inir bash config
   cat > "$ii_config" << 'EOF'
-# ii shell integration - starship prompt and terminal colors
+# inir shell integration - starship prompt and terminal colors
 
-# Load terminal colors from ii theming
+# Load terminal colors from inir theming
 if [[ -f ~/.local/state/quickshell/user/generated/terminal/sequences.txt ]]; then
     cat ~/.local/state/quickshell/user/generated/terminal/sequences.txt
 fi
@@ -749,7 +749,7 @@ if command -v eza &> /dev/null; then
 elif [[ -x ~/.local/bin/eza ]]; then
     alias ls='~/.local/bin/eza --icons'
 fi
-alias q='qs -c ii'
+alias q='qs -c inir'
 
 # Add local bin to PATH
 export PATH="$HOME/.local/bin:$PATH"
@@ -757,15 +757,15 @@ EOF
 
   # Add source line to .bashrc if not present
   if [[ -f "$bashrc" ]]; then
-    if ! grep -q "source.*ii/bashrc" "$bashrc" && ! grep -q "\..*ii/bashrc" "$bashrc"; then
-      echo -e "\n# ii shell integration\n[[ -f ~/.config/ii/bashrc ]] && source ~/.config/ii/bashrc" >> "$bashrc"
-      log_success "Added ii integration to .bashrc"
+    if ! grep -q "source.*inir/bashrc" "$bashrc" && ! grep -q "\..*inir/bashrc" "$bashrc"; then
+      echo -e "\n# inir shell integration\n[[ -f ~/.config/inir/bashrc ]] && source ~/.config/inir/bashrc" >> "$bashrc"
+      log_success "Added inir integration to .bashrc"
     else
-      log_info "ii integration already in .bashrc"
+      log_info "inir integration already in .bashrc"
     fi
   else
-    echo -e "# ii shell integration\n[[ -f ~/.config/ii/bashrc ]] && source ~/.config/ii/bashrc" > "$bashrc"
-    log_success "Created .bashrc with ii integration"
+    echo -e "# inir shell integration\n[[ -f ~/.config/inir/bashrc ]] && source ~/.config/inir/bashrc" > "$bashrc"
+    log_success "Created .bashrc with inir integration"
   fi
 
   log_success "Bash shell configuration set"
@@ -775,15 +775,15 @@ setup-zsh-config(){
   log_info "Setting up Zsh shell configuration..."
 
   local zshrc="$HOME/.zshrc"
-  local ii_config="$HOME/.config/ii/zshrc"
+  local ii_config="$HOME/.config/inir/zshrc"
 
-  mkdir -p ~/.config/ii
+  mkdir -p ~/.config/inir
 
-  # Create ii zsh config
+  # Create inir zsh config
   cat > "$ii_config" << 'EOF'
-# ii shell integration - starship prompt and terminal colors
+# inir shell integration - starship prompt and terminal colors
 
-# Load terminal colors from ii theming
+# Load terminal colors from inir theming
 if [[ -f ~/.local/state/quickshell/user/generated/terminal/sequences.txt ]]; then
     cat ~/.local/state/quickshell/user/generated/terminal/sequences.txt
 fi
@@ -801,7 +801,7 @@ if command -v eza &> /dev/null; then
 elif [[ -x ~/.local/bin/eza ]]; then
     alias ls='~/.local/bin/eza --icons'
 fi
-alias q='qs -c ii'
+alias q='qs -c inir'
 
 # Add local bin to PATH
 export PATH="$HOME/.local/bin:$PATH"
@@ -809,11 +809,11 @@ EOF
 
   # Add source line to .zshrc if not present
   if [[ -f "$zshrc" ]]; then
-    if ! grep -q "source.*ii/zshrc" "$zshrc" && ! grep -q "\..*ii/zshrc" "$zshrc"; then
-      echo -e "\n# ii shell integration\n[[ -f ~/.config/ii/zshrc ]] && source ~/.config/ii/zshrc" >> "$zshrc"
-      log_success "Added ii integration to .zshrc"
+    if ! grep -q "source.*inir/zshrc" "$zshrc" && ! grep -q "\..*inir/zshrc" "$zshrc"; then
+      echo -e "\n# inir shell integration\n[[ -f ~/.config/inir/zshrc ]] && source ~/.config/inir/zshrc" >> "$zshrc"
+      log_success "Added inir integration to .zshrc"
     else
-      log_info "ii integration already in .zshrc"
+      log_info "inir integration already in .zshrc"
     fi
   else
     # Don't create .zshrc if it doesn't exist - user might not use zsh

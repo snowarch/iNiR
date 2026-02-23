@@ -441,7 +441,7 @@ Item {
                         console.log("[SidebarRight] Checking for existing settings window among", wins.length, "windows");
                         for (let i = 0; i < wins.length; i++) {
                             const w = wins[i]
-                            if (w.title === "illogical-impulse Settings" && w.app_id === "org.quickshell") {
+                            if (w.title === "inir Settings" && w.app_id === "org.quickshell") {
                                 console.log("[SidebarRight] Found existing settings window, focusing it");
                                 GlobalStates.sidebarRightOpen = false;
                                 Qt.callLater(() => {
@@ -456,7 +456,7 @@ Item {
                     console.log("[SidebarRight] Opening new settings window via IPC");
                     GlobalStates.sidebarRightOpen = false;
                     Qt.callLater(() => {
-                        Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "settings", "open"]);
+                        Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "settings", "open"]);
                     })
                 }
                 StyledToolTip {

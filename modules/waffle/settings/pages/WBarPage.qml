@@ -17,7 +17,7 @@ WSettingsPage {
     
     property bool isWaffleActive: Config.options?.panelFamily === "waffle"
     
-    // Warning when ii is active
+    // Warning when inir is active
     WSettingsCard {
         visible: !root.isWaffleActive
         

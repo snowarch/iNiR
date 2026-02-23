@@ -6,7 +6,7 @@ import qs.modules.common.widgets
 import qs.services
 
 /**
- * Compact timer indicator for the ii bar.
+ * Compact timer indicator for the inir bar.
  * Shows when pomodoro, countdown, or stopwatch is active.
  */
 MouseArea {

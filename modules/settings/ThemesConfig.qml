@@ -897,7 +897,7 @@ ContentPage {
                     onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.terminals.starship", checked)
                     opacity: terminalColorsSection.detectionDone && !(terminalColorsSection.installedTerminals["starship"] ?? false) ? 0.5 : 1
                     StyledToolTip {
-                        text: Translation.tr("Starship prompt palette - use 'palette = \"ii\"' in starship.toml")
+                        text: Translation.tr("Starship prompt palette - use 'palette = \"inir\"' in starship.toml")
                     }
                 }
             }
