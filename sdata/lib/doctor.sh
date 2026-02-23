@@ -137,7 +137,7 @@ get_missing_dependencies() {
 }
 
 check_critical_files() {
-    local target="${XDG_CONFIG_HOME}/quickshell/ii"
+    local target="${XDG_CONFIG_HOME}/quickshell/inir"
     local critical=("shell.qml" "GlobalStates.qml" "modules/common/Config.qml" "services/NiriService.qml")
     local missing=0
     
@@ -149,7 +149,7 @@ check_critical_files() {
 }
 
 check_script_permissions() {
-    local target="${XDG_CONFIG_HOME}/quickshell/ii/scripts"
+    local target="${XDG_CONFIG_HOME}/quickshell/inir/scripts"
     [[ ! -d "$target" ]] && return 0
     
     local bad=$(find "$target" \( -name "*.sh" -o -name "*.fish" -o -name "*.py" \) ! -executable 2>/dev/null | wc -l)
@@ -163,7 +163,7 @@ check_script_permissions() {
 }
 
 check_user_config() {
-    local config="${XDG_CONFIG_HOME}/illogical-impulse/config.json"
+    local config="${XDG_CONFIG_HOME}/inir/config.json"
     
     if [[ ! -f "$config" ]]; then
         doctor_pass "User config (using defaults)"
@@ -179,7 +179,7 @@ check_user_config() {
 }
 
 check_state_directories() {
-    local dirs=("${XDG_STATE_HOME}/quickshell/user" "${XDG_CACHE_HOME}/quickshell" "${XDG_CONFIG_HOME}/illogical-impulse")
+    local dirs=("${XDG_STATE_HOME}/quickshell/user" "${XDG_CACHE_HOME}/quickshell" "${XDG_CONFIG_HOME}/inir")
     local created=0
     
     for dir in "${dirs[@]}"; do
@@ -191,7 +191,7 @@ check_state_directories() {
 
 check_python_packages() {
     local venv="${XDG_STATE_HOME}/quickshell/.venv"
-    local req="${XDG_CONFIG_HOME}/quickshell/ii/sdata/uv/requirements.txt"
+    local req="${XDG_CONFIG_HOME}/quickshell/inir/sdata/uv/requirements.txt"
     
     # Check if venv exists
     if [[ ! -d "$venv" ]]; then
@@ -239,8 +239,8 @@ check_niri_running() {
 }
 
 check_version_tracking() {
-    local version_file="${XDG_CONFIG_HOME}/illogical-impulse/version.json"
-    local installed_marker="${XDG_CONFIG_HOME}/illogical-impulse/installed_true"
+    local version_file="${XDG_CONFIG_HOME}/inir/version.json"
+    local installed_marker="${XDG_CONFIG_HOME}/inir/installed_true"
     
     if [[ -f "$installed_marker" && ! -f "$version_file" ]]; then
         # Existing install without tracking - create it
@@ -254,12 +254,12 @@ check_version_tracking() {
 }
 
 check_manifest() {
-    local manifest="${XDG_CONFIG_HOME}/quickshell/ii/.ii-manifest"
-    local installed_marker="${XDG_CONFIG_HOME}/illogical-impulse/installed_true"
+    local manifest="${XDG_CONFIG_HOME}/quickshell/inir/.inir-manifest"
+    local installed_marker="${XDG_CONFIG_HOME}/inir/installed_true"
     
     if [[ -f "$installed_marker" && ! -f "$manifest" ]]; then
         # Generate manifest from current state
-        local target="${XDG_CONFIG_HOME}/quickshell/ii"
+        local target="${XDG_CONFIG_HOME}/quickshell/inir"
         if [[ -d "$target" ]]; then
             generate_manifest "$target" "$manifest" 2>/dev/null || true
             doctor_fix "Created file manifest"
@@ -277,7 +277,7 @@ check_quickshell_loads() {
     fi
     
     # If already running, just check it's responsive
-    if pgrep -f "qs.*-c.*ii" &>/dev/null; then
+    if pgrep -f "qs.*-c.*inir" &>/dev/null; then
         doctor_pass "Quickshell running"
         return 0
     fi
@@ -287,7 +287,7 @@ check_quickshell_loads() {
     
     # Start in background and capture initial output
     local logfile="/tmp/qs-doctor-$$.log"
-    nohup qs -c ii >"$logfile" 2>&1 &
+    nohup qs -c inir >"$logfile" 2>&1 &
     local qs_pid=$!
     disown
     
@@ -329,7 +329,7 @@ check_matugen_colors() {
     if [[ ! -f "$colors_json" && ! -f "$colors_scss" ]]; then
         # Try to auto-generate from current wallpaper
         local wallpaper=""
-        local config="${XDG_CONFIG_HOME}/illogical-impulse/config.json"
+        local config="${XDG_CONFIG_HOME}/inir/config.json"
         if [[ -f "$config" ]] && command -v jq &>/dev/null; then
             wallpaper=$(jq -r '.background.wallpaperPath // empty' "$config" 2>/dev/null)
         fi
@@ -345,7 +345,7 @@ check_matugen_colors() {
             fi
         else
             doctor_fail "Theme colors not generated (no valid wallpaper set)"
-            echo -e "    ${STY_FAINT}Set a wallpaper via ii settings or run: matugen image /path/to/wallpaper.png${STY_RST}"
+            echo -e "    ${STY_FAINT}Set a wallpaper via inir settings or run: matugen image /path/to/wallpaper.png${STY_RST}"
             return 1
         fi
     else
@@ -354,7 +354,7 @@ check_matugen_colors() {
     
     if [[ ! -f "$darkly_file" ]]; then
         # Try to regenerate Darkly colors
-        local darkly_script="${XDG_CONFIG_HOME}/quickshell/ii/scripts/colors/apply-gtk-theme.sh"
+        local darkly_script="${XDG_CONFIG_HOME}/quickshell/inir/scripts/colors/apply-gtk-theme.sh"
         if [[ -f "$darkly_script" ]]; then
             bash "$darkly_script" 2>/dev/null
             [[ -f "$darkly_file" ]] && doctor_fix "Regenerated Darkly Qt colors" || doctor_fail "Darkly Qt colors generation failed"
@@ -392,7 +392,7 @@ check_conflicting_services() {
 check_wallpaper_health() {
     local wallpaper_dir
     wallpaper_dir="$(xdg-user-dir PICTURES 2>/dev/null || echo "$HOME/Pictures")/Wallpapers"
-    local assets_dir="${XDG_CONFIG_HOME}/quickshell/ii/assets/wallpapers"
+    local assets_dir="${XDG_CONFIG_HOME}/quickshell/inir/assets/wallpapers"
     
     [[ ! -d "$wallpaper_dir" ]] && { doctor_pass "Wallpapers (dir not created yet)"; return 0; }
     
@@ -429,11 +429,11 @@ check_environment_vars() {
     local fixed=0
     
     # Check bash
-    if [[ -f "$HOME/.bashrc" ]] && ! grep -q "ILLOGICAL_IMPULSE_VIRTUAL_ENV" "$HOME/.bashrc" 2>/dev/null; then
+    if [[ -f "$HOME/.bashrc" ]] && ! grep -q "INIR_VIRTUAL_ENV" "$HOME/.bashrc" 2>/dev/null; then
         cat >> "$HOME/.bashrc" << BEOF
 
 # iNiR environment
-export ILLOGICAL_IMPULSE_VIRTUAL_ENV="${venv_path}"
+export INIR_VIRTUAL_ENV="${venv_path}"
 # end iNiR
 BEOF
         ((fixed++)) || true
@@ -445,17 +445,17 @@ BEOF
         mkdir -p "$(dirname "$fish_conf")"
         cat > "$fish_conf" << FEOF
 # iNiR environment — auto-generated by doctor
-set -gx ILLOGICAL_IMPULSE_VIRTUAL_ENV "${venv_path}"
+set -gx INIR_VIRTUAL_ENV "${venv_path}"
 FEOF
         ((fixed++)) || true
     fi
     
     # Check zsh
-    if [[ -f "$HOME/.zshrc" ]] && ! grep -q "ILLOGICAL_IMPULSE_VIRTUAL_ENV" "$HOME/.zshrc" 2>/dev/null; then
+    if [[ -f "$HOME/.zshrc" ]] && ! grep -q "INIR_VIRTUAL_ENV" "$HOME/.zshrc" 2>/dev/null; then
         cat >> "$HOME/.zshrc" << ZEOF
 
 # iNiR environment
-export ILLOGICAL_IMPULSE_VIRTUAL_ENV="${venv_path}"
+export INIR_VIRTUAL_ENV="${venv_path}"
 # end iNiR
 ZEOF
         ((fixed++)) || true

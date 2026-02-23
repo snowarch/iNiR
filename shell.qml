@@ -47,12 +47,12 @@ ShellRoot {
                 Qt.callLater(() => IconThemeService.ensureInitialized());
                 // Only reset enabledPanels if it's empty or undefined (first run / corrupted config)
                 if (!Config.options?.enabledPanels || Config.options.enabledPanels.length === 0) {
-                    const family = Config.options?.panelFamily ?? "ii"
+                    const family = Config.options?.panelFamily ?? "inir"
                     if (root.families.includes(family)) {
                         Config.options.enabledPanels = root.panelFamilies[family]
                     }
                 }
-                // Migration: Ensure waffle family has wBackdrop instead of iiBackdrop
+                // Migration: Ensure waffle family has wBackdrop instead of inirBackdrop
                 root.migrateEnabledPanels();
             }
         }
@@ -64,7 +64,7 @@ ShellRoot {
         if (_migrationDone) return;
         _migrationDone = true;
 
-        const family = Config.options?.panelFamily ?? "ii";
+        const family = Config.options?.panelFamily ?? "inir";
         let panels = [...(Config.options?.enabledPanels ?? [])];
         let changed = false;
 
@@ -79,13 +79,13 @@ ShellRoot {
         }
 
         if (family === "waffle") {
-            // If waffle family has iiBackdrop but not wBackdrop, migrate
-            const hasIiBackdrop = panels.includes("iiBackdrop");
+            // If waffle family has inirBackdrop but not wBackdrop, migrate
+            const hasInirBackdrop = panels.includes("inirBackdrop");
             const hasWBackdrop = panels.includes("wBackdrop");
 
-            if (hasIiBackdrop && !hasWBackdrop) {
-                root._log("[Shell] Migrating enabledPanels: replacing iiBackdrop with wBackdrop for waffle family");
-                panels = panels.filter(p => p !== "iiBackdrop");
+            if (hasInirBackdrop && !hasWBackdrop) {
+                root._log("[Shell] Migrating enabledPanels: replacing inirBackdrop with wBackdrop for waffle family");
+                panels = panels.filter(p => p !== "inirBackdrop");
                 panels.push("wBackdrop");
                 changed = true;
             }
@@ -109,10 +109,10 @@ ShellRoot {
                 Quickshell.execDetached(["/usr/bin/qs", "-n", "-p",
                     Quickshell.shellPath("waffleSettings.qml")])
             } else if (Config.options?.settingsUi?.overlayMode ?? false) {
-                // ii overlay mode — toggle inline panel
+                // inir overlay mode — toggle inline panel
                 GlobalStates.settingsOverlayOpen = !GlobalStates.settingsOverlayOpen
             } else {
-                // ii window mode (default) — launch separate process
+                // inir window mode (default) — launch separate process
                 Quickshell.execDetached(["/usr/bin/qs", "-n", "-p",
                     Quickshell.shellPath("settings.qml")])
             }
@@ -134,12 +134,12 @@ ShellRoot {
 
     // Load ONLY the active family panels to reduce startup time.
     LazyLoader {
-        active: Config.ready && (Config.options?.panelFamily ?? "ii") !== "waffle"
-        component: ShellIiPanels { }
+        active: Config.ready && (Config.options?.panelFamily ?? "inir") !== "waffle"
+        component: ShellInirPanels { }
     }
 
     LazyLoader {
-        active: Config.ready && (Config.options?.panelFamily ?? "ii") === "waffle"
+        active: Config.ready && (Config.options?.panelFamily ?? "inir") === "waffle"
         component: ShellWafflePanels { }
     }
 
@@ -150,24 +150,24 @@ ShellRoot {
     ToastManager {}
 
     // === Panel Families ===
-    // Note: iiAltSwitcher is always loaded (not in families) as it acts as IPC router
+    // Note: inirAltSwitcher is always loaded (not in families) as it acts as IPC router
     // for the unified "altSwitcher" target, redirecting to wAltSwitcher when waffle is active
-    property list<string> families: ["ii", "waffle"]
+    property list<string> families: ["inir", "waffle"]
     property var panelFamilies: ({
-        "ii": [
-            "iiBar", "iiBackground", "iiBackdrop", "iiCheatsheet", "iiControlPanel", "iiDock", "iiLock",
-            "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard",
-            "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners",
-            "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar",
-            "iiWallpaperSelector", "iiClipboard"
+        "inir": [
+            "inirBar", "inirBackground", "inirBackdrop", "inirCheatsheet", "inirControlPanel", "inirDock", "inirLock",
+            "inirMediaControls", "inirNotificationPopup", "inirOnScreenDisplay", "inirOnScreenKeyboard",
+            "inirOverlay", "inirOverview", "inirPolkit", "inirRegionSelector", "inirScreenCorners",
+            "inirSessionScreen", "inirSidebarLeft", "inirSidebarRight", "inirTilingOverlay", "inirVerticalBar",
+            "inirWallpaperSelector", "inirClipboard"
         ],
         "waffle": [
             "wBar", "wBackground", "wBackdrop", "wStartMenu", "wActionCenter", "wNotificationCenter", "wNotificationPopup", "wOnScreenDisplay", "wWidgets", "wLock", "wPolkit", "wSessionScreen",
             // Shared modules that work with waffle
             // Note: wTaskView is experimental and NOT included by default
             // Note: wAltSwitcher is always loaded when waffle is active (not in this list)
-            "iiCheatsheet", "iiControlPanel", "iiLock", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit",
-            "iiRegionSelector", "iiScreenCorners", "iiSessionScreen", "iiTilingOverlay", "iiWallpaperSelector", "iiClipboard"
+            "inirCheatsheet", "inirControlPanel", "inirLock", "inirOnScreenKeyboard", "inirOverlay", "inirOverview", "inirPolkit",
+            "inirRegionSelector", "inirScreenCorners", "inirSessionScreen", "inirTilingOverlay", "inirWallpaperSelector", "inirClipboard"
         ]
     })
 
@@ -193,18 +193,18 @@ ShellRoot {
     }
 
     function cyclePanelFamily() {
-        const currentFamily = Config.options?.panelFamily ?? "ii"
+        const currentFamily = Config.options?.panelFamily ?? "inir"
         const currentIndex = families.indexOf(currentFamily)
         const nextIndex = (currentIndex + 1) % families.length
         const nextFamily = families[nextIndex]
 
-        // Determine direction: ii -> waffle = left, waffle -> ii = right
+        // Determine direction: inir -> waffle = left, waffle -> inir = right
         const direction = nextIndex > currentIndex ? "left" : "right"
         root.startFamilyTransition(nextFamily, direction)
     }
 
     function setPanelFamily(family: string) {
-        const currentFamily = Config.options?.panelFamily ?? "ii"
+        const currentFamily = Config.options?.panelFamily ?? "inir"
         if (families.includes(family) && family !== currentFamily) {
             const currentIndex = families.indexOf(currentFamily)
             const nextIndex = families.indexOf(family)

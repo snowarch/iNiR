@@ -106,12 +106,12 @@ Singleton {
 
             // Panel system
             property list<string> enabledPanels: [
-                "iiBar", "iiBackground", "iiBackdrop", "iiCheatsheet", "iiControlPanel", "iiDock", "iiLock", "iiMediaControls",
-                "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard", "iiOverlay",
-                "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners", "iiSessionScreen",
-                "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar", "iiWallpaperSelector", "iiClipboard", "iiShellUpdate"
+                "inirBar", "inirBackground", "inirBackdrop", "inirCheatsheet", "inirControlPanel", "inirDock", "inirLock", "inirMediaControls",
+                "inirNotificationPopup", "inirOnScreenDisplay", "inirOnScreenKeyboard", "inirOverlay",
+                "inirOverview", "inirPolkit", "inirRegionSelector", "inirScreenCorners", "inirSessionScreen",
+                "inirSidebarLeft", "inirSidebarRight", "inirTilingOverlay", "inirVerticalBar", "inirWallpaperSelector", "inirClipboard", "inirShellUpdate"
             ]
-            property string panelFamily: "ii" // "ii" or "waffle"
+            property string panelFamily: "inir" // "inir" or "waffle"
             property bool familyTransitionAnimation: true // Show animated overlay when switching families
 
             property JsonObject policies: JsonObject {
@@ -416,7 +416,7 @@ Singleton {
                 property string networkEthernet: "kcmshell6 kcm_networkmanagement"
                 property string taskManager: "missioncenter"
                 property string terminal: "kitty" // This is only for shell actions
-                property string volumeMixer: `~/.config/quickshell/ii/scripts/launch_first_available.sh "pavucontrol-qt" "pavucontrol"`
+                property string volumeMixer: `~/.config/quickshell/inir/scripts/launch_first_available.sh "pavucontrol-qt" "pavucontrol"`
                 property string discord: "discord" // Shell command to launch Discord client
                 property string update: "kitty -e sudo pacman -Syu" // Command to run system updates
             }
@@ -533,7 +533,7 @@ Singleton {
                 property int customRounding: -1 // -1: use global theme rounding | 0+: override bar rounding (px)
                 property bool floatStyleShadow: true // Show shadow behind bar when cornerStyle == 1 (Float)
                 property bool borderless: false // true for no grouping of items
-                property string topLeftIcon: "spark" // Options: "distro" or any icon name in ~/.config/quickshell/ii/assets/icons
+                property string topLeftIcon: "spark" // Options: "distro" or any icon name in ~/.config/quickshell/inir/assets/icons
                 property bool showBackground: true
                 property bool showScrollHints: true // Show brightness/volume scroll hints on hover
                 property JsonObject blurBackground: JsonObject {
@@ -825,7 +825,7 @@ Singleton {
                 property bool showPreviews: false // Show window thumbnails in overview
             }
 
-            // Settings for the custom Alt-Tab switcher in ii
+            // Settings for the custom Alt-Tab switcher in inir
             property JsonObject altSwitcher: JsonObject {
                 // Preset style: "default" (sidebar) or "list" (centered list)
                 property string preset: "default"
@@ -1250,7 +1250,7 @@ Singleton {
                     property string locale: ""
                 }
                 property JsonObject theming: JsonObject {
-                    property bool useMaterialColors: true // Use Material ii colors instead of W11 grey
+                    property bool useMaterialColors: true // Use Material inir colors instead of W11 grey
                     property JsonObject font: JsonObject {
                         property string family: "Noto Sans"
                         property real scale: 1.0 // Font size multiplier (0.8 - 1.5)

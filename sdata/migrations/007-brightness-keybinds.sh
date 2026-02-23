@@ -51,8 +51,8 @@ for i, line in enumerate(lines):
 if insert_idx is not None:
     brightness_block = '''
     // Brightness (hardware keys)
-    XF86MonBrightnessUp { spawn "qs" "-c" "ii" "ipc" "call" "brightness" "increment"; }
-    XF86MonBrightnessDown { spawn "qs" "-c" "ii" "ipc" "call" "brightness" "decrement"; }
+    XF86MonBrightnessUp { spawn "qs" "-c" "inir" "ipc" "call" "brightness" "increment"; }
+    XF86MonBrightnessDown { spawn "qs" "-c" "inir" "ipc" "call" "brightness" "decrement"; }
 '''
     lines.insert(insert_idx + 1, brightness_block)
     

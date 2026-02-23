@@ -13,7 +13,7 @@ if ! pgrep -x quickshell >/dev/null 2>&1; then
 fi
 
 # Try IPC - QS will ignore if in startup grace period
-if timeout 0.2 qs -c ii ipc call closeConfirm trigger 2>/dev/null; then
+if timeout 0.2 qs -c inir ipc call closeConfirm trigger 2>/dev/null; then
     exit 0
 fi
 

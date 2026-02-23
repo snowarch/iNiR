@@ -26,9 +26,9 @@ WSettingsPage {
         icon: "image"
         
         WSettingsSwitch {
-            label: Translation.tr("Use Material ii wallpaper")
+            label: Translation.tr("Use Material inir wallpaper")
             icon: "image"
-            description: Translation.tr("Share wallpaper with Material ii family")
+            description: Translation.tr("Share wallpaper with Material inir family")
             checked: root.wBg.useMainWallpaper ?? true
             onCheckedChanged: Config.setNestedValue("waffles.background.useMainWallpaper", checked)
         }
@@ -40,7 +40,7 @@ WSettingsPage {
             buttonText: Translation.tr("Change")
             onButtonClicked: {
                 Config.setNestedValue("wallpaperSelector.selectionTarget", "waffle")
-                Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "wallpaperSelector", "toggle"])
+                Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "wallpaperSelector", "toggle"])
             }
         }
 
@@ -492,7 +492,7 @@ WSettingsPage {
                                     if (mon) {
                                         Config.setNestedValue("wallpaperSelector.selectionTarget", "main")
                                         Config.setNestedValue("wallpaperSelector.targetMonitor", mon)
-                                        Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "wallpaperSelector", "toggle"])
+                                        Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "wallpaperSelector", "toggle"])
                                     }
                                 }
                             }
@@ -528,7 +528,7 @@ WSettingsPage {
                                 colForeground: Looks.colors.accentFg
                                 onClicked: {
                                     Config.setNestedValue("wallpaperSelector.selectionTarget", "waffle-backdrop")
-                                    Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "wallpaperSelector", "toggle"])
+                                    Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "wallpaperSelector", "toggle"])
                                 }
                             }
                             WButton {
@@ -905,7 +905,7 @@ WSettingsPage {
             buttonText: Translation.tr("Change")
             onButtonClicked: {
                 Config.setNestedValue("wallpaperSelector.selectionTarget", "waffle-backdrop")
-                Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "wallpaperSelector", "toggle"])
+                Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "wallpaperSelector", "toggle"])
             }
         }
 

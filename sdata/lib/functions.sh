@@ -146,7 +146,7 @@ cp_file(){
   x mkdir -p "$(dirname "$dst")"
 
   # Avoid failing when source and destination are the same file
-  # (e.g. when ~/.config/quickshell/ii points into the repo).
+  # (e.g. when ~/.config/quickshell/inir points into the repo).
   if [[ -e "$dst" ]]; then
     local src_real dst_real
     src_real="$(realpath -se "$src" 2>/dev/null || echo "$src")"

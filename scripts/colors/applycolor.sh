@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-QUICKSHELL_CONFIG_NAME="ii"
+QUICKSHELL_CONFIG_NAME="inir"
 XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
 XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
@@ -113,8 +113,8 @@ apply_terminal_configs() {
   # Run the Python script to generate configs
   local python_cmd="python3"
   local _ac_venv
-  if [[ -n "${ILLOGICAL_IMPULSE_VIRTUAL_ENV:-}" ]]; then
-    _ac_venv="$(eval echo "$ILLOGICAL_IMPULSE_VIRTUAL_ENV")"
+  if [[ -n "${INIR_VIRTUAL_ENV:-}" ]]; then
+    _ac_venv="$(eval echo "$INIR_VIRTUAL_ENV")"
   else
     _ac_venv="$HOME/.local/state/quickshell/.venv"
   fi
@@ -187,7 +187,7 @@ reload_terminal_colors() {
           # Try to reload via DBus (works in some versions)
           if command -v qdbus6 &>/dev/null; then
             for session in $(qdbus6 org.kde.konsole 2>/dev/null | grep -E '/Sessions/[0-9]+$'); do
-              qdbus6 org.kde.konsole "$session" org.kde.konsole.Session.setProfile "ii-auto" 2>/dev/null
+              qdbus6 org.kde.konsole "$session" org.kde.konsole.Session.setProfile "inir-auto" 2>/dev/null
             done
             echo "[terminal-colors] Konsole: attempted profile reload via DBus"
           else
@@ -212,7 +212,7 @@ apply_gtk_kde() {
 }
 
 # Check if terminal theming is enabled in config
-CONFIG_FILE="$XDG_CONFIG_HOME/illogical-impulse/config.json"
+CONFIG_FILE="$XDG_CONFIG_HOME/inir/config.json"
 if [ -f "$CONFIG_FILE" ]; then
   enable_terminal=$(jq -r '.appearance.wallpaperTheming.enableTerminal // true' "$CONFIG_FILE" 2>/dev/null || echo "true")
   if [ "$enable_terminal" = "true" ]; then
@@ -238,8 +238,8 @@ else
   apply_gtk_kde &
 fi
 
-# Sync ii-pixel SDDM theme colors (if installed)
+# Sync inir-pixel SDDM theme colors (if installed)
 SDDM_SYNC_SCRIPT="$SCRIPT_DIR/../sddm/sync-pixel-sddm.py"
-if [[ -d "/usr/share/sddm/themes/ii-pixel" && -f "$SDDM_SYNC_SCRIPT" ]]; then
+if [[ -d "/usr/share/sddm/themes/inir-pixel" && -f "$SDDM_SYNC_SCRIPT" ]]; then
   python3 "$SDDM_SYNC_SCRIPT" &
 fi

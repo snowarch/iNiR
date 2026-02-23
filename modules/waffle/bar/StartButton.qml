@@ -50,7 +50,7 @@ AppButton {
             {
                 text: Translation.tr("Settings"),
                 action: () => {
-                    Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "settings", "open"]);
+                    Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "settings", "open"]);
                 }
             },
             {
@@ -62,7 +62,7 @@ AppButton {
             {
                 text: Translation.tr("Search"),
                 action: () => {
-                    Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "overview", "toggle"]);
+                    Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "overview", "toggle"]);
                 }
             },
         ]

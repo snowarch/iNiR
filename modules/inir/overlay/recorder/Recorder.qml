@@ -8,7 +8,7 @@ import qs
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
-import qs.modules.ii.overlay
+import qs.modules.inir.overlay
 import qs.services
 
 StyledOverlayWidget {
@@ -72,7 +72,7 @@ StyledOverlayWidget {
                     name: Translation.tr("Screenshot region")
                     onClicked: {
                         GlobalStates.overlayOpen = false;
-                        Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "region", "screenshot"]);
+                        Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "region", "screenshot"]);
                     }
                 }
 
@@ -95,7 +95,7 @@ StyledOverlayWidget {
                             Quickshell.execDetached([Directories.recordScriptPath]);
                         } else {
                             GlobalStates.overlayOpen = false;
-                            Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "region", "recordWithSound"]);
+                            Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "region", "recordWithSound"]);
                         }
                     }
                     property bool isFullscreenRecording: false

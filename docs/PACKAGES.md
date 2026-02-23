@@ -1,6 +1,6 @@
 # Package Reference
 
-Complete list of packages used by ii, organized by category. These are what the setup script installs on Arch-based systems.
+Complete list of packages used by inir, organized by category. These are what the setup script installs on Arch-based systems.
 
 The PKGBUILDs live in `sdata/dist-arch/`.
 
@@ -8,7 +8,7 @@ The PKGBUILDs live in `sdata/dist-arch/`.
 
 ## Core (`iNiR-core`)
 
-Essential packages for Niri + ii to function.
+Essential packages for Niri + inir to function.
 
 | Package | Purpose |
 |---------|---------|

@@ -10,7 +10,7 @@ ContentPage {
     settingsPageIndex: 5
     settingsPageName: Translation.tr("Interface")
 
-    property bool isIiActive: Config.options?.panelFamily !== "waffle"
+    property bool isInirActive: Config.options?.panelFamily !== "waffle"
 
     SettingsCardSection {
         expanded: false
@@ -174,10 +174,10 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
+        visible: root.isInirActive
         expanded: false
         icon: "keyboard_tab"
-        title: Translation.tr("Alt-Tab switcher (Material ii)")
+        title: Translation.tr("Alt-Tab switcher (Material inir)")
 
         SettingsGroup {
             SettingsSwitch {
@@ -343,7 +343,7 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
+        visible: root.isInirActive
         expanded: false
         icon: "call_to_action"
         title: Translation.tr("Dock")
@@ -753,7 +753,7 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
+        visible: root.isInirActive
         expanded: false
         icon: "notifications"
         title: Translation.tr("Notifications")
@@ -978,7 +978,7 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
+        visible: root.isInirActive
         expanded: false
         icon: "side_navigation"
         title: Translation.tr("Sidebars")
@@ -1668,7 +1668,7 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
+        visible: root.isInirActive
         expanded: false
         icon: "widgets"
         title: Translation.tr("Widgets")
@@ -2328,7 +2328,7 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
+        visible: root.isInirActive
         expanded: false
         icon: "overview_key"
         title: Translation.tr("Overview")

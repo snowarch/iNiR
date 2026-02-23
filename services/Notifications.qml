@@ -502,17 +502,17 @@ Singleton {
         const tests = [
             {
                 summary: "Notification Position Test",
-                body: "ii test notification 1 of 3 ~ Hi there!",
+                body: "inir test notification 1 of 3 ~ Hi there!",
                 icon: "preferences-system"
             },
             {
                 summary: "Second Test",
-                body: "ii notification 2 of 3 ~ Check it out!",
+                body: "inir notification 2 of 3 ~ Check it out!",
                 icon: "applications-graphics"
             },
             {
                 summary: "Third Test",
-                body: "ii notification 3 of 3 ~ Enjoy!",
+                body: "inir notification 3 of 3 ~ Enjoy!",
                 icon: "face-smile"
             }
         ];
@@ -522,7 +522,7 @@ Singleton {
             Quickshell.execDetached([
                 "/usr/bin/notify-send",
                 "-h", "int:transient:1",
-                "-a", "Quickshell ii",
+                "-a", "Quickshell inir",
                 "-i", t.icon,
                 t.summary,
                 t.body,

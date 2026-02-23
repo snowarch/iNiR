@@ -7,7 +7,7 @@ import Quickshell.Io
 import QtQuick
 
 /**
- * Simple persistent notepad for ii.
+ * Simple persistent notepad for inir.
  * Stores a single text buffer on disk under Directories.notepadPath.
  */
 Singleton {

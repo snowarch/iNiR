@@ -534,7 +534,7 @@ Scope {
                                 console.log("[ShellUpdates] Diagnostics:\n" + diag)
                                 Notifications.notify({
                                     summary: "Update System Diagnostics",
-                                    body: "Diagnostics printed to console. Run: qs log -c ii | tail -50",
+                                    body: "Diagnostics printed to console. Run: qs log -c inir | tail -50",
                                     urgency: NotificationUrgency.Normal,
                                     timeout: 8000,
                                     appName: "iNiR Shell"

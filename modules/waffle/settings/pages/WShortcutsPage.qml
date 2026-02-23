@@ -127,7 +127,7 @@ WSettingsPage {
     function getCategoryIcon(name: string): string {
         const icons = {
             "System": "power",
-            "ii Shell": "wand",
+            "inir Shell": "wand",
             "Window Switcher": "arrow-swap",
             "Screenshots": "screenshot",
             "Applications": "apps",

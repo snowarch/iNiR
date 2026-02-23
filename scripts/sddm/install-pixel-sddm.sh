@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Install ii-pixel SDDM theme for iNiR
+# Install inir-pixel SDDM theme for iNiR
 # Pixel aesthetic with Material You dynamic colors matching the Quickshell lockscreen.
 # Requires: sddm, qt6-declarative, qt6-5compat
 
 set -euo pipefail
 
-THEME_NAME="ii-pixel"
+THEME_NAME="inir-pixel"
 THEME_SRC="${REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}/dots/sddm/pixel"
 THEME_DIR="/usr/share/sddm/themes/${THEME_NAME}"
 SYNC_SCRIPT="${REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}/scripts/sddm/sync-pixel-sddm.py"
@@ -149,14 +149,14 @@ chmod +x "$SYNC_DST"
 log_ok "Sync script installed to ${SYNC_DST}"
 
 # NOTE: We no longer mutate user matugen config here. The shipped config template
-# already includes a safe ii-pixel sync post_hook. Keep installer idempotent.
+# already includes a safe inir-pixel sync post_hook. Keep installer idempotent.
 
 # Cleanup stale sudo-based hook variants from very old setups if present
 MATUGEN_CONFIG="${XDG_CONFIG_HOME:-${HOME}/.config}/matugen/config.toml"
 if [[ -f "$MATUGEN_CONFIG" ]]; then
     if grep -qE "post_hook\s*=\s*'.*sudo.*sync-pixel-sddm\.py" "$MATUGEN_CONFIG" 2>/dev/null; then
         log_warn "Detected legacy sudo SDDM matugen hook in user config"
-        log_warn "Please remove old ii-pixel-sddm hook block from: $MATUGEN_CONFIG"
+        log_warn "Please remove old inir-pixel-sddm hook block from: $MATUGEN_CONFIG"
     fi
 fi
 

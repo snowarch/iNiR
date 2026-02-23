@@ -276,7 +276,7 @@ ContentPage {
                                 if (Config.options?.background?.multiMonitor?.enable && multiMonitorPanel.selectedMonitor) {
                                     Config.setNestedValue("wallpaperSelector.targetMonitor", multiMonitorPanel.selectedMonitor)
                                 }
-                                Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "wallpaperSelector", "toggle"]);
+                                Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "wallpaperSelector", "toggle"]);
                             }
                         }
                     }
@@ -485,16 +485,16 @@ ContentPage {
                 property bool backdropViewActive: false
 
                 // Backdrop wallpaper data for stacked preview
-                readonly property var iiBackdrop: Config.options?.background?.backdrop ?? {}
-                readonly property bool backdropEnabled: iiBackdrop.enable ?? false
+                readonly property var inirBackdrop: Config.options?.background?.backdrop ?? {}
+                readonly property bool backdropEnabled: inirBackdrop.enable ?? false
                 readonly property string backdropPath: {
-                    const useMain = iiBackdrop.useMainWallpaper ?? true;
+                    const useMain = inirBackdrop.useMainWallpaper ?? true;
                     if (!useMain) {
                         // Per-monitor backdrop takes priority
                         const perMonBd = selMonData.backdropPath ?? ""
                         if (perMonBd) return perMonBd
                         // Fall back to global backdrop
-                        const globalBd = iiBackdrop.wallpaperPath || ""
+                        const globalBd = inirBackdrop.wallpaperPath || ""
                         if (globalBd) return globalBd
                     }
                     return selMonPath;
@@ -1194,7 +1194,7 @@ ContentPage {
                                         if (mon) {
                                             Config.setNestedValue("wallpaperSelector.selectionTarget", "main")
                                             Config.setNestedValue("wallpaperSelector.targetMonitor", mon)
-                                            Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "wallpaperSelector", "toggle"])
+                                            Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "wallpaperSelector", "toggle"])
                                         }
                                     }
                                 }
@@ -1264,7 +1264,7 @@ ContentPage {
                                     visible: multiMonitorPanel.backdropEnabled
                                     onClicked: {
                                         Config.setNestedValue("wallpaperSelector.selectionTarget", "backdrop")
-                                        Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "wallpaperSelector", "toggle"])
+                                        Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "wallpaperSelector", "toggle"])
                                     }
                                     StyledToolTip {
                                         text: Translation.tr("Change the backdrop wallpaper (used for overview/blur)")
@@ -1528,7 +1528,7 @@ ContentPage {
                     buttonRadius: Appearance.rounding.small
                     materialIcon: "refresh"
                     mainText: Translation.tr("Reload shell")
-                    onClicked: Quickshell.execDetached(["/usr/bin/setsid", "/usr/bin/fish", "-c", "qs kill -c ii; sleep 0.3; qs -c ii"])
+                    onClicked: Quickshell.execDetached(["/usr/bin/setsid", "/usr/bin/fish", "-c", "qs kill -c inir; sleep 0.3; qs -c inir"])
                 }
 
                 RippleButtonWithIcon {
@@ -1536,7 +1536,7 @@ ContentPage {
                     buttonRadius: Appearance.rounding.small
                     materialIcon: "terminal"
                     mainText: Translation.tr("Open config")
-                    onClicked: Qt.openUrlExternally(`${Directories.config}/illogical-impulse/config.json`)
+                    onClicked: Qt.openUrlExternally(`${Directories.config}/inir/config.json`)
                 }
 
                 RippleButtonWithIcon {
@@ -1544,7 +1544,7 @@ ContentPage {
                     buttonRadius: Appearance.rounding.small
                     materialIcon: "keyboard"
                     mainText: Translation.tr("Shortcuts")
-                    onClicked: Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "cheatsheet", "toggle"])
+                    onClicked: Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "cheatsheet", "toggle"])
                 }
             }
 

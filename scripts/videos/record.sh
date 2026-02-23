@@ -15,7 +15,7 @@ getactivemonitor() {
 }
 
 # Try to get save path from config, fallback to XDG Videos
-CONFIG_FILE="$HOME/.config/illogical-impulse/config.json"
+CONFIG_FILE="$HOME/.config/inir/config.json"
 SAVE_PATH=""
 if [[ -f "$CONFIG_FILE" ]] && command -v jq >/dev/null 2>&1; then
     SAVE_PATH=$(jq -r '.screenRecord.savePath // empty' "$CONFIG_FILE" 2>/dev/null)

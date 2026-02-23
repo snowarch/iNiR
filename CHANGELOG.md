@@ -39,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **quickshell-git conflict**: Installer handles existing `-git` package, prefers official repos; adds ffmpeg as dependency
 
 ### Fixed
-- **Terminal colors not updating**: Root cause — venv activation failed in QML `execDetached` context when `ILLOGICAL_IMPULSE_VIRTUAL_ENV` was unset
+- **Terminal colors not updating**: Root cause — venv activation failed in QML `execDetached` context when `INIR_VIRTUAL_ENV` was unset
 - **SDDM Qt5 compatibility**: Full rewrite for SDDM's Qt5 runtime (model roles, easing curves, font loading)
 - **Wallpaper theming**: Stop guessing thumbnails by basename, clear stale paths on video→image switch, kill previous switchwall before starting new
 - **Video first-frame**: `seek(0)` after pause ensures frame display
@@ -58,7 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Desktop right-click context menu**: Right-click on the desktop background opens a context menu with Mission Center, Overview/Task View, Settings, Wallpaper Selector, Terminal, Media Controls, Lock Screen, and Power Menu
-- **Bar right-click context menu (ii family)**: Right-click on the horizontal or vertical bar opens a context menu with Mission Center and Settings
+- **Bar right-click context menu (inir family)**: Right-click on the horizontal or vertical bar opens a context menu with Mission Center and Settings
 - **DesktopShellContextMenu component**: Reusable context menu widget for desktop backgrounds, respects all three global styles (Material, Aurora, iNiR)
 
 ### Changed

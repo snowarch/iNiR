@@ -10,7 +10,7 @@
 
 <p align="center">
   <b>Un shell de escritorio completo hecho con Quickshell para el compositor Niri</b><br>
-  <sub>Fork original de illogical-impulse de end-4 — evolucionó a algo propio</sub>
+  <sub>Fork original de inir de end-4 — evolucionó a algo propio</sub>
 </p>
 
 <p align="center">
@@ -29,7 +29,7 @@
 ## Capturas
 
 <details open>
-<summary><b>Material ii</b> — barra flotante, sidebars, estética Material Design</summary>
+<summary><b>Material inir</b> — barra flotante, sidebars, estética Material Design</summary>
 
 | | |
 |:---:|:---:|
@@ -69,10 +69,10 @@ Elegís un wallpaper y todo se adapta — el shell, apps GTK/Qt, terminales, Fir
 
 Cambiá entre ellas al vuelo con `Super+Shift+W`:
 
-- **Material ii** — barra flotante (arriba/abajo, 4 estilos de esquinas), sidebars, dock (las 4 posiciones), panel de control, variante de barra vertical
+- **Material inir** — barra flotante (arriba/abajo, 4 estilos de esquinas), sidebars, dock (las 4 posiciones), panel de control, variante de barra vertical
 - **Waffle** — barra de tareas estilo Windows 11, menú inicio, centro de acciones, centro de notificaciones, panel de widgets, vista de tareas
 
-### Sidebars y widgets (Material ii)
+### Sidebars y widgets (Material inir)
 
 El sidebar izquierdo funciona como cajón de apps:
 
@@ -178,8 +178,8 @@ Lista completa y guía de personalización: [docs/KEYBINDS.md](docs/KEYBINDS.md)
 ## Solución de problemas
 
 ```bash
-qs log -c ii                    # Revisá los logs — la respuesta suele estar ahí
-qs kill -c ii && qs -c ii       # Reiniciar el shell
+qs log -c inir                    # Revisá los logs — la respuesta suele estar ahí
+qs kill -c inir && qs -c inir       # Reiniciar el shell
 ./setup doctor                  # Auto-diagnosticar y arreglar problemas comunes
 ./setup rollback                # Deshacer la última actualización
 ```
@@ -190,7 +190,7 @@ Revisá [LIMITATIONS.md](docs/LIMITATIONS.md) antes de abrir un issue — capaz 
 
 ## Créditos
 
-- [**end-4**](https://github.com/end-4/dots-hyprland) — illogical-impulse original para Hyprland, donde empezó todo esto
+- [**end-4**](https://github.com/end-4/dots-hyprland) — inir original para Hyprland, donde empezó todo esto
 - [**Quickshell**](https://quickshell.outfoxxed.me/) — el framework que hace posible este shell
 - [**Niri**](https://github.com/YaLTeR/niri) — el compositor Wayland de tiling scrollable
 

@@ -96,7 +96,7 @@ ContentPage {
     function getCategoryIcon(name: string): string {
         const icons = {
             "System": "settings_power",
-            "ii Shell": "auto_awesome",
+            "inir Shell": "auto_awesome",
             "Window Switcher": "swap_horiz",
             "Screenshots": "screenshot_region",
             "Applications": "apps",

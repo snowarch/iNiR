@@ -90,10 +90,10 @@ function setup_systemd_services(){
 function setup_super_daemon(){
   tui_info "Setting up Super-tap daemon..."
   
-  local daemon_src="${REPO_ROOT}/scripts/daemon/ii_super_overview_daemon.py"
-  local service_src="${REPO_ROOT}/scripts/systemd/ii-super-overview.service"
-  local daemon_dst="${HOME}/.local/bin/ii_super_overview_daemon.py"
-  local service_dst="${XDG_CONFIG_HOME}/systemd/user/ii-super-overview.service"
+  local daemon_src="${REPO_ROOT}/scripts/daemon/inir_super_overview_daemon.py"
+  local service_src="${REPO_ROOT}/scripts/systemd/inir-super-overview.service"
+  local daemon_dst="${HOME}/.local/bin/inir_super_overview_daemon.py"
+  local service_dst="${XDG_CONFIG_HOME}/systemd/user/inir-super-overview.service"
   
   if [[ ! -f "$daemon_src" ]]; then
     log_warning "Super-tap daemon not found in repo, skipping"
@@ -112,10 +112,10 @@ function setup_super_daemon(){
   # Enable service if in graphical session
   if [[ -n "${DBUS_SESSION_BUS_ADDRESS}" ]]; then
     v systemctl --user daemon-reload
-    v systemctl --user enable ii-super-overview.service --now
+    v systemctl --user enable inir-super-overview.service --now
   else
     log_warning "Not in graphical session. Enable later with:"
-    echo "  systemctl --user enable ii-super-overview.service --now"
+    echo "  systemctl --user enable inir-super-overview.service --now"
   fi
   
   log_success "Super-tap daemon installed"
@@ -124,18 +124,18 @@ function setup_super_daemon(){
 function disable_super_daemon_if_present(){
   tui_info "Cleaning up legacy Super-tap daemon..."
 
-  local daemon_dst="${HOME}/.local/bin/ii_super_overview_daemon.py"
+  local daemon_dst="${HOME}/.local/bin/inir_super_overview_daemon.py"
   local config_dir="${XDG_CONFIG_HOME:-${HOME}/.config}"
   local systemd_user_dir="${config_dir}/systemd/user"
-  local service_dst="${systemd_user_dir}/ii-super-overview.service"
+  local service_dst="${systemd_user_dir}/inir-super-overview.service"
 
   # Best-effort stop/disable user service if we appear to be in a graphical session
   if [[ -n "${DBUS_SESSION_BUS_ADDRESS}" && -f "${service_dst}" ]]; then
-    systemctl --user disable --now ii-super-overview.service 2>/dev/null || true
+    systemctl --user disable --now inir-super-overview.service 2>/dev/null || true
     systemctl --user daemon-reload 2>/dev/null || true
   elif [[ -f "${service_dst}" ]]; then
     log_warning "Legacy Super-tap daemon service file detected but user systemd may not be reachable. Disable it later with:"
-    echo "  systemctl --user disable --now ii-super-overview.service"
+    echo "  systemctl --user disable --now inir-super-overview.service"
   fi
 
   # Remove service definition and helper script if they exist
@@ -229,7 +229,7 @@ showfun setup_desktop_settings
 v setup_desktop_settings
 
 # Super-tap daemon (legacy - optional)
-# Disabled by default in favor of Mod+Space ii overview.
+# Disabled by default in favor of Mod+Space inir overview.
 # To install anyway, set II_ENABLE_SUPER_DAEMON=1 in the environment.
 if [[ "${II_ENABLE_SUPER_DAEMON:-0}" == "1" ]]; then
   showfun setup_super_daemon

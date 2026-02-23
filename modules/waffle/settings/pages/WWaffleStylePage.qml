@@ -46,7 +46,7 @@ WSettingsPage {
     }
     
     WSettingsCard {
-        visible: root.isWaffleActive && root.isPanelEnabled("iiAltSwitcher")
+        visible: root.isWaffleActive && root.isPanelEnabled("inirAltSwitcher")
         title: Translation.tr("Alt+Tab Switcher")
         icon: "apps"
         
@@ -299,7 +299,7 @@ WSettingsPage {
         }
     }
     
-    // Weather configuration - shared with ii family
+    // Weather configuration - shared with inir family
     WSettingsCard {
         title: Translation.tr("Weather")
         icon: "weather-sunny"

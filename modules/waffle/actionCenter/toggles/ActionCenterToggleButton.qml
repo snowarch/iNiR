@@ -105,7 +105,7 @@ ColumnLayout {
         border.width: 1
         border.color: root.colBorder
 
-        // Right-click to open menu (like Material ii sidebar)
+        // Right-click to open menu (like Material inir sidebar)
         TapHandler {
             acceptedButtons: Qt.RightButton
             enabled: toggleFragment.isMainToggle && root.altAction

@@ -8,7 +8,7 @@
 #####################################################################################
 # Version Configuration
 #####################################################################################
-VERSION_FILE_LOCAL="${XDG_CONFIG_HOME}/illogical-impulse/version.json"
+VERSION_FILE_LOCAL="${XDG_CONFIG_HOME}/inir/version.json"
 VERSION_FILE_REPO="${REPO_ROOT}/VERSION"
 CHANGELOG_FILE="${REPO_ROOT}/CHANGELOG.md"
 GITHUB_REPO="snowarch/inir"
@@ -53,9 +53,9 @@ get_installed_version_json() {
 get_installed_version() {
     if [[ -f "$VERSION_FILE_LOCAL" ]] && command -v jq &>/dev/null; then
         jq -r '.version // "0.0.0"' "$VERSION_FILE_LOCAL"
-    elif [[ -f "${XDG_CONFIG_HOME}/illogical-impulse/version" ]]; then
+    elif [[ -f "${XDG_CONFIG_HOME}/inir/version" ]]; then
         # Fallback to old format
-        cat "${XDG_CONFIG_HOME}/illogical-impulse/version"
+        cat "${XDG_CONFIG_HOME}/inir/version"
     else
         echo "0.0.0"
     fi
@@ -101,7 +101,7 @@ EOF
     fi
     
     # Also update old format for backwards compatibility
-    echo "$version" > "${XDG_CONFIG_HOME}/illogical-impulse/version"
+    echo "$version" > "${XDG_CONFIG_HOME}/inir/version"
 }
 
 #####################################################################################

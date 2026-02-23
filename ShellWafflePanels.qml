@@ -7,7 +7,7 @@ import qs.modules.regionSelector
 import qs.modules.screenCorners
 import qs.modules.sessionScreen
 import qs.modules.wallpaperSelector
-import qs.modules.ii.overlay
+import qs.modules.inir.overlay
 import "modules/clipboard" as ClipboardModule
 
 import qs.modules.waffle.actionCenter
@@ -49,16 +49,16 @@ Item {
     PanelLoader { identifier: "wSessionScreen"; component: SessionScreen {} }
 
     // Shared modules that work with waffle
-    PanelLoader { identifier: "iiCheatsheet"; component: Cheatsheet {} }
-    PanelLoader { identifier: "iiOnScreenKeyboard"; component: OnScreenKeyboard {} }
-    PanelLoader { identifier: "iiOverlay"; component: Overlay {} }
-    PanelLoader { identifier: "iiOverview"; component: Overview {} }
-    PanelLoader { identifier: "iiPolkit"; component: Polkit {} }
-    PanelLoader { identifier: "iiRegionSelector"; component: RegionSelector {} }
-    PanelLoader { identifier: "iiScreenCorners"; component: ScreenCorners {} }
-    PanelLoader { identifier: "iiSessionScreen"; component: SessionScreen {} }
-    PanelLoader { identifier: "iiWallpaperSelector"; component: WallpaperSelector {} }
-    PanelLoader { identifier: "iiClipboard"; component: ClipboardModule.ClipboardPanel {} }
+    PanelLoader { identifier: "inirCheatsheet"; component: Cheatsheet {} }
+    PanelLoader { identifier: "inirOnScreenKeyboard"; component: OnScreenKeyboard {} }
+    PanelLoader { identifier: "inirOverlay"; component: Overlay {} }
+    PanelLoader { identifier: "inirOverview"; component: Overview {} }
+    PanelLoader { identifier: "inirPolkit"; component: Polkit {} }
+    PanelLoader { identifier: "inirRegionSelector"; component: RegionSelector {} }
+    PanelLoader { identifier: "inirScreenCorners"; component: ScreenCorners {} }
+    PanelLoader { identifier: "inirSessionScreen"; component: SessionScreen {} }
+    PanelLoader { identifier: "inirWallpaperSelector"; component: WallpaperSelector {} }
+    PanelLoader { identifier: "inirClipboard"; component: ClipboardModule.ClipboardPanel {} }
 
     // Waffle Clipboard - handles IPC when panelFamily === "waffle"
     LazyLoader { active: Config.ready && Config.options?.panelFamily === "waffle"; component: WaffleClipboardModule.WaffleClipboard {} }

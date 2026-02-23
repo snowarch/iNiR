@@ -53,8 +53,8 @@ output_path = '~/.local/state/quickshell/user/generated/wallpaper/path.txt'
 input_path = '~/.config/matugen/templates/firefox/materialfox.css'
 output_path = '~/.local/state/quickshell/user/generated/firefox-materialfox.css'
 
-# SDDM ii-pixel theme sync (safe no-op if script/theme are not present)
-[templates.ii_pixel_sddm_sync]
+# SDDM inir-pixel theme sync (safe no-op if script/theme are not present)
+[templates.inir_pixel_sddm_sync]
 input_path = '/dev/null'
 output_path = '/dev/null'
-post_hook = 'bash -lc "[[ -x ~/.local/bin/sync-pixel-sddm.py && -d /usr/share/sddm/themes/ii-pixel ]] && nohup python3 ~/.local/bin/sync-pixel-sddm.py >/dev/null 2>&1 &"'
+post_hook = 'bash -lc "[[ -x ~/.local/bin/sync-pixel-sddm.py && -d /usr/share/sddm/themes/inir-pixel ]] && nohup python3 ~/.local/bin/sync-pixel-sddm.py >/dev/null 2>&1 &"'

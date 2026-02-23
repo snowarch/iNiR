@@ -1212,7 +1212,7 @@ Scope {
         }
     }
 
-    // Only handle IPC when Material ii family is active
+    // Only handle IPC when Material inir family is active
     property bool isActive: Config.options?.panelFamily !== "waffle"
 
     IpcHandler {

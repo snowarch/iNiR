@@ -570,7 +570,7 @@ PanelWindow {
                     sourceComponent: regionSelectionControls.useWaffle ? waffleControls : materialControls
                 }
 
-                // Material ii controls
+                // Material inir controls
                 Component {
                     id: materialControls
                     Row {

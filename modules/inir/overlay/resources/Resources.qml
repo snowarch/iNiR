@@ -8,7 +8,7 @@ import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
-import qs.modules.ii.overlay
+import qs.modules.inir.overlay
 
 StyledOverlayWidget {
     id: root

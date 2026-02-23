@@ -126,7 +126,7 @@ Scope {
         }
     }
 
-    // Lock surface component - switches between Material (ii) and Windows 11 (waffle) styles
+    // Lock surface component - switches between Material (inir) and Windows 11 (waffle) styles
     // Reactive binding - updates automatically when panelFamily changes (but only when unlocked)
     readonly property bool useWaffleLock: Config.ready && !GlobalStates.screenLocked 
         ? (Config.options?.panelFamily === "waffle")
@@ -149,7 +149,7 @@ Scope {
     }
     
     Component {
-        id: iiLockComponent
+        id: inirLockComponent
         LockSurface {
             context: lockContext
         }
@@ -196,7 +196,7 @@ Scope {
                 opacity: active ? 1 : 0
                 sourceComponent: root._cachedUseWaffleLock
                     ? (CompositorService.isNiri ? waffleLockSafeComponent : waffleLockComponent)
-                    : iiLockComponent
+                    : inirLockComponent
                 
                 // Detect load errors
                 onStatusChanged: {

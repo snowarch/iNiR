@@ -975,7 +975,7 @@ ApplicationWindow {
             pageIndex: 8, pageName: pages[8].name,
             section: Translation.tr("Keyboard Shortcuts"),
             label: Translation.tr("Keyboard Shortcuts"),
-            description: Translation.tr("Niri and ii keybindings reference"),
+            description: Translation.tr("Niri and inir keybindings reference"),
             keywords: ["shortcuts", "keybindings", "hotkeys", "keyboard", "cheatsheet",
                        "terminal", "clipboard", "volume", "brightness", "screenshot", "lock",
                        "workspace", "window", "focus", "move", "fullscreen", "floating",
@@ -1080,7 +1080,7 @@ ApplicationWindow {
         {
             pageIndex: 11, pageName: pages[11].name,
             section: Translation.tr("About"),
-            label: Translation.tr("About ii"),
+            label: Translation.tr("About inir"),
             description: Translation.tr("Version info, credits and links"),
             keywords: ["about", "version", "credits", "github", "info"]
         }
@@ -1433,7 +1433,7 @@ ApplicationWindow {
 
     visible: true
     onClosing: Qt.quit()
-    title: "illogical-impulse Settings"
+    title: "inir Settings"
 
     Component.onCompleted: {
         Config.readWriteDelay = 0 // Settings app always only sets one var at a time so delay isn't needed
@@ -1742,10 +1742,10 @@ ApplicationWindow {
                             buttonText: justCopied ? Translation.tr("Path copied") : Translation.tr("Config file")
                             expanded: navRail.expanded
                             downAction: () => {
-                                Qt.openUrlExternally(`${Directories.config}/illogical-impulse/config.json`);
+                                Qt.openUrlExternally(`${Directories.config}/inir/config.json`);
                             }
                             altAction: () => {
-                                Quickshell.clipboardText = CF.FileUtils.trimFileProtocol(`${Directories.config}/illogical-impulse/config.json`);
+                                Quickshell.clipboardText = CF.FileUtils.trimFileProtocol(`${Directories.config}/inir/config.json`);
                                 fab.justCopied = true;
                                 revertTextTimer.restart()
                             }

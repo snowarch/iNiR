@@ -30,7 +30,7 @@ WSettingsPage {
                 
                 WText {
                     anchors.centerIn: parent
-                    text: "ii"
+                    text: "inir"
                     font.pixelSize: 28
                     font.weight: Font.Bold
                     color: Looks.colors.accentFg
@@ -42,7 +42,7 @@ WSettingsPage {
                 spacing: 4
                 
                 WText {
-                    text: "illogical-impulse"
+                    text: "inir"
                     font.pixelSize: Looks.font.pixelSize.larger + 2
                     font.weight: Looks.font.weight.strong
                 }
@@ -109,7 +109,7 @@ WSettingsPage {
         
         WText {
             Layout.fillWidth: true
-            text: Translation.tr("Based on illogical-impulse by end-4, adapted for Niri compositor.")
+            text: Translation.tr("Based on inir by end-4, adapted for Niri compositor.")
             wrapMode: Text.WordWrap
             color: Looks.colors.subfg
         }
@@ -129,17 +129,17 @@ WSettingsPage {
         
         WSettingsRow {
             label: Translation.tr("Config path")
-            description: FileUtils.trimFileProtocol(`${Directories.config}/illogical-impulse/`)
+            description: FileUtils.trimFileProtocol(`${Directories.config}/inir/`)
         }
         
         WSettingsRow {
             label: Translation.tr("Shell path")
-            description: FileUtils.trimFileProtocol(`${Directories.config}/quickshell/ii/`)
+            description: FileUtils.trimFileProtocol(`${Directories.config}/quickshell/inir/`)
         }
         
         WSettingsRow {
             label: Translation.tr("Panel family")
-            description: Config.options?.panelFamily === "waffle" ? "Waffle (Windows 11)" : "ii (Material)"
+            description: Config.options?.panelFamily === "waffle" ? "Waffle (Windows 11)" : "inir (Material)"
         }
     }
 }

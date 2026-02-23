@@ -191,7 +191,7 @@ Singleton {
         onTriggered: {
             root._restartQueued = false
             console.log("[IconThemeService] Restarting shell now...")
-            Quickshell.execDetached(["/usr/bin/setsid", "/usr/bin/fish", "-c", "qs kill -c ii; sleep 0.3; qs -c ii"])
+            Quickshell.execDetached(["/usr/bin/setsid", "/usr/bin/fish", "-c", "qs kill -c inir; sleep 0.3; qs -c inir"])
         }
     }
 

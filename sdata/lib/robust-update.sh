@@ -7,9 +7,9 @@
 #####################################################################################
 # Configuration
 #####################################################################################
-II_TARGET="${XDG_CONFIG_HOME}/quickshell/ii"
-II_BACKUP_DIR="${XDG_STATE_HOME}/quickshell/backups"
-II_MANIFEST_FILE="${II_TARGET}/.ii-manifest"
+INIR_TARGET="${XDG_CONFIG_HOME}/quickshell/inir"
+INIR_BACKUP_DIR="${XDG_STATE_HOME}/quickshell/backups"
+INIR_MANIFEST_FILE="${INIR_TARGET}/.inir-manifest"
 VERIFICATION_TIMEOUT=10
 
 #####################################################################################
@@ -66,7 +66,7 @@ generate_manifest() {
 
     } | sort -t: -k1 | {
         # Prepend header
-        echo "# ii-manifest v2"
+        echo "# inir-manifest v2"
         echo "# generated: $(date -Iseconds)"
         echo "# commit: $commit"
         cat
@@ -122,22 +122,22 @@ create_update_backup() {
     local target_dir="$1"
     local timestamp
     timestamp=$(date +%Y%m%d-%H%M%S)
-    local backup_path="${II_BACKUP_DIR}/pre-update-${timestamp}"
+    local backup_path="${INIR_BACKUP_DIR}/pre-update-${timestamp}"
     
     mkdir -p "$backup_path"
     
     # Only backup QML code, not user configs
-    rsync -a --exclude='.ii-manifest' "$target_dir/" "$backup_path/" 2>/dev/null
+    rsync -a --exclude='.inir-manifest' "$target_dir/" "$backup_path/" 2>/dev/null
     
     # Save backup path for potential rollback
-    echo "$backup_path" > "${II_BACKUP_DIR}/.last-backup"
+    echo "$backup_path" > "${INIR_BACKUP_DIR}/.last-backup"
     
     echo "$backup_path"
 }
 
 # Rollback to last backup
 rollback_update() {
-    local last_backup_file="${II_BACKUP_DIR}/.last-backup"
+    local last_backup_file="${INIR_BACKUP_DIR}/.last-backup"
     
     if [[ ! -f "$last_backup_file" ]]; then
         log_error "No backup found to rollback to"
@@ -155,7 +155,7 @@ rollback_update() {
     log_warning "Rolling back to: $backup_path"
     
     # Restore from backup
-    rsync -a --delete "$backup_path/" "$II_TARGET/"
+    rsync -a --delete "$backup_path/" "$INIR_TARGET/"
     
     log_success "Rollback complete"
     return 0
@@ -190,14 +190,14 @@ verify_qs_loads() {
     local timeout_sec="${1:-$VERIFICATION_TIMEOUT}"
     
     # Kill any existing instance
-    qs kill -c ii 2>/dev/null || true
+    qs kill -c inir 2>/dev/null || true
     sleep 0.5
     
     # Try to start and capture output
     local output
     local exit_code
     
-    output=$(timeout "$timeout_sec" qs -c ii 2>&1) || exit_code=$?
+    output=$(timeout "$timeout_sec" qs -c inir 2>&1) || exit_code=$?
     
     # Check for fatal errors (not warnings)
     if echo "$output" | grep -qE "^[[:space:]]*(ERROR|FATAL|error:|Error:)" | grep -v "polkit\|bluez"; then
@@ -226,29 +226,29 @@ run_verification() {
     log_info "Running post-update verification..."
     
     # 1. Check manifest exists
-    if [[ ! -f "$II_MANIFEST_FILE" ]]; then
+    if [[ ! -f "$INIR_MANIFEST_FILE" ]]; then
         log_warning "Manifest file missing (will be created)"
     fi
     
     # 2. Check critical files exist
     local critical_files=("shell.qml" "GlobalStates.qml" "modules/common/Config.qml")
     for file in "${critical_files[@]}"; do
-        if [[ ! -f "$II_TARGET/$file" ]]; then
+        if [[ ! -f "$INIR_TARGET/$file" ]]; then
             log_error "Critical file missing: $file"
             ((errors++))
         fi
     done
     
     # 3. Check script permissions
-    if [[ -d "$II_TARGET/scripts" ]]; then
+    if [[ -d "$INIR_TARGET/scripts" ]]; then
         local scripts_without_exec
-        scripts_without_exec=$(find "$II_TARGET/scripts" -name "*.sh" -o -name "*.fish" -o -name "*.py" | while read -r f; do
+        scripts_without_exec=$(find "$INIR_TARGET/scripts" -name "*.sh" -o -name "*.fish" -o -name "*.py" | while read -r f; do
             [[ ! -x "$f" ]] && echo "$f"
         done)
         
         if [[ -n "$scripts_without_exec" ]]; then
             log_warning "Fixing script permissions..."
-            find "$II_TARGET/scripts" \( -name "*.sh" -o -name "*.fish" -o -name "*.py" \) -exec chmod +x {} \;
+            find "$INIR_TARGET/scripts" \( -name "*.sh" -o -name "*.fish" -o -name "*.py" \) -exec chmod +x {} \;
         fi
     fi
     
@@ -316,7 +316,7 @@ cleanup_orphans() {
 # Perform robust update with backup, verification, and rollback
 perform_robust_update() {
     local repo_root="$1"
-    local target_dir="${2:-$II_TARGET}"
+    local target_dir="${2:-$INIR_TARGET}"
     local skip_verification="${3:-false}"
     
     log_header "Performing robust update"
@@ -337,12 +337,12 @@ perform_robust_update() {
     # The caller should call this function AFTER syncing files
     
     # 4. Install manifest
-    cp "$temp_manifest" "$II_MANIFEST_FILE"
+    cp "$temp_manifest" "$INIR_MANIFEST_FILE"
     rm -f "$temp_manifest"
     
     # 5. Cleanup orphans
     log_info "Checking for orphan files..."
-    cleanup_orphans "$target_dir" "$II_MANIFEST_FILE"
+    cleanup_orphans "$target_dir" "$INIR_MANIFEST_FILE"
     
     # 6. Fix permissions
     log_info "Fixing script permissions..."
@@ -358,7 +358,7 @@ perform_robust_update() {
     fi
     
     # 8. Cleanup old backups
-    cleanup_old_backups "$II_BACKUP_DIR" 5
+    cleanup_old_backups "$INIR_BACKUP_DIR" 5
     
     log_success "Update completed successfully"
     return 0

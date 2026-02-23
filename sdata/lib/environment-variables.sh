@@ -31,6 +31,6 @@ declare -a TEMP_FILES_TO_CLEANUP=()
 
 # Used by install script
 BACKUP_DIR="${BACKUP_DIR:-$HOME/inir-backup}"
-DOTS_CORE_CONFDIR="${XDG_CONFIG_HOME}/illogical-impulse"
+DOTS_CORE_CONFDIR="${XDG_CONFIG_HOME}/inir"
 INSTALLED_LISTFILE="${DOTS_CORE_CONFDIR}/installed_listfile"
 FIRSTRUN_FILE="${DOTS_CORE_CONFDIR}/installed_true"

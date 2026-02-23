@@ -218,6 +218,6 @@ Item {
 
     Process {
         id: lockProc
-        command: ["/usr/bin/qs", "-c", "ii", "ipc", "call", "lock", "activate"]
+        command: ["/usr/bin/qs", "-c", "inir", "ipc", "call", "lock", "activate"]
     }
 }

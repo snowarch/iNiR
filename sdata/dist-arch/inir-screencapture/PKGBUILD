@@ -1,7 +1,7 @@
 pkgname=inir-screencapture
 pkgver=1.0
 pkgrel=1
-pkgdesc='illogical-impulse on Niri - Screenshot and Recording Dependencies'
+pkgdesc='inir on Niri - Screenshot and Recording Dependencies'
 arch=(any)
 license=(MIT)
 depends=(

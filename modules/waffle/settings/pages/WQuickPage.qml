@@ -331,7 +331,7 @@ WSettingsPage {
                         } else {
                             Config.setNestedValue("wallpaperSelector.selectionTarget", useMain ? "main" : "waffle")
                         }
-                        Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "wallpaperSelector", "toggle"])
+                        Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "wallpaperSelector", "toggle"])
                     }
                 }
             }
@@ -492,21 +492,21 @@ WSettingsPage {
                 Layout.fillWidth: true
                 text: Translation.tr("Reload shell")
                 icon.name: "arrow-sync"
-                onClicked: Quickshell.execDetached(["/usr/bin/setsid", "/usr/bin/fish", "-c", "qs kill -c ii; sleep 0.3; qs -c ii"])
+                onClicked: Quickshell.execDetached(["/usr/bin/setsid", "/usr/bin/fish", "-c", "qs kill -c inir; sleep 0.3; qs -c inir"])
             }
             
             WButton {
                 Layout.fillWidth: true
                 text: Translation.tr("Open config")
                 icon.name: "settings"
-                onClicked: Qt.openUrlExternally(`${Directories.config}/illogical-impulse/config.json`)
+                onClicked: Qt.openUrlExternally(`${Directories.config}/inir/config.json`)
             }
             
             WButton {
                 Layout.fillWidth: true
                 text: Translation.tr("Shortcuts")
                 icon.name: "keyboard"
-                onClicked: Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "cheatsheet", "toggle"])
+                onClicked: Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "cheatsheet", "toggle"])
             }
         }
         

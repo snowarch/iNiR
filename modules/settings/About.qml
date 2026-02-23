@@ -203,7 +203,7 @@ ContentPage {
                         anchors.fill: parent
                         sourceSize.width: 64
                         sourceSize.height: 64
-                        source: Quickshell.shellPath("assets/icons/illogical-impulse.svg")
+                        source: Quickshell.shellPath("assets/icons/inir.svg")
                         fillMode: Image.PreserveAspectFit
                         visible: status === Image.Ready
                     }
@@ -219,7 +219,7 @@ ContentPage {
                 ColumnLayout {
                     Layout.alignment: Qt.AlignVCenter
                     StyledText {
-                        text: "illogical-impulse"
+                        text: "inir"
                         font.pixelSize: Appearance.font.pixelSize.title
                     }
                     StyledText {
@@ -235,7 +235,7 @@ ContentPage {
 
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("This project is a fork of end-4's illogical-impulse, adapted for the Niri compositor.")
+                text: Translation.tr("This project is a fork of end-4's inir, adapted for the Niri compositor.")
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.small
                 wrapMode: Text.WordWrap
@@ -248,7 +248,7 @@ ContentPage {
 
                 RippleButtonWithIcon {
                     materialIcon: "open_in_new"
-                    mainText: "illogical-impulse"
+                    mainText: "inir"
                     onClicked: Qt.openUrlExternally("https://github.com/end-4/dots-hyprland")
                 }
                 RippleButtonWithIcon {

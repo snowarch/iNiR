@@ -17,7 +17,7 @@ migration_check() {
 
 migration_preview() {
   echo -e "${STY_RED}- Mod+Q { close-window; }${STY_RST}"
-  echo -e "${STY_GREEN}+ Mod+Q { spawn \"bash\" \"-c\" \"\$HOME/.config/quickshell/ii/scripts/close-window.sh\"; }${STY_RST}"
+  echo -e "${STY_GREEN}+ Mod+Q { spawn \"bash\" \"-c\" \"\$HOME/.config/quickshell/inir/scripts/close-window.sh\"; }${STY_RST}"
 }
 
 migration_apply() {
@@ -36,7 +36,7 @@ with open(config_path, 'r') as f:
     content = f.read()
 
 pattern = r'Mod\+Q[^}]*close-window[^}]*\}'
-replacement = 'Mod+Q repeat=false { spawn "bash" "-c" "$HOME/.config/quickshell/ii/scripts/close-window.sh"; }'
+replacement = 'Mod+Q repeat=false { spawn "bash" "-c" "$HOME/.config/quickshell/inir/scripts/close-window.sh"; }'
 content = re.sub(pattern, replacement, content)
 
 with open(config_path, 'w') as f:

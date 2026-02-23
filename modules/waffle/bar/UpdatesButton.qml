@@ -106,7 +106,7 @@ BarIconButton {
                 }
                 onClicked: {
                     menu.close()
-                    Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "settings", "open"])
+                    Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "settings", "open"])
                 }
             }
         }

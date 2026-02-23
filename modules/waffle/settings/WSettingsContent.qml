@@ -63,7 +63,7 @@ Item {
         { pageIndex: 2, pageName: "Taskbar", section: "Clock & Notifications", label: "Show unread count", targetLabel: "Show unread count", keywords: ["notification", "badge", "count", "unread", "clock"] },
         
         // === Background (3) ===
-        { pageIndex: 3, pageName: "Background", section: "Wallpaper", label: "Use Material ii wallpaper", targetLabel: "Use Material ii wallpaper", keywords: ["wallpaper", "background", "material", "share", "image"] },
+        { pageIndex: 3, pageName: "Background", section: "Wallpaper", label: "Use Material inir wallpaper", targetLabel: "Use Material inir wallpaper", keywords: ["wallpaper", "background", "material", "share", "image"] },
         { pageIndex: 3, pageName: "Background", section: "Wallpaper", label: "Waffle wallpaper", targetLabel: "Waffle wallpaper", keywords: ["wallpaper", "background", "waffle", "change", "image"] },
         { pageIndex: 3, pageName: "Background", section: "Wallpaper Effects", label: "Enable blur", targetLabel: "Enable blur", keywords: ["blur", "wallpaper", "background", "effect"] },
         { pageIndex: 3, pageName: "Background", section: "Wallpaper Effects", label: "Blur radius", targetLabel: "Blur radius", keywords: ["blur", "radius", "intensity"] },
@@ -128,7 +128,7 @@ Item {
         { pageIndex: 8, pageName: "Shortcuts", section: "", label: "Keyboard Shortcuts", targetLabel: "", keywords: ["shortcuts", "keybinds", "hotkeys", "keyboard", "niri", "super", "mod"] },
         
         // === About (9) ===
-        { pageIndex: 9, pageName: "About", section: "", label: "About ii", targetLabel: "", keywords: ["about", "version", "credits", "github", "info"] }
+        { pageIndex: 9, pageName: "About", section: "", label: "About inir", targetLabel: "", keywords: ["about", "version", "credits", "github", "info"] }
     ]
     
     function highlightTerms(text: string, terms: list<string>): string {
