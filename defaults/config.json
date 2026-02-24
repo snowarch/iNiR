@@ -117,6 +117,7 @@
             "enableQtApps": true,
             "enableTerminal": true,
             "enableVesktop": true,
+            "enableZed": true,
             "useBackdropForColors": false,
             "terminalGenerationProps": {
                 "forceDarkMode": false,

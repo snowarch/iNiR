@@ -293,6 +293,7 @@ Singleton {
                     property bool enableQtApps: true
                     property bool enableTerminal: true
                     property bool enableVesktop: true
+                    property bool enableZed: true
                     property bool useBackdropForColors: false
                     property JsonObject terminals: JsonObject {
                         property bool kitty: true
