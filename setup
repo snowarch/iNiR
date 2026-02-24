@@ -733,14 +733,29 @@ MATUGEN_SDDM_EOF
     check_dependencies
     if [[ ${#doctor_missing_deps[@]} -gt 0 ]]; then
         tui_warn "Missing packages detected: ${doctor_missing_deps[*]}"
-        if ! $ask || tui_confirm "Install missing packages now?"; then
+        if $ask; then
+            # Interactive mode: offer to install
+            if tui_confirm "Install missing packages now?"; then
+                detect_distro
+                SKIP_SYSUPDATE=true
+                ONLY_MISSING_DEPS="${doctor_missing_deps[*]}"
+                source ./sdata/subcmd-install/1.deps-router.sh
+                tui_success "Dependencies installed"
+            else
+                tui_info "Skipped dependency installation"
+            fi
+        elif can_elevate; then
+            # Non-interactive mode but can elevate (pkexec available) — install via graphical auth
+            tui_info "Installing missing packages via graphical authentication..."
             detect_distro
             SKIP_SYSUPDATE=true
             ONLY_MISSING_DEPS="${doctor_missing_deps[*]}"
+            USE_ELEVATE=true  # Signal deps-router to use elevate() instead of sudo
             source ./sdata/subcmd-install/1.deps-router.sh
             tui_success "Dependencies installed"
         else
-            tui_info "Skipped dependency installation"
+            # No way to elevate — just inform
+            tui_info "Run './setup doctor' to install missing packages"
         fi
     else
         tui_success "All required commands available"

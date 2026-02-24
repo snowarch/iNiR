@@ -17,6 +17,17 @@ log_ok()   { echo -e "\033[0;32m[sddm] ✓ $*\033[0m"; }
 log_warn() { echo -e "\033[0;33m[sddm] ⚠ $*\033[0m"; }
 log_err()  { echo -e "\033[0;31m[sddm] ✗ $*\033[0m"; }
 
+# Intelligent privilege escalation: sudo for terminal, pkexec for graphical/IPC mode
+elevate() {
+  if [[ -t 0 ]] && [[ -t 1 ]]; then
+    sudo "$@"
+  elif command -v pkexec &>/dev/null; then
+    pkexec "$@"
+  else
+    sudo "$@"
+  fi
+}
+
 get_current_sddm_theme() {
     local from_dropin=""
     if [[ -f "$SDDM_CONF" ]]; then
@@ -76,15 +87,26 @@ if [[ ! -d "$THEME_SRC" ]]; then
 fi
 
 # Install theme files
+# If user already owns the theme dir (from a previous install), skip sudo entirely.
+# This allows IPC-triggered updates (inir shell update) to refresh the theme
+# without needing a terminal for sudo prompts.
 log_info "Installing ${THEME_NAME} to ${THEME_DIR}..."
-sudo mkdir -p "${THEME_DIR}/assets"
-sudo cp -rf "${THEME_SRC}/." "${THEME_DIR}/"
-log_ok "Theme files installed"
+if [[ -d "${THEME_DIR}" ]] && [[ -O "${THEME_DIR}" ]]; then
+    # User already owns the directory — no sudo needed
+    mkdir -p "${THEME_DIR}/assets"
+    cp -rf "${THEME_SRC}/." "${THEME_DIR}/"
+    log_ok "Theme files updated (no sudo needed — user owns dir)"
+else
+    # First install or owned by root — requires elevation (sudo or pkexec)
+    elevate mkdir -p "${THEME_DIR}/assets"
+    elevate cp -rf "${THEME_SRC}/." "${THEME_DIR}/"
+    log_ok "Theme files installed"
 
-# Transfer ownership to the current user so the sync script can update colors
-# and wallpaper on every wallpaper change without triggering sudo/polkit prompts.
-sudo chown -R "${USER}:${USER}" "${THEME_DIR}"
-log_ok "Theme directory owned by ${USER} — sync requires no sudo"
+    # Transfer ownership to the current user so the sync script can update colors
+    # and wallpaper on every wallpaper change without triggering sudo/polkit prompts.
+    elevate chown -R "${USER}:${USER}" "${THEME_DIR}"
+    log_ok "Theme directory owned by ${USER} — sync requires no sudo"
+fi
 
 # Create a placeholder background (symlinked to wallpaper later by sync script)
 if [[ ! -f "${THEME_DIR}/assets/background.png" ]]; then
@@ -120,11 +142,11 @@ if should_apply_theme; then
     # The drop-in /etc/sddm.conf.d/ only works if the main file doesn't override it
     if [[ -f /etc/sddm.conf ]] && grep -q '^\s*Current\s*=' /etc/sddm.conf 2>/dev/null; then
         log_info "Removing conflicting theme setting from /etc/sddm.conf..."
-        sudo sed -i '/^\s*Current\s*=/d' /etc/sddm.conf
+        elevate sed -i '/^\s*Current\s*=/d' /etc/sddm.conf
     fi
     
-    sudo mkdir -p /etc/sddm.conf.d
-    sudo tee "${SDDM_CONF}" > /dev/null << SDDM_EOF
+    elevate mkdir -p /etc/sddm.conf.d
+    elevate tee "${SDDM_CONF}" > /dev/null << SDDM_EOF
 [Theme]
 Current=${THEME_NAME}
 SDDM_EOF
@@ -160,16 +182,19 @@ if [[ -f "$MATUGEN_CONFIG" ]]; then
     fi
 fi
 
-# Enable SDDM service
+# Enable SDDM service (only on first install — on updates the service is already enabled,
+# and running sudo without a terminal would fail in IPC mode)
 if command -v systemctl &>/dev/null && [[ -d /run/systemd/system ]]; then
-    for dm in gdm lightdm lxdm greetd; do
-        if systemctl is-enabled "${dm}.service" &>/dev/null 2>&1; then
-            log_info "Disabling conflicting display manager: ${dm}"
-            sudo systemctl disable "${dm}.service" 2>/dev/null || true
-            break
-        fi
-    done
-    sudo systemctl enable sddm.service 2>/dev/null && log_ok "SDDM service enabled"
+    if ! systemctl is-enabled sddm.service &>/dev/null 2>&1; then
+        for dm in gdm lightdm lxdm greetd; do
+            if systemctl is-enabled "${dm}.service" &>/dev/null 2>&1; then
+                log_info "Disabling conflicting display manager: ${dm}"
+                elevate systemctl disable "${dm}.service" 2>/dev/null || true
+                break
+            fi
+        done
+        elevate systemctl enable sddm.service 2>/dev/null && log_ok "SDDM service enabled"
+    fi
 fi
 
 log_ok "${THEME_NAME} installed and configured"

@@ -5,6 +5,19 @@
 # shellcheck shell=bash
 
 #####################################################################################
+# Privilege escalation helper
+#####################################################################################
+
+# Use elevate() when USE_ELEVATE is set (graphical mode), otherwise use sudo
+pkg_sudo() {
+  if [[ "${USE_ELEVATE:-false}" == "true" ]] && type elevate &>/dev/null; then
+    elevate "$@"
+  else
+    sudo "$@"
+  fi
+}
+
+#####################################################################################
 # AUR Helpers (Arch-specific)
 #####################################################################################
 
@@ -15,7 +28,7 @@ install-yay(){
   rm -rf /tmp/buildyay
 
   # Sync databases and install base-devel
-  if ! x sudo pacman -Sy --needed --noconfirm base-devel git; then
+  if ! x pkg_sudo pacman -Sy --needed --noconfirm base-devel git; then
       log_error "Failed to install base-devel/git. Check your pacman mirrors."
       return 1
   fi
@@ -37,7 +50,7 @@ install-yay(){
 
 install-paru(){
   tui_info "Installing paru (AUR helper)..."
-  x sudo pacman -S --needed --noconfirm base-devel git
+  x pkg_sudo pacman -S --needed --noconfirm base-devel git
   x git clone https://aur.archlinux.org/paru-bin.git /tmp/buildparu
   x cd /tmp/buildparu
   x makepkg -si --noconfirm
@@ -354,27 +367,27 @@ install-github-binary(){
       *.tar.gz|*.tgz)
         tar -xzf "$temp_dir/$filename" -C "$temp_dir"
         local binary=$(find "$temp_dir" -type f -name "$name" -o -type f -executable | grep -v "\.tar" | head -1)
-        [[ -n "$binary" ]] && sudo cp "$binary" "$install_path/$name"
+        [[ -n "$binary" ]] && pkg_sudo cp "$binary" "$install_path/$name"
         ;;
       *.zip)
         unzip -o "$temp_dir/$filename" -d "$temp_dir" >/dev/null
         local binary=$(find "$temp_dir" -type f -name "$name" | head -1)
-        [[ -n "$binary" ]] && sudo cp "$binary" "$install_path/$name"
+        [[ -n "$binary" ]] && pkg_sudo cp "$binary" "$install_path/$name"
         ;;
       *.rpm)
-        sudo dnf install -y "$temp_dir/$filename" 2>/dev/null || \
-        sudo rpm -i "$temp_dir/$filename" 2>/dev/null
+        pkg_sudo dnf install -y "$temp_dir/$filename" 2>/dev/null || \
+        pkg_sudo rpm -i "$temp_dir/$filename" 2>/dev/null
         ;;
       *.deb)
-        sudo dpkg -i "$temp_dir/$filename" 2>/dev/null || \
-        sudo apt-get install -f -y 2>/dev/null
+        pkg_sudo dpkg -i "$temp_dir/$filename" 2>/dev/null || \
+        pkg_sudo apt-get install -f -y 2>/dev/null
         ;;
       *)
         # Direct binary
-        sudo cp "$temp_dir/$filename" "$install_path/$name"
+        pkg_sudo cp "$temp_dir/$filename" "$install_path/$name"
         ;;
     esac
-    sudo chmod +x "$install_path/$name" 2>/dev/null
+    pkg_sudo chmod +x "$install_path/$name" 2>/dev/null
     log_success "$name installed"
   else
     log_warning "Failed to download $name"

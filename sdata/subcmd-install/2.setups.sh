@@ -13,11 +13,11 @@ function setup_user_groups(){
   
   # i2c group for ddcutil (external monitor brightness)
   if [[ -z $(getent group i2c) ]]; then
-    x sudo groupadd i2c
+    x pkg_sudo groupadd i2c
   fi
   
   # Add user to required groups
-  x sudo usermod -aG video,i2c,input "$(whoami)"
+  x pkg_sudo usermod -aG video,i2c,input "$(whoami)"
   
   log_success "User added to video, i2c, input groups"
   log_warning "Group changes require logout/login to take effect"
@@ -37,7 +37,7 @@ function setup_systemd_services(){
   fi
   
   # i2c-dev module for ddcutil
-  v bash -c "echo i2c-dev | sudo tee /etc/modules-load.d/i2c-dev.conf"
+  v bash -c "echo i2c-dev | pkg_sudo tee /etc/modules-load.d/i2c-dev.conf"
   
   # ydotool service - create user service symlink if needed
   # Check multiple possible locations (varies by distro)
@@ -58,8 +58,8 @@ function setup_systemd_services(){
     done
 
     if [[ -n "$ydotool_system_service" ]]; then
-      x sudo mkdir -p /usr/lib/systemd/user
-      x sudo ln -sf "$ydotool_system_service" /usr/lib/systemd/user/ydotool.service
+      x pkg_sudo mkdir -p /usr/lib/systemd/user
+      x pkg_sudo ln -sf "$ydotool_system_service" /usr/lib/systemd/user/ydotool.service
       ydotool_service_found=true
     fi
   fi
@@ -78,7 +78,7 @@ function setup_systemd_services(){
   
   # Bluetooth (optional)
   if command -v bluetoothctl &>/dev/null; then
-    v sudo systemctl enable bluetooth --now
+    v pkg_sudo systemctl enable bluetooth --now
   fi
   
   log_success "Services configured"

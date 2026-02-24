@@ -292,3 +292,31 @@ function dedup_and_sort_listfile(){
     mv -f -- "$temp" "$2"
   fi
 }
+
+# Intelligent privilege escalation: sudo for terminal, pkexec for graphical/IPC mode
+# Usage: elevate command [args...]
+# Returns: exit code of the elevated command
+function elevate() {
+  if [[ -t 0 ]] && [[ -t 1 ]]; then
+    # Interactive terminal available — use sudo
+    sudo "$@"
+  elif command -v pkexec &>/dev/null; then
+    # No terminal but pkexec available — use graphical auth dialog
+    pkexec "$@"
+  else
+    # Fallback to sudo (will likely fail without terminal, but try anyway)
+    sudo "$@"
+  fi
+}
+
+# Check if we can elevate privileges (either via terminal sudo or pkexec)
+# Returns: 0 if elevation is possible, 1 otherwise
+function can_elevate() {
+  if [[ -t 0 ]] && [[ -t 1 ]]; then
+    return 0  # Terminal available for sudo
+  elif command -v pkexec &>/dev/null && [[ -n "$DISPLAY" || -n "$WAYLAND_DISPLAY" ]]; then
+    return 0  # Graphical session with pkexec available
+  else
+    return 1  # No way to elevate
+  fi
+}
