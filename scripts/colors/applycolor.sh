@@ -220,7 +220,7 @@ apply_code_editors() {
     enable_zed=$(jq -r '.appearance.wallpaperTheming.enableZed // true' "$CONFIG_FILE" 2>/dev/null || echo "true")
   fi
 
-  if [[ "$enable_zed" == "true" ]] && [[ -d "$HOME/.config/zed" ]]; then
+  if [[ "$enable_zed" == "true" ]] && { command -v zed &>/dev/null || command -v zeditor &>/dev/null; }; then
     echo "[code-editors] Generating Zed theme..." | tee -a "$log_file" 2>/dev/null
 
     # Run the Python script to generate Zed config
