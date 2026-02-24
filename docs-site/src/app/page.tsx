@@ -179,7 +179,7 @@ export default function HomePage() {
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img
-            src={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/hero-bg.jpg`}
+            src={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/hero-bg.png`}
             alt=""
             className="h-full w-full object-cover opacity-30"
             aria-hidden="true"
