@@ -1,0 +1,621 @@
+---
+title: "Features"
+description: "What iNiR can do and how to use it"
+---
+
+# Features
+
+Everything iNiR can do, with examples.
+
+## Panel Families
+
+### Switch on the fly
+
+```bash
+# Cycle between ii and waffle
+qs -c ii ipc call panelFamily cycle
+
+# Or use keybind
+Mod+Shift+W
+```
+
+No restart needed. Panels transition smoothly.
+
+### ii (Material Design)
+
+Floating panels, sidebars, Material Design aesthetic.
+
+**What you get:**
+- Top bar (or bottom, or sides)
+- Left sidebar (AI chat, app launcher)
+- Right sidebar (quick toggles, notepad)
+- Floating dock
+- Workspace overview
+- Search overlay
+
+**Memory:** ~300-400MB
+
+### waffle
+
+Bottom taskbar, start menu, action center.
+
+**What you get:**
+- Bottom taskbar (centered icons)
+- Start menu (search + apps)
+- Action center (quick settings)
+- Notification center
+- Widgets panel
+- Task view
+
+**Memory:** ~200-300MB
+
+
+## Visual Styles
+
+### Material (Solid)
+
+Classic Material Design. Opaque panels, subtle shadows.
+
+```json
+"appearance": {
+  "globalStyle": "material"
+}
+```
+
+**Pros:** Best readability, lowest GPU usage
+**Cons:** Less fancy
+
+### Cards
+
+Card-based layout with subtle shadows and rounded corners.
+
+```json
+"appearance": {
+  "globalStyle": "cards"
+}
+```
+
+**Pros:** Clean, modern look
+**Cons:** Slightly more visual complexity
+
+### Aurora (Blur)
+
+Glass blur, translucent panels.
+
+```json
+"appearance": {
+  "globalStyle": "aurora"
+}
+```
+
+**Pros:** Beautiful, adapts to wallpaper
+**Cons:** Higher GPU usage, can be hard to read
+
+### iNiR (TUI)
+
+Terminal-inspired, thin borders, minimal.
+
+```json
+"appearance": {
+  "globalStyle": "inir"
+}
+```
+
+**Pros:** Minimal, unique aesthetic, lowest resource usage
+**Cons:** Not for everyone
+
+### Angel (Neo-Brutalism)
+
+Frosted glass with escalonado shadows, bold typography.
+
+```json
+"appearance": {
+  "globalStyle": "angel"
+}
+```
+
+**Pros:** Unique striking aesthetic, flagship style
+**Cons:** Higher GPU usage, polarizing design
+
+## Dynamic Theming
+
+### From Wallpaper
+
+Set a wallpaper, get a theme.
+
+```bash
+# Open wallpaper selector
+Ctrl+Alt+T
+
+# Or via IPC
+qs -c ii ipc call wallpaperSelector toggle
+```
+
+matugen extracts colors, generates theme, updates terminals.
+
+**Supported terminals:**
+- foot
+- kitty
+- alacritty
+- wezterm
+- ghostty
+- konsole
+
+### Theme Presets
+
+Pre-made themes if you don't want wallpaper-based.
+
+41 presets ship with iNiR. See the [full list in the theming guide](/docs/theming#theme-presets).
+
+```json
+"appearance": {
+  "theme": "gruvbox"
+}
+```
+
+Or via settings: `Super+,` → Appearance → Theme
+
+## Workspace Management
+
+### Overview
+
+Niri-native workspace overview.
+
+```bash
+# Toggle overview
+Mod+Space
+
+# Or via IPC
+qs -c ii ipc call overview toggle
+```
+
+Shows all workspaces in scrollable row. Drag windows between workspaces. Click to focus.
+
+**Niri-specific:** Adapts to Niri's scrolling workspace model. Workspaces are created dynamically, not fixed grid.
+
+### Window Switcher
+
+Alt+Tab that works across all workspaces.
+
+```bash
+# Next window
+Alt+Tab
+
+# Previous window
+Alt+Shift+Tab
+```
+
+Shows window preview, title, workspace. Works across all workspaces, not just current.
+
+## Clipboard Manager
+
+Searchable clipboard history with image preview.
+
+```bash
+# Open clipboard
+Super+V
+
+# Or via IPC
+qs -c ii ipc call clipboard toggle
+```
+
+**Features:**
+- Text and image history
+- Search and filter
+- Pin important items
+- Delete individual entries
+- Clear all
+
+**Backend:** cliphist
+
+**Storage:** `~/.cache/cliphist/`
+
+## Region Tools
+
+Draw a box, get stuff done.
+
+### Screenshot
+
+```bash
+# Region screenshot
+Super+Shift+S
+
+# Full screenshot
+Print
+
+# Current screen
+Ctrl+Print
+
+# Current window
+Alt+Print
+```
+
+Saves to `~/Pictures/Screenshots/`
+
+### OCR
+
+Extract text from screen region.
+
+```bash
+# Region OCR
+Super+Shift+X
+```
+
+Copies text to clipboard. Requires tesseract.
+
+### Image Search
+
+Reverse image search with Google Lens.
+
+```bash
+# Region search
+Super+Shift+A
+```
+
+Takes screenshot, opens Google Lens in browser.
+
+### Screen Recording
+
+```bash
+# Record region (no audio)
+qs -c ii ipc call region record
+
+# Record region with audio
+qs -c ii ipc call region recordWithSound
+```
+
+Requires wf-recorder. Saves to `~/Videos/`
+
+## Media Controls
+
+### MPRIS Integration
+
+Control any media player.
+
+```bash
+# Play/pause (keyboard shortcut)
+Mod+Shift+P
+
+# Or via IPC
+qs -c ii ipc call mpris playPause
+qs -c ii ipc call mpris next
+qs -c ii ipc call mpris previous
+```
+
+Auto-detects active player. Shows album art, title, artist.
+
+### YtMusic Integration
+
+Direct control for YtMusic (mpv-based).
+
+```bash
+# Play/pause YtMusic
+qs -c ii ipc call ytmusic playPause
+
+# Next track
+qs -c ii ipc call ytmusic next
+```
+
+**Setup:**
+1. Enable in settings: `Super+,` → Sidebar → YtMusic
+2. Select browser (Firefox, Chrome, etc.)
+3. Play something on YouTube Music
+4. Controls appear in bar
+
+## AI Features
+
+### AI Chat (Sidebar)
+
+Chat with Gemini, Mistral, OpenRouter, or local models via Ollama.
+
+**Setup:**
+1. Get API key (Gemini, Mistral, or OpenRouter)
+2. Store in keyring:
+```bash
+secret-tool store --label="Gemini API" service gemini key api
+# Paste API key when prompted
+```
+3. Enable in settings: `Super+,` → Sidebar → AI Chat
+4. Restart: `qs kill -c ii; qs -c ii`
+
+**Usage:**
+- Open left sidebar
+- Type message
+- Get response
+
+**Models supported:**
+- Gemini (free tier available)
+- Mistral
+- OpenRouter (access to many models)
+- Ollama (local, no API key needed)
+
+### Voice Search
+
+Voice-to-text search with Gemini.
+
+```bash
+# Via IPC (no default keybind)
+qs -c ii ipc call voiceSearch toggle
+```
+
+Records from mic, transcribes with Gemini, opens search.
+Requires a Gemini API key. Bind to a key in your Niri config if you want a shortcut.
+
+## Performance Features
+
+### GameMode
+
+Auto-optimize for gaming.
+
+**What it does:**
+- Detects fullscreen apps
+- Disables blur effects
+- Disables animations
+- Hides non-essential UI
+
+**Manual toggle:**
+```bash
+# Via IPC (no default keybind)
+qs -c ii ipc call gamemode toggle
+```
+
+**Config:**
+```json
+"gameMode": {
+  "enable": true,
+  "disableEffects": true,
+  "disableAnimations": true,
+  "minimalMode": true
+}
+```
+
+### Low Power Mode
+
+Reduce resource usage.
+
+```json
+"performance": {
+  "lowPower": true,
+  "reduceAnimations": true
+}
+```
+
+**Effects:**
+- Disables blur
+- Reduces animations
+- Lowers refresh rate for some components
+
+### Modular Design
+
+Disable what you don't use.
+
+```json
+"enabledPanels": [
+  "iiBar",
+  "iiDock",
+  "iiBackground"
+]
+```
+
+Remove panels from array to disable them. Saves memory.
+
+**Disable heavy modules:**
+```json
+"modules": {
+  "aiChat": false,
+  "videoWallpaper": false
+}
+```
+
+AI Chat: ~100MB
+Video Wallpaper: ~150MB
+
+## Customization
+
+### Bar Modules
+
+Enable/disable individual bar modules.
+
+```json
+"bar": {
+  "modules": {
+    "workspaces": true,
+    "media": true,
+    "resources": true,
+    "clock": true,
+    "battery": true,
+    "tray": true,
+    "utilityButtons": true
+  }
+}
+```
+
+### Dock
+
+Pinned apps, auto-hide, position.
+
+```json
+"dock": {
+  "pinnedApps": [
+    "firefox",
+    "foot",
+    "dolphin",
+    "code"
+  ],
+  "autoHide": true,
+  "position": "bottom",
+  "iconSize": 48
+}
+```
+
+### Sidebars
+
+Configure what's in each sidebar.
+
+```json
+"sidebar": {
+  "left": {
+    "enable": true,
+    "aiChat": { "enable": true },
+    "apps": { "enable": true }
+  },
+  "right": {
+    "enable": true,
+    "quickToggles": { "enable": true },
+    "notepad": { "enable": true }
+  }
+}
+```
+
+### Notifications
+
+Position, timeout, behavior.
+
+```json
+"notifications": {
+  "position": "top-right",
+  "timeout": 5000,
+  "maxVisible": 3,
+  "ignoreAppTimeout": false,
+  "scaleOnHover": true
+}
+```
+
+## Advanced Features
+
+### IPC Scripting
+
+Control iNiR from scripts.
+
+**Example: Toggle overview on workspace change**
+```bash
+#!/usr/bin/env fish
+# Watch for workspace changes
+niri msg -j event-stream | while read -l event
+    if string match -q '*"WorkspaceActivated"*' $event
+        qs -c ii ipc call overview toggle
+    end
+end
+```
+
+**Example: Auto-enable GameMode for specific apps**
+```bash
+#!/usr/bin/env fish
+# Enable GameMode when Steam starts
+while true
+    if pgrep steam > /dev/null
+        qs -c ii ipc call gamemode activate
+    else
+        qs -c ii ipc call gamemode deactivate
+    end
+    sleep 5
+end
+```
+
+### Custom Keybinds
+
+Add your own keybinds in Niri config.
+
+**Example: Custom power menu**
+```kdl
+bind "Super+P" {
+    spawn "qs" "-c" "ii" "ipc" "call" "session" "toggle";
+}
+```
+
+**Example: Quick screenshot to clipboard**
+```kdl
+bind "Super+S" {
+    spawn "sh" "-c" "grim -g \"$(slurp)\" - | wl-copy";
+}
+```
+
+### Config Migrations
+
+iNiR auto-migrates config on updates.
+
+**How it works:**
+1. Update iNiR: `./setup update`
+2. Setup detects config version
+3. Runs migration scripts
+4. Backs up old config
+5. Applies new defaults
+
+**Manual migration:**
+```bash
+./setup migrate
+```
+
+**Rollback:**
+```bash
+./setup rollback
+```
+
+### User Modifications
+
+Setup detects and preserves your changes.
+
+**Modified files are:**
+- Backed up before updates
+- Not overwritten
+- Listed in update summary
+
+**Check your modifications:**
+```bash
+./setup my-changes
+```
+
+## Integration
+
+### Terminal Themes
+
+Auto-sync terminal colors with shell theme.
+
+**Supported:**
+- foot (auto-reload)
+- kitty (auto-reload)
+- alacritty (requires restart)
+- wezterm (auto-reload)
+- ghostty (auto-reload)
+- konsole (requires restart)
+
+**How it works:**
+1. Change wallpaper or theme
+2. matugen generates colors
+3. Terminal config files updated
+4. Terminals reload (if supported)
+
+### GTK/Qt Themes
+
+Shell theme syncs with GTK/Qt apps.
+
+**Generated:**
+- GTK 3/4 theme
+- Qt color scheme
+- Icon theme colors
+
+**Location:** `~/.config/gtk-3.0/`, `~/.config/gtk-4.0/`
+
+### Compositor Integration
+
+#### Niri (Full Support)
+
+- Workspace overview
+- Window switcher
+- IPC integration
+- Minimize workaround
+- Screen cast toggle
+
+#### Hyprland (Partial)
+
+- Most features work
+- Some Niri-specific features unavailable
+- Screen zoom (Hyprland-only)
+- Lock screen blur hack (Hyprland-only)
+
+## See Also
+
+- [Configuration](/docs/configuration) - How to configure
+- [IPC Commands](/docs/ipc) - All IPC targets
+- [Common Workflows](/docs/workflows) - Step-by-step guides
+- [Theming](/docs/theming) - Theming details

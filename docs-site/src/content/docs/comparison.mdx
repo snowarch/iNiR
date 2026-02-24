@@ -1,0 +1,60 @@
+---
+title: "iNiR vs illogical-impulse"
+description: "Same codebase, different compositors"
+---
+
+# iNiR vs illogical-impulse
+
+Short version: **Niri? Use iNiR. Hyprland? Use illogical-impulse.**
+
+## Background
+
+illogical-impulse by end-4 is the original project, built for Hyprland. iNiR is a fork by snowarch, adapted for Niri with its own features on top. They share the same Quickshell + QML foundation but target different compositors.
+
+## Differences
+
+| | iNiR | illogical-impulse |
+|---|---|---|
+| Compositor | Niri | Hyprland |
+| Workspace model | Scrolling | Grid |
+| Panel families | ii + waffle | ii only |
+| Config path | `~/.config/illogical-impulse/config.json` | `~/.config/illogical-impulse/config.json` |
+| Maintainer | snowarch | end-4 |
+
+## What iNiR adds
+
+- **waffle panel family** — taskbar, start menu, action center, widgets panel, task view
+- **Niri-native overview** — built for scrolling workspaces, not grid
+- **Per-monitor wallpapers** — different wallpaper per screen, per-monitor color extraction
+- **Shell update overlay** — see what changed before updating
+- **Weather geocoding** — city name or GPS for manual location
+
+## Compositor support
+
+**iNiR on Niri:** primary target. Most features are designed and tested for Niri.
+
+**iNiR on Hyprland:** partial. Some features are Hyprland-only, and some behaviors differ between compositors.
+
+**illogical-impulse on Niri:** not supported. Different workspace model, different IPC layer.
+
+For a detailed breakdown of what is compositor-specific, see [Limitations](/docs/limitations).
+
+## Configs are not compatible
+
+Similar JSON structure but different keys and different defaults. If migrating:
+
+```bash
+# backup old config
+cp ~/.config/illogical-impulse/config.json ~/illogical-impulse-config-backup.json
+
+# install iNiR
+git clone https://github.com/snowarch/inir.git ~/.config/quickshell/ii
+cd ~/.config/quickshell/ii && ./setup install
+```
+
+Port settings manually. Don't copy the whole config file — schema differences will break things.
+
+## Links
+
+- **iNiR:** [github.com/snowarch/inir](https://github.com/snowarch/inir)
+- **illogical-impulse:** [github.com/end-4/illogical-impulse](https://github.com/end-4/illogical-impulse)

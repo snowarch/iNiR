@@ -1,0 +1,296 @@
+---
+title: "Troubleshooting"
+description: "Common issues and how to fix them"
+---
+
+# Troubleshooting
+
+## iNiR Won't Start
+
+### Check if it's running
+
+```bash
+ps aux | grep "qs -c ii"
+```
+
+If nothing shows up, iNiR isn't running.
+
+### Check the logs
+
+```bash
+qs log -c ii
+```
+
+Look for errors. Common issues:
+
+**"Config file not found"**
+- Run `./setup install` again
+- Or manually copy `defaults/config.json` to `~/.config/illogical-impulse/config.json`
+
+**"Module not found"**
+- Missing dependency. Check which package provides the module.
+- Some quickshell builds don't include all optional modules.
+
+**"Permission denied"**
+- Check file permissions: `chmod +x ~/.config/quickshell/ii/scripts/*`
+
+### Restart iNiR
+
+```bash
+qs kill -c ii
+qs -c ii
+```
+
+## Bar Not Showing
+
+### Check if bar is enabled
+
+```bash
+qs -c ii ipc call bar toggle
+```
+
+### Check config
+
+Open `~/.config/illogical-impulse/config.json` and verify:
+
+```json
+"enabledPanels": ["iiBar", ...]
+```
+
+Make sure `"iiBar"` is in the list.
+
+### Check logs for errors
+
+```bash
+qs log -c ii | grep -i "bar\|error"
+```
+
+## Wallpaper Not Changing
+
+### Check wallpaper path
+
+```bash
+qs log -c ii | grep -i "wallpaper"
+```
+
+### Verify matugen is installed
+
+```bash
+which matugen
+```
+
+If not found, install it:
+
+```bash
+paru -S matugen
+```
+
+### Manually set wallpaper
+
+Edit config and set absolute path:
+
+```json
+"background": {
+  "wallpaperPath": "/home/user/Pictures/wallpaper.jpg"
+}
+```
+
+## Clipboard History Empty
+
+### Check if cliphist is running
+
+```bash
+ps aux | grep cliphist
+```
+
+### Start cliphist watcher
+
+```bash
+wl-paste --watch cliphist store
+```
+
+Add this to your Niri config to start automatically:
+
+```kdl
+spawn-at-startup "wl-paste" "--watch" "cliphist" "store"
+```
+
+## Screenshots Not Working
+
+### Check dependencies
+
+```bash
+which grim slurp
+```
+
+Install if missing:
+
+```bash
+paru -S grim slurp
+```
+
+### Check screenshot directory
+
+Default is `~/Pictures/Screenshots/`. Create it if it doesn't exist:
+
+```bash
+mkdir -p ~/Pictures/Screenshots
+```
+
+## Audio Not Working
+
+### Check PipeWire
+
+```bash
+systemctl --user status pipewire wireplumber
+```
+
+Start if not running:
+
+```bash
+systemctl --user start pipewire wireplumber
+```
+
+### Check volume
+
+```bash
+pamixer --get-volume
+```
+
+Unmute if needed:
+
+```bash
+pamixer --unmute
+```
+
+## Settings Window Won't Open
+
+### Try opening from terminal
+
+```bash
+qs -c ii ipc call settings open
+```
+
+Check for errors in the output.
+
+### Check if iNiR is loaded
+
+```bash
+qs log -c ii | grep -i "Configuration Loaded"
+```
+
+### Restart iNiR
+
+```bash
+qs kill -c ii && qs -c ii
+```
+
+## High Memory Usage
+
+### Disable unused modules
+
+Open settings and disable features you don't use:
+- AI chat
+- Media controls
+- Clipboard history
+- Widgets
+
+### Enable low power mode
+
+In settings, enable "Low Power Mode" under Performance.
+
+### Check for memory leaks
+
+```bash
+qs log -c ii | grep -i "memory\|leak"
+```
+
+## Keybinds Not Working
+
+### Check Niri config
+
+```bash
+nano ~/.config/niri/config.kdl
+```
+
+Verify your keybinds are in the `binds` section.
+
+### Reload Niri config
+
+```bash
+niri msg action load-config-file
+```
+
+### Test IPC command directly
+
+```bash
+qs -c ii ipc call overview toggle
+```
+
+If this works but the keybind doesn't, the issue is in your Niri config.
+
+## Animations Laggy
+
+### Enable GameMode
+
+```bash
+qs -c ii ipc call gamemode activate
+```
+
+### Reduce animations
+
+In settings, enable "Reduce Animations" under Performance.
+
+### Disable blur
+
+Change global style from Aurora to Material or iNiR (lower GPU usage).
+
+## Panel Family Won't Switch
+
+### Check current family
+
+```bash
+qs log -c ii | grep -i "family"
+```
+
+### Force switch
+
+```bash
+qs -c ii ipc call panelFamily set ii
+```
+
+or
+
+```bash
+qs -c ii ipc call panelFamily set waffle
+```
+
+### Restart after switching
+
+```bash
+qs kill -c ii && qs -c ii
+```
+
+## Still Having Issues?
+
+1. Check the logs: `qs log -c ii -f` (follow mode)
+2. Search existing issues: https://github.com/snowarch/inir/issues
+3. Join Discord for help
+4. Create a new issue with logs and system info
+
+### Collecting Debug Info
+
+```bash
+# System info
+uname -a
+niri --version
+qs --version
+
+# iNiR logs
+qs log -c ii > ~/inir-debug.log
+
+# Config
+cat ~/.config/illogical-impulse/config.json > ~/inir-config.json
+```
+
+Include these files when reporting issues.

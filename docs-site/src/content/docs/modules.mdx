@@ -1,0 +1,417 @@
+---
+title: "Modules"
+description: "Available modules and features in iNiR"
+---
+
+# Modules
+
+iNiR is built from modular components. Enable or disable modules to customize your experience and reduce resource usage.
+
+## Core Modules
+
+These modules provide essential functionality.
+
+### Bar
+
+Top bar with workspaces, system tray, and status indicators.
+
+**Features:**
+- Workspace indicators
+- System tray
+- Clock and date
+- Media player controls
+- Weather widget
+- Quick toggles
+
+**Config:**
+```json
+"bar": {
+  "vertical": false,
+  "position": "top",
+  "height": 40
+}
+```
+
+### Background
+
+Wallpaper display and management.
+
+**Features:**
+- Wallpaper display
+- Video wallpapers
+- Color extraction for theming
+
+### Notifications
+
+Notification popups and management.
+
+**Features:**
+- Popup notifications
+- Notification history
+- Do Not Disturb mode
+- Per-app notification settings
+
+## Panel Modules
+
+### Overview
+
+Workspace and window overview.
+
+**Features:**
+- All workspaces visible
+- Window thumbnails (app icons)
+- Search and filter
+- Drag to reorder
+
+**Keybind:** `Mod+Space`
+
+### Overlay
+
+Central search and quick actions.
+
+**Features:**
+- App launcher
+- File search
+- Calculator
+- Quick actions
+- Widgets
+
+**Keybind:** `Super+G`
+
+### Dock
+
+Application dock with pinned and running apps.
+
+**Features:**
+- Pinned applications
+- Running app indicators
+- Drag to reorder
+- Right-click context menu
+
+**Config:**
+```json
+"dock": {
+  "position": "bottom",
+  "height": 60,
+  "pinnedApps": ["firefox", "kitty"]
+}
+```
+
+### Sidebars
+
+Left and right sidebars (ii family only).
+
+**Left Sidebar:**
+- AI chat interface
+- App launcher
+- Recent files
+
+**Right Sidebar:**
+- Quick toggles
+- Notepad
+- System info
+
+**Keybinds:**
+- Left: Custom (not bound by default)
+- Right: Custom (not bound by default)
+
+## Utility Modules
+
+### Clipboard
+
+Clipboard history manager.
+
+**Features:**
+- Text and image history
+- Search clipboard
+- Pin items
+- Clear history
+
+**Keybind:** `Super+V`
+
+**Requires:** `cliphist`
+
+### Region Tools
+
+Screenshot and screen capture tools.
+
+**Features:**
+- Region screenshot
+- OCR text extraction
+- Image search
+- Screen recording
+
+**Keybinds:**
+- Screenshot: `Super+Shift+S`
+- OCR: `Super+Shift+X`
+- Search: `Super+Shift+A`
+
+**Requires:** `grim`, `slurp`, `tesseract` (OCR), `wf-recorder` (recording)
+
+### Media Controls
+
+Floating media player controls.
+
+**Features:**
+- Play/pause
+- Next/previous track
+- Volume control
+- Album art
+- Multiple player support
+
+**Keybind:** Custom (not bound by default)
+
+### Wallpaper Selector
+
+Grid-based wallpaper picker.
+
+**Features:**
+- Browse wallpapers
+- Preview before applying
+- Automatic color extraction
+
+**Keybind:** `Ctrl+Alt+T`
+
+## System Modules
+
+### Lock Screen
+
+Screen lock with authentication.
+
+**Features:**
+- Password authentication
+- Blur background (Hyprland only)
+- Clock display
+- Media controls
+
+**Keybind:** `Super+Alt+L`
+
+### Session Menu
+
+Power and session management.
+
+**Features:**
+- Logout
+- Suspend
+- Reboot
+- Shutdown
+- Lock
+
+**Keybind:** `Super+Shift+E`
+
+### Settings
+
+GUI configuration window.
+
+**Features:**
+- Appearance settings
+- Module toggles
+- Performance options
+- Keybind reference
+
+**Keybind:** `Super+,`
+
+### Cheatsheet
+
+Keyboard shortcut reference.
+
+**Features:**
+- All keybinds listed
+- Searchable
+- Categorized
+
+**Keybind:** `Super+/`
+
+## Optional Modules
+
+### AI Chat
+
+AI assistant interface (left sidebar).
+
+**Features:**
+- Chat with AI models
+- Code assistance
+- Context-aware responses
+
+**Requires:** API key for Gemini, Mistral, or OpenRouter — or local models via Ollama
+
+### Voice Search
+
+Voice-to-text search.
+
+**Features:**
+- Voice recording
+- Gemini transcription
+- Automatic search
+
+**Requires:** Gemini API key
+
+**Keybind:** none by default (bind via IPC: `qs -c ii ipc call voiceSearch toggle`)
+
+### Weather
+
+Weather widget in bar.
+
+**Features:**
+- Current conditions
+- Forecast
+- Location-based
+
+**Requires:** `geoclue` (for GPS) or IP geolocation
+
+### System Tray
+
+System tray in bar.
+
+**Features:**
+- App indicators
+- Status icons
+- Click to interact
+
+### On-Screen Keyboard
+
+Virtual keyboard.
+
+**Features:**
+- Touch-friendly
+- Multiple layouts
+
+**Keybind:** Custom (not bound by default)
+
+## Waffle-Specific Modules
+
+### Start Menu
+
+Windows 11-style start menu.
+
+**Features:**
+- App grid
+- Search
+- Recent files
+- Power options
+
+### Action Center
+
+Quick settings panel.
+
+**Features:**
+- WiFi toggle
+- Bluetooth toggle
+- Volume slider
+- Brightness slider
+
+### Notification Center
+
+Notification history panel.
+
+**Features:**
+- All notifications
+- Clear all
+- Per-notification actions
+
+### Widgets
+
+Information widgets panel.
+
+**Features:**
+- Weather
+- Calendar
+- System stats
+
+## Enabling/Disabling Modules
+
+### Via Settings
+
+Open settings (`Super+,`) and go to Modules section. Toggle modules on/off.
+
+### Via Config
+
+Edit `~/.config/illogical-impulse/config.json`:
+
+```json
+"modules": {
+  "clipboard": true,
+  "mediaControls": false,
+  "aiChat": false
+}
+```
+
+### Via Enabled Panels
+
+Some modules are panels. Control them via `enabledPanels`:
+
+```json
+"enabledPanels": [
+  "iiBar",
+  "iiDock",
+  "iiBackground"
+]
+```
+
+## Performance Impact
+
+### High Impact
+
+- AI Chat (requires API calls)
+- Media Controls (constant updates)
+- Weather (network requests)
+
+### Medium Impact
+
+- Overview (renders all workspaces)
+- Clipboard (stores history)
+- Notifications (popup animations)
+
+### Low Impact
+
+- Bar (static display)
+- Background (single image)
+- Settings (only when open)
+
+## Troubleshooting
+
+### Module not loading
+
+1. Check if enabled in config
+2. Verify dependencies installed
+3. Check logs for errors
+4. Restart iNiR
+
+### Module using too much memory
+
+1. Disable the module
+2. Check for memory leaks in logs
+3. Report issue if persistent
+
+### Module features not working
+
+1. Verify dependencies
+2. Check API keys (for AI features)
+3. Review module-specific requirements
+
+## Resource Usage
+
+| Module | Memory | CPU (idle) | Impact |
+|--------|--------|------------|--------|
+| Bar | ~30MB | <1% | Low |
+| Background | ~50MB | <1% | Low |
+| Dock | ~25MB | <1% | Low |
+| Overview | ~40MB | 0% (lazy) | Low |
+| Sidebars | ~60MB | <1% | Medium |
+| Media Controls | ~20MB | <1% | Low |
+| Clipboard | ~20MB | <1% | Low |
+| Notifications | ~15MB | <1% | Low |
+| AI Chat | ~100MB | 2-5% | High |
+| Video Wallpaper | ~150MB | 5-10% | High |
+
+**Recommendations:**
+- Disable AI Chat if not using AI features
+- Disable Video Wallpaper on battery or low-end hardware
+- Disable unused sidebars to save ~60MB
+- Use Material or iNiR style (no blur) for better performance
+- Enable `performance.lowPower` in config for battery saving
+
+**Total Memory:**
+- Minimal setup (bar + background): ~80MB
+- Typical setup (bar + dock + sidebars): ~200-300MB
+- Full setup (all modules): ~400-500MB

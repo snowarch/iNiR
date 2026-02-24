@@ -1,0 +1,303 @@
+---
+title: "Theming"
+description: "Customize the look and feel of iNiR"
+---
+
+# Theming
+
+iNiR supports multiple theming approaches: wallpaper-based colors, preset themes, and manual customization.
+
+## Global Styles
+
+iNiR has five visual styles that change how panels look:
+
+### Material
+
+Solid backgrounds, classic Material Design aesthetic.
+
+- Opaque panels
+- Material Design colors
+- Subtle shadows
+- Best for readability
+
+### Cards
+
+Card-based layout with subtle shadows.
+
+- Rounded corners
+- Soft drop shadows
+- Clean modern look
+- Medium resource usage
+
+### Aurora
+
+Glass blur, translucent panels.
+
+- Blurred backgrounds
+- Transparent panels
+- Adapts to wallpaper
+- More GPU intensive
+
+### iNiR
+
+TUI-inspired, minimal aesthetic.
+
+- Thin borders
+- Minimal shadows
+- Clean lines
+- Lowest resource usage
+
+### Angel
+
+Neo-brutalism with frosted glass.
+
+- Escalonado shadows
+- Bold typography
+- Striking aesthetic
+- Higher GPU usage
+
+Switch styles in settings or via config:
+
+```json
+"appearance": {
+  "globalStyle": "material"
+}
+```
+
+## Wallpaper-Based Theming
+
+iNiR uses matugen to extract Material You colors from your wallpaper.
+
+### How It Works
+
+1. You set a wallpaper
+2. Matugen analyzes the image
+3. Colors are extracted and saved
+4. iNiR applies the color scheme
+5. Terminal themes are generated
+
+### Setting a Wallpaper
+
+Use the wallpaper selector:
+
+```bash
+qs -c ii ipc call wallpaperSelector toggle
+```
+
+Or press `Ctrl+Alt+T`.
+
+### Manual Wallpaper
+
+Edit config:
+
+```json
+"background": {
+  "wallpaperPath": "/path/to/wallpaper.jpg"
+}
+```
+
+Restart iNiR to apply.
+
+### Generated Files
+
+Matugen creates:
+
+- `~/.local/state/quickshell/user/generated/colors.json` - Color palette
+- `~/.config/foot/colors.ini` - Foot terminal theme
+- `~/.config/kitty/current-theme.conf` - Kitty terminal theme
+- `~/.config/alacritty/colors.toml` - Alacritty theme
+- GTK theme files
+
+## Theme Presets
+
+iNiR ships 41 built-in presets. Select in settings under Appearance → Theme.
+
+**Dark presets:**
+
+| Preset | Description |
+|--------|-------------|
+| Angel | Warm gold on deep purple-black |
+| Ayu | Muted earth tones, soft contrast |
+| Catppuccin Frappe | Blue-gray pastels |
+| Catppuccin Macchiato | Teal-rose pastels on dark |
+| Catppuccin Mocha | Mauve pastels, warm dark |
+| Cobalt2 | Electric blue, high contrast |
+| Cursor | Clean monochrome dev theme |
+| Dracula | Purple-pink on dark gray |
+| Everforest | Muted green, soft background |
+| Flexoki | Paper-inspired warm tones |
+| GitHub Dark | GitHub's dark color scheme |
+| Gruvbox Dark | Retro warm browns and oranges |
+| Gruvbox Material | Refined Gruvbox variant |
+| Kanagawa | Japanese ink painting tones |
+| Kanagawa Dragon | Darker Kanagawa variant |
+| Lucent Orange | Bright orange accent, dark base |
+| Material Black | Pure black with Material accents |
+| Material Ocean | Deep ocean blue Material |
+| Matrix | Green-on-black terminal |
+| Mercury | Silver-gray metallic |
+| Monokai | Classic syntax-inspired warm |
+| Monokai Pro | Refined Monokai variant |
+| Night Owl | Deep blue for night coding |
+| Nord | Arctic blue-gray palette |
+| One Dark | Atom editor dark theme |
+| OpenCode | Minimal dev-focused dark |
+| Orange | Bold orange accent system |
+| Osaka Jade | Deep jade green on dark |
+| Palenight | Soft purple-blue Material |
+| Rose Pine | Muted rose and pine |
+| Sakura | Cherry blossom pink accents |
+| Samurai | Red and dark, high contrast |
+| Solarized Dark | Ethan Schoonover's dark variant |
+| Synthwave 84 | Neon retro synthwave |
+| Tokyo Night | Deep blue with neon accents |
+| Vercel | Clean black and white |
+| Vesper | Warm amber on dark |
+| Zenburn | Low-contrast warm dark |
+| Zen Garden | Calming earth greens |
+
+**Light presets:**
+
+| Preset | Description |
+|--------|-------------|
+| Angel Light | Warm gold on cream |
+| Catppuccin Latte | Pastel on light background |
+
+## Custom Themes
+
+### Creating a Theme
+
+Themes are defined in the matugen config. To create a custom theme:
+
+1. Copy an existing theme template
+2. Modify colors
+3. Save to matugen config directory
+4. Select in iNiR settings
+
+### Theme Structure
+
+Themes define:
+
+- Primary color
+- Secondary color
+- Tertiary color
+- Background colors
+- Surface colors
+- Error colors
+
+See matugen documentation for the full schema.
+
+## Dark and Light Modes
+
+iNiR automatically detects your system theme preference. You can also force a mode:
+
+```json
+"appearance": {
+  "darkMode": true
+}
+```
+
+The documentation site has a theme toggle in the sidebar.
+
+## Transparency
+
+Control panel transparency:
+
+```json
+"appearance": {
+  "transparency": {
+    "enable": true,
+    "automatic": true,
+    "backgroundTransparency": 0.15,
+    "contentTransparency": 0.9
+  }
+}
+```
+
+- `automatic` - Adjusts based on wallpaper vibrancy
+- `backgroundTransparency` - Panel background opacity
+- `contentTransparency` - Content overlay opacity
+
+## Accent Colors
+
+The primary color from your theme is used as the accent:
+
+- Active workspace indicator
+- Selected items
+- Progress bars
+- Buttons
+
+## Font Configuration
+
+iNiR uses system fonts. Configure in your system settings or GTK config.
+
+Recommended fonts:
+
+- **Sans-serif**: Inter, Roboto, system default
+- **Monospace**: JetBrains Mono, Fira Code
+
+## Terminal Theming
+
+iNiR automatically generates terminal themes for:
+
+- Foot
+- Kitty
+- Alacritty
+- Wezterm
+- Ghostty
+- Konsole
+
+Themes are regenerated when you change wallpaper or theme preset.
+
+## GTK Theming
+
+iNiR applies GTK themes via matugen templates. Your GTK apps will match your shell theme.
+
+Config location: `~/.config/gtk-3.0/settings.ini`
+
+## Icon Themes
+
+iNiR doesn't manage icon themes. Set your preferred icon theme in GTK settings:
+
+```bash
+gsettings set org.gnome.desktop.interface icon-theme 'Papirus-Dark'
+```
+
+## Cursor Themes
+
+Set cursor theme in GTK settings:
+
+```bash
+gsettings set org.gnome.desktop.interface cursor-theme 'Adwaita'
+```
+
+## Troubleshooting Themes
+
+### Colors not updating
+
+1. Check if matugen is installed
+2. Verify wallpaper path is correct
+3. Restart iNiR
+4. Check logs for matugen errors
+
+### Terminal theme not applying
+
+1. Check if terminal config file exists
+2. Verify terminal is using the generated theme file
+3. Restart terminal
+
+### GTK apps don't match
+
+1. Check GTK config: `~/.config/gtk-3.0/settings.ini`
+2. Verify matugen templates are installed
+3. Restart GTK apps
+
+## Advanced Theming
+
+For complete control, edit the matugen config directly:
+
+```bash
+nano ~/.config/matugen/config.toml
+```
+
+See matugen documentation for all options.

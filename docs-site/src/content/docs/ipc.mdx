@@ -1,0 +1,348 @@
+---
+title: "IPC Commands"
+description: "Complete reference of iNiR IPC targets and functions"
+---
+
+# IPC Commands
+
+iNiR exposes IPC targets you can call from Niri keybinds, scripts, or your terminal.
+
+From terminal:
+
+```bash
+qs -c ii ipc call <target> <function>
+```
+
+In Niri config:
+
+```kdl
+bind "Key" { spawn "qs" "-c" "ii" "ipc" "call" "<target>" "<function>"; }
+```
+
+## Core Panels
+
+### overview
+
+Toggle the workspace overview panel.
+
+| Function | Description |
+|----------|-------------|
+| `toggle` | Open/close overview |
+
+```kdl
+bind "Mod+Space" { spawn "qs" "-c" "ii" "ipc" "call" "overview" "toggle"; }
+```
+
+### overlay
+
+The central overlay. Search, quick actions, widgets.
+
+| Function | Description |
+|----------|-------------|
+| `toggle` | Open/close overlay |
+
+```kdl
+bind "Super+G" { spawn "qs" "-c" "ii" "ipc" "call" "overlay" "toggle"; }
+```
+
+### clipboard
+
+Clipboard history panel.
+
+| Function | Description |
+|----------|-------------|
+| `toggle` | Open/close panel |
+| `open` | Open panel |
+| `close` | Close panel |
+
+```kdl
+bind "Super+V" { spawn "qs" "-c" "ii" "ipc" "call" "clipboard" "toggle"; }
+```
+
+### altSwitcher
+
+Alt+Tab window switcher. Works across workspaces.
+
+| Function | Description |
+|----------|-------------|
+| `toggle` | Toggle switcher |
+| `open` | Open switcher |
+| `close` | Close switcher |
+| `next` | Focus next window |
+| `previous` | Focus previous window |
+
+```kdl
+bind "Alt+Tab" { spawn "qs" "-c" "ii" "ipc" "call" "altSwitcher" "next"; }
+bind "Alt+Shift+Tab" { spawn "qs" "-c" "ii" "ipc" "call" "altSwitcher" "previous"; }
+```
+
+## Region Tools
+
+### region
+
+Region selection tools. Screenshots, OCR, recording.
+
+| Function | Description |
+|----------|-------------|
+| `screenshot` | Take a region screenshot |
+| `search` | Image search (Google Lens) |
+| `ocr` | OCR text recognition |
+| `record` | Record region (no audio) |
+| `recordWithSound` | Record region with audio |
+
+```kdl
+bind "Super+Shift+S" { spawn "qs" "-c" "ii" "ipc" "call" "region" "screenshot"; }
+bind "Super+Shift+X" { spawn "qs" "-c" "ii" "ipc" "call" "region" "ocr"; }
+bind "Super+Shift+A" { spawn "qs" "-c" "ii" "ipc" "call" "region" "search"; }
+```
+
+### voiceSearch
+
+Voice search using Gemini API. Records from microphone, transcribes, opens Google search.
+
+| Function | Description |
+|----------|-------------|
+| `start` | Start recording |
+| `stop` | Stop recording |
+| `toggle` | Toggle recording |
+
+```kdl
+// example — not bound by default
+bind "Super+Shift+V" { spawn "qs" "-c" "ii" "ipc" "call" "voiceSearch" "toggle"; }
+```
+
+## System
+
+### session
+
+Power menu. Logout, suspend, reboot, shutdown.
+
+| Function | Description |
+|----------|-------------|
+| `toggle` | Open/close session menu |
+
+```kdl
+bind "Super+Shift+E" { spawn "qs" "-c" "ii" "ipc" "call" "session" "toggle"; }
+```
+
+### lock
+
+Lock screen.
+
+| Function | Description |
+|----------|-------------|
+| `activate` | Lock the screen |
+
+```kdl
+bind "Super+Alt+L" allow-when-locked=true { spawn "qs" "-c" "ii" "ipc" "call" "lock" "activate"; }
+```
+
+### settings
+
+Open the settings window.
+
+| Function | Description |
+|----------|-------------|
+| `open` | Open settings window |
+
+```kdl
+bind "Super+Comma" { spawn "qs" "-c" "ii" "ipc" "call" "settings" "open"; }
+```
+
+### cheatsheet
+
+Keyboard shortcuts reference.
+
+| Function | Description |
+|----------|-------------|
+| `toggle` | Open/close cheatsheet |
+
+```kdl
+bind "Super+Slash" { spawn "qs" "-c" "ii" "ipc" "call" "cheatsheet" "toggle"; }
+```
+
+## UI Elements
+
+### sidebarLeft
+
+Left sidebar (AI chat, apps).
+
+| Function | Description |
+|----------|-------------|
+| `toggle` | Open/close left sidebar |
+
+### sidebarRight
+
+Right sidebar (quick toggles, notepad, settings).
+
+| Function | Description |
+|----------|-------------|
+| `toggle` | Open/close right sidebar |
+
+### bar
+
+Top bar visibility.
+
+| Function | Description |
+|----------|-------------|
+| `toggle` | Show/hide bar |
+
+### wallpaperSelector
+
+Wallpaper picker grid.
+
+| Function | Description |
+|----------|-------------|
+| `toggle` | Open/close wallpaper selector |
+
+```kdl
+bind "Ctrl+Alt+T" { spawn "qs" "-c" "ii" "ipc" "call" "wallpaperSelector" "toggle"; }
+```
+
+### mediaControls
+
+Floating media controls panel.
+
+| Function | Description |
+|----------|-------------|
+| `toggle` | Open/close media controls |
+
+## Media Control
+
+### mpris
+
+Media player control. Automatically detects and uses YtMusic controls when active.
+
+| Function | Description |
+|----------|-------------|
+| `pauseAll` | Pause all players |
+| `playPause` | Toggle play/pause |
+| `previous` | Previous track |
+| `next` | Next track |
+
+```kdl
+// shipped default
+bind "Mod+Shift+P" { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "playPause"; }
+// hardware media keys also work (XF86AudioPlay, etc.)
+```
+
+### ytmusic
+
+Direct YtMusic player control.
+
+| Function | Description |
+|----------|-------------|
+| `playPause` | Toggle YtMusic play/pause |
+| `next` | Play next track |
+| `previous` | Play previous track |
+| `stop` | Stop playback |
+
+## System Control
+
+### audio
+
+Volume and mute control.
+
+| Function | Description |
+|----------|-------------|
+| `volumeUp` | Increase volume |
+| `volumeDown` | Decrease volume |
+| `mute` | Toggle speaker mute |
+| `micMute` | Toggle microphone mute |
+
+### brightness
+
+Display brightness control.
+
+| Function | Description |
+|----------|-------------|
+| `increment` | Increase brightness |
+| `decrement` | Decrease brightness |
+
+### zoom
+
+Screen zoom for accessibility.
+
+| Function | Description |
+|----------|-------------|
+| `zoomIn` | Increase zoom level |
+| `zoomOut` | Decrease zoom level |
+
+### gamemode
+
+Performance mode for gaming. Auto-detects fullscreen apps and disables animations/effects.
+
+| Function | Description |
+|----------|-------------|
+| `toggle` | Toggle gamemode on/off |
+| `activate` | Force enable gamemode |
+| `deactivate` | Force disable gamemode |
+| `status` | Print current status to logs |
+
+```kdl
+// example — not bound by default
+bind "Super+F12" { spawn "qs" "-c" "ii" "ipc" "call" "gamemode" "toggle"; }
+```
+
+### panelFamily
+
+Switch between panel styles (ii ↔ waffle).
+
+| Function | Description |
+|----------|-------------|
+| `cycle` | Cycle to next panel family |
+| `set` | Set specific family ("ii" or "waffle") |
+
+```kdl
+bind "Mod+Shift+W" { spawn "qs" "-c" "ii" "ipc" "call" "panelFamily" "cycle"; }
+```
+
+### notifications
+
+Notification management.
+
+| Function | Description |
+|----------|-------------|
+| `test` | Send test notifications |
+| `clearAll` | Dismiss all notifications |
+| `toggleSilent` | Toggle Do Not Disturb mode |
+
+## Waffle-Specific
+
+These targets only work when using the Waffle (Windows 11) panel style.
+
+### search
+
+Waffle start menu / search.
+
+| Function | Description |
+|----------|-------------|
+| `toggle` | Open/close start menu |
+| `open` | Open start menu |
+| `close` | Close start menu |
+
+### wactionCenter
+
+Waffle action center (quick settings).
+
+| Function | Description |
+|----------|-------------|
+| `toggle` | Open/close action center |
+
+### wnotificationCenter
+
+Waffle notification center.
+
+| Function | Description |
+|----------|-------------|
+| `toggle` | Open/close notification center |
+
+### wwidgets
+
+Waffle widgets panel.
+
+| Function | Description |
+|----------|-------------|
+| `toggle` | Open/close widgets |
+| `open` | Open widgets |
+| `close` | Close widgets |

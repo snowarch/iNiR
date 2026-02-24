@@ -1,0 +1,281 @@
+---
+title: "Configuration"
+description: "How to configure iNiR to fit your workflow"
+---
+
+# Configuration
+
+iNiR stores its configuration in `~/.config/illogical-impulse/config.json`. You can edit this file directly or use the GUI settings.
+
+## Using GUI Settings
+
+The easiest way to configure iNiR:
+
+```bash
+qs -c ii ipc call settings open
+```
+
+Or press `Super+,`.
+
+The settings window covers most common options. Changes apply immediately.
+
+## Config File Location
+
+```
+~/.config/illogical-impulse/config.json
+```
+
+This file is created on first run with default values from `defaults/config.json`.
+
+## Config Structure
+
+The config file is organized into sections:
+
+```json
+{
+  "panelFamily": "ii",
+  "enabledPanels": ["iiBar", "iiDock", ...],
+  "appearance": { ... },
+  "bar": { ... },
+  "dock": { ... },
+  "sidebar": { ... },
+  "notifications": { ... },
+  "performance": { ... },
+  "modules": { ... }
+}
+```
+
+## Common Settings
+
+### Panel Family
+
+Switch between ii (Material) and waffle (Windows 11):
+
+```json
+"panelFamily": "ii"
+```
+
+Or use IPC:
+
+```bash
+qs -c ii ipc call panelFamily set waffle
+```
+
+### Enabled Panels
+
+Control which panels load:
+
+```json
+"enabledPanels": [
+  "iiBar",
+  "iiDock",
+  "iiBackground",
+  "iiNotificationPopup"
+]
+```
+
+Remove panels you don't use to save memory.
+
+### Global Style
+
+Choose visual style:
+
+```json
+"appearance": {
+  "globalStyle": "material"
+}
+```
+
+Options: `"material"`, `"cards"`, `"aurora"`, `"inir"`, `"angel"`
+
+### Transparency
+
+Enable/disable transparency:
+
+```json
+"appearance": {
+  "transparency": {
+    "enable": true,
+    "automatic": true,
+    "backgroundTransparency": 0.15,
+    "contentTransparency": 0.9
+  }
+}
+```
+
+### Theme
+
+Use a preset or wallpaper colors:
+
+```json
+"appearance": {
+  "theme": "wallpaper"
+}
+```
+
+Options: `"wallpaper"`, `"gruvbox"`, `"catppuccin"`, etc.
+
+### Performance
+
+Optimize for battery or older hardware:
+
+```json
+"performance": {
+  "lowPower": false,
+  "reduceAnimations": false
+}
+```
+
+### GameMode
+
+Auto-detect fullscreen apps:
+
+```json
+"gameMode": {
+  "enable": true,
+  "disableEffects": true,
+  "disableAnimations": true,
+  "minimalMode": true
+}
+```
+
+## Module-Specific Settings
+
+### Bar
+
+```json
+"bar": {
+  "vertical": false,
+  "position": "top",
+  "height": 40,
+  "modules": {
+    "workspaces": true,
+    "tray": true,
+    "media": true,
+    "weather": true
+  }
+}
+```
+
+### Dock
+
+```json
+"dock": {
+  "position": "bottom",
+  "height": 60,
+  "pinnedApps": [
+    "firefox",
+    "kitty",
+    "dolphin"
+  ]
+}
+```
+
+### Notifications
+
+```json
+"notifications": {
+  "position": "top-right",
+  "timeout": 5000,
+  "maxVisible": 3
+}
+```
+
+### Sidebar
+
+```json
+"sidebar": {
+  "left": {
+    "enable": true,
+    "width": 400
+  },
+  "right": {
+    "enable": true,
+    "width": 350
+  }
+}
+```
+
+## Applying Changes
+
+### GUI Settings
+
+Changes apply immediately when using the settings window.
+
+### Manual Edits
+
+After editing the config file manually:
+
+```bash
+qs kill -c ii && qs -c ii
+```
+
+Some changes hot-reload, but restarting ensures everything updates.
+
+## Backup and Restore
+
+### Backup
+
+```bash
+cp ~/.config/illogical-impulse/config.json ~/config-backup.json
+```
+
+### Restore
+
+```bash
+cp ~/config-backup.json ~/.config/illogical-impulse/config.json
+qs kill -c ii && qs -c ii
+```
+
+### Reset to Defaults
+
+```bash
+cp ~/.config/quickshell/ii/defaults/config.json ~/.config/illogical-impulse/config.json
+qs kill -c ii && qs -c ii
+```
+
+## Config Migrations
+
+When updating iNiR, the setup script may offer config migrations for new features. These are optional and preserve your existing settings.
+
+```bash
+./setup migrate
+```
+
+## Troubleshooting Config Issues
+
+### Config not loading
+
+Check for JSON syntax errors:
+
+```bash
+cat ~/.config/illogical-impulse/config.json | jq .
+```
+
+If this fails, you have a syntax error.
+
+### Settings not applying
+
+1. Restart iNiR
+2. Check logs for errors
+3. Verify the setting exists in the schema
+4. Try resetting to defaults
+
+### Config gets overwritten
+
+The setup script never overwrites your config. If it's getting reset:
+
+1. Check file permissions
+2. Verify you're editing the right file
+3. Make sure iNiR isn't running when you edit
+
+## Advanced Configuration
+
+Some settings aren't exposed in the GUI. Edit the config file directly for:
+
+- Custom keybinds (edit Niri config instead)
+- Advanced module options
+- Experimental features
+- Debug settings
+
+See the config options reference for a complete list of available settings.

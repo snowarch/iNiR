@@ -1,0 +1,111 @@
+---
+title: "Installation"
+description: "How to install iNiR on your system"
+---
+
+# Installation
+
+iNiR is designed for Arch Linux. The installer only supports Arch-based distros. If you're on something else, check the manual section below.
+
+## Quick Install (Arch)
+
+```bash
+git clone https://github.com/snowarch/inir.git
+cd inir
+./setup install
+```
+
+Add `-y` if you don't want to answer questions:
+
+```bash
+./setup install -y
+```
+
+When it's done:
+
+```bash
+niri msg action load-config-file
+```
+
+Log out and back in, or restart Niri.
+
+## Manual Installation
+
+For when you're not on Arch, or you want more control.
+
+### 1. Get dependencies
+
+The bare minimum to not crash immediately:
+
+| Package | Why |
+|---------|-----|
+| `niri` | The compositor |
+| `quickshell` | The shell runtime (official repos) |
+| `syntax-highlighting` | QML module for code blocks |
+| `kirigami` | KDE QML components |
+| `kdialog` | KDE runtime helper |
+| `plasma-integration` | KDE platform theme plugin |
+| `darkly-bin` (AUR) | Darkly Qt style |
+| `wl-clipboard` | Copy/paste |
+| `cliphist` | Clipboard history |
+| `pipewire` + `wireplumber` | Audio |
+| `grim` + `slurp` | Screenshots |
+| `matugen` | Material You colors from wallpaper |
+
+For everything else, check the packages documentation.
+
+### 2. Clone the repo
+
+```bash
+git clone https://github.com/snowarch/inir.git ~/.config/quickshell/ii
+```
+
+### 3. Copy the configs
+
+```bash
+cp -r dots/.config/* ~/.config/
+```
+
+This gives you Niri config with ii keybindings, matugen templates, GTK settings, and fuzzel config.
+
+### 4. Tell Niri to start ii
+
+Add this to `~/.config/niri/config.kdl`:
+
+```kdl
+spawn-at-startup "qs" "-c" "ii"
+```
+
+### 5. Restart Niri
+
+```bash
+niri msg action load-config-file
+```
+
+Or log out and back in.
+
+## Verify Installation
+
+Check the logs:
+
+```bash
+qs log -c ii
+```
+
+If everything went well, you should see:
+- Bar at the top
+- Background/wallpaper
+- `Mod+Tab` opens the Niri overview
+- `Mod+Space` toggles the ii overview
+- `Alt+Tab` cycles windows
+- `Super+V` opens clipboard
+- `Super+Shift+S` takes a region screenshot
+
+If something's broken, the logs will tell you which package is missing.
+
+## What's Next?
+
+- [First Steps](/docs/first-steps) - Configure your new shell
+- [Quick Reference](/docs/quick-reference) - Learn essential keybinds
+- [Panel Families](/docs/panel-families) - Choose your layout
+- [Common Workflows](/docs/workflows) - Step-by-step guides

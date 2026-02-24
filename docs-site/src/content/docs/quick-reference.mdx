@@ -1,0 +1,127 @@
+---
+title: "Quick Reference"
+description: "Essential commands and shortcuts at a glance"
+---
+
+# Quick Reference
+
+## Essential Commands
+
+```
+┌─────────────────────────────────────────────────┐
+│ SHELL CONTROL                                   │
+├─────────────────────────────────────────────────┤
+│ qs -c ii              Start iNiR                │
+│ qs kill -c ii         Stop iNiR                 │
+│ qs log -c ii          View logs                 │
+│ ./setup update        Update and restart        │
+└─────────────────────────────────────────────────┘
+```
+
+## Core Keybinds
+
+| Key | Action |
+|-----|--------|
+| `Mod+Space` | Overview |
+| `Super+G` | Overlay (search) |
+| `Alt+Tab` | Window switcher |
+| `Super+V` | Clipboard |
+| `Super+,` | Settings |
+| `Mod+Shift+W` | Switch panel family |
+| `Super+Shift+S` | Screenshot region |
+| `Super+Shift+E` | Power menu |
+
+## Panel Families
+
+| Family | Style |
+|--------|-------|
+| **ii** | Material Design, floating panels |
+| **waffle** | Windows 11, bottom taskbar |
+
+Switch: `Mod+Shift+W` or `qs -c ii ipc call panelFamily cycle`
+
+## Global Styles
+
+| Style | Look |
+|-------|------|
+| **material** | Solid backgrounds, classic Material Design |
+| **cards** | Card-based layout with subtle shadows |
+| **aurora** | Glass blur, translucent panels |
+| **inir** | TUI-inspired, minimal borders |
+| **angel** | Neo-brutalism with frosted glass |
+
+Change: `Super+,` → Appearance → Global Style
+
+## Config Location
+
+```
+~/.config/illogical-impulse/config.json
+```
+
+Edit manually or via Settings GUI (`Super+,`)
+
+## IPC Format
+
+```bash
+qs -c ii ipc call <target> <function>
+```
+
+**Examples:**
+```bash
+qs -c ii ipc call overview toggle
+qs -c ii ipc call panelFamily set waffle
+qs -c ii ipc call audio volumeUp
+qs -c ii ipc call brightness increment
+```
+
+## Common IPC Targets
+
+| Target | Functions | Description |
+|--------|-----------|-------------|
+| `overview` | `toggle` | Workspace overview |
+| `overlay` | `toggle` | Search/widgets overlay |
+| `clipboard` | `toggle` | Clipboard history |
+| `settings` | `open`, `toggle` | Settings window |
+| `session` | `toggle` | Power menu |
+| `lock` | `activate` | Lock screen |
+| `audio` | `volumeUp`, `volumeDown`, `mute` | Audio control |
+| `brightness` | `increment`, `decrement` | Brightness |
+| `panelFamily` | `cycle`, `set` | Switch families |
+
+## Debugging
+
+```bash
+# View recent logs
+qs log -c ii | tail -50
+
+# Search for errors
+qs log -c ii | grep -i error
+
+# Restart shell
+qs kill -c ii; qs -c ii
+
+# Validate config
+cat ~/.config/illogical-impulse/config.json | jq .
+
+# Reset to defaults
+./setup doctor
+```
+
+## Performance Tips
+
+**Low-end hardware:**
+- Use waffle family (lower memory)
+- Use material or inir style (no blur)
+- Disable unused modules in config
+- Enable `performance.lowPower`
+
+**Gaming:**
+- Enable `gameMode.enable` in config
+- Auto-disables effects and animations when fullscreen detected
+
+## Next Steps
+
+- [Installation](/docs/installation) - Get iNiR running
+- [First Steps](/docs/first-steps) - Initial configuration
+- [Common Workflows](/docs/workflows) - Step-by-step guides
+- [Keybindings](/docs/keybindings) - Complete keybind reference

@@ -1,0 +1,98 @@
+---
+title: "Panel Families"
+description: "ii and waffle — two shell layouts, one keybind to switch"
+---
+
+# Panel Families
+
+iNiR has two panel families: **ii** and **waffle**. Each one is a complete shell layout with its own panels, settings window, and design language. Switch between them at runtime with `Mod+Shift+W`.
+
+## ii
+
+The default. Floating panels, Material Design language.
+
+### Layout
+
+| Element | Position | Contents |
+|---------|----------|----------|
+| **Bar** | Top (configurable) | Workspaces, tray, media, weather, clock, utility buttons |
+| **Left sidebar** | Left edge | AI chat, app launcher, search |
+| **Right sidebar** | Right edge | Quick toggles, notepad, calendar |
+| **Dock** | Bottom (floating) | Pinned apps, running indicators |
+
+### Features
+
+- **Bar positioning** — top, bottom, left, or right; optional vertical mode
+- **Dual sidebars** — left for apps/AI, right for toggles/tools
+- **Floating dock** — auto-hide, drag to reorder, running indicators
+- **Niri overview** — adapted for scrolling workspaces with app icons
+- **Five visual styles** — Material, Cards, Aurora, iNiR, Angel
+
+## waffle
+
+Bottom taskbar layout inspired by Windows 11. Its own settings window, its own panels.
+
+### Layout
+
+| Element | Position | Contents |
+|---------|----------|----------|
+| **Taskbar** | Bottom | Start button, pinned apps, tray, clock, action center |
+
+### Features
+
+- **Centered taskbar** — pinned apps with running indicators, system tray
+- **Start menu** — app grid with search, recent apps, power options
+- **Action center** — WiFi, Bluetooth, volume, brightness toggles
+- **Notification center** — popup notifications with history
+- **Widgets panel** — weather, calendar, system stats
+- **Task view** — workspace overview with window previews
+- **Own theming** — separate color system with live previews
+
+## Comparison
+
+| | ii | waffle |
+|---|---|---|
+| Layout | Floating panels + sidebars | Bottom taskbar |
+| Bar position | Top / bottom / left / right | Bottom only |
+| Sidebars | Left + right | No |
+| Dock | Separate floating dock | Integrated in taskbar |
+| Settings | Material Design settings | Win11-style settings |
+| Visual styles | Material, Cards, Aurora, iNiR, Angel | Own styling |
+
+## Switching
+
+**Keybind:** `Mod+Shift+W` cycles between families.
+
+**IPC:**
+
+```bash
+qs -c ii ipc call panelFamily set ii
+qs -c ii ipc call panelFamily set waffle
+qs -c ii ipc call panelFamily cycle
+```
+
+**Config:**
+
+```json
+"panelFamily": "waffle"
+```
+
+When you switch, all panels from the old family unload and the new family's panels load. You can't mix panels from both families.
+
+## Shared between both
+
+These work regardless of which family is active:
+
+- Clipboard history
+- Region tools (screenshot, OCR, recording, image search)
+- Media controls
+- Lock screen
+- Session menu (power options)
+- Notifications
+- Wallpaper theming
+
+## Troubleshooting
+
+**Family won't switch** — check `qs log -c ii | grep family`, try forcing via IPC, restart if needed.
+
+**Panels missing** — verify `enabledPanels` in config includes the right identifiers for your active family.

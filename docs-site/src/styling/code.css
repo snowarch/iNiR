@@ -1,0 +1,291 @@
+/* Code block overrides for doc pages — neo-brutalist terminal style */
+
+/* Inline code */
+article code {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  padding: 0.15em 0.4em;
+  font-size: 0.85em;
+  font-family: var(--font-mono);
+  color: var(--color-main);
+}
+
+/* Code blocks */
+article pre {
+  position: relative;
+  background-color: var(--color-secondary-background);
+  border: 2px solid var(--color-border);
+  border-left: 3px solid var(--color-main);
+  padding: 1rem;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.7;
+  box-shadow: 4px 4px 0px 0px #2a2630;
+}
+
+article pre code {
+  background-color: transparent;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+  color: var(--color-text);
+}
+
+/* Line numbers */
+code {
+  counter-reset: line;
+}
+
+code > [data-line]::before {
+  counter-increment: line;
+  content: counter(line);
+  display: inline-block;
+  width: 1rem;
+  margin-right: 1.25rem;
+  text-align: right;
+  color: var(--color-text-dim);
+  font-size: 0.65rem;
+  opacity: 0.5;
+}
+
+code[data-line-numbers-max-digits="2"] > [data-line]::before {
+  width: 1.5rem;
+}
+
+code[data-line-numbers-max-digits="3"] > [data-line]::before {
+  width: 2rem;
+}
+
+/* Highlighted lines */
+[data-highlighted-line] {
+  background-color: rgba(var(--color-accent-rgb), 0.08);
+  border-left: 2px solid var(--color-accent);
+  padding-left: 0.5rem;
+  margin-left: -0.5rem;
+}
+
+/* ═══════════════════════════════════════════
+   SYNTAX HIGHLIGHTING — Angel palette
+   ═══════════════════════════════════════════ */
+
+/* Keywords */
+.token.keyword,
+.token.control,
+.token.else,
+.token.if,
+.token.then,
+.token.for,
+.token.while,
+.token.function,
+.token.class,
+.token.const,
+.token.let,
+.token.var,
+.token.return,
+.token.import,
+.token.export,
+.token.from {
+  color: var(--color-main);
+  font-weight: 600;
+}
+
+/* Strings */
+.token.string,
+.token.string-quoted,
+.token.char,
+.token.attribute-name {
+  color: var(--color-success);
+}
+
+/* Numbers */
+.token.number,
+.token.integer,
+.token.float,
+.token.hex {
+  color: var(--color-tertiary);
+}
+
+/* Comments */
+.token.comment,
+.token.line-comment,
+.token.block-comment,
+.token.doc-comment {
+  color: var(--color-text-dim);
+  font-style: italic;
+}
+
+/* Functions */
+.token.function,
+.token.function-name,
+.token.method,
+.token.call {
+  color: var(--color-secondary);
+}
+
+/* Operators */
+.token.operator,
+.token.punctuation,
+.token.bracket,
+.token.delimiter {
+  color: var(--color-text-muted);
+}
+
+/* Variables */
+.token.variable,
+.token.property,
+.token.field {
+  color: var(--color-text);
+}
+
+/* Types */
+.token.type,
+.token.class-name,
+.token.interface,
+.token.struct,
+.token.enum {
+  color: var(--color-warning);
+}
+
+/* Built-ins */
+.token.builtin,
+.token.keyword-control,
+.token.module {
+  color: var(--color-main);
+  font-weight: 500;
+}
+
+/* ═══════════════════════════════════════════
+   TERMINAL-LINE STYLING
+   ═══════════════════════════════════════════ */
+
+/* Command prompt styling */
+.terminal-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.terminal-line::before {
+  content: "$";
+  color: var(--color-main);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* Output styling */
+.terminal-output {
+  color: var(--color-text-muted);
+  padding-left: 1rem;
+}
+
+/* Error output */
+.terminal-error {
+  color: var(--color-error);
+}
+
+/* Success output */
+.terminal-success {
+  color: var(--color-success);
+}
+
+/* ═══════════════════════════════════════════
+   FILENAME BADGE
+   ═══════════════════════════════════════════ */
+
+.code-filename {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0.25rem 0.75rem;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--color-text-dim);
+  background: var(--color-surface);
+  border-bottom-left-radius: 0;
+  border-bottom: 1px solid var(--color-border);
+  border-left: 1px solid var(--color-border);
+}
+
+/* ═══════════════════════════════════════════
+   LANGUAGE BADGE
+   ═══════════════════════════════════════════ */
+
+.code-language {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  font-size: 9px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-main);
+  background: rgba(232, 184, 130, 0.1);
+  border: 1px solid var(--color-main);
+}
+
+/* ═══════════════════════════════════════════
+   DIFF STYLING
+   ═══════════════════════════════════════════ */
+
+.diff-added {
+  background-color: rgba(152, 200, 144, 0.15);
+  border-left: 2px solid var(--color-success);
+}
+
+.diff-removed {
+  background-color: rgba(240, 160, 144, 0.15);
+  border-left: 2px solid var(--color-error);
+}
+
+.diff-added::before {
+  content: "+";
+  color: var(--color-success);
+  margin-right: 0.5rem;
+}
+
+.diff-removed::before {
+  content: "-";
+  color: var(--color-error);
+  margin-right: 0.5rem;
+}
+
+/* ═══════════════════════════════════════════
+   SELECTION STYLING
+   ═══════════════════════════════════════════ */
+
+article pre::selection,
+article pre code::selection {
+  background-color: var(--color-main);
+  color: var(--color-main-foreground);
+}
+
+/* ═══════════════════════════════════════════
+   HOVER EFFECTS
+   ═══════════════════════════════════════════ */
+
+article pre:hover {
+  border-color: var(--color-main);
+  box-shadow: 6px 6px 0px 0px #2a2630;
+}
+
+/* ═══════════════════════════════════════════
+   SCROLLBAR FOR CODE
+   ═══════════════════════════════════════════ */
+
+article pre::-webkit-scrollbar {
+  height: 6px;
+}
+
+article pre::-webkit-scrollbar-track {
+  background: var(--color-background);
+}
+
+article pre::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+}
+
+article pre::-webkit-scrollbar-thumb:hover {
+  background: var(--color-main);
+}

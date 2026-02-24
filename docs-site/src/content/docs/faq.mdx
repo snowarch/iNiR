@@ -1,0 +1,528 @@
+---
+title: "FAQ"
+description: "Frequently asked questions and common issues"
+---
+
+# Frequently Asked Questions
+
+## Installation & Setup
+
+### Why isn't my bar showing up?
+
+**Most common causes:**
+
+1. **Panel not enabled in config:**
+   ```bash
+   grep "iiBar" ~/.config/illogical-impulse/config.json
+   ```
+   Make sure `"iiBar"` is in `enabledPanels` array.
+
+2. **Config not loaded:**
+   ```bash
+   qs log -c ii | grep "Config ready"
+   ```
+   If you don't see "Config ready", your config has errors.
+
+3. **Wrong compositor:**
+   Bar requires Niri or Hyprland. Check: `echo $XDG_CURRENT_DESKTOP`
+
+4. **Quickshell not running:**
+   ```bash
+   ps aux | grep quickshell
+   ```
+
+**Fix:**
+```bash
+qs kill -c ii; sleep 2; qs -c ii
+qs log -c ii | tail -50
+```
+
+### Can I use iNiR on Hyprland?
+
+**Partial support.** Most features work, but some are Niri-specific:
+
+**Works:**
+- Bar, dock, sidebars
+- Clipboard, media controls
+- Settings, theming
+- Notifications
+
+**Niri-only:**
+- Workspace overview (uses Niri's scrolling model)
+- Window minimize workaround
+- Some IPC commands
+
+**Recommendation:** Use Niri for full experience, or wait for Hyprland-specific adaptations.
+
+### How do I switch from illogical-impulse to iNiR?
+
+**Key differences:**
+- iNiR is for **Niri**, illogical-impulse is for **Hyprland**
+- Config schemas and defaults differ (not compatible)
+- iNiR has waffle family (Windows 11 style)
+- iNiR has better Niri integration
+
+**Migration:**
+```bash
+# Backup old config
+cp ~/.config/illogical-impulse/config.json ~/illogical-impulse-config-backup.json
+
+# Install iNiR
+git clone https://github.com/snowarch/inir.git ~/.config/quickshell/ii
+cd ~/.config/quickshell/ii
+./setup install
+
+# Manually port settings you want to keep
+```
+
+**Note:** Configs are NOT compatible. You'll need to reconfigure.
+
+### Does iNiR work on [my distro]?
+
+**Officially supported:**
+- Arch Linux (and derivatives: CachyOS, EndeavourOS, Manjaro)
+
+**Should work:**
+- NixOS (with Quickshell package)
+- Fedora (with dependencies)
+- Gentoo (compile Quickshell)
+
+**Won't work:**
+- Ubuntu/Debian (Quickshell not packaged, old Qt)
+- Non-Wayland systems
+
+**Dependencies:** Qt 6.6+, Quickshell git, Niri/Hyprland, PipeWire
+
+## Configuration
+
+### How do I change keybinds?
+
+iNiR keybinds are configured in **Niri's config**, not iNiR's config.
+
+**Edit Niri config:**
+```bash
+$EDITOR ~/.config/niri/config.kdl
+```
+
+**Add custom bind:**
+```kdl
+binds {
+    Super+P { spawn "qs" "-c" "ii" "ipc" "call" "session" "toggle"; }
+}
+```
+
+**Reload Niri:**
+```bash
+niri msg action load-config-file
+```
+
+**See all IPC commands:** [IPC Reference](/docs/ipc)
+
+### Settings window won't open
+
+**Try IPC directly:**
+```bash
+qs -c ii ipc call settings open
+```
+
+**Check logs:**
+```bash
+qs log -c ii | grep -i settings
+```
+
+**Common causes:**
+- Config has syntax errors (invalid JSON)
+- Settings panel not in `enabledPanels`
+- Quickshell crashed (check logs)
+
+**Nuclear option:**
+```bash
+qs kill -c ii; sleep 2; qs -c ii
+qs -c ii ipc call settings open
+```
+
+### How do I reset to default config?
+
+**Option 1: Doctor script**
+```bash
+cd ~/.config/quickshell/ii
+./setup doctor
+```
+
+**Option 2: Manual reset**
+```bash
+# Backup current config
+cp ~/.config/illogical-impulse/config.json ~/config-backup.json
+
+# Copy defaults
+cp ~/.config/quickshell/ii/defaults/config.json ~/.config/illogical-impulse/config.json
+
+# Restart
+qs kill -c ii; qs -c ii
+```
+
+**Option 3: Fresh install**
+```bash
+rm -rf ~/.config/illogical-impulse
+cd ~/.config/quickshell/ii
+./setup install
+```
+
+## Performance
+
+### iNiR is using too much RAM
+
+**Check what's loaded:**
+```bash
+ps aux | grep quickshell
+```
+
+**Typical memory usage:**
+- Minimal (bar + background): ~80MB
+- Normal (bar + dock + sidebars): ~200-300MB
+- Full (all modules): ~400-500MB
+
+**Reduce memory:**
+
+1. **Switch to waffle family** (lighter):
+   ```bash
+   qs -c ii ipc call panelFamily set waffle
+   ```
+
+2. **Disable heavy modules** in config:
+   ```json
+   "modules": {
+     "aiChat": false,
+     "videoWallpaper": false
+   }
+   ```
+
+3. **Disable unused sidebars:**
+   ```json
+   "sidebar": {
+     "left": { "enable": false },
+     "right": { "enable": false }
+   }
+   ```
+
+4. **Use Material, Cards, or iNiR style** (no blur):
+   ```bash
+   Super+, → Appearance → Global Style → material
+   ```
+
+### Animations are laggy
+
+**Enable performance mode:**
+```json
+"performance": {
+  "lowPower": true,
+  "reduceAnimations": true
+}
+```
+
+**Or use GameMode** (auto-disables effects when fullscreen):
+```json
+"gameMode": {
+  "enable": true,
+  "disableEffects": true,
+  "disableAnimations": true
+}
+```
+
+**Check compositor performance:**
+```bash
+# Niri
+niri msg version
+
+# Check if compositor is dropping frames
+journalctl -f | grep -i niri
+```
+
+### Video wallpapers cause stuttering
+
+**Disable video wallpapers:**
+```json
+"background": {
+  "videoWallpaper": false
+}
+```
+
+**Or use static wallpaper:**
+```bash
+Ctrl+Alt+T → Select image (not video)
+```
+
+**Video wallpapers use ~150MB RAM + 5-10% CPU.** Not recommended for:
+- Battery-powered devices
+- Low-end hardware
+- Gaming sessions
+
+## Features
+
+### Clipboard history is empty
+
+**Check if cliphist is running:**
+```bash
+ps aux | grep cliphist
+```
+
+**Start cliphist watcher:**
+```bash
+wl-paste --watch cliphist store &
+```
+
+**Add to Niri config:**
+```kdl
+spawn-at-startup "wl-paste" "--watch" "cliphist" "store"
+```
+
+**Clear and rebuild:**
+```bash
+cliphist wipe
+# Copy something new
+echo "test" | wl-copy
+# Open clipboard
+Super+V
+```
+
+### AI Chat doesn't work
+
+**Check API key:**
+```bash
+secret-tool lookup service gemini key api
+```
+
+**Store API key:**
+```bash
+secret-tool store --label="Gemini API" service gemini key api
+# Paste your API key when prompted
+```
+
+**Enable in config:**
+```json
+"sidebar": {
+  "left": {
+    "aiChat": { "enable": true }
+  }
+}
+```
+
+**Restart:**
+```bash
+qs kill -c ii; qs -c ii
+```
+
+**Get API key:**
+- Gemini: https://makersuite.google.com/app/apikey
+- Mistral: https://console.mistral.ai/api-keys
+- OpenRouter: https://openrouter.ai/keys
+- Or use Ollama locally (no key needed)
+
+### Screenshots don't work
+
+**Check dependencies:**
+```bash
+which grim slurp
+```
+
+**Install if missing:**
+```bash
+# Arch
+sudo pacman -S grim slurp
+
+# Test manually
+grim -g "$(slurp)" ~/test-screenshot.png
+```
+
+**Check keybind:**
+```bash
+grep "screenshot" ~/.config/niri/config.kdl
+```
+
+**Should be:**
+```kdl
+Super+Shift+S { spawn "qs" "-c" "ii" "ipc" "call" "region" "screenshot"; }
+```
+
+### OCR doesn't extract text
+
+**Check tesseract:**
+```bash
+which tesseract
+tesseract --list-langs
+```
+
+**Install if missing:**
+```bash
+# Arch
+sudo pacman -S tesseract tesseract-data-eng
+
+# For other languages
+sudo pacman -S tesseract-data-spa  # Spanish
+sudo pacman -S tesseract-data-fra  # French
+```
+
+**Test manually:**
+```bash
+grim -g "$(slurp)" /tmp/test.png
+tesseract /tmp/test.png stdout
+```
+
+## Troubleshooting
+
+### iNiR won't start
+
+**Check logs:**
+```bash
+qs log -c ii
+```
+
+**Common errors:**
+
+1. **"Config file not found"**
+   ```bash
+   cp ~/.config/quickshell/ii/defaults/config.json ~/.config/illogical-impulse/config.json
+   ```
+
+2. **"QML module not found"**
+   ```bash
+   cd ~/.config/quickshell/ii
+   ./setup install
+   ```
+
+3. **"Cannot connect to compositor"**
+   - Make sure you're in a Wayland session
+   - Check `echo $WAYLAND_DISPLAY`
+
+4. **"Permission denied"**
+   ```bash
+   chmod +x ~/.config/quickshell/ii/scripts/*.sh
+   chmod +x ~/.config/quickshell/ii/scripts/*/*.sh
+   ```
+
+### Shell crashes on startup
+
+**Check for syntax errors:**
+```bash
+cat ~/.config/illogical-impulse/config.json | jq .
+```
+
+**If jq fails, your JSON is invalid.** Fix or reset:
+```bash
+cp ~/.config/quickshell/ii/defaults/config.json ~/.config/illogical-impulse/config.json
+```
+
+**Check for missing dependencies:**
+```bash
+cd ~/.config/quickshell/ii
+./setup doctor
+```
+
+**Start with minimal config:**
+```json
+{
+  "panelFamily": "ii",
+  "enabledPanels": ["iiBar", "iiBackground"]
+}
+```
+
+### How do I report a bug?
+
+**Before reporting:**
+
+1. **Check logs:**
+   ```bash
+   qs log -c ii | tail -100 > ~/inir-logs.txt
+   ```
+
+2. **Check if it's already reported:**
+   https://github.com/snowarch/inir/issues
+
+3. **Try with default config:**
+   ```bash
+   mv ~/.config/illogical-impulse/config.json ~/config-backup.json
+   cp ~/.config/quickshell/ii/defaults/config.json ~/.config/illogical-impulse/config.json
+   qs kill -c ii; qs -c ii
+   ```
+
+**Report with:**
+- iNiR version: `cat ~/.config/quickshell/ii/VERSION`
+- Compositor: `echo $XDG_CURRENT_DESKTOP`
+- Distro: `cat /etc/os-release`
+- Logs: Attach `~/inir-logs.txt`
+- Steps to reproduce
+
+**GitHub:** https://github.com/snowarch/inir/issues/new
+
+## Customization
+
+### Can I use custom fonts?
+
+**Yes.** Edit config:
+```json
+"appearance": {
+  "typography": {
+    "fontFamily": "JetBrains Mono",
+    "fontSize": 12
+  }
+}
+```
+
+**Font must be installed system-wide:**
+```bash
+fc-list | grep "YourFont"
+```
+
+### Can I change panel positions?
+
+**ii family:**
+```json
+"bar": {
+  "position": "top"  // top, bottom, left, right
+}
+```
+
+**waffle family:**
+- Taskbar is always bottom (Windows 11 style)
+- Not customizable
+
+### Can I add custom modules?
+
+**Yes, but requires QML knowledge.**
+
+1. Create module in `modules/custom/YourModule.qml`
+2. Add to panel loader in `ShellIiPanels.qml`
+3. Add config schema in `modules/common/Config.qml`
+
+**See:** [Contributing Guide](/docs/contributing) (coming soon)
+
+## Comparison
+
+### iNiR vs illogical-impulse?
+
+| Feature | iNiR | illogical-impulse |
+|---------|------|-------------------|
+| Compositor | Niri (primary) | Hyprland (primary) |
+| Workspace model | Scrolling | Grid |
+| Panel families | ii + waffle | ii only |
+| Config location | `~/.config/illogical-impulse/config.json` | `~/.config/illogical-impulse/config.json` |
+| Maintainer | snowarch | end-4 |
+| Focus | Niri integration | Hyprland integration |
+
+**Use iNiR if:** You use Niri or want Windows 11 style (waffle)
+**Use illogical-impulse if:** You use Hyprland
+
+### ii vs waffle family?
+
+See: [Panel Families](/docs/panel-families)
+
+**TL;DR:**
+- **ii** = Material Design, floating panels, more customizable
+- **waffle** = Windows 11, bottom taskbar, familiar
+
+## Still Need Help?
+
+- [Troubleshooting Guide](/docs/troubleshooting) - Detailed fixes
+- [Common Workflows](/docs/workflows) - Step-by-step guides
+- [Quick Reference](/docs/quick-reference) - Essential commands
+- [GitHub Issues](https://github.com/snowarch/inir/issues) - Report bugs

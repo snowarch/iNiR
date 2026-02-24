@@ -1,0 +1,435 @@
+---
+title: "Architecture"
+description: "How iNiR is structured internally"
+---
+
+# Architecture
+
+Understanding how iNiR works under the hood. For developers, contributors, or the curious.
+
+## High-Level Overview
+
+iNiR is a Quickshell configuration written in QML (Qt Modeling Language). It's not a standalone application - it runs inside Quickshell, which provides the Qt/QML runtime and Wayland integration.
+
+```
+User → Niri compositor → Quickshell runtime → iNiR (QML) → UI
+```
+
+## Entry Point
+
+**File:** `shell.qml`
+
+This is where everything starts. It:
+1. Loads the config system
+2. Initializes services (singletons)
+3. Chooses which panel family to load (ii or waffle)
+4. Spawns the panel loaders
+
+```qml
+// Simplified
+ShellRoot {
+    Config { id: config }
+
+    Loader {
+        source: config.panelFamily === "ii"
+            ? "ShellIiPanels.qml"
+            : "ShellWafflePanels.qml"
+    }
+}
+```
+
+## Panel Families
+
+Two distinct UI systems that share common components:
+
+### ii Family (Material Design)
+
+**File:** `ShellIiPanels.qml`
+
+Loads panels conditionally using `PanelLoader`:
+
+```qml
+PanelLoader {
+    identifier: "iiBar"
+    extraCondition: !(Config.options?.bar?.vertical ?? false)
+    component: Bar {}
+}
+```
+
+Panels only load if:
+- `Config.ready` is true
+- Identifier is in `enabledPanels` array
+- `extraCondition` is met (if specified)
+
+**Panels:** iiBar, iiDock, iiSidebarLeft, iiSidebarRight, iiOverview, iiOverlay, iiBackground, iiNotificationPopup, iiMediaControls, iiClipboard, iiLock, iiSessionScreen, etc.
+
+### waffle Family (Windows 11)
+
+**File:** `ShellWafflePanels.qml`
+
+Similar structure but different panels:
+
+**Panels:** wBar (taskbar), wStartMenu, wActionCenter, wNotificationCenter, wWidgets, wTaskView, wBackground, wLock, etc.
+
+## Directory Structure
+
+```
+ii/
+├── shell.qml                    # Entry point
+├── ShellIiPanels.qml            # ii panel loaders
+├── ShellWafflePanels.qml        # waffle panel loaders
+├── GlobalStates.qml             # UI state singleton
+├── VERSION                      # Version string
+├── CHANGELOG.md                 # Release history
+├── defaults/config.json         # Default config
+│
+├── modules/
+│   ├── common/                  # Shared across families
+│   │   ├── Config.qml           # Config system (singleton)
+│   │   ├── Appearance.qml       # Theming (singleton)
+│   │   ├── Directories.qml      # Paths (singleton)
+│   │   ├── Persistent.qml       # Runtime state (singleton)
+│   │   ├── widgets/             # Reusable UI components
+│   │   ├── functions/           # Utilities (StringUtils, etc.)
+│   │   └── models/              # Data models
+│   │
+│   ├── bar/                     # Top bar (ii)
+│   ├── dock/                    # Dock (ii)
+│   ├── sidebarLeft/             # Left sidebar (ii)
+│   ├── sidebarRight/            # Right sidebar (ii)
+│   ├── overview/                # Workspace overview
+│   ├── mediaControls/           # Media player overlay
+│   ├── settings/                # Settings window
+│   ├── notifications/           # Notification system
+│   └── waffle/                  # Windows 11 components
+│
+├── services/                    # ~59 singletons
+│   ├── Audio.qml                # Audio control
+│   ├── NiriService.qml          # Niri IPC
+│   ├── MprisController.qml      # Media players
+│   ├── Notifications.qml        # Notification backend
+│   ├── ThemeService.qml         # Theme management
+│   ├── GameMode.qml             # Performance mode
+│   └── ...
+│
+├── scripts/                     # Shell scripts (Fish/Python)
+│   ├── colors/                  # Theming scripts
+│   ├── setup/                   # Installation
+│   └── utils/                   # Utilities
+│
+└── docs/                        # Documentation
+```
+
+## Config System
+
+**File:** `modules/common/Config.qml`
+
+Singleton that manages configuration. Uses Qt's `JsonAdapter` to sync between QML properties and JSON file.
+
+### How it works
+
+1. **Schema definition** (Config.qml):
+```qml
+JsonAdapter {
+    property string panelFamily: "ii"
+    property list<string> enabledPanels: ["iiBar", "iiDock"]
+    property var appearance: ({
+        globalStyle: "material",
+        theme: "wallpaper"
+    })
+}
+```
+
+2. **File location**: `~/.config/illogical-impulse/config.json`
+
+3. **Reading config** (always null-safe):
+```qml
+Config.options?.bar?.vertical ?? false
+```
+
+4. **Writing config** (must use setNestedValue):
+```qml
+Config.setNestedValue("bar.vertical", true)
+```
+
+**Critical:** Direct assignment doesn't persist. Always use `setNestedValue`.
+
+### Config sync
+
+Every option must exist in **both**:
+- `Config.qml` schema (runtime)
+- `defaults/config.json` (fresh install default)
+
+If out of sync, fresh installs get different defaults than existing users.
+
+## Services (Singletons)
+
+Services are QML singletons that provide system integration and shared state.
+
+**Examples:**
+
+### Audio.qml
+- Wraps PipeWire/PulseAudio
+- Exposes volume, mute state
+- Emits signals on changes
+
+### NiriService.qml
+- Communicates with Niri compositor via IPC
+- Provides window list, workspace info
+- Handles Niri-specific features
+
+### MprisController.qml
+- Manages media players (MPRIS protocol)
+- Deduplicates players by title/position
+- Provides `displayPlayers` (use this, not `players`)
+
+### ThemeService.qml
+- Applies themes (wallpaper-based or presets)
+- Calls matugen to generate colors
+- Updates terminal themes
+
+### GameMode.qml
+- Detects fullscreen apps
+- Auto-disables effects/animations
+- Can be toggled manually
+
+## Theming System
+
+### Flow
+
+1. User changes wallpaper or selects preset
+2. `ThemeService.applyCurrentTheme()` called
+3. `matugen` generates Material You colors
+4. Colors saved to `~/.local/state/quickshell/user/generated/colors.json`
+5. `MaterialThemeLoader` loads colors into `Appearance.m3colors`
+6. Terminal themes generated (foot, kitty, alacritty, etc.)
+7. GTK/Qt themes applied via matugen templates
+
+### Design Tokens
+
+**Never hardcode values.** Always use design tokens:
+
+```qml
+// ❌ Wrong
+color: "#1a1a1a"
+radius: 12
+font.pixelSize: 16
+
+// ✅ Correct
+color: Appearance.colors.colLayer1
+radius: Appearance.rounding.normal
+font.pixelSize: Appearance.font.pixelSize.normal
+```
+
+### Five Global Styles
+
+All ii components must support all five:
+
+```qml
+color: Appearance.inirEverywhere ? Appearance.inir.colLayer1
+     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+     : Appearance.colors.colLayer1
+```
+
+- **material**: Solid backgrounds, Material Design
+- **cards**: Subtle shadows, elevated surfaces
+- **aurora**: Glass blur, translucent
+- **inir**: TUI-inspired, minimal
+- **angel**: Neo-brutalism glass
+
+## IPC System
+
+Keybinds call shell functions via IPC.
+
+### How it works
+
+1. **Define IPC handler** in QML:
+```qml
+IpcHandler {
+    target: "overview"
+    function toggle(): void {  // Must have return type
+        GlobalStates.overviewOpen = !GlobalStates.overviewOpen
+    }
+}
+```
+
+2. **Call from Niri config**:
+```kdl
+bind "Mod+Space" {
+    spawn "qs" "-c" "ii" "ipc" "call" "overview" "toggle";
+}
+```
+
+3. **Or from terminal**:
+```bash
+qs -c ii ipc call overview toggle
+```
+
+**Critical:** IPC functions MUST have explicit return type (`: void`, `: string`, etc.) or they won't register.
+
+## State Management
+
+### GlobalStates.qml
+
+Singleton for UI state that needs to be shared across components:
+
+```qml
+QtObject {
+    property bool barOpen: true
+    property bool sidebarLeftOpen: false
+    property bool overviewOpen: false
+    property bool screenLocked: false
+    // etc.
+}
+```
+
+### Persistent.qml
+
+Runtime state that survives hot-reloads but not restarts:
+
+```qml
+QtObject {
+    property var lastUsedTheme: null
+    property var cachedData: ({})
+}
+```
+
+## Hot-Reload vs Restart
+
+**Hot-reload works for:**
+- UI changes within existing components
+- Config value changes
+- Non-singleton QML files
+
+**Restart required for:**
+- Singleton changes (services, Config, Appearance)
+- shell.qml changes
+- Panel loader changes
+- New modules added
+- Config schema changes
+
+**Restart command:**
+```bash
+qs kill -c ii; qs -c ii
+```
+
+## Common Patterns
+
+### Lazy Loading
+
+```qml
+LazyLoader {
+    active: GlobalStates.sidebarRightOpen && Config.ready
+    component: SidebarRight {}
+}
+```
+
+Component only loads when `active` is true.
+
+### Null-Safe Config Access
+
+```qml
+// Always use optional chaining + default
+property string value: Config.options?.module?.option ?? "default"
+```
+
+### Animations
+
+```qml
+Behavior on opacity {
+    enabled: Appearance.animationsEnabled  // Respects GameMode
+    animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+}
+```
+
+### Process Commands
+
+```qml
+// Must use absolute paths
+Process {
+    command: ["/usr/bin/fish", Directories.scriptPath + "/script.fish"]
+}
+```
+
+## Widget Property Names
+
+**Critical - wrong name = silent failure:**
+
+| Widget | Icon Property | NOT |
+|--------|---------------|-----|
+| ConfigSwitch | `buttonIcon` | ~~icon~~ |
+| ConfigSpinBox | `icon` | ~~buttonIcon~~ |
+| MaterialSymbol | `text` | ~~icon~~ |
+
+## Performance Considerations
+
+### Memory Usage
+
+- Full shell: ~400MB
+- Minimal (bar + background): ~80MB
+- Each panel: ~20-60MB
+- AI Chat: ~100MB
+- Video wallpaper: ~150MB
+
+### Optimization
+
+1. **Disable unused panels** in `enabledPanels`
+2. **Use Material or iNiR style** (no blur)
+3. **Enable GameMode** for auto-optimization
+4. **Reduce animations** in performance settings
+5. **Disable heavy modules** (AI chat, video wallpaper)
+
+### GameMode Integration
+
+When fullscreen app detected:
+- `Appearance.effectsEnabled` → false (disables blur)
+- `Appearance.animationsEnabled` → false (disables animations)
+- `Appearance.gameModeMinimal` → true (hides non-essential UI)
+
+## Development Workflow
+
+### Making Changes
+
+1. Edit QML files
+2. Changes hot-reload automatically (if not singleton)
+3. Check logs: `qs log -c ii -f`
+4. Test feature
+5. Restart if needed: `qs kill -c ii; qs -c ii`
+
+### Debugging
+
+```bash
+# View logs
+qs log -c ii
+
+# Follow logs live
+qs log -c ii -f
+
+# Check for errors
+qs log -c ii | grep -iE "error|ReferenceError|TypeError"
+
+# Test IPC
+qs -c ii ipc show
+qs -c ii ipc call overview toggle
+```
+
+### Common Issues
+
+**Config not saving:**
+- Using direct assignment instead of `setNestedValue`
+
+**IPC not working:**
+- Missing return type on function
+
+**Crash on config read:**
+- Missing optional chaining (`?.`)
+
+**Singleton not updating:**
+- Need to restart, hot-reload doesn't work for singletons
+
+## See Also
+
+- [Contributing](/docs/contributing) - How to contribute code
+- [Config Options](/docs/config-options) - All config options
+- [IPC Commands](/docs/ipc) - All IPC targets
+- [CLAUDE.md](https://github.com/snowarch/inir/blob/main/CLAUDE.md) - Complete technical reference

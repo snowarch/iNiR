@@ -1,0 +1,94 @@
+---
+title: "Introduction"
+description: "Quickshell configuration for Niri — bar, dock, overview, sidebars, settings GUI"
+---
+
+# iNiR
+
+A full desktop shell for Niri, built on Quickshell and QML. Originally forked from end-4's illogical-impulse, now its own thing.
+
+## What is this?
+
+All the UI you need on top of a Niri session. Bar, dock, sidebars, overview, clipboard, media controls, lock screen, notifications, and a settings GUI for everything. One process, one config.
+
+Two panel families you can switch between at runtime. Five visual styles. Colors pulled from your wallpaper or from 41 built-in presets.
+
+## Panel families
+
+- **ii** — floating panels, Material Design language, sidebars, configurable bar positioning
+- **waffle** — bottom taskbar with start menu and action center, inspired by Win11
+
+Switch with `Mod+Shift+W` or via IPC. No restart.
+
+## Visual styles
+
+- **Material** — solid opaque backgrounds
+- **Cards** — card-based layout with subtle shadows
+- **Aurora** — glass blur, translucent panels (GPU-intensive)
+- **iNiR** — thin TUI-style borders, minimal
+- **Angel** — neo-brutalism with frosted glass and escalonado shadows
+
+## What ships with it
+
+**UI panels:** bar, dock, overview, overlay, sidebars (left/right), notifications
+
+**Tools:** clipboard history, screenshot/OCR/recording, media controls (MPRIS + YtMusic), wallpaper selector, lock screen
+
+**Theming:** wallpaper color extraction via matugen, 41 presets, terminal theme sync for foot/kitty/alacritty/wezterm/ghostty/konsole
+
+**Performance:** GameMode auto-detection, low power mode, per-module disable
+
+## Quick start
+
+```bash
+git clone https://github.com/snowarch/inir.git ~/.config/quickshell/ii
+cd ~/.config/quickshell/ii
+./setup install
+qs -c ii
+```
+
+[Full install guide](/docs/installation) | [Requirements](/docs/requirements)
+
+## Requirements
+
+- Arch Linux (or derivative)
+- Niri compositor (Hyprland has partial support)
+- Quickshell (official repos), Qt 6.6+
+- PipeWire, matugen
+- 4GB RAM minimum, 8GB recommended
+
+## FAQ
+
+**Hyprland?** — Partial. Most things work but overview and some Niri-specific features don't. For Hyprland, use illogical-impulse directly.
+
+**Ubuntu/Fedora?** — You'll need to build Quickshell from source. Only Arch is officially supported.
+
+**RAM usage?** — 200-400MB depending on what's enabled. Disable video wallpapers and AI chat if memory is tight.
+
+**Customizable?** — Every option has a GUI control. Config is JSON at `~/.config/illogical-impulse/config.json`. You can also edit QML directly.
+
+[All questions](/docs/faq)
+
+## When something breaks
+
+```bash
+qs log -c ii | tail -50     # check logs
+qs kill -c ii; qs -c ii     # restart
+./setup doctor              # validate setup
+```
+
+[Troubleshooting guide](/docs/troubleshooting) | [Open an issue](https://github.com/snowarch/inir/issues)
+
+## Project
+
+**Maintainer:** snowarch
+**License:** GPL-3.0
+**Repo:** [github.com/snowarch/inir](https://github.com/snowarch/inir)
+**Support:** [Ko-fi](https://ko-fi.com/snowarch)
+
+## Next
+
+- [Quick Reference](/docs/quick-reference) — commands and keybinds at a glance
+- [First Steps](/docs/first-steps) — initial configuration after install
+- [Keybindings](/docs/keybindings) — default shortcuts
+- [Workflows](/docs/workflows) — common tasks step by step

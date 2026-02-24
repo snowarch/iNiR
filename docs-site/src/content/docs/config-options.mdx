@@ -1,0 +1,502 @@
+---
+title: "Config Options"
+description: "Complete reference of all configuration options"
+---
+
+# Config Options
+
+Complete reference of all available configuration options in `~/.config/illogical-impulse/config.json`.
+
+## At a Glance
+
+Most commonly changed options:
+
+- `panelFamily` - Switch between ii and waffle
+- `appearance.globalStyle` - Material, Cards, Aurora, iNiR, or Angel
+- `appearance.theme` - Color scheme preset
+- `bar.position` - Bar placement (top/bottom/left/right)
+- `dock.pinnedApps` - Pinned applications
+- `performance.lowPower` - Battery saving mode
+
+[Jump to full reference ↓](#top-level-options)
+
+## Top Level Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `panelFamily` | `"ii"` \| `"waffle"` | `"ii"` | Panel family to use |
+| `enabledPanels` | `string[]` | All | Panel identifiers to load |
+
+## Appearance Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `appearance.globalStyle` | `"material"` \| `"cards"` \| `"aurora"` \| `"inir"` \| `"angel"` | `"material"` | Visual style |
+| `appearance.theme` | `string` | `"wallpaper"` | Theme preset or wallpaper |
+| `appearance.darkMode` | `boolean` | System | Force dark or light mode |
+
+### appearance.transparency
+
+Transparency settings (object):
+
+```json
+"appearance": {
+  "transparency": {
+    "enable": true,
+    "automatic": true,
+    "backgroundTransparency": 0.15,
+    "contentTransparency": 0.9
+  }
+}
+```
+
+- `enable` - Enable transparency
+- `automatic` - Auto-adjust based on wallpaper
+- `backgroundTransparency` - Panel background opacity (0-1)
+- `contentTransparency` - Content overlay opacity (0-1)
+
+## Bar Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `bar.vertical` | `boolean` | `false` | Vertical orientation (ii only) |
+| `bar.position` | `"top"` \| `"bottom"` \| `"left"` \| `"right"` | `"top"` | Bar position |
+| `bar.height` | `number` | `40` | Bar height in pixels |
+
+## Top Level
+
+### panelFamily
+
+Which panel family to use.
+
+**Type:** `string`
+**Options:** `"ii"`, `"waffle"`
+**Default:** `"ii"`
+
+```json
+"panelFamily": "ii"
+```
+
+### enabledPanels
+
+Array of panel identifiers to load.
+
+**Type:** `array<string>`
+**Default:** All panels enabled
+
+```json
+"enabledPanels": [
+  "iiBar",
+  "iiDock",
+  "iiBackground",
+  "iiNotificationPopup"
+]
+```
+
+## Appearance
+
+### appearance.globalStyle
+
+Visual style for panels.
+
+**Type:** `string`
+**Options:** `"material"`, `"cards"`, `"aurora"`, `"inir"`, `"angel"`
+**Default:** `"material"`
+
+```json
+"appearance": {
+  "globalStyle": "material"
+}
+```
+
+### appearance.theme
+
+Theme preset or wallpaper-based colors.
+
+**Type:** `string`
+**Options:** `"wallpaper"`, `"gruvbox"`, `"catppuccin"`, `"nord"`, `"dracula"`, `"tokyo-night"`
+**Default:** `"wallpaper"`
+
+### appearance.transparency
+
+Transparency settings.
+
+**Type:** `object`
+
+```json
+"appearance": {
+  "transparency": {
+    "enable": true,
+    "automatic": true,
+    "backgroundTransparency": 0.15,
+    "contentTransparency": 0.9
+  }
+}
+```
+
+- `enable` - Enable transparency
+- `automatic` - Auto-adjust based on wallpaper
+- `backgroundTransparency` - Panel background opacity (0-1)
+- `contentTransparency` - Content overlay opacity (0-1)
+
+### appearance.darkMode
+
+Force dark or light mode.
+
+**Type:** `boolean`
+**Default:** System preference
+
+## Bar
+
+### bar.vertical
+
+Vertical bar orientation (ii family only).
+
+**Type:** `boolean`
+**Default:** `false`
+
+### bar.position
+
+Bar position.
+
+**Type:** `string`
+**Options:** `"top"`, `"bottom"`, `"left"`, `"right"`
+**Default:** `"top"`
+
+### bar.height
+
+Bar height in pixels.
+
+**Type:** `number`
+**Default:** `40`
+
+### bar.modules
+
+Enable/disable bar modules.
+
+**Type:** `object`
+
+```json
+"bar": {
+  "modules": {
+    "workspaces": true,
+    "tray": true,
+    "media": true,
+    "weather": true,
+    "clock": true
+  }
+}
+```
+
+## Dock
+
+### dock.position
+
+Dock position (ii family only).
+
+**Type:** `string`
+**Options:** `"top"`, `"bottom"`, `"left"`, `"right"`
+**Default:** `"bottom"`
+
+### dock.height
+
+Dock height in pixels.
+
+**Type:** `number`
+**Default:** `60`
+
+### dock.pinnedApps
+
+Array of pinned application IDs.
+
+**Type:** `array<string>`
+**Default:** `[]`
+
+```json
+"dock": {
+  "pinnedApps": [
+    "firefox",
+    "kitty",
+    "dolphin",
+    "code"
+  ]
+}
+```
+
+## Background
+
+### background.wallpaperPath
+
+Path to wallpaper image.
+
+**Type:** `string`
+**Default:** `""`
+
+```json
+"background": {
+  "wallpaperPath": "/home/user/Pictures/wallpaper.jpg"
+}
+```
+
+### background.videoWallpaper
+
+Enable video wallpapers.
+
+**Type:** `boolean`
+**Default:** `false`
+
+## Notifications
+
+### notifications.position
+
+Notification popup position.
+
+**Type:** `string`
+**Options:** `"top-left"`, `"top-right"`, `"bottom-left"`, `"bottom-right"`
+**Default:** `"top-right"`
+
+### notifications.timeout
+
+Notification timeout in milliseconds.
+
+**Type:** `number`
+**Default:** `5000`
+
+### notifications.maxVisible
+
+Maximum visible notifications.
+
+**Type:** `number`
+**Default:** `3`
+
+## Sidebar
+
+### sidebar.left
+
+Left sidebar settings (ii family only).
+
+**Type:** `object`
+
+```json
+"sidebar": {
+  "left": {
+    "enable": true,
+    "width": 400
+  }
+}
+```
+
+### sidebar.right
+
+Right sidebar settings (ii family only).
+
+**Type:** `object`
+
+```json
+"sidebar": {
+  "right": {
+    "enable": true,
+    "width": 350
+  }
+}
+```
+
+## Performance
+
+### performance.lowPower
+
+Enable low power mode.
+
+**Type:** `boolean`
+**Default:** `false`
+
+Reduces animations and effects to save battery.
+
+### performance.reduceAnimations
+
+Reduce or disable animations.
+
+**Type:** `boolean`
+**Default:** `false`
+
+## GameMode
+
+### gameMode.enable
+
+Enable automatic GameMode detection.
+
+**Type:** `boolean`
+**Default:** `true`
+
+### gameMode.disableEffects
+
+Disable blur effects in GameMode.
+
+**Type:** `boolean`
+**Default:** `true`
+
+### gameMode.disableAnimations
+
+Disable animations in GameMode.
+
+**Type:** `boolean`
+**Default:** `true`
+
+### gameMode.minimalMode
+
+Enable minimal mode in GameMode.
+
+**Type:** `boolean`
+**Default:** `true`
+
+Makes panels transparent and reduces visual weight.
+
+## Modules
+
+### modules.clipboard
+
+Enable clipboard history.
+
+**Type:** `boolean`
+**Default:** `true`
+
+### modules.mediaControls
+
+Enable floating media controls.
+
+**Type:** `boolean`
+**Default:** `true`
+
+### modules.aiChat
+
+Enable AI chat interface.
+
+**Type:** `boolean`
+**Default:** `false`
+
+Requires API keys.
+
+### modules.weather
+
+Enable weather widget.
+
+**Type:** `boolean`
+**Default:** `true`
+
+### modules.tray
+
+Enable system tray.
+
+**Type:** `boolean`
+**Default:** `true`
+
+## Policies
+
+### policies.aiAccessLevel
+
+AI feature access level.
+
+**Type:** `number`
+**Options:** `0` (all), `1` (limited), `2` (local only)
+**Default:** `0`
+
+### policies.weebContent
+
+Enable anime/weeb content features.
+
+**Type:** `boolean`
+**Default:** `false`
+
+## Waffle-Specific
+
+### waffles.taskbarPosition
+
+Taskbar position (waffle family only).
+
+**Type:** `string`
+**Options:** `"bottom"`, `"top"`
+**Default:** `"bottom"`
+
+### waffles.centerTaskbar
+
+Center taskbar icons.
+
+**Type:** `boolean`
+**Default:** `true`
+
+### waffles.allowMultiplePanels
+
+Allow multiple waffle panels open simultaneously.
+
+**Type:** `boolean`
+**Default:** `false`
+
+## Example Complete Config
+
+```json
+{
+  "panelFamily": "ii",
+  "enabledPanels": ["iiBar", "iiDock", "iiBackground"],
+  "appearance": {
+    "globalStyle": "material",
+    "theme": "wallpaper",
+    "transparency": {
+      "enable": true,
+      "automatic": true
+    }
+  },
+  "bar": {
+    "vertical": false,
+    "position": "top",
+    "height": 40,
+    "modules": {
+      "workspaces": true,
+      "tray": true,
+      "media": true,
+      "weather": true
+    }
+  },
+  "dock": {
+    "position": "bottom",
+    "height": 60,
+    "pinnedApps": ["firefox", "kitty", "dolphin"]
+  },
+  "background": {
+    "wallpaperPath": "/home/user/Pictures/wallpaper.jpg"
+  },
+  "notifications": {
+    "position": "top-right",
+    "timeout": 5000,
+    "maxVisible": 3
+  },
+  "performance": {
+    "lowPower": false,
+    "reduceAnimations": false
+  },
+  "gameMode": {
+    "enable": true,
+    "disableEffects": true,
+    "disableAnimations": true
+  },
+  "modules": {
+    "clipboard": true,
+    "mediaControls": true,
+    "aiChat": false,
+    "weather": true
+  }
+}
+```
+
+## Validation
+
+iNiR validates the config on startup. Invalid options are logged and defaults are used.
+
+Check logs for validation errors:
+
+```bash
+qs log -c ii | grep -i "config\|validation"
+```
+
+## Schema
+
+The config schema is defined in `modules/common/Config.qml`. All options must exist in the schema before use.

@@ -1,0 +1,36 @@
+{
+  "name": "inir-docs",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Documentation site for iNiR - Quickshell configuration for Niri",
+  "scripts": {
+    "dev": "next dev",
+    "prebuild": "node scripts/generate-search-index.mjs",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "gray-matter": "^4.0.3",
+    "next": "15.2.0",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.33",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "autoprefixer": "^10.4.24",
+    "eslint": "^8.45.0",
+    "eslint-config-next": "15.2.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.19",
+    "typescript": "5.9.3"
+  },
+  "packageManager": "npm@10.0.0",
+  "engines": {
+    "node": ">=20"
+  }
+}

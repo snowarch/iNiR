@@ -1,0 +1,266 @@
+/* ═══════════════════════════════════════════
+   hero.css — iNiR Home Page Effects
+   Neo Dev Brutalism. Raw. Sharp. Terminal-first.
+   ═══════════════════════════════════════════ */
+
+/* ── 1. Spotlight — harsh amber cone ── */
+.hero-spotlight {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hero-spotlight::before {
+  content: "";
+  position: absolute;
+  width: 250%;
+  height: 250%;
+  top: -75%;
+  left: -75%;
+  background: radial-gradient(
+    ellipse 18% 22% at 50% 50%,
+    rgba(10, 10, 10, 0.05) 0%,
+    rgba(10, 10, 10, 0.3) 25%,
+    rgba(10, 10, 10, 0.65) 50%,
+    rgba(10, 10, 10, 0.88) 100%
+  );
+  animation: spotlight-drift 40s ease-in-out infinite;
+}
+
+.hero-spotlight::after {
+  content: "";
+  position: absolute;
+  width: 250%;
+  height: 250%;
+  top: -75%;
+  left: -75%;
+  background: radial-gradient(
+    ellipse 14% 18% at 50% 50%,
+    rgba(245, 166, 35, 0.04) 0%,
+    transparent 60%
+  );
+  animation: spotlight-drift 40s ease-in-out infinite;
+  filter: blur(60px);
+}
+
+@keyframes spotlight-drift {
+  0%   { transform: translate(-8%, -5%); }
+  15%  { transform: translate(5%, -2%); }
+  30%  { transform: translate(8%, 4%); }
+  50%  { transform: translate(0%, 6%); }
+  70%  { transform: translate(-5%, 2%); }
+  85%  { transform: translate(-3%, -3%); }
+  100% { transform: translate(-8%, -5%); }
+}
+
+/* ── 2. CRT Scanlines — tight harsh lines ── */
+.scanlines::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.06) 2px,
+    rgba(0, 0, 0, 0.06) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── 3. Terminal cursor blink ── */
+.cursor-blink::after {
+  content: "█";
+  animation: blink-cursor 1s step-end infinite;
+  color: var(--color-main);
+  font-size: 0.85em;
+  margin-left: 1px;
+}
+
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+
+/* ── 4. ASCII logo glow — sharp warm burn ── */
+.title-glow {
+  text-shadow:
+    0 0 30px rgba(245, 166, 35, 0.25),
+    0 0 80px rgba(245, 166, 35, 0.08);
+  animation: title-pulse 4s ease-in-out infinite;
+}
+
+@keyframes title-pulse {
+  0%, 100% {
+    text-shadow:
+      0 0 30px rgba(245, 166, 35, 0.2),
+      0 0 80px rgba(245, 166, 35, 0.06);
+  }
+  50% {
+    text-shadow:
+      0 0 40px rgba(245, 166, 35, 0.35),
+      0 0 100px rgba(245, 166, 35, 0.12);
+  }
+}
+
+/* ── 5. Stat value glow ── */
+.stat-value {
+  text-shadow: 0 0 20px rgba(245, 166, 35, 0.15);
+}
+
+/* ── 6. Grid bg — tight matrix ── */
+.tui-bg {
+  background-image:
+    linear-gradient(rgba(245, 166, 35, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(245, 166, 35, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* ── 7. Brutal button transitions ── */
+.btn-brutal {
+  transition: all 0.1s ease;
+}
+
+.btn-brutal:hover {
+  transform: translate(-3px, -3px);
+}
+
+.btn-brutal:active {
+  transform: translate(0, 0);
+}
+
+/* ── 8. Radial vignette ── */
+.bg-radial-vignette {
+  background: radial-gradient(
+    ellipse at center,
+    transparent 0%,
+    transparent 35%,
+    rgba(10, 10, 10, 0.7) 100%
+  );
+}
+
+/* ── 9. Stagger animation ── */
+.hero-stagger > * {
+  opacity: 0;
+  animation: fade-in-up 0.5s ease forwards;
+}
+
+.hero-stagger > *:nth-child(1) { animation-delay: 0.05s; }
+.hero-stagger > *:nth-child(2) { animation-delay: 0.15s; }
+.hero-stagger > *:nth-child(3) { animation-delay: 0.25s; }
+.hero-stagger > *:nth-child(4) { animation-delay: 0.35s; }
+.hero-stagger > *:nth-child(5) { animation-delay: 0.45s; }
+.hero-stagger > *:nth-child(6) { animation-delay: 0.55s; }
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── 10. Pulse dot ── */
+.hero-badge-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--color-main);
+  border-radius: 50%;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.75); }
+}
+
+/* ── 11. Hero noise overlay ── */
+.hero-noise::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.025;
+  pointer-events: none;
+}
+
+/* ── 12. Animated gradient border ── */
+.hero-border-animate {
+  position: relative;
+}
+
+.hero-border-animate::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(
+    90deg,
+    var(--color-main),
+    transparent 20%,
+    transparent 80%,
+    var(--color-main)
+  );
+  animation: border-slide 10s linear infinite;
+  z-index: -1;
+}
+
+@keyframes border-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ── 13. Scroll indicator ── */
+.hero-scroll-indicator {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-dim);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  font-family: var(--font-mono);
+  animation: scroll-bounce 2.5s ease-in-out infinite;
+}
+
+@keyframes scroll-bounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(6px); }
+}
+
+.hero-scroll-indicator::after {
+  content: "↓";
+  font-size: 14px;
+  color: var(--color-main);
+}
+
+/* ── 14. Progress bar fill ── */
+.hero-progress { height: 4px; background: var(--color-border); overflow: hidden; }
+.hero-progress-bar {
+  height: 100%;
+  background: var(--color-main);
+  animation: progress-fill 1.8s ease-in-out forwards;
+}
+
+@keyframes progress-fill {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+/* ── 15. Gradient text shift ── */
+.hero-gradient-text {
+  background: linear-gradient(90deg, var(--color-main) 0%, var(--color-secondary) 50%, var(--color-main) 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 5s ease infinite;
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% center; }
+  50% { background-position: 100% center; }
+  100% { background-position: 0% center; }
+}

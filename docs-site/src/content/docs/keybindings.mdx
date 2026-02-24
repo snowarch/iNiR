@@ -1,0 +1,117 @@
+---
+title: "Keybindings"
+description: "Default keyboard shortcuts for iNiR"
+---
+
+# Keybindings
+
+These are the default keybinds shipped with iNiR. They live in `~/.config/niri/config.kdl` after install.
+
+Change them. Break them. Make them yours.
+
+## iNiR Controls
+
+| Key | Action |
+|-----|--------|
+| `Mod+Tab` | Niri overview (native compositor) |
+| `Mod+Space` | iNiR overview (daemon) |
+| `Super+G` | iNiR overlay (search, widgets) |
+| `Alt+Tab` | iNiR window switcher (next) |
+| `Alt+Shift+Tab` | iNiR window switcher (previous) |
+| `Super+V` | Clipboard history |
+| `Super+/` | Cheatsheet |
+| `Super+,` | Settings |
+| `Super+Alt+L` | Lock screen |
+| `Ctrl+Alt+T` | Wallpaper selector |
+| `Mod+Shift+W` | Cycle panel family (ii ↔ waffle) |
+
+## Region Tools
+
+| Key | Action |
+|-----|--------|
+| `Super+Shift+S` | Region screenshot |
+| `Super+Shift+X` | Region OCR |
+| `Super+Shift+A` | Region image search |
+| `Print` | Full screenshot (native) |
+| `Ctrl+Print` | Screenshot current screen |
+| `Alt+Print` | Screenshot current window |
+
+## Window Management
+
+| Key | Action |
+|-----|--------|
+| `Super+Q` | Close window (with optional confirmation) |
+| `Super+D` | Maximize column |
+| `Super+F` | Toggle fullscreen |
+| `Super+A` | Toggle floating |
+
+### Focus
+
+| Key | Action |
+|-----|--------|
+| `Super+Left/H` | Focus left |
+| `Super+Right/L` | Focus right |
+| `Super+Up/K` | Focus up |
+| `Super+Down/J` | Focus down |
+
+### Move
+
+| Key | Action |
+|-----|--------|
+| `Super+Shift+Left/H` | Move left |
+| `Super+Shift+Right/L` | Move right |
+| `Super+Shift+Up/K` | Move up |
+| `Super+Shift+Down/J` | Move down |
+
+## Workspaces
+
+| Key | Action |
+|-----|--------|
+| `Super+1-9` | Focus workspace 1-9 |
+| `Super+Shift+1-5` | Move window to workspace 1-5 |
+
+## Applications
+
+| Key | Action |
+|-----|--------|
+| `Super+T` / `Super+Return` | Terminal (foot) |
+| `Super+E` | File manager (dolphin) |
+
+## System
+
+| Key | Action |
+|-----|--------|
+| `Super+Shift+E` | Quit Niri |
+| `Super+Shift+O` | Power off monitors |
+| `Super+Escape` | Toggle keyboard shortcuts inhibit |
+
+## Media
+
+| Key | Action |
+|-----|--------|
+| `Mod+Shift+P` | Play/pause (MPRIS) |
+| `XF86AudioPlay` | Play/pause (hardware key) |
+| `XF86AudioRaiseVolume` | Volume up |
+| `XF86AudioLowerVolume` | Volume down |
+| `XF86AudioMute` | Toggle mute |
+
+## Customizing
+
+Edit `~/.config/niri/config.kdl` to change keybinds. See the IPC documentation for all available iNiR targets you can bind.
+
+Example:
+
+```kdl
+binds {
+    // Your custom binds
+    Super+P { spawn "qs" "-c" "ii" "ipc" "call" "session" "toggle"; }
+}
+```
+
+Then reload Niri:
+
+```bash
+niri msg action load-config-file
+```
+
+If your keybind doesn't work, you probably forgot to reload.

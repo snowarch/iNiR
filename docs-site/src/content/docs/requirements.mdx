@@ -1,0 +1,121 @@
+---
+title: "Requirements"
+description: "System requirements and dependencies for iNiR"
+---
+
+# Requirements
+
+## System Requirements
+
+- **OS**: Linux (Arch-based recommended)
+- **Compositor**: Niri (primary support) or Hyprland (partial)
+- **Display Server**: Wayland
+- **Memory**: 200-400MB RAM for full shell
+
+## Core Dependencies
+
+These are required for iNiR to run:
+
+| Package | Purpose |
+|---------|---------|
+| `niri` | Wayland compositor |
+| `quickshell` | QML shell runtime (official repos) |
+| `syntax-highlighting` | QML module for code blocks |
+| `kirigami` | KDE QML components |
+| `kdialog` | KDE runtime helper |
+| `plasma-integration` | KDE platform theme plugin |
+| `darkly-bin` (AUR) | Darkly Qt style |
+| `wl-clipboard` | Clipboard operations |
+| `cliphist` | Clipboard history backend |
+| `pipewire` | Audio system |
+| `wireplumber` | PipeWire session manager |
+| `grim` | Screenshot tool |
+| `slurp` | Region selection |
+| `matugen` | Material You color generation |
+
+## Optional Dependencies
+
+### Media & Audio
+
+| Package | Feature |
+|---------|---------|
+| `playerctl` | Media player control |
+| `pamixer` | Volume control |
+| `pavucontrol` | Audio settings GUI |
+
+### Screenshots & Recording
+
+| Package | Feature |
+|---------|---------|
+| `wf-recorder` | Screen recording |
+| `tesseract` | OCR text recognition |
+| `imagemagick` | Image processing |
+
+### System Integration
+
+| Package | Feature |
+|---------|---------|
+| `polkit-kde-agent` | Authentication dialogs |
+| `gnome-keyring` | Credential storage |
+| `geoclue` | Location services for weather |
+| `ddcutil` | External monitor brightness |
+
+### Applications
+
+| Package | Feature |
+|---------|---------|
+| `foot` | Default terminal |
+| `dolphin` | Default file manager |
+| `fuzzel` | Application launcher |
+
+## Font Requirements
+
+iNiR uses system fonts. Recommended:
+
+- **Sans-serif**: Inter, Roboto, or system default
+- **Monospace**: JetBrains Mono, Fira Code, or system default
+- **Icons**: Material Symbols (included in shell)
+
+## Compositor Notes
+
+### Niri (Primary)
+
+Full support for all features:
+- Scrolling workspaces
+- Window switcher
+- Overview
+- All IPC commands
+
+### Hyprland (Partial)
+
+Limited support:
+- Some features may not work
+- Screen zoom requires Hyprland
+- Lock screen blur hack is Hyprland-specific
+
+## Performance Notes
+
+- Disable unused modules to reduce memory usage
+- GameMode auto-disables effects for better performance
+- Low power mode available in settings
+- Reduce animations option for older hardware
+
+## Known Limitations
+
+- **PipeWire required** - PulseAudio-only won't work
+- **External monitor brightness** requires DDC/CI support
+- **GPS weather** requires geoclue, falls back to IP geolocation
+- **No live window previews** - uses app icons instead
+- **Clipboard requires cliphist**
+- **OCR requires tesseract**
+- **Recording requires wf-recorder**
+
+## Checking Dependencies
+
+After installation, check logs for missing dependencies:
+
+```bash
+qs log -c ii | grep -i "error\|missing"
+```
+
+iNiR will work with missing optional dependencies, but some features will be disabled.

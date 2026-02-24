@@ -1,0 +1,269 @@
+---
+title: "Contributing"
+description: "How to contribute to iNiR"
+---
+
+# Contributing
+
+iNiR is open source and welcomes contributions. Whether you're fixing bugs, adding features, or improving documentation, your help is appreciated.
+
+## Getting Started
+
+### Fork and Clone
+
+```bash
+git clone https://github.com/yourusername/inir.git
+cd inir
+```
+
+### Development Setup
+
+```bash
+./setup install
+```
+
+This installs iNiR in development mode. Changes to QML files hot-reload automatically.
+
+### Running from Source
+
+```bash
+qs -c ii
+```
+
+Check logs:
+
+```bash
+qs log -c ii -f
+```
+
+## Project Structure
+
+```
+ii/
+├── shell.qml              # Entry point
+├── modules/               # Feature modules
+│   ├── common/           # Shared components
+│   ├── bar/              # Top bar
+│   ├── dock/             # Dock
+│   └── ...
+├── services/             # Singletons
+├── scripts/              # Shell scripts
+├── docs/                 # Documentation
+└── defaults/             # Default configs
+```
+
+## Code Style
+
+### QML
+
+- Use 4 spaces for indentation
+- Follow existing patterns
+- Use design tokens (never hardcode colors/sizes)
+- Support all five global styles (Material, Cards, Aurora, iNiR, Angel)
+- Add null-safety (`?.` and `??`)
+
+Example:
+
+```qml
+Rectangle {
+    color: Appearance.colors.colLayer1
+    radius: Appearance.rounding.normal
+
+    property string value: Config.options?.module?.option ?? "default"
+}
+```
+
+### JavaScript
+
+- Use modern ES6+ syntax
+- Add JSDoc comments for complex functions
+- Handle errors gracefully
+
+### Shell Scripts
+
+- Use Fish shell syntax
+- Add comments for complex logic
+- Check for dependencies before using them
+
+## Making Changes
+
+### 1. Create a Branch
+
+```bash
+git checkout -b feature/your-feature-name
+```
+
+### 2. Make Your Changes
+
+- Edit QML files
+- Test thoroughly
+- Check logs for errors
+- Verify on different screen sizes
+
+### 3. Test
+
+```bash
+# Restart iNiR
+qs kill -c ii && qs -c ii
+
+# Check logs
+qs log -c ii | grep -i error
+
+# Test the feature
+# Open settings, test UI, check all five styles
+```
+
+### 4. Commit
+
+Use conventional commits:
+
+```bash
+git commit -m "feat(bar): add new widget"
+git commit -m "fix(dock): resolve icon sizing issue"
+git commit -m "docs: update installation guide"
+```
+
+Types:
+- `feat` - New feature
+- `fix` - Bug fix
+- `docs` - Documentation
+- `style` - Code style (formatting)
+- `refactor` - Code refactoring
+- `perf` - Performance improvement
+- `test` - Tests
+- `chore` - Maintenance
+
+### 5. Push and PR
+
+```bash
+git push origin feature/your-feature-name
+```
+
+Create a pull request on GitHub with:
+- Clear description of changes
+- Screenshots/videos if UI changes
+- Testing steps
+- Related issues
+
+## Guidelines
+
+### Adding Features
+
+- Check if it fits iNiR's scope
+- Discuss in an issue first for large features
+- Make it configurable (add to settings)
+- Support both panel families if applicable
+- Update documentation
+
+### Fixing Bugs
+
+- Reproduce the bug first
+- Check if it's already reported
+- Fix the root cause, not the symptom
+- Add comments explaining the fix
+- Test edge cases
+
+### Documentation
+
+- Write in clear, natural language
+- No corporate speak or AI-sounding text
+- Include code examples
+- Update relevant docs when changing features
+
+### Design
+
+- Follow Material Design principles (ii family)
+- Follow Windows 11 design (waffle family)
+- Use existing design tokens
+- Support all five global styles
+- Test on different screen sizes
+
+## Testing
+
+### Manual Testing
+
+1. Restart iNiR
+2. Check logs for errors
+3. Test the feature
+4. Test on different screen sizes
+5. Test with different themes
+6. Test with different panel families
+
+### Automated Testing
+
+Currently no automated tests. Manual testing required.
+
+## Code Review
+
+Pull requests are reviewed for:
+
+- Code quality
+- Design consistency
+- Performance impact
+- Breaking changes
+- Documentation updates
+
+Be patient. Reviews may take a few days.
+
+## Reporting Issues
+
+### Before Reporting
+
+1. Check existing issues
+2. Verify it's not a config issue
+3. Test with default config
+4. Collect logs and system info
+
+### Issue Template
+
+```markdown
+**Description**
+Clear description of the issue.
+
+**Steps to Reproduce**
+1. Do this
+2. Then this
+3. See error
+
+**Expected Behavior**
+What should happen.
+
+**Actual Behavior**
+What actually happens.
+
+**System Info**
+- OS: Arch Linux
+- Niri version: 0.x.x
+- Quickshell version: x.x.x
+- iNiR version: x.x.x
+
+**Logs**
+```
+qs log -c ii output here
+```
+
+**Screenshots**
+If applicable.
+```
+
+## Community
+
+- **Discord** - Chat, help, discussions
+- **GitHub Issues** - Bug reports, feature requests
+- **GitHub Discussions** - General questions, ideas
+
+## License
+
+By contributing, you agree that your contributions will be licensed under the MIT License.
+
+## Recognition
+
+Contributors are listed in the README. Significant contributions may be highlighted in release notes.
+
+## Questions?
+
+- Ask in Discord
+- Open a discussion on GitHub
+- Comment on related issues
+
+Thank you for contributing to iNiR!

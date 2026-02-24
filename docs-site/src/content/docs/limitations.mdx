@@ -1,0 +1,185 @@
+---
+title: "Limitations"
+description: "Known limitations and workarounds for iNiR"
+---
+
+# Limitations
+
+iNiR has some limitations due to compositor constraints, missing features in dependencies, or design decisions.
+
+## Compositor Limitations
+
+### Niri-Specific
+
+**No native window minimization**
+- Niri doesn't support minimizing windows
+- iNiR works around this by moving windows to a hidden workspace
+- Not perfect, but functional
+
+**Click-outside-to-close requires workarounds**
+- Niri doesn't have native support for this
+- iNiR uses backdrop panels or Escape key
+- Some panels auto-close when others open
+
+**No live window previews**
+- Niri doesn't expose window thumbnails
+- iNiR uses app icons instead
+- Overview shows window titles and workspace info
+
+### Hyprland-Specific
+
+**Partial support only**
+- Some features work, some don't
+- Screen zoom requires Hyprland
+- Lock screen blur hack is Hyprland-specific
+- Not all IPC commands are tested on Hyprland
+
+## Hardware Limitations
+
+### Audio
+
+**PipeWire required**
+- PulseAudio-only systems won't work
+- No plans to support PulseAudio
+- Migrate to PipeWire if you haven't already
+
+### Display
+
+**External monitor brightness requires DDC/CI**
+- Not all monitors support DDC/CI
+- Requires `ddcutil` package
+- 300ms debounce to prevent flickering
+- Laptop internal displays work fine
+
+### Location
+
+**GPS weather requires geoclue**
+- Falls back to IP geolocation if geoclue not available
+- IP geolocation is less accurate
+- Some distros don't ship geoclue by default
+
+## Feature Limitations
+
+### Clipboard
+
+**Requires cliphist**
+- No built-in clipboard history
+- Must run `wl-paste --watch cliphist store` in background
+- Images stored as files, not in memory
+
+### Screenshots
+
+**No built-in screenshot tool**
+- Requires `grim` and `slurp`
+- Region selection is compositor-dependent
+- Some Wayland apps block screenshots (security feature)
+
+### Recording
+
+**Requires wf-recorder**
+- No built-in screen recording
+- Audio recording requires PipeWire
+- Some apps block recording (DRM content)
+
+### OCR
+
+**Requires tesseract**
+- No built-in OCR
+- Accuracy depends on tesseract language data
+- Works best with clear, high-contrast text
+
+### AI Features
+
+**Requires API keys**
+- AI chat needs Gemini, Mistral, or OpenRouter API key — or use Ollama for local models
+- Voice search needs Gemini API key
+- Keys stored in gnome-keyring
+
+## Performance Limitations
+
+### Memory Usage
+
+**200-400MB RAM for full shell**
+- QML/Qt runtime is heavy
+- Disable unused modules to reduce usage
+- Low power mode helps on older hardware
+
+### Animations
+
+**Can be laggy on older hardware**
+- Blur effects are expensive
+- Reduce animations in settings
+- GameMode auto-disables effects
+- Switch from Aurora to Material/iNiR style
+
+### Startup Time
+
+**2-3 seconds to fully load**
+- QML compilation takes time
+- Singletons load on startup
+- Lazy loading helps but isn't instant
+
+## Design Limitations
+
+### Configuration
+
+**JSON config file**
+- Not the most user-friendly format
+- GUI settings help but don't cover everything
+- Some advanced options require manual editing
+
+### Theming
+
+**Matugen required for wallpaper colors**
+- No built-in color extraction
+- Matugen must be installed separately
+- Manual theme editing is possible but tedious
+
+### Translations
+
+**Incomplete translations**
+- English is primary language
+- Some strings not translated
+- Contributions welcome
+
+## Workarounds
+
+### Missing Features
+
+If a feature you need isn't available:
+
+1. Check if it's compositor-limited
+2. Look for alternative approaches
+3. Request it as a feature (GitHub issues)
+4. Contribute a PR if you can implement it
+
+### Performance Issues
+
+If iNiR is slow:
+
+1. Disable unused modules
+2. Enable low power mode
+3. Reduce animations
+4. Switch to Material or iNiR style (no blur)
+5. Use GameMode for fullscreen apps
+
+### Compatibility Issues
+
+If something doesn't work:
+
+1. Check compositor (Niri vs Hyprland)
+2. Verify dependencies are installed
+3. Check logs for errors
+4. Report issue with system info
+
+## Future Improvements
+
+Some limitations may be addressed in future versions:
+
+- Better Hyprland support
+- More efficient rendering
+- Reduced memory usage
+- Faster startup time
+- More complete translations
+
+No promises, but we're working on it.

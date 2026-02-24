@@ -1,0 +1,274 @@
+---
+title: "Common Workflows"
+description: "Step-by-step guides for common tasks"
+---
+
+# Common Workflows
+
+## First-Time Setup
+
+```
+1. Install iNiR
+   ./setup install
+
+2. Choose panel family
+   Mod+Shift+W (or keep default ii)
+
+3. Choose global style
+   Super+, → Appearance → Global Style
+
+4. Set wallpaper
+   Ctrl+Alt+T → Select wallpaper
+
+5. Configure keybinds
+   Edit ~/.config/niri/config.kdl
+```
+
+## Switching Themes
+
+**Via GUI:**
+```
+Super+, → Appearance → Theme → Select preset
+```
+
+**Via Wallpaper:**
+```
+Ctrl+Alt+T → Select wallpaper
+Colors auto-extract with matugen
+```
+
+**Via Config:**
+```bash
+# Edit config
+nano ~/.config/illogical-impulse/config.json
+
+# Change theme
+"appearance": { "theme": "gruvbox" }
+
+# Restart
+qs kill -c ii; qs -c ii
+```
+
+## Debugging Issues
+
+```
+1. Check logs
+   qs log -c ii | tail -50
+
+2. Look for errors
+   qs log -c ii | grep -i error
+
+3. Restart shell
+   qs kill -c ii; qs -c ii
+
+4. Check config validity
+   cat ~/.config/illogical-impulse/config.json | jq .
+
+5. Reset to defaults
+   ./setup doctor
+```
+
+## Performance Tuning
+
+**Low-end hardware:**
+```
+1. Use waffle family (lower memory)
+   qs -c ii ipc call panelFamily set waffle
+
+2. Use Material or iNiR style (no blur)
+   Super+, → Appearance → Global Style → material
+
+3. Disable unused modules
+   Edit config: "modules": { "aiChat": false }
+
+4. Enable performance.lowPower
+   "performance": { "lowPower": true }
+
+5. Enable performance.reduceAnimations
+   "performance": { "reduceAnimations": true }
+```
+
+**Gaming:**
+```
+1. Enable gameMode.enable
+   "gameMode": { "enable": true }
+
+2. Enable gameMode.disableEffects
+   "gameMode": { "disableEffects": true }
+
+3. Enable gameMode.disableAnimations
+   "gameMode": { "disableAnimations": true }
+
+4. Enable gameMode.minimalMode
+   "gameMode": { "minimalMode": true }
+```
+
+## Customizing Keybinds
+
+```
+1. Edit Niri config
+   $EDITOR ~/.config/niri/config.kdl
+
+2. Find binds section
+   Search for "binds {"
+
+3. Add custom bind
+   Mod+P { spawn "qs" "-c" "ii" "ipc" "call" "session" "toggle"; }
+
+4. Reload Niri
+   niri msg action load-config-file
+
+5. Test keybind
+   Press Mod+P
+```
+
+## Adding Pinned Apps to Dock
+
+```
+1. Find app ID
+   # Run app, then:
+   qs -c ii ipc call dock listApps
+
+2. Edit config
+   nano ~/.config/illogical-impulse/config.json
+
+3. Add to pinnedApps
+   "dock": {
+     "pinnedApps": ["firefox", "kitty", "code"]
+   }
+
+4. Restart
+   qs kill -c ii; qs -c ii
+```
+
+## Setting Up AI Chat
+
+```
+1. Get API key
+   # Gemini: https://makersuite.google.com/app/apikey
+   # Mistral: https://console.mistral.ai/api-keys
+   # OpenRouter: https://openrouter.ai/keys
+   # Or use Ollama locally (no key needed)
+
+2. Store in keyring
+   secret-tool store --label="Gemini API" service gemini key api
+
+3. Enable in config
+   "sidebar": {
+     "left": {
+       "aiChat": { "enable": true }
+     }
+   }
+
+4. Restart and open sidebar
+   qs kill -c ii; qs -c ii
+   Super+A (or click sidebar button)
+```
+
+## Switching Between Monitors
+
+**Per-monitor wallpapers:**
+```
+1. Enable multi-monitor mode
+   "background": {
+     "multiMonitor": { "enable": true }
+   }
+
+2. Set wallpaper per monitor
+   Ctrl+Alt+T → Select monitor → Choose wallpaper
+
+3. Each monitor gets independent wallpaper and colors
+```
+
+## Taking Screenshots
+
+**Region screenshot:**
+```
+Super+Shift+S → Drag region → Auto-copied to clipboard
+```
+
+**OCR (text extraction):**
+```
+Super+Shift+X → Drag region → Text copied to clipboard
+```
+
+**Screen recording:**
+```
+Super+Shift+R → Drag region → Recording starts
+Super+Shift+R again → Stop recording
+```
+
+## Fixing Common Issues
+
+**Bar not showing:**
+```
+1. Check if enabled
+   grep "iiBar" ~/.config/illogical-impulse/config.json
+
+2. Check logs
+   qs log -c ii | grep -i bar
+
+3. Force restart
+   qs kill -c ii; sleep 2; qs -c ii
+```
+
+**Settings won't open:**
+```
+1. Try IPC
+   qs -c ii ipc call settings open
+
+2. Check logs
+   qs log -c ii | grep -i settings
+
+3. Verify config is valid
+   cat ~/.config/illogical-impulse/config.json | jq .
+```
+
+**High memory usage:**
+```
+1. Check which modules are loaded
+   ps aux | grep quickshell
+
+2. Disable heavy modules
+   # AI Chat, Video Wallpaper, Sidebars
+
+3. Switch to waffle family
+   qs -c ii ipc call panelFamily set waffle
+```
+
+## Updating iNiR
+
+```
+1. Pull latest changes
+   cd ~/.config/quickshell/ii
+   git pull
+
+2. Run update script
+   ./setup update
+
+3. Check changelog
+   cat CHANGELOG.md | head -50
+
+4. Restart automatically applied
+```
+
+## Backing Up Config
+
+```
+1. Copy config file
+   cp ~/.config/illogical-impulse/config.json ~/config-backup.json
+
+2. Or use setup script
+   ./setup my-changes
+
+3. Restore if needed
+   cp ~/config-backup.json ~/.config/illogical-impulse/config.json
+   qs kill -c ii; qs -c ii
+```
+
+## Next Steps
+
+- [Quick Reference](/docs/quick-reference) - Essential commands
+- [Keybindings](/docs/keybindings) - Complete keybind reference
+- [Troubleshooting](/docs/troubleshooting) - Fix common issues
+- [Config Options](/docs/config-options) - All configuration options

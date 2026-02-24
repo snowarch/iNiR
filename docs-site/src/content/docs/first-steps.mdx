@@ -1,0 +1,168 @@
+---
+title: "First Steps"
+description: "Getting started with iNiR after installation"
+---
+
+# First Steps
+
+You've installed iNiR. Now what?
+
+## Verify Everything Works
+
+Check the logs to make sure iNiR started correctly:
+
+```bash
+qs log -c ii
+```
+
+You should see "Config ready" and no critical errors. Some warnings about missing optional features are normal.
+
+## Learn the Basics
+
+### Opening Things
+
+- `Mod+Space` - Overview (see all workspaces and windows)
+- `Super+G` - Overlay (search apps, files, widgets)
+- `Alt+Tab` - Switch between windows
+- `Super+V` - Clipboard history
+- `Super+,` - Settings
+
+### Taking Screenshots
+
+- `Super+Shift+S` - Select a region to screenshot
+- `Print` - Full screenshot
+- `Super+Shift+X` - OCR (extract text from screen)
+
+### Managing Windows
+
+- `Super+Q` - Close window
+- `Super+F` - Fullscreen
+- `Super+Left/Right` - Move focus between windows
+- `Super+1-9` - Switch to workspace 1-9
+
+## Configure Your Setup
+
+Open settings with `Super+,` or run:
+
+```bash
+qs -c ii ipc call settings open
+```
+
+### Essential Settings
+
+**Appearance**
+- Choose your global style: Material, Cards, Aurora (glass), iNiR (minimal), or Angel (neo-brutalism)
+- Enable/disable transparency
+- Pick a theme preset or let matugen generate colors from your wallpaper
+
+**Panel Family**
+- ii (Material Design) - Floating bar, sidebars
+- waffle (Windows 11) - Bottom taskbar, action center
+
+**Modules**
+- Enable/disable specific features
+- Reduce memory usage by disabling what you don't use
+
+**Performance**
+- Low power mode for laptops
+- Reduce animations for older hardware
+- GameMode auto-detection for fullscreen apps
+
+## Set Your Wallpaper
+
+iNiR uses matugen to generate colors from your wallpaper.
+
+### Using the Wallpaper Selector
+
+Press `Ctrl+Alt+T` to open the wallpaper selector, or:
+
+```bash
+qs -c ii ipc call wallpaperSelector toggle
+```
+
+### Manual Wallpaper
+
+Edit your config:
+
+```bash
+nano ~/.config/illogical-impulse/config.json
+```
+
+Find the `background` section and set your wallpaper path:
+
+```json
+"background": {
+  "wallpaperPath": "/path/to/your/wallpaper.jpg"
+}
+```
+
+Then restart iNiR:
+
+```bash
+qs kill -c ii && qs -c ii
+```
+
+## Customize Keybinds
+
+Edit Niri's config:
+
+```bash
+nano ~/.config/niri/config.kdl
+```
+
+Add your custom keybinds in the `binds` section. See the IPC documentation for all available commands.
+
+Example:
+
+```kdl
+binds {
+    Super+P { spawn "qs" "-c" "ii" "ipc" "call" "session" "toggle"; }
+}
+```
+
+Reload Niri config:
+
+```bash
+niri msg action load-config-file
+```
+
+## Explore Features
+
+### AI Chat (Left Sidebar)
+
+If you have AI API keys configured, the left sidebar has an AI chat interface.
+
+### Quick Toggles (Right Sidebar)
+
+The right sidebar has quick toggles for common settings and a notepad.
+
+### Clipboard Manager
+
+`Super+V` opens your clipboard history. Search through past clips, including images.
+
+### Region Tools
+
+- Screenshot: `Super+Shift+S`
+- OCR: `Super+Shift+X`
+- Image search: `Super+Shift+A`
+- Screen recording: Available in region tools
+
+### GameMode
+
+iNiR automatically detects fullscreen apps and disables effects/animations for better performance. Toggle manually via IPC: `qs -c ii ipc call gamemode toggle`.
+
+## Troubleshooting
+
+If something doesn't work:
+
+1. Check the logs: `qs log -c ii`
+2. Restart iNiR: `qs kill -c ii && qs -c ii`
+3. Check for missing dependencies
+4. See the troubleshooting guide
+
+## Continue Learning
+
+- [Keybindings](/docs/keybindings) - Master keyboard shortcuts
+- [Theming](/docs/theming) - Customize appearance
+- [Common Workflows](/docs/workflows) - Solve common tasks
+- [Config Options](/docs/config-options) - All configuration options
