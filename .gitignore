@@ -66,8 +66,7 @@ tmp/
 # Session files (personal dev data)
 session-*.md
 session-ses_*.md
-docs-site/
-src/
+/src/
 
 # Credentials and cookies (NEVER commit)
 yt-cookies.txt
