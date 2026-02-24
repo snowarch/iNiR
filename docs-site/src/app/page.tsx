@@ -54,10 +54,10 @@ const modules = [
 ]
 
 const screenshots = [
-  { src: "https://github.com/user-attachments/assets/da6beb4a-ccee-40ba-a372-5eea77b595f8", alt: "iNiR bar and dock" },
-  { src: "https://github.com/user-attachments/assets/1fe258bc-8aec-4fd9-8574-d9d7472c3cc8", alt: "iNiR desktop overview" },
-  { src: "https://github.com/user-attachments/assets/3ce2055b-648c-45a1-9d09-705c1b4a03b7", alt: "iNiR settings and sidebar" },
-  { src: "https://github.com/user-attachments/assets/ea2311dc-769e-44dc-a46d-37cf8807d2cc", alt: "iNiR overview mode" },
+  { src: "https://github.com/user-attachments/assets/da6beb4a-ccee-40ba-a372-5eea77b595f8", alt: "iNiR bar, dock, and settings" },
+  { src: "https://github.com/user-attachments/assets/1fe258bc-8aec-4fd9-8574-d9d7472c3cc8", alt: "iNiR sidebar widgets and wallpaper browser" },
+  { src: "https://github.com/user-attachments/assets/3ce2055b-648c-45a1-9d09-705c1b4a03b7", alt: "iNiR sidebar and media controls" },
+  { src: "https://github.com/user-attachments/assets/ea2311dc-769e-44dc-a46d-37cf8807d2cc", alt: "iNiR overview with calendar and notifications" },
 ]
 
 /* ── Unified CTA button — same style everywhere ── */
@@ -179,7 +179,7 @@ export default function HomePage() {
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img
-            src="/hero-bg.jpg"
+            src={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/hero-bg.jpg`}
             alt=""
             className="h-full w-full object-cover opacity-30"
             aria-hidden="true"

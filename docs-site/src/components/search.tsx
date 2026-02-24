@@ -26,9 +26,11 @@ interface IndexEntry {
 
 let searchIndex: IndexEntry[] | null = null
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ""
+
 async function loadIndex(): Promise<IndexEntry[]> {
   if (searchIndex) return searchIndex
-  const res = await fetch("/search-index.json")
+  const res = await fetch(`${basePath}/search-index.json`)
   searchIndex = await res.json()
   return searchIndex!
 }
