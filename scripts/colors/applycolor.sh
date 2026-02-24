@@ -239,7 +239,7 @@ apply_code_editors() {
     if command -v "$python_cmd" &>/dev/null || [[ -x "$python_cmd" ]]; then
       "$python_cmd" "$SCRIPT_DIR/generate_terminal_configs.py" \
         --scss "$STATE_DIR/user/generated/material_colors.scss" \
-        --terminals zed >> "$log_file" 2>&1
+        --zed >> "$log_file" 2>&1
 
       if [ $? -eq 0 ]; then
         echo "[code-editors] Zed theme generated (Zed auto-reloads on file change)" >> "$log_file" 2>/dev/null
