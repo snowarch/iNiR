@@ -232,17 +232,22 @@ Scope {
 
     property bool _noUiRebuildPending: false
     
+    // Synchronous version for immediate use in noVisualUi mode
+    function rebuildNoUiSnapshotSync() {
+        const windows = NiriService.windows || []
+        const workspaces = NiriService.workspaces || {}
+        const mruIds = NiriService.mruWindowIds || []
+        root.noUiSnapshot = buildItemsFrom(windows, workspaces, mruIds)
+        root.noUiIndex = 0
+    }
+    
     function rebuildNoUiSnapshot() {
         if (_noUiRebuildPending) return
         _noUiRebuildPending = true
         
         Qt.callLater(function() {
             _noUiRebuildPending = false
-            const windows = NiriService.windows || []
-            const workspaces = NiriService.workspaces || {}
-            const mruIds = NiriService.mruWindowIds || []
-            root.noUiSnapshot = buildItemsFrom(windows, workspaces, mruIds)
-            root.noUiIndex = 0
+            rebuildNoUiSnapshotSync()
         })
     }
 
@@ -469,14 +474,14 @@ Scope {
 
             StyledRectangularShadow {
                 target: root.compactStyle ? compactBackground : panelBackground
-                visible: Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere)
+                visible: !root.listStyle && (Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere))
             }
 
             MultiEffect {
                 z: 0.5
                 anchors.fill: panelBackground
                 source: panelBackground
-                visible: !root.compactStyle && !root.altUseM3Layout && Appearance.effectsEnabled && root.effectiveEnableBlurGlass && root.altBlurAmount > 0 && !root.isHighLoad
+                visible: !root.compactStyle && !root.listStyle && !root.altUseM3Layout && Appearance.effectsEnabled && root.effectiveEnableBlurGlass && root.altBlurAmount > 0 && !root.isHighLoad
                 blurEnabled: true
                 blur: root.altBlurAmount
                 blurMax: 64
@@ -1241,7 +1246,7 @@ Scope {
 
                 const len = root.noUiSnapshot?.length ?? 0
                 if (!root.quickSwitchDone || len === 0) {
-                    root.rebuildNoUiSnapshot()
+                    root.rebuildNoUiSnapshotSync()  // Use sync version for immediate response
                 }
 
                 const newLen = root.noUiSnapshot?.length ?? 0
@@ -1273,7 +1278,7 @@ Scope {
 
                 const len = root.noUiSnapshot?.length ?? 0
                 if (!root.quickSwitchDone || len === 0) {
-                    root.rebuildNoUiSnapshot()
+                    root.rebuildNoUiSnapshotSync()  // Use sync version for immediate response
                 }
 
                 const newLen = root.noUiSnapshot?.length ?? 0

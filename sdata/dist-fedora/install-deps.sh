@@ -197,7 +197,6 @@ FEDORA_CORE_PKGS=(
   
   # Terminal - kitty is default, configurable in Settings
   kitty
-  foot
   
   # Shell (required for scripts)
   fish

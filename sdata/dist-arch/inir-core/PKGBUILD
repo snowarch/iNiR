@@ -44,7 +44,6 @@ depends=(
   
   # Terminal - kitty is default, configurable in Settings
   kitty
-  foot
   
   # Shell - fish is required for scripts
   fish

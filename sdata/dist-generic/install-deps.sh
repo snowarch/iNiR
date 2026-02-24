@@ -215,7 +215,7 @@ echo "  polkit, networkmanager, gnome-keyring, blueman"
 echo ""
 
 echo -e "${STY_BLUE}Optional but recommended:${STY_RST}"
-echo "  foot (terminal), nautilus (file manager), fuzzel (launcher)"
+echo "  kitty (terminal), nautilus (file manager), fuzzel (launcher)"
 echo "  easyeffects, mpv, yt-dlp, tesseract-ocr"
 echo ""
 

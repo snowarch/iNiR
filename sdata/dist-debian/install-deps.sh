@@ -349,7 +349,7 @@ DEBIAN_CORE_PKGS=(
   kdialog
   
   # Terminal
-  foot
+  kitty
   
   # Shell (required for scripts)
   fish
