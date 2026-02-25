@@ -18,10 +18,8 @@ Item { // Notification item area
     property real padding: onlyNotification ? 0 : 8
     property real summaryElideRatio: 0.85
 
-    // Animation tokens — popup uses fast (200ms), sidebar uses standard (500ms)
-    readonly property QtObject _dismissAnim: root.popup
-        ? Appearance.animation.elementMoveFast
-        : Appearance.animation.elementMove
+    // Animation tokens — use fast timing for dismiss in all modes
+    readonly property QtObject _dismissAnim: Appearance.animation.elementMoveFast
     readonly property QtObject _contentAnim: Appearance.animation.elementMoveFast
 
     property real dragConfirmThreshold: 70 // Drag to discard notification

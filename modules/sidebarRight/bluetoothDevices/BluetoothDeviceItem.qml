@@ -88,6 +88,7 @@ DialogListItem {
                     if (root.device?.connected) {
                         root.device.disconnect();
                     } else {
+                        if (root.device) root.device.trusted = true;
                         root.device.connect();
                     }
                 }

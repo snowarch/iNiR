@@ -14,7 +14,26 @@ Scope {
 
     PanelWindow {
         id: sidebarRoot
-        visible: GlobalStates.sidebarLeftOpen
+
+        Component.onCompleted: visible = GlobalStates.sidebarLeftOpen
+
+        Connections {
+            target: GlobalStates
+            function onSidebarLeftOpenChanged() {
+                if (GlobalStates.sidebarLeftOpen) {
+                    _closeTimer.stop()
+                    sidebarRoot.visible = true
+                } else {
+                    _closeTimer.restart()
+                }
+            }
+        }
+
+        Timer {
+            id: _closeTimer
+            interval: 300
+            onTriggered: sidebarRoot.visible = false
+        }
 
         function hide() {
             GlobalStates.sidebarLeftOpen = false
@@ -67,23 +86,18 @@ Scope {
             width: sidebarWidth - Appearance.sizes.hyprlandGapsOut - Appearance.sizes.elevationMargin
             height: parent.height - Appearance.sizes.hyprlandGapsOut * 2
 
-            // Simple slide animation using transform (GPU-accelerated)
+            // Full slide-out animation (GPU-accelerated)
             property bool animating: false
             transform: Translate {
-                x: GlobalStates.sidebarLeftOpen ? 0 : -30
+                x: GlobalStates.sidebarLeftOpen ? 0 : -(root.sidebarWidth + Appearance.sizes.hyprlandGapsOut)
                 Behavior on x {
                     enabled: Appearance.animationsEnabled
                     NumberAnimation {
-                        duration: 150
+                        duration: 250
                         easing.type: Easing.OutCubic
                         onRunningChanged: sidebarContentLoader.animating = running
                     }
                 }
-            }
-            opacity: GlobalStates.sidebarLeftOpen ? 1 : 0
-            Behavior on opacity {
-                enabled: Appearance.animationsEnabled
-                NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
             }
 
             focus: GlobalStates.sidebarLeftOpen

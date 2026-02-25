@@ -30,12 +30,27 @@ ToolTip {
     }
 
     visible: internalVisibleCondition
+
+    onVisibleChanged: {
+        if (visible) {
+            contentItem.shown = false
+            _showTimer.restart()
+        } else {
+            contentItem.shown = false
+        }
+    }
+
+    Timer {
+        id: _showTimer
+        interval: 16
+        onTriggered: contentItem.shown = true
+    }
     
     contentItem: StyledToolTipContent {
         id: contentItem
         font: root.font
         text: root.text
-        shown: root.internalVisibleCondition
+        shown: false
         horizontalPadding: root.horizontalPadding
         verticalPadding: root.verticalPadding
     }

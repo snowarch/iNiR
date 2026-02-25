@@ -286,12 +286,21 @@ Item {
         required property string shownPropertyString
         property alias dialog: toggleDialogLoader.sourceComponent
         readonly property bool shown: root[shownPropertyString]
+        property bool _loaded: false
         anchors.fill: parent
 
-        active: shown
-        
-        onItemChanged: {
+        active: _loaded
+
+        onShownChanged: {
+            if (shown && !_loaded) _loaded = true
             if (item) {
+                item.show = shown
+                if (shown) item.forceActiveFocus()
+            }
+        }
+
+        onItemChanged: {
+            if (item && shown) {
                 item.show = true;
                 item.forceActiveFocus();
             }
