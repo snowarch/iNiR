@@ -96,6 +96,10 @@ Scope {
                     }
                 }
 
+                Keys.onEscapePressed: {
+                    GlobalStates.mediaControlsOpen = false;
+                }
+
                 MouseArea {
                     anchors.fill: parent
                     onClicked: GlobalStates.mediaControlsOpen = false
