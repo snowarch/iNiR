@@ -173,6 +173,72 @@ def setup_poll(client_id, client_secret, device_code):
     except Exception as e:
         print(json.dumps({"status": "error", "error": str(e)}))
 
+def fetch_liked():
+    """Fetch liked videos via YouTube Data API v3. Outputs one JSON per line (JSONL)."""
+    oauth = load_oauth()
+    oauth = ensure_valid_token(oauth)
+
+    page_token = ""
+    count = 0
+    max_results = 200  # safety cap
+
+    while count < max_results:
+        url = "https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&myRating=like&maxResults=50"
+        if page_token:
+            url += f"&pageToken={page_token}"
+
+        req = urllib.request.Request(url)
+        req.add_header("Authorization", f"Bearer {oauth['access_token']}")
+
+        try:
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                data = json.loads(resp.read())
+        except urllib.error.HTTPError as e:
+            body = e.read().decode()
+            print(json.dumps({"_error": f"HTTP {e.code}", "detail": body[:200]}), flush=True)
+            break
+        except Exception as e:
+            print(json.dumps({"_error": str(e)}), flush=True)
+            break
+
+        for item in data.get("items", []):
+            snippet = item.get("snippet", {})
+            content = item.get("contentDetails", {})
+            video_id = item.get("id", "")
+
+            # Parse ISO 8601 duration (PT3M45S -> seconds)
+            duration_str = content.get("duration", "PT0S")
+            duration = 0
+            import re
+            m = re.match(r'PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?', duration_str)
+            if m:
+                duration = int(m.group(1) or 0) * 3600 + int(m.group(2) or 0) * 60 + int(m.group(3) or 0)
+
+            # Filter: 30s-900s (same as existing yt-dlp filter)
+            if duration < 30 or duration > 900:
+                continue
+
+            # Get best thumbnail
+            thumbs = snippet.get("thumbnails", {})
+            thumb = (thumbs.get("medium") or thumbs.get("default") or {}).get("url", "")
+
+            print(json.dumps({
+                "videoId": video_id,
+                "title": snippet.get("title", "Unknown"),
+                "artist": snippet.get("channelTitle", ""),
+                "thumbnail": thumb,
+                "duration": duration,
+                "url": f"https://music.youtube.com/watch?v={video_id}",
+            }), flush=True)
+            count += 1
+
+        page_token = data.get("nextPageToken", "")
+        if not page_token:
+            break
+
+    # Signal done
+    print(json.dumps({"_done": True, "count": count}), flush=True)
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print(json.dumps({"error": "Usage: ytmusic_rate.py <command> [args]"}))
@@ -190,6 +256,8 @@ if __name__ == "__main__":
         setup_request(sys.argv[2], sys.argv[3])
     elif action == "setup-poll" and len(sys.argv) == 5:
         setup_poll(sys.argv[2], sys.argv[3], sys.argv[4])
+    elif action == "fetch-liked":
+        fetch_liked()
     else:
         print(json.dumps({"error": f"Unknown command: {' '.join(sys.argv[1:])}"}))
         sys.exit(1)

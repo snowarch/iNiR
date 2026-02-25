@@ -1020,9 +1020,45 @@ print("")
     }
     
     function fetchLikedSongs(): void {
-        if (!root.googleConnected || root.syncingLiked) return
+        if (root.syncingLiked) return
         root.syncingLiked = true
-        _fetchLikedProc.running = true
+        if (root.oauthConfigured) {
+            _fetchLikedOAuthProc._items = []
+            _fetchLikedOAuthProc.running = true
+        } else if (root.googleConnected) {
+            _fetchLikedProc.running = true
+        } else {
+            root.syncingLiked = false
+        }
+    }
+
+    Process {
+        id: _fetchLikedOAuthProc
+        property var _items: []
+        command: ["python3", Directories.scriptPath + "/ytmusic_rate.py", "fetch-liked"]
+        stdout: SplitParser {
+            onRead: data => {
+                try {
+                    const r = JSON.parse(data)
+                    if (r._done || r._error) return
+                    _fetchLikedOAuthProc._items.push(r)
+                } catch(e) {}
+            }
+        }
+        onExited: (code) => {
+            if (_fetchLikedOAuthProc._items.length > 0) {
+                root.likedSongs = _fetchLikedOAuthProc._items
+                root.lastLikedSync = new Date().toLocaleString(Qt.locale(), "yyyy-MM-dd hh:mm")
+                Config.setNestedValue('sidebar.ytmusic.liked', root.likedSongs)
+                Config.setNestedValue('sidebar.ytmusic.lastLikedSync', root.lastLikedSync)
+                root.syncingLiked = false
+            } else if (root.googleConnected) {
+                // OAuth returned empty or failed — fallback to cookie method
+                _fetchLikedProc.running = true
+            } else {
+                root.syncingLiked = false
+            }
+        }
     }
     
     function fetchYtMusicPlaylists(): void {
