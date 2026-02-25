@@ -169,7 +169,7 @@ Scope {
 
         Timer {
             id: _closeTimer
-            interval: 250
+            interval: 180
             onTriggered: window.visible = false
         }
 

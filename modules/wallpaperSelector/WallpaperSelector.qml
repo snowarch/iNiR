@@ -54,7 +54,25 @@ Scope {
 
     Loader {
         id: wallpaperSelectorLoader
-        active: GlobalStates.wallpaperSelectorOpen
+        active: GlobalStates.wallpaperSelectorOpen || _wsClosing
+
+        property bool _wsClosing: false
+
+        Connections {
+            target: GlobalStates
+            function onWallpaperSelectorOpenChanged() {
+                if (!GlobalStates.wallpaperSelectorOpen) {
+                    wallpaperSelectorLoader._wsClosing = true
+                    _wsCloseTimer.restart()
+                }
+            }
+        }
+
+        Timer {
+            id: _wsCloseTimer
+            interval: 250
+            onTriggered: wallpaperSelectorLoader._wsClosing = false
+        }
 
         sourceComponent: PanelWindow {
             id: panelWindow
