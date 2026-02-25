@@ -63,6 +63,17 @@ Singleton {
     property bool autoConnectAttempted: false
     property bool autoConnectEnabled: Config.options?.sidebar?.ytmusic?.autoConnect ?? true
     
+    // OAuth state
+    property bool oauthConfigured: false
+    property string oauthChannel: ""
+    property bool oauthSetupActive: false
+    property string oauthUserCode: ""
+    property string oauthVerificationUrl: ""
+    property string oauthDeviceCode: ""
+    property string oauthSetupError: ""
+    property string _oauthClientId: ""
+    property string _oauthClientSecret: ""
+    
     readonly property int maxRecentSearches: 10
     readonly property int maxLikedSongs: 200
     readonly property int maxSearchResults: 30
@@ -154,6 +165,7 @@ Singleton {
         _detectBrowsersProc.running = true
         _loadData()
         _findMpvPlayer()
+        checkOAuth()
     }
 
     Timer {
@@ -522,8 +534,10 @@ Singleton {
         root.likedSongs = liked
         Config.setNestedValue('sidebar.ytmusic.liked', root.likedSongs)
         // Send real like to YouTube via OAuth
-        _rateLikeProc._videoId = root.currentVideoId
-        _rateLikeProc.running = true
+        if (root.oauthConfigured) {
+            _rateLikeProc._videoId = root.currentVideoId
+            _rateLikeProc.running = true
+        }
     }
 
     function unlikeSong(videoId): void {
@@ -534,8 +548,10 @@ Singleton {
         root.likedSongs = liked
         Config.setNestedValue('sidebar.ytmusic.liked', root.likedSongs)
         // Send real unlike to YouTube via OAuth
-        _rateUnlikeProc._videoId = videoId
-        _rateUnlikeProc.running = true
+        if (root.oauthConfigured) {
+            _rateUnlikeProc._videoId = videoId
+            _rateUnlikeProc.running = true
+        }
     }
 
     Process {
@@ -548,6 +564,123 @@ Singleton {
         id: _rateUnlikeProc
         property string _videoId: ""
         command: ["python3", Directories.scriptPath + "/ytmusic_rate.py", "unlike", _videoId]
+    }
+
+    // ── OAuth Setup ────────────────────────────────────────────────────
+    function checkOAuth(): void {
+        _oauthCheckProc.running = true
+    }
+
+    function startOAuthSetup(clientId, clientSecret): void {
+        root._oauthClientId = clientId
+        root._oauthClientSecret = clientSecret
+        root.oauthSetupError = ""
+        root.oauthSetupActive = true
+        _oauthRequestProc._clientId = clientId
+        _oauthRequestProc._clientSecret = clientSecret
+        _oauthRequestProc.running = true
+    }
+
+    function cancelOAuthSetup(): void {
+        root.oauthSetupActive = false
+        root.oauthUserCode = ""
+        root.oauthVerificationUrl = ""
+        root.oauthDeviceCode = ""
+        root.oauthSetupError = ""
+        _oauthPollTimer.running = false
+    }
+
+    function disconnectOAuth(): void {
+        root.oauthConfigured = false
+        root.oauthChannel = ""
+        // Delete the oauth json file
+        _oauthDeleteProc.running = true
+    }
+
+    Process {
+        id: _oauthCheckProc
+        command: ["python3", Directories.scriptPath + "/ytmusic_rate.py", "check"]
+        stdout: SplitParser {
+            onRead: data => {
+                try {
+                    const r = JSON.parse(data)
+                    root.oauthConfigured = r.configured === true
+                    root.oauthChannel = r.channel || ""
+                } catch(e) {}
+            }
+        }
+    }
+
+    Process {
+        id: _oauthRequestProc
+        property string _clientId: ""
+        property string _clientSecret: ""
+        command: ["python3", Directories.scriptPath + "/ytmusic_rate.py", "setup-request", _clientId, _clientSecret]
+        stdout: SplitParser {
+            onRead: data => {
+                try {
+                    const r = JSON.parse(data)
+                    if (r.error) {
+                        root.oauthSetupError = r.error
+                        return
+                    }
+                    root.oauthUserCode = r.user_code
+                    root.oauthVerificationUrl = r.verification_url
+                    root.oauthDeviceCode = r.device_code
+                    _oauthPollTimer.interval = (r.interval || 5) * 1000
+                    _oauthPollTimer.running = true
+                } catch(e) {
+                    root.oauthSetupError = "Failed to parse response"
+                }
+            }
+        }
+    }
+
+    Timer {
+        id: _oauthPollTimer
+        interval: 5000
+        repeat: true
+        onTriggered: {
+            _oauthPollProc._clientId = root._oauthClientId
+            _oauthPollProc._clientSecret = root._oauthClientSecret
+            _oauthPollProc._deviceCode = root.oauthDeviceCode
+            _oauthPollProc.running = true
+        }
+    }
+
+    Process {
+        id: _oauthPollProc
+        property string _clientId: ""
+        property string _clientSecret: ""
+        property string _deviceCode: ""
+        command: ["python3", Directories.scriptPath + "/ytmusic_rate.py", "setup-poll", _clientId, _clientSecret, _deviceCode]
+        stdout: SplitParser {
+            onRead: data => {
+                try {
+                    const r = JSON.parse(data)
+                    if (r.status === "authorized") {
+                        _oauthPollTimer.running = false
+                        root.oauthSetupActive = false
+                        root.oauthUserCode = ""
+                        root.oauthDeviceCode = ""
+                        root.oauthConfigured = true
+                        root.checkOAuth() // fetch channel name
+                    } else if (r.status === "pending" || r.status === "slow_down") {
+                        // keep polling
+                        if (r.status === "slow_down") _oauthPollTimer.interval += 2000
+                    } else {
+                        _oauthPollTimer.running = false
+                        root.oauthSetupError = r.error || "Authorization failed"
+                        root.oauthSetupActive = false
+                    }
+                } catch(e) {}
+            }
+        }
+    }
+
+    Process {
+        id: _oauthDeleteProc
+        command: ["/bin/sh", "-c", "rm -f \"${XDG_CONFIG_HOME:-$HOME/.config}/illogical-impulse/ytmusic_oauth.json\""]
     }
 
     function playPlaylist(playlistIndex, shuffle): void {

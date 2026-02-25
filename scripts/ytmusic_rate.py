@@ -73,18 +73,123 @@ def rate_video(video_id, rating):
         print(json.dumps({"error": f"HTTP {e.code}", "detail": body[:200]}))
         sys.exit(1)
 
+def setup_check():
+    """Check if OAuth is configured and token is valid."""
+    if not os.path.exists(OAUTH_PATH):
+        print(json.dumps({"configured": False}))
+        return
+    try:
+        oauth = load_oauth()
+        has_token = bool(oauth.get("access_token") and oauth.get("refresh_token"))
+        expired = time.time() > oauth.get("expires_at", 0) - 60
+        # Try to get channel name
+        channel = ""
+        if has_token:
+            try:
+                if expired:
+                    oauth = refresh_token(oauth)
+                url = "https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true"
+                req = urllib.request.Request(url)
+                req.add_header("Authorization", f"Bearer {oauth['access_token']}")
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    data = json.loads(resp.read())
+                    items = data.get("items", [])
+                    if items:
+                        channel = items[0].get("snippet", {}).get("title", "")
+            except Exception:
+                pass
+        print(json.dumps({"configured": has_token, "channel": channel}))
+    except Exception:
+        print(json.dumps({"configured": False}))
+
+def setup_request(client_id, client_secret):
+    """Request device code for OAuth device flow."""
+    data = urllib.parse.urlencode({
+        "client_id": client_id,
+        "scope": "https://www.googleapis.com/auth/youtube",
+    }).encode()
+    req = urllib.request.Request("https://oauth2.googleapis.com/device/code", data=data, method="POST")
+    req.add_header("Content-Type", "application/x-www-form-urlencoded")
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            result = json.loads(resp.read())
+            # Save client credentials for later
+            os.makedirs(os.path.dirname(OAUTH_PATH), exist_ok=True)
+            save_oauth({"client_id": client_id, "client_secret": client_secret})
+            print(json.dumps({
+                "status": "ok",
+                "user_code": result["user_code"],
+                "verification_url": result["verification_url"],
+                "device_code": result["device_code"],
+                "interval": result.get("interval", 5),
+                "expires_in": result.get("expires_in", 1800),
+            }))
+    except urllib.error.HTTPError as e:
+        body = e.read().decode()
+        print(json.dumps({"error": f"HTTP {e.code}", "detail": body[:300]}))
+        sys.exit(1)
+    except Exception as e:
+        print(json.dumps({"error": str(e)}))
+        sys.exit(1)
+
+def setup_poll(client_id, client_secret, device_code):
+    """Poll for OAuth token (single attempt)."""
+    data = urllib.parse.urlencode({
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "device_code": device_code,
+        "grant_type": "urn:ietf:params:oauth:grant_type:device_code",
+    }).encode()
+    req = urllib.request.Request("https://oauth2.googleapis.com/token", data=data, method="POST")
+    req.add_header("Content-Type", "application/x-www-form-urlencoded")
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            token_data = json.loads(resp.read())
+            # Save full OAuth data
+            oauth = {
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "access_token": token_data["access_token"],
+                "refresh_token": token_data.get("refresh_token", ""),
+                "expires_at": int(time.time()) + token_data.get("expires_in", 3600),
+            }
+            os.makedirs(os.path.dirname(OAUTH_PATH), exist_ok=True)
+            save_oauth(oauth)
+            os.chmod(OAUTH_PATH, 0o600)
+            print(json.dumps({"status": "authorized"}))
+    except urllib.error.HTTPError as e:
+        body = json.loads(e.read().decode())
+        err = body.get("error", "unknown")
+        if err == "authorization_pending":
+            print(json.dumps({"status": "pending"}))
+        elif err == "slow_down":
+            print(json.dumps({"status": "slow_down"}))
+        elif err == "access_denied":
+            print(json.dumps({"status": "denied", "error": "User denied access"}))
+        elif err == "expired_token":
+            print(json.dumps({"status": "expired", "error": "Code expired, try again"}))
+        else:
+            print(json.dumps({"status": "error", "error": err}))
+    except Exception as e:
+        print(json.dumps({"status": "error", "error": str(e)}))
+
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print(json.dumps({"error": "Usage: ytmusic_rate.py like|unlike <videoId>"}))
+    if len(sys.argv) < 2:
+        print(json.dumps({"error": "Usage: ytmusic_rate.py <command> [args]"}))
         sys.exit(1)
 
     action = sys.argv[1]
-    video_id = sys.argv[2]
 
-    if action == "like":
-        rate_video(video_id, "like")
-    elif action == "unlike":
-        rate_video(video_id, "none")
+    if action == "like" and len(sys.argv) == 3:
+        rate_video(sys.argv[2], "like")
+    elif action == "unlike" and len(sys.argv) == 3:
+        rate_video(sys.argv[2], "none")
+    elif action == "check":
+        setup_check()
+    elif action == "setup-request" and len(sys.argv) == 4:
+        setup_request(sys.argv[2], sys.argv[3])
+    elif action == "setup-poll" and len(sys.argv) == 5:
+        setup_poll(sys.argv[2], sys.argv[3], sys.argv[4])
     else:
-        print(json.dumps({"error": f"Unknown action: {action}"}))
+        print(json.dumps({"error": f"Unknown command: {' '.join(sys.argv[1:])}"}))
         sys.exit(1)
