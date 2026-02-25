@@ -33,25 +33,28 @@ Scope {
 
     property list<real> visualizerPoints: cavaProcess.points
 
-    Loader {
-        id: mediaControlsLoader
-        active: GlobalStates.mediaControlsOpen || closingTimer.running
-
-        Timer {
-            id: closingTimer
-            interval: Appearance.animationsEnabled ? 350 : 0
-        }
-
-        Connections {
-            target: GlobalStates
-            function onMediaControlsOpenChanged() {
-                if (!GlobalStates.mediaControlsOpen) {
-                    closingTimer.restart()
-                } else {
-                    closingTimer.stop()
-                }
+    Connections {
+        target: GlobalStates
+        function onMediaControlsOpenChanged() {
+            if (GlobalStates.mediaControlsOpen) {
+                _mediaCloseTimer.stop()
+                mediaControlsLoader.active = true
+            } else {
+                _mediaCloseTimer.restart()
             }
         }
+    }
+
+    Timer {
+        id: _mediaCloseTimer
+        interval: 350
+        onTriggered: mediaControlsLoader.active = false
+    }
+
+    Loader {
+        id: mediaControlsLoader
+        active: false
+        Component.onCompleted: active = GlobalStates.mediaControlsOpen
 
         sourceComponent: PanelWindow {
             id: mediaControlsRoot
@@ -111,42 +114,52 @@ Scope {
                 height: playerColumnLayout.implicitHeight
                 anchors.horizontalCenter: parent.horizontalCenter
 
+                property bool _shown: false
+                Component.onCompleted: _showTimer.start()
+                Timer {
+                    id: _showTimer
+                    interval: 16
+                    onTriggered: cardArea._shown = true
+                }
+
+                Connections {
+                    target: GlobalStates
+                    function onMediaControlsOpenChanged() {
+                        cardArea._shown = GlobalStates.mediaControlsOpen
+                    }
+                }
+
                 // Use screen height for reliable off-screen position
                 readonly property real screenH: mediaControlsRoot.screen?.height ?? 1080
                 readonly property real targetY: screenH - height - root.dockHeight - root.dockMargin - 5
 
-                y: screenH + 50
-                opacity: 0
-                scale: 0.9
+                y: _shown ? targetY : screenH + 50
+                opacity: _shown ? 1 : 0
+                scale: _shown ? 1 : 0.9
                 transformOrigin: Item.Bottom
 
-                states: State {
-                    name: "visible"
-                    when: GlobalStates.mediaControlsOpen
-                    PropertyChanges {
-                        target: cardArea
-                        y: cardArea.targetY
-                        opacity: 1
-                        scale: 1
+                Behavior on y {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation {
+                        duration: cardArea._shown ? 350 : 300
+                        easing.type: cardArea._shown ? Easing.OutQuint : Easing.InCubic
                     }
                 }
-
-                transitions: [
-                    Transition {
-                        to: "visible"
-                        enabled: Appearance.animationsEnabled
-                        NumberAnimation { properties: "y"; duration: 350; easing.type: Easing.OutQuint }
-                        NumberAnimation { properties: "opacity"; duration: 250; easing.type: Easing.OutCubic }
-                        NumberAnimation { properties: "scale"; duration: 350; easing.type: Easing.OutBack; easing.overshoot: 1.2 }
-                    },
-                    Transition {
-                        from: "visible"
-                        enabled: Appearance.animationsEnabled
-                        NumberAnimation { properties: "y"; duration: 250; easing.type: Easing.InQuint }
-                        NumberAnimation { properties: "opacity"; duration: 200; easing.type: Easing.InCubic }
-                        NumberAnimation { properties: "scale"; duration: 250; easing.type: Easing.InBack; easing.overshoot: 1.0 }
+                Behavior on opacity {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation {
+                        duration: cardArea._shown ? 250 : 200
+                        easing.type: Easing.OutCubic
                     }
-                ]
+                }
+                Behavior on scale {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation {
+                        duration: cardArea._shown ? 350 : 300
+                        easing.type: cardArea._shown ? Easing.OutBack : Easing.InCubic
+                        easing.overshoot: cardArea._shown ? 1.2 : 1.0
+                    }
+                }
 
                 ColumnLayout {
                     id: playerColumnLayout
