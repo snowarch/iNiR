@@ -56,7 +56,25 @@ Scope {
 
     Loader {
         id: sessionLoader
-        active: GlobalStates.sessionOpen
+        active: GlobalStates.sessionOpen || _sessionClosing
+
+        property bool _sessionClosing: false
+
+        Connections {
+            target: GlobalStates
+            function onSessionOpenChanged() {
+                if (!GlobalStates.sessionOpen) {
+                    sessionLoader._sessionClosing = true
+                    _sessionCloseTimer.restart()
+                }
+            }
+        }
+
+        Timer {
+            id: _sessionCloseTimer
+            interval: 250
+            onTriggered: sessionLoader._sessionClosing = false
+        }
         onActiveChanged: {
             if (sessionLoader.active) SessionWarnings.refresh();
         }

@@ -67,7 +67,27 @@ Scope {
 
     PanelWindow {
         id: window
-        visible: root.cheatsheetOpen
+
+        Component.onCompleted: visible = root.cheatsheetOpen
+
+        Connections {
+            target: root
+            function onCheatsheetOpenChanged() {
+                if (root.cheatsheetOpen) {
+                    _closeTimer.stop()
+                    window.visible = true
+                } else {
+                    _closeTimer.restart()
+                }
+            }
+        }
+
+        Timer {
+            id: _closeTimer
+            interval: 250
+            onTriggered: window.visible = false
+        }
+
         exclusionMode: ExclusionMode.Ignore
         color: "transparent"
         WlrLayershell.namespace: "quickshell:cheatsheet"
