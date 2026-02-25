@@ -33,6 +33,9 @@ Singleton {
     property bool superDown: false
     property bool superReleaseMightTrigger: true
     property bool wallpaperSelectorOpen: false
+    // Dialog requests from other panels (e.g. left sidebar → right sidebar)
+    property bool requestWifiDialog: false
+    property bool requestBluetoothDialog: false
     // Selection targets: "main", "backdrop", "waffle", "waffle-backdrop"
     property string wallpaperSelectionTarget: "main"
     // Target monitor for wallpaper selector (set before opening, avoids config timing issues)
