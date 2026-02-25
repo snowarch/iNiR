@@ -521,6 +521,9 @@ Singleton {
         if (liked.length > root.maxLikedSongs) liked = liked.slice(0, root.maxLikedSongs)
         root.likedSongs = liked
         Config.setNestedValue('sidebar.ytmusic.liked', root.likedSongs)
+        // Send real like to YouTube via OAuth
+        _rateLikeProc._videoId = root.currentVideoId
+        _rateLikeProc.running = true
     }
 
     function unlikeSong(videoId): void {
@@ -530,6 +533,21 @@ Singleton {
         liked.splice(idx, 1)
         root.likedSongs = liked
         Config.setNestedValue('sidebar.ytmusic.liked', root.likedSongs)
+        // Send real unlike to YouTube via OAuth
+        _rateUnlikeProc._videoId = videoId
+        _rateUnlikeProc.running = true
+    }
+
+    Process {
+        id: _rateLikeProc
+        property string _videoId: ""
+        command: ["python3", Directories.scriptPath + "/ytmusic_rate.py", "like", _videoId]
+    }
+
+    Process {
+        id: _rateUnlikeProc
+        property string _videoId: ""
+        command: ["python3", Directories.scriptPath + "/ytmusic_rate.py", "unlike", _videoId]
     }
 
     function playPlaylist(playlistIndex, shuffle): void {
@@ -568,9 +586,18 @@ Singleton {
     function disconnectGoogle(): void {
         root.googleConnected = false
         root.googleError = ""
+        root.googleChecking = false
         root.ytMusicPlaylists = []
+        root._resolvedBrowserArg = ""
+        root.autoConnectAttempted = false
+        root.userName = ""
+        root.userAvatar = ""
+        root.userChannelUrl = ""
         Config.setNestedValue('sidebar.ytmusic.connected', false)
         Config.setNestedValue('sidebar.ytmusic.resolvedBrowserArg', "")
+        Config.setNestedValue('sidebar.ytmusic.profile', { name: "", avatar: "", url: "" })
+        // Delete stale cookie file
+        _deleteCookiesProc.running = true
     }
     
     function quickConnect(): void {
@@ -797,13 +824,14 @@ print("")
         }
         
         onExited: (code) => {
-            root.syncingLiked = false
             if (code === 0 && _fetchLikedProc.newLiked.length > 0) {
+                root.syncingLiked = false
                 root.likedSongs = _fetchLikedProc.newLiked
                 root.lastLikedSync = new Date().toLocaleString(Qt.locale(), "yyyy-MM-dd hh:mm")
                 Config.setNestedValue('sidebar.ytmusic.liked', root.likedSongs)
                 Config.setNestedValue('sidebar.ytmusic.lastLikedSync', root.lastLikedSync)
-            } else if (code !== 0) {
+            } else {
+                // Error or empty result — try YouTube LL fallback
                 _fetchLikedFallbackProc.running = true
             }
         }
@@ -849,7 +877,7 @@ print("")
         
         onExited: (code) => {
             root.syncingLiked = false
-            if (code === 0) {
+            if (code === 0 && _fetchLikedFallbackProc.newLiked.length > 0) {
                 root.likedSongs = _fetchLikedFallbackProc.newLiked
                 root.lastLikedSync = new Date().toLocaleString(Qt.locale(), "yyyy-MM-dd hh:mm")
                 Config.setNestedValue('sidebar.ytmusic.liked', root.likedSongs)
@@ -1137,20 +1165,8 @@ print("")
         command: ["python3", Directories.scriptPath + "/ytmusic_auth.py", root.googleBrowser]
     }
 
-    Timer {
-        id: _trackEndDetector
-        interval: 1000
-        running: root.currentVideoId !== "" && root.currentDuration > 0
-        repeat: true
-        onTriggered: {
-            if (root.currentPosition >= root.currentDuration - 1 && !root.loading) {
-                if (!root._mpvPlayer?.isPlaying && root.currentPosition > 0) {
-                    console.log("[YtMusic] Track ended, playing next")
-                    root.playNext()
-                }
-            }
-        }
-    }
+    // _trackEndDetector removed — track advancement is handled by _playProc.onExited (code 0)
+    // Having both caused a race condition where playNext() could be called twice, skipping a track
 
     // Check if mpv-mpris plugin exists (optional — IPC fallback works without it)
     readonly property bool _hasMpvMpris: _mpvMprisExists
@@ -1271,6 +1287,11 @@ print("")
     }
 
     Process {
+        id: _deleteCookiesProc
+        command: ["/bin/rm", "-f", root._cookiesFilePath]
+    }
+
+    Process {
         id: _searchProc
         command: ["/usr/bin/yt-dlp",
             ...(root.googleConnected ? root._cookieArgs : []),
@@ -1372,7 +1393,10 @@ print("")
             console.log("[YtMusic] mpv exited. Code:", code, "stderr:", _stderr.substring(0, 500))
             root.loading = false
             root._mpvPlayer = null
-            if (code !== 0 && code !== 4 && code !== 9 && code !== 15) {
+            if (code === 0 && root.currentVideoId !== "") {
+                // Normal exit = track ended naturally, play next
+                root.playNext()
+            } else if (code !== 0 && code !== 4 && code !== 9 && code !== 15 && code !== 143 && code !== 137) {
                 root.error = Translation.tr("Playback failed")
             }
         }

@@ -64,7 +64,7 @@ Item {
     Timer {
         id: fetchTimer
         interval: root.refreshInterval
-        running: root.coins.length > 0 && Config.ready
+        running: root.coins.length > 0 && Config.ready && GlobalStates.sidebarLeftOpen
         repeat: true
         onTriggered: root.fetchPrices()
     }
