@@ -310,16 +310,18 @@ Item {
                     : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.6)
             }
 
-            // Volume control (compact)
+            // Player volume control (MPRIS)
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 8
-                visible: Audio.sink !== null
+                visible: MprisController.activePlayer?.canControl ?? false
+
+                readonly property real playerVolume: MprisController.activePlayer?.volume ?? 0
 
                 MaterialSymbol {
-                    text: Audio.volume === 0 ? "volume_off"
-                        : Audio.volume < 0.33 ? "volume_mute"
-                        : Audio.volume < 0.66 ? "volume_down"
+                    text: parent.playerVolume === 0 ? "volume_off"
+                        : parent.playerVolume < 0.33 ? "volume_mute"
+                        : parent.playerVolume < 0.66 ? "volume_down"
                         : "volume_up"
                     iconSize: 16
                     color: root.colTextSecondary
@@ -330,8 +332,15 @@ Item {
                     Layout.fillWidth: true
                     from: 0
                     to: 1
-                    value: Audio.volume ?? 0
-                    onMoved: Audio.volume = value
+                    value: parent.playerVolume
+                    enabled: MprisController.activePlayer?.canControl ?? false
+                    
+                    onMoved: {
+                        const player = MprisController.activePlayer
+                        if (player && player.canControl) {
+                            player.volume = value
+                        }
+                    }
 
                     background: Rectangle {
                         x: volumeSlider.leftPadding
@@ -368,7 +377,7 @@ Item {
                 }
 
                 StyledText {
-                    text: Math.round((Audio.volume ?? 0) * 100) + "%"
+                    text: Math.round(parent.playerVolume * 100) + "%"
                     font.pixelSize: Appearance.font.pixelSize.smallest
                     font.family: Appearance.font.family.numbers
                     color: root.colTextSecondary
