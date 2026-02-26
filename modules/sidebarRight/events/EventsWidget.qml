@@ -251,19 +251,19 @@ Item {
                 
                 SelectionGroupButton {
                     buttonText: Translation.tr("Low")
-                    selected: parent.parent.parent.eventPriority === "low"
+                    toggled: parent.parent.parent.eventPriority === "low"
                     onClicked: parent.parent.parent.eventPriority = "low"
                 }
                 
                 SelectionGroupButton {
                     buttonText: Translation.tr("Normal")
-                    selected: parent.parent.parent.eventPriority === "normal"
+                    toggled: parent.parent.parent.eventPriority === "normal"
                     onClicked: parent.parent.parent.eventPriority = "normal"
                 }
                 
                 SelectionGroupButton {
                     buttonText: Translation.tr("High")
-                    selected: parent.parent.parent.eventPriority === "high"
+                    toggled: parent.parent.parent.eventPriority === "high"
                     onClicked: parent.parent.parent.eventPriority = "high"
                 }
             }

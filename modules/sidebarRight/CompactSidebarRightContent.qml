@@ -780,141 +780,126 @@ Item {
                     width: controlsFlickable.width
                     spacing: Appearance.sizes.spacingMedium
 
-                    // Section header with edit mode toggle
+                    // Section header
                     SectionHeader {
                         Layout.fillWidth: true
                         headerText: Translation.tr("Controls")
                         headerIcon: "tune"
-                        showAction: true
-                        actionIcon: root.controlsEditMode ? "check" : "drag_indicator"
-                        actionTooltip: root.controlsEditMode ? Translation.tr("Done") : Translation.tr("Reorder")
-                        onActionClicked: root.controlsEditMode = !root.controlsEditMode
+                        showAction: (Config.options?.sidebar?.quickToggles?.style ?? "classic") === "android"
+                        actionIcon: root.editMode ? "check" : "edit"
+                        actionTooltip: Translation.tr("Edit quick toggles")
+                        onActionClicked: root.editMode = !root.editMode
                     }
 
-                    // Reorderable controls items
-                    Repeater {
-                        model: root.controlsOrder
-                        
-                        Item {
-                            required property string modelData
-                            required property int index
-                            
-                            Layout.fillWidth: true
-                            implicitHeight: loader.implicitHeight
-                            
-                            // Visual feedback during drag
-                            opacity: root.controlsDragIndex === index ? 0.5 : 1.0
-                            
-                            // Displacement animation for non-dragged items
-                            property real displacement: root.getControlsDisplacement(index)
-                            transform: Translate {
-                                y: parent.displacement
-                                Behavior on y {
-                                    enabled: Appearance.animationsEnabled && root.controlsEditMode
-                                    NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
-                                }
-                            }
-                            
-                            // Drag follow for dragged item
-                            property real dragFollow: root.controlsDragIndex === index ? root.getControlsDragFollow() : 0
-                            transform: Translate {
-                                y: parent.dragFollow
-                            }
-                            
-                            Loader {
-                                id: loader
+                    // Quick Sliders (Volume, Brightness, Mic)
+                    Loader {
+                        Layout.fillWidth: true
+                        Layout.maximumWidth: controlsColumn.width
+                        visible: active
+                        active: {
+                            const cfg = Config.options?.sidebar?.quickSliders
+                            return (cfg?.enable && (cfg?.showMic || cfg?.showVolume || cfg?.showBrightness))
+                        }
+                        sourceComponent: QuickSliders {}
+                    }
+
+                    // Compact quick controls row (reuse ControlsCard)
+                    Item {
+                        Layout.fillWidth: true
+                        implicitHeight: controlsCardSurface.implicitHeight
+
+                        StyledRectangularShadow {
+                            target: controlsCardSurface
+                            visible: !bg.inirEverywhere && !bg.auroraEverywhere
+                        }
+
+                        Rectangle {
+                            id: controlsCardSurface
+                            anchors.fill: parent
+                            implicitHeight: controlsCard.implicitHeight + 10
+                            radius: bg.angelEverywhere ? Appearance.angel.roundingNormal
+                                : bg.inirEverywhere ? Appearance.inir.roundingNormal
+                                : Appearance.rounding.normal
+                            color: bg.angelEverywhere ? Appearance.angel.colGlassCard
+                                : bg.inirEverywhere ? Appearance.inir.colLayer1
+                                : bg.auroraEverywhere ? "transparent"
+                                : Appearance.colors.colLayer1
+                            border.width: bg.angelEverywhere ? Appearance.angel.cardBorderWidth
+                                : bg.inirEverywhere ? 1 : (bg.auroraEverywhere ? 0 : 1)
+                            border.color: bg.angelEverywhere ? Appearance.angel.colCardBorder
+                                : bg.inirEverywhere ? Appearance.inir.colBorder
+                                : Appearance.colors.colLayer0Border
+
+                            ControlsCard {
+                                id: controlsCard
                                 anchors.fill: parent
-                                sourceComponent: {
-                                    switch (parent.modelData) {
-                                        case "sliders": return quickSlidersComponent
-                                        case "card": return controlsCardComponent
-                                        case "devices": return devicesComponent
-                                        case "toggles": return quickTogglesComponent
-                                        case "media": return mediaPlayerComponent
-                                        case "actions": return quickActionsComponent
-                                        default: return null
-                                    }
-                                }
+                                anchors.margins: 4
                             }
-                            
-                            // Drag handle overlay (visible in edit mode)
-                            Rectangle {
-                                anchors.fill: parent
-                                color: "transparent"
-                                border.width: root.controlsEditMode ? 2 : 0
-                                border.color: root.controlsHoverIndex === index 
-                                    ? Appearance.colors.colPrimary
-                                    : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.5)
-                                radius: Appearance.rounding.small
-                                visible: root.controlsEditMode
-                                
-                                MaterialSymbol {
-                                    anchors.centerIn: parent
-                                    text: "drag_indicator"
-                                    iconSize: 24
-                                    color: Appearance.colors.colPrimary
-                                    opacity: 0.7
-                                }
-                            }
-                            
-                            // Drag detection
-                            MouseArea {
-                                anchors.fill: parent
-                                enabled: root.controlsEditMode
-                                hoverEnabled: root.controlsEditMode
-                                cursorShape: root.controlsEditMode ? Qt.OpenHandCursor : Qt.ArrowCursor
-                                
-                                property bool dragPrimed: false
-                                property real pressY: 0
-                                
-                                onEntered: root.controlsHoverIndex = index
-                                onExited: if (root.controlsHoverIndex === index) root.controlsHoverIndex = -1
-                                
-                                onPressed: (mouse) => {
-                                    if (!root.controlsEditMode) return
-                                    dragPrimed = false
-                                    pressY = mouse.y
-                                    dragPrimeTimer.restart()
-                                }
-                                
-                                onPositionChanged: (mouse) => {
-                                    if (!root.controlsEditMode || !pressed) return
-                                    
-                                    const dy = mouse.y - pressY
-                                    
-                                    // Cancel if moved too much before primed
-                                    if (dragPrimeTimer.running && !dragPrimed && Math.abs(dy) > 10) {
-                                        dragPrimeTimer.stop()
-                                        return
-                                    }
-                                    
-                                    // Start drag on first movement after primed
-                                    if (dragPrimed && root.controlsDragIndex < 0) {
-                                        root.startControlsDrag(index, mouse.y)
-                                    }
-                                    
-                                    // Update drag position
-                                    if (root.controlsDragIndex === index) {
-                                        root.updateControlsDrag(mouse.y)
-                                    }
-                                }
-                                
-                                onReleased: {
-                                    dragPrimeTimer.stop()
-                                    dragPrimed = false
-                                    if (root.controlsDragIndex === index) {
-                                        root.endControlsDrag()
-                                    }
-                                }
-                                
-                                Timer {
-                                    id: dragPrimeTimer
-                                    interval: 180
-                                    onTriggered: parent.dragPrimed = true
-                                }
-                            }
+
+                            AngelPartialBorder { targetRadius: controlsCardSurface.radius }
                         }
                     }
+
+                    // Device shortcuts
+                    SectionDivider {
+                        Layout.topMargin: Appearance.sizes.spacingSmall
+                        text: Translation.tr("Devices")
+                    }
+
+                    GridLayout {
+                        Layout.fillWidth: true
+                        columns: 2
+                        columnSpacing: 8
+                        rowSpacing: 8
+
+                        ControlChipButton {
+                            Layout.fillWidth: true
+                            chipIcon: "media_output"
+                            chipLabel: Translation.tr("Output")
+                            value: Audio.sink?.description ?? ""
+                            onClicked: root.showAudioOutputDialog = true
+                        }
+
+                        ControlChipButton {
+                            Layout.fillWidth: true
+                            chipIcon: "mic_external_on"
+                            chipLabel: Translation.tr("Input")
+                            value: Audio.source?.description ?? ""
+                            onClicked: root.showAudioInputDialog = true
+                        }
+
+                        ControlChipButton {
+                            Layout.fillWidth: true
+                            chipIcon: "bluetooth"
+                            chipLabel: Translation.tr("Bluetooth")
+                            value: Bluetooth.defaultAdapter?.enabled ? Translation.tr("On") : Translation.tr("Off")
+                            onClicked: root.showBluetoothDialog = true
+                        }
+
+                        ControlChipButton {
+                            Layout.fillWidth: true
+                            chipIcon: Network.materialSymbol
+                            chipLabel: Translation.tr("Wi-Fi")
+                            value: Network.networkName ?? ""
+                            onClicked: root.showWifiDialog = true
+                        }
+                    }
+
+                    // Quick Toggles - Classic Style
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: toggleLoader.item?.implicitHeight ?? 0
+                        visible: toggleLoader.active
+                        Layout.leftMargin: 2
+                        Layout.rightMargin: 4
+
+                        Loader {
+                            id: toggleLoader
+                            anchors.fill: parent
+                            active: (Config.options?.sidebar?.quickToggles?.style ?? "classic") === "classic"
+                            sourceComponent: ClassicQuickPanel { compactMode: true }
+                            Connections {
+                                target: toggleLoader.item
                                 function onOpenAudioOutputDialog() { root.showAudioOutputDialog = true }
                                 function onOpenAudioInputDialog()  { root.showAudioInputDialog  = true }
                                 function onOpenBluetoothDialog()   { root.showBluetoothDialog   = true }
