@@ -294,6 +294,7 @@ Singleton {
                     property bool enableTerminal: true
                     property bool enableVesktop: true
                     property bool enableZed: true
+                    property bool enableVSCode: true
                     property bool useBackdropForColors: false
                     property JsonObject terminals: JsonObject {
                         property bool kitty: true
@@ -661,6 +662,7 @@ Singleton {
             }
 
             property JsonObject dock: JsonObject {
+                property string style: "panel" // "panel" | "pill"
                 property bool cardStyle: false
                 property bool enable: false
                 property bool monochromeIcons: true
@@ -686,6 +688,7 @@ Singleton {
                 // Window preview on hover
                 property bool hoverPreview: true // Show window preview popup on hover
                 property int hoverPreviewDelay: 400 // Delay before showing preview (ms)
+                property bool keepPreviewOnClick: false // Keep preview open when clicking a window thumbnail
                 // Drag & drop reordering
                 property bool enableDragReorder: true // Allow drag to reorder pinned apps
             }
@@ -917,6 +920,7 @@ Singleton {
 
             property JsonObject sidebar: JsonObject {
                 property bool cardStyle: false
+                property string layout: "default" // "default" | "compact"
                 property bool keepRightSidebarLoaded: true
                 property bool keepLeftSidebarLoaded: true
                 property bool openFolderOnDownload: false // Open file manager after wallpaper download
@@ -1093,7 +1097,7 @@ Singleton {
 
                 // Right sidebar widget toggles
                 property JsonObject right: JsonObject {
-                    property list<string> enabledWidgets: ["calendar", "todo", "notepad", "calculator", "sysmon", "timer"]
+                    property list<string> enabledWidgets: ["dashboard", "calendar", "todo", "notepad", "calculator", "sysmon", "timer"]
                 }
             }
 

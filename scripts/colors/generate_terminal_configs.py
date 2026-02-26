@@ -15,6 +15,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from zed.theme_generator import generate_zed_config
+from vscode.theme_generator import generate_vscode_theme
 
 
 def parse_scss_colors(scss_path):
@@ -1184,6 +1185,11 @@ def main():
         action="store_true",
         help="Generate Zed editor theme",
     )
+    parser.add_argument(
+        "--vscode",
+        action="store_true",
+        help="Generate VSCode theme (injects into settings.json)",
+    )
 
     args = parser.parse_args()
 
@@ -1251,6 +1257,27 @@ def main():
         generate_zed_config(
             colors, args.scss, f"{home}/.config/zed/themes/ii-theme.json"
         )
+
+    if args.vscode:
+        # Detect installed VSCode variants
+        vscode_variants = []
+        if os.path.exists(f"{home}/.config/Code"):
+            vscode_variants.append(("VSCode", f"{home}/.config/Code/User/settings.json"))
+        if os.path.exists(f"{home}/.config/VSCodium"):
+            vscode_variants.append(("VSCodium", f"{home}/.config/VSCodium/User/settings.json"))
+        if os.path.exists(f"{home}/.config/Cursor"):
+            vscode_variants.append(("Cursor", f"{home}/.config/Cursor/User/settings.json"))
+        
+        if not vscode_variants:
+            print("✗ No VSCode variants found (VSCode/VSCodium/Cursor)")
+        else:
+            colors_json = os.path.expanduser(
+                "~/.local/state/quickshell/user/generated/colors.json"
+            )
+            for variant_name, settings_path in vscode_variants:
+                success = generate_vscode_theme(colors_json, args.scss, settings_path)
+                if not success:
+                    print(f"✗ Failed to generate {variant_name} theme", file=sys.stderr)
 
 
 if __name__ == "__main__":

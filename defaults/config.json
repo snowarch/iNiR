@@ -118,6 +118,7 @@
             "enableTerminal": true,
             "enableVesktop": true,
             "enableZed": true,
+            "enableVSCode": true,
             "useBackdropForColors": false,
             "terminalGenerationProps": {
                 "forceDarkMode": false,
@@ -417,7 +418,8 @@
         "showBackground": true,
         "iconSize": 35,
         "separatePinnedFromRunning": true,
-        "enableDragReorder": true
+        "enableDragReorder": true,
+        "style": "panel"
     },
     "settingsUi": {
         "overlayMode": false,
@@ -618,6 +620,7 @@
             "visualize": true
         },
         "keepRightSidebarLoaded": true,
+        "layout": "default",
         "quickSliders": {
             "enable": true,
             "showBrightness": true,
@@ -647,6 +650,17 @@
                 ]
             },
             "style": "android"
+        },
+        "right": {
+            "enabledWidgets": [
+                "dashboard",
+                "calendar",
+                "todo",
+                "notepad",
+                "calculator",
+                "sysmon",
+                "timer"
+            ]
         },
         "translator": {
             "delay": 300,

@@ -65,6 +65,28 @@ ContentPage {
                     text: Translation.tr("Generate Discord theme from wallpaper colors (requires Vesktop with system24 theme)")
                 }
             }
+            SettingsSwitch {
+                buttonIcon: "code"
+                text: Translation.tr("Zed editor")
+                checked: Config.options.appearance.wallpaperTheming.enableZed
+                onCheckedChanged: {
+                    Config.options.appearance.wallpaperTheming.enableZed = checked;
+                }
+                StyledToolTip {
+                    text: Translation.tr("Generate Zed editor theme from wallpaper colors")
+                }
+            }
+            SettingsSwitch {
+                buttonIcon: "code"
+                text: Translation.tr("VSCode/Cursor")
+                checked: Config.options.appearance.wallpaperTheming.enableVSCode
+                onCheckedChanged: {
+                    Config.options.appearance.wallpaperTheming.enableVSCode = checked;
+                }
+                StyledToolTip {
+                    text: Translation.tr("Generate VSCode/VSCodium/Cursor theme from wallpaper colors")
+                }
+            }
             ConfigRow {
                 uniform: true
                 SettingsSwitch {
