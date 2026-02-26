@@ -235,7 +235,7 @@ apply_code_editors() {
   # Check if Zed is installed and enabled
   local enable_zed="true"
   if [ -f "$CONFIG_FILE" ]; then
-    enable_zed=$(jq -r '.appearance.wallpaperTheming.enableZed // true' "$CONFIG_FILE" 2>/dev/null || echo "true")
+    enable_zed=$(jq -r 'if .appearance.wallpaperTheming | has("enableZed") then .appearance.wallpaperTheming.enableZed else true end' "$CONFIG_FILE" 2>/dev/null || echo "true")
   fi
 
   if [[ "$enable_zed" == "true" ]] && { command -v zed &>/dev/null || command -v zeditor &>/dev/null; }; then
@@ -254,7 +254,7 @@ apply_code_editors() {
   # Check if VSCode is installed and enabled
   local enable_vscode="true"
   if [ -f "$CONFIG_FILE" ]; then
-    enable_vscode=$(jq -r '.appearance.wallpaperTheming.enableVSCode // true' "$CONFIG_FILE" 2>/dev/null || echo "true")
+    enable_vscode=$(jq -r 'if .appearance.wallpaperTheming | has("enableVSCode") then .appearance.wallpaperTheming.enableVSCode else true end' "$CONFIG_FILE" 2>/dev/null || echo "true")
   fi
 
   if [[ "$enable_vscode" == "true" ]]; then
