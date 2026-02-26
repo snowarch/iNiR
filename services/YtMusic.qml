@@ -26,7 +26,7 @@ Singleton {
     
     property bool canPause: _mpvPlayer?.canPause ?? true
     property bool canSeek: _mpvPlayer?.canSeek ?? true
-    property real volume: _mpvPlayer?.volume ?? 1.0
+    property real volume: _mpvPlayer?.volume ?? (_savedVolume / 100)
     
     property bool shuffleMode: Config.options?.sidebar?.ytmusic?.shuffleMode ?? false
     property int repeatMode: Config.options?.sidebar?.ytmusic?.repeatMode ?? 0
@@ -352,10 +352,12 @@ Singleton {
     }
 
     function setVolume(vol): void {
+        const clamped = Math.max(0, Math.min(1, vol))
+        root._savedVolume = Math.round(clamped * 100)
         if (root._mpvPlayer) {
-            root._mpvPlayer.volume = Math.max(0, Math.min(1, vol))
+            root._mpvPlayer.volume = clamped
         } else {
-            _sendIpc(["set_property", "volume", Math.round(vol * 100)])
+            _sendIpc(["set_property", "volume", root._savedVolume])
         }
     }
     
@@ -364,6 +366,7 @@ Singleton {
     }
     
     property real _ipcVolume: 1.0
+    property int _savedVolume: 100
 
     function toggleShuffle(): void {
         root.shuffleMode = !root.shuffleMode
@@ -1530,7 +1533,7 @@ print("")
             ...(root._hasMpvMpris ? ["--script=/usr/lib/mpv-mpris/mpris.so"] : []),
             "--force-media-title=" + root.currentTitle + (root.currentArtist ? " - " + root.currentArtist : ""),
             "--metadata-codepage=utf-8",
-            "--volume=100",
+            "--volume=" + root._savedVolume,
             "--audio-buffer=1",
             "--initial-audio-sync=yes",
             "--demuxer-max-bytes=50MiB",
