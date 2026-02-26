@@ -655,6 +655,7 @@
             "enabledWidgets": [
                 "dashboard",
                 "calendar",
+                "events",
                 "todo",
                 "notepad",
                 "calculator",
