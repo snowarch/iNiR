@@ -132,167 +132,169 @@ Item {
     }
     
     // Add event dialog
-    Loader {
-        active: root.showAddDialog
+    WindowDialog {
+        show: root.showAddDialog
+        backgroundHeight: 500
+        onDismiss: root.showAddDialog = false
         
-        sourceComponent: WindowDialog {
-            property string eventTitle: ""
-            property string eventDescription: ""
-            property date eventDate: new Date()
-            property int eventHour: 12
-            property int eventMinute: 0
-            property string eventCategory: "general"
-            property string eventPriority: "normal"
+        property string eventTitle: ""
+        property string eventDescription: ""
+        property date eventDate: new Date()
+        property int eventHour: 12
+        property int eventMinute: 0
+        property string eventCategory: "general"
+        property string eventPriority: "normal"
+        
+        WindowDialogTitle {
+            text: Translation.tr("New Event")
+        }
+        
+        MaterialTextField {
+            Layout.fillWidth: true
+            placeholderText: Translation.tr("Event title")
+            text: parent.eventTitle
+            onTextChanged: parent.eventTitle = text
+        }
+        
+        MaterialTextField {
+            Layout.fillWidth: true
+            placeholderText: Translation.tr("Description (optional)")
+            text: parent.eventDescription
+            onTextChanged: parent.eventDescription = text
+        }
+        
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 8
             
-            WindowDialogTitle {
-                text: Translation.tr("New Event")
+            StyledText {
+                text: Translation.tr("Date:")
+                font.pixelSize: Appearance.font.pixelSize.small
             }
             
-            MaterialTextField {
+            RippleButton {
                 Layout.fillWidth: true
-                placeholderText: Translation.tr("Event title")
-                text: parent.eventTitle
-                onTextChanged: parent.eventTitle = text
-            }
-            
-            MaterialTextField {
-                Layout.fillWidth: true
-                placeholderText: Translation.tr("Description (optional)")
-                text: parent.eventDescription
-                onTextChanged: parent.eventDescription = text
-            }
-            
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
+                implicitHeight: 36
+                colBackground: Appearance.colors.colLayer1
                 
-                StyledText {
-                    text: Translation.tr("Date:")
+                contentItem: StyledText {
+                    anchors.centerIn: parent
+                    text: Qt.formatDate(parent.parent.parent.eventDate, "dd/MM/yyyy")
                     font.pixelSize: Appearance.font.pixelSize.small
                 }
-                
-                RippleButton {
-                    Layout.fillWidth: true
-                    implicitHeight: 36
-                    colBackground: Appearance.colors.colLayer1
-                    
-                    contentItem: StyledText {
-                        anchors.centerIn: parent
-                        text: Qt.formatDate(parent.parent.parent.eventDate, "dd/MM/yyyy")
-                        font.pixelSize: Appearance.font.pixelSize.small
-                    }
-                }
+            }
+        }
+        
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 8
+            
+            StyledText {
+                text: Translation.tr("Time:")
+                font.pixelSize: Appearance.font.pixelSize.small
             }
             
-            RowLayout {
+            SpinBox {
+                from: 0
+                to: 23
+                value: parent.parent.eventHour
+                onValueChanged: parent.parent.eventHour = value
+            }
+            
+            StyledText {
+                text: ":"
+            }
+            
+            SpinBox {
+                from: 0
+                to: 59
+                value: parent.parent.eventMinute
+                onValueChanged: parent.parent.eventMinute = value
+            }
+        }
+        
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 8
+            
+            StyledText {
+                text: Translation.tr("Category:")
+                font.pixelSize: Appearance.font.pixelSize.small
+            }
+            
+            StyledComboBox {
                 Layout.fillWidth: true
-                spacing: 8
-                
-                StyledText {
-                    text: Translation.tr("Time:")
-                    font.pixelSize: Appearance.font.pixelSize.small
-                }
-                
-                SpinBox {
-                    from: 0
-                    to: 23
-                    value: parent.parent.eventHour
-                    onValueChanged: parent.parent.eventHour = value
-                }
-                
-                StyledText {
-                    text: ":"
-                }
-                
-                SpinBox {
-                    from: 0
-                    to: 59
-                    value: parent.parent.eventMinute
-                    onValueChanged: parent.parent.eventMinute = value
-                }
+                model: [
+                    { value: "general", text: Translation.tr("General") },
+                    { value: "birthday", text: Translation.tr("Birthday") },
+                    { value: "meeting", text: Translation.tr("Meeting") },
+                    { value: "deadline", text: Translation.tr("Deadline") },
+                    { value: "reminder", text: Translation.tr("Reminder") }
+                ]
+                textRole: "text"
+                valueRole: "value"
+                onCurrentValueChanged: parent.parent.eventCategory = currentValue
+            }
+        }
+        
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 8
+            
+            StyledText {
+                text: Translation.tr("Priority:")
+                font.pixelSize: Appearance.font.pixelSize.small
             }
             
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
+            ButtonGroup {
+                spacing: 4
                 
-                StyledText {
-                    text: Translation.tr("Category:")
-                    font.pixelSize: Appearance.font.pixelSize.small
+                SelectionGroupButton {
+                    buttonText: Translation.tr("Low")
+                    selected: parent.parent.parent.eventPriority === "low"
+                    onClicked: parent.parent.parent.eventPriority = "low"
                 }
                 
-                StyledComboBox {
-                    Layout.fillWidth: true
-                    model: [
-                        { value: "general", text: Translation.tr("General") },
-                        { value: "birthday", text: Translation.tr("Birthday") },
-                        { value: "meeting", text: Translation.tr("Meeting") },
-                        { value: "deadline", text: Translation.tr("Deadline") },
-                        { value: "reminder", text: Translation.tr("Reminder") }
-                    ]
-                    textRole: "text"
-                    valueRole: "value"
-                    onCurrentValueChanged: parent.parent.eventCategory = currentValue
+                SelectionGroupButton {
+                    buttonText: Translation.tr("Normal")
+                    selected: parent.parent.parent.eventPriority === "normal"
+                    onClicked: parent.parent.parent.eventPriority = "normal"
+                }
+                
+                SelectionGroupButton {
+                    buttonText: Translation.tr("High")
+                    selected: parent.parent.parent.eventPriority === "high"
+                    onClicked: parent.parent.parent.eventPriority = "high"
                 }
             }
+        }
+        
+        WindowDialogSeparator {}
+        
+        WindowDialogButtonRow {
+            Item { Layout.fillWidth: true }
             
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-                
-                StyledText {
-                    text: Translation.tr("Priority:")
-                    font.pixelSize: Appearance.font.pixelSize.small
-                }
-                
-                ButtonGroup {
-                    spacing: 4
-                    
-                    SelectionGroupButton {
-                        buttonText: Translation.tr("Low")
-                        selected: parent.parent.parent.eventPriority === "low"
-                        onClicked: parent.parent.parent.eventPriority = "low"
-                    }
-                    
-                    SelectionGroupButton {
-                        buttonText: Translation.tr("Normal")
-                        selected: parent.parent.parent.eventPriority === "normal"
-                        onClicked: parent.parent.parent.eventPriority = "normal"
-                    }
-                    
-                    SelectionGroupButton {
-                        buttonText: Translation.tr("High")
-                        selected: parent.parent.parent.eventPriority === "high"
-                        onClicked: parent.parent.parent.eventPriority = "high"
-                    }
-                }
+            DialogButton {
+                buttonText: Translation.tr("Cancel")
+                onClicked: root.showAddDialog = false
             }
             
-            WindowDialogButtonRow {
-                Item { Layout.fillWidth: true }
-                
-                DialogButton {
-                    buttonText: Translation.tr("Cancel")
-                    onClicked: root.showAddDialog = false
-                }
-                
-                DialogButton {
-                    buttonText: Translation.tr("Add")
-                    onClicked: {
-                        if (parent.parent.eventTitle.trim() !== "") {
-                            const dateTime = new Date(parent.parent.eventDate)
-                            dateTime.setHours(parent.parent.eventHour, parent.parent.eventMinute, 0, 0)
-                            
-                            Events.addEvent(
-                                parent.parent.eventTitle,
-                                parent.parent.eventDescription,
-                                dateTime.toISOString(),
-                                parent.parent.eventCategory,
-                                parent.parent.eventPriority
-                            )
-                            
-                            root.showAddDialog = false
-                        }
+            DialogButton {
+                buttonText: Translation.tr("Add")
+                onClicked: {
+                    if (parent.parent.eventTitle.trim() !== "") {
+                        const dateTime = new Date(parent.parent.eventDate)
+                        dateTime.setHours(parent.parent.eventHour, parent.parent.eventMinute, 0, 0)
+                        
+                        Events.addEvent(
+                            parent.parent.eventTitle,
+                            parent.parent.eventDescription,
+                            dateTime.toISOString(),
+                            parent.parent.eventCategory,
+                            parent.parent.eventPriority
+                        )
+                        
+                        root.showAddDialog = false
                     }
                 }
             }

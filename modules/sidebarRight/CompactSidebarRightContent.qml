@@ -97,7 +97,7 @@ Item {
 
     Component { id: dashboardComponent;  DashboardWidget  { anchors.fill: parent; anchors.margins: 8 } }
     Component { id: calendarComponent;   CalendarWidget   { anchors.fill: parent; anchors.margins: 8 } }
-    // Component { id: eventsComponent;     EventsWidget     { anchors.fill: parent; anchors.margins: 8 } }
+    Component { id: eventsComponent;     EventsWidget     { anchors.fill: parent; anchors.margins: 8 } }
     Component { id: todoComponent;       TodoWidget       { anchors.fill: parent; anchors.margins: 8 } }
     Component { id: notepadComponent;    NotepadWidget    { anchors.fill: parent; anchors.margins: 8 } }
     Component { id: calculatorComponent; CalculatorWidget { anchors.fill: parent; anchors.margins: 8 } }
@@ -204,11 +204,11 @@ Item {
 
     readonly property var widgetSections: {
         root.configVersion // Force dependency
-        const enabled = Config.options?.sidebar?.right?.enabledWidgets ?? ["dashboard", "calendar", "todo", "notepad", "calculator", "sysmon", "timer"]
+        const enabled = Config.options?.sidebar?.right?.enabledWidgets ?? ["dashboard", "calendar", "events", "todo", "notepad", "calculator", "sysmon", "timer"]
         const all = [
             {id: "dashboard",  icon: "dashboard",     label: Translation.tr("Dashboard"),  component: dashboardComponent},
             {id: "calendar",   icon: "calendar_month", label: Translation.tr("Calendar"),   component: calendarComponent},
-            // {id: "events",     icon: "event_upcoming", label: Translation.tr("Events"),     component: eventsComponent},
+            {id: "events",     icon: "event_upcoming", label: Translation.tr("Events"),     component: eventsComponent},
             {id: "todo",       icon: "done_outline",  label: Translation.tr("To Do"),      component: todoComponent},
             {id: "notepad",    icon: "edit_note",     label: Translation.tr("Notepad"),    component: notepadComponent},
             {id: "calculator", icon: "calculate",     label: Translation.tr("Calc"),       component: calculatorComponent},
