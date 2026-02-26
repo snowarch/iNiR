@@ -65,7 +65,7 @@ Item { // Player instance - Old style design
 
     Timer { // Force update for position
         running: root.player?.playbackState == MprisPlaybackState.Playing
-        interval: Config.options?.resources?.updateInterval ?? 3000
+        interval: 1000
         repeat: true
         onTriggered: {
             root.player?.positionChanged()

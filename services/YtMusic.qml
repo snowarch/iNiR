@@ -15,6 +15,9 @@ Singleton {
     property bool loading: false
     property bool libraryLoading: false
     property string error: ""
+    property bool verbose: Config.options?.sidebar?.ytmusic?.verbose ?? false
+
+    function _log(msg) { if (root.verbose) console.log(msg) }
     
     property string currentTitle: ""
     property string currentArtist: ""
@@ -261,12 +264,12 @@ Singleton {
     }
     
     function playFromPlaylist(playlist, index, source): void {
-        console.log("[YtMusic] playFromPlaylist. playlist.length=" + (playlist?.length ?? "null") + " index=" + index + " source=" + source)
+        root._log("[YtMusic] playFromPlaylist. playlist.length=" + (playlist?.length ?? "null") + " index=" + index + " source=" + source)
         if (!playlist || index < 0 || index >= playlist.length) return
         root.activePlaylist = [...playlist]
         root.currentIndex = index
         root.activePlaylistSource = source || "custom"
-        console.log("[YtMusic] Set activePlaylist.length=" + root.activePlaylist.length + " currentIndex=" + root.currentIndex)
+        root._log("[YtMusic] Set activePlaylist.length=" + root.activePlaylist.length + " currentIndex=" + root.currentIndex)
         _playInternal(playlist[index])
     }
     
@@ -277,7 +280,7 @@ Singleton {
     }
     
     function playFromLiked(index): void {
-        console.log("[YtMusic] playFromLiked. index=" + index + " likedSongs.length=" + likedSongs.length)
+        root._log("[YtMusic] playFromLiked. index=" + index + " likedSongs.length=" + likedSongs.length)
         if (index >= 0 && index < likedSongs.length) {
             playFromPlaylist(likedSongs, index, "liked")
         }
@@ -377,7 +380,7 @@ Singleton {
     }
 
     function playNext(): void {
-        console.log("[YtMusic] playNext called. activePlaylist.length=" + activePlaylist.length + " currentIndex=" + currentIndex + " source=" + activePlaylistSource)
+        root._log("[YtMusic] playNext called. activePlaylist.length=" + activePlaylist.length + " currentIndex=" + currentIndex + " source=" + activePlaylistSource)
         
         if (root.repeatMode === 1 && root.currentVideoId) {
             seek(0)
@@ -842,7 +845,7 @@ print("")
                 Config.setNestedValue('sidebar.ytmusic.browser', root.googleBrowser)
                 Config.setNestedValue('sidebar.ytmusic.connected', true)
                 Config.setNestedValue('sidebar.ytmusic.resolvedBrowserArg', root._resolvedBrowserArg)
-                console.log("[YtMusic] QuickConnect succeeded with:", root._browserArgForYtdlp)
+                root._log("[YtMusic] QuickConnect succeeded with:", root._browserArgForYtdlp)
                 // Export static cookie file for mpv
                 _exportCookiesProc.running = true
                 root.fetchUserProfile()
@@ -1125,10 +1128,10 @@ print("")
         function onRunningChanged() {
             if (!_detectBrowsersProc.running && root.available && root.autoConnectEnabled && !root.autoConnectAttempted) {
                 root.autoConnectAttempted = true
-                console.log("[YtMusic] Browser detection done. Detected:", JSON.stringify(root.detectedBrowsers), "Saved browser:", root.googleBrowser)
+                root._log("[YtMusic] Browser detection done. Detected:", JSON.stringify(root.detectedBrowsers), "Saved browser:", root.googleBrowser)
                 // If already connected from persisted state, just verify silently
                 if (root.googleConnected && root._browserArgReady) {
-                    console.log("[YtMusic] Already connected (persisted). Verifying silently...")
+                    root._log("[YtMusic] Already connected (persisted). Verifying silently...")
                     _googleCheckProc.running = true
                     return
                 }
@@ -1289,7 +1292,7 @@ print("")
                 if (resolved) {
                     root._resolvedBrowserArg = resolved
                     Config.setNestedValue('sidebar.ytmusic.resolvedBrowserArg', resolved)
-                    console.log("[YtMusic] Resolved browser arg:", resolved)
+                    root._log("[YtMusic] Resolved browser arg:", resolved)
                 }
             }
         }
@@ -1358,20 +1361,20 @@ print("")
             onRead: line => {
                 if (line.trim()) {
                     root.googleError = "Missing: " + line.trim() + ". Install with: sudo pacman -S" + line.trim()
-                    console.log("[YtMusic] Missing dependencies:" + line.trim())
+                    root._log("[YtMusic] Missing dependencies:" + line.trim())
                 }
             }
         }
         onExited: (code) => {
             root.available = (code === 0)
-            console.log("[YtMusic] Dependencies check:", root.available ? "OK" : "FAILED")
+            root._log("[YtMusic] Dependencies check:", root.available ? "OK" : "FAILED")
             // If browser detection already finished, trigger auto-connect now
             if (root.available && !_detectBrowsersProc.running && root.autoConnectEnabled && !root.autoConnectAttempted) {
                 root.autoConnectAttempted = true
-                console.log("[YtMusic] Deps ready + browsers already detected:", JSON.stringify(root.detectedBrowsers))
+                root._log("[YtMusic] Deps ready + browsers already detected:", JSON.stringify(root.detectedBrowsers))
                 // If already connected from persisted state, just verify silently
                 if (root.googleConnected && root._browserArgReady) {
-                    console.log("[YtMusic] Already connected (persisted). Verifying silently...")
+                    root._log("[YtMusic] Already connected (persisted). Verifying silently...")
                     _googleCheckProc.running = true
                     return
                 }
@@ -1410,17 +1413,17 @@ print("")
         onStarted: { 
             errorOutput = ""; 
             stdOutput = "";
-            console.log("[YtMusic] Starting connection check with browser:", root.googleBrowser)
+            root._log("[YtMusic] Starting connection check with browser:", root.googleBrowser)
         }
         onExited: (code) => {
-            console.log("[YtMusic] Connection check exited. Code:", code, "Connected:", (code === 0 && stdOutput.trim().length > 0))
+            root._log("[YtMusic] Connection check exited. Code:", code, "Connected:", (code === 0 && stdOutput.trim().length > 0))
             if (code === 0 && stdOutput.trim().length > 0) {
                 root.googleChecking = false
                 root.googleConnected = true
                 root.googleError = ""
                 Config.setNestedValue('sidebar.ytmusic.connected', true)
                 Config.setNestedValue('sidebar.ytmusic.resolvedBrowserArg', root._resolvedBrowserArg)
-                console.log("[YtMusic] Successfully connected via --cookies-from-browser:", root._browserArgForYtdlp)
+                root._log("[YtMusic] Successfully connected via --cookies-from-browser:", root._browserArgForYtdlp)
                 // Export static cookie file for mpv use
                 _exportCookiesProc.running = true
             } else {
@@ -1428,7 +1431,7 @@ print("")
                 root.googleConnected = false
                 Config.setNestedValue('sidebar.ytmusic.connected', false)
                 const err = errorOutput.toLowerCase()
-                console.log("[YtMusic] Connection failed. Error output:", errorOutput.substring(0, 200))
+                root._log("[YtMusic] Connection failed. Error output:", errorOutput.substring(0, 200))
                 if (err.includes("sign in") || err.includes("403") || err.includes("not found")) {
                     root.googleError = Translation.tr("Could not connect. Log in to music.youtube.com in your browser first.")
                 } else if (err.includes("cookies") || err.includes("browser") || err.includes("keyring")) {
@@ -1553,7 +1556,7 @@ print("")
 
         onStarted: {
             _stderr = ""
-            console.log("[YtMusic] mpv started. URL:", root._playUrl)
+            root._log("[YtMusic] mpv started. URL:", root._playUrl)
         }
         onRunningChanged: {
             if (running) {
@@ -1562,7 +1565,7 @@ print("")
             }
         }
         onExited: (code) => {
-            console.log("[YtMusic] mpv exited. Code:", code, "stderr:", _stderr.substring(0, 500))
+            root._log("[YtMusic] mpv exited. Code:", code, "stderr:", _stderr.substring(0, 500))
             root.loading = false
             root._mpvPlayer = null
             if (code === 0 && root.currentVideoId !== "") {

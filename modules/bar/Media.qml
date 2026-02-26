@@ -25,7 +25,7 @@ Item {
 
     Timer {
         running: activePlayer?.playbackState == MprisPlaybackState.Playing
-        interval: Config.options?.resources?.updateInterval ?? 3000
+        interval: 1000
         repeat: true
         onTriggered: activePlayer?.positionChanged()
     }
