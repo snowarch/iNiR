@@ -155,7 +155,11 @@ Singleton {
     }
 
     function stringifyList(list) {
-        return JSON.stringify(list.map((notif) => notifToJSON(notif)), null, 2);
+        return JSON.stringify(
+            list.map((notif) => notifToJSON(notif)).filter(json => json !== null), 
+            null, 
+            2
+        )
     }
 
     onListChanged: {
