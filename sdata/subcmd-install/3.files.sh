@@ -275,6 +275,25 @@ if [[ -d "dots/.config/fish" ]]; then
     fi
   done
   log_success "Fish shell config installed"
+
+  # Set Fish as default shell if requested
+  if [[ "${INIR_SET_DEFAULT_SHELL:-}" == "true" ]]; then
+    if command -v chsh &>/dev/null; then
+      local fish_path
+      fish_path=$(command -v fish 2>/dev/null)
+      if [[ -n "$fish_path" ]] && [[ -x "$fish_path" ]]; then
+        if chsh -s "$fish_path" 2>/dev/null; then
+          log_success "Default shell set to Fish ($fish_path)"
+        else
+          log_warning "Could not set default shell (may require password)"
+        fi
+      else
+        log_warning "Fish shell not found in PATH"
+      fi
+    else
+      log_warning "chsh not available - cannot set default shell"
+    fi
+  fi
 fi
 
 # Foot terminal config

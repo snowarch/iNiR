@@ -78,9 +78,10 @@ show_help() {
     echo ""
 
     tui_subtitle "Options"
-    tui_list_item "-y, --yes     Skip prompts (auto-yes)"
-    tui_list_item "-q, --quiet   Minimal output"
-    tui_list_item "-h, --help    Show this help"
+    tui_list_item "-y, --yes              Skip prompts (auto-yes)"
+    tui_list_item "-q, --quiet            Minimal output"
+    tui_list_item "--set-default-shell    Set Fish as default shell (uses chsh)"
+    tui_list_item "-h, --help             Show this help"
     echo ""
 
     tui_subtitle "Examples"
@@ -815,6 +816,7 @@ while [[ $# -gt 0 ]]; do
         status) COMMAND="status"; shift ;;
         -y|--yes) ask=false; shift ;;
         -q|--quiet) quiet=true; shift ;;
+        --set-default-shell) export INIR_SET_DEFAULT_SHELL=true; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "Unknown: $1"; show_help; exit 1 ;;
     esac

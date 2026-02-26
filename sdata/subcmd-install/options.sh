@@ -24,6 +24,7 @@ Options:
   --no-toolkit        Skip toolkit dependencies (ydotool, backlight)
   --no-screencapture  Skip screenshot/recording tools
   --no-fonts          Skip fonts and theming tools
+  --set-default-shell Set Fish as the default shell (uses chsh)
   -h, --help          Show this help
 
 Examples:
@@ -53,6 +54,7 @@ INSTALL_AUDIO=true
 INSTALL_TOOLKIT=true
 INSTALL_SCREENCAPTURE=true
 INSTALL_FONTS=true
+SET_DEFAULT_SHELL=false
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -115,6 +117,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --no-fonts)
       INSTALL_FONTS=false
+      shift
+      ;;
+    --set-default-shell)
+      SET_DEFAULT_SHELL=true
       shift
       ;;
     -h|--help)
