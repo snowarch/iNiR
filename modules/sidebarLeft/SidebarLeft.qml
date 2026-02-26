@@ -42,7 +42,7 @@ Scope {
         exclusiveZone: 0
         implicitWidth: screen?.width ?? 1920
         WlrLayershell.namespace: "quickshell:sidebarLeft"
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+        WlrLayershell.keyboardFocus: GlobalStates.sidebarLeftOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
         color: "transparent"
 
         anchors {
