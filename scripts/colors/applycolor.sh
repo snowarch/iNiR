@@ -289,15 +289,26 @@ apply_chrome() {
     return
   fi
 
-  echo "[chrome] GM3 seed color: $primary_color" >> "$log_file"
+  # Detect dark/light mode from the material color pipeline
+  # generate_colors_material.py outputs "$darkmode: true;" or "$darkmode: false;" in the SCSS
+  local color_scheme="dark"
+  if [[ -f "$scss_file" ]]; then
+    local darkmode_val
+    darkmode_val=$(grep '^\$darkmode:' "$scss_file" | sed 's/.*: *\(.*\);/\1/' | tr -d ' ')
+    if [[ "$darkmode_val" == "false" || "$darkmode_val" == "False" ]]; then
+      color_scheme="light"
+    fi
+  fi
+
+  echo "[chrome] GM3 seed color: $primary_color, color scheme: $color_scheme" >> "$log_file"
 
   # Build the managed policy JSON
   # BrowserThemeColor: GM3 seed — Chrome generates the full Material palette from it
-  # BrowserColorScheme: "device" lets Chrome follow the system dark/light preference
-  #   and GM3 generates the appropriate palette variant automatically
+  # BrowserColorScheme: Explicitly set to match Quickshell's mode since "device" doesn't
+  #   work reliably on Wayland/Quickshell — Chrome can't detect the system preference
   local policy_json="{
   \"BrowserThemeColor\": \"$primary_color\",
-  \"BrowserColorScheme\": \"device\"
+  \"BrowserColorScheme\": \"$color_scheme\"
 }"
 
   # Browser detection: binary names -> policy directories (Linux paths)
