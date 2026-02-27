@@ -116,6 +116,7 @@
             "enableAppsAndShell": true,
             "enableQtApps": true,
             "enableTerminal": true,
+            "enableChrome": true,
             "enableVesktop": true,
             "enableZed": true,
             "useBackdropForColors": false,

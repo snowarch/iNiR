@@ -28,6 +28,7 @@
         },
         "wallpaperTheming": {
             "enableAppsAndShell": true,
+            "enableChrome": true,
             "enableQtApps": true,
             "enableTerminal": true,
             "terminalGenerationProps": {
