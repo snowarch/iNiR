@@ -289,26 +289,15 @@ apply_chrome() {
     return
   fi
 
-  # Detect dark/light mode from the material color pipeline
-  # generate_colors_material.py outputs "$darkmode: true;" or "$darkmode: false;" in the SCSS
-  local color_scheme="dark"
-  if [[ -f "$scss_file" ]]; then
-    local darkmode_val
-    darkmode_val=$(grep '^\$darkmode:' "$scss_file" | sed 's/.*: *\(.*\);/\1/' | tr -d ' ')
-    if [[ "$darkmode_val" == "false" || "$darkmode_val" == "False" ]]; then
-      color_scheme="light"
-    fi
-  fi
-
-  echo "[chrome] GM3 seed color: $primary_color, color scheme: $color_scheme" >> "$log_file"
+  echo "[chrome] GM3 seed color: $primary_color" >> "$log_file"
 
   # Build the managed policy JSON
   # BrowserThemeColor: GM3 seed — Chrome generates the full Material palette from it
-  # BrowserColorScheme: Forces dark/light mode to match the shell's current mode
-  #   Without this, Chrome defaults to light mode regardless of the system theme
+  # BrowserColorScheme: "device" lets Chrome follow the system dark/light preference
+  #   and GM3 generates the appropriate palette variant automatically
   local policy_json="{
   \"BrowserThemeColor\": \"$primary_color\",
-  \"BrowserColorScheme\": \"$color_scheme\"
+  \"BrowserColorScheme\": \"device\"
 }"
 
   # Browser detection: binary names -> policy directories (Linux paths)
