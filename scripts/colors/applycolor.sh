@@ -262,6 +262,12 @@ apply_gtk_kde() {
 apply_chrome() {
   # Apply Chrome/Chromium/Brave theme via managed policies using GM3 BrowserThemeColor
   # Chrome 142+ / Brave 141+ support --refresh-platform-policy for instant application
+  #
+  # IMPORTANT: Only write policy + refresh when the color actually changes.
+  # On dark/light mode toggles, the color stays the same — gsettings color-scheme
+  # (set by switchwall.sh) handles mode switching via xdg-desktop-portal.
+  # Calling --refresh-platform-policy during a mode toggle causes Chrome to
+  # re-evaluate its theme and flicker back to the wrong mode.
   local log_file="$STATE_DIR/user/generated/chrome_theme.log"
   : > "$log_file" 2>/dev/null
 
@@ -284,65 +290,47 @@ apply_chrome() {
 
   echo "[chrome] GM3 seed color: $primary_color" >> "$log_file"
 
-  # Apply to each detected browser
+  local policy_content="{\"BrowserThemeColor\": \"$primary_color\"}"
+
+  # Helper: write policy and refresh only if color changed
+  _apply_to_browser() {
+    local bin="$1"
+    local dir="$2"
+    local name="$3"
+    local policy_file="$dir/ii-theme.json"
+
+    if [[ ! -d "$dir" || ! -w "$dir" ]]; then
+      echo "[chrome] $name: policy dir not writable. Run: sudo mkdir -p $dir && sudo chown \$USER $dir" >> "$log_file"
+      return
+    fi
+
+    # Skip write + refresh if the color hasn't changed
+    if [[ -f "$policy_file" ]] && [[ "$(cat "$policy_file" 2>/dev/null)" == "$policy_content" ]]; then
+      echo "[chrome] $name: color unchanged, skipping refresh" >> "$log_file"
+      return
+    fi
+
+    echo "$policy_content" | tee "$policy_file" >/dev/null
+    "$bin" --refresh-platform-policy --no-startup-window >/dev/null 2>&1 & disown
+    echo "[chrome] Applied to $name" >> "$log_file"
+  }
+
   if command -v google-chrome-stable &>/dev/null; then
-    local dir="/etc/opt/chrome/policies/managed"
-    if [[ -d "$dir" && -w "$dir" ]]; then
-      echo "{\"BrowserThemeColor\": \"$primary_color\"}" | tee "$dir/ii-theme.json" >/dev/null
-      google-chrome-stable --refresh-platform-policy --no-startup-window >/dev/null 2>&1 & disown
-      echo "[chrome] Applied to Google Chrome" >> "$log_file"
-    else
-      echo "[chrome] Google Chrome: policy dir not writable. Run: sudo mkdir -p $dir && sudo chown \$USER $dir" >> "$log_file"
-    fi
+    _apply_to_browser google-chrome-stable "/etc/opt/chrome/policies/managed" "Google Chrome"
   elif command -v google-chrome &>/dev/null; then
-    local dir="/etc/opt/chrome/policies/managed"
-    if [[ -d "$dir" && -w "$dir" ]]; then
-      echo "{\"BrowserThemeColor\": \"$primary_color\"}" | tee "$dir/ii-theme.json" >/dev/null
-      google-chrome --refresh-platform-policy --no-startup-window >/dev/null 2>&1 & disown
-      echo "[chrome] Applied to Google Chrome" >> "$log_file"
-    else
-      echo "[chrome] Google Chrome: policy dir not writable. Run: sudo mkdir -p $dir && sudo chown \$USER $dir" >> "$log_file"
-    fi
+    _apply_to_browser google-chrome "/etc/opt/chrome/policies/managed" "Google Chrome"
   fi
 
   if command -v chromium &>/dev/null; then
-    local dir="/etc/chromium/policies/managed"
-    if [[ -d "$dir" && -w "$dir" ]]; then
-      echo "{\"BrowserThemeColor\": \"$primary_color\"}" | tee "$dir/ii-theme.json" >/dev/null
-      chromium --refresh-platform-policy --no-startup-window >/dev/null 2>&1 & disown
-      echo "[chrome] Applied to Chromium" >> "$log_file"
-    else
-      echo "[chrome] Chromium: policy dir not writable. Run: sudo mkdir -p $dir && sudo chown \$USER $dir" >> "$log_file"
-    fi
+    _apply_to_browser chromium "/etc/chromium/policies/managed" "Chromium"
   elif command -v chromium-browser &>/dev/null; then
-    local dir="/etc/chromium/policies/managed"
-    if [[ -d "$dir" && -w "$dir" ]]; then
-      echo "{\"BrowserThemeColor\": \"$primary_color\"}" | tee "$dir/ii-theme.json" >/dev/null
-      chromium-browser --refresh-platform-policy --no-startup-window >/dev/null 2>&1 & disown
-      echo "[chrome] Applied to Chromium" >> "$log_file"
-    else
-      echo "[chrome] Chromium: policy dir not writable. Run: sudo mkdir -p $dir && sudo chown \$USER $dir" >> "$log_file"
-    fi
+    _apply_to_browser chromium-browser "/etc/chromium/policies/managed" "Chromium"
   fi
 
   if command -v brave &>/dev/null; then
-    local dir="/etc/brave/policies/managed"
-    if [[ -d "$dir" && -w "$dir" ]]; then
-      echo "{\"BrowserThemeColor\": \"$primary_color\"}" | tee "$dir/ii-theme.json" >/dev/null
-      brave --refresh-platform-policy --no-startup-window >/dev/null 2>&1 & disown
-      echo "[chrome] Applied to Brave" >> "$log_file"
-    else
-      echo "[chrome] Brave: policy dir not writable. Run: sudo mkdir -p $dir && sudo chown \$USER $dir" >> "$log_file"
-    fi
+    _apply_to_browser brave "/etc/brave/policies/managed" "Brave"
   elif command -v brave-browser &>/dev/null; then
-    local dir="/etc/brave/policies/managed"
-    if [[ -d "$dir" && -w "$dir" ]]; then
-      echo "{\"BrowserThemeColor\": \"$primary_color\"}" | tee "$dir/ii-theme.json" >/dev/null
-      brave-browser --refresh-platform-policy --no-startup-window >/dev/null 2>&1 & disown
-      echo "[chrome] Applied to Brave" >> "$log_file"
-    else
-      echo "[chrome] Brave: policy dir not writable. Run: sudo mkdir -p $dir && sudo chown \$USER $dir" >> "$log_file"
-    fi
+    _apply_to_browser brave-browser "/etc/brave/policies/managed" "Brave"
   fi
 }
 
