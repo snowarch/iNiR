@@ -292,7 +292,7 @@ apply_chrome() {
 
   local policy_content="{\"BrowserThemeColor\": \"$primary_color\"}"
 
-  # Helper: write policy and refresh only if color changed
+  # Helper: write policy and refresh
   _apply_to_browser() {
     local bin="$1"
     local dir="$2"
@@ -301,12 +301,6 @@ apply_chrome() {
 
     if [[ ! -d "$dir" || ! -w "$dir" ]]; then
       echo "[chrome] $name: policy dir not writable. Run: sudo mkdir -p $dir && sudo chown \$USER $dir" >> "$log_file"
-      return
-    fi
-
-    # Skip write + refresh if the color hasn't changed
-    if [[ -f "$policy_file" ]] && [[ "$(cat "$policy_file" 2>/dev/null)" == "$policy_content" ]]; then
-      echo "[chrome] $name: color unchanged, skipping refresh" >> "$log_file"
       return
     fi
 
