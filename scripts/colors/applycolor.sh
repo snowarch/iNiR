@@ -291,25 +291,36 @@ apply_chrome() {
 
   # Detect dark/light mode from the material color pipeline
   # generate_colors_material.py outputs "$darkmode: true;" or "$darkmode: false;" in the SCSS
-  local color_scheme="dark"
+  local is_dark=true
   if [[ -f "$scss_file" ]]; then
     local darkmode_val
     darkmode_val=$(grep '^\$darkmode:' "$scss_file" | sed 's/.*: *\(.*\);/\1/' | tr -d ' ')
     if [[ "$darkmode_val" == "false" || "$darkmode_val" == "False" ]]; then
-      color_scheme="light"
+      is_dark=false
     fi
   fi
 
-  echo "[chrome] GM3 seed color: $primary_color, color scheme: $color_scheme" >> "$log_file"
+  echo "[chrome] GM3 seed color: $primary_color, dark mode: $is_dark" >> "$log_file"
 
-  # Build the managed policy JSON
-  # BrowserThemeColor: GM3 seed — Chrome generates the full Material palette from it
-  # BrowserColorScheme: Explicitly set to match Quickshell's mode since "device" doesn't
-  #   work reliably on Wayland/Quickshell — Chrome can't detect the system preference
+  # Build the managed policy JSON — only BrowserThemeColor
+  # NOTE: We intentionally do NOT set BrowserColorScheme here.
+  # That policy locks the mode and prevents live updates. Instead, we set
+  # gsettings color-scheme below, which Chrome monitors in real-time via
+  # xdg-desktop-portal's SettingChanged DBus signal.
   local policy_json="{
-  \"BrowserThemeColor\": \"$primary_color\",
-  \"BrowserColorScheme\": \"$color_scheme\"
+  \"BrowserThemeColor\": \"$primary_color\"
 }"
+
+  # Set system color-scheme via gsettings — Chrome watches this in real-time
+  # through xdg-desktop-portal and updates dark/light mode instantly
+  if command -v gsettings &>/dev/null; then
+    if [[ "$is_dark" == "true" ]]; then
+      gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' 2>/dev/null || true
+    else
+      gsettings set org.gnome.desktop.interface color-scheme 'prefer-light' 2>/dev/null || true
+    fi
+    echo "[chrome] Set gsettings color-scheme to $([ "$is_dark" == "true" ] && echo 'prefer-dark' || echo 'prefer-light')" >> "$log_file"
+  fi
 
   # Browser detection: binary names -> policy directories (Linux paths)
   local -a browser_names=()
