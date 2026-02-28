@@ -1,7 +1,7 @@
 // CompactMediaPlayer.qml
 // Enhanced media player widget for the compact sidebar Controls section
 // Shows current track with album art, playback controls, and progress
-
+pragma ComponentBehavior: Bound
 import qs
 import qs.services
 import qs.modules.common
@@ -43,7 +43,9 @@ Item {
         : inirStyle ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
     readonly property color colCard: angelStyle ? Appearance.angel.colGlassCard
         : inirStyle ? Appearance.inir.colLayer1
-        : auroraStyle ? Appearance.aurora.colSubSurface
+        : auroraStyle ? ColorUtils.transparentize(
+            blendedColors?.colLayer0 ?? Appearance.aurora.colSubSurface, 0.7
+          )
         : Appearance.colors.colLayer1
     readonly property color colBorder: angelStyle ? Appearance.angel.colCardBorder
         : inirStyle ? Appearance.inir.colBorder : Appearance.colors.colLayer0Border
@@ -79,26 +81,16 @@ Item {
             maskSource: Rectangle { width: playerCard.width; height: playerCard.height; radius: playerCard.radius }
         }
 
-        // Enhanced blurred album art background
+        // Blurred album art background (same pattern as OverviewDashboard)
         Image {
-            id: bgArt
             anchors.fill: parent
-            source: MprisController.sanitizeArtUrl(MprisController.activeTrack?.artUrl ?? "")
+            source: playerBase.displayedArtFilePath
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
-            cache: true
-            visible: false
-        }
-        
-        MultiEffect {
-            anchors.fill: parent
-            source: bgArt
-            visible: bgArt.status === Image.Ready && Appearance.effectsEnabled
-            blurEnabled: true
-            blurMax: 64
-            blur: 1.0
-            saturation: -0.2
-            opacity: 0.25
+            visible: playerBase.displayedArtFilePath !== ""
+            opacity: root.inirStyle ? 0.12 : (root.auroraStyle ? 0.22 : 0.35)
+            layer.enabled: Appearance.effectsEnabled
+            layer.effect: MultiEffect { blurEnabled: true; blur: 0.35; blurMax: 32; saturation: 0.2 }
         }
 
         // Gradient overlay for depth and text readability
@@ -207,16 +199,23 @@ Item {
                         Rectangle {
                             anchors.fill: parent
                             radius: parent.artRadius
-                            color: ColorUtils.transparentize(root.accentColor, 0.25)
+                            color: "transparent"
                             opacity: artMA.containsMouse ? 1 : 0
                             visible: opacity > 0
                             Behavior on opacity { NumberAnimation { duration: 150 } }
+
+                            // Subtle dark scrim for icon readability
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: parent.radius
+                                color: Qt.rgba(0, 0, 0, 0.35)
+                            }
 
                             MaterialSymbol {
                                 anchors.centerIn: parent
                                 text: MprisController.isPlaying ? "pause" : "play_arrow"
                                 iconSize: 32
-                                fill: 1
+                                fill: 0
                                 color: "white"
                             }
                         }
@@ -243,7 +242,7 @@ Item {
                         titleSize: Appearance.font.pixelSize.normal
                         artistSize: Appearance.font.pixelSize.small
                         titleColor: root.colText
-                        artistColor: root.colTextSecondary
+                        artistColor: root.accentColor
                         animateTitle: true
                     }
 
@@ -328,13 +327,20 @@ Item {
                 Layout.alignment: Qt.AlignHCenter
                 spacing: 6
 
-                // Shuffle
-                MediaControlBtn {
-                    visible: MprisController.shuffleSupported
-                    icon: "shuffle"
-                    toggled: MprisController.hasShuffle
-                    onClicked: MprisController.setShuffle(!MprisController.hasShuffle)
-                    tooltipText: Translation.tr("Shuffle")
+                // Left spacer (fixed width to match right side)
+                Item {
+                    Layout.preferredWidth: MprisController.shuffleSupported ? 36 : 0
+                    Layout.preferredHeight: 36
+
+                    // Shuffle
+                    MediaControlBtn {
+                        anchors.fill: parent
+                        visible: MprisController.shuffleSupported
+                        icon: "shuffle"
+                        toggled: MprisController.hasShuffle
+                        onClicked: MprisController.setShuffle(!MprisController.hasShuffle)
+                        tooltipText: Translation.tr("Shuffle")
+                    }
                 }
 
                 Item { Layout.fillWidth: true }
@@ -367,16 +373,23 @@ Item {
 
                 Item { Layout.fillWidth: true }
 
-                // Loop
-                MediaControlBtn {
-                    visible: MprisController.loopSupported
-                    icon: MprisController.loopState === 2 ? "repeat_one" : "repeat"
-                    toggled: MprisController.loopState !== 0
-                    onClicked: {
-                        const next = (MprisController.loopState + 1) % 3
-                        MprisController.setLoopState(next)
+                // Right spacer (fixed width to match left side)
+                Item {
+                    Layout.preferredWidth: MprisController.loopSupported ? 36 : 0
+                    Layout.preferredHeight: 36
+
+                    // Loop
+                    MediaControlBtn {
+                        anchors.fill: parent
+                        visible: MprisController.loopSupported
+                        icon: MprisController.loopState === 2 ? "repeat_one" : "repeat"
+                        toggled: MprisController.loopState !== 0
+                        onClicked: {
+                            const next = (MprisController.loopState + 1) % 3
+                            MprisController.setLoopState(next)
+                        }
+                        tooltipText: Translation.tr("Loop")
                     }
-                    tooltipText: Translation.tr("Loop")
                 }
             }
         }
@@ -454,16 +467,6 @@ Item {
                 } 
             }
             
-            // Enhanced glow on highlighted button
-            layer.enabled: (mcBtn.highlighted || mcBtn.large) && Appearance.effectsEnabled
-            layer.effect: MultiEffect {
-                shadowEnabled: true
-                shadowColor: mcBtn.highlighted 
-                    ? ColorUtils.transparentize(root.accentColor, 0.3)
-                    : ColorUtils.transparentize(root.colTextSecondary, 0.7)
-                shadowBlur: mcBtn.large ? 0.5 : 0.3
-                shadowScale: 1.08
-            }
             
             MaterialSymbol {
                 anchors.centerIn: parent
@@ -483,21 +486,12 @@ Item {
                 }
             }
             
-            // Enhanced scale animation with rotation for play/pause
             scale: mcBtnMA.containsPress ? 0.88 : 1.0
-            rotation: mcBtn.large && mcBtnMA.containsPress ? 5 : 0
             
             Behavior on scale {
                 NumberAnimation { 
                     duration: 150
                     easing.type: Easing.OutCubic 
-                }
-            }
-            
-            Behavior on rotation {
-                NumberAnimation {
-                    duration: 150
-                    easing.type: Easing.OutCubic
                 }
             }
             
