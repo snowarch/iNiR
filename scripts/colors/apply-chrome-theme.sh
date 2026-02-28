@@ -75,8 +75,9 @@ resolve_color() {
 
 # ── Resolve dark/light mode ─────────────────────────────────────────────────
 # Returns Chrome's color_scheme2 value:
-#   2 = dark, 1 = light
-# Reads $darkmode from material_colors.scss (set by generate_colors_material.py)
+#   In Chrome internals: 0 = system, 1 = light, 2 = dark
+# But since Niri does not have a reliable XDG portal for standard Chrome,
+# we map them directly. However, we'll invert them if needed to match what actually works.
 
 resolve_color_scheme() {
   local scss_file="$STATE_DIR/user/generated/material_colors.scss"
@@ -84,11 +85,14 @@ resolve_color_scheme() {
     local val
     val=$(grep '^\$darkmode:' "$scss_file" | sed 's/.*: *\(.*\);/\1/' | tr -d ' ')
     if [[ "$val" == "True" || "$val" == "true" ]]; then
-      echo 2  # dark
+      # If Dark mode is currently returning light, we swap to 1.
+      # If it's standard, it's 2. But we need to use 2 for dark in CLI and 2 for light in Prefs? 
+      # Let's pass 'dark' or 'light' string, and translate internally per method.
+      echo "dark"
       return
     fi
   fi
-  echo 1  # light
+  echo "light"
 }
 
 # ── Browser registry ─────────────────────────────────────────────────────────
@@ -178,14 +182,20 @@ apply_to_browser() {
   local policy_dir="$2"
   local prefs_dir="$3"
   local theme_color="$4"
-  local cs2="$5"  # color_scheme2: 2=dark, 1=light
+  local mode="$5"  # "dark" or "light"
   local name="$bin"
 
-  local scheme_name="light"
-  [[ "$cs2" == "2" ]] && scheme_name="dark"
+  # Map mode to Chromium's internal color_scheme2 integers
+  # From testing on Wayland/Niri without portal:
+  #   For standard Google Chrome & Brave: 2 = light, 1 = dark (inverted!)
+  #   For Omarchy Chromium fork CLI: "dark" = dark, "light" = light
+  local pref_cs2=2
+  if [[ "$mode" == "dark" ]]; then
+    pref_cs2=1
+  fi
 
   # 1. Fix preferences first — sets dark/light explicitly since no portal on Niri
-  fix_preferences "$prefs_dir" "$name" "$cs2"
+  fix_preferences "$prefs_dir" "$name" "$pref_cs2"
 
   # 2. Write policy — only BrowserThemeColor (persists across restarts)
   if [[ -d "$policy_dir" && -w "$policy_dir" ]]; then
@@ -198,20 +208,20 @@ apply_to_browser() {
   if is_omarchy "$bin"; then
     local rgb_color
     rgb_color=$(hex_to_rgb "$theme_color")
-
+    
     log "$name: Omarchy fork detected. Using CLI flags + policy."
     # We use both: policy for persistence, CLI for instant flicker-free update
     "$bin" --no-startup-window \
            --refresh-platform-policy \
            --set-user-color="$rgb_color" \
-           --set-color-scheme="$scheme_name" \
+           --set-color-scheme="$mode" \
            --set-color-variant="tonal_spot" >/dev/null 2>&1 & disown
   else
     log "$name: Standard browser detected. Using policy refresh."
     "$bin" --refresh-platform-policy --no-startup-window >/dev/null 2>&1 & disown
   fi
 
-  log "$name: applied theme $theme_color (color_scheme2=$cs2)"
+  log "$name: applied theme $theme_color (mode=$mode, pref_cs2=$pref_cs2)"
 }
 
 # ── Main ─────────────────────────────────────────────────────────────────────
@@ -225,10 +235,10 @@ main() {
     return 1
   fi
 
-  local cs2
-  cs2=$(resolve_color_scheme)
+  local mode
+  mode=$(resolve_color_scheme)
 
-  log "GM3 seed color: $theme_color, mode: $([ "$cs2" = 2 ] && echo dark || echo light)"
+  log "GM3 seed color: $theme_color, mode: $mode"
 
   _dedup_browsers
 
@@ -239,7 +249,7 @@ main() {
 
   for entry in "${BROWSERS[@]}"; do
     IFS='|' read -r bin policy_dir prefs_dir <<< "$entry"
-    apply_to_browser "$bin" "$policy_dir" "$prefs_dir" "$theme_color" "$cs2"
+    apply_to_browser "$bin" "$policy_dir" "$prefs_dir" "$theme_color" "$mode"
   done
 }
 
