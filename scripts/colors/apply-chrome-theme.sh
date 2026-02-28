@@ -185,35 +185,33 @@ apply_to_browser() {
   local scheme_name="light"
   [[ "$cs2" == "2" ]] && scheme_name="dark"
 
+  # 1. Fix preferences first — sets dark/light explicitly since no portal on Niri
+  fix_preferences "$prefs_dir" "$name" "$cs2"
+
+  # 2. Write policy — only BrowserThemeColor (persists across restarts)
+  if [[ -d "$policy_dir" && -w "$policy_dir" ]]; then
+    echo "{\"BrowserThemeColor\": \"$theme_color\"}" | tee "$policy_dir/ii-theme.json" >/dev/null
+  else
+    log "$name: policy dir not writable → sudo mkdir -p $policy_dir && sudo chown \$USER $policy_dir"
+  fi
+
+  # 3. Apply live
   if is_omarchy "$bin"; then
     local rgb_color
     rgb_color=$(hex_to_rgb "$theme_color")
     
-    log "$name: Omarchy fork detected. Using CLI flags."
-    # Direct CLI command (fast, reliable, bypasses policies entirely)
+    log "$name: Omarchy fork detected. Using CLI flags + policy."
+    # We use both: policy for persistence, CLI for instant flicker-free update
     "$bin" --no-startup-window \
+           --refresh-platform-policy \
            --set-user-color="$rgb_color" \
-           --set-color-scheme="$scheme_name" >/dev/null 2>&1 & disown
-    return
+           --set-color-scheme="$scheme_name" \
+           --set-color-variant="tonal_spot" >/dev/null 2>&1 & disown
+  else
+    log "$name: Standard browser detected. Using policy refresh."
+    "$bin" --refresh-platform-policy --no-startup-window >/dev/null 2>&1 & disown
   fi
 
-  # --- Standard Browser Fallback (Policy Mode) ---
-  log "$name: Standard browser detected. Using policy mode."
-
-  # Fix preferences first — sets dark/light explicitly since no portal on Niri
-  fix_preferences "$prefs_dir" "$name" "$cs2"
-
-  # Check policy dir
-  if [[ ! -d "$policy_dir" || ! -w "$policy_dir" ]]; then
-    log "$name: policy dir not writable → sudo mkdir -p $policy_dir && sudo chown \$USER $policy_dir"
-    return
-  fi
-
-  # Write policy — only BrowserThemeColor
-  echo "{\"BrowserThemeColor\": \"$theme_color\"}" | tee "$policy_dir/ii-theme.json" >/dev/null
-
-  # Refresh running instance
-  "$bin" --refresh-platform-policy --no-startup-window >/dev/null 2>&1 & disown
   log "$name: applied theme $theme_color (color_scheme2=$cs2)"
 }
 
