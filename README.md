@@ -124,20 +124,23 @@ The right sidebar covers everyday essentials:
 ```bash
 git clone https://github.com/snowarch/inir.git
 cd inir
-./setup
+./setup install       # Interactive — asks before each step
+./setup install -y    # Automatic — installs everything without prompts
 ```
 
-The installer handles dependencies, configs, theming — everything. Just follow the prompts.
+The installer handles dependencies, configs, theming — everything.
 
 **Other distros:** The installer fully supports Arch only. Manual installation guide in [docs/INSTALL.md](docs/INSTALL.md).
 
 **Updating:**
 
 ```bash
-./setup
+./setup update        # Check remote, pull, sync, restart shell
 ```
 
-Your configs stay untouched. New features come as optional migrations. Rollback included if something breaks.
+Or run `./setup` with no arguments for the interactive TUI menu where you can update, migrate, rollback, diagnose, and more.
+
+Your configs stay untouched. New features come as optional migrations. Rollback included if something breaks (`./setup rollback`).
 
 ---
 
