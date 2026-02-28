@@ -8,7 +8,6 @@ import qs.modules.sidebarRight.pomodoro
 import qs.modules.sidebarRight.notepad
 import qs.modules.sidebarRight.calculator
 import qs.modules.sidebarRight.sysmon
-import qs.modules.sidebarRight.dashboard
 import qs.modules.sidebarRight.events
 import QtQuick
 import QtQuick.Layouts
@@ -35,7 +34,6 @@ Rectangle {
     property bool collapsed: Persistent.states?.sidebar?.bottomGroup?.collapsed ?? false
     
     property var allTabs: [
-        {"type": "dashboard", "name": Translation.tr("Dashboard"), "icon": "dashboard", "widget": dashboardWidget},
         {"type": "calendar", "name": Translation.tr("Calendar"), "icon": "calendar_month", "widget": calendarWidget},
         {"type": "events", "name": Translation.tr("Events"), "icon": "event_upcoming", "widget": eventsWidgetComponent},
         {"type": "todo", "name": Translation.tr("To Do"), "icon": "done_outline", "widget": todoWidget},
@@ -49,15 +47,6 @@ Rectangle {
     Connections {
         target: Config
         function onConfigChanged() { root.configVersion++ }
-    }
-
-    // Dashboard component
-    Component {
-        id: dashboardWidget
-        DashboardWidget {
-            anchors.fill: parent
-            anchors.margins: 5
-        }
     }
 
     // Signal to open events dialog (propagated from EventsWidget)
@@ -75,7 +64,7 @@ Rectangle {
 
     readonly property var enabledWidgets: {
         root.configVersion // Force dependency
-        return Config.options?.sidebar?.right?.enabledWidgets ?? ["dashboard", "calendar", "events", "todo", "notepad", "calculator", "sysmon", "timer"]
+        return Config.options?.sidebar?.right?.enabledWidgets ?? ["calendar", "todo", "notepad", "calculator", "sysmon", "timer"]
     }
 
     property var tabs: allTabs.filter(tab => enabledWidgets.includes(tab.type))
@@ -405,6 +394,14 @@ Rectangle {
         }
     }
 
+    // Navigate to Events tab by type
+    function switchToEventsTab(): void {
+        const eventsIndex = root.tabs.findIndex(t => t.type === "events")
+        if (eventsIndex !== -1) {
+            Persistent.states.sidebar.bottomGroup.tab = eventsIndex
+        }
+    }
+
     // Calendar component
     Component {
         id: calendarWidget
@@ -412,6 +409,7 @@ Rectangle {
         CalendarWidget {
             anchors.fill: parent
             anchors.margins: 5
+            onDayWithEventsClicked: (date) => root.switchToEventsTab()
         }
     }
 
