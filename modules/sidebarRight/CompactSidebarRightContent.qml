@@ -7,7 +7,7 @@
 // Sections:
 //   0 = Controls  (sliders + quick toggles)
 //   1 = Notifications
-//   2+ = Widgets  (dashboard / calendar / todo / notepad / calc / sysmon / timer)
+//   2+ = Widgets  (calendar / events / todo / notepad / calc / sysmon / timer)
 //
 // Fully compatible with all global styles: material, aurora, inir, angel.
 
@@ -34,7 +34,6 @@ import qs.modules.sidebarRight.volumeMixer
 import qs.modules.sidebarRight.wifiNetworks
 import qs.modules.sidebarLeft.widgets
 
-import qs.modules.sidebarRight.dashboard
 import qs.modules.sidebarRight.calendar
 import qs.modules.sidebarRight.todo
 import qs.modules.sidebarRight.pomodoro
@@ -60,9 +59,34 @@ Item {
     property bool showNightLightDialog: false
     property bool showWifiDialog: false
     property bool editMode: false
+    property bool layoutEditMode: false // Edit mode for reordering Controls sections
     property var eventsDialogEditEvent: null
     property bool reloadButtonEnabled: true
     property bool settingsButtonEnabled: true
+    
+    // Controls section order from config
+    readonly property var defaultSectionOrder: ["sliders", "toggles", "devices", "media", "quickActions"]
+    property var controlsSectionOrder: Config.options?.sidebar?.right?.controlsSectionOrder ?? defaultSectionOrder
+    
+    function moveSectionUp(index: int): void {
+        if (index <= 0) return
+        let order = [...root.controlsSectionOrder]
+        const temp = order[index - 1]
+        order[index - 1] = order[index]
+        order[index] = temp
+        root.controlsSectionOrder = order
+        Config.setNestedValue("sidebar.right.controlsSectionOrder", order)
+    }
+    
+    function moveSectionDown(index: int): void {
+        if (index >= root.controlsSectionOrder.length - 1) return
+        let order = [...root.controlsSectionOrder]
+        const temp = order[index + 1]
+        order[index + 1] = order[index]
+        order[index] = temp
+        root.controlsSectionOrder = order
+        Config.setNestedValue("sidebar.right.controlsSectionOrder", order)
+    }
 
     // Active section index — persisted
     property int activeSection: Persistent.states?.sidebar?.compactGroup?.tab ?? 0
@@ -97,8 +121,17 @@ Item {
         { id: "notifications", icon: "notifications", label: Translation.tr("Notifications") },
     ]
 
-    Component { id: dashboardComponent;  DashboardWidget  { anchors.fill: parent; anchors.margins: 8 } }
-    Component { id: calendarComponent;   CalendarWidget   { anchors.fill: parent; anchors.margins: 8 } }
+    Component {
+        id: calendarComponent
+        CalendarWidget {
+            anchors.fill: parent
+            anchors.margins: 8
+            onDayWithEventsClicked: (date) => {
+                const eventsIdx = root.sections.findIndex(s => s.id === "events")
+                if (eventsIdx !== -1) root.activeSection = eventsIdx
+            }
+        }
+    }
     Component { 
         id: eventsComponent
         EventsWidget { 
@@ -216,9 +249,8 @@ Item {
 
     readonly property var widgetSections: {
         root.configVersion // Force dependency
-        const enabled = Config.options?.sidebar?.right?.enabledWidgets ?? ["dashboard", "calendar", "events", "todo", "notepad", "calculator", "sysmon", "timer"]
+        const enabled = Config.options?.sidebar?.right?.enabledWidgets ?? ["calendar", "todo", "notepad", "calculator", "sysmon", "timer"]
         const all = [
-            {id: "dashboard",  icon: "dashboard",     label: Translation.tr("Dashboard"),  component: dashboardComponent},
             {id: "calendar",   icon: "calendar_month", label: Translation.tr("Calendar"),   component: calendarComponent},
             {id: "events",     icon: "event_upcoming", label: Translation.tr("Events"),     component: eventsComponent},
             {id: "todo",       icon: "done_outline",  label: Translation.tr("To Do"),      component: todoComponent},
@@ -799,163 +831,183 @@ Item {
                         Layout.fillWidth: true
                         headerText: Translation.tr("Controls")
                         headerIcon: "tune"
-                        showAction: (Config.options?.sidebar?.quickToggles?.style ?? "classic") === "android"
-                        actionIcon: root.editMode ? "check" : "edit"
-                        actionTooltip: Translation.tr("Edit quick toggles")
-                        onActionClicked: root.editMode = !root.editMode
+                        // Layout edit button
+                        showAction: true
+                        actionIcon: root.layoutEditMode ? "check" : "reorder"
+                        actionTooltip: root.layoutEditMode ? Translation.tr("Done editing") : Translation.tr("Reorder sections")
+                        onActionClicked: root.layoutEditMode = !root.layoutEditMode
+                        // Quick toggles edit (only for android style)
+                        showSecondaryAction: (Config.options?.sidebar?.quickToggles?.style ?? "classic") === "android"
+                        secondaryActionIcon: root.editMode ? "check" : "edit"
+                        secondaryActionTooltip: Translation.tr("Edit quick toggles")
+                        onSecondaryActionClicked: root.editMode = !root.editMode
                     }
 
-                    // Quick Sliders (Volume, Brightness, Mic)
-                    Loader {
-                        Layout.fillWidth: true
-                        Layout.maximumWidth: controlsColumn.width
-                        visible: active
-                        active: {
-                            const cfg = Config.options?.sidebar?.quickSliders
-                            return (cfg?.enable && (cfg?.showMic || cfg?.showVolume || cfg?.showBrightness))
-                        }
-                        sourceComponent: QuickSliders {}
-                    }
-
-                    // Compact quick controls row (reuse ControlsCard)
-                    Item {
-                        Layout.fillWidth: true
-                        implicitHeight: controlsCardSurface.implicitHeight
-
-                        StyledRectangularShadow {
-                            target: controlsCardSurface
-                            visible: !bg.inirEverywhere && !bg.auroraEverywhere
-                        }
-
-                        Rectangle {
-                            id: controlsCardSurface
-                            anchors.fill: parent
-                            implicitHeight: controlsCard.implicitHeight + 10
-                            radius: bg.angelEverywhere ? Appearance.angel.roundingNormal
-                                : bg.inirEverywhere ? Appearance.inir.roundingNormal
-                                : Appearance.rounding.normal
-                            color: bg.angelEverywhere ? Appearance.angel.colGlassCard
-                                : bg.inirEverywhere ? Appearance.inir.colLayer1
-                                : bg.auroraEverywhere ? "transparent"
-                                : Appearance.colors.colLayer1
-                            border.width: bg.angelEverywhere ? Appearance.angel.cardBorderWidth
-                                : bg.inirEverywhere ? 1 : (bg.auroraEverywhere ? 0 : 1)
-                            border.color: bg.angelEverywhere ? Appearance.angel.colCardBorder
-                                : bg.inirEverywhere ? Appearance.inir.colBorder
-                                : Appearance.colors.colLayer0Border
-
-                            ControlsCard {
-                                id: controlsCard
-                                anchors.fill: parent
-                                anchors.margins: 4
-                            }
-
-                            AngelPartialBorder { targetRadius: controlsCardSurface.radius }
-                        }
-                    }
-
-                    // Device shortcuts
-                    SectionDivider {
-                        Layout.topMargin: Appearance.sizes.spacingSmall
-                        text: Translation.tr("Devices")
-                    }
-
-                    GridLayout {
-                        Layout.fillWidth: true
-                        columns: 2
-                        columnSpacing: 8
-                        rowSpacing: 8
-
-                        ControlChipButton {
+                    // ═══════════════════════════════════════════════════════
+                    // REORDERABLE CONTROLS SECTIONS
+                    // ═══════════════════════════════════════════════════════
+                    Repeater {
+                        model: root.controlsSectionOrder
+                        
+                        delegate: ColumnLayout {
+                            id: sectionDelegate
+                            required property string modelData
+                            required property int index
+                            
                             Layout.fillWidth: true
-                            chipIcon: "media_output"
-                            chipLabel: Translation.tr("Output")
-                            value: Audio.sink?.description ?? ""
-                            onClicked: root.showAudioOutputDialog = true
-                        }
-
-                        ControlChipButton {
-                            Layout.fillWidth: true
-                            chipIcon: "mic_external_on"
-                            chipLabel: Translation.tr("Input")
-                            value: Audio.source?.description ?? ""
-                            onClicked: root.showAudioInputDialog = true
-                        }
-
-                        ControlChipButton {
-                            Layout.fillWidth: true
-                            chipIcon: "bluetooth"
-                            chipLabel: Translation.tr("Bluetooth")
-                            value: Bluetooth.defaultAdapter?.enabled ? Translation.tr("On") : Translation.tr("Off")
-                            onClicked: root.showBluetoothDialog = true
-                        }
-
-                        ControlChipButton {
-                            Layout.fillWidth: true
-                            chipIcon: Network.materialSymbol
-                            chipLabel: Translation.tr("Wi-Fi")
-                            value: Network.networkName ?? ""
-                            onClicked: root.showWifiDialog = true
-                        }
-                    }
-
-                    // Quick Toggles - Classic Style
-                    Item {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: toggleLoader.item?.implicitHeight ?? 0
-                        visible: toggleLoader.active
-                        Layout.leftMargin: 2
-                        Layout.rightMargin: 4
-
-                        Loader {
-                            id: toggleLoader
-                            anchors.fill: parent
-                            active: (Config.options?.sidebar?.quickToggles?.style ?? "classic") === "classic"
-                            sourceComponent: ClassicQuickPanel { compactMode: true }
-                            Connections {
-                                target: toggleLoader.item
-                                function onOpenAudioOutputDialog() { root.showAudioOutputDialog = true }
-                                function onOpenAudioInputDialog()  { root.showAudioInputDialog  = true }
-                                function onOpenBluetoothDialog()   { root.showBluetoothDialog   = true }
-                                function onOpenNightLightDialog()  { root.showNightLightDialog  = true }
-                                function onOpenWifiDialog()        { root.showWifiDialog        = true }
+                            spacing: 4
+                            
+                            // Move buttons (visible in edit mode)
+                            RowLayout {
+                                Layout.fillWidth: true
+                                visible: root.layoutEditMode
+                                spacing: 4
+                                
+                                StyledText {
+                                    Layout.fillWidth: true
+                                    text: {
+                                        switch (sectionDelegate.modelData) {
+                                            case "sliders": return Translation.tr("Sliders")
+                                            case "toggles": return Translation.tr("Quick Toggles")
+                                            case "devices": return Translation.tr("Devices")
+                                            case "media": return Translation.tr("Media Player")
+                                            case "quickActions": return Translation.tr("Quick Actions")
+                                            default: return sectionDelegate.modelData
+                                        }
+                                    }
+                                    font.pixelSize: Appearance.font.pixelSize.small
+                                    font.weight: Font.Medium
+                                    color: bg.inirEverywhere ? Appearance.inir.colPrimary
+                                        : bg.angelEverywhere ? Appearance.angel.colPrimary
+                                        : Appearance.colors.colPrimary
+                                }
+                                
+                                RippleButton {
+                                    implicitWidth: 28; implicitHeight: 28
+                                    buttonRadius: 14
+                                    enabled: sectionDelegate.index > 0
+                                    opacity: enabled ? 1 : 0.3
+                                    colBackground: "transparent"
+                                    colBackgroundHover: bg.inirEverywhere ? Appearance.inir.colLayer1Hover
+                                        : bg.angelEverywhere ? Appearance.angel.colGlassCardHover
+                                        : Appearance.colors.colLayer1Hover
+                                    onClicked: root.moveSectionUp(sectionDelegate.index)
+                                    contentItem: MaterialSymbol { anchors.centerIn: parent; text: "arrow_upward"; iconSize: 16; color: bg.inirEverywhere ? Appearance.inir.colText : bg.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer1 }
+                                    StyledToolTip { text: Translation.tr("Move up") }
+                                }
+                                
+                                RippleButton {
+                                    implicitWidth: 28; implicitHeight: 28
+                                    buttonRadius: 14
+                                    enabled: sectionDelegate.index < root.controlsSectionOrder.length - 1
+                                    opacity: enabled ? 1 : 0.3
+                                    colBackground: "transparent"
+                                    colBackgroundHover: bg.inirEverywhere ? Appearance.inir.colLayer1Hover
+                                        : bg.angelEverywhere ? Appearance.angel.colGlassCardHover
+                                        : Appearance.colors.colLayer1Hover
+                                    onClicked: root.moveSectionDown(sectionDelegate.index)
+                                    contentItem: MaterialSymbol { anchors.centerIn: parent; text: "arrow_downward"; iconSize: 16; color: bg.inirEverywhere ? Appearance.inir.colText : bg.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer1 }
+                                    StyledToolTip { text: Translation.tr("Move down") }
+                                }
+                            }
+                            
+                            // Section content based on modelData
+                            Loader {
+                                Layout.fillWidth: true
+                                active: sectionDelegate.modelData === "sliders"
+                                visible: active && (Config.options?.sidebar?.quickSliders?.enable && (Config.options?.sidebar?.quickSliders?.showMic || Config.options?.sidebar?.quickSliders?.showVolume || Config.options?.sidebar?.quickSliders?.showBrightness))
+                                sourceComponent: QuickSliders {}
+                            }
+                            
+                            Loader {
+                                Layout.fillWidth: true
+                                active: sectionDelegate.modelData === "toggles"
+                                visible: active
+                                sourceComponent: ColumnLayout {
+                                    spacing: 4
+                                    
+                                    // ControlsCard
+                                    Item {
+                                        Layout.fillWidth: true
+                                        implicitHeight: ccSurface.implicitHeight
+                                        
+                                        Rectangle {
+                                            id: ccSurface
+                                            anchors.fill: parent
+                                            implicitHeight: ccCard.implicitHeight + 10
+                                            radius: bg.angelEverywhere ? Appearance.angel.roundingNormal : bg.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+                                            color: bg.angelEverywhere ? Appearance.angel.colGlassCard : bg.inirEverywhere ? Appearance.inir.colLayer1 : bg.auroraEverywhere ? "transparent" : Appearance.colors.colLayer1
+                                            border.width: bg.angelEverywhere ? Appearance.angel.cardBorderWidth : bg.inirEverywhere ? 1 : (bg.auroraEverywhere ? 0 : 1)
+                                            border.color: bg.angelEverywhere ? Appearance.angel.colCardBorder : bg.inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colLayer0Border
+                                            ControlsCard { id: ccCard; anchors.fill: parent; anchors.margins: 4 }
+                                            AngelPartialBorder { targetRadius: ccSurface.radius }
+                                        }
+                                    }
+                                    
+                                    // Classic/Android Quick Panel
+                                    Loader {
+                                        Layout.fillWidth: true
+                                        Layout.leftMargin: 2; Layout.rightMargin: 4
+                                        active: (Config.options?.sidebar?.quickToggles?.style ?? "classic") === "classic"
+                                        sourceComponent: ClassicQuickPanel { compactMode: true }
+                                        Connections {
+                                            target: item
+                                            function onOpenAudioOutputDialog() { root.showAudioOutputDialog = true }
+                                            function onOpenAudioInputDialog()  { root.showAudioInputDialog  = true }
+                                            function onOpenBluetoothDialog()   { root.showBluetoothDialog   = true }
+                                            function onOpenNightLightDialog()  { root.showNightLightDialog  = true }
+                                            function onOpenWifiDialog()        { root.showWifiDialog        = true }
+                                        }
+                                    }
+                                    Loader {
+                                        Layout.fillWidth: true
+                                        Layout.leftMargin: 2; Layout.rightMargin: 4
+                                        active: (Config.options?.sidebar?.quickToggles?.style ?? "classic") === "android"
+                                        sourceComponent: AndroidQuickPanel { editMode: root.editMode }
+                                        Connections {
+                                            target: item
+                                            function onOpenAudioOutputDialog() { root.showAudioOutputDialog = true }
+                                            function onOpenAudioInputDialog()  { root.showAudioInputDialog  = true }
+                                            function onOpenBluetoothDialog()   { root.showBluetoothDialog   = true }
+                                            function onOpenNightLightDialog()  { root.showNightLightDialog  = true }
+                                            function onOpenWifiDialog()        { root.showWifiDialog        = true }
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            Loader {
+                                Layout.fillWidth: true
+                                active: sectionDelegate.modelData === "devices"
+                                visible: active
+                                sourceComponent: ColumnLayout {
+                                    spacing: 8
+                                    SectionDivider { text: Translation.tr("Devices"); visible: !root.layoutEditMode }
+                                    GridLayout {
+                                        Layout.fillWidth: true
+                                        columns: 2; columnSpacing: 8; rowSpacing: 8
+                                        ControlChipButton { Layout.fillWidth: true; chipIcon: "media_output"; chipLabel: Translation.tr("Output"); value: Audio.sink?.description ?? ""; onClicked: root.showAudioOutputDialog = true }
+                                        ControlChipButton { Layout.fillWidth: true; chipIcon: "mic_external_on"; chipLabel: Translation.tr("Input"); value: Audio.source?.description ?? ""; onClicked: root.showAudioInputDialog = true }
+                                        ControlChipButton { Layout.fillWidth: true; chipIcon: "bluetooth"; chipLabel: Translation.tr("Bluetooth"); value: Bluetooth.defaultAdapter?.enabled ? Translation.tr("On") : Translation.tr("Off"); onClicked: root.showBluetoothDialog = true }
+                                        ControlChipButton { Layout.fillWidth: true; chipIcon: Network.materialSymbol; chipLabel: Translation.tr("Wi-Fi"); value: Network.networkName ?? ""; onClicked: root.showWifiDialog = true }
+                                    }
+                                }
+                            }
+                            
+                            Loader {
+                                Layout.fillWidth: true
+                                active: sectionDelegate.modelData === "media"
+                                visible: active
+                                sourceComponent: CompactMediaPlayer {}
+                            }
+                            
+                            Loader {
+                                Layout.fillWidth: true
+                                active: sectionDelegate.modelData === "quickActions"
+                                visible: active
+                                sourceComponent: QuickActionsSection {}
                             }
                         }
-                    }
-
-                    Item {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: androidToggleLoader.item?.implicitHeight ?? 0
-                        visible: androidToggleLoader.active
-                        Layout.leftMargin: 2
-                        Layout.rightMargin: 4
-
-                        Loader {
-                            id: androidToggleLoader
-                            anchors.fill: parent
-                            active: (Config.options?.sidebar?.quickToggles?.style ?? "classic") === "android"
-                            sourceComponent: AndroidQuickPanel {
-                                editMode: root.editMode
-                            }
-                            Connections {
-                                target: androidToggleLoader.item
-                                function onOpenAudioOutputDialog() { root.showAudioOutputDialog = true }
-                                function onOpenAudioInputDialog()  { root.showAudioInputDialog  = true }
-                                function onOpenBluetoothDialog()   { root.showBluetoothDialog   = true }
-                                function onOpenNightLightDialog()  { root.showNightLightDialog  = true }
-                                function onOpenWifiDialog()        { root.showWifiDialog        = true }
-                            }
-                        }
-                    }
-
-                    // Media player (shows when music is playing)
-                    CompactMediaPlayer {
-                        Layout.fillWidth: true
-                    }
-
-                    // Quick Actions section
-                    QuickActionsSection {
-                        Layout.fillWidth: true
                     }
                 }
             }
