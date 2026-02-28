@@ -827,6 +827,14 @@ Singleton {
                 property bool keepOverviewOpenOnWindowClick: true
                 property bool closeAfterWindowMove: true
                 property bool showPreviews: false // Show window thumbnails in overview
+                property JsonObject dashboard: JsonObject {
+                    property bool enable: false
+                    property bool showToggles: true
+                    property bool showMedia: true
+                    property bool showVolume: true
+                    property bool showWeather: true
+                    property bool showSystem: true
+                }
             }
 
             // Settings for the custom Alt-Tab switcher in ii
@@ -1097,7 +1105,9 @@ Singleton {
 
                 // Right sidebar widget toggles
                 property JsonObject right: JsonObject {
-                    property list<string> enabledWidgets: ["dashboard", "calendar", "events", "todo", "notepad", "calculator", "sysmon", "timer"]
+                    property list<string> enabledWidgets: ["calendar", "todo", "notepad", "calculator", "sysmon", "timer"]
+                    // Controls section order for compact layout (drag to reorder)
+                    property list<string> controlsSectionOrder: ["sliders", "toggles", "devices", "media", "quickActions"]
                 }
             }
 

@@ -1164,7 +1164,7 @@ ContentPage {
                 title: Translation.tr("Right Sidebar")
                 tooltip: Translation.tr("Toggle which widgets appear in the right sidebar")
 
-                readonly property var defaults: ["dashboard", "calendar", "events", "todo", "notepad", "calculator", "sysmon", "timer"]
+                readonly property var defaults: ["calendar", "todo", "notepad", "calculator", "sysmon", "timer"]
 
                 function isEnabled(widgetId) {
                     return (Config.options?.sidebar?.right?.enabledWidgets ?? defaults).includes(widgetId)
@@ -1185,15 +1185,6 @@ ContentPage {
                         Config.setNestedValue("sidebar.right.enabledWidgets", current)
                     } else {
                         console.log(`[RightSidebar] No change needed`)
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "dashboard"
-                    text: Translation.tr("Dashboard")
-                    Component.onCompleted: checked = rightSidebarWidgets.isEnabled("dashboard")
-                    onClicked: {
-                        rightSidebarWidgets.setWidget("dashboard", checked)
                     }
                 }
 
@@ -2392,6 +2383,48 @@ ContentPage {
                 StyledToolTip {
                     text: Translation.tr("Enable the app launcher and workspace overview (Super+Space)")
                 }
+            }
+            SettingsSwitch {
+                buttonIcon: "dashboard"
+                text: Translation.tr("Dashboard panel")
+                checked: Config.options?.overview?.dashboard?.enable ?? true
+                onCheckedChanged: Config.setNestedValue("overview.dashboard.enable", checked)
+                StyledToolTip { text: Translation.tr("Show a control center dashboard below workspace previews") }
+            }
+            SettingsSwitch {
+                buttonIcon: "toggle_on"
+                text: Translation.tr("Dashboard: Quick toggles")
+                checked: Config.options?.overview?.dashboard?.showToggles ?? true
+                onCheckedChanged: Config.setNestedValue("overview.dashboard.showToggles", checked)
+                visible: Config.options?.overview?.dashboard?.enable ?? true
+            }
+            SettingsSwitch {
+                buttonIcon: "music_note"
+                text: Translation.tr("Dashboard: Media player")
+                checked: Config.options?.overview?.dashboard?.showMedia ?? true
+                onCheckedChanged: Config.setNestedValue("overview.dashboard.showMedia", checked)
+                visible: Config.options?.overview?.dashboard?.enable ?? true
+            }
+            SettingsSwitch {
+                buttonIcon: "volume_up"
+                text: Translation.tr("Dashboard: Volume slider")
+                checked: Config.options?.overview?.dashboard?.showVolume ?? true
+                onCheckedChanged: Config.setNestedValue("overview.dashboard.showVolume", checked)
+                visible: Config.options?.overview?.dashboard?.enable ?? true
+            }
+            SettingsSwitch {
+                buttonIcon: "cloud"
+                text: Translation.tr("Dashboard: Weather")
+                checked: Config.options?.overview?.dashboard?.showWeather ?? true
+                onCheckedChanged: Config.setNestedValue("overview.dashboard.showWeather", checked)
+                visible: Config.options?.overview?.dashboard?.enable ?? true
+            }
+            SettingsSwitch {
+                buttonIcon: "memory"
+                text: Translation.tr("Dashboard: System stats")
+                checked: Config.options?.overview?.dashboard?.showSystem ?? true
+                onCheckedChanged: Config.setNestedValue("overview.dashboard.showSystem", checked)
+                visible: Config.options?.overview?.dashboard?.enable ?? true
             }
             SettingsSwitch {
                 buttonIcon: "center_focus_strong"
