@@ -262,12 +262,6 @@ apply_gtk_kde() {
 apply_chrome() {
   # Apply Chrome/Chromium/Brave theme via managed policies using GM3 BrowserThemeColor
   # Chrome 142+ / Brave 141+ support --refresh-platform-policy for instant application
-  #
-  # IMPORTANT: Only write policy + refresh when the color actually changes.
-  # On dark/light mode toggles, the color stays the same — gsettings color-scheme
-  # (set by switchwall.sh) handles mode switching via xdg-desktop-portal.
-  # Calling --refresh-platform-policy during a mode toggle causes Chrome to
-  # re-evaluate its theme and flicker back to the wrong mode.
   local log_file="$STATE_DIR/user/generated/chrome_theme.log"
   : > "$log_file" 2>/dev/null
 
@@ -288,9 +282,21 @@ apply_chrome() {
     return
   fi
 
-  echo "[chrome] GM3 seed color: $primary_color" >> "$log_file"
+  # Detect dark/light mode from the material color pipeline
+  local color_scheme="dark"
+  if [[ -f "$scss_file" ]]; then
+    local darkmode_val
+    darkmode_val=$(grep '^\$darkmode:' "$scss_file" | sed 's/.*: *\(.*\);/\1/' | tr -d ' ')
+    if [[ "$darkmode_val" == "false" || "$darkmode_val" == "False" ]]; then
+      color_scheme="light"
+    fi
+  fi
 
-  local policy_content="{\"BrowserThemeColor\": \"$primary_color\"}"
+  echo "[chrome] GM3 seed color: $primary_color, scheme: $color_scheme" >> "$log_file"
+
+  # BrowserThemeColor: GM3 seed color
+  # BrowserColorScheme: Explicitly dark/light — portal doesn't work reliably for Chrome on Wayland
+  local policy_content="{\"BrowserThemeColor\": \"$primary_color\", \"BrowserColorScheme\": \"$color_scheme\"}"
 
   # Helper: write policy and refresh
   _apply_to_browser() {
