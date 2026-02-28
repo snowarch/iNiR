@@ -408,11 +408,14 @@ Item { // Bar content region
                             color: rightSidebarButton.colText
                         }
                     }
-                    Bar.HyprlandXkbIndicator {
-                        vertical: true
+                    Loader {
+                        active: CompositorService.isHyprland
                         Layout.alignment: Qt.AlignHCenter
                         Layout.bottomMargin: indicatorsColumnLayout.realSpacing
-                        color: rightSidebarButton.colText
+                        sourceComponent: Bar.HyprlandXkbIndicator {
+                            vertical: true
+                            color: rightSidebarButton.colText
+                        }
                     }
                     Revealer {
                         vertical: true

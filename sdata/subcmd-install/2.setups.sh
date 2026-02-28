@@ -37,7 +37,7 @@ function setup_systemd_services(){
   fi
   
   # i2c-dev module for ddcutil
-  v bash -c "echo i2c-dev | pkg_sudo tee /etc/modules-load.d/i2c-dev.conf"
+  v pkg_sudo sh -c 'printf "%s\n" i2c-dev > /etc/modules-load.d/i2c-dev.conf'
   
   # ydotool service - create user service symlink if needed
   # Check multiple possible locations (varies by distro)

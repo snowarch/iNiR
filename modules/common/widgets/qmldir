@@ -26,6 +26,7 @@ ContentSubsectionLabel 1.0 ContentSubsectionLabel.qml
 ContentSubsection 1.0 ContentSubsection.qml
 ContextMenu 1.0 ContextMenu.qml
 CustomIcon 1.0 CustomIcon.qml
+DatePicker 1.0 DatePicker.qml
 DialogButton 1.0 DialogButton.qml
 DialogListItem 1.0 DialogListItem.qml
 DirectoryIcon 1.0 DirectoryIcon.qml

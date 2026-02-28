@@ -11,6 +11,8 @@ Item {
     id: stopwatchTab
     Layout.fillWidth: true
     Layout.fillHeight: true
+    property bool compactMode: false
+    property bool centerMode: true
 
     Item {
         anchors {
@@ -24,15 +26,17 @@ Item {
             id: elapsedIndicator
             
             anchors {
-                top: undefined
-                verticalCenter: parent.verticalCenter
+                top: stopwatchTab.centerMode ? undefined : parent.top
+                topMargin: stopwatchTab.centerMode ? 0 : 6
+                verticalCenter: stopwatchTab.centerMode ? parent.verticalCenter : undefined
+                verticalCenterOffset: stopwatchTab.centerMode ? -(controlButtons.height / 2 + 12) : 0
                 left: controlButtons.left
                 leftMargin: 6
             }
 
             states: State {
                 name: "hasLaps"
-                when: TimerService.stopwatchLaps.length > 0
+                when: stopwatchTab.centerMode && TimerService.stopwatchLaps.length > 0
                 AnchorChanges {
                     target: elapsedIndicator
                     anchors.top: parent.top
@@ -53,7 +57,9 @@ Item {
             StyledText {
                 // Layout.preferredWidth: elapsedIndicator.width * 0.6 // Prevent shakiness
                 font.pixelSize: Math.round(40 * Appearance.fontSizeScale)
-                color: Appearance.m3colors.m3onSurface
+                color: Appearance.angelEverywhere ? Appearance.angel.colText
+                    : Appearance.inirEverywhere ? Appearance.inir.colText
+                    : Appearance.m3colors.m3onSurface
                 text: {
                     let totalSeconds = Math.floor(TimerService.stopwatchTime) / 100
                     let minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0')
@@ -64,7 +70,9 @@ Item {
             StyledText {
                 Layout.fillWidth: true
                 font.pixelSize: Math.round(40 * Appearance.fontSizeScale)
-                color: Appearance.colors.colSubtext
+                color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+                    : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
+                    : Appearance.colors.colSubtext
                 text: {
                     return `:<sub>${(Math.floor(TimerService.stopwatchTime) % 100).toString().padStart(2, '0')}</sub>`
                 }
@@ -116,7 +124,9 @@ Item {
 
                     StyledText {
                         font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colSubtext
+                        color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+                            : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
+                            : Appearance.colors.colSubtext
                         text: `${TimerService.stopwatchLaps.length - lapItem.index}.`
                     }
 
@@ -156,9 +166,34 @@ Item {
             id: controlButtons
             anchors {
                 horizontalCenter: parent.horizontalCenter
-                bottom: parent.bottom
-                bottomMargin: 6
+                bottom: stopwatchTab.centerMode ? undefined : parent.bottom
+                bottomMargin: stopwatchTab.centerMode ? 0 : 6
+                verticalCenter: stopwatchTab.centerMode ? parent.verticalCenter : undefined
+                verticalCenterOffset: stopwatchTab.centerMode ? (controlButtons.height / 2 + 12) : 0
             }
+
+            states: State {
+                name: "hasLaps"
+                when: stopwatchTab.centerMode && TimerService.stopwatchLaps.length > 0
+                AnchorChanges {
+                    target: controlButtons
+                    anchors.bottom: parent.bottom
+                    anchors.verticalCenter: undefined
+                }
+                PropertyChanges {
+                    target: controlButtons
+                    anchors.bottomMargin: 6
+                }
+            }
+
+            transitions: Transition {
+                AnchorAnimation {
+                    duration: Appearance.animation.elementMoveFast.duration
+                    easing.type: Appearance.animation.elementMoveFast.type
+                    easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                }
+            }
+
             spacing: 4
 
             RippleButton {

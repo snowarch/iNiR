@@ -26,10 +26,12 @@ LazyLoader {
 
     // Fullscreen transparent backdrop for Niri to detect clicks outside
     // (same pattern as ContextMenu / SysTrayMenu)
+    // Color must be non-zero alpha so the compositor registers it as a surface,
+    // but visually invisible — do not use "transparent" (alpha=0 breaks input)
     PanelWindow {
         id: clickOutsideBackdrop
         visible: root.active && root.closeOnOutsideClick
-        color: "#01000000"
+        color: Qt.rgba(0, 0, 0, 1/255)
         exclusiveZone: 0
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "quickshell:popup-catcher"

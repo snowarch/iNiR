@@ -30,6 +30,17 @@ Singleton {
     
     // Preview validity duration (5 minutes)
     readonly property int previewValidityMs: 300000
+
+    // Debounce: coalesce rapid capture requests (e.g. hovering across multiple dock icons)
+    Timer {
+        id: captureDebounceTimer
+        interval: 300  // 300ms debounce — fast enough to feel instant, slow enough to coalesce
+        repeat: false
+        onTriggered: root._doCapture()
+    }
+    // Cooldown: prevent captures from firing back-to-back after one completes
+    property double _lastCaptureEndTime: 0
+    readonly property int _captureCooldownMs: 2000  // 2 seconds between capture cycles
     
     signal captureComplete()
     signal previewUpdated(int windowId)
@@ -102,11 +113,23 @@ Singleton {
     // Track if we've done initial capture this session
     property bool initialCapturesDone: false
     
-    // Called when TaskView opens - capture windows that need it
+    // Called when TaskView/dock preview opens - debounced to coalesce rapid hover events
     function captureForTaskView(): void {
         if (capturing) return
-
         if (!initialized) initialize()
+
+        // Cooldown: don't re-capture if we just finished one
+        if (Date.now() - _lastCaptureEndTime < _captureCooldownMs && initialCapturesDone) {
+            captureComplete()  // signal callers that cached previews are ready
+            return
+        }
+
+        captureDebounceTimer.restart()
+    }
+
+    // Internal: actual capture logic, called after debounce
+    function _doCapture(): void {
+        if (capturing) return
         
         const windows = NiriService.windows ?? []
         if (windows.length === 0) return
@@ -182,6 +205,7 @@ Singleton {
         
         onExited: (exitCode, exitStatus) => {
             root.capturing = false
+            root._lastCaptureEndTime = Date.now()
 
             if (exitCode !== 0) {
                 console.log("[WindowPreviewService] capture process failed", exitCode, exitStatus)

@@ -5,6 +5,36 @@ All notable changes to iNiR will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.12.0] - 2026-02-28
+
+### Added
+- **Overview Dashboard panel**: New control center below workspace previews with quick toggles, media player, volume/brightness sliders, weather summary, and system stats. Configurable via `overview.dashboard.*` settings.
+- **Events & Reminders system**: Full event management with date-based notifications, calendar integration with event dots, and professional add/edit dialog.
+- **Calendar event indicators**: Days with events show colored dots; clicking navigates to Events tab.
+- **Reorderable Controls sections**: Drag to reorder sidebar sections (sliders, toggles, devices, media, quick actions) in compact layout. Persisted via `sidebar.right.controlsSectionOrder`.
+- **VSCode/Cursor theme generation**: Material You integration for VS Code and Cursor editors with wallpaper-synced colors.
+- **Zed editor theme generation**: Material You theme support for Zed (PR #62).
+- **Lock screen display name**: Show user's full name (GECOS) instead of username on lock screen.
+- **Documentation site**: Next.js static site with GitHub Pages deployment, full feature documentation.
+- **Launcher search prefixes**: Document search prefix shortcuts in launcher.
+
+### Changed
+- **Dashboard moved to Overview**: DashboardWidget removed from right sidebar; functionality consolidated into OverviewDashboard in the Overview panel.
+- **Compact sidebar polish**: Simplified SectionDivider (no lines, just text), enhanced CompactMediaPlayer with cleaner blur and centered controls.
+- **README install instructions**: Updated with explicit `./setup install`, `./setup update`, and TUI menu documentation.
+- **Events reactivity**: Replaced property-based reactivity with trigger pattern (`_eventsTrigger` counter) for reliable UI updates when events change.
+- **ProfileHeader greeting**: Uses primary color instead of subtext for warmer appearance.
+
+### Fixed
+- **SDDM install script**: Improved privilege escalation (try cached sudo before pkexec), force X11 display server (kwin_wayland crashes in VMs), handle conflicting display-manager.service symlinks.
+- **Installer robustness**: Quote variables for filenames with spaces, correct pacman -Syu logic for interactive/non-interactive modes, i2c-dev module config without subshell functions.
+- **DatePicker compatibility**: Fix ComponentBehavior: Bound compatibility issues.
+- **Notifications null safety**: Filter null values in stringifyList, add null check in notifToJSON.
+- **CompactMediaPlayer**: Add fallback for undefined effectiveIdentity, use MPRIS player volume instead of system audio.
+- **Config fallbacks**: Respect false values in enableZed/enableVSCode, use fallback path when XDG_CONFIG_HOME unset.
+- **Pomodoro centering**: Properly centered in both compact and default sidebar modes.
+- **Settings border color**: Replace undefined colLayer1Border with colLayer0Border.
+
 ## [2.11.1] - 2026-02-22
 
 ### Changed

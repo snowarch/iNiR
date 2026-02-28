@@ -495,14 +495,7 @@ ContentPage {
                 ConfigSelectionArray {
                     currentValue: Config.options?.time?.format ?? "hh:mm"
                     onSelected: newValue => {
-                        if (newValue === "hh:mm") {
-                            Quickshell.execDetached(["/usr/bin/bash", "-c", `sed -i 's/\\TIME12\\b/TIME/' '${FileUtils.trimFileProtocol(Directories.config)}/hypr/hyprlock.conf'`]);
-                        } else {
-                            Quickshell.execDetached(["/usr/bin/bash", "-c", `sed -i 's/\\TIME\\b/TIME12/' '${FileUtils.trimFileProtocol(Directories.config)}/hypr/hyprlock.conf'`]);
-                        }
-
                         Config.setNestedValue("time.format", newValue);
-                        
                     }
                     options: [
                         {

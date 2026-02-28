@@ -87,10 +87,10 @@ Singleton {
     }
 
     // ── Video first-frame system ──────────────────────────────────────────
-    // Generates and caches first-frame JPGs for video wallpapers (same dir as switchwall.sh)
+    // Generates and caches first-frame JPGs for video wallpapers
     readonly property string _videoThumbDir: {
-        const xdg = Quickshell.env("XDG_CONFIG_HOME") || (Quickshell.env("HOME") + "/.config")
-        return xdg + "/hypr/custom/scripts/mpvpaper_thumbnails"
+        const xdgCache = Quickshell.env("XDG_CACHE_HOME") || (Quickshell.env("HOME") + "/.cache")
+        return xdgCache + "/quickshell/video_thumbnails"
     }
 
     property var videoFirstFrames: ({})

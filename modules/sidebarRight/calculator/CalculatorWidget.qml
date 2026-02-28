@@ -180,8 +180,8 @@ Item {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 10
-        spacing: 8
+        anchors.margins: 8
+        spacing: 4
 
         // Header with mode toggles
         RowLayout {
@@ -232,7 +232,7 @@ Item {
         // Display Area
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 70
+            Layout.preferredHeight: 60
             color: root.colBg
             radius: root.radius
             border.width: root.borderWidth
@@ -240,7 +240,7 @@ Item {
 
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: 12
+                anchors.margins: 8
                 spacing: 2
 
                 StyledText {
@@ -380,7 +380,8 @@ Item {
         // Memory buttons row
         RowLayout {
             Layout.fillWidth: true
-            spacing: 4
+            Layout.preferredHeight: 32
+            spacing: 3
 
             CalcButton { label: "MC"; secondary: true; onClicked: memoryClear(); Layout.fillWidth: true }
             CalcButton { label: "MR"; secondary: true; onClicked: memoryRecall(); Layout.fillWidth: true }
@@ -393,8 +394,8 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             columns: 4
-            rowSpacing: 4
-            columnSpacing: 4
+            rowSpacing: 3
+            columnSpacing: 3
 
             CalcButton { label: "C"; secondary: true; onClicked: clear() }
             CalcButton { label: "+/-"; secondary: true; onClicked: toggleSign() }
@@ -430,7 +431,8 @@ Item {
 
         Layout.fillWidth: true
         Layout.fillHeight: true
-        Layout.minimumHeight: 36
+        Layout.minimumHeight: 32
+        Layout.maximumHeight: 52
 
         buttonText: label
         buttonRadius: root.radiusSmall

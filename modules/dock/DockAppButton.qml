@@ -12,12 +12,16 @@ DockButton {
     id: root
     property var appToplevel
     property var appListRoot
+    property int listIndex: -1       // set by the DockApps delegate (required property int index)
     property int lastFocused: -1
     property real iconSize: Config.options?.dock?.iconSize ?? 35
     property real countDotWidth: 10
     property real countDotHeight: 4
-    property bool appIsActive: appToplevel.toplevels.find(t => (t.activated == true)) !== undefined
-    property bool hasWindows: appToplevel.toplevels.length > 0
+    readonly property var toplevels: appToplevel?.toplevels ?? []
+    property bool appIsActive: toplevels.find(t => (t.activated == true)) !== undefined
+    property bool hasWindows: toplevels.length > 0
+    property bool pillStyle:  Config.options?.dock?.style === "pill"
+    property bool macosStyle: Config.options?.dock?.style === "macos"
 
     // Hover preview signals
     signal hoverPreviewRequested()
@@ -38,11 +42,11 @@ DockButton {
     // Determine focused window index for smart indicator (Niri only)
     // Returns the index (0-based) of the focused window sorted by column position
     property int focusedWindowIndex: {
-        if (!root.appIsActive || appToplevel.toplevels.length <= 1)
+        if (!root.appIsActive || toplevels.length <= 1)
             return 0;
 
         // Find the focused toplevel
-        const focusedToplevel = appToplevel.toplevels.find(t => t.activated === true);
+        const focusedToplevel = toplevels.find(t => t.activated === true);
         if (!focusedToplevel)
             return 0;
 
@@ -52,8 +56,8 @@ DockButton {
 
             // Build array of {toplevelIdx, column} for sorting
             const windowPositions = [];
-            for (let i = 0; i < appToplevel.toplevels.length; i++) {
-                const tl = appToplevel.toplevels[i];
+            for (let i = 0; i < toplevels.length; i++) {
+                const tl = toplevels[i];
                 let col = 999999;
                 if (tl.niriWindowId) {
                     const niriWin = niriWindows.find(w => w.id === tl.niriWindowId);
@@ -74,14 +78,15 @@ DockButton {
         }
 
         // Fallback: find by activated flag in original order
-        for (let i = 0; i < appToplevel.toplevels.length; i++) {
-            if (appToplevel.toplevels[i].activated) return i;
+        for (let i = 0; i < toplevels.length; i++) {
+            if (toplevels[i].activated) return i;
         }
         return 0;
     }
 
-    // Subtle highlight for active app
-    scale: appIsActive ? 1.05 : 1.0
+    // Subtle highlight for active app (disabled in macOS and pill modes —
+    // macOS uses magnify, pill uses its own background highlight)
+    scale: (!macosStyle && !pillStyle && appIsActive) ? 1.05 : 1.0
     Behavior on scale {
         enabled: Appearance.animationsEnabled
         animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
@@ -97,12 +102,57 @@ DockButton {
 
     implicitWidth: isSeparator ? (vertical ? separatorSize : 8) : (vertical ? 50 : (implicitHeight - topInset - bottomInset))
     implicitHeight: isSeparator ? (vertical ? 8 : separatorSize) : 50
-    background.visible: !isSeparator
+
+    // In pill mode, hide the default RippleButton hover background — DockPillItem provides its own.
+    // In macOS mode, also hide it — DockMacItem provides visual feedback via magnify.
+    background.visible: !isSeparator && !pillStyle && !macosStyle
+
+    // Suppress ripple/hover bg in macOS mode so no colored rect appears under icon
+    colBackgroundHover: macosStyle ? "transparent" : (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
+        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+        : Appearance.colors.colLayer0Hover)
+    colRipple: macosStyle ? "transparent" : (Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer1Active
+        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
+        : Appearance.colors.colLayer0Active)
+
+    // Pill background (replaces shared panel for this item)
+    DockPillItem {
+        id: pillBackground
+        anchors.fill: parent
+        visible: pillStyle && !isSeparator && !Appearance.gameModeMinimal
+        appIsActive: root.appIsActive
+        hasWindows: root.hasWindows
+        windowCount: toplevels.length
+        focusedWindowIndex: root.focusedWindowIndex
+        vertical: root.vertical
+        countDotWidth: root.countDotWidth
+        countDotHeight: root.countDotHeight
+    }
+
+    // macOS-style icon wrapper: magnify effect + multi-window indicator dots
+    DockMacItem {
+        id: macItem
+        anchors.fill: parent
+        visible: macosStyle && !isSeparator && !Appearance.gameModeMinimal
+        appIsActive: root.appIsActive
+        hasWindows: root.hasWindows
+        buttonHovered: root.buttonHovered
+        previewVisible: root.appListRoot?.previewAnchorItem === root
+        vertical: root.vertical
+        neighborDistance: {
+            const hi = root.appListRoot?.macHoveredIndex ?? -1
+            return (hi < 0 || root.listIndex < 0) ? 99 : Math.abs(root.listIndex - hi)
+        }
+        windowCount: toplevels.length
+        focusedWindowIndex: root.focusedWindowIndex
+    }
 
     // Hover shadow (disabled for angel — whole dock already has escalonado)
     StyledRectangularShadow {
-        target: root.background
-        visible: !Appearance.angelEverywhere
+        target: root.pillStyle ? pillBackground : root.background
+        visible: !Appearance.angelEverywhere && !root.macosStyle
         opacity: root.buttonHovered && !root.isSeparator ? 0.6 : 0
         Behavior on opacity {
             enabled: Appearance.animationsEnabled
@@ -124,7 +174,7 @@ DockButton {
 
     // Use RippleButton's built-in buttonHovered instead of separate MouseArea
     onButtonHoveredChanged: {
-        if (appToplevel.toplevels.length > 0) {
+        if (toplevels.length > 0) {
             if (buttonHovered) {
                 appListRoot.lastHoveredButton = root
                 appListRoot.buttonHovered = true
@@ -145,7 +195,7 @@ DockButton {
         }
     }
 
-    function launchFromDesktopEntry() {
+    function launchFromDesktopEntry(): bool {
         // Intentar siempre vía gtk-launch y, si falla, ejecutar appId directamente
         var id = appToplevel.originalAppId ?? appToplevel.appId;
         // Caso especial: YouTube Music (pear)
@@ -170,15 +220,17 @@ DockButton {
             appListRoot._suppressNextClick = false
             return
         }
+        // macOS click micro-pulse
+        if (macosStyle) macItem.clickPulse()
         // Sin ventanas abiertas: lanzar nueva instancia desde desktop entry o fallbacks
-        if (appToplevel.toplevels.length === 0) {
+        if (toplevels.length === 0) {
             launchFromDesktopEntry();
             return;
         }
         // Con ventanas: rotar foco entre instancias abiertas
-        const total = appToplevel.toplevels.length
+        const total = toplevels.length
         lastFocused = (lastFocused + 1) % total
-        const toplevel = appToplevel.toplevels[lastFocused]
+        const toplevel = toplevels[lastFocused]
         if (CompositorService.isNiri) {
             if (toplevel?.niriWindowId) {
                 NiriService.focusWindow(toplevel.niriWindowId)
@@ -198,7 +250,7 @@ DockButton {
         showContextMenu()
     }
 
-    function showContextMenu() {
+    function showContextMenu(): void {
         root.appListRoot.closeAllContextMenus()
         root.appListRoot.contextMenuOpen = true
         root.hoverPreviewDismissed()
@@ -255,10 +307,10 @@ DockButton {
                 { type: "separator" },
                 {
                     iconName: "close",
-                    text: appToplevel.toplevels.length > 1 ? Translation.tr("Close all windows") : Translation.tr("Close window"),
+                    text: toplevels.length > 1 ? Translation.tr("Close all windows") : Translation.tr("Close window"),
                     monochromeIcon: true,
                     action: () => {
-                        for (let toplevel of appToplevel.toplevels) {
+                        for (let toplevel of toplevels) {
                             toplevel.close()
                         }
                     }
@@ -267,10 +319,17 @@ DockButton {
         ]
     }
 
-    contentItem: Loader {
-        active: !isSeparator
-        sourceComponent: Item {
-            anchors.centerIn: parent
+      contentItem: Loader {
+          active: !isSeparator
+          sourceComponent: Item {
+              id: contentRoot
+              anchors.centerIn: parent
+
+              // macOS magnify: scale around the bottom centre so icons grow upward.
+              // Animation is driven by DockMacItem's own Behavior on _magnifyScale —
+              // no extra Behavior needed here.
+              scale:           root.macosStyle ? macItem.iconScale : 1.0
+              transformOrigin: root.vertical ? Item.Right : Item.Bottom
 
             Loader {
                 id: iconImageLoader
@@ -290,46 +349,61 @@ DockButton {
                         } else {
                             icon = root.desktopEntry?.icon || AppSearch.guessIcon(appId);
                         }
-                        // Use smart resolution to fix absolute paths that don't exist (e.g. Electron apps)
                         return IconThemeService.smartIconName(icon, appId);
                     }
-                    // Don't generate candidates if iconName is already an absolute path
                     property bool isAbsolutePath: iconName.startsWith("/") || iconName.startsWith("file://")
                     property var candidates: isAbsolutePath ? [] : IconThemeService.dockIconCandidates(iconName)
-                    property int candidateIndex: 0
 
+                    // Reactive fallback state — NEVER set `source` imperatively (destroys binding on delegate recycle)
+                    property int _candidateIdx: 0
+                    property bool _useSystemFallback: false
+                    property string _systemFallbackName: ""
+
+                    // Reset fallback state whenever iconName changes (delegate recycled for different app)
+                    onIconNameChanged: {
+                        _candidateIdx = 0;
+                        _useSystemFallback = false;
+                        _systemFallbackName = "";
+                    }
+
+                    // Pure reactive binding — never broken by imperative assignment
                     source: {
-                        if (isAbsolutePath) {
-                            return iconName.startsWith("file://") ? iconName : `file://${iconName}`
+                        if (_useSystemFallback && _systemFallbackName) {
+                            return Quickshell.iconPath(_systemFallbackName, "image-missing");
                         }
-                        return candidates.length > 0 ? candidates[0] : Quickshell.iconPath(iconName, "image-missing")
+                        if (isAbsolutePath) {
+                            return iconName.startsWith("file://") ? iconName : `file://${iconName}`;
+                        }
+                        if (candidates.length > 0 && _candidateIdx < candidates.length) {
+                            return candidates[_candidateIdx];
+                        }
+                        return Quickshell.iconPath(iconName, "image-missing");
                     }
                     implicitSize: root.iconSize
 
                     onStatusChanged: {
                         if (status === Image.Error) {
-                            // Fix for absolute paths failing (e.g. Electron apps pointing to non-existent files)
-                            if (isAbsolutePath) {
-                                const path = iconName.startsWith("file://") ? iconName.substring(7) : iconName;
-                                const fileName = path.split("/").pop();
-                                let baseName = fileName;
-                                if (baseName.includes(".")) {
-                                    baseName = baseName.split(".").slice(0, -1).join(".");
+                            // Defer state changes to break binding loop:
+                            // source → status → onStatusChanged → state → source
+                            Qt.callLater(() => {
+                                if (isAbsolutePath && !_useSystemFallback) {
+                                    const path = iconName.startsWith("file://") ? iconName.substring(7) : iconName;
+                                    const fileName = path.split("/").pop();
+                                    let baseName = fileName;
+                                    if (baseName.includes(".")) {
+                                        baseName = baseName.split(".").slice(0, -1).join(".");
+                                    }
+                                    _systemFallbackName = baseName;
+                                    _useSystemFallback = true;
+                                    return;
                                 }
-                                // Try loading system icon with base name
-                                source = Quickshell.iconPath(baseName, "image-missing");
-                                return;
-                            }
-
-                            if (candidates.length > 0) {
-                                candidateIndex++;
-                                if (candidateIndex < candidates.length) {
-                                    source = candidates[candidateIndex];
-                                } else {
-                                    // All candidates failed, use system icon
-                                    source = Quickshell.iconPath(iconName, "image-missing");
+                                if (candidates.length > 0 && _candidateIdx < candidates.length - 1) {
+                                    _candidateIdx++;
+                                } else if (!_useSystemFallback) {
+                                    _systemFallbackName = iconName;
+                                    _useSystemFallback = true;
                                 }
-                            }
+                            });
                         }
                     }
                 }
@@ -354,9 +428,10 @@ DockButton {
                 }
             }
 
-            // Smart indicator: shows window count and which is focused
-            Loader {
-                active: root.hasWindows && !root.isSeparator
+              // Smart indicator: shows window count and which is focused
+              // Hidden in macOS and pill modes — those render their own indicators
+              Loader {
+                  active: root.hasWindows && !root.isSeparator && !root.macosStyle && !root.pillStyle
                 anchors {
                     top: iconImageLoader.bottom
                     topMargin: 2
@@ -377,7 +452,7 @@ DockButton {
                             const showAll = Config.options?.dock?.showAllWindowDots !== false;
                             const max = Config.options?.dock?.maxIndicatorDots ?? 5;
                             if (root.appIsActive || showAll) {
-                                return Math.min(appToplevel.toplevels.length, max);
+                                return Math.min(toplevels.length, max);
                             }
                             return 0;
                         }
@@ -391,7 +466,7 @@ DockButton {
                             property bool isFocusedWindow: {
                                 if (!root.appIsActive) return false;
                                 if (!smartMode) return true; // All indicators same when smart mode off
-                                if (appToplevel.toplevels.length <= 1) return true;
+                                if (toplevels.length <= 1) return true;
                                 return index === root.focusedWindowIndex;
                             }
 

@@ -30,7 +30,7 @@ Singleton {
 
     Process {
         id: keybindParser
-        command: ["python3", root.parserScript]
+        command: ["/usr/bin/python3", root.parserScript]
         
         stdout: StdioCollector {
             id: stdoutCollector

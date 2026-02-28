@@ -17,6 +17,7 @@ import qs.modules.sidebarRight.quickToggles
 import qs.modules.sidebarRight.quickToggles.classicStyle
 
 import qs.modules.sidebarRight.bluetoothDevices
+import qs.modules.sidebarRight.events
 import qs.modules.sidebarRight.nightLight
 import qs.modules.sidebarRight.volumeMixer
 import qs.modules.sidebarRight.wifiNetworks
@@ -32,9 +33,13 @@ Item {
     property bool showAudioOutputDialog: false
     property bool showAudioInputDialog: false
     property bool showBluetoothDialog: false
+    property bool showEventsDialog: false
     property bool showNightLightDialog: false
     property bool showWifiDialog: false
     property bool editMode: false
+    
+    // Events dialog editing state
+    property var eventsDialogEditEvent: null
     
     // Debounce timers to prevent accidental double-clicks
     property bool reloadButtonEnabled: true
@@ -52,9 +57,11 @@ Item {
             if (!GlobalStates.sidebarRightOpen) {
                 root.showWifiDialog = false;
                 root.showBluetoothDialog = false;
+                root.showEventsDialog = false;
                 root.showAudioOutputDialog = false;
                 root.showAudioInputDialog = false;
                 root.showNightLightDialog = false;
+                root.eventsDialogEditEvent = null;
             }
         }
     }
@@ -220,6 +227,11 @@ Item {
                 Layout.fillHeight: false
                 Layout.fillWidth: true
                 Layout.preferredHeight: implicitHeight
+                
+                onOpenEventsDialog: (editEvent) => {
+                    root.eventsDialogEditEvent = editEvent;
+                    root.showEventsDialog = true;
+                }
             }
         }
     }
@@ -264,6 +276,26 @@ Item {
             if (!shown) return;
             Network.enableWifi();
             Network.rescanWifi();
+        }
+    }
+
+    ToggleDialog {
+        id: eventsToggle
+        shownPropertyString: "showEventsDialog"
+        dialog: EventsDialog {}
+        onShownChanged: {
+            if (shown && eventsToggle.item) {
+                if (root.eventsDialogEditEvent) {
+                    eventsToggle.item.loadEvent(root.eventsDialogEditEvent);
+                } else {
+                    eventsToggle.item.resetForm();
+                }
+            }
+        }
+        onActiveChanged: {
+            if (!active) {
+                root.eventsDialogEditEvent = null;
+            }
         }
     }
 
@@ -381,7 +413,17 @@ Item {
                 buttonIcon: "edit"
                 onClicked: root.editMode = !root.editMode
                 StyledToolTip {
+                    position: "left"
                     text: Translation.tr("Edit quick toggles") + (root.editMode ? Translation.tr("\nLMB to enable/disable\nRMB to toggle size\nScroll to swap position") : "")
+                }
+            }
+            QuickToggleButton {
+                toggled: false
+                buttonIcon: "view_sidebar"
+                onClicked: Config.setNestedValue("sidebar.layout", "compact")
+                StyledToolTip {
+                    position: "left"
+                    text: Translation.tr("Switch to compact layout")
                 }
             }
             QuickToggleButton {
@@ -408,6 +450,7 @@ Item {
                     Quickshell.reload(true);
                 }
                 StyledToolTip {
+                    position: "left"
                     text: Translation.tr("Reload Quickshell")
                 }
             }
@@ -460,6 +503,7 @@ Item {
                     })
                 }
                 StyledToolTip {
+                    position: "left"
                     text: Translation.tr("Settings")
                 }
             }
@@ -479,6 +523,7 @@ Item {
                     GlobalStates.sessionOpen = true;
                 }
                 StyledToolTip {
+                    position: "left"
                     text: Translation.tr("Session")
                 }
             }

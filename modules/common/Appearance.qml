@@ -93,8 +93,8 @@ Singleton {
     // Components should check this to hide backgrounds/shadows during GameMode
     readonly property bool gameModeMinimal: _gameModeMinimalMode
 
-    onEffectsEnabledChanged: console.log("[Appearance] effectsEnabled:", effectsEnabled, "gameModeActive:", _gameModeActive)
-    onAnimationsEnabledChanged: console.log("[Appearance] animationsEnabled:", animationsEnabled)
+    onEffectsEnabledChanged: if (Qt.application.arguments.indexOf("--debug") !== -1) console.log("[Appearance] effectsEnabled:", effectsEnabled, "gameModeActive:", _gameModeActive)
+    onAnimationsEnabledChanged: if (Qt.application.arguments.indexOf("--debug") !== -1) console.log("[Appearance] animationsEnabled:", animationsEnabled)
 
     // Helper for calculating effective animation duration
     function calcEffectiveDuration(baseDuration) {

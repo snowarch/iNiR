@@ -534,9 +534,9 @@ ContentPage {
                          : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                          : Appearance.colors.colLayer1
                     border.width: Appearance.angelEverywhere ? (Appearance.angel?.cardBorderWidth ?? 1) : 1
-                    border.color: Appearance.angelEverywhere ? (Appearance.angel?.colCardBorder ?? Appearance.colors.colLayer1Border)
-                               : Appearance.inirEverywhere ? (Appearance.inir?.colBorder ?? Appearance.colors.colLayer1Border)
-                               : Appearance.colors.colLayer1Border
+                    border.color: Appearance.angelEverywhere ? (Appearance.angel?.colCardBorder ?? Appearance.colors.colLayer0Border)
+                               : Appearance.inirEverywhere ? (Appearance.inir?.colBorder ?? Appearance.colors.colLayer0Border)
+                               : Appearance.colors.colLayer0Border
                     clip: true
 
                     readonly property string _activePath: bgMultiMonPanel.showBackdropView
@@ -705,10 +705,10 @@ ContentPage {
                             implicitHeight: 1
                             color: Appearance.inirEverywhere
                                 ? (Appearance.inir?.colBorder
-                                    ?? Appearance.colors?.colLayer1Border
+                                    ?? Appearance.colors?.colLayer0Border
                                     ?? Appearance.colors?.colLayer0Border
                                     ?? Appearance.m3colors.m3outlineVariant)
-                                : (Appearance.colors?.colLayer1Border
+                                : (Appearance.colors?.colLayer0Border
                                     ?? Appearance.colors?.colLayer0Border
                                     ?? Appearance.m3colors.m3outlineVariant)
                             opacity: 0.5

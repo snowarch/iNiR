@@ -20,7 +20,11 @@ Button {
     padding: 6
     Layout.fillHeight: true
 
+    // Emitted BEFORE focus IPC so the popup can close instantly (no flash)
+    signal windowActivated()
+
     onClicked: {
+        root.windowActivated()
         if (CompositorService.isNiri && root.toplevel?.niriWindowId) {
             NiriService.focusWindow(root.toplevel.niriWindowId)
         } else {
@@ -56,7 +60,14 @@ Button {
             IconImage {
                 id: appIcon
                 Layout.alignment: Qt.AlignVCenter
-                source: Quickshell.iconPath(AppSearch.guessIcon(root.toplevel?.appId ?? ""), "application-x-executable")
+                // Use desktop entry icon (same resolution as dock button) instead of weak guessIcon
+                source: {
+                    const appId = root.toplevel?.appId ?? "";
+                    const de = DesktopEntries.heuristicLookup(appId);
+                    const icon = de?.icon || AppSearch.guessIcon(appId);
+                    const resolved = IconThemeService.smartIconName(icon, appId);
+                    return Quickshell.iconPath(resolved, "application-x-executable");
+                }
                 implicitSize: 16
                 mipmap: true
                 smooth: true
@@ -113,7 +124,10 @@ Button {
             implicitWidth: 140
             implicitHeight: 90
 
-            readonly property int windowId: root.toplevel?.id ?? root.toplevel?.niriWindowId ?? 0
+            // Prefer niriWindowId for Niri compositor — WindowPreviewService captures by niri IDs
+            readonly property int windowId: CompositorService.isNiri
+                ? (root.toplevel?.niriWindowId ?? root.toplevel?.id ?? 0)
+                : (root.toplevel?.id ?? 0)
             property string previewUrl: ""
 
             // Loading shimmer effect
@@ -152,11 +166,11 @@ Button {
                 }
             }
 
-            // Fallback icon - shown until preview loads
+            // Fallback icon - shown until preview loads (uses same resolution as header icon)
             IconImage {
                 id: fallbackIcon
                 anchors.centerIn: parent
-                source: Quickshell.iconPath(AppSearch.guessIcon(root.toplevel?.appId ?? ""), "application-x-executable")
+                source: appIcon.source
                 implicitSize: Math.min(48, parent.width * 0.4)
                 opacity: windowPreview.status === Image.Ready ? 0 : 0.7
                 mipmap: true

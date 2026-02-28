@@ -588,7 +588,7 @@ ContentPage {
                                         : Appearance.inirEverywhere ? 1 : (monitorStack.showingBackdrop ? 2 : 1)
                                     border.color: monitorStack.showingBackdrop
                                         ? (Appearance.angelEverywhere ? (Appearance.angel?.colPrimary ?? Appearance.colors.colPrimary) : Appearance.inirEverywhere ? (Appearance.inir?.colAccent ?? Appearance.colors.colPrimary) : Appearance.colors.colPrimary)
-                                        : (Appearance.angelEverywhere ? (Appearance.angel?.colCardBorder ?? Appearance.colors.colLayer1Border) : Appearance.inirEverywhere ? (Appearance.inir?.colBorder ?? Appearance.colors.colLayer1Border) : Appearance.colors.colLayer1Border)
+                                        : (Appearance.angelEverywhere ? (Appearance.angel?.colCardBorder ?? Appearance.colors.colLayer0Border) : Appearance.inirEverywhere ? (Appearance.inir?.colBorder ?? Appearance.colors.colLayer0Border) : Appearance.colors.colLayer0Border)
                                     clip: true
                                     z: monitorStack.showingBackdrop ? 2 : 0
                                     opacity: monitorStack.showingBackdrop ? 1.0 : 0.6
@@ -913,9 +913,9 @@ ContentPage {
                          : Appearance.colors.colLayer1
                     border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
                         : Appearance.inirEverywhere ? 1 : (Appearance.auroraEverywhere ? 0 : 1)
-                    border.color: Appearance.angelEverywhere ? (Appearance.angel?.colCardBorder ?? Appearance.colors.colLayer1Border)
-                               : Appearance.inirEverywhere ? (Appearance.inir?.colBorder ?? Appearance.colors.colLayer1Border)
-                               : Appearance.colors.colLayer1Border
+                    border.color: Appearance.angelEverywhere ? (Appearance.angel?.colCardBorder ?? Appearance.colors.colLayer0Border)
+                               : Appearance.inirEverywhere ? (Appearance.inir?.colBorder ?? Appearance.colors.colLayer0Border)
+                               : Appearance.colors.colLayer0Border
                     clip: true
 
                     ColumnLayout {

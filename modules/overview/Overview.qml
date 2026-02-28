@@ -79,8 +79,13 @@ Scope {
                     const inOverview = overviewLoader.item && overviewPos &&
                                        overviewPos.x >= 0 && overviewPos.x <= overviewLoader.item.width &&
                                        overviewPos.y >= 0 && overviewPos.y <= overviewLoader.item.height
+
+                    const dashPos = dashboardPanel.visible ? mapToItem(dashboardPanel, mouse.x, mouse.y) : null
+                    const inDashboard = dashboardPanel.visible && dashPos &&
+                                        dashPos.x >= 0 && dashPos.x <= dashboardPanel.width &&
+                                        dashPos.y >= 0 && dashPos.y <= dashboardPanel.height
                     
-                    if (!inSearch && !inOverview) {
+                    if (!inSearch && !inOverview && !inDashboard) {
                         GlobalStates.overviewOpen = false
                     }
                 }
@@ -196,11 +201,22 @@ Scope {
                         const ov = Config?.options?.overview;
                         const base = (ov && ov.bottomMargin !== undefined) ? ov.bottomMargin : 0;
                         const respectBar = ov && ov.respectBar !== undefined ? ov.respectBar : true;
+                        let margin = base;
+                        
+                        // Respect bar at bottom
                         if (respectBar && Config.options.bar.bottom) {
                             const barH = Appearance.sizes.barHeight + Appearance.rounding.screenRounding;
-                            return barH + base;
+                            margin += barH;
                         }
-                        return base;
+                        
+                        // Respect dock at bottom (if enabled)
+                        const dock = Config.options?.dock;
+                        if (dock?.enable && dock?.position === "bottom") {
+                            const dockH = (dock.height ?? 60) + 16; // dock height + margin
+                            margin += dockH;
+                        }
+                        
+                        return margin;
                     }
                 }
                 spacing: -8
@@ -264,6 +280,23 @@ Scope {
                     OverviewNiriWidget {
                         panelWindow: root
                         visible: (root.searchingText == "")
+                    }
+                }
+
+                // Dashboard panel below workspace thumbnails
+                OverviewDashboard {
+                    id: dashboardPanel
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    visible: (root.searchingText == "") && (Config.options?.overview?.dashboard?.enable ?? true)
+                    opacity: GlobalStates.overviewOpen ? 1 : 0
+
+                    Behavior on opacity {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation {
+                            duration: Appearance.animation?.elementMoveEnter?.duration ?? 400
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: Appearance.animationCurves?.emphasizedDecel ?? [0.05, 0.7, 0.1, 1, 1, 1]
+                        }
                     }
                 }
             }

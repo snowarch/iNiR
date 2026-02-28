@@ -180,18 +180,18 @@ rsync_dir__sync(){
 }
 
 function install_file(){
-  local s=$1
-  local t=$2
-  if [ -f $t ] && ! ${quiet:-false}; then
+  local s="$1"
+  local t="$2"
+  if [ -f "$t" ] && ! ${quiet:-false}; then
     echo -e "${STY_YELLOW}[$0]: \"$t\" will be overwritten.${STY_RST}"
   fi
-  v cp_file $s $t
+  v cp_file "$s" "$t"
 }
 
 function install_file__auto_backup(){
-  local s=$1
-  local t=$2
-  if [ -f $t ];then
+  local s="$1"
+  local t="$2"
+  if [ -f "$t" ];then
     if ! ${quiet:-false}; then
       echo -e "${STY_YELLOW}[$0]: \"$t\" exists.${STY_RST}"
     fi
@@ -199,8 +199,8 @@ function install_file__auto_backup(){
       if ! ${quiet:-false}; then
         echo -e "${STY_BLUE}[$0]: First run - backing up.${STY_RST}"
       fi
-      v mv $t $t.old
-      v cp_file $s $t
+      v mv "$t" "$t.old"
+      v cp_file "$s" "$t"
     else
       if ! ${quiet:-false}; then
         echo -e "${STY_BLUE}[$0]: Not first run - preserving existing file${STY_RST}"
@@ -210,32 +210,32 @@ function install_file__auto_backup(){
     if ! ${quiet:-false}; then
       echo -e "${STY_GREEN}[$0]: \"$t\" does not exist.${STY_RST}"
     fi
-    v cp_file $s $t
+    v cp_file "$s" "$t"
   fi
 }
 
 function install_dir(){
-  local s=$1
-  local t=$2
-  if [ -d $t ] && ! ${quiet:-false}; then
+  local s="$1"
+  local t="$2"
+  if [ -d "$t" ] && ! ${quiet:-false}; then
     echo -e "${STY_YELLOW}[$0]: \"$t\" will be merged.${STY_RST}"
   fi
-  rsync_dir $s $t
+  rsync_dir "$s" "$t"
 }
 
 function install_dir__sync(){
-  local s=$1
-  local t=$2
-  if [ -d $t ] && ! ${quiet:-false}; then
+  local s="$1"
+  local t="$2"
+  if [ -d "$t" ] && ! ${quiet:-false}; then
     echo -e "${STY_YELLOW}[$0]: \"$t\" will be synced (--delete).${STY_RST}"
   fi
-  rsync_dir__sync $s $t
+  rsync_dir__sync "$s" "$t"
 }
 
 function install_dir__skip_existed(){
-  local s=$1
-  local t=$2
-  if [ -d $t ];then
+  local s="$1"
+  local t="$2"
+  if [ -d "$t" ];then
     if ! ${quiet:-false}; then
       echo -e "${STY_BLUE}[$0]: \"$t\" exists, skipping.${STY_RST}"
     fi
@@ -243,7 +243,7 @@ function install_dir__skip_existed(){
     if ! ${quiet:-false}; then
       echo -e "${STY_YELLOW}[$0]: \"$t\" does not exist.${STY_RST}"
     fi
-    v rsync_dir $s $t
+    v rsync_dir "$s" "$t"
   fi
 }
 

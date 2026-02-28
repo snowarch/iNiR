@@ -117,10 +117,10 @@ Item {
             StyledText {
                 text: root.getGreeting()
                 font.pixelSize: Appearance.font.pixelSize.smaller
-                color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
-                     : root.inirEverywhere ? Appearance.inir.colTextSecondary 
-                     : root.auroraEverywhere ? Appearance.m3colors.m3outline
-                     : Appearance.colors.colSubtext
+                color: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                     : root.inirEverywhere ? Appearance.inir.colPrimary 
+                     : root.auroraEverywhere ? Appearance.m3colors.m3primary
+                     : Appearance.colors.colPrimary
             }
             StyledText {
                 text: SystemInfo.username

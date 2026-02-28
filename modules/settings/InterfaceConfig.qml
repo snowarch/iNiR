@@ -361,6 +361,23 @@ ContentPage {
                 }
             }
 
+            ContentSubsection {
+                title: Translation.tr("Dock style")
+                tooltip: Translation.tr("Panel: classic unified background. Pill: each icon floats in its own capsule. macOS: frosted glass shelf with magnify effect.")
+
+                ConfigSelectionArray {
+                    currentValue: Config.options?.dock?.style ?? "panel"
+                    onSelected: newValue => {
+                        Config.setNestedValue("dock.style", newValue)
+                    }
+                    options: [
+                        { displayName: Translation.tr("Panel"), icon: "dock_to_bottom", value: "panel" },
+                        { displayName: Translation.tr("Pill"),  icon: "interests",       value: "pill"  },
+                        { displayName: Translation.tr("macOS"), icon: "desktop_mac",     value: "macos" }
+                    ]
+                }
+            }
+
             ConfigRow {
                 uniform: true
                 ContentSubsection {
@@ -600,6 +617,19 @@ ContentPage {
                     }
                     StyledToolTip {
                         text: Translation.tr("Time to wait before showing window preview")
+                    }
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "keep"
+                    text: Translation.tr("Keep preview on click")
+                    enabled: Config.options.dock.hoverPreview !== false
+                    checked: Config.options?.dock?.keepPreviewOnClick ?? false
+                    onCheckedChanged: {
+                        Config.setNestedValue("dock.keepPreviewOnClick", checked)
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Don't close the preview popup when clicking a window thumbnail, so you can navigate between windows")
                     }
                 }
             }
@@ -1165,6 +1195,15 @@ ContentPage {
                     onClicked: {
                         // checked ya fue invertido por ConfigSwitch.onClicked
                         rightSidebarWidgets.setWidget("calendar", checked)
+                    }
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "event_upcoming"
+                    text: Translation.tr("Events")
+                    Component.onCompleted: checked = rightSidebarWidgets.isEnabled("events")
+                    onClicked: {
+                        rightSidebarWidgets.setWidget("events", checked)
                     }
                 }
 
@@ -2344,6 +2383,48 @@ ContentPage {
                 StyledToolTip {
                     text: Translation.tr("Enable the app launcher and workspace overview (Super+Space)")
                 }
+            }
+            SettingsSwitch {
+                buttonIcon: "dashboard"
+                text: Translation.tr("Dashboard panel")
+                checked: Config.options?.overview?.dashboard?.enable ?? true
+                onCheckedChanged: Config.setNestedValue("overview.dashboard.enable", checked)
+                StyledToolTip { text: Translation.tr("Show a control center dashboard below workspace previews") }
+            }
+            SettingsSwitch {
+                buttonIcon: "toggle_on"
+                text: Translation.tr("Dashboard: Quick toggles")
+                checked: Config.options?.overview?.dashboard?.showToggles ?? true
+                onCheckedChanged: Config.setNestedValue("overview.dashboard.showToggles", checked)
+                visible: Config.options?.overview?.dashboard?.enable ?? true
+            }
+            SettingsSwitch {
+                buttonIcon: "music_note"
+                text: Translation.tr("Dashboard: Media player")
+                checked: Config.options?.overview?.dashboard?.showMedia ?? true
+                onCheckedChanged: Config.setNestedValue("overview.dashboard.showMedia", checked)
+                visible: Config.options?.overview?.dashboard?.enable ?? true
+            }
+            SettingsSwitch {
+                buttonIcon: "volume_up"
+                text: Translation.tr("Dashboard: Volume slider")
+                checked: Config.options?.overview?.dashboard?.showVolume ?? true
+                onCheckedChanged: Config.setNestedValue("overview.dashboard.showVolume", checked)
+                visible: Config.options?.overview?.dashboard?.enable ?? true
+            }
+            SettingsSwitch {
+                buttonIcon: "cloud"
+                text: Translation.tr("Dashboard: Weather")
+                checked: Config.options?.overview?.dashboard?.showWeather ?? true
+                onCheckedChanged: Config.setNestedValue("overview.dashboard.showWeather", checked)
+                visible: Config.options?.overview?.dashboard?.enable ?? true
+            }
+            SettingsSwitch {
+                buttonIcon: "memory"
+                text: Translation.tr("Dashboard: System stats")
+                checked: Config.options?.overview?.dashboard?.showSystem ?? true
+                onCheckedChanged: Config.setNestedValue("overview.dashboard.showSystem", checked)
+                visible: Config.options?.overview?.dashboard?.enable ?? true
             }
             SettingsSwitch {
                 buttonIcon: "center_focus_strong"

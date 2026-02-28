@@ -19,13 +19,26 @@ log_err()  { echo -e "\033[0;31m[sddm] ✗ $*\033[0m"; }
 
 # Intelligent privilege escalation: sudo for terminal, pkexec for graphical/IPC mode
 elevate() {
+  # If we have a TTY, use interactive sudo
   if [[ -t 0 ]] && [[ -t 1 ]]; then
     sudo "$@"
-  elif command -v pkexec &>/dev/null; then
-    pkexec "$@"
-  else
-    sudo "$@"
+    return $?
   fi
+  
+  # Try non-interactive sudo first (works if NOPASSWD is configured or credentials cached)
+  if sudo -n true 2>/dev/null; then
+    sudo "$@"
+    return $?
+  fi
+  
+  # Try pkexec for graphical environments with polkit
+  if command -v pkexec &>/dev/null && [[ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]]; then
+    pkexec "$@"
+    return $?
+  fi
+  
+  # Last resort: try sudo anyway (may fail without TTY)
+  sudo "$@"
 }
 
 get_current_sddm_theme() {
@@ -146,11 +159,15 @@ if should_apply_theme; then
     fi
     
     elevate mkdir -p /etc/sddm.conf.d
+    # Use X11 as display server - Wayland (kwin_wayland) crashes in some environments (VMs, etc.)
     elevate tee "${SDDM_CONF}" > /dev/null << SDDM_EOF
+[General]
+DisplayServer=x11
+
 [Theme]
 Current=${THEME_NAME}
 SDDM_EOF
-    log_ok "SDDM configured (${SDDM_CONF})"
+    log_ok "SDDM configured (${SDDM_CONF}) with X11 display server"
 else
     log_info "Installed ${THEME_NAME}, but did not change SDDM Current theme"
 fi
@@ -186,13 +203,24 @@ fi
 # and running sudo without a terminal would fail in IPC mode)
 if command -v systemctl &>/dev/null && [[ -d /run/systemd/system ]]; then
     if ! systemctl is-enabled sddm.service &>/dev/null 2>&1; then
-        for dm in gdm lightdm lxdm greetd; do
+        # Handle conflicting display-manager.service symlink (e.g., plasmalogin, gdm, etc.)
+        if [[ -L /etc/systemd/system/display-manager.service ]]; then
+            local current_dm
+            current_dm=$(readlink -f /etc/systemd/system/display-manager.service 2>/dev/null | xargs basename 2>/dev/null || echo "unknown")
+            if [[ "$current_dm" != "sddm.service" ]]; then
+                log_info "Removing conflicting display-manager.service -> ${current_dm}"
+                elevate rm -f /etc/systemd/system/display-manager.service 2>/dev/null || true
+            fi
+        fi
+        
+        # Disable known conflicting display managers
+        for dm in gdm lightdm lxdm greetd plasmalogin; do
             if systemctl is-enabled "${dm}.service" &>/dev/null 2>&1; then
                 log_info "Disabling conflicting display manager: ${dm}"
                 elevate systemctl disable "${dm}.service" 2>/dev/null || true
-                break
             fi
         done
+        
         elevate systemctl enable sddm.service 2>/dev/null && log_ok "SDDM service enabled"
     fi
 fi

@@ -513,7 +513,7 @@ MouseArea {
                     Text {
                         anchors.centerIn: parent
                         text: SystemInfo.username.charAt(0).toUpperCase()
-                        font.pixelSize: 40
+                        font.pixelSize: Math.round(40 * Appearance.fontSizeScale)
                         font.weight: Font.Medium
                         color: Appearance.colors.colOnPrimary
                         visible: avatarImage.status !== Image.Ready && avatarImageFallback.status !== Image.Ready

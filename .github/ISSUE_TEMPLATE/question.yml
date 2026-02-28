@@ -32,7 +32,7 @@ body:
     attributes:
       label: Version
       description: Output of cat ~/.config/quickshell/ii/VERSION
-      placeholder: 2.8.2
+      placeholder: 2.11.11
     validations:
       required: true
 
@@ -41,7 +41,7 @@ body:
     attributes:
       label: Compositor
       description: Niri or Hyprland with version
-      placeholder: Niri 0.1.10
+      placeholder: Niri 25.11
     validations:
       required: true
 

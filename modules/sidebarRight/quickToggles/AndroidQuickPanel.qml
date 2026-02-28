@@ -22,9 +22,7 @@ AbstractQuickPanel {
     property real spacing: 6
     property real padding: 6
     readonly property real baseCellWidth: {
-        // This is the wrong calculation, but it looks correct in reality???
-        // (theoretically spacing should be multiplied by 1 column less)
-        const availableWidth = root.width - (root.padding * 2) - (root.spacing * (root.columns))
+        const availableWidth = root.width - (root.padding * 2) - (root.spacing * (root.columns - 1))
         return availableWidth / root.columns
     }
     readonly property real baseCellHeight: 56

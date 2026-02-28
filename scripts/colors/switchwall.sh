@@ -12,6 +12,18 @@ SHELL_CONFIG_FILE="$XDG_CONFIG_HOME/illogical-impulse/config.json"
 MATUGEN_DIR="$XDG_CONFIG_HOME/matugen"
 terminalscheme="$SCRIPT_DIR/terminal/scheme-base.json"
 
+# Validate critical runtime dependencies early
+if ! command -v jq &>/dev/null; then
+    echo "[switchwall.sh] Missing required dependency: jq"
+    echo "  Arch: sudo pacman -S jq"
+    exit 1
+fi
+if ! command -v matugen &>/dev/null; then
+    echo "[switchwall.sh] Missing required dependency: matugen"
+    echo "  Install from: https://github.com/InioX/matugen"
+    exit 1
+fi
+
 repair_matugen_colors_template() {
     local user_template="$MATUGEN_DIR/templates/colors.json"
     local default_template="$CONFIG_DIR/defaults/matugen/templates/colors.json"
@@ -143,10 +155,10 @@ check_and_prompt_upscale() {
     fi
 }
 
-CUSTOM_DIR="$XDG_CONFIG_HOME/hypr/custom"
+CUSTOM_DIR="$XDG_CACHE_HOME/quickshell"
 RESTORE_SCRIPT_DIR="$CUSTOM_DIR/scripts"
 RESTORE_SCRIPT="$RESTORE_SCRIPT_DIR/__restore_video_wallpaper.sh"
-THUMBNAIL_DIR="$RESTORE_SCRIPT_DIR/mpvpaper_thumbnails"
+THUMBNAIL_DIR="$CUSTOM_DIR/video_thumbnails"
 VIDEO_OPTS="no-audio loop hwdec=auto scale=bilinear interpolation=no video-sync=display-resample panscan=1.0 video-scale-x=1.0 video-scale-y=1.0 video-align-x=0.5 video-align-y=0.5 load-scripts=no"
 
 is_video() {
@@ -217,7 +229,15 @@ create_restore_script() {
 
 pkill -f -9 mpvpaper
 
-for monitor in \$(hyprctl monitors -j | jq -r '.[] | .name'); do
+# Get monitors - try Niri first, then Hyprland
+monitors=""
+if command -v niri >/dev/null 2>&1 && niri msg outputs >/dev/null 2>&1; then
+    monitors=\$(niri msg outputs | awk -F'[()]' '/^Output / {gsub(/^ +| +\$/, "", \$2); print \$2}')
+elif command -v hyprctl >/dev/null 2>&1; then
+    monitors=\$(hyprctl monitors -j | jq -r '.[] | .name')
+fi
+
+for monitor in \$monitors; do
     mpvpaper -o "$VIDEO_OPTS" "\$monitor" "$video_path" &
     sleep 0.1
 done

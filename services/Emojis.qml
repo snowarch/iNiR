@@ -12,7 +12,7 @@ import Quickshell.Io
  */
 Singleton {
     id: root
-    property string emojiScriptPath: `${Directories.config}/hypr/hyprland/scripts/fuzzel-emoji.sh`
+    property string emojiScriptPath: `${Directories.scriptPath}/emoji/emoji-data.sh`
 	property string lineBeforeData: "### DATA ###"
     property list<var> list
 

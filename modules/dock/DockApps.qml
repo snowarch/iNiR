@@ -25,11 +25,28 @@ Item {
     property bool vertical: false
     property string dockPosition: "bottom"
     property var parentWindow: null
+    readonly property bool pillStyle:   Config.options?.dock?.style === "pill"
+    readonly property bool macosStyle:  Config.options?.dock?.style === "macos"
+
+    // Propagated hovered index for neighbor magnify in macOS style
+    property int macHoveredIndex: -1
+
+    // Deferred reset — avoids the race where buttonHovered=false of the old
+    // item arrives after buttonHovered=true of the new item.
+    Timer {
+        id: macHoverResetTimer
+        interval: 32   // one frame — enough for the new hover to fire first
+        repeat: false
+        onTriggered: root.macHoveredIndex = -1
+    }
 
     property Item lastHoveredButton
     property bool buttonHovered: false
     property bool contextMenuOpen: false
     property bool requestDockShow: dockPreviewPopup.visible || contextMenuOpen || dragActive
+
+    // Track which button has its preview visible (for macOS hover persistence)
+    readonly property Item previewAnchorItem: dockPreviewPopup.visible ? dockPreviewPopup.anchorItem : null
 
     // Signal to close any open context menu before opening a new one
     signal closeAllContextMenus()
@@ -466,7 +483,7 @@ Item {
 
     StyledListView {
         id: listView
-        spacing: 2
+        spacing: root.macosStyle ? 4 : (root.pillStyle ? 6 : 2)
         orientation: root.vertical ? ListView.Vertical : ListView.Horizontal
         anchors {
             top: root.vertical ? undefined : parent.top
@@ -490,23 +507,36 @@ Item {
             values: root.dockItems
         }
 
-        delegate: DockAppButton {
-            id: dockDelegate
-            required property var modelData
-            required property int index
-            appToplevel: modelData
-            appListRoot: root
-            vertical: root.vertical
-            dockPosition: root.dockPosition
+          delegate: DockAppButton {
+              id: dockDelegate
+              required property var modelData
+              required property int index
+              appToplevel: modelData
+              appListRoot: root
+              listIndex:   index
+              vertical: root.vertical
+              dockPosition: root.dockPosition
 
-            anchors.verticalCenter: !root.vertical ? parent?.verticalCenter : undefined
-            anchors.horizontalCenter: root.vertical ? parent?.horizontalCenter : undefined
+              anchors.verticalCenter: !root.vertical ? parent?.verticalCenter : undefined
+              anchors.horizontalCenter: root.vertical ? parent?.horizontalCenter : undefined
 
-            // Sin insets - el tamaño viene del DockButton
-            topInset: 0
-            bottomInset: 0
-            leftInset: 0
-            rightInset: 0
+              // Sin insets - el tamaño viene del DockButton
+              topInset: 0
+              bottomInset: 0
+              leftInset: 0
+              rightInset: 0
+
+               // ─── macOS neighbor magnify propagation ──────────────────
+               onButtonHoveredChanged: {
+                   if (root.macosStyle) {
+                       if (buttonHovered) {
+                           macHoverResetTimer.stop()
+                           root.macHoveredIndex = index
+                       } else {
+                           macHoverResetTimer.restart()
+                       }
+                   }
+               }
 
             // ─── Drag & Drop Properties ──────────────────────────────
             readonly property bool isBeingDragged: root.dragActive && root.dragIndex === index
@@ -554,9 +584,9 @@ Item {
             // Scale effect when being dragged
             // Merge active-app highlight scale with drag elevation scale
             // (overrides the base DockAppButton scale property)
-            scale: isBeingDragged ? 1.08
-                 : appToplevel.toplevels.find(t => t.activated === true) !== undefined ? 1.05
-                 : 1.0
+              scale: isBeingDragged ? 1.08
+                   : (root.macosStyle ? 1.0
+                       : (((appToplevel?.toplevels ?? []).find(t => t.activated === true) !== undefined) ? 1.05 : 1.0))
 
             // Dragged item lifts slightly; others dim just enough to signal drag mode
             opacity: isBeingDragged ? 0.8

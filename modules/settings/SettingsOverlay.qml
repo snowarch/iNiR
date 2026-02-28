@@ -1501,17 +1501,27 @@ Scope {
     // ── Page definitions (same as settings.qml) ──
     property int overlayCurrentPage: 0
 
+    // Navigation categories for grouping pages in the rail
+    property var navCategories: [
+        { label: Translation.tr("Appearance"), pages: [0, 4, 3] },
+        { label: Translation.tr("Layout"), pages: [2, 5, 10] },
+        { label: Translation.tr("System"), pages: [1, 6, 7] },
+        { label: Translation.tr("Reference"), pages: [8, 9, 11] }
+    ]
+
     property var overlayPages: [
         {
             name: Translation.tr("Quick"),
             shortName: "",
             icon: "instant_mix",
+            desc: Translation.tr("Wallpaper & quick tweaks"),
             component: Quickshell.shellPath("modules/settings/QuickConfig.qml")
         },
         {
             name: Translation.tr("General"),
             shortName: "",
             icon: "browse",
+            desc: Translation.tr("Audio, battery, language"),
             component: Quickshell.shellPath("modules/settings/GeneralConfig.qml")
         },
         {
@@ -1519,60 +1529,70 @@ Scope {
             shortName: "",
             icon: "toast",
             iconRotation: 180,
+            desc: Translation.tr("Position, tray, modules"),
             component: Quickshell.shellPath("modules/settings/BarConfig.qml")
         },
         {
             name: Translation.tr("Background"),
             shortName: "",
             icon: "texture",
+            desc: Translation.tr("Parallax, effects, widgets"),
             component: Quickshell.shellPath("modules/settings/BackgroundConfig.qml")
         },
         {
             name: Translation.tr("Themes"),
             shortName: "",
             icon: "palette",
+            desc: Translation.tr("Colors, fonts, styles"),
             component: Quickshell.shellPath("modules/settings/ThemesConfig.qml")
         },
         {
             name: Translation.tr("Interface"),
             shortName: "",
             icon: "bottom_app_bar",
+            desc: Translation.tr("Dock, sidebar, overview"),
             component: Quickshell.shellPath("modules/settings/InterfaceConfig.qml")
         },
         {
             name: Translation.tr("Services"),
             shortName: "",
             icon: "settings",
+            desc: Translation.tr("Weather, AI, apps"),
             component: Quickshell.shellPath("modules/settings/ServicesConfig.qml")
         },
         {
             name: Translation.tr("Advanced"),
             shortName: "",
             icon: "construction",
+            desc: Translation.tr("Color gen, performance"),
             component: Quickshell.shellPath("modules/settings/AdvancedConfig.qml")
         },
         {
             name: Translation.tr("Shortcuts"),
             shortName: "",
             icon: "keyboard",
+            desc: Translation.tr("Keybindings reference"),
             component: Quickshell.shellPath("modules/settings/CheatsheetConfig.qml")
         },
         {
             name: Translation.tr("Modules"),
             shortName: "",
             icon: "extension",
+            desc: Translation.tr("Enable/disable panels"),
             component: Quickshell.shellPath("modules/settings/ModulesConfig.qml")
         },
         {
             name: Translation.tr("Waffle Style"),
             shortName: "",
             icon: "window",
+            desc: Translation.tr("Win11-style taskbar"),
             component: Quickshell.shellPath("modules/settings/WaffleConfig.qml")
         },
         {
             name: Translation.tr("About"),
             shortName: "",
             icon: "info",
+            desc: Translation.tr("Version & credits"),
             component: Quickshell.shellPath("modules/settings/About.qml")
         }
     ]

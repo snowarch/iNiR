@@ -54,6 +54,43 @@ Scope {
             }
         }
 
+        Component {
+            id: defaultContentComponent
+            SidebarRightContent {
+                screenWidth: sidebarRoot.screen?.width ?? 1920
+                screenHeight: sidebarRoot.screen?.height ?? 1080
+                panelScreen: sidebarRoot.screen ?? null
+            }
+        }
+
+        Component {
+            id: compactContentComponent
+            CompactSidebarRightContent {
+                screenWidth: sidebarRoot.screen?.width ?? 1920
+                screenHeight: sidebarRoot.screen?.height ?? 1080
+                panelScreen: sidebarRoot.screen ?? null
+            }
+        }
+
+        Component {
+            id: contentStackComponent
+            Item {
+                anchors.fill: parent
+
+                FadeLoader {
+                    anchors.fill: parent
+                    shown: (Config?.options?.sidebar?.layout ?? "default") === "default"
+                    sourceComponent: defaultContentComponent
+                }
+
+                FadeLoader {
+                    anchors.fill: parent
+                    shown: (Config?.options?.sidebar?.layout ?? "default") === "compact"
+                    sourceComponent: compactContentComponent
+                }
+            }
+        }
+
         Loader {
             id: sidebarContentLoader
             active: GlobalStates.sidebarRightOpen || (Config?.options?.sidebar?.keepRightSidebarLoaded ?? true)
@@ -93,11 +130,7 @@ Scope {
                 }
             }
 
-            sourceComponent: SidebarRightContent {
-                screenWidth: sidebarRoot.screen?.width ?? 1920
-                screenHeight: sidebarRoot.screen?.height ?? 1080
-                panelScreen: sidebarRoot.screen ?? null
-            }
+            sourceComponent: contentStackComponent
         }
     }
 

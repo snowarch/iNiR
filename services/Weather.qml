@@ -199,6 +199,12 @@ Singleton {
     // Step 2: Fetch weather using coordinates (precise) or city name (fallback)
     function fetchWeather(): void {
         if (!root.location.valid || fetcher.running) return;
+
+        // Skip primary provider (wttr.in) if it has failed repeatedly — go straight to Open-Meteo
+        if (root._primaryFailCount >= 3 && Date.now() < root._primaryFailUntil) {
+            root.fetchWeatherFallback();
+            return;
+        }
         
         let query;
         if (root.location.lat !== 0 || root.location.lon !== 0) {
@@ -230,15 +236,24 @@ Singleton {
     // Retry timer for when network isn't ready at startup
     property int _retryCount: 0
     property int _emptyResponseCount: 0
+    // Track consecutive primary provider failures to skip it after repeated timeouts
+    property int _primaryFailCount: 0
+    property double _primaryFailUntil: 0  // timestamp (ms) until which primary is skipped
     Timer {
         id: retryTimer
-        interval: 5000  // 5 seconds between retries
+        // Exponential backoff: 5s, 10s, 20s, 40s, 80s
+        interval: Math.min(5000 * Math.pow(2, root._retryCount), 80000)
         repeat: false
         onTriggered: {
-            if (!root.location.valid && root._retryCount < 5) {
+            if (root._retryCount < 5) {
                 root._retryCount++;
                 console.info("[Weather] Retry attempt", root._retryCount);
-                root.resolveLocation();
+                if (!root.location.valid) {
+                    root.resolveLocation();
+                } else {
+                    // Location is valid but weather fetch failed — retry weather directly
+                    root.fetchWeather();
+                }
             }
         }
     }
@@ -529,7 +544,10 @@ Singleton {
     // Weather fetcher
     Process {
         id: fetcher
+        // Guard: prevent double fallback invocation from both onStreamFinished and onExited
+        property bool _fallbackTriggered: false
         command: ["/usr/bin/bash", "-c", ""]
+        onRunningChanged: if (running) _fallbackTriggered = false
         stdout: StdioCollector {
             onStreamFinished: {
                 const payload = text.trim();
@@ -540,7 +558,12 @@ Singleton {
                     } else {
                         console.info("[Weather] Empty response, retrying");
                     }
-                    root.fetchWeatherFallback();
+                    if (!fetcher._fallbackTriggered) {
+                        fetcher._fallbackTriggered = true;
+                        root._primaryFailCount++;
+                        root._primaryFailUntil = Date.now() + 30 * 60 * 1000; // Skip primary for 30min after 3 fails
+                        root.fetchWeatherFallback();
+                    }
                     return;
                 }
 
@@ -551,7 +574,12 @@ Singleton {
                     } else {
                         console.info("[Weather] Transient weather response, retrying");
                     }
-                    root.fetchWeatherFallback();
+                    if (!fetcher._fallbackTriggered) {
+                        fetcher._fallbackTriggered = true;
+                        root._primaryFailCount++;
+                        root._primaryFailUntil = Date.now() + 30 * 60 * 1000;
+                        root.fetchWeatherFallback();
+                    }
                     return;
                 }
 
@@ -563,6 +591,7 @@ Singleton {
                     }
                     root.refineData(normalized);
                     root._emptyResponseCount = 0;
+                    root._primaryFailCount = 0; // Reset on success
                 } catch (e) {
                     root._emptyResponseCount++;
                     if (root._emptyResponseCount >= 3) {
@@ -570,12 +599,20 @@ Singleton {
                     } else {
                         console.info("[Weather] Parse error, retrying");
                     }
-                    root.fetchWeatherFallback();
+                    if (!fetcher._fallbackTriggered) {
+                        fetcher._fallbackTriggered = true;
+                        root._primaryFailCount++;
+                        root._primaryFailUntil = Date.now() + 30 * 60 * 1000;
+                        root.fetchWeatherFallback();
+                    }
                 }
             }
         }
         onExited: (code) => {
-            if (code !== 0) {
+            if (code !== 0 && !fetcher._fallbackTriggered) {
+                fetcher._fallbackTriggered = true;
+                root._primaryFailCount++;
+                root._primaryFailUntil = Date.now() + 30 * 60 * 1000;
                 console.warn("[Weather] Primary provider failed, switching fallback. code:", code);
                 root.fetchWeatherFallback();
             }

@@ -24,6 +24,9 @@ Singleton {
     }
 
     property bool _initialized: false
+    // Guard against re-entrant discardNotification calls (server dismiss → onNotificationChanged → discard again)
+    property var _discardingIds: new Set()
+
     component Notif: QtObject {
         id: wrapper
         required property int notificationId // Could just be `id` but it conflicts with the default prop in QtObject
@@ -51,6 +54,10 @@ Singleton {
     }
 
     function notifToJSON(notif) {
+        if (!notif) {
+            console.warn("[Notifications] notifToJSON called with null notification")
+            return null
+        }
         return {
             "notificationId": notif.notificationId,
             "actions": notif.actions,
@@ -64,7 +71,8 @@ Singleton {
         }
     }
     function notifToString(notif) {
-        return JSON.stringify(notifToJSON(notif), null, 2);
+        const json = notifToJSON(notif)
+        return json ? JSON.stringify(json, null, 2) : "{}"
     }
 
     component NotifTimer: Timer {
@@ -147,7 +155,11 @@ Singleton {
     }
 
     function stringifyList(list) {
-        return JSON.stringify(list.map((notif) => notifToJSON(notif)), null, 2);
+        return JSON.stringify(
+            list.map((notif) => notifToJSON(notif)).filter(json => json !== null), 
+            null, 
+            2
+        )
     }
 
     onListChanged: {
@@ -354,21 +366,46 @@ Singleton {
     }
 
     function discardNotification(id) {
-        console.log("[Notifications] Discarding notification with ID: " + id);
+        // Guard against re-entrant calls (server dismiss → onNotificationChanged → discard again)
+        if (root._discardingIds.has(id)) return;
+        root._discardingIds.add(id);
+
+        root._log("[Notifications] Discarding notification with ID: " + id);
         const index = root.list.findIndex((notif) => notif.notificationId === id);
-        const notifServerIndex = notifServer.trackedNotifications.values.findIndex((notif) => notif.id + root.idOffset === id);
         if (index !== -1) {
+            const notif = root.list[index];
+            // Cancel and destroy the timer to prevent orphaned timer fires
+            if (notif.timer) {
+                notif.timer.stop();
+                notif.timer.destroy();
+                notif.timer = null;
+            }
             root.list.splice(index, 1);
             notifFileView.setText(stringifyList(root.list));
-            triggerListChange()
+            triggerListChange();
+            // Destroy the Notif QML object to prevent memory leak
+            notif.destroy();
         }
+        const notifServerIndex = notifServer.trackedNotifications.values.findIndex((notif) => notif.id + root.idOffset === id);
         if (notifServerIndex !== -1) {
             notifServer.trackedNotifications.values[notifServerIndex].dismiss()
         }
         root.discard(id); // Emit signal
+
+        // Remove from re-entrancy guard after dismiss chain completes
+        Qt.callLater(() => root._discardingIds.delete(id));
     }
 
     function discardAllNotifications() {
+        // Cancel and destroy all active timers before clearing the list
+        for (const notif of root.list) {
+            if (notif.timer) {
+                notif.timer.stop();
+                notif.timer.destroy();
+                notif.timer = null;
+            }
+            notif.destroy();
+        }
         root.list = []
         triggerListChange()
         notifFileView.setText(stringifyList(root.list));
@@ -382,6 +419,8 @@ Singleton {
         const index = root.list.findIndex((notif) => notif.notificationId === id);
         if (index !== -1 && root.list[index] != null && root.list[index].timer != null) {
             root.list[index].timer.stop();
+            root.list[index].timer.destroy();
+            root.list[index].timer = null;
         }
     }
 

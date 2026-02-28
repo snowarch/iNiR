@@ -56,6 +56,52 @@ prevent_sudo_or_root
 ask=true
 quiet=false
 
+# Check privilege escalation availability
+_check_privilege_prereqs() {
+  # Load the package installers to get access to privilege detection
+  source ./sdata/lib/package-installers.sh 2>/dev/null
+  
+  local can_escalate=false
+  local method=""
+  
+  # Check each method
+  if command -v sudo &>/dev/null && sudo -n true 2>/dev/null; then
+    can_escalate=true
+    method="sudo"
+  elif command -v pkexec &>/dev/null && ( [[ -n "${DBUS_SESSION_BUS_ADDRESS}" ]] || [[ -n "${DISPLAY}" ]] || [[ -n "${WAYLAND_DISPLAY}" ]] ); then
+    can_escalate=true
+    method="pkexec"
+  elif command -v su &>/dev/null && [[ -z "${DISPLAY}" ]] && [[ -z "${WAYLAND_DISPLAY}" ]]; then
+    can_escalate=true
+    method="su"
+  fi
+  
+  if ! $can_escalate; then
+    echo ""
+    tui_warn "No privilege escalation method detected!"
+    echo ""
+    echo "This may cause installation to fail if sudo credentials are not cached."
+    echo ""
+    echo "Detected environment:"
+    [[ -n "${DISPLAY}" ]] && echo "  - DISPLAY: ${DISPLAY}" || echo "  - DISPLAY: (not set)"
+    [[ -n "${WAYLAND_DISPLAY}" ]] && echo "  - WAYLAND: ${WAYLAND_DISPLAY}" || echo "  - WAYLAND: (not set)"
+    [[ -n "${DBUS_SESSION_BUS_ADDRESS}" ]] && echo "  - D-Bus: available" || echo "  - D-Bus: (not set)"
+    echo "  - sudo: $(command -v sudo &>/dev/null && echo 'available' || echo 'not found')"
+    echo "  - pkexec: $(command -v pkexec &>/dev/null && echo 'available' || echo 'not found')"
+    echo "  - su: $(command -v su &>/dev/null && echo 'available' || echo 'not found')"
+    echo ""
+    
+    # Only warn in non-interactive mode, otherwise let user decide
+    if [[ "$1" == "install" ]] && [[ "$ask" == "false" ]]; then
+      tui_warn "Running in non-interactive mode - may fail. Consider:"
+      echo "  1. Running interactively: ./setup install"
+      echo "  2. Configure sudo first: sudo visudo"
+      echo "  3. Or use a graphical terminal with polkit agent"
+      echo ""
+    fi
+  fi
+}
+
 ###############################################################################
 # Help
 ###############################################################################
@@ -821,6 +867,11 @@ while [[ $# -gt 0 ]]; do
         *) echo "Unknown: $1"; show_help; exit 1 ;;
     esac
 done
+
+# Check prerequisites for install command (after parsing flags)
+if [[ "$COMMAND" == "install" ]]; then
+  _check_privilege_prereqs "install"
+fi
 
 ###############################################################################
 # Run

@@ -8,6 +8,7 @@ ToolTip {
     id: root
     property bool extraVisibleCondition: true
     property bool alternativeVisibleCondition: false
+    property string position: "bottom" // "bottom", "left", "right", "top"
 
     // Visibility logic:
     // - If parent has buttonHovered (RippleButton), use it
@@ -31,6 +32,18 @@ ToolTip {
 
     visible: internalVisibleCondition
     
+    // Position offsets based on position property
+    x: {
+        if (position === "left") return -width - 8
+        if (position === "right") return parent.width + 8
+        return (parent.width - width) / 2  // center for top/bottom
+    }
+    y: {
+        if (position === "top") return -height - 4
+        if (position === "left" || position === "right") return (parent.height - height) / 2
+        return parent.height + 4  // bottom default
+    }
+
     contentItem: StyledToolTipContent {
         id: contentItem
         font: root.font

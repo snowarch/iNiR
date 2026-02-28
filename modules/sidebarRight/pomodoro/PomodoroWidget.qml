@@ -7,6 +7,8 @@ import QtQuick.Layouts
 
 Item {
     id: root
+    property bool compactMode: false
+    property bool centerMode: true
     property int currentTab: Persistent.states?.timer?.tab ?? 0
     property var tabButtonList: [
         {"name": Translation.tr("Pomodoro"), "icon": "search_activity"},
@@ -17,7 +19,8 @@ Item {
     // Style tokens
     readonly property color colText: Appearance.angelEverywhere ? Appearance.angel.colText
         : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
-    readonly property color colTextSecondary: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+    readonly property color colTextSecondary: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+        : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
     readonly property color colPrimary: Appearance.angelEverywhere ? Appearance.angel.colPrimary
         : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
     readonly property color colBorder: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
@@ -155,10 +158,10 @@ Item {
 
         SwipeView {
             id: swipeView
-            Layout.topMargin: 10
+            Layout.topMargin: 6
             Layout.fillWidth: true
             Layout.fillHeight: true
-            spacing: 10
+            spacing: 6
             clip: true
             currentIndex: currentTab
             onCurrentIndexChanged: {
@@ -169,9 +172,18 @@ Item {
                 }
             }
 
-            PomodoroTimer {}
-            CountdownTimer {}
-            Stopwatch {}
+            PomodoroTimer {
+                compactMode: root.compactMode
+                centerMode: root.centerMode
+            }
+            CountdownTimer {
+                compactMode: root.compactMode
+                centerMode: root.centerMode
+            }
+            Stopwatch {
+                compactMode: root.compactMode
+                centerMode: root.centerMode
+            }
         }
     }
 }

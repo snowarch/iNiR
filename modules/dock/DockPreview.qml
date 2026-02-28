@@ -46,6 +46,25 @@ PopupWindow {
         root.open()
     }
 
+    // Sort toplevels by Niri column position for spatial consistency
+    function _sortedToplevels(): list<var> {
+        const toplevels = root.appEntry?.toplevels ?? [];
+        if (!CompositorService.isNiri || toplevels.length <= 1) return toplevels;
+
+        const niriWindows = NiriService.windows ?? [];
+        const sorted = [...toplevels];
+        sorted.sort((a, b) => {
+            const aNiriId = a.niriWindowId ?? 0;
+            const bNiriId = b.niriWindowId ?? 0;
+            const aNiri = niriWindows.find(w => w.id === aNiriId);
+            const bNiri = niriWindows.find(w => w.id === bNiriId);
+            const aCol = aNiri?.layout?.pos_in_scrolling_layout?.[0] ?? 999999;
+            const bCol = bNiri?.layout?.pos_in_scrolling_layout?.[0] ?? 999999;
+            return aCol - bCol;
+        });
+        return sorted;
+    }
+
     visible: false
     color: "transparent"
     implicitWidth: contentItem.implicitWidth + ambientShadowWidth + (visualMargin * 2)
@@ -150,11 +169,15 @@ PopupWindow {
 
                 Repeater {
                     model: ScriptModel {
-                        values: root.appEntry?.toplevels ?? []
+                        values: root._sortedToplevels()
                     }
                     delegate: DockWindowPreview {
                         required property var modelData
                         toplevel: modelData
+                        onWindowActivated: {
+                            if (!(Config.options?.dock?.keepPreviewOnClick ?? false))
+                                root.close()
+                        }
                     }
                 }
             }

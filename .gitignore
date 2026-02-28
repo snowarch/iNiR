@@ -21,15 +21,16 @@ agents/
 .dory/
 inir-docs/
 context-architect/
-AGENTS.md
-**/AGENTS.md
-CLAUDE.md
-**/CLAUDE.md
-GEMINI.md
-Session.md
+AGENTS.md*
+**/AGENTS.md*
+CLAUDE.md*
+**/CLAUDE.md*
+GEMINI.md*
+Session.md*
 opencode.json
 hooks/
 prompts/
+mcp.json
 .cursorrules
 .windsurfrules
 
@@ -96,3 +97,6 @@ Thumbs.db
 .aider*
 .kilocode/
 .windsurf/
+.omc/
+.task/
+.opencode
