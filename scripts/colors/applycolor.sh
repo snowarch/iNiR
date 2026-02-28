@@ -299,12 +299,54 @@ apply_chrome() {
   # BrowserColorScheme: Explicitly dark/light — portal doesn't work reliably for Chrome on Wayland
   local policy_content="{\"BrowserThemeColor\": \"$primary_color\", \"BrowserColorScheme\": \"$color_scheme\"}"
 
+  # Helper: set browser defaults so managed policy theme takes effect
+  # Clears any user-installed theme and sets color_scheme/user_color to follow policy
+  _set_browser_defaults() {
+    local prefs_file="$1"
+    local name="$2"
+
+    if [[ ! -f "$prefs_file" ]]; then
+      echo "[chrome] $name: Preferences not found at $prefs_file, skipping defaults" >> "$log_file"
+      return
+    fi
+
+    # Check if defaults are already set to avoid unnecessary writes
+    local current_id current_system current_custom current_cs current_uc
+    current_id=$(jq -r '.extensions.theme.id // "unset"' "$prefs_file" 2>/dev/null)
+    current_system=$(jq -r '.extensions.theme.use_system // "unset"' "$prefs_file" 2>/dev/null)
+    current_custom=$(jq -r '.extensions.theme.use_custom // "unset"' "$prefs_file" 2>/dev/null)
+    current_cs=$(jq -r '.browser.theme.color_scheme // "unset"' "$prefs_file" 2>/dev/null)
+    current_uc=$(jq -r '.browser.theme.user_color // "unset"' "$prefs_file" 2>/dev/null)
+
+    if [[ "$current_id" == "" && "$current_system" == "false" && "$current_custom" == "false" \
+       && "$current_cs" == "2" && "$current_uc" == "2" ]]; then
+      echo "[chrome] $name: browser defaults already set" >> "$log_file"
+      return
+    fi
+
+    local tmp_file="${prefs_file}.ii-tmp"
+    if jq '.extensions.theme.id = "" | .extensions.theme.use_system = false | .extensions.theme.use_custom = false | .browser.theme.color_scheme = 2 | .browser.theme.user_color = 2' \
+        "$prefs_file" > "$tmp_file" 2>/dev/null && [[ -s "$tmp_file" ]]; then
+      mv "$tmp_file" "$prefs_file"
+      echo "[chrome] $name: browser defaults set (cleared user theme, policy mode)" >> "$log_file"
+    else
+      rm -f "$tmp_file"
+      echo "[chrome] $name: failed to set browser defaults" >> "$log_file"
+    fi
+  }
+
   # Helper: write policy and refresh
   _apply_to_browser() {
     local bin="$1"
     local dir="$2"
     local name="$3"
+    local prefs_dir="$4"
     local policy_file="$dir/ii-theme.json"
+
+    # Set browser defaults in Preferences (one-time, skips if already set)
+    if [[ -n "$prefs_dir" ]]; then
+      _set_browser_defaults "$prefs_dir/Default/Preferences" "$name"
+    fi
 
     if [[ ! -d "$dir" || ! -w "$dir" ]]; then
       echo "[chrome] $name: policy dir not writable. Run: sudo mkdir -p $dir && sudo chown \$USER $dir" >> "$log_file"
@@ -317,21 +359,21 @@ apply_chrome() {
   }
 
   if command -v google-chrome-stable &>/dev/null; then
-    _apply_to_browser google-chrome-stable "/etc/opt/chrome/policies/managed" "Google Chrome"
+    _apply_to_browser google-chrome-stable "/etc/opt/chrome/policies/managed" "Google Chrome" "$HOME/.config/google-chrome"
   elif command -v google-chrome &>/dev/null; then
-    _apply_to_browser google-chrome "/etc/opt/chrome/policies/managed" "Google Chrome"
+    _apply_to_browser google-chrome "/etc/opt/chrome/policies/managed" "Google Chrome" "$HOME/.config/google-chrome"
   fi
 
   if command -v chromium &>/dev/null; then
-    _apply_to_browser chromium "/etc/chromium/policies/managed" "Chromium"
+    _apply_to_browser chromium "/etc/chromium/policies/managed" "Chromium" "$HOME/.config/chromium"
   elif command -v chromium-browser &>/dev/null; then
-    _apply_to_browser chromium-browser "/etc/chromium/policies/managed" "Chromium"
+    _apply_to_browser chromium-browser "/etc/chromium/policies/managed" "Chromium" "$HOME/.config/chromium"
   fi
 
   if command -v brave &>/dev/null; then
-    _apply_to_browser brave "/etc/brave/policies/managed" "Brave"
+    _apply_to_browser brave "/etc/brave/policies/managed" "Brave" "$HOME/.config/BraveSoftware/Brave-Browser"
   elif command -v brave-browser &>/dev/null; then
-    _apply_to_browser brave-browser "/etc/brave/policies/managed" "Brave"
+    _apply_to_browser brave-browser "/etc/brave/policies/managed" "Brave" "$HOME/.config/BraveSoftware/Brave-Browser"
   fi
 }
 
