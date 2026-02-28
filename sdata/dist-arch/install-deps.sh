@@ -64,7 +64,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
   if [[ ${#_miss_pkgs[@]} -gt 0 ]]; then
     case $SKIP_SYSUPDATE in
       true) sleep 0;;
-      *) $ask && v sudo pacman -Syu || v sudo pacman -Syu --noconfirm;;
+      *) $ask && v pkg_sudo pacman -Syu || v pkg_sudo pacman -Syu --noconfirm;;
     esac
 
     if ! command -v yay >/dev/null 2>&1 && ! command -v paru >/dev/null 2>&1; then
@@ -91,7 +91,7 @@ fi
 #####################################################################################
 case $SKIP_SYSUPDATE in
   true) sleep 0;;
-  *) $ask && v sudo pacman -Syu || v sudo pacman -Syu --noconfirm;;
+  *) $ask && v pkg_sudo pacman -Syu || v pkg_sudo pacman -Syu --noconfirm;;
 esac
 
 #####################################################################################
@@ -142,7 +142,7 @@ install_pkgbuild_deps() {
   $ask || installflags="$installflags --noconfirm"
   
   # Install via pacman first (for official repos)
-  sudo pacman -S $installflags "${depends[@]}" 2>/dev/null || {
+  pkg_sudo pacman -S $installflags "${depends[@]}" 2>/dev/null || {
     # Some packages may be AUR-only, try with AUR helper
     $AUR_HELPER -S $installflags "${depends[@]}"
   }
@@ -173,8 +173,8 @@ for qs_conflict in quickshell-git quickshell-bin; do
     if $ask; then
       if tui_confirm "Replace $qs_conflict with quickshell (stable)? (recommended)"; then
         log_info "Removing $qs_conflict..."
-        v sudo pacman -Rdd --noconfirm "$qs_conflict" 2>/dev/null \
-          || v sudo pacman -R --noconfirm "$qs_conflict" \
+        v pkg_sudo pacman -Rdd --noconfirm "$qs_conflict" 2>/dev/null \
+          || v pkg_sudo pacman -R --noconfirm "$qs_conflict" \
           || log_warning "Could not remove $qs_conflict — install may fail"
       else
         log_warning "Keeping $qs_conflict — removing quickshell from install list"
@@ -182,8 +182,8 @@ for qs_conflict in quickshell-git quickshell-bin; do
       fi
     else
       log_info "Non-interactive: replacing $qs_conflict with quickshell (stable)"
-      sudo pacman -Rdd --noconfirm "$qs_conflict" 2>/dev/null \
-        || sudo pacman -R --noconfirm "$qs_conflict" 2>/dev/null \
+      pkg_sudo pacman -Rdd --noconfirm "$qs_conflict" 2>/dev/null \
+        || pkg_sudo pacman -R --noconfirm "$qs_conflict" 2>/dev/null \
         || log_warning "Could not remove $qs_conflict — install may fail"
     fi
   fi
@@ -252,7 +252,7 @@ installflags="--needed"
 $ask || installflags="$installflags --noconfirm"
 
 log_info "Using precompiled packages from official repos (no compilation)"
-v sudo pacman -S $installflags "${OFFICIAL_PACKAGES[@]}"
+v pkg_sudo pacman -S $installflags "${OFFICIAL_PACKAGES[@]}"
 
 #####################################################################################
 # Install AUR packages (only those not in official repos)

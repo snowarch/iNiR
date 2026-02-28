@@ -52,7 +52,11 @@ source ./sdata/lib/user-modifications.sh
 
 prevent_sudo_or_root
 
-# Check privilege escalation availability early
+# Defaults
+ask=true
+quiet=false
+
+# Check privilege escalation availability
 _check_privilege_prereqs() {
   # Load the package installers to get access to privilege detection
   source ./sdata/lib/package-installers.sh 2>/dev/null
@@ -97,15 +101,6 @@ _check_privilege_prereqs() {
     fi
   fi
 }
-
-# Check prerequisites for install command
-if [[ "${1:-}" == "install" ]]; then
-  _check_privilege_prereqs "install"
-fi
-
-# Defaults
-ask=true
-quiet=false
 
 ###############################################################################
 # Help
@@ -870,6 +865,11 @@ while [[ $# -gt 0 ]]; do
         *) echo "Unknown: $1"; show_help; exit 1 ;;
     esac
 done
+
+# Check prerequisites for install command (after parsing flags)
+if [[ "$COMMAND" == "install" ]]; then
+  _check_privilege_prereqs "install"
+fi
 
 ###############################################################################
 # Run
