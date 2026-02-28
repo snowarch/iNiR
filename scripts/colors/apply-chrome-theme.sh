@@ -185,11 +185,16 @@ apply_to_browser() {
   local mode="$5"  # "dark" or "light"
   local name="$bin"
 
-  # Since the xdg-desktop-portal is active, we should let Chrome handle
-  # dark/light mode dynamically by setting color_scheme to 0 (System).
-  local pref_cs2=0
+  # We must explicitly set Chrome's internal theme engine to Dark (2) or Light (1).
+  # While xdg-desktop-portal successfully tells Chrome's GTK window borders to switch,
+  # it often fails to trigger the GM3 Theme Engine to recalculate its palette.
+  # 2 = Dark, 1 = Light
+  local pref_cs2=1
+  if [[ "$mode" == "dark" ]]; then
+    pref_cs2=2
+  fi
 
-  # 1. Fix preferences first — ensures Chrome is allowed to follow system
+  # 1. Fix preferences first — ensures GM3 theme engine generates correct dark/light palette
   fix_preferences "$prefs_dir" "$name" "$pref_cs2"
 
   # 2. Write policy — only BrowserThemeColor (persists across restarts)
