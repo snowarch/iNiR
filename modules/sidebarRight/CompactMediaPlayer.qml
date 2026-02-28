@@ -1,7 +1,7 @@
+pragma ComponentBehavior: Bound
 // CompactMediaPlayer.qml
 // Enhanced media player widget for the compact sidebar Controls section
 // Shows current track with album art, playback controls, and progress
-pragma ComponentBehavior: Bound
 import qs
 import qs.services
 import qs.modules.common
