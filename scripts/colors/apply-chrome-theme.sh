@@ -22,6 +22,25 @@ mkdir -p "$STATE_DIR/user/generated" 2>/dev/null
 
 log() { echo "[chrome] $*" >> "$LOG_FILE"; }
 
+# ── Helpers ──────────────────────────────────────────────────────────────────
+
+hex_to_rgb() {
+  local hex=$1
+  hex="${hex#\#}"
+  printf "%d,%d,%d" "0x${hex:0:2}" "0x${hex:2:2}" "0x${hex:4:2}"
+}
+
+is_omarchy() {
+  local bin_path
+  bin_path=$(command -v "$1" 2>/dev/null)
+  if [[ -n "$bin_path" ]]; then
+    if command -v pacman &>/dev/null; then
+      pacman -Qo "$bin_path" 2>/dev/null | grep -qi "omarchy" && return 0
+    fi
+  fi
+  return 1
+}
+
 # ── Resolve theme color ─────────────────────────────────────────────────────
 
 resolve_color() {
@@ -162,6 +181,24 @@ apply_to_browser() {
   local theme_color="$4"
   local cs2="$5"  # color_scheme2: 2=dark, 1=light
   local name="$bin"
+
+  local scheme_name="light"
+  [[ "$cs2" == "2" ]] && scheme_name="dark"
+
+  if is_omarchy "$bin"; then
+    local rgb_color
+    rgb_color=$(hex_to_rgb "$theme_color")
+    
+    log "$name: Omarchy fork detected. Using CLI flags."
+    # Direct CLI command (fast, reliable, bypasses policies entirely)
+    "$bin" --no-startup-window \
+           --set-user-color="$rgb_color" \
+           --set-color-scheme="$scheme_name" >/dev/null 2>&1 & disown
+    return
+  fi
+
+  # --- Standard Browser Fallback (Policy Mode) ---
+  log "$name: Standard browser detected. Using policy mode."
 
   # Fix preferences first — sets dark/light explicitly since no portal on Niri
   fix_preferences "$prefs_dir" "$name" "$cs2"
