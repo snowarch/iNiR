@@ -119,6 +119,7 @@
             "enableVesktop": true,
             "enableZed": true,
             "enableVSCode": true,
+            "enableChrome": true,
             "useBackdropForColors": false,
             "terminalGenerationProps": {
                 "forceDarkMode": false,

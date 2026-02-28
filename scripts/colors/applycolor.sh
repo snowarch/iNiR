@@ -286,6 +286,12 @@ apply_gtk_kde() {
   "$SCRIPT_DIR/apply-gtk-theme.sh"
 }
 
+apply_chrome() {
+  # apply-chrome-theme.sh applies GM3 BrowserThemeColor to Chromium-based browsers
+  # Supports: Google Chrome, Chromium, Brave (and Omarchy fork with CLI theming)
+  "$SCRIPT_DIR/apply-chrome-theme.sh"
+}
+
 # Check if terminal theming is enabled in config
 CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/illogical-impulse/config.json"
 if [ -f "$CONFIG_FILE" ]; then
@@ -316,6 +322,16 @@ fi
 
 # Apply code editor themes (Zed, etc.)
 apply_code_editors &
+
+# Apply Chrome/Chromium/Brave GM3 theme via managed policies
+if [ -f "$CONFIG_FILE" ]; then
+  enable_chrome=$(jq -r '.appearance.wallpaperTheming.enableChrome // true' "$CONFIG_FILE" 2>/dev/null || echo "true")
+  if [ "$enable_chrome" = "true" ]; then
+    apply_chrome &
+  fi
+else
+  apply_chrome &
+fi
 
 # Sync ii-pixel SDDM theme colors (if installed)
 SDDM_SYNC_SCRIPT="$SCRIPT_DIR/../sddm/sync-pixel-sddm.py"
