@@ -283,12 +283,13 @@ apply_chrome() {
   fi
 
   # Detect dark/light mode from the material color pipeline
-  local color_scheme="dark"
+  # NOTE: Chrome's BrowserColorScheme is inverted relative to the SCSS $darkmode value
+  local color_scheme="light"
   if [[ -f "$scss_file" ]]; then
     local darkmode_val
     darkmode_val=$(grep '^\$darkmode:' "$scss_file" | sed 's/.*: *\(.*\);/\1/' | tr -d ' ')
     if [[ "$darkmode_val" == "false" || "$darkmode_val" == "False" ]]; then
-      color_scheme="light"
+      color_scheme="dark"
     fi
   fi
 
