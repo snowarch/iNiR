@@ -70,6 +70,8 @@ Singleton {
     property bool familyTransitionActive: false
     property string familyTransitionDirection: "left" // "left" = current exits left, new enters from right
 
+    signal requestRipple(real x, real y, string screenName)
+
     // Close other waffle popups when one opens (unless allowMultiplePanels is enabled)
     property bool _allowMultiple: Config.options?.waffles?.behavior?.allowMultiplePanels ?? false
     onSearchOpenChanged: {

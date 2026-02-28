@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+- Added authentic Google Pixel "Fluid Ripple" shader-based animation.
+- Support for multiple ripple triggers: Charging, Niri Overview, Hotcorners, Screen Lock, and Session Screen.
+- Integrated customizable ripple settings in Background tab.
+
 All notable changes to iNiR will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),

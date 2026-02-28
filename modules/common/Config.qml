@@ -482,6 +482,16 @@ Singleton {
                     property int videoBlurStrength: 50
                     property int dim: 0 // 0-100 percentage (base overlay)
                     property int dynamicDim: 0 // Extra dim when there are windows on the current workspace (0-100)
+                    property JsonObject ripple: JsonObject {
+                        property bool enable: true
+                        property bool charging: true
+                        property bool overview: true
+                        property bool reload: true
+                        property bool lock: true
+                        property bool session: true
+                        property bool hotcorners: true
+                        property int rippleDuration: 3000
+                    }
                 }
                 property JsonObject backdrop: JsonObject {
                     property bool enable: true

@@ -3,6 +3,7 @@ AddressBreadcrumb 1.0 AddressBreadcrumb.qml
 AngelAccentBar 1.0 AngelAccentBar.qml
 AngelBackground 1.0 AngelBackground.qml
 AngelPartialBorder 1.0 AngelPartialBorder.qml
+SmartAppIcon 1.0 SmartAppIcon.qml
 ButtonGroup 1.0 ButtonGroup.qml
 CalendarView 1.0 CalendarView.qml
 CavaProcess 1.0 CavaProcess.qml
@@ -124,3 +125,4 @@ WindowDialogSeparator 1.0 WindowDialogSeparator.qml
 WindowDialogSlider 1.0 WindowDialogSlider.qml
 WindowDialogTitle 1.0 WindowDialogTitle.qml
 WallpaperCrossfader 1.0 WallpaperCrossfader.qml
+FluidRipple 1.0 FluidRipple.qml

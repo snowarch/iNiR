@@ -22,6 +22,29 @@
 
 ---
 
+## Features
+
+- **Two panel families** — Material Design or Windows 11 style, switchable on the fly
+- **Three visual styles** — Material (solid), Aurora (glass blur), Inir (TUI-inspired)
+- **Workspace overview** — Adapted for Niri's scrolling workspace model
+- **Window switcher** — Alt+Tab that works across all workspaces
+- **Region tools** — Screenshots, screen recording, OCR, reverse image search
+- **Clipboard manager** — Searchable history with image preview
+- **Dynamic theming** — Matugen extracts colors from your wallpaper
+- **Theme presets** — Gruvbox, Catppuccin, and more, or build your own
+- **GameMode** — Auto-disables effects when fullscreen apps are detected
+- **GUI Settings** — Configure everything without touching JSON
+- **Fluid Ripple (AOSP Port)** — Authentic Android sparkle-style ripple animations for system events, ported from the Android Open Source Project (Apache 2.0).
+- **Battery Conservation Mode** — Integrated control for battery health settings on supported laptops.
+
+---
+
+## Technical Attributions
+
+This project includes code derived from the **Android Open Source Project (AOSP)**, specifically the Material You ripple shader logic, licensed under the **Apache License 2.0**. Portions of the implementation were adapted for the Qt6/Quickshell pipeline.
+
+---
+
 ## Screenshots
 
 <details open>
@@ -196,5 +219,5 @@ Check [LIMITATIONS.md](docs/LIMITATIONS.md) before opening an issue — it might
 ---
 
 <p align="center">
-  <sub>This is a personal project. It works on my machine. YMMV.</sub>
+  <sub>Thank you for using and supporting **iNiR**! Your interest and feedback help make this project better every day. 🚀</sub>
 </p>

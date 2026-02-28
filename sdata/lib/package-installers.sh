@@ -236,6 +236,14 @@ install-python-packages(){
     return 0
   fi
 
+  # Check for broken venv (e.g. after python update)
+  if [[ -d "$venv_dir/bin" ]]; then
+    if ! "$venv_dir/bin/python" --version &>/dev/null; then
+      log_warning "Broken Python venv detected, recreating..."
+      rm -rf "$venv_dir"
+    fi
+  fi
+
   if [[ ! -d "$venv_dir/bin" ]]; then
     x mkdir -p "$(dirname "$venv_dir")"
     x uv venv --prompt ii-venv "$venv_dir" -p 3.12 || uv venv --prompt ii-venv "$venv_dir" || {

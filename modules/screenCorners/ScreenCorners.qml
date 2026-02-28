@@ -104,8 +104,13 @@ Scope {
                             screenCorners.actionForCorner[cornerPanelWindow.corner]();
                     }
                     onPressed: {
-                        if (!(Config.options?.sidebar?.cornerOpen?.clickless ?? false))
+                        if (!(Config.options?.sidebar?.cornerOpen?.clickless ?? false)) {
                             screenCorners.actionForCorner[cornerPanelWindow.corner]();
+                            if (Config.options.background.effects.ripple.hotcorners ?? true) {
+                                // Force spawn from left top corner as requested
+                                GlobalStates.requestRipple(0, 0, cornerPanelWindow.screen.name);
+                            }
+                        }
                     }
                     onScrollDown: {
                         if (!(Config.options?.sidebar?.cornerOpen?.valueScroll ?? false))

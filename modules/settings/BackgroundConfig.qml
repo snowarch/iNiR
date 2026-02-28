@@ -1066,6 +1066,98 @@ ContentPage {
             }
 
             ContentSubsection {
+                title: Translation.tr("Fluid Ripple (AOSP Port)")
+
+                SettingsSwitch {
+                    buttonIcon: "check_circle"
+                    text: Translation.tr("Enable all ripples")
+                    checked: Config.options.background.effects.ripple.enable ?? true
+                    onCheckedChanged: {
+                        Config.setNestedValue("background.effects.ripple.enable", checked);
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Authentic Android sparkle-style ripples.\nLicensed under Apache 2.0 (AOSP).")
+                    }
+                }
+
+                SettingsGroup {
+                    enabled: Config.options.background.effects.ripple.enable ?? true
+                    
+                    SettingsSwitch {
+                        buttonIcon: "bolt"
+                        text: Translation.tr("On charging")
+                        checked: Config.options.background.effects.ripple.charging ?? true
+                        onCheckedChanged: {
+                            Config.setNestedValue("background.effects.ripple.charging", checked);
+                        }
+                    }
+
+                    SettingsSwitch {
+                        buttonIcon: "grid_view"
+                        text: Translation.tr("On Niri overview open")
+                        checked: Config.options.background.effects.ripple.overview ?? true
+                        onCheckedChanged: {
+                            Config.setNestedValue("background.effects.ripple.overview", checked);
+                        }
+                    }
+
+                    SettingsSwitch {
+                        buttonIcon: "near_me"
+                        text: Translation.tr("On hotcorner activation")
+                        checked: Config.options.background.effects.ripple.hotcorners ?? true
+                        onCheckedChanged: {
+                            Config.setNestedValue("background.effects.ripple.hotcorners", checked);
+                        }
+                    }
+
+                    SettingsSwitch {
+                        buttonIcon: "refresh"
+                        text: Translation.tr("On shell reload")
+                        checked: Config.options.background.effects.ripple.reload ?? true
+                        onCheckedChanged: {
+                            Config.setNestedValue("background.effects.ripple.reload", checked);
+                        }
+                    }
+
+                    SettingsSwitch {
+                        buttonIcon: "lock"
+                        text: Translation.tr("On screen lock")
+                        checked: Config.options.background.effects.ripple.lock ?? true
+                        onCheckedChanged: {
+                            Config.setNestedValue("background.effects.ripple.lock", checked);
+                        }
+                    }
+
+                    SettingsSwitch {
+                        buttonIcon: "logout"
+                        text: Translation.tr("On session screen open")
+                        checked: Config.options.background.effects.ripple.session ?? true
+                        onCheckedChanged: {
+                            Config.setNestedValue("background.effects.ripple.session", checked);
+                        }
+                    }
+
+                    SettingsDivider {}
+
+                    ConfigSpinBox {
+                        icon: "schedule"
+                        text: Translation.tr("Animation duration (ms)")
+                        value: Config.options?.background?.effects?.ripple?.rippleDuration ?? 3000
+                        from: 500
+                        to: 10000
+                        stepSize: 250
+                        onValueChanged: {
+                            Config.setNestedValue("background.effects.ripple.rippleDuration", value);
+                        }
+                        StyledToolTip {
+                            text: Translation.tr("How long the ripple lasts. Higher = slower expansion.")
+                        }
+                    }
+                }
+            }
+
+
+            ContentSubsection {
                 title: Translation.tr("Backdrop (overview)")
 
                 SettingsSwitch {
