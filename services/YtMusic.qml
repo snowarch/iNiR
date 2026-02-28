@@ -15,6 +15,9 @@ Singleton {
     property bool loading: false
     property bool libraryLoading: false
     property string error: ""
+    property bool verbose: Config.options?.sidebar?.ytmusic?.verbose ?? false
+
+    function _log(msg) { if (root.verbose) console.log(msg) }
     
     property string currentTitle: ""
     property string currentArtist: ""
@@ -26,7 +29,7 @@ Singleton {
     
     property bool canPause: _mpvPlayer?.canPause ?? true
     property bool canSeek: _mpvPlayer?.canSeek ?? true
-    property real volume: _mpvPlayer?.volume ?? 1.0
+    property real volume: _mpvPlayer?.volume ?? (_savedVolume / 100)
     
     property bool shuffleMode: Config.options?.sidebar?.ytmusic?.shuffleMode ?? false
     property int repeatMode: Config.options?.sidebar?.ytmusic?.repeatMode ?? 0
@@ -62,6 +65,17 @@ Singleton {
     property string defaultBrowser: ""
     property bool autoConnectAttempted: false
     property bool autoConnectEnabled: Config.options?.sidebar?.ytmusic?.autoConnect ?? true
+    
+    // OAuth state
+    property bool oauthConfigured: false
+    property string oauthChannel: ""
+    property bool oauthSetupActive: false
+    property string oauthUserCode: ""
+    property string oauthVerificationUrl: ""
+    property string oauthDeviceCode: ""
+    property string oauthSetupError: ""
+    property string _oauthClientId: ""
+    property string _oauthClientSecret: ""
     
     readonly property int maxRecentSearches: 10
     readonly property int maxLikedSongs: 200
@@ -154,6 +168,7 @@ Singleton {
         _detectBrowsersProc.running = true
         _loadData()
         _findMpvPlayer()
+        checkOAuth()
     }
 
     Timer {
@@ -249,12 +264,12 @@ Singleton {
     }
     
     function playFromPlaylist(playlist, index, source): void {
-        console.log("[YtMusic] playFromPlaylist. playlist.length=" + (playlist?.length ?? "null") + " index=" + index + " source=" + source)
+        root._log("[YtMusic] playFromPlaylist. playlist.length=" + (playlist?.length ?? "null") + " index=" + index + " source=" + source)
         if (!playlist || index < 0 || index >= playlist.length) return
         root.activePlaylist = [...playlist]
         root.currentIndex = index
         root.activePlaylistSource = source || "custom"
-        console.log("[YtMusic] Set activePlaylist.length=" + root.activePlaylist.length + " currentIndex=" + root.currentIndex)
+        root._log("[YtMusic] Set activePlaylist.length=" + root.activePlaylist.length + " currentIndex=" + root.currentIndex)
         _playInternal(playlist[index])
     }
     
@@ -265,7 +280,7 @@ Singleton {
     }
     
     function playFromLiked(index): void {
-        console.log("[YtMusic] playFromLiked. index=" + index + " likedSongs.length=" + likedSongs.length)
+        root._log("[YtMusic] playFromLiked. index=" + index + " likedSongs.length=" + likedSongs.length)
         if (index >= 0 && index < likedSongs.length) {
             playFromPlaylist(likedSongs, index, "liked")
         }
@@ -340,10 +355,12 @@ Singleton {
     }
 
     function setVolume(vol): void {
+        const clamped = Math.max(0, Math.min(1, vol))
+        root._savedVolume = Math.round(clamped * 100)
         if (root._mpvPlayer) {
-            root._mpvPlayer.volume = Math.max(0, Math.min(1, vol))
+            root._mpvPlayer.volume = clamped
         } else {
-            _sendIpc(["set_property", "volume", Math.round(vol * 100)])
+            _sendIpc(["set_property", "volume", root._savedVolume])
         }
     }
     
@@ -352,6 +369,7 @@ Singleton {
     }
     
     property real _ipcVolume: 1.0
+    property int _savedVolume: 100
 
     function toggleShuffle(): void {
         root.shuffleMode = !root.shuffleMode
@@ -362,7 +380,7 @@ Singleton {
     }
 
     function playNext(): void {
-        console.log("[YtMusic] playNext called. activePlaylist.length=" + activePlaylist.length + " currentIndex=" + currentIndex + " source=" + activePlaylistSource)
+        root._log("[YtMusic] playNext called. activePlaylist.length=" + activePlaylist.length + " currentIndex=" + currentIndex + " source=" + activePlaylistSource)
         
         if (root.repeatMode === 1 && root.currentVideoId) {
             seek(0)
@@ -521,6 +539,11 @@ Singleton {
         if (liked.length > root.maxLikedSongs) liked = liked.slice(0, root.maxLikedSongs)
         root.likedSongs = liked
         Config.setNestedValue('sidebar.ytmusic.liked', root.likedSongs)
+        // Send real like to YouTube via OAuth
+        if (root.oauthConfigured) {
+            _rateLikeProc._videoId = root.currentVideoId
+            _rateLikeProc.running = true
+        }
     }
 
     function unlikeSong(videoId): void {
@@ -530,6 +553,140 @@ Singleton {
         liked.splice(idx, 1)
         root.likedSongs = liked
         Config.setNestedValue('sidebar.ytmusic.liked', root.likedSongs)
+        // Send real unlike to YouTube via OAuth
+        if (root.oauthConfigured) {
+            _rateUnlikeProc._videoId = videoId
+            _rateUnlikeProc.running = true
+        }
+    }
+
+    Process {
+        id: _rateLikeProc
+        property string _videoId: ""
+        command: ["python3", Directories.scriptPath + "/ytmusic_rate.py", "like", _videoId]
+    }
+
+    Process {
+        id: _rateUnlikeProc
+        property string _videoId: ""
+        command: ["python3", Directories.scriptPath + "/ytmusic_rate.py", "unlike", _videoId]
+    }
+
+    // ── OAuth Setup ────────────────────────────────────────────────────
+    function checkOAuth(): void {
+        _oauthCheckProc.running = true
+    }
+
+    function startOAuthSetup(clientId, clientSecret): void {
+        root._oauthClientId = clientId
+        root._oauthClientSecret = clientSecret
+        root.oauthSetupError = ""
+        root.oauthSetupActive = true
+        _oauthRequestProc._clientId = clientId
+        _oauthRequestProc._clientSecret = clientSecret
+        _oauthRequestProc.running = true
+    }
+
+    function cancelOAuthSetup(): void {
+        root.oauthSetupActive = false
+        root.oauthUserCode = ""
+        root.oauthVerificationUrl = ""
+        root.oauthDeviceCode = ""
+        root.oauthSetupError = ""
+        _oauthPollTimer.running = false
+    }
+
+    function disconnectOAuth(): void {
+        root.oauthConfigured = false
+        root.oauthChannel = ""
+        // Delete the oauth json file
+        _oauthDeleteProc.running = true
+    }
+
+    Process {
+        id: _oauthCheckProc
+        command: ["python3", Directories.scriptPath + "/ytmusic_rate.py", "check"]
+        stdout: SplitParser {
+            onRead: data => {
+                try {
+                    const r = JSON.parse(data)
+                    root.oauthConfigured = r.configured === true
+                    root.oauthChannel = r.channel || ""
+                } catch(e) {}
+            }
+        }
+    }
+
+    Process {
+        id: _oauthRequestProc
+        property string _clientId: ""
+        property string _clientSecret: ""
+        command: ["python3", Directories.scriptPath + "/ytmusic_rate.py", "setup-request", _clientId, _clientSecret]
+        stdout: SplitParser {
+            onRead: data => {
+                try {
+                    const r = JSON.parse(data)
+                    if (r.error) {
+                        root.oauthSetupError = r.error
+                        return
+                    }
+                    root.oauthUserCode = r.user_code
+                    root.oauthVerificationUrl = r.verification_url
+                    root.oauthDeviceCode = r.device_code
+                    _oauthPollTimer.interval = (r.interval || 5) * 1000
+                    _oauthPollTimer.running = true
+                } catch(e) {
+                    root.oauthSetupError = "Failed to parse response"
+                }
+            }
+        }
+    }
+
+    Timer {
+        id: _oauthPollTimer
+        interval: 5000
+        repeat: true
+        onTriggered: {
+            _oauthPollProc._clientId = root._oauthClientId
+            _oauthPollProc._clientSecret = root._oauthClientSecret
+            _oauthPollProc._deviceCode = root.oauthDeviceCode
+            _oauthPollProc.running = true
+        }
+    }
+
+    Process {
+        id: _oauthPollProc
+        property string _clientId: ""
+        property string _clientSecret: ""
+        property string _deviceCode: ""
+        command: ["python3", Directories.scriptPath + "/ytmusic_rate.py", "setup-poll", _clientId, _clientSecret, _deviceCode]
+        stdout: SplitParser {
+            onRead: data => {
+                try {
+                    const r = JSON.parse(data)
+                    if (r.status === "authorized") {
+                        _oauthPollTimer.running = false
+                        root.oauthSetupActive = false
+                        root.oauthUserCode = ""
+                        root.oauthDeviceCode = ""
+                        root.oauthConfigured = true
+                        root.checkOAuth() // fetch channel name
+                    } else if (r.status === "pending" || r.status === "slow_down") {
+                        // keep polling
+                        if (r.status === "slow_down") _oauthPollTimer.interval += 2000
+                    } else {
+                        _oauthPollTimer.running = false
+                        root.oauthSetupError = r.error || "Authorization failed"
+                        root.oauthSetupActive = false
+                    }
+                } catch(e) {}
+            }
+        }
+    }
+
+    Process {
+        id: _oauthDeleteProc
+        command: ["/bin/sh", "-c", "rm -f \"${XDG_CONFIG_HOME:-$HOME/.config}/illogical-impulse/ytmusic_oauth.json\""]
     }
 
     function playPlaylist(playlistIndex, shuffle): void {
@@ -568,9 +725,18 @@ Singleton {
     function disconnectGoogle(): void {
         root.googleConnected = false
         root.googleError = ""
+        root.googleChecking = false
         root.ytMusicPlaylists = []
+        root._resolvedBrowserArg = ""
+        root.autoConnectAttempted = false
+        root.userName = ""
+        root.userAvatar = ""
+        root.userChannelUrl = ""
         Config.setNestedValue('sidebar.ytmusic.connected', false)
         Config.setNestedValue('sidebar.ytmusic.resolvedBrowserArg', "")
+        Config.setNestedValue('sidebar.ytmusic.profile', { name: "", avatar: "", url: "" })
+        // Delete stale cookie file
+        _deleteCookiesProc.running = true
     }
     
     function quickConnect(): void {
@@ -679,7 +845,7 @@ print("")
                 Config.setNestedValue('sidebar.ytmusic.browser', root.googleBrowser)
                 Config.setNestedValue('sidebar.ytmusic.connected', true)
                 Config.setNestedValue('sidebar.ytmusic.resolvedBrowserArg', root._resolvedBrowserArg)
-                console.log("[YtMusic] QuickConnect succeeded with:", root._browserArgForYtdlp)
+                root._log("[YtMusic] QuickConnect succeeded with:", root._browserArgForYtdlp)
                 // Export static cookie file for mpv
                 _exportCookiesProc.running = true
                 root.fetchUserProfile()
@@ -797,13 +963,14 @@ print("")
         }
         
         onExited: (code) => {
-            root.syncingLiked = false
             if (code === 0 && _fetchLikedProc.newLiked.length > 0) {
+                root.syncingLiked = false
                 root.likedSongs = _fetchLikedProc.newLiked
                 root.lastLikedSync = new Date().toLocaleString(Qt.locale(), "yyyy-MM-dd hh:mm")
                 Config.setNestedValue('sidebar.ytmusic.liked', root.likedSongs)
                 Config.setNestedValue('sidebar.ytmusic.lastLikedSync', root.lastLikedSync)
-            } else if (code !== 0) {
+            } else {
+                // Error or empty result — try YouTube LL fallback
                 _fetchLikedFallbackProc.running = true
             }
         }
@@ -849,7 +1016,7 @@ print("")
         
         onExited: (code) => {
             root.syncingLiked = false
-            if (code === 0) {
+            if (code === 0 && _fetchLikedFallbackProc.newLiked.length > 0) {
                 root.likedSongs = _fetchLikedFallbackProc.newLiked
                 root.lastLikedSync = new Date().toLocaleString(Qt.locale(), "yyyy-MM-dd hh:mm")
                 Config.setNestedValue('sidebar.ytmusic.liked', root.likedSongs)
@@ -859,9 +1026,45 @@ print("")
     }
     
     function fetchLikedSongs(): void {
-        if (!root.googleConnected || root.syncingLiked) return
+        if (root.syncingLiked) return
         root.syncingLiked = true
-        _fetchLikedProc.running = true
+        if (root.oauthConfigured) {
+            _fetchLikedOAuthProc._items = []
+            _fetchLikedOAuthProc.running = true
+        } else if (root.googleConnected) {
+            _fetchLikedProc.running = true
+        } else {
+            root.syncingLiked = false
+        }
+    }
+
+    Process {
+        id: _fetchLikedOAuthProc
+        property var _items: []
+        command: ["python3", Directories.scriptPath + "/ytmusic_rate.py", "fetch-liked"]
+        stdout: SplitParser {
+            onRead: data => {
+                try {
+                    const r = JSON.parse(data)
+                    if (r._done || r._error) return
+                    _fetchLikedOAuthProc._items.push(r)
+                } catch(e) {}
+            }
+        }
+        onExited: (code) => {
+            if (_fetchLikedOAuthProc._items.length > 0) {
+                root.likedSongs = _fetchLikedOAuthProc._items
+                root.lastLikedSync = new Date().toLocaleString(Qt.locale(), "yyyy-MM-dd hh:mm")
+                Config.setNestedValue('sidebar.ytmusic.liked', root.likedSongs)
+                Config.setNestedValue('sidebar.ytmusic.lastLikedSync', root.lastLikedSync)
+                root.syncingLiked = false
+            } else if (root.googleConnected) {
+                // OAuth returned empty or failed — fallback to cookie method
+                _fetchLikedProc.running = true
+            } else {
+                root.syncingLiked = false
+            }
+        }
     }
     
     function fetchYtMusicPlaylists(): void {
@@ -925,10 +1128,10 @@ print("")
         function onRunningChanged() {
             if (!_detectBrowsersProc.running && root.available && root.autoConnectEnabled && !root.autoConnectAttempted) {
                 root.autoConnectAttempted = true
-                console.log("[YtMusic] Browser detection done. Detected:", JSON.stringify(root.detectedBrowsers), "Saved browser:", root.googleBrowser)
+                root._log("[YtMusic] Browser detection done. Detected:", JSON.stringify(root.detectedBrowsers), "Saved browser:", root.googleBrowser)
                 // If already connected from persisted state, just verify silently
                 if (root.googleConnected && root._browserArgReady) {
-                    console.log("[YtMusic] Already connected (persisted). Verifying silently...")
+                    root._log("[YtMusic] Already connected (persisted). Verifying silently...")
                     _googleCheckProc.running = true
                     return
                 }
@@ -1089,7 +1292,7 @@ print("")
                 if (resolved) {
                     root._resolvedBrowserArg = resolved
                     Config.setNestedValue('sidebar.ytmusic.resolvedBrowserArg', resolved)
-                    console.log("[YtMusic] Resolved browser arg:", resolved)
+                    root._log("[YtMusic] Resolved browser arg:", resolved)
                 }
             }
         }
@@ -1137,20 +1340,8 @@ print("")
         command: ["python3", Directories.scriptPath + "/ytmusic_auth.py", root.googleBrowser]
     }
 
-    Timer {
-        id: _trackEndDetector
-        interval: 1000
-        running: root.currentVideoId !== "" && root.currentDuration > 0
-        repeat: true
-        onTriggered: {
-            if (root.currentPosition >= root.currentDuration - 1 && !root.loading) {
-                if (!root._mpvPlayer?.isPlaying && root.currentPosition > 0) {
-                    console.log("[YtMusic] Track ended, playing next")
-                    root.playNext()
-                }
-            }
-        }
-    }
+    // _trackEndDetector removed — track advancement is handled by _playProc.onExited (code 0)
+    // Having both caused a race condition where playNext() could be called twice, skipping a track
 
     // Check if mpv-mpris plugin exists (optional — IPC fallback works without it)
     readonly property bool _hasMpvMpris: _mpvMprisExists
@@ -1170,20 +1361,20 @@ print("")
             onRead: line => {
                 if (line.trim()) {
                     root.googleError = "Missing: " + line.trim() + ". Install with: sudo pacman -S" + line.trim()
-                    console.log("[YtMusic] Missing dependencies:" + line.trim())
+                    root._log("[YtMusic] Missing dependencies:" + line.trim())
                 }
             }
         }
         onExited: (code) => {
             root.available = (code === 0)
-            console.log("[YtMusic] Dependencies check:", root.available ? "OK" : "FAILED")
+            root._log("[YtMusic] Dependencies check:", root.available ? "OK" : "FAILED")
             // If browser detection already finished, trigger auto-connect now
             if (root.available && !_detectBrowsersProc.running && root.autoConnectEnabled && !root.autoConnectAttempted) {
                 root.autoConnectAttempted = true
-                console.log("[YtMusic] Deps ready + browsers already detected:", JSON.stringify(root.detectedBrowsers))
+                root._log("[YtMusic] Deps ready + browsers already detected:", JSON.stringify(root.detectedBrowsers))
                 // If already connected from persisted state, just verify silently
                 if (root.googleConnected && root._browserArgReady) {
-                    console.log("[YtMusic] Already connected (persisted). Verifying silently...")
+                    root._log("[YtMusic] Already connected (persisted). Verifying silently...")
                     _googleCheckProc.running = true
                     return
                 }
@@ -1222,17 +1413,17 @@ print("")
         onStarted: { 
             errorOutput = ""; 
             stdOutput = "";
-            console.log("[YtMusic] Starting connection check with browser:", root.googleBrowser)
+            root._log("[YtMusic] Starting connection check with browser:", root.googleBrowser)
         }
         onExited: (code) => {
-            console.log("[YtMusic] Connection check exited. Code:", code, "Connected:", (code === 0 && stdOutput.trim().length > 0))
+            root._log("[YtMusic] Connection check exited. Code:", code, "Connected:", (code === 0 && stdOutput.trim().length > 0))
             if (code === 0 && stdOutput.trim().length > 0) {
                 root.googleChecking = false
                 root.googleConnected = true
                 root.googleError = ""
                 Config.setNestedValue('sidebar.ytmusic.connected', true)
                 Config.setNestedValue('sidebar.ytmusic.resolvedBrowserArg', root._resolvedBrowserArg)
-                console.log("[YtMusic] Successfully connected via --cookies-from-browser:", root._browserArgForYtdlp)
+                root._log("[YtMusic] Successfully connected via --cookies-from-browser:", root._browserArgForYtdlp)
                 // Export static cookie file for mpv use
                 _exportCookiesProc.running = true
             } else {
@@ -1240,7 +1431,7 @@ print("")
                 root.googleConnected = false
                 Config.setNestedValue('sidebar.ytmusic.connected', false)
                 const err = errorOutput.toLowerCase()
-                console.log("[YtMusic] Connection failed. Error output:", errorOutput.substring(0, 200))
+                root._log("[YtMusic] Connection failed. Error output:", errorOutput.substring(0, 200))
                 if (err.includes("sign in") || err.includes("403") || err.includes("not found")) {
                     root.googleError = Translation.tr("Could not connect. Log in to music.youtube.com in your browser first.")
                 } else if (err.includes("cookies") || err.includes("browser") || err.includes("keyring")) {
@@ -1268,6 +1459,11 @@ print("")
                 } catch (e) {}
             }
         }
+    }
+
+    Process {
+        id: _deleteCookiesProc
+        command: ["/bin/rm", "-f", root._cookiesFilePath]
     }
 
     Process {
@@ -1340,7 +1536,7 @@ print("")
             ...(root._hasMpvMpris ? ["--script=/usr/lib/mpv-mpris/mpris.so"] : []),
             "--force-media-title=" + root.currentTitle + (root.currentArtist ? " - " + root.currentArtist : ""),
             "--metadata-codepage=utf-8",
-            "--volume=100",
+            "--volume=" + root._savedVolume,
             "--audio-buffer=1",
             "--initial-audio-sync=yes",
             "--demuxer-max-bytes=50MiB",
@@ -1360,7 +1556,7 @@ print("")
 
         onStarted: {
             _stderr = ""
-            console.log("[YtMusic] mpv started. URL:", root._playUrl)
+            root._log("[YtMusic] mpv started. URL:", root._playUrl)
         }
         onRunningChanged: {
             if (running) {
@@ -1369,10 +1565,13 @@ print("")
             }
         }
         onExited: (code) => {
-            console.log("[YtMusic] mpv exited. Code:", code, "stderr:", _stderr.substring(0, 500))
+            root._log("[YtMusic] mpv exited. Code:", code, "stderr:", _stderr.substring(0, 500))
             root.loading = false
             root._mpvPlayer = null
-            if (code !== 0 && code !== 4 && code !== 9 && code !== 15) {
+            if (code === 0 && root.currentVideoId !== "") {
+                // Normal exit = track ended naturally, play next
+                root.playNext()
+            } else if (code !== 0 && code !== 4 && code !== 9 && code !== 15 && code !== 143 && code !== 137) {
                 root.error = Translation.tr("Playback failed")
             }
         }

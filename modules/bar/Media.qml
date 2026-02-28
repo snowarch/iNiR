@@ -25,7 +25,7 @@ Item {
 
     Timer {
         running: activePlayer?.playbackState == MprisPlaybackState.Playing
-        interval: Config.options?.resources?.updateInterval ?? 3000
+        interval: 1000
         repeat: true
         onTriggered: activePlayer?.positionChanged()
     }
@@ -116,7 +116,26 @@ Item {
     // Bar-anchored media controls popup (when popupMode === "bar")
     Loader {
         id: barMediaPopupLoader
-        active: root.barMediaPopupVisible && root.popupMode === "bar"
+        active: (root.barMediaPopupVisible || _barMediaClosing) && root.popupMode === "bar"
+
+        property bool _barMediaClosing: false
+
+        Connections {
+            target: root
+            function onBarMediaPopupVisibleChanged() {
+                if (!root.barMediaPopupVisible) {
+                    barMediaPopupLoader._barMediaClosing = true
+                    _barMediaCloseTimer.restart()
+                }
+            }
+        }
+
+        Timer {
+            id: _barMediaCloseTimer
+            interval: 200
+            onTriggered: barMediaPopupLoader._barMediaClosing = false
+        }
+
         sourceComponent: PopupWindow {
             id: barMediaPopup
             visible: true
@@ -142,19 +161,18 @@ Item {
                 anchors.centerIn: parent
                 onCloseRequested: root.barMediaPopupVisible = false
                 
-                // Entry animation
-                opacity: 0
-                scale: 0.9
+                // Entry/exit animation
+                opacity: root.barMediaPopupVisible ? 1 : 0
+                scale: root.barMediaPopupVisible ? 1 : 0.9
                 transformOrigin: Config.options.bar.bottom ? Item.Bottom : Item.Top
                 
-                Component.onCompleted: {
-                    entryAnim.start()
+                Behavior on opacity {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
                 }
-                
-                ParallelAnimation {
-                    id: entryAnim
-                    NumberAnimation { target: mediaPopupContent; property: "opacity"; to: 1; duration: 200; easing.type: Easing.OutCubic }
-                    NumberAnimation { target: mediaPopupContent; property: "scale"; to: 1; duration: 250; easing.type: Easing.OutBack; easing.overshoot: 1.2 }
+                Behavior on scale {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
                 }
             }
         }

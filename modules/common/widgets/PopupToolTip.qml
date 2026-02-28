@@ -29,15 +29,28 @@ Item {
         anchors.centerIn: parent
         text: root.text
         shown: false
-        Component.onCompleted: shown = true
         horizontalPadding: root.horizontalPadding
         verticalPadding: root.verticalPadding
+    }
+
+    Timer {
+        id: _showDelayTimer
+        interval: 16
+        onTriggered: contentItem.shown = true
     }
 
     Loader {
         id: tooltipLoader
         anchors.fill: parent
         active: root.internalVisibleCondition
+        onActiveChanged: {
+            if (active) {
+                contentItem.shown = false
+                _showDelayTimer.restart()
+            } else {
+                contentItem.shown = false
+            }
+        }
         sourceComponent: PopupWindow {
             visible: true
             anchor {

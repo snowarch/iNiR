@@ -64,6 +64,20 @@ Item {
                 root.eventsDialogEditEvent = null;
             }
         }
+        function onRequestWifiDialogChanged() {
+            if (GlobalStates.requestWifiDialog) {
+                GlobalStates.requestWifiDialog = false
+                if (!GlobalStates.sidebarRightOpen) GlobalStates.sidebarRightOpen = true
+                root.showWifiDialog = true
+            }
+        }
+        function onRequestBluetoothDialogChanged() {
+            if (GlobalStates.requestBluetoothDialog) {
+                GlobalStates.requestBluetoothDialog = false
+                if (!GlobalStates.sidebarRightOpen) GlobalStates.sidebarRightOpen = true
+                root.showBluetoothDialog = true
+            }
+        }
     }
 
     implicitHeight: sidebarRightBackground.implicitHeight
@@ -304,12 +318,21 @@ Item {
         required property string shownPropertyString
         property alias dialog: toggleDialogLoader.sourceComponent
         readonly property bool shown: root[shownPropertyString]
+        property bool _loaded: false
         anchors.fill: parent
 
-        active: shown
-        
-        onItemChanged: {
+        active: _loaded
+
+        onShownChanged: {
+            if (shown && !_loaded) _loaded = true
             if (item) {
+                item.show = shown
+                if (shown) item.forceActiveFocus()
+            }
+        }
+
+        onItemChanged: {
+            if (item && shown) {
                 item.show = true;
                 item.forceActiveFocus();
             }

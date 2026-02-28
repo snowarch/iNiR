@@ -35,12 +35,19 @@ Item {
                     : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder
                     : Appearance.colors.colLayer3Hover
         opacity: shown ? 1 : 0
+        scale: shown ? 1.0 : 0.85
+        transformOrigin: Item.Center
         implicitWidth: shown ? (tooltipTextObject.implicitWidth + 2 * root.horizontalPadding) : 0
         implicitHeight: shown ? (tooltipTextObject.implicitHeight + 2 * root.verticalPadding) : 0
         clip: true
 
         Behavior on opacity {
-            animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
+        }
+        Behavior on scale {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
         }
 
         AngelPartialBorder {

@@ -152,7 +152,27 @@ Scope {
 
     PanelWindow {
         id: window
-        visible: GlobalStates.clipboardOpen
+
+        Component.onCompleted: visible = GlobalStates.clipboardOpen
+
+        Connections {
+            target: GlobalStates
+            function onClipboardOpenChanged() {
+                if (GlobalStates.clipboardOpen) {
+                    _closeTimer.stop()
+                    window.visible = true
+                } else {
+                    _closeTimer.restart()
+                }
+            }
+        }
+
+        Timer {
+            id: _closeTimer
+            interval: 180
+            onTriggered: window.visible = false
+        }
+
         exclusionMode: ExclusionMode.Ignore
         color: "transparent"
         WlrLayershell.namespace: "quickshell:clipboardPanel"

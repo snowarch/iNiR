@@ -173,7 +173,7 @@ Variants {
                 smooth: true
                 mipmap: true
                 visible: !backdropWindow.useAuroraStyle && backdropWindow.wallpaperIsGif
-                playing: visible && backdropWindow.enableAnimation
+                playing: visible && backdropWindow.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive
 
                 layer.enabled: Appearance.effectsEnabled && backdropWindow.enableAnimatedBlur && backdropWindow.backdropBlurRadius > 0
                 layer.effect: MultiEffect {
@@ -202,7 +202,7 @@ Variants {
                 muted: true
                 autoPlay: true
 
-                readonly property bool shouldPlay: backdropWindow.enableAnimation
+                readonly property bool shouldPlay: backdropWindow.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive && !GlobalStates.overviewOpen
 
                 function pauseAndShowFirstFrame() {
                     pause()
@@ -280,7 +280,7 @@ Variants {
                 smooth: true
                 mipmap: true
                 visible: backdropWindow.useAuroraStyle && backdropWindow.wallpaperIsGif
-                playing: visible && backdropWindow.enableAnimation
+                playing: visible && backdropWindow.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive
 
                 layer.enabled: Appearance.effectsEnabled && backdropWindow.enableAnimatedBlur
                 layer.effect: MultiEffect {
@@ -306,7 +306,7 @@ Variants {
                 muted: true
                 autoPlay: true
 
-                readonly property bool shouldPlay: backdropWindow.enableAnimation
+                readonly property bool shouldPlay: backdropWindow.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive && !GlobalStates.overviewOpen
 
                 function pauseAndShowFirstFrame() {
                     pause()

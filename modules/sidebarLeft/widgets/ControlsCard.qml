@@ -73,8 +73,8 @@ Item {
         }
 
         // Actions
-        Action { btnIcon: "wifi"; tip: Translation.tr("Network"); onClicked: Quickshell.execDetached(["/usr/bin/nm-connection-editor"]); visible: Config.options?.sidebar?.widgets?.controlsCard?.showNetwork ?? true }
-        Action { btnIcon: "bluetooth"; tip: Translation.tr("Bluetooth"); onClicked: Quickshell.execDetached(["/usr/bin/blueman-manager"]); visible: Config.options?.sidebar?.widgets?.controlsCard?.showBluetooth ?? true }
+        Action { btnIcon: "wifi"; tip: Translation.tr("Network"); onClicked: function() { GlobalStates.sidebarLeftOpen = false; GlobalStates.requestWifiDialog = true }; visible: Config.options?.sidebar?.widgets?.controlsCard?.showNetwork ?? true }
+        Action { btnIcon: "bluetooth"; tip: Translation.tr("Bluetooth"); onClicked: function() { GlobalStates.sidebarLeftOpen = false; GlobalStates.requestBluetoothDialog = true }; visible: Config.options?.sidebar?.widgets?.controlsCard?.showBluetooth ?? true }
         Action { btnIcon: "settings"; tip: Translation.tr("Settings"); onClicked: root.openSettings(); visible: Config.options?.sidebar?.widgets?.controlsCard?.showSettings ?? true }
         Action { btnIcon: "lock"; tip: Translation.tr("Lock"); onClicked: Session.lock(); visible: Config.options?.sidebar?.widgets?.controlsCard?.showLock ?? true }
 

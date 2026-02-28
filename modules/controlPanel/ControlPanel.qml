@@ -15,7 +15,26 @@ Scope {
 
     PanelWindow {
         id: panelRoot
-        visible: GlobalStates.controlPanelOpen
+
+        Component.onCompleted: visible = GlobalStates.controlPanelOpen
+
+        Connections {
+            target: GlobalStates
+            function onControlPanelOpenChanged() {
+                if (GlobalStates.controlPanelOpen) {
+                    _closeTimer.stop()
+                    panelRoot.visible = true
+                } else {
+                    _closeTimer.restart()
+                }
+            }
+        }
+
+        Timer {
+            id: _closeTimer
+            interval: 250
+            onTriggered: panelRoot.visible = false
+        }
 
         function hide() {
             GlobalStates.controlPanelOpen = false
@@ -26,7 +45,7 @@ Scope {
         implicitHeight: screen?.height ?? 1080
         WlrLayershell.namespace: "quickshell:controlPanel"
         WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+        WlrLayershell.keyboardFocus: GlobalStates.controlPanelOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
         color: "transparent"
 
         anchors {

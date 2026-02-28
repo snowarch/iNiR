@@ -28,7 +28,26 @@ Scope {
                 ? (Hyprland.focusedMonitor?.id == monitor?.id)
                 : (NiriService.currentOutput === root.screen?.name)
             screen: modelData
-            visible: GlobalStates.overviewOpen
+
+            Component.onCompleted: visible = GlobalStates.overviewOpen
+
+            Connections {
+                target: GlobalStates
+                function onOverviewOpenChanged() {
+                    if (GlobalStates.overviewOpen) {
+                        _overviewCloseTimer.stop()
+                        root.visible = true
+                    } else {
+                        _overviewCloseTimer.restart()
+                    }
+                }
+            }
+
+            Timer {
+                id: _overviewCloseTimer
+                interval: 250
+                onTriggered: root.visible = false
+            }
 
             exclusionMode: ExclusionMode.Ignore
 

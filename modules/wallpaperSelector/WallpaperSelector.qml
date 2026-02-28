@@ -54,7 +54,25 @@ Scope {
 
     Loader {
         id: wallpaperSelectorLoader
-        active: GlobalStates.wallpaperSelectorOpen
+        active: GlobalStates.wallpaperSelectorOpen || _wsClosing
+
+        property bool _wsClosing: false
+
+        Connections {
+            target: GlobalStates
+            function onWallpaperSelectorOpenChanged() {
+                if (!GlobalStates.wallpaperSelectorOpen) {
+                    wallpaperSelectorLoader._wsClosing = true
+                    _wsCloseTimer.restart()
+                }
+            }
+        }
+
+        Timer {
+            id: _wsCloseTimer
+            interval: 200
+            onTriggered: wallpaperSelectorLoader._wsClosing = false
+        }
 
         sourceComponent: PanelWindow {
             id: panelWindow
@@ -75,7 +93,7 @@ Scope {
             exclusionMode: ExclusionMode.Ignore
             WlrLayershell.namespace: "quickshell:wallpaperSelector"
             WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+            WlrLayershell.keyboardFocus: GlobalStates.wallpaperSelectorOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
             color: "transparent"
 
             anchors {
@@ -115,15 +133,23 @@ Scope {
                 }
                 implicitHeight: Appearance.sizes.wallpaperSelectorHeight
                 implicitWidth: Appearance.sizes.wallpaperSelectorWidth
-                // Subtle scale + fade when opening the wallpaper selector
+                // Subtle scale + fade when opening/closing the wallpaper selector
                 transformOrigin: Item.Top
-                scale: GlobalStates.wallpaperSelectorOpen ? 1.0 : 0.97
+                scale: GlobalStates.wallpaperSelectorOpen ? 1.0 : 0.93
                 opacity: GlobalStates.wallpaperSelectorOpen ? 1.0 : 0.0
                 Behavior on scale {
-                    animation: Appearance.animation.elementMoveEnter.numberAnimation.createObject(this)
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation {
+                        duration: GlobalStates.wallpaperSelectorOpen ? 250 : 180
+                        easing.type: Easing.OutCubic
+                    }
                 }
                 Behavior on opacity {
-                    animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation {
+                        duration: GlobalStates.wallpaperSelectorOpen ? 250 : 180
+                        easing.type: Easing.OutCubic
+                    }
                 }
             }
         }

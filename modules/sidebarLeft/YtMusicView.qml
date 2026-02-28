@@ -234,7 +234,7 @@ Item {
         id: advancedOptionsPopup
         anchors.centerIn: parent
         width: 300
-        height: Math.min(400, advancedContent.implicitHeight + 40)
+        height: Math.min(500, advancedContent.implicitHeight + 40)
         padding: 16
         modal: true
         dim: true
@@ -480,6 +480,75 @@ Item {
                     }
                 }
             }
+
+            // ── YouTube Like OAuth ─────────────────────────────
+            Rectangle { Layout.fillWidth: true; Layout.topMargin: 4; height: 1; color: root.colBorder }
+
+            StyledText {
+                text: Translation.tr("YouTube Like/Unlike")
+                font.pixelSize: Appearance.font.pixelSize.small
+                font.weight: Font.DemiBold
+                color: root.colText
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: oauthStatusCol.implicitHeight + 16
+                radius: root.radiusSmall
+                color: YtMusic.oauthConfigured
+                    ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.92)
+                    : ColorUtils.transparentize(root.colTextSecondary, 0.95)
+
+                ColumnLayout {
+                    id: oauthStatusCol
+                    anchors.fill: parent
+                    anchors.margins: 8
+                    spacing: 6
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+                        MaterialSymbol {
+                            text: YtMusic.oauthConfigured ? "check_circle" : "info"
+                            iconSize: 18
+                            color: YtMusic.oauthConfigured ? Appearance.colors.colPrimary : root.colTextSecondary
+                        }
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: YtMusic.oauthConfigured
+                                ? (YtMusic.oauthChannel || Translation.tr("OAuth Connected"))
+                                : Translation.tr("Not configured — likes are local only")
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            color: root.colText
+                            wrapMode: Text.WordWrap
+                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 6
+                        RippleButton {
+                            visible: !YtMusic.oauthConfigured
+                            implicitWidth: 80; implicitHeight: 28; buttonRadius: 14
+                            colBackground: root.colPrimary
+                            onClicked: { advancedOptionsPopup.close(); oauthSetupPopup.open() }
+                            contentItem: StyledText { anchors.centerIn: parent; text: Translation.tr("Setup"); font.pixelSize: Appearance.font.pixelSize.smaller; color: Appearance.colors.colOnPrimary }
+                        }
+                        RippleButton {
+                            visible: YtMusic.oauthConfigured
+                            implicitWidth: 100; implicitHeight: 28; buttonRadius: 14
+                            colBackground: ColorUtils.transparentize(Appearance.colors.colError, 0.9)
+                            colBackgroundHover: ColorUtils.transparentize(Appearance.colors.colError, 0.8)
+                            onClicked: { YtMusic.disconnectOAuth(); advancedOptionsPopup.close() }
+                            contentItem: RowLayout {
+                                anchors.centerIn: parent; spacing: 4
+                                MaterialSymbol { text: "link_off"; iconSize: 14; color: Appearance.colors.colError }
+                                StyledText { text: Translation.tr("Remove"); color: Appearance.colors.colError; font.pixelSize: Appearance.font.pixelSize.smaller }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
                 StackLayout {
@@ -490,6 +559,199 @@ Item {
                     SearchView {}
                     LibraryView {}
                     QueueView {}
+                }
+            }
+        }
+    }
+
+    // ── OAuth Setup Popup ──────────────────────────────────────────────
+    Popup {
+        id: oauthSetupPopup
+        anchors.centerIn: parent
+        width: 320
+        height: Math.min(420, oauthSetupContent.implicitHeight + 40)
+        padding: 16
+        modal: true
+        dim: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        onClosed: { if (YtMusic.oauthSetupActive) YtMusic.cancelOAuthSetup() }
+
+        background: Rectangle {
+            color: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                 : Appearance.auroraEverywhere ? Appearance.colors.colLayer1Base
+                 : Appearance.colors.colLayer1
+            radius: root.radiusNormal
+            border.width: root.borderWidth
+            border.color: root.colBorder
+        }
+
+        contentItem: ColumnLayout {
+            id: oauthSetupContent
+            spacing: 12
+
+            // Header
+            RowLayout {
+                Layout.fillWidth: true
+                MaterialSymbol { text: "passkey"; iconSize: 22; color: root.colPrimary }
+                StyledText {
+                    text: Translation.tr("YouTube OAuth Setup")
+                    font.pixelSize: Appearance.font.pixelSize.normal
+                    font.weight: Font.Bold
+                    color: root.colText
+                }
+                Item { Layout.fillWidth: true }
+                RippleButton {
+                    implicitWidth: 24; implicitHeight: 24; buttonRadius: 12
+                    colBackground: "transparent"; colBackgroundHover: root.colLayer2Hover
+                    onClicked: oauthSetupPopup.close()
+                    contentItem: MaterialSymbol { anchors.centerIn: parent; text: "close"; iconSize: 18; color: root.colTextSecondary }
+                }
+            }
+
+            // Step 1: Enter credentials (shown when no device code yet)
+            Loader {
+                Layout.fillWidth: true
+                active: !YtMusic.oauthUserCode && !YtMusic.oauthSetupActive
+                visible: active
+                sourceComponent: ColumnLayout {
+                    spacing: 10
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: Translation.tr("Create a Google Cloud project with YouTube Data API v3, then enter your OAuth client credentials.")
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        color: root.colTextSecondary
+                        wrapMode: Text.WordWrap
+                    }
+
+                    RippleButton {
+                        implicitWidth: 160; implicitHeight: 28; buttonRadius: 14
+                        colBackground: root.colLayer2; colBackgroundHover: root.colLayer2Hover
+                        onClicked: Qt.openUrlExternally("https://console.cloud.google.com/apis/credentials")
+                        contentItem: RowLayout {
+                            anchors.centerIn: parent; spacing: 4
+                            MaterialSymbol { text: "open_in_new"; iconSize: 14; color: root.colPrimary }
+                            StyledText { text: Translation.tr("Google Cloud Console"); font.pixelSize: Appearance.font.pixelSize.smallest; color: root.colPrimary }
+                        }
+                    }
+
+                    StyledText { text: Translation.tr("Client ID"); font.pixelSize: Appearance.font.pixelSize.smaller; font.weight: Font.Medium; color: root.colText }
+                    Rectangle {
+                        Layout.fillWidth: true; implicitHeight: 34; radius: root.radiusSmall
+                        color: root.colLayer2; border.width: root.borderWidth; border.color: oauthClientIdField.activeFocus ? root.colPrimary : root.colBorder
+                        TextField {
+                            id: oauthClientIdField; anchors.fill: parent; anchors.margins: 6
+                            placeholderText: "xxxxx.apps.googleusercontent.com"; color: root.colText
+                            font.pixelSize: Appearance.font.pixelSize.smallest; placeholderTextColor: root.colTextSecondary; background: Item {}
+                        }
+                    }
+
+                    StyledText { text: Translation.tr("Client Secret"); font.pixelSize: Appearance.font.pixelSize.smaller; font.weight: Font.Medium; color: root.colText }
+                    Rectangle {
+                        Layout.fillWidth: true; implicitHeight: 34; radius: root.radiusSmall
+                        color: root.colLayer2; border.width: root.borderWidth; border.color: oauthClientSecretField.activeFocus ? root.colPrimary : root.colBorder
+                        TextField {
+                            id: oauthClientSecretField; anchors.fill: parent; anchors.margins: 6
+                            placeholderText: "GOCSPX-..."; color: root.colText; echoMode: TextInput.Password
+                            font.pixelSize: Appearance.font.pixelSize.smallest; placeholderTextColor: root.colTextSecondary; background: Item {}
+                        }
+                    }
+
+                    // Error
+                    StyledText {
+                        Layout.fillWidth: true
+                        visible: YtMusic.oauthSetupError !== ""
+                        text: YtMusic.oauthSetupError
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        color: Appearance.colors.colError
+                        wrapMode: Text.WordWrap
+                    }
+
+                    RippleButton {
+                        Layout.alignment: Qt.AlignRight
+                        implicitWidth: 100; implicitHeight: 34; buttonRadius: root.radiusSmall
+                        colBackground: root.colPrimary
+                        enabled: oauthClientIdField.text.length > 10 && oauthClientSecretField.text.length > 5
+                        opacity: enabled ? 1.0 : 0.5
+                        onClicked: YtMusic.startOAuthSetup(oauthClientIdField.text.trim(), oauthClientSecretField.text.trim())
+                        contentItem: StyledText { anchors.centerIn: parent; text: Translation.tr("Continue"); color: Appearance.colors.colOnPrimary; font.weight: Font.Medium }
+                    }
+                }
+            }
+
+            // Step 2: Show device code (waiting for user to authorize)
+            Loader {
+                Layout.fillWidth: true
+                active: YtMusic.oauthUserCode !== ""
+                visible: active
+                sourceComponent: ColumnLayout {
+                    spacing: 12
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: Translation.tr("Open the link below and enter this code:")
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        color: root.colTextSecondary
+                        wrapMode: Text.WordWrap
+                    }
+
+                    // Code display
+                    Rectangle {
+                        Layout.fillWidth: true; Layout.preferredHeight: 56
+                        radius: root.radiusSmall
+                        color: ColorUtils.transparentize(root.colPrimary, 0.9)
+                        border.width: 1; border.color: ColorUtils.transparentize(root.colPrimary, 0.7)
+
+                        StyledText {
+                            anchors.centerIn: parent
+                            text: YtMusic.oauthUserCode
+                            font.pixelSize: 22; font.weight: Font.Bold; font.letterSpacing: 3
+                            color: root.colPrimary
+                        }
+                    }
+
+                    RippleButton {
+                        Layout.fillWidth: true; implicitHeight: 34; buttonRadius: root.radiusSmall
+                        colBackground: root.colPrimary
+                        onClicked: Qt.openUrlExternally(YtMusic.oauthVerificationUrl || "https://www.google.com/device")
+                        contentItem: RowLayout {
+                            anchors.centerIn: parent; spacing: 6
+                            MaterialSymbol { text: "open_in_new"; iconSize: 16; color: Appearance.colors.colOnPrimary }
+                            StyledText { text: Translation.tr("Open Google"); color: Appearance.colors.colOnPrimary; font.weight: Font.Medium }
+                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true; spacing: 8
+                        MaterialLoadingIndicator { implicitSize: 18; loading: true }
+                        StyledText {
+                            text: Translation.tr("Waiting for authorization...")
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            color: root.colTextSecondary
+                        }
+                    }
+
+                    RippleButton {
+                        Layout.alignment: Qt.AlignRight
+                        implicitWidth: 80; implicitHeight: 28; buttonRadius: 14
+                        colBackground: "transparent"; colBackgroundHover: root.colLayer2Hover
+                        onClicked: { YtMusic.cancelOAuthSetup(); oauthSetupPopup.close() }
+                        contentItem: StyledText { anchors.centerIn: parent; text: Translation.tr("Cancel"); color: root.colTextSecondary; font.pixelSize: Appearance.font.pixelSize.smaller }
+                    }
+                }
+            }
+
+            // Loading state
+            Loader {
+                Layout.fillWidth: true
+                active: YtMusic.oauthSetupActive && !YtMusic.oauthUserCode
+                visible: active
+                sourceComponent: RowLayout {
+                    spacing: 8
+                    Item { Layout.fillWidth: true }
+                    MaterialLoadingIndicator { implicitSize: 24; loading: true }
+                    StyledText { text: Translation.tr("Requesting code..."); color: root.colTextSecondary }
+                    Item { Layout.fillWidth: true }
                 }
             }
         }

@@ -38,10 +38,8 @@ MouseArea { // Notification group area
     property var dragIndexDiff: Math.abs(parentDragIndex - index)
     property real xOffset: dragIndexDiff == 0 ? parentDragDistance : 0
 
-    // Animation tokens — popup uses fast (200ms), sidebar uses standard (500ms)
-    readonly property QtObject _dismissAnim: root.popup
-        ? Appearance.animation.elementMoveFast
-        : Appearance.animation.elementMove
+    // Animation tokens — use fast timing for dismiss in all modes
+    readonly property QtObject _dismissAnim: Appearance.animation.elementMoveFast
     readonly property QtObject _contentAnim: Appearance.animation.elementMoveFast
 
     function destroyWithAnimation(left = false) {
