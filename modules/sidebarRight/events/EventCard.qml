@@ -1,6 +1,8 @@
+pragma ComponentBehavior: Bound
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.common.functions
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -11,10 +13,18 @@ Item {
     
     required property var event
     signal removeClicked()
+    signal editClicked(var event)
     
     implicitHeight: cardContent.implicitHeight + 16
     
-    readonly property color priorityColor: Events.getPriorityColor(event.priority)
+    readonly property color priorityColor: {
+        // Use Appearance colors instead of hardcoded values
+        switch (root.event?.priority ?? "normal") {
+            case "high": return Appearance.colors.colError
+            case "low": return Appearance.colors.colSubtext
+            default: return Appearance.colors.colPrimary
+        }
+    }
     readonly property date eventDate: new Date(event.dateTime)
     readonly property bool isToday: {
         const now = new Date()
@@ -199,6 +209,15 @@ Item {
         AngelPartialBorder {
             targetRadius: cardBg.radius
             visible: Appearance.angelEverywhere
+        }
+        
+        // Click to edit
+        MouseArea {
+            anchors.fill: parent
+            z: -1
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.editClicked(root.event)
         }
     }
 }

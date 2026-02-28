@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
@@ -8,7 +9,9 @@ import QtQuick.Layouts
 Item {
     id: root
     
-    property bool showAddDialog: false
+    // Signal to open external EventsDialog
+    signal openEventsDialog(var editEvent)
+    
     property int fabSize: 48
     property int fabMargins: 14
     
@@ -75,11 +78,13 @@ Item {
                     model: Events.getUpcomingEvents(30)
                     
                     delegate: EventCard {
+                        required property var modelData
                         Layout.fillWidth: true
                         Layout.margins: 8
                         event: modelData
                         
                         onRemoveClicked: Events.removeEvent(modelData.id)
+                        onEditClicked: (evt) => root.openEventsDialog(evt)
                     }
                 }
                 
@@ -128,177 +133,7 @@ Item {
         anchors.bottomMargin: root.fabMargins
         iconText: "add"
         baseSize: root.fabSize
-        onClicked: root.showAddDialog = true
-    }
-    
-    // Add event dialog
-    WindowDialog {
-        show: root.showAddDialog
-        backgroundHeight: 500
-        onDismiss: root.showAddDialog = false
-        
-        property string eventTitle: ""
-        property string eventDescription: ""
-        property date eventDate: new Date()
-        property int eventHour: 12
-        property int eventMinute: 0
-        property string eventCategory: "general"
-        property string eventPriority: "normal"
-        
-        WindowDialogTitle {
-            text: Translation.tr("New Event")
-        }
-        
-        MaterialTextField {
-            Layout.fillWidth: true
-            placeholderText: Translation.tr("Event title")
-            text: parent.eventTitle
-            onTextChanged: parent.eventTitle = text
-        }
-        
-        MaterialTextField {
-            Layout.fillWidth: true
-            placeholderText: Translation.tr("Description (optional)")
-            text: parent.eventDescription
-            onTextChanged: parent.eventDescription = text
-        }
-        
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
-            
-            StyledText {
-                text: Translation.tr("Date:")
-                font.pixelSize: Appearance.font.pixelSize.small
-            }
-            
-            RippleButton {
-                Layout.fillWidth: true
-                implicitHeight: 36
-                colBackground: Appearance.colors.colLayer1
-                
-                contentItem: StyledText {
-                    anchors.centerIn: parent
-                    text: Qt.formatDate(parent.parent.parent.eventDate, "dd/MM/yyyy")
-                    font.pixelSize: Appearance.font.pixelSize.small
-                }
-            }
-        }
-        
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
-            
-            StyledText {
-                text: Translation.tr("Time:")
-                font.pixelSize: Appearance.font.pixelSize.small
-            }
-            
-            SpinBox {
-                from: 0
-                to: 23
-                value: parent.parent.eventHour
-                onValueChanged: parent.parent.eventHour = value
-            }
-            
-            StyledText {
-                text: ":"
-            }
-            
-            SpinBox {
-                from: 0
-                to: 59
-                value: parent.parent.eventMinute
-                onValueChanged: parent.parent.eventMinute = value
-            }
-        }
-        
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
-            
-            StyledText {
-                text: Translation.tr("Category:")
-                font.pixelSize: Appearance.font.pixelSize.small
-            }
-            
-            StyledComboBox {
-                Layout.fillWidth: true
-                model: [
-                    { value: "general", text: Translation.tr("General") },
-                    { value: "birthday", text: Translation.tr("Birthday") },
-                    { value: "meeting", text: Translation.tr("Meeting") },
-                    { value: "deadline", text: Translation.tr("Deadline") },
-                    { value: "reminder", text: Translation.tr("Reminder") }
-                ]
-                textRole: "text"
-                valueRole: "value"
-                onCurrentValueChanged: parent.parent.eventCategory = currentValue
-            }
-        }
-        
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
-            
-            StyledText {
-                text: Translation.tr("Priority:")
-                font.pixelSize: Appearance.font.pixelSize.small
-            }
-            
-            ButtonGroup {
-                spacing: 4
-                
-                SelectionGroupButton {
-                    buttonText: Translation.tr("Low")
-                    toggled: parent.parent.parent.eventPriority === "low"
-                    onClicked: parent.parent.parent.eventPriority = "low"
-                }
-                
-                SelectionGroupButton {
-                    buttonText: Translation.tr("Normal")
-                    toggled: parent.parent.parent.eventPriority === "normal"
-                    onClicked: parent.parent.parent.eventPriority = "normal"
-                }
-                
-                SelectionGroupButton {
-                    buttonText: Translation.tr("High")
-                    toggled: parent.parent.parent.eventPriority === "high"
-                    onClicked: parent.parent.parent.eventPriority = "high"
-                }
-            }
-        }
-        
-        WindowDialogSeparator {}
-        
-        WindowDialogButtonRow {
-            Item { Layout.fillWidth: true }
-            
-            DialogButton {
-                buttonText: Translation.tr("Cancel")
-                onClicked: root.showAddDialog = false
-            }
-            
-            DialogButton {
-                buttonText: Translation.tr("Add")
-                onClicked: {
-                    if (parent.parent.eventTitle.trim() !== "") {
-                        const dateTime = new Date(parent.parent.eventDate)
-                        dateTime.setHours(parent.parent.eventHour, parent.parent.eventMinute, 0, 0)
-                        
-                        Events.addEvent(
-                            parent.parent.eventTitle,
-                            parent.parent.eventDescription,
-                            dateTime.toISOString(),
-                            parent.parent.eventCategory,
-                            parent.parent.eventPriority
-                        )
-                        
-                        root.showAddDialog = false
-                    }
-                }
-            }
-        }
+        onClicked: root.openEventsDialog(null)
     }
     
     // Listen for triggered events and show notifications
@@ -306,12 +141,30 @@ Item {
         target: Events
         
         function onEventTriggered(event) {
+            const urgency = event.priority === "high" ? 2 : (event.priority === "low" ? 0 : 1)
             Notifications.notify(
                 event.title,
-                event.description || Translation.tr("Event reminder"),
+                event.description || Translation.tr("Event is now!"),
                 Events.getCategoryIcon(event.category),
                 "event-" + event.id,
-                5000,
+                event.priority === "high" ? 0 : 10000,
+                []
+            )
+        }
+        
+        function onReminderTriggered(event, minutesBefore) {
+            const reminderText = minutesBefore >= 1440 
+                ? Translation.tr("Tomorrow")
+                : minutesBefore >= 60 
+                    ? Translation.tr("In %1 hour(s)").arg(Math.floor(minutesBefore / 60))
+                    : Translation.tr("In %1 minutes").arg(minutesBefore)
+            
+            Notifications.notify(
+                Translation.tr("Upcoming: %1").arg(event.title),
+                reminderText + (event.description ? " — " + event.description : ""),
+                "alarm",
+                "event-reminder-" + event.id,
+                8000,
                 []
             )
         }

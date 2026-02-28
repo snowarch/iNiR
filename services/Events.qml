@@ -1,4 +1,6 @@
 pragma Singleton
+pragma ComponentBehavior: Bound
+import qs.modules.common
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -6,7 +8,7 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    property string filePath: Quickshell.env("XDG_DATA_HOME") + "/quickshell/events.json"
+    property string filePath: `${Directories.state}/user/events.json`
     property var list: []
     property int nextId: 1
     
@@ -20,6 +22,44 @@ Singleton {
         checkTimer.start()
     }
 
+    FileView {
+        id: eventsFileView
+        path: Qt.resolvedUrl(root.filePath)
+        watchChanges: true
+        onLoaded: {
+            const fileContents = eventsFileView.text()
+            if (!fileContents || fileContents.trim() === "") {
+                root.list = []
+                root.nextId = 1
+                return
+            }
+            try {
+                const data = JSON.parse(fileContents)
+                root.list = data.events || []
+                root.nextId = data.nextId || 1
+                console.log("[Events] Loaded", root.list.length, "events")
+            } catch (e) {
+                console.warn("[Events] Failed to parse file:", e)
+                root.list = []
+                root.nextId = 1
+            }
+        }
+        onLoadFailed: (error) => {
+            if (error === FileViewError.FileNotFound) {
+                console.log("[Events] File not found, creating new file.")
+                const parentDir = root.filePath.substring(0, root.filePath.lastIndexOf('/'))
+                Quickshell.execDetached(["/usr/bin/mkdir", "-p", parentDir])
+                root.list = []
+                root.nextId = 1
+                root.saveToFile()
+            } else {
+                console.log("[Events] Error loading file:", error)
+                root.list = []
+                root.nextId = 1
+            }
+        }
+    }
+
     // Check for due events every minute
     Timer {
         id: checkTimer
@@ -29,26 +69,78 @@ Singleton {
         onTriggered: root.checkDueEvents()
     }
 
+    signal reminderTriggered(var event, int minutesBefore)
+
     function checkDueEvents() {
         const now = new Date()
         const currentTime = now.getTime()
+        let needsSave = false
         
         for (let i = 0; i < root.list.length; i++) {
             const event = root.list[i]
-            if (!event.notified && event.dateTime) {
-                const eventTime = new Date(event.dateTime).getTime()
+            if (!event.dateTime) continue
+            
+            const eventTime = new Date(event.dateTime).getTime()
+            const reminderMinutes = event.reminderMinutes ?? 0
+            const reminderTime = eventTime - (reminderMinutes * 60 * 1000)
+            
+            // Check for reminder notification (before event)
+            if (reminderMinutes > 0 && !event.reminderNotified && currentTime >= reminderTime && currentTime < eventTime) {
+                root.list[i].reminderNotified = true
+                root.reminderTriggered(event, reminderMinutes)
+                needsSave = true
+            }
+            
+            // Check for event time notification
+            if (!event.notified && currentTime >= eventTime) {
+                root.list[i].notified = true
+                root.eventTriggered(event)
+                needsSave = true
                 
-                // Trigger if event time has passed
-                if (currentTime >= eventTime) {
-                    root.list[i].notified = true
-                    root.eventTriggered(event)
-                    root.saveToFile()
+                // Handle recurrence - create next occurrence
+                if (event.recurrence && event.recurrence !== "none") {
+                    root.createNextRecurrence(event)
                 }
             }
         }
+        
+        if (needsSave) root.saveToFile()
     }
 
-    function addEvent(title, description, dateTime, category, priority) {
+    function createNextRecurrence(event) {
+        const eventDate = new Date(event.dateTime)
+        let nextDate = new Date(eventDate)
+        
+        switch (event.recurrence) {
+            case "daily":
+                nextDate.setDate(nextDate.getDate() + 1)
+                break
+            case "weekly":
+                nextDate.setDate(nextDate.getDate() + 7)
+                break
+            case "monthly":
+                nextDate.setMonth(nextDate.getMonth() + 1)
+                break
+            case "yearly":
+                nextDate.setFullYear(nextDate.getFullYear() + 1)
+                break
+            default:
+                return
+        }
+        
+        // Create recurring event
+        root.addEvent(
+            event.title,
+            event.description,
+            nextDate.toISOString(),
+            event.category,
+            event.priority,
+            event.reminderMinutes,
+            event.recurrence
+        )
+    }
+
+    function addEvent(title, description, dateTime, category, priority, reminderMinutes, recurrence) {
         const event = {
             id: root.nextId++,
             title: title || "",
@@ -56,7 +148,10 @@ Singleton {
             dateTime: dateTime || new Date().toISOString(),
             category: category || "general", // general, birthday, meeting, deadline, reminder
             priority: priority || "normal", // low, normal, high
+            reminderMinutes: reminderMinutes ?? 15, // 0, 5, 15, 30, 60, 1440
+            recurrence: recurrence || "none", // none, daily, weekly, monthly, yearly
             notified: false,
+            reminderNotified: false,
             createdAt: new Date().toISOString()
         }
         
@@ -124,35 +219,11 @@ Singleton {
             nextId: root.nextId,
             events: root.list
         }
-        
-        const dir = Quickshell.env("XDG_DATA_HOME") + "/quickshell"
-        Quickshell.execDetached(["mkdir", "-p", dir])
-        
-        const json = JSON.stringify(data, null, 2)
-        const writeProcess = Process.exec("/usr/bin/bash", ["-c", 
-            `echo '${json.replace(/'/g, "'\\''")}' > "${root.filePath}"`
-        ])
+        eventsFileView.setText(JSON.stringify(data, null, 2))
     }
 
     function loadFromFile() {
-        const readProcess = Process.exec("/usr/bin/cat", [root.filePath])
-        
-        if (readProcess.exitCode === 0 && readProcess.stdout.trim() !== "") {
-            try {
-                const data = JSON.parse(readProcess.stdout)
-                root.list = data.events || []
-                root.nextId = data.nextId || 1
-                console.log("[Events] Loaded", root.list.length, "events")
-            } catch (e) {
-                console.warn("[Events] Failed to parse file:", e)
-                root.list = []
-                root.nextId = 1
-            }
-        } else {
-            console.log("[Events] No existing file, starting fresh")
-            root.list = []
-            root.nextId = 1
-        }
+        eventsFileView.reload()
     }
 
     function getCategoryIcon(category) {
