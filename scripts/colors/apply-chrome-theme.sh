@@ -54,7 +54,7 @@ resolve_color() {
   local colors_json="$STATE_DIR/user/generated/colors.json"
   if [[ -f "$colors_json" ]] && command -v jq &>/dev/null; then
     local c
-    c=$(jq -r '.primary // empty' J"$colors_json" 2>/dev/null)
+    c=$(jq -r '.primary // empty' "$colors_json" 2>/dev/null)
     if [[ -n "$c" ]]; then
       echo "$c"
       return
