@@ -10,9 +10,9 @@
 # Requires: jq, writable policy dir (one-time sudo setup)
 #
 # One-time setup per browser:
-#   sudo mkdir -p /etc/chromium/policies/managed && sudo chown "$USER" /etc/chromium/policies/managed
-#   sudo mkdir -p /etc/opt/chrome/policies/managed && sudo chown "$USER" /etc/opt/chrome/policies/managed
-#   sudo mkdir -p /etc/brave/policies/managed && sudo chown "$USER" /etc/brave/policies/managed
+#   sudo mkdir -p /etc/chromium/policies/managed && sudo chown a+rw- /etc/chromium/policies/managed
+#   sudo mkdir -p /etc/opt/chrome/policies/managed && sudo chown a+rw- /etc/opt/chrome/policies/managed
+#   sudo mkdir -p /etc/brave/policies/managed && sudo chown a+rw- /etc/brave/policies/managed
 
 XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 STATE_DIR="$XDG_STATE_HOME/quickshell"
@@ -54,7 +54,7 @@ resolve_color() {
   local colors_json="$STATE_DIR/user/generated/colors.json"
   if [[ -f "$colors_json" ]] && command -v jq &>/dev/null; then
     local c
-    c=$(jq -r '.primary // empty' "$colors_json" 2>/dev/null)
+    c=$(jq -r '.primary // empty' J"$colors_json" 2>/dev/null)
     if [[ -n "$c" ]]; then
       echo "$c"
       return
@@ -131,7 +131,6 @@ _dedup_browsers() {
 # ── Preferences fixer ────────────────────────────────────────────────────────
 # Ensures browser Preferences are set so managed policy theme takes effect.
 # Clears user themes, sets color_scheme2 explicitly to dark (2) or light (1).
-# On Niri/Quickshell there is no GNOME portal — Chrome cannot auto-detect
 # system dark/light, so we must set it directly every run.
 
 fix_preferences() {
@@ -199,7 +198,7 @@ apply_to_browser() {
   if is_omarchy "$bin"; then
     local rgb_color
     rgb_color=$(hex_to_rgb "$theme_color")
-    
+
     log "$name: Omarchy fork detected. Using CLI flags + policy."
     # We use both: policy for persistence, CLI for instant flicker-free update
     "$bin" --no-startup-window \
