@@ -206,7 +206,7 @@ done
 #####################################################################################
 tui_info "Installing official repo packages..."
 
-# These packages are now in official Arch repos (extra) - NO AUR, NO COMPILATION!
+  # These packages are now in official Arch repos (extra) - NO AUR, NO COMPILATION!
 OFFICIAL_PACKAGES=(
   # Quickshell (CRITICAL) - NOW IN EXTRA REPO!
   quickshell
@@ -222,7 +222,8 @@ OFFICIAL_PACKAGES=(
   gum
   starship
   xwayland-satellite
-  
+  zoxide
+
   # Theming
   matugen
   

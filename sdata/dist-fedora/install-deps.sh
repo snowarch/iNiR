@@ -141,13 +141,16 @@ fi
 #####################################################################################
 tui_info "Installing packages from repositories..."
 
-# Core system packages (including Quickshell and Niri from COPR)
+  # Core system packages (including Quickshell and Niri from COPR)
 FEDORA_CORE_PKGS=(
   # Quickshell (from COPR - no compilation needed!)
   quickshell
-  
+
   # Niri compositor (from COPR)
   niri
+
+  # zoxide - smart cd replacement
+  zoxide
   
   # Build tools (needed for Python packages like dbus-python, pycairo, pygobject)
   gcc
@@ -750,8 +753,8 @@ echo "  - Qt/Kvantum: MaterialAdw + Darkly"
 echo ""
 
 # Verify critical commands
-tui_info "Verifying installation:"
-for cmd in qs niri fish gum matugen cliphist starship eza; do
+echo -e "${STY_CYAN}Verifying installation:${STY_RST}"
+for cmd in qs niri fish gum matugen cliphist starship eza zoxide; do
   if command -v "$cmd" &>/dev/null || command -v ~/.local/bin/$cmd &>/dev/null; then
     log_success "$cmd"
   else

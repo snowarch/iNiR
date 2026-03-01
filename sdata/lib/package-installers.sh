@@ -597,6 +597,92 @@ install-uv(){
   log_success "uv installed"
 }
 
+install-zoxide(){
+  if command -v zoxide &>/dev/null; then
+    echo -e "${STY_GREEN}zoxide already installed.${STY_RST}"
+    return 0
+  fi
+
+  echo -e "${STY_BLUE}Installing zoxide...${STY_RST}"
+
+  # Try distro package manager first, fallback to official installer
+  case "$OS_GROUP_ID" in
+    arch)
+      # Arch Linux - use pacman (zoxide is in official repos)
+      if command -v pacman &>/dev/null; then
+        sudo pacman -S --needed --noconfirm zoxide 2>/dev/null && {
+          echo -e "${STY_GREEN}zoxide installed via pacman.${STY_RST}"
+          return 0
+        }
+      fi
+      ;;
+
+    fedora)
+      # Fedora - use dnf (zoxide is in official repos)
+      if command -v dnf &>/dev/null; then
+        sudo dnf install -y zoxide 2>/dev/null && {
+          echo -e "${STY_GREEN}zoxide installed via dnf.${STY_RST}"
+          return 0
+        }
+      fi
+      ;;
+
+    debian|ubuntu)
+      # Debian/Ubuntu - zoxide is in repos for newer versions
+      if command -v apt &>/dev/null; then
+        sudo apt install -y zoxide 2>/dev/null && {
+          echo -e "${STY_GREEN}zoxide installed via apt.${STY_RST}"
+          return 0
+        }
+      fi
+      ;;
+
+    opensuse)
+      # openSUSE - use zypper
+      if command -v zypper &>/dev/null; then
+        sudo zypper install -y zoxide 2>/dev/null && {
+          echo -e "${STY_GREEN}zoxide installed via zypper.${STY_RST}"
+          return 0
+        }
+      fi
+      ;;
+
+    void)
+      # Void Linux - use xbps
+      if command -v xbps-install &>/dev/null; then
+        sudo xbps-install -Sy zoxide 2>/dev/null && {
+          echo -e "${STY_GREEN}zoxide installed via xbps.${STY_RST}"
+          return 0
+        }
+      fi
+      ;;
+
+    alpine)
+      # Alpine Linux - use apk
+      if command -v apk &>/dev/null; then
+        sudo apk add zoxide 2>/dev/null && {
+          echo -e "${STY_GREEN}zoxide installed via apk.${STY_RST}"
+          return 0
+        }
+      fi
+      ;;
+  esac
+
+  # Fallback: Official installer (works on all Linux distributions)
+  echo -e "${STY_BLUE}Installing zoxide via official installer...${STY_RST}"
+
+  if curl -sSf https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh; then
+    # Add to PATH if installed to ~/.local/bin
+    if [[ -f "$HOME/.local/bin/zoxide" ]]; then
+      export PATH="$HOME/.local/bin:$PATH"
+    fi
+    echo -e "${STY_GREEN}zoxide installed successfully.${STY_RST}"
+  else
+    echo -e "${STY_YELLOW}Failed to install zoxide.${STY_RST}"
+    return 1
+  fi
+}
+
 #####################################################################################
 # Config File Setup (All distros)
 #####################################################################################
@@ -848,6 +934,11 @@ if status is-interactive
         starship init fish | source
     end
 
+    # zoxide - smarter cd command (replaces cd)
+    if command -v zoxide > /dev/null
+        zoxide init --cmd cd fish | source
+    end
+
     # Load terminal colors from ii theming
     if test -f ~/.local/state/quickshell/user/generated/terminal/sequences.txt
         cat ~/.local/state/quickshell/user/generated/terminal/sequences.txt
@@ -892,6 +983,13 @@ if command -v starship &> /dev/null; then
     eval "$(starship init bash)"
 elif [[ -x ~/.local/bin/starship ]]; then
     eval "$(~/.local/bin/starship init bash)"
+fi
+
+# zoxide - smarter cd command (replaces cd)
+if command -v zoxide &> /dev/null; then
+    eval "$(zoxide init --cmd cd bash)"
+elif [[ -x ~/.local/bin/zoxide ]]; then
+    eval "$(~/.local/bin/zoxide init --cmd cd bash)"
 fi
 
 # Aliases
@@ -944,6 +1042,13 @@ if command -v starship &> /dev/null; then
     eval "$(starship init zsh)"
 elif [[ -x ~/.local/bin/starship ]]; then
     eval "$(~/.local/bin/starship init zsh)"
+fi
+
+# zoxide - smarter cd command (replaces cd)
+if command -v zoxide &> /dev/null; then
+    eval "$(zoxide init --cmd cd zsh)"
+elif [[ -x ~/.local/bin/zoxide ]]; then
+    eval "$(~/.local/bin/zoxide init --cmd cd zsh)"
 fi
 
 # Aliases
@@ -1040,6 +1145,7 @@ install-all-tools(){
   install-uv
   install-cliphist
   install-matugen
+  install-zoxide
 
   log_success "All tools installed"
 }
