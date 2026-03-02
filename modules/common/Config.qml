@@ -296,6 +296,22 @@ Singleton {
                     property bool enableZed: true
                     property bool enableVSCode: true
                     property bool enableChrome: true
+                    property JsonObject vscodeEditors: JsonObject {
+                        property bool code: true           // Official VSCode
+                        property bool codium: true         // VSCodium (FOSS)
+                        property bool codeOss: true        // Code - OSS
+                        property bool codeInsiders: true   // Code - Insiders
+                        property bool cursor: true         // Cursor AI
+                        property bool windsurf: true       // Windsurf AI
+                        property bool windsurfNext: true   // Windsurf - Next
+                        property bool qoder: true          // Qoder
+                        property bool antigravity: true    // Antigravity
+                        property bool positron: true       // Positron
+                        property bool voidEditor: true     // Void
+                        property bool melty: true          // Melty
+                        property bool pearai: true         // PearAI
+                        property bool aide: true           // Aide
+                    }
                     property bool useBackdropForColors: false
                     property JsonObject terminals: JsonObject {
                         property bool kitty: true
@@ -584,11 +600,21 @@ Singleton {
                     property list<string> rightOrder: ["rightSidebarButton", "sysTray", "weather"]
                 }
                 property JsonObject resources: JsonObject {
+                    property bool showMemoryIndicator: true
+                    property bool showSwapIndicator: true
+                    property bool showTempIndicator: true
+                    property bool showCpuIndicator: true
+                    property bool showGpuIndicator: true
                     property bool alwaysShowSwap: true
+                    property bool alwaysShowTemp: true
                     property bool alwaysShowCpu: true
+                    property bool alwaysShowGpu: true
+                    property int tempCautionThreshold: 65
+                    property int tempWarningThreshold: 80
                     property int memoryWarningThreshold: 95
                     property int swapWarningThreshold: 85
                     property int cpuWarningThreshold: 90
+                    property int gpuWarningThreshold: 90
                 }
                 property list<string> screenList: [] // List of names, like "eDP-1", find out with 'hyprctl monitors' command
                 property JsonObject utilButtons: JsonObject {
@@ -813,6 +839,7 @@ Singleton {
                 property int scrimDim: 35
                 property int topMargin: 0
                 property int bottomMargin: 0
+                property bool centerLauncher: false
                 property bool respectBar: true
                 property real maxPanelWidthRatio: 1.0
                 property int workspaceSpacing: 5
@@ -1143,6 +1170,14 @@ Singleton {
 
             property JsonObject screenRecord: JsonObject {
                 property string savePath: "" // Empty = use XDG Videos or ~/Videos
+                property string videoCodec: "libx264"
+                property string audioCodec: "aac"
+                property int fps: 60
+                property int videoBitrateKbps: 12000
+                property int audioBitrateKbps: 192
+                property string pixelFormat: "yuv420p"
+                property string preset: "veryfast"
+                property int crf: 21
             }
 
             property JsonObject windows: JsonObject {

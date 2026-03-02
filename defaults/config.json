@@ -323,9 +323,19 @@
             "workspaces": "center"
         },
         "resources": {
+            "showMemoryIndicator": true,
+            "showSwapIndicator": true,
+            "showTempIndicator": true,
+            "showCpuIndicator": true,
+            "showGpuIndicator": true,
             "alwaysShowCpu": true,
+            "alwaysShowGpu": true,
             "alwaysShowSwap": true,
+            "alwaysShowTemp": true,
+            "tempCautionThreshold": 65,
+            "tempWarningThreshold": 80,
             "cpuWarningThreshold": 90,
+            "gpuWarningThreshold": 90,
             "memoryWarningThreshold": 95,
             "swapWarningThreshold": 85
         },
@@ -813,7 +823,15 @@
         "useSystemFileDialog": false
     },
     "screenRecord": {
-        "savePath": ""
+        "savePath": "",
+        "videoCodec": "libx264",
+        "audioCodec": "aac",
+        "fps": 60,
+        "videoBitrateKbps": 12000,
+        "audioBitrateKbps": 192,
+        "pixelFormat": "yuv420p",
+        "preset": "veryfast",
+        "crf": 21
     },
     "windows": {
         "centerTitle": true,
