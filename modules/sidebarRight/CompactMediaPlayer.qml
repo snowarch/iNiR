@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 // CompactMediaPlayer.qml
 // Enhanced media player widget for the compact sidebar Controls section
 // Shows current track with album art, playback controls, and progress
+// Supports native players, YtMusic, and browser media (via MPRIS/plasma-browser-integration)
 import qs
 import qs.services
 import qs.modules.common
@@ -55,36 +56,12 @@ Item {
         : inirStyle ? Appearance.inir.roundingNormal : Appearance.rounding.normal
     readonly property color colPrimary: angelStyle ? Appearance.angel.colPrimary
         : inirStyle ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
-    readonly property color colControlSurface: angelStyle
-        ? ColorUtils.transparentize(Appearance.angel.colGlassElevated, 0.40)
-        : inirStyle
-        ? ColorUtils.transparentize(Appearance.inir.colLayer2, 0.44)
-        : auroraStyle
-        ? ColorUtils.transparentize(Appearance.aurora.colSubSurface, 0.50)
-        : ColorUtils.transparentize((blendedColors?.colLayer1 ?? Appearance.colors.colLayer1), 0.48)
-    readonly property color colControlBorder: angelStyle ? Appearance.angel.colCardBorder
-        : inirStyle ? Appearance.inir.colBorderSubtle : Appearance.colors.colOutlineVariant
-    readonly property color colControlOverlay: angelStyle
-        ? ColorUtils.transparentize(Appearance.angel.colGlassCard, 0.30)
-        : inirStyle
-        ? ColorUtils.transparentize(Appearance.inir.colLayer2, 0.32)
-        : auroraStyle
-        ? ColorUtils.transparentize(Appearance.aurora.colSubSurface, 0.42)
-        : ColorUtils.transparentize((blendedColors?.colLayer1 ?? Appearance.colors.colLayer1), 0.38)
-    readonly property color colAuxButton: angelStyle
-        ? ColorUtils.transparentize(Appearance.angel.colGlassCard, 0.42)
-        : inirStyle
-        ? ColorUtils.transparentize(Appearance.inir.colLayer2, 0.22)
-        : ColorUtils.transparentize((blendedColors?.colLayer1 ?? Appearance.colors.colLayer1), 0.45)
     readonly property color colAuxButtonHover: angelStyle ? Appearance.angel.colGlassCardHover
         : inirStyle ? Appearance.inir.colLayer2Hover
-        : ColorUtils.transparentize(root.accentColor, 0.72)
+        : ColorUtils.transparentize(root.colText, 0.82)
     readonly property color colAuxButtonActive: angelStyle ? Appearance.angel.colGlassCardActive
         : inirStyle ? Appearance.inir.colLayer2Active
-        : ColorUtils.transparentize(root.accentColor, 0.62)
-    readonly property color colAuxButtonBorder: angelStyle ? Appearance.angel.colCardBorder
-        : inirStyle ? Appearance.inir.colBorderSubtle
-        : Appearance.colors.colOutlineVariant
+        : ColorUtils.transparentize(root.colText, 0.72)
     
     // Dynamic accent from album art
     readonly property color accentColor: playerBase.downloaded && !inirStyle && !angelStyle
@@ -108,7 +85,7 @@ Item {
             maskSource: Rectangle { width: playerCard.width; height: playerCard.height; radius: playerCard.radius }
         }
 
-        // Blurred album art background (same pattern as OverviewDashboard)
+        // Blurred album art background
         Image {
             anchors.fill: parent
             source: playerBase.displayedArtFilePath
@@ -144,7 +121,7 @@ Item {
                 fill: parent
                 margins: 10
             }
-            spacing: 8
+            spacing: 6
 
             // Player switcher header (when multiple players)
             RowLayout {
@@ -153,7 +130,7 @@ Item {
                 spacing: 6
 
                 MaterialSymbol {
-                    text: playerBase.effectiveIdentity ?? "music_note"
+                    text: _playerIcon()
                     iconSize: 14
                     color: root.colTextSecondary
                 }
@@ -192,15 +169,15 @@ Item {
                 }
             }
 
-            // Main content: Album art + Track info
+            // Main content: Album art + Track info + time
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 12
+                spacing: 10
 
-                // Enhanced album art with PlayerArtwork component
+                // Album art with hover play/pause overlay
                 Item {
-                    Layout.preferredWidth: 72
-                    Layout.preferredHeight: 72
+                    Layout.preferredWidth: 56
+                    Layout.preferredHeight: 56
 
                     PlayerArtwork {
                         id: artwork
@@ -210,7 +187,7 @@ Item {
                         artRadius: root.angelStyle ? Appearance.angel.roundingSmall
                             : root.inirStyle ? Appearance.inir.roundingSmall
                             : Appearance.rounding.small
-                        iconSize: 28
+                        iconSize: 24
                         enableBlurTransition: true
 
                         // Scale animation on hover
@@ -231,7 +208,6 @@ Item {
                             visible: opacity > 0
                             Behavior on opacity { NumberAnimation { duration: 150 } }
 
-                            // Subtle dark scrim for icon readability
                             Rectangle {
                                 anchors.fill: parent
                                 radius: parent.radius
@@ -240,8 +216,8 @@ Item {
 
                             MaterialSymbol {
                                 anchors.centerIn: parent
-                                text: MprisController.isPlaying ? "pause" : "play_arrow"
-                                iconSize: 32
+                                text: playerBase.effectiveIsPlaying ? "pause" : "play_arrow"
+                                iconSize: 26
                                 fill: 0
                                 color: "white"
                             }
@@ -257,30 +233,30 @@ Item {
                     }
                 }
 
-                // Track info with enhanced layout
+                // Track info
                 ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: 4
+                    spacing: 2
 
                     PlayerInfo {
                         Layout.fillWidth: true
                         title: playerBase.effectiveTitle
                         artist: playerBase.effectiveArtist
                         titleSize: Appearance.font.pixelSize.normal
-                        artistSize: Appearance.font.pixelSize.small
+                        artistSize: Appearance.font.pixelSize.smaller
                         titleColor: root.colText
-                        artistColor: root.accentColor
+                        artistColor: root.colTextSecondary
                         animateTitle: true
                     }
 
-                    // Time display with accent color
+                    // Time display
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 4
-                        visible: MprisController.activePlayer?.length > 0
+                        visible: playerBase.effectiveLength > 0
 
                         StyledText {
-                            text: formatTime(MprisController.activePlayer?.position ?? 0)
+                            text: formatTime(playerBase.effectivePosition)
                             font.pixelSize: Appearance.font.pixelSize.smallest
                             font.family: Appearance.font.family.numbers
                             color: root.accentColor
@@ -295,7 +271,7 @@ Item {
                         }
 
                         StyledText {
-                            text: formatTime(MprisController.activePlayer?.length ?? 0)
+                            text: formatTime(playerBase.effectiveLength)
                             font.pixelSize: Appearance.font.pixelSize.smallest
                             font.family: Appearance.font.family.numbers
                             color: root.colTextSecondary
@@ -332,132 +308,134 @@ Item {
             // Progress bar with dynamic accent color
             PlayerProgress {
                 Layout.fillWidth: true
-                implicitHeight: 18
-                position: MprisController.activePlayer?.position ?? 0
-                length: MprisController.activePlayer?.length ?? 0
-                canSeek: MprisController.activePlayer?.canSeek ?? false
-                isPlaying: MprisController.isPlaying
+                implicitHeight: 16
+                position: playerBase.effectivePosition
+                length: playerBase.effectiveLength
+                canSeek: playerBase.effectiveCanSeek
+                isPlaying: playerBase.effectiveIsPlaying
                 highlightColor: root.accentColor
                 trackColor: root.angelStyle ? Appearance.angel.colBorderSubtle
                     : root.inirStyle ? ColorUtils.transparentize(Appearance.inir.colBorder, 0.5)
+                    : auroraStyle ? ColorUtils.transparentize(blendedColors?.colLayer1 ?? Appearance.colors.colLayer2, 0.6)
                     : Appearance.colors.colLayer2
                 enableWavy: true
                 onSeekRequested: (seconds) => {
-                    const player = MprisController.activePlayer
-                    if (player && player.length > 0) player.position = seconds
+                    playerBase.seek(seconds)
                 }
             }
 
-            // Control surface + primary transport controls (refactored)
-            Rectangle {
+            // Transport controls row — clean, no wrapper surface
+            RowLayout {
                 Layout.fillWidth: true
-                implicitHeight: controlsRow.implicitHeight + 10
-                radius: root.angelStyle ? Appearance.angel.roundingNormal
-                    : root.inirStyle ? Appearance.inir.roundingNormal
-                    : Appearance.rounding.normal
-                color: root.colControlSurface
-                border.width: root.angelStyle ? Appearance.angel.cardBorderWidth : (root.inirStyle ? 1 : 1)
-                border.color: root.colControlBorder
-                clip: true
+                Layout.topMargin: 2
+                spacing: 2
 
-                Rectangle {
-                    id: controlBlurLayer
-                    anchors.fill: parent
-                    radius: parent.radius
-                    color: "transparent"
-                    clip: true
-                    layer.enabled: true
-                    layer.effect: GE.OpacityMask {
-                        maskSource: Rectangle {
-                            width: controlBlurLayer.width
-                            height: controlBlurLayer.height
-                            radius: controlBlurLayer.radius
-                        }
-                    }
+                // Shuffle button (left auxiliary)
+                MediaControlBtn {
+                    visible: MprisController.shuffleSupported
+                    icon: "shuffle"
+                    toggled: MprisController.hasShuffle
+                    onClicked: MprisController.setShuffle(!MprisController.hasShuffle)
+                    tooltipText: Translation.tr("Shuffle")
+                    small: true
+                }
 
-                    Image {
-                        anchors.fill: parent
-                        source: playerBase.displayedArtFilePath
-                        fillMode: Image.PreserveAspectCrop
-                        asynchronous: true
-                        visible: playerBase.displayedArtFilePath !== ""
-                        opacity: root.inirStyle ? 0.34 : (root.auroraStyle ? 0.42 : 0.50)
-                        layer.enabled: Appearance.effectsEnabled
-                        layer.effect: MultiEffect {
-                            blurEnabled: true
-                            blur: 0.84
-                            blurMax: 52
-                            saturation: root.inirStyle ? 0.22 : 0.30
-                        }
-                    }
+                Item { Layout.fillWidth: true }
+
+                // Previous
+                MediaControlBtn {
+                    icon: "skip_previous"
+                    iconFill: true
+                    onClicked: playerBase.previous()
+                    tooltipText: Translation.tr("Previous")
+                }
+
+                // Play/Pause — prominent center button
+                Item {
+                    implicitWidth: 42
+                    implicitHeight: 42
 
                     Rectangle {
+                        id: playBtnBg
                         anchors.fill: parent
-                        radius: parent.radius
-                        color: root.colControlOverlay
+                        radius: root.angelStyle ? Appearance.angel.roundingSmall
+                            : root.inirStyle ? Appearance.inir.roundingSmall
+                            : Appearance.rounding.full
+                        color: {
+                            if (playBtnMA.containsPress)
+                                return ColorUtils.transparentize(root.accentColor, 0.35)
+                            if (playBtnMA.containsMouse)
+                                return ColorUtils.transparentize(root.accentColor, 0.55)
+                            return ColorUtils.transparentize(root.accentColor, 0.75)
+                        }
+                        border.width: 1
+                        border.color: ColorUtils.transparentize(root.accentColor, 0.45)
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Appearance.animation.elementMoveFast.duration
+                            }
+                        }
+
+                        scale: playBtnMA.containsPress ? 0.90 : 1.0
+                        Behavior on scale {
+                            NumberAnimation {
+                                duration: 150
+                                easing.type: Easing.OutCubic
+                            }
+                        }
+
+                        MaterialSymbol {
+                            anchors.centerIn: parent
+                            text: playerBase.effectiveIsPlaying ? "pause" : "play_arrow"
+                            iconSize: 26
+                            fill: 1
+                            color: root.accentColor
+
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation {
+                                    duration: Appearance.animation.elementMoveFast.duration
+                                }
+                            }
+                        }
+
+                        MouseArea {
+                            id: playBtnMA
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: playerBase.togglePlaying()
+                        }
+
+                        StyledToolTip {
+                            visible: playBtnMA.containsMouse
+                            text: playerBase.effectiveIsPlaying ? Translation.tr("Pause") : Translation.tr("Play")
+                        }
                     }
                 }
 
-                RowLayout {
-                    id: controlsRow
-                    anchors.fill: parent
-                    anchors.margins: 6
-                    spacing: 6
+                // Next
+                MediaControlBtn {
+                    icon: "skip_next"
+                    iconFill: true
+                    onClicked: playerBase.next()
+                    tooltipText: Translation.tr("Next")
+                }
 
-                    MediaControlBtn {
-                        visible: MprisController.shuffleSupported
-                        icon: "shuffle"
-                        toggled: MprisController.hasShuffle
-                        onClicked: MprisController.setShuffle(!MprisController.hasShuffle)
-                        tooltipText: Translation.tr("Shuffle")
+                Item { Layout.fillWidth: true }
+
+                // Loop button (right auxiliary)
+                MediaControlBtn {
+                    visible: MprisController.loopSupported
+                    icon: MprisController.loopState === 2 ? "repeat_one" : "repeat"
+                    toggled: MprisController.loopState !== 0
+                    onClicked: {
+                        const next = (MprisController.loopState + 1) % 3
+                        MprisController.setLoopState(next)
                     }
-
-                    Item { Layout.fillWidth: true }
-
-                    PlayerControls {
-                        Layout.alignment: Qt.AlignHCenter
-                        isPlaying: MprisController.isPlaying
-                        showLabels: false
-                        buttonSize: 34
-                        playButtonSize: 46
-                        iconSize: 20
-                        playIconSize: 24
-                        buttonColor: "transparent"
-                        buttonRadius: root.angelStyle ? Appearance.angel.roundingSmall
-                            : root.inirStyle ? Appearance.inir.roundingSmall
-                            : Appearance.rounding.full
-                        playButtonRadius: buttonRadius
-                        buttonHoverColor: root.angelStyle ? Appearance.angel.colGlassCardHover
-                            : root.inirStyle ? Appearance.inir.colLayer2Hover
-                            : ColorUtils.transparentize(root.accentColor, 0.65)
-                        buttonRippleColor: root.angelStyle ? Appearance.angel.colGlassCardActive
-                            : root.inirStyle ? Appearance.inir.colLayer2Active
-                            : ColorUtils.transparentize(root.accentColor, 0.5)
-                        iconColor: root.colText
-                        playIconColor: root.accentColor
-                        onPreviousClicked: playerBase.previous()
-                        onPlayPauseClicked: playerBase.togglePlaying()
-                        onNextClicked: playerBase.next()
-                    }
-
-                    Item { Layout.fillWidth: true }
-
-                    MediaControlBtn {
-                        visible: MprisController.loopSupported
-                        icon: MprisController.loopState === 2 ? "repeat_one" : "repeat"
-                        toggled: MprisController.loopState !== 0
-                        onClicked: {
-                            const next = (MprisController.loopState + 1) % 3
-                            MprisController.setLoopState(next)
-                        }
-                        tooltipText: Translation.tr("Loop")
-                    }
-
-                    MediaControlBtn {
-                        icon: "open_in_full"
-                        onClicked: GlobalStates.mediaControlsOpen = true
-                        tooltipText: Translation.tr("Open full player")
-                    }
+                    tooltipText: Translation.tr("Loop")
+                    small: true
                 }
             }
         }
@@ -485,6 +463,24 @@ Item {
         }))
     }
 
+    // Resolve a Material Symbol icon name for the active player identity
+    function _playerIcon(): string {
+        const player = MprisController.activePlayer
+        if (!player) return "music_note"
+        const name = (player.dbusName ?? "").toLowerCase()
+        const identity = (player.identity ?? "").toLowerCase()
+        if (name.includes("firefox") || identity.includes("firefox")) return "open_in_browser"
+        if (name.includes("chrom") || identity.includes("chrom")) return "open_in_browser"
+        if (name.includes("brave") || identity.includes("brave")) return "open_in_browser"
+        if (name.includes("vivaldi") || identity.includes("vivaldi")) return "open_in_browser"
+        if (name.includes("opera") || identity.includes("opera")) return "open_in_browser"
+        if (name.includes("plasma-browser") || identity.includes("plasma-browser")) return "open_in_browser"
+        if (name.includes("spotify") || identity.includes("spotify")) return "library_music"
+        if (name.includes("mpv") || identity.includes("mpv")) return "smart_display"
+        if (name.includes("vlc") || identity.includes("vlc")) return "smart_display"
+        return "music_note"
+    }
+
     function formatTime(seconds) {
         if (!seconds || seconds <= 0) return "0:00"
         const mins = Math.floor(seconds / 60)
@@ -492,39 +488,38 @@ Item {
         return mins + ":" + (secs < 10 ? "0" : "") + secs
     }
 
-    // Media control button component with enhanced styling
+    // Media control button component — simplified, no wrapper surface
     component MediaControlBtn: Item {
         id: mcBtn
         required property string icon
         property string tooltipText: ""
         property bool highlighted: false
         property bool toggled: false
-        property bool large: false
+        property bool small: false
+        property bool iconFill: false
         
         signal clicked()
         
-        implicitWidth: large ? 52 : 36
-        implicitHeight: large ? 52 : 36
+        implicitWidth: small ? 30 : 34
+        implicitHeight: small ? 30 : 34
         
         Rectangle {
             anchors.fill: parent
             radius: root.angelStyle ? Appearance.angel.roundingSmall
-                : root.inirStyle ? Appearance.inir.roundingSmall : Appearance.rounding.small
-            border.width: 1
-            border.color: root.colAuxButtonBorder
+                : root.inirStyle ? Appearance.inir.roundingSmall : Appearance.rounding.full
+            border.width: 0
+            border.color: "transparent"
             
             color: {
                 if (mcBtnMA.containsPress)
                     return root.colAuxButtonActive
                 if (mcBtnMA.containsMouse)
                     return root.colAuxButtonHover
-                if (mcBtn.highlighted)
-                    return root.accentColor
                 if (mcBtn.toggled)
                     return root.angelStyle ? ColorUtils.transparentize(root.accentColor, 0.64)
                         : root.inirStyle ? Appearance.inir.colSecondaryContainer
                         : ColorUtils.transparentize(root.accentColor, 0.78)
-                return root.colAuxButton
+                return "transparent"
             }
             
             Behavior on color { 
@@ -533,17 +528,16 @@ Item {
                 } 
             }
             
-            
             MaterialSymbol {
                 anchors.centerIn: parent
                 text: mcBtn.icon
-                iconSize: mcBtn.large ? 28 : 20
-                fill: mcBtn.highlighted || mcBtn.toggled ? 1 : 0
+                iconSize: mcBtn.small ? 18 : 22
+                fill: mcBtn.iconFill || mcBtn.highlighted || mcBtn.toggled ? 1 : 0
                 color: mcBtn.highlighted
                     ? "white"
                     : mcBtn.toggled
                     ? (root.inirStyle ? Appearance.inir.colOnSecondaryContainer : root.accentColor)
-                    : root.colTextSecondary
+                    : root.colText
                 
                 Behavior on color {
                     ColorAnimation { 

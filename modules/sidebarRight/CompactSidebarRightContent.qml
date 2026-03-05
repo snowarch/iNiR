@@ -384,7 +384,7 @@ Item {
 
         signal clicked()
 
-        implicitHeight: value !== "" ? 52 : 46
+        implicitHeight: value !== "" ? 50 : 44
 
         RippleButton {
             id: chipButton
@@ -405,8 +405,8 @@ Item {
 
             contentItem: RowLayout {
                 anchors.fill: parent
-                anchors.margins: 10
-                spacing: 8
+                anchors.margins: 9
+                spacing: 7
 
                 MaterialSymbol {
                     iconSize: 19
@@ -1086,7 +1086,7 @@ Item {
                 ColumnLayout {
                     id: controlsColumn
                     width: controlsFlickable.width - ((controlsVScroll.visible ? controlsVScroll.width : 0) + 6)
-                    spacing: Appearance.sizes.spacingMedium
+                    spacing: Appearance.sizes.spacingSmall
 
                     // Section header
                     SectionHeader {
@@ -1211,12 +1211,13 @@ Item {
                                     
                                     // Classic/Android Quick Panel
                                     Loader {
+                                        id: compactClassicQuickPanelLoader
                                         Layout.fillWidth: true
                                         Layout.leftMargin: 2; Layout.rightMargin: 8
                                         active: (Config.options?.sidebar?.quickToggles?.style ?? "classic") === "classic"
                                         sourceComponent: ClassicQuickPanel { compactMode: true }
                                         Connections {
-                                            target: item
+                                            target: compactClassicQuickPanelLoader.item
                                             ignoreUnknownSignals: true
                                             function onOpenAudioOutputDialog() { root.showAudioOutputDialog = true }
                                             function onOpenAudioInputDialog()  { root.showAudioInputDialog  = true }
@@ -1226,12 +1227,13 @@ Item {
                                         }
                                     }
                                     Loader {
+                                        id: compactAndroidQuickPanelLoader
                                         Layout.fillWidth: true
                                         Layout.leftMargin: 2; Layout.rightMargin: 2
                                         active: (Config.options?.sidebar?.quickToggles?.style ?? "classic") === "android"
                                         sourceComponent: AndroidQuickPanel { editMode: root.editMode }
                                         Connections {
-                                            target: item
+                                            target: compactAndroidQuickPanelLoader.item
                                             ignoreUnknownSignals: true
                                             function onOpenAudioOutputDialog() { root.showAudioOutputDialog = true }
                                             function onOpenAudioInputDialog()  { root.showAudioInputDialog  = true }
@@ -1248,14 +1250,14 @@ Item {
                                 active: sectionDelegate.modelData === "devices"
                                 visible: active
                                 sourceComponent: ColumnLayout {
-                                    spacing: 8
+                                    spacing: 6
                                     SectionDivider { text: Translation.tr("Devices"); visible: !root.layoutEditMode }
 
                                     GridLayout {
                                         Layout.fillWidth: true
                                         columns: 2
-                                        columnSpacing: 8
-                                        rowSpacing: 8
+                                        columnSpacing: 6
+                                        rowSpacing: 6
 
                                         ControlChipButton { Layout.fillWidth: true; chipIcon: "media_output"; chipLabel: Translation.tr("Output"); value: Audio.sink?.description ?? ""; onClicked: root.showAudioOutputDialog = true }
                                         ControlChipButton { Layout.fillWidth: true; chipIcon: "mic_external_on"; chipLabel: Translation.tr("Input"); value: Audio.source?.description ?? ""; onClicked: root.showAudioInputDialog = true }
@@ -1703,12 +1705,12 @@ Item {
             text: Translation.tr("Quick Actions")
         }
 
-        // Action buttons — clean section (no wrapper card)
+        // Action buttons — compact 3-column grid
         GridLayout {
             Layout.fillWidth: true
-            columns: 2
-            columnSpacing: 8
-            rowSpacing: 8
+            columns: 3
+            columnSpacing: 6
+            rowSpacing: 6
 
             QuickActionButton {
                 Layout.fillWidth: true
@@ -1812,7 +1814,7 @@ Item {
 
         signal clicked()
 
-        implicitHeight: 48
+        implicitHeight: 44
 
         Rectangle {
             id: qaBtnBg
@@ -1843,7 +1845,7 @@ Item {
                 : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.78)
                 : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.72)
             
-            scale: qaBtnMA.containsPress ? 0.96 : 1.0
+            scale: qaBtnMA.containsPress ? 0.94 : 1.0
             Behavior on scale {
                 enabled: Appearance.animationsEnabled
                 NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
@@ -1855,12 +1857,12 @@ Item {
 
             ColumnLayout {
                 anchors.centerIn: parent
-                spacing: 4
+                spacing: 2
 
                 MaterialSymbol {
                     Layout.alignment: Qt.AlignHCenter
                     text: qaBtn.icon
-                    iconSize: 19
+                    iconSize: 18
                     fill: qaBtn.toggled ? 1 : 0
                     color: qaBtn.toggled
                         ? (bg.inirEverywhere ? Appearance.inir.colOnSecondaryContainer
@@ -1873,6 +1875,7 @@ Item {
 
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter
+                    Layout.maximumWidth: qaBtnBg.width - 8
                     text: qaBtn.label
                     font.pixelSize: Appearance.font.pixelSize.smallest
                     font.weight: Font.Medium
@@ -1884,6 +1887,7 @@ Item {
                          : bg.angelEverywhere ? Appearance.angel.colText
                          : Appearance.colors.colOnLayer1)
                     elide: Text.ElideRight
+                    horizontalAlignment: Text.AlignHCenter
                 }
             }
 
