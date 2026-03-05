@@ -46,23 +46,10 @@ PopupWindow {
         root.open()
     }
 
-    // Sort toplevels by Niri column position for spatial consistency
+    // Toplevels are already sorted by spatial layout in DockApps.qml
+    // (via CompositorService.sortedToplevels)
     function _sortedToplevels(): list<var> {
-        const toplevels = root.appEntry?.toplevels ?? [];
-        if (!CompositorService.isNiri || toplevels.length <= 1) return toplevels;
-
-        const niriWindows = NiriService.windows ?? [];
-        const sorted = [...toplevels];
-        sorted.sort((a, b) => {
-            const aNiriId = a.niriWindowId ?? 0;
-            const bNiriId = b.niriWindowId ?? 0;
-            const aNiri = niriWindows.find(w => w.id === aNiriId);
-            const bNiri = niriWindows.find(w => w.id === bNiriId);
-            const aCol = aNiri?.layout?.pos_in_scrolling_layout?.[0] ?? 999999;
-            const bCol = bNiri?.layout?.pos_in_scrolling_layout?.[0] ?? 999999;
-            return aCol - bCol;
-        });
-        return sorted;
+        return root.appEntry?.toplevels ?? [];
     }
 
     visible: false
@@ -77,7 +64,13 @@ PopupWindow {
             if (!root.visible || !root.appEntry) return
             const appId = root.appEntry.appId
             if (!appId) return
-            const current = ToplevelManager.toplevels.values.filter(
+            // Use CompositorService.sortedToplevels for correct spatial order, 
+            // fallback to ToplevelManager if not available.
+            const allToplevels = CompositorService.sortedToplevels && CompositorService.sortedToplevels.length
+                    ? CompositorService.sortedToplevels
+                    : ToplevelManager.toplevels.values;
+
+            const current = allToplevels.filter(
                 t => t.appId && t.appId.toLowerCase() === appId
             )
             if (current.length === 0) {

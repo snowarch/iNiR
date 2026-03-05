@@ -7,6 +7,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Widgets
+import Quickshell.Wayland
 
 DockButton {
     id: root
@@ -18,7 +19,16 @@ DockButton {
     property real countDotWidth: 10
     property real countDotHeight: 4
     readonly property var toplevels: appToplevel?.toplevels ?? []
-    property bool appIsActive: toplevels.find(t => (t.activated == true)) !== undefined
+    // O(1) reactive: depends only on ToplevelManager.activeToplevel signal,
+    // NOT on individual t.activated of every toplevel (which caused cascade re-evaluations).
+    property bool appIsActive: {
+        const active = ToplevelManager.activeToplevel
+        if (!active || !active.activated) return false
+        for (let i = 0; i < toplevels.length; i++) {
+            if (toplevels[i] === active) return true
+        }
+        return false
+    }
     property bool hasWindows: toplevels.length > 0
     property bool pillStyle:  Config.options?.dock?.style === "pill"
     property bool macosStyle: Config.options?.dock?.style === "macos"
@@ -39,47 +49,18 @@ DockButton {
         }
     }
 
-    // Determine focused window index for smart indicator (Niri only)
-    // Returns the index (0-based) of the focused window sorted by column position
+    // Determine focused window index for smart indicator.
+    // toplevels is already sorted by layout (thanks to CompositorService.sortedToplevels in DockApps)
+    // so we just need to find the active toplevel index.
     property int focusedWindowIndex: {
         if (!root.appIsActive || toplevels.length <= 1)
             return 0;
 
-        // Find the focused toplevel
-        const focusedToplevel = toplevels.find(t => t.activated === true);
-        if (!focusedToplevel)
-            return 0;
+        const active = ToplevelManager.activeToplevel;
+        if (!active) return 0;
 
-        // For Niri: use column position to determine order
-        if (CompositorService.isNiri && focusedToplevel.niriWindowId) {
-            const niriWindows = NiriService.windows;
-
-            // Build array of {toplevelIdx, column} for sorting
-            const windowPositions = [];
-            for (let i = 0; i < toplevels.length; i++) {
-                const tl = toplevels[i];
-                let col = 999999;
-                if (tl.niriWindowId) {
-                    const niriWin = niriWindows.find(w => w.id === tl.niriWindowId);
-                    if (niriWin && niriWin.layout && niriWin.layout.pos_in_scrolling_layout) {
-                        col = niriWin.layout.pos_in_scrolling_layout[0];
-                    }
-                }
-                windowPositions.push({ idx: i, col: col, activated: tl.activated });
-            }
-
-            // Sort by column
-            windowPositions.sort((a, b) => a.col - b.col);
-
-            // Find the focused one's position in sorted array
-            for (let i = 0; i < windowPositions.length; i++) {
-                if (windowPositions[i].activated) return i;
-            }
-        }
-
-        // Fallback: find by activated flag in original order
         for (let i = 0; i < toplevels.length; i++) {
-            if (toplevels[i].activated) return i;
+            if (toplevels[i] === active) return i;
         }
         return 0;
     }
@@ -324,6 +305,12 @@ DockButton {
           sourceComponent: Item {
               id: contentRoot
               anchors.centerIn: parent
+
+              // Cache the item into an FBO layer if shaders are present AND animating.
+              // This completely eliminates the horrific 100% CPU/GPU spike when macOS
+              // hover magnify continually rescales the Desaturate and ColorOverlay shaders.
+              layer.enabled: root.macosStyle && (Config.options?.dock?.monochromeIcons ?? false)
+              layer.smooth: true
 
               // macOS magnify: scale around the bottom centre so icons grow upward.
               // Animation is driven by DockMacItem's own Behavior on _magnifyScale —

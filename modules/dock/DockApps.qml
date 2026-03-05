@@ -301,7 +301,35 @@ Item {
         return _cachedIgnoredRegexes;
     }
 
+    // ─── Debounce Timer ─────────────────────────────────────────────────
+    // Coalesces rapid toplevel/compositor signals into a single rebuild.
+    Timer {
+        id: rebuildTimer
+        interval: 80
+        repeat: false
+        onTriggered: root._doRebuildDockItems()
+    }
+
     function rebuildDockItems() {
+        rebuildTimer.restart()
+    }
+
+    // Skip model update when structure hasn't changed (same apps, order, toplevels)
+    function _dockItemsEqual(oldItems, newItems): bool {
+        if (oldItems.length !== newItems.length) return false
+        for (let i = 0; i < oldItems.length; i++) {
+            const o = oldItems[i], n = newItems[i]
+            if (o.uniqueId !== n.uniqueId || o.pinned !== n.pinned || o.section !== n.section) return false
+            const oTL = o.toplevels, nTL = n.toplevels
+            if (oTL.length !== nTL.length) return false
+            for (let j = 0; j < oTL.length; j++) {
+                if (oTL[j] !== nTL[j]) return false
+            }
+        }
+        return true
+    }
+
+    function _doRebuildDockItems() {
         const pinnedApps = Config.options?.dock?.pinnedApps ?? [];
         const ignoredRegexes = _getIgnoredRegexes();
         const separatePinnedFromRunning = root.separatePinnedFromRunning;
@@ -452,7 +480,11 @@ Item {
             }
         }
 
-        dockItems = values
+        // Skip update if the model structure is identical — avoids
+        // ScriptModel churn and downstream binding re-evaluations.
+        if (!_dockItemsEqual(dockItems, values)) {
+            dockItems = values
+        }
     }
 
     Connections {
@@ -586,7 +618,7 @@ Item {
             // (overrides the base DockAppButton scale property)
               scale: isBeingDragged ? 1.08
                    : (root.macosStyle ? 1.0
-                       : (((appToplevel?.toplevels ?? []).find(t => t.activated === true) !== undefined) ? 1.05 : 1.0))
+                       : (dockDelegate.appIsActive ? 1.05 : 1.0))
 
             // Dragged item lifts slightly; others dim just enough to signal drag mode
             opacity: isBeingDragged ? 0.8
