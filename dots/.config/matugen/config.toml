@@ -58,3 +58,8 @@ output_path = '~/.local/state/quickshell/user/generated/firefox-materialfox.css'
 input_path = '/dev/null'
 output_path = '/dev/null'
 post_hook = 'bash -lc "[[ -x ~/.local/bin/sync-pixel-sddm.py && -d /usr/share/sddm/themes/ii-pixel ]] && nohup python3 ~/.local/bin/sync-pixel-sddm.py >/dev/null 2>&1 &"'
+
+# Zed Editor Theme
+[templates.zed]
+input_path = '~/.config/matugen/templates/zed-colors.json'
+output_path = '~/.config/zed/themes/iNiR-alt.json'
