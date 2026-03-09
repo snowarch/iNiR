@@ -147,11 +147,10 @@ reload_terminal_colors() {
   for term in "${terminals[@]}"; do
     case "$term" in
       kitty)
-        # Kitty: reload colors via remote control (works if allow_remote_control is enabled)
+        # Kitty: SIGUSR1 triggers config reload (updates all windows and tab bar)
         if pgrep -x kitty &>/dev/null; then
-          kitty @ set-colors --all "$home/.config/kitty/current-theme.conf" 2>/dev/null && \
-            echo "[terminal-colors] Kitty: reloaded via remote control" || \
-            echo "[terminal-colors] Kitty: remote control not available (enable allow_remote_control in kitty.conf for live reload)"
+          pkill --signal SIGUSR1 -x kitty 2>/dev/null && \
+            echo "[terminal-colors] Kitty: sent SIGUSR1 reload signal"
         fi
         ;;
       foot)

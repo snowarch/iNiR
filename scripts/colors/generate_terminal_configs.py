@@ -130,8 +130,17 @@ color7  {colors.get("term7", "#A89984")}
 color15 {colors.get("term15", "#EBDBB2")}
 """
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    with open(output_path, "w") as f:
+    # Write config to a secondary file
+    theme_conf = os.path.join(os.path.dirname(output_path), "theme.conf")
+    with open(theme_conf, "w") as f:
         f.write(config)
+
+    # Use atomic mv for the symlink swap (eliminates race conditions)
+    tmp_link = output_path + ".tmp"
+    if os.path.lexists(tmp_link):
+        os.remove(tmp_link)
+    os.symlink("theme.conf", tmp_link)
+    os.replace(tmp_link, output_path)
 
     # Auto-integrate into kitty.conf
     home = os.path.expanduser("~")
@@ -143,28 +152,14 @@ color15 {colors.get("term15", "#EBDBB2")}
     else:
         print(f"✓ Generated Kitty config (already integrated)")
 
-    # Live reload kitty colors via remote control socket
+    # Live reload kitty config via SIGUSR1 (updates all windows and tab bar)
     import subprocess
 
-    socket_path = "/tmp/kitty-socket"
-    if os.path.exists(socket_path):
-        try:
-            subprocess.run(
-                [
-                    "kitten",
-                    "@",
-                    "--to",
-                    f"unix:{socket_path}",
-                    "set-colors",
-                    "--all",
-                    output_path,
-                ],
-                capture_output=True,
-                timeout=2,
-            )
-            print(f"  → Live-reloaded Kitty colors via socket")
-        except Exception:
-            pass
+    try:
+        subprocess.run(["pkill", "--signal", "SIGUSR1", "-x", "kitty"], capture_output=True, timeout=2)
+        print("  → Live-reloaded Kitty config (SIGUSR1)")
+    except Exception:
+        pass
 
 
 def fix_alacritty_import_order(config_path):
