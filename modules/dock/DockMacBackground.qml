@@ -101,7 +101,7 @@ Rectangle {
                 ? (Appearance.angel.blurSaturation * Appearance.angel.colorStrength)
                 : (Appearance.effectsEnabled ? 0.35 : 0)
             blurEnabled: Appearance.effectsEnabled
-            blurMax: 100
+            blurMax: 64
             blur: Appearance.effectsEnabled
                 ? (root.angelEverywhere ? Appearance.angel.blurIntensity : 0.9)
                 : 0

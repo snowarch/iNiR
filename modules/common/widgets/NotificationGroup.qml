@@ -220,7 +220,7 @@ MouseArea { // Notification group area
                     ? (Appearance.angel.blurSaturation * Appearance.angel.colorStrength)
                     : (Appearance.effectsEnabled ? 0.2 : 0)
                 blurEnabled: Appearance.effectsEnabled
-                blurMax: 100
+                blurMax: 64
                 blur: Appearance.effectsEnabled
                     ? (Appearance.angelEverywhere ? Appearance.angel.blurIntensity : 1)
                     : 0

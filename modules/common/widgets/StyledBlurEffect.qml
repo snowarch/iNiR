@@ -8,6 +8,6 @@ MultiEffect {
     anchors.fill: source
     saturation: Appearance.effectsEnabled ? 0.2 : 0
     blurEnabled: Appearance.effectsEnabled
-    blurMax: 100
+    blurMax: 64
     blur: Appearance.effectsEnabled ? 1 : 0
 }

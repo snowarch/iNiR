@@ -236,7 +236,7 @@ AbstractOverlayWidget {
                 anchors.fill: source
                 saturation: Appearance.angel.blurSaturation * Appearance.angel.colorStrength
                 blurEnabled: Appearance.effectsEnabled
-                blurMax: 100
+                blurMax: 64
                 blur: Appearance.effectsEnabled ? Appearance.angel.blurIntensity : 0
             }
         }

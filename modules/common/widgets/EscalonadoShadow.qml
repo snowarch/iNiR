@@ -96,7 +96,7 @@ Item {
                 anchors.fill: source
                 saturation: Appearance.angel.blurSaturation * Appearance.angel.colorStrength * 0.7
                 blurEnabled: Appearance.effectsEnabled
-                blurMax: 100
+                blurMax: 64
                 blur: Appearance.angel.shadowGlassBlur
             }
         }
