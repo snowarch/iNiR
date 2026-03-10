@@ -120,6 +120,7 @@
             "enableZed": true,
             "enableVSCode": true,
             "enableChrome": true,
+            "enableSpicetify": false,
             "useBackdropForColors": false,
             "terminalGenerationProps": {
                 "forceDarkMode": false,

@@ -326,6 +326,11 @@ apply_chrome() {
   "$SCRIPT_DIR/apply-chrome-theme.sh"
 }
 
+apply_spicetify() {
+  # apply-spicetify-theme.sh creates/updates a dedicated Spicetify theme from colors.json
+  "$SCRIPT_DIR/apply-spicetify-theme.sh"
+}
+
 # Check if terminal theming is enabled in config
 CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/illogical-impulse/config.json"
 if [ -f "$CONFIG_FILE" ]; then
@@ -405,6 +410,14 @@ if [ -f "$CONFIG_FILE" ]; then
   fi
 else
   apply_chrome &
+fi
+
+# Apply Spotify theme via Spicetify (opt-in)
+if [ -f "$CONFIG_FILE" ]; then
+  enable_spicetify=$(jq -r '.appearance.wallpaperTheming.enableSpicetify // false' "$CONFIG_FILE" 2>/dev/null || echo "false")
+  if [ "$enable_spicetify" = "true" ] && command -v spicetify &>/dev/null; then
+    apply_spicetify &
+  fi
 fi
 
 # Sync ii-pixel SDDM theme colors (if installed)

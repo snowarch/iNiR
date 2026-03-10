@@ -296,6 +296,7 @@ Singleton {
                     property bool enableZed: true
                     property bool enableVSCode: true
                     property bool enableChrome: true
+                    property bool enableSpicetify: false
                     property JsonObject vscodeEditors: JsonObject {
                         property bool code: true           // Official VSCode
                         property bool codium: true         // VSCodium (FOSS)

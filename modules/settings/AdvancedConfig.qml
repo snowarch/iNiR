@@ -70,6 +70,18 @@ ContentPage {
                 }
             }
             SettingsSwitch {
+                buttonIcon: "music_note"
+                text: Translation.tr("Spotify (Spicetify)")
+                checked: Config.options?.appearance?.wallpaperTheming?.enableSpicetify ?? false
+                onCheckedChanged: {
+                    Config.setNestedValue("appearance.wallpaperTheming.enableSpicetify", checked)
+                    colorRegenTimer.restart()
+                }
+                StyledToolTip {
+                    text: Translation.tr("Generate and apply a Spicetify theme from wallpaper colors")
+                }
+            }
+            SettingsSwitch {
                 buttonIcon: "code"
                 text: Translation.tr("Zed editor")
                 checked: Config.options?.appearance?.wallpaperTheming?.enableZed ?? true

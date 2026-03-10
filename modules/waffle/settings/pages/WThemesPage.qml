@@ -571,6 +571,14 @@ WSettingsPage {
         }
 
         WSettingsSwitch {
+            label: Translation.tr("Spotify theming")
+            icon: "music_note"
+            description: Translation.tr("Generate and apply Spicetify theme from wallpaper colors")
+            checked: Config.options?.appearance?.wallpaperTheming?.enableSpicetify ?? false
+            onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.enableSpicetify", checked)
+        }
+
+        WSettingsSwitch {
             label: Translation.tr("Transparency")
             icon: "eye"
             description: Translation.tr("Enable transparent UI elements")
