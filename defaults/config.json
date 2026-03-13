@@ -670,7 +670,16 @@
             "showDefaultActionsWithoutPrefix": true,
             "webSearch": "?"
         },
-        "sloppy": true
+        "sloppy": true,
+        "globalActions": {
+            "enableSystem": true,
+            "enableAppearance": true,
+            "enableTools": true,
+            "enableMedia": true,
+            "enableSettings": true,
+            "enablePackages": true,
+            "enableCustom": true
+        }
     },
     "sidebar": {
         "ai": {

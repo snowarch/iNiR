@@ -992,6 +992,15 @@ Singleton {
                     property string fileUploadApiFallback2: "https://catbox.moe/user/api.php"
                     property bool useCircleSelection: false
                 }
+                property JsonObject globalActions: JsonObject {
+                    property bool enableSystem: true
+                    property bool enableAppearance: true
+                    property bool enableTools: true
+                    property bool enableMedia: true
+                    property bool enableSettings: true
+                    property bool enablePackages: true
+                    property bool enableCustom: true
+                }
             }
 
             property JsonObject sidebar: JsonObject {
