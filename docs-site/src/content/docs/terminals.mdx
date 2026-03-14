@@ -1,0 +1,59 @@
+---
+title: "Terminal Emulators"
+description: "How iNiR dynamically themes terminal emulators"
+---
+
+# Terminal Emulators
+
+iNiR's theming pipeline dynamically adjusts your terminal emulators using a combination of fast OSC escape sequences and native configuration generation, ensuring immediate updates without needing to restart your applications.
+
+## Supported Terminals
+
+iNiR natively generates configuration files for the following terminal emulators:
+
+- **Kitty** (`kitty`)
+- **Alacritty** (`alacritty`)
+- **Foot** (`foot`)
+- **WezTerm** (`wezterm`)
+- **Ghostty** (`ghostty`)
+- **Konsole** (`konsole`)
+
+## How it works
+
+When you change your wallpaper or manually apply a theme preset, iNiR executes `applycolor.sh`. This handles terminal theming in two simultaneous steps:
+
+### 1. Instant OSC Sequence Injection
+The script looks for active interactive shells (`fish`, `bash`, `zsh`, `nu`, `elvish`, `xonsh`). For every active terminal instance found, it immediately pushes raw OSC (Operating System Command) sequences through its PTY (e.g., `/dev/pts/0`). 
+
+This means the colors within your currently open terminal windows update instantly without flashing or breaking existing programs.
+
+### 2. Native Config Generation & Reload
+Next, a Python generator parses the `material_colors.scss` file and creates the respective native configuration file for each installed terminal:
+- `~/.config/kitty/current-theme.conf`
+- `~/.config/alacritty/alacritty.toml` (auto-reloads)
+- `~/.config/wezterm/wezterm.lua` (auto-reloads)
+
+It then sends the appropriate reload signal to the running terminal instance:
+- **Foot:** Sends a `SIGUSR1` signal to reload configuration.
+- **Kitty:** Uses `kitty @ set-colors` via remote control.
+- **Konsole:** Attempts to push changes via `qdbus6` or `dbus`.
+- **Ghostty:** Requires you to use the `Ctrl+Shift+,` shortcut to manually reload.
+
+## Configuration
+
+You can enable or disable terminal theming by modifying your `config.json` inside the `illogical-impulse` directory:
+
+```json
+"appearance": {
+  "wallpaperTheming": {
+    "enableTerminal": true,
+    "terminals": {
+      "kitty": true,
+      "alacritty": true,
+      "foot": true
+    }
+  }
+}
+```
+
+*Note: You can control the global transparency of your terminal windows by editing the `term_alpha` variable in `scripts/colors/applycolor.sh` (default is 100%).*

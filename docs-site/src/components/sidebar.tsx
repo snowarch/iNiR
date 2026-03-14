@@ -17,6 +17,21 @@ const navigation = [
     ],
   },
   {
+    title: "themed apps",
+    items: [
+      { title: "Terminals", href: "/docs/terminals" },
+      { title: "CLI Tools", href: "/docs/cli-tools" },
+      { title: "Firefox", href: "/docs/firefox" },
+      { title: "Chromium", href: "/docs/chromium" },
+      { title: "VSCode", href: "/docs/vscode" },
+      { title: "Zed", href: "/docs/zed" },
+      { title: "Spicetify", href: "/docs/spicetify" },
+      { title: "Vencord", href: "/docs/vencord" },
+      { title: "GTK & Qt", href: "/docs/gtk-qt" },
+      { title: "SDDM", href: "/docs/sddm" },
+    ],
+  },
+  {
     title: "guides",
     items: [
       { title: "Configuration", href: "/docs/configuration" },

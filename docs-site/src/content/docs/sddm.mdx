@@ -1,0 +1,28 @@
+---
+title: "SDDM"
+description: "How iNiR themes the Simple Desktop Display Manager (SDDM)"
+---
+
+# SDDM Login Manager
+
+iNiR can extend its Material You and wallpaper theming to your computer's login screen if you use the [Simple Desktop Display Manager (SDDM)](https://github.com/sddm/sddm).
+
+## Documentation
+
+Instead of showing a default login screen, iNiR synchronizes your active wallpaper and primary accent color directly with SDDM using a Python script.
+
+### How it works
+
+When a theme change occurs (`applycolor.sh` runs), iNiR checks if the **ii-pixel** SDDM theme is installed on your system. 
+
+1. `scripts/sddm/sync-pixel-sddm.py` is invoked.
+2. The script reads the generated Niri colors from `~/.local/state/quickshell/user/generated/colors.json`.
+3. It updates the `theme.conf` file of the `ii-pixel` theme in `/usr/share/sddm/themes/ii-pixel/`.
+4. It sets the background image to match the `wallpaperPath` in your iNiR `config.json`.
+5. Your login screen's buttons, text fields, and accents will now perfectly match your desktop session when you reboot or lock your screen.
+
+### Installation
+
+For this to work, you must install the `ii-pixel` SDDM theme.
+
+If installed, the script handles the rest automatically. No further configuration is required!

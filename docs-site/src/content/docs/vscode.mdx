@@ -1,0 +1,41 @@
+---
+title: "VSCode"
+description: "How to theme Visual Studio Code with iNiR"
+---
+
+# Visual Studio Code
+
+VSCode is widely used for modern web development. iNiR allows you to seamlessly integrate your system colors into your editor without leaving your IDE.
+
+## Documentation
+
+iNiR ships with a VSCode theme generator (`scripts/colors/generate_terminal_configs.py --vscode`) that injects your system colors directly into the `settings.json` file for VSCode, VSCodium, and Cursor.
+
+### How it works
+
+1. It searches for `Code/User/settings.json` (or equivalent for VSCodium/Cursor) in `~/.config`.
+2. It parses both Material You JSON (`colors.json`) and generated terminal SCSS colors (`material_colors.scss`).
+3. Using these palettes, it updates the `workbench.colorCustomizations` and `editor.tokenColorCustomizations` sections inside your settings.
+4. VSCode auto-detects these changes instantly, meaning your theme dynamically updates without requiring an extension install or reload.
+
+### Installation
+
+If VSCode (or VSCodium/Cursor) is installed, iNiR automatically handles everything for you.
+
+1. Ensure your IDE is installed in `~/.config/Code` (or VSCodium/Cursor).
+2. Change your wallpaper using the iNiR wallpaper selector or matugen bindings.
+3. Your VSCode window will update immediately, reflecting the exact same primary, surface, error, and terminal colors generated for Niri and Quickshell.
+
+*Note: You do not need any external extensions for this integration. The python script handles updating the JSON natively.*
+
+## Showcase
+
+Here is VSCode tailored to your desktop environment:
+
+![VSCode Showcase](/images/showcase-vscode.png)
+
+### Features
+
+- Deep integration with UI components.
+- Integrated terminal matches your standalone terminal themes.
+- Accent colors adapt dynamically.

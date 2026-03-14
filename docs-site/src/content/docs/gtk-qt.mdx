@@ -1,0 +1,40 @@
+---
+title: "GTK & Qt"
+description: "How iNiR styles GTK4 and Qt/KDE applications seamlessly"
+---
+
+# GTK & Qt Applications
+
+iNiR ensures that all standard desktop applications — whether built with GTK (GNOME) or Qt (KDE) — share a unified aesthetic. This means your file manager (`nautilus`, `dolphin`), system settings, and other utility apps follow your active Material You palette.
+
+## How it works
+
+When a new theme or wallpaper is applied, `scripts/colors/applycolor.sh` calls the `apply-gtk-theme.sh` script to parse `colors.json` and generate configuration for both toolkits simultaneously.
+
+### GTK4 / Libadwaita
+1. The script extracts background, surface, outline, and primary colors.
+2. It dynamically builds a `~/.config/gtk-4.0/gtk.css` file.
+3. It declares CSS variables (e.g., `@define-color accent_color`) that override standard libadwaita variables.
+4. Specific CSS classes are added for apps like Nautilus to fix sidebar, background, and hover states.
+5. Finally, the script silently restarts Nautilus (`nautilus -q`) so it picks up the new colors immediately.
+
+### Qt & KDE
+Unlike GTK which uses CSS, Qt apps require a different approach to match the GTK style:
+
+1. **qt6ct & Darkly:** The script configures the Qt platform theme tool (`qt6ct`) to use the `Darkly` style. 
+2. It generates a custom KDE color scheme file at `~/.local/share/color-schemes/Darkly.colors` by converting Material hex colors to Qt-compatible RGB strings.
+3. **Kdeglobals:** It also injects these colors into `~/.config/kdeglobals`, which serves as the central configuration for KDE Plasma apps (like Dolphin).
+4. **Kvantum:** Another helper script (`materialQT.sh`) dynamically generates a Kvantum theme to further unify Qt's appearance.
+
+## Customization
+
+The script calculates contrasting colors (e.g., dimming inactive text, adjusting backgrounds) to ensure readability regardless of the primary wallpaper color. You can disable GUI app theming via configuration:
+
+```json
+"appearance": {
+  "wallpaperTheming": {
+    "enableAppsAndShell": true,
+    "enableQtApps": true
+  }
+}
+```

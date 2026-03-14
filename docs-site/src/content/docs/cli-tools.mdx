@@ -1,0 +1,48 @@
+---
+title: "CLI Tools"
+description: "How iNiR integrates with popular command-line tools"
+---
+
+# CLI Tools
+
+In addition to styling your terminal emulator, iNiR extends its Material You pipeline to popular command-line applications like system monitors, shells, and file managers.
+
+## Supported Tools
+
+- **Starship** (`starship`)
+- **Btop** (`btop`)
+- **Lazygit** (`lazygit`)
+- **Yazi** (`yazi`)
+
+## How it works
+
+When a theme change occurs, `scripts/colors/generate_terminal_configs.py` parses `material_colors.scss` and writes tool-specific configuration files automatically. 
+
+### Starship
+iNiR modifies your `~/.config/starship.toml` configuration to ensure your prompt's background, foreground, and accent colors match the generated Material You palette.
+
+### Btop
+A dedicated Btop theme file is generated at `~/.config/btop/themes/ii-auto.theme`. Btop automatically detects this file and refreshes its UI without needing a restart.
+
+### Lazygit
+A YAML configuration file is generated at `~/.config/lazygit/ii-theme.yml`. This overrides Lazygit's default interface colors to use your current primary and accent colors.
+
+### Yazi
+Yazi, the blazing-fast terminal file manager, receives a custom flavor located at `~/.config/yazi/flavors/ii-auto.yazi/flavor.toml`. This allows the file manager's selection, background, and icon colors to sync seamlessly with Niri.
+
+## Enabling/Disabling
+
+You can disable the generation of these files individually by modifying the terminal dictionary in your configuration:
+
+```json
+"appearance": {
+  "wallpaperTheming": {
+    "terminals": {
+      "starship": true,
+      "btop": true,
+      "lazygit": true,
+      "yazi": true
+    }
+  }
+}
+```

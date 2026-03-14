@@ -1,0 +1,47 @@
+---
+title: "Chromium"
+description: "How to theme Chromium browsers with iNiR"
+---
+
+# Chromium
+
+Chromium browsers like Google Chrome, Brave, and Edge can have their appearance adjusted directly using GTK variables or specialized extensions.
+
+## Documentation
+
+iNiR ships with a dedicated Chromium theme generator script (`scripts/colors/apply-chrome-theme.sh`) that dynamically forces Chromium-based browsers (Google Chrome, Chromium, Brave) to use Niri's `matugen` palette.
+
+### How it works
+
+1. It attempts to resolve a primary theme color from the Material You pipeline (`colors.json`).
+2. It translates Niri's current dark/light mode preference (`material_colors.scss`).
+3. It resets Chromium's internal theme variables (clearing user themes/extensions) so the dynamic UI engine takes over.
+4. It sets the `BrowserThemeColor` via Linux enterprise policies (`/etc/opt/chrome/policies/managed/`).
+5. It safely invokes the browser binary (`--refresh-platform-policy` and `--no-startup-window`) to hot-reload the changes without losing active tabs!
+
+### Installation
+
+For Chrome theming to work via managed policies, you need a one-time `sudo` setup to create the writable directories for iNiR:
+
+```bash
+sudo mkdir -p /etc/opt/chrome/policies/managed && sudo chown a+rw- /etc/opt/chrome/policies/managed
+sudo mkdir -p /etc/chromium/policies/managed && sudo chown a+rw- /etc/chromium/policies/managed
+sudo mkdir -p /etc/brave/policies/managed && sudo chown a+rw- /etc/brave/policies/managed
+```
+
+After doing this:
+1. Simply use iNiR's wallpaper selector or color picker.
+2. The script will automatically trigger `apply-chrome-theme.sh`, which seamlessly overrides your active browser's top bar colors.
+3. Your browser matches your desktop without needing browser extensions!
+
+## Showcase
+
+Here is a glimpse of how Chromium integrates perfectly into your themed workspace.
+
+![Chromium Showcase](/images/showcase-chromium.png)
+
+### Features
+
+- Native window controls integration.
+- Light and Dark theme synchronization.
+- Accent colors sync via GTK settings.

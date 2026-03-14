@@ -1,0 +1,58 @@
+---
+title: "Vencord"
+description: "How to theme Vencord with iNiR"
+---
+
+# Vencord
+
+Vencord is a custom client and mod for Discord. Because Discord runs on web technologies, we can seamlessly theme it using CSS variables exported by iNiR.
+
+## Documentation
+
+iNiR ships with a python script (`scripts/colors/system24_palette.py`) that generates a fully Material You-compliant Vencord theme based on the [System24](https://github.com/refact0r/system24) and [Midnight](https://github.com/refact0r/midnight-discord) base themes.
+
+### How it works
+
+1. It reads your current palette from `~/.local/state/quickshell/user/generated/colors.json`.
+2. It generates a full CSS theme overriding System24 and Midnight color variables, utilizing `color-mix` and adjusting luminance for interaction states (hover, active, mentions).
+3. The script automatically exports two theme variants:
+   - `system24.theme.css`
+   - `ii-midnight.theme.css`
+4. The files are placed directly into your Vesktop/Vencord themes folder (`~/.config/vesktop/themes/`).
+
+### Installation
+
+To enable iNiR to generate the Discord theme, you must first enable it in your configuration:
+
+1. Open iNiR Settings (`Super + S` or via the Quick Settings panel).
+2. If using the **Material** family: go to **Advanced** → **Color generation** and enable **Vesktop/Discord**.
+3. If using the **Waffle** family: go to **Themes** → **Theming** and enable **Vesktop/Discord theming**.
+4. Alternatively, you can edit your `config.json` directly:
+   ```json
+   "appearance": {
+     "wallpaperTheming": {
+       "enableVesktop": true
+     }
+   }
+   ```
+
+Then, configure Vencord:
+
+1. Ensure you have [Vesktop](https://github.com/Vencord/Vesktop) installed (or Vencord configured to read from `~/.config/vesktop/themes/`).
+2. Open Discord/Vesktop Settings.
+3. Scroll down to the **Vencord** section and click **Themes**.
+4. Enable either the **iNiR Material (System24)** or **ii-midnight** theme.
+
+*Note: Whenever your wallpaper or system theme changes, the `.css` files are instantly updated. Vencord will automatically hot-reload the CSS without requiring a restart!*
+
+## Showcase
+
+Here is what Vencord looks like integrated with your desktop theme:
+
+![Vencord Showcase](/images/showcase-vencord.png)
+
+### Features
+
+- Material You color integration.
+- Dynamic theme switching (Light/Dark mode sync).
+- Matches system aesthetics natively.

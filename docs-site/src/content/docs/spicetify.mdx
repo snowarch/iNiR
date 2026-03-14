@@ -1,0 +1,45 @@
+---
+title: "Spicetify"
+description: "How iNiR dynamically themes Spotify using Spicetify"
+---
+
+# Spicetify
+
+iNiR can dynamically theme your Spotify desktop client to match your system's Material You colors. It does this by leveraging [Spicetify](https://spicetify.app/) and injecting a custom generated theme.
+
+## Documentation
+
+iNiR uses a dedicated shell script (`scripts/colors/apply-spicetify-theme.sh`) to bridge Niri's `matugen` pipeline with Spicetify's theme engine.
+
+### How it works
+
+1. It reads your generated primary, surface, and container colors from `colors.json`.
+2. It generates a custom Spicetify configuration file at `~/.config/spicetify/Themes/Inir/color.ini`.
+3. It downloads the base layout CSS from the popular **Sleek** Spicetify theme to ensure Spotify's UI elements are cleanly structured.
+4. It sets your active Spicetify theme to `Inir` and the scheme to `matugen`.
+5. **Live Reloading:** If Spicetify is actively running, it launches a background process (`spicetify watch`). This means that as soon as you change your wallpaper, the script simply overwrites `color.ini` and the `watch` process immediately hot-reloads Spotify's colors—without restarting the client!
+
+### Installation
+
+To enable iNiR to generate the Spicetify theme, you must first enable it in your configuration:
+
+1. Open iNiR Settings (`Super + S` or via the Quick Settings panel).
+2. If using the **Material** family: go to **Advanced** → **Color generation** and enable **Spotify (Spicetify)**.
+3. If using the **Waffle** family: go to **Themes** → **Theming** and enable **Spotify theming**.
+4. Alternatively, you can edit your `config.json` directly:
+   ```json
+   "appearance": {
+     "wallpaperTheming": {
+       "enableSpicetify": true
+     }
+   }
+   ```
+
+Then, configure Spotify and Spicetify on your system:
+
+1. Install the official Spotify desktop client (not the Flatpak or Snap version, as Spicetify requires access to the binary).
+2. Install [Spicetify CLI](https://spicetify.app/docs/getting-started/).
+3. Run `spicetify backup apply` once to patch your client.
+4. iNiR will handle the rest automatically whenever you change your wallpaper or run the theming script!
+
+*Note: The first time the script runs (if Spotify isn't open), it will apply the theme and launch the `watch` daemon in the background. On subsequent runs, it will gracefully update colors on the fly.*
