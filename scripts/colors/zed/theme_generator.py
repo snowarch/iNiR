@@ -114,7 +114,8 @@ def generate_zed_config(colors, scss_path, output_path):
         return f"#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}"
 
     def saturate(hex_color, factor):
-        """Increase saturation of hex color (factor > 1 = more saturated)"""
+        """Increase saturation of hex color (factor > 1 = more saturated).
+        Boosts saturation significantly for very muted colors to guarantee readability."""
         hex_color = hex_color.lstrip("#")
         r = int(hex_color[0:2], 16) / 255.0
         g = int(hex_color[2:4], 16) / 255.0
@@ -137,7 +138,13 @@ def generate_zed_config(colors, scss_path, output_path):
             h = (r - g) / d + 4
         h /= 6.0
 
-        s = min(1.0, s * factor)
+        # Additive saturation boost for very muted colors when factor > 1
+        s = s * factor
+        if factor > 1.0 and s < 0.35:
+            # Force a minimum saturation proportional to the factor
+            s += 0.25 * (factor - 1.0)
+            
+        s = min(1.0, s)
 
         def hue_to_rgb(p, q, t):
             if t < 0:
@@ -162,6 +169,20 @@ def generate_zed_config(colors, scss_path, output_path):
             b = hue_to_rgb(p, q, h - 1 / 3)
 
         return f"#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}"
+
+
+    def mix_colors(hex1, hex2, weight=0.1):
+        """Mix hex2 into hex1 by weight (0.0 to 1.0)"""
+        h1 = hex1.lstrip("#")
+        h2 = hex2.lstrip("#")
+        r1, g1, b1 = int(h1[0:2], 16), int(h1[2:4], 16), int(h1[4:6], 16)
+        r2, g2, b2 = int(h2[0:2], 16), int(h2[2:4], 16), int(h2[4:6], 16)
+
+        r = int(r1 * (1 - weight) + r2 * weight)
+        g = int(g1 * (1 - weight) + g2 * weight)
+        b = int(b1 * (1 - weight) + b2 * weight)
+
+        return f"#{r:02x}{g:02x}{b:02x}"
 
     def _luminance(hex_color):
         hex_color = hex_color.lstrip("#")
@@ -444,38 +465,57 @@ def generate_zed_config(colors, scss_path, output_path):
             for color in player_colors
         ]
 
+        def lighten(color, factor=1.15):
+            return adjust_lightness(color, factor)
+
+        def darken(color, factor=0.85):
+            return adjust_lightness(color, factor)
+
+        # Use terminal colors for guaranteed hue variance on syntax tokens
+        term1 = term_colors.get("term1", error)
+        term2 = term_colors.get("term2", tertiary)
+        term3 = term_colors.get("term3", tertiary)
+        term4 = term_colors.get("term4", primary)
+        term5 = term_colors.get("term5", secondary)
+        term6 = term_colors.get("term6", secondary)
+
+        # Force a strong saturation bump for syntax so it's always readable
+        # Mix 12% of the theme's primary color into the vibrant syntax colors so it matches the vibe
+        syn_red = mix_colors(saturate(term1, 2.0), primary, 0.12)
+        syn_green = mix_colors(saturate(term2, 2.0), primary, 0.12)
+        syn_yellow = mix_colors(saturate(term3, 2.0), primary, 0.12)
+        syn_blue = mix_colors(saturate(term4, 2.0), primary, 0.12)
+        syn_magenta = mix_colors(saturate(term5, 2.0), primary, 0.12)
+        syn_cyan = mix_colors(saturate(term6, 2.0), primary, 0.12)
+
         theme["syntax"] = {
             "attribute": {
-                "color": hex_with_alpha(primary, "ff"),
+                "color": hex_with_alpha(syn_cyan, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "boolean": {
-                "color": hex_with_alpha(tertiary, "ff"),
+                "color": hex_with_alpha(syn_yellow, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "comment": {
-                "color": hex_with_alpha(
-                    adjust_lightness(on_surface_variant, 0.7), "ff"
-                ),
-                "font_style": None,
+                "color": hex_with_alpha(adjust_lightness(on_surface_variant, 0.7), "ff"),
+                "font_style": "italic",
                 "font_weight": None,
             },
             "comment.doc": {
-                "color": hex_with_alpha(
-                    adjust_lightness(on_surface_variant, 0.8), "ff"
-                ),
-                "font_style": None,
+                "color": hex_with_alpha(adjust_lightness(on_surface_variant, 0.8), "ff"),
+                "font_style": "italic",
                 "font_weight": None,
             },
             "constant": {
-                "color": hex_with_alpha(adjust_lightness(tertiary, 0.9), "ff"),
+                "color": hex_with_alpha(syn_yellow, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "constructor": {
-                "color": hex_with_alpha(primary, "ff"),
+                "color": hex_with_alpha(syn_yellow, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
@@ -485,72 +525,72 @@ def generate_zed_config(colors, scss_path, output_path):
                 "font_weight": None,
             },
             "emphasis": {
-                "color": hex_with_alpha(primary, "ff"),
-                "font_style": None,
+                "color": hex_with_alpha(syn_magenta, "ff"),
+                "font_style": "italic",
                 "font_weight": None,
             },
             "emphasis.strong": {
-                "color": hex_with_alpha(adjust_lightness(tertiary, 0.8), "ff"),
+                "color": hex_with_alpha(syn_magenta, "ff"),
                 "font_style": None,
                 "font_weight": 700,
             },
             "enum": {
-                "color": hex_with_alpha(secondary, "ff"),
+                "color": hex_with_alpha(syn_yellow, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "function": {
-                "color": hex_with_alpha(primary, "ff"),
+                "color": hex_with_alpha(syn_blue, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "hint": {
-                "color": hex_with_alpha(adjust_lightness(primary, 0.7), "ff"),
+                "color": hex_with_alpha(syn_cyan, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "keyword": {
-                "color": hex_with_alpha(secondary, "ff"),
+                "color": hex_with_alpha(syn_magenta, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "label": {
-                "color": hex_with_alpha(primary, "ff"),
+                "color": hex_with_alpha(syn_cyan, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "link_text": {
-                "color": hex_with_alpha(primary, "ff"),
-                "font_style": "normal",
+                "color": hex_with_alpha(syn_blue, "ff"),
+                "font_style": "underline",
                 "font_weight": None,
             },
             "link_uri": {
-                "color": hex_with_alpha(secondary, "ff"),
-                "font_style": None,
+                "color": hex_with_alpha(syn_cyan, "ff"),
+                "font_style": "underline",
                 "font_weight": None,
             },
             "namespace": {
-                "color": hex_with_alpha(on_surface, "ff"),
+                "color": hex_with_alpha(syn_yellow, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "number": {
-                "color": hex_with_alpha(adjust_lightness(tertiary, 0.8), "ff"),
+                "color": hex_with_alpha(syn_yellow, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "operator": {
-                "color": hex_with_alpha(secondary, "ff"),
+                "color": hex_with_alpha(syn_cyan, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "predictive": {
-                "color": hex_with_alpha(adjust_lightness(secondary, 0.8), "ff"),
+                "color": hex_with_alpha(adjust_lightness(on_surface_variant, 0.7), "ff"),
                 "font_style": "italic",
                 "font_weight": None,
             },
             "preproc": {
-                "color": hex_with_alpha(on_surface, "ff"),
+                "color": hex_with_alpha(syn_magenta, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
@@ -560,87 +600,92 @@ def generate_zed_config(colors, scss_path, output_path):
                 "font_weight": None,
             },
             "property": {
-                "color": hex_with_alpha(adjust_lightness(primary, 0.85), "ff"),
+                "color": hex_with_alpha(syn_red, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "punctuation": {
-                "color": hex_with_alpha(on_surface, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "punctuation.bracket": {
-                "color": hex_with_alpha(adjust_lightness(on_surface, 0.9), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "punctuation.delimiter": {
-                "color": hex_with_alpha(adjust_lightness(on_surface, 0.9), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "punctuation.list_marker": {
-                "color": hex_with_alpha(adjust_lightness(primary, 0.85), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "punctuation.markup": {
-                "color": hex_with_alpha(adjust_lightness(primary, 0.85), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "punctuation.special": {
-                "color": hex_with_alpha(adjust_lightness(error, 0.8), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "selector": {
-                "color": hex_with_alpha(adjust_lightness(tertiary, 0.9), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "selector.pseudo": {
-                "color": hex_with_alpha(primary, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "string": {
-                "color": hex_with_alpha(tertiary, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "string.escape": {
                 "color": hex_with_alpha(on_surface_variant, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
+            "punctuation.bracket": {
+                "color": hex_with_alpha(on_surface_variant, "ff"),
+                "font_style": None,
+                "font_weight": None,
+            },
+            "punctuation.delimiter": {
+                "color": hex_with_alpha(on_surface_variant, "ff"),
+                "font_style": None,
+                "font_weight": None,
+            },
+            "punctuation.list_marker": {
+                "color": hex_with_alpha(syn_cyan, "ff"),
+                "font_style": None,
+                "font_weight": None,
+            },
+            "punctuation.markup": {
+                "color": hex_with_alpha(syn_cyan, "ff"),
+                "font_style": None,
+                "font_weight": None,
+            },
+            "punctuation.special": {
+                "color": hex_with_alpha(syn_cyan, "ff"),
+                "font_style": None,
+                "font_weight": None,
+            },
+            "selector": {
+                "color": hex_with_alpha(syn_magenta, "ff"),
+                "font_style": None,
+                "font_weight": None,
+            },
+            "selector.pseudo": {
+                "color": hex_with_alpha(syn_cyan, "ff"),
+                "font_style": None,
+                "font_weight": None,
+            },
+            "string": {
+                "color": hex_with_alpha(syn_green, "ff"),
+                "font_style": None,
+                "font_weight": None,
+            },
+            "string.escape": {
+                "color": hex_with_alpha(syn_yellow, "ff"),
+                "font_style": None,
+                "font_weight": None,
+            },
             "string.regex": {
-                "color": hex_with_alpha(tertiary, "ff"),
+                "color": hex_with_alpha(syn_red, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "string.special": {
-                "color": hex_with_alpha(tertiary, "ff"),
+                "color": hex_with_alpha(syn_yellow, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "string.special.symbol": {
-                "color": hex_with_alpha(tertiary, "ff"),
+                "color": hex_with_alpha(syn_yellow, "ff"),
+                "font_style": None,
+                "font_weight": None,
+            },
+            "tag": {
+                "color": hex_with_alpha(syn_red, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "text.literal": {
-                "color": hex_with_alpha(tertiary, "ff"),
+                "color": hex_with_alpha(syn_green, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "title": {
-                "color": hex_with_alpha(primary, "ff"),
+                "color": hex_with_alpha(syn_blue, "ff"),
                 "font_style": None,
-                "font_weight": 400,
+                "font_weight": 700,
             },
-            "variable.special": {
-                "color": hex_with_alpha(tertiary, "ff"),
+            "type": {
+                "color": hex_with_alpha(syn_yellow, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
@@ -650,12 +695,12 @@ def generate_zed_config(colors, scss_path, output_path):
                 "font_weight": None,
             },
             "variable.special": {
-                "color": hex_with_alpha(adjust_lightness(tertiary, 0.8), "ff"),
+                "color": hex_with_alpha(syn_red, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "variant": {
-                "color": hex_with_alpha(primary, "ff"),
+                "color": hex_with_alpha(syn_blue, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
@@ -870,34 +915,51 @@ def generate_zed_config(colors, scss_path, output_path):
             for color in player_colors
         ]
 
+        # Use terminal colors for guaranteed hue variance on syntax tokens
+        term1 = term_colors.get("term1", error)
+        term2 = term_colors.get("term2", tertiary)
+        term3 = term_colors.get("term3", tertiary)
+        term4 = term_colors.get("term4", primary)
+        term5 = term_colors.get("term5", secondary)
+        term6 = term_colors.get("term6", secondary)
+
+        # Force a strong saturation bump and slightly darken for light theme legibility
+        # Mix 12% of the theme's primary color into the vibrant syntax colors so it matches the vibe
+        syn_red = darken(mix_colors(saturate(term1, 2.0), primary, 0.12), 0.8)
+        syn_green = darken(mix_colors(saturate(term2, 2.0), primary, 0.12), 0.8)
+        syn_yellow = darken(mix_colors(saturate(term3, 2.0), primary, 0.12), 0.8)
+        syn_blue = darken(mix_colors(saturate(term4, 2.0), primary, 0.12), 0.8)
+        syn_magenta = darken(mix_colors(saturate(term5, 2.0), primary, 0.12), 0.8)
+        syn_cyan = darken(mix_colors(saturate(term6, 2.0), primary, 0.12), 0.8)
+
         light_theme["syntax"] = {
             "attribute": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
+                "color": hex_with_alpha(syn_cyan, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "boolean": {
-                "color": hex_with_alpha(saturate(tertiary, 1.5), "ff"),
+                "color": hex_with_alpha(syn_yellow, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "comment": {
                 "color": hex_with_alpha(on_surface_variant, "ff"),
-                "font_style": None,
+                "font_style": "italic",
                 "font_weight": None,
             },
             "comment.doc": {
                 "color": hex_with_alpha(on_surface_variant, "ff"),
-                "font_style": None,
+                "font_style": "italic",
                 "font_weight": None,
             },
             "constant": {
-                "color": hex_with_alpha(saturate(tertiary, 1.5), "ff"),
+                "color": hex_with_alpha(syn_yellow, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "constructor": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
+                "color": hex_with_alpha(syn_yellow, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
@@ -907,72 +969,72 @@ def generate_zed_config(colors, scss_path, output_path):
                 "font_weight": None,
             },
             "emphasis": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
-                "font_style": None,
+                "color": hex_with_alpha(syn_magenta, "ff"),
+                "font_style": "italic",
                 "font_weight": None,
             },
             "emphasis.strong": {
-                "color": hex_with_alpha(saturate(tertiary, 1.5), "ff"),
+                "color": hex_with_alpha(syn_magenta, "ff"),
                 "font_style": None,
                 "font_weight": 700,
             },
             "enum": {
-                "color": hex_with_alpha(saturate(secondary, 1.5), "ff"),
+                "color": hex_with_alpha(syn_yellow, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "function": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
+                "color": hex_with_alpha(syn_blue, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "hint": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
+                "color": hex_with_alpha(syn_cyan, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "keyword": {
-                "color": hex_with_alpha(saturate(secondary, 1.5), "ff"),
+                "color": hex_with_alpha(syn_magenta, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "label": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
+                "color": hex_with_alpha(syn_cyan, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "link_text": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
-                "font_style": "normal",
+                "color": hex_with_alpha(syn_blue, "ff"),
+                "font_style": "underline",
                 "font_weight": None,
             },
             "link_uri": {
-                "color": hex_with_alpha(saturate(secondary, 1.5), "ff"),
-                "font_style": None,
+                "color": hex_with_alpha(syn_cyan, "ff"),
+                "font_style": "underline",
                 "font_weight": None,
             },
             "namespace": {
-                "color": hex_with_alpha(on_surface, "ff"),
+                "color": hex_with_alpha(syn_yellow, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "number": {
-                "color": hex_with_alpha(saturate(tertiary, 1.5), "ff"),
+                "color": hex_with_alpha(syn_yellow, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "operator": {
-                "color": hex_with_alpha(saturate(secondary, 1.5), "ff"),
+                "color": hex_with_alpha(syn_cyan, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "predictive": {
-                "color": hex_with_alpha(saturate(secondary, 1.5), "ff"),
+                "color": hex_with_alpha(on_surface_variant, "ff"),
                 "font_style": "italic",
                 "font_weight": None,
             },
             "preproc": {
-                "color": hex_with_alpha(on_surface, "ff"),
+                "color": hex_with_alpha(syn_magenta, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
@@ -982,7 +1044,7 @@ def generate_zed_config(colors, scss_path, output_path):
                 "font_weight": None,
             },
             "property": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
+                "color": hex_with_alpha(syn_red, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
@@ -1002,72 +1064,72 @@ def generate_zed_config(colors, scss_path, output_path):
                 "font_weight": None,
             },
             "punctuation.list_marker": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
+                "color": hex_with_alpha(syn_cyan, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "punctuation.markup": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
+                "color": hex_with_alpha(syn_cyan, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "punctuation.special": {
-                "color": hex_with_alpha(saturate(error, 1.5), "ff"),
+                "color": hex_with_alpha(syn_cyan, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "selector": {
-                "color": hex_with_alpha(saturate(tertiary, 1.5), "ff"),
+                "color": hex_with_alpha(syn_magenta, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "selector.pseudo": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
+                "color": hex_with_alpha(syn_cyan, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "string": {
-                "color": hex_with_alpha(saturate(tertiary, 1.5), "ff"),
+                "color": hex_with_alpha(syn_green, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "string.escape": {
-                "color": hex_with_alpha(on_surface_variant, "ff"),
+                "color": hex_with_alpha(syn_yellow, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "string.regex": {
-                "color": hex_with_alpha(saturate(tertiary, 1.5), "ff"),
+                "color": hex_with_alpha(syn_red, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "string.special": {
-                "color": hex_with_alpha(saturate(tertiary, 1.5), "ff"),
+                "color": hex_with_alpha(syn_yellow, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "string.special.symbol": {
-                "color": hex_with_alpha(saturate(tertiary, 1.5), "ff"),
+                "color": hex_with_alpha(syn_yellow, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "tag": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
+                "color": hex_with_alpha(syn_red, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "text.literal": {
-                "color": hex_with_alpha(saturate(tertiary, 1.5), "ff"),
+                "color": hex_with_alpha(syn_green, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "title": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
+                "color": hex_with_alpha(syn_blue, "ff"),
                 "font_style": None,
-                "font_weight": 400,
+                "font_weight": 700,
             },
             "type": {
-                "color": hex_with_alpha(saturate(secondary, 1.5), "ff"),
+                "color": hex_with_alpha(syn_yellow, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
@@ -1077,12 +1139,12 @@ def generate_zed_config(colors, scss_path, output_path):
                 "font_weight": None,
             },
             "variable.special": {
-                "color": hex_with_alpha(saturate(tertiary, 1.5), "ff"),
+                "color": hex_with_alpha(syn_red, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
             "variant": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
+                "color": hex_with_alpha(syn_blue, "ff"),
                 "font_style": None,
                 "font_weight": None,
             },
