@@ -14,10 +14,10 @@ migration_check() {
 }
 
 migration_preview() {
-  echo -e "${STY_GREEN}+ XF86AudioPlay { spawn \"qs\" ... \"mpris\" \"playPause\"; }${STY_RST}"
-  echo -e "${STY_GREEN}+ XF86AudioPause { spawn \"qs\" ... \"mpris\" \"playPause\"; }${STY_RST}"
-  echo -e "${STY_GREEN}+ XF86AudioNext { spawn \"qs\" ... \"mpris\" \"next\"; }${STY_RST}"
-  echo -e "${STY_GREEN}+ XF86AudioPrev { spawn \"qs\" ... \"mpris\" \"previous\"; }${STY_RST}"
+  echo -e "${STY_GREEN}+ XF86AudioPlay { spawn \"inir\" \"mpris\" \"playPause\"; }${STY_RST}"
+  echo -e "${STY_GREEN}+ XF86AudioPause { spawn \"inir\" \"mpris\" \"playPause\"; }${STY_RST}"
+  echo -e "${STY_GREEN}+ XF86AudioNext { spawn \"inir\" \"mpris\" \"next\"; }${STY_RST}"
+  echo -e "${STY_GREEN}+ XF86AudioPrev { spawn \"inir\" \"mpris\" \"previous\"; }${STY_RST}"
 }
 
 migration_apply() {
@@ -30,7 +30,7 @@ migration_apply() {
   python3 << 'MIGRATE'
 import os
 
-config_path = os.path.expanduser("~/.config/niri/config.kdl")
+config_path = os.path.expanduser(os.environ.get("XDG_CONFIG_HOME", "~/.config")) + "/niri/config.kdl"
 with open(config_path, 'r') as f:
     lines = f.readlines()
 
@@ -52,10 +52,10 @@ for i, line in enumerate(lines):
 if insert_idx is not None:
     media_block = '''
     // Media playback (hardware keys)
-    XF86AudioPlay { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "playPause"; }
-    XF86AudioPause { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "playPause"; }
-    XF86AudioNext { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "next"; }
-    XF86AudioPrev { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "previous"; }
+    XF86AudioPlay { spawn "inir" "mpris" "playPause"; }
+    XF86AudioPause { spawn "inir" "mpris" "playPause"; }
+    XF86AudioNext { spawn "inir" "mpris" "next"; }
+    XF86AudioPrev { spawn "inir" "mpris" "previous"; }
 '''
     lines.insert(insert_idx + 1, media_block)
     

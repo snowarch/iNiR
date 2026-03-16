@@ -55,8 +55,8 @@ Singleton {
     }
 
     property string volumeIcon: {
-        const muted = Audio.sink?.audio.muted ?? false;
-        const volume = Audio.sink?.audio.volume ?? 0;
+        const muted = Audio?.sink?.audio?.muted ?? false;
+        const volume = Audio?.sink?.audio?.volume ?? 0;
         if (muted)
             return "speaker-mute";
         if (volume == 0)
@@ -67,7 +67,7 @@ Singleton {
     }
 
     property string micIcon: {
-        const muted = Audio.source?.audio.muted ?? false;
+        const muted = Audio?.source?.audio?.muted ?? false;
         return muted ? "mic-off" : "mic";
     }
 

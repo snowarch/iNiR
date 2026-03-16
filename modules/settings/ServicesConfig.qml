@@ -89,11 +89,11 @@ ContentPage {
             MaterialTextArea {
                 Layout.fillWidth: true
                 placeholderText: Translation.tr("System prompt")
-                text: Config.options.ai.systemPrompt
+                text: Config.options?.ai?.systemPrompt ?? ""
                 wrapMode: TextEdit.Wrap
                 onTextChanged: {
                     Qt.callLater(() => {
-                        Config.options.ai.systemPrompt = text;
+                        Config.setNestedValue("ai.systemPrompt", text)
                     });
                 }
             }
@@ -109,12 +109,12 @@ ContentPage {
             ConfigSpinBox {
                 icon: "timer_off"
                 text: Translation.tr("Total duration timeout (s)")
-                value: Config.options.musicRecognition.timeout
+                value: Config.options?.musicRecognition?.timeout ?? 16
                 from: 10
                 to: 100
                 stepSize: 2
                 onValueChanged: {
-                    Config.options.musicRecognition.timeout = value;
+                    Config.setNestedValue("musicRecognition.timeout", value)
                 }
                 StyledToolTip {
                     text: Translation.tr("Maximum time to wait for music recognition result")
@@ -123,12 +123,12 @@ ContentPage {
             ConfigSpinBox {
                 icon: "av_timer"
                 text: Translation.tr("Polling interval (s)")
-                value: Config.options.musicRecognition.interval
+                value: Config.options?.musicRecognition?.interval ?? 4
                 from: 2
                 to: 10
                 stepSize: 1
                 onValueChanged: {
-                    Config.options.musicRecognition.interval = value;
+                    Config.setNestedValue("musicRecognition.interval", value)
                 }
                 StyledToolTip {
                     text: Translation.tr("How often to check for recognition result")
@@ -146,10 +146,10 @@ ContentPage {
             MaterialTextArea {
                 Layout.fillWidth: true
                 placeholderText: Translation.tr("User agent (for services that require it)")
-                text: Config.options.networking.userAgent
+                text: Config.options?.networking?.userAgent ?? "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
                 wrapMode: TextEdit.Wrap
                 onTextChanged: {
-                    Config.options.networking.userAgent = text;
+                    Config.setNestedValue("networking.userAgent", text)
                 }
             }
         }
@@ -164,12 +164,12 @@ ContentPage {
             ConfigSpinBox {
                 icon: "av_timer"
                 text: Translation.tr("Polling interval (ms)")
-                value: Config.options.resources.updateInterval
+                value: Config.options?.resources?.updateInterval ?? 3000
                 from: 100
                 to: 10000
                 stepSize: 100
                 onValueChanged: {
-                    Config.options.resources.updateInterval = value;
+                    Config.setNestedValue("resources.updateInterval", value)
                 }
                 StyledToolTip {
                     text: Translation.tr("How often to update CPU, RAM, and disk usage stats")
@@ -186,9 +186,9 @@ ContentPage {
         SettingsGroup {
             SettingsSwitch {
                 text: Translation.tr("Use Levenshtein distance-based algorithm instead of fuzzy")
-                checked: Config.options.search.sloppy
+                checked: Config.options?.search?.sloppy ?? false
                 onCheckedChanged: {
-                    Config.options.search.sloppy = checked;
+                    Config.setNestedValue("search.sloppy", checked)
                 }
                 StyledToolTip {
                     text: Translation.tr("Could be better if you make a ton of typos,\nbut results can be weird and might not work with acronyms\n(e.g. \"GIMP\" might not give you the paint program)")
@@ -202,28 +202,28 @@ ContentPage {
                     MaterialTextArea {
                         Layout.fillWidth: true
                         placeholderText: Translation.tr("Action")
-                        text: Config.options.search.prefix.action
+                        text: Config.options?.search?.prefix?.action ?? "/"
                         wrapMode: TextEdit.Wrap
                         onTextChanged: {
-                            Config.options.search.prefix.action = text;
+                            Config.setNestedValue("search.prefix.action", text)
                         }
                     }
                     MaterialTextArea {
                         Layout.fillWidth: true
                         placeholderText: Translation.tr("Clipboard")
-                        text: Config.options.search.prefix.clipboard
+                        text: Config.options?.search?.prefix?.clipboard ?? ";"
                         wrapMode: TextEdit.Wrap
                         onTextChanged: {
-                            Config.options.search.prefix.clipboard = text;
+                            Config.setNestedValue("search.prefix.clipboard", text)
                         }
                     }
                     MaterialTextArea {
                         Layout.fillWidth: true
                         placeholderText: Translation.tr("Emojis")
-                        text: Config.options.search.prefix.emojis
+                        text: Config.options?.search?.prefix?.emojis ?? ":"
                         wrapMode: TextEdit.Wrap
                         onTextChanged: {
-                            Config.options.search.prefix.emojis = text;
+                            Config.setNestedValue("search.prefix.emojis", text)
                         }
                     }
                 }
@@ -233,28 +233,28 @@ ContentPage {
                     MaterialTextArea {
                         Layout.fillWidth: true
                         placeholderText: Translation.tr("Math")
-                        text: Config.options.search.prefix.math
+                        text: Config.options?.search?.prefix?.math ?? "="
                         wrapMode: TextEdit.Wrap
                         onTextChanged: {
-                            Config.options.search.prefix.math = text;
+                            Config.setNestedValue("search.prefix.math", text)
                         }
                     }
                     MaterialTextArea {
                         Layout.fillWidth: true
                         placeholderText: Translation.tr("Shell command")
-                        text: Config.options.search.prefix.shellCommand
+                        text: Config.options?.search?.prefix?.shellCommand ?? "$"
                         wrapMode: TextEdit.Wrap
                         onTextChanged: {
-                            Config.options.search.prefix.shellCommand = text;
+                            Config.setNestedValue("search.prefix.shellCommand", text)
                         }
                     }
                     MaterialTextArea {
                         Layout.fillWidth: true
                         placeholderText: Translation.tr("Web search")
-                        text: Config.options.search.prefix.webSearch
+                        text: Config.options?.search?.prefix?.webSearch ?? "?"
                         wrapMode: TextEdit.Wrap
                         onTextChanged: {
-                            Config.options.search.prefix.webSearch = text;
+                            Config.setNestedValue("search.prefix.webSearch", text)
                         }
                     }
                 }
@@ -264,10 +264,10 @@ ContentPage {
                 MaterialTextArea {
                     Layout.fillWidth: true
                     placeholderText: Translation.tr("Base URL")
-                    text: Config.options.search.engineBaseUrl
+                    text: Config.options?.search?.engineBaseUrl ?? "https://www.google.com/search?q="
                     wrapMode: TextEdit.Wrap
                     onTextChanged: {
-                        Config.options.search.engineBaseUrl = text;
+                        Config.setNestedValue("search.engineBaseUrl", text)
                     }
                 }
             }
@@ -660,7 +660,7 @@ ContentPage {
                             // Separate window mode (default): settings.qml is a separate qs process.
                             // Singletons are isolated per-process, so we must use IPC to reach
                             // the main shell's ShellUpdates.openOverlay() instead.
-                            Quickshell.execDetached(["/usr/bin/qs", "-p", Quickshell.shellPath("shell.qml"), "ipc", "call", "shellUpdate", "open"])
+                            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "shellUpdate", "open"])
                         }
                     }
 

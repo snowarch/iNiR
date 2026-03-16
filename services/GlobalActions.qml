@@ -31,6 +31,10 @@ Singleton {
     // ── Public API ──────────────────────────────────────────────────────
     readonly property var allActions: _rebuildActions()
 
+    function runLauncher(args): void {
+        Quickshell.execDetached([Quickshell.shellPath("scripts/inir")].concat(args ?? []))
+    }
+
     function fuzzyQuery(query: string): list<var> {
         if (!query || query.trim() === "") return allActions
         const q = query.toLowerCase().trim()
@@ -102,7 +106,7 @@ Singleton {
         }
 
         function open(): void {
-            Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "overview", "actionOpen"])
+            root.runLauncher(["overview", "actionOpen"])
         }
     }
 
@@ -166,7 +170,7 @@ Singleton {
             category: "system",
             keywords: ["lock", "security", "screen"],
             execute: () => {
-                Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "lock", "activate"])
+                root.runLauncher(["lock", "activate"])
             }
         },
         {
@@ -177,7 +181,7 @@ Singleton {
             category: "system",
             keywords: ["power", "shutdown", "reboot", "logout", "suspend", "session"],
             execute: () => {
-                Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "session", "open"])
+                root.runLauncher(["session", "open"])
             }
         },
         {
@@ -270,8 +274,8 @@ Singleton {
             category: "appearance",
             keywords: ["wallpaper", "background", "wall", "image", "grid"],
             execute: () => {
-                Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "coverflowSelector", "close"])
-                Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "wallpaperSelector", "open"])
+                root.runLauncher(["coverflowSelector", "close"])
+                root.runLauncher(["wallpaperSelector", "open"])
             }
         },
         {
@@ -282,8 +286,8 @@ Singleton {
             category: "appearance",
             keywords: ["wallpaper", "background", "wall", "coverflow", "carousel"],
             execute: () => {
-                Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "wallpaperSelector", "close"])
-                Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "coverflowSelector", "open"])
+                root.runLauncher(["wallpaperSelector", "close"])
+                root.runLauncher(["coverflowSelector", "open"])
             }
         },
         {
@@ -354,7 +358,7 @@ Singleton {
             category: "tools",
             keywords: ["screenshot", "snip", "capture", "screen", "region"],
             execute: () => {
-                Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "region", "screenshot"])
+                root.runLauncher(["region", "screenshot"])
             }
         },
         {
@@ -391,7 +395,7 @@ Singleton {
             category: "tools",
             keywords: ["clipboard", "paste", "history", "cliphist", "copy"],
             execute: () => {
-                Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "clipboard", "open"])
+                root.runLauncher(["clipboard", "open"])
             }
         },
         {
@@ -475,7 +479,7 @@ Singleton {
             category: "tools",
             keywords: ["keyboard", "shortcuts", "cheatsheet", "keybinds", "hotkeys"],
             execute: () => {
-                Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "cheatsheet", "open"])
+                root.runLauncher(["cheatsheet", "open"])
             }
         },
         {
@@ -499,7 +503,7 @@ Singleton {
             category: "media",
             keywords: ["play", "pause", "media", "music", "player", "mpris"],
             execute: () => {
-                Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "mpris", "playPause"])
+                root.runLauncher(["mpris", "playPause"])
             }
         },
         {
@@ -510,7 +514,7 @@ Singleton {
             category: "media",
             keywords: ["next", "skip", "track", "media", "forward"],
             execute: () => {
-                Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "mpris", "next"])
+                root.runLauncher(["mpris", "next"])
             }
         },
         {
@@ -521,7 +525,7 @@ Singleton {
             category: "media",
             keywords: ["previous", "back", "track", "media", "rewind"],
             execute: () => {
-                Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "mpris", "previous"])
+                root.runLauncher(["mpris", "previous"])
             }
         },
         {
@@ -647,7 +651,7 @@ Singleton {
             category: "settings",
             keywords: ["overview", "windows", "workspace"],
             execute: () => {
-                Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "overview", "toggle"])
+                root.runLauncher(["overview", "toggle"])
             }
         },
         {
@@ -658,7 +662,7 @@ Singleton {
             category: "settings",
             keywords: ["sidebar", "left", "panel"],
             execute: () => {
-                Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "sidebarLeft", "open"])
+                root.runLauncher(["sidebarLeft", "open"])
             }
         },
         {
@@ -669,7 +673,7 @@ Singleton {
             category: "settings",
             keywords: ["sidebar", "right", "panel"],
             execute: () => {
-                Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "sidebarRight", "open"])
+                root.runLauncher(["sidebarRight", "open"])
             }
         },
         {
@@ -680,7 +684,7 @@ Singleton {
             category: "settings",
             keywords: ["osk", "keyboard", "onscreen", "virtual"],
             execute: () => {
-                Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "osk", "toggle"])
+                root.runLauncher(["osk", "toggle"])
             }
         },
         {
@@ -718,7 +722,7 @@ Singleton {
             category: "settings",
             keywords: ["family", "panel", "ii", "material", "layout"],
             execute: () => {
-                Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "panelFamily", "set", "ii"])
+                root.runLauncher(["panelFamily", "set", "ii"])
             }
         },
         {
@@ -729,7 +733,7 @@ Singleton {
             category: "settings",
             keywords: ["family", "panel", "waffle", "win11", "windows", "layout"],
             execute: () => {
-                Quickshell.execDetached(["/usr/bin/qs", "-c", "inir", "ipc", "call", "panelFamily", "set", "waffle"])
+                root.runLauncher(["panelFamily", "set", "waffle"])
             }
         },
     ]

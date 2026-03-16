@@ -89,7 +89,7 @@ WBarAttachedPanelContent {
                             implicitSize: 16
                         }
                         onClicked: {
-                            Quickshell.execDetached(["/usr/bin/qs", "-p", Quickshell.shellPath("shell.qml"), "ipc", "call", "settings", "open"])
+                            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"])
                             GlobalStates.waffleWidgetsOpen = false
                         }
                     }
@@ -600,7 +600,7 @@ WBarAttachedPanelContent {
                             iconName: "terminal"
                             label: Translation.tr("Terminal")
                             onClicked: {
-                                Quickshell.execDetached([Quickshell.shellPath("scripts/launch-terminal.sh")])
+                                Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "terminal"])
                                 GlobalStates.waffleWidgetsOpen = false
                             }
                         }
@@ -610,7 +610,7 @@ WBarAttachedPanelContent {
                             iconName: "settings"
                             label: Translation.tr("Settings")
                             onClicked: {
-                                Quickshell.execDetached(["/usr/bin/qs", "-p", Quickshell.shellPath("shell.qml"), "ipc", "call", "settings", "open"])
+                                Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"])
                                 GlobalStates.waffleWidgetsOpen = false
                             }
                         }

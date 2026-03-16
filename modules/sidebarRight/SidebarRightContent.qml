@@ -524,7 +524,7 @@ Item {
                     console.log("[SidebarRight] Opening new settings window via IPC");
                     GlobalStates.sidebarRightOpen = false;
                     Qt.callLater(() => {
-                        Quickshell.execDetached(["/usr/bin/qs", "-p", Quickshell.shellPath("shell.qml"), "ipc", "call", "settings", "open"]);
+                        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"]);
                     })
                 }
                 StyledToolTip {

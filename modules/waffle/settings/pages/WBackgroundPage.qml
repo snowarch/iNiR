@@ -57,7 +57,7 @@ WSettingsPage {
             buttonText: Translation.tr("Change")
             onButtonClicked: {
                 Config.setNestedValue("wallpaperSelector.selectionTarget", "waffle")
-                Quickshell.execDetached(["/usr/bin/qs", "-p", Quickshell.shellPath("shell.qml"), "ipc", "call", "wallpaperSelector", "toggle"])
+                Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "wallpaperSelector", "toggle"])
             }
         }
 
@@ -75,6 +75,14 @@ WSettingsPage {
                     }
                 }
             }
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("Hide when fullscreen")
+            icon: "fullscreen_exit"
+            description: Translation.tr("Hide the Waffle wallpaper layer while a fullscreen window is active")
+            checked: root.wBg.hideWhenFullscreen ?? true
+            onCheckedChanged: Config.setNestedValue("waffles.background.hideWhenFullscreen", checked)
         }
 
         WSettingsRow {
@@ -872,7 +880,7 @@ WSettingsPage {
                                     if (mon) {
                                         Config.setNestedValue("wallpaperSelector.selectionTarget", "main")
                                         Config.setNestedValue("wallpaperSelector.targetMonitor", mon)
-                                        Quickshell.execDetached(["/usr/bin/qs", "-p", Quickshell.shellPath("shell.qml"), "ipc", "call", "wallpaperSelector", "toggle"])
+                                        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "wallpaperSelector", "toggle"])
                                     }
                                 }
                             }
@@ -908,7 +916,7 @@ WSettingsPage {
                                 colForeground: Looks.colors.accentFg
                                 onClicked: {
                                     Config.setNestedValue("wallpaperSelector.selectionTarget", "waffle-backdrop")
-                                    Quickshell.execDetached(["/usr/bin/qs", "-p", Quickshell.shellPath("shell.qml"), "ipc", "call", "wallpaperSelector", "toggle"])
+                                    Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "wallpaperSelector", "toggle"])
                                 }
                             }
                             WButton {
@@ -1302,7 +1310,7 @@ WSettingsPage {
             buttonText: Translation.tr("Change")
             onButtonClicked: {
                 Config.setNestedValue("wallpaperSelector.selectionTarget", "waffle-backdrop")
-                Quickshell.execDetached(["/usr/bin/qs", "-p", Quickshell.shellPath("shell.qml"), "ipc", "call", "wallpaperSelector", "toggle"])
+                Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "wallpaperSelector", "toggle"])
             }
         }
 

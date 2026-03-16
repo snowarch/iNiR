@@ -16,20 +16,63 @@ Running `./setup` without arguments launches an interactive menu with all availa
 
 This is the recommended way to use the setup script if you're unsure which command to run.
 
+## How the pieces fit together
+
+There are now three complementary entry points:
+
+- `./setup`
+  - installer, updater, migration runner, rollback, doctor, uninstall
+- `inir`
+  - runtime launcher and operator CLI
+  - use it to start, restart, open settings, inspect status, or call IPC against the active runtime
+- `make install`
+  - packaging-style local install for packagers, testers, or source installs that should behave like a packaged shell payload
+
+Use them like this:
+
+- install once:
+  - `./setup install`
+- runtime operation:
+  - `inir run`
+  - `inir settings`
+  - `inir doctor`
+  - `inir logs`
+  - `inir repair`
+  - `inir status`
+- local distribution validation:
+  - `make test-local`
+  - `inir test-local`
+  - `inir test-local --with-runtime`
+
 ## Install
 
 ```bash
 git clone https://github.com/snowarch/inir.git
 cd inir
 ./setup install
+inir run
 ```
 
 Add `-y` for non-interactive mode.
 
+If you want a packaging-style local install surface instead of the repo-sync installer:
+
+```bash
+sudo make install
+```
+
+That installs:
+
+- `inir` launcher into your install prefix `bin/`
+- shell payload into `/usr/local/share/quickshell/inir` by default
+- user service asset
+- desktop entry
+- runtime metadata so `status` / `doctor` can detect package-managed style installs
+
 ## Update
 
 ```bash
-./setup update
+inir update
 ```
 
 What happens:
@@ -46,7 +89,7 @@ What happens:
 
 Your user configs (`config.json`, `config.kdl`) are never touched.
 
-If `setup` detects that the active iNiR installation is externally managed, `./setup update` does **not** pull or sync repo files into the runtime. In that case it:
+If `setup` detects that the active iNiR installation is externally managed, `inir update` does **not** pull or sync repo files into the runtime. In that case it:
 
 - Shows the detected install mode
 - Shows the package update command when metadata provides one
@@ -56,7 +99,7 @@ If `setup` detects that the active iNiR installation is externally managed, `./s
 ## Doctor
 
 ```bash
-./setup doctor
+inir doctor
 ```
 
 Diagnoses and **automatically fixes** common issues:
@@ -65,9 +108,14 @@ Diagnoses and **automatically fixes** common issues:
 - Python packages (via uv)
 - Version tracking
 - File manifest
-- Starts shell if not running
 
 For externally managed installs, `doctor` can rebuild `~/.config/illogical-impulse/version.json` from the runtime metadata already present under `~/.config/quickshell/inir/version.json`. It also skips the repo-sync manifest requirement when the install is package-managed.
+
+If you want the same repair flow plus restart and filtered logs:
+
+```bash
+inir repair
+```
 
 ## Rollback
 
@@ -117,13 +165,24 @@ Useful when you want to see what you've changed or restore defaults after custom
 |---------|-------------|
 | `./setup` | Interactive menu |
 | `./setup install` | Full installation |
-| `./setup update` | Check remote, pull, sync, restart |
+| `inir update` | Check remote, pull, sync, restart |
 | `./setup status` | Show install mode, update strategy, and health |
 | `./setup migrate` | Review and apply config migrations |
 | `./setup doctor` | Diagnose and auto-fix |
 | `./setup rollback` | Restore previous snapshot |
 | `./setup my-changes` | View and restore user modifications |
 | `./setup uninstall` | Remove iNiR from system |
+| `inir install` | Run the installer from the repo/runtime root |
+| `inir start` | Start iNiR in the background |
+| `inir stop` | Stop the active runtime |
+| `inir run` | Launch iNiR from the active runtime |
+| `inir restart` | Restart the active runtime |
+| `inir settings` | Open settings via IPC |
+| `inir doctor` | Run setup doctor from the active runtime |
+| `inir logs` | Show recent runtime logs |
+| `inir repair` | Doctor + restart + filtered log check |
+| `inir status` | Show runtime path, update mode, and health |
+| `inir test-local` | Run local distribution checks |
 
 Options: `-y` (skip prompts), `-q` (quiet), `-h` (help)
 
@@ -143,16 +202,48 @@ Shows:
 
 For externally managed installs, `status` also shows the detected package update command and makes it explicit that repo-sync updates are disabled for that installation mode.
 
+It also reports:
+
+- resolved runtime path
+- launcher availability
+- runtime metadata availability
+
+You can reach the same status through:
+
+```bash
+inir status
+```
+
+## Local validation
+
+For distribution, launcher, or install-flow changes, test locally with:
+
+```bash
+make test-local
+inir test-local
+inir test-local --with-runtime
+```
+
+These checks cover:
+
+- shell syntax for `setup`, `doctor`, `versioning`, `package-installers`, and `scripts/inir`
+- PKGBUILD syntax for the new Arch package roots
+- local `make install` dry-run
+- launcher path and status resolution
+- optional runtime restart and filtered log/error smoke test
+
 ## What Gets Installed
 
 ### Core Files
 
 | Source | Destination |
 |--------|-------------|
-| QML code | `~/.config/quickshell/inir/` |
+| QML code (`./setup install`) | `~/.config/quickshell/inir/` |
+| QML code (`make install` / package style) | `/usr/share/quickshell/inir/` or `/usr/local/share/quickshell/inir/` |
 | User config | `~/.config/illogical-impulse/config.json` |
 | State files | `~/.local/state/quickshell/user/` |
 | Cache | `~/.cache/quickshell/inir/` |
+| Launcher | `inir` in the install prefix |
 | Super daemon | `~/.local/bin/inir_super_overview_daemon.py` |
 | Daemon service | `~/.config/systemd/user/inir-super-overview.service` |
 
@@ -172,7 +263,7 @@ For externally managed installs, `status` also shows the detected package update
 
 - First install: Existing configs are backed up to `~/inir-backup/`
 - Updates: Your configs are never touched, only QML code is synced
-- Package-managed installs: `./setup update` defers shell payload updates to the package manager instead of syncing from the current repo checkout
+- Package-managed installs: `inir update` defers shell payload updates to the package manager instead of syncing from the current repo checkout
 - Shared configs: Only installed if they don't exist or you approve overwrite
 
 ## Migrations
@@ -327,7 +418,7 @@ rm -f ~/.config/Vesktop/themes/ii-colors.css
 # rm -rf ~/.local/state/quickshell/themes
 
 # Comment out spawn-at-startup in ~/.config/niri/config.kdl:
-# spawn-at-startup "qs" "-c" "ii"
+# spawn-at-startup "inir" "start"
 ```
 
 ### Reinstalling
@@ -338,4 +429,5 @@ To reinstall iNiR after uninstalling:
 git clone https://github.com/snowarch/inir.git
 cd inir
 ./setup install
+inir run
 ```

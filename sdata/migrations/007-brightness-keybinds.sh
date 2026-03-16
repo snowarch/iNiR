@@ -14,8 +14,8 @@ migration_check() {
 }
 
 migration_preview() {
-  echo -e "${STY_GREEN}+ XF86MonBrightnessUp { spawn \"qs\" ... \"brightness\" \"increment\"; }${STY_RST}"
-  echo -e "${STY_GREEN}+ XF86MonBrightnessDown { spawn \"qs\" ... \"brightness\" \"decrement\"; }${STY_RST}"
+  echo -e "${STY_GREEN}+ XF86MonBrightnessUp { spawn \"inir\" \"brightness\" \"increment\"; }${STY_RST}"
+  echo -e "${STY_GREEN}+ XF86MonBrightnessDown { spawn \"inir\" \"brightness\" \"decrement\"; }${STY_RST}"
 }
 
 migration_apply() {
@@ -28,7 +28,7 @@ migration_apply() {
   python3 << 'MIGRATE'
 import os
 
-config_path = os.path.expanduser("~/.config/niri/config.kdl")
+config_path = os.path.expanduser(os.environ.get("XDG_CONFIG_HOME", "~/.config")) + "/niri/config.kdl"
 with open(config_path, 'r') as f:
     lines = f.readlines()
 
@@ -51,8 +51,8 @@ for i, line in enumerate(lines):
 if insert_idx is not None:
     brightness_block = '''
     // Brightness (hardware keys)
-    XF86MonBrightnessUp { spawn "qs" "-c" "ii" "ipc" "call" "brightness" "increment"; }
-    XF86MonBrightnessDown { spawn "qs" "-c" "ii" "ipc" "call" "brightness" "decrement"; }
+    XF86MonBrightnessUp { spawn "inir" "brightness" "increment"; }
+    XF86MonBrightnessDown { spawn "inir" "brightness" "decrement"; }
 '''
     lines.insert(insert_idx + 1, brightness_block)
     

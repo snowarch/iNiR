@@ -100,7 +100,7 @@ Rectangle {
             icon: "settings"
             onClicked: {
                 GlobalStates.controlPanelOpen = false
-                Quickshell.execDetached(["/usr/bin/qs", "-p", Quickshell.shellPath("shell.qml"), "ipc", "call", "settings", "open"])
+                Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"])
             }
         }
 
@@ -108,7 +108,7 @@ Rectangle {
             icon: "lock"
             onClicked: {
                 GlobalStates.controlPanelOpen = false
-                Quickshell.execDetached(["/usr/bin/qs", "-p", Quickshell.shellPath("shell.qml"), "ipc", "call", "lock", "activate"])
+                Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "lock", "activate"])
             }
         }
 

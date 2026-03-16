@@ -50,7 +50,7 @@ Singleton {
     }
 
     function lock() {
-        Quickshell.execDetached(["/usr/bin/qs", "-p", Quickshell.shellPath("shell.qml"), "ipc", "call", "lock", "activate"]);
+        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "lock", "activate"]);
     }
 
     function suspend() {

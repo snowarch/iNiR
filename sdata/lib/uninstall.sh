@@ -19,12 +19,15 @@ declare -A INIR_ONLY_PATHS=(
     ["${XDG_CONFIG_HOME}/illogical-impulse"]="iNiR user preferences"
     ["${XDG_STATE_HOME}/quickshell/user"]="iNiR state (notifications, todo)"
     ["${XDG_CACHE_HOME}/quickshell/inir"]="iNiR cache"
+    ["${XDG_BIN_HOME}/inir"]="iNiR launcher"
     ["${HOME}/.local/bin/inir_super_overview_daemon.py"]="iNiR super daemon"
     ["${XDG_CONFIG_HOME}/systemd/user/inir-super-overview.service"]="iNiR daemon service"
     ["${XDG_CONFIG_HOME}/vesktop/themes/system24.theme.css"]="iNiR Vesktop theme"
     ["${XDG_CONFIG_HOME}/vesktop/themes/ii-colors.css"]="iNiR Vesktop colors"
     ["${XDG_CONFIG_HOME}/Vesktop/themes/system24.theme.css"]="iNiR Vesktop theme (alt)"
     ["${XDG_CONFIG_HOME}/Vesktop/themes/ii-colors.css"]="iNiR Vesktop colors (alt)"
+    ["${XDG_DATA_HOME}/applications/inir.desktop"]="iNiR desktop entry"
+    ["${XDG_DATA_HOME}/icons/hicolor/scalable/apps/inir.svg"]="iNiR launcher icon"
     ["${HOME}/.local/bin/sync-pixel-sddm.py"]="iNiR SDDM theme sync helper"
 )
 
@@ -78,7 +81,10 @@ declare -A INIR_PACKAGES=(
 has_other_quickshell_configs() {
     local qs_dir="${XDG_CONFIG_HOME}/quickshell"
     if [[ -d "$qs_dir" ]]; then
-        local other_configs=$(find "$qs_dir" -maxdepth 1 -type d ! -name "ii" ! -name "quickshell" 2>/dev/null | wc -l)
+        local other_configs
+        other_configs=$(find "$qs_dir" -mindepth 2 -maxdepth 2 -type f -name "shell.qml" \
+            ! -path "${qs_dir}/inir/shell.qml" \
+            ! -path "${qs_dir}/ii/shell.qml" 2>/dev/null | wc -l)
         [[ "$other_configs" -gt 0 ]]
     else
         return 1
@@ -110,7 +116,7 @@ has_other_niri_usage() {
 # Check if niri config has iNiR-specific content or is user-customized
 niri_config_is_inir_default() {
     local config="${XDG_CONFIG_HOME}/niri/config.kdl"
-    [[ -f "$config" ]] && grep -q "quickshell:ii" "$config" 2>/dev/null
+    [[ -f "$config" ]] && grep -qE 'spawn-at-startup "([^"]*/)?inir" "start"|spawn-at-startup "qs" "-c" "inir"|quickshell:iiBackdrop' "$config" 2>/dev/null
 }
 
 # Check if niri config has user customizations beyond iNiR defaults
@@ -794,7 +800,9 @@ run_uninstall() {
 
     # Check if installed
     if [[ ! -f "${XDG_CONFIG_HOME}/illogical-impulse/installed_true" ]] && \
-       [[ ! -d "${XDG_CONFIG_HOME}/quickshell/inir" ]]; then
+       [[ ! -d "${XDG_CONFIG_HOME}/quickshell/inir" ]] && \
+       [[ ! -f "${XDG_CONFIG_HOME}/illogical-impulse/version.json" ]] && \
+       [[ ! -f "${XDG_BIN_HOME}/inir" ]]; then
         tui_warn "iNiR does not appear to be installed"
         return 1
     fi

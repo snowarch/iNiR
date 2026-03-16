@@ -62,7 +62,7 @@ Item { // Bar content region
                 monochromeIcon: true,
                 text: Translation.tr("Settings"),
                 action: () => {
-                    Quickshell.execDetached(["/usr/bin/qs", "-p", Quickshell.shellPath("shell.qml"), "ipc", "call", "settings", "open"])
+                    Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"])
                 },
             },
         ]

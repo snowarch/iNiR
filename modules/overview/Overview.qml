@@ -406,6 +406,7 @@ Scope {
         }
         function actionOpen(): void {
             if (Config.options?.panelFamily === "waffle") {
+                LauncherSearch.ensurePrefix(Config.options?.search?.prefix?.action ?? "/")
                 GlobalStates.searchOpen = true;
             } else {
                 overviewScope.openWithPrefix(Config.options?.search?.prefix?.action ?? "/");

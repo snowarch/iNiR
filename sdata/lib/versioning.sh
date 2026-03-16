@@ -8,8 +8,13 @@
 #####################################################################################
 # Version Configuration
 #####################################################################################
+RUNTIME_DIR_USER="${XDG_CONFIG_HOME}/quickshell/inir"
+RUNTIME_DIR_SYSTEM_LOCAL="${INIR_SYSTEM_RUNTIME_DIR_LOCAL:-/usr/local/share/quickshell/inir}"
+RUNTIME_DIR_SYSTEM="${INIR_SYSTEM_RUNTIME_DIR:-/usr/share/quickshell/inir}"
 VERSION_FILE_LOCAL="${XDG_CONFIG_HOME}/illogical-impulse/version.json"
-VERSION_FILE_RUNTIME="${XDG_CONFIG_HOME}/quickshell/inir/version.json"
+VERSION_FILE_RUNTIME_USER="${RUNTIME_DIR_USER}/version.json"
+VERSION_FILE_RUNTIME_SYSTEM_LOCAL="${RUNTIME_DIR_SYSTEM_LOCAL}/version.json"
+VERSION_FILE_RUNTIME_SYSTEM="${RUNTIME_DIR_SYSTEM}/version.json"
 VERSION_FILE_REPO="${REPO_ROOT}/VERSION"
 CHANGELOG_FILE="${REPO_ROOT}/CHANGELOG.md"
 GITHUB_REPO="snowarch/inir"
@@ -18,6 +23,34 @@ GITHUB_API="https://api.github.com/repos/${GITHUB_REPO}"
 # Cache for remote version checks (avoid hammering GitHub)
 VERSION_CACHE_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/inir/version-cache.json"
 VERSION_CACHE_TTL=3600  # 1 hour in seconds
+
+get_runtime_shell_dir() {
+    local override="${INIR_RUNTIME_DIR:-}"
+    if [[ -n "$override" && -f "$override/shell.qml" ]]; then
+        printf '%s' "$override"
+        return
+    fi
+
+    local candidate
+    for candidate in "$RUNTIME_DIR_USER" "$RUNTIME_DIR_SYSTEM_LOCAL" "$RUNTIME_DIR_SYSTEM"; do
+        if [[ -n "$candidate" && -f "$candidate/shell.qml" ]]; then
+            printf '%s' "$candidate"
+            return
+        fi
+    done
+
+    printf '%s' ""
+}
+
+get_runtime_version_file() {
+    local runtime_dir
+    runtime_dir="$(get_runtime_shell_dir)"
+    if [[ -n "$runtime_dir" ]]; then
+        printf '%s/version.json' "$runtime_dir"
+    else
+        printf '%s' ""
+    fi
+}
 
 #####################################################################################
 # Local Version Management
@@ -43,10 +76,19 @@ get_repo_commit() {
 
 # Get installed version info as JSON
 get_installed_version_file() {
-    if [[ -f "$VERSION_FILE_LOCAL" ]]; then
+    local runtime_version_file
+    runtime_version_file="$(get_runtime_version_file)"
+
+    if [[ -n "${INIR_RUNTIME_DIR:-}" && -f "$runtime_version_file" ]]; then
+        printf '%s' "$runtime_version_file"
+    elif [[ -f "$VERSION_FILE_LOCAL" ]]; then
         printf '%s' "$VERSION_FILE_LOCAL"
-    elif [[ -f "$VERSION_FILE_RUNTIME" ]]; then
-        printf '%s' "$VERSION_FILE_RUNTIME"
+    elif [[ -f "$VERSION_FILE_RUNTIME_USER" ]]; then
+        printf '%s' "$VERSION_FILE_RUNTIME_USER"
+    elif [[ -f "$VERSION_FILE_RUNTIME_SYSTEM_LOCAL" ]]; then
+        printf '%s' "$VERSION_FILE_RUNTIME_SYSTEM_LOCAL"
+    elif [[ -f "$VERSION_FILE_RUNTIME_SYSTEM" ]]; then
+        printf '%s' "$VERSION_FILE_RUNTIME_SYSTEM"
     else
         printf '%s' ""
     fi
@@ -198,9 +240,10 @@ get_installed_install_mode() {
     local stored_repo_path
     stored_repo_path="$(get_stored_repo_path)"
 
-    local target="${XDG_CONFIG_HOME}/quickshell/inir"
+    local target
     local target_real=""
     local repo_real=""
+    target="$(get_runtime_shell_dir)"
     target_real=$(realpath "$target" 2>/dev/null || printf '%s' "$target")
 
     if [[ -n "${REPO_ROOT:-}" ]]; then

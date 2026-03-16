@@ -21,6 +21,10 @@ WSettingsPage {
     function isPanelEnabled(panelId: string): bool {
         return (Config.options?.enabledPanels ?? []).includes(panelId)
     }
+
+    function disabledModuleDescription(moduleName: string): string {
+        return moduleName + " " + Translation.tr("is currently disabled in Modules. These settings will apply when you enable it.")
+    }
     
     // Warning when not active
     WSettingsCard {
@@ -46,7 +50,7 @@ WSettingsPage {
     }
     
     WSettingsCard {
-        visible: root.isWaffleActive && root.isPanelEnabled("iiAltSwitcher")
+        visible: root.isWaffleActive
         title: Translation.tr("Alt+Tab Switcher")
         icon: "apps"
         
@@ -60,9 +64,13 @@ WSettingsPage {
                 { value: "cards", displayName: Translation.tr("Cards") },
                 { value: "compact", displayName: Translation.tr("Compact") },
                 { value: "list", displayName: Translation.tr("List") },
+                { value: "skew", displayName: Translation.tr("Skew previews") },
                 { value: "none", displayName: Translation.tr("Disabled") }
             ]
-            onSelected: newValue => Config.setNestedValue("waffles.altSwitcher.preset", newValue)
+            onSelected: newValue => {
+                Config.setNestedValue("waffles.altSwitcher.preset", newValue)
+                Config.setNestedValue("waffles.altSwitcher.noVisualUi", newValue === "none")
+            }
         }
         
         WSettingsSwitch {
@@ -77,7 +85,18 @@ WSettingsPage {
             label: Translation.tr("No visual UI")
             icon: "eye-off"
             description: Translation.tr("Switch windows without showing overlay")
-            checked: Config.options?.waffles?.altSwitcher?.noVisualUi ?? false
+            enabled: {
+                const preset = Config.options?.waffles?.altSwitcher?.preset ?? "thumbnails"
+                return preset !== "skew" && preset !== "none"
+            }
+            checked: {
+                const preset = Config.options?.waffles?.altSwitcher?.preset ?? "thumbnails"
+                if (preset === "none")
+                    return true
+                if (preset === "skew")
+                    return false
+                return Config.options?.waffles?.altSwitcher?.noVisualUi ?? false
+            }
             onCheckedChanged: Config.setNestedValue("waffles.altSwitcher.noVisualUi", checked)
         }
         
@@ -154,9 +173,16 @@ WSettingsPage {
     }
     
     WSettingsCard {
-        visible: root.isWaffleActive && root.isPanelEnabled("wTaskView")
+        visible: root.isWaffleActive
         title: Translation.tr("Task View")
         icon: "task-view-dark"
+
+        WSettingsRow {
+            visible: !root.isPanelEnabled("wTaskView")
+            label: Translation.tr("Module currently disabled")
+            icon: "info"
+            description: root.disabledModuleDescription(Translation.tr("Task View"))
+        }
         
         WSettingsDropdown {
             label: Translation.tr("View mode")
@@ -210,9 +236,16 @@ WSettingsPage {
     }
 
     WSettingsCard {
-        visible: root.isWaffleActive && root.isPanelEnabled("wStartMenu")
+        visible: root.isWaffleActive
         title: Translation.tr("Start Menu")
         icon: "start-here"
+
+        WSettingsRow {
+            visible: !root.isPanelEnabled("wStartMenu")
+            label: Translation.tr("Module currently disabled")
+            icon: "info"
+            description: root.disabledModuleDescription(Translation.tr("Start Menu"))
+        }
 
         WSettingsDropdown {
             label: Translation.tr("Size preset")
@@ -254,9 +287,16 @@ WSettingsPage {
     }
     
     WSettingsCard {
-        visible: root.isWaffleActive && root.isPanelEnabled("wWidgets")
+        visible: root.isWaffleActive
         title: Translation.tr("Widgets Panel")
         icon: "apps"
+
+        WSettingsRow {
+            visible: !root.isPanelEnabled("wWidgets")
+            label: Translation.tr("Module currently disabled")
+            icon: "info"
+            description: root.disabledModuleDescription(Translation.tr("Widgets Panel"))
+        }
         
         WSettingsSwitch {
             label: Translation.tr("Show date & time")
@@ -379,9 +419,16 @@ WSettingsPage {
     }
     
     WSettingsCard {
-        visible: root.isWaffleActive && root.isPanelEnabled("wNotificationCenter")
+        visible: root.isWaffleActive
         title: Translation.tr("Calendar")
         icon: "news"
+
+        WSettingsRow {
+            visible: !root.isPanelEnabled("wNotificationCenter")
+            label: Translation.tr("Module currently disabled")
+            icon: "info"
+            description: root.disabledModuleDescription(Translation.tr("Calendar / Notification Center"))
+        }
         
         WSettingsSwitch {
             label: Translation.tr("Force 2-char day names")

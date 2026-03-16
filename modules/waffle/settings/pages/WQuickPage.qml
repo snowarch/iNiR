@@ -352,7 +352,7 @@ WSettingsPage {
                         } else {
                             Config.setNestedValue("wallpaperSelector.selectionTarget", useMain ? "main" : "waffle")
                         }
-                        Quickshell.execDetached(["/usr/bin/qs", "-p", Quickshell.shellPath("shell.qml"), "ipc", "call", "wallpaperSelector", "toggle"])
+                        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "wallpaperSelector", "toggle"])
                     }
                 }
             }
@@ -527,7 +527,7 @@ WSettingsPage {
                 Layout.fillWidth: true
                 text: Translation.tr("Shortcuts")
                 icon.name: "keyboard"
-                onClicked: Quickshell.execDetached(["/usr/bin/qs", "-p", Quickshell.shellPath("shell.qml"), "ipc", "call", "cheatsheet", "toggle"])
+                onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "cheatsheet", "toggle"])
             }
         }
         

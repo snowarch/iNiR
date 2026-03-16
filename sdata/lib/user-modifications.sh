@@ -18,8 +18,8 @@ TRACKED_PATTERNS=("*.qml" "*.js" "*.py" "*.sh" "*.fish")
 manifest_has_checksums() {
     local manifest_file="$1"
     [[ -f "$manifest_file" ]] || return 1
-    # v2 manifests have "# ii-manifest v2" header
-    head -1 "$manifest_file" | grep -q "ii-manifest v2" && return 0
+    # v2 manifests may have either the legacy ii header or the current inir header
+    head -1 "$manifest_file" | grep -qE "(ii|inir)-manifest v2" && return 0
     # Fallback: check if any line has path:checksum format (64 hex chars)
     grep -q "^[^#].*:[a-f0-9]\{64\}$" "$manifest_file" 2>/dev/null
 }
@@ -207,7 +207,7 @@ show_file_diff() {
     local snapshot_dir="$3"
 
     local current="${target_dir}/${file_path}"
-    local original="${snapshot_dir}/ii/${file_path}"
+    local original="${snapshot_dir}/inir/${file_path}"
 
     if [[ -f "$original" ]] && [[ -f "$current" ]]; then
         echo ""
@@ -278,7 +278,7 @@ handle_user_modifications() {
                 local latest_snapshot
                 latest_snapshot=$(ls -1t "$SNAPSHOTS_DIR" 2>/dev/null | head -1)
 
-                if [[ -n "$latest_snapshot" ]] && [[ -d "${SNAPSHOTS_DIR}/${latest_snapshot}/ii" ]]; then
+                if [[ -n "$latest_snapshot" ]] && [[ -d "${SNAPSHOTS_DIR}/${latest_snapshot}/inir" ]]; then
                     echo ""
                     local shown=0
                     while IFS= read -r f && [[ $shown -lt 3 ]]; do

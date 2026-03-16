@@ -137,8 +137,35 @@ get_missing_dependencies() {
     printf '%s\n' "${doctor_missing_deps[*]}"
 }
 
+doctor_runtime_missing_reported=false
+
+doctor_runtime_dir() {
+    local target
+    target="$(get_runtime_shell_dir)"
+    if [[ -n "$target" && -f "$target/shell.qml" ]]; then
+        printf '%s' "$target"
+    fi
+}
+
+doctor_runtime_dir_or_fail() {
+    local target
+    target="$(doctor_runtime_dir)"
+    if [[ -n "$target" ]]; then
+        printf '%s' "$target"
+        return 0
+    fi
+
+    if [[ "$doctor_runtime_missing_reported" != true ]]; then
+        doctor_fail "Runtime payload missing (run ./setup install)"
+        doctor_runtime_missing_reported=true
+    fi
+
+    return 1
+}
+
 check_critical_files() {
-    local target="${XDG_CONFIG_HOME}/quickshell/inir"
+    local target
+    target="$(doctor_runtime_dir_or_fail)" || return 0
     local critical=("shell.qml" "GlobalStates.qml" "modules/common/Config.qml" "services/NiriService.qml")
     local missing=0
     
@@ -150,7 +177,9 @@ check_critical_files() {
 }
 
 check_script_permissions() {
-    local target="${XDG_CONFIG_HOME}/quickshell/inir/scripts"
+    local target
+    target="$(doctor_runtime_dir_or_fail)" || return 0
+    target="${target}/scripts"
     [[ ! -d "$target" ]] && return 0
     
     local bad=$(find "$target" \( -name "*.sh" -o -name "*.fish" -o -name "*.py" \) ! -executable 2>/dev/null | wc -l)
@@ -192,7 +221,10 @@ check_state_directories() {
 
 check_python_packages() {
     local venv="${XDG_STATE_HOME}/quickshell/.venv"
-    local req="${XDG_CONFIG_HOME}/quickshell/inir/sdata/uv/requirements.txt"
+    local req
+    local runtime_dir
+    runtime_dir="$(doctor_runtime_dir_or_fail)" || return 0
+    req="${runtime_dir}/sdata/uv/requirements.txt"
     
     # Check for broken venv (e.g. after python update)
     if [[ -d "$venv/bin" ]]; then
@@ -249,8 +281,9 @@ check_niri_running() {
 
 check_version_tracking() {
     local version_file="${XDG_CONFIG_HOME}/illogical-impulse/version.json"
-    local runtime_version_file="${XDG_CONFIG_HOME}/quickshell/inir/version.json"
+    local runtime_version_file
     local installed_marker="${XDG_CONFIG_HOME}/illogical-impulse/installed_true"
+    runtime_version_file="$(get_runtime_version_file)"
     
     if [[ -f "$installed_marker" && ! -f "$version_file" ]]; then
         if [[ -f "$runtime_version_file" ]]; then
@@ -270,7 +303,9 @@ check_version_tracking() {
 }
 
 check_manifest() {
-    local manifest="${XDG_CONFIG_HOME}/quickshell/inir/.inir-manifest"
+    local target
+    target="$(doctor_runtime_dir_or_fail)" || return 0
+    local manifest="${target}/.inir-manifest"
     local installed_marker="${XDG_CONFIG_HOME}/illogical-impulse/installed_true"
     local installed_strategy
     installed_strategy=$(get_installed_update_strategy)
@@ -282,7 +317,6 @@ check_manifest() {
     
     if [[ -f "$installed_marker" && ! -f "$manifest" ]]; then
         # Generate manifest from current state
-        local target="${XDG_CONFIG_HOME}/quickshell/inir"
         if [[ -d "$target" ]]; then
             generate_manifest "$target" "$manifest" 2>/dev/null || true
             doctor_fix "Created file manifest"
@@ -293,6 +327,10 @@ check_manifest() {
 }
 
 check_quickshell_loads() {
+    local target
+    local running_output
+    target="$(doctor_runtime_dir_or_fail)" || return 0
+
     # Skip if no graphical session
     if [[ -z "$WAYLAND_DISPLAY" && -z "$DISPLAY" && -z "$NIRI_SOCKET" ]]; then
         doctor_pass "Quickshell (skipped - no display)"
@@ -300,7 +338,8 @@ check_quickshell_loads() {
     fi
     
     # If already running, just check it's responsive
-    if pgrep -f "qs.*-c.*inir" &>/dev/null; then
+    running_output="$(qs -p "$target" list 2>/dev/null || true)"
+    if [[ -n "$running_output" && "$running_output" != No\ running\ instances* ]]; then
         doctor_pass "Quickshell running"
         return 0
     fi
@@ -310,7 +349,7 @@ check_quickshell_loads() {
     
     # Start in background and capture initial output
     local logfile="/tmp/qs-doctor-$$.log"
-    nohup qs -c inir >"$logfile" 2>&1 &
+    nohup qs -p "$target" >"$logfile" 2>&1 &
     local qs_pid=$!
     disown
     
@@ -377,7 +416,10 @@ check_matugen_colors() {
     
     if [[ ! -f "$darkly_file" ]]; then
         # Try to regenerate Darkly colors
-        local darkly_script="${XDG_CONFIG_HOME}/quickshell/inir/scripts/colors/apply-gtk-theme.sh"
+        local darkly_script
+        local runtime_dir
+        runtime_dir="$(doctor_runtime_dir_or_fail)" || return 1
+        darkly_script="${runtime_dir}/scripts/colors/apply-gtk-theme.sh"
         if [[ -f "$darkly_script" ]]; then
             bash "$darkly_script" 2>/dev/null
             [[ -f "$darkly_file" ]] && doctor_fix "Regenerated Darkly Qt colors" || doctor_fail "Darkly Qt colors generation failed"
@@ -415,7 +457,10 @@ check_conflicting_services() {
 check_wallpaper_health() {
     local wallpaper_dir
     wallpaper_dir="$(xdg-user-dir PICTURES 2>/dev/null || echo "$HOME/Pictures")/Wallpapers"
-    local assets_dir="${XDG_CONFIG_HOME}/quickshell/inir/assets/wallpapers"
+    local assets_dir
+    local runtime_dir
+    runtime_dir="$(doctor_runtime_dir_or_fail)" || return 0
+    assets_dir="${runtime_dir}/assets/wallpapers"
     
     [[ ! -d "$wallpaper_dir" ]] && { doctor_pass "Wallpapers (dir not created yet)"; return 0; }
     

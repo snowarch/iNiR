@@ -106,7 +106,7 @@ The right sidebar covers everyday essentials:
 
 - **GUI settings** — configure everything without touching config files
 - **GameMode** — auto-disables effects when fullscreen apps are detected
-- **Auto-updates** — `./setup update` with rollback, migrations, and user-change preservation
+- **Auto-updates** — `inir update` with rollback, migrations, and user-change preservation
 - **Lock screen** and **session screen** (logout/reboot/shutdown/suspend)
 - **Polkit agent**, **on-screen keyboard**, **autostart manager**
 - **15+ languages** — auto-detected, with AI-assisted translation generation
@@ -119,28 +119,56 @@ The right sidebar covers everyday essentials:
 
 ## Quick Start
 
-**Arch Linux:**
+**Most people only need this:**
 
 ```bash
 git clone https://github.com/snowarch/inir.git
 cd inir
-./setup install       # Interactive — asks before each step
-./setup install -y    # Automatic — installs everything without prompts
+./setup install
+inir run
 ```
 
-The installer handles dependencies, configs, theming — everything.
+Install once with `./setup install`. After that, use `inir` for normal life.
+
+**Daily commands:**
+
+```bash
+inir run
+inir settings
+inir doctor
+inir logs
+inir repair
+inir status
+```
+
+**Packaging-style local install:**
+
+```bash
+sudo make install
+inir run
+```
+
+This installs the shell payload like a packaged application instead of relying only on the repo-sync model.
 
 **Other distros:** The installer fully supports Arch only. Manual installation guide in [docs/INSTALL.md](docs/INSTALL.md).
 
 **Updating:**
 
 ```bash
-./setup update        # Check remote, pull, sync, restart shell
+inir update
 ```
 
-Or run `./setup` with no arguments for the interactive TUI menu where you can update, migrate, rollback, diagnose, and more.
+If you want the advanced TUI menu, run `./setup`.
 
 Your configs stay untouched. New features come as optional migrations. Rollback included if something breaks (`./setup rollback`).
+
+**Local validation of the distribution/runtime layer:**
+
+```bash
+make test-local
+inir test-local
+inir test-local --with-runtime
+```
 
 ---
 
@@ -177,8 +205,11 @@ Full list and customization guide: [docs/KEYBINDS.md](docs/KEYBINDS.md)
 ## Troubleshooting
 
 ```bash
-qs log -c ii                    # Check logs — the answer is usually here
-qs kill -c ii && qs -c ii       # Restart the shell
+inir logs                       # Check recent runtime logs
+inir restart                    # Restart the active runtime
+inir status                     # See runtime path, update mode, and health
+inir repair                     # Doctor + restart + filtered log check
+inir test-local --with-runtime  # Validate launcher + runtime + logs
 ./setup doctor                  # Auto-diagnose and fix common problems
 ./setup rollback                # Undo the last update
 ```

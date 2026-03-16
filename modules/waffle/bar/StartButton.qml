@@ -37,7 +37,7 @@ AppButton {
             {
                 text: Translation.tr("Terminal"),
                 action: () => {
-                    Quickshell.execDetached([Quickshell.shellPath("scripts/launch-terminal.sh")])
+                    Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "terminal"])
                 }
             },
             {
@@ -50,7 +50,7 @@ AppButton {
             {
                 text: Translation.tr("Settings"),
                 action: () => {
-                    Quickshell.execDetached(["/usr/bin/qs", "-p", Quickshell.shellPath("shell.qml"), "ipc", "call", "settings", "open"]);
+                    Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"]);
                 }
             },
             {
@@ -62,7 +62,7 @@ AppButton {
             {
                 text: Translation.tr("Search"),
                 action: () => {
-                    Quickshell.execDetached(["/usr/bin/qs", "-p", Quickshell.shellPath("shell.qml"), "ipc", "call", "overview", "toggle"]);
+                    Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "overview", "toggle"]);
                 }
             },
         ]

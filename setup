@@ -152,12 +152,13 @@ show_help() {
     echo ""
 
     tui_subtitle "Examples"
-    tui_dim "  ./setup              # Interactive menu"
-    tui_dim "  ./setup update       # Check for updates and apply"
-    tui_dim "  ./setup migrate      # Review/apply pending migrations"
-    tui_dim "  ./setup doctor       # Fix common issues"
-    tui_dim "  ./setup rollback     # Restore previous state"
-    tui_dim "  ./setup my-changes   # View/restore your modifications"
+    tui_dim "  ./setup install      # Install iNiR once"
+    tui_dim "  inir run             # Start iNiR"
+    tui_dim "  inir settings        # Open settings"
+    tui_dim "  inir doctor          # Diagnose problems"
+    tui_dim "  inir logs            # Check recent runtime logs"
+    tui_dim "  inir repair          # Fix + restart + log-check"
+    tui_dim "  ./setup              # Advanced interactive menu"
     echo ""
 }
 
@@ -169,13 +170,26 @@ show_version_info() {
     local installed_commit=$(get_installed_commit)
     local installed_mode=$(get_installed_install_mode)
     local update_strategy=$(get_installed_update_strategy)
-    local repo_ver=$(get_repo_version)
-    local repo_commit=$(get_repo_commit)
+    local installed_repo_path=$(get_installed_repo_path)
+    local repo_ver
+    local repo_commit
+    local runtime_dir
+    runtime_dir="$(get_runtime_shell_dir)"
+    local runtime_dir_display="${runtime_dir:-"(missing)"}"
+
+    if [[ -n "$installed_repo_path" && -f "${installed_repo_path}/VERSION" ]]; then
+        repo_ver="$(head -1 "${installed_repo_path}/VERSION" | tr -d '[:space:]')"
+        repo_commit="$(git -C "$installed_repo_path" rev-parse --short HEAD 2>/dev/null || echo "unknown")"
+    else
+        repo_ver=$(get_repo_version)
+        repo_commit=$(get_repo_commit)
+    fi
 
     echo ""
     tui_status_line "Installed:" "$installed_ver ($installed_commit)" "ok"
     tui_status_line "Mode:" "$installed_mode" ""
     tui_status_line "Updates:" "$update_strategy" ""
+    tui_status_line "Runtime:" "$runtime_dir_display" ""
 
     if [[ "$update_strategy" == "package-manager" ]]; then
         local update_hint
@@ -251,8 +265,24 @@ show_status() {
     local update_strategy=$(get_installed_update_strategy)
     local installed_repo_path=$(get_installed_repo_path)
     local update_hint=$(get_installed_package_update_hint)
-    local repo_ver=$(get_repo_version)
-    local repo_commit=$(get_repo_commit)
+    local repo_ver
+    local repo_commit
+    local runtime_dir=$(get_runtime_shell_dir)
+    local runtime_version_file=""
+    local running_output
+    local runtime_dir_display="${runtime_dir:-"(missing)"}"
+
+    if [[ -n "$runtime_dir" ]]; then
+        runtime_version_file="$(get_runtime_version_file)"
+    fi
+
+    if [[ -n "$installed_repo_path" && -f "${installed_repo_path}/VERSION" ]]; then
+        repo_ver="$(head -1 "${installed_repo_path}/VERSION" | tr -d '[:space:]')"
+        repo_commit="$(git -C "$installed_repo_path" rev-parse --short HEAD 2>/dev/null || echo "unknown")"
+    else
+        repo_ver=$(get_repo_version)
+        repo_commit=$(get_repo_commit)
+    fi
 
     tui_title "Status"
 
@@ -261,6 +291,8 @@ show_status() {
     tui_table_row "Commit" "$installed_commit" 14 36
     tui_table_row "Install Mode" "$installed_mode" 14 36
     tui_table_row "Updates" "$update_strategy" 14 36
+    tui_table_row "Runtime Path" "$runtime_dir_display" 14 36
+    tui_table_row "Launcher" "inir run" 14 36
     [[ -n "$installed_repo_path" ]] && tui_table_row "Repo Path" "$installed_repo_path" 14 36
     if [[ "$update_strategy" == "package-manager" ]]; then
         [[ -n "$update_hint" ]] && tui_table_row "Update Cmd" "$update_hint" 14 36
@@ -280,10 +312,27 @@ show_status() {
     tui_title "Health Checks"
 
     # Check shell status
-    if pgrep -f "qs.*-c.*inir" &>/dev/null; then
-        tui_check_ok "Shell is running"
+    if [[ -n "$runtime_dir" && -f "$runtime_dir/shell.qml" ]]; then
+        running_output="$(qs -p "$runtime_dir" list 2>/dev/null || true)"
+        if [[ -n "$running_output" && "$running_output" != No\ running\ instances* ]]; then
+            tui_check_ok "Shell is running"
+        else
+            tui_check_warn "Shell is not running"
+        fi
     else
-        tui_check_warn "Shell is not running"
+        tui_check_warn "Runtime payload missing"
+    fi
+
+    if command -v inir &>/dev/null || [[ -x "${REPO_ROOT}/scripts/inir" ]]; then
+        tui_check_ok "Launcher available"
+    else
+        tui_check_warn "Launcher not available in PATH"
+    fi
+
+    if [[ -f "$runtime_version_file" ]]; then
+        tui_check_ok "Runtime metadata present"
+    else
+        tui_check_warn "Runtime metadata missing"
     fi
 
     # Check Niri
@@ -542,7 +591,8 @@ run_my_changes() {
 # Helper: Restore all files from a user-mods backup
 restore_all_user_mods() {
     local backup_path="$1"
-    local target="${XDG_CONFIG_HOME}/quickshell/inir"
+    local target
+    target="$(get_runtime_shell_dir)"
     local restored=0
 
     # Restore modified files
@@ -574,13 +624,14 @@ restore_all_user_mods() {
 
     echo ""
     tui_success "Restored $restored file(s)"
-    tui_info "Restart the shell to apply changes: qs kill -c inir; qs -c inir"
+    tui_info "Restart the shell to apply changes: inir restart"
 }
 
 # Helper: Restore a single file from user-mods backup
 restore_single_user_mod() {
     local backup_path="$1"
-    local target="${XDG_CONFIG_HOME}/quickshell/inir"
+    local target
+    target="$(get_runtime_shell_dir)"
 
     # Build list of files
     local files=()
@@ -625,7 +676,7 @@ restore_single_user_mod() {
     mkdir -p "$(dirname "$dest_file")"
     cp "$src_file" "$dest_file"
     tui_success "Restored: $choice"
-    tui_info "Restart the shell to apply changes"
+    tui_info "Restart the shell to apply changes: inir restart"
 }
 
 ###############################################################################
@@ -786,15 +837,22 @@ run_update() {
             [[ -f "$qml" ]] && cp -f "$qml" "${II_TARGET}/$(basename "$qml")"
         done
 
-        # Sync directories
-        for dir in modules services scripts assets translations sdata defaults dots; do
-            [[ -d "${II_SOURCE}/${dir}" ]] && mkdir -p "${II_TARGET}/${dir}" && rsync -a --delete "${II_SOURCE}/${dir}/" "${II_TARGET}/${dir}/"
-        done
+        local runtime_root_manifest="${II_SOURCE}/sdata/runtime-root-files.txt"
+        local runtime_dirs_manifest="${II_SOURCE}/sdata/runtime-payload-dirs.txt"
 
-        # Sync metadata files (needed by shell update overlay)
-        for meta in VERSION CHANGELOG.md; do
-            [[ -f "${II_SOURCE}/${meta}" ]] && cp -f "${II_SOURCE}/${meta}" "${II_TARGET}/${meta}"
-        done
+        if [[ -f "$runtime_root_manifest" ]]; then
+            while IFS= read -r runtime_file; do
+                [[ -n "$runtime_file" ]] || continue
+                [[ -f "${II_SOURCE}/${runtime_file}" ]] && cp -f "${II_SOURCE}/${runtime_file}" "${II_TARGET}/${runtime_file}"
+            done < "$runtime_root_manifest"
+        fi
+
+        if [[ -f "$runtime_dirs_manifest" ]]; then
+            while IFS= read -r dir; do
+                [[ -n "$dir" ]] || continue
+                [[ -d "${II_SOURCE}/${dir}" ]] && mkdir -p "${II_TARGET}/${dir}" && rsync -a --delete "${II_SOURCE}/${dir}/" "${II_TARGET}/${dir}/"
+            done < "$runtime_dirs_manifest"
+        fi
 
         # Cleanup deprecated files
         [[ -f "${II_TARGET}/requirements.txt" ]] && rm -f "${II_TARGET}/requirements.txt"
@@ -812,6 +870,29 @@ run_update() {
 
     # Fix permissions
     find "$II_TARGET/scripts" \( -name "*.sh" -o -name "*.fish" -o -name "*.py" \) -exec chmod +x {} \; 2>/dev/null || true
+    [[ -f "${II_TARGET}/setup" ]] && chmod +x "${II_TARGET}/setup"
+
+    local launcher_target="${XDG_BIN_HOME}/inir"
+    if [[ -f "${REPO_ROOT}/scripts/inir" ]]; then
+        mkdir -p "$XDG_BIN_HOME"
+        cp -f "${REPO_ROOT}/scripts/inir" "$launcher_target"
+        chmod +x "$launcher_target"
+    fi
+
+    if [[ -f "${REPO_ROOT}/assets/icons/desktop-symbolic.svg" ]]; then
+        local icon_target_dir="${XDG_DATA_HOME}/icons/hicolor/scalable/apps"
+        mkdir -p "$icon_target_dir"
+        cp -f "${REPO_ROOT}/assets/icons/desktop-symbolic.svg" "${icon_target_dir}/inir.svg"
+    fi
+
+    if [[ -f "${REPO_ROOT}/assets/applications/inir.desktop" ]]; then
+        local applications_dir="${XDG_DATA_HOME}/applications"
+        local desktop_tmp="${XDG_CACHE_HOME}/inir.desktop.$$"
+        mkdir -p "$applications_dir"
+        sed "s|^Exec=.*|Exec=${launcher_target//&/\\&} settings|" "${REPO_ROOT}/assets/applications/inir.desktop" > "$desktop_tmp"
+        cp -f "$desktop_tmp" "${applications_dir}/inir.desktop"
+        rm -f "$desktop_tmp"
+    fi
 
     # Update version
     set_installed_version "$repo_ver" "$repo_commit" "update"
@@ -900,6 +981,16 @@ MATUGEN_SDDM_EOF
         fi
     fi
 
+    local niri_config="${XDG_CONFIG_HOME}/niri/config.kdl"
+    if [[ -f "$niri_config" && -x "${XDG_BIN_HOME}/inir" ]]; then
+        local launcher_target_escaped="${XDG_BIN_HOME}/inir"
+        launcher_target_escaped="${launcher_target_escaped//&/\\&}"
+        sed -i \
+            -e 's|spawn-at-startup "inir" "start"|spawn-at-startup "'"${launcher_target_escaped}"'" "start"|' \
+            -e 's|spawn "inir" "|spawn "'"${launcher_target_escaped}"'" "|g' \
+            "$niri_config"
+    fi
+
     # DISABLED: webapps — requires quickshell-webengine rebuild, re-enable when ready
     # # Install default WebApp plugins for existing users
     # if [[ -d "${REPO_ROOT}/defaults/plugins" ]]; then
@@ -927,15 +1018,20 @@ MATUGEN_SDDM_EOF
     echo ""
     if [[ -n "$NIRI_SOCKET" ]] || [[ -n "$WAYLAND_DISPLAY" ]]; then
         tui_info "Restarting shell..."
-        qs kill -c inir 2>/dev/null || true
-        sleep 1
-        nohup qs -c inir >/dev/null 2>&1 &
-        disown
+        if [[ -x "${II_TARGET}/scripts/inir" ]]; then
+            nohup bash "${II_TARGET}/scripts/inir" restart -c "${II_TARGET}" >/dev/null 2>&1 &
+            disown
+        else
+            qs -p "${II_TARGET}" kill 2>/dev/null || true
+            sleep 1
+            nohup qs -p "${II_TARGET}" >/dev/null 2>&1 &
+            disown
+        fi
         tui_success "Shell restarted"
     else
         tui_warn "Not in graphical session - shell restart skipped"
         tui_info "The shell will use new files on next restart"
-        tui_info "Or run: qs kill -c inir && qs -c inir"
+        tui_info "Or run: inir restart"
     fi
 
     # Post-update: check for missing dependencies and offer to install them

@@ -23,8 +23,8 @@ Steps to verify this works:
 - [ ] Config changes synced in Config.qml and defaults/config.json
 - [ ] Config access uses optional chaining: Config.options?.section?.option ?? default
 - [ ] IPC functions have explicit return types (: void, : string, etc.)
-- [ ] Shell restarted after changes: qs kill -c inir; qs -c inir
-- [ ] Logs checked for errors: qs log -c inir | tail -50
+- [ ] Shell restarted after changes: inir restart
+- [ ] Logs checked for errors: inir logs
 - [ ] Lazy-loaded components tested (Settings, overlays)
 - [ ] No console errors or warnings
 

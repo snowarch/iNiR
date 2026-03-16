@@ -111,14 +111,14 @@ Change them. Break them. Make them yours. We won't judge.
 
 ## Customizing
 
-Edit `~/.config/niri/config.kdl` to change keybinds. See [IPC.md](IPC.md) for all available ii targets you can bind.
+Edit `~/.config/niri/config.kdl` to change keybinds. See [IPC.md](IPC.md) for all available iNiR targets you can bind.
 
 Example (because you're definitely going to ask):
 
 ```kdl
 binds {
     // Your custom binds
-    Super+P { spawn "qs" "-c" "ii" "ipc" "call" "session" "toggle"; }
+    Super+P { spawn "inir" "session" "toggle"; }
 }
 ```
 

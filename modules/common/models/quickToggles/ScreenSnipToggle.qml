@@ -21,7 +21,7 @@ QuickToggleModel {
         interval: 300
         repeat: false
         onTriggered: {
-            Quickshell.execDetached(["/usr/bin/qs", "-p", Quickshell.shellPath("shell.qml"), "ipc", "call", "region", "screenshot"]);
+            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "screenshot"]);
         }
     }
 

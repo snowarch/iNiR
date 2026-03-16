@@ -124,7 +124,7 @@ RowLayout {
 
         Layout.fillHeight: true
         color: Looks.colors.bg1
-        radius: Looks.radius.normal
+        radius: Looks.radius.medium
 
         ColumnLayout {
             anchors.fill: parent

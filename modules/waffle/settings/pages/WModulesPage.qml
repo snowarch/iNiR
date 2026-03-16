@@ -36,6 +36,28 @@ WSettingsPage {
     }
 
     WSettingsCard {
+        visible: !root.isWaffleActive
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 12
+
+            FluentIcon {
+                icon: "info"
+                implicitSize: 24
+                color: Looks.colors.accent
+            }
+
+            WText {
+                Layout.fillWidth: true
+                text: Translation.tr("These Waffle modules are currently inactive because another panel family is selected. You can still pre-configure them here before switching.")
+                wrapMode: Text.WordWrap
+                color: Looks.colors.subfg
+            }
+        }
+    }
+
+    WSettingsCard {
         title: Translation.tr("Panel Style")
         icon: "desktop"
 
@@ -50,7 +72,7 @@ WSettingsPage {
             ]
             onSelected: newValue => {
                 if (newValue !== Config.options?.panelFamily) {
-                    Quickshell.execDetached(["/usr/bin/qs", "-p", Quickshell.shellPath("shell.qml"), "ipc", "call", "panelFamily", "set", newValue])
+                    Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "panelFamily", "set", newValue])
                 }
             }
         }
@@ -82,9 +104,15 @@ WSettingsPage {
 
     // Waffle modules
     WSettingsCard {
-        visible: root.isWaffleActive
         title: Translation.tr("Panels")
         icon: "desktop"
+
+        WSettingsRow {
+            visible: !root.isWaffleActive
+            label: Translation.tr("Waffle family currently inactive")
+            icon: "info"
+            description: Translation.tr("Changes here will apply when you switch the panel family back to Windows 11 (Waffle).")
+        }
 
         WSettingsSwitch {
             label: Translation.tr("Taskbar")

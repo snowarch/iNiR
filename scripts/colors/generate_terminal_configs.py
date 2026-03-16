@@ -136,7 +136,7 @@ color15 {colors.get("term15", "#EBDBB2")}
         f.write(config)
 
     # Use atomic mv for the symlink swap (eliminates race conditions)
-    tmp_link = output_path + ".tmp"
+    tmp_link = output_path + f".{os.getpid()}.tmp"
     if os.path.lexists(tmp_link):
         os.remove(tmp_link)
     os.symlink("theme.conf", tmp_link)
@@ -1266,7 +1266,7 @@ def main():
             "yazi",
             "all",
         ],
-        default=["all"],
+        default=None,
         help="Which terminals/tools to generate configs for",
     )
     parser.add_argument(
@@ -1297,10 +1297,7 @@ def main():
         sys.exit(1)
 
     home = os.path.expanduser("~")
-    terminals = (
-        args.terminals
-        if "all" not in args.terminals
-        else [
+    all_terminals = [
             "kitty",
             "alacritty",
             "foot",
@@ -1313,7 +1310,10 @@ def main():
             "lazygit",
             "yazi",
         ]
-    )
+    if args.terminals is None:
+        terminals = [] if (args.zed or args.vscode) else all_terminals
+    else:
+        terminals = args.terminals if "all" not in args.terminals else all_terminals
 
     # Generate configs for requested terminals
     if "kitty" in terminals:

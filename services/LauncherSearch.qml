@@ -34,8 +34,8 @@ Singleton {
 
     function ensurePrefix(prefix: string): void {
         const prefixes = [
-            Config.options?.search?.prefix?.action ?? ">",
-            Config.options?.search?.prefix?.app ?? "/",
+            Config.options?.search?.prefix?.action ?? "/",
+            Config.options?.search?.prefix?.app ?? ">",
             Config.options?.search?.prefix?.clipboard ?? ";",
             Config.options?.search?.prefix?.emojis ?? ":",
             Config.options?.search?.prefix?.math ?? "=",
@@ -92,8 +92,8 @@ Singleton {
         const mathPrefix = Config.options?.search?.prefix?.math ?? "="
         const shellPrefix = Config.options?.search?.prefix?.shellCommand ?? "$"
         const webPrefix = Config.options?.search?.prefix?.webSearch ?? "?"
-        const actionPrefix = Config.options?.search?.prefix?.action ?? ">"
-        const appPrefix = Config.options?.search?.prefix?.app ?? "/"
+        const actionPrefix = Config.options?.search?.prefix?.action ?? "/"
+        const appPrefix = Config.options?.search?.prefix?.app ?? ">"
 
         // Clipboard search
         if (q.startsWith(clipboardPrefix)) {

@@ -183,7 +183,7 @@ Item {
                         const pageIndex = isWaffle ? 6 : 5; // Modules (Waffle) vs Interface (ii)
                         const section = isWaffle ? Translation.tr("Widgets Panel") : Translation.tr("Widgets");
 
-                        Quickshell.execDetached(["/usr/bin/env", "QS_SETTINGS_PAGE=" + pageIndex, "QS_SETTINGS_SECTION=" + section, "/usr/bin/qs", "-n", "-p", settingsPath]);
+                        Quickshell.execDetached(["/usr/bin/env", "QS_SETTINGS_PAGE=" + pageIndex, "QS_SETTINGS_SECTION=" + section, Quickshell.shellPath("scripts/inir"), isWaffle ? "waffle-settings-window" : "settings-window"]);
                     }
 
                     contentItem: Item {

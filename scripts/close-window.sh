@@ -7,13 +7,15 @@
 # 3. If IPC fails/times out, we fall back to niri's native close-window
 
 # Quick check if quickshell process exists
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+launcher_path="$script_dir/inir"
 if ! pgrep -x quickshell >/dev/null 2>&1; then
     niri msg action close-window
     exit 0
 fi
 
 # Try IPC - QS will ignore if in startup grace period
-if timeout 0.2 qs -c inir ipc call closeConfirm trigger 2>/dev/null; then
+if timeout 0.2 "$launcher_path" closeConfirm trigger 2>/dev/null; then
     exit 0
 fi
 

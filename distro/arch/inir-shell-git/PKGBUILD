@@ -1,0 +1,94 @@
+pkgname=inir-shell-git
+pkgver=2.13.2.r0.g0000000
+pkgrel=1
+pkgdesc='iNiR shell payload, launcher, and user service (git)'
+arch=(any)
+url='https://github.com/snowarch/inir'
+license=(MIT)
+depends=(
+  bash
+  inir-quickshell
+)
+optdepends=(
+  'inir-meta: full recommended iNiR desktop stack'
+  'niri: primary supported compositor'
+)
+makedepends=(
+  git
+  rsync
+)
+provides=('inir-shell')
+conflicts=('inir-shell')
+source=(
+  'git+https://github.com/snowarch/inir.git'
+)
+sha256sums=('SKIP')
+
+pkgver() {
+  cd "${srcdir}/inir"
+  local base
+  base="$(tr -d '[:space:]' < VERSION)"
+  printf '%s.r%s.g%s' "$base" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+package() {
+  local srcroot="${srcdir}/inir"
+  local shellroot="${pkgdir}/usr/share/quickshell/inir"
+  local docroot="${pkgdir}/usr/share/doc/${pkgname}"
+  local timestamp
+  local commit
+  timestamp="$(date -Iseconds)"
+  commit="$(git -C "$srcroot" rev-parse --short HEAD)"
+
+  install -dm755 "$shellroot"
+
+  while IFS= read -r -d '' root_qml; do
+    install -Dm644 "$root_qml" "$shellroot/$(basename "$root_qml")"
+  done < <(find "$srcroot" -maxdepth 1 -type f -name '*.qml' -print0)
+
+  while IFS= read -r runtime_file; do
+    [[ -n "$runtime_file" ]] || continue
+    if [[ "$runtime_file" == "setup" ]]; then
+      install -Dm755 "$srcroot/$runtime_file" "$shellroot/$runtime_file"
+    else
+      install -Dm644 "$srcroot/$runtime_file" "$shellroot/$runtime_file"
+    fi
+  done < "$srcroot/sdata/runtime-root-files.txt"
+
+  while IFS= read -r dir; do
+    [[ -n "$dir" ]] || continue
+    cp -a "$srcroot/$dir" "$shellroot/"
+  done < "$srcroot/sdata/runtime-payload-dirs.txt"
+
+  find "$shellroot/scripts" -type f \( -name '*.sh' -o -name '*.fish' -o -name '*.py' \) -exec chmod +x {} +
+
+  install -Dm755 "$srcroot/scripts/inir" "$pkgdir/usr/bin/inir"
+  install -Dm644 "$srcroot/assets/systemd/inir.service" "$pkgdir/usr/lib/systemd/user/inir.service"
+  install -Dm644 "$srcroot/assets/applications/inir.desktop" "$pkgdir/usr/share/applications/inir.desktop"
+  install -Dm644 "$srcroot/assets/icons/desktop-symbolic.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/inir.svg"
+  install -Dm644 "$srcroot/README.md" "$docroot/README.md"
+  install -Dm644 "$srcroot/docs/SETUP.md" "$docroot/SETUP.md"
+  install -Dm644 "$srcroot/docs/IPC.md" "$docroot/IPC.md"
+
+  cat > "$shellroot/version.json" <<EOF
+{
+  "version": "${pkgver}",
+  "commit": "${commit}",
+  "installed_at": "${timestamp}",
+  "installedAt": "${timestamp}",
+  "source": "pacman",
+  "repo_path": "",
+  "repoPath": "",
+  "install_mode": "package-managed",
+  "installMode": "package-managed",
+  "update_strategy": "package-manager",
+  "updateStrategy": "package-manager",
+  "package_manager": "pacman",
+  "packageManager": "pacman",
+  "package_name": "inir-shell-git",
+  "packageName": "inir-shell-git",
+  "package_update_hint": "sudo pacman -Syu inir-shell-git",
+  "packageUpdateHint": "sudo pacman -Syu inir-shell-git"
+}
+EOF
+}

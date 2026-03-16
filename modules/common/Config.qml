@@ -1302,7 +1302,7 @@ Singleton {
                     property bool switchHandlePositionFix: true
                 }
                 property JsonObject altSwitcher: JsonObject {
-                    property string preset: "default"
+                    property string preset: "thumbnails"
                     property bool noVisualUi: false
                     property bool monochromeIcons: false
                     property bool enableAnimation: true
@@ -1310,13 +1310,13 @@ Singleton {
                     property real backgroundOpacity: 1.0
                     property real blurAmount: 0.0
                     property int scrimDim: 0
-                    property int autoHideDelayMs: 300
+                    property int autoHideDelayMs: 500
                     property bool showOverviewWhileSwitching: false
                     property bool compactStyle: false
                     property string panelAlignment: "center"
                     property bool useM3Layout: false
                     property bool useMostRecentFirst: true
-                    property bool quickSwitch: true
+                    property bool quickSwitch: false
                     property bool autoHide: true
                     property bool closeOnFocus: true
                     property int thumbnailWidth: 280

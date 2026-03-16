@@ -97,7 +97,7 @@ WSettingsPage {
             
             readonly property var categoryKeybinds: modelData.children?.[0]?.keybinds ?? []
             
-            title: modelData.name
+            title: root.displayCategoryName(modelData.name)
             icon: root.getCategoryIcon(modelData.name)
             
             // Register each keybind for search
@@ -118,10 +118,16 @@ WSettingsPage {
                     // Search registration
                     settingsPageIndex: root.settingsPageIndex
                     settingsPageName: root.pageTitle
-                    settingsSection: categoryCard.modelData.name
+                    settingsSection: root.displayCategoryName(categoryCard.modelData.name)
                 }
             }
         }
+    }
+
+    function displayCategoryName(name: string): string {
+        if (name === "ii Shell")
+            return Translation.tr("iNiR Shell")
+        return name
     }
     
     function getCategoryIcon(name: string): string {

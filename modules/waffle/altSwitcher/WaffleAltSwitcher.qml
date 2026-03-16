@@ -22,6 +22,8 @@ Scope {
     property var noUiSnapshot: []
     property int noUiIndex: 0
 
+    property bool cardVisible: false
+
     // Config getters
     function cfg() { return Config.options?.waffles?.altSwitcher ?? {} }
     function getPreset() { return cfg().preset ?? "thumbnails" }
@@ -85,6 +87,8 @@ Scope {
                 title: w.title || "",
                 workspaceId: w.workspace_id,
                 workspaceIdx: wsIdx,
+                isFocused: w.is_focused ?? false,
+                isFloating: w.is_floating ?? false,
                 icon: root.getCachedIcon(appId, appName, w.title)
             })
             itemsById[w.id] = items[items.length - 1]
@@ -184,31 +188,61 @@ Scope {
         }
         quickSwitchResetTimer.stop()  // Cancel reset timer since we're opening UI
         if (itemSnapshot.length === 0) return
+        if (root.getPreset() === "skew")
+            currentIndex = itemSnapshot.length > 1 ? 1 : 0
         GlobalStates.waffleAltSwitcherOpen = true
+        if (root.getPreset() === "skew") {
+            root.cardVisible = false
+            cardShowTimer.restart()
+        } else {
+            root.cardVisible = true
+        }
         maybeOpenOverview()
         if (CompositorService.isNiri && root.getPreset() === "skew") {
             Qt.callLater(() => WindowPreviewService.captureForTaskView())
         }
-        if (root.getAutoHide()) autoHideTimer.restart()
+        if (root.getAutoHide() && root.getPreset() !== "skew")
+            autoHideTimer.restart()
     }
 
     function closeSwitcher() {
         autoHideTimer.stop()
         GlobalStates.waffleAltSwitcherOpen = false
+        root.cardVisible = false
         quickSwitchDone = false  // Reset for next session
         maybeCloseOverview()
+    }
+
+    Timer {
+        id: cardShowTimer
+        interval: 30
+        repeat: false
+        onTriggered: root.cardVisible = GlobalStates.waffleAltSwitcherOpen && root.getPreset() === "skew"
+    }
+
+    Timer {
+        id: focusTimer
+        interval: 30
+        running: GlobalStates.waffleAltSwitcherOpen
+        repeat: true
+        onTriggered: {
+            if (GlobalStates.waffleAltSwitcherOpen)
+                keyHandler.forceActiveFocus()
+        }
     }
 
     function nextItem() {
         if (itemSnapshot.length === 0) return
         currentIndex = (currentIndex + 1) % itemSnapshot.length
-        if (root.getAutoHide()) autoHideTimer.restart()
+        if (root.getAutoHide() && root.getPreset() !== "skew")
+            autoHideTimer.restart()
     }
 
     function previousItem() {
         if (itemSnapshot.length === 0) return
         currentIndex = (currentIndex - 1 + itemSnapshot.length) % itemSnapshot.length
-        if (root.getAutoHide()) autoHideTimer.restart()
+        if (root.getAutoHide() && root.getPreset() !== "skew")
+            autoHideTimer.restart()
     }
 
     function activateCurrent() {
@@ -216,6 +250,11 @@ Scope {
         if (item?.id !== undefined) {
             NiriService.focusWindow(item.id)
         }
+    }
+
+    function confirmCurrent() {
+        root.activateCurrent()
+        root.closeSwitcher()
     }
 
     function activateAndClose(windowId) {
@@ -313,10 +352,17 @@ Scope {
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
         anchors { top: true; bottom: true; left: true; right: true }
 
-        Item {
+        FocusScope {
             id: keyHandler
             anchors.fill: parent
             focus: GlobalStates.waffleAltSwitcherOpen
+
+            Keys.onReleased: event => {
+                if (root.getPreset() === "skew" && event.key === Qt.Key_Alt) {
+                    root.confirmCurrent()
+                    event.accepted = true
+                }
+            }
 
             // Keyboard handling
             Keys.onPressed: event => {
@@ -327,8 +373,12 @@ Scope {
                         break
                     case Qt.Key_Return:
                     case Qt.Key_Enter:
-                        root.activateCurrent()
-                        if (root.getCloseOnFocus()) root.closeSwitcher()
+                        if (root.getPreset() === "skew")
+                            root.confirmCurrent()
+                        else {
+                            root.activateCurrent()
+                            if (root.getCloseOnFocus()) root.closeSwitcher()
+                        }
                         event.accepted = true
                         break
                     case Qt.Key_Tab:
@@ -364,6 +414,9 @@ Scope {
         WaffleAltSwitcherContent {
             id: content
             anchors.centerIn: parent
+            availableWidth: parent.width
+            availableHeight: parent.height
+            cardVisible: root.cardVisible
             itemSnapshot: root.itemSnapshot
             selectedIndex: root.currentIndex
             onSelectedIndexChanged: root.currentIndex = selectedIndex
@@ -420,6 +473,15 @@ Scope {
                 return
             }
 
+            if (root.getPreset() === "skew") {
+                if (!GlobalStates.waffleAltSwitcherOpen) {
+                    root.openSwitcher()
+                    return
+                }
+                root.nextItem()
+                return
+            }
+
             if (!GlobalStates.waffleAltSwitcherOpen) {
                 root.rebuildSnapshot()
                 if (root.itemSnapshot.length === 0) return
@@ -463,6 +525,15 @@ Scope {
 
                 root.focusNoUiIndex()
                 quickSwitchResetTimer.restart()
+                return
+            }
+
+            if (root.getPreset() === "skew") {
+                if (!GlobalStates.waffleAltSwitcherOpen) {
+                    root.openSwitcher()
+                    return
+                }
+                root.previousItem()
                 return
             }
 

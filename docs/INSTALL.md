@@ -76,17 +76,17 @@ cp -r dots/.config/* ~/.config/
 ```
 
 This gives you:
-- Niri config with ii keybindings
+- Niri config wired to the `inir` launcher
 - Matugen templates for theming
 - GTK settings
 - Fuzzel config
 
-### 4. Tell Niri to start ii
+### 4. Tell Niri to start iNiR
 
 Add this to `~/.config/niri/config.kdl`:
 
 ```kdl
-spawn-at-startup "qs" "-c" "ii"
+spawn-at-startup "inir" "start"
 ```
 
 ### 5. Restart Niri
@@ -104,7 +104,7 @@ Or log out and back in.
 Check the logs:
 
 ```bash
-qs log -c ii
+inir logs
 ```
 
 If everything went well, you should see:

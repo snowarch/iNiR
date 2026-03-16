@@ -53,7 +53,7 @@ ShellRoot {
                 if (!Config.options?.enabledPanels || Config.options.enabledPanels.length === 0) {
                     const family = Config.options?.panelFamily ?? "ii"
                     if (root.families.includes(family)) {
-                        Config.options.enabledPanels = root.panelFamilies[family]
+                        Config.setNestedValue("enabledPanels", root.panelFamilies[family])
                     }
                 }
                 // Migration: Ensure waffle family has wBackdrop instead of iiBackdrop
@@ -95,9 +95,8 @@ ShellRoot {
             }
         }
 
-        if (changed) {
-            Config.options.enabledPanels = panels;
-        }
+        if (changed)
+            Config.setNestedValue("enabledPanels", panels)
     }
 
     // IPC for settings - overlay mode or separate window based on config
@@ -110,15 +109,15 @@ ShellRoot {
 
             if (isWaffle) {
                 // Waffle always opens its own Win11-style settings window
-                Quickshell.execDetached(["/usr/bin/qs", "-n", "-p",
-                    Quickshell.shellPath("waffleSettings.qml")])
+                Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),
+                    "waffle-settings-window"])
             } else if (Config.options?.settingsUi?.overlayMode ?? false) {
                 // ii overlay mode — toggle inline panel
                 GlobalStates.settingsOverlayOpen = !GlobalStates.settingsOverlayOpen
             } else {
                 // ii window mode (default) — launch separate process
-                Quickshell.execDetached(["/usr/bin/qs", "-n", "-p",
-                    Quickshell.shellPath("settings.qml")])
+                Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),
+                    "settings-window"])
             }
         }
         function toggle(): void {
@@ -185,7 +184,7 @@ ShellRoot {
 
         if (basePanels.length === 0) return
         if (currentPanels.length === 0) {
-            Config.options.enabledPanels = [...basePanels]
+            Config.setNestedValue("enabledPanels", [...basePanels])
             return
         }
 
@@ -193,7 +192,7 @@ ShellRoot {
         for (const panel of basePanels) {
             if (!merged.includes(panel)) merged.push(panel)
         }
-        Config.options.enabledPanels = merged
+        Config.setNestedValue("enabledPanels", merged)
     }
 
     function cyclePanelFamily() {
@@ -222,7 +221,7 @@ ShellRoot {
 
         // If animation is disabled, switch instantly
         if (!(Config.options?.familyTransitionAnimation ?? true)) {
-            Config.options.panelFamily = targetFamily
+            Config.setNestedValue("panelFamily", targetFamily)
             root._ensureFamilyPanels(targetFamily)
             return
         }
@@ -235,7 +234,7 @@ ShellRoot {
 
     function applyPendingFamily() {
         if (_pendingFamily && families.includes(_pendingFamily)) {
-            Config.options.panelFamily = _pendingFamily
+            Config.setNestedValue("panelFamily", _pendingFamily)
             root._ensureFamilyPanels(_pendingFamily)
         }
         _pendingFamily = ""

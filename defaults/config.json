@@ -670,7 +670,7 @@
             "showDefaultActionsWithoutPrefix": true,
             "webSearch": "?"
         },
-        "sloppy": true,
+        "sloppy": false,
         "globalActions": {
             "enableSystem": true,
             "enableAppearance": true,

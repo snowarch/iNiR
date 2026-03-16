@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=iNiR Settings
+Comment=Open iNiR settings
+Exec=inir settings
+Icon=inir
+Terminal=false
+Categories=Settings;DesktopSettings;Utility;

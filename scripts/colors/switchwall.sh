@@ -623,6 +623,9 @@ switch() {
     fi
 
     [[ -n "$type_flag" ]] && matugen_args+=(--type "$type_flag") && generate_colors_material_args+=(--scheme "$type_flag")
+    if [[ "${matugen_args[0]:-}" == "image" ]] && matugen image --help 2>&1 | grep -q -- '--source-color-index'; then
+        matugen_args+=(--source-color-index 0)
+    fi
     generate_colors_material_args+=(--termscheme "$terminalscheme" --blend_bg_fg)
     generate_colors_material_args+=(--cache "$STATE_DIR/user/generated/color.txt")
 

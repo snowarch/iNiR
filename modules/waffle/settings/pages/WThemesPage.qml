@@ -156,12 +156,11 @@ WSettingsPage {
                         color: Looks.colors.subfg
                     }
 
-                    TextInput {
+                    WTextInput {
                         id: themeSearchInput
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignVCenter
                         font.pixelSize: Looks.font.pixelSize.small
-                        font.family: Looks.font.family
                         color: Looks.colors.fg
                         clip: true
                         onTextChanged: colorThemeCard.searchQuery = text
@@ -454,7 +453,6 @@ WSettingsPage {
             : derivedStyle
 
         function _applyGlobalStyle(styleId) {
-            console.log("[GlobalStyle] apply", styleId)
             if (styleId === "cards") {
                 Config.setNestedValue("dock.cardStyle", true)
                 Config.setNestedValue("sidebar.cardStyle", true)
@@ -499,7 +497,6 @@ WSettingsPage {
                 { value: "angel", displayName: Translation.tr("Angel") }
             ]
             onSelected: newValue => {
-                console.log("[GlobalStyle] selected", newValue)
                 Config.setNestedValue("appearance.globalStyle", newValue)
                 globalStyleCard._applyGlobalStyle(newValue)
             }

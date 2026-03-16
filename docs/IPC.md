@@ -1,20 +1,20 @@
 # IPC Reference
 
-ii exposes IPC targets you can call from Niri keybinds, scripts, or your terminal when you're feeling fancy.
+iNiR exposes IPC targets you can call from Niri keybinds, scripts, or your terminal.
 
 From terminal (for testing, or showing off):
 
 ```bash
-qs -c inir ipc call <target> <function>
+inir <target> <function>
 ```
 
 In Niri config (for actual keybinds):
 
 ```kdl
-bind "Key" { spawn "qs" "-c" "inir" "ipc" "call" "<target>" "<function>"; }
+bind "Key" { spawn "inir" "<target>" "<function>"; }
 ```
 
-Yes, it's verbose. No, there's no shorter way. Welcome to IPC.
+For low-level debugging, `inir ipc <target> <function>` still works.
 
 ---
 
@@ -31,7 +31,7 @@ Toggle the workspace overview panel. The one with all your windows looking tiny 
 | `toggle` | Open/close overview |
 
 ```kdl
-bind "Mod+Space" { spawn "qs" "-c" "ii" "ipc" "call" "overview" "toggle"; }
+bind "Mod+Space" { spawn "inir" "overview" "toggle"; }
 ```
 
 ---
@@ -45,7 +45,7 @@ The central overlay. Search, quick actions, widgets. The thing that pops up and 
 | `toggle` | Open/close overlay |
 
 ```kdl
-bind "Super+G" { spawn "qs" "-c" "ii" "ipc" "call" "overlay" "toggle"; }
+bind "Super+G" { spawn "inir" "overlay" "toggle"; }
 ```
 
 ---
@@ -61,7 +61,7 @@ Clipboard history panel. Because Ctrl+V only remembers one thing, and that's not
 | `close` | Close panel |
 
 ```kdl
-bind "Super+V" { spawn "qs" "-c" "ii" "ipc" "call" "clipboard" "toggle"; }
+bind "Super+V" { spawn "inir" "clipboard" "toggle"; }
 ```
 
 ---
@@ -79,8 +79,8 @@ Alt+Tab window switcher. Works across workspaces, unlike some other implementati
 | `previous` | Focus previous window |
 
 ```kdl
-bind "Alt+Tab" { spawn "qs" "-c" "ii" "ipc" "call" "altSwitcher" "next"; }
-bind "Alt+Shift+Tab" { spawn "qs" "-c" "ii" "ipc" "call" "altSwitcher" "previous"; }
+bind "Alt+Tab" { spawn "inir" "altSwitcher" "next"; }
+bind "Alt+Shift+Tab" { spawn "inir" "altSwitcher" "previous"; }
 ```
 
 ---
@@ -98,9 +98,9 @@ Region selection tools. Screenshots, OCR, recording. Draw a box, get stuff done.
 | `recordWithSound` | Record region with audio |
 
 ```kdl
-bind "Super+Shift+S" { spawn "qs" "-c" "ii" "ipc" "call" "region" "screenshot"; }
-bind "Super+Shift+X" { spawn "qs" "-c" "ii" "ipc" "call" "region" "ocr"; }
-bind "Super+Shift+A" { spawn "qs" "-c" "ii" "ipc" "call" "region" "search"; }
+bind "Super+Shift+S" { spawn "inir" "region" "screenshot"; }
+bind "Super+Shift+X" { spawn "inir" "region" "ocr"; }
+bind "Super+Shift+A" { spawn "inir" "region" "search"; }
 ```
 
 ---
@@ -116,7 +116,7 @@ Voice search using Gemini API. Records from microphone, transcribes with Gemini,
 | `toggle` | Toggle recording |
 
 ```kdl
-bind "Super+Shift+V" { spawn "qs" "-c" "ii" "ipc" "call" "voiceSearch" "toggle"; }
+bind "Super+Shift+V" { spawn "inir" "voiceSearch" "toggle"; }
 ```
 
 ---
@@ -130,7 +130,7 @@ Power menu. Logout, suspend, reboot, shutdown. The "I'm done for today" buttons.
 | `toggle` | Open/close session menu |
 
 ```kdl
-bind "Super+Shift+E" { spawn "qs" "-c" "ii" "ipc" "call" "session" "toggle"; }
+bind "Super+Shift+E" { spawn "inir" "session" "toggle"; }
 ```
 
 ---
@@ -144,7 +144,7 @@ Lock screen. For when you need to pretend you're working.
 | `activate` | Lock the screen |
 
 ```kdl
-bind "Super+Alt+L" allow-when-locked=true { spawn "qs" "-c" "ii" "ipc" "call" "lock" "activate"; }
+bind "Super+Alt+L" allow-when-locked=true { spawn "inir" "lock" "activate"; }
 ```
 
 ---
@@ -158,7 +158,7 @@ Keyboard shortcuts reference. For when you forget what you just configured five 
 | `toggle` | Open/close cheatsheet |
 
 ```kdl
-bind "Super+Slash" { spawn "qs" "-c" "ii" "ipc" "call" "cheatsheet" "toggle"; }
+bind "Super+Slash" { spawn "inir" "cheatsheet" "toggle"; }
 ```
 
 ---
@@ -173,7 +173,7 @@ Close window confirmation dialog. Shows a prompt before closing the focused wind
 | `close` | Dismiss the dialog without closing |
 
 ```kdl
-bind "Mod+Q" repeat=false { spawn "qs" "-c" "ii" "ipc" "call" "closeConfirm" "trigger"; }
+bind "Mod+Q" repeat=false { spawn "inir" "close-window"; }
 ```
 
 By default, confirmation is disabled (closes immediately). Enable it in settings or config:
@@ -195,7 +195,7 @@ Open the settings window. GUI config so you don't have to edit JSON like it's 20
 | `open` | Open settings window |
 
 ```kdl
-bind "Super+Comma" { spawn "qs" "-c" "ii" "ipc" "call" "settings" "open"; }
+bind "Super+Comma" { spawn "inir" "settings"; }
 ```
 
 ---
@@ -244,8 +244,8 @@ Command palette / action registry. Search and execute shell actions from scripts
 Categories: `system`, `appearance`, `tools`, `media`, `settings`, `custom`.
 
 ```kdl
-bind "Super+Slash" { spawn "qs" "-c" "ii" "ipc" "call" "globalActions" "open"; }
-bind "Super+M" { spawn "qs" "-c" "ii" "ipc" "call" "globalActions" "run" "toggle-mute"; }
+bind "Super+Slash" { spawn "inir" "globalActions" "open"; }
+bind "Super+M" { spawn "inir" "globalActions" "run" "toggle-mute"; }
 ```
 
 ---
@@ -259,7 +259,7 @@ Wallpaper picker grid.
 | `toggle` | Open/close wallpaper selector |
 
 ```kdl
-bind "Ctrl+Alt+T" { spawn "qs" "-c" "ii" "ipc" "call" "wallpaperSelector" "toggle"; }
+bind "Ctrl+Alt+T" { spawn "inir" "wallpaperSelector" "toggle"; }
 ```
 
 ---
@@ -343,9 +343,9 @@ Media player control. Automatically detects and uses YtMusic controls when activ
 | `next` | Next track (uses YtMusic if active) |
 
 ```kdl
-bind "Ctrl+Mod+Space" { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "playPause"; }
-bind "Mod+Alt+N" { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "next"; }
-bind "Mod+Alt+P" { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "previous"; }
+bind "Ctrl+Mod+Space" { spawn "inir" "mpris" "playPause"; }
+bind "Mod+Alt+N" { spawn "inir" "mpris" "next"; }
+bind "Mod+Alt+P" { spawn "inir" "mpris" "previous"; }
 ```
 
 ---
@@ -362,7 +362,7 @@ Direct YtMusic player control. Use these if you want to control YtMusic specific
 | `stop` | Stop YtMusic playback |
 
 ```kdl
-bind "Mod+M+Space" { spawn "qs" "-c" "ii" "ipc" "call" "ytmusic" "playPause"; }
+bind "Mod+M+Space" { spawn "inir" "ytmusic" "playPause"; }
 ```
 
 ---
@@ -399,7 +399,7 @@ Performance mode for gaming. Auto-detects fullscreen apps and disables animation
 | `status` | Print current status to logs |
 
 ```kdl
-bind "Super+F12" { spawn "qs" "-c" "ii" "ipc" "call" "gamemode" "toggle"; }
+bind "Super+F12" { spawn "inir" "gamemode" "toggle"; }
 ```
 
 ---
@@ -414,7 +414,7 @@ Switch between panel styles. ii supports two visual styles: Material ii (default
 | `set` | Set specific family ("ii" or "waffle") |
 
 ```kdl
-bind "Mod+Shift+W" { spawn "qs" "-c" "ii" "ipc" "call" "panelFamily" "cycle"; }
+bind "Mod+Shift+W" { spawn "inir" "panelFamily" "cycle"; }
 ```
 
 ---

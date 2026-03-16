@@ -15,7 +15,7 @@ migration_check() {
 
 migration_preview() {
   echo -e "${STY_RED}- XF86AudioRaiseVolume { spawn \"wpctl\" \"set-volume\" ... }${STY_RST}"
-  echo -e "${STY_GREEN}+ XF86AudioRaiseVolume { spawn \"qs\" \"-c\" \"ii\" \"ipc\" \"call\" \"audio\" \"volumeUp\" }${STY_RST}"
+  echo -e "${STY_GREEN}+ XF86AudioRaiseVolume { spawn \"inir\" \"audio\" \"volumeUp\"; }${STY_RST}"
   echo ""
   echo "Same for: XF86AudioLowerVolume, XF86AudioMute"
 }
@@ -25,7 +25,7 @@ migration_diff() {
   echo "Current audio keybinds:"
   grep -E "XF86Audio(Raise|Lower|Mute)" "$config" 2>/dev/null | head -5
   echo ""
-  echo "After migration, will use ii IPC for OSD support"
+  echo "After migration, will use the inir launcher for OSD support"
 }
 
 migration_apply() {
@@ -39,24 +39,24 @@ migration_apply() {
 import re
 import os
 
-config_path = os.path.expanduser("~/.config/niri/config.kdl")
+config_path = os.path.expanduser(os.environ.get("XDG_CONFIG_HOME", "~/.config")) + "/niri/config.kdl"
 with open(config_path, 'r') as f:
     content = f.read()
 
-# Replace wpctl volume keybinds with ii IPC (only if using wpctl)
+# Replace wpctl volume keybinds with the inir launcher (only if using wpctl)
 content = re.sub(
     r'XF86AudioRaiseVolume[^}]*spawn[^}]*wpctl[^}]*\}',
-    'XF86AudioRaiseVolume allow-when-locked=true { spawn "qs" "-c" "ii" "ipc" "call" "audio" "volumeUp"; }',
+    'XF86AudioRaiseVolume allow-when-locked=true { spawn "inir" "audio" "volumeUp"; }',
     content
 )
 content = re.sub(
     r'XF86AudioLowerVolume[^}]*spawn[^}]*wpctl[^}]*\}',
-    'XF86AudioLowerVolume allow-when-locked=true { spawn "qs" "-c" "ii" "ipc" "call" "audio" "volumeDown"; }',
+    'XF86AudioLowerVolume allow-when-locked=true { spawn "inir" "audio" "volumeDown"; }',
     content
 )
 content = re.sub(
     r'XF86AudioMute[^}]*spawn[^}]*wpctl[^}]*\}',
-    'XF86AudioMute allow-when-locked=true { spawn "qs" "-c" "ii" "ipc" "call" "audio" "mute"; }',
+    'XF86AudioMute allow-when-locked=true { spawn "inir" "audio" "mute"; }',
     content
 )
 

@@ -30,7 +30,7 @@ WSettingsPage {
                 
                 WText {
                     anchors.centerIn: parent
-                    text: "ii"
+                    text: "iN"
                     font.pixelSize: 28
                     font.weight: Font.Bold
                     color: Looks.colors.accentFg

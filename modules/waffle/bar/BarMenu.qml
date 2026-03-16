@@ -48,6 +48,7 @@ BarPopup {
                         horizontalPadding: 10
                         verticalPadding: 6
                         font.pixelSize: Looks.font.pixelSize.small
+                        readonly property var menuPopup: root
                         
                         // Hover más visible con accent color
                         colBackground: "transparent"
@@ -62,7 +63,7 @@ BarPopup {
 
                         onClicked: {
                             if (modelData.action) modelData.action();
-                            root.close();
+                            menuPopup.close();
                         }
                     }
                 }

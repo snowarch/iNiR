@@ -181,8 +181,8 @@ Lista completa y guía de personalización: [docs/KEYBINDS.md](docs/KEYBINDS.md)
 ## Solución de problemas
 
 ```bash
-qs log -c ii                    # Revisá los logs — la respuesta suele estar ahí
-qs kill -c ii && qs -c ii       # Reiniciar el shell
+inir logs                       # Revisá los logs — la respuesta suele estar ahí
+inir restart                    # Reiniciar el shell
 ./setup doctor                  # Auto-diagnosticar y arreglar problemas comunes
 ./setup rollback                # Deshacer la última actualización
 ```

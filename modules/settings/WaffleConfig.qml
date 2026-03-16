@@ -63,7 +63,7 @@ ContentPage {
                 mainText: Translation.tr("Pick main wallpaper")
                 onClicked: {
                     Config.setNestedValue("wallpaperSelector.selectionTarget", "main")
-                    Quickshell.execDetached(["/usr/bin/qs", "-p", Quickshell.shellPath("shell.qml"), "ipc", "call", "wallpaperSelector", "toggle"]);
+                    Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "wallpaperSelector", "toggle"]);
                 }
             }
 
@@ -75,7 +75,7 @@ ContentPage {
                 mainText: Translation.tr("Pick Waffle wallpaper")
                 onClicked: {
                     Config.setNestedValue("wallpaperSelector.selectionTarget", "waffle")
-                    Quickshell.execDetached(["/usr/bin/qs", "-p", Quickshell.shellPath("shell.qml"), "ipc", "call", "wallpaperSelector", "toggle"]);
+                    Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "wallpaperSelector", "toggle"]);
                 }
             }
 
@@ -209,7 +209,7 @@ ContentPage {
                 mainText: Translation.tr("Pick backdrop wallpaper")
                 onClicked: {
                     Config.setNestedValue("wallpaperSelector.selectionTarget", "waffle-backdrop")
-                    Quickshell.execDetached(["/usr/bin/qs", "-p", Quickshell.shellPath("shell.qml"), "ipc", "call", "wallpaperSelector", "toggle"]);
+                    Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "wallpaperSelector", "toggle"]);
                 }
             }
 
@@ -441,7 +441,7 @@ ContentPage {
                     { displayName: Translation.tr("Wide"), icon: "view_week", value: "wide" }
                 ]
                 currentValue: Config.options?.waffles?.startMenu?.sizePreset ?? "normal"
-                onSelected: (newValue) => Config.options.waffles.startMenu.sizePreset = newValue
+                onSelected: (newValue) => Config.setNestedValue("waffles.startMenu.sizePreset", newValue)
             }
 
             ConfigSpinBox {

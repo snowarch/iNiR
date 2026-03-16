@@ -1,0 +1,20 @@
+pkgname=inir-meta
+pkgver=2.13.2
+pkgrel=1
+pkgdesc='Recommended dependency bundle for the full iNiR desktop experience'
+arch=(any)
+url='https://github.com/snowarch/inir'
+license=(MIT)
+depends=(
+  inir-shell
+  inir-core
+  inir-quickshell
+  inir-fonts
+  inir-toolkit
+  inir-audio
+  inir-screencapture
+)
+
+package() {
+  install -dm755 "${pkgdir}/usr/share/doc/${pkgname}"
+}

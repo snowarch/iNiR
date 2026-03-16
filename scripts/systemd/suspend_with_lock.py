@@ -1,18 +1,34 @@
+import os
+from pathlib import Path
+import shutil
 import subprocess
 import time
-import sys
+
+def resolve_launcher():
+    env_launcher = os.environ.get("INIR_LAUNCHER_PATH")
+    script_launcher = Path(__file__).resolve().parents[1] / "inir"
+    xdg_bin_launcher = Path(os.environ.get("XDG_BIN_HOME", "~/.local/bin")).expanduser() / "inir"
+    path_launcher = shutil.which("inir")
+
+    for candidate in (env_launcher, str(script_launcher), str(xdg_bin_launcher), path_launcher):
+        if not candidate:
+            continue
+        if Path(candidate).is_file():
+            return candidate
+    return None
 
 def main():
-    # Attempt to lock the screen using the IPC call
     try:
-        subprocess.Popen(["qs", "-c", "ii", "ipc", "call", "lock", "activate"])
+        launcher = resolve_launcher()
+        if launcher:
+            subprocess.Popen([launcher, "lock", "activate"])
+        else:
+            print("Failed to lock: could not resolve inir launcher")
     except Exception as e:
         print(f"Failed to lock: {e}")
 
-    # Give it a moment to register the lock
     time.sleep(1)
 
-    # Trigger suspend
     try:
         subprocess.run(["systemctl", "suspend"], check=True)
     except Exception as e:

@@ -213,7 +213,7 @@ spawn-at-startup "bash" "-c" "systemctl --user import-environment XDG_MENU_PREFI
 
 spawn-at-startup "bash" "-c" "wl-paste --watch cliphist store &"
 spawn-at-startup "/usr/lib/mate-polkit/polkit-mate-authentication-agent-1"
-spawn-at-startup "qs" "-c" "inir"
+spawn-at-startup "inir" "start"
 
 // ============================================================================
 // KEYBINDINGS
@@ -226,46 +226,46 @@ binds {
     Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
     
     // ii Window Switcher (Alt+Tab)
-    Alt+Tab { spawn "qs" "-c" "inir" "ipc" "call" "altSwitcher" "next"; }
-    Alt+Shift+Tab { spawn "qs" "-c" "inir" "ipc" "call" "altSwitcher" "previous"; }
+    Alt+Tab { spawn "inir" "altSwitcher" "next"; }
+    Alt+Shift+Tab { spawn "inir" "altSwitcher" "previous"; }
     
     // ii Overlay
-    Super+G { spawn "qs" "-c" "inir" "ipc" "call" "overlay" "toggle"; }
+    Super+G { spawn "inir" "overlay" "toggle"; }
 
     // ii Overview (daemon)
-    Mod+Space repeat=false { spawn "qs" "-c" "inir" "ipc" "call" "overview" "toggle"; }
+    Mod+Space repeat=false { spawn "inir" "overview" "toggle"; }
     
     // ii Clipboard
-    Mod+V { spawn "qs" "-c" "inir" "ipc" "call" "clipboard" "toggle"; }
+    Mod+V { spawn "inir" "clipboard" "toggle"; }
     
     // ii Lock screen
-    Mod+Alt+L allow-when-locked=true { spawn "qs" "-c" "inir" "ipc" "call" "lock" "activate"; }
+    Mod+Alt+L allow-when-locked=true { spawn "inir" "lock" "activate"; }
     
     // ii Region tools
-    Mod+Shift+S { spawn "qs" "-c" "inir" "ipc" "call" "region" "screenshot"; }
-    Mod+Shift+X { spawn "qs" "-c" "inir" "ipc" "call" "region" "ocr"; }
-    Mod+Shift+A { spawn "qs" "-c" "inir" "ipc" "call" "region" "search"; }
+    Mod+Shift+S { spawn "inir" "region" "screenshot"; }
+    Mod+Shift+X { spawn "inir" "region" "ocr"; }
+    Mod+Shift+A { spawn "inir" "region" "search"; }
     
     // ii Wallpaper selector
-    Ctrl+Alt+T { spawn "qs" "-c" "inir" "ipc" "call" "wallpaperSelector" "toggle"; }
+    Ctrl+Alt+T { spawn "inir" "wallpaperSelector" "toggle"; }
     
     // ii Settings
-    Mod+Comma { spawn "qs" "-c" "inir" "ipc" "call" "settings" "open"; }
+    Mod+Comma { spawn "inir" "settings"; }
     
     // ii Cheatsheet
-    Mod+Slash { spawn "qs" "-c" "inir" "ipc" "call" "cheatsheet" "toggle"; }
+    Mod+Slash { spawn "inir" "cheatsheet" "toggle"; }
     
     // ii Panel family (cycle between Material ii and Waffle styles)
-    Mod+Shift+W { spawn "qs" "-c" "inir" "ipc" "call" "panelFamily" "cycle"; }
+    Mod+Shift+W { spawn "inir" "panelFamily" "cycle"; }
     
     // Applications (uses configured terminal from Settings)
-    Mod+T { spawn "bash" "-c" "$HOME/.config/quickshell/inir/scripts/launch-terminal.sh"; }
-    Mod+Return { spawn "bash" "-c" "$HOME/.config/quickshell/inir/scripts/launch-terminal.sh"; }
+    Mod+T { spawn "inir" "terminal"; }
+    Mod+Return { spawn "inir" "terminal"; }
     Super+E { spawn "nautilus"; }
     Super+W { spawn "bash" "-c" "xdg-open https://"; }
     
     // Window management
-    Mod+Q repeat=false { spawn "bash" "-c" "$HOME/.config/quickshell/inir/scripts/close-window.sh"; }
+    Mod+Q repeat=false { spawn "inir" "close-window"; }
     Mod+D { maximize-column; }
     Mod+F { fullscreen-window; }
     Mod+A { toggle-window-floating; }
@@ -315,35 +315,35 @@ binds {
     // ========================================================================
     // HARDWARE KEYS - Audio, Brightness, Media
     // ========================================================================
-    // These use ii IPC so the OSD (On Screen Display) shows feedback
+    // These use the iNiR launcher IPC shorthand so the OSD shows feedback
     
     // Volume (hardware keys)
-    XF86AudioRaiseVolume allow-when-locked=true { spawn "qs" "-c" "inir" "ipc" "call" "audio" "volumeUp"; }
-    XF86AudioLowerVolume allow-when-locked=true { spawn "qs" "-c" "inir" "ipc" "call" "audio" "volumeDown"; }
-    XF86AudioMute allow-when-locked=true { spawn "qs" "-c" "inir" "ipc" "call" "audio" "mute"; }
-    XF86AudioMicMute allow-when-locked=true { spawn "qs" "-c" "inir" "ipc" "call" "audio" "micMute"; }
+    XF86AudioRaiseVolume allow-when-locked=true { spawn "inir" "audio" "volumeUp"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn "inir" "audio" "volumeDown"; }
+    XF86AudioMute allow-when-locked=true { spawn "inir" "audio" "mute"; }
+    XF86AudioMicMute allow-when-locked=true { spawn "inir" "audio" "micMute"; }
     
     // Brightness (hardware keys)
-    XF86MonBrightnessUp allow-when-locked=true { spawn "qs" "-c" "inir" "ipc" "call" "brightness" "increment"; }
-    XF86MonBrightnessDown allow-when-locked=true { spawn "qs" "-c" "inir" "ipc" "call" "brightness" "decrement"; }
+    XF86MonBrightnessUp allow-when-locked=true { spawn "inir" "brightness" "increment"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn "inir" "brightness" "decrement"; }
     
     // Media playback (hardware keys)
-    XF86AudioPlay { spawn "qs" "-c" "inir" "ipc" "call" "mpris" "playPause"; }
-    XF86AudioPause { spawn "qs" "-c" "inir" "ipc" "call" "mpris" "playPause"; }
-    XF86AudioNext { spawn "qs" "-c" "inir" "ipc" "call" "mpris" "next"; }
-    XF86AudioPrev { spawn "qs" "-c" "inir" "ipc" "call" "mpris" "previous"; }
+    XF86AudioPlay { spawn "inir" "mpris" "playPause"; }
+    XF86AudioPause { spawn "inir" "mpris" "playPause"; }
+    XF86AudioNext { spawn "inir" "mpris" "next"; }
+    XF86AudioPrev { spawn "inir" "mpris" "previous"; }
     
     // Music control (keyboard alternatives for keyboards without media keys)
-    Ctrl+Mod+Space { spawn "qs" "-c" "inir" "ipc" "call" "mpris" "playPause"; }
-    Mod+Alt+N { spawn "qs" "-c" "inir" "ipc" "call" "mpris" "next"; }
-    Mod+Alt+P { spawn "qs" "-c" "inir" "ipc" "call" "mpris" "previous"; }
-    Mod+Shift+M { spawn "qs" "-c" "inir" "ipc" "call" "audio" "mute"; }
-    Mod+Shift+P { spawn "qs" "-c" "inir" "ipc" "call" "mpris" "playPause"; }
-    Mod+Shift+N { spawn "qs" "-c" "inir" "ipc" "call" "mpris" "next"; }
-    Mod+Shift+B { spawn "qs" "-c" "inir" "ipc" "call" "mpris" "previous"; }
+    Ctrl+Mod+Space { spawn "inir" "mpris" "playPause"; }
+    Mod+Alt+N { spawn "inir" "mpris" "next"; }
+    Mod+Alt+P { spawn "inir" "mpris" "previous"; }
+    Mod+Shift+M { spawn "inir" "audio" "mute"; }
+    Mod+Shift+P { spawn "inir" "mpris" "playPause"; }
+    Mod+Shift+N { spawn "inir" "mpris" "next"; }
+    Mod+Shift+B { spawn "inir" "mpris" "previous"; }
     
     // Power / Session
-    Mod+Shift+Q { spawn "qs" "-c" "inir" "ipc" "call" "session" "toggle"; }
+    Mod+Shift+Q { spawn "inir" "session" "toggle"; }
 }
 
 // Layer rules for ii backdrop visibility during Niri overview

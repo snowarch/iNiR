@@ -164,8 +164,8 @@ ACTION_MAP = {
 IPC_MAP = {
     ('altSwitcher', 'next'): 'Next window',
     ('altSwitcher', 'previous'): 'Previous window',
-    ('overlay', 'toggle'): 'ii Overlay',
-    ('overview', 'toggle'): 'ii Overview',
+    ('overlay', 'toggle'): 'iNiR Overlay',
+    ('overview', 'toggle'): 'iNiR Overview',
     ('clipboard', 'toggle'): 'Clipboard',
     ('lock', 'activate'): 'Lock screen',
     ('region', 'screenshot'): 'Screenshot region',
@@ -186,12 +186,38 @@ IPC_MAP = {
     ('mpris', 'previous'): 'Previous track',
     ('notifications', 'clearAll'): 'Clear notifications',
     ('gamemode', 'toggle'): 'Toggle game mode',
+    ('launcher', 'terminal'): 'Terminal',
+    ('launcher', 'close-window'): 'Close window',
 }
 
 # App detection
 TERMINALS = ['foot', 'kitty', 'alacritty', 'wezterm', 'ghostty', 'konsole', 'gnome-terminal']
 FILE_MANAGERS = ['dolphin', 'nautilus', 'thunar', 'nemo', 'pcmanfm', 'ranger']
 BROWSERS = ['firefox', 'zen-browser', 'chromium', 'brave', 'vivaldi']
+
+
+def parse_inir_action(action: str) -> tuple[str, str] | None:
+    ipc_match = re.search(r'spawn\s+"(?:[^"]*/)?inir"\s+"ipc"\s+"call"\s+"([\w-]+)"\s+"([\w-]+)"', action)
+    if ipc_match:
+        return ipc_match.group(1), ipc_match.group(2)
+
+    settings_match = re.search(r'spawn\s+"(?:[^"]*/)?inir"\s+"settings"(?:\s|;|$)', action)
+    if settings_match:
+        return 'settings', 'open'
+
+    terminal_match = re.search(r'spawn\s+"(?:[^"]*/)?inir"\s+"terminal"(?:\s|;|$)', action)
+    if terminal_match:
+        return 'launcher', 'terminal'
+
+    close_window_match = re.search(r'spawn\s+"(?:[^"]*/)?inir"\s+"close-window"(?:\s|;|$)', action)
+    if close_window_match:
+        return 'launcher', 'close-window'
+
+    direct_match = re.search(r'spawn\s+"(?:[^"]*/)?inir"\s+"([\w-]+)"\s+"([\w-]+)"', action)
+    if direct_match:
+        return direct_match.group(1), direct_match.group(2)
+
+    return None
 
 
 def generate_comment(action: str) -> str:
@@ -210,13 +236,19 @@ def generate_comment(action: str) -> str:
     
     # Spawn commands
     if action.startswith('spawn'):
-        # ii IPC calls
+        inir_action = parse_inir_action(action)
+        if inir_action:
+            target, func = inir_action
+            return IPC_MAP.get((target, func), f'{target} {func}')
+
         ipc_match = re.search(r'ipc.*call.*"(\w+)".*"(\w+)"', action)
         if ipc_match:
             target, func = ipc_match.groups()
             return IPC_MAP.get((target, func), f'{target} {func}')
         
         # Terminal
+        if 'launch-terminal.sh' in action:
+            return 'Terminal'
         if any(term in action for term in TERMINALS):
             return 'Terminal'
         
@@ -263,11 +295,22 @@ def categorize_keybind(kb: dict) -> str:
     if any(x in comment for x in ['niri overview', 'quit niri', 'inhibit', 'power off', 'hotkey overlay']):
         return 'System'
     
-    # ii Shell
-    if any(x in comment for x in ['ii ', 'clipboard', 'lock screen', 'wallpaper', 'settings', 'cheatsheet', 'panel style']):
-        return 'ii Shell'
+    # iNiR Shell
+    if any(x in comment for x in ['inir ', 'clipboard', 'lock screen', 'wallpaper', 'settings', 'cheatsheet', 'panel style']):
+        return 'iNiR Shell'
+    inir_action = parse_inir_action(action)
+    if inir_action:
+        target, _func = inir_action
+        if target in ('overlay', 'overview', 'clipboard', 'lock', 'wallpaperSelector', 'settings', 'cheatsheet', 'panelFamily'):
+            return 'iNiR Shell'
+        if target == 'altSwitcher':
+            return 'Window Switcher'
+        if target in ('audio', 'mpris'):
+            return 'Media'
+        if target == 'brightness':
+            return 'Brightness'
     if re.search(r'ipc.*call.*(overlay|overview|clipboard|lock|wallpaper|settings|cheatsheet|panelfamily)', action):
-        return 'ii Shell'
+        return 'iNiR Shell'
     
     # Window Switcher
     if 'window' in comment and ('next' in comment or 'previous' in comment):
@@ -360,7 +403,7 @@ def parse_niri_config(config_path: Path) -> dict:
         })
     
     category_order = [
-        'System', 'ii Shell', 'Window Switcher', 'Screenshots',
+        'System', 'iNiR Shell', 'Window Switcher', 'Screenshots',
         'Applications', 'Window Management', 'Focus', 'Move Windows',
         'Workspaces', 'Media', 'Brightness', 'Other'
     ]

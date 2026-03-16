@@ -10,7 +10,7 @@ ContentPage {
     settingsPageIndex: 9
     settingsPageName: Translation.tr("Modules")
 
-    readonly property bool isWaffle: Config.options.panelFamily === "waffle"
+    readonly property bool isWaffle: Config.options?.panelFamily === "waffle"
 
     readonly property var defaultPanels: ({
         "ii": [
@@ -21,18 +21,18 @@ ContentPage {
             "iiWallpaperSelector", "iiAltSwitcher", "iiClipboard"
         ],
         "waffle": [
-            "wBar", "wBackground", "wStartMenu", "wActionCenter", "wNotificationCenter", "wNotificationPopup", "wOnScreenDisplay", "wWidgets", "wLock", "wPolkit", "wSessionScreen",
-            "iiBackdrop", "iiCheatsheet", "iiControlPanel", "iiLock", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit", 
-            "iiRegionSelector", "iiSessionScreen", "iiWallpaperSelector", "iiAltSwitcher", "iiClipboard"
+            "wBar", "wBackground", "wBackdrop", "wStartMenu", "wActionCenter", "wNotificationCenter", "wNotificationPopup", "wOnScreenDisplay", "wWidgets", "wLock", "wPolkit", "wSessionScreen",
+            "iiCheatsheet", "iiControlPanel", "iiLock", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit",
+            "iiRegionSelector", "iiScreenCorners", "iiSessionScreen", "iiTilingOverlay", "iiWallpaperSelector", "iiCoverflowSelector", "iiClipboard"
         ]
     })
 
     function isPanelEnabled(panelId: string): bool {
-        return Config.options.enabledPanels.includes(panelId)
+        return (Config.options?.enabledPanels ?? []).includes(panelId)
     }
 
     function setPanelEnabled(panelId: string, enabled: bool) {
-        let panels = [...Config.options.enabledPanels]
+        let panels = [...(Config.options?.enabledPanels ?? [])]
         const idx = panels.indexOf(panelId)
         
         if (enabled && idx === -1) {
@@ -41,12 +41,12 @@ ContentPage {
             panels.splice(idx, 1)
         }
         
-        Config.options.enabledPanels = panels
+        Config.setNestedValue("enabledPanels", panels)
     }
 
     function resetToDefaults() {
-        const family = Config.options.panelFamily || "ii"
-        Config.options.enabledPanels = [...defaultPanels[family]]
+        const family = Config.options?.panelFamily ?? "ii"
+        Config.setNestedValue("enabledPanels", [...(defaultPanels[family] ?? [])])
     }
 
     SettingsCardSection {
@@ -131,8 +131,8 @@ ContentPage {
                     }
 
                     onClicked: {
-                        Config.options.panelFamily = "ii"
-                        Config.options.enabledPanels = [...modulesPage.defaultPanels["ii"]]
+                        Config.setNestedValue("panelFamily", "ii")
+                        Config.setNestedValue("enabledPanels", [...modulesPage.defaultPanels["ii"]])
                     }
                 }
 
@@ -162,8 +162,8 @@ ContentPage {
                     }
 
                     onClicked: {
-                        Config.options.panelFamily = "waffle"
-                        Config.options.enabledPanels = [...modulesPage.defaultPanels["waffle"]]
+                        Config.setNestedValue("panelFamily", "waffle")
+                        Config.setNestedValue("enabledPanels", [...modulesPage.defaultPanels["waffle"]])
                     }
                 }
             }
