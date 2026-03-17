@@ -162,7 +162,7 @@ Item {
                     ? (Appearance.angel.blurSaturation * Appearance.angel.colorStrength)
                     : (Appearance.effectsEnabled ? 0.2 : 0)
                 blurEnabled: Appearance.effectsEnabled
-                blurMax: 64
+                blurMax: 100
                 blur: Appearance.effectsEnabled
                     ? (sidebarRightBackground.angelEverywhere ? Appearance.angel.blurIntensity : 1)
                     : 0

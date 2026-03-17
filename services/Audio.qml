@@ -23,6 +23,10 @@ Singleton {
         !link.source.isStream && !link.source.isSink && link.target.isStream
     ).length > 0
 
+    property bool _wpctlMicStateKnown: false
+    property bool _wpctlMicMuted: false
+    readonly property bool micMuted: _wpctlMicStateKnown ? _wpctlMicMuted : (source?.audio?.muted ?? false)
+
     function friendlyDeviceName(node) {
         return node ? (node.nickname || node.description || Translation.tr("Unknown")) : Translation.tr("Unknown");
     }
@@ -59,10 +63,69 @@ Singleton {
         root.sink.audio.muted = !root.sink.audio.muted
     }
 
-    function toggleMicMute() {
-        if (!root.source?.audio) return;
-        root.source.audio.muted = !root.source.audio.muted
+    function setSourceVolume(target: real): void {
+        const clamped = Math.max(0, Math.min(root.hardMaxValue, target))
+        if (root.source?.audio) {
+            root.source.audio.volume = clamped
+        }
+        if (wpctlSetSourceVolume.running) return
+        wpctlSetSourceVolume.command = ["wpctl", "set-volume", "@DEFAULT_AUDIO_SOURCE@", String(clamped)]
+        wpctlSetSourceVolume.running = true
     }
+
+    function toggleMicMute() {
+        const shouldMute = !root.micMuted
+        if (root.source?.audio) {
+            root.source.audio.muted = shouldMute
+        }
+        if (wpctlSetMicMute.running) return
+        wpctlSetMicMute.command = ["wpctl", "set-mute", "@DEFAULT_AUDIO_SOURCE@", shouldMute ? "1" : "0"]
+        wpctlSetMicMute.running = true
+    }
+
+    function refreshMicState(): void {
+        if (wpctlGetMicState.running) return
+        wpctlGetMicState.running = true
+    }
+
+    Process {
+        id: wpctlSetMicMute
+        command: ["wpctl", "set-mute", "@DEFAULT_AUDIO_SOURCE@", "toggle"]
+        onExited: refreshMicState()
+    }
+
+    Process {
+        id: wpctlSetSourceVolume
+        command: ["wpctl", "set-volume", "@DEFAULT_AUDIO_SOURCE@", "1.0"]
+        onExited: refreshMicState()
+    }
+
+    Process {
+        id: wpctlGetMicState
+        command: ["wpctl", "get-volume", "@DEFAULT_AUDIO_SOURCE@"]
+        stdout: StdioCollector {
+            id: wpctlGetMicStateStdout
+        }
+        onExited: (exitCode, _exitStatus) => {
+            if (exitCode !== 0) return
+            const raw = (wpctlGetMicStateStdout.text?.trim() ?? "")
+            if (!raw.length) return
+            const out = raw.split(/\r?\n/).filter(l => l.trim().length > 0).slice(-1)[0] ?? ""
+            if (!out.length) return
+
+            root._wpctlMicStateKnown = true
+            root._wpctlMicMuted = out.toUpperCase().includes("MUTED")
+        }
+    }
+
+    Timer {
+        interval: 2000
+        repeat: true
+        running: true
+        onTriggered: refreshMicState()
+    }
+
+    Component.onCompleted: refreshMicState()
 
     // Set sink volume safely. When protection is enabled, large jumps are rejected as "Illegal increment".
     // To keep UX consistent with brightness (click anywhere on slider), we ramp in small steps.

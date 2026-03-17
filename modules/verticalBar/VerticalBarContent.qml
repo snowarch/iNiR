@@ -163,7 +163,7 @@ Item { // Bar content region
                     ? Appearance.angel.blurSaturation
                     : (Appearance.effectsEnabled ? 0.2 : 0)
                 blurEnabled: Appearance.effectsEnabled
-                blurMax: 64
+                blurMax: 100
                 blur: Appearance.effectsEnabled ? 1 : 0
             }
 
@@ -459,7 +459,7 @@ Item { // Bar content region
                     }
                     Revealer {
                         vertical: true
-                        reveal: Audio.source?.audio?.muted ?? false
+                        reveal: Audio.micMuted
                         Layout.fillWidth: true
                         Layout.bottomMargin: reveal ? indicatorsColumnLayout.realSpacing : 0
                         Behavior on Layout.topMargin {

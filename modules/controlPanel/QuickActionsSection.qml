@@ -44,9 +44,9 @@ Rectangle {
         }
 
         ActionTile {
-            icon: Audio.source?.audio?.muted ? "mic_off" : "mic"
-            active: !(Audio.source?.audio?.muted ?? false)
-            onClicked: Audio.source?.audio?.toggleMute()
+            icon: Audio.micMuted ? "mic_off" : "mic"
+            active: !Audio.micMuted
+            onClicked: Audio.toggleMicMute()
         }
 
         ActionTile {

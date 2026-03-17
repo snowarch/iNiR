@@ -42,13 +42,11 @@ StyledOverlayWidget {
                 }
 
                 BigActionButton {
-                    materialSymbol: (Audio.source?.audio?.muted ?? false) ? "mic_off" : "mic"
+                    materialSymbol: Audio.micMuted ? "mic_off" : "mic"
                     name: "Toggle mic (global)"
-                    active: Audio.source?.audio?.muted ?? false
+                    active: Audio.micMuted
                     onClicked: {
-                        if (Audio.source?.audio) {
-                            Audio.toggleMicMute()
-                        }
+                        Audio.toggleMicMute()
                     }
                 }
 

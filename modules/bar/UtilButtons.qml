@@ -156,10 +156,10 @@ Item {
                 id: micButton
                 Layout.alignment: Qt.AlignVCenter
 
-                readonly property bool isMuted: Pipewire.defaultAudioSource?.audio?.muted ?? false
+                readonly property bool isMuted: Audio.micMuted
                 readonly property bool isInUse: (Privacy.micActive || (Audio?.micBeingAccessed ?? false))
 
-                onClicked: Quickshell.execDetached(["/usr/bin/wpctl", "set-mute", "@DEFAULT_SOURCE@", "toggle"])
+                onClicked: Audio.toggleMicMute()
 
                 Item {
                     anchors.fill: parent

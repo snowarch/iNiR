@@ -184,7 +184,7 @@ Item { // Player instance - Old style design
                     ? Appearance.angel.blurSaturation
                     : (Appearance.effectsEnabled ? 0.2 : 0)
                 blurEnabled: Appearance.effectsEnabled
-                blurMax: 64
+                blurMax: 100
                 blur: Appearance.effectsEnabled ? 1 : 0
             }
         }
@@ -217,7 +217,7 @@ Item { // Player instance - Old style design
                 anchors.fill: source
                 saturation: Appearance.effectsEnabled ? 0.2 : 0
                 blurEnabled: Appearance.effectsEnabled
-                blurMax: 64
+                blurMax: 100
                 blur: Appearance.effectsEnabled ? 1 : 0
             }
 

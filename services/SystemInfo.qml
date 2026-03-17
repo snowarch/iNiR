@@ -25,12 +25,9 @@ Singleton {
     property string windowingSystem: ""
 
     function refreshIdentity(): void {
-        if (!getUsername.running) {
-            getUsername.running = true
+        if (getUsername.running || getDisplayName.running)
             return
-        }
-        if (!getDisplayName.running)
-            getDisplayName.running = true
+        getUsername.running = true
     }
 
     Timer {
@@ -105,10 +102,13 @@ Singleton {
 
     Process {
         id: getUsername
-        command: ["/usr/bin/whoami"]
-        stdout: SplitParser {
-            onRead: data => {
-                root.username = data.trim()
+        command: ["/usr/bin/id", "-un"]
+        stdout: StdioCollector {
+            id: usernameCollector
+            onStreamFinished: {
+                const name = usernameCollector.text.trim() || Quickshell.env("USER") || root.username
+                root.username = name
+                getDisplayName.command = ["/usr/bin/getent", "passwd", name]
                 getDisplayName.running = true
             }
         }
@@ -117,11 +117,14 @@ Singleton {
     Process {
         id: getDisplayName
         running: false
-        command: ["/usr/bin/bash", "-lc", `getent passwd "${root.username}" | cut -d: -f5 | cut -d, -f1`]
+        command: ["/usr/bin/getent", "passwd", root.username]
         stdout: StdioCollector {
             id: displayNameCollector
             onStreamFinished: {
-                const name = displayNameCollector.text.trim()
+                const passwdLine = displayNameCollector.text.trim().split("\n")[0] ?? ""
+                const fields = passwdLine.split(":")
+                const gecosField = fields.length >= 5 ? fields[4] : ""
+                const name = gecosField.split(",")[0].trim()
                 root.displayName = name.length > 0 ? name : root.username
             }
         }

@@ -178,7 +178,7 @@ Scope {
                 source: wallpaperSource
                 blurEnabled: Appearance.effectsEnabled && !Appearance.inirEverywhere
                 blur: (Appearance.effectsEnabled && !Appearance.inirEverywhere) ? 1.0 : 0
-                blurMax: 64
+                blurMax: 100
                 blurMultiplier: 1.0
                 saturation: (Appearance.effectsEnabled && !Appearance.inirEverywhere) ? 0.2 : 0
                 visible: !Appearance.inirEverywhere

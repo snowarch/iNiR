@@ -181,8 +181,16 @@ Singleton {
 
         // During GameMode, skip non-essential events to reduce CPU usage
         if (GameMode.active) {
-            // Only process critical events: focus changes, window open/close
-            const criticalEvents = ['WindowFocusChanged', 'WindowClosed', 'WindowOpenedOrChanged', 'WorkspaceActivated']
+            const criticalEvents = [
+                'WindowFocusChanged',
+                'WindowClosed',
+                'WindowOpenedOrChanged',
+                'WorkspaceActivated',
+                'WorkspaceActiveWindowChanged',
+                'WorkspacesChanged',
+                'OutputsChanged',
+                'ConfigLoaded',
+            ]
             if (!criticalEvents.includes(eventType)) {
                 return
             }
@@ -531,12 +539,27 @@ Singleton {
     }
 
     function handleOutputsChanged(data) {
-        if (!data.outputs)
-            return
-        outputs = data.outputs
+        const nextOutputs = data?.outputs ?? {}
+        outputs = nextOutputs
         updateDisplayScales()
+
+        const outputNames = Object.keys(nextOutputs)
+        let nextCurrentOutput = ""
+
+        if (focusedWorkspaceIndex >= 0 && focusedWorkspaceIndex < allWorkspaces.length) {
+            nextCurrentOutput = allWorkspaces[focusedWorkspaceIndex]?.output ?? ""
+        }
+
+        if ((!nextCurrentOutput || nextOutputs[nextCurrentOutput] === undefined) && outputNames.length > 0) {
+            nextCurrentOutput = outputNames[0]
+        }
+
+        currentOutput = nextCurrentOutput
+        updateCurrentOutputWorkspaces()
+
         // Force immediate update for outputs as it affects geometry calculations significantly
-        windows = sortWindowsByLayout(windows) 
+        windows = sortWindowsByLayout(windows)
+        fetchOutputs()
     }
 
     function handleOverviewChanged(data) {
