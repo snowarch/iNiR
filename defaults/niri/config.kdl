@@ -279,7 +279,18 @@ binds {
     Mod+J { focus-window-down; }
     Mod+K { focus-window-up; }
     Mod+L { focus-column-right; }
+   
+    Mod+Comma  { consume-or-expel-window-left; }
+    Mod+Period { consume-or-expel-window-right; }
+
+    Mod+Ctrl+Down { expel-window-from-column; }
+    Mod+Minus     { set-column-width "-10%"; }
+    Mod+Equal     { set-column-width "+10%"; }
+    Mod+Alt+Minus { set-window-height "-10%"; }
+    Mod+Alt+Equal { set-window-height "+10%"; }
     
+    Mod+U { toggle-column-tabbed-display; }
+
     // Move windows
     Mod+Shift+Left { move-column-left; }
     Mod+Shift+Right { move-column-right; }
