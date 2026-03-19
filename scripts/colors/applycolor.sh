@@ -9,6 +9,16 @@ CACHE_DIR="$XDG_CACHE_HOME/quickshell"
 STATE_DIR="$XDG_STATE_HOME/quickshell"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# If applycolor.sh is invoked with switchwall-style args, forward to switchwall.sh.
+# This lets users run: applycolor.sh --image /path/to/wallpaper
+for arg in "$@"; do
+  case "$arg" in
+    --image|--noswitch|--mode|--type|--color|--monitor|--start-workspace|--end-workspace|--skip-config-write)
+      exec "$SCRIPT_DIR/switchwall.sh" "$@"
+      ;;
+  esac
+done
+
 term_alpha=100 #Set this to < 100 make all your terminals transparent
 # sleep 0 # idk i wanted some delay or colors dont get applied properly
 if [ ! -d "$STATE_DIR"/user/generated ]; then
@@ -278,7 +288,7 @@ apply_code_editors() {
       # Read individual fork settings, default to true if not specified
       local editors_config
       editors_config=$(jq -r '.appearance.wallpaperTheming.vscodeEditors // {}' "$CONFIG_FILE" 2>/dev/null || echo "{}")
-      
+
       # Map config keys to script fork keys
       [[ $(echo "$editors_config" | jq -r '.code // true') == "true" ]] && [[ -d "$HOME/.config/Code" ]] && enabled_forks+=("code")
       [[ $(echo "$editors_config" | jq -r '.codium // true') == "true" ]] && [[ -d "$HOME/.config/VSCodium" ]] && enabled_forks+=("codium")
