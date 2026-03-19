@@ -36,6 +36,12 @@ output_path = '~/.config/gtk-3.0/gtk.css'
 input_path = '~/.config/matugen/templates/fuzzel/fuzzel_theme.ini'
 output_path = '~/.config/fuzzel/fuzzel_theme.ini'
 
+# Vicinae theme (matugen integration)
+[templates.vicinae]
+input_path = '~/.config/matugen/templates/vicinae.toml'
+output_path = '~/.local/share/vicinae/themes/matugen.toml'
+post_hook = 'bash -lc "command -v vicinae >/dev/null 2>&1 && vicinae theme set matugen"'
+
 # KDE source color cache (used by kde-material-you-colors-wrapper)
 [templates.kde_colors]
 input_path = '~/.config/matugen/templates/kde/color.txt'
