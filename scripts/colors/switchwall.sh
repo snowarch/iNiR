@@ -44,6 +44,33 @@ repair_matugen_colors_template() {
     fi
 }
 
+ensure_vicinae_template() {
+    local user_template="$MATUGEN_DIR/templates/vicinae.toml"
+    local default_template="$CONFIG_DIR/defaults/matugen/templates/vicinae.toml"
+
+    if [[ ! -f "$user_template" && -f "$default_template" ]]; then
+        mkdir -p "$MATUGEN_DIR/templates"
+        cp "$default_template" "$user_template"
+        echo "[switchwall.sh] Installed Vicinae matugen template"
+    fi
+}
+
+ensure_vicinae_config_block() {
+    local matugen_cfg="$MATUGEN_DIR/config.toml"
+    if [[ -f "$matugen_cfg" ]]; then
+        if ! grep -q "\[templates\.vicinae\]" "$matugen_cfg" 2>/dev/null; then
+            cat >> "$matugen_cfg" << 'MATUGEN_VICINAE_EOF'
+
+# Vicinae theme (matugen integration)
+[templates.vicinae]
+input_path = '~/.config/matugen/templates/vicinae.toml'
+output_path = '~/.local/share/vicinae/themes/matugen.toml'
+post_hook = 'bash -lc "command -v vicinae >/dev/null 2>&1 && vicinae theme set matugen"'
+MATUGEN_VICINAE_EOF
+        fi
+    fi
+}
+
 handle_kde_material_you_colors() {
     # Check if Qt app theming is enabled in config
     if [ -f "$SHELL_CONFIG_FILE" ]; then
@@ -84,6 +111,8 @@ handle_kde_material_you_colors() {
 pre_process() {
     local mode_flag="$1"
     repair_matugen_colors_template
+    ensure_vicinae_template
+    ensure_vicinae_config_block
 
     # Set GNOME color-scheme if mode_flag is dark or light
     if [[ "$mode_flag" == "dark" ]]; then
@@ -250,17 +279,17 @@ for output in $outputs; do
 done
 LAUNCHER_EOF
     chmod +x "$launcher_script"
-    
+
     # Execute launcher in a completely detached way using at if available, otherwise nohup
     if command -v at >/dev/null 2>&1; then
         echo "$launcher_script '$video_path' $outputs" | at now 2>/dev/null
     else
         (nohup "$launcher_script" "$video_path" $outputs > /dev/null 2>&1 &)
     fi
-    
+
     # Small delay to let the launcher start
     sleep 0.3
-    
+
     # Clean up launcher script after a delay
     (sleep 5 && rm -f "$launcher_script") &
 }
@@ -649,11 +678,11 @@ switch() {
         term_brightness=$(jq -r '.appearance.wallpaperTheming.terminalColorAdjustments.brightness // 0.60' "$SHELL_CONFIG_FILE")
         term_harmony=$(jq -r '.appearance.wallpaperTheming.terminalColorAdjustments.harmony // 0.40' "$SHELL_CONFIG_FILE")
         term_bg_brightness=$(jq -r '.appearance.wallpaperTheming.terminalColorAdjustments.backgroundBrightness // 0.50' "$SHELL_CONFIG_FILE")
-        
+
         # Legacy props for backwards compatibility
         harmonize_threshold=$(jq -r '.appearance.wallpaperTheming.terminalGenerationProps.harmonizeThreshold // 100' "$SHELL_CONFIG_FILE")
         soften_colors=$(jq -r '.appearance.softenColors' "$SHELL_CONFIG_FILE")
-        
+
         # Pass new parameters to Python script
         [[ "$term_saturation" != "null" && -n "$term_saturation" ]] && generate_colors_material_args+=(--term_saturation "$term_saturation")
         [[ "$term_brightness" != "null" && -n "$term_brightness" ]] && generate_colors_material_args+=(--term_brightness "$term_brightness")
