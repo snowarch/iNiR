@@ -33,6 +33,56 @@ WBarAttachedPanelContent {
     }
 
     readonly property bool barAtBottom: Config.options?.waffles?.bar?.bottom ?? false
+    readonly property list<string> defaultQuickActionIds: ["files", "terminal", "settings", "wallpaper", "screenshot", "screenRecord", "session"]
+    readonly property var quickActionDefinitions: [
+        { id: "files", icon: "folder", label: Translation.tr("Files") },
+        { id: "terminal", icon: "terminal", label: Translation.tr("Terminal") },
+        { id: "settings", icon: "settings", label: Translation.tr("Settings") },
+        { id: "wallpaper", icon: "image", label: Translation.tr("Wallpaper") },
+        { id: "screenshot", icon: "screenshot", label: Translation.tr("Screenshot") },
+        { id: "screenRecord", icon: "record", label: RecorderStatus.isRecording ? Translation.tr("Stop") : Translation.tr("Record") },
+        { id: "session", icon: "power", label: Translation.tr("Session") }
+    ]
+    readonly property var configuredQuickActionIds: {
+        const configured = Config.options?.waffles?.widgetsPanel?.quickActions
+        return Array.isArray(configured) ? configured : defaultQuickActionIds
+    }
+    readonly property var enabledQuickActions: configuredQuickActionIds
+        .map(actionId => quickActionDefinitions.find(action => action.id === actionId))
+        .filter(action => !!action)
+
+    function runQuickAction(actionId: string): void {
+        switch (actionId) {
+        case "files":
+            Quickshell.execDetached(["/usr/bin/nautilus"])
+            break
+        case "terminal":
+            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "terminal"])
+            break
+        case "settings":
+            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"])
+            break
+        case "wallpaper": {
+            const useMain = Config.options?.waffles?.background?.useMainWallpaper ?? true
+            Config.setNestedValue("wallpaperSelector.selectionTarget", useMain ? "main" : "waffle")
+            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "wallpaperSelector", "toggle"])
+            break
+        }
+        case "screenshot":
+            GlobalStates.regionSelectorOpen = true
+            break
+        case "screenRecord":
+            GlobalActions.runById("screen-record", "")
+            break
+        case "session":
+            GlobalStates.sessionOpen = true
+            break
+        default:
+            return
+        }
+
+        GlobalStates.waffleWidgetsOpen = false
+    }
 
     contentItem: ColumnLayout {
         anchors {
@@ -594,63 +644,15 @@ WBarAttachedPanelContent {
                         columns: 3
                         spacing: 10
 
-                        QuickActionButton {
-                            width: (parent.width - 16) / 3
-                            iconName: "folder"
-                            label: Translation.tr("Files")
-                            onClicked: {
-                                Quickshell.execDetached(["/usr/bin/nautilus"])
-                                GlobalStates.waffleWidgetsOpen = false
-                            }
-                        }
+                        Repeater {
+                            model: root.enabledQuickActions
 
-                        QuickActionButton {
-                            width: (parent.width - 16) / 3
-                            iconName: "terminal"
-                            label: Translation.tr("Terminal")
-                            onClicked: {
-                                Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "terminal"])
-                                GlobalStates.waffleWidgetsOpen = false
-                            }
-                        }
-
-                        QuickActionButton {
-                            width: (parent.width - 16) / 3
-                            iconName: "settings"
-                            label: Translation.tr("Settings")
-                            onClicked: {
-                                Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"])
-                                GlobalStates.waffleWidgetsOpen = false
-                            }
-                        }
-
-                        QuickActionButton {
-                            width: (parent.width - 16) / 3
-                            iconName: "image"
-                            label: Translation.tr("Wallpaper")
-                            onClicked: {
-                                GlobalStates.wallpaperSelectorOpen = true
-                                GlobalStates.waffleWidgetsOpen = false
-                            }
-                        }
-
-                        QuickActionButton {
-                            width: (parent.width - 16) / 3
-                            iconName: "screenshot"
-                            label: Translation.tr("Screenshot")
-                            onClicked: {
-                                GlobalStates.waffleWidgetsOpen = false
-                                GlobalStates.regionSelectorOpen = true
-                            }
-                        }
-
-                        QuickActionButton {
-                            width: (parent.width - 16) / 3
-                            iconName: "power"
-                            label: Translation.tr("Session")
-                            onClicked: {
-                                GlobalStates.waffleWidgetsOpen = false
-                                GlobalStates.sessionOpen = true
+                            delegate: QuickActionButton {
+                                required property var modelData
+                                width: (parent.width - 16) / 3
+                                iconName: modelData.icon
+                                label: modelData.label
+                                onClicked: root.runQuickAction(modelData.id)
                             }
                         }
                     }

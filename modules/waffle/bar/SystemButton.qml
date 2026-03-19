@@ -35,6 +35,38 @@ BarButton {
             }
             spacing: 4
 
+            IconHoverArea {
+                id: recordingHoverArea
+                visible: RecorderStatus.isRecording
+                iconItem: Item {
+                    anchors.verticalCenter: parent.verticalCenter
+                    implicitWidth: 20
+                    implicitHeight: 20
+
+                    FluentIcon {
+                        anchors.fill: parent
+                        icon: "record"
+                        color: Looks.colors.danger
+                    }
+
+                    Rectangle {
+                        width: 4
+                        height: 4
+                        radius: 2
+                        color: Looks.colors.danger
+                        anchors { top: parent.top; right: parent.right; topMargin: -1; rightMargin: -1 }
+
+                        SequentialAnimation on opacity {
+                            running: RecorderStatus.isRecording
+                            loops: Animation.Infinite
+                            NumberAnimation { to: 0.5; duration: 1200 }
+                            NumberAnimation { to: 1.0; duration: 1200 }
+                        }
+                    }
+                }
+                onClicked: GlobalActions.runById("screen-record", "")
+            }
+
             // Mic indicator (only when in use)
             IconHoverArea {
                 id: micHoverArea
@@ -124,6 +156,10 @@ BarButton {
         children: [iconItem]
     }
 
+    BarToolTip {
+        extraVisibleCondition: root.shouldShowTooltip && recordingHoverArea.containsMouse
+        text: Translation.tr("Screen recording: Active")
+    }
     BarToolTip {
         extraVisibleCondition: root.shouldShowTooltip && micHoverArea.containsMouse
         text: Translation.tr("Microphone: %1").arg(Audio.micMuted ? Translation.tr("Muted") : Translation.tr("In use"))

@@ -2867,10 +2867,9 @@ ContentPage {
             SettingsSwitch {
                 buttonIcon: "check"
                 text: Translation.tr("Enable")
-                checked: Config.options.overview.enable
-                onCheckedChanged: {
-                    Config.options.overview.enable = checked;
-                }
+                checked: Config.options?.overview?.enable ?? true
+                enabled: !(Config.options?.overview?.dashboard?.enable ?? false)
+                onCheckedChanged: Config.setNestedValue("overview.enable", checked)
                 StyledToolTip {
                     text: Translation.tr("Enable the app launcher and workspace overview (Super+Space)")
                 }
@@ -2878,8 +2877,12 @@ ContentPage {
             SettingsSwitch {
                 buttonIcon: "dashboard"
                 text: Translation.tr("Dashboard panel")
-                checked: Config.options?.overview?.dashboard?.enable ?? true
-                onCheckedChanged: Config.setNestedValue("overview.dashboard.enable", checked)
+                checked: Config.options?.overview?.dashboard?.enable ?? false
+                onCheckedChanged: {
+                    Config.setNestedValue("overview.dashboard.enable", checked)
+                    if (checked)
+                        Config.setNestedValue("overview.enable", false)
+                }
                 StyledToolTip { text: Translation.tr("Show a control center dashboard below workspace previews") }
             }
             SettingsSwitch {
@@ -2887,35 +2890,35 @@ ContentPage {
                 text: Translation.tr("Dashboard: Quick toggles")
                 checked: Config.options?.overview?.dashboard?.showToggles ?? true
                 onCheckedChanged: Config.setNestedValue("overview.dashboard.showToggles", checked)
-                visible: Config.options?.overview?.dashboard?.enable ?? true
+                visible: Config.options?.overview?.dashboard?.enable ?? false
             }
             SettingsSwitch {
                 buttonIcon: "music_note"
                 text: Translation.tr("Dashboard: Media player")
                 checked: Config.options?.overview?.dashboard?.showMedia ?? true
                 onCheckedChanged: Config.setNestedValue("overview.dashboard.showMedia", checked)
-                visible: Config.options?.overview?.dashboard?.enable ?? true
+                visible: Config.options?.overview?.dashboard?.enable ?? false
             }
             SettingsSwitch {
                 buttonIcon: "volume_up"
                 text: Translation.tr("Dashboard: Volume slider")
                 checked: Config.options?.overview?.dashboard?.showVolume ?? true
                 onCheckedChanged: Config.setNestedValue("overview.dashboard.showVolume", checked)
-                visible: Config.options?.overview?.dashboard?.enable ?? true
+                visible: Config.options?.overview?.dashboard?.enable ?? false
             }
             SettingsSwitch {
                 buttonIcon: "cloud"
                 text: Translation.tr("Dashboard: Weather")
                 checked: Config.options?.overview?.dashboard?.showWeather ?? true
                 onCheckedChanged: Config.setNestedValue("overview.dashboard.showWeather", checked)
-                visible: Config.options?.overview?.dashboard?.enable ?? true
+                visible: Config.options?.overview?.dashboard?.enable ?? false
             }
             SettingsSwitch {
                 buttonIcon: "memory"
                 text: Translation.tr("Dashboard: System stats")
                 checked: Config.options?.overview?.dashboard?.showSystem ?? true
                 onCheckedChanged: Config.setNestedValue("overview.dashboard.showSystem", checked)
-                visible: Config.options?.overview?.dashboard?.enable ?? true
+                visible: Config.options?.overview?.dashboard?.enable ?? false
             }
             SettingsSwitch {
                 buttonIcon: "center_focus_strong"
