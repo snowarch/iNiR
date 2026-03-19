@@ -686,6 +686,11 @@ switch() {
     fi
     generate_colors_material_args+=(--termscheme "$terminalscheme" --blend_bg_fg)
     generate_colors_material_args+=(--cache "$STATE_DIR/user/generated/color.txt")
+    # Matugen prompts for source color in TTY mode unless an index is provided.
+    # Force a default index to keep non-interactive runs working.
+    if [[ "$color_flag" != "1" ]]; then
+        matugen_args+=(--source-color-index 0)
+    fi
 
     pre_process "$mode_flag"
     write_generated_wallpaper_path "$imgpath"
