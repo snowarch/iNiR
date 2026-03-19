@@ -71,6 +71,38 @@ MATUGEN_VICINAE_EOF
     fi
 }
 
+ensure_vicinae_output_dir() {
+    local vicinae_dir="$HOME/.local/share/vicinae/themes"
+    mkdir -p "$vicinae_dir" 2>/dev/null || true
+}
+
+apply_vicinae_theme() {
+    local theme_path="$HOME/.local/share/vicinae/themes/matugen.toml"
+    if [[ ! -f "$theme_path" ]]; then
+        echo "[switchwall.sh] Vicinae theme not generated (missing $theme_path)"
+        return
+    fi
+
+    local vicinae_bin=""
+    if command -v vicinae >/dev/null 2>&1; then
+        vicinae_bin="vicinae"
+    elif [[ -x "$HOME/.local/bin/vicinae" ]]; then
+        vicinae_bin="$HOME/.local/bin/vicinae"
+    elif [[ -x "/usr/local/bin/vicinae" ]]; then
+        vicinae_bin="/usr/local/bin/vicinae"
+    elif [[ -x "/usr/bin/vicinae" ]]; then
+        vicinae_bin="/usr/bin/vicinae"
+    fi
+
+    if [[ -z "$vicinae_bin" ]]; then
+        echo "[switchwall.sh] Vicinae binary not found; theme not applied"
+        return
+    fi
+
+    "$vicinae_bin" theme set matugen >/dev/null 2>&1 || \
+        echo "[switchwall.sh] Failed to apply Vicinae theme (vicinae theme set matugen)"
+}
+
 handle_kde_material_you_colors() {
     # Check if Qt app theming is enabled in config
     if [ -f "$SHELL_CONFIG_FILE" ]; then
@@ -113,6 +145,7 @@ pre_process() {
     repair_matugen_colors_template
     ensure_vicinae_template
     ensure_vicinae_config_block
+    ensure_vicinae_output_dir
 
     # Set GNOME color-scheme if mode_flag is dark or light
     if [[ "$mode_flag" == "dark" ]]; then
@@ -694,6 +727,7 @@ switch() {
 
     # Use user's matugen config (installed to ~/.config/matugen/ during setup)
     matugen --config "$MATUGEN_DIR/config.toml" "${matugen_args[@]}"
+    apply_vicinae_theme
     if [[ -n "${ILLOGICAL_IMPULSE_VIRTUAL_ENV:-}" ]]; then
         _ii_venv="$(eval echo "$ILLOGICAL_IMPULSE_VIRTUAL_ENV")"
     else
