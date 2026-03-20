@@ -457,7 +457,6 @@ WSettingsPage {
                 Config.setNestedValue("dock.cardStyle", true)
                 Config.setNestedValue("sidebar.cardStyle", true)
                 Config.setNestedValue("bar.cornerStyle", 3)
-                Config.setNestedValue("appearance.transparency.enable", false)
                 return;
             }
 
@@ -465,7 +464,6 @@ WSettingsPage {
                 Config.setNestedValue("dock.cardStyle", false)
                 Config.setNestedValue("sidebar.cardStyle", false)
                 if ((Config.options?.bar?.cornerStyle ?? 1) === 3) Config.setNestedValue("bar.cornerStyle", 1)
-                Config.setNestedValue("appearance.transparency.enable", true)
                 return;
             }
 
@@ -473,7 +471,6 @@ WSettingsPage {
                 Config.setNestedValue("dock.cardStyle", false)
                 Config.setNestedValue("sidebar.cardStyle", false)
                 if ((Config.options?.bar?.cornerStyle ?? 1) === 3) Config.setNestedValue("bar.cornerStyle", 1)
-                Config.setNestedValue("appearance.transparency.enable", true)
                 return;
             }
 
@@ -481,7 +478,6 @@ WSettingsPage {
             Config.setNestedValue("dock.cardStyle", false)
             Config.setNestedValue("sidebar.cardStyle", false)
             if ((Config.options?.bar?.cornerStyle ?? 1) === 3) Config.setNestedValue("bar.cornerStyle", 1)
-            Config.setNestedValue("appearance.transparency.enable", false)
         }
 
         WSettingsDropdown {

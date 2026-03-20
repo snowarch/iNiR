@@ -599,7 +599,6 @@ Scope {
                     currentValue: Config.options?.appearance?.globalStyle ?? "material"
                     onSelected: newValue => {
                         Config.setNestedValue("appearance.globalStyle", newValue)
-                        Config.setNestedValue("appearance.transparency.enable", newValue === "aurora" || newValue === "angel")
                     }
                     options: [
                         { displayName: "Material", icon: "dashboard", value: "material" },
