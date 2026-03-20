@@ -19,13 +19,25 @@ Rectangle {
     Layout.fillWidth: true
     implicitHeight: mainColumn.implicitHeight
     radius: Looks.radius.xLarge
-    color: Looks.colors.bgPanelFooter
+    color: cardHoverArea.containsMouse ? Qt.lighter(Looks.colors.bgPanelFooter, 1.03) : Looks.colors.bgPanelFooter
     border.width: 1
     border.color: Looks.colors.bg2Border
+    
+    Behavior on color {
+        animation: ColorAnimation { duration: Looks.transition.enabled ? 120 : 0; easing.type: Easing.OutQuad }
+    }
     
     // Card elevation shadow
     WRectangularShadow {
         target: root
+    }
+    
+    // Subtle hover detection for entire card
+    MouseArea {
+        id: cardHoverArea
+        anchors.fill: parent
+        hoverEnabled: true
+        acceptedButtons: Qt.NoButton
     }
     
     ColumnLayout {
@@ -72,13 +84,13 @@ Rectangle {
                     Layout.fillWidth: true
                     text: root.title
                     font.pixelSize: Looks.font.pixelSize.large
-                    font.weight: Looks.font.weight.regular
+                    font.weight: Looks.font.weight.strong
                     color: Looks.colors.fg
                 }
                 
                 FluentIcon {
                     visible: root.collapsible
-                    icon: root.expanded ? "chevron-up" : "chevron-down"
+                    icon: "chevron-up"
                     implicitSize: 12
                     color: Looks.colors.subfg
                     
@@ -90,19 +102,31 @@ Rectangle {
             }
         }
 
-        // Content
-        ColumnLayout {
-            id: contentColumn
-            visible: root.expanded
+        // Content with smooth collapse
+        Item {
             Layout.fillWidth: true
-            Layout.leftMargin: 0
-            Layout.rightMargin: 0
-            Layout.topMargin: root.title !== "" ? 4 : 6
-            Layout.bottomMargin: 10
-            spacing: 0
+            implicitHeight: root.expanded ? contentColumn.implicitHeight + contentColumn.anchors.topMargin + contentColumn.anchors.bottomMargin : 0
+            clip: true
 
-            Behavior on Layout.topMargin {
-                animation: NumberAnimation { duration: Looks.transition.enabled ? Looks.transition.duration.fast : 0 }
+            Behavior on implicitHeight {
+                animation: NumberAnimation { duration: Looks.transition.enabled ? Looks.transition.duration.medium : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
+            }
+
+            ColumnLayout {
+                id: contentColumn
+                anchors {
+                    top: parent.top
+                    left: parent.left
+                    right: parent.right
+                    topMargin: root.title !== "" ? 4 : 6
+                    bottomMargin: 10
+                }
+                spacing: 0
+                opacity: root.expanded ? 1 : 0
+
+                Behavior on opacity {
+                    animation: NumberAnimation { duration: Looks.transition.enabled ? Looks.transition.duration.fast : 0; easing.type: Easing.OutQuad }
+                }
             }
         }
     }

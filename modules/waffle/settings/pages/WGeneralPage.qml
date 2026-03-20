@@ -86,7 +86,7 @@ WSettingsPage {
         
         WSettingsSwitch {
             label: Translation.tr("Show seconds")
-            icon: "pulse"
+            icon: "timer"
             description: Translation.tr("Display seconds in clock")
             checked: Config.options?.time?.secondPrecision ?? false
             onCheckedChanged: Config.setNestedValue("time.secondPrecision", checked)

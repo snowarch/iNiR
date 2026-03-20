@@ -26,7 +26,7 @@ Item {
     Layout.fillWidth: true
     Layout.leftMargin: 16
     Layout.rightMargin: 16
-    implicitHeight: Math.max(54, contentRow.implicitHeight + 20)
+    implicitHeight: Math.max(56, contentRow.implicitHeight + 22)
     
     // Highlight animation for search focus
     Behavior on opacity {
@@ -127,9 +127,13 @@ Item {
             if (mouseArea.containsMouse) return Looks.colors.bg2Hover
             return "transparent"
         }
+        scale: root.clickable && mouseArea.pressed ? 0.985 : 1.0
         
         Behavior on color {
-            animation: ColorAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
+            animation: ColorAnimation { duration: Looks.transition.enabled ? 100 : 0; easing.type: Easing.OutQuad }
+        }
+        Behavior on scale {
+            animation: NumberAnimation { duration: Looks.transition.enabled ? 80 : 0; easing.type: Easing.OutQuad }
         }
     }
     
@@ -152,8 +156,8 @@ Item {
     MouseArea {
         id: mouseArea
         anchors.fill: parent
-        enabled: true
-        hoverEnabled: true
+        enabled: root.clickable
+        hoverEnabled: root.clickable
         cursorShape: root.clickable ? Qt.PointingHandCursor : Qt.ArrowCursor
         onClicked: if (root.clickable) root.clicked()
     }
@@ -164,12 +168,16 @@ Item {
             bottom: parent.bottom
             left: parent.left
             right: parent.right
-            leftMargin: root.icon !== "" ? 40 : 16
+            leftMargin: root.icon !== "" ? 44 : 16
             rightMargin: 16
         }
         height: 1
         color: Looks.colors.bg2Border
-        opacity: 0.2
+        opacity: mouseArea.containsMouse ? 0.08 : 0.15
+        
+        Behavior on opacity {
+            animation: NumberAnimation { duration: Looks.transition.enabled ? 100 : 0 }
+        }
     }
     
     RowLayout {
@@ -185,7 +193,12 @@ Item {
             visible: root.icon !== ""
             icon: root.icon
             implicitSize: 16
-            color: Looks.colors.subfg
+            Layout.alignment: Qt.AlignVCenter
+            color: mouseArea.containsMouse ? Looks.colors.accent : Looks.colors.subfg
+            
+            Behavior on color {
+                animation: ColorAnimation { duration: Looks.transition.enabled ? 100 : 0 }
+            }
         }
         
         ColumnLayout {

@@ -70,6 +70,19 @@ WSettingsRow {
                 implicitHeight: contentItem.implicitHeight + 8
                 padding: 4
                 
+                enter: Transition {
+                    ParallelAnimation {
+                        NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Looks.transition.enabled ? Looks.transition.duration.fast : 0; easing.type: Easing.OutCubic }
+                        NumberAnimation { property: "scale"; from: 0.95; to: 1.0; duration: Looks.transition.enabled ? Looks.transition.duration.fast : 0; easing.type: Easing.OutCubic }
+                    }
+                }
+                exit: Transition {
+                    ParallelAnimation {
+                        NumberAnimation { property: "opacity"; from: 1; to: 0; duration: Looks.transition.enabled ? Looks.transition.duration.ultraFast : 0; easing.type: Easing.InQuad }
+                        NumberAnimation { property: "scale"; from: 1.0; to: 0.97; duration: Looks.transition.enabled ? Looks.transition.duration.ultraFast : 0; easing.type: Easing.InQuad }
+                    }
+                }
+                
                 background: Item {
                     Rectangle {
                         id: popupBg
@@ -106,7 +119,16 @@ WSettingsRow {
                 
                 background: Rectangle {
                     radius: Looks.radius.medium
-                    color: delegateItem.highlighted ? Looks.colors.bg2Hover : "transparent"
+                    color: {
+                        if (delegateItem.index === combo.currentIndex) return Looks.colors.accent
+                        if (delegateItem.highlighted) return Looks.colors.bg2Hover
+                        return "transparent"
+                    }
+                    opacity: delegateItem.index === combo.currentIndex ? 0.15 : 1.0
+                    
+                    Behavior on color {
+                        animation: ColorAnimation { duration: Looks.transition.enabled ? 80 : 0 }
+                    }
                 }
                 
                 contentItem: RowLayout {
@@ -116,7 +138,7 @@ WSettingsRow {
                         Layout.leftMargin: 8
                         icon: "checkmark"
                         implicitSize: 12
-                        color: Looks.colors.fg
+                        color: delegateItem.index === combo.currentIndex ? Looks.colors.accent : Looks.colors.fg
                         visible: delegateItem.index === combo.currentIndex
                     }
                     
@@ -130,6 +152,7 @@ WSettingsRow {
                         Layout.fillWidth: true
                         text: delegateItem.modelData.displayName
                         font.pixelSize: Looks.font.pixelSize.normal
+                        font.weight: delegateItem.index === combo.currentIndex ? Looks.font.weight.strong : Looks.font.weight.regular
                         verticalAlignment: Text.AlignVCenter
                     }
                 }

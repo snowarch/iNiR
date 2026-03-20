@@ -21,6 +21,7 @@ Flickable {
     clip: true
     contentHeight: contentColumn.implicitHeight + 56
     boundsBehavior: Flickable.StopAtBounds
+    pressDelay: 50
     
     ScrollBar.vertical: WScrollBar {}
     
@@ -38,35 +39,48 @@ Flickable {
         spacing: 16
 
         opacity: 0
+        transform: Translate { id: contentTranslate; y: Looks.transition.enabled ? 18 : 0 }
+
         Component.onCompleted: {
             if (Looks.transition.enabled) {
-                contentFadeIn.start()
+                contentEntrance.start()
             } else {
                 contentColumn.opacity = 1
+                contentTranslate.y = 0
             }
         }
-        NumberAnimation {
-            id: contentFadeIn
-            target: contentColumn
-            property: "opacity"
-            from: 0; to: 1
-            duration: Looks.transition.duration.medium
-            easing.type: Easing.OutCubic
+
+        ParallelAnimation {
+            id: contentEntrance
+            NumberAnimation {
+                target: contentColumn
+                property: "opacity"
+                from: 0; to: 1
+                duration: Looks.transition.duration.medium
+                easing.type: Easing.OutCubic
+            }
+            NumberAnimation {
+                target: contentTranslate
+                property: "y"
+                from: 18; to: 0
+                duration: Looks.transition.duration.medium
+                easing.type: Easing.OutCubic
+            }
         }
 
         // Page header
         ColumnLayout {
             Layout.fillWidth: true
-            Layout.bottomMargin: 12
-            spacing: 8
+            Layout.bottomMargin: 16
+            spacing: 10
 
             RowLayout {
-                spacing: 12
+                spacing: 14
 
                 FluentIcon {
                     visible: root.pageIcon !== ""
                     icon: root.pageIcon
-                    implicitSize: 24
+                    implicitSize: 28
                     color: Looks.colors.accent
                 }
 

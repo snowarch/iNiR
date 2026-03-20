@@ -1466,11 +1466,11 @@ WSettingsPage {
 
     WSettingsCard {
         title: Translation.tr("Desktop Clock")
-        icon: "pulse"
+        icon: "schedule"
 
         WSettingsSwitch {
             label: Translation.tr("Enable clock")
-            icon: "pulse"
+            icon: "schedule"
             description: Translation.tr("Show a desktop clock on the Waffle wallpaper layer")
             checked: root.wClock.enable ?? false
             onCheckedChanged: root.setNestedValueWhenReady("waffles.background.widgets.clock.enable", checked)
@@ -1548,7 +1548,7 @@ WSettingsPage {
 
                     WSettingsDropdown {
                         label: Translation.tr("Time format")
-                        icon: "pulse"
+                        icon: "schedule"
                         description: Translation.tr("Follow the global clock format or override it for the wallpaper clock")
                         currentValue: root.wClock.timeFormat ?? "system"
                         options: [
@@ -1561,7 +1561,7 @@ WSettingsPage {
 
                     WSettingsSwitch {
                         label: Translation.tr("Show seconds")
-                        icon: "pulse"
+                        icon: "timer"
                         description: Translation.tr("Update the wallpaper clock every second")
                         checked: root.wClock.showSeconds ?? false
                         onCheckedChanged: root.setNestedValueWhenReady("waffles.background.widgets.clock.showSeconds", checked)

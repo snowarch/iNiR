@@ -329,36 +329,22 @@ Item {
                 // Header with app name (expanded)
                 RowLayout {
                     Layout.fillWidth: true
-                    Layout.bottomMargin: 10
+                    Layout.bottomMargin: 6
                     spacing: 10
                     visible: root.navExpanded
 
-                    Item {
-                        implicitWidth: 34
-                        implicitHeight: 34
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: width / 2
-                            color: Looks.colors.bg1
-                            border.width: 1
-                            border.color: Looks.colors.accent
-                        }
-
-                        WUserAvatar {
-                            anchors.centerIn: parent
-                            sourceSize: Qt.size(30, 30)
-                        }
+                    WUserAvatar {
+                        sourceSize: Qt.size(32, 32)
                     }
 
                     ColumnLayout {
                         Layout.fillWidth: true
-                        spacing: 0
+                        spacing: 1
 
                         WText {
                             text: Translation.tr("Settings")
                             font.pixelSize: Looks.font.pixelSize.larger
-                            font.weight: Looks.font.weight.strong
+                            font.weight: Looks.font.weight.stronger
                             color: Looks.colors.fg
                         }
 
@@ -395,6 +381,16 @@ Item {
                             color: Looks.colors.subfg
                         }
                     }
+                }
+                
+                // Subtle separator under header
+                Rectangle {
+                    visible: root.navExpanded
+                    Layout.fillWidth: true
+                    Layout.bottomMargin: 6
+                    height: 1
+                    color: Looks.colors.bg2Border
+                    opacity: 0.3
                 }
                 
                 // Header icon (collapsed) — larger, with accent tint
@@ -766,12 +762,12 @@ Item {
             }
         }
         
-        // Separator
+        // Separator — subtle gradient-like line
         Rectangle {
             Layout.fillHeight: true
             width: 1
             color: Looks.colors.bg2Border
-            opacity: 0.6
+            opacity: 0.4
         }
         
         // Content area
@@ -836,10 +832,12 @@ Item {
                         source: root.pages[index].component
                         visible: index === root.currentPage && status === Loader.Ready
                         opacity: visible ? 1 : 0
+                        // Disabled pages must not intercept mouse events even at opacity 0
+                        enabled: visible
 
-                          Behavior on opacity {
-                              animation: NumberAnimation { duration: Looks.transition.enabled ? Looks.transition.duration.normal : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
-                          }
+                        Behavior on opacity {
+                            animation: NumberAnimation { duration: Looks.transition.enabled ? Looks.transition.duration.normal : 0; easing.type: Easing.OutCubic }
+                        }
                     }
                 }
             }

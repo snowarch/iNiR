@@ -118,7 +118,7 @@ WSettingsPage {
         WSettingsSpinBox {
             visible: Config.options?.waffles?.bar?.desktopPeek?.hoverPeek ?? false
             label: Translation.tr("Hover delay")
-            icon: "pulse"
+            icon: "timer"
             suffix: "ms"
             from: 100; to: 2000; stepSize: 100
             value: Config.options?.waffles?.bar?.desktopPeek?.hoverDelay ?? 500
@@ -133,7 +133,7 @@ WSettingsPage {
         
         WSettingsSwitch {
             label: Translation.tr("Show seconds")
-            icon: "pulse"
+            icon: "timer"
             description: Translation.tr("Display seconds in taskbar clock")
             checked: Config.options?.time?.secondPrecision ?? false
             onCheckedChanged: Config.setNestedValue("time.secondPrecision", checked)

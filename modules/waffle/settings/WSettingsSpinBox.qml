@@ -17,27 +17,37 @@ WSettingsRow {
     
     control: Component {
         RowLayout {
-            spacing: 4
+            spacing: 2
             
             WBorderlessButton {
-                implicitWidth: 28
-                implicitHeight: 28
+                id: decrementBtn
+                implicitWidth: 32
+                implicitHeight: 32
                 enabled: root.value > root.from
+                radius: Looks.radius.medium
                 
                 contentItem: FluentIcon {
                     anchors.centerIn: parent
                     icon: "subtract"
-                    implicitSize: 12
-                    color: parent.enabled ? Looks.colors.fg : Looks.colors.subfg
-                    opacity: parent.enabled ? 1 : 0.4
+                    implicitSize: 13
+                    color: {
+                        if (!decrementBtn.enabled) return Looks.colors.subfg
+                        if (decrementBtn.hovered) return Looks.colors.accent
+                        return Looks.colors.fg
+                    }
+                    opacity: decrementBtn.enabled ? 1 : 0.35
+                    
+                    Behavior on color {
+                        animation: ColorAnimation { duration: Looks.transition.enabled ? 80 : 0 }
+                    }
                 }
                 
                 onClicked: root.value = Math.max(root.from, root.value - root.stepSize)
             }
             
             Rectangle {
-                implicitWidth: Math.max(56, valueText.implicitWidth + 16)
-                implicitHeight: 28
+                implicitWidth: Math.max(58, valueText.implicitWidth + 20)
+                implicitHeight: 32
                 radius: Looks.radius.medium
                 color: Looks.colors.inputBg
                 border.width: 1
@@ -49,20 +59,31 @@ WSettingsRow {
                     text: root.value + root.suffix
                     font.pixelSize: Looks.font.pixelSize.normal
                     font.family: Looks.font.family.ui
+                    font.weight: Looks.font.weight.strong
                 }
             }
             
             WBorderlessButton {
-                implicitWidth: 28
-                implicitHeight: 28
+                id: incrementBtn
+                implicitWidth: 32
+                implicitHeight: 32
                 enabled: root.value < root.to
+                radius: Looks.radius.medium
                 
                 contentItem: FluentIcon {
                     anchors.centerIn: parent
                     icon: "add"
-                    implicitSize: 12
-                    color: parent.enabled ? Looks.colors.fg : Looks.colors.subfg
-                    opacity: parent.enabled ? 1 : 0.4
+                    implicitSize: 13
+                    color: {
+                        if (!incrementBtn.enabled) return Looks.colors.subfg
+                        if (incrementBtn.hovered) return Looks.colors.accent
+                        return Looks.colors.fg
+                    }
+                    opacity: incrementBtn.enabled ? 1 : 0.35
+                    
+                    Behavior on color {
+                        animation: ColorAnimation { duration: Looks.transition.enabled ? 80 : 0 }
+                    }
                 }
                 
                 onClicked: root.value = Math.min(root.to, root.value + root.stepSize)
