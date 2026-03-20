@@ -58,12 +58,7 @@ Scope {
         if (!filePath || filePath.length === 0) return
 
         const normalizedPath = FileUtils.trimFileProtocol(String(filePath))
-        const configTarget = Config.options?.wallpaperSelector?.selectionTarget ?? "main"
-        let target = (configTarget && configTarget !== "main")
-            ? configTarget
-            : GlobalStates.wallpaperSelectionTarget
-
-        Wallpapers.applySelectionTarget(normalizedPath, target, useDarkMode, root.selectedMonitor)
+        Wallpapers.applySelectionTarget(normalizedPath, root.currentSelectionTarget, useDarkMode, root.selectedMonitor)
 
         Config.setNestedValue("wallpaperSelector.selectionTarget", "main")
         Config.setNestedValue("wallpaperSelector.targetMonitor", "")

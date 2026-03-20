@@ -101,11 +101,7 @@ MouseArea {
     function selectWallpaperPath(filePath) {
         if (filePath && filePath.length > 0) {
             const normalizedPath = FileUtils.trimFileProtocol(String(filePath))
-            // Check Config first (set by settings.qml via IPC), then GlobalStates
-            const configTarget = Config.options?.wallpaperSelector?.selectionTarget;
-            let target = (configTarget && configTarget !== "main") ? configTarget : GlobalStates.wallpaperSelectionTarget;
-            
-            Wallpapers.applySelectionTarget(normalizedPath, target, root.useDarkMode, root.selectedMonitor);
+            Wallpapers.applySelectionTarget(normalizedPath, Wallpapers.currentSelectionTarget(), root.useDarkMode, root.selectedMonitor);
             Config.setNestedValue("wallpaperSelector.selectionTarget", "main")
             Config.setNestedValue("wallpaperSelector.targetMonitor", "")
             GlobalStates.wallpaperSelectionTarget = "main";

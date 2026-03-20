@@ -286,11 +286,6 @@ Singleton {
             wallpaperCacheTimer.restart()
     }
 
-    function currentSelectionTarget(): string {
-        const configTarget = Config.options?.wallpaperSelector?.selectionTarget ?? "main"
-        return (configTarget && configTarget !== "main") ? configTarget : (GlobalStates.wallpaperSelectionTarget ?? "main")
-    }
-
     function currentMainWallpaperPath(monitorName = ""): string {
         const targetMonitor = monitorName || (WallpaperListener.multiMonitorEnabled ? WallpaperListener.getFocusedMonitor() : "")
         if (WallpaperListener.multiMonitorEnabled && targetMonitor) {
@@ -578,10 +573,12 @@ Singleton {
         property string filePath: ""
         property bool darkMode: Appearance.m3colors.darkmode
         property string monitorName: ""
-        function select(filePath, darkMode = Appearance.m3colors.darkmode, monitorName = "") {
+        property string target: ""
+        function select(filePath, darkMode = Appearance.m3colors.darkmode, monitorName = "", target = "") {
             selectProc.filePath = filePath
             selectProc.darkMode = darkMode
             selectProc.monitorName = monitorName
+            selectProc.target = target
             selectProc.exec(["test", "-d", FileUtils.trimFileProtocol(filePath)])
         }
         onExited: (exitCode, exitStatus) => {
@@ -589,19 +586,48 @@ Singleton {
                 setDirectory(selectProc.filePath)
                 return
             }
+            const target = root.resolveSelectionTarget(selectProc.target, selectProc.monitorName)
+            if (target !== "main") {
+                root.applySelectionTarget(selectProc.filePath, target, selectProc.darkMode, selectProc.monitorName)
+                return
+            }
             root.apply(selectProc.filePath, selectProc.darkMode, selectProc.monitorName)
         }
     }
 
-    function select(filePath, darkMode = Appearance.m3colors.darkmode, monitorName = "") {
-        selectProc.select(filePath, darkMode, monitorName)
+    function resolveSelectionTarget(target = "", monitorName = ""): string {
+        const normalizedTarget = String(target ?? "")
+        if (normalizedTarget.length > 0)
+            return normalizedTarget
+        if (monitorName && monitorName.length > 0)
+            return "main"
+        return currentSelectionTarget()
     }
 
-    function randomFromCurrentFolder(darkMode = Appearance.m3colors.darkmode, monitorName = "") {
+    function currentSelectionTarget(): string {
+        const configTarget = Config.options?.wallpaperSelector?.selectionTarget ?? "main"
+        if (configTarget && configTarget !== "main")
+            return configTarget
+
+        const globalTarget = GlobalStates.wallpaperSelectionTarget ?? "main"
+        if (globalTarget && globalTarget !== "main")
+            return globalTarget
+
+        if ((Config.options?.panelFamily ?? "ii") === "waffle")
+            return (Config.options?.waffles?.background?.useMainWallpaper ?? true) ? "main" : "waffle"
+
+        return "main"
+    }
+
+    function select(filePath, darkMode = Appearance.m3colors.darkmode, monitorName = "", target = "") {
+        selectProc.select(filePath, darkMode, monitorName, target)
+    }
+
+    function randomFromCurrentFolder(darkMode = Appearance.m3colors.darkmode, monitorName = "", target = "") {
         if (folderModel.count === 0) return
         const randomIndex = Math.floor(Math.random() * folderModel.count)
         const filePath = folderModel.get(randomIndex, "filePath")
-        root.select(filePath, darkMode, monitorName)
+        root.select(filePath, darkMode, monitorName, target)
     }
 
     // Detect workspace range for a monitor (Niri-specific)

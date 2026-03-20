@@ -779,7 +779,7 @@ main() {
                 ;;
             --noswitch)
                 noswitch_flag="1"
-                imgpath=$(jq -r '.background.wallpaperPath' "$SHELL_CONFIG_FILE" 2>/dev/null || echo "")
+                skip_config_write="1"
                 shift
                 ;;
             --skip-config-write)
