@@ -29,10 +29,8 @@ Scope {
     property string overlaySearchText: ""
     property var overlaySearchResults: []
 
-    // Spotlight effect for search results
-    property var spotlightTarget: null
-    property rect spotlightRect: Qt.rect(0, 0, 0, 0)
-    property bool spotlightActive: false
+    // Navigation target for search results (no visual spotlight)
+    property var searchTargetControl: null
 
     Timer {
         id: searchDebounceTimer
@@ -147,7 +145,7 @@ Scope {
         { pageIndex: 7, pageName: overlayPages[7].name, section: Translation.tr("Idle & Power"), label: Translation.tr("Idle & Power"), description: Translation.tr("Screen off, lock and suspend timeouts"), keywords: ["idle", "power", "screen", "off", "lock", "suspend", "sleep", "timeout"] },
         { pageIndex: 5, pageName: overlayPages[5].name, section: Translation.tr("Controls Card"), label: Translation.tr("Night light"), description: Translation.tr("Show or hide the night light toggle in the sidebar"), keywords: ["night", "light", "blue", "filter", "sidebar", "toggle", "controls"] },
         { pageIndex: 0, pageName: overlayPages[0].name, section: Translation.tr("GameMode"), label: Translation.tr("GameMode"), description: Translation.tr("Auto-detect fullscreen games and reduce effects"), keywords: ["game", "mode", "fullscreen", "performance", "fps", "auto", "detect", "animations", "effects"] },
-        { pageIndex: 7, pageName: overlayPages[7].name, section: Translation.tr("Applications"), label: Translation.tr("Default applications"), description: Translation.tr("Terminal, file manager, browser commands"), keywords: ["apps", "applications", "terminal", "browser", "file", "manager", "discord", "default"] },
+        { pageIndex: 7, pageName: overlayPages[7].name, section: Translation.tr("Applications"), label: Translation.tr("Default applications"), description: Translation.tr("Terminal, browser, network and account commands"), keywords: ["apps", "applications", "terminal", "browser", "network", "bluetooth", "account", "default"] },
         // Advanced (page 8)
         { pageIndex: 8, pageName: overlayPages[8].name, section: Translation.tr("Color generation"), label: Translation.tr("Color generation"), description: Translation.tr("Wallpaper-based color theming and palette type"), keywords: ["color", "generation", "theming", "wallpaper", "matugen", "palette"] },
         { pageIndex: 8, pageName: overlayPages[8].name, section: Translation.tr("Color generation"), label: Translation.tr("Terminal saturation"), description: Translation.tr("Saturation intensity of terminal colors from wallpaper"), keywords: ["terminal", "color", "saturation", "vivid", "muted", "intensity"] },
@@ -159,7 +157,7 @@ Scope {
         { pageIndex: 9, pageName: overlayPages[9].name, section: Translation.tr("Keyboard Shortcuts"), label: Translation.tr("Keyboard Shortcuts"), description: Translation.tr("Niri and ii keybindings reference"), keywords: ["shortcuts", "keybindings", "hotkeys", "keyboard", "cheatsheet", "terminal", "clipboard", "volume", "brightness", "screenshot", "lock", "workspace", "window", "focus", "move", "fullscreen", "floating", "overview", "settings", "wallpaper", "media", "play", "pause"] },
         // Modules (page 10)
         { pageIndex: 10, pageName: overlayPages[10].name, section: Translation.tr("Panel Modules"), label: Translation.tr("Panel Modules"), description: Translation.tr("Enable or disable shell modules"), keywords: ["modules", "panels", "enable", "disable", "bar", "sidebar", "overview"] },
-        { pageIndex: 10, pageName: overlayPages[10].name, section: Translation.tr("Display scaling"), label: Translation.tr("Shell scale"), description: Translation.tr("Scale the entire shell UI for HiDPI / 4K monitors"), keywords: ["scale", "dpi", "hidpi", "4k", "zoom", "size", "display", "monitor", "resolution"] },
+        { pageIndex: 10, pageName: overlayPages[10].name, section: Translation.tr("Display scaling"), label: Translation.tr("UI scale (%)"), description: Translation.tr("Scale the entire shell UI for HiDPI / 4K monitors"), keywords: ["scale", "dpi", "hidpi", "4k", "zoom", "size", "display", "monitor", "resolution"] },
         { pageIndex: 10, pageName: overlayPages[10].name, section: Translation.tr("Wallpaper selector"), label: Translation.tr("Wallpaper selector"), description: Translation.tr("Wallpaper picker style and behavior"), keywords: ["wallpaper", "selector", "picker", "coverflow", "grid", "file"] },
         { pageIndex: 10, pageName: overlayPages[10].name, section: Translation.tr("Settings UI"), label: Translation.tr("Overlay mode"), description: Translation.tr("Open Settings as floating overlay inside shell for live preview"), keywords: ["settings", "overlay", "mode", "live", "preview", "floating", "window", "layer"] },
         // Waffle Style (page 11)
@@ -167,15 +165,34 @@ Scope {
         { pageIndex: 11, pageName: overlayPages[11].name, section: Translation.tr("Waffle Start Menu"), label: Translation.tr("Waffle Start Menu"), description: Translation.tr("Start menu size and behavior"), keywords: ["waffle", "start", "menu", "apps", "pinned"] },
         // Compositor (page 12)
         { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Displays"), label: Translation.tr("Display settings"), description: Translation.tr("Monitor resolution, refresh rate, scale and rotation"), keywords: ["display", "monitor", "resolution", "refresh", "scale", "rotation", "transform", "vrr", "output", "hdmi", "dp"] },
-        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Input"), label: Translation.tr("Keyboard"), description: Translation.tr("Keyboard repeat delay and rate"), keywords: ["keyboard", "repeat", "delay", "rate", "input", "typing"] },
-        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Input"), label: Translation.tr("Touchpad"), description: Translation.tr("Tap to click, natural scroll, acceleration"), keywords: ["touchpad", "tap", "scroll", "natural", "accel", "gesture", "input"] },
-        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Input"), label: Translation.tr("Mouse"), description: Translation.tr("Mouse acceleration profile and natural scroll"), keywords: ["mouse", "accel", "flat", "adaptive", "natural", "scroll", "input"] },
+        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Keyboard"), label: Translation.tr("Keyboard"), description: Translation.tr("Keyboard repeat delay and rate"), keywords: ["keyboard", "repeat", "delay", "rate", "input", "typing"] },
+        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Touchpad"), label: Translation.tr("Touchpad"), description: Translation.tr("Tap to click, natural scroll, acceleration"), keywords: ["touchpad", "tap", "scroll", "natural", "accel", "gesture", "input"] },
+        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Mouse"), label: Translation.tr("Mouse"), description: Translation.tr("Mouse acceleration profile and natural scroll"), keywords: ["mouse", "accel", "flat", "adaptive", "natural", "scroll", "input"] },
+        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Trackpoint"), label: Translation.tr("Trackpoint"), description: Translation.tr("Trackpoint acceleration, scroll method and speed"), keywords: ["trackpoint", "thinkpad", "nub", "pointing stick", "accel", "scroll", "input"] },
+        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("General Input"), label: Translation.tr("Focus follows mouse"), description: Translation.tr("Hover-to-focus, pointer warp and workspace navigation input behavior"), keywords: ["focus", "mouse", "hover", "warp", "pointer", "workspace", "input"] },
+        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Cursor"), label: Translation.tr("Cursor theme"), description: Translation.tr("Cursor theme, size and typing visibility"), keywords: ["cursor", "xcursor", "theme", "size", "hide", "typing"] },
         { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Layout"), label: Translation.tr("Window gaps"), description: Translation.tr("Gap size between windows"), keywords: ["gaps", "spacing", "windows", "layout", "tiling"] },
         { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Layout"), label: Translation.tr("Window border"), description: Translation.tr("Border around all windows"), keywords: ["border", "window", "outline", "width", "layout"] },
         { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Layout"), label: Translation.tr("Focus ring"), description: Translation.tr("Highlight ring on focused window"), keywords: ["focus", "ring", "highlight", "active", "window"] },
+        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Layout"), label: Translation.tr("Default column display"), description: Translation.tr("Normal or tabbed layout for new columns"), keywords: ["column", "tabbed", "display", "layout", "tabs"] },
+        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Layout"), label: Translation.tr("Window shadow"), description: Translation.tr("Shadow softness, spread, offset and color"), keywords: ["shadow", "softness", "spread", "offset", "color", "layout"] },
+        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Layout"), label: Translation.tr("Struts"), description: Translation.tr("Shrink the tiling area from each edge"), keywords: ["struts", "edge", "margin", "padding", "layout", "tiling"] },
+        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Window Rules"), label: Translation.tr("Clip windows to rounded geometry"), description: Translation.tr("Round corners and clip windows to their visual geometry"), keywords: ["clip", "corner", "radius", "window rules", "rounded"] },
+        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Animations"), label: Translation.tr("Per-animation toggles"), description: Translation.tr("Enable or disable specific compositor animations"), keywords: ["animation", "spring", "toggle", "workspace", "overview", "recent windows"] },
+        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Niri config status"), label: Translation.tr("Managed overrides status"), description: Translation.tr("Actionable managed overrides and extra files in Niri config"), keywords: ["niri", "status", "managed", "override", "extra", "config.d", "kdl"] },
         // About (page 13)
         { pageIndex: 13, pageName: overlayPages[13].name, section: Translation.tr("About"), label: Translation.tr("About ii"), description: Translation.tr("Version info, credits and links"), keywords: ["about", "version", "credits", "github", "info"] }
     ]
+
+    function getWaffleSettingsPageIndex() {
+        for (var i = 0; i < overlayPages.length; i++) {
+            var componentPath = String(overlayPages[i].component || "");
+            if (componentPath.indexOf("modules/settings/WaffleConfig.qml") >= 0) {
+                return i;
+            }
+        }
+        return -1;
+    }
 
     function recomputeOverlaySearchResults() {
         var q = String(overlaySearchText || "").toLowerCase().trim();
@@ -188,12 +205,13 @@ Scope {
         var results = [];
 
         var isWaffleActive = Config.options?.panelFamily === "waffle";
-        var wafflePageIndex = 11;
+        var wafflePageIndex = getWaffleSettingsPageIndex();
 
         // 1. Static index
         for (var i = 0; i < overlaySearchIndex.length; i++) {
             var entry = overlaySearchIndex[i];
-            if (entry.pageIndex === wafflePageIndex && !isWaffleActive) continue;
+            if (wafflePageIndex >= 0 && entry.pageIndex === wafflePageIndex && !isWaffleActive)
+                continue;
 
             var label = (entry.label || "").toLowerCase();
             var desc = (entry.description || "").toLowerCase();
@@ -234,7 +252,7 @@ Scope {
         // 2. Dynamic widget registry
         if (typeof SettingsSearchRegistry !== "undefined") {
             var widgetResults = SettingsSearchRegistry.buildResults(overlaySearchText);
-            if (!isWaffleActive) {
+            if (!isWaffleActive && wafflePageIndex >= 0) {
                 widgetResults = widgetResults.filter(r => r.pageIndex !== wafflePageIndex);
             }
             // Prefer real controls (dynamic registry entries with optionId)
@@ -263,14 +281,12 @@ Scope {
         overlaySearchResults = unique.slice(0, 50);
     }
 
-    // ── Spotlight system (full, aligned with settings.qml) ──
+    // ── Search navigation system ──
     property int pendingSpotlightOptionId: -1
     property string pendingSpotlightLabel: ""
     property string pendingSpotlightSection: ""
     property int pendingSpotlightPageIndex: -1
     property bool pendingSpotlightIsSection: false
-    property var spotlightFlickable: null
-    property real spotlightTargetScrollY: 0
     property int spotlightRetryCount: 0
     property int spotlightMaxRetries: 15
 
@@ -279,8 +295,8 @@ Scope {
         overlaySearchText = "";
         if (typeof overlaySearchField !== "undefined" && overlaySearchField) overlaySearchField.text = "";
 
-        // Deactivate any existing spotlight
-        deactivateSpotlight();
+        // Reset any previous search target
+        resetSearchTarget();
 
         if (!entry || entry.pageIndex === undefined || entry.pageIndex < 0) return;
 
@@ -296,7 +312,7 @@ Scope {
             overlayCurrentPage = entry.pageIndex;
         }
 
-        // Always try spotlight (with retry for lazy-loaded widgets)
+        // Always try navigation (with retry for lazy-loaded widgets)
         if (pendingSpotlightOptionId >= 0 || pendingSpotlightLabel.length > 0) {
             spotlightRetryCount = 0;
             spotlightPageLoadTimer.restart();
@@ -379,7 +395,7 @@ Scope {
         }
 
         if (control) {
-            doSpotlightForControl(control);
+            navigateToSearchControl(control);
         } else if (spotlightRetryCount < spotlightMaxRetries) {
             spotlightRetryCount++;
             spotlightPageLoadTimer.restart();
@@ -393,7 +409,7 @@ Scope {
         }
     }
 
-    function doSpotlightForControl(control) {
+    function navigateToSearchControl(control) {
         if (!control) return;
 
         // Expand the section containing the control and collapse others
@@ -423,69 +439,19 @@ Scope {
         var maxScroll = Math.max(0, flick.contentHeight - flick.height);
         targetScrollY = Math.max(0, Math.min(targetScrollY, maxScroll));
 
-        // Store the target scroll position for later verification
-        spotlightTargetScrollY = targetScrollY;
-
         // Scroll to position - set directly to bypass animation
         flick.contentY = targetScrollY;
-
-        // Store references for spotlight calculation
-        spotlightTarget = control;
-        spotlightFlickable = flick;
-
-        // Wait for layout to update after scroll
-        spotlightShowTimer.restart();
-    }
-
-    Timer {
-        id: spotlightShowTimer
-        interval: 250
-        onTriggered: root.showSpotlight()
-    }
-
-    function showSpotlight() {
-        if (!spotlightTarget || !spotlightFlickable) {
-            deactivateSpotlight();
-            return;
-        }
-
-        var control = spotlightTarget;
-        var flick = spotlightFlickable;
-
-        // Check if scroll animation is still running (contentY hasn't reached target)
-        var scrollDiff = Math.abs(flick.contentY - spotlightTargetScrollY);
-        if (scrollDiff > 2) {
-            spotlightShowTimer.restart();
-            return;
-        }
-
-        // Guard: overlayContentContainer may not be loaded yet
-        if (typeof overlayContentContainer === "undefined" || !overlayContentContainer) {
-            spotlightShowTimer.restart();
-            return;
-        }
-
-        // Use mapToItem directly to get the control's visual position in overlayContentContainer
-        var pos = control.mapToItem(overlayContentContainer, 0, 0);
-
-        var padding = 8;
-        spotlightRect = Qt.rect(
-            Math.max(0, pos.x - padding),
-            Math.max(0, pos.y - padding),
-            control.width + padding * 2,
-            control.height + padding * 2
-        );
-        spotlightActive = true;
+        searchTargetControl = control;
         pendingSpotlightOptionId = -1;
         pendingSpotlightIsSection = false;
     }
 
-    function deactivateSpotlight() {
-        spotlightActive = false;
-        spotlightTarget = null;
-        spotlightFlickable = null;
-        spotlightTargetScrollY = 0;
+    function resetSearchTarget() {
+        searchTargetControl = null;
         pendingSpotlightOptionId = -1;
+        pendingSpotlightLabel = "";
+        pendingSpotlightSection = "";
+        pendingSpotlightPageIndex = -1;
         pendingSpotlightIsSection = false;
     }
 
@@ -547,9 +513,7 @@ Scope {
             Shortcut {
                 sequences: ["Escape"]
                 onActivated: {
-                    if (root.spotlightActive) {
-                        root.deactivateSpotlight();
-                    } else if (root.overlaySearchText.length > 0) {
+                    if (root.overlaySearchText.length > 0) {
                         root.openOverlaySearchResult({});
                     } else {
                         GlobalStates.settingsOverlayOpen = false;
@@ -723,7 +687,7 @@ Scope {
                                 anchors.centerIn: parent
                                 width: 34
                                 height: 34
-                                source: `file://${Directories.userAvatarPathRicersAndWeirdSystems}`
+                                source: Directories.userAvatarSourcePrimary
                                 fillMode: Image.PreserveAspectCrop
                                 asynchronous: true
                                 cache: true
@@ -732,7 +696,9 @@ Scope {
                                 visible: false
                                 onStatusChanged: {
                                     if (status === Image.Error) {
-                                        source = `file://${Directories.userAvatarPathAccountsService}`
+                                        const nextSource = Directories.nextAvatarSource(source)
+                                        if (nextSource.length > 0 && nextSource !== source)
+                                            source = nextSource
                                     }
                                 }
                             }
@@ -1316,83 +1282,6 @@ Scope {
                                 }
                             }
 
-                            // ── Spotlight overlay ──
-                            Item {
-                                id: spotlightOverlay
-                                anchors.fill: parent
-                                visible: root.spotlightActive
-                                z: 200
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: root.deactivateSpotlight()
-                                }
-
-                                Canvas {
-                                    id: spotlightCanvas
-                                    anchors.fill: parent
-
-                                    onPaint: {
-                                        var ctx = getContext("2d");
-                                        ctx.reset();
-                                        ctx.fillStyle = Qt.rgba(0, 0, 0, 0.5);
-                                        ctx.fillRect(0, 0, width, height);
-
-                                        if (root.spotlightActive && root.spotlightRect.width > 0) {
-                                            ctx.globalCompositeOperation = "destination-out";
-                                            var r = root.spotlightRect;
-                                            var radius = Appearance.rounding.normal;
-                                            ctx.beginPath();
-                                            ctx.moveTo(r.x + radius, r.y);
-                                            ctx.lineTo(r.x + r.width - radius, r.y);
-                                            ctx.quadraticCurveTo(r.x + r.width, r.y, r.x + r.width, r.y + radius);
-                                            ctx.lineTo(r.x + r.width, r.y + r.height - radius);
-                                            ctx.quadraticCurveTo(r.x + r.width, r.y + r.height, r.x + r.width - radius, r.y + r.height);
-                                            ctx.lineTo(r.x + radius, r.y + r.height);
-                                            ctx.quadraticCurveTo(r.x, r.y + r.height, r.x, r.y + r.height - radius);
-                                            ctx.lineTo(r.x, r.y + radius);
-                                            ctx.quadraticCurveTo(r.x, r.y, r.x + radius, r.y);
-                                            ctx.closePath();
-                                            ctx.fill();
-                                        }
-                                    }
-
-                                    Connections {
-                                        target: root
-                                        function onSpotlightRectChanged() { spotlightCanvas.requestPaint(); }
-                                        function onSpotlightActiveChanged() { spotlightCanvas.requestPaint(); }
-                                    }
-                                }
-
-                                // Border around cutout
-                                Rectangle {
-                                    visible: root.spotlightActive && root.spotlightRect.width > 0
-                                    x: root.spotlightRect.x - 1
-                                    y: root.spotlightRect.y - 1
-                                    width: root.spotlightRect.width + 2
-                                    height: root.spotlightRect.height + 2
-                                    radius: Appearance.rounding.normal + 1
-                                    color: "transparent"
-                                    border.width: 1
-                                    border.color: Appearance.colors.colPrimary
-                                    opacity: 0.8
-                                }
-
-                                Timer {
-                                    running: root.spotlightActive
-                                    interval: 2500
-                                    onTriggered: root.deactivateSpotlight()
-                                }
-
-                                Keys.onPressed: event => {
-                                    if (event.key === Qt.Key_Escape || event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                                        root.deactivateSpotlight();
-                                        event.accepted = true;
-                                    }
-                                }
-
-                                Component.onCompleted: forceActiveFocus()
-                            }
                         }
                     }
                 }
@@ -1507,8 +1396,8 @@ Scope {
                                         MaterialSymbol {
                                             text: {
                                                 var icons = ["instant_mix", "browse", "toast", "texture", "palette",
-                                                            "bottom_app_bar", "settings", "construction", "keyboard",
-                                                            "extension", "window", "info"];
+                                                            "bottom_app_bar", "build", "settings", "construction", "keyboard",
+                                                            "extension", "window", "desktop_windows", "info"];
                                                 return icons[resultDelegate.modelData.pageIndex] || "settings";
                                             }
                                             iconSize: 12
@@ -1613,7 +1502,7 @@ Scope {
                         height: 36
                         radius: Appearance.rounding.full
                         color: Appearance.angelEverywhere ? Appearance.angel.colGlassPopup
-                             : Appearance.auroraEverywhere ? Appearance.aurora.colPopupSurface
+                             : Appearance.auroraEverywhere ? Appearance.colors.colLayer1Base
                              : Appearance.inirEverywhere ? Appearance.inir.colLayer2
                              : Appearance.colors.colLayer1
                         z: 100
@@ -1640,9 +1529,7 @@ Scope {
                 // Escape key handler + Ctrl+F
                 Keys.onPressed: (event) => {
                     if (event.key === Qt.Key_Escape) {
-                        if (root.spotlightActive) {
-                            root.deactivateSpotlight();
-                        } else if (root.overlaySearchText.length > 0) {
+                        if (root.overlaySearchText.length > 0) {
                             root.openOverlaySearchResult({});
                         } else {
                             GlobalStates.settingsOverlayOpen = false
@@ -1683,7 +1570,7 @@ Scope {
         { label: Translation.tr("Appearance"), pages: [0, 4, 3] },
         { label: Translation.tr("Layout"), pages: [2, 5, 6, 10] },
         { label: Translation.tr("System"), pages: [1, 7, 8] },
-        { label: Translation.tr("Reference"), pages: [9, 11, 12] }
+        { label: Translation.tr("Reference"), pages: [9, 11, 12, 13] }
     ]
 
     property var overlayPages: [

@@ -8,13 +8,15 @@
 #####################################################################################
 # Version Configuration
 #####################################################################################
-RUNTIME_DIR_USER="${XDG_CONFIG_HOME}/quickshell/inir"
+XDG_CONFIG_HOME_RESOLVED="${XDG_CONFIG_HOME:-$HOME/.config}"
+
+RUNTIME_DIR_USER="${XDG_CONFIG_HOME_RESOLVED}/quickshell/inir"
 RUNTIME_DIR_SYSTEM_LOCAL="${INIR_SYSTEM_RUNTIME_DIR_LOCAL:-/usr/local/share/quickshell/inir}"
 RUNTIME_DIR_SYSTEM="${INIR_SYSTEM_RUNTIME_DIR:-/usr/share/quickshell/inir}"
-LEGACY_RUNTIME_DIR_USER="${XDG_CONFIG_HOME}/quickshell/ii"
+LEGACY_RUNTIME_DIR_USER="${XDG_CONFIG_HOME_RESOLVED}/quickshell/ii"
 LEGACY_RUNTIME_DIR_SYSTEM_LOCAL="${INIR_LEGACY_SYSTEM_RUNTIME_DIR_LOCAL:-/usr/local/share/quickshell/ii}"
 LEGACY_RUNTIME_DIR_SYSTEM="${INIR_LEGACY_SYSTEM_RUNTIME_DIR:-/usr/share/quickshell/ii}"
-VERSION_FILE_LOCAL="${XDG_CONFIG_HOME}/illogical-impulse/version.json"
+VERSION_FILE_LOCAL="${XDG_CONFIG_HOME_RESOLVED}/illogical-impulse/version.json"
 VERSION_FILE_RUNTIME_USER="${RUNTIME_DIR_USER}/version.json"
 VERSION_FILE_RUNTIME_SYSTEM_LOCAL="${RUNTIME_DIR_SYSTEM_LOCAL}/version.json"
 VERSION_FILE_RUNTIME_SYSTEM="${RUNTIME_DIR_SYSTEM}/version.json"
@@ -62,6 +64,21 @@ get_runtime_version_file() {
     fi
 }
 
+is_package_managed_version_file() {
+    local version_file="$1"
+
+    [[ -n "$version_file" && -f "$version_file" ]] || return 1
+
+    if command -v jq &>/dev/null; then
+        local mode
+        mode=$(jq -r '.installMode // .install_mode // empty' "$version_file" 2>/dev/null || true)
+        [[ "$mode" == "package-managed" ]]
+        return
+    fi
+
+    grep -Eq '"install(M|_m)ode"[[:space:]]*:[[:space:]]*"package-managed"' "$version_file" 2>/dev/null
+}
+
 #####################################################################################
 # Local Version Management
 #####################################################################################
@@ -90,6 +107,8 @@ get_installed_version_file() {
     runtime_version_file="$(get_runtime_version_file)"
 
     if [[ -n "${INIR_RUNTIME_DIR:-}" && -f "$runtime_version_file" ]]; then
+        printf '%s' "$runtime_version_file"
+    elif is_package_managed_version_file "$runtime_version_file"; then
         printf '%s' "$runtime_version_file"
     elif [[ -f "$VERSION_FILE_LOCAL" ]]; then
         printf '%s' "$VERSION_FILE_LOCAL"
@@ -120,9 +139,9 @@ get_installed_version() {
     version_file="$(get_installed_version_file)"
     if [[ -n "$version_file" ]] && command -v jq &>/dev/null; then
         jq -r '.version // "0.0.0"' "$version_file"
-    elif [[ -f "${XDG_CONFIG_HOME}/illogical-impulse/version" ]]; then
+    elif [[ -f "${XDG_CONFIG_HOME_RESOLVED}/illogical-impulse/version" ]]; then
         # Fallback to old format
-        cat "${XDG_CONFIG_HOME}/illogical-impulse/version"
+        cat "${XDG_CONFIG_HOME_RESOLVED}/illogical-impulse/version"
     else
         echo "0.0.0"
     fi
@@ -305,7 +324,7 @@ get_install_mode() {
         return
     fi
 
-    local target="${XDG_CONFIG_HOME}/quickshell/inir"
+    local target="${XDG_CONFIG_HOME_RESOLVED}/quickshell/inir"
     local repo_real=""
     local target_real=""
 
@@ -437,7 +456,7 @@ set_installed_version() {
     write_version_info_json "$VERSION_FILE_LOCAL" "$version" "$commit" "$source"
 
     # Also update old format for backwards compatibility
-    echo "$version" > "${XDG_CONFIG_HOME}/illogical-impulse/version"
+    echo "$version" > "${XDG_CONFIG_HOME_RESOLVED}/illogical-impulse/version"
 }
 
 #####################################################################################

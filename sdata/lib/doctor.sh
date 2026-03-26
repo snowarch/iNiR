@@ -9,6 +9,12 @@ doctor_failed=0
 doctor_fixed=0
 doctor_missing_deps=()
 
+# Ensure XDG paths are always defined (doctor can be sourced outside setup bootstrap)
+XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
+XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
+XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+
 doctor_pass() {
     tui_success "$1"
     ((doctor_passed++)) || true
@@ -142,6 +148,50 @@ get_missing_dependencies() {
 
 doctor_runtime_missing_reported=false
 
+doctor_repo_root() {
+    if [[ -n "${REPO_ROOT:-}" && -f "${REPO_ROOT}/shell.qml" ]]; then
+        printf '%s' "$REPO_ROOT"
+        return 0
+    fi
+
+    local guessed
+    guessed="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." 2>/dev/null && pwd)"
+    if [[ -n "$guessed" && -f "$guessed/shell.qml" ]]; then
+        printf '%s' "$guessed"
+        return 0
+    fi
+
+    return 1
+}
+
+doctor_fallback_wallpaper() {
+    local runtime_dir
+    local repo_root
+    local search_dirs=()
+
+    runtime_dir="$(doctor_runtime_dir)"
+    [[ -n "$runtime_dir" ]] && search_dirs+=("$runtime_dir/assets/wallpapers")
+
+    repo_root="$(doctor_repo_root || true)"
+    [[ -n "$repo_root" ]] && search_dirs+=("$repo_root/assets/wallpapers")
+
+    local dir
+    local candidate
+    for dir in "${search_dirs[@]}"; do
+        [[ -d "$dir" ]] || continue
+        while IFS= read -r -d '' candidate; do
+            if [[ -f "$candidate" && -s "$candidate" ]]; then
+                printf '%s' "$candidate"
+                return 0
+            fi
+        done < <(find "$dir" -maxdepth 1 -type f \
+            \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) \
+            -print0 2>/dev/null)
+    done
+
+    return 1
+}
+
 doctor_runtime_dir() {
     local target
     target="$(get_runtime_shell_dir)"
@@ -151,6 +201,7 @@ doctor_runtime_dir() {
 }
 
 doctor_runtime_dir_or_fail() {
+    local check_name="${1:-}"
     local target
     target="$(doctor_runtime_dir)"
     if [[ -n "$target" ]]; then
@@ -159,8 +210,13 @@ doctor_runtime_dir_or_fail() {
     fi
 
     if [[ "$doctor_runtime_missing_reported" != true ]]; then
-        doctor_fail "Runtime payload missing (run ./setup install)"
+        tui_error "Runtime payload missing (run ./setup install)"
+        ((doctor_failed++)) || true
         doctor_runtime_missing_reported=true
+    fi
+
+    if [[ -n "$check_name" ]]; then
+        tui_info "$check_name skipped (runtime payload missing)"
     fi
 
     return 1
@@ -168,7 +224,11 @@ doctor_runtime_dir_or_fail() {
 
 check_critical_files() {
     local target
-    target="$(doctor_runtime_dir_or_fail)" || return 0
+    target="$(doctor_runtime_dir)"
+    if [[ -z "$target" ]]; then
+        doctor_runtime_dir_or_fail "Critical files"
+        return 0
+    fi
     local critical=("shell.qml" "GlobalStates.qml" "modules/common/Config.qml" "services/NiriService.qml")
     local missing=0
     
@@ -181,7 +241,11 @@ check_critical_files() {
 
 check_script_permissions() {
     local target
-    target="$(doctor_runtime_dir_or_fail)" || return 0
+    target="$(doctor_runtime_dir)"
+    if [[ -z "$target" ]]; then
+        doctor_runtime_dir_or_fail "Script permissions"
+        return 0
+    fi
     target="${target}/scripts"
     [[ ! -d "$target" ]] && return 0
     
@@ -224,10 +288,23 @@ check_state_directories() {
 
 check_python_packages() {
     local venv="${XDG_STATE_HOME}/quickshell/.venv"
-    local req
+    local req=""
     local runtime_dir
-    runtime_dir="$(doctor_runtime_dir_or_fail)" || return 0
-    req="${runtime_dir}/sdata/uv/requirements.txt"
+    local repo_root
+
+    runtime_dir="$(doctor_runtime_dir)"
+    if [[ -n "$runtime_dir" && -f "${runtime_dir}/sdata/uv/requirements.txt" ]]; then
+        req="${runtime_dir}/sdata/uv/requirements.txt"
+    else
+        repo_root="$(doctor_repo_root || true)"
+        if [[ -n "$repo_root" && -f "${repo_root}/sdata/uv/requirements.txt" ]]; then
+            req="${repo_root}/sdata/uv/requirements.txt"
+        else
+            doctor_runtime_dir_or_fail "Python packages"
+            doctor_pass "Python (no requirements.txt)"
+            return 0
+        fi
+    fi
     
     # Check for broken venv (e.g. after python update)
     if [[ -d "$venv/bin" ]]; then
@@ -310,6 +387,9 @@ check_fonts() {
 
     local fc_cache
     fc_cache="$(fc-list : family 2>/dev/null)"
+    local user_font_dir="${XDG_DATA_HOME}/fonts"
+
+    mkdir -p "$user_font_dir"
 
     local missing_critical=()
     local missing_important=()
@@ -355,7 +435,7 @@ check_fonts() {
 
     # Try to auto-fix before reporting failures
     local can_fix=false
-    if declare -F install-material-symbols-rounded &>/dev/null; then
+    if declare -F _try_install_font_package &>/dev/null; then
         can_fix=true
     fi
 
@@ -365,24 +445,25 @@ check_fonts() {
         for font in "${missing_critical[@]}" "${missing_important[@]}"; do
             case "$font" in
                 "Material Symbols Rounded")
-                    install-material-symbols-rounded &>/dev/null && ((fixed++)) || true ;;
+                    _try_install_font_package "ttf-material-symbols-variable-git" "Material Symbols Rounded" && ((fixed++)) || true ;;
                 "Material Symbols Outlined")
-                    install-material-symbols-outlined &>/dev/null && ((fixed++)) || true ;;
+                    _try_install_font_package "ttf-material-symbols-variable-git" "Material Symbols Outlined" && ((fixed++)) || true ;;
                 "JetBrainsMono Nerd Font")
-                    install-jetbrains-mono-nerd &>/dev/null && ((fixed++)) || true ;;
+                    _try_install_font_package "ttf-jetbrains-mono-nerd" "JetBrainsMono Nerd Font" && ((fixed++)) || true ;;
                 "Roboto Flex")
                     _try_install_font_package "ttf-roboto-flex" "Roboto Flex" && ((fixed++)) || true ;;
                 "Rubik")
-                    install-rubik-font &>/dev/null && ((fixed++)) || true ;;
+                    _try_install_font_package "ttf-rubik" "Rubik" && ((fixed++)) || true ;;
                 "Space Grotesk")
-                    install-space-grotesk &>/dev/null && ((fixed++)) || true ;;
+                    _try_install_font_package "ttf-space-grotesk" "Space Grotesk" && ((fixed++)) || true ;;
                 "Readex Pro")
                     _try_install_font_package "ttf-readex-pro" "Readex Pro" && ((fixed++)) || true ;;
             esac
         done
 
         if [[ $fixed -gt 0 ]]; then
-            fc-cache -f ~/.local/share/fonts 2>/dev/null || true
+            fc-cache -f "$user_font_dir" 2>/dev/null || true
+            fc-cache -f 2>/dev/null || true
             doctor_fix "Installed $fixed font(s)"
         fi
     fi
@@ -438,10 +519,29 @@ _try_install_font_package() {
         fi
     fi
 
-    local font_dir="${HOME}/.local/share/fonts"
+    local font_dir="${XDG_DATA_HOME}/fonts"
     mkdir -p "$font_dir"
 
     case "$display_name" in
+        "Material Symbols Rounded")
+            curl -fsSL -o "$font_dir/MaterialSymbolsRounded.ttf" \
+                "https://raw.githubusercontent.com/google/material-design-icons/master/variablefont/MaterialSymbolsRounded%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf" 2>/dev/null && return 0
+            ;;
+        "Material Symbols Outlined")
+            curl -fsSL -o "$font_dir/MaterialSymbolsOutlined.ttf" \
+                "https://raw.githubusercontent.com/google/material-design-icons/master/variablefont/MaterialSymbolsOutlined%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf" 2>/dev/null && return 0
+            ;;
+        "JetBrainsMono Nerd Font")
+            local tmp_nf="/tmp/nerdfonts-$$"
+            mkdir -p "$tmp_nf"
+            if curl -fsSL -o "$tmp_nf/JetBrainsMono.zip" \
+                "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip" 2>/dev/null; then
+                unzip -o "$tmp_nf/JetBrainsMono.zip" -d "$font_dir" >/dev/null 2>&1
+                rm -rf "$tmp_nf"
+                return 0
+            fi
+            rm -rf "$tmp_nf"
+            ;;
         "Roboto Flex")
             local tmp="/tmp/roboto-flex-$$"
             mkdir -p "$tmp"
@@ -456,6 +556,14 @@ _try_install_font_package() {
         "Readex Pro")
             curl -fsSL -o "$font_dir/ReadexPro.ttf" \
                 "https://github.com/google/fonts/raw/main/ofl/readexpro/ReadexPro%5BHEXP%2Cwght%5D.ttf" 2>/dev/null && return 0
+            ;;
+        "Space Grotesk")
+            curl -fsSL -o "$font_dir/SpaceGrotesk.ttf" \
+                "https://github.com/google/fonts/raw/main/ofl/spacegrotesk/SpaceGrotesk%5Bwght%5D.ttf" 2>/dev/null && return 0
+            ;;
+        "Rubik")
+            curl -fsSL -o "$font_dir/Rubik.ttf" \
+                "https://github.com/google/fonts/raw/main/ofl/rubik/Rubik%5Bwght%5D.ttf" 2>/dev/null && return 0
             ;;
         "Gabarito")
             curl -fsSL -o "$font_dir/Gabarito.ttf" \
@@ -499,7 +607,11 @@ check_version_tracking() {
 
 check_manifest() {
     local target
-    target="$(doctor_runtime_dir_or_fail)" || return 0
+    target="$(doctor_runtime_dir)"
+    if [[ -z "$target" ]]; then
+        doctor_runtime_dir_or_fail "File manifest"
+        return 0
+    fi
     local manifest="${target}/.inir-manifest"
     local installed_marker="${XDG_CONFIG_HOME}/illogical-impulse/installed_true"
     local installed_strategy
@@ -524,7 +636,11 @@ check_manifest() {
 check_quickshell_loads() {
     local target
     local running_output
-    target="$(doctor_runtime_dir_or_fail)" || return 0
+    target="$(doctor_runtime_dir)"
+    if [[ -z "$target" ]]; then
+        doctor_runtime_dir_or_fail "Quickshell"
+        return 0
+    fi
 
     # Skip if no graphical session
     if [[ -z "$WAYLAND_DISPLAY" && -z "$DISPLAY" && -z "$NIRI_SOCKET" ]]; then
@@ -578,31 +694,79 @@ check_quickshell_loads() {
 }
 
 check_matugen_colors() {
-    local colors_json="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/user/generated/colors.json"
-    local colors_scss="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/user/generated/material_colors.scss"
-    local darkly_file="${XDG_DATA_HOME:-$HOME/.local/share}/color-schemes/Darkly.colors"
+    local colors_json="${XDG_STATE_HOME}/quickshell/user/generated/colors.json"
+    local colors_scss="${XDG_STATE_HOME}/quickshell/user/generated/material_colors.scss"
+    local darkly_file="${XDG_DATA_HOME}/color-schemes/Darkly.colors"
     
     # Check if colors exist (colors.json is primary, scss is legacy)
     if [[ ! -f "$colors_json" && ! -f "$colors_scss" ]]; then
         # Try to auto-generate from current wallpaper
         local wallpaper=""
+        local wallpaper_source="configured wallpaper"
         local config="${XDG_CONFIG_HOME}/illogical-impulse/config.json"
         if [[ -f "$config" ]] && command -v jq &>/dev/null; then
             wallpaper=$(jq -r '.background.wallpaperPath // empty' "$config" 2>/dev/null)
+        fi
+
+        if [[ -z "$wallpaper" || ! -f "$wallpaper" || ! -s "$wallpaper" ]]; then
+            wallpaper="$(doctor_fallback_wallpaper || true)"
+            [[ -n "$wallpaper" ]] && wallpaper_source="bundled fallback wallpaper"
         fi
         
         if [[ -n "$wallpaper" && -f "$wallpaper" && -s "$wallpaper" ]] && command -v matugen &>/dev/null; then
             local matugen_cfg="${XDG_CONFIG_HOME}/matugen/config.toml"
             if [[ -f "$matugen_cfg" ]]; then
                 matugen -c "$matugen_cfg" image "$wallpaper" 2>/dev/null
-                doctor_fix "Regenerated theme colors from wallpaper"
             else
                 matugen image "$wallpaper" 2>/dev/null
-                doctor_fix "Regenerated theme colors (no matugen config)"
+            fi
+
+            local runtime_dir
+            runtime_dir="$(doctor_runtime_dir)"
+            local gen_material_script=""
+            if [[ -n "$runtime_dir" && -f "${runtime_dir}/scripts/colors/generate_colors_material.py" ]]; then
+                gen_material_script="${runtime_dir}/scripts/colors/generate_colors_material.py"
+            else
+                local repo_root
+                repo_root="$(doctor_repo_root || true)"
+                if [[ -n "$repo_root" && -f "${repo_root}/scripts/colors/generate_colors_material.py" ]]; then
+                    gen_material_script="${repo_root}/scripts/colors/generate_colors_material.py"
+                fi
+            fi
+
+            if [[ ! -f "$colors_json" && -n "$gen_material_script" ]]; then
+                local python_cmd=""
+                local venv_python="${XDG_STATE_HOME}/quickshell/.venv/bin/python3"
+                if [[ -x "$venv_python" ]]; then
+                    python_cmd="$venv_python"
+                elif command -v python3 &>/dev/null; then
+                    python_cmd="python3"
+                fi
+
+                if [[ -n "$python_cmd" ]]; then
+                    mkdir -p "$(dirname "$colors_json")"
+                    "$python_cmd" "$gen_material_script" \
+                        --path "$wallpaper" \
+                        --mode dark \
+                        --json-output "$colors_json" \
+                        >/dev/null 2>&1 || true
+                fi
+            fi
+
+            if [[ -f "$colors_json" || -f "$colors_scss" ]]; then
+                doctor_fix "Regenerated theme colors from ${wallpaper_source}"
+            else
+                doctor_fail "Theme colors regeneration failed"
+                echo -e "    ${STY_FAINT}matugen ran but no generated color files were produced${STY_RST}"
+                return 1
             fi
         else
-            doctor_fail "Theme colors not generated (no valid wallpaper set)"
-            echo -e "    ${STY_FAINT}Set a wallpaper via ii settings or run: matugen image /path/to/wallpaper.png${STY_RST}"
+            doctor_fail "Theme colors not generated"
+            if ! command -v matugen &>/dev/null; then
+                echo -e "    ${STY_FAINT}Install matugen, then run: ./setup doctor${STY_RST}"
+            else
+                echo -e "    ${STY_FAINT}Set a wallpaper via settings or run: matugen image /path/to/wallpaper.png${STY_RST}"
+            fi
             return 1
         fi
     else
@@ -613,8 +777,21 @@ check_matugen_colors() {
         # Try to regenerate Darkly colors
         local darkly_script
         local runtime_dir
-        runtime_dir="$(doctor_runtime_dir_or_fail)" || return 1
-        darkly_script="${runtime_dir}/scripts/colors/apply-gtk-theme.sh"
+        runtime_dir="$(doctor_runtime_dir)"
+        darkly_script=""
+        if [[ -n "$runtime_dir" && -f "${runtime_dir}/scripts/colors/apply-gtk-theme.sh" ]]; then
+            darkly_script="${runtime_dir}/scripts/colors/apply-gtk-theme.sh"
+        else
+            local repo_root
+            repo_root="$(doctor_repo_root || true)"
+            if [[ -n "$repo_root" && -f "${repo_root}/scripts/colors/apply-gtk-theme.sh" ]]; then
+                darkly_script="${repo_root}/scripts/colors/apply-gtk-theme.sh"
+            else
+                doctor_runtime_dir_or_fail "Darkly Qt colors"
+                return 0
+            fi
+        fi
+
         if [[ -f "$darkly_script" ]]; then
             bash "$darkly_script" 2>/dev/null
             [[ -f "$darkly_file" ]] && doctor_fix "Regenerated Darkly Qt colors" || doctor_fail "Darkly Qt colors generation failed"
@@ -654,8 +831,19 @@ check_wallpaper_health() {
     wallpaper_dir="$(xdg-user-dir PICTURES 2>/dev/null || echo "$HOME/Pictures")/Wallpapers"
     local assets_dir
     local runtime_dir
-    runtime_dir="$(doctor_runtime_dir_or_fail)" || return 0
-    assets_dir="${runtime_dir}/assets/wallpapers"
+    runtime_dir="$(doctor_runtime_dir)"
+    if [[ -n "$runtime_dir" ]]; then
+        assets_dir="${runtime_dir}/assets/wallpapers"
+    else
+        local repo_root
+        repo_root="$(doctor_repo_root || true)"
+        if [[ -n "$repo_root" ]]; then
+            assets_dir="${repo_root}/assets/wallpapers"
+        else
+            doctor_runtime_dir_or_fail "Wallpaper health"
+            return 0
+        fi
+    fi
     
     [[ ! -d "$wallpaper_dir" ]] && { doctor_pass "Wallpapers (dir not created yet)"; return 0; }
     
