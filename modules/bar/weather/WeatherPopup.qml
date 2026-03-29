@@ -22,6 +22,7 @@ StyledPopup {
             spacing: 2
 
             RowLayout {
+                visible: Weather.showVisibleCity
                 Layout.alignment: Qt.AlignHCenter
                 spacing: 6
 
@@ -34,7 +35,7 @@ StyledPopup {
                 }
 
                 StyledText {
-                    text: Weather.data.city
+                    text: Weather.visibleCity
                     font {
                         weight: Font.Medium
                         pixelSize: Appearance.font.pixelSize.normal

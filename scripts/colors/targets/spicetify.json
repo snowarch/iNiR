@@ -1,0 +1,9 @@
+{
+  "id": "spicetify",
+  "label": "Spicetify",
+  "module": "50-spicetify.sh",
+  "category": "music",
+  "inputs": ["palette.json"],
+  "description": "Apply the current generated palette to Spicetify themes.",
+  "configKey": "appearance.wallpaperTheming.enableAppsAndShell"
+}

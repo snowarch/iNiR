@@ -6,7 +6,7 @@ import qs.modules.common.widgets
 import qs.modules.common.functions
 
 ContentPage {
-    settingsPageIndex: 7
+    settingsPageIndex: 8
     settingsPageName: Translation.tr("Advanced")
 
     Timer {

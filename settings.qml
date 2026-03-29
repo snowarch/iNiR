@@ -2,9 +2,7 @@
 //@ pragma Env QS_NO_RELOAD_POPUP=1
 //@ pragma Env QT_QUICK_CONTROLS_STYLE=Basic
 //@ pragma Env QT_QUICK_FLICKABLE_WHEEL_DECELERATION=10000
-
-// Adjust this to make the app smaller or larger
-//@ pragma Env QT_SCALE_FACTOR=1
+// Launcher keeps QT_SCALE_FACTOR=1; shell scaling lives in appearance.typography.sizeScale
 
 import QtQuick
 import QtQuick.Controls
@@ -31,7 +29,7 @@ ApplicationWindow {
             component: "modules/settings/QuickConfig.qml"
         },
         {
-            name: Translation.tr("General"),
+            name: Translation.tr("System"),
             icon: "browse",
             component: "modules/settings/GeneralConfig.qml"
         },
@@ -52,9 +50,14 @@ ApplicationWindow {
             component: "modules/settings/ThemesConfig.qml"
         },
         {
-            name: Translation.tr("Interface"),
+            name: Translation.tr("Panels"),
             icon: "bottom_app_bar",
             component: "modules/settings/InterfaceConfig.qml"
+        },
+        {
+            name: Translation.tr("Tools"),
+            icon: "build",
+            component: "modules/settings/ToolsConfig.qml"
         },
         {
             name: Translation.tr("Services"),
@@ -82,6 +85,11 @@ ApplicationWindow {
             component: "modules/settings/WaffleConfig.qml"
         },
         {
+            name: Translation.tr("Compositor"),
+            icon: "desktop_windows",
+            component: "modules/settings/NiriConfig.qml"
+        },
+        {
             name: Translation.tr("About"),
             icon: "info",
             component: "modules/settings/About.qml"
@@ -94,13 +102,10 @@ ApplicationWindow {
     property string settingsSearchText: ""
     property var settingsSearchResults: []
 
-    // Spotlight effect for search results
-    property var spotlightTarget: null
-    property rect spotlightRect: Qt.rect(0, 0, 0, 0)
-    property bool spotlightActive: false
+    // Search navigation focus state
+    property var searchTargetControl: null
 
     // Índice de secciones y opciones individuales para el buscador.
-    // Cada entrada con targetLabel permite spotlight scroll-to en la página destino.
     property var settingsSearchIndex: [
         // =====================================================================
         // Quick (page 0)
@@ -171,6 +176,13 @@ ApplicationWindow {
             label: Translation.tr("Auto suspend"),
             description: Translation.tr("Automatically suspend on critical battery"),
             keywords: ["battery", "suspend", "sleep", "auto", "critical"]
+        },
+        {
+            pageIndex: 1, pageName: pages[1].name,
+            section: Translation.tr("Battery"),
+            label: Translation.tr("Charge limit"),
+            description: Translation.tr("Limit maximum charge to preserve battery health"),
+            keywords: ["battery", "charge", "limit", "health", "threshold", "conservation", "sysfs"]
         },
         {
             pageIndex: 1, pageName: pages[1].name,
@@ -583,6 +595,13 @@ ApplicationWindow {
         // =====================================================================
         {
             pageIndex: 5, pageName: pages[5].name,
+            section: Translation.tr("Display scaling"),
+            label: Translation.tr("UI scale (%)"),
+            description: Translation.tr("Scale the entire shell UI for HiDPI / 4K monitors"),
+            keywords: ["scale", "dpi", "hidpi", "4k", "zoom", "size", "display", "monitor", "resolution"]
+        },
+        {
+            pageIndex: 5, pageName: pages[5].name,
             section: Translation.tr("Crosshair overlay"),
             label: Translation.tr("Crosshair overlay"),
             description: Translation.tr("In-game crosshair overlay"),
@@ -814,115 +833,161 @@ ApplicationWindow {
         },
 
         // =====================================================================
-        // Services (page 6) — per-option entries
+        // Tools (page 6)
         // =====================================================================
         {
             pageIndex: 6, pageName: pages[6].name,
+            section: Translation.tr("Screen Recording"),
+            label: Translation.tr("Screen recording"),
+            description: Translation.tr("Screen recording settings and shortcuts"),
+            keywords: ["screen", "record", "recording", "video", "capture", "wf-recorder"]
+        },
+        {
+            pageIndex: 6, pageName: pages[6].name,
+            section: Translation.tr("Region Selector"),
+            label: Translation.tr("Region selector"),
+            description: Translation.tr("Screenshot region selector tool"),
+            keywords: ["region", "selector", "screenshot", "snip", "area", "capture"]
+        },
+        {
+            pageIndex: 6, pageName: pages[6].name,
+            section: Translation.tr("Crosshair"),
+            label: Translation.tr("Crosshair overlay"),
+            description: Translation.tr("Screen crosshair overlay for aiming"),
+            keywords: ["crosshair", "overlay", "aim", "center", "screen"]
+        },
+        {
+            pageIndex: 6, pageName: pages[6].name,
+            section: Translation.tr("Discord"),
+            label: Translation.tr("Discord overlay"),
+            description: Translation.tr("Discord rich presence overlay widget"),
+            keywords: ["discord", "overlay", "rich", "presence", "widget"]
+        },
+        {
+            pageIndex: 6, pageName: pages[6].name,
+            section: Translation.tr("Overlay"),
+            label: Translation.tr("Overlay widgets"),
+            description: Translation.tr("Floating desktop overlay widgets"),
+            keywords: ["overlay", "widgets", "floating", "desktop", "notes", "mixer", "fps"]
+        },
+        {
+            pageIndex: 6, pageName: pages[6].name,
+            section: Translation.tr("On-Screen Display"),
+            label: Translation.tr("On-screen display"),
+            description: Translation.tr("Volume and brightness OSD settings"),
+            keywords: ["osd", "on", "screen", "display", "volume", "brightness"]
+        },
+
+        // =====================================================================
+        // Services (page 7) — per-option entries
+        // =====================================================================
+        {
+            pageIndex: 7, pageName: pages[7].name,
             section: Translation.tr("AI"),
             label: Translation.tr("AI"),
             description: Translation.tr("System prompt for sidebar AI"),
             keywords: ["ai", "prompt", "system", "sidebar", "chat"]
         },
         {
-            pageIndex: 6, pageName: pages[6].name,
+            pageIndex: 7, pageName: pages[7].name,
             section: Translation.tr("AI"),
             label: Translation.tr("AI system prompt"),
             description: Translation.tr("Custom instructions for the AI assistant"),
             keywords: ["ai", "prompt", "system", "instructions", "custom", "assistant"]
         },
         {
-            pageIndex: 6, pageName: pages[6].name,
+            pageIndex: 7, pageName: pages[7].name,
             section: Translation.tr("Music Recognition"),
             label: Translation.tr("Music Recognition"),
             description: Translation.tr("Song recognition timeout and interval"),
             keywords: ["music", "recognition", "song", "timeout", "shazam", "songrec"]
         },
         {
-            pageIndex: 6, pageName: pages[6].name,
+            pageIndex: 7, pageName: pages[7].name,
             section: Translation.tr("Networking"),
             label: Translation.tr("User agent"),
             description: Translation.tr("Custom user agent string for web requests"),
             keywords: ["network", "user", "agent", "http", "web", "request"]
         },
         {
-            pageIndex: 6, pageName: pages[6].name,
+            pageIndex: 7, pageName: pages[7].name,
             section: Translation.tr("Resources"),
             label: Translation.tr("Resource monitor interval"),
             description: Translation.tr("Polling interval for CPU/RAM/disk monitor"),
             keywords: ["resources", "cpu", "memory", "ram", "disk", "interval", "poll", "monitor"]
         },
         {
-            pageIndex: 6, pageName: pages[6].name,
+            pageIndex: 7, pageName: pages[7].name,
             section: Translation.tr("Search"),
             label: Translation.tr("Search"),
             description: Translation.tr("Search engine, prefix configuration"),
             keywords: ["search", "prefix", "engine", "web", "google", "app", "launcher"]
         },
         {
-            pageIndex: 6, pageName: pages[6].name,
+            pageIndex: 7, pageName: pages[7].name,
             section: Translation.tr("Search"),
             label: Translation.tr("Search engine"),
             description: Translation.tr("Default search engine URL"),
             keywords: ["search", "engine", "url", "google", "duckduckgo", "web"]
         },
         {
-            pageIndex: 6, pageName: pages[6].name,
+            pageIndex: 7, pageName: pages[7].name,
             section: Translation.tr("Search"),
             label: Translation.tr("Search prefixes"),
             description: Translation.tr("Type shortcuts: / for actions, > for apps, = for math"),
             keywords: ["search", "prefix", "shortcut", "action", "app", "math", "emoji", "clipboard"]
         },
         {
-            pageIndex: 6, pageName: pages[6].name,
+            pageIndex: 7, pageName: pages[7].name,
             section: Translation.tr("Weather"),
             label: Translation.tr("Weather"),
             description: Translation.tr("Weather units, GPS and city"),
             keywords: ["weather", "gps", "city", "fahrenheit", "celsius", "temperature", "units"]
         },
         {
-            pageIndex: 6, pageName: pages[6].name,
+            pageIndex: 7, pageName: pages[7].name,
             section: Translation.tr("Idle & Power"),
             label: Translation.tr("Idle & Power"),
             description: Translation.tr("Screen off, lock and suspend timeouts"),
             keywords: ["idle", "power", "screen", "off", "lock", "suspend", "sleep", "timeout"]
         },
         {
-            pageIndex: 6, pageName: pages[6].name,
+            pageIndex: 7, pageName: pages[7].name,
             section: Translation.tr("Idle & Power"),
             label: Translation.tr("Screen off timeout"),
             description: Translation.tr("Time before screen turns off"),
             keywords: ["screen", "off", "timeout", "idle", "dpms", "blank"]
         },
         {
-            pageIndex: 6, pageName: pages[6].name,
+            pageIndex: 7, pageName: pages[7].name,
             section: Translation.tr("Idle & Power"),
             label: Translation.tr("Lock timeout"),
             description: Translation.tr("Time before screen locks"),
             keywords: ["lock", "timeout", "idle", "auto", "security"]
         },
         {
-            pageIndex: 6, pageName: pages[6].name,
+            pageIndex: 7, pageName: pages[7].name,
             section: Translation.tr("Night Light"),
             label: Translation.tr("Night light"),
             description: Translation.tr("Blue light filter / color temperature"),
             keywords: ["night", "light", "blue", "filter", "color", "temperature", "warm", "redshift"]
         },
         {
-            pageIndex: 6, pageName: pages[6].name,
+            pageIndex: 7, pageName: pages[7].name,
             section: Translation.tr("Night Light"),
             label: Translation.tr("Night light schedule"),
             description: Translation.tr("Automatic night light based on time"),
             keywords: ["night", "light", "schedule", "auto", "time", "sunset", "sunrise"]
         },
         {
-            pageIndex: 6, pageName: pages[6].name,
+            pageIndex: 7, pageName: pages[7].name,
             section: Translation.tr("GameMode"),
             label: Translation.tr("GameMode"),
             description: Translation.tr("Auto-detect fullscreen games and reduce effects"),
             keywords: ["game", "mode", "fullscreen", "performance", "fps", "auto", "detect", "animations", "effects"]
         },
         {
-            pageIndex: 6, pageName: pages[6].name,
+            pageIndex: 7, pageName: pages[7].name,
             section: Translation.tr("Applications"),
             label: Translation.tr("Default applications"),
             description: Translation.tr("Terminal, file manager, browser commands"),
@@ -930,38 +995,38 @@ ApplicationWindow {
         },
 
         // =====================================================================
-        // Advanced (page 7)
+        // Advanced (page 8)
         // =====================================================================
         {
-            pageIndex: 7, pageName: pages[7].name,
+            pageIndex: 8, pageName: pages[8].name,
             section: Translation.tr("Color generation"),
             label: Translation.tr("Color generation"),
             description: Translation.tr("Wallpaper-based color theming and palette type"),
             keywords: ["color", "generation", "theming", "wallpaper", "matugen", "palette"]
         },
         {
-            pageIndex: 7, pageName: pages[7].name,
+            pageIndex: 8, pageName: pages[8].name,
             section: Translation.tr("Color generation"),
             label: Translation.tr("Palette type"),
             description: Translation.tr("Material You palette algorithm variant"),
             keywords: ["palette", "type", "scheme", "content", "expressive", "fidelity", "tonal", "spot", "monochrome"]
         },
         {
-            pageIndex: 7, pageName: pages[7].name,
+            pageIndex: 8, pageName: pages[8].name,
             section: Translation.tr("Terminal Colors"),
             label: Translation.tr("Terminal color adjustments"),
             description: Translation.tr("Fine-tune terminal theme colors"),
             keywords: ["terminal", "color", "saturation", "brightness", "harmony", "adjustment"]
         },
         {
-            pageIndex: 7, pageName: pages[7].name,
+            pageIndex: 8, pageName: pages[8].name,
             section: Translation.tr("Performance"),
             label: Translation.tr("Low power mode"),
             description: Translation.tr("Reduce resource usage for low-end hardware"),
             keywords: ["performance", "low", "power", "mode", "reduce", "battery", "laptop"]
         },
         {
-            pageIndex: 7, pageName: pages[7].name,
+            pageIndex: 8, pageName: pages[8].name,
             section: Translation.tr("Interactions"),
             label: Translation.tr("Scrolling"),
             description: Translation.tr("Touchpad and mouse scroll speed"),
@@ -969,10 +1034,10 @@ ApplicationWindow {
         },
 
         // =====================================================================
-        // Shortcuts (page 8)
+        // Shortcuts (page 9)
         // =====================================================================
         {
-            pageIndex: 8, pageName: pages[8].name,
+            pageIndex: 9, pageName: pages[9].name,
             section: Translation.tr("Keyboard Shortcuts"),
             label: Translation.tr("Keyboard Shortcuts"),
             description: Translation.tr("Niri and ii keybindings reference"),
@@ -983,45 +1048,45 @@ ApplicationWindow {
         },
 
         // =====================================================================
-        // Modules (page 9)
+        // Modules (page 10)
         // =====================================================================
         {
-            pageIndex: 9, pageName: pages[9].name,
+            pageIndex: 10, pageName: pages[10].name,
             section: Translation.tr("Panel Modules"),
             label: Translation.tr("Panel Modules"),
             description: Translation.tr("Enable or disable shell modules"),
             keywords: ["modules", "panels", "enable", "disable", "bar", "sidebar", "overview"]
         },
         {
-            pageIndex: 9, pageName: pages[9].name,
+            pageIndex: 10, pageName: pages[10].name,
             section: Translation.tr("Panel Modules"),
             label: Translation.tr("Enable notification popups"),
             description: Translation.tr("Toggle notification toast popups"),
             keywords: ["module", "notification", "popup", "toast", "enable", "disable"]
         },
         {
-            pageIndex: 9, pageName: pages[9].name,
+            pageIndex: 10, pageName: pages[10].name,
             section: Translation.tr("Panel Modules"),
             label: Translation.tr("Enable dock"),
             description: Translation.tr("Toggle dock panel"),
             keywords: ["module", "dock", "enable", "disable", "panel"]
         },
         {
-            pageIndex: 9, pageName: pages[9].name,
+            pageIndex: 10, pageName: pages[10].name,
             section: Translation.tr("Panel Modules"),
             label: Translation.tr("Enable overview"),
             description: Translation.tr("Toggle workspace overview"),
             keywords: ["module", "overview", "enable", "disable", "workspace"]
         },
         {
-            pageIndex: 9, pageName: pages[9].name,
+            pageIndex: 10, pageName: pages[10].name,
             section: Translation.tr("Panel Modules"),
             label: Translation.tr("Enable sidebars"),
             description: Translation.tr("Toggle left and right sidebars"),
             keywords: ["module", "sidebar", "left", "right", "enable", "disable"]
         },
         {
-            pageIndex: 9, pageName: pages[9].name,
+            pageIndex: 10, pageName: pages[10].name,
             section: Translation.tr("Alt+Tab Switcher"),
             label: Translation.tr("Alt+Tab Switcher"),
             description: Translation.tr("Window switcher style and behavior"),
@@ -1029,45 +1094,45 @@ ApplicationWindow {
         },
 
         // =====================================================================
-        // Waffle Style (page 10)
+        // Waffle Style (page 11)
         // =====================================================================
         {
-            pageIndex: 10, pageName: pages[10].name,
+            pageIndex: 11, pageName: pages[11].name,
             section: Translation.tr("Waffle Taskbar"),
             label: Translation.tr("Waffle Taskbar"),
             description: Translation.tr("Windows 11 style taskbar settings"),
             keywords: ["waffle", "taskbar", "windows", "bottom", "tray"]
         },
         {
-            pageIndex: 10, pageName: pages[10].name,
+            pageIndex: 11, pageName: pages[11].name,
             section: Translation.tr("Waffle Start Menu"),
             label: Translation.tr("Waffle Start Menu"),
             description: Translation.tr("Start menu size and behavior"),
             keywords: ["waffle", "start", "menu", "apps", "pinned"]
         },
         {
-            pageIndex: 10, pageName: pages[10].name,
+            pageIndex: 11, pageName: pages[11].name,
             section: Translation.tr("Waffle Action Center"),
             label: Translation.tr("Waffle Action Center"),
             description: Translation.tr("Quick toggles and action center"),
             keywords: ["waffle", "action", "center", "toggles", "quick"]
         },
         {
-            pageIndex: 10, pageName: pages[10].name,
+            pageIndex: 11, pageName: pages[11].name,
             section: Translation.tr("Waffle Widgets"),
             label: Translation.tr("Waffle Widgets"),
             description: Translation.tr("Widgets panel settings"),
             keywords: ["waffle", "widgets", "panel", "weather", "calendar"]
         },
         {
-            pageIndex: 10, pageName: pages[10].name,
+            pageIndex: 11, pageName: pages[11].name,
             section: Translation.tr("Waffle Alt+Tab"),
             label: Translation.tr("Waffle Alt+Tab"),
             description: Translation.tr("Waffle window switcher with thumbnails"),
             keywords: ["waffle", "alt", "tab", "switcher", "thumbnails", "carousel"]
         },
         {
-            pageIndex: 10, pageName: pages[10].name,
+            pageIndex: 11, pageName: pages[11].name,
             section: Translation.tr("Waffle Background"),
             label: Translation.tr("Waffle Background"),
             description: Translation.tr("Waffle-specific wallpaper and backdrop settings"),
@@ -1075,16 +1140,140 @@ ApplicationWindow {
         },
 
         // =====================================================================
-        // About (page 11)
+        // Compositor (page 12)
         // =====================================================================
         {
-            pageIndex: 11, pageName: pages[11].name,
+            pageIndex: 12, pageName: pages[12].name,
+            section: Translation.tr("Displays"),
+            label: Translation.tr("Displays"),
+            description: Translation.tr("Monitor configuration and display outputs"),
+            keywords: ["display", "monitor", "output", "screen", "resolution", "refresh", "rate"]
+        },
+        {
+            pageIndex: 12, pageName: pages[12].name,
+            section: Translation.tr("Keyboard"),
+            label: Translation.tr("Keyboard"),
+            description: Translation.tr("Keyboard layout and repeat settings"),
+            keywords: ["keyboard", "layout", "repeat", "delay", "rate", "xkb", "input"]
+        },
+        {
+            pageIndex: 12, pageName: pages[12].name,
+            section: Translation.tr("Touchpad"),
+            label: Translation.tr("Touchpad"),
+            description: Translation.tr("Touchpad gestures, tap and scroll"),
+            keywords: ["touchpad", "tap", "scroll", "gesture", "natural", "click", "input"]
+        },
+        {
+            pageIndex: 12, pageName: pages[12].name,
+            section: Translation.tr("Mouse"),
+            label: Translation.tr("Mouse"),
+            description: Translation.tr("Mouse acceleration and speed"),
+            keywords: ["mouse", "acceleration", "speed", "pointer", "input"]
+        },
+        {
+            pageIndex: 12, pageName: pages[12].name,
+            section: Translation.tr("Trackpoint"),
+            label: Translation.tr("Trackpoint"),
+            description: Translation.tr("Trackpoint speed and acceleration"),
+            keywords: ["trackpoint", "speed", "acceleration", "thinkpad", "input"]
+        },
+        {
+            pageIndex: 12, pageName: pages[12].name,
+            section: Translation.tr("General Input"),
+            label: Translation.tr("General Input"),
+            description: Translation.tr("Focus follows mouse, workspace auto-back-and-forth"),
+            keywords: ["input", "focus", "mouse", "workspace", "auto", "back", "forth"]
+        },
+        {
+            pageIndex: 12, pageName: pages[12].name,
+            section: Translation.tr("Cursor"),
+            label: Translation.tr("Cursor"),
+            description: Translation.tr("Cursor theme, size, and hide on typing"),
+            keywords: ["cursor", "theme", "size", "hide", "typing", "pointer"]
+        },
+        {
+            pageIndex: 12, pageName: pages[12].name,
+            section: Translation.tr("Window Gaps"),
+            label: Translation.tr("Window gaps"),
+            description: Translation.tr("Inner and outer gap size between windows"),
+            keywords: ["gap", "gaps", "window", "inner", "outer", "spacing"]
+        },
+        {
+            pageIndex: 12, pageName: pages[12].name,
+            section: Translation.tr("Window Border"),
+            label: Translation.tr("Window border"),
+            description: Translation.tr("Active and inactive window border width and color"),
+            keywords: ["border", "window", "active", "inactive", "color", "width"]
+        },
+        {
+            pageIndex: 12, pageName: pages[12].name,
+            section: Translation.tr("Focus Ring"),
+            label: Translation.tr("Focus ring"),
+            description: Translation.tr("Focus ring width and color"),
+            keywords: ["focus", "ring", "color", "width", "active", "inactive"]
+        },
+        {
+            pageIndex: 12, pageName: pages[12].name,
+            section: Translation.tr("Layout"),
+            label: Translation.tr("Default column display"),
+            description: Translation.tr("Default column width for new windows"),
+            keywords: ["column", "display", "width", "default", "layout", "proportion"]
+        },
+        {
+            pageIndex: 12, pageName: pages[12].name,
+            section: Translation.tr("Window Shadow"),
+            label: Translation.tr("Window shadow"),
+            description: Translation.tr("Window shadow softness, spread, offset, color"),
+            keywords: ["shadow", "window", "softness", "spread", "offset", "color"]
+        },
+        {
+            pageIndex: 12, pageName: pages[12].name,
+            section: Translation.tr("Struts"),
+            label: Translation.tr("Struts"),
+            description: Translation.tr("Reserved screen edge space for panels"),
+            keywords: ["struts", "edge", "space", "panel", "reserved", "left", "right", "top", "bottom"]
+        },
+        {
+            pageIndex: 12, pageName: pages[12].name,
+            section: Translation.tr("Misc"),
+            label: Translation.tr("Clip windows"),
+            description: Translation.tr("Clip windows to their workspace bounds"),
+            keywords: ["clip", "window", "workspace", "bounds", "hotspot"]
+        },
+        {
+            pageIndex: 12, pageName: pages[12].name,
+            section: Translation.tr("Animations"),
+            label: Translation.tr("Per-animation toggles"),
+            description: Translation.tr("Enable or disable individual compositor animations"),
+            keywords: ["animation", "toggle", "enable", "disable", "compositor", "transition"]
+        },
+        {
+            pageIndex: 12, pageName: pages[12].name,
+            section: Translation.tr("Niri config status"),
+            label: Translation.tr("Managed overrides status"),
+            description: Translation.tr("Actionable managed overrides and extra files in Niri config"),
+            keywords: ["niri", "status", "managed", "override", "extra", "config", "kdl"]
+        },
+
+        // =====================================================================
+        // About (page 13)
+        // =====================================================================
+        {
+            pageIndex: 13, pageName: pages[13].name,
             section: Translation.tr("About"),
             label: Translation.tr("About ii"),
             description: Translation.tr("Version info, credits and links"),
             keywords: ["about", "version", "credits", "github", "info"]
         }
     ]
+
+    function getWaffleSettingsPageIndex() {
+        for (var i = 0; i < pages.length; i++) {
+            if ((pages[i].component || "").indexOf("modules/settings/WaffleConfig.qml") >= 0)
+                return i;
+        }
+        return -1;
+    }
 
     function recomputeSettingsSearchResults() {
         var q = String(settingsSearchText || "").toLowerCase().trim();
@@ -1098,14 +1287,14 @@ ApplicationWindow {
 
         // Check if waffle family is active
         var isWaffleActive = Config.options?.panelFamily === "waffle";
-        var wafflePageIndex = 10; // "Waffle Style" page index
+        var wafflePageIndex = getWaffleSettingsPageIndex();
 
         // 1. Buscar en el índice estático de secciones (para navegación rápida a secciones)
         for (var i = 0; i < settingsSearchIndex.length; i++) {
             var entry = settingsSearchIndex[i];
 
             // Skip Waffle Style page if waffle family is not active
-            if (entry.pageIndex === wafflePageIndex && !isWaffleActive) {
+            if (wafflePageIndex >= 0 && entry.pageIndex === wafflePageIndex && !isWaffleActive) {
                 continue;
             }
 
@@ -1180,13 +1369,13 @@ ApplicationWindow {
         settingsSearchResults = unique.slice(0, 50);
     }
 
-    // Pending spotlight data
+    // Pending search navigation target data
     property int pendingSpotlightOptionId: -1
     property string pendingSpotlightLabel: ""
     property string pendingSpotlightSection: ""
     property int pendingSpotlightPageIndex: -1
     property bool pendingSpotlightIsSection: false
-    property var spotlightFlickable: null
+    property var searchTargetFlickable: null
 
     function openSearchResult(entry) {
         // Clear search immediately
@@ -1195,14 +1384,14 @@ ApplicationWindow {
             settingsSearchField.text = "";
         }
 
-        // Deactivate any existing spotlight
-        deactivateSpotlight();
+        // Reset existing search target state
+        resetSearchTarget();
 
         if (!entry || entry.pageIndex === undefined || entry.pageIndex < 0) {
             return;
         }
 
-        // Store spotlight target info
+        // Store navigation target info
         pendingSpotlightOptionId = (entry.optionId !== undefined) ? entry.optionId : -1;
         pendingSpotlightLabel = entry.label || "";
         pendingSpotlightSection = entry.section || "";
@@ -1214,7 +1403,7 @@ ApplicationWindow {
             currentPage = entry.pageIndex;
         }
 
-        // Always try spotlight (with retry for lazy-loaded widgets)
+        // Always try to resolve and navigate target (with retry for lazy-loaded widgets)
         if (pendingSpotlightOptionId >= 0 || pendingSpotlightLabel.length > 0) {
             spotlightRetryCount = 0;
             spotlightPageLoadTimer.restart();
@@ -1293,7 +1482,7 @@ ApplicationWindow {
         }
 
         if (control) {
-            doSpotlightForControl(control);
+            navigateToSearchControl(control);
         } else if (spotlightRetryCount < spotlightMaxRetries) {
             spotlightRetryCount++;
             spotlightPageLoadTimer.restart();
@@ -1307,7 +1496,7 @@ ApplicationWindow {
         }
     }
 
-    function doSpotlightForControl(control) {
+    function navigateToSearchControl(control) {
         if (!control) return;
 
         // Expand the section containing the control and collapse others
@@ -1344,70 +1533,19 @@ ApplicationWindow {
         // Scroll to position - set directly to bypass animation
         flick.contentY = targetScrollY;
 
-        // Store references for spotlight calculation
-        spotlightTarget = control;
-        spotlightFlickable = flick;
+        // Store references for optional focus retries
+        searchTargetControl = control;
+        searchTargetFlickable = flick;
 
-        // Wait for layout to update after scroll
-        spotlightShowTimer.restart();
+        // Clear pending data after successful navigation
+        pendingSpotlightOptionId = -1;
+        pendingSpotlightLabel = "";
+        pendingSpotlightSection = "";
+        pendingSpotlightPageIndex = -1;
+        pendingSpotlightIsSection = false;
     }
 
     property real spotlightTargetScrollY: 0
-
-    Timer {
-        id: spotlightShowTimer
-        interval: 250  // Must be longer than scroll animation (200ms) + layout time
-        onTriggered: root.showSpotlight()
-    }
-
-    function showSpotlight() {
-        if (!spotlightTarget || !spotlightFlickable) {
-            deactivateSpotlight();
-            return;
-        }
-
-        var control = spotlightTarget;
-        var flick = spotlightFlickable;
-
-        // Check if scroll animation is still running (contentY hasn't reached target)
-        var scrollDiff = Math.abs(flick.contentY - spotlightTargetScrollY);
-        if (scrollDiff > 2) {
-            // Animation still in progress, wait a bit more
-            spotlightShowTimer.restart();
-            return;
-        }
-
-        // Use mapToItem directly to get the control's visual position in contentContainer
-        // This is the most reliable method as it accounts for all transformations
-        var pos = control.mapToItem(contentContainer, 0, 0);
-
-        // Sanity check: control should be roughly centered vertically
-        var expectedY = (contentContainer.height - control.height) / 2;
-        var yDiff = Math.abs(pos.y - expectedY);
-
-        // If position is way off from center, something went wrong
-        if (yDiff > contentContainer.height / 2) {
-            // Fallback: recalculate scroll position
-            var posInContent = control.mapToItem(flick.contentItem, 0, 0);
-            var targetScrollY = posInContent.y - (flick.height / 2) + (control.height / 2);
-            var maxScroll = Math.max(0, flick.contentHeight - flick.height);
-            targetScrollY = Math.max(0, Math.min(targetScrollY, maxScroll));
-            spotlightTargetScrollY = targetScrollY;
-            flick.contentY = targetScrollY;
-            spotlightShowTimer.restart();
-            return;
-        }
-
-        var padding = 8;
-        spotlightRect = Qt.rect(
-            Math.max(0, pos.x - padding),
-            Math.max(0, pos.y - padding),
-            control.width + padding * 2,
-            control.height + padding * 2
-        );
-        spotlightActive = true;
-        pendingSpotlightOptionId = -1;
-    }
 
     function findParentFlickable(item) {
         var p = item ? item.parent : null;
@@ -1423,12 +1561,15 @@ ApplicationWindow {
         return null;
     }
 
-    function deactivateSpotlight() {
-        spotlightActive = false;
-        spotlightTarget = null;
-        spotlightFlickable = null;
+    function resetSearchTarget() {
+        searchTargetControl = null;
+        searchTargetFlickable = null;
         spotlightTargetScrollY = 0;
         pendingSpotlightOptionId = -1;
+        pendingSpotlightLabel = "";
+        pendingSpotlightSection = "";
+        pendingSpotlightPageIndex = -1;
+        pendingSpotlightIsSection = false;
     }
 
     visible: true
@@ -1541,7 +1682,7 @@ ApplicationWindow {
                         anchors.centerIn: parent
                         width: 32
                         height: 32
-                        source: `file://${Directories.userAvatarPathRicersAndWeirdSystems}`
+                        source: Directories.userAvatarSourcePrimary
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
                         cache: true
@@ -1550,7 +1691,9 @@ ApplicationWindow {
                         visible: false
                         onStatusChanged: {
                             if (status === Image.Error) {
-                                source = `file://${Directories.userAvatarPathAccountsService}`
+                                const nextSource = Directories.nextAvatarSource(source)
+                                if (nextSource.length > 0 && nextSource !== source)
+                                    source = nextSource
                             }
                         }
                     }
@@ -1774,7 +1917,7 @@ ApplicationWindow {
                     buttonRadius: Appearance.rounding.full
                     implicitWidth: 35
                     implicitHeight: 35
-                    onClicked: Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "lock", "activate"])
+                    onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "lock", "activate"])
                     contentItem: MaterialSymbol {
                         anchors.centerIn: parent
                         horizontalAlignment: Text.AlignHCenter
@@ -1811,10 +1954,15 @@ ApplicationWindow {
                 Flickable {
                     id: navRailFlickable
                     anchors.fill: parent
+                    anchors.bottomMargin: overlayToggleBtn.height + 4
                     contentWidth: navRail.width
                     contentHeight: navRail.implicitHeight
                     clip: true
                     boundsBehavior: Flickable.StopAtBounds
+                    interactive: contentHeight > height
+                    ScrollBar.vertical: StyledScrollBar {
+                        policy: navRailFlickable.contentHeight > navRailFlickable.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+                    }
 
                     NavigationRail {
                         id: navRail
@@ -1872,6 +2020,62 @@ ApplicationWindow {
                                 }
                             }
                         }
+                    }
+                }
+
+                // Overlay mode toggle at bottom of nav rail
+                RippleButton {
+                    id: overlayToggleBtn
+                    anchors.bottom: parent.bottom
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    height: 36
+                    buttonRadius: Appearance.rounding.small
+                    colBackground: "transparent"
+                    colBackgroundHover: Appearance.colors.colLayer1Hover
+
+                    onClicked: {
+                        Config.setNestedValue("settingsUi.overlayMode", true)
+                        settingsRestartTimer.restart()
+                    }
+
+                    contentItem: RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: navRail.expanded ? 10 : 0
+                        anchors.rightMargin: navRail.expanded ? 8 : 0
+                        spacing: navRail.expanded ? 8 : 0
+
+                        MaterialSymbol {
+                            Layout.alignment: navRail.expanded ? Qt.AlignVCenter : Qt.AlignCenter
+                            text: "layers"
+                            iconSize: 18
+                            color: Appearance.colors.colOnSurfaceVariant
+                        }
+
+                        StyledText {
+                            Layout.fillWidth: true
+                            visible: navRail.expanded
+                            text: Translation.tr("Overlay")
+                            font {
+                                family: Appearance.font.family.main
+                                pixelSize: Appearance.font.pixelSize.smaller
+                            }
+                            color: Appearance.colors.colOnSurfaceVariant
+                            elide: Text.ElideRight
+                        }
+                    }
+
+                    StyledToolTip {
+                        text: Translation.tr("Switch to overlay mode (live preview)")
+                    }
+                }
+
+                Timer {
+                    id: settingsRestartTimer
+                    interval: 500
+                    onTriggered: {
+                        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"])
+                        Qt.quit()
                     }
                 }
             }
@@ -1973,6 +2177,9 @@ ApplicationWindow {
                     }
 
                     // Results card
+                    StyledRectangularShadow {
+                        target: searchResultsCard
+                    }
                     Rectangle {
                         id: searchResultsCard
                         width: Math.min(parent.width - 40, 500)
@@ -1983,15 +2190,26 @@ ApplicationWindow {
                         radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
                              : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
                              : Appearance.rounding.normal
-                        color: Appearance.angelEverywhere ? Appearance.angel.colGlassPopup
-                            : Appearance.auroraEverywhere ? Appearance.aurora.colPopupSurface
-                            : Appearance.inirEverywhere ? Appearance.inir.colLayer2
-                            : Appearance.colors.colLayer1
+                        color: "transparent"
                         border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
                                     : Appearance.inirEverywhere ? 1 : 1
                         border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
                             : Appearance.inirEverywhere ? Appearance.inir.colBorder
+                            : Appearance.auroraEverywhere ? Appearance.aurora.colPopupBorder
                             : Appearance.m3colors.m3outlineVariant
+
+                        GlassBackground {
+                            anchors.fill: parent
+                            radius: searchResultsCard.radius
+                            screenX: searchResultsCard.mapToGlobal(0, 0).x
+                            screenY: searchResultsCard.mapToGlobal(0, 0).y
+                            screenWidth: Quickshell.screens[0]?.width ?? root.width
+                            screenHeight: Quickshell.screens[0]?.height ?? root.height
+                            hovered: false
+                            fallbackColor: Appearance.colors.colLayer1
+                            inirColor: Appearance.inir.colLayer2
+                            auroraTransparency: Math.max(0.22, Appearance.aurora.popupTransparentize - 0.12)
+                        }
 
                         layer.enabled: Appearance.effectsEnabled && !Appearance.auroraEverywhere
                         layer.effect: DropShadow {
@@ -2071,8 +2289,8 @@ ApplicationWindow {
                                     MaterialSymbol {
                                         text: {
                                             var icons = ["instant_mix", "browse", "toast", "texture", "palette",
-                                                        "bottom_app_bar", "settings", "construction", "keyboard",
-                                                        "extension", "window", "info"];
+                                                        "bottom_app_bar", "build", "settings", "construction", "keyboard",
+                                                        "extension", "window", "desktop_windows", "info"];
                                             return icons[resultItem.modelData.pageIndex] || "settings";
                                         }
                                         iconSize: 20
@@ -2153,6 +2371,7 @@ ApplicationWindow {
 
                 // No results indicator (inline, not overlay)
                 Rectangle {
+                    id: noResultsCard
                     visible: root.settingsSearchText.length > 0 && root.settingsSearchResults.length === 0
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.top: parent.top
@@ -2160,11 +2379,21 @@ ApplicationWindow {
                     width: noResultsRow.implicitWidth + 24
                     height: 36
                     radius: Appearance.rounding.full
-                    color: Appearance.angelEverywhere ? Appearance.angel.colGlassPopup
-                         : Appearance.auroraEverywhere ? Appearance.aurora.colPopupSurface
-                         : Appearance.inirEverywhere ? Appearance.inir.colLayer2
-                         : Appearance.colors.colLayer1
+                    color: "transparent"
                     z: 100
+
+                    GlassBackground {
+                        anchors.fill: parent
+                        radius: noResultsCard.radius
+                        screenX: noResultsCard.mapToGlobal(0, 0).x
+                        screenY: noResultsCard.mapToGlobal(0, 0).y
+                        screenWidth: Quickshell.screens[0]?.width ?? root.width
+                        screenHeight: Quickshell.screens[0]?.height ?? root.height
+                        hovered: false
+                        fallbackColor: Appearance.colors.colLayer1
+                        inirColor: Appearance.inir.colLayer2
+                        auroraTransparency: Math.max(0.22, Appearance.aurora.popupTransparentize - 0.12)
+                    }
 
                     RowLayout {
                         id: noResultsRow
@@ -2185,97 +2414,6 @@ ApplicationWindow {
                     }
                 }
 
-                // Spotlight overlay - scrim with cutout for focused option
-                Item {
-                    id: spotlightOverlay
-                    anchors.fill: parent
-                    visible: root.spotlightActive
-                    z: 200
-
-                    // Click anywhere to dismiss
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: root.deactivateSpotlight()
-                    }
-
-                    // Dark scrim with cutout using Canvas
-                    Canvas {
-                        id: spotlightCanvas
-                        anchors.fill: parent
-
-                        onPaint: {
-                            var ctx = getContext("2d");
-                            ctx.reset();
-
-                            // Fill entire area with semi-transparent dark
-                            ctx.fillStyle = Qt.rgba(0, 0, 0, 0.5);
-                            ctx.fillRect(0, 0, width, height);
-
-                            // Cut out the spotlight area (clear it)
-                            if (root.spotlightActive && root.spotlightRect.width > 0) {
-                                ctx.globalCompositeOperation = "destination-out";
-
-                                var r = root.spotlightRect;
-                                var radius = Appearance.rounding.normal;
-
-                                // Draw rounded rectangle cutout
-                                ctx.beginPath();
-                                ctx.moveTo(r.x + radius, r.y);
-                                ctx.lineTo(r.x + r.width - radius, r.y);
-                                ctx.quadraticCurveTo(r.x + r.width, r.y, r.x + r.width, r.y + radius);
-                                ctx.lineTo(r.x + r.width, r.y + r.height - radius);
-                                ctx.quadraticCurveTo(r.x + r.width, r.y + r.height, r.x + r.width - radius, r.y + r.height);
-                                ctx.lineTo(r.x + radius, r.y + r.height);
-                                ctx.quadraticCurveTo(r.x, r.y + r.height, r.x, r.y + r.height - radius);
-                                ctx.lineTo(r.x, r.y + radius);
-                                ctx.quadraticCurveTo(r.x, r.y, r.x + radius, r.y);
-                                ctx.closePath();
-                                ctx.fill();
-                            }
-                        }
-
-                        Connections {
-                            target: root
-                            function onSpotlightRectChanged() {
-                                spotlightCanvas.requestPaint();
-                            }
-                            function onSpotlightActiveChanged() {
-                                spotlightCanvas.requestPaint();
-                            }
-                        }
-                    }
-
-                    // Subtle border around the cutout
-                    Rectangle {
-                        visible: root.spotlightActive && root.spotlightRect.width > 0
-                        x: root.spotlightRect.x - 1
-                        y: root.spotlightRect.y - 1
-                        width: root.spotlightRect.width + 2
-                        height: root.spotlightRect.height + 2
-                        radius: Appearance.rounding.normal + 1
-                        color: "transparent"
-                        border.width: 1
-                        border.color: Appearance.colors.colPrimary
-                        opacity: 0.8
-                    }
-
-                    // Auto-dismiss after 2.5 seconds
-                    Timer {
-                        running: root.spotlightActive
-                        interval: 2500
-                        onTriggered: root.deactivateSpotlight()
-                    }
-
-                    // Keyboard dismiss
-                    Keys.onPressed: event => {
-                        if (event.key === Qt.Key_Escape || event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                            root.deactivateSpotlight();
-                            event.accepted = true;
-                        }
-                    }
-
-                    Component.onCompleted: forceActiveFocus()
-                }
             }
         }
     }

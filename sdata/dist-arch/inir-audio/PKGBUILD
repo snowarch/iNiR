@@ -1,7 +1,7 @@
 pkgname=inir-audio
 pkgver=1.0
 pkgrel=1
-pkgdesc='illogical-impulse on Niri - Audio Dependencies'
+pkgdesc='iNiR - audio dependency bundle'
 arch=(any)
 license=(MIT)
 depends=(
@@ -28,5 +28,4 @@ depends=(
   yt-dlp
   socat
 )
-
 

@@ -8,7 +8,7 @@
 # - Subsequent runs (watch running): just update color.ini, watch handles live reload
 # - No Spotify restarts on wallpaper change when watch mode is active
 #
-# Reads: ~/.local/state/quickshell/user/generated/colors.json
+# Reads: palette.json first, then colors.json fallback
 # Writes: ~/.config/spicetify/Themes/Inir/color.ini
 #         ~/.config/spicetify/Themes/Inir/user.css  (bridge block only)
 
@@ -19,6 +19,7 @@ set -euo pipefail
 XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 STATE_DIR="$XDG_STATE_HOME/quickshell"
+PALETTE_JSON="$STATE_DIR/user/generated/palette.json"
 COLORS_JSON="$STATE_DIR/user/generated/colors.json"
 LOG_FILE="$STATE_DIR/user/generated/spicetify_theme.log"
 WATCH_LOCK="$STATE_DIR/user/generated/spicetify_watch.lock"
@@ -100,8 +101,11 @@ release_watch_lock() {
 # ─── Color extraction ───────────────────────────────────────────────────────────
 
 read_colors() {
-  if [[ ! -f "$COLORS_JSON" ]]; then
-    log "colors.json not found at $COLORS_JSON"
+  local color_source="$PALETTE_JSON"
+  [[ -f "$color_source" ]] || color_source="$COLORS_JSON"
+
+  if [[ ! -f "$color_source" ]]; then
+    log "palette/colors JSON not found at $PALETTE_JSON or $COLORS_JSON"
     return 1
   fi
 
@@ -110,24 +114,24 @@ read_colors() {
     return 1
   fi
 
-  COLORS[primary]=$(jq -r '.primary // "#8caaee"' "$COLORS_JSON")
-  COLORS[on_primary]=$(jq -r '.on_primary // "#1e3a5f"' "$COLORS_JSON")
-  COLORS[on_surface]=$(jq -r '.on_surface // "#dce0e8"' "$COLORS_JSON")
-  COLORS[on_surface_variant]=$(jq -r '.on_surface_variant // "#a6adc8"' "$COLORS_JSON")
-  COLORS[surface]=$(jq -r '.surface // "#1e1e2e"' "$COLORS_JSON")
-  COLORS[surface_variant]=$(jq -r '.surface_variant // "#45475a"' "$COLORS_JSON")
-  COLORS[surface_container_low]=$(jq -r '.surface_container_low // "#181825"' "$COLORS_JSON")
-  COLORS[surface_container]=$(jq -r '.surface_container // "#313244"' "$COLORS_JSON")
-  COLORS[surface_container_high]=$(jq -r '.surface_container_high // "#45475a"' "$COLORS_JSON")
-  COLORS[surface_container_highest]=$(jq -r '.surface_container_highest // "#494d64"' "$COLORS_JSON")
-  COLORS[primary_container]=$(jq -r '.primary_container // "#313244"' "$COLORS_JSON")
-  COLORS[secondary]=$(jq -r '.secondary // "#89b4fa"' "$COLORS_JSON")
-  COLORS[secondary_container]=$(jq -r '.secondary_container // "#3d4c6b"' "$COLORS_JSON")
-  COLORS[tertiary]=$(jq -r '.tertiary // "#94e2d5"' "$COLORS_JSON")
-  COLORS[outline]=$(jq -r '.outline // "#585b70"' "$COLORS_JSON")
-  COLORS[outline_variant]=$(jq -r '.outline_variant // "#45475a"' "$COLORS_JSON")
-  COLORS[error]=$(jq -r '.error // "#f38ba8"' "$COLORS_JSON")
-  COLORS[shadow]=$(jq -r '.shadow // "#000000"' "$COLORS_JSON")
+  COLORS[primary]=$(jq -r '.primary // "#8caaee"' "$color_source")
+  COLORS[on_primary]=$(jq -r '.on_primary // "#1e3a5f"' "$color_source")
+  COLORS[on_surface]=$(jq -r '.on_surface // "#dce0e8"' "$color_source")
+  COLORS[on_surface_variant]=$(jq -r '.on_surface_variant // "#a6adc8"' "$color_source")
+  COLORS[surface]=$(jq -r '.surface // "#1e1e2e"' "$color_source")
+  COLORS[surface_variant]=$(jq -r '.surface_variant // "#45475a"' "$color_source")
+  COLORS[surface_container_low]=$(jq -r '.surface_container_low // "#181825"' "$color_source")
+  COLORS[surface_container]=$(jq -r '.surface_container // "#313244"' "$color_source")
+  COLORS[surface_container_high]=$(jq -r '.surface_container_high // "#45475a"' "$color_source")
+  COLORS[surface_container_highest]=$(jq -r '.surface_container_highest // "#494d64"' "$color_source")
+  COLORS[primary_container]=$(jq -r '.primary_container // "#313244"' "$color_source")
+  COLORS[secondary]=$(jq -r '.secondary // "#89b4fa"' "$color_source")
+  COLORS[secondary_container]=$(jq -r '.secondary_container // "#3d4c6b"' "$color_source")
+  COLORS[tertiary]=$(jq -r '.tertiary // "#94e2d5"' "$color_source")
+  COLORS[outline]=$(jq -r '.outline // "#585b70"' "$color_source")
+  COLORS[outline_variant]=$(jq -r '.outline_variant // "#45475a"' "$color_source")
+  COLORS[error]=$(jq -r '.error // "#f38ba8"' "$color_source")
+  COLORS[shadow]=$(jq -r '.shadow // "#000000"' "$color_source")
 }
 
 # ─── Theme generation ───────────────────────────────────────────────────────────
@@ -232,6 +236,13 @@ PYEOF
   log "CSS variable bridge regenerated from current palette"
 }
 
+patch_existing_user_css() {
+  local css_file="$1"
+
+  [[ -f "$css_file" ]] || return 0
+
+  sed -i 's/rgba(var(--spice-rgb-selected-row),.7)/var(--spice-subtext)/g' "$css_file"
+}
 download_sleek_css() {
   local css_file="$1"
   if [[ ! -f "$css_file" ]]; then
@@ -261,6 +272,7 @@ configure_spicetify() {
   read_colors || return 1
   
   download_sleek_css "$user_css"
+  patch_existing_user_css "$user_css"
   # Write user.css bridge FIRST so that when color.ini lands (last) and
   # triggers spicetify watch's file-change debounce, user.css is already
   # fully updated. Reversed order caused watch to reload Spotify from

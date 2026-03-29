@@ -1,7 +1,7 @@
 pkgname=inir-fonts
 pkgver=1.0
 pkgrel=1
-pkgdesc='illogical-impulse on Niri - Fonts and Theming Dependencies'
+pkgdesc='iNiR - fonts and theming dependency bundle'
 arch=(any)
 license=(MIT)
 depends=(

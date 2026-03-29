@@ -20,6 +20,13 @@ from typing import Dict, Tuple
 
 COLOR_SOURCE = Path(
     os.environ.get(
+        "QUICKSHELL_PALETTE_JSON",
+        "~/.local/state/quickshell/user/generated/palette.json",
+    )
+).expanduser()
+
+FALLBACK_COLOR_SOURCE = Path(
+    os.environ.get(
         "QUICKSHELL_COLORS_JSON",
         "~/.local/state/quickshell/user/generated/colors.json",
     )
@@ -64,8 +71,9 @@ def _resolve_output_files(env_var: str, default_path: Path) -> list[Path]:
 
     return [default_path]
 
+
 # Template for the full theme file
-THEME_TEMPLATE = '''/**
+THEME_TEMPLATE = """/**
  * @name iNiR Material
  * @description Material Design Discord theme with Material You colors.
  * @author refact0r (system24 base), iNiR (Material adaptation)
@@ -126,9 +134,9 @@ body {{
 {palette_css}
 
 /* Material Design System */
-'''
+"""
 
-MIDNIGHT_THEME_TEMPLATE = '''/**
+MIDNIGHT_THEME_TEMPLATE = """/**
  * @name ii-midnight
  * @description dank-discord / midnight style theme using iNiR Material You colors.
  * @author iNiR (Material palette injection)
@@ -160,7 +168,7 @@ MIDNIGHT_THEME_TEMPLATE = '''/**
     --border-light: var(--border);
     --button-border: var(--border);
 }}
-'''
+"""
 
 
 def _ensure_parent(path: Path) -> None:
@@ -168,12 +176,13 @@ def _ensure_parent(path: Path) -> None:
 
 
 def _load_colors() -> Dict[str, str]:
-    if not COLOR_SOURCE.exists():
+    source = COLOR_SOURCE if COLOR_SOURCE.exists() else FALLBACK_COLOR_SOURCE
+    if not source.exists():
         raise FileNotFoundError(
-            f"Material colors file not found: {COLOR_SOURCE}. "
+            f"Material colors file not found: {COLOR_SOURCE} or {FALLBACK_COLOR_SOURCE}. "
             "Ensure switchwall.sh has been executed successfully."
         )
-    with COLOR_SOURCE.open("r", encoding="utf-8") as fh:
+    with source.open("r", encoding="utf-8") as fh:
         data = json.load(fh)
     return {k: v.lower() for k, v in data.items()}
 
@@ -306,7 +315,7 @@ def _build_palette(colors: Dict[str, str]) -> Dict[str, str]:
 
     # === BASE COLOR LADDERS ===
     # These are used throughout system24 for various UI elements
-    
+
     def make_ladder(base: str) -> list:
         """Create 5-step color ladder from base color."""
         return [
@@ -371,7 +380,7 @@ def _write_palette(palette: Dict[str, str]) -> None:
     system24_outputs = _resolve_output_files("SYSTEM24_PALETTE_CSS", OUTPUT_FILE)
     midnight_outputs = _resolve_output_files("MIDNIGHT_DMS_CSS", MIDNIGHT_OUTPUT_FILE)
 
-    for out in (system24_outputs + midnight_outputs):
+    for out in system24_outputs + midnight_outputs:
         _ensure_parent(out)
 
     system24_content = THEME_TEMPLATE.format(palette_css=palette_css)

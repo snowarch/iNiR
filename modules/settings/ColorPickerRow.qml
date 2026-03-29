@@ -121,7 +121,7 @@ Item {
         id: colorDialog
         selectedColor: root.currentColor
         onAccepted: {
-            Config.options.appearance.customTheme[root.colorKey] = selectedColor.toString()
+            Config.setNestedValue("appearance.customTheme." + root.colorKey, selectedColor.toString())
             root.colorChanged()
         }
     }

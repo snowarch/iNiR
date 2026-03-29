@@ -13,17 +13,18 @@ Button {
     property bool selected: false
     property bool expanded: true
     
-    implicitHeight: 40
+    implicitHeight: 44
     implicitWidth: expanded ? 220 : 48
     
     background: Rectangle {
-        radius: Looks.radius.medium
+        radius: Looks.radius.large
         color: {
             if (root.selected) return Looks.colors.bg2Hover
             if (root.down) return Looks.colors.bg2Active
             if (root.hovered) return Looks.colors.bg2Hover
             return "transparent"
         }
+        scale: root.down ? 0.96 : 1.0
         
         // Selection indicator - Win11 pill style
         Rectangle {
@@ -32,9 +33,9 @@ Button {
                 left: parent.left
                 verticalCenter: parent.verticalCenter
             }
-            width: 3
-            height: root.down ? 8 : 16
-            radius: 1.5
+            width: 3.5
+            height: root.down ? 8 : 20
+            radius: 2
             color: Looks.colors.accent
             
             Behavior on height {
@@ -43,7 +44,10 @@ Button {
         }
 
         Behavior on color {
-            animation: ColorAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
+            animation: ColorAnimation { duration: Looks.transition.enabled ? 100 : 0; easing.type: Easing.OutQuad }
+        }
+        Behavior on scale {
+            animation: NumberAnimation { duration: Looks.transition.enabled ? 80 : 0; easing.type: Easing.OutQuad }
         }
     }
     
@@ -51,9 +55,9 @@ Button {
         spacing: root.expanded ? 12 : 0
         
         Item {
-            implicitWidth: 20
-            implicitHeight: 20
-            Layout.leftMargin: root.expanded ? 14 : 0
+            implicitWidth: 22
+            implicitHeight: 22
+            Layout.leftMargin: root.expanded ? 16 : 0
             Layout.fillWidth: !root.expanded
             Layout.alignment: root.expanded ? Qt.AlignVCenter : Qt.AlignCenter
             
@@ -61,10 +65,10 @@ Button {
                 anchors.centerIn: parent
                 icon: root.navIcon
                 implicitSize: root.expanded ? 18 : 20
-                color: root.selected ? Looks.colors.fg : Looks.colors.subfg
+                color: root.selected ? Looks.colors.accent : (root.hovered ? Looks.colors.fg : Looks.colors.subfg)
                 
                 Behavior on color {
-                    animation: ColorAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
+                    animation: ColorAnimation { duration: Looks.transition.enabled ? 100 : 0; easing.type: Easing.OutQuad }
                 }
             }
         }
@@ -74,8 +78,8 @@ Button {
             Layout.fillWidth: true
             text: root.text
             font.pixelSize: Looks.font.pixelSize.large
-            font.weight: root.selected ? Looks.font.weight.regular : Looks.font.weight.thin
-            color: root.selected ? Looks.colors.fg : Looks.colors.subfg
+            font.weight: root.selected ? Looks.font.weight.strong : Looks.font.weight.regular
+            color: root.selected ? Looks.colors.fg : (root.hovered ? Looks.colors.fg : Looks.colors.subfg)
             elide: Text.ElideRight
             
             Behavior on color {

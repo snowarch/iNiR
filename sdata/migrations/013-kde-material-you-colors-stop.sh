@@ -36,7 +36,7 @@ migration_diff() {
 }
 
 migration_apply() {
-  local ii_dir="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/ii"
+  local ii_dir="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/inir"
   local wrapper_src="${ii_dir}/dots/.config/matugen/templates/kde/kde-material-you-colors-wrapper.sh"
   local wrapper_dst="${XDG_CONFIG_HOME:-$HOME/.config}/matugen/templates/kde/kde-material-you-colors-wrapper.sh"
 

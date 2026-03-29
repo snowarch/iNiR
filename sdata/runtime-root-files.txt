@@ -1,0 +1,3 @@
+setup
+VERSION
+CHANGELOG.md

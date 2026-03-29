@@ -256,10 +256,10 @@ Item {
 
                 if (root.languageSelectorTarget) {
                     root.targetLanguage = result;
-                    Config.options.language.translator.targetLanguage = result; // Save to config
+                    Config.setNestedValue("language.translator.targetLanguage", result)
                 } else {
                     root.sourceLanguage = result;
-                    Config.options.language.translator.sourceLanguage = result; // Save to config
+                    Config.setNestedValue("language.translator.sourceLanguage", result)
                 }
 
                 translateTimer.restart(); // Restart translation after language change

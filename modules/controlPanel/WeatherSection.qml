@@ -9,11 +9,15 @@ import qs.modules.common.functions
 Rectangle {
     id: root
     Layout.fillWidth: true
-    implicitHeight: visible ? weatherRow.implicitHeight + 16 : 0
+    implicitHeight: visible ? contentLayout.implicitHeight + 16 : 0
     visible: Weather.enabled && Weather.data.temp && !Weather.data.temp.startsWith("--")
     
     readonly property bool inirEverywhere: Appearance.inirEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
+    readonly property bool hideLocation: Config.options?.waffles?.widgetsPanel?.weatherHideLocation ?? false
+    readonly property string weatherDescription: Weather.describeWeather(Weather.data?.wCode ?? "113")
+    readonly property string locationText: Weather.visibleCity
+    readonly property string secondaryText: locationText || root.weatherDescription
 
     radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
@@ -27,80 +31,102 @@ Rectangle {
 
     AngelPartialBorder { targetRadius: parent.radius; coverage: 0.45 }
 
-    RowLayout {
-        id: weatherRow
+    ColumnLayout {
+        id: contentLayout
         anchors.fill: parent
         anchors.margins: 8
-        spacing: 10
+        spacing: 4
 
-        MaterialSymbol {
-            text: Icons.getWeatherIcon(Weather.data.wCode, Weather.isNightNow()) ?? "cloud"
-            iconSize: 32
-            color: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                 : root.inirEverywhere ? Appearance.inir.colPrimary
-                 : root.auroraEverywhere ? Appearance.m3colors.m3primary
-                 : Appearance.colors.colPrimary
-        }
-
-        StyledText {
-            text: Weather.data.temp
-            font.pixelSize: Appearance.font.pixelSize.huge
-            font.weight: Font.Medium
-            font.family: Appearance.font.family.numbers
-            color: Appearance.angelEverywhere ? Appearance.angel.colText
-                 : root.inirEverywhere ? Appearance.inir.colText
-                 : root.auroraEverywhere ? Appearance.m3colors.m3onSurface
-                 : Appearance.colors.colOnLayer1
-        }
-
-        ColumnLayout {
+        RowLayout {
             Layout.fillWidth: true
-            spacing: 0
+            spacing: 10
+
+            MaterialSymbol {
+                text: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "cloud"
+                iconSize: 32
+                color: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                     : root.inirEverywhere ? Appearance.inir.colPrimary
+                     : root.auroraEverywhere ? Appearance.m3colors.m3primary
+                     : Appearance.colors.colPrimary
+                Layout.alignment: Qt.AlignVCenter
+            }
 
             StyledText {
-                text: Weather.data.description || ""
-                font.pixelSize: Appearance.font.pixelSize.small
+                text: Weather.data?.temp ?? "--°"
+                font.pixelSize: Appearance.font.pixelSize.huge
+                font.weight: Font.Medium
+                font.family: Appearance.font.family.numbers
                 color: Appearance.angelEverywhere ? Appearance.angel.colText
                      : root.inirEverywhere ? Appearance.inir.colText
                      : root.auroraEverywhere ? Appearance.m3colors.m3onSurface
                      : Appearance.colors.colOnLayer1
-                elide: Text.ElideRight
+                Layout.alignment: Qt.AlignVCenter
+            }
+
+            Item {
                 Layout.fillWidth: true
             }
 
-            StyledText {
-                text: Weather.data.city
-                font.pixelSize: Appearance.font.pixelSize.smallest
-                color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
-                     : root.inirEverywhere ? Appearance.inir.colTextSecondary
-                     : root.auroraEverywhere ? Appearance.m3colors.m3onSurfaceVariant
-                     : Appearance.colors.colSubtext
-                elide: Text.ElideRight
-                Layout.fillWidth: true
+            RowLayout {
+                spacing: 4
+                Layout.alignment: Qt.AlignVCenter
+
+                MaterialSymbol {
+                    text: root.hideLocation ? "visibility_off" : "visibility"
+                    iconSize: 14
+                    color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+                         : root.inirEverywhere ? Appearance.inir.colTextSecondary
+                         : root.auroraEverywhere ? Appearance.m3colors.m3onSurfaceVariant
+                         : Appearance.colors.colSubtext
+                    opacity: root.hideLocation ? 1 : 0.7
+                }
+
+                StyledSwitch {
+                    id: privacySwitch
+                    checked: root.hideLocation
+                    scale: 0.6
+                    Layout.alignment: Qt.AlignVCenter
+                    onToggled: Config.setNestedValue("waffles.widgetsPanel.weatherHideLocation", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Hide weather location")
+                    }
+                }
+            }
+
+            RippleButton {
+                implicitWidth: 28
+                implicitHeight: 28
+                buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+                    : root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
+                colBackground: "transparent"
+                colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                    : root.inirEverywhere ? Appearance.inir.colLayer2Hover
+                    : root.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
+                    : Appearance.colors.colLayer2Hover
+                onClicked: Weather.forceRefresh()
+                contentItem: MaterialSymbol {
+                    anchors.centerIn: parent
+                    text: "refresh"
+                    iconSize: 16
+                    color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+                         : root.inirEverywhere ? Appearance.inir.colTextSecondary
+                         : root.auroraEverywhere ? Appearance.m3colors.m3onSurfaceVariant
+                         : Appearance.colors.colSubtext
+                }
+                StyledToolTip { text: Translation.tr("Refresh") }
             }
         }
 
-        RippleButton {
-            implicitWidth: 28
-            implicitHeight: 28
-            buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-                : root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
-            colBackground: "transparent"
-            colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                : root.inirEverywhere ? Appearance.inir.colLayer2Hover 
-                : root.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
-                : Appearance.colors.colLayer2Hover
-            onClicked: Weather.fetchWeather()
-            contentItem: MaterialSymbol {
-                anchors.centerIn: parent
-                text: "refresh"
-                iconSize: 16
-                color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
-                     : root.inirEverywhere ? Appearance.inir.colTextSecondary
-                     : root.auroraEverywhere ? Appearance.m3colors.m3onSurfaceVariant
-                     : Appearance.colors.colSubtext
-            }
-            StyledToolTip { text: Translation.tr("Refresh") }
+        StyledText {
+            Layout.fillWidth: true
+            Layout.leftMargin: 42
+            text: root.secondaryText
+            font.pixelSize: root.hideLocation ? Appearance.font.pixelSize.small : Appearance.font.pixelSize.smallest
+            color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+                 : root.inirEverywhere ? Appearance.inir.colTextSecondary
+                 : root.auroraEverywhere ? Appearance.m3colors.m3onSurfaceVariant
+                 : Appearance.colors.colSubtext
+            elide: Text.ElideRight
         }
     }
 }

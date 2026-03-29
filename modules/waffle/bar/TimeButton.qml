@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import qs
 import qs.services
 import qs.modules.common
@@ -8,9 +9,10 @@ import qs.modules.waffle.looks
 BarButton {
     id: root
 
-    rightInset: 6
-    leftPadding: 12
-    rightPadding: 12
+    readonly property var panelScreen: root.QsWindow?.window?.screen ?? null
+    rightInset: Looks.scaledBar(6, panelScreen)
+    leftPadding: Looks.scaledBar(12, panelScreen)
+    rightPadding: Looks.scaledBar(12, panelScreen)
 
     checked: GlobalStates.waffleNotificationCenterOpen
     onClicked: {
@@ -23,7 +25,7 @@ BarButton {
         Row {
             id: contentLayout
             anchors.centerIn: parent
-            spacing: 7
+            spacing: Looks.scaledBar(7, root.panelScreen)
             
             Column {
                 anchors.verticalCenter: parent.verticalCenter
@@ -45,9 +47,9 @@ BarButton {
                 readonly property bool shouldShow: count > 0 && !Notifications.silent && showCount
                 visible: shouldShow || scale > 0
                 anchors.verticalCenter: parent.verticalCenter
-                width: count > 9 ? 18 : (count > 0 ? 16 : 0)
-                height: 16
-                radius: 8
+                width: count > 9 ? Looks.scaledBar(18, root.panelScreen) : (count > 0 ? Looks.scaledBar(16, root.panelScreen) : 0)
+                height: Looks.scaledBar(16, root.panelScreen)
+                radius: height / 2
                 color: Looks.colors.accent
                 scale: shouldShow ? 1 : 0
                 opacity: shouldShow ? 1 : 0
@@ -75,7 +77,7 @@ BarButton {
                 WText {
                     anchors.centerIn: parent
                     text: notifBadge.count > 9 ? "9+" : String(notifBadge.count)
-                    font.pixelSize: 10
+                    font.pixelSize: Looks.scaledBar(10, root.panelScreen)
                     font.weight: Font.DemiBold
                     color: Looks.colors.accentFg
                 }
@@ -86,7 +88,7 @@ BarButton {
                 visible: Notifications.silent
                 anchors.verticalCenter: parent.verticalCenter
                 icon: "alert-snooze"
-                implicitSize: 16
+                implicitSize: Looks.scaledBar(16, root.panelScreen)
                 monochrome: true
                 color: Looks.colors.subfg
             }

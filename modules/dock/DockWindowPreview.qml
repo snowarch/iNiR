@@ -15,10 +15,33 @@ Button {
     id: root
 
     required property var toplevel
+    property bool closing: false
     property real previewWidthConstraint: 200
     property real previewHeightConstraint: 110
     padding: 6
     Layout.fillHeight: true
+    opacity: closing ? 0 : 1
+    scale: closing ? 0.92 : 1
+    Layout.preferredWidth: closing ? 0 : implicitWidth
+    Layout.maximumWidth: closing ? 0 : implicitWidth
+    Layout.preferredHeight: implicitHeight
+    Layout.maximumHeight: implicitHeight
+
+    Behavior on opacity {
+        NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+    }
+
+    Behavior on scale {
+        NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+    }
+
+    Behavior on Layout.preferredWidth {
+        NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+    }
+
+    Behavior on Layout.maximumWidth {
+        NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+    }
 
     // Emitted BEFORE focus IPC so the popup can close instantly (no flash)
     signal windowActivated()
@@ -103,7 +126,10 @@ Button {
                 colBackgroundHover: ColorUtils.transparentize(Appearance.colors.colError, 0.8)
                 colRipple: ColorUtils.transparentize(Appearance.colors.colError, 0.6)
                 
-                onClicked: root.toplevel?.close()
+                onClicked: {
+                    root.closing = true
+                    closeWindowTimer.restart()
+                }
 
                 contentItem: MaterialSymbol {
                     text: "close"
@@ -229,5 +255,11 @@ Button {
                 })
             }
         }
+    }
+
+    Timer {
+        id: closeWindowTimer
+        interval: 150
+        onTriggered: root.toplevel?.close()
     }
 }

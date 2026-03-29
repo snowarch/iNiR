@@ -14,7 +14,7 @@ Item {
     signal closed
 
     required property Item contentItem
-    property real visualMargin: 12
+    property real visualMargin: Looks.dp(12)
     property int closeAnimDuration: 180
     property bool revealFromSides: false
     property bool revealFromLeft: true
@@ -23,13 +23,31 @@ Item {
     property real openScale: 0.94
     property real closeScale: 0.97
     property int openDuration: Looks.transition.duration.panel
-    property int slideOffset: 20  // Reduced slide distance for subtlety
+    property int slideOffset: Looks.dp(20)  // Reduced slide distance for subtlety
 
     function close() {
         closeAnim.start();
     }
 
     readonly property bool barAtBottom: Config.options?.waffles?.bar?.bottom ?? false
+
+    // Screen position for GlassBackground blur alignment in child WPanes
+    readonly property var _screen: Quickshell.screens[0]
+    readonly property real _screenW: _screen?.width ?? 1920
+    readonly property real _screenH: _screen?.height ?? 1080
+    readonly property real panelScreenX: {
+        if (revealFromSides && !revealFromLeft) {
+            // Right-side panel
+            return _screenW - root.implicitWidth
+        }
+        return 0  // Left-side or vertical panel
+    }
+    readonly property real panelScreenY: {
+        if (barAtBottom) {
+            return _screenH - root.implicitHeight
+        }
+        return 0  // Top-anchored
+    }
 
     implicitHeight: contentItem.implicitHeight + visualMargin * 2
     implicitWidth: contentItem.implicitWidth + visualMargin * 2

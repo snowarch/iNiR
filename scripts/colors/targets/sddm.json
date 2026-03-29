@@ -1,0 +1,9 @@
+{
+  "id": "sddm",
+  "label": "SDDM",
+  "module": "60-sddm.sh",
+  "category": "login",
+  "inputs": ["palette.json"],
+  "description": "Sync the current generated palette into the shipped SDDM theme assets.",
+  "configKey": "appearance.wallpaperTheming.enableAppsAndShell"
+}

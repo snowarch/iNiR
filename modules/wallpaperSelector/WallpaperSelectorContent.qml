@@ -16,6 +16,7 @@ MouseArea {
     property real previewCellAspectRatio: 4 / 3
     property bool useDarkMode: Appearance.m3colors.darkmode
     property string _lastThumbnailSizeName: ""
+    readonly property real _dpr: root.window ? root.window.devicePixelRatio : 1
 
     // Multi-monitor support — capture focused monitor at open time
     property string _lockedTarget: ""
@@ -30,30 +31,43 @@ MouseArea {
     readonly property string currentSelectionTarget: Wallpapers.currentSelectionTarget()
     readonly property string currentSelectionPath: Wallpapers.currentWallpaperPathForTarget(currentSelectionTarget, selectedMonitor)
 
+    function syncDirectoryToCurrentSelection() {
+        const currentPath = FileUtils.trimFileProtocol(String(root.currentSelectionPath ?? ""))
+        const currentDir = FileUtils.parentDirectory(currentPath)
+        if (currentDir && currentDir.length > 0)
+            Wallpapers.setDirectory(currentDir)
+    }
+
     Component.onCompleted: {
         // Read target monitor from GlobalStates (set before opening, no timing issues)
         const gsTarget = GlobalStates.wallpaperSelectorTargetMonitor ?? ""
         if (gsTarget && WallpaperListener.screenNames.includes(gsTarget)) {
             _lockedTarget = gsTarget
-            return
+        } else {
+            // Fallback: check Config (for settings UI "Change" button via IPC)
+            const configTarget = Config.options?.wallpaperSelector?.targetMonitor ?? ""
+            if (configTarget && WallpaperListener.screenNames.includes(configTarget)) {
+                _lockedTarget = configTarget
+            } else if (CompositorService.isNiri) {
+                // Last resort: capture focused monitor (may be stale if overlay already took focus)
+                _capturedMonitor = NiriService.currentOutput ?? ""
+            } else if (CompositorService.isHyprland) {
+                _capturedMonitor = Hyprland.focusedMonitor?.name ?? ""
+            }
         }
-        // Fallback: check Config (for settings UI "Change" button via IPC)
-        const configTarget = Config.options?.wallpaperSelector?.targetMonitor ?? ""
-        if (configTarget && WallpaperListener.screenNames.includes(configTarget)) {
-            _lockedTarget = configTarget
-            return
-        }
-        // Last resort: capture focused monitor (may be stale if overlay already took focus)
-        if (CompositorService.isNiri) {
-            _capturedMonitor = NiriService.currentOutput ?? ""
-        } else if (CompositorService.isHyprland) {
-            _capturedMonitor = Hyprland.focusedMonitor?.name ?? ""
-        }
+        Qt.callLater(() => {
+            Wallpapers.searchQuery = ""
+            root.syncDirectoryToCurrentSelection()
+            root.updateThumbnails()
+        })
     }
 
     function updateThumbnails() {
         const totalImageMargin = (Appearance.sizes.wallpaperSelectorItemMargins + Appearance.sizes.wallpaperSelectorItemPadding) * 2
-        const thumbnailSizeName = Images.thumbnailSizeNameForDimensions(grid.cellWidth - totalImageMargin, grid.cellHeight - totalImageMargin)
+        const thumbnailSizeName = Images.thumbnailSizeNameForDimensions(
+            Math.round((grid.cellWidth - totalImageMargin) * root._dpr),
+            Math.round((grid.cellHeight - totalImageMargin) * root._dpr)
+        )
         root._lastThumbnailSizeName = thumbnailSizeName
         Wallpapers.generateThumbnail(thumbnailSizeName)
     }
@@ -87,13 +101,11 @@ MouseArea {
     function selectWallpaperPath(filePath) {
         if (filePath && filePath.length > 0) {
             const normalizedPath = FileUtils.trimFileProtocol(String(filePath))
-            // Check Config first (set by settings.qml via IPC), then GlobalStates
-            const configTarget = Config.options?.wallpaperSelector?.selectionTarget;
-            let target = (configTarget && configTarget !== "main") ? configTarget : GlobalStates.wallpaperSelectionTarget;
-            
-            Wallpapers.applySelectionTarget(normalizedPath, target, root.useDarkMode, root.selectedMonitor);
-            // Reset GlobalStates only (Config resets on its own via defaults)
+            Wallpapers.applySelectionTarget(normalizedPath, Wallpapers.currentSelectionTarget(), root.useDarkMode, root.selectedMonitor);
+            Config.setNestedValue("wallpaperSelector.selectionTarget", "main")
+            Config.setNestedValue("wallpaperSelector.targetMonitor", "")
             GlobalStates.wallpaperSelectionTarget = "main";
+            GlobalStates.wallpaperSelectorTargetMonitor = "";
             filterField.text = "";
             GlobalStates.wallpaperSelectorOpen = false;
         }
@@ -407,7 +419,11 @@ MouseArea {
                             required property string fileName
                             required property bool fileIsDir
                             required property url fileUrl
-                            
+
+                            // Compute once; avoids two separate Wallpapers.isCurrentWallpaperPath
+                            // calls per binding re-evaluation (colBackground + colText).
+                            readonly property bool _isCurrent: Wallpapers.isCurrentWallpaperPath(filePath, root.currentSelectionTarget, root.selectedMonitor)
+
                             fileModelData: ({
                                 filePath: filePath,
                                 fileName: fileName,
@@ -416,8 +432,8 @@ MouseArea {
                             })
                             width: grid.cellWidth
                             height: grid.cellHeight
-                            colBackground: (index === grid?.currentIndex || containsMouse) ? Appearance.colors.colPrimary : Wallpapers.isCurrentWallpaperPath(filePath, root.currentSelectionTarget, root.selectedMonitor) ? Appearance.colors.colSecondaryContainer : ColorUtils.transparentize(Appearance.colors.colPrimaryContainer)
-                            colText: (index === grid.currentIndex || containsMouse) ? Appearance.colors.colOnPrimary : Wallpapers.isCurrentWallpaperPath(filePath, root.currentSelectionTarget, root.selectedMonitor) ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer0
+                            colBackground: (index === grid?.currentIndex || containsMouse) ? Appearance.colors.colPrimary : _isCurrent ? Appearance.colors.colSecondaryContainer : ColorUtils.transparentize(Appearance.colors.colPrimaryContainer)
+                            colText: (index === grid.currentIndex || containsMouse) ? Appearance.colors.colOnPrimary : _isCurrent ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer0
 
                             onEntered: {
                                 grid.currentIndex = index;
@@ -480,7 +496,7 @@ MouseArea {
                         IconToolbarButton {
                             implicitWidth: height
                             onClicked: {
-                                Wallpapers.randomFromCurrentFolder();
+                                Wallpapers.randomFromCurrentFolder(root.useDarkMode);
                             }
                             text: "ifl"
                             StyledToolTip {
@@ -490,7 +506,10 @@ MouseArea {
 
                         IconToolbarButton {
                             implicitWidth: height
-                            onClicked: root.useDarkMode = !root.useDarkMode
+                            onClicked: {
+                                root.useDarkMode = !root.useDarkMode
+                                MaterialThemeLoader.setDarkMode(root.useDarkMode)
+                            }
                             text: root.useDarkMode ? "dark_mode" : "light_mode"
                             StyledToolTip {
                                 text: Translation.tr("Click to toggle light/dark mode\n(applied when wallpaper is chosen)")
@@ -564,8 +583,15 @@ MouseArea {
     Connections {
         target: GlobalStates
         function onWallpaperSelectorOpenChanged() {
-            if (GlobalStates.wallpaperSelectorOpen && monitorIsFocused) {
-                filterField.forceActiveFocus();
+            if (GlobalStates.wallpaperSelectorOpen) {
+                Wallpapers.searchQuery = ""
+                Qt.callLater(() => {
+                    root.syncDirectoryToCurrentSelection()
+                    root.updateThumbnails()
+                })
+                if (monitorIsFocused) {
+                    filterField.forceActiveFocus();
+                }
             }
         }
     }

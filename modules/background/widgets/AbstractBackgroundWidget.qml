@@ -33,6 +33,14 @@ AbstractWidget {
         value: root.targetY
         when: root.placementStrategy !== "free"
     }
+    Behavior on x {
+        enabled: Appearance.animationsEnabled && root.placementStrategy !== "free"
+        NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Appearance.animation.elementMove.type; easing.bezierCurve: Appearance.animation.elementMove.bezierCurve }
+    }
+    Behavior on y {
+        enabled: Appearance.animationsEnabled && root.placementStrategy !== "free"
+        NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Appearance.animation.elementMove.type; easing.bezierCurve: Appearance.animation.elementMove.bezierCurve }
+    }
 
     visible: opacity > 0
     opacity: (GlobalStates.screenLocked && !visibleWhenLocked) ? 0 : 1
@@ -79,7 +87,7 @@ AbstractWidget {
     }
     property string wallpaperPath: wallpaperIsVideo ? (Config.options?.background?.thumbnailPath ?? "") : (Config.options?.background?.wallpaperPath ?? "")
     
-    onWallpaperPathChanged: refreshPlacementIfNeeded()
+    onWallpaperPathChanged: _placementDebounce.restart()
     onPlacementStrategyChanged: {
         syncFreePositionFromConfig()
         refreshPlacementIfNeeded()
@@ -90,6 +98,12 @@ AbstractWidget {
             refreshPlacementIfNeeded()
             syncFreePositionFromConfig()
         }
+    }
+    Timer {
+        id: _placementDebounce
+        interval: 500
+        repeat: false
+        onTriggered: root.refreshPlacementIfNeeded()
     }
     function refreshPlacementIfNeeded() {
         if (!Config.ready || (root.placementStrategy === "free" && root.needsColText)) return;

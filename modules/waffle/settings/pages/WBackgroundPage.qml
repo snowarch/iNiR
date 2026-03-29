@@ -10,6 +10,7 @@ import qs.modules.common
 import qs.modules.common.functions as CF
 import qs.modules.waffle.looks
 import qs.modules.waffle.settings
+import "root:modules/common/functions/parallax.js" as ParallaxMath
 
 WSettingsPage {
     id: root
@@ -21,14 +22,34 @@ WSettingsPage {
     // Shorthand for waffle background config
     readonly property var wBg: Config.options?.waffles?.background ?? {}
     readonly property var wEffects: wBg.effects ?? {}
+    readonly property var wClock: wBg.widgets?.clock ?? {}
     readonly property var wBackdrop: wBg.backdrop ?? {}
     readonly property var wTransition: wBg.transition ?? {}
+    readonly property var wParallax: wBg.parallax ?? {}
     readonly property bool useSharedWallpaperTransition: root.wBg.useMainWallpaper ?? true
     readonly property bool waffleTransitionsEnabled: root.wTransition.enable ?? true
     readonly property string waffleTransitionType: root.wTransition.type ?? "crossfade"
     readonly property string waffleTransitionDirection: root.wTransition.direction ?? "right"
     readonly property int waffleTransitionDuration: root.wTransition.duration ?? 800
     readonly property var directionalTransitionTypes: ["wipe", "wave"]
+    readonly property string waffleParallaxPreset: ParallaxMath.detectPreset(
+        root.wParallax.zoom ?? root.wParallax.workspaceZoom ?? 1.05,
+        root.wParallax.workspaceShift ?? 1,
+        root.wParallax.panelShift ?? root.wParallax.sidebarShift ?? 0.12,
+        root.wParallax.widgetDepth ?? root.wParallax.widgetsFactor ?? 1.0
+    )
+    property bool backgroundBrowserPrimed: false
+    property bool heavySectionsReady: false
+    property string pendingBackgroundBrowserPath: ""
+    property bool settingsHandlersReady: false
+    property bool deferredDetailCardsReady: false
+
+    function setNestedValueWhenReady(nestedKey, value): void {
+        if (!settingsHandlersReady)
+            return
+
+        Config.setNestedValue(nestedKey, value)
+    }
     
     function setWaffleTransitionType(newValue: string): void {
         Config.setNestedValue("waffles.background.transition.type", newValue)
@@ -37,7 +58,71 @@ WSettingsPage {
     function setWaffleTransitionDirection(newValue: string): void {
         Config.setNestedValue("waffles.background.transition.direction", newValue)
     }
-    
+
+    function setWaffleParallaxAxis(newValue: string): void {
+        Config.setNestedValue("waffles.background.parallax.axis", newValue)
+        Config.setNestedValue("waffles.background.parallax.autoVertical", newValue === "auto")
+        Config.setNestedValue("waffles.background.parallax.vertical", newValue === "vertical")
+    }
+
+    function applyWaffleParallaxPreset(presetId: string): void {
+        const preset = ParallaxMath.preset(presetId)
+        Config.setNestedValue("waffles.background.parallax.enable", true)
+        Config.setNestedValue("waffles.background.parallax.zoom", preset.zoom)
+        Config.setNestedValue("waffles.background.parallax.workspaceZoom", preset.zoom)
+        Config.setNestedValue("waffles.background.parallax.workspaceShift", preset.workspaceShift)
+        Config.setNestedValue("waffles.background.parallax.panelShift", preset.panelShift)
+        Config.setNestedValue("waffles.background.parallax.widgetDepth", preset.widgetDepth)
+        Config.setNestedValue("waffles.background.parallax.widgetsFactor", preset.widgetDepth)
+    }
+
+    function ensureHeavySectionsReady(effectivePath: string): void {
+        if (heavySectionsReady)
+            return
+
+        heavySectionsReady = true
+        pendingBackgroundBrowserPath = effectivePath
+        backgroundBrowserInitTimer.restart()
+    }
+
+    function primeBackgroundBrowser(effectivePath: string): void {
+        if (backgroundBrowserPrimed)
+            return
+
+        backgroundBrowserPrimed = true
+
+        if (effectivePath && effectivePath.length > 0) {
+            const clean = CF.FileUtils.trimFileProtocol(String(effectivePath))
+            const dir = CF.FileUtils.parentDirectory(clean)
+            if (dir && dir.length > 0 && dir !== Wallpapers.effectiveDirectory) {
+                Wallpapers.setDirectory(dir)
+                return
+            }
+        }
+
+        Wallpapers.generateThumbnail("large")
+    }
+
+    Timer {
+        id: backgroundBrowserInitTimer
+        interval: 50
+        repeat: false
+        onTriggered: root.primeBackgroundBrowser(root.pendingBackgroundBrowserPath)
+    }
+
+    Connections {
+        target: Wallpapers
+        function onFolderChanged() {
+            if (root.backgroundBrowserPrimed && root.heavySectionsReady)
+                Wallpapers.generateThumbnail("large")
+        }
+    }
+
+    Component.onCompleted: Qt.callLater(() => {
+        root.settingsHandlersReady = true
+        root.deferredDetailCardsReady = true
+    })
+
     WSettingsCard {
         title: Translation.tr("Wallpaper")
         icon: "image"
@@ -47,7 +132,7 @@ WSettingsPage {
             icon: "image"
             description: Translation.tr("Share wallpaper with Material ii family")
             checked: root.wBg.useMainWallpaper ?? true
-            onCheckedChanged: Config.setNestedValue("waffles.background.useMainWallpaper", checked)
+            onCheckedChanged: root.setNestedValueWhenReady("waffles.background.useMainWallpaper", checked)
         }
         
         WSettingsButton {
@@ -57,16 +142,18 @@ WSettingsPage {
             buttonText: Translation.tr("Change")
             onButtonClicked: {
                 Config.setNestedValue("wallpaperSelector.selectionTarget", "waffle")
-                Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "wallpaperSelector", "toggle"])
+                Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "wallpaperSelector", "toggle"])
             }
         }
 
         WSettingsSwitch {
             label: Translation.tr("Per-monitor wallpapers")
-            icon: "monitor"
+            icon: "desktop"
             description: Translation.tr("Set different wallpapers for each monitor")
             checked: Config.options?.background?.multiMonitor?.enable ?? false
             onCheckedChanged: {
+                if (!root.settingsHandlersReady)
+                    return
                 Config.setNestedValue("background.multiMonitor.enable", checked)
                 if (!checked) {
                     const globalPath = Config.options?.background?.wallpaperPath ?? ""
@@ -77,9 +164,17 @@ WSettingsPage {
             }
         }
 
+        WSettingsSwitch {
+            label: Translation.tr("Hide when fullscreen")
+            icon: "desktop"
+            description: Translation.tr("Hide the Waffle wallpaper layer while a fullscreen window is active")
+            checked: root.wBg.hideWhenFullscreen ?? true
+            onCheckedChanged: root.setNestedValueWhenReady("waffles.background.hideWhenFullscreen", checked)
+        }
+
         WSettingsRow {
             label: Translation.tr("Wallpaper scaling")
-            icon: "aspect_ratio"
+            icon: "image"
             description: Translation.tr("Only Fill, Fit and Center are available because awww is the active wallpaper backend.")
         }
         Grid {
@@ -123,13 +218,7 @@ WSettingsPage {
             }
 
             Component.onCompleted: {
-                // Sync folder model to the current wallpaper's directory
-                if (_effectivePath && _effectivePath.length > 0) {
-                    const clean = CF.FileUtils.trimFileProtocol(String(_effectivePath))
-                    const dir = CF.FileUtils.parentDirectory(clean)
-                    if (dir && dir.length > 0)
-                        Wallpapers.setDirectory(dir)
-                }
+                root.pendingBackgroundBrowserPath = _effectivePath
             }
 
             RowLayout {
@@ -144,6 +233,7 @@ WSettingsPage {
                 WText {
                     Layout.fillWidth: true
                     text: {
+                        if (!root.heavySectionsReady) return Translation.tr("Wallpapers")
                         const dir = Wallpapers.effectiveDirectory
                         if (!dir) return Translation.tr("Wallpapers")
                         const parts = dir.split("/")
@@ -155,23 +245,32 @@ WSettingsPage {
                     elide: Text.ElideMiddle
                 }
                 WText {
-                    text: Wallpapers.folderModel.count + " " + Translation.tr("items")
+                    visible: root.heavySectionsReady
+                    text: root.heavySectionsReady ? (Wallpapers.folderModel.count + " " + Translation.tr("items")) : ""
                     font.pixelSize: Looks.font.pixelSize.tiny
                     color: Looks.colors.subfg
                     opacity: 0.5
                 }
             }
 
+            WSettingsButton {
+                visible: !root.heavySectionsReady
+                label: Translation.tr("Wallpaper previews")
+                icon: "image"
+                buttonText: Translation.tr("Load")
+                onButtonClicked: root.ensureHeavySectionsReady(_effectivePath)
+            }
+
             ListView {
                 id: mainWpStrip
+                visible: root.heavySectionsReady
                 Layout.fillWidth: true
                 Layout.preferredHeight: 74
                 orientation: ListView.Horizontal
                 spacing: 4
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
-                model: Wallpapers.folderModel
-                Component.onCompleted: Wallpapers.generateThumbnail("large")
+                model: root.heavySectionsReady ? Wallpapers.folderModel : null
 
                 delegate: Rectangle {
                     id: mainWpThumb
@@ -261,7 +360,7 @@ WSettingsPage {
                         cache: true
                         asynchronous: true
                         Component.onCompleted: {
-                            if (WallpaperListener.isVideoPath(mainWpThumb.filePath))
+                            if (root.heavySectionsReady)
                                 Wallpapers.ensureVideoFirstFrame(mainWpThumb.filePath)
                         }
                     }
@@ -315,7 +414,7 @@ WSettingsPage {
         WSettingsRow {
             visible: root.useSharedWallpaperTransition
             label: Translation.tr("Shared with Material ii")
-            icon: "link"
+            icon: "desktop"
             description: Translation.tr("When 'Use Material ii wallpaper' is enabled, Waffle inherits ii's wallpaper transition backend and timing. Disable the shared wallpaper to configure Waffle-specific transitions without overlapping families.")
             enableSettingsSearch: false
         }
@@ -326,7 +425,7 @@ WSettingsPage {
             icon: "flash-on"
             description: Translation.tr("Animate wallpaper swaps only for Waffle's own wallpaper")
             checked: root.waffleTransitionsEnabled
-            onCheckedChanged: Config.setNestedValue("waffles.background.transition.enable", checked)
+            onCheckedChanged: root.setNestedValueWhenReady("waffles.background.transition.enable", checked)
         }
         
         WSettingsRow {
@@ -383,7 +482,7 @@ WSettingsPage {
                 return ["wipe", "wave"].indexOf(t) >= 0
             }
             label: Translation.tr("Transition direction")
-            icon: "arrow-move"
+            icon: "arrow-right"
         }
         Grid {
             visible: transitionDirectionRow.visible
@@ -425,50 +524,229 @@ WSettingsPage {
                 return t !== "simple" && t !== "none"
             }
             label: Translation.tr("Transition duration")
-            icon: "timer"
+            icon: "arrow-clockwise"
             description: Translation.tr("How long Waffle's dedicated wallpaper transition should take.")
             suffix: "ms"
             value: root.waffleTransitionDuration
             from: 200
             to: 3000
             stepSize: 100
-            onValueChanged: Config.setNestedValue("waffles.background.transition.duration", value)
+            onValueChanged: root.setNestedValueWhenReady("waffles.background.transition.duration", value)
         }
     }
-    
-    // Multi-monitor management card
+
     WSettingsCard {
-        id: multiMonCard
-        visible: Config.options?.background?.multiMonitor?.enable ?? false
-        title: Translation.tr("Monitor Wallpapers")
-        icon: "desktop"
+        title: Translation.tr("Parallax")
+        icon: "image"
 
-        property string selectedMonitor: {
-            const primary = GlobalStates.primaryScreen
-            const primaryName = primary ? (WallpaperListener.getMonitorName(primary) ?? "") : ""
-            if (primaryName) return primaryName
-            const focused = WallpaperListener.getFocusedMonitor()
-            if (focused) return focused
-            const screens = Quickshell.screens
-            if (!screens || screens.length === 0) return ""
-            return WallpaperListener.getMonitorName(screens[0]) ?? ""
+        WSettingsSwitch {
+            label: Translation.tr("Enable parallax")
+            icon: "image"
+            description: Translation.tr("Move the Waffle wallpaper and background widgets with workspaces and open panels")
+            checked: root.wParallax.enable ?? ((root.wParallax.enableWorkspace ?? false) || (root.wParallax.enableSidebar ?? false))
+            onCheckedChanged: root.setNestedValueWhenReady("waffles.background.parallax.enable", checked)
         }
 
-        readonly property var selMonData: WallpaperListener.effectivePerMonitor[selectedMonitor] ?? { path: "", isVideo: false, isGif: false, isAnimated: false, hasCustomWallpaper: false }
-        readonly property string selMonPath: selMonData.path || (Config.options?.background?.wallpaperPath ?? "")
-        property bool showBackdropView: false
-
-        readonly property string backdropPath: {
-            const bd = Config.options?.waffles?.background?.backdrop ?? {}
-            if (!(bd.useMainWallpaper ?? true) && bd.wallpaperPath) return bd.wallpaperPath
-            return selMonPath
+        WSettingsRow {
+            label: Translation.tr("Background rendering")
+            icon: "desktop"
+            description: Translation.tr("When parallax is active, Waffle renders the wallpaper internally so panel motion and transitions stay visually stable.")
+            enableSettingsSearch: false
         }
 
-        // Visual monitor layout
-        Item {
+        WSettingsRow {
+            id: waffleParallaxProfileRow
+            label: Translation.tr("Motion profile")
+            icon: "wand"
+            description: Translation.tr("Apply a tuned set of zoom, workspace travel, panel travel and widget depth values.")
+        }
+        Grid {
             Layout.fillWidth: true
-            Layout.leftMargin: 12
-            Layout.rightMargin: 12
+            Layout.leftMargin: 16
+            Layout.rightMargin: 16
+            Layout.bottomMargin: 8
+            columns: 3
+            columnSpacing: 6
+            rowSpacing: 6
+
+            Repeater {
+                model: [
+                    { label: Translation.tr("Subtle"), value: "subtle" },
+                    { label: Translation.tr("Balanced"), value: "balanced" },
+                    { label: Translation.tr("Immersive"), value: "immersive" }
+                ]
+
+                delegate: WChoiceButton {
+                    required property var modelData
+                    Layout.fillWidth: false
+                    width: (waffleParallaxProfileRow.width - 16 * 2 - 6 * 2) / 3
+                    text: modelData.label
+                    checked: root.waffleParallaxPreset === modelData.value
+                    onClicked: root.applyWaffleParallaxPreset(modelData.value)
+                }
+            }
+        }
+
+        WSettingsRow {
+            id: waffleParallaxAxisRow
+            label: Translation.tr("Axis")
+            icon: "arrow-right"
+        }
+        Grid {
+            Layout.fillWidth: true
+            Layout.leftMargin: 16
+            Layout.rightMargin: 16
+            Layout.bottomMargin: 8
+            columns: 3
+            columnSpacing: 6
+            rowSpacing: 6
+
+            Repeater {
+                model: [
+                    { label: Translation.tr("Horizontal"), value: "horizontal" },
+                    { label: Translation.tr("Vertical"), value: "vertical" },
+                    { label: Translation.tr("Auto"), value: "auto" }
+                ]
+
+                delegate: WChoiceButton {
+                    required property var modelData
+                    Layout.fillWidth: false
+                    width: (waffleParallaxAxisRow.width - 16 * 2 - 6 * 2) / 3
+                    text: modelData.label
+                    checked: (root.wParallax.axis
+                        ?? ((root.wParallax.autoVertical ?? true) ? "auto" : ((root.wParallax.vertical ?? false) ? "vertical" : "horizontal"))) === modelData.value
+                    onClicked: root.setWaffleParallaxAxis(modelData.value)
+                }
+            }
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("Follow workspace")
+            icon: "desktop"
+            description: Translation.tr("Shift the wallpaper with the current workspace range")
+            checked: root.wParallax.enableWorkspace ?? false
+            enabled: root.wParallax.enable ?? ((root.wParallax.enableWorkspace ?? false) || (root.wParallax.enableSidebar ?? false))
+            onCheckedChanged: root.setNestedValueWhenReady("waffles.background.parallax.enableWorkspace", checked)
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("Follow panels")
+            icon: "apps"
+            description: Translation.tr("Add lateral motion when Start, widgets, clipboard, Action Center or notifications open")
+            checked: root.wParallax.enableSidebar ?? false
+            enabled: root.wParallax.enable ?? ((root.wParallax.enableWorkspace ?? false) || (root.wParallax.enableSidebar ?? false))
+            onCheckedChanged: root.setNestedValueWhenReady("waffles.background.parallax.enableSidebar", checked)
+        }
+
+        WSettingsSpinBox {
+            label: Translation.tr("Wallpaper zoom")
+            icon: "search"
+            description: Translation.tr("Extra wallpaper scale reserved for parallax movement")
+            suffix: "%"
+            value: Math.round((root.wParallax.zoom ?? root.wParallax.workspaceZoom ?? 1.05) * 100)
+            from: 100
+            to: 140
+            stepSize: 1
+            onValueChanged: {
+                if (!root.settingsHandlersReady)
+                    return
+                Config.setNestedValue("waffles.background.parallax.zoom", value / 100)
+                Config.setNestedValue("waffles.background.parallax.workspaceZoom", value / 100)
+            }
+        }
+
+        WSettingsSpinBox {
+            label: Translation.tr("Workspace travel")
+            icon: "arrow-right"
+            description: Translation.tr("How far Waffle should travel across the workspace range")
+            suffix: "%"
+            value: Math.round((root.wParallax.workspaceShift ?? 1) * 100)
+            from: 0
+            to: 150
+            stepSize: 5
+            enabled: (root.wParallax.enable ?? ((root.wParallax.enableWorkspace ?? false) || (root.wParallax.enableSidebar ?? false))) && (root.wParallax.enableWorkspace ?? false)
+            onValueChanged: root.setNestedValueWhenReady("waffles.background.parallax.workspaceShift", value / 100)
+        }
+
+        WSettingsSpinBox {
+            label: Translation.tr("Panel travel")
+            icon: "apps"
+            description: Translation.tr("How much lateral offset to add for Waffle panels")
+            suffix: "%"
+            value: Math.round((root.wParallax.panelShift ?? root.wParallax.sidebarShift ?? 0.12) * 100)
+            from: 0
+            to: 30
+            stepSize: 1
+            enabled: (root.wParallax.enable ?? ((root.wParallax.enableWorkspace ?? false) || (root.wParallax.enableSidebar ?? false))) && (root.wParallax.enableSidebar ?? false)
+            onValueChanged: root.setNestedValueWhenReady("waffles.background.parallax.panelShift", value / 100)
+        }
+
+        WSettingsSpinBox {
+            label: Translation.tr("Widget depth")
+            icon: "apps"
+            description: Translation.tr("Keep Waffle background widgets slightly ahead of the wallpaper motion")
+            suffix: "%"
+            value: Math.round((root.wParallax.widgetDepth ?? root.wParallax.widgetsFactor ?? 1.0) * 100)
+            from: 50
+            to: 180
+            stepSize: 5
+            enabled: root.wParallax.enable ?? ((root.wParallax.enableWorkspace ?? false) || (root.wParallax.enableSidebar ?? false))
+            onValueChanged: {
+                if (!root.settingsHandlersReady)
+                    return
+                Config.setNestedValue("waffles.background.parallax.widgetDepth", value / 100)
+                Config.setNestedValue("waffles.background.parallax.widgetsFactor", value / 100)
+            }
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("Pause during wallpaper transitions")
+            icon: "flash-on"
+            description: Translation.tr("Freeze parallax briefly while wallpaper transitions settle")
+            checked: root.wParallax.pauseDuringTransitions ?? true
+            enabled: root.wParallax.enable ?? ((root.wParallax.enableWorkspace ?? false) || (root.wParallax.enableSidebar ?? false))
+            onCheckedChanged: root.setNestedValueWhenReady("waffles.background.parallax.pauseDuringTransitions", checked)
+        }
+
+        WSettingsSpinBox {
+            label: Translation.tr("Transition settle")
+            icon: "arrow-clockwise"
+            description: Translation.tr("Extra pause after a wallpaper change before parallax resumes")
+            suffix: "ms"
+            value: root.wParallax.transitionSettleMs ?? 220
+            from: 0
+            to: 1200
+            stepSize: 20
+            enabled: (root.wParallax.enable ?? ((root.wParallax.enableWorkspace ?? false) || (root.wParallax.enableSidebar ?? false))) && (root.wParallax.pauseDuringTransitions ?? true)
+            onValueChanged: root.setNestedValueWhenReady("waffles.background.parallax.transitionSettleMs", value)
+        }
+    }
+    Loader {
+        active: Config.options?.background?.multiMonitor?.enable ?? false
+        asynchronous: true
+        Layout.fillWidth: true
+        sourceComponent: multiMonCardComponent
+    }
+
+    Component {
+        id: multiMonCardComponent
+
+        WSettingsCard {
+            id: multiMonCard
+            width: parent?.width ?? 0
+            title: Translation.tr("Monitor Wallpapers")
+            icon: "desktop"
+
+            property string selectedMonitor: {
+                const primary = GlobalStates.primaryScreen
+                const primaryName = primary ? (WallpaperListener.getMonitorName(primary) ?? "") : ""
+                if (primaryName) return primaryName
+                const focused = WallpaperListener.getFocusedMonitor()
+                if (focused) return focused
+                const screens = Quickshell.screens
+                if (!screens || screens.length === 0) return ""
+                return WallpaperListener.getMonitorName(screens[0]) ?? ""
+            }
             Layout.bottomMargin: 4
             implicitHeight: 140
 
@@ -485,7 +763,7 @@ WSettingsPage {
                     height: parent.height - 12
 
                     Repeater {
-                        model: Quickshell.screens
+                        model: root.heavySectionsReady ? Quickshell.screens : []
 
                         Rectangle {
                             id: wMonitorCard
@@ -572,7 +850,10 @@ WSettingsPage {
                                 }
                                 cache: true
                                 asynchronous: true
-                                Component.onCompleted: Wallpapers.ensureVideoFirstFrame(wMonitorCard.wpPath)
+                                Component.onCompleted: {
+                                    if (root.heavySectionsReady)
+                                        Wallpapers.ensureVideoFirstFrame(wMonitorCard.wpPath)
+                                }
                             }
 
                             // Media type badge (video/gif)
@@ -668,60 +949,55 @@ WSettingsPage {
                         }
                     }
                 }
-            }
         }
 
         // Unified preview + controls card
-        Item {
+        Rectangle {
+            id: wMonPreviewCard
             Layout.fillWidth: true
             Layout.leftMargin: 16
             Layout.rightMargin: 16
             Layout.bottomMargin: 4
-            implicitHeight: wMonPreviewCard.implicitHeight
+            implicitHeight: wMonPreviewCol.implicitHeight
+            radius: Looks.radius.large
+            color: Looks.colors.bg2Base
+            border.width: 1
+            border.color: Looks.colors.bg2Border
+            clip: true
 
-            Rectangle {
-                id: wMonPreviewCard
-                anchors.fill: parent
-                implicitHeight: wMonPreviewCol.implicitHeight
-                radius: Looks.radius.large
-                color: Looks.colors.bg2Base
-                border.width: 1
-                border.color: Looks.colors.bg2Border
-                clip: true
+            readonly property string displayPath: multiMonCard.showBackdropView ? multiMonCard.backdropPath : multiMonCard.selMonPath
+            readonly property string wpUrl: {
+                const path = displayPath
+                if (!path) return ""
+                return path.startsWith("file://") ? path : "file://" + path
+            }
+            readonly property bool isVideo: WallpaperListener.isVideoPath(displayPath)
+            readonly property bool isGif: WallpaperListener.isGifPath(displayPath)
 
-                readonly property string displayPath: multiMonCard.showBackdropView ? multiMonCard.backdropPath : multiMonCard.selMonPath
-                readonly property string wpUrl: {
-                    const path = displayPath
-                    if (!path) return ""
-                    return path.startsWith("file://") ? path : "file://" + path
+            Connections {
+                target: multiMonCard
+                function onSelMonPathChanged() {
+                    if (root.heavySectionsReady && wMonPreviewCard.isVideo) Wallpapers.ensureVideoFirstFrame(wMonPreviewCard.displayPath)
                 }
-                readonly property bool isVideo: WallpaperListener.isVideoPath(displayPath)
-                readonly property bool isGif: WallpaperListener.isGifPath(displayPath)
-
-                Connections {
-                    target: multiMonCard
-                    function onSelMonPathChanged() {
-                        if (wMonPreviewCard.isVideo) Wallpapers.ensureVideoFirstFrame(wMonPreviewCard.displayPath)
-                    }
-                    function onBackdropPathChanged() {
-                        if (WallpaperListener.isVideoPath(multiMonCard.backdropPath)) Wallpapers.ensureVideoFirstFrame(multiMonCard.backdropPath)
-                    }
+                function onBackdropPathChanged() {
+                    if (root.heavySectionsReady && WallpaperListener.isVideoPath(multiMonCard.backdropPath)) Wallpapers.ensureVideoFirstFrame(multiMonCard.backdropPath)
                 }
+            }
 
-                ColumnLayout {
-                    id: wMonPreviewCol
-                    anchors { left: parent.left; right: parent.right }
-                    spacing: 0
+            ColumnLayout {
+                id: wMonPreviewCol
+                anchors { left: parent.left; right: parent.right }
+                spacing: 0
 
                     // Hero preview area — frozen first frame for videos/GIFs to save resources
-                    Item {
+                    Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 140
                         clip: true
 
                         Image {
                             id: wMonPreviewImage
-                            visible: !wMonPreviewCard.isGif && !wMonPreviewCard.isVideo
+                            visible: root.heavySectionsReady && !wMonPreviewCard.isGif && !wMonPreviewCard.isVideo
                             anchors.fill: parent
                             fillMode: Image.PreserveAspectCrop
                             source: visible ? wMonPreviewCard.wpUrl : ""
@@ -731,7 +1007,7 @@ WSettingsPage {
 
                         AnimatedImage {
                             id: wMonPreviewGif
-                            visible: wMonPreviewCard.isGif
+                            visible: root.heavySectionsReady && wMonPreviewCard.isGif
                             anchors.fill: parent
                             fillMode: Image.PreserveAspectCrop
                             source: visible ? wMonPreviewCard.wpUrl : ""
@@ -742,16 +1018,20 @@ WSettingsPage {
 
                         Image {
                             id: wMonPreviewVideo
-                            visible: wMonPreviewCard.isVideo
+                            visible: root.heavySectionsReady && wMonPreviewCard.isVideo
                             anchors.fill: parent
                             fillMode: Image.PreserveAspectCrop
                             source: {
+                                if (!root.heavySectionsReady) return ""
                                 const ff = Wallpapers.videoFirstFrames[wMonPreviewCard.displayPath]
                                 return ff ? (ff.startsWith("file://") ? ff : "file://" + ff) : ""
                             }
                             asynchronous: true
                             cache: false
-                            Component.onCompleted: Wallpapers.ensureVideoFirstFrame(wMonPreviewCard.displayPath)
+                            Component.onCompleted: {
+                                if (root.heavySectionsReady)
+                                    Wallpapers.ensureVideoFirstFrame(wMonPreviewCard.displayPath)
+                            }
                         }
 
                         // Bottom gradient overlay with monitor info
@@ -872,14 +1152,14 @@ WSettingsPage {
                                     if (mon) {
                                         Config.setNestedValue("wallpaperSelector.selectionTarget", "main")
                                         Config.setNestedValue("wallpaperSelector.targetMonitor", mon)
-                                        Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "wallpaperSelector", "toggle"])
+                                        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "wallpaperSelector", "toggle"])
                                     }
                                 }
                             }
                             WButton {
                                 Layout.fillWidth: true
                                 text: Translation.tr("Random")
-                                icon.name: "arrow-shuffle"
+                                icon.name: "arrow-sync"
                                 colBackground: Looks.colors.bg2
                                 colBackgroundHover: Looks.colors.bg2Hover
                                 colBackgroundActive: Looks.colors.bg2Active
@@ -908,7 +1188,7 @@ WSettingsPage {
                                 colForeground: Looks.colors.accentFg
                                 onClicked: {
                                     Config.setNestedValue("wallpaperSelector.selectionTarget", "waffle-backdrop")
-                                    Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "wallpaperSelector", "toggle"])
+                                    Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "wallpaperSelector", "toggle"])
                                 }
                             }
                             WButton {
@@ -983,11 +1263,13 @@ WSettingsPage {
                         WSettingsSwitch {
                             visible: root.wBackdrop.enable ?? true
                             label: Translation.tr("Derive theme colors from backdrop")
-                            icon: "color"
+                            icon: "eyedropper"
                             checked: Config.options?.appearance?.wallpaperTheming?.useBackdropForColors ?? false
                             onCheckedChanged: {
+                                if (!root.settingsHandlersReady)
+                                    return
                                 Config.setNestedValue("appearance.wallpaperTheming.useBackdropForColors", checked)
-                                if (!(root.wBackdrop.useMainWallpaper ?? true)) {
+                                if (checked && !(root.wBackdrop.useMainWallpaper ?? true)) {
                                     Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--noswitch"])
                                 }
                             }
@@ -1011,6 +1293,7 @@ WSettingsPage {
                                 WText {
                                     Layout.fillWidth: true
                                     text: {
+                                        if (!root.heavySectionsReady) return Translation.tr("Wallpapers")
                                         const dir = Wallpapers.effectiveDirectory
                                         if (!dir) return Translation.tr("Wallpapers")
                                         const parts = dir.split("/")
@@ -1022,7 +1305,8 @@ WSettingsPage {
                                     elide: Text.ElideMiddle
                                 }
                                 WText {
-                                    text: Wallpapers.folderModel.count + " " + Translation.tr("items")
+                                    visible: root.heavySectionsReady
+                                    text: root.heavySectionsReady ? (Wallpapers.folderModel.count + " " + Translation.tr("items")) : ""
                                     font.pixelSize: Looks.font.pixelSize.tiny
                                     color: Looks.colors.subfg
                                     opacity: 0.5
@@ -1031,13 +1315,14 @@ WSettingsPage {
 
                             ListView {
                                 id: bgWpStrip
+                                visible: root.heavySectionsReady
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: 70
                                 orientation: ListView.Horizontal
                                 spacing: 3
                                 clip: true
                                 boundsBehavior: Flickable.StopAtBounds
-                                model: Wallpapers.folderModel
+                                model: root.heavySectionsReady ? Wallpapers.folderModel : null
 
                                 delegate: Rectangle {
                                     id: bgWpThumb
@@ -1122,7 +1407,7 @@ WSettingsPage {
                                         cache: true
                                         asynchronous: true
                                         Component.onCompleted: {
-                                            if (WallpaperListener.isVideoPath(bgWpThumb.filePath))
+                                            if (root.heavySectionsReady && WallpaperListener.isVideoPath(bgWpThumb.filePath))
                                                 Wallpapers.ensureVideoFirstFrame(bgWpThumb.filePath)
                                         }
                                     }
@@ -1164,243 +1449,467 @@ WSettingsPage {
                                     }
                                 }
                             }
-                        }
 
-                        // Info bar
-                        WText {
-                            Layout.fillWidth: true
-                            Layout.topMargin: 2
-                            font.pixelSize: Looks.font.pixelSize.small - 2
-                            color: Looks.colors.subfg
-                            opacity: 0.6
-                            text: Translation.tr("%1 monitors detected").arg(WallpaperListener.screenCount) + "  ·  " + Translation.tr("Ctrl+Alt+T targets focused output")
-                            wrapMode: Text.WordWrap
+                            WText {
+                                Layout.fillWidth: true
+                                Layout.topMargin: 2
+                                font.pixelSize: Looks.font.pixelSize.small - 2
+                                color: Looks.colors.subfg
+                                opacity: 0.6
+                                text: Translation.tr("%1 monitors detected").arg(WallpaperListener.screenCount) + "  ·  " + Translation.tr("Ctrl+Alt+T targets focused output")
+                            }
                         }
                     }
                 }
             }
         }
     }
-    
+
+    WSettingsCard {
+        title: Translation.tr("Desktop Clock")
+        icon: "schedule"
+
+        WSettingsSwitch {
+            label: Translation.tr("Enable clock")
+            icon: "schedule"
+            description: Translation.tr("Show a desktop clock on the Waffle wallpaper layer")
+            checked: root.wClock.enable ?? false
+            onCheckedChanged: root.setNestedValueWhenReady("waffles.background.widgets.clock.enable", checked)
+        }
+
+        ColumnLayout {
+            visible: root.wClock.enable ?? false
+            Layout.fillWidth: true
+            spacing: 0
+
+                    WSettingsRow {
+                        label: Translation.tr("Placement")
+                        icon: "drag_pan"
+                        description: Translation.tr("Use Draggable to place it manually, or let Waffle choose the least busy region")
+                    }
+
+                    Grid {
+                        id: clockPlacementGrid
+                        Layout.fillWidth: true
+                        Layout.leftMargin: 16
+                        Layout.rightMargin: 16
+                        Layout.bottomMargin: 8
+                        columns: 3
+                        columnSpacing: 6
+                        rowSpacing: 6
+
+                        Repeater {
+                            model: [
+                                { label: Translation.tr("Draggable"), value: "free" },
+                                { label: Translation.tr("Least busy"), value: "leastBusy" },
+                                { label: Translation.tr("Most busy"), value: "mostBusy" }
+                            ]
+
+                            delegate: WChoiceButton {
+                                required property var modelData
+                                Layout.fillWidth: false
+                                width: Math.max(0, (clockPlacementGrid.width - 12) / 3)
+                                text: modelData.label
+                                checked: (root.wClock.placementStrategy ?? "leastBusy") === modelData.value
+                                onClicked: Config.setNestedValue("waffles.background.widgets.clock.placementStrategy", modelData.value)
+                            }
+                        }
+                    }
+
+                    WSettingsButton {
+                        visible: (root.wClock.placementStrategy ?? "leastBusy") === "free"
+                        label: Translation.tr("Reset free position")
+                        icon: "arrow-counterclockwise"
+                        description: Translation.tr("Move the draggable clock back to its default position")
+                        buttonText: Translation.tr("Center")
+                        buttonIcon: "arrow-counterclockwise"
+                        onButtonClicked: {
+                            Config.setNestedValue("waffles.background.widgets.clock.x", 100)
+                            Config.setNestedValue("waffles.background.widgets.clock.y", 100)
+                        }
+                    }
+
+                    WSettingsDropdown {
+                        label: Translation.tr("Clock style")
+                        icon: "desktop"
+                        description: Translation.tr("Choose how prominent the wallpaper clock feels")
+                        currentValue: root.wClock.style ?? "hero"
+                        options: [
+                            { value: "hero", displayName: Translation.tr("Hero") },
+                            { value: "balanced", displayName: Translation.tr("Balanced") },
+                            { value: "minimal", displayName: Translation.tr("Minimal") }
+                        ]
+                        onSelected: newValue => Config.setNestedValue("waffles.background.widgets.clock.style", newValue)
+                    }
+
+                    WSettingsDropdown {
+                        label: Translation.tr("Time format")
+                        icon: "schedule"
+                        description: Translation.tr("Follow the global clock format or override it for the wallpaper clock")
+                        currentValue: root.wClock.timeFormat ?? "system"
+                        options: [
+                            { value: "system", displayName: Translation.tr("Follow system") },
+                            { value: "24h", displayName: Translation.tr("24-hour") },
+                            { value: "12h", displayName: Translation.tr("12-hour") }
+                        ]
+                        onSelected: newValue => Config.setNestedValue("waffles.background.widgets.clock.timeFormat", newValue)
+                    }
+
+                    WSettingsSwitch {
+                        label: Translation.tr("Show seconds")
+                        icon: "timer"
+                        description: Translation.tr("Update the wallpaper clock every second")
+                        checked: root.wClock.showSeconds ?? false
+                        onCheckedChanged: root.setNestedValueWhenReady("waffles.background.widgets.clock.showSeconds", checked)
+                    }
+
+                    WSettingsSwitch {
+                        label: Translation.tr("Show date")
+                        icon: "desktop"
+                        description: Translation.tr("Display a second line with the current date")
+                        checked: root.wClock.showDate ?? true
+                        onCheckedChanged: root.setNestedValueWhenReady("waffles.background.widgets.clock.showDate", checked)
+                    }
+
+                    WSettingsDropdown {
+                        visible: root.wClock.showDate ?? true
+                        label: Translation.tr("Date style")
+                        icon: "desktop"
+                        description: Translation.tr("Control how much date information is shown")
+                        currentValue: root.wClock.dateStyle ?? "long"
+                        options: [
+                            { value: "long", displayName: Translation.tr("Long") },
+                            { value: "minimal", displayName: Translation.tr("Minimal") },
+                            { value: "weekday", displayName: Translation.tr("Weekday only") },
+                            { value: "numeric", displayName: Translation.tr("Numeric") }
+                        ]
+                        onSelected: newValue => Config.setNestedValue("waffles.background.widgets.clock.dateStyle", newValue)
+                    }
+
+                    WSettingsDropdown {
+                        label: Translation.tr("Color tone")
+                        icon: "eyedropper"
+                        description: Translation.tr("Blend with wallpaper colors or keep the text neutral")
+                        currentValue: root.wClock.colorMode ?? "adaptive"
+                        options: [
+                            { value: "adaptive", displayName: Translation.tr("Adaptive") },
+                            { value: "accent", displayName: Translation.tr("Accent") },
+                            { value: "plain", displayName: Translation.tr("Plain") }
+                        ]
+                        onSelected: newValue => Config.setNestedValue("waffles.background.widgets.clock.colorMode", newValue)
+                    }
+
+                    WSettingsSwitch {
+                        label: Translation.tr("Animate time change")
+                        icon: "arrow-clockwise"
+                        description: Translation.tr("Smoothly animate the clock text when time changes")
+                        checked: root.wClock.digital?.animateChange ?? true
+                        onCheckedChanged: root.setNestedValueWhenReady("waffles.background.widgets.clock.digital.animateChange", checked)
+                    }
+
+                    WSettingsSpinBox {
+                        label: Translation.tr("Clock dim")
+                        icon: "dark-theme"
+                        description: Translation.tr("Darken the clock text without affecting the wallpaper")
+                        suffix: "%"
+                        from: 0; to: 100; stepSize: 5
+                        value: root.wClock.dim ?? 55
+                        onValueChanged: root.setNestedValueWhenReady("waffles.background.widgets.clock.dim", value)
+                    }
+
+                    WSettingsSpinBox {
+                        label: Translation.tr("Time scale")
+                        icon: "auto"
+                        description: Translation.tr("Scale the main time line independently")
+                        suffix: "%"
+                        from: 65; to: 160; stepSize: 5
+                        value: root.wClock.timeScale ?? 100
+                        onValueChanged: root.setNestedValueWhenReady("waffles.background.widgets.clock.timeScale", value)
+                    }
+
+                    WSettingsSpinBox {
+                        visible: root.wClock.showDate ?? true
+                        label: Translation.tr("Date scale")
+                        icon: "auto"
+                        description: Translation.tr("Scale the date line independently")
+                        suffix: "%"
+                        from: 65; to: 160; stepSize: 5
+                        value: root.wClock.dateScale ?? 100
+                        onValueChanged: root.setNestedValueWhenReady("waffles.background.widgets.clock.dateScale", value)
+                    }
+
+                    WSettingsSwitch {
+                        label: Translation.tr("Show shadow")
+                        icon: "dark-theme"
+                        description: Translation.tr("Use a shadow behind the text for better contrast")
+                        checked: root.wClock.showShadow ?? true
+                        onCheckedChanged: root.setNestedValueWhenReady("waffles.background.widgets.clock.showShadow", checked)
+                    }
+
+                    WSettingsSwitch {
+                        label: Translation.tr("Show lock status")
+                        icon: "desktop"
+                        description: Translation.tr("Show the locked status row when the screen is locked")
+                        checked: root.wClock.showLockStatus ?? true
+                        onCheckedChanged: root.setNestedValueWhenReady("waffles.background.widgets.clock.showLockStatus", checked)
+                    }
+
+                    WSettingsRow {
+                        label: Translation.tr("Clock font")
+                        icon: "keyboard"
+                        description: Translation.tr("Choose a more Windows-like font for the Waffle desktop clock")
+                    }
+
+                    Grid {
+                        id: clockFontGrid
+                        Layout.fillWidth: true
+                        Layout.leftMargin: 16
+                        Layout.rightMargin: 16
+                        Layout.bottomMargin: 8
+                        columns: 2
+                        columnSpacing: 6
+                        rowSpacing: 6
+
+                        Repeater {
+                            model: [
+                                { label: Translation.tr("Waffle UI"), value: Looks.font.family.ui },
+                                { label: "Segoe UI Variable Display", value: "Segoe UI Variable Display" },
+                                { label: "Segoe UI Variable Text", value: "Segoe UI Variable Text" },
+                                { label: "Inter", value: "Inter" },
+                                { label: "Roboto Flex", value: "Roboto Flex" }
+                            ]
+
+                            delegate: WChoiceButton {
+                                required property var modelData
+                                Layout.fillWidth: false
+                                width: Math.max(0, (clockFontGrid.width - 16 * 2 - 6) / 2)
+                                text: modelData.label
+                                checked: (root.wClock.fontFamily ?? "Segoe UI Variable Display") === modelData.value
+                                onClicked: Config.setNestedValue("waffles.background.widgets.clock.fontFamily", modelData.value)
+                            }
+                        }
+                    }
+        }
+    }
+
     WSettingsCard {
         title: Translation.tr("Wallpaper Effects")
-        icon: "image"
+                icon: "image"
 
-        WSettingsSwitch {
-            label: Translation.tr("Enable animated wallpapers (videos/GIFs)")
-            icon: "play"
-            description: Translation.tr("Play videos and GIFs as wallpaper. When disabled, shows a frozen frame")
-            checked: root.wBg.enableAnimation ?? true
-            onCheckedChanged: Config.setNestedValue("waffles.background.enableAnimation", checked)
-        }
+                WSettingsSwitch {
+                    label: Translation.tr("Enable animated wallpapers (videos/GIFs)")
+                    icon: "play"
+                    description: Translation.tr("Play videos and GIFs as wallpaper. When disabled, shows a frozen frame")
+                    checked: root.wBg.enableAnimation ?? true
+                    onCheckedChanged: root.setNestedValueWhenReady("waffles.background.enableAnimation", checked)
+                }
 
-        // NOTE: Blur activates only when windows are present on the workspace.
-        // During wallpaper transitions, blur temporarily fades out so the
-        // transition animation is visible, then fades back in.
-        WSettingsSwitch {
-            label: Translation.tr("Enable blur")
-            icon: "eye"
-            description: Translation.tr("Blur wallpaper when windows are open. Temporarily hides during wallpaper transitions.")
-            checked: root.wEffects.enableBlur ?? false
-            onCheckedChanged: Config.setNestedValue("waffles.background.effects.enableBlur", checked)
-        }
+                WSettingsSwitch {
+                    label: Translation.tr("Enable blur")
+                    icon: "eye"
+                    description: Translation.tr("Blur wallpaper when windows are open. Temporarily hides during wallpaper transitions.")
+                    checked: root.wEffects.enableBlur ?? false
+                    onCheckedChanged: root.setNestedValueWhenReady("waffles.background.effects.enableBlur", checked)
+                }
 
-        WSettingsSwitch {
-            visible: root.wBg.enableAnimation ?? true
-            label: Translation.tr("Blur animated wallpapers (videos/GIFs)")
-            icon: "eye"
-            description: Translation.tr("Apply blur to animated wallpapers. Independent from window blur. May significantly impact performance.")
-            checked: root.wEffects.enableAnimatedBlur ?? false
-            onCheckedChanged: Config.setNestedValue("waffles.background.effects.enableAnimatedBlur", checked)
-        }
+                WSettingsSwitch {
+                    visible: root.wBg.enableAnimation ?? true
+                    label: Translation.tr("Blur animated wallpapers (videos/GIFs)")
+                    icon: "eye"
+                    description: Translation.tr("Apply blur to animated wallpapers. Independent from window blur. May significantly impact performance.")
+                    checked: root.wEffects.enableAnimatedBlur ?? false
+                    onCheckedChanged: root.setNestedValueWhenReady("waffles.background.effects.enableAnimatedBlur", checked)
+                }
 
-        WSettingsSpinBox {
-            visible: root.wEffects.enableBlur ?? false
-            label: Translation.tr("Blur radius")
-            icon: "eye"
-            description: Translation.tr("Amount of blur applied to wallpaper")
-            from: 0; to: 100; stepSize: 5
-            value: root.wEffects.blurRadius ?? 32
-            onValueChanged: Config.setNestedValue("waffles.background.effects.blurRadius", value)
-        }
+                WSettingsSpinBox {
+                    visible: root.wEffects.enableBlur ?? false
+                    label: Translation.tr("Blur radius")
+                    icon: "eye"
+                    description: Translation.tr("Amount of blur applied to wallpaper")
+                    from: 0; to: 100; stepSize: 5
+                    value: root.wEffects.blurRadius ?? 32
+                    onValueChanged: root.setNestedValueWhenReady("waffles.background.effects.blurRadius", value)
+                }
 
-        WSettingsSpinBox {
-            visible: root.wEffects.enableAnimatedBlur ?? false
-            label: Translation.tr("Animated blur strength")
-            icon: "eye"
-            description: Translation.tr("Blur intensity for animated wallpapers (0-100%)")
-            suffix: "%"
-            from: 0; to: 100; stepSize: 5
-            value: root.wEffects.thumbnailBlurStrength ?? 70
-            onValueChanged: Config.setNestedValue("waffles.background.effects.thumbnailBlurStrength", value)
-        }
-        
-        WSettingsSpinBox {
-            label: Translation.tr("Dim overlay")
-            icon: "dark-theme"
-            description: Translation.tr("Darken the wallpaper")
-            suffix: "%"
-            from: 0; to: 100; stepSize: 5
-            value: root.wEffects.dim ?? 0
-            onValueChanged: Config.setNestedValue("waffles.background.effects.dim", value)
-        }
-        
-        WSettingsSpinBox {
-            label: Translation.tr("Extra dim with windows")
-            icon: "dark-theme"
-            description: Translation.tr("Additional dim when windows are present")
-            suffix: "%"
-            from: 0; to: 100; stepSize: 5
-            value: root.wEffects.dynamicDim ?? 0
-            onValueChanged: Config.setNestedValue("waffles.background.effects.dynamicDim", value)
-        }
-    }
-    
-    WSettingsCard {
-        title: Translation.tr("Backdrop (Overview)")
-        icon: "desktop"
-        
-        WSettingsSwitch {
-            label: Translation.tr("Enable backdrop")
-            icon: "desktop"
-            description: Translation.tr("Show backdrop layer for overview")
-            checked: root.wBackdrop.enable ?? true
-            onCheckedChanged: Config.setNestedValue("waffles.background.backdrop.enable", checked)
-        }
-        
-        WSettingsSwitch {
-            visible: root.wBackdrop.enable ?? true
-            label: Translation.tr("Enable animated wallpapers (videos/GIFs)")
-            icon: "play"
-            description: Translation.tr("Play videos and GIFs in backdrop (may impact performance)")
-            checked: root.wBackdrop.enableAnimation ?? false
-            onCheckedChanged: Config.setNestedValue("waffles.background.backdrop.enableAnimation", checked)
-        }
+                WSettingsSpinBox {
+                    visible: root.wEffects.enableAnimatedBlur ?? false
+                    label: Translation.tr("Animated blur strength")
+                    icon: "eye"
+                    description: Translation.tr("Blur intensity for animated wallpapers (0-100%)")
+                    suffix: "%"
+                    from: 0; to: 100; stepSize: 5
+                    value: root.wEffects.thumbnailBlurStrength ?? 70
+                    onValueChanged: root.setNestedValueWhenReady("waffles.background.effects.thumbnailBlurStrength", value)
+                }
 
-        WSettingsSwitch {
-            visible: (root.wBackdrop.enable ?? true) && (root.wBackdrop.enableAnimation ?? false)
-            label: Translation.tr("Blur animated wallpapers (videos/GIFs)")
-            icon: "eye"
-            description: Translation.tr("Apply blur to animated wallpapers in backdrop. May significantly impact performance.")
-            checked: root.wBackdrop.enableAnimatedBlur ?? false
-            onCheckedChanged: Config.setNestedValue("waffles.background.backdrop.enableAnimatedBlur", checked)
-        }
+                WSettingsSpinBox {
+                    label: Translation.tr("Dim overlay")
+                    icon: "dark-theme"
+                    description: Translation.tr("Darken the wallpaper")
+                    suffix: "%"
+                    from: 0; to: 100; stepSize: 5
+                    value: root.wEffects.dim ?? 0
+                    onValueChanged: root.setNestedValueWhenReady("waffles.background.effects.dim", value)
+                }
 
-        WSettingsSwitch {
-            visible: root.wBackdrop.enable ?? true
-            label: Translation.tr("Use separate wallpaper")
-            icon: "image"
-            description: Translation.tr("Use a different wallpaper for backdrop")
-            checked: !(root.wBackdrop.useMainWallpaper ?? true)
-            onCheckedChanged: Config.setNestedValue("waffles.background.backdrop.useMainWallpaper", !checked)
-        }
-        
-        WSettingsButton {
-            visible: (root.wBackdrop.enable ?? true) && !(root.wBackdrop.useMainWallpaper ?? true)
-            label: Translation.tr("Backdrop wallpaper")
-            icon: "image"
-            buttonText: Translation.tr("Change")
-            onButtonClicked: {
-                Config.setNestedValue("wallpaperSelector.selectionTarget", "waffle-backdrop")
-                Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "wallpaperSelector", "toggle"])
-            }
-        }
-
-        WSettingsSwitch {
-            visible: root.wBackdrop.enable ?? true
-            label: Translation.tr("Derive theme colors from backdrop")
-            icon: "color"
-            description: Translation.tr("Generate theme colors from the backdrop wallpaper instead of the main wallpaper")
-            checked: Config.options?.appearance?.wallpaperTheming?.useBackdropForColors ?? false
-            onCheckedChanged: {
-                Config.setNestedValue("appearance.wallpaperTheming.useBackdropForColors", checked)
-                if (checked && !(root.wBackdrop.useMainWallpaper ?? true)) {
-                    Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--noswitch"])
+                WSettingsSpinBox {
+                    label: Translation.tr("Extra dim with windows")
+                    icon: "dark-theme"
+                    description: Translation.tr("Additional dim when windows are present")
+                    suffix: "%"
+                    from: 0; to: 100; stepSize: 5
+                    value: root.wEffects.dynamicDim ?? 0
+                    onValueChanged: root.setNestedValueWhenReady("waffles.background.effects.dynamicDim", value)
                 }
             }
-        }
-        
-        WSettingsSwitch {
-            visible: root.wBackdrop.enable ?? true
-            label: Translation.tr("Hide main wallpaper")
-            icon: "eye-off"
-            description: Translation.tr("Show only backdrop, hide main wallpaper")
-            checked: root.wBackdrop.hideWallpaper ?? false
-            onCheckedChanged: Config.setNestedValue("waffles.background.backdrop.hideWallpaper", checked)
-        }
-        
-        WSettingsSpinBox {
-            visible: root.wBackdrop.enable ?? true
-            label: Translation.tr("Backdrop blur")
-            icon: "eye"
-            description: Translation.tr("Amount of blur for backdrop layer")
-            from: 0; to: 100; stepSize: 5
-            value: root.wBackdrop.blurRadius ?? 64
-            onValueChanged: Config.setNestedValue("waffles.background.backdrop.blurRadius", value)
-        }
-        
-        WSettingsSpinBox {
-            visible: root.wBackdrop.enable ?? true
-            label: Translation.tr("Backdrop dim")
-            icon: "dark-theme"
-            description: Translation.tr("Darken the backdrop layer")
-            suffix: "%"
-            from: 0; to: 100; stepSize: 5
-            value: root.wBackdrop.dim ?? 20
-            onValueChanged: Config.setNestedValue("waffles.background.backdrop.dim", value)
-        }
-        
-        WSettingsSpinBox {
-            visible: root.wBackdrop.enable ?? true
-            label: Translation.tr("Backdrop saturation")
-            icon: "eyedropper"
-            description: Translation.tr("Increase color intensity")
-            suffix: "%"
-            from: -100; to: 100; stepSize: 10
-            value: root.wBackdrop.saturation ?? 0
-            onValueChanged: Config.setNestedValue("waffles.background.backdrop.saturation", value)
-        }
-        
-        WSettingsSpinBox {
-            visible: root.wBackdrop.enable ?? true
-            label: Translation.tr("Backdrop contrast")
-            icon: "auto"
-            description: Translation.tr("Increase light/dark difference")
-            suffix: "%"
-            from: -100; to: 100; stepSize: 10
-            value: root.wBackdrop.contrast ?? 0
-            onValueChanged: Config.setNestedValue("waffles.background.backdrop.contrast", value)
-        }
 
-        WSettingsSwitch {
-            visible: root.wBackdrop.enable ?? true
-            label: Translation.tr("Enable vignette")
-            icon: "border-outside"
-            description: Translation.tr("Add a dark gradient around the edges of the backdrop")
-            checked: root.wBackdrop.vignetteEnabled ?? false
-            onCheckedChanged: Config.setNestedValue("waffles.background.backdrop.vignetteEnabled", checked)
-        }
+            WSettingsCard {
+                title: Translation.tr("Backdrop (Overview)")
+                icon: "desktop"
 
-        WSettingsSpinBox {
-            visible: (root.wBackdrop.enable ?? true) && (root.wBackdrop.vignetteEnabled ?? false)
-            label: Translation.tr("Vignette intensity")
-            icon: "border-outside"
-            description: Translation.tr("How dark the vignette effect should be")
-            suffix: "%"
-            from: 0; to: 100; stepSize: 5
-            value: Math.round((root.wBackdrop.vignetteIntensity ?? 0.5) * 100)
-            onValueChanged: Config.setNestedValue("waffles.background.backdrop.vignetteIntensity", value / 100.0)
-        }
+                WSettingsSwitch {
+                    label: Translation.tr("Enable backdrop")
+                    icon: "desktop"
+                    description: Translation.tr("Show backdrop layer for overview")
+                    checked: root.wBackdrop.enable ?? true
+                    onCheckedChanged: root.setNestedValueWhenReady("waffles.background.backdrop.enable", checked)
+                }
 
-        WSettingsSpinBox {
-            visible: (root.wBackdrop.enable ?? true) && (root.wBackdrop.vignetteEnabled ?? false)
-            label: Translation.tr("Vignette radius")
-            icon: "border-outside"
-            description: Translation.tr("How far the vignette extends from the edges")
-            suffix: "%"
-            from: 10; to: 100; stepSize: 5
-            value: Math.round((root.wBackdrop.vignetteRadius ?? 0.7) * 100)
-            onValueChanged: Config.setNestedValue("waffles.background.backdrop.vignetteRadius", value / 100.0)
-        }
-    }
+                WSettingsSwitch {
+                    visible: root.wBackdrop.enable ?? true
+                    label: Translation.tr("Enable animated wallpapers (videos/GIFs)")
+                    icon: "play"
+                    description: Translation.tr("Play videos and GIFs in backdrop (may impact performance)")
+                    checked: root.wBackdrop.enableAnimation ?? false
+                    onCheckedChanged: root.setNestedValueWhenReady("waffles.background.backdrop.enableAnimation", checked)
+                }
+
+                WSettingsSwitch {
+                    visible: (root.wBackdrop.enable ?? true) && (root.wBackdrop.enableAnimation ?? false)
+                    label: Translation.tr("Blur animated wallpapers (videos/GIFs)")
+                    icon: "eye"
+                    description: Translation.tr("Apply blur to animated wallpapers in backdrop. May significantly impact performance.")
+                    checked: root.wBackdrop.enableAnimatedBlur ?? false
+                    onCheckedChanged: root.setNestedValueWhenReady("waffles.background.backdrop.enableAnimatedBlur", checked)
+                }
+
+                WSettingsSwitch {
+                    visible: root.wBackdrop.enable ?? true
+                    label: Translation.tr("Use separate wallpaper")
+                    icon: "image"
+                    description: Translation.tr("Use a different wallpaper for backdrop")
+                    checked: !(root.wBackdrop.useMainWallpaper ?? true)
+                    onCheckedChanged: root.setNestedValueWhenReady("waffles.background.backdrop.useMainWallpaper", !checked)
+                }
+
+                WSettingsButton {
+                    visible: (root.wBackdrop.enable ?? true) && !(root.wBackdrop.useMainWallpaper ?? true)
+                    label: Translation.tr("Backdrop wallpaper")
+                    icon: "image"
+                    buttonText: Translation.tr("Change")
+                    onButtonClicked: {
+                        Config.setNestedValue("wallpaperSelector.selectionTarget", "waffle-backdrop")
+                        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "wallpaperSelector", "toggle"])
+                    }
+                }
+
+                WSettingsSwitch {
+                    visible: root.wBackdrop.enable ?? true
+                    label: Translation.tr("Derive theme colors from backdrop")
+                    icon: "eyedropper"
+                    description: Translation.tr("Generate theme colors from the backdrop wallpaper instead of the main wallpaper")
+                    checked: Config.options?.appearance?.wallpaperTheming?.useBackdropForColors ?? false
+                    onCheckedChanged: {
+                        if (!root.settingsHandlersReady)
+                            return
+                        Config.setNestedValue("appearance.wallpaperTheming.useBackdropForColors", checked)
+                        if (checked && !(root.wBackdrop.useMainWallpaper ?? true)) {
+                            Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--noswitch"])
+                        }
+                    }
+                }
+
+                WSettingsSwitch {
+                    visible: root.wBackdrop.enable ?? true
+                    label: Translation.tr("Hide main wallpaper")
+                    icon: "eye-off"
+                    description: Translation.tr("Show only backdrop, hide main wallpaper")
+                    checked: root.wBackdrop.hideWallpaper ?? false
+                    onCheckedChanged: root.setNestedValueWhenReady("waffles.background.backdrop.hideWallpaper", checked)
+                }
+
+                WSettingsSpinBox {
+                    visible: root.wBackdrop.enable ?? true
+                    label: Translation.tr("Backdrop blur")
+                    icon: "eye"
+                    description: Translation.tr("Amount of blur for backdrop layer")
+                    from: 0; to: 100; stepSize: 5
+                    value: root.wBackdrop.blurRadius ?? 64
+                    onValueChanged: root.setNestedValueWhenReady("waffles.background.backdrop.blurRadius", value)
+                }
+
+                WSettingsSpinBox {
+                    visible: root.wBackdrop.enable ?? true
+                    label: Translation.tr("Backdrop dim")
+                    icon: "dark-theme"
+                    description: Translation.tr("Darken the backdrop layer")
+                    suffix: "%"
+                    from: 0; to: 100; stepSize: 5
+                    value: root.wBackdrop.dim ?? 20
+                    onValueChanged: root.setNestedValueWhenReady("waffles.background.backdrop.dim", value)
+                }
+
+                WSettingsSpinBox {
+                    visible: root.wBackdrop.enable ?? true
+                    label: Translation.tr("Backdrop saturation")
+                    icon: "eyedropper"
+                    description: Translation.tr("Increase color intensity")
+                    suffix: "%"
+                    from: -100; to: 100; stepSize: 10
+                    value: root.wBackdrop.saturation ?? 0
+                    onValueChanged: root.setNestedValueWhenReady("waffles.background.backdrop.saturation", value)
+                }
+
+                WSettingsSpinBox {
+                    visible: root.wBackdrop.enable ?? true
+                    label: Translation.tr("Backdrop contrast")
+                    icon: "auto"
+                    description: Translation.tr("Increase light/dark difference")
+                    suffix: "%"
+                    from: -100; to: 100; stepSize: 10
+                    value: root.wBackdrop.contrast ?? 0
+                    onValueChanged: root.setNestedValueWhenReady("waffles.background.backdrop.contrast", value)
+                }
+
+                WSettingsSwitch {
+                    visible: root.wBackdrop.enable ?? true
+                    label: Translation.tr("Enable vignette")
+                    icon: "border-outside"
+                    description: Translation.tr("Add a dark gradient around the edges of the backdrop")
+                    checked: root.wBackdrop.vignetteEnabled ?? false
+                    onCheckedChanged: root.setNestedValueWhenReady("waffles.background.backdrop.vignetteEnabled", checked)
+                }
+
+                WSettingsSpinBox {
+                    visible: (root.wBackdrop.enable ?? true) && (root.wBackdrop.vignetteEnabled ?? false)
+                    label: Translation.tr("Vignette intensity")
+                    icon: "border-outside"
+                    description: Translation.tr("How dark the vignette effect should be")
+                    suffix: "%"
+                    from: 0; to: 100; stepSize: 5
+                    value: Math.round((root.wBackdrop.vignetteIntensity ?? 0.5) * 100)
+                    onValueChanged: root.setNestedValueWhenReady("waffles.background.backdrop.vignetteIntensity", value / 100.0)
+                }
+
+                WSettingsSpinBox {
+                    visible: (root.wBackdrop.enable ?? true) && (root.wBackdrop.vignetteEnabled ?? false)
+                    label: Translation.tr("Vignette radius")
+                    icon: "border-outside"
+                    description: Translation.tr("How far the vignette extends from the edges")
+                    suffix: "%"
+                    from: 10; to: 100; stepSize: 5
+                    value: Math.round((root.wBackdrop.vignetteRadius ?? 0.7) * 100)
+                    onValueChanged: root.setNestedValueWhenReady("waffles.background.backdrop.vignetteRadius", value / 100.0)
+                }
+            }
 }

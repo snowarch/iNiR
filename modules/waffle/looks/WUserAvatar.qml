@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Qt5Compat.GraphicalEffects
+import Qt5Compat.GraphicalEffects as GE
 import Quickshell
 import qs
 import qs.services
@@ -14,7 +14,7 @@ import qs.modules.waffle.looks
 Item {
     id: root
     property size sourceSize: Qt.size(32, 32)
-    
+
     width: sourceSize.width
     height: sourceSize.height
     implicitWidth: sourceSize.width
@@ -23,52 +23,53 @@ Item {
     Layout.preferredHeight: sourceSize.height
 
     Rectangle {
-        anchors.fill: parent
-        radius: Math.min(width, height) / 2
-        color: Looks.colors.bg2Base
-        visible: avatarImage.status !== Image.Ready
-    }
-
-    MaterialSymbol {
-        anchors.centerIn: parent
-        text: "person"
-        iconSize: Math.round(root.sourceSize.width * 0.55)
-        color: Looks.colors.subfg
-        visible: avatarImage.status !== Image.Ready
-    }
-
-    Rectangle {
         id: avatarMask
         anchors.fill: parent
-        radius: Math.min(width, height) / 2
+        radius: width / 2
         visible: false
     }
 
     Image {
-        id: avatarImage
+        id: avatarImg
         anchors.fill: parent
-        sourceSize: Qt.size(root.sourceSize.width * 2, root.sourceSize.height * 2)
+        source: Directories.userAvatarSourcePrimary
         fillMode: Image.PreserveAspectCrop
-        source: `file://${Directories.userAvatarPathRicersAndWeirdSystems}`
+        asynchronous: true
         cache: true
         smooth: true
         mipmap: true
-        asynchronous: true
+        sourceSize.width: root.sourceSize.width * 2
+        sourceSize.height: root.sourceSize.height * 2
         visible: false
+        
         onStatusChanged: {
             if (status === Image.Error) {
-                if (String(source).indexOf(Directories.userAvatarPathAccountsService) >= 0)
-                    source = `file://${Directories.userAvatarPathRicersAndWeirdSystems2}`
-                else
-                    source = `file://${Directories.userAvatarPathAccountsService}`
+                const nextSource = Directories.nextAvatarSource(source)
+                if (nextSource.length > 0 && nextSource !== source)
+                    source = nextSource
             }
         }
     }
 
-    OpacityMask {
+    GE.OpacityMask {
         anchors.fill: parent
-        source: avatarImage
+        source: avatarImg
         maskSource: avatarMask
-        visible: avatarImage.status === Image.Ready
+        visible: avatarImg.status === Image.Ready
+    }
+
+    // Fallback icon
+    Rectangle {
+        anchors.fill: parent
+        radius: width / 2
+        color: Looks.colors.bg2Base
+        visible: avatarImg.status !== Image.Ready
+
+        MaterialSymbol {
+            anchors.centerIn: parent
+            text: "person"
+            iconSize: Math.round(root.sourceSize.width * 0.55)
+            color: Looks.colors.subfg
+        }
     }
 }

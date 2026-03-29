@@ -1,0 +1,9 @@
+{
+  "id": "gtk-kde",
+  "label": "GTK and KDE",
+  "module": "20-gtk-kde.sh",
+  "category": "desktop",
+  "inputs": ["palette.json"],
+  "description": "Apply shell-adjacent desktop theming outputs such as GTK, KDE, Qt colors, and related app integrations.",
+  "configKey": "appearance.wallpaperTheming.enableAppsAndShell"
+}

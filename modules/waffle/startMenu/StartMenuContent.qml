@@ -61,12 +61,16 @@ WBarAttachedPanelContent {
     }
 
     contentItem: WPane {
+        screenX: root.panelScreenX + root.visualMargin
+        screenY: root.panelScreenY + root.visualMargin
+        screenWidth: root._screenW
+        screenHeight: root._screenH
         contentItem: WPanelPageColumn {
             SearchBar {
                 id: searchBar
                 Layout.fillWidth: true
-                implicitWidth: 600
-                horizontalPadding: root.searching ? 16 : 24
+                implicitWidth: Looks.dp(600)
+                horizontalPadding: root.searching ? Looks.dp(16) : Looks.dp(24)
                 // searching is read-only in SearchBar (bound to text length), so we only listen to changes
                 onSearchingChanged: if (searching !== root.searching) root.searching = searching
                 focus: true
@@ -76,8 +80,8 @@ WBarAttachedPanelContent {
             }
             
             Item {
-                implicitHeight: 520
-                implicitWidth: 600
+                implicitHeight: Looks.dp(520)
+                implicitWidth: Looks.dp(600)
                 Layout.fillWidth: true
                 clip: true
 

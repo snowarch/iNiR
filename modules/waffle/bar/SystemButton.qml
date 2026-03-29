@@ -35,6 +35,38 @@ BarButton {
             }
             spacing: 4
 
+            IconHoverArea {
+                id: recordingHoverArea
+                visible: RecorderStatus.isRecording
+                iconItem: Item {
+                    anchors.verticalCenter: parent.verticalCenter
+                    implicitWidth: 20
+                    implicitHeight: 20
+
+                    FluentIcon {
+                        anchors.fill: parent
+                        icon: "record"
+                        color: Looks.colors.danger
+                    }
+
+                    Rectangle {
+                        width: 4
+                        height: 4
+                        radius: 2
+                        color: Looks.colors.danger
+                        anchors { top: parent.top; right: parent.right; topMargin: -1; rightMargin: -1 }
+
+                        SequentialAnimation on opacity {
+                            running: RecorderStatus.isRecording
+                            loops: Animation.Infinite
+                            NumberAnimation { to: 0.5; duration: 1200 }
+                            NumberAnimation { to: 1.0; duration: 1200 }
+                        }
+                    }
+                }
+                onClicked: GlobalActions.runById("screen-record", "")
+            }
+
             // Mic indicator (only when in use)
             IconHoverArea {
                 id: micHoverArea
@@ -47,11 +79,11 @@ BarButton {
 
                     FluentIcon {
                         anchors.fill: parent
-                        icon: (Audio.source?.audio?.muted ?? false) ? "mic-off" : "mic-on"
+                        icon: Audio.micMuted ? "mic-off" : "mic-on"
                     }
 
                     Rectangle {
-                        visible: !(Audio.source?.audio?.muted ?? true)
+                        visible: !Audio.micMuted
                         width: 4
                         height: 4
                         radius: 2
@@ -59,7 +91,7 @@ BarButton {
                         anchors { top: parent.top; right: parent.right; topMargin: -1; rightMargin: -1 }
 
                         SequentialAnimation on opacity {
-                            running: micHoverArea.micInUse && !(Audio.source?.audio?.muted ?? true)
+                            running: micHoverArea.micInUse && !Audio.micMuted
                             loops: Animation.Infinite
                             NumberAnimation { to: 0.5; duration: 1200 }
                             NumberAnimation { to: 1.0; duration: 1200 }
@@ -84,6 +116,7 @@ BarButton {
                 iconItem: FluentIcon {
                     anchors.verticalCenter: parent.verticalCenter
                     icon: WIcons.internetIcon
+                    filled: true
                 }
             }
 
@@ -100,9 +133,19 @@ BarButton {
             IconHoverArea {
                 id: batteryHoverArea
                 visible: Battery?.available ?? false
-                iconItem: FluentIcon {
+                iconItem: Row {
                     anchors.verticalCenter: parent.verticalCenter
-                    icon: WIcons.batteryIcon
+                    spacing: 2
+                    FluentIcon {
+                        anchors.verticalCenter: parent.verticalCenter
+                        icon: WIcons.batteryIcon
+                    }
+                    WText {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: `${Math.round((Battery?.percentage ?? 0) * 100)}%`
+                        font.pixelSize: Looks.font.pixelSize.small
+                        color: Looks.colors.fg
+                    }
                 }
             }
         }
@@ -125,8 +168,12 @@ BarButton {
     }
 
     BarToolTip {
+        extraVisibleCondition: root.shouldShowTooltip && recordingHoverArea.containsMouse
+        text: Translation.tr("Screen recording: Active")
+    }
+    BarToolTip {
         extraVisibleCondition: root.shouldShowTooltip && micHoverArea.containsMouse
-        text: Translation.tr("Microphone: %1").arg((Audio.source?.audio?.muted ?? false) ? Translation.tr("Muted") : Translation.tr("In use"))
+        text: Translation.tr("Microphone: %1").arg(Audio.micMuted ? Translation.tr("Muted") : Translation.tr("In use"))
     }
     BarToolTip {
         extraVisibleCondition: root.shouldShowTooltip && screenShareHoverArea.containsMouse

@@ -2,6 +2,7 @@ module qs.services
 singleton AwwwBackend 1.0 AwwwBackend.qml
 singleton Ai 1.0 Ai.qml
 singleton AnimeService 1.0 AnimeService.qml
+singleton AppLauncher 1.0 AppLauncher.qml
 singleton AppSearch 1.0 AppSearch.qml
 singleton Audio 1.0 Audio.qml
 singleton Autostart 1.0 Autostart.qml
@@ -21,6 +22,8 @@ singleton Events 1.0 Events.qml
 singleton FirstRunExperience 1.0 FirstRunExperience.qml
 singleton FontSyncService 1.0 FontSyncService.qml
 singleton GameMode 1.0 GameMode.qml
+singleton GowallService 1.0 GowallService.qml
+singleton GlobalActions 1.0 GlobalActions.qml
 HyprlandData 1.0 HyprlandData.qml
 singleton HyprlandKeybinds 1.0 HyprlandKeybinds.qml
 singleton HyprlandXkb 1.0 HyprlandXkb.qml
@@ -38,6 +41,7 @@ singleton NiriKeybinds 1.0 NiriKeybinds.qml
 singleton NiriService 1.0 NiriService.qml
 singleton Notepad 1.0 Notepad.qml
 singleton Notifications 1.0 Notifications.qml
+singleton PackageSearch 1.0 PackageSearch.qml
 singleton PolkitService 1.0 PolkitService.qml
 PolkitServiceImpl 1.0 PolkitServiceImpl.qml
 singleton PowerProfilePersistence 1.0 PowerProfilePersistence.qml

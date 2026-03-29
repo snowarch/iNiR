@@ -45,6 +45,7 @@ Graph 1.0 Graph.qml
 GroupButton 1.0 GroupButton.qml
 IconThemeSelector 1.0 IconThemeSelector.qml
 IconToolbarButton 1.0 IconToolbarButton.qml
+InputChip 1.0 InputChip.qml
 KeyboardKey 1.0 KeyboardKey.qml
 LightDarkPreferenceButton 1.0 LightDarkPreferenceButton.qml
 MaterialCookie 1.0 MaterialCookie.qml

@@ -34,10 +34,19 @@ PanelWindow {
     readonly property bool useNiri: CompositorService.isNiri
 
     property string screenshotDir: Directories.screenshotTemp
-    property string imageSearchEngineBaseUrl: Config.options?.search?.imageSearch?.imageSearchEngineBaseUrl ?? "https://lens.google.com/uploadbyurl?url="
+    property string imageSearchEngineBaseUrl: Config.options?.search?.imageSearch?.imageSearchEngineBaseUrl ?? "https://yandex.com/images/search?rpt=imageview&url="
     property string fileUploadApiEndpoint: Config.options?.search?.imageSearch?.fileUploadApiEndpoint ?? "https://0x0.st"
     property string fileUploadApiFallback: Config.options?.search?.imageSearch?.fileUploadApiFallback ?? "https://litterbox.catbox.moe/resources/internals/api.php"
     property string fileUploadApiFallback2: Config.options?.search?.imageSearch?.fileUploadApiFallback2 ?? "https://catbox.moe/user/api.php"
+    readonly property string effectiveImageSearchEngineBaseUrl: {
+        const configured = imageSearchEngineBaseUrl ?? ""
+        if (configured === ""
+                || configured === "https://lens.google.com/uploadbyurl?url="
+                || configured === "https://www.google.com/searchbyimage?image_url=") {
+            return "https://yandex.com/images/search?rpt=imageview&url="
+        }
+        return configured
+    }
 
     // Tri-style color support
     property color overlayColor: Appearance.angelEverywhere ? "#55000000"
@@ -333,7 +342,7 @@ PanelWindow {
         const ry = Math.round(root.regionY * root.monitorScale);
         const rw = Math.round(root.regionWidth * root.monitorScale);
         const rh = Math.round(root.regionHeight * root.monitorScale);
-        const cropBase = `magick ${StringUtils.shellSingleQuoteEscape(root.screenshotPath)} `
+        const cropBase = `magick '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}' `
             + `-crop ${rw}x${rh}+${rx}+${ry}`
         const cropToStdout = `${cropBase} -`
         const cropInPlace = `${cropBase} '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}'`
@@ -356,7 +365,7 @@ PanelWindow {
                 snipProc.command = ["/usr/bin/bash", "-c", `${cropToStdout} | ${annotationCommand} && ${cleanup}`]
                 break;
             case RegionSelection.SnipAction.Search:
-                snipProc.command = ["/usr/bin/bash", "-c", `${cropInPlace} && /usr/bin/xdg-open "${root.imageSearchEngineBaseUrl}$(${uploadAndGetUrl(root.screenshotPath)})" && ${cleanup}`]
+                snipProc.command = ["/usr/bin/bash", "-c", `${cropInPlace} && uploaded_url="$(${uploadAndGetUrl(root.screenshotPath)})"; if [[ -n "$uploaded_url" && "$uploaded_url" == http* ]]; then /usr/bin/xdg-open "${root.effectiveImageSearchEngineBaseUrl}$uploaded_url"; else /usr/bin/notify-send "Image search failed" "Could not upload the image for reverse search" -a "Image Search" -i image; fi; ${cleanup}`]
                 break;
             case RegionSelection.SnipAction.CharRecognition:
                 snipProc.command = ["/usr/bin/bash", "-c", `${cropInPlace} && /usr/bin/tesseract '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}' stdout -l $(/usr/bin/tesseract --list-langs | /usr/bin/awk 'NR>1{print $1}' | /usr/bin/tr '\\n' '+' | /usr/bin/sed 's/\\+$/\\n/') | tee >(/usr/bin/wl-copy --primary) | /usr/bin/wl-copy && ${cleanup} && /usr/bin/notify-send "Text recognized" "OCR text copied to clipboard" -a "OCR" -i edit-find -t 3000`]

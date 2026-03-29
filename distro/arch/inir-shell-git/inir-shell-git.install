@@ -1,0 +1,27 @@
+post_install() {
+  cat <<'EOF'
+iNiR has been installed.
+
+Recommended next steps:
+  - Start the shell manually with: inir run
+  - Or enable the user service with:
+      systemctl --user enable --now inir.service
+
+Package-managed installs keep user config in:
+  ~/.config/illogical-impulse/config.json
+
+The packaged runtime lives in:
+  /usr/share/quickshell/inir
+EOF
+}
+
+post_upgrade() {
+  cat <<'EOF'
+iNiR has been upgraded.
+
+Recommended next steps:
+  - Restart the shell with: inir restart
+  - Package-managed installs use pacman for updates.
+  - Runtime migrations, when needed, are applied by iNiR's packaged lifecycle.
+EOF
+}

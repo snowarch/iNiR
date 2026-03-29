@@ -1,5 +1,6 @@
 import QtQuick
 import Qt5Compat.GraphicalEffects
+import Quickshell
 import org.kde.kirigami as Kirigami
 import qs.services
 import qs.modules.common
@@ -11,8 +12,9 @@ Item {
     property bool separateLightDark: false
     property bool tryCustomIcon: true
     property bool monochrome: Config.options?.waffles?.bar?.monochromeIcons ?? false
+    readonly property var currentScreen: root.QsWindow?.window?.screen ?? null
     
-    property real implicitSize: 26
+    property real implicitSize: Looks.scaledBar(Config.options?.waffles?.bar?.iconSize ?? 26, currentScreen)
     implicitWidth: implicitSize
     implicitHeight: implicitSize
 

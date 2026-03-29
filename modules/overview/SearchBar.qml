@@ -22,15 +22,16 @@ RowLayout {
     }
 
     enum SearchPrefixType { Action, App, Clipboard, Emojis, Math, ShellCommand, WebSearch, DefaultSearch }
+    readonly property var searchPrefixes: Config.options?.search?.prefix ?? {}
 
     property var searchPrefixType: {
-        if (root.searchingText.startsWith(Config.options.search.prefix.action)) return SearchBar.SearchPrefixType.Action;
-        if (root.searchingText.startsWith(Config.options.search.prefix.app)) return SearchBar.SearchPrefixType.App;
-        if (root.searchingText.startsWith(Config.options.search.prefix.clipboard)) return SearchBar.SearchPrefixType.Clipboard;
-        if (root.searchingText.startsWith(Config.options.search.prefix.emojis)) return SearchBar.SearchPrefixType.Emojis;
-        if (root.searchingText.startsWith(Config.options.search.prefix.math)) return SearchBar.SearchPrefixType.Math;
-        if (root.searchingText.startsWith(Config.options.search.prefix.shellCommand)) return SearchBar.SearchPrefixType.ShellCommand;
-        if (root.searchingText.startsWith(Config.options.search.prefix.webSearch)) return SearchBar.SearchPrefixType.WebSearch;
+        if (root.searchingText.startsWith(root.searchPrefixes.action ?? "/")) return SearchBar.SearchPrefixType.Action;
+        if (root.searchingText.startsWith(root.searchPrefixes.app ?? ">")) return SearchBar.SearchPrefixType.App;
+        if (root.searchingText.startsWith(root.searchPrefixes.clipboard ?? ";")) return SearchBar.SearchPrefixType.Clipboard;
+        if (root.searchingText.startsWith(root.searchPrefixes.emojis ?? ":")) return SearchBar.SearchPrefixType.Emojis;
+        if (root.searchingText.startsWith(root.searchPrefixes.math ?? "=")) return SearchBar.SearchPrefixType.Math;
+        if (root.searchingText.startsWith(root.searchPrefixes.shellCommand ?? "$")) return SearchBar.SearchPrefixType.ShellCommand;
+        if (root.searchingText.startsWith(root.searchPrefixes.webSearch ?? "?")) return SearchBar.SearchPrefixType.WebSearch;
         return SearchBar.SearchPrefixType.DefaultSearch;
     }
     
@@ -74,20 +75,42 @@ RowLayout {
             id: searchWidthBehavior
             enabled: root.animateWidth
             NumberAnimation {
-                duration: 250
-                easing.type: Easing.OutQuart
+                duration: Appearance.animation.elementResize.duration
+                easing.type: Appearance.animation.elementResize.type
+                easing.bezierCurve: Appearance.animation.elementResize.bezierCurve
             }
         }
 
         onTextChanged: root.searchingText = text
 
-        onAccepted: {
-            if (appResults.count > 0) {
-                // Get the first visible delegate and trigger its click
-                let firstItem = appResults.itemAtIndex(0);
-                if (firstItem && firstItem.clicked) {
-                    firstItem.clicked();
+        Keys.onPressed: (event) => {
+            if (actionModeView?.visible) {
+                if (event.key === Qt.Key_Tab) {
+                    actionModeView.selectedCategoryIndex = (actionModeView.selectedCategoryIndex + 1) % actionModeView.categoryList.length
+                    event.accepted = true
+                } else if (event.key === Qt.Key_Backtab) {
+                    actionModeView.selectedCategoryIndex = (actionModeView.selectedCategoryIndex - 1 + actionModeView.categoryList.length) % actionModeView.categoryList.length
+                    event.accepted = true
+                } else if (event.key === Qt.Key_Down) {
+                    actionModeView.focusFirstItem()
+                    event.accepted = true
                 }
+            } else if (event.key === Qt.Key_Down && appResults?.visible && appResults.count > 0) {
+                appResults.stepSelection(1)
+                event.accepted = true
+            } else if (event.key === Qt.Key_Up && appResults?.visible && appResults.count > 0) {
+                appResults.stepSelection(-1)
+                event.accepted = true
+            }
+        }
+
+        onAccepted: {
+            if (actionModeView?.visible) {
+                actionModeView.executeCurrentOrFirst()
+                return
+            }
+            if (appResults.count > 0) {
+                appResults.activateCurrentOrFirst()
             }
         }
     }
@@ -98,7 +121,7 @@ RowLayout {
         onClicked: {
             GlobalStates.overviewOpen = false;
             // Use IPC to trigger region search (works for both Hyprland and Niri)
-            Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "region", "googleLens"]);
+            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "googleLens"]);
         }
         text: "image_search"
         StyledToolTip {

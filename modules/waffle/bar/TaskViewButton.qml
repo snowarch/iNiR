@@ -17,7 +17,7 @@ AppButton {
     checked: GlobalStates.waffleTaskViewOpen
     onClicked: {
         // Use IPC to toggle TaskView - this triggers preview capture before opening
-        Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "taskview", "toggle"])
+        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "taskview", "toggle"])
     }
 
     BarToolTip {

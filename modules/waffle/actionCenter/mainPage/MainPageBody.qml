@@ -29,9 +29,9 @@ BodyRectangle {
         }
 
         MainPageBodySliders {
-            Layout.margins: 12
-            Layout.topMargin: 18
-            Layout.bottomMargin: 14
+            Layout.margins: Looks.dp(12)
+            Layout.topMargin: Looks.dp(18)
+            Layout.bottomMargin: Looks.dp(14)
         }
     }
 }

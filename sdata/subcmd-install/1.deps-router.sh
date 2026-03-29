@@ -51,7 +51,7 @@ case "$OS_GROUP_ID" in
     echo ""
     echo "Basic steps:"
     echo "  1. Add quickshell and niri to your system packages"
-    echo "  2. Clone this repo to ~/.config/quickshell/ii"
+    echo "  2. Clone this repo to ~/.config/quickshell/inir"
     echo "  3. Run: ./setup install --skip-deps"
     echo ""
     

@@ -7,9 +7,9 @@
 #####################################################################################
 # Configuration
 #####################################################################################
-II_TARGET="${XDG_CONFIG_HOME}/quickshell/ii"
+II_TARGET="${XDG_CONFIG_HOME}/quickshell/inir"
 II_BACKUP_DIR="${XDG_STATE_HOME}/quickshell/backups"
-II_MANIFEST_FILE="${II_TARGET}/.ii-manifest"
+II_MANIFEST_FILE="${II_TARGET}/.inir-manifest"
 VERIFICATION_TIMEOUT=10
 
 #####################################################################################
@@ -23,6 +23,8 @@ generate_manifest() {
     local manifest_file="$2"
     local commit
     commit=$(git -C "$repo_root" rev-parse --short HEAD 2>/dev/null || echo "unknown")
+    local runtime_root_manifest="${repo_root}/sdata/runtime-root-files.txt"
+    local runtime_dirs_manifest="${repo_root}/sdata/runtime-payload-dirs.txt"
 
     # Extensions that get checksums (code files users might modify)
     local checksum_extensions="qml|js|py|sh|fish"
@@ -41,32 +43,44 @@ generate_manifest() {
             echo "${name}:${checksum}"
         done
 
-        # Directories that get synced
-        for dir in modules services scripts assets translations defaults; do
-            if [[ -d "$repo_root/$dir" ]]; then
-                find "$repo_root/$dir" -type f 2>/dev/null | while read -r file; do
+        if [[ -f "$runtime_root_manifest" ]]; then
+            while IFS= read -r runtime_file; do
+                [[ -n "$runtime_file" ]] || continue
+                local file="${repo_root}/${runtime_file}"
+                [[ -f "$file" ]] || continue
+                local ext="${file##*.}"
+                if [[ "$ext" =~ ^($checksum_extensions)$ ]]; then
+                    local checksum
+                    checksum=$(sha256sum "$file" 2>/dev/null | cut -d' ' -f1)
+                    echo "${runtime_file}:${checksum}"
+                else
+                    echo "${runtime_file}:"
+                fi
+            done < "$runtime_root_manifest"
+        fi
+
+        if [[ -f "$runtime_dirs_manifest" ]]; then
+            while IFS= read -r dir; do
+                [[ -n "$dir" ]] || continue
+                [[ -d "$repo_root/$dir" ]] || continue
+                find "$repo_root/$dir" -type f ! -name 'AGENTS.md' 2>/dev/null | while read -r file; do
                     local rel_path="${file#$repo_root/}"
                     local ext="${file##*.}"
 
-                    # Check if file extension needs checksum
                     if [[ "$ext" =~ ^($checksum_extensions)$ ]]; then
                         local checksum
                         checksum=$(sha256sum "$file" 2>/dev/null | cut -d' ' -f1)
                         echo "${rel_path}:${checksum}"
                     else
-                        # Non-code files: just path (for orphan detection)
                         echo "${rel_path}:"
                     fi
                 done
-            fi
-        done
-
-        # Other tracked files
-        [[ -f "$repo_root/requirements.txt" ]] && echo "requirements.txt:"
+            done < "$runtime_dirs_manifest"
+        fi
 
     } | sort -t: -k1 | {
         # Prepend header
-        echo "# ii-manifest v2"
+        echo "# inir-manifest v2"
         echo "# generated: $(date -Iseconds)"
         echo "# commit: $commit"
         cat
@@ -78,6 +92,8 @@ generate_manifest() {
 get_orphan_files() {
     local target_dir="$1"
     local manifest_file="$2"
+    local runtime_root_manifest="${REPO_ROOT}/sdata/runtime-root-files.txt"
+    local runtime_dirs_manifest="${REPO_ROOT}/sdata/runtime-payload-dirs.txt"
 
     if [[ ! -f "$manifest_file" ]]; then
         return 0
@@ -91,14 +107,21 @@ get_orphan_files() {
         # Root QML files
         find "$target_dir" -maxdepth 1 -name "*.qml" -type f -printf "%f\n" 2>/dev/null
 
-        # Tracked directories
-        for dir in modules services scripts assets translations defaults; do
-            if [[ -d "$target_dir/$dir" ]]; then
-                find "$target_dir/$dir" -type f -printf "$dir/%P\n" 2>/dev/null
-            fi
-        done
+        if [[ -f "$runtime_root_manifest" ]]; then
+            while IFS= read -r runtime_file; do
+                [[ -n "$runtime_file" ]] || continue
+                [[ -f "$target_dir/$runtime_file" ]] && echo "$runtime_file"
+            done < "$runtime_root_manifest"
+        fi
 
-        [[ -f "$target_dir/requirements.txt" ]] && echo "requirements.txt"
+        if [[ -f "$runtime_dirs_manifest" ]]; then
+            while IFS= read -r dir; do
+                [[ -n "$dir" ]] || continue
+                if [[ -d "$target_dir/$dir" ]]; then
+                    find "$target_dir/$dir" -type f ! -name 'AGENTS.md' -printf "$dir/%P\n" 2>/dev/null
+                fi
+            done < "$runtime_dirs_manifest"
+        fi
 
     } | sort -u > "$current_files"
 
@@ -127,7 +150,7 @@ create_update_backup() {
     mkdir -p "$backup_path"
     
     # Only backup QML code, not user configs
-    rsync -a --exclude='.ii-manifest' "$target_dir/" "$backup_path/" 2>/dev/null
+    rsync -a --exclude='.inir-manifest' "$target_dir/" "$backup_path/" 2>/dev/null
     
     # Save backup path for potential rollback
     echo "$backup_path" > "${II_BACKUP_DIR}/.last-backup"
@@ -190,14 +213,14 @@ verify_qs_loads() {
     local timeout_sec="${1:-$VERIFICATION_TIMEOUT}"
     
     # Kill any existing instance
-    qs kill -c ii 2>/dev/null || true
+    qs -p "$II_TARGET" kill 2>/dev/null || true
     sleep 0.5
     
     # Try to start and capture output
     local output
     local exit_code
     
-    output=$(timeout "$timeout_sec" qs -c ii 2>&1) || exit_code=$?
+    output=$(timeout "$timeout_sec" qs -p "$II_TARGET" 2>&1) || exit_code=$?
     
     # Check for fatal errors (not warnings)
     if echo "$output" | grep -qE "^[[:space:]]*(ERROR|FATAL|error:|Error:)" | grep -v "polkit\|bluez"; then

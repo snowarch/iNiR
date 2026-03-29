@@ -131,7 +131,7 @@ Item {
 
         clip: true
 
-        layer.enabled: auroraEverywhere && !inirEverywhere && !gameModeMinimal
+        layer.enabled: !gameModeMinimal
         layer.effect: GE.OpacityMask {
             maskSource: Rectangle {
                 width: sidebarRightBackground.width
@@ -162,7 +162,7 @@ Item {
                     ? (Appearance.angel.blurSaturation * Appearance.angel.colorStrength)
                     : (Appearance.effectsEnabled ? 0.2 : 0)
                 blurEnabled: Appearance.effectsEnabled
-                blurMax: 64
+                blurMax: 100
                 blur: Appearance.effectsEnabled
                     ? (sidebarRightBackground.angelEverywhere ? Appearance.angel.blurIntensity : 1)
                     : 0
@@ -472,7 +472,7 @@ Item {
                     } else if (CompositorService.isNiri) {
                         Quickshell.execDetached(["/usr/bin/niri", "msg", "action", "load-config-file"]);
                     }
-                    Quickshell.reload(true);
+                    Quickshell.execDetached(["/usr/bin/bash", Quickshell.shellPath("scripts/restart-shell.sh")]);
                 }
                 StyledToolTip {
                     position: "left"
@@ -524,7 +524,7 @@ Item {
                     console.log("[SidebarRight] Opening new settings window via IPC");
                     GlobalStates.sidebarRightOpen = false;
                     Qt.callLater(() => {
-                        Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "settings", "open"]);
+                        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"]);
                     })
                 }
                 StyledToolTip {

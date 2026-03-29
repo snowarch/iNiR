@@ -1,0 +1,107 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// 10 — Input devices, gestures & cursor
+// ─────────────────────────────────────────────────────────────────────────────
+// Docs: https://niri-wm.github.io/niri/Configuration:-Input
+//
+// Omitting a setting leaves it at the libinput / Niri default.
+// All values here are applied live — no restart needed.
+// ─────────────────────────────────────────────────────────────────────────────
+
+input {
+    keyboard {
+        xkb {
+            // Set rules, model, layout, variant, options.
+            // See xkeyboard-config(7) for full reference.
+            //
+            // Examples:
+            //   layout "us,es"
+            //   options "grp:win_space_toggle,compose:ralt,ctrl:nocaps"
+            //
+            // If this section is empty, Niri reads xkb settings from
+            // org.freedesktop.locale1 (controlled via `localectl`).
+            layout "us"
+        }
+
+        // Enable numlock at login. Remove to leave it off.
+        // numlock
+
+        // How quickly held keys start repeating (ms) and how fast (chars/s).
+        repeat-delay 250
+        repeat-rate 50
+    }
+
+    touchpad {
+        // Remove "tap" to require a physical click.
+        tap
+        tap-button-map "left-right-middle"
+
+        // Scroll direction: uncomment for macOS-style "natural" scrolling.
+        // natural-scroll
+
+        // Disable touchpad while typing (dwt) or while the trackpoint is in use (dwtp).
+        // dwt
+        // dwtp
+
+        // Disable the touchpad entirely when an external mouse is plugged in.
+        // disabled-on-external-mouse
+    }
+
+    mouse {
+        // "flat" = raw movement, "adaptive" = acceleration curve.
+        accel-profile "flat"
+
+        // Adjust pointer speed: -1.0 (slowest) … 0.0 (default) … 1.0 (fastest).
+        // accel-speed 0.0
+    }
+
+    // Trackpoint (ThinkPad nub, etc.).
+    // trackpoint {
+    //     accel-profile "flat"
+    //     accel-speed 0.0
+    // }
+
+    // "Mod" = Super on bare metal, Alt inside a nested Niri window.
+    mod-key "Super"
+    mod-key-nested "Alt"
+
+    // Warp the cursor to the center of a newly focused window.
+    // warp-mouse-to-focus
+
+    // Focus windows automatically when the mouse enters them.
+    // max-scroll-amount="0%" limits it to windows already fully on screen.
+    // focus-follows-mouse max-scroll-amount="0%"
+}
+
+// ── Gestures ────────────────────────────────────────────────────────────────
+// Hot corners: move cursor to the top-left corner to open Niri's overview.
+// iNiR has its own overview (Mod+Space), so you may want to disable this.
+gestures {
+    hot-corners {
+        // off
+    }
+}
+
+// ── Cursor theme ────────────────────────────────────────────────────────────
+cursor {
+    xcursor-theme "capitaine-cursors-light"
+    xcursor-size 24
+    hide-when-typing
+}
+
+// ── Output / monitor configuration ──────────────────────────────────────────
+// Run `niri msg outputs` to list connected monitors and available modes.
+// Uncomment and adjust the block below for your setup.
+//
+// /-output "eDP-1" {
+//     // off                           // Disable this output
+//     mode "1920x1080@60.000"          // WxH or WxH@Hz
+//     scale 1                          // Integer or fractional (1.5 = 150%)
+//     transform "normal"               // normal|90|180|270|flipped|flipped-90…
+//     position x=0 y=0                 // Global coordinate space
+// }
+//
+// /-output "HDMI-A-1" {
+//     mode "2560x1440@144.000"
+//     scale 1
+//     position x=1920 y=0             // Place right of eDP-1
+// }

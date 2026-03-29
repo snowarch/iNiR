@@ -5,7 +5,7 @@
 //@ pragma Env QT_LOGGING_RULES=quickshell.dbus.properties=false
 //@ pragma Env QT_QUICK_CONTROLS_STYLE=Basic
 //@ pragma Env QT_QUICK_FLICKABLE_WHEEL_DECELERATION=10000
-//@ pragma Env QT_SCALE_FACTOR=1
+// Launcher keeps QT_SCALE_FACTOR=1; shell scaling lives in appearance.typography.sizeScale
 // DISABLED: webapps — requires quickshell-webengine rebuild
 //-@ pragma Env QTWEBENGINE_CHROMIUM_FLAGS=--disable-features=ThirdPartyCookieBlocking,StorageAccessAPI
 
@@ -36,6 +36,7 @@ ShellRoot {
     property var _fontSyncService: FontSyncService
 
     Component.onCompleted: {
+        Quickshell.watchFiles = true;
         root._log("[Shell] Initializing singletons");
         Hyprsunset.load();
         FirstRunExperience.load();
@@ -53,7 +54,7 @@ ShellRoot {
                 if (!Config.options?.enabledPanels || Config.options.enabledPanels.length === 0) {
                     const family = Config.options?.panelFamily ?? "ii"
                     if (root.families.includes(family)) {
-                        Config.options.enabledPanels = root.panelFamilies[family]
+                        Config.setNestedValue("enabledPanels", root.panelFamilies[family])
                     }
                 }
                 // Migration: Ensure waffle family has wBackdrop instead of iiBackdrop
@@ -95,9 +96,16 @@ ShellRoot {
             }
         }
 
-        if (changed) {
-            Config.options.enabledPanels = panels;
+        const legacyPinnedApps = ["org.gnome.Nautilus", "firefox", "foot"];
+        const currentPinnedApps = Config.options?.dock?.pinnedApps ?? [];
+        if (currentPinnedApps.length === legacyPinnedApps.length
+                && currentPinnedApps.every((panel, idx) => panel === legacyPinnedApps[idx])) {
+            root._log("[Shell] Migrating dock.pinnedApps default terminal from foot to kitty");
+            Config.setNestedValue("dock.pinnedApps", ["org.gnome.Nautilus", "firefox", "kitty"])
         }
+
+        if (changed)
+            Config.setNestedValue("enabledPanels", panels)
     }
 
     // IPC for settings - overlay mode or separate window based on config
@@ -110,15 +118,15 @@ ShellRoot {
 
             if (isWaffle) {
                 // Waffle always opens its own Win11-style settings window
-                Quickshell.execDetached(["/usr/bin/qs", "-n", "-p",
-                    Quickshell.shellPath("waffleSettings.qml")])
+                Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),
+                    "waffle-settings-window"])
             } else if (Config.options?.settingsUi?.overlayMode ?? false) {
                 // ii overlay mode — toggle inline panel
                 GlobalStates.settingsOverlayOpen = !GlobalStates.settingsOverlayOpen
             } else {
                 // ii window mode (default) — launch separate process
-                Quickshell.execDetached(["/usr/bin/qs", "-n", "-p",
-                    Quickshell.shellPath("settings.qml")])
+                Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),
+                    "settings-window"])
             }
         }
         function toggle(): void {
@@ -166,12 +174,11 @@ ShellRoot {
             "iiWallpaperSelector", "iiCoverflowSelector", "iiClipboard"
         ],
         "waffle": [
-            "wBar", "wBackground", "wBackdrop", "wStartMenu", "wActionCenter", "wNotificationCenter", "wNotificationPopup", "wOnScreenDisplay", "wWidgets", "wLock", "wPolkit", "wSessionScreen",
+            "wBar", "wBackground", "wBackdrop", "wStartMenu", "wActionCenter", "wNotificationCenter", "wNotificationPopup", "wOnScreenDisplay", "wWidgets", "wTaskView", "wLock", "wPolkit", "wSessionScreen",
             // Shared modules that work with waffle
-            // Note: wTaskView is experimental and NOT included by default
             // Note: wAltSwitcher is always loaded when waffle is active (not in this list)
-            "iiCheatsheet", "iiControlPanel", "iiLock", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit",
-            "iiRegionSelector", "iiScreenCorners", "iiSessionScreen", "iiTilingOverlay", "iiWallpaperSelector", "iiCoverflowSelector", "iiClipboard"
+            "iiCheatsheet", "iiControlPanel", "iiOnScreenKeyboard", "iiOverlay", "iiOverview",
+            "iiRegionSelector", "iiScreenCorners", "iiTilingOverlay", "iiWallpaperSelector", "iiCoverflowSelector", "iiClipboard"
         ]
     })
 
@@ -185,7 +192,7 @@ ShellRoot {
 
         if (basePanels.length === 0) return
         if (currentPanels.length === 0) {
-            Config.options.enabledPanels = [...basePanels]
+            Config.setNestedValue("enabledPanels", [...basePanels])
             return
         }
 
@@ -193,7 +200,7 @@ ShellRoot {
         for (const panel of basePanels) {
             if (!merged.includes(panel)) merged.push(panel)
         }
-        Config.options.enabledPanels = merged
+        Config.setNestedValue("enabledPanels", merged)
     }
 
     function cyclePanelFamily() {
@@ -222,7 +229,7 @@ ShellRoot {
 
         // If animation is disabled, switch instantly
         if (!(Config.options?.familyTransitionAnimation ?? true)) {
-            Config.options.panelFamily = targetFamily
+            Config.setNestedValue("panelFamily", targetFamily)
             root._ensureFamilyPanels(targetFamily)
             return
         }
@@ -235,7 +242,7 @@ ShellRoot {
 
     function applyPendingFamily() {
         if (_pendingFamily && families.includes(_pendingFamily)) {
-            Config.options.panelFamily = _pendingFamily
+            Config.setNestedValue("panelFamily", _pendingFamily)
             root._ensureFamilyPanels(_pendingFamily)
         }
         _pendingFamily = ""

@@ -357,8 +357,7 @@ WPanelPageColumn {
                                         anchors.fill: parent
                                         cursorShape: Qt.PointingHandCursor
                                         onClicked: {
-                                            const cmd = Config.options?.apps?.manageUser ?? "kcmshell6 kcm_users"
-                                            ShellExec.execCmd(cmd)
+                                            AppLauncher.launch("manageUser")
                                             GlobalStates.searchOpen = false
                                             userMenu.close()
                                         }

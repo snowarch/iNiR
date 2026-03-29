@@ -90,6 +90,24 @@ create_backup() {
     echo "$backup_dir"
 }
 
+resolve_migration_target_file() {
+    local target_file="$1"
+    [[ -n "$target_file" ]] || return 0
+
+    local home_config="${HOME}/.config"
+    local home_cache="${HOME}/.cache"
+    local home_data="${HOME}/.local/share"
+    local home_state="${HOME}/.local/state"
+    local resolved="${target_file/#\~/$HOME}"
+
+    resolved="${resolved/#$home_config/${XDG_CONFIG_HOME:-$home_config}}"
+    resolved="${resolved/#$home_cache/${XDG_CACHE_HOME:-$home_cache}}"
+    resolved="${resolved/#$home_data/${XDG_DATA_HOME:-$home_data}}"
+    resolved="${resolved/#$home_state/${XDG_STATE_HOME:-$home_state}}"
+
+    printf '%s' "$resolved"
+}
+
 #####################################################################################
 # Migration Discovery
 #####################################################################################
@@ -123,8 +141,26 @@ is_migration_needed() {
 # Get real status of a migration (checks actual config, not just JSON)
 get_migration_real_status() {
     local migration_id="$1"
+    load_migration "$migration_id" 2>/dev/null || return 1
+    local is_required="${MIGRATION_REQUIRED:-false}"
     
-    # First check JSON state
+    if [[ "$is_required" == "true" ]]; then
+        if is_migration_needed "$migration_id"; then
+            echo "pending"
+            return
+        fi
+
+        if ! is_migration_applied "$migration_id"; then
+            mark_migration_applied "$migration_id"
+            echo "auto-applied"
+            return
+        fi
+
+        echo "applied"
+        return
+    fi
+
+    # Optional migrations honor user skip/applied state first.
     if is_migration_skipped "$migration_id"; then
         echo "skipped"
         return
@@ -135,11 +171,9 @@ get_migration_real_status() {
         return
     fi
     
-    # Check if actually needed
     if is_migration_needed "$migration_id"; then
         echo "pending"
     else
-        # Config already has the changes, auto-mark as applied
         mark_migration_applied "$migration_id"
         echo "auto-applied"
     fi
@@ -206,11 +240,14 @@ apply_migration() {
     fi
     
     # Check if target file exists
-    local target_file="${MIGRATION_TARGET_FILE/#\~/$HOME}"
+    local target_file
+    target_file=$(resolve_migration_target_file "$MIGRATION_TARGET_FILE")
     if [[ -n "$target_file" && ! -f "$target_file" ]]; then
-        tui_check_skip "Target file not found: $(basename "$target_file")"
-        mark_migration_skipped "$migration_id"
-        return 0
+        if [[ "${MIGRATION_REQUIRED:-false}" != "true" ]]; then
+            tui_check_skip "Target file not found: $(basename "$target_file")"
+            mark_migration_skipped "$migration_id"
+            return 0
+        fi
     fi
     
     # Create backup
@@ -247,7 +284,9 @@ show_migration_card() {
     
     load_migration "$migration_id" || return 1
     
-    local target_short=$(basename "${MIGRATION_TARGET_FILE/#\~/$HOME}" 2>/dev/null || echo "N/A")
+    local resolved_target
+    resolved_target=$(resolve_migration_target_file "$MIGRATION_TARGET_FILE")
+    local target_short=$(basename "$resolved_target" 2>/dev/null || echo "N/A")
     
     echo ""
     if $HAS_GUM; then
@@ -375,12 +414,12 @@ run_migrations_interactive() {
 }
 
 run_migrations_auto() {
-    local pending=($(get_pending_migrations))
-    
-    for migration_id in "${pending[@]}"; do
+    local migration_id
+
+    for migration_id in $(list_available_migrations); do
         load_migration "$migration_id"
-        if [[ "$MIGRATION_REQUIRED" == "true" ]]; then
-            apply_migration "$migration_id"
+        if [[ "${MIGRATION_REQUIRED:-false}" == "true" ]] && is_migration_needed "$migration_id"; then
+            apply_migration "$migration_id" true
         fi
     done
 }

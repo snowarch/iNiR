@@ -13,7 +13,7 @@ AndroidQuickToggleButton {
     toggled: !Audio.sink?.audio?.muted
     buttonIcon: Audio.sink?.audio?.muted ? "volume_off" : "volume_up"
     mainAction: () => {
-        Audio.sink.audio.muted = !Audio.sink.audio.muted
+        Audio.toggleMute()
     }
 
     altAction: () => {

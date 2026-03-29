@@ -13,6 +13,7 @@ Singleton {
     readonly property bool enabled: Config.options?.bar?.weather?.enable ?? false
     readonly property int fetchInterval: (Config.options?.bar?.weather?.fetchInterval ?? 10) * 60 * 1000
     readonly property bool useUSCS: Config.options?.bar?.weather?.useUSCS ?? false
+    readonly property bool hideLocation: Config.options?.waffles?.widgetsPanel?.weatherHideLocation ?? false
 
     // Manual location config
     readonly property string configCity: Config.options?.bar?.weather?.city ?? ""
@@ -31,6 +32,7 @@ Singleton {
         sunset: "--:--",
         windDir: "N",
         wCode: "113",
+        description: "",
         city: "City",
         wind: "0 km/h",
         precip: "0 mm",
@@ -39,10 +41,101 @@ Singleton {
         temp: "--°C",
         tempFeelsLike: "--°C"
     })
+    readonly property string visibleCity: {
+        if (root.hideLocation)
+            return ""
+        const city = String(root.data?.city ?? "")
+        if (city.length > 0 && city.toLowerCase() !== "unknown")
+            return city
+        return ""
+    }
+    readonly property bool showVisibleCity: root.visibleCity.length > 0
+
+    function redactedLogCity(city): string {
+        if (root.hideLocation)
+            return "[hidden]"
+
+        const value = String(city ?? "").trim()
+        return value.length > 0 ? value : "Unknown"
+    }
+
+    function redactedLogLocationName(name): string {
+        if (root.hideLocation)
+            return "[hidden]"
+
+        const value = String(name ?? "").trim()
+        return value.length > 0 ? value : "Unknown"
+    }
+
+    function redactedLogCoordinates(lat, lon): string {
+        if (root.hideLocation)
+            return "[hidden]"
+
+        const latNum = Number(lat)
+        const lonNum = Number(lon)
+        if (!isFinite(latNum) || !isFinite(lonNum))
+            return "Unknown"
+        return latNum.toFixed(5) + "," + lonNum.toFixed(5)
+    }
 
     function isNightNow(): bool {
         const h = new Date().getHours();
         return h < 6 || h >= 18;
+    }
+
+    function describeWeather(code): string {
+        const weatherCode = String(code ?? "113")
+        const descriptions = {
+            "113": Translation.tr("Sunny"),
+            "116": Translation.tr("Partly cloudy"),
+            "119": Translation.tr("Cloudy"),
+            "122": Translation.tr("Overcast"),
+            "143": Translation.tr("Mist"),
+            "176": Translation.tr("Light rain"),
+            "179": Translation.tr("Light sleet"),
+            "182": Translation.tr("Light sleet"),
+            "185": Translation.tr("Light sleet"),
+            "200": Translation.tr("Thunderstorm"),
+            "227": Translation.tr("Light snow"),
+            "230": Translation.tr("Heavy snow"),
+            "248": Translation.tr("Fog"),
+            "260": Translation.tr("Fog"),
+            "263": Translation.tr("Light drizzle"),
+            "266": Translation.tr("Light drizzle"),
+            "281": Translation.tr("Freezing drizzle"),
+            "284": Translation.tr("Freezing drizzle"),
+            "293": Translation.tr("Light rain"),
+            "296": Translation.tr("Light rain"),
+            "299": Translation.tr("Moderate rain"),
+            "302": Translation.tr("Heavy rain"),
+            "305": Translation.tr("Heavy rain"),
+            "308": Translation.tr("Heavy rain"),
+            "311": Translation.tr("Freezing rain"),
+            "314": Translation.tr("Freezing rain"),
+            "317": Translation.tr("Sleet"),
+            "320": Translation.tr("Light snow"),
+            "323": Translation.tr("Light snow"),
+            "326": Translation.tr("Light snow"),
+            "329": Translation.tr("Moderate snow"),
+            "332": Translation.tr("Moderate snow"),
+            "335": Translation.tr("Heavy snow"),
+            "338": Translation.tr("Heavy snow"),
+            "350": Translation.tr("Ice pellets"),
+            "353": Translation.tr("Light showers"),
+            "356": Translation.tr("Moderate showers"),
+            "359": Translation.tr("Heavy showers"),
+            "362": Translation.tr("Sleet showers"),
+            "365": Translation.tr("Sleet showers"),
+            "368": Translation.tr("Snow showers"),
+            "371": Translation.tr("Snow showers"),
+            "374": Translation.tr("Ice pellets"),
+            "377": Translation.tr("Ice pellets"),
+            "386": Translation.tr("Thunderstorm"),
+            "389": Translation.tr("Thunderstorm"),
+            "392": Translation.tr("Thunderstorm"),
+            "395": Translation.tr("Snow storm")
+        }
+        return descriptions[weatherCode] ?? Translation.tr("Unknown")
     }
 
     function refineData(apiData) {
@@ -58,6 +151,7 @@ Singleton {
         result.sunset = astro?.sunset ?? "--:--";
         result.windDir = current.winddir16Point ?? "N";
         result.wCode = current.weatherCode ?? "113";
+        result.description = root.describeWeather(result.wCode);
         result.city = root.location.name || "Unknown";
 
         if (root.useUSCS) {
@@ -77,7 +171,7 @@ Singleton {
         }
 
         root.data = result;
-        console.info("[Weather] Updated:", result.temp, result.city);
+        console.info("[Weather] Updated:", result.temp, root.redactedLogCity(result.city));
     }
 
     function _degToCompass(deg): string {
@@ -103,6 +197,7 @@ Singleton {
         result.sunset = sunset ? sunset.split("T")[1] ?? sunset : "--:--"
         result.windDir = root._degToCompass(current.wind_direction_10m)
         result.wCode = String(current.weather_code ?? 113)
+        result.description = root.describeWeather(result.wCode)
         result.city = root.location.name || "Unknown"
 
         result.temp = (current.temperature_2m ?? 0) + (units.temperature_2m ?? (root.useUSCS ? "°F" : "°C"))
@@ -113,7 +208,7 @@ Singleton {
         result.press = (current.pressure_msl ?? 0) + " " + (units.pressure_msl ?? (root.useUSCS ? "inHg" : "hPa"))
 
         root.data = result
-        console.info("[Weather] Updated via Open-Meteo:", result.temp, result.city)
+        console.info("[Weather] Updated via Open-Meteo:", result.temp, root.redactedLogCity(result.city))
     }
 
     function fetchWeatherFallback(): void {
@@ -151,7 +246,7 @@ Singleton {
 
         if (root.hasManualCoords) {
             // User provided exact coordinates — reverse geocode for display name
-            console.info("[Weather] Using manual coordinates:", root.configLat, root.configLon);
+            console.info("[Weather] Using manual coordinates:", root.redactedLogCoordinates(root.configLat, root.configLon));
             root.location = {
                 valid: true,
                 lat: root.configLat,
@@ -171,7 +266,7 @@ Singleton {
 
         if (root.hasManualCity) {
             // User provided city name — forward geocode for coordinates + validated name
-            console.info("[Weather] Using manual city:", root.configCity);
+            console.info("[Weather] Using manual city:", root.redactedLogLocationName(root.configCity));
             const q = encodeURIComponent(root.configCity);
             forwardGeocoder.command = ["/usr/bin/curl", "-s", "--max-time", "10",
                 "https://nominatim.openstreetmap.org/search?format=jsonv2&q=" + q + "&limit=5&addressdetails=1&accept-language=es,en"];
@@ -217,6 +312,12 @@ Singleton {
         fetcher.running = true;
     }
 
+    function hasRunningRequests(): bool {
+        return gpsLocator.running || ipLocator.running || fallbackLocator.running
+            || forwardGeocoder.running || reverseGeocoder.running
+            || fetcher.running || openMeteoFetcher.running;
+    }
+
     function getData(): void {
         if (root.location.valid) {
             fetchWeather();
@@ -228,8 +329,17 @@ Singleton {
     // Force refresh (useful for settings UI "refresh now" button)
     function forceRefresh(): void {
         console.info("[Weather] Force refresh requested");
+        root._forceRefreshPending = false;
         root.location = { valid: false, lat: 0, lon: 0, name: "" };
         root._retryCount = 0;
+        root._emptyResponseCount = 0;
+        root._primaryFailCount = 0;
+        root._primaryFailUntil = 0;
+        if (root.hasRunningRequests()) {
+            root._forceRefreshPending = true;
+            pendingForceRefreshTimer.restart();
+            return;
+        }
         resolveLocation();
     }
 
@@ -239,6 +349,7 @@ Singleton {
     // Track consecutive primary provider failures to skip it after repeated timeouts
     property int _primaryFailCount: 0
     property double _primaryFailUntil: 0  // timestamp (ms) until which primary is skipped
+    property bool _forceRefreshPending: false
     Timer {
         id: retryTimer
         // Exponential backoff: 5s, 10s, 20s, 40s, 80s
@@ -255,6 +366,23 @@ Singleton {
                     root.fetchWeather();
                 }
             }
+        }
+    }
+
+    Timer {
+        id: pendingForceRefreshTimer
+        interval: 350
+        repeat: true
+        onTriggered: {
+            if (!root._forceRefreshPending) {
+                pendingForceRefreshTimer.stop();
+                return;
+            }
+            if (root.hasRunningRequests())
+                return;
+            root._forceRefreshPending = false;
+            pendingForceRefreshTimer.stop();
+            root.resolveLocation();
         }
     }
 
@@ -372,7 +500,15 @@ Singleton {
                         }
 
                         root.location = { valid: true, lat: lat, lon: lon, name: displayName };
-                        console.info("[Weather] Geocoded:", root.configCity, "→", displayName, "(", lat, ",", lon, ")");
+                        console.info(
+                            "[Weather] Geocoded:",
+                            root.redactedLogLocationName(root.configCity),
+                            "→",
+                            root.redactedLogLocationName(displayName),
+                            "(",
+                            root.redactedLogCoordinates(lat, lon),
+                            ")"
+                        );
                         root.fetchWeather();
                     } else {
                         console.warn("[Weather] No geocode results for:", root.configCity);
@@ -413,7 +549,7 @@ Singleton {
                                 name: name
                             };
                             // Save the resolved name back to config for display
-                            console.info("[Weather] Reverse geocoded:", name);
+                            console.info("[Weather] Reverse geocoded:", root.redactedLogLocationName(name));
                         }
                     }
                 } catch (e) {
@@ -444,7 +580,7 @@ Singleton {
                     const lon = parseFloat(parts[1]);
                     if (!isNaN(lat) && !isNaN(lon)) {
                         root.location = { valid: true, lat: lat, lon: lon, name: "" };
-                        console.info("[Weather] GPS location:", lat, lon);
+                        console.info("[Weather] GPS location:", root.redactedLogCoordinates(lat, lon));
                         // Reverse geocode for display name
                         reverseGeocoder.command = ["/usr/bin/curl", "-s", "--max-time", "10",
                             "https://nominatim.openstreetmap.org/reverse?format=json&lat=" + lat + "&lon=" + lon + "&zoom=10&accept-language=en"];
@@ -486,7 +622,7 @@ Singleton {
                             lon: data.lon,
                             name: data.city + (data.regionName ? `, ${data.regionName}` : "")
                         };
-                        console.info("[Weather] Location:", root.location.name);
+                        console.info("[Weather] Location:", root.redactedLogLocationName(root.location.name));
                         root.fetchWeather();
                     } else {
                         fallbackLocator.running = true;
@@ -585,9 +721,10 @@ Singleton {
 
                 try {
                     const parsed = JSON.parse(payload);
+                    const weatherPayload = parsed?.data ?? parsed ?? {}
                     const normalized = {
-                        current: parsed?.current ?? parsed?.current_condition?.[0],
-                        astronomy: parsed?.astronomy ?? parsed?.weather?.[0]?.astronomy?.[0]
+                        current: weatherPayload?.current ?? weatherPayload?.current_condition?.[0],
+                        astronomy: weatherPayload?.astronomy ?? weatherPayload?.weather?.[0]?.astronomy?.[0]
                     }
                     root.refineData(normalized);
                     root._emptyResponseCount = 0;

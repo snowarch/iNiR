@@ -10,10 +10,10 @@ AndroidQuickToggleButton {
 
     name: Translation.tr("Audio input")
     statusText: toggled ? Translation.tr("Enabled") : Translation.tr("Muted")
-    toggled: !Audio.source?.audio?.muted
-    buttonIcon: Audio.source?.audio?.muted ? "mic_off" : "mic"
+    toggled: !Audio.micMuted
+    buttonIcon: Audio.micMuted ? "mic_off" : "mic"
     mainAction: () => {
-        Audio.source.audio.muted = !Audio.source.audio.muted
+        Audio.toggleMicMute()
     }
 
     altAction: () => {

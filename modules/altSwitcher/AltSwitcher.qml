@@ -6,6 +6,7 @@ import qs.modules.common.widgets
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
+import QtQuick.Shapes
 import Qt5Compat.GraphicalEffects
 import Quickshell
 import Quickshell.Wayland
@@ -20,6 +21,7 @@ Scope {
     readonly property var altSwitcherOptions: Config.options?.altSwitcher ?? {}
     readonly property string altPreset: altSwitcherOptions.preset ?? "default"
     readonly property bool altNoVisualUi: altSwitcherOptions.noVisualUi ?? false
+    readonly property bool effectiveNoVisualUi: altNoVisualUi && altPreset !== "skew"
     readonly property bool altMonochromeIcons: altSwitcherOptions.monochromeIcons ?? false
     readonly property bool altEnableAnimation: altSwitcherOptions.enableAnimation ?? true
     readonly property int altAnimationDurationMs: altSwitcherOptions.animationDurationMs ?? 200
@@ -45,12 +47,24 @@ Scope {
     readonly property int maxIconCacheSize: 100
     property bool useM3Layout: root.altUseM3Layout
     property bool centerPanel: root.altPanelAlignment === "center"
-    property bool compactStyle: root.altCompactStyle
+    property bool compactStyle: root.altCompactStyle && !root.listStyle && !root.skewStyle
     property bool listStyle: root.altPreset === "list"
+    property bool skewStyle: root.altPreset === "skew"
     property bool showOverviewWhileSwitching: root.altShowOverviewWhileSwitching
     property bool overviewOpenedByAltSwitcher: false
     // Pre-warm flag para evitar lag en primera apertura
     property bool _warmedUp: false
+    // Slice geometry constants (scaled for better fit)
+    readonly property int skewSliceWidth: 135
+    readonly property int skewExpandedWidth: 924
+    readonly property int skewSliceHeight: 520
+    readonly property int skewOffset: 35
+    readonly property int skewSliceSpacing: -22
+    readonly property int skewVisibleCount: 12
+    readonly property int skewCardWidth: 1600
+    readonly property int skewCardHeight: root.skewSliceHeight + 40
+    readonly property int skewPanelWidth: root.skewCardWidth
+    property bool skewCardVisible: false
     
     readonly property int windowCount: itemSnapshot ? itemSnapshot.length : 0
     readonly property bool isHighLoad: windowCount > 15
@@ -84,6 +98,24 @@ Scope {
                 root.noUiSnapshot = []
                 root.noUiIndex = 0
             }
+        }
+    }
+
+    Timer {
+        id: skewCardShowTimer
+        interval: 30
+        repeat: false
+        onTriggered: root.skewCardVisible = GlobalStates.altSwitcherOpen && root.skewStyle
+    }
+
+    Timer {
+        id: skewFocusTimer
+        interval: 30
+        running: root.skewStyle && GlobalStates.altSwitcherOpen
+        repeat: true
+        onTriggered: {
+            if (GlobalStates.altSwitcherOpen)
+                altReleaseDetector.forceActiveFocus()
         }
     }
 
@@ -164,6 +196,8 @@ Scope {
                 title: w.title || "",
                 workspaceId: w.workspace_id,
                 workspaceIdx: wsIdx,
+                isFocused: w.is_focused ?? false,
+                isFloating: w.is_floating ?? false,
                 // Pre-resolver icono durante build para evitar lag en render
                 icon: root.getCachedIcon(appId, appName, w.title)
             }
@@ -230,6 +264,13 @@ Scope {
         })
     }
 
+    function rebuildSnapshotSync() {
+        const windows = NiriService.windows || []
+        const workspaces = NiriService.workspaces || {}
+        const mruIds = NiriService.mruWindowIds || []
+        itemSnapshot = buildItemsFrom(windows, workspaces, mruIds)
+    }
+
     property bool _noUiRebuildPending: false
     
     // Synchronous version for immediate use in noVisualUi mode
@@ -262,8 +303,12 @@ Scope {
     }
 
     function ensureSnapshot() {
-        if (!itemSnapshot || itemSnapshot.length === 0)
-            rebuildSnapshot()
+        if (!itemSnapshot || itemSnapshot.length === 0) {
+            if (root.skewStyle)
+                rebuildSnapshotSync()
+            else
+                rebuildSnapshot()
+        }
     }
 
     function maybeOpenOverview() {
@@ -358,10 +403,20 @@ Scope {
             }
         }
 
-        Item {
-            id: keyHandler
+        FocusScope {
+            id: altReleaseDetector
             anchors.fill: parent
             focus: GlobalStates.altSwitcherOpen
+            activeFocusOnTab: false
+
+            Keys.onReleased: function (event) {
+                if (!GlobalStates.altSwitcherOpen)
+                    return
+                if (root.skewStyle && event.key === Qt.Key_Alt) {
+                    root.confirmCurrentSelection()
+                    event.accepted = true
+                }
+            }
 
             Keys.onPressed: function (event) {
                 if (!GlobalStates.altSwitcherOpen)
@@ -370,12 +425,21 @@ Scope {
                     GlobalStates.altSwitcherOpen = false
                     event.accepted = true
                 } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                    root.activateCurrent()
+                    if (root.skewStyle)
+                        root.confirmCurrentSelection()
+                    else
+                        root.activateCurrent()
                     event.accepted = true
-                } else if (event.key === Qt.Key_Down || event.key === Qt.Key_J) {
+                } else if (event.key === Qt.Key_Tab) {
+                    if (event.modifiers & Qt.ShiftModifier)
+                        root.previousItem()
+                    else
+                        root.nextItem()
+                    event.accepted = true
+                } else if (event.key === Qt.Key_Right || event.key === Qt.Key_Down || event.key === Qt.Key_J) {
                     root.nextItem()
                     event.accepted = true
-                } else if (event.key === Qt.Key_Up || event.key === Qt.Key_K) {
+                } else if (event.key === Qt.Key_Left || event.key === Qt.Key_Up || event.key === Qt.Key_K) {
                     root.previousItem()
                     event.accepted = true
                 }
@@ -384,7 +448,8 @@ Scope {
 
         Rectangle {
             id: panel
-            width: root.listStyle ? 420 : (root.compactStyle ? compactRow.implicitWidth + 40 : root.panelWidth)
+            width: root.skewStyle ? Math.min(root.skewPanelWidth, parent.width - Appearance.sizes.hyprlandGapsOut * 2)
+                : (root.listStyle ? 420 : (root.compactStyle ? compactRow.implicitWidth + 40 : root.panelWidth))
             height: root.compactStyle ? 100 : undefined
             color: "transparent"
             border.width: 0
@@ -392,7 +457,7 @@ Scope {
             states: [
                 State {
                     name: "right"
-                    when: !root.centerPanel && !root.compactStyle && !root.listStyle
+                    when: !root.centerPanel && !root.compactStyle && !root.listStyle && !root.skewStyle
                     AnchorChanges {
                         target: panel
                         anchors.right: parent.right
@@ -405,7 +470,7 @@ Scope {
                 },
                 State {
                     name: "center"
-                    when: root.centerPanel || root.compactStyle || root.listStyle
+                    when: root.centerPanel || root.compactStyle || root.listStyle || root.skewStyle
                     AnchorChanges {
                         target: panel
                         anchors.right: undefined
@@ -420,14 +485,16 @@ Scope {
             
             anchors.verticalCenter: parent.verticalCenter
 
-            implicitHeight: root.listStyle 
+            implicitHeight: root.skewStyle
+                ? Math.min(cardContainer.height + Appearance.sizes.hyprlandGapsOut * 2, parent.height - Appearance.sizes.hyprlandGapsOut * 2)
+                : (root.listStyle 
                 ? Math.min(listContent.implicitHeight, parent.height - Appearance.sizes.hyprlandGapsOut * 2)
                 : (root.compactStyle ? 100 : Math.min(contentColumn.implicitHeight + Appearance.sizes.hyprlandGapsOut * 2,
-                                      parent.height - Appearance.sizes.hyprlandGapsOut * 2))
+                                      parent.height - Appearance.sizes.hyprlandGapsOut * 2)))
 
             Rectangle {
                 id: panelBackground
-                visible: !root.compactStyle && !root.listStyle
+                visible: !root.compactStyle && !root.listStyle && !root.skewStyle
                 z: 0
                 anchors.fill: parent
                 radius: Appearance.angelEverywhere ? Appearance.angel.roundingLarge
@@ -473,19 +540,442 @@ Scope {
 
             StyledRectangularShadow {
                 target: root.compactStyle ? compactBackground : panelBackground
-                visible: !root.listStyle && (Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere))
+                visible: !root.listStyle && !root.skewStyle && (Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere))
             }
 
             MultiEffect {
                 z: 0.5
                 anchors.fill: panelBackground
                 source: panelBackground
-                visible: !root.compactStyle && !root.listStyle && !root.altUseM3Layout && Appearance.effectsEnabled && root.effectiveEnableBlurGlass && root.altBlurAmount > 0 && !root.isHighLoad
+                visible: !root.compactStyle && !root.listStyle && !root.skewStyle && !root.altUseM3Layout && Appearance.effectsEnabled && root.effectiveEnableBlurGlass && root.altBlurAmount > 0 && !root.isHighLoad
                 blurEnabled: true
                 blur: root.altBlurAmount
                 blurMax: 64
                 saturation: 1.0
             }
+
+            // Card container with fade-in (matching piixident structure)
+            Item {
+                id: cardContainer
+                width: root.skewCardWidth
+                height: root.skewCardHeight
+                anchors.centerIn: parent
+                visible: root.skewStyle && root.skewCardVisible
+
+                opacity: 0
+                property bool animateIn: root.skewCardVisible
+
+                onAnimateInChanged: {
+                    fadeInAnim.stop()
+                    if (animateIn) {
+                        opacity = 0
+                        fadeInAnim.start()
+                    }
+                }
+
+                NumberAnimation {
+                    id: fadeInAnim
+                    target: cardContainer
+                    property: "opacity"
+                    from: 0; to: 1
+                    duration: 400
+                    easing.type: Easing.OutCubic
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {}
+                }
+
+                Item {
+                    id: backgroundRect
+                    anchors.fill: parent
+                }
+            }
+
+            // Horizontal parallelogram slice list view (matching piixident)
+            ListView {
+                id: skewDeck
+                anchors.top: cardContainer.top
+                anchors.topMargin: 15
+                anchors.bottom: cardContainer.bottom
+                anchors.bottomMargin: 20
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: root.skewExpandedWidth + (root.skewVisibleCount - 1) * (root.skewSliceWidth + root.skewSliceSpacing)
+
+                currentIndex: listView.currentIndex
+                orientation: ListView.Horizontal
+                model: ScriptModel { values: root.itemSnapshot }
+                clip: false
+                spacing: root.skewSliceSpacing
+                interactive: false
+                flickDeceleration: 1500
+                maximumFlickVelocity: 3000
+                boundsBehavior: Flickable.StopAtBounds
+                cacheBuffer: root.skewExpandedWidth * 2
+                visible: root.skewStyle && root.skewCardVisible
+
+                highlightFollowsCurrentItem: true
+                highlightMoveDuration: 350
+                highlight: Item {}
+                preferredHighlightBegin: (width - root.skewExpandedWidth) / 2
+                preferredHighlightEnd: (width + root.skewExpandedWidth) / 2
+                highlightRangeMode: ListView.StrictlyEnforceRange
+                header: Item { width: (skewDeck.width - root.skewExpandedWidth) / 2; height: 1 }
+                footer: Item { width: (skewDeck.width - root.skewExpandedWidth) / 2; height: 1 }
+
+                delegate: Item {
+                    id: skewSlice
+                    required property var modelData
+                    required property int index
+                    property bool isCurrent: ListView.isCurrentItem
+                    property real viewX: x - skewDeck.contentX
+                    property real fadeZone: root.skewSliceWidth * 1.5
+                    property real edgeOpacity: {
+                        if (fadeZone <= 0)
+                            return 1.0
+                        const center = viewX + width * 0.5
+                        const leftFade = Math.min(1.0, Math.max(0.0, center / fadeZone))
+                        const rightFade = Math.min(1.0, Math.max(0.0, (skewDeck.width - center) / fadeZone))
+                        return Math.min(leftFade, rightFade)
+                    }
+                    property string previewUrl: ""
+                    width: isCurrent ? root.skewExpandedWidth : root.skewSliceWidth
+                    height: skewDeck.height
+                    z: isCurrent ? 100 : 50 - Math.min(Math.abs(index - listView.currentIndex), 50)
+                    opacity: edgeOpacity
+
+                    function refreshPreview(): void {
+                        if (modelData?.id === undefined)
+                            return
+                        const url = WindowPreviewService.getPreviewUrl(modelData.id)
+                        if (url && url.length > 0)
+                            previewUrl = url
+                    }
+
+                    Behavior on width {
+                        enabled: root.effectiveEnableAnimation
+                        NumberAnimation {
+                            duration: 200
+                            easing.type: Easing.OutQuad
+                        }
+                    }
+
+                    Component.onCompleted: Qt.callLater(() => skewSlice.refreshPreview())
+
+                    Connections {
+                        target: WindowPreviewService
+                        function onPreviewUpdated(updatedId: int): void {
+                            if (updatedId === skewSlice.modelData?.id)
+                                skewSlice.previewUrl = WindowPreviewService.getPreviewUrl(updatedId)
+                        }
+                        function onCaptureComplete(): void {
+                            skewSlice.refreshPreview()
+                        }
+                    }
+
+                    Canvas {
+                        id: shadowCanvas
+                        z: -1
+                        anchors.fill: parent
+                        anchors.margins: -10
+                        property real shadowOffsetX: skewSlice.isCurrent ? 4 : 2
+                        property real shadowOffsetY: skewSlice.isCurrent ? 10 : 5
+                        property real shadowAlpha: skewSlice.isCurrent ? 0.6 : 0.4
+                        onWidthChanged: requestPaint()
+                        onHeightChanged: requestPaint()
+                        onShadowAlphaChanged: requestPaint()
+                        onPaint: {
+                            const ctx = getContext("2d")
+                            ctx.clearRect(0, 0, width, height)
+                            const ox = 10
+                            const oy = 10
+                            const w = skewSlice.width
+                            const h = skewSlice.height
+                            const sk = root.skewOffset
+                            const sx = shadowOffsetX
+                            const sy = shadowOffsetY
+                            const layers = [
+                                { dx: sx, dy: sy, alpha: shadowAlpha * 0.5 },
+                                { dx: sx * 0.6, dy: sy * 0.6, alpha: shadowAlpha * 0.3 },
+                                { dx: sx * 1.4, dy: sy * 1.4, alpha: shadowAlpha * 0.2 }
+                            ]
+                            for (let i = 0; i < layers.length; i++) {
+                                const layer = layers[i]
+                                ctx.globalAlpha = layer.alpha
+                                ctx.fillStyle = "#000000"
+                                ctx.beginPath()
+                                ctx.moveTo(ox + sk + layer.dx, oy + layer.dy)
+                                ctx.lineTo(ox + w + layer.dx, oy + layer.dy)
+                                ctx.lineTo(ox + w - sk + layer.dx, oy + h + layer.dy)
+                                ctx.lineTo(ox + layer.dx, oy + h + layer.dy)
+                                ctx.closePath()
+                                ctx.fill()
+                            }
+                        }
+                    }
+
+                    Item {
+                        id: skewImageContainer
+                        anchors.fill: parent
+                        layer.enabled: true
+                        layer.smooth: true
+                        layer.samples: 4
+                        layer.effect: MultiEffect {
+                                maskEnabled: true
+                                maskSource: ShaderEffectSource {
+                                    sourceItem: Item {
+                                        width: skewImageContainer.width
+                                        height: skewImageContainer.height
+                                        layer.enabled: true
+                                        layer.smooth: true
+                                        layer.samples: 8
+
+                                        Shape {
+                                            anchors.fill: parent
+                                            antialiasing: true
+                                            preferredRendererType: Shape.CurveRenderer
+
+                                            ShapePath {
+                                                fillColor: "white"
+                                                strokeColor: "transparent"
+                                                startX: root.skewOffset
+                                                startY: 0
+                                                PathLine { x: skewSlice.width; y: 0 }
+                                                PathLine { x: skewSlice.width - root.skewOffset; y: skewSlice.height }
+                                                PathLine { x: 0; y: skewSlice.height }
+                                                PathLine { x: root.skewOffset; y: 0 }
+                                            }
+                                        }
+                                    }
+                                }
+                                maskThresholdMin: 0.3
+                                maskSpreadAtMin: 0.3
+                            }
+
+                            Rectangle {
+                                anchors.fill: parent
+                                gradient: Gradient {
+                                    GradientStop {
+                                        position: 0.0
+                                        color: Appearance.auroraEverywhere ? Appearance.colors.colLayer1Base : Appearance.colors.colLayer1
+                                    }
+                                    GradientStop {
+                                        position: 1.0
+                                        color: Appearance.auroraEverywhere ? Appearance.colors.colLayer0Base : Appearance.colors.colLayer0
+                                    }
+                                }
+                            }
+
+                            Image {
+                                id: previewImage
+                                anchors.fill: parent
+                                source: skewSlice.previewUrl
+                                fillMode: Image.PreserveAspectCrop
+                                smooth: true
+                                asynchronous: true
+                                cache: false
+                                visible: status === Image.Ready && source.toString().length > 0
+                                sourceSize.width: root.skewExpandedWidth
+                                sourceSize.height: root.skewSliceHeight
+                            }
+
+                            Rectangle {
+                                anchors.fill: parent
+                                color: Qt.rgba(0, 0, 0, skewSlice.isCurrent ? 0.0 : 0.4)
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: 200
+                                    }
+                                }
+                            }
+
+                            // Big icon (matching piixident structure)
+                            Text {
+                                id: bigIcon
+                                anchors.centerIn: parent
+                                anchors.verticalCenterOffset: -20
+                                text: skewSlice.modelData?.icon ? "" : "?"
+                                property int iconSize: skewSlice.isCurrent ? 96 : 48
+                                font.pixelSize: iconSize
+                                font.family: Appearance.font.family.monospace
+                                opacity: previewImage.visible ? 0.7 : 1.0
+                                Behavior on opacity { NumberAnimation { duration: 200 } }
+                                color: skewSlice.isCurrent ? Appearance.colors.colPrimary : Qt.rgba(Appearance.colors.colTertiary.r, Appearance.colors.colTertiary.g, Appearance.colors.colTertiary.b, 0.5)
+                                Behavior on iconSize { NumberAnimation { duration: 200; easing.type: Easing.OutQuad } }
+                                Behavior on color { ColorAnimation { duration: 200 } }
+                                visible: !skewSlice.modelData?.icon
+                            }
+                            
+                            IconImage {
+                                id: bigIconImage
+                                anchors.centerIn: parent
+                                anchors.verticalCenterOffset: -20
+                                width: skewSlice.isCurrent ? 96 : 48
+                                height: width
+                                source: skewSlice.modelData?.icon || ""
+                                opacity: previewImage.visible ? 0.7 : 1.0
+                                visible: !!skewSlice.modelData?.icon
+                                Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutQuad } }
+                                Behavior on opacity { NumberAnimation { duration: 200 } }
+                            }
+                        }
+
+                        // Glow border with color animation (matching piixident)
+                        Shape {
+                            id: glowBorder
+                            anchors.fill: parent
+                            antialiasing: true
+                            preferredRendererType: Shape.CurveRenderer
+
+                            ShapePath {
+                                fillColor: "transparent"
+                                strokeColor: skewSlice.isCurrent ? Appearance.colors.colPrimary : Qt.rgba(0, 0, 0, 0.6)
+                                Behavior on strokeColor { ColorAnimation { duration: 200 } }
+                                strokeWidth: skewSlice.isCurrent ? 3 : 1
+                                startX: root.skewOffset
+                                startY: 0
+                                PathLine { x: skewSlice.width; y: 0 }
+                                PathLine { x: skewSlice.width - root.skewOffset; y: skewSlice.height }
+                                PathLine { x: 0; y: skewSlice.height }
+                                PathLine { x: root.skewOffset; y: 0 }
+                            }
+                        }
+
+                        Rectangle {
+                            anchors.top: parent.top
+                            anchors.topMargin: 10
+                            anchors.left: parent.left
+                            anchors.leftMargin: root.skewOffset + 6
+                            width: focusedLabel.width + 12
+                            height: 20
+                            radius: 10
+                            color: Appearance.colors.colPrimary
+                            visible: skewSlice.modelData?.isFocused ?? false
+                            z: 10
+
+                            Text {
+                                id: focusedLabel
+                                anchors.centerIn: parent
+                                text: "FOCUSED"
+                                font.family: Appearance.font.family.main
+                                font.pixelSize: 9
+                                font.weight: Font.Bold
+                                font.letterSpacing: 0.5
+                                color: Appearance.colors.colOnPrimary
+                            }
+                        }
+
+                        Rectangle {
+                            id: nameLabel
+                            anchors.bottom: parent.bottom
+                            anchors.bottomMargin: 40
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            width: nameLabelCol.width + 24
+                            height: nameLabelCol.height + 16
+                            radius: 6
+                            color: Qt.rgba(0, 0, 0, 0.75)
+                            border.width: 1
+                            border.color: Qt.rgba(Appearance.colors.colPrimary.r, Appearance.colors.colPrimary.g, Appearance.colors.colPrimary.b, 0.5)
+                            visible: skewSlice.isCurrent
+                            opacity: skewSlice.isCurrent ? 1 : 0
+
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: 200
+                                }
+                            }
+
+                            Column {
+                                id: nameLabelCol
+                                anchors.centerIn: parent
+                                spacing: 4
+
+                                Text {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    text: (skewSlice.modelData?.appName ?? "Window").toUpperCase()
+                                    font.family: Appearance.font.family.main
+                                    font.pixelSize: 13
+                                    font.weight: Font.Bold
+                                    font.letterSpacing: 0.5
+                                    color: Appearance.colors.colPrimary
+                                }
+
+                                Text {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    text: {
+                                        const title = skewSlice.modelData?.title ?? ""
+                                        return title.length > 60 ? title.substring(0, 60) + "…" : title
+                                    }
+                                    font.family: Appearance.font.family.main
+                                    font.pixelSize: 11
+                                    color: Qt.rgba(1, 1, 1, 0.6)
+                                    width: Math.min(implicitWidth, skewSlice.width - 80)
+                                    elide: Text.ElideRight
+                                    horizontalAlignment: Text.AlignHCenter
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            anchors.bottom: parent.bottom
+                            anchors.bottomMargin: 8
+                            anchors.right: parent.right
+                            anchors.rightMargin: root.skewOffset + 8
+                            width: wsBadgeText.width + 8
+                            height: 16
+                            radius: 4
+                            color: Qt.rgba(0, 0, 0, 0.75)
+                            border.width: 1
+                            border.color: Qt.rgba(Appearance.colors.colPrimary.r, Appearance.colors.colPrimary.g, Appearance.colors.colPrimary.b, 0.4)
+                            visible: (skewSlice.modelData?.workspaceIdx ?? 0) > 0
+                            z: 10
+
+                            Text {
+                                id: wsBadgeText
+                                anchors.centerIn: parent
+                                text: "WS " + (skewSlice.modelData?.workspaceIdx ?? "")
+                                font.family: Appearance.font.family.main
+                                font.pixelSize: 9
+                                font.weight: Font.Bold
+                                font.letterSpacing: 0.5
+                                color: Appearance.colors.colSecondary
+                            }
+                        }
+
+                        Rectangle {
+                            anchors.bottom: parent.bottom
+                            anchors.bottomMargin: 8
+                            anchors.left: parent.left
+                            anchors.leftMargin: root.skewOffset + 8
+                            width: floatLabel.width + 8
+                            height: 16
+                            radius: 4
+                            color: Qt.rgba(0, 0, 0, 0.75)
+                            border.width: 1
+                            border.color: Qt.rgba(Appearance.colors.colPrimary.r, Appearance.colors.colPrimary.g, Appearance.colors.colPrimary.b, 0.4)
+                            visible: skewSlice.modelData?.isFloating ?? false
+                            z: 10
+
+                            Text {
+                                id: floatLabel
+                                anchors.centerIn: parent
+                                text: "FLOAT"
+                                font.family: Appearance.font.family.main
+                                font.pixelSize: 9
+                                font.weight: Font.Bold
+                                font.letterSpacing: 0.5
+                                color: Appearance.colors.colSecondary
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onClicked: listView.currentIndex = index
+                        }
+                    }
+                }
 
             Row {
                 id: compactRow
@@ -814,7 +1304,7 @@ Scope {
 
             ColumnLayout {
                 id: contentColumn
-                visible: !root.compactStyle && !root.listStyle
+                visible: !root.compactStyle && !root.listStyle && !root.skewStyle
                 z: 1
                 anchors.fill: parent
                 anchors.margins: Appearance.sizes.hyprlandGapsOut
@@ -1090,9 +1580,19 @@ Scope {
     }
 
     function showPanel() {
-        rebuildSnapshot()
+        if (root.skewStyle) {
+            rebuildSnapshotSync()
+            root.skewCardVisible = false
+            if (listView.currentIndex < 0 || listView.currentIndex >= (itemSnapshot?.length ?? 0))
+                listView.currentIndex = root.defaultSkewIndex()
+            skewCardShowTimer.restart()
+        } else {
+            rebuildSnapshot()
+        }
+        if (CompositorService.isNiri && root.skewStyle)
+            Qt.callLater(() => WindowPreviewService.captureForTaskView())
         panelVisible = true
-        if (animationsEnabled && !centerPanel && !compactStyle) {
+        if (animationsEnabled && !centerPanel && !compactStyle && !root.listStyle && !root.skewStyle) {
             const dur = currentAnimDuration()
             slideOutAnim.stop()
             root.panelRightMargin = -panelWidth
@@ -1108,7 +1608,9 @@ Scope {
     function hidePanel() {
         if (!panelVisible)
             return
-        if (animationsEnabled && !centerPanel) {
+        skewCardShowTimer.stop()
+        root.skewCardVisible = false
+        if (animationsEnabled && !centerPanel && !root.listStyle && !root.skewStyle) {
             const dur = currentAnimDuration()
             slideInAnim.stop()
             slideOutAnim.from = panelRightMargin
@@ -1130,6 +1632,27 @@ Scope {
         if (!GlobalStates.altSwitcherOpen) {
             GlobalStates.altSwitcherOpen = true
         }
+    }
+
+    function defaultSkewIndex() {
+        const total = itemSnapshot?.length ?? 0
+        if (total <= 0)
+            return -1
+        return total > 1 ? 1 : 0
+    }
+
+    function openSkewSwitcher() {
+        autoHideTimer.stop()
+        rebuildSnapshotSync()
+        if ((itemSnapshot?.length ?? 0) === 0)
+            return
+        ensureOpen()
+        listView.currentIndex = defaultSkewIndex()
+    }
+
+    function confirmCurrentSelection() {
+        root.activateCurrent()
+        GlobalStates.altSwitcherOpen = false
     }
 
     function nextItem() {
@@ -1157,6 +1680,15 @@ Scope {
     }
 
     function activateCurrent() {
+        if (root.skewStyle) {
+            const idx = listView.currentIndex
+            if (idx >= 0 && idx < (itemSnapshot?.length ?? 0)) {
+                const item = itemSnapshot[idx]
+                if (item?.id !== undefined)
+                    NiriService.focusWindow(item.id)
+            }
+            return
+        }
         if (listView.currentItem && listView.currentItem.activate) {
             listView.currentItem.activate()
         }
@@ -1201,7 +1733,7 @@ Scope {
         id: noUiSnapshotUpdateTimer
         interval: GameMode.active ? 10000 : 3000
         repeat: true
-        running: root.altNoVisualUi && !GlobalStates.altSwitcherOpen
+        running: root.effectiveNoVisualUi && !GlobalStates.altSwitcherOpen
         onTriggered: {
             if (GameMode.active) return
             
@@ -1216,30 +1748,59 @@ Scope {
         }
     }
 
-    // Only handle IPC when Material ii family is active
-    property bool isActive: Config.options?.panelFamily !== "waffle"
+    readonly property bool waffleFamilyActive: (Config.options?.panelFamily ?? "ii") === "waffle"
+
+    function routeToWaffle(functionName: string): void {
+        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "waffleAltSwitcher", functionName])
+    }
 
     IpcHandler {
         target: "altSwitcher"
-        enabled: root.isActive
 
         function open(): void {
+            if (root.waffleFamilyActive) {
+                root.routeToWaffle("open")
+                return
+            }
+            if (root.skewStyle) {
+                root.openSkewSwitcher()
+                return
+            }
             ensureOpen()
             autoHideTimer.restart()
         }
 
         function close(): void {
+            if (root.waffleFamilyActive) {
+                root.routeToWaffle("close")
+                return
+            }
             GlobalStates.altSwitcherOpen = false
         }
 
         function toggle(): void {
+            if (root.waffleFamilyActive) {
+                root.routeToWaffle("toggle")
+                return
+            }
+            if (root.skewStyle) {
+                if (GlobalStates.altSwitcherOpen)
+                    GlobalStates.altSwitcherOpen = false
+                else
+                    root.openSkewSwitcher()
+                return
+            }
             GlobalStates.altSwitcherOpen = !GlobalStates.altSwitcherOpen
             if (GlobalStates.altSwitcherOpen)
                 autoHideTimer.restart()
         }
 
         function next(): void {
-            if (root.altNoVisualUi) {
+            if (root.waffleFamilyActive) {
+                root.routeToWaffle("next")
+                return
+            }
+            if (root.effectiveNoVisualUi) {
                 autoHideTimer.stop()
                 GlobalStates.altSwitcherOpen = false
 
@@ -1264,6 +1825,15 @@ Scope {
                 return
             }
 
+            if (root.skewStyle) {
+                if (!GlobalStates.altSwitcherOpen) {
+                    root.openSkewSwitcher()
+                    return
+                }
+                nextItem()
+                return
+            }
+
             ensureOpen()
             nextItem()
             activateCurrent()
@@ -1271,7 +1841,11 @@ Scope {
         }
 
         function previous(): void {
-            if (root.altNoVisualUi) {
+            if (root.waffleFamilyActive) {
+                root.routeToWaffle("previous")
+                return
+            }
+            if (root.effectiveNoVisualUi) {
                 autoHideTimer.stop()
                 GlobalStates.altSwitcherOpen = false
 
@@ -1293,6 +1867,15 @@ Scope {
 
                 root.focusNoUiIndex()
                 quickSwitchResetTimer.restart()
+                return
+            }
+
+            if (root.skewStyle) {
+                if (!GlobalStates.altSwitcherOpen) {
+                    root.openSkewSwitcher()
+                    return
+                }
+                previousItem()
                 return
             }
 

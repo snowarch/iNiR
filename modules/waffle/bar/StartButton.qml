@@ -37,20 +37,19 @@ AppButton {
             {
                 text: Translation.tr("Terminal"),
                 action: () => {
-                    Quickshell.execDetached([Quickshell.shellPath("scripts/launch-terminal.sh")])
+                    Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "terminal"])
                 }
             },
             {
                 text: Translation.tr("Task Manager"),
                 action: () => {
-                    const cmd = Config.options?.apps?.taskManager ?? "missioncenter"
-                    ShellExec.execCmd(cmd)
+                    AppLauncher.launch("taskManager")
                 }
             },
             {
                 text: Translation.tr("Settings"),
                 action: () => {
-                    Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "settings", "open"]);
+                    Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"]);
                 }
             },
             {
@@ -62,7 +61,7 @@ AppButton {
             {
                 text: Translation.tr("Search"),
                 action: () => {
-                    Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "overview", "toggle"]);
+                    Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "overview", "toggle"]);
                 }
             },
         ]

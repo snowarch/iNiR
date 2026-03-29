@@ -36,7 +36,7 @@ WChoiceButton {
 
         SearchEntryIcon {
             entry: root.entry
-            iconSize: 24
+            iconSize: Config.options?.waffles?.bar?.searchIconSize ?? 24
         }
         
         EntryNameColumn {

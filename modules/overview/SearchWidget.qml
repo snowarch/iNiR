@@ -15,8 +15,11 @@ Item { // Wrapper
     readonly property string xdgConfigHome: Directories.config
     property string searchingText: ""
     property bool showResults: searchingText != ""
+    property real availableHeight: root.QsWindow?.window?.height ?? (root.QsWindow?.window?.screen?.height ?? 1080)
+    readonly property bool actionMode: searchingText.startsWith(root.prefixAction)
+    readonly property string actionQuery: actionMode ? StringUtils.cleanPrefix(searchingText, root.prefixAction) : ""
     implicitWidth: searchWidgetContent.implicitWidth + Appearance.sizes.elevationMargin * 2
-    implicitHeight: searchBar.implicitHeight + searchBar.verticalPadding * 2 + Appearance.sizes.elevationMargin * 2
+    implicitHeight: searchWidgetContent.implicitHeight + Appearance.sizes.elevationMargin * 2
 
     readonly property var searchPrefixes: Config.options?.search?.prefix ?? {}
     readonly property string prefixAction: searchPrefixes.action ?? "/"
@@ -30,6 +33,14 @@ Item { // Wrapper
     property string mathResult: ""
     property string debouncedSearchText: ""
     property var cachedResults: []
+    readonly property real resultsAvailableHeight: Math.max(
+        180,
+        availableHeight
+            - searchBar.implicitHeight
+            - searchBar.verticalPadding * 2
+            - Appearance.sizes.elevationMargin * 2
+            - 24
+    )
 
     property bool clipboardWorkSafetyActive: {
         const enabled = Config.options?.workSafety?.enable?.clipboard ?? false;
@@ -38,71 +49,54 @@ Item { // Wrapper
         return enabled && sensitiveNetwork;
     }
 
-    property var searchActions: [
-        {
-            action: "accentcolor",
-            execute: args => {
-                Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--noswitch", "--color", ...(args != '' ? [`${args}`] : [])]);
-            }
-        },
-        {
-            action: "dark",
-            execute: () => {
-                Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--mode", "dark", "--noswitch"]);
-            }
-        },
-        {
-            action: "konachanwallpaper",
-            execute: () => {
-                Quickshell.execDetached([Quickshell.shellPath("scripts/colors/random/random_konachan_wall.sh")]);
-            }
-        },
-        {
-            action: "light",
-            execute: () => {
-                Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--mode", "light", "--noswitch"]);
-            }
-        },
-        {
-            action: "superpaste",
-            execute: args => {
-                if (!/^(\d+)/.test(args.trim())) { // Invalid if doesn't start with numbers
-                    Quickshell.execDetached([
-                        "/usr/bin/notify-send", 
-                        Translation.tr("Superpaste"), 
-                        Translation.tr("Usage: <tt>%1superpaste NUM_OF_ENTRIES[i]</tt>\nSupply <tt>i</tt> when you want images\nExamples:\n<tt>%1superpaste 4i</tt> for the last 4 images\n<tt>%1superpaste 7</tt> for the last 7 entries").arg(root.prefixAction),
-                        "-a", "Shell"
-                    ]);
-                    return;
-                }
-                const syntaxMatch = /^(?:(\d+)(i)?)/.exec(args.trim());
-                const count = syntaxMatch[1] ? parseInt(syntaxMatch[1]) : 1;
-                const isImage = !!syntaxMatch[2];
-                Cliphist.superpaste(count, isImage);
-            }
-        },
-        {
-            action: "todo",
-            execute: args => {
-                Todo.addTask(args);
-            }
-        },
-        {
-            action: "wallpaper",
-            execute: () => {
-                GlobalStates.wallpaperSelectorOpen = true;
-            }
-        },
-        {
-            action: "wipeclipboard",
-            execute: () => {
-                Cliphist.wipe();
-            }
-        },
-    ]
+    // All actions are now centralized in GlobalActions service.
+    property var searchActions: GlobalActions.searchActions
+
+    function focusAppResultCurrentOrFirst() {
+        if (!appResults.visible || appResults.count <= 0)
+            return
+
+        const targetIndex = appResults.currentIndex >= 0 ? Math.min(appResults.currentIndex, appResults.count - 1) : 0
+        appResults.currentIndex = targetIndex
+    }
+
+    function stepAppResultSelection(step) {
+        if (!appResults.visible || appResults.count <= 0)
+            return false
+
+        const baseIndex = appResults.currentIndex >= 0 ? appResults.currentIndex : (step > 0 ? -1 : 0)
+        const targetIndex = Math.max(0, Math.min(baseIndex + step, appResults.count - 1))
+        appResults.currentIndex = targetIndex
+        return true
+    }
+
+    function executeAppResultCurrentOrFirst() {
+        if (!appResults.visible || appResults.count <= 0)
+            return
+
+        const targetIndex = appResults.currentIndex >= 0 ? Math.min(appResults.currentIndex, appResults.count - 1) : 0
+        appResults.currentIndex = targetIndex
+
+        const item = appResults.itemAtIndex(targetIndex)
+        if (item && item.clicked) {
+            item.clicked()
+            return
+        }
+
+        Qt.callLater(() => {
+            const delayedItem = appResults.itemAtIndex(targetIndex)
+            if (delayedItem && delayedItem.clicked)
+                delayedItem.clicked()
+        })
+    }
 
     function focusFirstItem() {
-        appResults.currentIndex = 0;
+        if (root.actionMode && actionModeView.visible) {
+            actionModeView.focusFirstItem()
+        } else if (appResults.visible && appResults.count > 0) {
+            appResults.currentIndex = 0
+            root.focusAppResultCurrentOrFirst()
+        }
     }
 
     function focusSearchInput() {
@@ -121,6 +115,7 @@ Item { // Wrapper
 
     function setSearchingText(text) {
         searchBar.searchInput.text = text;
+        searchBar.searchInput.cursorPosition = searchBar.searchInput.text.length;
         root.searchingText = text;
     }
 
@@ -134,6 +129,12 @@ Item { // Wrapper
         const text = root.debouncedSearchText;
         
         if (text === "") {
+            root.cachedResults = [];
+            return;
+        }
+
+        // Action mode is handled entirely by ActionModeView
+        if (text.startsWith(root.prefixAction)) {
             root.cachedResults = [];
             return;
         }
@@ -304,7 +305,7 @@ Item { // Wrapper
 
     Timer {
         id: searchDebounceTimer
-        interval: 100  // Increased debounce to reduce flickering
+        interval: 60
         onTriggered: {
             root.debouncedSearchText = root.searchingText;
             root.updateSearchResults();
@@ -312,6 +313,7 @@ Item { // Wrapper
     }
 
     onSearchingTextChanged: {
+        root.mathResult = ""
         searchDebounceTimer.restart();
     }
 
@@ -323,6 +325,12 @@ Item { // Wrapper
             if (expr.startsWith(root.prefixMath)) {
                 expr = expr.slice(root.prefixMath.length);
             }
+            expr = expr.trim()
+            if (expr.length === 0) {
+                root.mathResult = ""
+                root.updateSearchResults()
+                return
+            }
             mathProcess.calculateExpression(expr);
         }
     }
@@ -331,6 +339,7 @@ Item { // Wrapper
         id: mathProcess
         property list<string> baseCommand: ["/usr/bin/qalc", "-t"]
         function calculateExpression(expression) {
+            root.mathResult = "";
             mathProcess.running = false;
             mathProcess.command = baseCommand.concat(expression);
             mathProcess.running = true;
@@ -338,7 +347,7 @@ Item { // Wrapper
         stdout: SplitParser {
             onRead: data => {
                 root.mathResult = data;
-                root.focusFirstItem();
+                root.updateSearchResults();
             }
         }
     }
@@ -388,7 +397,6 @@ Item { // Wrapper
                 searchBar.searchInput.text = searchBar.searchInput.text.slice(0, searchBar.searchInput.cursorPosition) + event.text + searchBar.searchInput.text.slice(searchBar.searchInput.cursorPosition);
                 searchBar.searchInput.cursorPosition += 1;
                 event.accepted = true;
-                root.focusFirstItem();
             }
         }
     }
@@ -455,17 +463,28 @@ Item { // Wrapper
 
             Rectangle {
                 // Separator
-                visible: root.showResults
+                visible: root.showResults && !root.actionMode
                 Layout.fillWidth: true
                 height: 1
                 color: Appearance.colors.colOutlineVariant
             }
 
+            // ── Action Mode View (replaces normal results when in / mode) ──
+            ActionModeView {
+                id: actionModeView
+                Layout.fillWidth: true
+                visible: root.actionMode && root.showResults
+                query: root.actionQuery
+                availableHeight: root.resultsAvailableHeight
+                onActionExecuted: GlobalStates.overviewOpen = false
+                onReturnToSearch: root.focusSearchInput()
+            }
+
             ListView { // App results
                 id: appResults
-                visible: root.showResults
+                visible: root.showResults && !root.actionMode
                 Layout.fillWidth: true
-                implicitHeight: Math.min(600, appResults.contentHeight + topMargin + bottomMargin)
+                implicitHeight: Math.min(root.resultsAvailableHeight, appResults.contentHeight + topMargin + bottomMargin)
                 clip: true
                 topMargin: 10
                 bottomMargin: 10
@@ -473,9 +492,40 @@ Item { // Wrapper
                 KeyNavigation.up: searchBar
                 highlightMoveDuration: 100
 
-                onFocusChanged: {
-                    if (focus)
-                        appResults.currentIndex = 1;
+                function focusCurrentOrFirst() {
+                    root.focusAppResultCurrentOrFirst()
+                }
+
+                function stepSelection(step) {
+                    return root.stepAppResultSelection(step)
+                }
+
+                function activateCurrentOrFirst() {
+                    root.executeAppResultCurrentOrFirst()
+                }
+
+                onActiveFocusChanged: {
+                    if (activeFocus && count > 0) {
+                        if (currentIndex < 0)
+                            currentIndex = 0;
+                    }
+                }
+
+                Keys.onPressed: event => {
+                    if (event.key === Qt.Key_Down) {
+                        stepSelection(1)
+                        event.accepted = true
+                    } else if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && currentIndex >= 0) {
+                        activateCurrentOrFirst()
+                        event.accepted = true
+                    } else if (event.key === Qt.Key_Up) {
+                        if (currentIndex > 0) {
+                            stepSelection(-1)
+                        } else {
+                            root.focusSearchInput()
+                        }
+                        event.accepted = true
+                    }
                 }
 
                 Connections {
@@ -498,6 +548,7 @@ Item { // Wrapper
                     anchors.left: parent?.left
                     anchors.right: parent?.right
                     entry: modelData
+                    upTarget: searchBar.searchInput
                     query: StringUtils.cleanOnePrefix(root.debouncedSearchText, [
                         root.prefixAction,
                         root.prefixApp,
@@ -512,7 +563,7 @@ Item { // Wrapper
                         if (event.key === Qt.Key_Tab) {
                             if (model.values.length === 0)
                                 return;
-                            const tabbedText = searchItem.entry.name;
+                            const tabbedText = entry.name;
                             root.setSearchingText(tabbedText);
                             event.accepted = true;
                             root.focusSearchInput();

@@ -37,7 +37,7 @@
                 "termFgBoost": 0.5
             },
             "enableSpicetify": false,
-            "enableOpenCode": true,
+            "enableOpenCode": false,
             "vscodeEditors": {
                 "code": true,
                 "codium": true,

@@ -829,31 +829,31 @@ Singleton {
         readonly property int roundingLarge: Config.options?.appearance?.angel?.rounding?.large ?? 25
     }
 
-    sizes: QtObject {
-        property real spacingSmall: 8
-        property real spacingMedium: 12
-        property real spacingLarge: 16
-        property real baseBarHeight: 40
+     sizes: QtObject {
+         property real spacingSmall: Math.round(8 * root.fontSizeScale)
+         property real spacingMedium: Math.round(12 * root.fontSizeScale)
+         property real spacingLarge: Math.round(16 * root.fontSizeScale)
+        property real baseBarHeight: Math.round(40 * root.fontSizeScale)
         property real barHeight: (((Config.options?.bar?.cornerStyle ?? 0) === 1) || ((Config.options?.bar?.cornerStyle ?? 0) === 3)) ? 
             (baseBarHeight + root.sizes.hyprlandGapsOut * 2) : baseBarHeight
-        property real barCenterSideModuleWidth: (Config.options?.bar?.verbose ?? true) ? 360 : 140
-        property real barCenterSideModuleWidthShortened: 280
-        property real barCenterSideModuleWidthHellaShortened: 190
+        property real barCenterSideModuleWidth: (Config.options?.bar?.verbose ?? true) ? Math.round(360 * root.fontSizeScale) : Math.round(140 * root.fontSizeScale)
+        property real barCenterSideModuleWidthShortened: Math.round(280 * root.fontSizeScale)
+        property real barCenterSideModuleWidthHellaShortened: Math.round(190 * root.fontSizeScale)
         property real barShortenScreenWidthThreshold: 1200 // Shorten if screen width is at most this value
         property real barHellaShortenScreenWidthThreshold: 1000 // Shorten even more...
-        property real elevationMargin: 10
+        property real elevationMargin: Math.round(10 * root.fontSizeScale)
         property real fabShadowRadius: 5
         property real fabHoveredShadowRadius: 7
         property real hyprlandGapsOut: 5
-        property real mediaControlsWidth: 380
-        property real mediaControlsHeight: 150
-        property real notificationPopupWidth: 410
-        property real osdWidth: 180
-        property real searchWidthCollapsed: 210
-        property real searchWidth: 360
-        property real sidebarWidth: 460
-        property real sidebarWidthExtended: 750
-        property real baseVerticalBarWidth: 46
+        property real mediaControlsWidth: Math.round(380 * root.fontSizeScale)
+        property real mediaControlsHeight: Math.round(150 * root.fontSizeScale)
+        property real notificationPopupWidth: Math.round(410 * root.fontSizeScale)
+        property real osdWidth: Math.round(180 * root.fontSizeScale)
+        property real searchWidthCollapsed: Math.round(210 * root.fontSizeScale)
+        property real searchWidth: Math.round(360 * root.fontSizeScale)
+        property real sidebarWidth: Math.round(460 * root.fontSizeScale)
+        property real sidebarWidthExtended: Math.round(750 * root.fontSizeScale)
+        property real baseVerticalBarWidth: Math.round(46 * root.fontSizeScale)
         property real verticalBarWidth: (((Config.options?.bar?.cornerStyle ?? 0) === 1) || ((Config.options?.bar?.cornerStyle ?? 0) === 3)) ? 
             (baseVerticalBarWidth + root.sizes.hyprlandGapsOut * 2) : baseVerticalBarWidth
         property real wallpaperSelectorWidth: 1200

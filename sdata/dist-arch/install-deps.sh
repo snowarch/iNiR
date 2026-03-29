@@ -389,4 +389,60 @@ fi
 showfun install-python-packages
 v install-python-packages
 
+#####################################################################################
+# Post-install: Check for Qt/Quickshell ABI mismatch
+# pacman -Syu may update Qt while quickshell-git/quickshell-bin (AUR) was built
+# against the old Qt. Quickshell uses Qt private APIs, so minor bumps break ABI.
+# See: https://github.com/snowarch/iNiR/issues/93
+#####################################################################################
+if command -v qs >/dev/null 2>&1; then
+  qs_abi_output="$(qs --version 2>&1 || true)"
+  if echo "$qs_abi_output" | grep -qiE "built against Qt|Qt.*mismatch|incompatible Qt"; then
+    log_warning "Qt/Quickshell ABI mismatch detected!"
+    log_warning "Quickshell was built against a different Qt version than what is installed."
+    log_warning "The shell will crash until quickshell is rebuilt."
+
+    qs_rebuild_pkg=""
+    if pacman -Qi quickshell-git &>/dev/null; then
+      qs_rebuild_pkg="quickshell-git"
+    elif pacman -Qi quickshell-bin &>/dev/null; then
+      qs_rebuild_pkg="quickshell-bin"
+    fi
+
+    if [[ -n "$qs_rebuild_pkg" && -n "${AUR_HELPER:-}" ]]; then
+      # Determine correct rebuild method:
+      # - Foreign/AUR package: --rebuild triggers source compilation
+      # - Binary repo (CachyOS, chaotic-aur): -Sa forces AUR source build
+      qs_rebuild_cmd=""
+      if pacman -Qm "$qs_rebuild_pkg" &>/dev/null; then
+        qs_rebuild_cmd="$AUR_HELPER -S --rebuild --noconfirm $qs_rebuild_pkg"
+      else
+        qs_rebuild_cmd="$AUR_HELPER -Sa --noconfirm $qs_rebuild_pkg"
+      fi
+
+      do_rebuild=false
+      if ! $ask; then
+        do_rebuild=true
+      elif tui_confirm "Rebuild $qs_rebuild_pkg for current Qt version?"; then
+        do_rebuild=true
+      fi
+
+      if $do_rebuild; then
+        log_info "Running: $qs_rebuild_cmd"
+        if eval "$qs_rebuild_cmd"; then
+          log_success "Rebuilt $qs_rebuild_pkg — ABI mismatch resolved"
+        else
+          log_error "Rebuild failed. Try manually: ${qs_rebuild_cmd/--noconfirm /}"
+        fi
+      else
+        log_warning "To fix: ${qs_rebuild_cmd/--noconfirm /}"
+      fi
+    elif [[ -n "$qs_rebuild_pkg" ]]; then
+      log_warning "To fix: yay -Sa $qs_rebuild_pkg  (forces AUR source build; or use paru)"
+    else
+      log_warning "Reinstall quickshell from official repos: sudo pacman -S quickshell"
+    fi
+  fi
+fi
+
 log_success "Dependencies installed"

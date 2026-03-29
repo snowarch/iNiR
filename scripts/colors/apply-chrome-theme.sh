@@ -61,8 +61,9 @@ resolve_color() {
     fi
   fi
 
-  # 3. colors.json fallback (this is the already-generated primary, which might cause double-theming)
-  local colors_json="$STATE_DIR/user/generated/colors.json"
+  # 3. explicit palette contract, then colors.json fallback
+  local colors_json="$STATE_DIR/user/generated/palette.json"
+  [[ -f "$colors_json" ]] || colors_json="$STATE_DIR/user/generated/colors.json"
   if [[ -f "$colors_json" ]] && command -v jq &>/dev/null; then
     local c
     c=$(jq -r '.primary // empty' "$colors_json" 2>/dev/null)
@@ -80,6 +81,16 @@ resolve_color() {
 # we map them directly. However, we'll invert them if needed to match what actually works.
 
 resolve_color_scheme() {
+  local meta_file="$STATE_DIR/user/generated/theme-meta.json"
+  if [[ -f "$meta_file" ]] && command -v jq &>/dev/null; then
+    local mode
+    mode=$(jq -r '.mode // empty' "$meta_file" 2>/dev/null)
+    if [[ "$mode" == "dark" || "$mode" == "light" ]]; then
+      echo "$mode"
+      return
+    fi
+  fi
+
   local scss_file="$STATE_DIR/user/generated/material_colors.scss"
   if [[ -f "$scss_file" ]]; then
     local val

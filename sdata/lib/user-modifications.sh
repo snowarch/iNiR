@@ -18,10 +18,22 @@ TRACKED_PATTERNS=("*.qml" "*.js" "*.py" "*.sh" "*.fish")
 manifest_has_checksums() {
     local manifest_file="$1"
     [[ -f "$manifest_file" ]] || return 1
-    # v2 manifests have "# ii-manifest v2" header
-    head -1 "$manifest_file" | grep -q "ii-manifest v2" && return 0
+    # v2 manifests may have either the legacy ii header or the current inir header
+    head -1 "$manifest_file" | grep -qE "(ii|inir)-manifest v2" && return 0
     # Fallback: check if any line has path:checksum format (64 hex chars)
     grep -q "^[^#].*:[a-f0-9]\{64\}$" "$manifest_file" 2>/dev/null
+}
+
+find_runtime_manifest_file() {
+    local target_dir="$1"
+    local manifest
+    for manifest in "${target_dir}/.inir-manifest" "${target_dir}/.ii-manifest"; do
+        if [[ -f "$manifest" ]]; then
+            printf '%s\n' "$manifest"
+            return 0
+        fi
+    done
+    return 1
 }
 
 ###############################################################################
@@ -153,6 +165,43 @@ EOF
     echo "$preserve_dir"
 }
 
+preserve_runtime_tree() {
+    local source_dir="$1"
+    local label="${2:-runtime}"
+
+    local timestamp
+    timestamp=$(date +%Y%m%d-%H%M%S)
+    local preserve_dir="${USER_MODS_DIR}/${timestamp}"
+    local dir_name
+    dir_name=$(printf '%s' "$label" | tr -cs 'A-Za-z0-9._-' '-')
+    [[ -n "$dir_name" ]] || dir_name="runtime"
+
+    mkdir -p "${preserve_dir}/${dir_name}"
+    rsync -a \
+        --exclude='.git/' \
+        --exclude='.ii-manifest' \
+        --exclude='.inir-manifest' \
+        "${source_dir}/" "${preserve_dir}/${dir_name}/"
+
+    local file_count=0
+    file_count=$(find "${preserve_dir}/${dir_name}" -type f 2>/dev/null | wc -l | tr -d ' ')
+
+    cat > "${preserve_dir}/metadata.json" << EOF
+{
+  "preserved_at": "$(date -Iseconds)",
+  "source_dir": "${source_dir}",
+  "label": "${label}",
+  "full_runtime_copy": true,
+  "modified_count": ${file_count:-0},
+  "additions_count": 0
+}
+EOF
+
+    cleanup_old_user_mods
+
+    echo "$preserve_dir"
+}
+
 # Remove old user modification backups, keep only MAX_USER_MODS
 cleanup_old_user_mods() {
     [[ -d "$USER_MODS_DIR" ]] || return 0
@@ -207,7 +256,10 @@ show_file_diff() {
     local snapshot_dir="$3"
 
     local current="${target_dir}/${file_path}"
-    local original="${snapshot_dir}/ii/${file_path}"
+    local original="${snapshot_dir}/inir/${file_path}"
+    if [[ ! -f "$original" ]]; then
+        original="${snapshot_dir}/ii/${file_path}"
+    fi
 
     if [[ -f "$original" ]] && [[ -f "$current" ]]; then
         echo ""
@@ -228,6 +280,7 @@ show_file_diff() {
 handle_user_modifications() {
     local mod_files_str="$1"
     local add_files_str="$2"
+    local source_dir="${3:-$II_TARGET}"
 
     local mod_count=0
     local add_count=0
@@ -249,7 +302,7 @@ handle_user_modifications() {
 
     # Non-interactive mode: auto-preserve
     if ! $ask; then
-        PRESERVED_MODS_DIR=$(preserve_user_modifications "$II_TARGET" "$mod_files_str" "$add_files_str")
+        PRESERVED_MODS_DIR=$(preserve_user_modifications "$source_dir" "$mod_files_str" "$add_files_str")
         tui_success "Auto-preserved $total file(s) to: $PRESERVED_MODS_DIR"
         return 0
     fi
@@ -264,13 +317,13 @@ handle_user_modifications() {
 
         case "$choice" in
             "Preserve & Continue")
-                PRESERVED_MODS_DIR=$(preserve_user_modifications "$II_TARGET" "$mod_files_str" "$add_files_str")
+                PRESERVED_MODS_DIR=$(preserve_user_modifications "$source_dir" "$mod_files_str" "$add_files_str")
                 echo ""
                 tui_success "Modifications saved to:"
                 tui_dim "    $PRESERVED_MODS_DIR"
                 echo ""
                 tui_info "To restore a file after update:"
-                tui_dim "    cp $PRESERVED_MODS_DIR/<path> ~/.config/quickshell/ii/<path>"
+                tui_dim "    cp $PRESERVED_MODS_DIR/<path> ~/.config/quickshell/inir/<path>"
                 return 0
                 ;;
             "View Changes")
@@ -278,12 +331,22 @@ handle_user_modifications() {
                 local latest_snapshot
                 latest_snapshot=$(ls -1t "$SNAPSHOTS_DIR" 2>/dev/null | head -1)
 
-                if [[ -n "$latest_snapshot" ]] && [[ -d "${SNAPSHOTS_DIR}/${latest_snapshot}/ii" ]]; then
+                if [[ -n "$latest_snapshot" ]] && [[ -d "${SNAPSHOTS_DIR}/${latest_snapshot}/inir" ]]; then
                     echo ""
                     local shown=0
                     while IFS= read -r f && [[ $shown -lt 3 ]]; do
                         [[ -z "$f" ]] && continue
-                        show_file_diff "$II_TARGET" "$f" "${SNAPSHOTS_DIR}/${latest_snapshot}"
+                        show_file_diff "$source_dir" "$f" "${SNAPSHOTS_DIR}/${latest_snapshot}"
+                        echo ""
+                        ((shown++))
+                    done <<< "$mod_files_str"
+                    [[ $mod_count -gt 3 ]] && tui_dim "(Showing first 3 files only)"
+                elif [[ -n "$latest_snapshot" ]] && [[ -d "${SNAPSHOTS_DIR}/${latest_snapshot}/ii" ]]; then
+                    echo ""
+                    local shown=0
+                    while IFS= read -r f && [[ $shown -lt 3 ]]; do
+                        [[ -z "$f" ]] && continue
+                        show_file_diff "$source_dir" "$f" "${SNAPSHOTS_DIR}/${latest_snapshot}"
                         echo ""
                         ((shown++))
                     done <<< "$mod_files_str"

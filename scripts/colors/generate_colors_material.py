@@ -106,6 +106,15 @@ parser.add_argument(
 parser.add_argument(
     "--json-output", type=str, default=None, help="file path to write colors.json"
 )
+parser.add_argument(
+    "--palette-output", type=str, default=None, help="file path to write palette.json"
+)
+parser.add_argument(
+    "--terminal-output", type=str, default=None, help="file path to write terminal.json"
+)
+parser.add_argument(
+    "--meta-output", type=str, default=None, help="file path to write theme-meta.json"
+)
 args = parser.parse_args()
 
 rgba_to_hex = lambda rgba: "#{:02X}{:02X}{:02X}".format(rgba[0], rgba[1], rgba[2])
@@ -411,22 +420,35 @@ else:
         )
     print("-----------------------------------------------")
 
-# Generate colors.json if requested (for MaterialThemeLoader)
-if args.json_output:
-    # Convert snake_case keys to match expected format
-    colors_json = {
+
+def build_palette_json():
+    palette = {
         "primary": material_colors.get("primary", ""),
         "on_primary": material_colors.get("onPrimary", ""),
         "primary_container": material_colors.get("primaryContainer", ""),
         "on_primary_container": material_colors.get("onPrimaryContainer", ""),
+        "primary_fixed": material_colors.get("primaryFixed", ""),
+        "primary_fixed_dim": material_colors.get("primaryFixedDim", ""),
+        "on_primary_fixed": material_colors.get("onPrimaryFixed", ""),
+        "on_primary_fixed_variant": material_colors.get("onPrimaryFixedVariant", ""),
         "secondary": material_colors.get("secondary", ""),
         "on_secondary": material_colors.get("onSecondary", ""),
         "secondary_container": material_colors.get("secondaryContainer", ""),
         "on_secondary_container": material_colors.get("onSecondaryContainer", ""),
+        "secondary_fixed": material_colors.get("secondaryFixed", ""),
+        "secondary_fixed_dim": material_colors.get("secondaryFixedDim", ""),
+        "on_secondary_fixed": material_colors.get("onSecondaryFixed", ""),
+        "on_secondary_fixed_variant": material_colors.get(
+            "onSecondaryFixedVariant", ""
+        ),
         "tertiary": material_colors.get("tertiary", ""),
         "on_tertiary": material_colors.get("onTertiary", ""),
         "tertiary_container": material_colors.get("tertiaryContainer", ""),
         "on_tertiary_container": material_colors.get("onTertiaryContainer", ""),
+        "tertiary_fixed": material_colors.get("tertiaryFixed", ""),
+        "tertiary_fixed_dim": material_colors.get("tertiaryFixedDim", ""),
+        "on_tertiary_fixed": material_colors.get("onTertiaryFixed", ""),
+        "on_tertiary_fixed_variant": material_colors.get("onTertiaryFixedVariant", ""),
         "error": material_colors.get("error", ""),
         "on_error": material_colors.get("onError", ""),
         "error_container": material_colors.get("errorContainer", ""),
@@ -435,10 +457,13 @@ if args.json_output:
         "on_background": material_colors.get("onBackground", ""),
         "surface": material_colors.get("surface", ""),
         "on_surface": material_colors.get("onSurface", ""),
+        "surface_dim": material_colors.get("surfaceDim", ""),
+        "surface_bright": material_colors.get("surfaceBright", ""),
         "surface_variant": material_colors.get("surfaceVariant", ""),
         "on_surface_variant": material_colors.get("onSurfaceVariant", ""),
-        "surface_container": material_colors.get("surfaceContainer", ""),
+        "surface_container_lowest": material_colors.get("surfaceContainerLowest", ""),
         "surface_container_low": material_colors.get("surfaceContainerLow", ""),
+        "surface_container": material_colors.get("surfaceContainer", ""),
         "surface_container_high": material_colors.get("surfaceContainerHigh", ""),
         "surface_container_highest": material_colors.get("surfaceContainerHighest", ""),
         "outline": material_colors.get("outline", ""),
@@ -449,6 +474,51 @@ if args.json_output:
         "shadow": material_colors.get("shadow", ""),
         "scrim": material_colors.get("scrim", ""),
         "surface_tint": material_colors.get("surfaceTint", ""),
+        "success": material_colors.get("success", ""),
+        "on_success": material_colors.get("onSuccess", ""),
+        "success_container": material_colors.get("successContainer", ""),
+        "on_success_container": material_colors.get("onSuccessContainer", ""),
     }
+    return palette
+
+
+palette_json = build_palette_json()
+colors_json = dict(palette_json)
+for tkey, tval in term_colors.items():
+    colors_json[tkey] = tval
+
+theme_meta = {
+    "source": "image"
+    if args.path is not None
+    else "color"
+    if args.color is not None
+    else "unknown",
+    "source_path": args.path,
+    "seed_color": argb_to_hex(argb),
+    "mode": "dark" if darkmode else "light",
+    "scheme": args.scheme,
+    "transparent": transparent,
+    "soften": args.soften,
+    "term_harmony": args.harmony,
+    "term_saturation": args.term_saturation,
+    "term_brightness": args.term_brightness,
+    "term_bg_brightness": args.term_bg_brightness,
+    "blend_bg_fg": args.blend_bg_fg,
+    "generated_by": "generate_colors_material.py",
+}
+
+if args.json_output:
     with open(args.json_output, "w") as f:
         json.dump(colors_json, f, indent=2)
+
+if args.palette_output:
+    with open(args.palette_output, "w") as f:
+        json.dump(palette_json, f, indent=2)
+
+if args.terminal_output:
+    with open(args.terminal_output, "w") as f:
+        json.dump(term_colors, f, indent=2)
+
+if args.meta_output:
+    with open(args.meta_output, "w") as f:
+        json.dump(theme_meta, f, indent=2)

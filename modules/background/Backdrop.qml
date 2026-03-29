@@ -132,11 +132,19 @@ Variants {
 
         Item {
             anchors.fill: parent
+            clip: true
+
+            // Blur edge compensation: MultiEffect fades at boundaries because the
+            // Gaussian kernel has no pixels beyond the item edge. To fix this, all
+            // wallpaper source items are oversized by blurMax (64px) on every side,
+            // and this parent clips the result to exact screen bounds.
+            readonly property int blurOverflow: 64
 
             // Static wallpaper with crossfade transitions (shares workspace transition settings)
             WallpaperCrossfader {
                 id: wallpaper
                 anchors.fill: parent
+                anchors.margins: -parent.blurOverflow
                 fillMode: Image.PreserveAspectCrop
                 source: backdropWindow.effectiveWallpaperPath && !backdropWindow.wallpaperIsGif && !backdropWindow.wallpaperIsVideo
                     ? (backdropWindow.effectiveWallpaperPath.startsWith("file://")
@@ -150,7 +158,7 @@ Variants {
             }
 
             MultiEffect {
-                anchors.fill: parent
+                anchors.fill: wallpaper
                 source: wallpaper
                 visible: wallpaper.ready && !backdropWindow.useAuroraStyle && !backdropWindow.wallpaperIsGif && !backdropWindow.wallpaperIsVideo
                 blurEnabled: backdropWindow.backdropBlurRadius > 0
@@ -165,6 +173,7 @@ Variants {
             AnimatedImage {
                 id: gifWallpaper
                 anchors.fill: parent
+                anchors.margins: -parent.blurOverflow
                 fillMode: Image.PreserveAspectCrop
                 source: backdropWindow.wallpaperIsGif && backdropWindow.wallpaperPathRaw
                     ? (backdropWindow.wallpaperPathRaw.startsWith("file://")
@@ -193,6 +202,7 @@ Variants {
             Video {
                 id: videoWallpaper
                 anchors.fill: parent
+                anchors.margins: -parent.blurOverflow
                 visible: !backdropWindow.useAuroraStyle && backdropWindow.wallpaperIsVideo
                 source: {
                     if (!backdropWindow.wallpaperIsVideo) return "";
@@ -251,6 +261,7 @@ Variants {
             Image {
                 id: auroraWallpaper
                 anchors.fill: parent
+                anchors.margins: -parent.blurOverflow
                 fillMode: Image.PreserveAspectCrop
                 source: backdropWindow.wallpaperIsGif ? gifWallpaper.source : wallpaper.source
                 asynchronous: true
@@ -279,6 +290,7 @@ Variants {
             AnimatedImage {
                 id: auroraGifWallpaper
                 anchors.fill: parent
+                anchors.margins: -parent.blurOverflow
                 fillMode: Image.PreserveAspectCrop
                 source: backdropWindow.wallpaperIsGif ? gifWallpaper.source : ""
                 asynchronous: true
@@ -305,6 +317,7 @@ Variants {
             Video {
                 id: auroraVideoWallpaper
                 anchors.fill: parent
+                anchors.margins: -parent.blurOverflow
                 visible: backdropWindow.useAuroraStyle && backdropWindow.wallpaperIsVideo
                 source: videoWallpaper.source
                 fillMode: VideoOutput.PreserveAspectCrop

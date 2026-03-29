@@ -15,7 +15,7 @@ from pathlib import Path
 
 
 def parse_scss_colors(scss_path: str) -> dict[str, str]:
-    """Parse material_colors.scss and extract color variables."""
+    """Parse material_colors.scss compatibility values."""
     colors = {}
     with open(scss_path, "r") as f:
         for line in f:
@@ -24,6 +24,14 @@ def parse_scss_colors(scss_path: str) -> dict[str, str]:
                 name, value = match.groups()
                 colors[name] = value.lower()
     return colors
+
+
+def load_json_colors(path: str | None) -> dict[str, str]:
+    if not path or not os.path.exists(path):
+        return {}
+    with open(path, "r") as f:
+        data = json.load(f)
+    return {k: v for k, v in data.items() if isinstance(v, str)}
 
 
 def hex_to_rgb(hex_color: str) -> tuple[int, int, int]:
@@ -232,9 +240,16 @@ def generate_opencode_theme(colors: dict[str, str]) -> dict:
     }
 
 
-def generate_opencode_config(scss_path: str, output_dir: str | None = None) -> str:
+def generate_opencode_config(
+    scss_path: str,
+    output_dir: str | None = None,
+    palette_json_path: str | None = None,
+    terminal_json_path: str | None = None,
+) -> str:
     """Main entry point. Parse SCSS, generate theme, write to disk."""
     colors = parse_scss_colors(scss_path)
+    colors.update(load_json_colors(palette_json_path))
+    colors.update(load_json_colors(terminal_json_path))
 
     # Also read boolean values
     with open(scss_path, "r") as f:
@@ -266,9 +281,24 @@ if __name__ == "__main__":
     else:
         scss_path = sys.argv[1]
 
+    palette_json_path = (
+        sys.argv[2]
+        if len(sys.argv) >= 3
+        else os.path.expanduser("~/.local/state/quickshell/user/generated/palette.json")
+    )
+    terminal_json_path = (
+        sys.argv[3]
+        if len(sys.argv) >= 4
+        else os.path.expanduser(
+            "~/.local/state/quickshell/user/generated/terminal.json"
+        )
+    )
+
     if not os.path.exists(scss_path):
         print(f"Error: {scss_path} not found", file=sys.stderr)
         sys.exit(1)
 
-    output = generate_opencode_config(scss_path)
+    output = generate_opencode_config(
+        scss_path, None, palette_json_path, terminal_json_path
+    )
     print(f"[opencode] Theme generated: {output}")

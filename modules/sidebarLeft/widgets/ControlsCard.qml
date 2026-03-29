@@ -18,7 +18,7 @@ Item {
     }
 
     function openSettings(): void {
-        Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "settings", "open"])
+        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"])
     }
 
     RowLayout {

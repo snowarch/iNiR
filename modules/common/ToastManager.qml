@@ -13,6 +13,7 @@ Scope {
     property var toasts: []
     property int maxToasts: 5
     property int toastSpacing: 8
+    readonly property bool suppressOnScreenToasts: (GameMode?.active ?? false) || (GameMode?.hasAnyFullscreenWindow ?? false)
     
     // Unified reload tracking - only show ONE toast per reload event
     property real _lastReloadToastTime: 0
@@ -25,6 +26,7 @@ Scope {
     
     // Check if reload toasts should be shown
     function shouldShowReloadToast(): bool {
+        if (Config.isSettingsProcess) return false
         if (!(Config.options?.reloadToasts?.enable ?? true)) return false
         
         if (GameMode.disableReloadToasts && (GameMode.active || GameMode.hasAnyFullscreenWindow || GameMode.suppressNiriToast)) {
@@ -192,6 +194,7 @@ Scope {
         
         PanelWindow {
             id: popup
+            visible: root.toasts.length > 0 && !root.suppressOnScreenToasts
             exclusiveZone: 0
             anchors.top: true
             anchors.left: true

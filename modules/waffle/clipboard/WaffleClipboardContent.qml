@@ -125,6 +125,10 @@ Item {
         id: pane
         anchors.centerIn: parent
         radius: Looks.radius.large
+        screenX: (Quickshell.screens[0]?.width ?? 1920) / 2 - pane.width / 2
+        screenY: (Quickshell.screens[0]?.height ?? 1080) / 2 - pane.height / 2
+        screenWidth: Quickshell.screens[0]?.width ?? 1920
+        screenHeight: Quickshell.screens[0]?.height ?? 1080
 
         contentItem: ColumnLayout {
             spacing: 0

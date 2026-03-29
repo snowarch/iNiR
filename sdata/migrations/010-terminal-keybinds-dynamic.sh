@@ -1,5 +1,5 @@
 # Migration: Dynamic terminal keybinds
-# Updates Mod+T and Mod+Return to use launch-terminal.sh so the Settings UI
+# Updates Mod+T and Mod+Return to use the iNiR launcher so the Settings UI
 # terminal selection controls which terminal opens.
 
 MIGRATION_ID="010-terminal-keybinds-dynamic"
@@ -13,7 +13,7 @@ migration_check() {
   [[ -f "$config" ]] || return 1
 
   # Already migrated?
-  if grep -q 'launch-terminal\.sh' "$config"; then
+  if grep -qE 'Mod\+(T|Return).*spawn.*"inir"\s+"terminal"' "$config"; then
     return 1
   fi
 
@@ -25,8 +25,8 @@ migration_preview() {
   echo -e "${STY_RED}- Mod+T { spawn \"<terminal>\"; }${STY_RST}"
   echo -e "${STY_RED}- Mod+Return { spawn \"<terminal>\"; }${STY_RST}"
   echo ""
-  echo -e "${STY_GREEN}+ Mod+T { spawn \"bash\" \"-c\" \"\$HOME/.config/quickshell/ii/scripts/launch-terminal.sh\"; }${STY_RST}"
-  echo -e "${STY_GREEN}+ Mod+Return { spawn \"bash\" \"-c\" \"\$HOME/.config/quickshell/ii/scripts/launch-terminal.sh\"; }${STY_RST}"
+  echo -e "${STY_GREEN}+ Mod+T { spawn \"inir\" \"terminal\"; }${STY_RST}"
+  echo -e "${STY_GREEN}+ Mod+Return { spawn \"inir\" \"terminal\"; }${STY_RST}"
 }
 
 migration_diff() {
@@ -53,19 +53,17 @@ config_path = os.path.expanduser(os.environ.get("XDG_CONFIG_HOME", "~/.config"))
 with open(config_path, "r", encoding="utf-8") as f:
     content = f.read()
 
-script = "$HOME/.config/quickshell/ii/scripts/launch-terminal.sh"
-
 # Replace Mod+T with any hardcoded terminal
 content = re.sub(
     r'(Mod\+T\s*\{)\s*spawn\s+"(?:foot|kitty|alacritty|ghostty|wezterm|konsole)"[^}]*(\})',
-    rf'\1 spawn "bash" "-c" "{script}"; \2',
+    r'\1 spawn "inir" "terminal"; \2',
     content
 )
 
 # Replace Mod+Return with any hardcoded terminal
 content = re.sub(
     r'(Mod\+Return\s*\{)\s*spawn\s+"(?:foot|kitty|alacritty|ghostty|wezterm|konsole)"[^}]*(\})',
-    rf'\1 spawn "bash" "-c" "{script}"; \2',
+    r'\1 spawn "inir" "terminal"; \2',
     content
 )
 

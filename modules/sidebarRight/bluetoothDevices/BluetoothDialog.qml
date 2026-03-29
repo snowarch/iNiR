@@ -78,8 +78,7 @@ WindowDialog {
         DialogButton {
             buttonText: Translation.tr("Details")
             onClicked: {
-                const cmd = Config.options?.apps?.bluetooth ?? "blueman-manager"
-                ShellExec.execCmd(cmd);
+                AppLauncher.launch("bluetooth")
                 GlobalStates.sidebarRightOpen = false;
             }
         }

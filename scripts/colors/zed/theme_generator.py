@@ -11,10 +11,12 @@ import sys
 from pathlib import Path
 
 
-def generate_zed_config(colors, scss_path, output_path):
+def generate_zed_config(
+    colors, scss_path, output_path, palette_json_path=None, terminal_json_path=None
+):
     """Generate Zed editor theme from Material You colors and SCSS terminal colors."""
-    colors_json_path = os.path.expanduser(
-        "~/.local/state/quickshell/user/generated/colors.json"
+    colors_json_path = palette_json_path or os.path.expanduser(
+        "~/.local/state/quickshell/user/generated/palette.json"
     )
 
     try:
@@ -22,7 +24,7 @@ def generate_zed_config(colors, scss_path, output_path):
             my_colors = json.load(f)
     except FileNotFoundError:
         print(
-            f"Warning: Could not find colors.json. Using defaults for Zed theme.",
+            f"Warning: Could not find palette/colors JSON. Using defaults for Zed theme.",
             file=sys.stderr,
         )
         my_colors = {
@@ -43,7 +45,7 @@ def generate_zed_config(colors, scss_path, output_path):
     my_colors = {k: v.lower() for k, v in my_colors.items()}
 
     def parse_scss_colors(scss_path):
-        """Parse material_colors.scss and extract color variables"""
+        """Parse material_colors.scss compatibility values."""
         term_colors = {}
         try:
             with open(scss_path, "r") as f:

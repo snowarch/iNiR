@@ -18,6 +18,10 @@ for dir in "$XDG_BIN_HOME" "$XDG_CACHE_HOME" "$XDG_CONFIG_HOME" "$XDG_DATA_HOME"
   fi
 done
 
+INIR_LAUNCHER_PATH="${XDG_BIN_HOME}/inir"
+INIR_APPLICATIONS_DIR="${XDG_DATA_HOME}/applications"
+INIR_ICON_DIR="${XDG_DATA_HOME}/icons/hicolor/scalable/apps"
+
 # Create quickshell state directories
 v mkdir -p "${XDG_STATE_HOME}/quickshell/user/generated/wallpaper"
 v mkdir -p "${XDG_STATE_HOME}/quickshell/user/generated/terminal"
@@ -90,12 +94,12 @@ if [[ ! "${SKIP_BACKUP}" == true ]]; then auto_backup_configs; fi
 case "${SKIP_QUICKSHELL}" in
   true) sleep 0;;
   *)
-    tui_info "Installing Quickshell ii config..."
+    tui_info "Installing Quickshell inir config..."
 
     # The ii QML code is in the root of this repo, not in dots/
-    # We copy it to ~/.config/quickshell/ii/
+    # We copy it to ~/.config/quickshell/inir/
     II_SOURCE="${REPO_ROOT}"
-    II_TARGET="${XDG_CONFIG_HOME}/quickshell/ii"
+    II_TARGET="${XDG_CONFIG_HOME}/quickshell/inir"
 
     v mkdir -p "$II_TARGET"
 
@@ -107,7 +111,7 @@ case "${SKIP_QUICKSHELL}" in
 
     # Generate manifest BEFORE syncing (to know what should exist)
     log_info "Generating file manifest..."
-    generate_manifest "$II_SOURCE" "${II_TARGET}/.ii-manifest.new"
+    generate_manifest "$II_SOURCE" "${II_TARGET}/.inir-manifest.new"
 
     # Copy all .qml files from root (auto-detect, no manual list needed)
     for qml_file in "${II_SOURCE}"/*.qml; do
@@ -116,28 +120,63 @@ case "${SKIP_QUICKSHELL}" in
       fi
     done
 
-    # Copy required directories
-    QML_DIRS=(modules services scripts assets translations sdata/uv)
-    for dir in "${QML_DIRS[@]}"; do
-      if [[ -d "${II_SOURCE}/${dir}" ]]; then
-        install_dir__sync "${II_SOURCE}/${dir}" "${II_TARGET}/${dir}"
-      fi
-    done
+    runtime_root_manifest="${II_SOURCE}/sdata/runtime-root-files.txt"
+    if [[ -f "$runtime_root_manifest" ]]; then
+      while IFS= read -r runtime_file; do
+        [[ -n "$runtime_file" ]] || continue
+        if [[ -f "${II_SOURCE}/${runtime_file}" ]]; then
+          install_file "${II_SOURCE}/${runtime_file}" "${II_TARGET}/${runtime_file}"
+        fi
+      done < "$runtime_root_manifest"
+    fi
+
+    # Copy runtime payload directories
+    runtime_dirs_manifest="${II_SOURCE}/sdata/runtime-payload-dirs.txt"
+    if [[ -f "$runtime_dirs_manifest" ]]; then
+      while IFS= read -r dir; do
+        [[ -n "$dir" ]] || continue
+        if [[ -d "${II_SOURCE}/${dir}" ]]; then
+          install_dir__sync "${II_SOURCE}/${dir}" "${II_TARGET}/${dir}"
+        fi
+      done < "$runtime_dirs_manifest"
+    fi
 
     # Finalize manifest
-    mv "${II_TARGET}/.ii-manifest.new" "${II_TARGET}/.ii-manifest"
+    mv "${II_TARGET}/.inir-manifest.new" "${II_TARGET}/.inir-manifest"
 
     # Cleanup orphan files (files that no longer exist in repo)
     if [[ "${IS_UPDATE}" == "true" ]]; then
       log_info "Cleaning up orphan files..."
-      cleanup_orphans "$II_TARGET" "${II_TARGET}/.ii-manifest"
+      cleanup_orphans "$II_TARGET" "${II_TARGET}/.inir-manifest"
     fi
 
     # Fix script permissions
     log_info "Setting script permissions..."
     find "$II_TARGET/scripts" \( -name "*.sh" -o -name "*.fish" -o -name "*.py" \) -exec chmod +x {} \; 2>/dev/null || true
+    [[ -f "${II_TARGET}/setup" ]] && chmod +x "${II_TARGET}/setup"
 
-    log_success "Quickshell ii config installed"
+    if [[ -f "${REPO_ROOT}/scripts/inir" ]]; then
+      install_file "${REPO_ROOT}/scripts/inir" "${INIR_LAUNCHER_PATH}"
+      chmod +x "${INIR_LAUNCHER_PATH}"
+      ensure_launcher_path_in_shells "${XDG_BIN_HOME}"
+      log_success "Launcher installed"
+      log_success "Launcher path configured for interactive shells"
+    fi
+
+    if [[ -f "${REPO_ROOT}/assets/icons/desktop-symbolic.svg" ]]; then
+      install_file "${REPO_ROOT}/assets/icons/desktop-symbolic.svg" "${INIR_ICON_DIR}/inir.svg"
+      log_success "Launcher icon installed"
+    fi
+
+    if [[ -f "${REPO_ROOT}/assets/applications/inir.desktop" ]]; then
+      INIR_DESKTOP_TMP="${XDG_CACHE_HOME}/inir.desktop.$$"
+      sed "s|^Exec=.*|Exec=${INIR_LAUNCHER_PATH//&/\\&} settings|" "${REPO_ROOT}/assets/applications/inir.desktop" > "${INIR_DESKTOP_TMP}"
+      install_file "${INIR_DESKTOP_TMP}" "${INIR_APPLICATIONS_DIR}/inir.desktop"
+      rm -f "${INIR_DESKTOP_TMP}"
+      log_success "Desktop entry installed"
+    fi
+
+    log_success "Quickshell inir config installed"
 
     # Install Python packages now that requirements.txt is in place
     showfun install-python-packages
@@ -169,18 +208,31 @@ case "${SKIP_NIRI}" in
   *)
     NIRI_CONFIG="${XDG_CONFIG_HOME}/niri/config.kdl"
 
-    # First install: copy our default config
-    # Update: preserve user's config; new options are handled via migrations
-    if [[ -f "defaults/niri/config.kdl" ]]; then
-      install_file__auto_backup "defaults/niri/config.kdl" "${XDG_CONFIG_HOME}/niri/config.kdl"
+    # Never replace an existing user config.kdl.
+    # If it exists, keep it and patch only the minimal launcher/theme bits below.
+    if [[ -f "$NIRI_CONFIG" ]]; then
+      log_success "Preserving existing Niri config"
+    elif [[ -d "defaults/niri" ]]; then
+      install_dir__sync "defaults/niri" "${XDG_CONFIG_HOME}/niri"
       log_success "Niri config installed (defaults)"
     elif [[ -d "dots/.config/niri" ]]; then
-      install_file__auto_backup "dots/.config/niri/config.kdl" "${XDG_CONFIG_HOME}/niri/config.kdl"
+      install_dir__sync "dots/.config/niri" "${XDG_CONFIG_HOME}/niri"
       log_success "Niri config installed (dots)"
     fi
 
     # Patch config.kdl: detect polkit agent
     NIRI_CFG="${XDG_CONFIG_HOME}/niri/config.kdl"
+    NIRI_ENV_CFG="${XDG_CONFIG_HOME}/niri/config.d/40-environment.kdl"
+    NIRI_STARTUP_CFG="${XDG_CONFIG_HOME}/niri/config.d/50-startup.kdl"
+    NIRI_BINDS_CFG="${XDG_CONFIG_HOME}/niri/config.d/70-binds.kdl"
+    NIRI_ENV_TARGET="${NIRI_CFG}"
+    NIRI_STARTUP_TARGET="${NIRI_CFG}"
+    NIRI_BINDS_TARGET="${NIRI_CFG}"
+
+    [[ -f "$NIRI_ENV_CFG" ]] && NIRI_ENV_TARGET="$NIRI_ENV_CFG"
+    [[ -f "$NIRI_STARTUP_CFG" ]] && NIRI_STARTUP_TARGET="$NIRI_STARTUP_CFG"
+    [[ -f "$NIRI_BINDS_CFG" ]] && NIRI_BINDS_TARGET="$NIRI_BINDS_CFG"
+
     if [[ -f "$NIRI_CFG" ]]; then
       POLKIT_AGENT=""
       for agent in \
@@ -196,7 +248,7 @@ case "${SKIP_NIRI}" in
         fi
       done
       if [[ -n "$POLKIT_AGENT" ]]; then
-        sed -i "s|spawn-at-startup \"/usr/lib/mate-polkit/polkit-mate-authentication-agent-1\"|spawn-at-startup \"${POLKIT_AGENT}\"|" "$NIRI_CFG"
+        sed -i "s|spawn-at-startup \"/usr/lib/mate-polkit/polkit-mate-authentication-agent-1\"|spawn-at-startup \"${POLKIT_AGENT}\"|" "$NIRI_STARTUP_TARGET"
         log_success "Polkit agent: $(basename "$(dirname "$POLKIT_AGENT")")/$(basename "$POLKIT_AGENT")"
       else
         log_warning "No polkit agent found — sudo dialogs may not work"
@@ -216,9 +268,21 @@ case "${SKIP_NIRI}" in
         # No plasma-integration: fall back to qt6ct
         # NOTE: This is suboptimal — Darkly style won't read kdeglobals colors properly.
         # The user should install plasma-integration for correct Material You Qt theming.
-        sed -i 's/QT_QPA_PLATFORMTHEME "kde"/QT_QPA_PLATFORMTHEME "qt6ct"/' "$NIRI_CFG"
+        sed -i 's/QT_QPA_PLATFORMTHEME "kde"/QT_QPA_PLATFORMTHEME "qt6ct"/' "$NIRI_ENV_TARGET"
         log_warning "Qt theme: qt6ct (plasma-integration not found — install it for proper Qt theming)"
       fi
+
+      _launcher_path_escaped="${INIR_LAUNCHER_PATH//&/\\&}"
+      sed -i \
+        -e 's|spawn "bash" "-lc" "exec \"\$(inir path)/scripts/launch-terminal.sh\""|spawn "'"${_launcher_path_escaped}"'" "terminal"|' \
+        -e 's|spawn "bash" "-lc" "exec \"\$(inir path)/scripts/close-window.sh\""|spawn "'"${_launcher_path_escaped}"'" "close-window"|' \
+        "$NIRI_BINDS_TARGET"
+      sed -i \
+        -e 's|spawn-at-startup "inir" "start"|spawn-at-startup "'"${_launcher_path_escaped}"'" "start"|' \
+        "$NIRI_STARTUP_TARGET"
+      sed -i \
+        -e 's|spawn "inir" "|spawn "'"${_launcher_path_escaped}"'" "|g' \
+        "$NIRI_BINDS_TARGET"
     fi
     ;;
 esac
@@ -734,7 +798,7 @@ tui_info "Copying wallpapers..."
 # Copy bundled wallpapers to user's Pictures/Wallpapers (always, don't overwrite)
 #####################################################################################
 # Ensure II_TARGET is defined (in case SKIP_QUICKSHELL was set)
-II_TARGET="${II_TARGET:-${XDG_CONFIG_HOME}/quickshell/ii}"
+II_TARGET="${II_TARGET:-${XDG_CONFIG_HOME}/quickshell/inir}"
 USER_WALLPAPERS_DIR="$(xdg-user-dir PICTURES 2>/dev/null || echo "$HOME/Pictures")/Wallpapers"
 if [[ -d "${II_TARGET}/assets/wallpapers" ]]; then
   mkdir -p "${USER_WALLPAPERS_DIR}"
@@ -801,8 +865,11 @@ if [[ "${INSTALL_FIRSTRUN}" == true && -n "${DEFAULT_WALLPAPER}" && -f "${DEFAUL
   export ILLOGICAL_IMPULSE_VIRTUAL_ENV="${XDG_STATE_HOME}/quickshell/.venv"
   if command -v matugen >/dev/null 2>&1; then
     tui_info "Generating theme colors from wallpaper..."
-    # Use --config to ensure correct config file is used
-    if matugen image "${DEFAULT_WALLPAPER}" --mode dark --config "${XDG_CONFIG_HOME}/matugen/config.toml" 2>&1; then
+    _matugen_cmd=(matugen image "${DEFAULT_WALLPAPER}" --mode dark --config "${XDG_CONFIG_HOME}/matugen/config.toml")
+    if matugen image --help 2>&1 | grep -q -- '--source-color-index'; then
+      _matugen_cmd+=(--source-color-index 0)
+    fi
+    if "${_matugen_cmd[@]}" 2>&1; then
       log_success "Theme colors generated (matugen)"
 
       # Generate material_colors.scss from colors.json (needed by applycolor.sh chain)
@@ -839,7 +906,7 @@ fi
 #####################################################################################
 # Migrate: Generate Darkly.colors for existing users (Qt file dialogs fix)
 #####################################################################################
-DARKLY_COLORS_FILE="${HOME}/.local/share/color-schemes/Darkly.colors"
+DARKLY_COLORS_FILE="${XDG_DATA_HOME:-$HOME/.local/share}/color-schemes/Darkly.colors"
 if [[ ! -f "${DARKLY_COLORS_FILE}" ]]; then
   tui_info "Generating Darkly color scheme for Qt apps..."
 
@@ -879,15 +946,7 @@ if [[ -n "${II_TARGET}" && -d "${II_TARGET}" ]]; then
   if command -v git &>/dev/null && [[ -d "${REPO_ROOT}/.git" ]]; then
     REPO_COMMIT=$(git -C "${REPO_ROOT}" rev-parse --short HEAD 2>/dev/null || echo "")
   fi
-  cat > "${II_TARGET}/version.json" << VEOF
-{
-  "version": "${REPO_VERSION:-0.0.0}",
-  "commit": "${REPO_COMMIT:-unknown}",
-  "repoPath": "${REPO_ROOT}",
-  "installedAt": "$(date -Iseconds)",
-  "method": "setup-install"
-}
-VEOF
+  write_version_info_json "${II_TARGET}/version.json" "${REPO_VERSION:-0.0.0}" "${REPO_COMMIT:-unknown}" "setup-install"
   log_success "Version tracking configured"
 fi
 
@@ -926,7 +985,7 @@ if ! ${quiet:-false}; then
   _VERIFY_ERRORS=0
   for _crit_file in "shell.qml" "GlobalStates.qml" "modules/common/Config.qml" \
                     "modules/common/Appearance.qml" "services/NiriService.qml"; do
-    if [[ -f "${II_TARGET:-${XDG_CONFIG_HOME}/quickshell/ii}/${_crit_file}" ]]; then
+    if [[ -f "${II_TARGET:-${XDG_CONFIG_HOME}/quickshell/inir}/${_crit_file}" ]]; then
       tui_verify_ok "${_crit_file}"
     else
       tui_verify_fail "${_crit_file}" "MISSING"
@@ -990,7 +1049,7 @@ EOF
 
     echo -e "${STY_BLUE}${STY_BOLD}┌─ What was updated${STY_RST}"
     echo -e "${STY_BLUE}│${STY_RST}"
-    echo -e "${STY_BLUE}│${STY_RST}  ${STY_GREEN}✓${STY_RST} Quickshell ii synced to ~/.config/quickshell/ii/"
+    echo -e "${STY_BLUE}│${STY_RST}  ${STY_GREEN}✓${STY_RST} Quickshell inir synced to ~/.config/quickshell/inir/"
     echo -e "${STY_BLUE}│${STY_RST}  ${STY_GREEN}✓${STY_RST} Missing keybinds added to Niri config (if any)"
     echo -e "${STY_BLUE}│${STY_RST}  ${STY_GREEN}✓${STY_RST} Config migrations applied"
     echo -e "${STY_BLUE}│${STY_RST}"
@@ -1011,11 +1070,12 @@ EOF
 
     echo -e "${STY_BLUE}${STY_BOLD}┌─ What was installed${STY_RST}"
     echo -e "${STY_BLUE}│${STY_RST}"
-    echo -e "${STY_BLUE}│${STY_RST}  ${STY_GREEN}✓${STY_RST} Quickshell ii copied to ~/.config/quickshell/ii/"
-    echo -e "${STY_BLUE}│${STY_RST}  ${STY_GREEN}✓${STY_RST} Niri config with ii keybindings"
+    echo -e "${STY_BLUE}│${STY_RST}  ${STY_GREEN}✓${STY_RST} Quickshell inir copied to ~/.config/quickshell/inir/"
+    echo -e "${STY_BLUE}│${STY_RST}  ${STY_GREEN}✓${STY_RST} Niri config wired to the inir launcher"
     echo -e "${STY_BLUE}│${STY_RST}  ${STY_GREEN}✓${STY_RST} GTK/Qt theming (Matugen + Kvantum + Darkly)"
     echo -e "${STY_BLUE}│${STY_RST}  ${STY_GREEN}✓${STY_RST} Environment variables for ${DETECTED_SHELL:-your shell}"
     echo -e "${STY_BLUE}│${STY_RST}  ${STY_GREEN}✓${STY_RST} Default wallpaper and color scheme"
+    echo -e "${STY_BLUE}│${STY_RST}  ${STY_GREEN}✓${STY_RST} User launcher, desktop entry, and icon"
     echo -e "${STY_BLUE}│${STY_RST}"
     echo -e "${STY_BLUE}└──────────────────────────────${STY_RST}"
     echo ""
@@ -1040,40 +1100,17 @@ if ! ${quiet:-false}; then
   # REBOOT WARNING (first install only)
   if [[ "${IS_UPDATE}" != "true" ]]; then
     echo ""
-    printf "${STY_RED}${STY_BOLD}"
-    cat << 'REBOOT'
-╔══════════════════════════════════════════════════════════════╗
-║                                                              ║
-║     ██████╗ ███████╗██████╗  ██████╗  ██████╗ ████████╗      ║
-║     ██╔══██╗██╔════╝██╔══██╗██╔═══██╗██╔═══██╗╚══██╔══╝      ║
-║     ██████╔╝█████╗  ██████╔╝██║   ██║██║   ██║   ██║         ║
-║     ██╔══██╗██╔══╝  ██╔══██╗██║   ██║██║   ██║   ██║         ║
-║     ██║  ██║███████╗██████╔╝╚██████╔╝╚██████╔╝   ██║         ║
-║     ╚═╝  ╚═╝╚══════╝╚═════╝  ╚═════╝  ╚═════╝    ╚═╝         ║
-║                                                              ║
-║          REBOOT YOUR SYSTEM. SERIOUSLY. DO IT NOW.           ║
-║                                                              ║
-╚══════════════════════════════════════════════════════════════╝
-REBOOT
-    printf "${STY_RST}"
+    echo -e "${STY_CYAN}${STY_BOLD}┌─ Session Note${STY_RST}"
+    echo -e "${STY_CYAN}│${STY_RST}"
+    echo -e "${STY_CYAN}│${STY_RST}  ${STY_YELLOW}Log out or reboot${STY_RST} if new groups, env vars, or user services"
+    echo -e "${STY_CYAN}│${STY_RST}  do not apply immediately in your current session."
     echo ""
-    echo -e "${STY_YELLOW}Environment variables, user groups, and systemd services${STY_RST}"
-    echo -e "${STY_YELLOW}won't take effect until you reboot. Don't skip this.${STY_RST}"
-    echo ""
-  fi
-
-  # Next steps
-  echo -e "${STY_CYAN}${STY_BOLD}┌─ Next Steps${STY_RST}"
-  echo -e "${STY_CYAN}│${STY_RST}"
-  if [[ "${IS_UPDATE}" != "true" ]]; then
-    echo -e "${STY_CYAN}│${STY_RST}  ${STY_BOLD}1.${STY_RST} ${STY_RED}${STY_BOLD}REBOOT${STY_RST} your system"
-    echo -e "${STY_CYAN}│${STY_RST}  ${STY_BOLD}2.${STY_RST} Select ${STY_BOLD}Niri${STY_RST} at your display manager"
-    echo -e "${STY_CYAN}│${STY_RST}  ${STY_BOLD}3.${STY_RST} ii will start automatically with your session"
   else
-    echo -e "${STY_CYAN}│${STY_RST}  ${STY_BOLD}1.${STY_RST} Log out and log back in, or reload Niri:"
-    echo -e "${STY_CYAN}│${STY_RST}  ${STY_FAINT}$ niri msg action load-config-file${STY_RST}"
+    echo -e "${STY_CYAN}${STY_BOLD}┌─ Session Note${STY_RST}"
+    echo -e "${STY_CYAN}│${STY_RST}"
+    echo -e "${STY_CYAN}│${STY_RST}  Reload Niri or restart the session if the updated launcher bindings"
+    echo -e "${STY_CYAN}│${STY_RST}  are not visible immediately."
   fi
-  echo -e "${STY_CYAN}│${STY_RST}"
   echo -e "${STY_CYAN}└──────────────────────────────${STY_RST}"
   echo ""
 
@@ -1093,13 +1130,13 @@ REBOOT
   fi
 
   echo -e "${STY_FAINT}Backups saved to: ${BACKUP_DIR}${STY_RST}"
-  echo -e "${STY_FAINT}Logs: qs log -c ii${STY_RST}"
+  echo -e "${STY_FAINT}Logs: inir logs${STY_RST}"
   echo ""
 
   if [[ "${IS_UPDATE}" == "true" ]]; then
     echo -e "${STY_GREEN}Done. Hot reload should kick in any second now.${STY_RST}"
   else
-    echo -e "${STY_GREEN}Now reboot and enjoy your new desktop!${STY_RST}"
+    echo -e "${STY_GREEN}Install complete. iNiR is ready through the inir launcher.${STY_RST}"
   fi
   echo ""
 

@@ -9,7 +9,7 @@ import qs.modules.common.widgets
 
 ContentPage {
     settingsPageIndex: 1
-    settingsPageName: Translation.tr("General")
+    settingsPageName: Translation.tr("System")
 
     Process {
         id: translationProc
@@ -332,6 +332,57 @@ ContentPage {
                     }
                 }
             }
+
+            SettingsDivider {}
+
+            ConfigRow {
+                enabled: Battery.chargeLimitSupported
+                uniform: false
+                Layout.fillWidth: false
+                SettingsSwitch {
+                    buttonIcon: "battery_saver"
+                    text: Translation.tr("Charge limit")
+                    checked: Config.options?.battery?.chargeLimit?.enable ?? false
+                    onCheckedChanged: {
+                        Config.setNestedValue("battery.chargeLimit.enable", checked);
+                    }
+                    StyledToolTip {
+                        text: !Battery.chargeLimitSupported
+                            ? Translation.tr("Not supported on this device")
+                            : Battery.chargeLimitAdjustable
+                                ? Translation.tr("Stop charging at a specific percentage to extend battery lifespan (requires polkit)")
+                                : Translation.tr("Use your device's built-in battery conservation mode (requires polkit)")
+                    }
+                }
+                ConfigSpinBox {
+                    visible: Battery.chargeLimitAdjustable
+                    enabled: (Config.options?.battery?.chargeLimit?.enable ?? false) && Battery.chargeLimitAdjustable
+                    icon: "speed"
+                    text: Translation.tr("at")
+                    value: Config.options?.battery?.chargeLimit?.threshold ?? 80
+                    from: 20
+                    to: 100
+                    stepSize: 5
+                    onValueChanged: {
+                        Config.setNestedValue("battery.chargeLimit.threshold", value);
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Maximum charge percentage")
+                    }
+                }
+            }
+
+            StyledText {
+                visible: Battery.chargeLimitSupported
+                Layout.leftMargin: 16
+                text: Battery.chargeLimitActive
+                    ? (Battery.currentChargeLimit > 0 && Battery.currentChargeLimit < 100
+                        ? Translation.tr("Current limit: %1%").arg(Battery.currentChargeLimit)
+                        : Translation.tr("Battery conservation mode active"))
+                    : Translation.tr("No charge limit active")
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: Appearance.colors.colSubtext
+            }
         }
     }
     
@@ -592,6 +643,152 @@ ContentPage {
                 }
                 StyledToolTip {
                     text: Translation.tr("Replace anime wallpapers with a solid color when enabled")
+                }
+            }
+        }
+    }
+
+    SettingsCardSection {
+        expanded: false
+        icon: "lock"
+        title: Translation.tr("Lock screen")
+
+        SettingsGroup {
+            SettingsSwitch {
+                visible: CompositorService.isHyprland
+                buttonIcon: "water_drop"
+                text: Translation.tr('Use Hyprlock (instead of Quickshell)')
+                checked: Config.options?.lock?.useHyprlock ?? false
+                onCheckedChanged: {
+                    Config.setNestedValue("lock.useHyprlock", checked);
+                }
+                StyledToolTip {
+                    text: Translation.tr("If you want to somehow use fingerprint unlock...")
+                }
+            }
+
+            SettingsSwitch {
+                buttonIcon: "account_circle"
+                text: Translation.tr('Launch on startup')
+                checked: Config.options?.lock?.launchOnStartup ?? false
+                onCheckedChanged: {
+                    Config.setNestedValue("lock.launchOnStartup", checked);
+                }
+                StyledToolTip {
+                    text: Translation.tr("Enable this if you want to use Quickshell as your lock screen provider")
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Security")
+
+                SettingsSwitch {
+                    buttonIcon: "settings_power"
+                    text: Translation.tr('Require password to power off/restart')
+                    checked: Config.options?.lock?.security?.requirePasswordToPower ?? true
+                    onCheckedChanged: {
+                        Config.setNestedValue("lock.security.requirePasswordToPower", checked);
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Remember that on most devices one can always hold the power button to force shutdown\nThis only makes it a tiny bit harder for accidents to happen")
+                    }
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "key_vertical"
+                    text: Translation.tr('Also unlock keyring')
+                    checked: Config.options?.lock?.security?.unlockKeyring ?? true
+                    onCheckedChanged: {
+                        Config.setNestedValue("lock.security.unlockKeyring", checked);
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("This is usually safe and needed for your browser and AI sidebar anyway\nMostly useful for those who use lock on startup instead of a display manager that does it (GDM, SDDM, etc.)")
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Style: general")
+
+                SettingsSwitch {
+                    buttonIcon: "center_focus_weak"
+                    text: Translation.tr('Center clock')
+                    checked: Config.options?.lock?.centerClock ?? false
+                    onCheckedChanged: {
+                        Config.setNestedValue("lock.centerClock", checked);
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Align the lock screen clock to the center instead of following layout rules")
+                    }
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "info"
+                    text: Translation.tr('Show "Locked" text')
+                    checked: Config.options?.lock?.showLockedText ?? true
+                    onCheckedChanged: {
+                        Config.setNestedValue("lock.showLockedText", checked);
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Display a 'Locked' label on the lock screen")
+                    }
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "shapes"
+                    text: Translation.tr('Use varying shapes for password characters')
+                    checked: Config.options?.lock?.materialShapeChars ?? false
+                    onCheckedChanged: {
+                        Config.setNestedValue("lock.materialShapeChars", checked);
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Show different geometric shapes instead of bullets for password input")
+                    }
+                }
+            }
+            ContentSubsection {
+                title: Translation.tr("Style: Blurred")
+
+                SettingsSwitch {
+                    buttonIcon: "blur_on"
+                    text: Translation.tr('Enable blur')
+                    checked: Config.options?.lock?.blur?.enable ?? true
+                    onCheckedChanged: {
+                        Config.setNestedValue("lock.blur.enable", checked);
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Apply blur effect to the lock screen background")
+                    }
+                }
+
+                ConfigSpinBox {
+                    icon: "blur_linear"
+                    text: Translation.tr("Blur radius")
+                    value: Config.options?.lock?.blur?.radius ?? 100
+                    from: 0
+                    to: 200
+                    stepSize: 10
+                    onValueChanged: {
+                        Config.setNestedValue("lock.blur.radius", value);
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Intensity of the blur effect")
+                    }
+                }
+
+                ConfigSpinBox {
+                    icon: "loupe"
+                    text: Translation.tr("Extra wallpaper zoom (%)")
+                    value: (Config.options?.lock?.blur?.extraZoom ?? 1.1) * 100
+                    from: 1
+                    to: 150
+                    stepSize: 2
+                    onValueChanged: {
+                        Config.setNestedValue("lock.blur.extraZoom", value / 100);
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Zoom level for the background wallpaper when blur is enabled")
+                    }
                 }
             }
         }

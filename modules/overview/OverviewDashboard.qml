@@ -229,7 +229,7 @@ Item {
                 anchors.fill: source
                 saturation: root.angelStyle ? Appearance.angel.blurSaturation : 0.14
                 blurEnabled: Appearance.effectsEnabled
-                blurMax: 64
+                blurMax: 100
                 blur: Appearance.effectsEnabled ? 1.12 : 0
             }
 
@@ -331,7 +331,7 @@ Item {
                     layer.effect: MultiEffect {
                         saturation: root.angelStyle ? Appearance.angel.blurSaturation : 0.2
                         blurEnabled: Appearance.effectsEnabled
-                        blurMax: 64
+                        blurMax: 100
                         blur: 1
                     }
 
@@ -446,7 +446,7 @@ Item {
                         buttonRadius: root.angelStyle ? Appearance.angel.roundingSmall : 16
                         colBackground: "transparent"
                         colBackgroundHover: root.colCardHover
-                        onClicked: Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "settings", "open"])
+                        onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"])
                         contentItem: MaterialSymbol {
                             anchors.centerIn: parent
                             text: "settings"
@@ -491,7 +491,7 @@ Item {
                           icon: Audio.sink?.audio?.muted ? "volume_off" : "volume_up"
                           label: Translation.tr("Sound")
                           active: !(Audio.sink?.audio?.muted ?? true)
-                          onClicked: { if (Audio.sink?.audio) Audio.sink.audio.toggleMute() }
+                          onClicked: Audio.toggleMute()
                       }
                       QuickToggle {
                           icon: Network.wifiEnabled ? "wifi" : "wifi_off"
@@ -592,7 +592,7 @@ Item {
                             icon: Audio.sink?.audio?.muted ? "volume_off" : "volume_up"
                             value: Audio.sink?.audio?.volume ?? 0
                             onMoved: (val) => Audio.setSinkVolume(val)
-                            onIconClicked: { if (Audio.sink?.audio) Audio.sink.audio.toggleMute() }
+                            onIconClicked: Audio.toggleMute()
                         }
                     }
                 }
@@ -906,8 +906,8 @@ Item {
 
                             StyledText {
                                 Layout.fillWidth: true
-                                text: Weather.data?.city ?? ""
-                                visible: (Weather.data?.city ?? "").length > 0
+                                text: Weather.visibleCity
+                                visible: Weather.showVisibleCity
                                 font.pixelSize: Appearance.font.pixelSize.smallest
                                 color: root.colSubtext
                                 elide: Text.ElideRight
@@ -921,7 +921,7 @@ Item {
                                 : root.inirStyle ? Appearance.inir.roundingSmall : Appearance.rounding.full
                             colBackground: "transparent"
                             colBackgroundHover: root.colCardHover
-                            onClicked: Weather.fetchWeather()
+                            onClicked: Weather.forceRefresh()
                             contentItem: MaterialSymbol {
                                 anchors.centerIn: parent
                                 text: "refresh"
@@ -993,7 +993,7 @@ Item {
                                     implicitSize: 32
                                     lineWidth: 3
                                     value: ResourceUsage.cpuUsage
-                                    colPrimary: ResourceUsage.cpuUsage > 0.8 ? Appearance.m3colors.m3error : root.colPrimary
+                                    colPrimary: ResourceUsage.cpuUsage > 0.8 ? Appearance.colors.colError : root.colPrimary
                                     colSecondary: root.angelStyle ? Appearance.angel.colGlassCard
                                         : root.inirStyle ? Appearance.inir.colLayer2
                                         : Appearance.colors.colSecondaryContainer
@@ -1017,7 +1017,7 @@ Item {
                                         StyledText {
                                             text: Math.round(ResourceUsage.cpuUsage * 100) + "%"
                                             font { pixelSize: Appearance.font.pixelSize.smallest; family: Appearance.font.family.numbers; weight: Font.Bold }
-                                            color: ResourceUsage.cpuUsage > 0.8 ? Appearance.m3colors.m3error : root.colPrimary
+                                            color: ResourceUsage.cpuUsage > 0.8 ? Appearance.colors.colError : root.colPrimary
                                         }
                                     }
 
@@ -1025,7 +1025,7 @@ Item {
                                         visible: ResourceUsage.cpuTemp > 0
                                         text: ResourceUsage.cpuTemp + "°C"
                                         font { pixelSize: Appearance.font.pixelSize.smallest; family: Appearance.font.family.numbers }
-                                        color: ResourceUsage.cpuTemp > 80 ? Appearance.m3colors.m3error
+                                        color: ResourceUsage.cpuTemp > 80 ? Appearance.colors.colError
                                             : ResourceUsage.cpuTemp > 60 ? Appearance.colors.colTertiary
                                             : root.colSubtext
                                     }
@@ -1037,7 +1037,7 @@ Item {
                                 Layout.preferredHeight: 24
                                 values: ResourceUsage.cpuUsageHistory
                                 points: Math.min(ResourceUsage.cpuUsageHistory.length, 30)
-                                color: ResourceUsage.cpuUsage > 0.8 ? Appearance.m3colors.m3error : root.colPrimary
+                                color: ResourceUsage.cpuUsage > 0.8 ? Appearance.colors.colError : root.colPrimary
                                 fillOpacity: 0.15
                                 alignment: Graph.Alignment.Right
                             }
@@ -1063,7 +1063,7 @@ Item {
                                     implicitSize: 32
                                     lineWidth: 3
                                     value: ResourceUsage.memoryUsedPercentage
-                                    colPrimary: ResourceUsage.memoryUsedPercentage > 0.85 ? Appearance.m3colors.m3error : Appearance.colors.colSecondary
+                                    colPrimary: ResourceUsage.memoryUsedPercentage > 0.85 ? Appearance.colors.colError : Appearance.colors.colSecondary
                                     colSecondary: root.angelStyle ? Appearance.angel.colGlassCard
                                         : root.inirStyle ? Appearance.inir.colLayer2
                                         : Appearance.colors.colSecondaryContainer
@@ -1087,7 +1087,7 @@ Item {
                                         StyledText {
                                             text: Math.round(ResourceUsage.memoryUsedPercentage * 100) + "%"
                                             font { pixelSize: Appearance.font.pixelSize.smallest; family: Appearance.font.family.numbers; weight: Font.Bold }
-                                            color: ResourceUsage.memoryUsedPercentage > 0.85 ? Appearance.m3colors.m3error : Appearance.colors.colSecondary
+                                            color: ResourceUsage.memoryUsedPercentage > 0.85 ? Appearance.colors.colError : Appearance.colors.colSecondary
                                         }
                                     }
 
@@ -1106,7 +1106,7 @@ Item {
                                 Layout.preferredHeight: 24
                                 values: ResourceUsage.memoryUsageHistory
                                 points: Math.min(ResourceUsage.memoryUsageHistory.length, 30)
-                                color: ResourceUsage.memoryUsedPercentage > 0.85 ? Appearance.m3colors.m3error : Appearance.colors.colSecondary
+                                color: ResourceUsage.memoryUsedPercentage > 0.85 ? Appearance.colors.colError : Appearance.colors.colSecondary
                                 fillOpacity: 0.15
                                 alignment: Graph.Alignment.Right
                             }
@@ -1151,7 +1151,7 @@ Item {
                             StyledText {
                                 text: Math.round(ResourceUsage.diskUsedPercentage * 100) + "%"
                                 font { pixelSize: Appearance.font.pixelSize.smallest; family: Appearance.font.family.numbers; weight: Font.Medium }
-                                color: ResourceUsage.diskUsedPercentage > 0.9 ? Appearance.m3colors.m3error : root.colSubtext
+                                color: ResourceUsage.diskUsedPercentage > 0.9 ? Appearance.colors.colError : root.colSubtext
                             }
                         }
 
@@ -1176,14 +1176,14 @@ Item {
                                     : (Battery.percentage * 100) > 20 ? "battery_2_bar" : "battery_1_bar"
                                 iconSize: 14
                                 fill: 1
-                                color: (Battery.percentage * 100) <= 20 && !Battery.isCharging ? Appearance.m3colors.m3error
+                                color: (Battery.percentage * 100) <= 20 && !Battery.isCharging ? Appearance.colors.colError
                                     : Battery.isCharging ? Appearance.colors.colTertiary
                                     : root.colSubtext
                             }
                             StyledText {
                                 text: Battery.percentage + "%"
                                 font { pixelSize: Appearance.font.pixelSize.smallest; family: Appearance.font.family.numbers; weight: Font.Medium }
-                                color: (Battery.percentage * 100) <= 20 && !Battery.isCharging ? Appearance.m3colors.m3error
+                                color: (Battery.percentage * 100) <= 20 && !Battery.isCharging ? Appearance.colors.colError
                                     : Battery.isCharging ? Appearance.colors.colTertiary
                                     : root.colSubtext
                             }
@@ -1339,7 +1339,7 @@ Item {
                 iconSize: 16
                 color: root.angelStyle ? Appearance.angel.colText
                     : root.inirStyle ? Appearance.inir.colText
-                    : root.auroraStyle ? (Appearance.m3colors?.m3onSurface ?? Appearance.colors.colOnLayer1)
+                    : root.auroraStyle ? Appearance.colors.colOnLayer1
                     : Appearance.colors.colOnLayer1
             }
         }

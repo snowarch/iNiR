@@ -90,10 +90,10 @@ function setup_systemd_services(){
 function setup_super_daemon(){
   tui_info "Setting up Super-tap daemon..."
   
-  local daemon_src="${REPO_ROOT}/scripts/daemon/ii_super_overview_daemon.py"
-  local service_src="${REPO_ROOT}/scripts/systemd/ii-super-overview.service"
-  local daemon_dst="${HOME}/.local/bin/ii_super_overview_daemon.py"
-  local service_dst="${XDG_CONFIG_HOME}/systemd/user/ii-super-overview.service"
+  local daemon_src="${REPO_ROOT}/scripts/daemon/inir_super_overview_daemon.py"
+  local service_src="${REPO_ROOT}/scripts/systemd/inir-super-overview.service"
+  local daemon_dst="${HOME}/.local/bin/inir_super_overview_daemon.py"
+  local service_dst="${XDG_CONFIG_HOME}/systemd/user/inir-super-overview.service"
   
   if [[ ! -f "$daemon_src" ]]; then
     log_warning "Super-tap daemon not found in repo, skipping"
@@ -112,10 +112,10 @@ function setup_super_daemon(){
   # Enable service if in graphical session
   if [[ -n "${DBUS_SESSION_BUS_ADDRESS}" ]]; then
     v systemctl --user daemon-reload
-    v systemctl --user enable ii-super-overview.service --now
+    v systemctl --user enable inir-super-overview.service --now
   else
     log_warning "Not in graphical session. Enable later with:"
-    echo "  systemctl --user enable ii-super-overview.service --now"
+    echo "  systemctl --user enable inir-super-overview.service --now"
   fi
   
   log_success "Super-tap daemon installed"

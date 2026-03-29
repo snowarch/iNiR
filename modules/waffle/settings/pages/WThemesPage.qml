@@ -156,12 +156,11 @@ WSettingsPage {
                         color: Looks.colors.subfg
                     }
 
-                    TextInput {
+                    WTextInput {
                         id: themeSearchInput
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignVCenter
                         font.pixelSize: Looks.font.pixelSize.small
-                        font.family: Looks.font.family
                         color: Looks.colors.fg
                         clip: true
                         onTextChanged: colorThemeCard.searchQuery = text
@@ -454,12 +453,10 @@ WSettingsPage {
             : derivedStyle
 
         function _applyGlobalStyle(styleId) {
-            console.log("[GlobalStyle] apply", styleId)
             if (styleId === "cards") {
                 Config.setNestedValue("dock.cardStyle", true)
                 Config.setNestedValue("sidebar.cardStyle", true)
                 Config.setNestedValue("bar.cornerStyle", 3)
-                Config.setNestedValue("appearance.transparency.enable", false)
                 return;
             }
 
@@ -467,7 +464,6 @@ WSettingsPage {
                 Config.setNestedValue("dock.cardStyle", false)
                 Config.setNestedValue("sidebar.cardStyle", false)
                 if ((Config.options?.bar?.cornerStyle ?? 1) === 3) Config.setNestedValue("bar.cornerStyle", 1)
-                Config.setNestedValue("appearance.transparency.enable", true)
                 return;
             }
 
@@ -475,7 +471,6 @@ WSettingsPage {
                 Config.setNestedValue("dock.cardStyle", false)
                 Config.setNestedValue("sidebar.cardStyle", false)
                 if ((Config.options?.bar?.cornerStyle ?? 1) === 3) Config.setNestedValue("bar.cornerStyle", 1)
-                Config.setNestedValue("appearance.transparency.enable", true)
                 return;
             }
 
@@ -483,7 +478,6 @@ WSettingsPage {
             Config.setNestedValue("dock.cardStyle", false)
             Config.setNestedValue("sidebar.cardStyle", false)
             if ((Config.options?.bar?.cornerStyle ?? 1) === 3) Config.setNestedValue("bar.cornerStyle", 1)
-            Config.setNestedValue("appearance.transparency.enable", false)
         }
 
         WSettingsDropdown {
@@ -499,7 +493,6 @@ WSettingsPage {
                 { value: "angel", displayName: Translation.tr("Angel") }
             ]
             onSelected: newValue => {
-                console.log("[GlobalStyle] selected", newValue)
                 Config.setNestedValue("appearance.globalStyle", newValue)
                 globalStyleCard._applyGlobalStyle(newValue)
             }
@@ -544,7 +537,13 @@ WSettingsPage {
             ]
             onSelected: newValue => {
                 Config.setNestedValue("appearance.palette.type", newValue)
-                ShellExec.execCmd(`${Directories.wallpaperSwitchScriptPath} --noswitch --type ${newValue}`)
+                if (ThemeService.isAutoTheme) {
+                    ShellExec.execCmd(`${Directories.wallpaperSwitchScriptPath} --noswitch --type ${newValue}`)
+                } else {
+                    const primary = Appearance.m3colors.m3primary
+                    const hex = "#" + ((1 << 24) | (Math.round(primary.r * 255) << 16) | (Math.round(primary.g * 255) << 8) | Math.round(primary.b * 255)).toString(16).slice(1)
+                    MaterialThemeLoader.applySchemeVariant(hex, newValue)
+                }
             }
         }
     }
@@ -572,7 +571,7 @@ WSettingsPage {
 
         WSettingsSwitch {
             label: Translation.tr("Spotify theming")
-            icon: "music_note"
+            icon: "music-note-2"
             description: Translation.tr("Generate and apply Spicetify theme from wallpaper colors")
             checked: Config.options?.appearance?.wallpaperTheming?.enableSpicetify ?? false
             onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.enableSpicetify", checked)

@@ -61,8 +61,7 @@ Item {
                 text: Translation.tr("More volume settings")
                 onClicked: {
                     GlobalStates.waffleActionCenterOpen = false
-                    const cmd = Config.options?.apps?.volumeMixer ?? "pavucontrol"
-                    ShellExec.execCmd(cmd)
+                    AppLauncher.launch("volumeMixer")
                 }
             }
         }
@@ -81,7 +80,7 @@ Item {
                 required property var modelData
                 icon.name: WIcons.audioDeviceIcon(modelData)
                 text: Audio.friendlyDeviceName(modelData)
-                checked: (root.output ? Audio.sink : Audio.source) === modelData
+                checked: modelData.id === (root.output ? Audio.sink : Audio.source)?.id
                 onClicked: {
                     if (root.output) Audio.setDefaultSink(modelData);
                     else Audio.setDefaultSource(modelData);

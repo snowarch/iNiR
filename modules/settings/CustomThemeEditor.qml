@@ -1751,60 +1751,12 @@ ColumnLayout {
                 Repeater {
                     model: root.savedThemesList
 
-                    Rectangle {
+                    InputChip {
                         required property string modelData
-                        implicitWidth: themeChipRow.implicitWidth + 16
-                        implicitHeight: 32
-                        radius: Appearance.rounding.normal
-                        color: Appearance.colors.colSecondaryContainer
-
-                        RowLayout {
-                            id: themeChipRow
-                            anchors.centerIn: parent
-                            spacing: 6
-
-                            MaterialSymbol {
-                                text: "palette"
-                                iconSize: 16
-                                color: Appearance.colors.colOnSecondaryContainer
-                            }
-
-                            StyledText {
-                                text: modelData
-                                font.pixelSize: Appearance.font.pixelSize.small
-                                color: Appearance.colors.colOnSecondaryContainer
-                            }
-
-                            Rectangle {
-                                width: 20
-                                height: 20
-                                radius: Appearance.rounding.verysmall
-                                color: Appearance.colors.colOnSecondaryContainer
-                                opacity: deleteArea.containsMouse ? 1 : 0.3
-
-                                MaterialSymbol {
-                                    anchors.centerIn: parent
-                                    text: "close"
-                                    iconSize: 14
-                                    color: Appearance.colors.colSecondaryContainer
-                                }
-
-                                MouseArea {
-                                    id: deleteArea
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: root.deleteTheme(modelData)
-                                }
-                            }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            anchors.rightMargin: 30
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.loadTheme(modelData)
-                        }
+                        text: modelData
+                        chipIcon: "palette"
+                        onActivated: root.loadTheme(modelData)
+                        onRemoved: root.deleteTheme(modelData)
                     }
                 }
             }

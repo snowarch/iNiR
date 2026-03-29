@@ -19,8 +19,8 @@
 #
 # Usage:
 #   Source this before launching quickshell:
-#     source ~/.config/quickshell/ii/scripts/quickshell-env.sh
-#     qs -c ii
+#     source ~/.config/quickshell/inir/scripts/quickshell-env.sh
+#     inir run
 #
 #   Or in niri config.kdl environment block:
 #     MALLOC_ARENA_MAX "2"

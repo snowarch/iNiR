@@ -28,6 +28,12 @@ Singleton {
     property string userAvatarPathAccountsService: FileUtils.trimFileProtocol(`/var/lib/AccountsService/icons/${SystemInfo.username}`)
     property string userAvatarPathRicersAndWeirdSystems: FileUtils.trimFileProtocol(`${Directories.home}/.face`)
     property string userAvatarPathRicersAndWeirdSystems2: FileUtils.trimFileProtocol(`${Directories.home}/.face.icon`)
+    readonly property var userAvatarPaths: [
+        userAvatarPathAccountsService,
+        userAvatarPathRicersAndWeirdSystems,
+        userAvatarPathRicersAndWeirdSystems2
+    ]
+    readonly property string userAvatarSourcePrimary: avatarSourceAt(0)
     property string coverArt: FileUtils.trimFileProtocol(`${Directories.cache}/media/coverart`)
     property string tempImages: "/tmp/quickshell/media/images"
     property string booruPreviews: FileUtils.trimFileProtocol(`${Directories.cache}/media/boorus`)
@@ -43,6 +49,9 @@ Singleton {
     property string conflictCachePath: FileUtils.trimFileProtocol(`${Directories.cache}/conflict-killer`)
     property string notificationsPath: FileUtils.trimFileProtocol(`${Directories.state}/user/notifications.json`)
     property string generatedMaterialThemePath: FileUtils.trimFileProtocol(`${Directories.state}/user/generated/colors.json`)
+    property string generatedPalettePath: FileUtils.trimFileProtocol(`${Directories.state}/user/generated/palette.json`)
+    property string generatedTerminalPalettePath: FileUtils.trimFileProtocol(`${Directories.state}/user/generated/terminal.json`)
+    property string generatedThemeMetaPath: FileUtils.trimFileProtocol(`${Directories.state}/user/generated/theme-meta.json`)
     property string generatedWallpaperCategoryPath: FileUtils.trimFileProtocol(`${Directories.state}/user/generated/wallpaper/category.txt`)
     property string cliphistDecode: FileUtils.trimFileProtocol(`/tmp/quickshell/media/cliphist`)
     property string screenshotTemp: "/tmp/quickshell/media/screenshot"
@@ -53,6 +62,25 @@ Singleton {
     property string aiChats: FileUtils.trimFileProtocol(`${Directories.state}/user/ai/chats`)
     property string aiTranslationScriptPath: FileUtils.trimFileProtocol(`${Directories.scriptPath}/ai/gemini-translate.sh`)
     property string recordScriptPath: FileUtils.trimFileProtocol(`${Directories.scriptPath}/videos/record.sh`)
+
+    function avatarSourceAt(index: int): string {
+        if (index < 0 || index >= userAvatarPaths.length)
+            return ""
+
+        const path = String(userAvatarPaths[index] ?? "").trim()
+        return path.length > 0 ? `file://${path}` : ""
+    }
+
+    function nextAvatarSource(currentSource: string): string {
+        const normalized = String(currentSource ?? "").replace(/^file:\/\//, "")
+
+        for (let i = 0; i < userAvatarPaths.length; ++i) {
+            if (String(userAvatarPaths[i] ?? "") === normalized)
+                return avatarSourceAt(i + 1)
+        }
+
+        return userAvatarSourcePrimary
+    }
     // Cleanup on init
     Component.onCompleted: {
         Quickshell.execDetached(["mkdir", "-p", `${shellConfig}`])

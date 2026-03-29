@@ -13,6 +13,7 @@ RippleButton {
     id: root
     property var entry
     property string query
+    property Item upTarget: null
     property bool entryShown: entry?.shown ?? true
     property string itemType: entry?.type ?? Translation.tr("App")
     property string itemName: entry?.name ?? ""
@@ -31,6 +32,23 @@ RippleButton {
     property int buttonHorizontalPadding: 10
     property int buttonVerticalPadding: 6
     property bool keyboardDown: false
+    readonly property bool isCurrentItem: ListView.isCurrentItem
+    readonly property bool isHighlighted: root.isCurrentItem
+    readonly property color normalTextColor: Appearance.angelEverywhere ? Appearance.angel.colText
+        : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+    readonly property color selectedTextColor: Appearance.angelEverywhere ? Appearance.angel.colText
+        : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnPrimaryContainer
+    readonly property color selectedBackgroundColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2
+        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+        : Appearance.colors.colPrimaryContainer
+    readonly property color hoverBackgroundColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+        : Appearance.colors.colLayer2Hover
+    readonly property color pressedBackgroundColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+        : Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive : Appearance.colors.colPrimaryContainerActive
+    readonly property color activeRippleColor: Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive : Appearance.colors.colPrimaryContainerActive
 
     // No fade-in animation - prevents flickering when results update rapidly
     opacity: 1
@@ -39,20 +57,13 @@ RippleButton {
     implicitWidth: rowLayout.implicitWidth + root.buttonHorizontalPadding * 2
     buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.normal
-    colBackground: (root.down || root.keyboardDown) 
-        ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
-            : Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive : Appearance.colors.colPrimaryContainerActive)
-        : ((root.hovered || root.focus) 
-            ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                : Appearance.inirEverywhere ? Appearance.inir.colLayer2 
-                : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface 
-                : Appearance.colors.colPrimaryContainer)
-            : "transparent")
-    colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover 
-        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface 
-        : Appearance.colors.colPrimaryContainer
-    colRipple: Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive : Appearance.colors.colPrimaryContainerActive
+    colBackground: (root.down || root.keyboardDown)
+        ? root.pressedBackgroundColor
+        : (root.isHighlighted
+            ? root.selectedBackgroundColor
+            : (root.hovered ? root.hoverBackgroundColor : "transparent"))
+    colBackgroundHover: root.hoverBackgroundColor
+    colRipple: root.activeRippleColor
 
     property string highlightPrefix: `<u><font color="${Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary}">`
     property string highlightSuffix: `</font></u>`
@@ -160,7 +171,15 @@ RippleButton {
             MaterialSymbol {
                 text: root.materialSymbol
                 iconSize: 30
-                color: Appearance.m3colors.m3onSurface
+                color: root.isHighlighted ? root.selectedTextColor : root.normalTextColor
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation {
+                        duration: Appearance.animation.elementMoveFast.duration
+                        easing.type: Appearance.animation.elementMoveFast.type
+                        easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                    }
+                }
             }
         }
 
@@ -169,7 +188,15 @@ RippleButton {
             StyledText {
                 text: root.bigText
                 font.pixelSize: Appearance.font.pixelSize.larger
-                color: Appearance.m3colors.m3onSurface
+                color: root.isHighlighted ? root.selectedTextColor : root.normalTextColor
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation {
+                        duration: Appearance.animation.elementMoveFast.duration
+                        easing.type: Appearance.animation.elementMoveFast.type
+                        easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                    }
+                }
             }
         }
 
@@ -199,7 +226,7 @@ RippleButton {
                             anchors.centerIn: parent
                             text: "check"
                             font.pixelSize: Appearance.font.pixelSize.normal
-                            color: Appearance.m3colors.m3onPrimary
+                            color: Appearance.colors.colOnPrimary
                         }
                     }
                 }
@@ -217,10 +244,18 @@ RippleButton {
                     textFormat: Text.StyledText // RichText also works, but StyledText ensures elide work
                     font.pixelSize: Appearance.font.pixelSize.small
                     font.family: Appearance.font.family[root.fontType]
-                    color: Appearance.m3colors.m3onSurface
+                    color: root.isHighlighted ? root.selectedTextColor : root.normalTextColor
                     horizontalAlignment: Text.AlignLeft
                     elide: Text.ElideRight
                     text: `${root.displayContent}`
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation {
+                            duration: Appearance.animation.elementMoveFast.duration
+                            easing.type: Appearance.animation.elementMoveFast.type
+                            easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                        }
+                    }
                 }
             }
             Loader { // Clipboard image preview
@@ -239,12 +274,20 @@ RippleButton {
         // Action text
         StyledText {
             Layout.fillWidth: false
-            visible: (root.hovered || root.focus)
+            visible: (root.hovered || root.isHighlighted)
             id: clickAction
             font.pixelSize: Appearance.font.pixelSize.normal
-            color: Appearance.colors.colOnPrimaryContainer
+            color: root.isHighlighted ? root.selectedTextColor : root.normalTextColor
             horizontalAlignment: Text.AlignRight
             text: root.itemClickActionName
+            Behavior on color {
+                enabled: Appearance.animationsEnabled
+                ColorAnimation {
+                    duration: Appearance.animation.elementMoveFast.duration
+                    easing.type: Appearance.animation.elementMoveFast.type
+                    easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                }
+            }
         }
 
         RowLayout {
@@ -262,8 +305,8 @@ RippleButton {
                     implicitHeight: 34
                     implicitWidth: 34
 
-                    colBackgroundHover: Appearance.colors.colSecondaryContainerHover
-                    colRipple: Appearance.colors.colSecondaryContainerActive
+                    colBackgroundHover: root.hoverBackgroundColor
+                    colRipple: root.activeRippleColor
 
                     contentItem: Item {
                         id: actionContentItem
@@ -274,7 +317,15 @@ RippleButton {
                             sourceComponent: MaterialSymbol {
                                 text: actionButton.materialIconName || "video_settings"
                                 font.pixelSize: Appearance.font.pixelSize.hugeass
-                                color: Appearance.m3colors.m3onSurface
+                                color: root.normalTextColor
+                                Behavior on color {
+                                    enabled: Appearance.animationsEnabled
+                                    ColorAnimation {
+                                        duration: Appearance.animation.elementMoveFast.duration
+                                        easing.type: Appearance.animation.elementMoveFast.type
+                                        easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                                    }
+                                }
                             }
                         }
                         Loader {

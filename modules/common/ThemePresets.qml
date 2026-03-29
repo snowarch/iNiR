@@ -312,18 +312,6 @@ Singleton {
             }
         },
         {
-            id: "opencode",
-            name: "OpenCode",
-            description: "The official OpenCode theme",
-            icon: "terminal",
-            colors: opencodeColors,
-            tags: ["dark", "minimal"],
-            meta: {
-                fontStyle: "mono",
-                roundingScale: 1.0
-            }
-        },
-        {
             id: "synthwave84",
             name: "Synthwave '84",
             description: "Retro neon aesthetics",
@@ -504,6 +492,30 @@ Singleton {
             meta: {
                 roundingScale: 0.5,
                 borderWidthScale: 0.5
+            }
+        },
+        {
+            id: "fields-of-the-shire",
+            name: "Fields of the Shire",
+            description: "Warm earthy tones of the pastoral countryside",
+            icon: "grass",
+            colors: fieldsOfTheShireDarkColors,
+            tags: ["dark", "nature"],
+            meta: {
+                roundingScale: 1.2,
+                fontStyle: "serif"
+            }
+        },
+        {
+            id: "fields-of-the-shire-light",
+            name: "Fields of the Shire Light",
+            description: "Morning sun over parchment meadows",
+            icon: "wb_sunny",
+            colors: fieldsOfTheShireLightColors,
+            tags: ["light", "nature"],
+            meta: {
+                roundingScale: 1.2,
+                fontStyle: "serif"
             }
         }
     ]
@@ -1899,64 +1911,6 @@ Singleton {
         m3onSuccessContainer: "#d8ecef"
     })
 
-    // OpenCode - Official Theme
-    readonly property var opencodeColors: ({
-        darkmode: true,
-        m3background: "#0a0a0a",
-        m3onBackground: "#eeeeee",
-        m3surface: "#0a0a0a",
-        m3surfaceDim: "#000000",
-        m3surfaceBright: "#1e1e1e",
-        m3surfaceContainerLowest: "#000000",
-        m3surfaceContainerLow: "#0a0a0a",
-        m3surfaceContainer: "#141414",
-        m3surfaceContainerHigh: "#1e1e1e",
-        m3surfaceContainerHighest: "#282828",
-        m3onSurface: "#eeeeee",
-        m3surfaceVariant: "#282828",
-        m3onSurfaceVariant: "#808080",
-        m3inverseSurface: "#eeeeee",
-        m3inverseOnSurface: "#0a0a0a",
-        m3outline: "#484848",
-        m3outlineVariant: "#3c3c3c",
-        m3shadow: "#000000",
-        m3scrim: "#000000",
-        m3surfaceTint: "#fab283",
-        m3primary: "#fab283",
-        m3onPrimary: "#0a0a0a",
-        m3primaryContainer: "#323232",
-        m3onPrimaryContainer: "#ffc09f",
-        m3inversePrimary: "#5c9cf5",
-        m3secondary: "#5c9cf5",
-        m3onSecondary: "#0a0a0a",
-        m3secondaryContainer: "#1e1e1e",
-        m3onSecondaryContainer: "#86e1fc",
-        m3tertiary: "#9d7cd8",
-        m3onTertiary: "#0a0a0a",
-        m3tertiaryContainer: "#282828",
-        m3onTertiaryContainer: "#c099ff",
-        m3error: "#e06c75",
-        m3onError: "#0a0a0a",
-        m3errorContainer: "#323232",
-        m3onErrorContainer: "#ff757f",
-        m3primaryFixed: "#fab283",
-        m3primaryFixedDim: "#d9956a",
-        m3onPrimaryFixed: "#0a0a0a",
-        m3onPrimaryFixedVariant: "#1e1e1e",
-        m3secondaryFixed: "#5c9cf5",
-        m3secondaryFixedDim: "#4a7ec0",
-        m3onSecondaryFixed: "#0a0a0a",
-        m3onSecondaryFixedVariant: "#1e1e1e",
-        m3tertiaryFixed: "#9d7cd8",
-        m3tertiaryFixedDim: "#7e62b0",
-        m3onTertiaryFixed: "#0a0a0a",
-        m3onTertiaryFixedVariant: "#1e1e1e",
-        m3success: "#7fd88f",
-        m3onSuccess: "#0a0a0a",
-        m3successContainer: "#1e1e1e",
-        m3onSuccessContainer: "#c3e88d"
-    })
-
     // Synthwave '84 - Retro Neon
     readonly property var synthwave84Colors: ({
         darkmode: true,
@@ -2886,6 +2840,123 @@ Singleton {
         m3onSuccessContainer: "#aaccf2"
     })
 
+    // Fields of the Shire (Dark) — Inspired by OpenChamber's "Fields of the Shire"
+    // Warm earthy tones: muted olive greens, parchment creams, amber and clay
+    readonly property var fieldsOfTheShireDarkColors: ({
+        darkmode: true,
+        m3background: "#1b1815",
+        m3onBackground: "#ebe0d1",
+        m3surface: "#1b1815",
+        m3surfaceDim: "#141210",
+        m3surfaceBright: "#2b2622",
+        m3surfaceContainerLowest: "#141210",
+        m3surfaceContainerLow: "#1b1815",
+        m3surfaceContainer: "#231f1b",
+        m3surfaceContainerHigh: "#2b2622",
+        m3surfaceContainerHighest: "#332d28",
+        m3onSurface: "#ebe0d1",
+        m3surfaceVariant: "#332d28",
+        m3onSurfaceVariant: "#a89888",
+        m3inverseSurface: "#ebe0d1",
+        m3inverseOnSurface: "#1b1815",
+        m3outline: "#6a5e52",
+        m3outlineVariant: "#413e3a",
+        m3shadow: "#000000",
+        m3scrim: "#000000",
+        m3surfaceTint: "#7a8a5a",
+        m3primary: "#7a8a5a",
+        m3onPrimary: "#1b1815",
+        m3primaryContainer: "#3d4530",
+        m3onPrimaryContainer: "#a4b67d",
+        m3inversePrimary: "#93a56b",
+        m3secondary: "#c47a3a",
+        m3onSecondary: "#1b1815",
+        m3secondaryContainer: "#5c3a1e",
+        m3onSecondaryContainer: "#e8a870",
+        m3tertiary: "#5a6d7a",
+        m3onTertiary: "#ebe0d1",
+        m3tertiaryContainer: "#2e3840",
+        m3onTertiaryContainer: "#8fa8b8",
+        m3error: "#b34d3b",
+        m3onError: "#ebe0d1",
+        m3errorContainer: "#4a2520",
+        m3onErrorContainer: "#d98878",
+        m3primaryFixed: "#7a8a5a",
+        m3primaryFixedDim: "#5e6b45",
+        m3onPrimaryFixed: "#1b1815",
+        m3onPrimaryFixedVariant: "#2b2622",
+        m3secondaryFixed: "#c47a3a",
+        m3secondaryFixedDim: "#9a6030",
+        m3onSecondaryFixed: "#1b1815",
+        m3onSecondaryFixedVariant: "#2b2622",
+        m3tertiaryFixed: "#5a6d7a",
+        m3tertiaryFixedDim: "#485860",
+        m3onTertiaryFixed: "#ebe0d1",
+        m3onTertiaryFixedVariant: "#2b2622",
+        m3success: "#93a56b",
+        m3onSuccess: "#1b1815",
+        m3successContainer: "#3d4530",
+        m3onSuccessContainer: "#a4b67d"
+    })
+
+    // Fields of the Shire (Light) — Parchment and morning meadow
+    readonly property var fieldsOfTheShireLightColors: ({
+        darkmode: false,
+        m3background: "#f9f5eb",
+        m3onBackground: "#2c2820",
+        m3surface: "#f9f5eb",
+        m3surfaceDim: "#ece8de",
+        m3surfaceBright: "#f9f5eb",
+        m3surfaceContainerLowest: "#ffffff",
+        m3surfaceContainerLow: "#f5f1e7",
+        m3surfaceContainer: "#efebe1",
+        m3surfaceContainerHigh: "#e9e5db",
+        m3surfaceContainerHighest: "#e3dfd5",
+        m3onSurface: "#2c2820",
+        m3surfaceVariant: "#e3dfd5",
+        m3onSurfaceVariant: "#5a5348",
+        m3inverseSurface: "#2c2820",
+        m3inverseOnSurface: "#f9f5eb",
+        m3outline: "#8a7e70",
+        m3outlineVariant: "#c8c0b4",
+        m3shadow: "#000000",
+        m3scrim: "#000000",
+        m3surfaceTint: "#5a6b3a",
+        m3primary: "#5a6b3a",
+        m3onPrimary: "#ffffff",
+        m3primaryContainer: "#d8e8b8",
+        m3onPrimaryContainer: "#3d4a28",
+        m3inversePrimary: "#93a56b",
+        m3secondary: "#8a5a2a",
+        m3onSecondary: "#ffffff",
+        m3secondaryContainer: "#f0d0a8",
+        m3onSecondaryContainer: "#5c3a1a",
+        m3tertiary: "#3a5a6a",
+        m3onTertiary: "#ffffff",
+        m3tertiaryContainer: "#b8d8e8",
+        m3onTertiaryContainer: "#1a3a4a",
+        m3error: "#9a3528",
+        m3onError: "#ffffff",
+        m3errorContainer: "#f0c8c0",
+        m3onErrorContainer: "#5a2018",
+        m3primaryFixed: "#5a6b3a",
+        m3primaryFixedDim: "#485830",
+        m3onPrimaryFixed: "#ffffff",
+        m3onPrimaryFixedVariant: "#e9e5db",
+        m3secondaryFixed: "#8a5a2a",
+        m3secondaryFixedDim: "#704820",
+        m3onSecondaryFixed: "#ffffff",
+        m3onSecondaryFixedVariant: "#e9e5db",
+        m3tertiaryFixed: "#3a5a6a",
+        m3tertiaryFixedDim: "#2a4858",
+        m3onTertiaryFixed: "#ffffff",
+        m3onTertiaryFixedVariant: "#e9e5db",
+        m3success: "#5a6b3a",
+        m3onSuccess: "#ffffff",
+        m3successContainer: "#d8e8b8",
+        m3onSuccessContainer: "#3d4a28"
+    })
+
     function getPreset(id) {
         for (let i = 0; i < presets.length; i++) {
             if (presets[i].id === id) return presets[i];
@@ -2986,6 +3057,8 @@ Singleton {
         m3.m3onSuccess = c.m3onSuccess;
         m3.m3successContainer = c.m3successContainer;
         m3.m3onSuccessContainer = c.m3onSuccessContainer;
+
+        generateColorsJson(c);
         
         if (applyExternal) {
             applyExternalThemes(c);
@@ -2998,17 +3071,6 @@ Singleton {
         const enableAppsAndShell = Config.options?.appearance?.wallpaperTheming?.enableAppsAndShell ?? true;
         const enableVesktop = Config.options?.appearance?.wallpaperTheming?.enableVesktop ?? true;
         const enableTerminal = Config.options?.appearance?.wallpaperTheming?.enableTerminal ?? true;
-        
-        // Generate colors.json for Vesktop (if enabled)
-        if (enableVesktop) {
-            generateColorsJson(c);
-            Qt.callLater(() => {
-                Quickshell.execDetached([
-                    "/usr/bin/python3",
-                    Directories.scriptPath + "/colors/system24_palette.py"
-                ]);
-            });
-        }
         
         // Apply GTK theme (if enabled)
         if (enableAppsAndShell) {
@@ -3081,19 +3143,35 @@ Singleton {
             "onPrimary": c.m3onPrimary,
             "primaryContainer": c.m3primaryContainer,
             "onPrimaryContainer": c.m3onPrimaryContainer,
+            "primaryFixed": c.m3primaryFixed,
+            "primaryFixedDim": c.m3primaryFixedDim,
+            "onPrimaryFixed": c.m3onPrimaryFixed,
+            "onPrimaryFixedVariant": c.m3onPrimaryFixedVariant,
             "inversePrimary": c.m3inversePrimary,
             "secondary": c.m3secondary,
             "onSecondary": c.m3onSecondary,
             "secondaryContainer": c.m3secondaryContainer,
             "onSecondaryContainer": c.m3onSecondaryContainer,
+            "secondaryFixed": c.m3secondaryFixed,
+            "secondaryFixedDim": c.m3secondaryFixedDim,
+            "onSecondaryFixed": c.m3onSecondaryFixed,
+            "onSecondaryFixedVariant": c.m3onSecondaryFixedVariant,
             "tertiary": c.m3tertiary,
             "onTertiary": c.m3onTertiary,
             "tertiaryContainer": c.m3tertiaryContainer,
             "onTertiaryContainer": c.m3onTertiaryContainer,
+            "tertiaryFixed": c.m3tertiaryFixed,
+            "tertiaryFixedDim": c.m3tertiaryFixedDim,
+            "onTertiaryFixed": c.m3onTertiaryFixed,
+            "onTertiaryFixedVariant": c.m3onTertiaryFixedVariant,
             "error": c.m3error,
             "onError": c.m3onError,
             "errorContainer": c.m3errorContainer,
             "onErrorContainer": c.m3onErrorContainer,
+            "success": c.m3success,
+            "onSuccess": c.m3onSuccess,
+            "successContainer": c.m3successContainer,
+            "onSuccessContainer": c.m3onSuccessContainer,
         };
         
         for (const [key, value] of Object.entries(colorMap)) {
@@ -3106,9 +3184,9 @@ Singleton {
         
         // Get user adjustments from config
         const termAdj = Config.options?.appearance?.wallpaperTheming?.terminalColorAdjustments ?? {};
-        const userSaturation = termAdj.saturation ?? 0.40;
-        const userBrightness = termAdj.brightness ?? 0.55;
-        const userHarmony = termAdj.harmony ?? 0.15;
+        const userSaturation = termAdj.saturation ?? 0.65;
+        const userBrightness = termAdj.brightness ?? 0.60;
+        const userHarmony = termAdj.harmony ?? 0.40;
         
         // Get primary color for harmonization
         const primaryColor = Qt.color(c.m3primary);
@@ -3213,24 +3291,33 @@ Singleton {
         // DEPRECATED: Use applyExternalThemes instead
         applyExternalThemes(c);
     }
-    
-    function generateColorsJson(c) {
-        console.log("[ThemePresets] Generating colors.json for Vesktop");
-        
-        // Generate colors.json in the format expected by system24_palette.py
-        const colorsJson = {
+
+    function generateColorsJsonObject(c) {
+        return {
             primary: c.m3primary,
             on_primary: c.m3onPrimary,
             primary_container: c.m3primaryContainer,
             on_primary_container: c.m3onPrimaryContainer,
+            primary_fixed: c.m3primaryFixed,
+            primary_fixed_dim: c.m3primaryFixedDim,
+            on_primary_fixed: c.m3onPrimaryFixed,
+            on_primary_fixed_variant: c.m3onPrimaryFixedVariant,
             secondary: c.m3secondary,
             on_secondary: c.m3onSecondary,
             secondary_container: c.m3secondaryContainer,
             on_secondary_container: c.m3onSecondaryContainer,
+            secondary_fixed: c.m3secondaryFixed,
+            secondary_fixed_dim: c.m3secondaryFixedDim,
+            on_secondary_fixed: c.m3onSecondaryFixed,
+            on_secondary_fixed_variant: c.m3onSecondaryFixedVariant,
             tertiary: c.m3tertiary,
             on_tertiary: c.m3onTertiary,
             tertiary_container: c.m3tertiaryContainer,
             on_tertiary_container: c.m3onTertiaryContainer,
+            tertiary_fixed: c.m3tertiaryFixed,
+            tertiary_fixed_dim: c.m3tertiaryFixedDim,
+            on_tertiary_fixed: c.m3onTertiaryFixed,
+            on_tertiary_fixed_variant: c.m3onTertiaryFixedVariant,
             error: c.m3error,
             on_error: c.m3onError,
             error_container: c.m3errorContainer,
@@ -3239,10 +3326,13 @@ Singleton {
             on_background: c.m3onBackground,
             surface: c.m3surface,
             on_surface: c.m3onSurface,
+            surface_dim: c.m3surfaceDim,
+            surface_bright: c.m3surfaceBright,
             surface_variant: c.m3surfaceVariant,
             on_surface_variant: c.m3onSurfaceVariant,
-            surface_container: c.m3surfaceContainer,
+            surface_container_lowest: c.m3surfaceContainerLowest,
             surface_container_low: c.m3surfaceContainerLow,
+            surface_container: c.m3surfaceContainer,
             surface_container_high: c.m3surfaceContainerHigh,
             surface_container_highest: c.m3surfaceContainerHighest,
             outline: c.m3outline,
@@ -3252,19 +3342,83 @@ Singleton {
             inverse_primary: c.m3inversePrimary,
             shadow: c.m3shadow,
             scrim: c.m3scrim,
-            surface_tint: c.m3surfaceTint
+            surface_tint: c.m3surfaceTint,
+            success: c.m3success,
+            on_success: c.m3onSuccess,
+            success_container: c.m3successContainer,
+            on_success_container: c.m3onSuccessContainer
         };
-        
+    }
+    
+    function generateColorsJson(c) {
+        console.log("[ThemePresets] Generating colors.json for preset theme");
+        const colorsJson = generateColorsJsonObject(c);
+        const terminalJson = buildTerminalJson(c);
+        Object.assign(colorsJson, terminalJson)
+
         const outputPath = Directories.generatedMaterialThemePath;
         const jsonStr = JSON.stringify(colorsJson, null, 2);
 
         colorsJsonFileView.path = Qt.resolvedUrl(outputPath)
         colorsJsonFileView.setText(jsonStr)
+        writeGeneratedThemeContracts(c)
+        if ((Config.options?.appearance?.wallpaperTheming?.enableVesktop ?? true) !== false) {
+            console.log("[ThemePresets] Triggering Vesktop theme generation wrapper")
+            Quickshell.execDetached([
+                "/usr/bin/bash",
+                Directories.scriptPath + "/colors/system24_palette.sh"
+            ])
+        }
         console.log("[ThemePresets] colors.json written to:", outputPath);
     }
 
     FileView {
         id: colorsJsonFileView
+    }
+
+    FileView {
+        id: paletteJsonFileView
+    }
+
+    FileView {
+        id: terminalJsonFileView
+    }
+
+    FileView {
+        id: themeMetaFileView
+    }
+
+    function buildTerminalJson(c) {
+        const scss = generateScssFromColors(c);
+        const terminalJson = {};
+        const regex = /^\$(term\d+):\s*(#[0-9A-Fa-f]{6});$/gm;
+        let match;
+        while ((match = regex.exec(scss)) !== null) {
+            terminalJson[match[1]] = match[2];
+        }
+        return terminalJson;
+    }
+
+    function buildThemeMeta(c) {
+        return {
+            source: "preset",
+            preset: Config.options?.appearance?.theme ?? null,
+            mode: c.darkmode ? "dark" : "light",
+            scheme: "preset",
+            transparent: c.transparent ?? false,
+            generated_by: "ThemePresets.qml"
+        };
+    }
+
+    function writeGeneratedThemeContracts(c) {
+        paletteJsonFileView.path = Qt.resolvedUrl(Directories.generatedPalettePath)
+        paletteJsonFileView.setText(JSON.stringify(generateColorsJsonObject(c), null, 2))
+
+        terminalJsonFileView.path = Qt.resolvedUrl(Directories.generatedTerminalPalettePath)
+        terminalJsonFileView.setText(JSON.stringify(buildTerminalJson(c), null, 2))
+
+        themeMetaFileView.path = Qt.resolvedUrl(Directories.generatedThemeMetaPath)
+        themeMetaFileView.setText(JSON.stringify(buildThemeMeta(c), null, 2))
     }
 
     // ========== Hover Preview System ==========
@@ -3419,4 +3573,3 @@ Singleton {
         m3.m3onSuccessContainer = c.m3onSuccessContainer;
     }
 }
-

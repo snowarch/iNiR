@@ -585,7 +585,7 @@ Item {
               : (Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1)
         clip: true
 
-        layer.enabled: auroraEverywhere && !inirEverywhere && !gameModeMinimal
+        layer.enabled: !gameModeMinimal
         layer.effect: GE.OpacityMask {
             maskSource: Rectangle {
                 width: bg.width; height: bg.height; radius: bg.radius
@@ -613,7 +613,7 @@ Item {
                     ? (Appearance.angel.blurSaturation * Appearance.angel.colorStrength)
                     : (Appearance.effectsEnabled ? 0.2 : 0)
                 blurEnabled: Appearance.effectsEnabled
-                blurMax: 64
+                blurMax: 100
                 blur: Appearance.effectsEnabled
                     ? (bg.angelEverywhere ? Appearance.angel.blurIntensity : 1) : 0
             }
@@ -1428,7 +1428,7 @@ Item {
             Hyprland.dispatch("reload")
         else if (CompositorService.isNiri)
             Quickshell.execDetached(["/usr/bin/niri", "msg", "action", "load-config-file"])
-        Quickshell.reload(true)
+        Quickshell.execDetached(["/usr/bin/bash", Quickshell.shellPath("scripts/restart-shell.sh")])
     }
 
     function doSettings() {
@@ -1447,7 +1447,7 @@ Item {
             }
         }
         GlobalStates.sidebarRightOpen = false
-        Qt.callLater(() => Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "settings", "open"]))
+        Qt.callLater(() => Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"]))
     }
 
     // ═════════════════════════════════════════════════════════════
@@ -1734,7 +1734,7 @@ Item {
                 label: Translation.tr("Screenshot")
                 onClicked: {
                     GlobalStates.sidebarRightOpen = false
-                    Qt.callLater(() => Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "region", "screenshot"]))
+                    Qt.callLater(() => Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "screenshot"]))
                 }
             }
 
@@ -1744,7 +1744,7 @@ Item {
                 label: Translation.tr("Record")
                 onClicked: {
                     GlobalStates.sidebarRightOpen = false
-                    Qt.callLater(() => Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "region", "record"]))
+                    Qt.callLater(() => Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "record"]))
                 }
             }
 
@@ -1754,7 +1754,7 @@ Item {
                 label: Translation.tr("OCR")
                 onClicked: {
                     GlobalStates.sidebarRightOpen = false
-                    Qt.callLater(() => Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "region", "ocr"]))
+                    Qt.callLater(() => Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "ocr"]))
                 }
             }
 
@@ -1764,7 +1764,7 @@ Item {
                 label: Translation.tr("Search")
                 onClicked: {
                     GlobalStates.sidebarRightOpen = false
-                    Qt.callLater(() => Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "region", "search"]))
+                    Qt.callLater(() => Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "search"]))
                 }
             }
 

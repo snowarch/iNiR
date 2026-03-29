@@ -15,16 +15,19 @@
 
 # iNiR-exclusive files (safe to remove)
 declare -A INIR_ONLY_PATHS=(
-    ["${XDG_CONFIG_HOME}/quickshell/ii"]="iNiR shell configuration"
+    ["${XDG_CONFIG_HOME}/quickshell/inir"]="iNiR shell configuration"
     ["${XDG_CONFIG_HOME}/illogical-impulse"]="iNiR user preferences"
     ["${XDG_STATE_HOME}/quickshell/user"]="iNiR state (notifications, todo)"
-    ["${XDG_CACHE_HOME}/quickshell/ii"]="iNiR cache"
-    ["${HOME}/.local/bin/ii_super_overview_daemon.py"]="iNiR super daemon"
-    ["${XDG_CONFIG_HOME}/systemd/user/ii-super-overview.service"]="iNiR daemon service"
+    ["${XDG_CACHE_HOME}/quickshell/inir"]="iNiR cache"
+    ["${XDG_BIN_HOME}/inir"]="iNiR launcher"
+    ["${HOME}/.local/bin/inir_super_overview_daemon.py"]="iNiR super daemon"
+    ["${XDG_CONFIG_HOME}/systemd/user/inir-super-overview.service"]="iNiR daemon service"
     ["${XDG_CONFIG_HOME}/vesktop/themes/system24.theme.css"]="iNiR Vesktop theme"
     ["${XDG_CONFIG_HOME}/vesktop/themes/ii-colors.css"]="iNiR Vesktop colors"
     ["${XDG_CONFIG_HOME}/Vesktop/themes/system24.theme.css"]="iNiR Vesktop theme (alt)"
     ["${XDG_CONFIG_HOME}/Vesktop/themes/ii-colors.css"]="iNiR Vesktop colors (alt)"
+    ["${XDG_DATA_HOME}/applications/inir.desktop"]="iNiR desktop entry"
+    ["${XDG_DATA_HOME}/icons/hicolor/scalable/apps/inir.svg"]="iNiR launcher icon"
     ["${HOME}/.local/bin/sync-pixel-sddm.py"]="iNiR SDDM theme sync helper"
 )
 
@@ -41,7 +44,7 @@ declare -A SHARED_PATHS=(
     ["${XDG_CONFIG_HOME}/gtk-3.0/gtk.css"]="GTK3 custom styles||optional"
     ["${XDG_CONFIG_HOME}/gtk-4.0/gtk.css"]="GTK4 custom styles||optional"
     ["${XDG_CONFIG_HOME}/fontconfig"]="Font configuration||essential"
-    ["${HOME}/.local/share/color-schemes/Darkly.colors"]="Darkly color scheme||inir_default"
+    ["${XDG_DATA_HOME:-$HOME/.local/share}/color-schemes/Darkly.colors"]="Darkly color scheme||inir_default"
 )
 
 # Quickshell state that may be shared with other quickshell configs
@@ -78,7 +81,10 @@ declare -A INIR_PACKAGES=(
 has_other_quickshell_configs() {
     local qs_dir="${XDG_CONFIG_HOME}/quickshell"
     if [[ -d "$qs_dir" ]]; then
-        local other_configs=$(find "$qs_dir" -maxdepth 1 -type d ! -name "ii" ! -name "quickshell" 2>/dev/null | wc -l)
+        local other_configs
+        other_configs=$(find "$qs_dir" -mindepth 2 -maxdepth 2 -type f -name "shell.qml" \
+            ! -path "${qs_dir}/inir/shell.qml" \
+            ! -path "${qs_dir}/ii/shell.qml" 2>/dev/null | wc -l)
         [[ "$other_configs" -gt 0 ]]
     else
         return 1
@@ -110,7 +116,7 @@ has_other_niri_usage() {
 # Check if niri config has iNiR-specific content or is user-customized
 niri_config_is_inir_default() {
     local config="${XDG_CONFIG_HOME}/niri/config.kdl"
-    [[ -f "$config" ]] && grep -q "quickshell:ii" "$config" 2>/dev/null
+    [[ -f "$config" ]] && grep -qE 'spawn-at-startup "([^"]*/)?inir" "start"|spawn-at-startup "qs" "-c" "inir"|quickshell:iiBackdrop' "$config" 2>/dev/null
 }
 
 # Check if niri config has user customizations beyond iNiR defaults
@@ -261,13 +267,14 @@ get_package_removal_safety() {
 uninstall_stop_services() {
     tui_info "Stopping iNiR services..."
 
-    # Stop quickshell ii config only
-    qs kill -c ii 2>/dev/null || true
+    # Stop quickshell inir config
+    local runtime_target="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/inir"
+    qs -p "$runtime_target" kill 2>/dev/null || true
 
     # Stop super daemon if running
     if command -v systemctl &>/dev/null && [[ -d /run/systemd/system ]]; then
-        if systemctl --user is-active ii-super-overview.service &>/dev/null; then
-            systemctl --user disable --now ii-super-overview.service 2>/dev/null || true
+        if systemctl --user is-active inir-super-overview.service &>/dev/null; then
+            systemctl --user disable --now inir-super-overview.service 2>/dev/null || true
         fi
     fi
 
@@ -281,8 +288,8 @@ uninstall_create_backup() {
     mkdir -p "$backup_dir"
 
     # Backup iNiR-specific files
-    if [[ -d "${XDG_CONFIG_HOME}/quickshell/ii" ]]; then
-        cp -r "${XDG_CONFIG_HOME}/quickshell/ii" "$backup_dir/quickshell-ii"
+    if [[ -d "${XDG_CONFIG_HOME}/quickshell/inir" ]]; then
+        cp -r "${XDG_CONFIG_HOME}/quickshell/inir" "$backup_dir/quickshell-inir"
     fi
 
     if [[ -d "${XDG_CONFIG_HOME}/illogical-impulse" ]]; then
@@ -776,6 +783,9 @@ uninstall_show_packages() {
 
 run_uninstall() {
     local _uninstall_start=$SECONDS
+    local installed_mode
+    local update_strategy
+    local package_name
     echo ""
     tui_title "iNiR Uninstaller"
     echo ""
@@ -791,13 +801,18 @@ run_uninstall() {
 
     # Check if installed
     if [[ ! -f "${XDG_CONFIG_HOME}/illogical-impulse/installed_true" ]] && \
-       [[ ! -d "${XDG_CONFIG_HOME}/quickshell/ii" ]]; then
+       [[ ! -d "${XDG_CONFIG_HOME}/quickshell/inir" ]] && \
+       [[ ! -f "${XDG_CONFIG_HOME}/illogical-impulse/version.json" ]] && \
+       [[ ! -f "${XDG_BIN_HOME}/inir" ]]; then
         tui_warn "iNiR does not appear to be installed"
         return 1
     fi
 
     # Detect distro for package info
     detect_distro 2>/dev/null || true
+    installed_mode=$(get_installed_install_mode)
+    update_strategy=$(get_installed_update_strategy)
+    package_name=$(get_installed_package_name)
 
     # Check for critical conditions
     local warnings=()
@@ -808,6 +823,14 @@ run_uninstall() {
     
     if has_other_quickshell_configs; then
         warnings+=("Other Quickshell configurations detected")
+    fi
+
+    if [[ "$update_strategy" == "package-manager" ]]; then
+        if [[ -n "$package_name" ]]; then
+            warnings+=("Shell payload is externally managed by package: ${package_name}")
+        else
+            warnings+=("Shell payload is externally managed by your package manager")
+        fi
     fi
 
     # Warning
@@ -832,7 +855,14 @@ run_uninstall() {
     else
         echo "  • Shared configs will be preserved unless you choose to remove them"
     fi
-    echo "  • System packages will NOT be removed automatically"
+    if [[ "$update_strategy" == "package-manager" ]]; then
+        echo "  • Externally managed shell packages will NOT be removed automatically"
+        if [[ -n "$package_name" ]]; then
+            echo "  • Remove package-managed payload separately: $package_name"
+        fi
+    else
+        echo "  • System packages will NOT be removed automatically"
+    fi
     echo ""
 
     # Confirm — in non-interactive mode (-y), skip confirmation
@@ -894,7 +924,7 @@ EOF
     echo -e "  $backup_dir"
     echo ""
     echo -e "${STY_FAINT}To restore from backup:${STY_RST}"
-    echo -e "  cp -r $backup_dir/quickshell-ii ${XDG_CONFIG_HOME}/quickshell/ii"
+    echo -e "  cp -r $backup_dir/quickshell-inir ${XDG_CONFIG_HOME}/quickshell/inir"
     echo ""
     local _total_elapsed=$(( SECONDS - _uninstall_start ))
     echo -e "${STY_FAINT}To reinstall iNiR:${STY_RST}"

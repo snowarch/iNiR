@@ -9,7 +9,7 @@ MAX_SNAPSHOTS=10
 
 # Paths to snapshot
 SNAPSHOT_PATHS=(
-    "${XDG_CONFIG_HOME}/quickshell/ii"
+    "${XDG_CONFIG_HOME}/quickshell/inir"
     "${XDG_CONFIG_HOME}/illogical-impulse/config.json"
     "${XDG_CONFIG_HOME}/niri/config.kdl"
 )
@@ -31,6 +31,10 @@ create_snapshot() {
     mkdir -p "$snapshot_dir"
     
     # Copy QML code
+    if [[ -d "${XDG_CONFIG_HOME}/quickshell/inir" ]]; then
+        rsync -a --exclude='.inir-manifest' "${XDG_CONFIG_HOME}/quickshell/inir/" "${snapshot_dir}/inir/"
+    fi
+
     if [[ -d "${XDG_CONFIG_HOME}/quickshell/ii" ]]; then
         rsync -a --exclude='.ii-manifest' "${XDG_CONFIG_HOME}/quickshell/ii/" "${snapshot_dir}/ii/"
     fi
@@ -116,6 +120,16 @@ show_snapshots() {
 restore_snapshot() {
     local snapshot_id="$1"
     local snapshot_dir="${SNAPSHOTS_DIR}/${snapshot_id}"
+    local installed_strategy
+    installed_strategy=$(get_installed_update_strategy)
+
+    if [[ "$installed_strategy" == "package-manager" ]]; then
+        log_error "Snapshot rollback is unavailable for package-managed installs"
+        local update_hint
+        update_hint=$(get_installed_package_update_hint)
+        [[ -n "$update_hint" ]] && tui_info "Use your package manager for shell payload changes: $update_hint"
+        return 1
+    fi
     
     if [[ ! -d "$snapshot_dir" ]]; then
         log_error "Snapshot not found: $snapshot_id"
@@ -131,12 +145,16 @@ restore_snapshot() {
     echo -e "${STY_CYAN}Restoring snapshot: ${snapshot_id}${STY_RST}"
     
     # Stop shell
-    qs kill -c ii &>/dev/null || true
+    local runtime_target="${XDG_CONFIG_HOME}/quickshell/inir"
+    qs -p "$runtime_target" kill &>/dev/null || true
     
     # Restore QML code
-    if [[ -d "${snapshot_dir}/ii" ]]; then
+    if [[ -d "${snapshot_dir}/inir" ]]; then
         log_info "Restoring QML code..."
-        rsync -a --delete "${snapshot_dir}/ii/" "${XDG_CONFIG_HOME}/quickshell/ii/"
+        rsync -a --delete "${snapshot_dir}/inir/" "${XDG_CONFIG_HOME}/quickshell/inir/"
+    elif [[ -d "${snapshot_dir}/ii" ]]; then
+        log_info "Restoring QML code..."
+        rsync -a --delete "${snapshot_dir}/ii/" "${XDG_CONFIG_HOME}/quickshell/inir/"
     fi
     
     # Restore user config
@@ -176,12 +194,12 @@ restore_snapshot() {
     # Restart shell (only if we have access to the session)
     if [[ -n "$NIRI_SOCKET" ]] || [[ -n "$WAYLAND_DISPLAY" ]]; then
         log_info "Starting shell..."
-        nohup qs -c ii >/dev/null 2>&1 &
+        nohup qs -p "$runtime_target" >/dev/null 2>&1 &
         disown
         tui_success "Snapshot restored and shell restarted"
     else
         tui_warn "Not in graphical session - shell restart skipped"
-        tui_info "Run: qs -c ii (in your Niri session)"
+        tui_info "Run: inir start (in your Niri session)"
         tui_success "Snapshot restored"
     fi
 }
@@ -190,6 +208,18 @@ restore_snapshot() {
 # Interactive rollback
 ###############################################################################
 run_rollback() {
+    local installed_strategy
+    installed_strategy=$(get_installed_update_strategy)
+
+    if [[ "$installed_strategy" == "package-manager" ]]; then
+        echo ""
+        tui_warn "Rollback snapshots are only available for repo-managed update flows"
+        local update_hint
+        update_hint=$(get_installed_package_update_hint)
+        [[ -n "$update_hint" ]] && tui_info "Use your package manager for shell payload changes: $update_hint"
+        return 1
+    fi
+
     local snapshots=($(list_snapshots))
     
     if [[ ${#snapshots[@]} -eq 0 ]]; then

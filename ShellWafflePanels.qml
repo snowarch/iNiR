@@ -53,10 +53,8 @@ Item {
     PanelLoader { identifier: "iiOnScreenKeyboard"; component: OnScreenKeyboard {} }
     PanelLoader { identifier: "iiOverlay"; component: Overlay {} }
     PanelLoader { identifier: "iiOverview"; component: Overview {} }
-    PanelLoader { identifier: "iiPolkit"; component: Polkit {} }
     PanelLoader { identifier: "iiRegionSelector"; component: RegionSelector {} }
     PanelLoader { identifier: "iiScreenCorners"; component: ScreenCorners {} }
-    PanelLoader { identifier: "iiSessionScreen"; component: SessionScreen {} }
     PanelLoader { identifier: "iiWallpaperSelector"; component: WallpaperSelector {} }
     PanelLoader { identifier: "iiCoverflowSelector"; component: WallpaperCoverflow {} }
     PanelLoader { identifier: "iiClipboard"; component: ClipboardModule.ClipboardPanel {} }

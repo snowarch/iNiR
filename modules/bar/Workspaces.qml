@@ -20,21 +20,38 @@ Item {
     readonly property Toplevel activeWindow: ToplevelManager.activeToplevel
     readonly property var wsConfig: Config.options?.bar?.workspaces ?? {}
     
+    // Per-monitor: each bar shows workspaces for its own output (Niri)
+    readonly property bool perMonitor: (wsConfig.perMonitor ?? true) && CompositorService.isNiri
+    readonly property string screenName: root.QsWindow.window?.screen?.name ?? ""
+    readonly property var outputWorkspaces: {
+        if (!CompositorService.isNiri) return []
+        if (perMonitor && screenName.length > 0) {
+            return (NiriService.allWorkspaces ?? []).filter(w => w.output === screenName)
+        }
+        return NiriService.currentOutputWorkspaces ?? []
+    }
+
     // Scroll behavior: "workspace" = switch workspaces, "column" = cycle windows left/right in same workspace
     readonly property string scrollBehavior: wsConfig.scrollBehavior ?? "workspace"
     readonly property bool columnMode: scrollBehavior === "column" && CompositorService.isNiri
 
-    readonly property int currentWorkspaceNumber: CompositorService.isNiri
-            ? NiriService.getCurrentWorkspaceNumber()
-            : (monitor?.activeWorkspace?.id || 1)
+    readonly property int currentWorkspaceNumber: {
+        if (CompositorService.isNiri) {
+            if (root.perMonitor) {
+                const activeWs = root.outputWorkspaces.find(w => w.is_active)
+                return activeWs?.idx ?? 1
+            }
+            return NiriService.getCurrentWorkspaceNumber()
+        }
+        return monitor?.activeWorkspace?.id || 1
+    }
     
     // Dynamic workspace count: use actual workspaces from Niri, or fixed count
     readonly property bool dynamicCount: (wsConfig.dynamicCount ?? true) && CompositorService.isNiri
     readonly property int actualWorkspaceCount: {
         if (!dynamicCount) return wsConfig.shown ?? 10
-        // Niri: count workspaces on current output
-        const wsList = NiriService.currentOutputWorkspaces || []
-        return Math.max(wsList.length, 1)
+        // Niri: count workspaces on this output
+        return Math.max(root.outputWorkspaces.length, 1)
     }
     readonly property int workspacesShown: actualWorkspaceCount
     readonly property bool wrapAround: wsConfig.wrapAround ?? true
@@ -53,7 +70,7 @@ Item {
     // Column mode: windows in current workspace
     readonly property var currentWorkspaceWindows: {
         if (!columnMode) return []
-        const currentWs = NiriService.currentOutputWorkspaces?.find(w => w.is_active)
+        const currentWs = root.outputWorkspaces.find(w => w.is_active)
         if (!currentWs) return []
         return NiriService.windows?.filter(w => w.workspace_id === currentWs.id) ?? []
     }
@@ -100,7 +117,7 @@ Item {
 
     function doUpdateWorkspaceOccupied() {
         if (CompositorService.isNiri) {
-            const wsList = NiriService.currentOutputWorkspaces || []
+            const wsList = root.outputWorkspaces || []
             const windows = NiriService.windows || []
             const base = workspaceGroup * root.workspacesShown
 

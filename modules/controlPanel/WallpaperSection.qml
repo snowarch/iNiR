@@ -85,7 +85,7 @@ Rectangle {
                 colBackgroundHover: root.inirEverywhere ? Appearance.inir.colLayer2Hover 
                     : root.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
                     : Appearance.colors.colLayer2Hover
-                onClicked: GlobalStates.wallpaperSelectorOpen = true
+                onClicked: GlobalActions.runLauncher(["wallpaperSelector", "toggle"])
                 contentItem: MaterialSymbol {
                     anchors.centerIn: parent
                     text: "folder_open"
@@ -162,6 +162,33 @@ Rectangle {
                     maskSource: fadeMask
                 }
             }
+        }
+
+        // Color scheme variant chips
+        ConfigSelectionArray {
+            Layout.fillWidth: true
+            currentValue: Config.options?.appearance?.palette?.type ?? "auto"
+            onSelected: newValue => {
+                Config.setNestedValue("appearance.palette.type", newValue)
+                if (ThemeService.isAutoTheme) {
+                    Quickshell.execDetached(["/usr/bin/bash", "-c", `${Directories.wallpaperSwitchScriptPath} --noswitch --type ${newValue}`]);
+                } else {
+                    const primary = Appearance.m3colors.m3primary
+                    const hex = "#" + ((1 << 24) | (Math.round(primary.r * 255) << 16) | (Math.round(primary.g * 255) << 8) | Math.round(primary.b * 255)).toString(16).slice(1)
+                    MaterialThemeLoader.applySchemeVariant(hex, newValue)
+                }
+            }
+            options: [
+                { "value": "auto", "displayName": Translation.tr("Auto") },
+                { "value": "scheme-content", "displayName": Translation.tr("Content") },
+                { "value": "scheme-expressive", "displayName": Translation.tr("Expressive") },
+                { "value": "scheme-fidelity", "displayName": Translation.tr("Fidelity") },
+                { "value": "scheme-fruit-salad", "displayName": Translation.tr("Fruit Salad") },
+                { "value": "scheme-monochrome", "displayName": Translation.tr("Monochrome") },
+                { "value": "scheme-neutral", "displayName": Translation.tr("Neutral") },
+                { "value": "scheme-rainbow", "displayName": Translation.tr("Rainbow") },
+                { "value": "scheme-tonal-spot", "displayName": Translation.tr("Tonal Spot") }
+            ]
         }
     }
 }

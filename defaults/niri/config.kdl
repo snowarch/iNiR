@@ -1,360 +1,45 @@
-// ============================================================================
-// NIRI CONFIGURATION - Base for iNiR (ii)
-// ============================================================================
-// Minimal base config - customize to your needs
-// Wiki: https://github.com/YaLTeR/niri/wiki/Configuration:-Introduction
-// ============================================================================
+// ─────────────────────────────────────────────────────────────────────────────
+// iNiR — Niri Compositor Configuration
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// This config is split into modular files under config.d/ so you can edit
+// individual sections without touching the rest. Niri auto-reloads on save.
+//
+//   10  Input, touchpad, mouse, cursor
+//   20  Layout, gaps, borders, shadows, overview
+//   30  Window rules (corner radius, per-app tweaks)
+//   40  Environment variables (Qt, XDG, theming)
+//   50  Processes spawned at login
+//   60  Animations (spring physics tuning)
+//   70  Key bindings (iNiR shell + window management)
+//   80  Layer rules (backdrop surfaces for iNiR panels)
+//   90  Your personal overrides (never touched by updates)
+//
+// Docs: https://niri-wm.github.io/niri/Configuration:-Introduction
+// KDL format: https://kdl.dev
+// ─────────────────────────────────────────────────────────────────────────────
 
+// Ask apps to drop client-side decorations so Niri draws borders around them.
+// This also fixes border/focus-ring rendering behind semitransparent windows.
+// Restart apps after toggling this.
 prefer-no-csd
 
+// Hide the built-in hotkey cheatsheet on startup (iNiR has its own: Mod+/).
 hotkey-overlay {
     skip-at-startup
 }
 
+// Where native Niri screenshots land (Print key).
+// iNiR's region selector (Mod+Shift+S) uses its own path.
 screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
 
-// Outputs (example - disabled by default)
-// Run `niri msg outputs` inside a niri session to see connector names and modes.
-// Then edit and uncomment this block to pin a specific monitor layout.
-
-// -output "eDP-1" {
-    // mode "1920x1080@60"
-    // scale 1
-    // transform "normal"
-    // position x=0 y=0
-// }
-
-// ============================================================================
-// INPUT
-// ============================================================================
-
-input {
-    keyboard {
-        xkb {
-            layout "us"
-        }
-        repeat-delay 250
-        repeat-rate 50
-    }
-    touchpad {
-        tap
-        tap-button-map "left-right-middle"
-    }
-    mouse {
-        accel-profile "flat"
-    }
-
-    mod-key "Super"
-    mod-key-nested "Alt"
-}
-
-// ============================================================================
-// LAYOUT
-// ============================================================================
-
-layout {
-    gaps 25
-    background-color "transparent"
-    center-focused-column "never"
-    
-    preset-column-widths {
-        proportion 0.33333
-        proportion 0.5
-        proportion 0.66667
-    }
-    
-    default-column-width { 
-        proportion 0.5
-    }
-    
-    border {
-        off
-        width 4
-        active-color   "#707070"
-        inactive-color "#d0d0d0"
-        urgent-color   "#cc4444"
-    }
-    
-    focus-ring {
-        off
-        width 1
-        active-color   "#808080"
-        inactive-color "#505050"
-    }
-    
-    shadow {
-       // off
-        softness 30
-        spread 5
-        offset x=0 y=5
-        color "#0007"
-    }
-    
-    struts { }
-}
-
-gestures {
-    hot-corners {
-        // off
-    }
-}
-
-cursor {
-    xcursor-theme "capitaine-cursors-light"
-    xcursor-size 24
-    hide-when-typing
-}
-
-overview {
-    zoom 0.75
-
-    // Uncomment to give the overview a solid backdrop between workspaces.
-    //backdrop-color "#777777"
-
-    // Uncomment to disable the workspace shadow in the overview.
-    //workspace-shadow {
-    //    off
-    //}
-}
-
-// ============================================================================
-// WINDOW RULES
-// ============================================================================
-
-window-rule {
-    geometry-corner-radius 16
-    clip-to-geometry true
-}
-
-window-rule { 
-    match is-active=false
-    opacity 0.9
-}
-
-// ============================================================================
-// ANIMATIONS
-// ============================================================================
-// Tuned to complement quickshell's expressive Material motion curves
-// QS uses ~500ms for main movements, ~400ms enter, ~200ms exit
-
-animations {
-    //off
-    
-    // Workspace switch: Match QS elementMove (~500ms, expressive overshoot)
-    // damping-ratio < 1 = overshoot (like QS bezier [0.38, 1.21, 0.22, 1.00])
-    workspace-switch {
-        spring damping-ratio=0.78 stiffness=600 epsilon=0.0001
-    }
-    
-    // Window open: Match QS elementMoveEnter (~400ms, emphasized decel)
-    // Lower stiffness = slower start, smooth decel landing
-    window-open {
-        spring damping-ratio=0.82 stiffness=500 epsilon=0.0001
-    }
-    
-    // Window close: Match QS elementMoveExit (~200ms, quick accel out)
-    // Higher stiffness = snappier, quick exit
-    window-close {
-        spring damping-ratio=0.88 stiffness=900 epsilon=0.0001
-    }
-    
-    // Horizontal view: Smooth panning with slight overshoot
-    horizontal-view-movement {
-        spring damping-ratio=0.80 stiffness=550 epsilon=0.0001
-    }
-    
-    // Window movement: Interactive feel, responsive with gentle settle
-    window-movement {
-        spring damping-ratio=0.85 stiffness=650 epsilon=0.0001
-    }
-    
-    // Column/window resize: Match QS elementResize (~300ms)
-    window-resize {
-        spring damping-ratio=0.88 stiffness=700 epsilon=0.0001
-    }
-    
-    // Config notification: Quick feedback
-    config-notification-open-close {
-        spring damping-ratio=0.90 stiffness=800 epsilon=0.0001
-    }
-    
-    // Screenshot UI: Snappy like QS fast effects
-    screenshot-ui-open {
-        spring damping-ratio=0.85 stiffness=750 epsilon=0.0001
-    }
-}
-
-// ============================================================================
-// ENVIRONMENT
-// ============================================================================
-
-environment {
-    XDG_CURRENT_DESKTOP "niri"
-    XDG_MENU_PREFIX "plasma-"  // Required for Dolphin/KDE app file associations
-    QT_QPA_PLATFORM "wayland"
-    ELECTRON_OZONE_PLATFORM_HINT "auto"
-    QT_LOGGING_RULES "quickshell.dbus.properties=false"
-    
-    // Qt theming: kde platform reads colors from kdeglobals (requires plasma-integration pkg)
-    // The installer falls back to qt6ct only if plasma-integration is not installed
-    QT_QPA_PLATFORMTHEME "kde"
-    QT_STYLE_OVERRIDE "Darkly"
-    
-    // Quickshell Python virtual environment
-    ILLOGICAL_IMPULSE_VIRTUAL_ENV "$HOME/.local/state/quickshell/.venv"
-}
-
-// ============================================================================
-// STARTUP
-// ============================================================================
-
-// Import XDG_MENU_PREFIX to systemd for Dolphin/KDE app file associations
-spawn-at-startup "bash" "-c" "systemctl --user import-environment XDG_MENU_PREFIX && kbuildsycoca6"
-
-spawn-at-startup "bash" "-c" "wl-paste --watch cliphist store &"
-spawn-at-startup "/usr/lib/mate-polkit/polkit-mate-authentication-agent-1"
-spawn-at-startup "qs" "-c" "ii"
-
-// ============================================================================
-// KEYBINDINGS
-// ============================================================================
-
-binds {
-    // System
-    Mod+Tab repeat=false { toggle-overview; }
-    Mod+Shift+E { quit; }
-    Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
-    
-    // ii Window Switcher (Alt+Tab)
-    Alt+Tab { spawn "qs" "-c" "ii" "ipc" "call" "altSwitcher" "next"; }
-    Alt+Shift+Tab { spawn "qs" "-c" "ii" "ipc" "call" "altSwitcher" "previous"; }
-    
-    // ii Overlay
-    Super+G { spawn "qs" "-c" "ii" "ipc" "call" "overlay" "toggle"; }
-
-    // ii Overview (daemon)
-    Mod+Space repeat=false { spawn "qs" "-c" "ii" "ipc" "call" "overview" "toggle"; }
-    
-    // ii Clipboard
-    Mod+V { spawn "qs" "-c" "ii" "ipc" "call" "clipboard" "toggle"; }
-    
-    // ii Lock screen
-    Mod+Alt+L allow-when-locked=true { spawn "qs" "-c" "ii" "ipc" "call" "lock" "activate"; }
-    
-    // ii Region tools
-    Mod+Shift+S { spawn "qs" "-c" "ii" "ipc" "call" "region" "screenshot"; }
-    Mod+Shift+X { spawn "qs" "-c" "ii" "ipc" "call" "region" "ocr"; }
-    Mod+Shift+A { spawn "qs" "-c" "ii" "ipc" "call" "region" "search"; }
-    
-    // ii Wallpaper selector
-    Ctrl+Alt+T { spawn "qs" "-c" "ii" "ipc" "call" "wallpaperSelector" "toggle"; }
-    
-    // ii Settings
-    Mod+Comma { spawn "qs" "-c" "ii" "ipc" "call" "settings" "open"; }
-    
-    // ii Cheatsheet
-    Mod+Slash { spawn "qs" "-c" "ii" "ipc" "call" "cheatsheet" "toggle"; }
-    
-    // ii Panel family (cycle between Material ii and Waffle styles)
-    Mod+Shift+W { spawn "qs" "-c" "ii" "ipc" "call" "panelFamily" "cycle"; }
-    
-    // Applications (uses configured terminal from Settings)
-    Mod+T { spawn "bash" "-c" "$HOME/.config/quickshell/ii/scripts/launch-terminal.sh"; }
-    Mod+Return { spawn "bash" "-c" "$HOME/.config/quickshell/ii/scripts/launch-terminal.sh"; }
-    Super+E { spawn "nautilus"; }
-    Super+W { spawn "bash" "-c" "xdg-open https://"; }
-    
-    // Window management
-    Mod+Q repeat=false { spawn "bash" "-c" "$HOME/.config/quickshell/ii/scripts/close-window.sh"; }
-    Mod+D { maximize-column; }
-    Mod+F { fullscreen-window; }
-    Mod+A { toggle-window-floating; }
-
-    // Focus
-    Mod+Left { focus-column-left; }
-    Mod+Right { focus-column-right; }
-    Mod+Up { focus-window-up; }
-    Mod+Down { focus-window-down; }
-    Mod+H { focus-column-left; }
-    Mod+J { focus-window-down; }
-    Mod+K { focus-window-up; }
-    Mod+L { focus-column-right; }
-    
-    // Move windows
-    Mod+Shift+Left { move-column-left; }
-    Mod+Shift+Right { move-column-right; }
-    Mod+Shift+Up { move-window-up; }
-    Mod+Shift+Down { move-window-down; }
-    Mod+Shift+H { move-column-left; }
-    Mod+Shift+J { move-window-down; }
-    Mod+Shift+K { move-window-up; }
-    Mod+Shift+L { move-column-right; }
-    
-    // Workspaces
-    Mod+1 { focus-workspace 1; }
-    Mod+2 { focus-workspace 2; }
-    Mod+3 { focus-workspace 3; }
-    Mod+4 { focus-workspace 4; }
-    Mod+5 { focus-workspace 5; }
-    Mod+6 { focus-workspace 6; }
-    Mod+7 { focus-workspace 7; }
-    Mod+8 { focus-workspace 8; }
-    Mod+9 { focus-workspace 9; }
-    
-    Mod+Shift+1 { move-column-to-workspace 1; }
-    Mod+Shift+2 { move-column-to-workspace 2; }
-    Mod+Shift+3 { move-column-to-workspace 3; }
-    Mod+Shift+4 { move-column-to-workspace 4; }
-    Mod+Shift+5 { move-column-to-workspace 5; }
-    
-    // Screenshots (native)
-    Print { screenshot; }
-    Ctrl+Print { screenshot-screen; }
-    Alt+Print { screenshot-window; }
-    
-    // ========================================================================
-    // HARDWARE KEYS - Audio, Brightness, Media
-    // ========================================================================
-    // These use ii IPC so the OSD (On Screen Display) shows feedback
-    
-    // Volume (hardware keys)
-    XF86AudioRaiseVolume allow-when-locked=true { spawn "qs" "-c" "ii" "ipc" "call" "audio" "volumeUp"; }
-    XF86AudioLowerVolume allow-when-locked=true { spawn "qs" "-c" "ii" "ipc" "call" "audio" "volumeDown"; }
-    XF86AudioMute allow-when-locked=true { spawn "qs" "-c" "ii" "ipc" "call" "audio" "mute"; }
-    XF86AudioMicMute allow-when-locked=true { spawn "qs" "-c" "ii" "ipc" "call" "audio" "micMute"; }
-    
-    // Brightness (hardware keys)
-    XF86MonBrightnessUp allow-when-locked=true { spawn "qs" "-c" "ii" "ipc" "call" "brightness" "increment"; }
-    XF86MonBrightnessDown allow-when-locked=true { spawn "qs" "-c" "ii" "ipc" "call" "brightness" "decrement"; }
-    
-    // Media playback (hardware keys)
-    XF86AudioPlay { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "playPause"; }
-    XF86AudioPause { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "playPause"; }
-    XF86AudioNext { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "next"; }
-    XF86AudioPrev { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "previous"; }
-    
-    // Music control (keyboard alternatives for keyboards without media keys)
-    Ctrl+Mod+Space { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "playPause"; }
-    Mod+Alt+N { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "next"; }
-    Mod+Alt+P { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "previous"; }
-    Mod+Shift+M { spawn "qs" "-c" "ii" "ipc" "call" "audio" "mute"; }
-    Mod+Shift+P { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "playPause"; }
-    Mod+Shift+N { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "next"; }
-    Mod+Shift+B { spawn "qs" "-c" "ii" "ipc" "call" "mpris" "previous"; }
-    
-    // Power / Session
-    Mod+Shift+Q { spawn "qs" "-c" "ii" "ipc" "call" "session" "toggle"; }
-}
-
-// Layer rules for ii backdrop visibility during Niri overview
-layer-rule {
-    match namespace="quickshell:iiBackdrop"
-    place-within-backdrop true
-    opacity 1.0
-}
-
-layer-rule {
-    match namespace="quickshell:wBackdrop"
-    place-within-backdrop true
-    opacity 1.0
-}
+// ── Modular includes ────────────────────────────────────────────────────────
+include "config.d/10-input-and-cursor.kdl"
+include "config.d/20-layout-and-overview.kdl"
+include "config.d/30-window-rules.kdl"
+include "config.d/40-environment.kdl"
+include "config.d/50-startup.kdl"
+include "config.d/60-animations.kdl"
+include "config.d/70-binds.kdl"
+include "config.d/80-layer-rules.kdl"
+include "config.d/90-user-extra.kdl"

@@ -9,6 +9,7 @@ Singleton {
     property string filePath: Directories.shellConfigPath
     property alias options: configOptionsJsonAdapter
     property bool ready: false
+    property bool isSettingsProcess: (Quickshell.env("QS_NO_RELOAD_POPUP") ?? "") === "1"
     property int readWriteDelay: 50 // milliseconds
     property bool blockWrites: false
 
@@ -94,7 +95,7 @@ Singleton {
                 console.log("[Config] File not found, creating new file.")
                 // Ensure parent directory exists
                 const parentDir = root.filePath.substring(0, root.filePath.lastIndexOf('/'))
-                Process.exec(["/usr/bin/mkdir", "-p", parentDir])
+                Quickshell.execDetached(["/usr/bin/mkdir", "-p", parentDir])
                 writeAdapter();
             }
             // Set ready even on failure so UI doesn't stay blank
@@ -297,7 +298,7 @@ Singleton {
                     property bool enableVSCode: true
                     property bool enableChrome: true
                     property bool enableSpicetify: false
-                    property bool enableOpenCode: true
+                    property bool enableOpenCode: false
                     property JsonObject vscodeEditors: JsonObject {
                         property bool code: true           // Official VSCode
                         property bool codium: true         // VSCodium (FOSS)
@@ -315,6 +316,8 @@ Singleton {
                         property bool aide: true           // Aide
                     }
                     property bool useBackdropForColors: false
+                    property bool colorsOnlyMode: false
+                    property string previewSourcePath: ""
                     property JsonObject terminals: JsonObject {
                         property bool kitty: true
                         property bool alacritty: true
@@ -358,6 +361,7 @@ Singleton {
                 }
                 property string iconTheme: "" // System icon theme (tray, GTK/Qt apps)
                 property string dockIconTheme: "" // Dock icon theme (overrides system for dock only)
+                property real shellScale: 1.0 // Legacy compatibility key. Launcher keeps QT_SCALE_FACTOR=1; use appearance.typography.sizeScale.
             }
 
             property JsonObject performance: JsonObject {
@@ -432,15 +436,21 @@ Singleton {
                 }
             }
 
+            property JsonObject compositor: JsonObject {
+                property bool autoExpandSingleTilingWindow: false
+            }
+
             property JsonObject apps: JsonObject {
                 property string bluetooth: "kcmshell6 kcm_bluetooth"
                 property string network: "kitty -1 fish -c nmtui"
                 property string networkEthernet: "kcmshell6 kcm_networkmanagement"
                 property string taskManager: "missioncenter"
                 property string terminal: "kitty" // This is only for shell actions
-                property string volumeMixer: `~/.config/quickshell/ii/scripts/launch_first_available.sh "pavucontrol-qt" "pavucontrol"`
+                property string browser: "firefox" // Used by launcher-backed browser shortcuts
+                property string volumeMixer: "pavucontrol"
                 property string discord: "discord" // Shell command to launch Discord client
                 property string update: "kitty -e sudo pacman -Syu" // Command to run system updates
+                property string manageUser: "kcmshell6 kcm_users" // User account management
             }
 
             property JsonObject background: JsonObject {
@@ -534,12 +544,20 @@ Singleton {
                     property real auroraOverlayOpacity: 0.38
                 }
                 property JsonObject parallax: JsonObject {
+                    property bool enable: true
+                    property string axis: "vertical"
                     property bool vertical: false
                     property bool autoVertical: false
                     property bool enableWorkspace: true
+                    property real workspaceShift: 1.0
                     property real workspaceZoom: 1.07 // Relative to your screen, not wallpaper size
+                    property real zoom: 1.07
                     property bool enableSidebar: true
+                    property real panelShift: 0.15
                     property real widgetsFactor: 1.2
+                    property real widgetDepth: 1.2
+                    property bool pauseDuringTransitions: true
+                    property int transitionSettleMs: 220
                 }
                 property JsonObject multiMonitor: JsonObject {
                     property bool enable: false
@@ -550,6 +568,11 @@ Singleton {
                     property int intervalMinutes: 30 // minutes between wallpaper changes
                     property bool generateColors: true // regenerate theme colors on each change
                     property string folder: "" // empty = use current wallpaper folder
+                }
+                property JsonObject pan: JsonObject {
+                    property real x: 0.0 // Focal point offset X (-1.0 to 1.0, stored as fraction; -1 = full left, +1 = full right)
+                    property real y: 0.0 // Focal point offset Y (-1.0 to 1.0; -1 = top, +1 = bottom)
+                    property real zoom: 1.0 // Extra zoom on top of fill-crop (1.0 = standard fill, 2.0 = 2× zoom, max 3.0)
                 }
                 property JsonObject backend: JsonObject {
                     property string provider: "awww"
@@ -584,7 +607,7 @@ Singleton {
                 property int customRounding: -1 // -1: use global theme rounding | 0+: override bar rounding (px)
                 property bool floatStyleShadow: true // Show shadow behind bar when cornerStyle == 1 (Float)
                 property bool borderless: false // true for no grouping of items
-                property string topLeftIcon: "spark" // Options: "distro" or any icon name in ~/.config/quickshell/ii/assets/icons
+                property string topLeftIcon: "spark" // Options: "distro" or any icon name in ~/.config/quickshell/inir/assets/icons
                 property bool showBackground: true
                 property bool showScrollHints: true // Show brightness/volume scroll hints on hover
                 property string leftScrollAction: "brightness" // "brightness", "volume", "workspace", "none"
@@ -684,6 +707,7 @@ Singleton {
                     property int showNumberDelay: 300 // milliseconds
                     property list<string> numberMap: ["1", "2"] // Characters to show instead of numbers on workspace indicator
                     property bool useNerdFont: false
+                    property bool perMonitor: true // Each bar shows workspaces for its own monitor (Niri)
                 }
                 property JsonObject weather: JsonObject {
                     property bool enable: false
@@ -708,6 +732,10 @@ Singleton {
                 property bool automaticSuspend: true
                 property int suspend: 3
                 property bool notifyFull: true
+                property JsonObject chargeLimit: JsonObject {
+                    property bool enable: false
+                    property int threshold: 80
+                }
             }
 
             property JsonObject closeConfirm: JsonObject {
@@ -745,7 +773,7 @@ Singleton {
                 property bool enableBlurGlass: true
                 property bool separatePinnedFromRunning: true // Waffle-style: pinned-only apps on left, running on right
                 property list<string> pinnedApps: [ // IDs of pinned entries
-                    "org.gnome.Nautilus", "firefox", "foot",]
+                    "org.gnome.Nautilus", "firefox", "kitty",]
                 property list<string> ignoredAppRegexes: []
                 property list<string> screenList: [] // List of screen names to show dock on (e.g. ["DP-2"]). Empty = all screens
                 // Smart indicator settings
@@ -986,11 +1014,20 @@ Singleton {
                     property string webSearch: "?"
                 }
                 property JsonObject imageSearch: JsonObject {
-                    property string imageSearchEngineBaseUrl: "https://lens.google.com/uploadbyurl?url="
+                    property string imageSearchEngineBaseUrl: "https://yandex.com/images/search?rpt=imageview&url="
                     property string fileUploadApiEndpoint: "https://0x0.st"
                     property string fileUploadApiFallback: "https://litterbox.catbox.moe/resources/internals/api.php"
                     property string fileUploadApiFallback2: "https://catbox.moe/user/api.php"
                     property bool useCircleSelection: false
+                }
+                property JsonObject globalActions: JsonObject {
+                    property bool enableSystem: true
+                    property bool enableAppearance: true
+                    property bool enableTools: true
+                    property bool enableMedia: true
+                    property bool enableSettings: true
+                    property bool enablePackages: true
+                    property bool enableCustom: true
                 }
             }
 
@@ -1287,13 +1324,14 @@ Singleton {
                     property bool dock: false
                     property bool mediaControls: false
                     property bool screenCorners: false
+                    property bool widgets: true
                 }
                 property JsonObject tweaks: JsonObject {
                     property bool smootherMenuAnimations: true
                     property bool switchHandlePositionFix: true
                 }
                 property JsonObject altSwitcher: JsonObject {
-                    property string preset: "default"
+                    property string preset: "thumbnails"
                     property bool noVisualUi: false
                     property bool monochromeIcons: false
                     property bool enableAnimation: true
@@ -1301,13 +1339,13 @@ Singleton {
                     property real backgroundOpacity: 1.0
                     property real blurAmount: 0.0
                     property int scrimDim: 0
-                    property int autoHideDelayMs: 300
+                    property int autoHideDelayMs: 500
                     property bool showOverviewWhileSwitching: false
                     property bool compactStyle: false
                     property string panelAlignment: "center"
                     property bool useM3Layout: false
                     property bool useMostRecentFirst: true
-                    property bool quickSwitch: true
+                    property bool quickSwitch: false
                     property bool autoHide: true
                     property bool closeOnFocus: true
                     property int thumbnailWidth: 280
@@ -1335,7 +1373,7 @@ Singleton {
                         property int thumbnailBlurStrength: 70 // Blur strength for animated wallpapers (0-100)
                     }
                     property JsonObject backdrop: JsonObject {
-                        property bool enable: false
+                        property bool enable: true
                         property bool hideWallpaper: false
                         property bool useMainWallpaper: true
                         property string wallpaperPath: ""
@@ -1350,12 +1388,63 @@ Singleton {
                         property real vignetteIntensity: 0.5
                         property real vignetteRadius: 0.7
                     }
+                    property JsonObject parallax: JsonObject {
+                        property bool enable: false
+                        property string axis: "horizontal"
+                        property bool vertical: false
+                        property bool autoVertical: true
+                        property bool enableWorkspace: false
+                        property real workspaceShift: 1.0
+                        property real workspaceZoom: 1.05
+                        property real zoom: 1.05
+                        property bool enableSidebar: false
+                        property real panelShift: 0.12
+                        property real widgetsFactor: 1.0
+                        property real widgetDepth: 1.0
+                        property bool pauseDuringTransitions: true
+                        property int transitionSettleMs: 220
+                    }
+                    property JsonObject widgets: JsonObject {
+                        property JsonObject clock: JsonObject {
+                            property bool enable: false
+                            property string placementStrategy: "leastBusy"
+                            property int x: 100
+                            property int y: 100
+                            property int dim: 55
+                            property string fontFamily: "Segoe UI Variable Display"
+                            property string style: "hero"
+                            property string timeFormat: "system"
+                            property string dateStyle: "long"
+                            property string colorMode: "adaptive"
+                            property bool showDate: true
+                            property bool showSeconds: false
+                            property bool showShadow: true
+                            property bool showLockStatus: true
+                            property int timeScale: 100
+                            property int dateScale: 100
+                            property JsonObject digital: JsonObject {
+                                property bool animateChange: true
+                            }
+                        }
+                    }
                 }
                 property JsonObject bar: JsonObject {
                     property bool bottom: true
                     property bool leftAlignApps: false
                     property bool monochromeIcons: false
                     property bool tintTrayIcons: false
+                    property int iconSize: 26
+                    property int searchIconSize: 24
+                    property JsonObject desktopPeek: JsonObject {
+                        property bool hoverPeek: false
+                        property int hoverDelay: 500
+                    }
+                    property JsonObject notifications: JsonObject {
+                        property bool showUnreadCount: true
+                    }
+                }
+                property JsonObject notifications: JsonObject {
+                    property bool showUnreadCount: true
                 }
                 property JsonObject actionCenter: JsonObject {
                     property list<string> toggles: [ "network", "bluetooth", "easyEffects", "powerProfile", "idleInhibitor", "nightLight", "darkMode", "antiFlashbang", "cloudflareWarp", "mic", "musicRecognition", "notifications", "onScreenKeyboard", "gameMode", "screenSnip", "colorPicker" ]
@@ -1384,7 +1473,17 @@ Singleton {
                     property bool showSystem: true
                     property bool showMedia: true
                     property bool showQuickActions: true
+                    property list<string> quickActions: ["files", "terminal", "settings", "wallpaper", "screenshot", "screenRecord", "session"]
                     property bool weatherHideLocation: false // Privacy: hide city name
+                    // Individual quick action toggles (used by settings switches)
+                    property bool showFiles: true
+                    property bool showTerminal: true
+                    property bool showSettings: true
+                    property bool showWallpaper: true
+                    property bool showScreenshot: true
+                    property bool showScreenRecord: true
+                    property bool showSession: true
+                    property bool showColorScheme: true
                 }
                 property JsonObject workspaceNames: JsonObject {
                     // Custom workspace names, keyed by workspace index (1-based)

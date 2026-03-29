@@ -1,0 +1,26 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// 50 — Processes spawned at login
+// ─────────────────────────────────────────────────────────────────────────────
+// Each line runs once when Niri starts. For daemons that support it,
+// xdg-desktop-autostart (systemd) is an alternative.
+//
+// Tip: use spawn-sh-at-startup for shell pipelines or variable expansion.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Export XDG_MENU_PREFIX into the systemd user session and rebuild the
+// sycoca database so KDE/Qt apps see the correct .desktop entries.
+spawn-at-startup "bash" "-c" "systemctl --user import-environment XDG_MENU_PREFIX && kbuildsycoca6"
+
+// Clipboard history: wl-paste watches the clipboard and cliphist stores it.
+// Access via iNiR's clipboard overlay (Mod+V).
+spawn-at-startup "bash" "-c" "wl-paste --watch cliphist store &"
+
+// Polkit authentication agent — needed for GUI sudo prompts (software install,
+// disk mount, etc.). iNiR's setup auto-detects which agent is installed and
+// patches this line accordingly (KDE, GNOME, MATE, LXQt, or lxpolkit).
+spawn-at-startup "/usr/lib/mate-polkit/polkit-mate-authentication-agent-1"
+
+// ── iNiR shell ──────────────────────────────────────────────────────────────
+// Starts Quickshell with the iNiR configuration (bar, sidebars, overlays…).
+// The launcher path is patched by iNiR's setup to the absolute path.
+spawn-at-startup "inir" "start"

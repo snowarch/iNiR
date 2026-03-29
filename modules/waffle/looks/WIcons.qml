@@ -55,8 +55,8 @@ Singleton {
     }
 
     property string volumeIcon: {
-        const muted = Audio.sink?.audio.muted ?? false;
-        const volume = Audio.sink?.audio.volume ?? 0;
+        const muted = Audio?.sink?.audio?.muted ?? false;
+        const volume = Audio?.sink?.audio?.volume ?? 0;
         if (muted)
             return "speaker-mute";
         if (volume == 0)
@@ -67,7 +67,7 @@ Singleton {
     }
 
     property string micIcon: {
-        const muted = Audio.source?.audio.muted ?? false;
+        const muted = Audio?.source?.audio?.muted ?? false;
         return muted ? "mic-off" : "mic";
     }
 
@@ -143,6 +143,38 @@ Singleton {
             return "pin";
         case "keep_off":
             return "pin-off";
+        // Common desktop entry icon names → fluent equivalents
+        case "steam":
+        case "lutris":
+        case "heroic":
+            return "games";
+        case "zen-browser":
+        case "firefox":
+        case "firefox-esr":
+        case "google-chrome":
+        case "chromium":
+        case "chromium-browser":
+        case "brave-browser":
+        case "vivaldi":
+        case "epiphany":
+        case "librewolf":
+            return "globe-search";
+        case "spotify":
+        case "spotify-client":
+            return "music-note-2";
+        case "discord":
+        case "telegram":
+        case "signal-desktop":
+        case "slack":
+            return "people";
+        case "vlc":
+        case "mpv":
+            return "play";
+        case "code":
+        case "visual-studio-code":
+        case "codium":
+        case "vscodium":
+            return "terminal";
         default:
             return "apps";
         }
@@ -150,6 +182,25 @@ Singleton {
 
     function guessIconForName(name) {
         const lowerName = name.toLowerCase();
+        // Gaming
+        if (lowerName.includes("steam") || lowerName.includes("lutris") || lowerName.includes("heroic") || lowerName.includes("proton"))
+            return "games";
+        // Browsers
+        if (lowerName.includes("firefox") || lowerName.includes("chrome") || lowerName.includes("chromium") || lowerName.includes("zen browser") || lowerName.includes("brave") || lowerName.includes("vivaldi") || lowerName.includes("librewolf"))
+            return "globe-search";
+        // Music & media players
+        if (lowerName.includes("spotify") || lowerName.includes("music") || lowerName.includes("rhythmbox") || lowerName.includes("lollypop") || lowerName.includes("amberol"))
+            return "music-note-2";
+        // Terminals
+        if (lowerName.includes("terminal") || lowerName.includes("console") || lowerName.includes("kitty") || lowerName.includes("alacritty") || lowerName.includes("foot"))
+            return "terminal";
+        // Communication
+        if (lowerName.includes("discord") || lowerName.includes("telegram") || lowerName.includes("signal") || lowerName.includes("slack") || lowerName.includes("element"))
+            return "people";
+        // Code editors
+        if (lowerName.includes("code") || lowerName.includes("codium") || lowerName.includes("neovim") || lowerName.includes("zed"))
+            return "terminal";
+        // General categories (original logic)
         if (lowerName.includes("app") || lowerName.includes("desktop"))
             return "apps";
         if (lowerName.includes("news"))
@@ -178,6 +229,15 @@ Singleton {
             return "record";
         if (lowerName.includes("screen") || lowerName.includes("display") || lowerName.includes("monitor") || lowerName.includes("desktop"))
             return "desktop";
+        // Video/media players
+        if (lowerName.includes("video") || lowerName.includes("player") || lowerName.includes("vlc") || lowerName.includes("mpv"))
+            return "play";
+        // Games (broad — after specific matches)
+        if (lowerName.includes("game"))
+            return "games";
+        // Browsing (broad — after specific matches)
+        if (lowerName.includes("browser") || lowerName.includes("web"))
+            return "globe-search";
 
         return "apps";
     }

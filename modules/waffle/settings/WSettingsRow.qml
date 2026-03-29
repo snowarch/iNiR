@@ -26,7 +26,7 @@ Item {
     Layout.fillWidth: true
     Layout.leftMargin: 16
     Layout.rightMargin: 16
-    implicitHeight: Math.max(48, contentRow.implicitHeight + 14)
+    implicitHeight: Math.max(56, contentRow.implicitHeight + 22)
     
     // Highlight animation for search focus
     Behavior on opacity {
@@ -119,13 +119,21 @@ Item {
     Rectangle {
         id: background
         anchors.fill: parent
-        radius: Looks.radius.medium
-        color: root.clickable && mouseArea.containsMouse 
-            ? Looks.colors.bg2Hover 
-            : "transparent"
+        anchors.leftMargin: 4
+        anchors.rightMargin: 4
+        radius: Looks.radius.large
+        color: {
+            if (root.clickable && mouseArea.pressed) return Looks.colors.bg2Active
+            if (mouseArea.containsMouse) return Looks.colors.bg2Hover
+            return "transparent"
+        }
+        scale: root.clickable && mouseArea.pressed ? 0.985 : 1.0
         
         Behavior on color {
-            animation: ColorAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
+            animation: ColorAnimation { duration: Looks.transition.enabled ? 100 : 0; easing.type: Easing.OutQuad }
+        }
+        Behavior on scale {
+            animation: NumberAnimation { duration: Looks.transition.enabled ? 80 : 0; easing.type: Easing.OutQuad }
         }
     }
     
@@ -149,9 +157,9 @@ Item {
         id: mouseArea
         anchors.fill: parent
         enabled: root.clickable
-        hoverEnabled: true
+        hoverEnabled: root.clickable
         cursorShape: root.clickable ? Qt.PointingHandCursor : Qt.ArrowCursor
-        onClicked: root.clicked()
+        onClicked: if (root.clickable) root.clicked()
     }
     
     // Bottom separator
@@ -160,20 +168,24 @@ Item {
             bottom: parent.bottom
             left: parent.left
             right: parent.right
-            leftMargin: root.icon !== "" ? 40 : 12
-            rightMargin: 12
+            leftMargin: root.icon !== "" ? 44 : 16
+            rightMargin: 16
         }
         height: 1
         color: Looks.colors.bg2Border
-        opacity: 0.35
+        opacity: mouseArea.containsMouse ? 0.08 : 0.15
+        
+        Behavior on opacity {
+            animation: NumberAnimation { duration: Looks.transition.enabled ? 100 : 0 }
+        }
     }
     
     RowLayout {
         id: contentRow
         anchors {
             fill: parent
-            leftMargin: 12
-            rightMargin: 12
+            leftMargin: 14
+            rightMargin: 14
         }
         spacing: 12
         
@@ -181,7 +193,12 @@ Item {
             visible: root.icon !== ""
             icon: root.icon
             implicitSize: 16
-            color: Looks.colors.subfg
+            Layout.alignment: Qt.AlignVCenter
+            color: mouseArea.containsMouse ? Looks.colors.accent : Looks.colors.subfg
+            
+            Behavior on color {
+                animation: ColorAnimation { duration: Looks.transition.enabled ? 100 : 0 }
+            }
         }
         
         ColumnLayout {
@@ -202,6 +219,7 @@ Item {
                 font.pixelSize: Looks.font.pixelSize.small
                 color: Looks.colors.subfg
                 wrapMode: Text.WordWrap
+                lineHeight: 1.2
             }
         }
         
@@ -213,8 +231,9 @@ Item {
         FluentIcon {
             visible: root.showChevron
             icon: "chevron-right"
-            implicitSize: 16
+            implicitSize: 14
             color: Looks.colors.subfg
+            opacity: 0.7
         }
     }
 }

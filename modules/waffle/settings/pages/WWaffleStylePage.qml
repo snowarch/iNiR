@@ -16,10 +16,13 @@ WSettingsPage {
     pageDescription: Translation.tr("Windows 11 style customization")
     
     property bool isWaffleActive: Config.options?.panelFamily === "waffle"
-
     // Helper to check if a module is enabled
     function isPanelEnabled(panelId: string): bool {
         return (Config.options?.enabledPanels ?? []).includes(panelId)
+    }
+
+    function disabledModuleDescription(moduleName: string): string {
+        return moduleName + " " + Translation.tr("is currently disabled in Modules. These settings will apply when you enable it.")
     }
     
     // Warning when not active
@@ -46,7 +49,7 @@ WSettingsPage {
     }
     
     WSettingsCard {
-        visible: root.isWaffleActive && root.isPanelEnabled("iiAltSwitcher")
+        visible: root.isWaffleActive
         title: Translation.tr("Alt+Tab Switcher")
         icon: "apps"
         
@@ -60,9 +63,13 @@ WSettingsPage {
                 { value: "cards", displayName: Translation.tr("Cards") },
                 { value: "compact", displayName: Translation.tr("Compact") },
                 { value: "list", displayName: Translation.tr("List") },
+                { value: "skew", displayName: Translation.tr("Skew previews") },
                 { value: "none", displayName: Translation.tr("Disabled") }
             ]
-            onSelected: newValue => Config.setNestedValue("waffles.altSwitcher.preset", newValue)
+            onSelected: newValue => {
+                Config.setNestedValue("waffles.altSwitcher.preset", newValue)
+                Config.setNestedValue("waffles.altSwitcher.noVisualUi", newValue === "none")
+            }
         }
         
         WSettingsSwitch {
@@ -77,7 +84,18 @@ WSettingsPage {
             label: Translation.tr("No visual UI")
             icon: "eye-off"
             description: Translation.tr("Switch windows without showing overlay")
-            checked: Config.options?.waffles?.altSwitcher?.noVisualUi ?? false
+            enabled: {
+                const preset = Config.options?.waffles?.altSwitcher?.preset ?? "thumbnails"
+                return preset !== "skew" && preset !== "none"
+            }
+            checked: {
+                const preset = Config.options?.waffles?.altSwitcher?.preset ?? "thumbnails"
+                if (preset === "none")
+                    return true
+                if (preset === "skew")
+                    return false
+                return Config.options?.waffles?.altSwitcher?.noVisualUi ?? false
+            }
             onCheckedChanged: Config.setNestedValue("waffles.altSwitcher.noVisualUi", checked)
         }
         
@@ -154,9 +172,16 @@ WSettingsPage {
     }
     
     WSettingsCard {
-        visible: root.isWaffleActive && root.isPanelEnabled("wTaskView")
+        visible: root.isWaffleActive
         title: Translation.tr("Task View")
         icon: "task-view-dark"
+
+        WSettingsRow {
+            visible: !root.isPanelEnabled("wTaskView")
+            label: Translation.tr("Module currently disabled")
+            icon: "info"
+            description: root.disabledModuleDescription(Translation.tr("Task View"))
+        }
         
         WSettingsDropdown {
             label: Translation.tr("View mode")
@@ -210,9 +235,16 @@ WSettingsPage {
     }
 
     WSettingsCard {
-        visible: root.isWaffleActive && root.isPanelEnabled("wStartMenu")
+        visible: root.isWaffleActive
         title: Translation.tr("Start Menu")
         icon: "start-here"
+
+        WSettingsRow {
+            visible: !root.isPanelEnabled("wStartMenu")
+            label: Translation.tr("Module currently disabled")
+            icon: "info"
+            description: root.disabledModuleDescription(Translation.tr("Start Menu"))
+        }
 
         WSettingsDropdown {
             label: Translation.tr("Size preset")
@@ -254,13 +286,20 @@ WSettingsPage {
     }
     
     WSettingsCard {
-        visible: root.isWaffleActive && root.isPanelEnabled("wWidgets")
+        visible: root.isWaffleActive
         title: Translation.tr("Widgets Panel")
         icon: "apps"
+
+        WSettingsRow {
+            visible: !root.isPanelEnabled("wWidgets")
+            label: Translation.tr("Module currently disabled")
+            icon: "info"
+            description: root.disabledModuleDescription(Translation.tr("Widgets Panel"))
+        }
         
         WSettingsSwitch {
             label: Translation.tr("Show date & time")
-            icon: "pulse"
+            icon: "schedule"
             description: Translation.tr("Display date and time widget")
             checked: Config.options?.waffles?.widgetsPanel?.showDateTime ?? true
             onCheckedChanged: Config.setNestedValue("waffles.widgetsPanel.showDateTime", checked)
@@ -272,6 +311,14 @@ WSettingsPage {
             description: Translation.tr("Display weather conditions widget")
             checked: Config.options?.waffles?.widgetsPanel?.showWeather ?? true
             onCheckedChanged: Config.setNestedValue("waffles.widgetsPanel.showWeather", checked)
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("Hide weather location")
+            icon: "eye-off"
+            description: Translation.tr("Hide the city/location name in the weather widget and taskbar button")
+            checked: Config.options?.waffles?.widgetsPanel?.weatherHideLocation ?? false
+            onCheckedChanged: Config.setNestedValue("waffles.widgetsPanel.weatherHideLocation", checked)
         }
         
         WSettingsSwitch {
@@ -296,6 +343,69 @@ WSettingsPage {
             description: Translation.tr("Display quick action buttons")
             checked: Config.options?.waffles?.widgetsPanel?.showQuickActions ?? true
             onCheckedChanged: Config.setNestedValue("waffles.widgetsPanel.showQuickActions", checked)
+        }
+
+        WSettingsSwitch {
+            visible: Config.options?.waffles?.widgetsPanel?.showQuickActions ?? true
+            label: Translation.tr("Files shortcut")
+            icon: "folder"
+            checked: Config.options?.waffles?.widgetsPanel?.showFiles ?? true
+            onCheckedChanged: Config.setNestedValue("waffles.widgetsPanel.showFiles", checked)
+        }
+
+        WSettingsSwitch {
+            visible: Config.options?.waffles?.widgetsPanel?.showQuickActions ?? true
+            label: Translation.tr("Terminal shortcut")
+            icon: "terminal"
+            checked: Config.options?.waffles?.widgetsPanel?.showTerminal ?? true
+            onCheckedChanged: Config.setNestedValue("waffles.widgetsPanel.showTerminal", checked)
+        }
+
+        WSettingsSwitch {
+            visible: Config.options?.waffles?.widgetsPanel?.showQuickActions ?? true
+            label: Translation.tr("Settings shortcut")
+            icon: "settings"
+            checked: Config.options?.waffles?.widgetsPanel?.showSettings ?? true
+            onCheckedChanged: Config.setNestedValue("waffles.widgetsPanel.showSettings", checked)
+        }
+
+        WSettingsSwitch {
+            visible: Config.options?.waffles?.widgetsPanel?.showQuickActions ?? true
+            label: Translation.tr("Wallpaper shortcut")
+            icon: "image"
+            checked: Config.options?.waffles?.widgetsPanel?.showWallpaper ?? true
+            onCheckedChanged: Config.setNestedValue("waffles.widgetsPanel.showWallpaper", checked)
+        }
+
+        WSettingsSwitch {
+            visible: Config.options?.waffles?.widgetsPanel?.showQuickActions ?? true
+            label: Translation.tr("Screenshot shortcut")
+            icon: "screenshot"
+            checked: Config.options?.waffles?.widgetsPanel?.showScreenshot ?? true
+            onCheckedChanged: Config.setNestedValue("waffles.widgetsPanel.showScreenshot", checked)
+        }
+
+        WSettingsSwitch {
+            visible: Config.options?.waffles?.widgetsPanel?.showQuickActions ?? true
+            label: Translation.tr("Screen Record shortcut")
+            icon: "record"
+            checked: Config.options?.waffles?.widgetsPanel?.showScreenRecord ?? true
+            onCheckedChanged: Config.setNestedValue("waffles.widgetsPanel.showScreenRecord", checked)
+        }
+
+        WSettingsSwitch {
+            visible: Config.options?.waffles?.widgetsPanel?.showQuickActions ?? true
+            label: Translation.tr("Session shortcut")
+            icon: "power"
+            checked: Config.options?.waffles?.widgetsPanel?.showSession ?? true
+            onCheckedChanged: Config.setNestedValue("waffles.widgetsPanel.showSession", checked)
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("Color Scheme selector")
+            icon: "color"
+            checked: Config.options?.waffles?.widgetsPanel?.showColorScheme ?? true
+            onCheckedChanged: Config.setNestedValue("waffles.widgetsPanel.showColorScheme", checked)
         }
     }
     
@@ -379,9 +489,16 @@ WSettingsPage {
     }
     
     WSettingsCard {
-        visible: root.isWaffleActive && root.isPanelEnabled("wNotificationCenter")
+        visible: root.isWaffleActive
         title: Translation.tr("Calendar")
         icon: "news"
+
+        WSettingsRow {
+            visible: !root.isPanelEnabled("wNotificationCenter")
+            label: Translation.tr("Module currently disabled")
+            icon: "info"
+            description: root.disabledModuleDescription(Translation.tr("Calendar / Notification Center"))
+        }
         
         WSettingsSwitch {
             label: Translation.tr("Force 2-char day names")

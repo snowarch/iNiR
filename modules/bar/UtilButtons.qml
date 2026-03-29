@@ -26,7 +26,7 @@ Item {
             visible: active
             sourceComponent: CircleUtilButton {
                 Layout.alignment: Qt.AlignVCenter
-                onClicked: Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "region", "screenshot"])
+                onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "screenshot"])
                 MaterialSymbol {
                     horizontalAlignment: Qt.AlignHCenter
                     fill: 1
@@ -156,10 +156,10 @@ Item {
                 id: micButton
                 Layout.alignment: Qt.AlignVCenter
 
-                readonly property bool isMuted: Pipewire.defaultAudioSource?.audio?.muted ?? false
+                readonly property bool isMuted: Audio.micMuted
                 readonly property bool isInUse: (Privacy.micActive || (Audio?.micBeingAccessed ?? false))
 
-                onClicked: Quickshell.execDetached(["/usr/bin/wpctl", "set-mute", "@DEFAULT_SOURCE@", "toggle"])
+                onClicked: Audio.toggleMicMute()
 
                 Item {
                     anchors.fill: parent
@@ -263,11 +263,7 @@ Item {
             sourceComponent: CircleUtilButton {
                 Layout.alignment: Qt.AlignVCenter
                 onClicked: event => {
-                    if (Appearance.m3colors.darkmode) {
-                        Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--mode", "light", "--noswitch"]);
-                    } else {
-                        Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--mode", "dark", "--noswitch"]);
-                    }
+                    MaterialThemeLoader.setDarkMode(!Appearance.m3colors.darkmode)
                 }
                 MaterialSymbol {
                     horizontalAlignment: Qt.AlignHCenter

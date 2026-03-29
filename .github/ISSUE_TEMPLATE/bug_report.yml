@@ -18,7 +18,7 @@ body:
       description: Numbered steps to trigger the issue
       placeholder: |
         1. Enable weather widget in settings
-        2. Restart shell with qs kill -c ii; qs -c ii
+        2. Restart shell with inir restart
         3. Bar crashes on startup
     validations:
       required: true
@@ -36,7 +36,7 @@ body:
     id: logs
     attributes:
       label: Logs
-      description: Output from qs log -c ii (last 50 lines or relevant errors)
+      description: Output from inir logs (last 50 lines or relevant errors)
       render: shell
     validations:
       required: true
@@ -45,7 +45,7 @@ body:
     id: version
     attributes:
       label: Version
-      description: Output of cat ~/.config/quickshell/ii/VERSION
+      description: Output of cat ~/.config/quickshell/inir/VERSION
       placeholder: 2.11.11
     validations:
       required: true

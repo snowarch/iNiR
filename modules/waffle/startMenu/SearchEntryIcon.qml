@@ -12,7 +12,7 @@ import qs.modules.waffle.looks
 Item {
     id: root
     property var entry
-    property int iconSize: 24
+    property int iconSize: Config.options?.waffles?.bar?.searchIconSize ?? 24
     implicitWidth: Math.max(iconSize, textIconLoader.implicitWidth)
     implicitHeight: iconSize
     

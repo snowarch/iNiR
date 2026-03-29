@@ -27,6 +27,115 @@ is_nvidia_gpu() {
     command -v nvidia-smi &>/dev/null && nvidia-smi &>/dev/null
 }
 
+json_escape() {
+    local value="$1"
+    value=${value//\\/\\\\}
+    value=${value//\"/\\\"}
+    value=${value//$'\n'/\\n}
+    value=${value//$'\r'/\\r}
+    value=${value//$'\t'/\\t}
+    printf '%s' "$value"
+}
+
+json_array() {
+    local first=1
+    printf '['
+    for item in "$@"; do
+        [[ $first -eq 0 ]] && printf ','
+        printf '"%s"' "$(json_escape "$item")"
+        first=0
+    done
+    printf ']'
+}
+
+resolve_hardware_device() {
+    local requested="$1"
+    if [[ -n "$requested" && "$requested" != "null" && -c "$requested" ]]; then
+        printf '%s\n' "$requested"
+        return
+    fi
+
+    local device
+    for device in /dev/dri/renderD*; do
+        if [[ -c "$device" ]]; then
+            printf '%s\n' "$device"
+            return
+        fi
+    done
+}
+
+collect_video_codecs() {
+    local -a codecs=()
+    local resolved_device="$1"
+
+    if [[ -n "$resolved_device" && -c "$resolved_device" ]]; then
+        has_ffmpeg_encoder h264_vaapi && codecs+=("h264_vaapi")
+        has_ffmpeg_encoder hevc_vaapi && codecs+=("hevc_vaapi")
+        has_ffmpeg_encoder vp9_vaapi && codecs+=("vp9_vaapi")
+        has_ffmpeg_encoder av1_vaapi && codecs+=("av1_vaapi")
+    fi
+
+    if is_nvidia_gpu || has_ffmpeg_encoder h264_nvenc || has_ffmpeg_encoder hevc_nvenc || has_ffmpeg_encoder av1_nvenc; then
+        has_ffmpeg_encoder h264_nvenc && codecs+=("h264_nvenc")
+        has_ffmpeg_encoder hevc_nvenc && codecs+=("hevc_nvenc")
+        has_ffmpeg_encoder av1_nvenc && codecs+=("av1_nvenc")
+    fi
+
+    has_ffmpeg_encoder libx264 && codecs+=("libx264")
+    has_ffmpeg_encoder libx265 && codecs+=("libx265")
+
+    printf '%s\n' "${codecs[@]}"
+}
+
+collect_audio_codecs() {
+    local -a codecs=()
+    has_ffmpeg_encoder aac && codecs+=("aac")
+    has_ffmpeg_encoder libopus && codecs+=("libopus")
+    has_ffmpeg_encoder opus && codecs+=("opus")
+    printf '%s\n' "${codecs[@]}"
+}
+
+collect_audio_sources() {
+    pactl list sources short 2>/dev/null | awk 'NF >= 2 { print $2 }'
+}
+
+collect_hardware_devices() {
+    local device
+    for device in /dev/dri/renderD*; do
+        [[ -c "$device" ]] && printf '%s\n' "$device"
+    done
+}
+
+probe_capabilities() {
+    local resolved_device="$1"
+    local default_sink
+    default_sink="$(pactl get-default-sink 2>/dev/null)"
+    local preferred_codec
+    preferred_codec="$(detect_hw_video_codec)"
+
+    local -a video_codecs=()
+    local -a audio_codecs=()
+    local -a audio_sources=()
+    local -a hardware_devices=()
+
+    mapfile -t video_codecs < <(collect_video_codecs "$resolved_device")
+    mapfile -t audio_codecs < <(collect_audio_codecs)
+    mapfile -t audio_sources < <(collect_audio_sources)
+    mapfile -t hardware_devices < <(collect_hardware_devices)
+
+    printf '{'
+    printf '"videoCodecs":%s,' "$(json_array "${video_codecs[@]}")"
+    printf '"audioCodecs":%s,' "$(json_array "${audio_codecs[@]}")"
+    printf '"audioSources":%s,' "$(json_array "${audio_sources[@]}")"
+    printf '"hardwareDevices":%s,' "$(json_array "${hardware_devices[@]}")"
+    printf '"defaultSink":"%s",' "$(json_escape "$default_sink")"
+    printf '"preferredCodec":"%s",' "$(json_escape "$preferred_codec")"
+    printf '"nvidia":%s,' "$(is_nvidia_gpu && printf true || printf false)"
+    printf '"vaapiAvailable":%s,' "$(printf '%s\n' "${video_codecs[@]}" | grep -q '_vaapi$' && printf true || printf false)"
+    printf '"nvencAvailable":%s' "$(printf '%s\n' "${video_codecs[@]}" | grep -q '_nvenc$' && printf true || printf false)"
+    printf '}\n'
+}
+
 getaudiooutput() {
     local default_sink
     default_sink="$(pactl get-default-sink 2>/dev/null)"
@@ -206,7 +315,7 @@ start_recording_command() {
 }
 
 # Try to get save path from config, fallback to XDG Videos
-CONFIG_FILE="$HOME/.config/illogical-impulse/config.json"
+CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/illogical-impulse/config.json"
 SAVE_PATH=""
 QUALITY_PRESET="balanced"
 VIDEO_CODEC=""
@@ -242,6 +351,13 @@ if [[ -f "$CONFIG_FILE" ]] && command -v jq >/dev/null 2>&1; then
     VIDEO_CRF=$(jq -r '.screenRecord.crf // 21' "$CONFIG_FILE" 2>/dev/null)
     VAAPI_FILTER=$(jq -r '.screenRecord.vaapiFilter // "scale_vaapi=format=nv12:out_range=full"' "$CONFIG_FILE" 2>/dev/null)
     ENABLE_FALLBACK=$(jq -r '.screenRecord.enableFallback // true' "$CONFIG_FILE" 2>/dev/null)
+fi
+
+HARDWARE_DEVICE="$(resolve_hardware_device "$HARDWARE_DEVICE")"
+
+if printf '%s\n' "$*" | grep -q -- '--probe-capabilities'; then
+    probe_capabilities "$HARDWARE_DEVICE"
+    exit 0
 fi
 
 if [[ "$ACCELERATION_MODE" == "gpu" ]]; then

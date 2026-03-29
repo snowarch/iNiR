@@ -9,12 +9,44 @@
 Running `./setup` without arguments launches an interactive menu with all available commands. The menu provides:
 
 - Visual command selection
-- Current version and update status
+- Current version, install mode, and update status
 - Pending migrations indicator
 - Health checks (shell running, Niri detected)
 - Snapshot availability
 
 This is the recommended way to use the setup script if you're unsure which command to run.
+
+## How the pieces fit together
+
+There are now three complementary entry points:
+
+- `./setup`
+  - authoritative installer and maintenance entry point
+  - owns install, update, doctor, status, migrate, rollback, my-changes, uninstall
+- `inir`
+  - daily launcher and operator CLI
+  - owns runtime actions like `run`, `start`, `restart`, `settings`, `logs`, `repair`, `terminal`, and IPC calls
+  - forwards maintenance commands like `install`, `update`, `doctor`, `status`, `migrate`, `rollback`, `my-changes`, and `uninstall` back to `setup`
+- `make install`
+  - packaging-style local install for packagers, testers, or source installs that should behave like a packaged shell payload
+
+Use them like this:
+
+- install once:
+  - `./setup install`
+- maintenance via launcher wrapper:
+  - `inir update`
+  - `inir doctor`
+  - `inir status`
+- runtime operation:
+  - `inir run`
+  - `inir settings`
+  - `inir logs`
+  - `inir repair`
+- local distribution validation:
+  - `make test-local`
+  - `inir test-local`
+  - `inir test-local --with-runtime`
 
 ## Install
 
@@ -22,15 +54,32 @@ This is the recommended way to use the setup script if you're unsure which comma
 git clone https://github.com/snowarch/inir.git
 cd inir
 ./setup install
+inir run
 ```
 
 Add `-y` for non-interactive mode.
 
+If you want a packaging-style local install surface instead of the repo-sync installer:
+
+```bash
+sudo make install
+```
+
+That installs:
+
+- `inir` launcher into your install prefix `bin/`
+- shell payload into `/usr/local/share/quickshell/inir` by default
+- user service asset
+- desktop entry
+- runtime metadata so `status` / `doctor` can detect package-managed style installs
+
 ## Update
 
 ```bash
-./setup update
+inir update
 ```
+
+`inir update` and `./setup update` run the same update engine. `inir update` is the convenient launcher-facing entry point; `./setup update` is the underlying maintenance command and the better choice when you also want the interactive TUI nearby.
 
 What happens:
 1. Checks remote for new commits
@@ -44,13 +93,24 @@ What happens:
 9. Checks for missing system packages
 10. Updates Python venv packages
 
-Your user configs (`config.json`, `config.kdl`) are never touched.
+The runtime sync does not overwrite your user configs directly. If a release needs config changes, required or optional migrations may update `config.json` or `config.kdl` with backup/rollback coverage.
+
+For legacy monolithic Niri configs, required migrations can now convert `~/.config/niri/config.kdl` into the modular `config.d/` layout automatically during update. The current config is preserved section-by-section, unknown top-level blocks are kept in `config.d/90-user-extra.kdl`, and the normal migration backup/rollback flow still applies.
+
+If `setup` detects that the active iNiR installation is externally managed, `inir update` does **not** pull or sync repo files into the runtime. In that case it:
+
+- Shows the detected install mode
+- Shows the package update command when metadata provides one
+- Leaves the shell payload unchanged
+- Still applies required migrations if any are pending
 
 ## Doctor
 
 ```bash
-./setup doctor
+inir doctor
 ```
+
+`inir doctor` is a wrapper around `./setup doctor`.
 
 Diagnoses and **automatically fixes** common issues:
 - Missing directories
@@ -58,7 +118,14 @@ Diagnoses and **automatically fixes** common issues:
 - Python packages (via uv)
 - Version tracking
 - File manifest
-- Starts shell if not running
+
+For externally managed installs, `doctor` can rebuild `~/.config/illogical-impulse/version.json` from the runtime metadata already present under `~/.config/quickshell/inir/version.json`. It also skips the repo-sync manifest requirement when the install is package-managed.
+
+If you want the same repair flow plus restart and filtered logs:
+
+```bash
+inir repair
+```
 
 ## Rollback
 
@@ -67,6 +134,8 @@ Diagnoses and **automatically fixes** common issues:
 ```
 
 Restore a previous snapshot if something breaks after an update. Shows available snapshots with dates and lets you choose which one to restore.
+
+For externally managed installs, `rollback` does not try to restore repo-managed snapshots or reset the checkout. It stops early and points you back to the package manager for shell payload changes.
 
 ## Migrate
 
@@ -83,6 +152,44 @@ What happens:
 - Lets you choose which migrations to apply
 - Required migrations are applied automatically during `update`
 - Optional migrations can be applied manually
+
+When the installer detects an older unified Niri config, the required migration path can split it into:
+
+- `config.kdl` include root
+- `config.d/10-80-*.kdl` standard sections
+- `config.d/90-user-extra.kdl` for preserved non-standard top-level content
+
+### Modular Niri config at a glance
+
+For new installs and migrated setups, `~/.config/niri/config.kdl` becomes a small include root and the real sections live in `config.d/`:
+
+- `10-input-and-cursor.kdl`
+  - keyboard, mouse, touchpad, cursor basics
+- `20-layout-and-overview.kdl`
+  - column layout, overview-related compositor behavior
+- `30-window-rules.kdl`
+  - per-app window rules and matching
+- `40-environment.kdl`
+  - environment variables exported into the session
+- `50-startup.kdl`
+  - startup programs and session bootstrap
+- `60-animations.kdl`
+  - compositor animation tuning
+- `70-binds.kdl`
+  - keybinds and launcher shortcuts
+- `80-layer-rules.kdl`
+  - layer-shell and overlay rules
+- `90-user-extra.kdl`
+  - preserved custom blocks that do not map to the standard split
+
+If you want to change which apps iNiR launches, edit `~/.config/illogical-impulse/config.json` instead of hardcoding new executables into the distributed binds:
+
+- `apps.terminal`
+  - used by `inir terminal`
+- `apps.browser`
+  - used by `inir browser` and the default `Super+W` bind
+- `sidebar.quickLaunch`
+  - custom quick-launch entries shown by the shell UI
 
 ## My Changes
 
@@ -106,14 +213,76 @@ Useful when you want to see what you've changed or restore defaults after custom
 |---------|-------------|
 | `./setup` | Interactive menu |
 | `./setup install` | Full installation |
-| `./setup update` | Check remote, pull, sync, restart |
+| `inir update` | Wrapper around `./setup update` |
+| `./setup status` | Show install mode, update strategy, and health |
 | `./setup migrate` | Review and apply config migrations |
 | `./setup doctor` | Diagnose and auto-fix |
 | `./setup rollback` | Restore previous snapshot |
 | `./setup my-changes` | View and restore user modifications |
 | `./setup uninstall` | Remove iNiR from system |
+| `inir install` | Wrapper around `./setup install` from the repo/runtime root |
+| `inir start` | Start iNiR in the background |
+| `inir stop` | Stop the active runtime |
+| `inir run` | Launch iNiR from the active runtime |
+| `inir restart` | Restart the active runtime |
+| `inir settings` | Open settings via IPC |
+| `inir terminal` | Launch the configured terminal from `apps.terminal` |
+| `inir browser` | Launch the configured browser from `apps.browser` |
+| `inir doctor` | Wrapper around `./setup doctor` |
+| `inir logs` | Show recent runtime logs |
+| `inir repair` | Doctor + restart + filtered log check |
+| `inir status` | Wrapper around `./setup status` |
+| `inir test-local` | Run local distribution checks |
 
 Options: `-y` (skip prompts), `-q` (quiet), `-h` (help)
+
+## Status
+
+```bash
+./setup status
+```
+
+Shows:
+
+- Installed version and commit
+- Install mode
+- Update strategy
+- Repo path when relevant
+- Health checks and snapshot availability
+
+For externally managed installs, `status` also shows the detected package update command and makes it explicit that repo-sync updates are disabled for that installation mode.
+
+It also reports:
+
+- resolved runtime path
+- launcher availability
+- runtime metadata availability
+
+You can reach the same status through:
+
+```bash
+inir status
+```
+
+`inir status` is a wrapper around `./setup status`.
+
+## Local validation
+
+For distribution, launcher, or install-flow changes, test locally with:
+
+```bash
+make test-local
+inir test-local
+inir test-local --with-runtime
+```
+
+These checks cover:
+
+- shell syntax for `setup`, `doctor`, `versioning`, `package-installers`, and `scripts/inir`
+- PKGBUILD syntax for the new Arch package roots
+- local `make install` dry-run
+- launcher path and status resolution
+- optional runtime restart and filtered log/error smoke test
 
 ## What Gets Installed
 
@@ -121,12 +290,14 @@ Options: `-y` (skip prompts), `-q` (quiet), `-h` (help)
 
 | Source | Destination |
 |--------|-------------|
-| QML code | `~/.config/quickshell/ii/` |
+| QML code (`./setup install`) | `~/.config/quickshell/inir/` |
+| QML code (`make install` / package style) | `/usr/share/quickshell/inir/` or `/usr/local/share/quickshell/inir/` |
 | User config | `~/.config/illogical-impulse/config.json` |
 | State files | `~/.local/state/quickshell/user/` |
-| Cache | `~/.cache/quickshell/ii/` |
-| Super daemon | `~/.local/bin/ii_super_overview_daemon.py` |
-| Daemon service | `~/.config/systemd/user/ii-super-overview.service` |
+| Cache | `~/.cache/quickshell/inir/` |
+| Launcher | `inir` in the install prefix |
+| Super daemon | `~/.local/bin/inir_super_overview_daemon.py` |
+| Daemon service | `~/.config/systemd/user/inir-super-overview.service` |
 
 ### Compositor & Themes
 
@@ -144,6 +315,7 @@ Options: `-y` (skip prompts), `-q` (quiet), `-h` (help)
 
 - First install: Existing configs are backed up to `~/inir-backup/`
 - Updates: Your configs are never touched, only QML code is synced
+- Package-managed installs: `inir update` defers shell payload updates to the package manager instead of syncing from the current repo checkout
 - Shared configs: Only installed if they don't exist or you approve overwrite
 
 ## Migrations
@@ -171,6 +343,7 @@ The uninstall script intelligently removes iNiR while preserving shared resource
 - Asks before removing shared configs (Niri, GTK, themes)
 - Detects if you're in a Niri session (preserves compositor config)
 - Detects other Quickshell configs (preserves shared resources)
+- Detects externally managed shell payloads and warns that package removal is separate
 - Lists installed packages with removal recommendations
 - Shows commands to revert system changes (groups, modules)
 
@@ -188,17 +361,19 @@ Asks before removing each shared config. Recommended for most users.
 
 Removes only iNiR-exclusive files, keeps all shared configs and packages.
 
+If the shell payload is externally managed, `uninstall` removes the user-side iNiR config/data it owns but does **not** remove the package-managed payload itself. The command warns about that explicitly.
+
 ### Files Removed Automatically
 
 The following are removed without prompting (iNiR-exclusive):
 
 ```
-~/.config/quickshell/ii/                         # Shell configuration
+~/.config/quickshell/inir/                       # Shell configuration
 ~/.config/illogical-impulse/                     # User preferences
 ~/.local/state/quickshell/user/                  # Notifications, todo
-~/.cache/quickshell/ii/                          # Cache
-~/.local/bin/ii_super_overview_daemon.py         # Super daemon
-~/.config/systemd/user/ii-super-overview.service # Daemon service
+~/.cache/quickshell/inir/                        # Cache
+~/.local/bin/inir_super_overview_daemon.py       # Super daemon
+~/.config/systemd/user/inir-super-overview.service # Daemon service
 ~/.config/vesktop/themes/system24.theme.css      # Vesktop theme
 ~/.config/vesktop/themes/ii-colors.css           # Vesktop colors
 ```
@@ -218,7 +393,7 @@ These may be used by other applications. The script asks before removing:
 | `~/.config/gtk-3.0/gtk.css` | Optional | Ask |
 | `~/.config/gtk-4.0/gtk.css` | Optional | Ask |
 | `~/.config/fontconfig/` | Essential | Keep |
-| `~/.local/share/color-schemes/Darkly.colors` | iNiR default | Remove |
+| `${XDG_DATA_HOME:-~/.local/share}/color-schemes/Darkly.colors` | iNiR default | Remove |
 
 ### Installed Packages
 
@@ -254,7 +429,7 @@ Backups are saved to:
 
 To restore from backup:
 ```bash
-cp -r ~/.local/share/inir-uninstall-backup-*/quickshell-ii ~/.config/quickshell/ii
+cp -r ~/.local/share/inir-uninstall-backup-*/quickshell-inir ~/.config/quickshell/inir
 cp -r ~/.local/share/inir-uninstall-backup-*/illogical-impulse ~/.config/illogical-impulse
 ```
 
@@ -264,16 +439,16 @@ If the automated script fails or is unavailable:
 
 ```bash
 # Stop services
-qs kill -c ii
-systemctl --user disable --now ii-super-overview.service 2>/dev/null
+qs kill -c inir
+systemctl --user disable --now inir-super-overview.service 2>/dev/null
 
 # Remove iNiR-exclusive files
-rm -rf ~/.config/quickshell/ii
+rm -rf ~/.config/quickshell/inir
 rm -rf ~/.config/illogical-impulse
 rm -rf ~/.local/state/quickshell/user
-rm -rf ~/.cache/quickshell/ii
-rm -f ~/.local/bin/ii_super_overview_daemon.py
-rm -f ~/.config/systemd/user/ii-super-overview.service
+rm -rf ~/.cache/quickshell/inir
+rm -f ~/.local/bin/inir_super_overview_daemon.py
+rm -f ~/.config/systemd/user/inir-super-overview.service
 rm -f ~/.config/vesktop/themes/system24.theme.css
 rm -f ~/.config/vesktop/themes/ii-colors.css
 rm -f ~/.config/Vesktop/themes/system24.theme.css
@@ -288,14 +463,14 @@ rm -f ~/.config/Vesktop/themes/ii-colors.css
 # rm -f ~/.config/dolphinrc
 # rm -f ~/.config/gtk-3.0/gtk.css
 # rm -f ~/.config/gtk-4.0/gtk.css
-# rm -f ~/.local/share/color-schemes/Darkly.colors
+# rm -f ${XDG_DATA_HOME:-~/.local/share}/color-schemes/Darkly.colors
 
 # Remove Quickshell shared resources (only if no other QS configs)
 # rm -rf ~/.local/state/quickshell/.venv
 # rm -rf ~/.local/state/quickshell/themes
 
 # Comment out spawn-at-startup in ~/.config/niri/config.kdl:
-# spawn-at-startup "qs" "-c" "ii"
+# spawn-at-startup "inir" "start"
 ```
 
 ### Reinstalling
@@ -306,4 +481,5 @@ To reinstall iNiR after uninstalling:
 git clone https://github.com/snowarch/inir.git
 cd inir
 ./setup install
+inir run
 ```

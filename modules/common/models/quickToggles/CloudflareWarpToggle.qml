@@ -142,5 +142,13 @@ QuickToggleModel {
     }
     tooltipText: Translation.tr("Cloudflare WARP (1.1.1.1)")
 
+    Timer {
+        id: warpPollTimer
+        interval: 5000
+        repeat: true
+        running: root.available
+        onTriggered: root.refreshStatus()
+    }
+
     Component.onCompleted: root.refreshStatus()
 }

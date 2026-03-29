@@ -7,62 +7,134 @@ import qs.modules.common.functions
 import qs.modules.waffle.looks
 import qs.services
 
-// Family transition with blurred wallpaper backdrop
-// Waffle: 4 tiles expand from center
-// Material: Ripple circle expands from center
+// Elegant family transition overlay
+//
+// Choreography:
+//   Entry  → overlay fades in + background zooms/settles + blur builds progressively
+//   Hold   → exitComplete fires (panels swap underneath), brief hold for loading
+//   Exit   → content recedes first, then family element, then background fades out
+//
+// Each family has its own visual identity:
+//   Waffle  → Fluent acrylic card with decelerate curve and accent shimmer
+//   Material → Ink ripple with Material emphasized curves and container badge
 Scope {
     id: root
 
     signal exitComplete()
     signal enterComplete()
 
-    readonly property int enterDuration: Appearance.animationsEnabled ? 400 : 10
-    readonly property int holdDuration: 250
-    readonly property int exitDuration: Appearance.animationsEnabled ? 450 : 10
-    
-    property bool _isWaffle: false
-    property bool _phase: false
-    property bool _active: false
-    property real _overlayOpacity: 0
+    // ── Timing ──────────────────────────────────────────────────────────
+    readonly property bool _animated: Appearance.animationsEnabled
+    readonly property int _entryFade: _animated ? 300 : 5
+    readonly property int _enterDuration: _animated ? 380 : 5
+    readonly property int _holdDuration: 200
+    readonly property int _contentExitDelay: _animated ? 180 : 5
+    readonly property int _exitDuration: _animated ? 380 : 5
 
+    // ── State ───────────────────────────────────────────────────────────
+    property bool _isWaffle: false
+    property bool _phase: false   // false = enter/hold, true = exit
+    property bool _active: false
+
+    // ── Animated background properties ──────────────────────────────────
+    property real _overlayOpacity: 0
+    property real _bgScale: 1.05
+    property real _blurAmount: 0
+
+    // ════════════════════════════════════════════════════════════════════
+    // TRIGGER
+    // ════════════════════════════════════════════════════════════════════
     Connections {
         target: GlobalStates
         function onFamilyTransitionActiveChanged() {
-            if (GlobalStates.familyTransitionActive) {
-                fadeOut.stop()
-                root._isWaffle = GlobalStates.familyTransitionDirection === "left"
-                root._phase = false
-                root._active = true
-                root._overlayOpacity = 1
-                enterTimer.start()
-            }
+            if (!GlobalStates.familyTransitionActive) return
+
+            // Cancel any running exit
+            fadeOut.stop()
+            bgScaleOut.stop()
+
+            root._isWaffle = GlobalStates.familyTransitionDirection === "left"
+            root._phase = false
+            root._active = true
+
+            // Reset to pre-entry state
+            root._overlayOpacity = 0
+            root._bgScale = 1.05
+            root._blurAmount = 0
+
+            // Launch entry animations (smooth, never instant)
+            fadeIn.restart()
+            bgScaleIn.restart()
+            blurIn.restart()
+            enterTimer.start()
         }
     }
 
-    Timer {
-        id: enterTimer
-        interval: root.enterDuration + 80
-        onTriggered: {
-            root.exitComplete()
-            holdTimer.start()
-        }
-    }
-    
-    Timer {
-        id: holdTimer
-        interval: root.holdDuration
-        onTriggered: {
-            root._phase = true
-            fadeOut.restart()
-        }
+    // ════════════════════════════════════════════════════════════════════
+    // ENTRY ANIMATIONS
+    // ════════════════════════════════════════════════════════════════════
+    NumberAnimation {
+        id: fadeIn
+        target: root; property: "_overlayOpacity"
+        from: 0; to: 1
+        duration: root._entryFade
+        easing.type: Easing.OutCubic
     }
 
     NumberAnimation {
+        id: bgScaleIn
+        target: root; property: "_bgScale"
+        from: 1.05; to: 1.0
+        duration: _animated ? 520 : 5
+        easing.type: Easing.OutQuart
+    }
+
+    NumberAnimation {
+        id: blurIn
+        target: root; property: "_blurAmount"
+        from: 0; to: 0.8
+        duration: _animated ? 360 : 5
+        easing.type: Easing.OutQuad
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // CHOREOGRAPHY TIMERS
+    // ════════════════════════════════════════════════════════════════════
+    Timer {
+        id: enterTimer
+        interval: root._enterDuration + 60
+        onTriggered: {
+            root.exitComplete()       // panels swap underneath
+            holdTimer.start()
+        }
+    }
+
+    Timer {
+        id: holdTimer
+        interval: root._holdDuration
+        onTriggered: {
+            root._phase = true        // triggers content exit in family components
+            contentExitTimer.start()
+        }
+    }
+
+    Timer {
+        id: contentExitTimer
+        interval: root._contentExitDelay
+        onTriggered: {
+            fadeOut.restart()
+            bgScaleOut.restart()
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // EXIT ANIMATIONS
+    // ════════════════════════════════════════════════════════════════════
+    NumberAnimation {
         id: fadeOut
-        target: root
-        property: "_overlayOpacity"
+        target: root; property: "_overlayOpacity"
         to: 0
-        duration: root.exitDuration
+        duration: root._exitDuration
         easing.type: Easing.InOutCubic
         onFinished: {
             root._active = false
@@ -70,6 +142,17 @@ Scope {
         }
     }
 
+    NumberAnimation {
+        id: bgScaleOut
+        target: root; property: "_bgScale"
+        to: 0.98
+        duration: root._exitDuration
+        easing.type: Easing.InCubic
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // OVERLAY WINDOW
+    // ════════════════════════════════════════════════════════════════════
     Loader {
         active: GlobalStates.familyTransitionActive || root._active
 
@@ -89,43 +172,40 @@ Scope {
             WlrLayershell.namespace: "quickshell:familyTransition"
             WlrLayershell.layer: WlrLayer.Overlay
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-            
+
             implicitWidth: screen?.width ?? 1920
             implicitHeight: screen?.height ?? 1080
 
             Item {
                 id: content
                 anchors.fill: parent
-
                 opacity: root._overlayOpacity
 
+                // Solid fallback behind the blur (visible while image loads)
                 Rectangle {
                     anchors.fill: parent
                     color: root._isWaffle ? Looks.colors.bg0 : Appearance.m3colors.m3background
-                    opacity: 1
                 }
 
-                // Blurred wallpaper background
+                // ── Blurred wallpaper with cinematic zoom ──
                 Item {
                     id: blurredBg
                     anchors.fill: parent
-                    opacity: 1
+                    scale: root._bgScale
+                    transformOrigin: Item.Center
 
                     Image {
                         id: wallpaperImg
                         anchors.fill: parent
                         source: {
-                            // Use target family's wallpaper
                             let path = ""
                             if (root._isWaffle) {
-                                // Going to Waffle - use waffle wallpaper (or main if shared)
                                 const wBg = Config.options?.waffles?.background ?? {}
                                 const useMain = wBg.useMainWallpaper ?? true
-                                path = useMain 
+                                path = useMain
                                     ? (Config.options?.background?.wallpaperPath ?? "")
                                     : (wBg.wallpaperPath ?? Config.options?.background?.wallpaperPath ?? "")
                             } else {
-                                // Going to Material - use main wallpaper
                                 path = Config.options?.background?.wallpaperPath ?? ""
                             }
                             if (!path) return ""
@@ -142,21 +222,30 @@ Scope {
                         source: wallpaperImg
                         visible: wallpaperImg.status === Image.Ready
                         blurEnabled: Appearance.effectsEnabled
-                        blur: 0.8
+                        blur: root._blurAmount
                         blurMax: 64
-                        saturation: 0.3
+                        saturation: 0.25
                     }
 
-                    // Subtle tint overlay (only for Material, Waffle uses clean blur)
+                    // Tint overlay — Material gets a subtle colored scrim, Waffle stays clean
                     Rectangle {
                         anchors.fill: parent
                         color: Appearance.m3colors.m3background
-                        opacity: root._isWaffle ? 0 : 0.3
-                        visible: !root._isWaffle
+                        opacity: root._isWaffle ? 0.08 : 0.28
                     }
                 }
 
-                // Family-specific transition effect
+                // ── Subtle vignette for depth ──
+                Rectangle {
+                    anchors.fill: parent
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: "transparent" }
+                        GradientStop { position: 0.45; color: "transparent" }
+                        GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, 0.15) }
+                    }
+                }
+
+                // ── Family-specific transition effect ──
                 Loader {
                     anchors.fill: parent
                     sourceComponent: root._isWaffle ? waffleTransition : materialTransition
@@ -165,230 +254,342 @@ Scope {
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // WAFFLE - Fluent Reveal: Acrylic panel emerges from center
-    // ═══════════════════════════════════════════════════════════════════════
+    // ════════════════════════════════════════════════════════════════════
+    // WAFFLE — Fluent acrylic card reveal
+    //
+    // A translucent card scales up from center with the Fluent Design
+    // decelerate curve, content staggers in, accent shimmer at bottom.
+    // ════════════════════════════════════════════════════════════════════
     Component {
         id: waffleTransition
-        
+
         Item {
             id: waffleRoot
             anchors.fill: parent
-            
+
             property bool expanded: false
-            property bool showContent: false
-            
+            property bool showIcon: false
+            property bool showText: false
+            property bool showAccent: false
+
             Component.onCompleted: Qt.callLater(() => expanded = true)
-            
-            Timer {
-                interval: 250
-                running: waffleRoot.expanded
-                onTriggered: waffleRoot.showContent = true
-            }
-            
-            // Acrylic panel - the main element
+
+            // Staggered content reveal
+            Timer { interval: 160; running: waffleRoot.expanded; onTriggered: waffleRoot.showIcon = true }
+            Timer { interval: 240; running: waffleRoot.expanded; onTriggered: waffleRoot.showText = true }
+            Timer { interval: 320; running: waffleRoot.expanded; onTriggered: waffleRoot.showAccent = true }
+
+            // ── Acrylic card ──
             Rectangle {
-                id: acrylicPanel
+                id: acrylicCard
                 anchors.centerIn: parent
-                width: waffleRoot.expanded && !root._phase ? 280 : 56
-                height: waffleRoot.expanded && !root._phase ? 200 : 56
-                radius: waffleRoot.expanded ? Looks.radius.xLarge : 28
-                color: ColorUtils.transparentize(Looks.colors.bg0, 0.12)
+                width: 260
+                height: 180
+                radius: Looks.radius.xLarge
+                color: ColorUtils.transparentize(Looks.colors.bg1, 0.15)
                 border.width: 1
-                border.color: ColorUtils.transparentize(Looks.colors.fg, 0.88)
-                opacity: root._phase ? 0 : 1
-                scale: root._phase ? 0.92 : 1
-                
-                Behavior on width { NumberAnimation { duration: root._phase ? 280 : root.enterDuration; easing.type: Easing.OutCubic } }
-                Behavior on height { NumberAnimation { duration: root._phase ? 280 : root.enterDuration; easing.type: Easing.OutCubic } }
-                Behavior on radius { NumberAnimation { duration: root.enterDuration * 0.5; easing.type: Easing.OutQuad } }
-                Behavior on opacity { NumberAnimation { duration: root._phase ? 250 : 100 } }
-                Behavior on scale { NumberAnimation { duration: 280; easing.type: Easing.OutCubic } }
-                
-                // Accent line at bottom
+                border.color: ColorUtils.transparentize(Looks.colors.fg, 0.9)
+
+                opacity: root._phase ? 0 : (waffleRoot.expanded ? 1 : 0)
+                scale: root._phase ? 0.92 : (waffleRoot.expanded ? 1 : 0.82)
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: root._phase ? 200 : 280
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: root._phase
+                            ? Looks.transition.easing.bezierCurve.accelerate
+                            : Looks.transition.easing.bezierCurve.decelerate
+                    }
+                }
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: root._phase ? 220 : 340
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: root._phase
+                            ? Looks.transition.easing.bezierCurve.accelerate
+                            : Looks.transition.easing.bezierCurve.decelerate
+                    }
+                }
+
+                // Accent shimmer line
                 Rectangle {
                     anchors.bottom: parent.bottom
+                    anchors.bottomMargin: 12
                     anchors.horizontalCenter: parent.horizontalCenter
-                    width: waffleRoot.showContent && !root._phase ? 60 : 0
-                    height: 3
-                    radius: 1.5
+                    width: waffleRoot.showAccent && !root._phase ? 48 : 0
+                    height: 2.5
+                    radius: 1.25
                     color: Looks.colors.accent
                     opacity: root._phase ? 0 : 1
-                    
-                    Behavior on width { NumberAnimation { duration: root._phase ? 150 : 300; easing.type: Easing.OutCubic } }
-                    Behavior on opacity { NumberAnimation { duration: 150 } }
+
+                    Behavior on width {
+                        NumberAnimation {
+                            duration: root._phase ? 120 : 300
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: Looks.transition.easing.bezierCurve.decelerate
+                        }
+                    }
+                    Behavior on opacity { NumberAnimation { duration: 120 } }
                 }
             }
-            
-            // Content
-            Column {
+
+            // ── Icon ──
+            Image {
                 anchors.centerIn: parent
-                spacing: 14
-                opacity: root._phase ? 0 : (waffleRoot.showContent ? 1 : 0)
-                scale: root._phase ? 0.95 : (waffleRoot.showContent ? 1 : 0.9)
-                
-                Behavior on opacity { NumberAnimation { duration: root._phase ? 150 : 220; easing.type: Easing.OutQuad } }
-                Behavior on scale { NumberAnimation { duration: root._phase ? 150 : 280; easing.type: Easing.OutCubic } }
-                
-                // Windows logo
-                Image {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    width: 52
-                    height: 52
-                    source: `${Looks.iconsPath}/start-here.svg`
-                    sourceSize: Qt.size(52, 52)
-                    
-                    layer.enabled: Appearance.effectsEnabled
-                    layer.effect: MultiEffect {
-                        colorization: 1.0
-                        colorizationColor: Looks.colors.fg
+                anchors.verticalCenterOffset: -22
+                width: 48
+                height: 48
+                source: `${Looks.iconsPath}/start-here.svg`
+                sourceSize: Qt.size(48, 48)
+                opacity: root._phase ? 0 : (waffleRoot.showIcon ? 1 : 0)
+                scale: root._phase ? 0.9 : (waffleRoot.showIcon ? 1 : 0.7)
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: root._phase ? 120 : 240
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Looks.transition.easing.bezierCurve.decelerate
                     }
                 }
-                
-                // Text
-                Column {
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: root._phase ? 140 : 300
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Looks.transition.easing.bezierCurve.decelerate
+                    }
+                }
+
+                layer.enabled: Appearance.effectsEnabled
+                layer.effect: MultiEffect {
+                    colorization: 1.0
+                    colorizationColor: Looks.colors.fg
+                }
+            }
+
+            // ── Text group ──
+            Column {
+                anchors.centerIn: parent
+                anchors.verticalCenterOffset: 32
+                spacing: 3
+                opacity: root._phase ? 0 : (waffleRoot.showText ? 1 : 0)
+                scale: root._phase ? 0.95 : (waffleRoot.showText ? 1 : 0.92)
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: root._phase ? 100 : 220
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Looks.transition.easing.bezierCurve.decelerate
+                    }
+                }
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: root._phase ? 120 : 260
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Looks.transition.easing.bezierCurve.decelerate
+                    }
+                }
+
+                Text {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    spacing: 2
-                    
-                    Text {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        text: "Waffle"
-                        font.pixelSize: 20
-                        font.family: Looks.font.family.ui
-                        font.weight: Font.DemiBold
-                        color: Looks.colors.fg
-                    }
-                    
-                    Text {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        text: "Windows 11 Style"
-                        font.pixelSize: Looks.font.pixelSize.small
-                        font.family: Looks.font.family.ui
-                        color: Looks.colors.subfg
-                    }
+                    text: "Waffle"
+                    font.pixelSize: 19
+                    font.family: Looks.font.family.ui
+                    font.weight: Font.DemiBold
+                    color: Looks.colors.fg
+                }
+
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: "Windows 11 Style"
+                    font.pixelSize: Looks.font.pixelSize.small
+                    font.family: Looks.font.family.ui
+                    color: Looks.colors.subfg
                 }
             }
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // MATERIAL II - Ripple circle expands from center
-    // ═══════════════════════════════════════════════════════════════════════
+    // ════════════════════════════════════════════════════════════════════
+    // MATERIAL II — Ink ripple expansion
+    //
+    // A primary-colored ink circle expands from center using the
+    // Material emphasized deceleration curve. Container badge and
+    // text stagger in. Exit reverses with accelerate curve.
+    // ════════════════════════════════════════════════════════════════════
     Component {
         id: materialTransition
-        
+
         Item {
             id: materialRoot
             anchors.fill: parent
-            
-            readonly property real maxRadius: Math.sqrt(width * width + height * height) / 2 + 100
+
+            readonly property real maxRadius: Math.sqrt(width * width + height * height) / 2 + 80
             property bool expanded: false
-            property bool showContent: false
-            
+            property bool showBadge: false
+            property bool showSubtext: false
+
             Component.onCompleted: Qt.callLater(() => expanded = true)
-            
-            Timer {
-                interval: 180
-                running: materialRoot.expanded
-                onTriggered: materialRoot.showContent = true
-            }
-            
-            // Expanding ripple circle
+
+            // Staggered content reveal
+            Timer { interval: 180; running: materialRoot.expanded; onTriggered: materialRoot.showBadge = true }
+            Timer { interval: 280; running: materialRoot.expanded; onTriggered: materialRoot.showSubtext = true }
+
+            // ── Primary ink ripple ──
             Rectangle {
                 anchors.centerIn: parent
                 width: materialRoot.expanded && !root._phase ? materialRoot.maxRadius * 2 : 0
                 height: width
                 radius: width / 2
-                color: ColorUtils.transparentize(Appearance.colors.colPrimaryContainer, 0.4)
+                color: ColorUtils.transparentize(Appearance.colors.colPrimaryContainer, 0.45)
                 opacity: root._phase ? 0 : 1
-                
-                Behavior on width { NumberAnimation { duration: root._phase ? root.exitDuration * 0.7 : root.enterDuration; easing.type: Easing.OutQuart } }
-                Behavior on opacity { NumberAnimation { duration: root.exitDuration; easing.type: Easing.OutQuad } }
+
+                Behavior on width {
+                    NumberAnimation {
+                        duration: root._phase ? (root._exitDuration * 0.6) : root._enterDuration
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: root._phase
+                            ? Appearance.animationCurves.emphasizedAccel
+                            : Appearance.animationCurves.emphasizedDecel
+                    }
+                }
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: root._exitDuration
+                        easing.type: Easing.OutQuad
+                    }
+                }
             }
-            
-            // Secondary ripple ring
+
+            // ── Secondary ring (subtle, trailing) ──
             Rectangle {
                 anchors.centerIn: parent
-                width: materialRoot.expanded && !root._phase ? materialRoot.maxRadius * 2.1 : 0
+                width: materialRoot.expanded && !root._phase ? materialRoot.maxRadius * 2.05 : 0
                 height: width
                 radius: width / 2
                 color: "transparent"
-                border.width: 2
-                border.color: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.7)
+                border.width: 1.5
+                border.color: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.78)
                 opacity: root._phase ? 0 : 1
-                
-                Behavior on width { NumberAnimation { duration: root._phase ? root.exitDuration * 0.6 : root.enterDuration + 80; easing.type: Easing.OutQuart } }
-                Behavior on opacity { NumberAnimation { duration: root.exitDuration * 0.8 } }
+
+                Behavior on width {
+                    NumberAnimation {
+                        duration: root._phase ? (root._exitDuration * 0.5) : (root._enterDuration + 100)
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: root._phase
+                            ? Appearance.animationCurves.emphasizedAccel
+                            : Appearance.animationCurves.emphasizedDecel
+                    }
+                }
+                Behavior on opacity { NumberAnimation { duration: root._exitDuration * 0.7 } }
             }
-            
-            // Center content
-            Column {
+
+            // ── Container badge ──
+            Rectangle {
+                id: badge
                 anchors.centerIn: parent
-                spacing: 14
-                opacity: root._phase ? 0 : (materialRoot.showContent ? 1 : 0)
-                scale: root._phase ? 0.9 : (materialRoot.showContent ? 1 : 0.75)
-                
-                Behavior on opacity { NumberAnimation { duration: root._phase ? 200 : 280; easing.type: Easing.OutQuad } }
-                Behavior on scale { NumberAnimation { duration: root._phase ? 200 : 350; easing.type: Easing.OutCubic } }
-                
-                Rectangle {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    width: 64
-                    height: 64
-                    radius: 32
-                    color: Appearance.colors.colPrimaryContainer
-                    
-                    Image {
-                        anchors.centerIn: parent
-                        width: 36
-                        height: 36
-                        source: Qt.resolvedUrl("assets/icons/illogical-impulse.svg")
-                        sourceSize: Qt.size(36, 36)
-                        
-                        layer.enabled: Appearance.effectsEnabled
-                        layer.effect: MultiEffect {
-                            colorization: 1.0
-                            colorizationColor: Appearance.colors.colOnPrimaryContainer
+                anchors.verticalCenterOffset: -18
+                width: 60
+                height: 60
+                radius: 30
+                color: Appearance.colors.colPrimaryContainer
+
+                opacity: root._phase ? 0 : (materialRoot.showBadge ? 1 : 0)
+                scale: root._phase ? 0.85 : (materialRoot.showBadge ? 1 : 0.6)
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: root._phase ? 160 : 280
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: root._phase
+                            ? Appearance.animationCurves.emphasizedAccel
+                            : Appearance.animationCurves.emphasizedDecel
+                    }
+                }
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: root._phase ? 180 : 350
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: root._phase
+                            ? Appearance.animationCurves.emphasizedAccel
+                            : Appearance.animationCurves.emphasizedDecel
+                    }
+                }
+
+                Image {
+                    anchors.centerIn: parent
+                    width: 34
+                    height: 34
+                    source: Qt.resolvedUrl("assets/icons/illogical-impulse.svg")
+                    sourceSize: Qt.size(34, 34)
+
+                    layer.enabled: Appearance.effectsEnabled
+                    layer.effect: MultiEffect {
+                        colorization: 1.0
+                        colorizationColor: {
+                            const c = Appearance.colors.colOnPrimaryContainer
+                            return ColorUtils.hslLightness(c) < 0.2 ? Appearance.colors.colPrimary : c
                         }
                     }
                 }
-                
-                Column {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    spacing: 2
-                    
-                    Text {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        text: "Material ii"
-                        font.pixelSize: Appearance.font.pixelSize.title
-                        font.family: Appearance.font.family.title
-                        font.weight: Font.Medium
-                        color: Appearance.m3colors.m3onSurface
-                        
-                        layer.enabled: Appearance.effectsEnabled
-                        layer.effect: MultiEffect {
-                            shadowEnabled: true
-                            shadowColor: Appearance.m3colors.darkmode ? "#000000" : "#FFFFFF"
-                            shadowBlur: 0.8
-                            shadowVerticalOffset: 1
-                        }
+            }
+
+            // ── Text group ──
+            Column {
+                anchors.centerIn: parent
+                anchors.verticalCenterOffset: 30
+                spacing: 3
+                opacity: root._phase ? 0 : (materialRoot.showSubtext ? 1 : 0)
+                scale: root._phase ? 0.92 : (materialRoot.showSubtext ? 1 : 0.85)
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: root._phase ? 140 : 260
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Appearance.animationCurves.emphasizedDecel
                     }
-                    
-                    Text {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        text: "Material Design"
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        font.family: Appearance.font.family.main
-                        color: Appearance.m3colors.m3onSurface
-                        opacity: 0.7
-                        
-                        layer.enabled: Appearance.effectsEnabled
-                        layer.effect: MultiEffect {
-                            shadowEnabled: true
-                            shadowColor: Appearance.m3colors.darkmode ? "#000000" : "#FFFFFF"
-                            shadowBlur: 0.6
-                            shadowVerticalOffset: 1
-                        }
+                }
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: root._phase ? 160 : 320
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: root._phase
+                            ? Appearance.animationCurves.emphasizedAccel
+                            : Appearance.animationCurves.emphasizedDecel
+                    }
+                }
+
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: "Material ii"
+                    font.pixelSize: Appearance.font.pixelSize.title
+                    font.family: Appearance.font.family.title
+                    font.weight: Font.Medium
+                    color: Appearance.m3colors.m3onSurface
+
+                    layer.enabled: Appearance.effectsEnabled
+                    layer.effect: MultiEffect {
+                        shadowEnabled: true
+                        shadowColor: Appearance.m3colors.darkmode ? "#40000000" : "#40FFFFFF"
+                        shadowBlur: 0.6
+                        shadowVerticalOffset: 1
+                    }
+                }
+
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: "Material Design"
+                    font.pixelSize: Appearance.font.pixelSize.small
+                    font.family: Appearance.font.family.main
+                    color: Appearance.m3colors.m3onSurface
+                    opacity: 0.65
+
+                    layer.enabled: Appearance.effectsEnabled
+                    layer.effect: MultiEffect {
+                        shadowEnabled: true
+                        shadowColor: Appearance.m3colors.darkmode ? "#30000000" : "#30FFFFFF"
+                        shadowBlur: 0.4
+                        shadowVerticalOffset: 1
                     }
                 }
             }

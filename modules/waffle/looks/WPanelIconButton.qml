@@ -9,15 +9,16 @@ import qs.modules.waffle.bar
 WButton {
     id: root
 
+    readonly property var currentScreen: root.QsWindow?.window?.screen ?? null
     property alias iconName: iconContent.icon
     property alias monochrome: iconContent.monochrome
-    implicitWidth: 40
-    implicitHeight: 40
+    implicitWidth: Looks.scaled(40, currentScreen)
+    implicitHeight: Looks.scaled(40, currentScreen)
 
     contentItem: FluentIcon {
         id: iconContent
         anchors.centerIn: parent
-        implicitSize: 18
+        implicitSize: Looks.scaled(18, root.currentScreen)
         icon: root.iconName
     }
 }

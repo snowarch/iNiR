@@ -77,16 +77,31 @@ Singleton {
     // Repo path - try to get from version.json, fallback to config dir
     readonly property string configDir: FileUtils.trimFileProtocol(Quickshell.shellPath("."))
     property string repoPath: configDir  // Will be updated after reading version.json
+    property string pendingRepoPath: ""
     property bool repoPathLoaded: false
-    readonly property string manifestPath: configDir + "/.ii-manifest"
+    readonly property string manifestPath: configDir + "/.inir-manifest"
+    property string installMode: "unknown"
+    property string updateStrategy: "unknown"
+    property string installSource: "unknown"
+    readonly property bool managedExternally: updateStrategy === "package-manager"
+    readonly property bool selfUpdateSupported: updateStrategy === "repo-setup"
+    readonly property string unavailableTitle: managedExternally
+        ? "Updates Managed Externally"
+        : "Updates Unavailable"
+    readonly property string unavailableMessage: managedExternally
+        ? "This iNiR installation is managed outside the runtime copy. Use your package manager or installation workflow to update it."
+        : "Repository not found. The update system cannot locate the iNiR git repository."
+    readonly property string unavailableHint: managedExternally
+        ? "Runtime diagnostics are still available, but in-shell self-update is disabled for this installation mode."
+        : "Run './setup doctor' in your terminal to diagnose the issue, or use the diagnose command below."
 
     // Handler: notify when availability changes to false (after initial check)
     onAvailableChanged: {
-        if (initialAvailabilityChecked && !available && !unavailableNotificationShown) {
+        if (initialAvailabilityChecked && !available && !unavailableNotificationShown && !managedExternally) {
             unavailableNotificationShown = true
             Notifications.notify({
-                summary: "iNiR Updates Unavailable",
-                body: "Repository not found. Run './setup doctor' to diagnose the issue.",
+                summary: root.unavailableTitle,
+                body: root.unavailableHint,
                 urgency: NotificationUrgency.Normal,
                 timeout: 10000,
                 appName: "iNiR Shell"
@@ -118,7 +133,7 @@ Singleton {
     }
 
     function check(): void {
-        if (!enabled || isChecking || isUpdating) return
+        if (!enabled || isChecking || isUpdating || managedExternally) return
         root.isChecking = true
         root.lastError = ""
         fetchProc.running = true
@@ -126,7 +141,7 @@ Singleton {
 
     // Fetch detailed info for the overlay (commit log, changelog, local mods)
     function fetchDetails(): void {
-        if (isFetchingDetails) return
+        if (isFetchingDetails || managedExternally) return
         root.isFetchingDetails = true
         root.commitLog = ""
         root.remoteChangelog = ""
@@ -166,7 +181,7 @@ Singleton {
     }
 
     function performUpdate(): void {
-        if (isUpdating || !hasUpdate || !available) return
+        if (isUpdating || !hasUpdate || !available || managedExternally) return
         root.isUpdating = true
         root.lastError = ""
         root.overlayOpen = false
@@ -201,6 +216,10 @@ Singleton {
             repoPathLoaded: root.repoPathLoaded,
             configDir: root.configDir,
             versionJsonPath: Directories.shellConfig + "/version.json",
+            installMode: root.installMode,
+            updateStrategy: root.updateStrategy,
+            installSource: root.installSource,
+            selfUpdateSupported: root.selfUpdateSupported,
             gitAvailable: root.available,
             lastError: root.lastError,
             consecutiveFetchErrors: root.consecutiveFetchErrors,
@@ -244,11 +263,36 @@ Singleton {
                     if (json.version && json.version !== "0.0.0") {
                         root.localVersion = json.version
                     }
-                    if (json.repo_path && json.repo_path.length > 0) {
-                        root.repoPath = json.repo_path
-                        print("[ShellUpdates] Using repo path from version.json: " + root.repoPath)
+                    const storedInstallMode = json.installMode ?? json.install_mode ?? ""
+                    const storedUpdateStrategy = json.updateStrategy ?? json.update_strategy ?? ""
+                    const storedSource = json.installSource ?? json.install_source ?? json.source ?? ""
+                    if (storedInstallMode.length > 0) {
+                        root.installMode = storedInstallMode
+                    }
+                    if (storedUpdateStrategy.length > 0) {
+                        root.updateStrategy = storedUpdateStrategy
+                    }
+                    if (storedSource.length > 0) {
+                        root.installSource = storedSource
+                    }
+                    const storedRepoPath = json.repoPath ?? json.repo_path ?? ""
+                    if (storedRepoPath.length > 0 && root.installMode === "unknown") {
+                        root.installMode = "repo-copy"
+                    }
+                    if (storedRepoPath.length > 0 && root.updateStrategy === "unknown") {
+                        root.updateStrategy = "repo-setup"
+                    }
+                    if (root.managedExternally) {
                         root.repoPathLoaded = true
-                        validateRepoPathProc.running = true
+                        root.initialAvailabilityChecked = true
+                        root.initialUpdateCheckDone = true
+                        root.available = false
+                        print("[ShellUpdates] Update strategy is managed externally: " + root.updateStrategy)
+                        return
+                    }
+                    if (storedRepoPath.length > 0) {
+                        root.pendingRepoPath = storedRepoPath
+                        preferConfigRepoProc.running = true
                         return
                     }
                 } catch (e) {
@@ -264,6 +308,49 @@ Singleton {
             if (exitCode !== 0 && !_handledFallback) {
                 print("[ShellUpdates] version.json not found, searching for repository...")
                 searchRepoProc.running = true
+            }
+        }
+    }
+
+    Process {
+        id: preferConfigRepoProc
+        running: false
+        command: [
+            "/usr/bin/bash", "-c",
+            "p='" + root.configDir + "'; [[ -d \"$p/.git\" && -f \"$p/setup\" && -f \"$p/shell.qml\" ]] && echo OK || echo ''"
+        ]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const ok = ((text ?? "").trim() === "OK")
+                if (ok) {
+                    root.repoPath = root.configDir
+                    root.installMode = "repo-link"
+                    root.updateStrategy = "repo-setup"
+                    root.repoPathLoaded = true
+                    print("[ShellUpdates] Using active config checkout as repo path: " + root.repoPath)
+                    persistRepoPathProc.running = true
+                    availabilityProc.running = true
+                } else if (root.pendingRepoPath.length > 0) {
+                    root.repoPath = root.pendingRepoPath
+                    root.pendingRepoPath = ""
+                    print("[ShellUpdates] Using repo path from version.json: " + root.repoPath)
+                    root.repoPathLoaded = true
+                    validateRepoPathProc.running = true
+                } else {
+                    searchRepoProc.running = true
+                }
+            }
+        }
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0) {
+                if (root.pendingRepoPath.length > 0) {
+                    root.repoPath = root.pendingRepoPath
+                    root.pendingRepoPath = ""
+                    root.repoPathLoaded = true
+                    validateRepoPathProc.running = true
+                } else {
+                    searchRepoProc.running = true
+                }
             }
         }
     }
@@ -318,6 +405,12 @@ Singleton {
                 const foundPath = (text ?? "").trim()
                 if (foundPath.length > 0) {
                     root.repoPath = foundPath
+                    if (root.installMode === "unknown") {
+                        root.installMode = foundPath === root.configDir ? "repo-link" : "repo-copy"
+                    }
+                    if (root.updateStrategy === "unknown") {
+                        root.updateStrategy = "repo-setup"
+                    }
                     print("[ShellUpdates] Found repository at: " + root.repoPath)
                     // Persist found path to version.json to avoid repeated searches
                     persistRepoPathProc.running = true
@@ -343,7 +436,7 @@ Singleton {
             "vfile='" + Directories.shellConfig + "/version.json'; " +
             "if [[ -f \"$vfile\" ]] && command -v jq &>/dev/null; then " +
             "  tmp=$(mktemp); " +
-            "  jq --arg p '" + root.repoPath + "' '.repo_path = $p' \"$vfile\" > \"$tmp\" && mv \"$tmp\" \"$vfile\"; " +
+            "  jq --arg p '" + root.repoPath + "' --arg m '" + root.installMode + "' --arg u '" + root.updateStrategy + "' '.repo_path = $p | .repoPath = $p | .install_mode = $m | .installMode = $m | .update_strategy = $u | .updateStrategy = $u' \"$vfile\" > \"$tmp\" && mv \"$tmp\" \"$vfile\"; " +
             "  echo 'Updated'; " +
             "elif [[ -f \"$vfile\" ]] && command -v python3 &>/dev/null; then " +
             "  tmp=$(mktemp); " +
@@ -351,7 +444,12 @@ Singleton {
             "\ntry: data=json.load(open(path,\"r\",encoding=\"utf-8\"))" +
             "\nexcept Exception: data={}" +
             "\ndata[\"repo_path\"]=repo" +
-            "\njson.dump(data, sys.stdout, ensure_ascii=False, indent=2)' \"$vfile\" '" + root.repoPath + "' > \"$tmp\" " +
+            "\ndata[\"repoPath\"]=repo" +
+            "\ndata[\"install_mode\"]=sys.argv[3]" +
+            "\ndata[\"installMode\"]=sys.argv[3]" +
+            "\ndata[\"update_strategy\"]=sys.argv[4]" +
+            "\ndata[\"updateStrategy\"]=sys.argv[4]" +
+            "\njson.dump(data, sys.stdout, ensure_ascii=False, indent=2)' \"$vfile\" '" + root.repoPath + "' '" + root.installMode + "' '" + root.updateStrategy + "' > \"$tmp\" " +
             "    && mv \"$tmp\" \"$vfile\" && echo 'Updated' || echo 'Skipped'; " +
             "else " +
             "  echo 'Skipped'; " +
@@ -392,6 +490,12 @@ Singleton {
         running: false
         command: ["git", "-C", root.repoPath, "rev-parse", "--git-dir"]
         onExited: (exitCode, exitStatus) => {
+            if (root.managedExternally) {
+                root.available = false
+                root.initialAvailabilityChecked = true
+                root.initialUpdateCheckDone = true
+                return
+            }
             root.available = (exitCode === 0)
             root.initialAvailabilityChecked = true
             print("[ShellUpdates] Git available: " + root.available)

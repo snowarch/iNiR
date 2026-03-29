@@ -409,15 +409,17 @@ Singleton {
 		let filtered = [];
 		let used = new Set();
 		
-		const allPlayers = [...ytMusic, ...nonYtMusic];
+		const allPlayers = [...ytMusic, ...nonYtMusic].filter(player => player);
 		for (let i = 0; i < allPlayers.length; i++) {
 			if (used.has(i)) continue;
 			const p1 = allPlayers[i];
+			if (!p1) continue;
 			let group = [i];
 			
 			for (let j = i + 1; j < allPlayers.length; j++) {
 				if (used.has(j)) continue;
 				const p2 = allPlayers[j];
+				if (!p2) continue;
 				
 				// Title similarity check
 				const titleMatch = p1.trackTitle && p2.trackTitle && 

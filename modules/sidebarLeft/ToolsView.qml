@@ -139,17 +139,17 @@ Item {
                     ActionTile {
                         tileIcon: "screenshot_region"
                         label: Translation.tr("Region")
-                        onClicked: Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "region", "screenshot"])
+                        onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "screenshot"])
                     }
                     ActionTile {
                         tileIcon: "videocam"
                         label: Translation.tr("Record")
-                        onClicked: Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "region", "record"])
+                        onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "record"])
                     }
                     ActionTile {
                         tileIcon: "text_fields"
                         label: Translation.tr("OCR")
-                        onClicked: Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "region", "ocr"])
+                        onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "ocr"])
                     }
                     ActionTile {
                         tileIcon: "colorize"
@@ -180,7 +180,7 @@ Item {
                     ActionTile {
                         tileIcon: "terminal"
                         label: Translation.tr("Terminal")
-                        onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/launch-terminal.sh")])
+                        onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "terminal"])
                     }
                     ActionTile {
                         tileIcon: "folder"
@@ -190,17 +190,17 @@ Item {
                     ActionTile {
                         tileIcon: "settings"
                         label: Translation.tr("Settings")
-                        onClicked: Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "settings", "open"])
+                        onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"])
                     }
                     ActionTile {
                         tileIcon: "tune"
                         label: Translation.tr("Audio")
-                        onClicked: Quickshell.execDetached([Config.options?.apps?.volumeMixer ?? "/usr/bin/pavucontrol"])
+                        onClicked: AppLauncher.launch("volumeMixer")
                     }
                     ActionTile {
                         tileIcon: "language"
                         label: Translation.tr("Browser")
-                        onClicked: Quickshell.execDetached([Config.options?.apps?.browser ?? "/usr/bin/firefox"])
+                        onClicked: AppLauncher.launch("browser")
                     }
                     ActionTile {
                         tileIcon: "code"
@@ -286,7 +286,7 @@ Item {
                 ActionButton {
                     btnIcon: "restart_alt"
                     label: Translation.tr("Restart shell")
-                    onClicked: Quickshell.execDetached(["/usr/bin/fish", "-c", "qs kill -c ii; qs -c ii -d"])
+                    onClicked: Quickshell.execDetached(["/usr/bin/bash", Quickshell.shellPath("scripts/restart-shell.sh")])
                 }
                 ActionButton {
                     btnIcon: "lock"

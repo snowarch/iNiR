@@ -7,7 +7,7 @@ Item {
     id: root
     property int currentIndex: 0
     property bool expanded: false
-    default property alias data: tabBarColumn.data  
+    default property alias contentData: tabBarColumn.data  
     implicitHeight: tabBarColumn.implicitHeight
     implicitWidth: tabBarColumn.implicitWidth
     Layout.topMargin: 25
@@ -44,4 +44,3 @@ Item {
         spacing: 0
     }
 }
-

@@ -27,6 +27,10 @@ WBarAttachedPanelContent {
     contentItem: WPane {
         anchors.centerIn: parent
         borderColor: Looks.colors.ambientShadow
+        screenX: root.panelScreenX + root.visualMargin
+        screenY: root.panelScreenY + root.visualMargin
+        screenWidth: root._screenW
+        screenHeight: root._screenH
 
         contentItem: Item {
             // color: Looks.colors.bg1Base

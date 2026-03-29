@@ -63,10 +63,12 @@ Item {
         const lower = activeName.toLowerCase()
         const isVideo = lower.endsWith(".mp4") || lower.endsWith(".webm") || lower.endsWith(".mkv") || lower.endsWith(".avi") || lower.endsWith(".mov")
         const isGif = lower.endsWith(".gif")
-        if (isVideo || isGif) {
-            const thumbPath = Wallpapers.getExpectedThumbnailPath(activePath, root._lastThumbnailSizeName)
-            return thumbPath.length > 0 ? ("file://" + thumbPath) : ""
-        }
+        // Always prefer the thumbnail for color quantization — loading the full
+        // source image just for accent extraction wastes memory and decode time.
+        const thumbPath = Wallpapers.getExpectedThumbnailPath(activePath, root._lastThumbnailSizeName)
+        if (thumbPath.length > 0) return "file://" + thumbPath
+        // Fall back to the full image only when no thumbnail is available yet.
+        if (isVideo || isGif) return ""
         return "file://" + activePath
     }
     readonly property string activeDisplayName: !hasItems ? ""
@@ -109,6 +111,11 @@ Item {
     readonly property real panelRadius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
         : Appearance.rounding.normal
+
+    readonly property string _sideThumbnailSizeName: Images.thumbnailSizeNameForDimensions(
+        Math.round(root.cardW * root._dpr * 0.9),
+        Math.round(root.cardH * root._dpr * 0.9)
+    )
 
     function updateThumbnails() {
         const w = Math.round(root.cardW * root._dpr * 2)
@@ -623,7 +630,7 @@ Item {
                             visible: shouldShow
                             generateThumbnail: shouldShow
                             sourcePath: shouldShow ? slot.filePath : ""
-                            thumbnailSizeName: slot.isCurrent ? root._lastThumbnailSizeName : "large"
+                            thumbnailSizeName: slot.isCurrent ? root._lastThumbnailSizeName : root._sideThumbnailSizeName
                             cache: true
                             asynchronous: true
                             retainWhileLoading: true
@@ -756,9 +763,17 @@ Item {
                                             id: activeBadgeText
                                             anchors.centerIn: parent
                                             text: Translation.tr("Active")
-                                            font.pixelSize: Appearance.font.pixelSize.smaller
+                                            font.pixelSize: Appearance.font.pixelSize.small
                                             font.weight: Font.DemiBold
                                             color: ColorUtils.contrastColor(root._accent)
+                                            layer.enabled: true
+                                            layer.effect: GE.DropShadow {
+                                                verticalOffset: 1
+                                                horizontalOffset: 0
+                                                radius: 6
+                                                samples: 16
+                                                color: ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.55)
+                                            }
                                         }
                                     }
                                 }
@@ -1306,13 +1321,14 @@ Item {
             onClicked: {
                 root.showKeyboardGuide = false
                 root.useDarkMode = !root.useDarkMode
+                MaterialThemeLoader.setDarkMode(root.useDarkMode)
             }
             text: root.useDarkMode ? "dark_mode" : "light_mode"
             StyledToolTip { text: Translation.tr("Toggle light/dark mode") }
         }
         IconToolbarButton {
             implicitWidth: height
-            onClicked: Wallpapers.randomFromCurrentFolder()
+            onClicked: Wallpapers.randomFromCurrentFolder(root.useDarkMode)
             text: "shuffle"
             StyledToolTip { text: Translation.tr("Random wallpaper") }
         }

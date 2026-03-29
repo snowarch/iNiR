@@ -7,10 +7,13 @@ import qs.modules.common.models
 TabBar {
     id: root
     property real indicatorPadding: 8
+    property bool wheelNavigationEnabled: true
+    property bool bottomBorderVisible: true
     Layout.fillWidth: true
 
     background: Item {
         WheelHandler {
+            enabled: root.wheelNavigationEnabled
             onWheel: (event) => {
                 if (event.angleDelta.y < 0) root.incrementCurrentIndex();
                 else if (event.angleDelta.y > 0) root.decrementCurrentIndex();
@@ -41,8 +44,9 @@ TabBar {
         Rectangle { // Tabbar bottom border
             id: tabBarBottomBorder
             z: 9998
+            visible: root.bottomBorderVisible
             anchors.bottom: parent.bottom
-            height: 1
+            height: visible ? 1 : 0
             anchors {
                 left: parent.left
                 right: parent.right

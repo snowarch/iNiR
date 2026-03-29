@@ -134,6 +134,14 @@ AndroidQuickToggleButton {
         }
     }
 
+    Timer {
+        id: warpPollTimer
+        interval: 5000
+        repeat: true
+        running: true
+        onTriggered: root.refreshStatus()
+    }
+
     Component.onCompleted: root.refreshStatus()
     StyledToolTip {
         text: Translation.tr("Cloudflare WARP (1.1.1.1)")

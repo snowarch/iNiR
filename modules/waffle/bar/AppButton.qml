@@ -20,7 +20,9 @@ BarButton {
     property real pressedScale: 5/6
 
     onDownChanged: {
-        scaleAnim.duration = root.down ? 150 : 200
+        scaleAnim.duration = root.down
+            ? (Looks.transition.enabled ? Looks.transition.duration.chromePress : 0)
+            : (Looks.transition.enabled ? Looks.transition.duration.chromeRelease : 0)
         scaleAnim.easing.bezierCurve = root.down ? Looks.transition.easing.bezierCurve.easeIn : Looks.transition.easing.bezierCurve.easeOut
         contentItem.scale = root.down ? root.pressedScale : 1 // If/When we do dragging, the scale is 1.25
     }

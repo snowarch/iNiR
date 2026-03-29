@@ -16,22 +16,64 @@ Singleton {
     property QtObject transition
     property string iconsPath: `${Directories.assetsPath}/icons/fluent`
     property bool dark: Appearance.m3colors.darkmode
-    property bool auroraEverywhere: (Config.options?.appearance?.globalStyle ?? "material") === "aurora"
+    property bool auroraEverywhere: {
+        const style = Config.options?.appearance?.globalStyle ?? "material"
+        return style === "aurora" || style === "angel"
+    }
     property bool useMaterial: (Config.options?.waffles?.theming?.useMaterialColors ?? false) || root.auroraEverywhere
+    // Glass mode: aurora/angel active (not iNiR which has its own aesthetic)
+    readonly property bool glassActive: root.auroraEverywhere && !Appearance.inirEverywhere
     
     // Font family - reactive property at root level for proper binding updates
     readonly property string fontFamily: {
         const f = Config.options?.waffles?.theming?.font?.family;
         return (f && f.length > 0) ? f : "Noto Sans";
     }
-    // Font scale - reactive property
-    readonly property real fontScale: Config.options?.waffles?.theming?.font?.scale ?? 1.0
+    // Font scale - reactive property.
+    // Combines the waffle-specific font fine-tuner (waffles.theming.font.scale)
+    // with the global UI scale (appearance.typography.sizeScale) so the
+    // "Display scaling" slider in Interface settings also affects waffle fonts.
+    readonly property real fontScale: (Config.options?.waffles?.theming?.font?.scale ?? 1.0) * Appearance.fontSizeScale
 
     readonly property bool transparencyEnabled: Config.options?.appearance?.transparency?.enable ?? false
     property real backgroundTransparency: root.auroraEverywhere ? (Appearance.backgroundTransparency ?? 0) : (transparencyEnabled ? 0.13 : 0)
     property real panelBackgroundTransparency: root.auroraEverywhere ? (Appearance.backgroundTransparency ?? 0) : (transparencyEnabled ? 0.12 : 0)
     property real panelLayerTransparency: root.auroraEverywhere ? (Appearance.aurora.popupSurfaceTransparentize ?? 0.5) : (root.dark ? 0.6 : 0.5)
     property real contentTransparency: root.auroraEverywhere ? (Appearance.contentTransparency ?? 0) : (root.dark ? 0.87 : 0.5)
+    function clamp(value, minimum, maximum) {
+        return Math.max(minimum, Math.min(maximum, value))
+    }
+    function screenScale(screen, minimum, maximum) {
+        minimum = minimum ?? 0.92
+        maximum = maximum ?? 1.08
+        const width = screen?.width ?? 1920
+        const height = screen?.height ?? 1080
+        const shortSide = Math.min(width, height)
+        return root.clamp(shortSide / 1080, minimum, maximum)
+    }
+    function barScale(screen, minimum, maximum) {
+        minimum = minimum ?? 0.9
+        maximum = maximum ?? 1.18
+        const width = screen?.width ?? 1920
+        const height = screen?.height ?? 1080
+        return root.clamp(Math.min(width / 1920, height / 1080), minimum, maximum)
+    }
+    function scaled(value, screen, minimum, maximum) {
+        minimum = minimum ?? 0.92
+        maximum = maximum ?? 1.08
+        return Math.round(value * root.screenScale(screen, minimum, maximum) * Appearance.fontSizeScale)
+    }
+    function scaledBar(value, screen, minimum, maximum) {
+        minimum = minimum ?? 0.9
+        maximum = maximum ?? 1.18
+        return Math.round(value * root.barScale(screen, minimum, maximum) * Appearance.fontSizeScale)
+    }
+    // Scale a raw pixel value by the global UI display scale factor.
+    // Use for layout dimensions (margins, spacing, sizes) that should
+    // respond to the user's "UI scale" setting. Reactive in bindings.
+    function dp(value) {
+        return Math.round(value * Appearance.fontSizeScale)
+    }
     function applyBackgroundTransparency(col) {
         return ColorUtils.applyAlpha(col, 1 - root.backgroundTransparency)
     }
@@ -102,22 +144,26 @@ Singleton {
         property color ambientShadow: ColorUtils.transparentize("#000000", 0.75)
         
         // Material-aware colors - use Appearance colors when useMaterial is true
-        property color bgPanelFooterBase: root.useMaterial 
-            ? Appearance.colors.colLayer0 
+        property color bgPanelFooterBase: root.useMaterial
+            ? Appearance.colors.colLayer0
             : ColorUtils.transparentize(root.dark ? root.darkColors.bgPanelFooter : root.lightColors.bgPanelFooter, root.panelBackgroundTransparency)
-        property color bgPanelFooter: root.useMaterial 
-            ? Appearance.colors.colLayer1 
+        property color bgPanelFooter: root.useMaterial
+            ? Appearance.colors.colLayer1
             : ColorUtils.transparentize(root.dark ? root.darkColors.bgPanelFooter : root.lightColors.bgPanelFooter, root.panelLayerTransparency)
-        property color bgPanelBody: root.useMaterial 
-            ? Appearance.colors.colLayer2 
-            : ColorUtils.transparentize(root.dark ? root.darkColors.bgPanelBody : root.lightColors.bgPanelBody, root.panelLayerTransparency)
-        property color bgPanelSeparator: root.useMaterial 
-            ? Appearance.colors.colOutlineVariant 
+        // bgPanelBody is only used inside WPane-backed panels (BodyRectangle),
+        // so making it transparent when glass is active lets GlassBackground show through
+        property color bgPanelBody: root.glassActive
+            ? "transparent"
+            : root.useMaterial
+                ? Appearance.colors.colLayer2
+                : ColorUtils.transparentize(root.dark ? root.darkColors.bgPanelBody : root.lightColors.bgPanelBody, root.panelLayerTransparency)
+        property color bgPanelSeparator: root.useMaterial
+            ? Appearance.colors.colOutlineVariant
             : ColorUtils.transparentize(root.dark ? root.darkColors.bgPanelSeparator : root.lightColors.bgPanelSeparator, root.backgroundTransparency)
-        property color bg0Opaque: root.useMaterial 
-            ? Appearance.m3colors.m3background 
+        property color bg0Opaque: root.useMaterial
+            ? Appearance.m3colors.m3background
             : (root.dark ? root.darkColors.bg0 : root.lightColors.bg0)
-        property color bg0: root.useMaterial 
+        property color bg0: root.useMaterial
             ? Appearance.colors.colLayer0 
             : ColorUtils.transparentize(bg0Opaque, root.backgroundTransparency)
         property color bg0Border: root.useMaterial 
@@ -153,6 +199,30 @@ Singleton {
         property color bg2Border: root.useMaterial 
             ? Appearance.colors.colOutlineVariant 
             : ColorUtils.transparentize(root.dark ? root.darkColors.bg2Border : root.lightColors.bg2Border, root.contentTransparency)
+        property color interactiveSurface: root.glassActive
+            ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCard : Appearance.aurora.colSubSurface)
+            : bg1
+        property color interactiveSurfaceHover: root.glassActive
+            ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover : Appearance.aurora.colSubSurfaceHover)
+            : bg2Hover
+        property color interactiveSurfaceActive: root.glassActive
+            ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive : Appearance.aurora.colSubSurfaceActive)
+            : bg2Active
+        property color popupSurface: root.glassActive
+            ? (Appearance.angelEverywhere ? Appearance.angel.colGlassPopup : Appearance.aurora.colPopupSurface)
+            : bg2
+        property color popupSurfaceHover: root.glassActive
+            ? (Appearance.angelEverywhere ? Appearance.angel.colGlassPopupHover : Appearance.aurora.colPopupSurfaceHover)
+            : bg2Hover
+        property color popupSurfaceActive: root.glassActive
+            ? (Appearance.angelEverywhere ? Appearance.angel.colGlassPopupActive : Appearance.aurora.colPopupSurfaceActive)
+            : bg2Active
+        property color tooltipSurface: root.glassActive
+            ? (Appearance.angelEverywhere ? Appearance.angel.colGlassTooltip : Appearance.aurora.colTooltipSurface)
+            : bg2
+        property color tooltipBorder: root.glassActive
+            ? (Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle : Appearance.aurora.colTooltipBorder)
+            : bg2Border
         property color subfg: root.useMaterial 
             ? Appearance.colors.colSubtext 
             : (root.dark ? root.darkColors.subfg : root.lightColors.subfg)
@@ -183,9 +253,9 @@ Singleton {
         property color link: root.useMaterial 
             ? Appearance.colors.colPrimary 
             : (root.dark ? root.darkColors.link : root.lightColors.link)
-        property color danger: "#C42B1C"
-        property color dangerActive: "#B62D1F"
-        property color warning: "#FF9900"
+        property color danger: Appearance.m3colors.m3error ?? "#C42B1C"
+        property color dangerActive: Qt.darker(danger, 1.1)
+        property color warning: Appearance.m3colors.m3tertiary ?? "#FF9900"
         property color accent: Appearance.colors.colPrimary
         property color accentHover: Appearance.colors.colPrimaryHover
         property color accentActive: Appearance.colors.colPrimaryActive
@@ -200,10 +270,10 @@ Singleton {
     radius: QtObject {
         id: radius
         property int none: 0
-        property int small: 2
-        property int medium: 4
-        property int large: 8
-        property int xLarge: 12
+        property int small: root.dp(2)
+        property int medium: root.dp(4)
+        property int large: root.dp(8)
+        property int xLarge: root.dp(12)
     }
 
     font: QtObject {
@@ -211,6 +281,7 @@ Singleton {
         property QtObject family: QtObject {
             // Delegates to root.fontFamily for reactive updates
             readonly property string ui: root.fontFamily
+            readonly property string monospace: "JetBrainsMono Nerd Font"
         }
         property QtObject variableAxes: QtObject {
             property var ui: ({
@@ -276,6 +347,11 @@ Singleton {
             readonly property int panel: 250         // Slightly faster panels
             readonly property int overlay: 300
             readonly property int page: 350          // Page transitions
+            readonly property int chromeHover: 90
+            readonly property int chromePress: 120
+            readonly property int chromeRelease: 170
+            readonly property int chromeMove: 170
+            readonly property int chromePanel: 220
         }
 
         // === Basic transitions (improved) ===

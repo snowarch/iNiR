@@ -56,14 +56,18 @@ Scope {
 
     Loader {
         id: sessionLoader
-        active: GlobalStates.sessionOpen || _sessionClosing
+        active: true
 
         property bool _sessionClosing: false
 
         Connections {
             target: GlobalStates
             function onSessionOpenChanged() {
-                if (!GlobalStates.sessionOpen) {
+                if (GlobalStates.sessionOpen) {
+                    _sessionCloseTimer.stop()
+                    sessionLoader._sessionClosing = false
+                    SessionWarnings.refresh()
+                } else {
                     sessionLoader._sessionClosing = true
                     _sessionCloseTimer.restart()
                 }
@@ -75,10 +79,6 @@ Scope {
             interval: 250
             onTriggered: sessionLoader._sessionClosing = false
         }
-        onActiveChanged: {
-            if (sessionLoader.active) SessionWarnings.refresh();
-        }
-
         Connections {
             target: GlobalStates
             function onScreenLockedChanged() {
@@ -90,7 +90,7 @@ Scope {
 
         sourceComponent: PanelWindow { // Session menu
             id: sessionRoot
-            visible: sessionLoader.active
+            visible: GlobalStates.sessionOpen || sessionLoader._sessionClosing
             property string subtitle
             
             function hide() {
@@ -100,7 +100,7 @@ Scope {
             exclusionMode: ExclusionMode.Ignore
             WlrLayershell.namespace: "quickshell:session"
             WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+            WlrLayershell.keyboardFocus: visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
             color: "transparent"
 
             anchors {
@@ -110,19 +110,35 @@ Scope {
                 right: true
             }
 
-            // Resolve wallpaper path: use thumbnail for video/gif
-            readonly property string _wallpaperSource: Config.options?.background?.wallpaperPath ?? ""
+            readonly property string _monitorName: root.focusedScreen?.name ?? ""
+            readonly property real _screenScale: root.focusedScreen?.scale ?? 1
+            readonly property string _wallpaperSource: Wallpapers.currentThemingWallpaperPath(_monitorName)
             readonly property string _wallpaperPath: {
-                const path = _wallpaperSource;
+                const path = FileUtils.trimFileProtocol(String(_wallpaperSource ?? ""));
                 if (!path) return "";
-                const lowerPath = path.toLowerCase();
-                const isVideo = lowerPath.endsWith(".mp4") || lowerPath.endsWith(".webm") || lowerPath.endsWith(".mkv") || lowerPath.endsWith(".avi") || lowerPath.endsWith(".mov");
-                const isGif = lowerPath.endsWith(".gif");
+                const isVideo = WallpaperListener.isVideoPath(path);
+                const isGif = WallpaperListener.isGifPath(path);
                 if (isVideo || isGif) {
-                    const thumbnail = Config.options?.background?.thumbnailPath ?? "";
+                    const thumbnail = Wallpapers.getExpectedThumbnailPath(path, "x-large");
                     return thumbnail || path;
                 }
                 return path;
+            }
+
+            function ensureWallpaperThumbnail(): void {
+                const path = FileUtils.trimFileProtocol(String(sessionRoot._wallpaperSource ?? ""))
+                if (!path) return
+                if (WallpaperListener.isVideoPath(path) || WallpaperListener.isGifPath(path))
+                    Wallpapers.ensureThumbnailForPath(path, "x-large")
+            }
+
+            Component.onCompleted: ensureWallpaperThumbnail()
+
+            Connections {
+                target: Wallpapers
+                function onChanged() {
+                    sessionRoot.ensureWallpaperThumbnail()
+                }
             }
             
             // Background wallpaper with blur (like lock screen)
@@ -132,6 +148,11 @@ Scope {
                 source: sessionRoot._wallpaperPath
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
+                cache: false
+                smooth: true
+                mipmap: true
+                sourceSize.width: Math.round((root.focusedScreen?.width ?? 1920) * sessionRoot._screenScale)
+                sourceSize.height: Math.round((root.focusedScreen?.height ?? 1080) * sessionRoot._screenScale)
                 
                 readonly property real blurRadius: 64
                 readonly property real blurZoom: 1.1

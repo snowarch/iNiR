@@ -22,6 +22,7 @@ Singleton {
     readonly property var terminalAdjCfg: wallpaperThemingCfg?.terminalColorAdjustments ?? null
     readonly property string liveRegenSignature: JSON.stringify({
         theme: currentTheme,
+        themingWallpaperPath: Wallpapers.effectiveWallpaperPath ?? "",
         enableAppsAndShell: wallpaperThemingCfg?.enableAppsAndShell ?? true,
         enableTerminal: wallpaperThemingCfg?.enableTerminal ?? true,
         enableVesktop: wallpaperThemingCfg?.enableVesktop ?? true,
@@ -30,13 +31,14 @@ Singleton {
         enableVSCode: wallpaperThemingCfg?.enableVSCode ?? true,
         useBackdropForColors: wallpaperThemingCfg?.useBackdropForColors ?? false,
         forceTerminalDarkMode: wallpaperThemingCfg?.terminalGenerationProps?.forceDarkMode ?? false,
-        termSaturation: terminalAdjCfg?.saturation ?? 0.40,
-        termBrightness: terminalAdjCfg?.brightness ?? 0.55,
-        termHarmony: terminalAdjCfg?.harmony ?? 0.40,
-        termBackgroundBrightness: terminalAdjCfg?.backgroundBrightness ?? 0.50,
-        softenColors: Config.options?.appearance?.softenColors ?? false,
+        termSaturation: terminalAdjCfg?.saturation ?? 0.65,
+        termBrightness: terminalAdjCfg?.brightness ?? 0.6,
+        termHarmony: terminalAdjCfg?.harmony ?? 0.4,
+        termBackgroundBrightness: terminalAdjCfg?.backgroundBrightness ?? 0.5,
+        softenColors: Config.options?.appearance?.softenColors ?? true,
     })
     property string _lastLiveRegenSignature: ""
+    property real _lastRegenTimestamp: 0
 
     onCurrentThemeChanged: {
         if (Config.ready) {
@@ -64,8 +66,22 @@ Singleton {
         } else {
             root._log("[ThemeService] Manual theme, calling ThemePresets.applyPreset");
             ThemePresets.applyPreset(themeId, applyExternal);
+            if (applyExternal && vesktopEnabled) {
+                root._log("[ThemeService] Manual setTheme requesting Vesktop regeneration")
+                root._triggerVesktopThemeGeneration()
+            }
         }
         root._log("[ThemeService] setTheme completed");
+    }
+
+    function _triggerVesktopThemeGeneration(): void {
+        root._log("[ThemeService] Triggering Vesktop theme generation wrapper")
+        Qt.callLater(() => {
+            Quickshell.execDetached([
+                "/usr/bin/bash",
+                Directories.scriptPath + "/colors/system24_palette.sh"
+            ]);
+        });
     }
 
     function applyCurrentTheme(applyExternal = defaultApplyExternal): void {
@@ -85,22 +101,28 @@ Singleton {
             }
 
             if (applyExternal && vesktopEnabled) {
-                Qt.callLater(() => {
-                    Quickshell.execDetached([
-                        "/usr/bin/python3",
-                        Directories.scriptPath + "/colors/system24_palette.py"
-                    ]);
-                });
+                root._triggerVesktopThemeGeneration()
             }
         } else {
             root._log("[ThemeService] Applying manual theme:", currentTheme);
             ThemePresets.applyPreset(currentTheme, applyExternal);
+            if (applyExternal && vesktopEnabled) {
+                root._log("[ThemeService] applyCurrentTheme manual branch requesting Vesktop regeneration")
+                root._triggerVesktopThemeGeneration()
+            }
         }
         root.ready = true;
     }
 
     function regenerateAutoTheme(): void {
         root._log("[ThemeService] regenerateAutoTheme called");
+        // Cooldown: prevent rapid successive regenerations (e.g. during settings navigation)
+        const now = Date.now()
+        if (now - root._lastRegenTimestamp < 3000) {
+            root._log("[ThemeService] regenerateAutoTheme skipped — cooldown active");
+            return
+        }
+        root._lastRegenTimestamp = now
         if (isAutoTheme) {
             // Force full regeneration from wallpaper (includes terminals, GTK, etc)
             const themingPath = Wallpapers.currentThemingWallpaperPath()

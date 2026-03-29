@@ -15,8 +15,10 @@ PopupWindow {
 
     required property bool dockHovered
     property var appEntry
+    property string appId: ""
     property Item anchorItem
     property string dockPosition: Config.options?.dock?.position ?? "bottom"
+    property string lastCaptureSignature: ""
 
     readonly property bool isBottom: dockPosition === "bottom"
     readonly property bool isTop: dockPosition === "top"
@@ -29,6 +31,7 @@ PopupWindow {
 
     function close(): void {
         marginBehavior.enabled = false
+        root.lastCaptureSignature = ""
         root.visible = false
     }
 
@@ -39,6 +42,8 @@ PopupWindow {
 
     function show(appEntry: var, button: Item): void {
         root.appEntry = appEntry
+        root.appId = appEntry?.appId ?? ""
+        root.lastCaptureSignature = ""
         root.anchorItem = button
         root.anchor.updateAnchor()
         // Capture previews for the windows
@@ -48,8 +53,97 @@ PopupWindow {
 
     // Toplevels are already sorted by spatial layout in DockApps.qml
     // (via CompositorService.sortedToplevels)
+    readonly property var liveToplevels: root.anchorItem?.toplevels ?? root.appEntry?.toplevels ?? []
+    readonly property var previewEntries: {
+        const entries = []
+        for (const toplevel of root.liveToplevels ?? []) {
+            entries.push({
+                previewKey: root._windowKey(toplevel),
+                toplevel: toplevel,
+            })
+        }
+        return entries
+    }
+
+    function _windowId(toplevel: var): int {
+        return CompositorService.isNiri
+            ? (toplevel?.niriWindowId ?? toplevel?.id ?? -1)
+            : (toplevel?.id ?? -1)
+    }
+
+    function _windowKey(toplevel: var): string {
+        const windowId = root._windowId(toplevel)
+        if (windowId > 0)
+            return "window:" + windowId
+        if (toplevel?.address !== undefined && toplevel?.address !== null && String(toplevel.address).length > 0)
+            return "addr:" + toplevel.address
+        return "app:" + (toplevel?.appId ?? "") + ":" + (toplevel?.title ?? "")
+    }
+
+    function maybeCaptureMissingPreviews(toplevels: list<var>): void {
+        let needsCapture = false
+        const signatureParts = []
+
+        for (const toplevel of toplevels ?? []) {
+            const windowId = root._windowId(toplevel)
+            if (windowId <= 0)
+                continue
+            signatureParts.push(String(windowId))
+            if (!WindowPreviewService.hasPreview(windowId))
+                needsCapture = true
+        }
+
+        const signature = signatureParts.join(",")
+        if (!needsCapture) {
+            root.lastCaptureSignature = signature
+            return
+        }
+
+        if (!signature || root.lastCaptureSignature === signature)
+            return
+
+        root.lastCaptureSignature = signature
+        WindowPreviewService.captureForTaskView()
+    }
+
     function _sortedToplevels(): list<var> {
-        return root.appEntry?.toplevels ?? [];
+        return root.liveToplevels ?? [];
+    }
+
+    function syncVisibleWindows(): void {
+        if (!root.visible)
+            return
+
+        const currentLive = root.liveToplevels ?? []
+        if (currentLive.length > 0) {
+            root.maybeCaptureMissingPreviews(currentLive)
+            return
+        }
+
+        const currentAppId = root.appId
+        if (!currentAppId) {
+            root.close()
+            return
+        }
+
+        const allToplevels = CompositorService.sortedToplevels && CompositorService.sortedToplevels.length
+                ? CompositorService.sortedToplevels
+                : ToplevelManager.toplevels.values
+
+        const current = allToplevels.filter(
+            t => t.appId && t.appId.toLowerCase() === currentAppId
+        )
+
+        if (current.length === 0) {
+            root.close()
+            return
+        }
+
+        root.appEntry = Object.assign({}, root.appEntry ?? {}, {
+            appId: currentAppId,
+            toplevels: current,
+        })
+        root.maybeCaptureMissingPreviews(current)
     }
 
     visible: false
@@ -61,23 +155,15 @@ PopupWindow {
     Connections {
         target: ToplevelManager.toplevels
         function onValuesChanged() {
-            if (!root.visible || !root.appEntry) return
-            const appId = root.appEntry.appId
-            if (!appId) return
-            // Use CompositorService.sortedToplevels for correct spatial order, 
-            // fallback to ToplevelManager if not available.
-            const allToplevels = CompositorService.sortedToplevels && CompositorService.sortedToplevels.length
-                    ? CompositorService.sortedToplevels
-                    : ToplevelManager.toplevels.values;
+            root.syncVisibleWindows()
+        }
+    }
 
-            const current = allToplevels.filter(
-                t => t.appId && t.appId.toLowerCase() === appId
-            )
-            if (current.length === 0) {
-                root.close()
-            } else {
-                root.appEntry = Object.assign({}, root.appEntry, { toplevels: current })
-            }
+    Connections {
+        target: root.anchorItem
+        ignoreUnknownSignals: true
+        function onToplevelsChanged() {
+            root.syncVisibleWindows()
         }
     }
 
@@ -162,11 +248,12 @@ PopupWindow {
 
                 Repeater {
                     model: ScriptModel {
-                        values: root._sortedToplevels()
+                        objectProp: "previewKey"
+                        values: root.previewEntries
                     }
                     delegate: DockWindowPreview {
                         required property var modelData
-                        toplevel: modelData
+                        toplevel: modelData.toplevel
                         onWindowActivated: {
                             if (!(Config.options?.dock?.keepPreviewOnClick ?? false))
                                 root.close()

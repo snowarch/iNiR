@@ -82,6 +82,24 @@ WSettingsPage {
             checked: Config.options?.waffles?.bar?.tintTrayIcons ?? false
             onCheckedChanged: Config.setNestedValue("waffles.bar.tintTrayIcons", checked)
         }
+
+        WSettingsSpinBox {
+            label: Translation.tr("Taskbar icon size")
+            icon: "desktop"
+            suffix: "px"
+            from: 20; to: 40; stepSize: 1
+            value: Config.options?.waffles?.bar?.iconSize ?? 26
+            onValueChanged: Config.setNestedValue("waffles.bar.iconSize", value)
+        }
+
+        WSettingsSpinBox {
+            label: Translation.tr("Search app icon size")
+            icon: "search"
+            suffix: "px"
+            from: 16; to: 40; stepSize: 1
+            value: Config.options?.waffles?.bar?.searchIconSize ?? 24
+            onValueChanged: Config.setNestedValue("waffles.bar.searchIconSize", value)
+        }
     }
     
     WSettingsCard {
@@ -100,7 +118,7 @@ WSettingsPage {
         WSettingsSpinBox {
             visible: Config.options?.waffles?.bar?.desktopPeek?.hoverPeek ?? false
             label: Translation.tr("Hover delay")
-            icon: "pulse"
+            icon: "timer"
             suffix: "ms"
             from: 100; to: 2000; stepSize: 100
             value: Config.options?.waffles?.bar?.desktopPeek?.hoverDelay ?? 500
@@ -115,7 +133,7 @@ WSettingsPage {
         
         WSettingsSwitch {
             label: Translation.tr("Show seconds")
-            icon: "pulse"
+            icon: "timer"
             description: Translation.tr("Display seconds in taskbar clock")
             checked: Config.options?.time?.secondPrecision ?? false
             onCheckedChanged: Config.setNestedValue("time.secondPrecision", checked)

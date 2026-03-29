@@ -1,0 +1,9 @@
+{
+  "id": "chrome",
+  "label": "Chromium browsers",
+  "module": "40-chrome.sh",
+  "category": "browser",
+  "inputs": ["palette.json"],
+  "description": "Apply generated theme colors to supported Chromium-based browsers.",
+  "configKey": "appearance.wallpaperTheming.enableAppsAndShell"
+}

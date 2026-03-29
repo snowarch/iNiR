@@ -162,17 +162,34 @@ Singleton {
         updateNetworkStrength.running = true;
     }
 
+    property bool _destroying: false
+
     Component.onCompleted: {
+        // Kill any orphaned nmcli monitor processes from previous shell instances,
+        // then start the fresh subscriber once cleanup finishes.
+        _cleanupStale.running = true;
         // Prime initial state once; subsequent updates come from nmcli monitor.
         Qt.callLater(() => root.update())
     }
 
+    Component.onDestruction: {
+        root._destroying = true;
+        subscriber.running = false;
+    }
+
+    Process {
+        id: _cleanupStale
+        command: ["pkill", "-f", "nmcli monitor"]
+        running: false
+        onExited: subscriber.running = true
+    }
+
     Process {
         id: subscriber
-        running: true
+        running: false
         command: ["nmcli", "monitor"]
         // Auto-restart if the monitor process dies (can happen after lockscreen/suspend)
-        onRunningChanged: if (!running) running = true
+        onRunningChanged: if (!running && !root._destroying) running = true
         stdout: SplitParser {
             onRead: root.update()
         }

@@ -9,7 +9,7 @@ import QtQuick.Layouts
  */
 Rectangle {
     id: root
-    default property alias data: rowLayout.data
+    default property alias contentData: rowLayout.data
     property alias uniformCellSizes: rowLayout.uniformCellSizes
     property real spacing: 5
     property real padding: 0

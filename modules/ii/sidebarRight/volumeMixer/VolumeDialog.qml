@@ -32,8 +32,7 @@ WindowDialog {
         DialogButton {
             buttonText: Translation.tr("Details")
             onClicked: {
-                const cmd = Config.options?.apps?.volumeMixer ?? "pavucontrol"
-                ShellExec.execCmd(cmd)
+                AppLauncher.launch("volumeMixer")
                 GlobalStates.sidebarRightOpen = false;
             }
         }

@@ -91,9 +91,11 @@ Item {
 
     property list<var> weekDaysModel: {
         const fdow = root.firstDayOfWeek
+        const first = DateUtils.getFirstDayOfWeek(new Date(), fdow)
         const days = []
         for (let i = 0; i < 7; i++) {
-            const d = new Date(2024, 0, fdow + i + 1) // Use a known week
+            const d = new Date(first)
+            d.setDate(first.getDate() + i)
             days.push(locale.toString(d, "ddd"))
         }
         return days

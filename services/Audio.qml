@@ -13,15 +13,20 @@ Singleton {
     id: root
 
     // Misc props
-    property bool ready: Pipewire.defaultAudioSink?.ready ?? false
-    property PwNode sink: Pipewire.defaultAudioSink
+    property bool ready: sink?.ready ?? rawSink?.ready ?? false
+    readonly property PwNode rawSink: Pipewire.defaultAudioSink
+    property PwNode sink: root.resolveControllableSink(rawSink)
     property PwNode source: Pipewire.defaultAudioSource
     readonly property real hardMaxValue: 2.00
     property string audioTheme: Config.options?.sounds?.theme ?? "freedesktop"
-    property real value: sink?.audio.volume ?? 0
+    property real value: sink?.audio?.volume ?? rawSink?.audio?.volume ?? 0
     property bool micBeingAccessed: Pipewire.links.values.filter(link =>
         !link.source.isStream && !link.source.isSink && link.target.isStream
     ).length > 0
+
+    property bool _wpctlMicStateKnown: false
+    property bool _wpctlMicMuted: false
+    readonly property bool micMuted: _wpctlMicStateKnown ? _wpctlMicMuted : (source?.audio?.muted ?? false)
 
     function friendlyDeviceName(node) {
         return node ? (node.nickname || node.description || Translation.tr("Unknown")) : Translation.tr("Unknown");
@@ -29,6 +34,50 @@ Singleton {
     function appNodeDisplayName(node) {
         if (!node) return Translation.tr("Unknown");
         return (node.properties?.["application.name"] || node.description || node.name || Translation.tr("Unknown"))
+    }
+
+    function resolveControllableSink(node) {
+        if (!node || !node.audio)
+            return node
+
+        const props = node.properties ?? {}
+        const nodeName = String(props["node.name"] ?? node.name ?? "")
+        const applicationId = String(props["application.id"] ?? "")
+        const isVirtual = String(props["node.virtual"] ?? "false") === "true"
+        const isPassthrough = String(props["monitor.passthrough"] ?? "false") === "true"
+        const driverId = Number(props["node.driver-id"] ?? 0)
+        const isEasyEffectsSink = nodeName === "easyeffects_sink"
+            || applicationId === "com.github.wwmm.easyeffects"
+            || (isVirtual && isPassthrough)
+
+        if (!isEasyEffectsSink || !Number.isFinite(driverId) || driverId <= 0)
+            return node
+
+        const physicalSink = Pipewire.nodes.values.find(candidate =>
+            root.correctType(candidate, true)
+            && !candidate.isStream
+            && Number(candidate.id ?? 0) === driverId
+        )
+
+        if (physicalSink) return physicalSink
+
+        // Fallback: find the first non-virtual, non-EasyEffects hardware sink.
+        // This handles cases where EasyEffects uses pw-loopback/filter-chain and
+        // driver-id doesn't point directly to the hardware sink node.
+        const fallbackSink = Pipewire.nodes.values.find(candidate => {
+            if (!root.correctType(candidate, true) || candidate.isStream) return false
+            const cProps = candidate.properties ?? {}
+            const cName = String(cProps["node.name"] ?? candidate.name ?? "")
+            const cAppId = String(cProps["application.id"] ?? "")
+            const cVirtual = String(cProps["node.virtual"] ?? "false") === "true"
+            const cPassthrough = String(cProps["monitor.passthrough"] ?? "false") === "true"
+            const isEE = cName === "easyeffects_sink"
+                || cAppId === "com.github.wwmm.easyeffects"
+                || (cVirtual && cPassthrough)
+            return !isEE
+        })
+
+        return fallbackSink ?? node
     }
 
     // Lists
@@ -59,10 +108,74 @@ Singleton {
         root.sink.audio.muted = !root.sink.audio.muted
     }
 
-    function toggleMicMute() {
-        if (!root.source?.audio) return;
-        root.source.audio.muted = !root.source.audio.muted
+    function setSourceVolume(target: real): void {
+        const clamped = Math.max(0, Math.min(root.hardMaxValue, target))
+        if (root.source?.audio) {
+            root.source.audio.volume = clamped
+        }
+        if (wpctlSetSourceVolume.running) return
+        wpctlSetSourceVolume.command = ["wpctl", "set-volume", "@DEFAULT_AUDIO_SOURCE@", String(clamped)]
+        wpctlSetSourceVolume.running = true
     }
+
+    function toggleMicMute() {
+        const shouldMute = !root.micMuted
+        if (root.source?.audio) {
+            root.source.audio.muted = shouldMute
+        }
+        if (wpctlSetMicMute.running) return
+        wpctlSetMicMute.command = ["wpctl", "set-mute", "@DEFAULT_AUDIO_SOURCE@", shouldMute ? "1" : "0"]
+        wpctlSetMicMute.running = true
+    }
+
+    function refreshMicState(): void {
+        if (wpctlGetMicState.running) return
+        wpctlGetMicState.running = true
+    }
+
+    Process {
+        id: wpctlSetMicMute
+        command: ["wpctl", "set-mute", "@DEFAULT_AUDIO_SOURCE@", "toggle"]
+        onExited: refreshMicState()
+    }
+
+    Process {
+        id: wpctlSetSourceVolume
+        command: ["wpctl", "set-volume", "@DEFAULT_AUDIO_SOURCE@", "1.0"]
+        onExited: refreshMicState()
+    }
+
+    Process {
+        id: wpctlGetMicState
+        command: ["wpctl", "get-volume", "@DEFAULT_AUDIO_SOURCE@"]
+        stdout: StdioCollector {
+            id: wpctlGetMicStateStdout
+        }
+        onExited: (exitCode, _exitStatus) => {
+            if (exitCode !== 0) return
+            const raw = (wpctlGetMicStateStdout.text?.trim() ?? "")
+            if (!raw.length) return
+            const out = raw.split(/\r?\n/).filter(l => l.trim().length > 0).slice(-1)[0] ?? ""
+            if (!out.length) return
+
+            root._wpctlMicStateKnown = true
+            root._wpctlMicMuted = out.toUpperCase().includes("MUTED")
+        }
+    }
+
+    Process {
+        id: wpctlSetDefaultDevice
+        command: ["wpctl", "set-default", "0"]
+    }
+
+    Timer {
+        interval: 2000
+        repeat: true
+        running: true
+        onTriggered: refreshMicState()
+    }
+
+    Component.onCompleted: refreshMicState()
 
     // Set sink volume safely. When protection is enabled, large jumps are rejected as "Illegal increment".
     // To keep UX consistent with brightness (click anywhere on slider), we ramp in small steps.
@@ -130,17 +243,34 @@ Singleton {
         root.sink.audio.volume = Math.max(0, currentVolume - step);
     }
 
+    function setDefaultNode(node, isSink: bool): void {
+        if (!node) return
+
+        if (isSink) {
+            Pipewire.preferredDefaultAudioSink = node;
+        } else {
+            Pipewire.preferredDefaultAudioSource = node;
+        }
+
+        const nodeId = Number(node.id ?? 0)
+        if (!Number.isFinite(nodeId) || nodeId <= 0 || wpctlSetDefaultDevice.running)
+            return
+
+        wpctlSetDefaultDevice.command = ["wpctl", "set-default", String(nodeId)]
+        wpctlSetDefaultDevice.running = true
+    }
+
     function setDefaultSink(node) {
-        Pipewire.preferredDefaultAudioSink = node;
+        root.setDefaultNode(node, true)
     }
 
     function setDefaultSource(node) {
-        Pipewire.preferredDefaultAudioSource = node;
+        root.setDefaultNode(node, false)
     }
 
     // Internals
     PwObjectTracker {
-        objects: [sink, source]
+        objects: [rawSink, sink, source]
     }
 
     Connections { // Protection against sudden volume changes

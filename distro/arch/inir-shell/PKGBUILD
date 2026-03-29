@@ -1,0 +1,159 @@
+# Maintainer: snowarch
+
+pkgname=inir-shell
+pkgver=2.15.0
+pkgrel=1
+pkgdesc='iNiR shell payload, launcher, and user service'
+arch=(any)
+url='https://github.com/snowarch/iNiR'
+license=('MIT')
+_default_source_archive="https://github.com/snowarch/iNiR/archive/refs/tags/v${pkgver}.tar.gz"
+_source_archive="${INIR_SOURCE_ARCHIVE:-${_default_source_archive}}"
+depends=(
+  bash
+  brightnessctl
+  cliphist
+  curl
+  fish
+  grim
+  jq
+  kirigami
+  libnotify
+  matugen
+  networkmanager
+  niri
+  noto-fonts-emoji
+  pipewire
+  pipewire-alsa
+  pipewire-pulse
+  playerctl
+  polkit-gnome
+  python
+  qt6-5compat
+  qt6-imageformats
+  qt6-multimedia
+  qt6-multimedia-ffmpeg
+  qt6-quicktimeline
+  quickshell
+  rsync
+  slurp
+  swayidle
+  swaylock
+  syntax-highlighting
+  ttf-jetbrains-mono-nerd
+  ttf-material-symbols-variable
+  ttf-roboto-flex
+  wireplumber
+  wl-clipboard
+  xdg-desktop-portal
+  xdg-desktop-portal-gnome
+  xdg-desktop-portal-gtk
+  xdg-user-dirs
+  xdg-utils
+  xwayland-satellite
+)
+optdepends=(
+  'awww-bin: animated wallpaper support'
+  'blueman: Bluetooth device management'
+  'breeze-icons: fallback icon theme'
+  'cava: audio visualizer'
+  'ddcutil: external monitor brightness control'
+  'easyeffects: audio effects integration'
+  'ffmpeg: recording and video wallpaper helpers'
+  'fprintd: fingerprint authentication integration'
+  'geoclue: GPS-backed weather location detection'
+  'gnome-keyring: secret storage for API keys and credentials'
+  'gum: setup TUI helpers'
+  'hyprpicker: color picker support'
+  'imagemagick: image conversion helpers'
+  'kconfig: KDE configuration integration'
+  'kdialog: KDE dialog integration for scripts'
+  'kitty: default terminal integration'
+  'kvantum: Qt style engine'
+  'libqalculate: calculator widget backend'
+  'mission-center: graphical system monitor (default task manager)'
+  'mpv: media playback and YouTube Music support'
+  'mpv-mpris: richer mpv media session integration'
+  'nautilus: default file manager integration'
+  'pavucontrol: advanced audio mixer UI'
+  'pacman-contrib: package update checking'
+  'plasma-integration: Qt platform theme integration'
+  'qt6ct: Qt theme configuration'
+  'songrec: music recognition support'
+  'socat: mpv IPC fallback helpers'
+  'swappy: screenshot annotation helpers'
+  'tesseract: OCR-backed screenshot tools'
+  'translate-shell: translation helpers'
+  'ttf-oxanium: angel style font'
+  'upower: battery monitoring service'
+  'uv: packaged Python environment management'
+  'wf-recorder: screen recording support'
+  'wtype: Wayland text injection helper'
+  'ydotool: virtual keyboard and clipboard paste helper'
+  'yt-dlp: YouTube media backend'
+)
+source=(
+  "inir-${pkgver}.tar.gz::${_source_archive}"
+)
+sha256sums=('SKIP')
+
+package() {
+  local srcroot="${srcdir}/iNiR-${pkgver}"
+  local shellroot="${pkgdir}/usr/share/quickshell/inir"
+  local docroot="${pkgdir}/usr/share/doc/${pkgname}"
+  local timestamp
+  timestamp="$(date -Iseconds)"
+
+  install -dm755 "$shellroot"
+
+  while IFS= read -r -d '' root_qml; do
+    install -Dm644 "$root_qml" "$shellroot/$(basename "$root_qml")"
+  done < <(find "$srcroot" -maxdepth 1 -type f -name '*.qml' -print0)
+
+  while IFS= read -r runtime_file; do
+    [[ -n "$runtime_file" ]] || continue
+    if [[ "$runtime_file" == "setup" ]]; then
+      install -Dm755 "$srcroot/$runtime_file" "$shellroot/$runtime_file"
+    else
+      install -Dm644 "$srcroot/$runtime_file" "$shellroot/$runtime_file"
+    fi
+  done < "$srcroot/sdata/runtime-root-files.txt"
+
+  while IFS= read -r dir; do
+    [[ -n "$dir" ]] || continue
+    cp -a "$srcroot/$dir" "$shellroot/"
+  done < "$srcroot/sdata/runtime-payload-dirs.txt"
+
+  find "$shellroot/scripts" -type f \( -name '*.sh' -o -name '*.fish' -o -name '*.py' \) -exec chmod +x {} +
+
+  install -Dm755 "$srcroot/scripts/inir" "$pkgdir/usr/bin/inir"
+  install -Dm644 "$srcroot/assets/systemd/inir.service" "$pkgdir/usr/lib/systemd/user/inir.service"
+  install -Dm644 "$srcroot/assets/applications/inir.desktop" "$pkgdir/usr/share/applications/inir.desktop"
+  install -Dm644 "$srcroot/assets/icons/desktop-symbolic.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/inir.svg"
+  install -Dm644 "$srcroot/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 "$srcroot/README.md" "$docroot/README.md"
+  install -Dm644 "$srcroot/docs/SETUP.md" "$docroot/SETUP.md"
+  install -Dm644 "$srcroot/docs/IPC.md" "$docroot/IPC.md"
+
+  cat > "$shellroot/version.json" <<EOF
+{
+  "version": "${pkgver}",
+  "commit": "release",
+  "installed_at": "${timestamp}",
+  "installedAt": "${timestamp}",
+  "source": "pacman",
+  "repo_path": "",
+  "repoPath": "",
+  "install_mode": "package-managed",
+  "installMode": "package-managed",
+  "update_strategy": "package-manager",
+  "updateStrategy": "package-manager",
+  "package_manager": "pacman",
+  "packageManager": "pacman",
+  "package_name": "inir-shell",
+  "packageName": "inir-shell",
+  "package_update_hint": "sudo pacman -Syu inir-shell",
+  "packageUpdateHint": "sudo pacman -Syu inir-shell"
+}
+EOF
+}

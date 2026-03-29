@@ -1,10 +1,10 @@
 # Quickshell and Qt6 dependencies for iNiR
-# Based on illogical-impulse-quickshell-git from end-4
+# Based on upstream packaging patterns from end-4
 
 pkgname=inir-quickshell
 pkgver=1.0
 pkgrel=1
-pkgdesc='illogical-impulse on Niri - Quickshell and Qt6 Dependencies'
+pkgdesc='iNiR - Quickshell and Qt6 dependency bundle'
 arch=(any)
 license=(MIT)
 depends=(

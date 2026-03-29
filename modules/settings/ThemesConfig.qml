@@ -1365,6 +1365,21 @@ ContentPage {
     }
 
     SettingsCardSection {
+        id: gowallEditorSection
+        expanded: false
+        icon: "wallpaper"
+        title: Translation.tr("Gowall Wallpaper Editor")
+
+        SettingsGroup {
+            Loader {
+                Layout.fillWidth: true
+                active: gowallEditorSection.expanded
+                source: "GowallWallpaperEditor.qml"
+            }
+        }
+    }
+
+    SettingsCardSection {
         expanded: false
         icon: "text_format"
         title: Translation.tr("Typography")
@@ -1428,7 +1443,7 @@ ContentPage {
                         selectedFont: Config.options?.appearance?.typography?.mainFont ?? "Roboto Flex"
                         onSelectedFontChanged: {
                             if (Config.options?.appearance?.typography)
-                                Config.options.appearance.typography.mainFont = selectedFont
+                                Config.setNestedValue("appearance.typography.mainFont", selectedFont)
                         }
                         Connections {
                             target: Config.options?.appearance?.typography ?? null
@@ -1443,7 +1458,7 @@ ContentPage {
                         selectedFont: Config.options?.appearance?.typography?.titleFont ?? "Gabarito"
                         onSelectedFontChanged: {
                             if (Config.options?.appearance?.typography)
-                                Config.options.appearance.typography.titleFont = selectedFont
+                                Config.setNestedValue("appearance.typography.titleFont", selectedFont)
                         }
                         Connections {
                             target: Config.options?.appearance?.typography ?? null
@@ -1458,7 +1473,7 @@ ContentPage {
                         selectedFont: Config.options?.appearance?.typography?.monospaceFont ?? "JetBrains Mono NF"
                         onSelectedFontChanged: {
                             if (Config.options?.appearance?.typography)
-                                Config.options.appearance.typography.monospaceFont = selectedFont
+                                Config.setNestedValue("appearance.typography.monospaceFont", selectedFont)
                         }
                         Connections {
                             target: Config.options?.appearance?.typography ?? null
@@ -1478,7 +1493,7 @@ ContentPage {
                 stepSize: 5
                 onValueChanged: {
                     if (Config.options?.appearance?.typography)
-                        Config.options.appearance.typography.sizeScale = value / 100
+                        Config.setNestedValue("appearance.typography.sizeScale", value / 100)
                 }
                 StyledToolTip {
                     text: Translation.tr("Scale all text in the shell")
@@ -1531,7 +1546,7 @@ ContentPage {
                     value: Config.options?.appearance?.typography?.variableAxes?.wght ?? 300
                     onValueChanged: {
                         if (Config.options?.appearance?.typography?.variableAxes)
-                            Config.options.appearance.typography.variableAxes.wght = value
+                            Config.setNestedValue("appearance.typography.variableAxes.wght", value)
                     }
                     Connections {
                         target: Config.options?.appearance?.typography?.variableAxes ?? null
@@ -1552,7 +1567,7 @@ ContentPage {
                     value: Config.options?.appearance?.typography?.variableAxes?.wdth ?? 105
                     onValueChanged: {
                         if (Config.options?.appearance?.typography?.variableAxes)
-                            Config.options.appearance.typography.variableAxes.wdth = value
+                            Config.setNestedValue("appearance.typography.variableAxes.wdth", value)
                     }
                     Connections {
                         target: Config.options?.appearance?.typography?.variableAxes ?? null
@@ -1573,7 +1588,7 @@ ContentPage {
                     value: Config.options?.appearance?.typography?.variableAxes?.grad ?? 175
                     onValueChanged: {
                         if (Config.options?.appearance?.typography?.variableAxes)
-                            Config.options.appearance.typography.variableAxes.grad = value
+                            Config.setNestedValue("appearance.typography.variableAxes.grad", value)
                     }
                     Connections {
                         target: Config.options?.appearance?.typography?.variableAxes ?? null

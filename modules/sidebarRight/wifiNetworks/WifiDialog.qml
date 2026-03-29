@@ -67,8 +67,7 @@ WindowDialog {
         DialogButton {
             buttonText: Translation.tr("Details")
             onClicked: {
-                const cmd = Network.ethernet ? (Config.options?.apps?.networkEthernet ?? "nm-connection-editor") : (Config.options?.apps?.network ?? "nm-connection-editor")
-                ShellExec.execCmd(cmd);
+                AppLauncher.launchNetworkSettings(Network.ethernet)
                 GlobalStates.sidebarRightOpen = false;
             }
         }

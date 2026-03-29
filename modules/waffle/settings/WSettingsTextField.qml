@@ -6,98 +6,55 @@ import qs.modules.common
 import qs.modules.waffle.looks
 
 // Text field setting row - Windows 11 style
-Item {
+WSettingsRow {
     id: root
 
-    property string icon: ""
-    property string label: ""
-    property string description: ""
     property string placeholderText: ""
     property string text: ""
 
     signal textEdited(string newText)
 
-    Layout.fillWidth: true
-    Layout.leftMargin: 16
-    Layout.rightMargin: 16
-    implicitHeight: contentColumn.implicitHeight + 16
-
-    ColumnLayout {
-        id: contentColumn
-        anchors {
-            fill: parent
-            leftMargin: 12
-            rightMargin: 12
-            topMargin: 8
-            bottomMargin: 8
-        }
-        spacing: 8
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 12
-
-            FluentIcon {
-                visible: root.icon !== ""
-                icon: root.icon
-                implicitSize: 16
-                color: Looks.colors.subfg
-            }
-
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 2
-
-                WText {
-                    Layout.fillWidth: true
-                    text: root.label
-                    font.pixelSize: Looks.font.pixelSize.normal
-                    elide: Text.ElideRight
-                }
-
-                WText {
-                    visible: root.description !== ""
-                    Layout.fillWidth: true
-                    text: root.description
-                    font.pixelSize: Looks.font.pixelSize.small
-                    color: Looks.colors.subfg
-                    wrapMode: Text.WordWrap
-                }
-            }
-        }
-
+    control: Component {
         Rectangle {
-            Layout.fillWidth: true
+            implicitWidth: 220
             implicitHeight: 36
-            radius: Looks.radius.small
+            radius: Looks.radius.medium
             color: Looks.colors.inputBg
-            border.width: textField.activeFocus ? 2 : 1
-            border.color: textField.activeFocus ? Looks.colors.accent : Looks.colors.bg1Border
+            border.width: fieldInput.activeFocus ? 2 : 1
+            border.color: fieldInput.activeFocus ? Looks.colors.accent : Looks.colors.bg1Border
 
-            TextInput {
-                id: textField
+            Behavior on border.color {
+                animation: ColorAnimation { duration: Looks.transition.enabled ? 100 : 0; easing.type: Easing.OutQuad }
+            }
+            Behavior on border.width {
+                animation: NumberAnimation { duration: Looks.transition.enabled ? 80 : 0 }
+            }
+
+            Item {
                 anchors {
                     fill: parent
                     leftMargin: 12
                     rightMargin: 12
                 }
-                verticalAlignment: TextInput.AlignVCenter
-                font.family: Looks.font.family.ui
-                font.pixelSize: Looks.font.pixelSize.normal
-                color: Looks.colors.fg
-                selectByMouse: true
-                clip: true
-                text: root.text
 
-                onTextEdited: root.textEdited(text)
+                WTextInput {
+                    id: fieldInput
+                    anchors.fill: parent
+                    font.pixelSize: Looks.font.pixelSize.normal
+                    color: Looks.colors.fg
+                    selectByMouse: true
+                    clip: true
+                    text: root.text
+                    onTextEdited: root.textEdited(text)
+                }
 
-                Text {
+                WText {
                     anchors.fill: parent
                     verticalAlignment: Text.AlignVCenter
                     text: root.placeholderText
                     color: Looks.colors.subfg
-                    font: textField.font
-                    visible: !textField.text && !textField.activeFocus
+                    font.pixelSize: fieldInput.font.pixelSize
+                    visible: !fieldInput.text && !fieldInput.activeFocus
                 }
             }
         }

@@ -1,0 +1,110 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// 20 — Layout, gaps, borders, shadows & overview
+// ─────────────────────────────────────────────────────────────────────────────
+// Docs: https://niri-wm.github.io/niri/Configuration:-Layout
+//
+// Niri uses a scrollable-tiling layout: windows arrange in an infinite
+// horizontal strip and you scroll left/right to navigate.
+// ─────────────────────────────────────────────────────────────────────────────
+
+layout {
+    // Gap between windows and from windows to screen edges (logical px).
+    gaps 25
+
+    // Transparent so iNiR's own wallpaper/backdrop shows through.
+    background-color "transparent"
+
+    // When focusing a column that's off-screen, how should the view scroll?
+    //   "never"       — keep the focused column at the left or right edge (default)
+    //   "on-overflow" — center only if both the old and new column don't fit on screen
+    //   "always"      — always center the focused column
+    center-focused-column "never"
+
+    // Widths cycled by switch-preset-column-width (Mod+R).
+    // "proportion" = fraction of output width accounting for gaps.
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+    }
+
+    // Heights cycled by switch-preset-window-height (Mod+Shift+R).
+    // Uncomment to define custom height presets.
+    // preset-window-heights {
+    //     proportion 0.33333
+    //     proportion 0.5
+    //     proportion 0.66667
+    // }
+
+    // Default width for new windows. Empty {} = let the app decide.
+    default-column-width {
+        proportion 0.5
+    }
+
+    // ── Focus ring ──────────────────────────────────────────────────────────
+    // Drawn around the focused window on the active monitor.
+    // With prefer-no-csd, it draws *around* the window geometry.
+    focus-ring {
+        off
+        width 1
+        active-color   "#808080"
+        inactive-color "#505050"
+
+        // Gradient alternative (CSS linear-gradient style):
+        // active-gradient from="#80c8ff" to="#c7ff7f" angle=45
+        // relative-to="workspace-view" makes the gradient span the whole view.
+    }
+
+    // ── Border ──────────────────────────────────────────────────────────────
+    // Always-visible border (unlike focus-ring which only shows on the active window).
+    // iNiR disables both ring and border by default; the shell draws its own highlights.
+    border {
+        off
+        width 4
+        active-color   "#707070"
+        inactive-color "#d0d0d0"
+        urgent-color   "#cc4444"
+
+        // Pastel rainbow example:
+        // active-gradient from="#e5989b" to="#ffb4a2" angle=45 relative-to="workspace-view" in="oklch longer hue"
+    }
+
+    // ── Shadow ──────────────────────────────────────────────────────────────
+    // Drop shadow beneath windows. Values are in logical pixels.
+    // If windows have CSD corners, you may need draw-behind-window or
+    // geometry-corner-radius in a window-rule to avoid artifacts.
+    shadow {
+        // off
+        softness 30
+        spread 5
+        offset x=0 y=5
+        color "#0007"
+        // draw-behind-window true
+    }
+
+    // ── Struts ──────────────────────────────────────────────────────────────
+    // Shrink the tiling area, like permanent outer gaps.
+    // Left/right struts keep the next column partially visible.
+    // iNiR's bar uses layer-shell, so struts are usually not needed.
+    struts {
+        // left 64
+        // right 64
+        // top 64
+        // bottom 64
+    }
+}
+
+// ── Niri's built-in overview ────────────────────────────────────────────────
+// Triggered by Mod+Tab or hot corners. Shows a zoomed-out workspace view.
+// Note: iNiR also has its own app-launcher overlay (Mod+Space).
+overview {
+    zoom 0.75
+
+    // Solid color between workspaces (default: transparent).
+    // backdrop-color "#777777"
+
+    // Disable the shadow behind each workspace in the overview.
+    // workspace-shadow {
+    //     off
+    // }
+}

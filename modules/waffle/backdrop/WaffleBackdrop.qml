@@ -104,11 +104,19 @@ Variants {
 
         Item {
             anchors.fill: parent
+            clip: true
+
+            // Blur edge compensation: MultiEffect fades at boundaries because the
+            // Gaussian kernel has no pixels beyond the item edge. To fix this, all
+            // wallpaper source items are oversized by blurMax (64px) on every side,
+            // and this parent clips the result to exact screen bounds.
+            readonly property int blurOverflow: 64
 
             // Static wallpaper with crossfade transitions (shares waffle workspace transition settings)
             WallpaperCrossfader {
                 id: wallpaper
                 anchors.fill: parent
+                anchors.margins: -parent.blurOverflow
                 fillMode: Image.PreserveAspectCrop
                 source: backdropWindow.wallpaperUrl && !backdropWindow.wallpaperIsGif && !backdropWindow.wallpaperIsVideo
                     ? backdropWindow.wallpaperUrl
@@ -127,6 +135,7 @@ Variants {
             AnimatedImage {
                 id: gifWallpaper
                 anchors.fill: parent
+                anchors.margins: -parent.blurOverflow
                 fillMode: Image.PreserveAspectCrop
                 source: backdropWindow.wallpaperIsGif
                     ? (backdropWindow.wallpaperPathRaw.startsWith("file://")
@@ -135,8 +144,7 @@ Variants {
                     : ""
                 asynchronous: true
                 cache: false
-                sourceSize.width: 480
-                sourceSize.height: 270
+                // No sourceSize for GIFs - let Qt handle native size for performance
                 visible: backdropWindow.wallpaperIsGif
                 playing: visible && backdropWindow.enableAnimation
 
@@ -155,6 +163,7 @@ Variants {
             Video {
                 id: videoWallpaper
                 anchors.fill: parent
+                anchors.margins: -parent.blurOverflow
                 visible: backdropWindow.wallpaperIsVideo
                 source: {
                     if (!backdropWindow.wallpaperIsVideo) return "";
@@ -211,7 +220,7 @@ Variants {
 
             // Blur effect (only for static images)
             MultiEffect {
-                anchors.fill: parent
+                anchors.fill: wallpaper
                 source: wallpaper
                 visible: wallpaper.ready && !backdropWindow.wallpaperIsGif && !backdropWindow.wallpaperIsVideo
                 blurEnabled: backdropWindow.backdropBlurRadius > 0

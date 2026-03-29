@@ -1,7 +1,7 @@
 pkgname=inir-core
 pkgver=1.0
 pkgrel=1
-pkgdesc='illogical-impulse on Niri - Core Dependencies'
+pkgdesc='iNiR - core dependency bundle'
 arch=(any)
 license=(MIT)
 depends=(
@@ -57,4 +57,3 @@ depends=(
   xwayland-satellite
   
 )
-

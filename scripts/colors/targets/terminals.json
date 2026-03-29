@@ -1,0 +1,9 @@
+{
+  "id": "terminals",
+  "label": "Terminals",
+  "module": "10-terminals.sh",
+  "category": "terminal",
+  "inputs": ["terminal.json", "material_colors.scss"],
+  "description": "Generate and reload terminal color schemes from the terminal palette.",
+  "configKey": "appearance.wallpaperTheming.enableTerminal"
+}

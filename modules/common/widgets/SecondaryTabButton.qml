@@ -12,8 +12,12 @@ TabButton {
     property string buttonIcon
     property bool selected: false
     property int rippleDuration: 1200
+    property real horizontalContentPadding: 14
+    property real iconTextSpacing: 5
     height: buttonBackground.height
     property int tabContentWidth: buttonBackground.width - buttonBackground.radius*2
+    implicitWidth: buttonBackground.implicitWidth
+    implicitHeight: buttonBackground.implicitHeight
 
     property color colBackground: ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 1)
     property color colBackgroundHover: Appearance.colors.colLayer1Hover
@@ -82,7 +86,7 @@ TabButton {
         ParallelAnimation {
             RippleAnim {
                 target: ripple
-                properties: "implicitWidth,implicitHeight"
+                properties: "rippleWidth,rippleHeight"
                 from: 0
                 to: rippleAnim.radius * 2
             }
@@ -93,6 +97,7 @@ TabButton {
         id: buttonBackground
         radius: Appearance?.rounding.normal
         implicitHeight: 37
+        implicitWidth: tabContent.implicitWidth + root.horizontalContentPadding * 2
         color: (root.hovered ? root.colBackgroundHover : root.colBackground)
         layer.enabled: true
         layer.effect: OpacityMask {
@@ -109,12 +114,12 @@ TabButton {
 
         Item {
             id: ripple
-            width: ripple.implicitWidth
-            height: ripple.implicitHeight
+            width: ripple.rippleWidth
+            height: ripple.rippleHeight
             opacity: 0
 
-            property real implicitWidth: 0
-            property real implicitHeight: 0
+            property real rippleWidth: 0
+            property real rippleHeight: 0
             visible: width > 0 && height > 0
 
             Behavior on opacity {
@@ -139,7 +144,10 @@ TabButton {
 
     contentItem: Item {
         anchors.centerIn: buttonBackground
+        implicitWidth: tabContent.implicitWidth
+        implicitHeight: tabContent.implicitHeight
         RowLayout {
+            id: tabContent
             anchors.centerIn: parent
             spacing: 0
             
@@ -147,7 +155,7 @@ TabButton {
                 id: iconLoader
                 active: buttonIcon?.length > 0
                 sourceComponent: buttonIcon?.length > 0 ? materialSymbolComponent : null
-                Layout.rightMargin: 5
+                Layout.rightMargin: root.iconTextSpacing
             }
 
             Component {

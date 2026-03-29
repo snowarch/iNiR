@@ -1,0 +1,39 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// 80 — Layer rules
+// ─────────────────────────────────────────────────────────────────────────────
+// Docs: https://niri-wm.github.io/niri/Configuration:-Layer-Rules
+//
+// Layer-shell surfaces are used by bars, panels, wallpaper renderers, and
+// overlays. iNiR uses them for its backdrop wallpaper surfaces.
+//
+// place-within-backdrop = true tells Niri to render the surface behind
+// windows but above the compositor background, so iNiR's wallpaper shows
+// between the desktop background color and the tiled windows.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// iNiR "ii" family backdrop (wallpaper surface).
+layer-rule {
+    match namespace="quickshell:iiBackdrop"
+    place-within-backdrop true
+    opacity 1.0
+}
+
+// iNiR "waffle" family backdrop (wallpaper surface).
+layer-rule {
+    match namespace="quickshell:wBackdrop"
+    place-within-backdrop true
+    opacity 1.0
+}
+
+// ── Examples ────────────────────────────────────────────────────────────────
+// Make a specific layer surface semi-transparent:
+// layer-rule {
+//     match namespace="waybar"
+//     opacity 0.9
+// }
+//
+// Block a layer surface from screen capture:
+// layer-rule {
+//     match namespace="some-private-overlay"
+//     block-out-from "screencast"
+// }

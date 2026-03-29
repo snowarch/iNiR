@@ -136,7 +136,7 @@ Item {
                         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active 
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive 
                         : Appearance.colors.colLayer2Active
-                    onClicked: GlobalStates.wallpaperSelectorOpen = true
+                    onClicked: GlobalActions.runLauncher(["wallpaperSelector", "toggle"])
                     contentItem: Item {
                         MaterialSymbol {
                             anchors.centerIn: parent

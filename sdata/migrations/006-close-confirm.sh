@@ -17,11 +17,11 @@ migration_check() {
 
 migration_preview() {
   echo -e "${STY_RED}- Mod+Q { close-window; }${STY_RST}"
-  echo -e "${STY_GREEN}+ Mod+Q { spawn \"bash\" \"-c\" \"\$HOME/.config/quickshell/ii/scripts/close-window.sh\"; }${STY_RST}"
+  echo -e "${STY_GREEN}+ Mod+Q { spawn \"inir\" \"close-window\"; }${STY_RST}"
 }
 
 migration_apply() {
-  local config="${XDG_CONFIG_HOME}/niri/config.kdl"
+  local config="${XDG_CONFIG_HOME:-$HOME/.config}/niri/config.kdl"
   
   if ! migration_check; then
     return 0
@@ -31,12 +31,12 @@ migration_apply() {
 import re
 import os
 
-config_path = os.path.expanduser("~/.config/niri/config.kdl")
+config_path = os.path.expanduser(os.environ.get("XDG_CONFIG_HOME", "~/.config")) + "/niri/config.kdl"
 with open(config_path, 'r') as f:
     content = f.read()
 
 pattern = r'Mod\+Q[^}]*close-window[^}]*\}'
-replacement = 'Mod+Q repeat=false { spawn "bash" "-c" "$HOME/.config/quickshell/ii/scripts/close-window.sh"; }'
+replacement = 'Mod+Q repeat=false { spawn "inir" "close-window"; }'
 content = re.sub(pattern, replacement, content)
 
 with open(config_path, 'w') as f:

@@ -36,6 +36,28 @@ WSettingsPage {
     }
 
     WSettingsCard {
+        visible: !root.isWaffleActive
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 12
+
+            FluentIcon {
+                icon: "info"
+                implicitSize: 24
+                color: Looks.colors.accent
+            }
+
+            WText {
+                Layout.fillWidth: true
+                text: Translation.tr("These Waffle modules are currently inactive because another panel family is selected. You can still pre-configure them here before switching.")
+                wrapMode: Text.WordWrap
+                color: Looks.colors.subfg
+            }
+        }
+    }
+
+    WSettingsCard {
         title: Translation.tr("Panel Style")
         icon: "desktop"
 
@@ -50,7 +72,7 @@ WSettingsPage {
             ]
             onSelected: newValue => {
                 if (newValue !== Config.options?.panelFamily) {
-                    Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "panelFamily", "set", newValue])
+                    Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "panelFamily", "set", newValue])
                 }
             }
         }
@@ -63,28 +85,27 @@ WSettingsPage {
         WSettingsDropdown {
             label: Translation.tr("Terminal emulator")
             icon: "terminal"
-            description: Translation.tr("Used by shell actions, keybinds, and update commands")
-            currentValue: Config.options?.apps?.terminal ?? "kitty"
-            options: [
-                { value: "foot", displayName: "Foot" },
-                { value: "kitty", displayName: "Kitty" },
-                { value: "ghostty", displayName: "Ghostty" },
-                { value: "alacritty", displayName: "Alacritty" },
-                { value: "wezterm", displayName: "WezTerm" },
-                { value: "konsole", displayName: "Konsole" }
-            ]
+            description: Translation.tr("Used by shell actions, keybinds, and package commands")
+            currentValue: AppLauncher.presetIdFor("terminal")
+            options: AppLauncher.presetOptions("terminal")
             onSelected: newValue => {
-                Config.setNestedValue("apps.terminal", newValue)
-                Config.setNestedValue("apps.update", newValue + " -e sudo pacman -Syu")
+                if (newValue !== "__custom__")
+                    AppLauncher.applyPreset("terminal", newValue)
             }
         }
     }
 
     // Waffle modules
     WSettingsCard {
-        visible: root.isWaffleActive
         title: Translation.tr("Panels")
         icon: "desktop"
+
+        WSettingsRow {
+            visible: !root.isWaffleActive
+            label: Translation.tr("Waffle family currently inactive")
+            icon: "info"
+            description: Translation.tr("Changes here will apply when you switch the panel family back to Windows 11 (Waffle).")
+        }
 
         WSettingsSwitch {
             label: Translation.tr("Taskbar")
@@ -130,7 +151,7 @@ WSettingsPage {
 
         WSettingsSwitch {
             label: Translation.tr("OSD")
-            icon: "speaker-2"
+            icon: "speaker-2-filled"
             checked: root.isPanelEnabled("wOnScreenDisplay")
             onCheckedChanged: root.setPanelEnabled("wOnScreenDisplay", checked)
         }

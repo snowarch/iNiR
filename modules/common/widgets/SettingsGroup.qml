@@ -6,7 +6,7 @@ import qs.modules.common.widgets
 Rectangle {
     id: root
 
-    default property alias data: content.data
+    default property alias contentData: content.data
 
     Layout.fillWidth: true
     implicitHeight: content.implicitHeight + SettingsMaterialPreset.groupPadding * 2

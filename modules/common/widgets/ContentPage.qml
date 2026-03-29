@@ -10,7 +10,7 @@ StyledFlickable {
     property int settingsPageIndex: -1
     property string settingsPageName: ""
 
-    default property alias data: contentColumn.data
+    default property alias contentData: contentColumn.data
 
     clip: true
     contentHeight: contentColumn.implicitHeight + root.bottomContentPadding

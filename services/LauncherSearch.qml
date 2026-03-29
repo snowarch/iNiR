@@ -4,7 +4,6 @@ import qs.modules.common
 import qs.modules.common.models
 import qs.modules.common.functions
 import QtQuick
-import Qt.labs.folderlistmodel
 import Quickshell
 import Quickshell.Io
 
@@ -35,8 +34,8 @@ Singleton {
 
     function ensurePrefix(prefix: string): void {
         const prefixes = [
-            Config.options?.search?.prefix?.action ?? ">",
-            Config.options?.search?.prefix?.app ?? "/",
+            Config.options?.search?.prefix?.action ?? "/",
+            Config.options?.search?.prefix?.app ?? ">",
             Config.options?.search?.prefix?.clipboard ?? ";",
             Config.options?.search?.prefix?.emojis ?? ":",
             Config.options?.search?.prefix?.math ?? "=",
@@ -50,95 +49,9 @@ Singleton {
         }
     }
 
-    property var searchActions: [
-        {
-            action: "accentcolor",
-            execute: args => {
-                Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--noswitch", "--color", ...(args !== '' ? [`${args}`] : [])])
-            }
-        },
-        {
-            action: "dark",
-            execute: () => {
-                Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--mode", "dark", "--noswitch"])
-            }
-        },
-        {
-            action: "konachanwallpaper",
-            execute: () => {
-                Quickshell.execDetached([Quickshell.shellPath("scripts/colors/random/random_konachan_wall.sh")])
-            }
-        },
-        {
-            action: "light", 
-            execute: () => {
-                Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--mode", "light", "--noswitch"])
-            }
-        },
-        {
-            action: "superpaste",
-            execute: args => {
-                if (!/^(\d+)/.test(args.trim())) {
-                    Quickshell.execDetached(["/usr/bin/notify-send", Translation.tr("Superpaste"), 
-                        Translation.tr("Usage: >superpaste NUM[i]\nExamples: >superpaste 4i (last 4 images), >superpaste 7 (last 7 entries)"), 
-                        "-a", "Shell"])
-                    return
-                }
-                const match = /^(?:(\d+)(i)?)/.exec(args.trim())
-                const count = match[1] ? parseInt(match[1]) : 1
-                const isImage = !!match[2]
-                Cliphist.superpaste(count, isImage)
-            }
-        },
-        {
-            action: "todo",
-            execute: args => {
-                Todo.addTask(args)
-            }
-        },
-        {
-            action: "wallpaper",
-            execute: () => {
-                GlobalStates.wallpaperSelectorOpen = true
-            }
-        },
-        {
-            action: "wipeclipboard",
-            execute: () => {
-                Cliphist.wipe()
-            }
-        },
-    ]
-
-    // Load user action scripts from ~/.config/illogical-impulse/actions/
-    property var userActionScripts: {
-        const actions = [];
-        for (let i = 0; i < userActionsFolder.count; i++) {
-            const fileName = userActionsFolder.get(i, "fileName");
-            const filePath = userActionsFolder.get(i, "filePath");
-            if (fileName && filePath) {
-                const actionName = fileName.replace(/\.[^/.]+$/, ""); // strip extension
-                actions.push({
-                    action: actionName,
-                    execute: ((path) => (args) => {
-                        Quickshell.execDetached([path, ...(args ? args.split(" ") : [])]);
-                    })(FileUtils.trimFileProtocol(filePath.toString()))
-                });
-            }
-        }
-        return actions;
-    }
-
-    FolderListModel {
-        id: userActionsFolder
-        folder: Qt.resolvedUrl(Directories.userActions)
-        showDirs: false
-        showHidden: false
-        sortField: FolderListModel.Name
-    }
-
-    // Combined built-in and user actions
-    property var allActions: searchActions.concat(userActionScripts)
+    // All actions are now centralized in GlobalActions service.
+    // This property delegates to GlobalActions.searchActions for backward compatibility.
+    property var allActions: GlobalActions.searchActions
 
     property string mathResult: ""
 
@@ -179,8 +92,8 @@ Singleton {
         const mathPrefix = Config.options?.search?.prefix?.math ?? "="
         const shellPrefix = Config.options?.search?.prefix?.shellCommand ?? "$"
         const webPrefix = Config.options?.search?.prefix?.webSearch ?? "?"
-        const actionPrefix = Config.options?.search?.prefix?.action ?? ">"
-        const appPrefix = Config.options?.search?.prefix?.app ?? "/"
+        const actionPrefix = Config.options?.search?.prefix?.action ?? "/"
+        const appPrefix = Config.options?.search?.prefix?.app ?? ">"
 
         // Clipboard search
         if (q.startsWith(clipboardPrefix)) {

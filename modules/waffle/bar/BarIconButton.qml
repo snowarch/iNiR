@@ -9,6 +9,7 @@ import qs.modules.waffle.bar
 BarButton {
     id: root
 
+    readonly property var panelScreen: root.QsWindow?.window?.screen ?? null
     property alias iconName: iconContent.icon
     property alias iconSource: iconContent.source
     property alias iconSize: iconContent.implicitSize
@@ -18,7 +19,7 @@ BarButton {
     property alias tooltipText: tooltip.text
     property alias overlayingItems: iconContent.data
 
-    implicitWidth: 32
+    implicitWidth: Looks.scaledBar(32, panelScreen)
 
     contentItem: Item {
         anchors.centerIn: parent
@@ -28,7 +29,7 @@ BarButton {
         FluentIcon {
             id: iconContent
             anchors.centerIn: parent
-            implicitSize: 16
+            implicitSize: Looks.scaledBar(16, root.panelScreen)
             icon: root.iconName
             monochrome: false
         }

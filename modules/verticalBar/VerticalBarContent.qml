@@ -62,7 +62,7 @@ Item { // Bar content region
                 monochromeIcon: true,
                 text: Translation.tr("Settings"),
                 action: () => {
-                    Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "settings", "open"])
+                    Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"])
                 },
             },
         ]
@@ -105,6 +105,7 @@ Item { // Bar content region
             target: barBackground
         }
     }
+
     // Background
     Rectangle {
         id: barBackground
@@ -132,49 +133,6 @@ Item { // Bar content region
 
         clip: true
 
-        layer.enabled: root.auroraEverywhere && !root.inirEverywhere && !root.gameModeMinimal
-        layer.effect: GE.OpacityMask {
-            maskSource: Rectangle {
-                width: barBackground.width
-                height: barBackground.height
-                radius: barBackground.radius
-            }
-        }
-
-        Image {
-            id: blurredWallpaper
-            x: -barBackground.x
-            y: -barBackground.y
-            width: root.width
-            height: root.height
-            visible: root.auroraEverywhere && !root.inirEverywhere && !root.gameModeMinimal
-            source: root.wallpaperUrl
-            fillMode: Image.PreserveAspectCrop
-            cache: true
-            sourceSize.width: root.width
-            sourceSize.height: root.height
-            asynchronous: true
-
-            layer.enabled: Appearance.effectsEnabled && root.auroraEverywhere && !root.inirEverywhere && !root.gameModeMinimal
-            layer.effect: MultiEffect {
-                source: blurredWallpaper
-                anchors.fill: source
-                saturation: Appearance.angelEverywhere
-                    ? Appearance.angel.blurSaturation
-                    : (Appearance.effectsEnabled ? 0.2 : 0)
-                blurEnabled: Appearance.effectsEnabled
-                blurMax: 64
-                blur: Appearance.effectsEnabled ? 1 : 0
-            }
-
-            Rectangle {
-                anchors.fill: parent
-                color: Appearance.angelEverywhere
-                    ? ColorUtils.transparentize((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.angel.overlayOpacity)
-                    : ColorUtils.transparentize((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
-            }
-        }
-
         // Angel inset glow — top edge
         Rectangle {
             anchors.top: parent.top
@@ -188,6 +146,66 @@ Item { // Bar content region
         // Angel partial border
         AngelPartialBorder {
             targetRadius: barBackground.radius
+        }
+    }
+
+    // Aurora/Angel blur layer — rendered as sibling of barBackground so the blur
+    // is applied over the full screen-sized wallpaper image (not the narrow
+    // clipped bar region). Placed right after barBackground in z-order so it
+    // sits between background and content.
+    Item {
+        id: auroraBlurLayer
+        anchors.fill: barBackground
+        visible: root.auroraEverywhere && !root.inirEverywhere && !root.gameModeMinimal
+            && (Config.options?.bar?.showBackground ?? true)
+
+        // Clip + mask to barBackground shape
+        clip: true
+        layer.enabled: visible
+        layer.effect: GE.OpacityMask {
+            maskSource: Rectangle {
+                width: auroraBlurLayer.width
+                height: auroraBlurLayer.height
+                radius: barBackground.radius
+            }
+        }
+
+        Image {
+            id: blurredWallpaper
+            // Position relative to screen — uses screen-sized source so the
+            // wallpaper portion shown matches corner decorators exactly.
+            readonly property real barMargin: barBackground.floatingStyle ? Appearance.sizes.hyprlandGapsOut : 0
+            x: root.barOnRight
+                ? (-(root.screen?.width ?? 1920) + auroraBlurLayer.width + barMargin)
+                : -barMargin
+            y: -barMargin
+            width: root.screen?.width ?? 1920
+            height: root.screen?.height ?? 1080
+            source: root.wallpaperUrl
+            fillMode: Image.PreserveAspectCrop
+            cache: true
+            sourceSize.width: root.screen?.width ?? 1920
+            sourceSize.height: root.screen?.height ?? 1080
+            asynchronous: true
+
+            layer.enabled: Appearance.effectsEnabled && root.auroraEverywhere && !root.inirEverywhere
+            layer.effect: MultiEffect {
+                source: blurredWallpaper
+                anchors.fill: source
+                saturation: Appearance.angelEverywhere
+                    ? Appearance.angel.blurSaturation
+                    : (Appearance.effectsEnabled ? 0.2 : 0)
+                blurEnabled: Appearance.effectsEnabled
+                blurMax: 100
+                blur: Appearance.effectsEnabled ? 1 : 0
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                color: Appearance.angelEverywhere
+                    ? ColorUtils.transparentize((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.angel.overlayOpacity)
+                    : ColorUtils.transparentize((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
+            }
         }
     }
 
@@ -459,7 +477,7 @@ Item { // Bar content region
                     }
                     Revealer {
                         vertical: true
-                        reveal: Audio.source?.audio?.muted ?? false
+                        reveal: Audio.micMuted
                         Layout.fillWidth: true
                         Layout.bottomMargin: reveal ? indicatorsColumnLayout.realSpacing : 0
                         Behavior on Layout.topMargin {

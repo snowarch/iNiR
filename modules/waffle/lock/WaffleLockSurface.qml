@@ -284,7 +284,8 @@ MouseArea {
                         }
                         
                         Text {
-                            text: Weather.data?.city ?? ""
+                            text: Weather.visibleCity
+                            visible: Weather.showVisibleCity
                             font.pixelSize: Looks.font.pixelSize.small
                             font.family: Looks.font.family.ui
                             color: Looks.colors.subfg
@@ -548,8 +549,7 @@ MouseArea {
                     Image {
                         id: avatarImage
                         anchors.fill: parent
-                        // Try .face first, then AccountsService
-                        source: `file://${Directories.userAvatarPathRicersAndWeirdSystems}`
+                        source: Directories.userAvatarSourcePrimary
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
                         cache: true
@@ -557,36 +557,12 @@ MouseArea {
                         mipmap: true
                         sourceSize.width: avatarCircle.width * 2
                         sourceSize.height: avatarCircle.height * 2
-                        visible: status === Image.Ready || avatarImageFallback.status === Image.Ready
-                        
-                        layer.enabled: root.effectsSafe
-                        layer.effect: OpacityMask {
-                            maskSource: Rectangle {
-                                width: avatarCircle.width
-                                height: avatarCircle.height
-                                radius: width / 2
-                            }
-                        }
-                    }
-                    
-                    // Fallback to AccountsService path
-                    Image {
-                        id: avatarImageFallback
-                        anchors.fill: parent
-                        source: avatarImage.status !== Image.Ready 
-                            ? `file://${Directories.userAvatarPathAccountsService}` 
-                            : ""
-                        fillMode: Image.PreserveAspectCrop
-                        asynchronous: true
-                        cache: true
-                        smooth: true
-                        mipmap: true
-                        sourceSize.width: avatarCircle.width * 2
-                        sourceSize.height: avatarCircle.height * 2
-                        visible: status === Image.Ready && avatarImage.status !== Image.Ready
+                        visible: status === Image.Ready
                         onStatusChanged: {
                             if (status === Image.Error) {
-                                source = `file://${Directories.userAvatarPathRicersAndWeirdSystems2}`
+                                const nextSource = Directories.nextAvatarSource(source)
+                                if (nextSource.length > 0 && nextSource !== source)
+                                    source = nextSource
                             }
                         }
                         
@@ -608,7 +584,7 @@ MouseArea {
                         font.weight: Looks.font.weight.regular
                         font.family: Looks.font.family.ui
                         color: Looks.colors.accentFg
-                        visible: avatarImage.status !== Image.Ready && avatarImageFallback.status !== Image.Ready
+                        visible: avatarImage.status !== Image.Ready
                     }
                 }
             }

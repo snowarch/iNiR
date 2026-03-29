@@ -137,7 +137,7 @@ Item {
                         anchors.centerIn: parent
                         text: root.keySubstitutions[modelData] ?? modelData
                         font.pixelSize: Looks.font.pixelSize.small
-                        font.family: Looks.font.family.mono
+                        font.family: Looks.font.family.monospace
                     }
                 }
             }
@@ -164,7 +164,7 @@ Item {
                     anchors.centerIn: parent
                     text: root.keySubstitutions[root.keyName] ?? root.keyName
                     font.pixelSize: Looks.font.pixelSize.small
-                    font.family: Looks.font.family.mono
+                    font.family: Looks.font.family.monospace
                 }
             }
         }

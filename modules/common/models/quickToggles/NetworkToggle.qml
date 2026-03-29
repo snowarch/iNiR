@@ -15,9 +15,6 @@ QuickToggleModel {
     mainAction: () => Network.toggleWifi()
     hasMenu: true
     altAction: () => {
-        const cmd = Network.ethernet
-            ? (Config.options?.apps?.networkEthernet ?? "nm-connection-editor")
-            : (Config.options?.apps?.network ?? "nm-connection-editor")
-        ShellExec.execCmd(cmd)
+        AppLauncher.launchNetworkSettings(Network.ethernet)
     }
 }

@@ -20,6 +20,9 @@ Singleton {
     // Suppression flag: prevents ThemeService from firing a duplicate
     // switchwall.sh run while a direct apply() is already in progress.
     property bool _applyInProgress: false
+    property string _queuedApplyPath: ""
+    property bool _queuedApplyDarkMode: Appearance.m3colors.darkmode
+    property bool _queuedApplyNoSwitch: false
     readonly property string backendProvider: "awww"
     readonly property bool awwwBackendEnabled: true
 
@@ -251,6 +254,7 @@ Singleton {
     property string searchQuery: ""
     readonly property list<string> extensions: ["jpg", "jpeg", "png", "webp", "avif", "bmp", "svg", "gif", "mp4", "webm", "mkv", "avi", "mov"]
     property list<string> wallpapers: []
+    property int _wallpaperCacheIndex: 0
     readonly property bool thumbnailGenerationRunning: thumbgenProc.running
     property real thumbnailGenerationProgress: 0
 
@@ -262,9 +266,24 @@ Singleton {
     function load() {}
     function refresh() {} // Compatibility - FolderListModel auto-refreshes
 
-    function currentSelectionTarget(): string {
-        const configTarget = Config.options?.wallpaperSelector?.selectionTarget ?? "main"
-        return (configTarget && configTarget !== "main") ? configTarget : (GlobalStates.wallpaperSelectionTarget ?? "main")
+    function rebuildWallpapersCache(): void {
+        root.wallpapers = []
+        root._wallpaperCacheIndex = 0
+        wallpaperCacheTimer.restart()
+    }
+
+    function appendWallpapersCacheBatch(): void {
+        const nextBatch = root.wallpapers.slice()
+        const batchEnd = Math.min(folderModel.count, root._wallpaperCacheIndex + 64)
+        for (let i = root._wallpaperCacheIndex; i < batchEnd; i++) {
+            const path = folderModel.get(i, "filePath") || FileUtils.trimFileProtocol(folderModel.get(i, "fileURL"))
+            if (path && path.length)
+                nextBatch.push(path)
+        }
+        root.wallpapers = nextBatch
+        root._wallpaperCacheIndex = batchEnd
+        if (root._wallpaperCacheIndex < folderModel.count)
+            wallpaperCacheTimer.restart()
     }
 
     function currentMainWallpaperPath(monitorName = ""): string {
@@ -315,14 +334,86 @@ Singleton {
         return currentPath.length > 0 && currentPath === normalizedPath
     }
 
-    Process { id: applyProc }
+    function _applyRequestKey(path: string, darkMode: bool, noSwitch: bool): string {
+        return [noSwitch ? "noswitch" : "switch", FileUtils.trimFileProtocol(String(path ?? "")), darkMode ? "dark" : "light"].join("|")
+    }
+
+    function _runWallpaperScript(path: string, darkMode: bool, noSwitch: bool): void {
+        const normalizedPath = FileUtils.trimFileProtocol(String(path ?? ""))
+        if (!normalizedPath || normalizedPath.length === 0)
+            return
+
+        root._applyInProgress = true
+        _applySuppressTimer.restart()
+        applyProc.activeRequestKey = root._applyRequestKey(normalizedPath, darkMode, noSwitch)
+        const command = [
+            Directories.wallpaperSwitchScriptPath,
+            "--image", normalizedPath,
+            "--mode", (darkMode ? "dark" : "light"),
+            "--skip-config-write"
+        ]
+        if (noSwitch)
+            command.splice(command.length - 1, 0, "--noswitch")
+        applyProc.exec(command)
+    }
+
+    function _queueWallpaperScript(path: string, darkMode: bool, noSwitch: bool): void {
+        const normalizedPath = FileUtils.trimFileProtocol(String(path ?? ""))
+        if (!normalizedPath || normalizedPath.length === 0)
+            return
+
+        const requestKey = root._applyRequestKey(normalizedPath, darkMode, noSwitch)
+        if (applyProc.running) {
+            if (applyProc.activeRequestKey === requestKey || applyProc.pendingRequestKey === requestKey)
+                return
+
+            root._queuedApplyPath = normalizedPath
+            root._queuedApplyDarkMode = darkMode
+            root._queuedApplyNoSwitch = noSwitch
+            applyProc.pendingRequestKey = requestKey
+            root._applyInProgress = true
+            _applySuppressTimer.restart()
+            return
+        }
+
+        root._queuedApplyPath = ""
+        applyProc.pendingRequestKey = ""
+        root._runWallpaperScript(normalizedPath, darkMode, noSwitch)
+    }
+
+    Process {
+        id: applyProc
+        property string activeRequestKey: ""
+        property string pendingRequestKey: ""
+
+        onExited: {
+            const nextKey = pendingRequestKey
+            const nextPath = root._queuedApplyPath
+            const nextDarkMode = root._queuedApplyDarkMode
+            const nextNoSwitch = root._queuedApplyNoSwitch
+
+            activeRequestKey = ""
+            pendingRequestKey = ""
+            root._queuedApplyPath = ""
+
+            if (nextKey !== "" && nextPath !== "") {
+                root._runWallpaperScript(nextPath, nextDarkMode, nextNoSwitch)
+                return
+            }
+
+            root._applyInProgress = false
+        }
+    }
 
     // Clears _applyInProgress after switchwall.sh has had time to start.
     // 3 seconds is enough for the script to begin; ThemeService debounce is 260ms.
     Timer {
         id: _applySuppressTimer
         interval: 3000
-        onTriggered: root._applyInProgress = false
+        onTriggered: {
+            if (!applyProc.running && applyProc.pendingRequestKey === "")
+                root._applyInProgress = false
+        }
     }
 
     function openFallbackPicker(darkMode = Appearance.m3colors.darkmode) {
@@ -386,8 +477,6 @@ Singleton {
             return
         }
 
-        if (applyProc.running) applyProc.running = false
-
         // Suppress ThemeService duplicate regeneration while switchwall.sh runs
         root._applyInProgress = true
         _applySuppressTimer.restart()
@@ -395,22 +484,29 @@ Singleton {
         if (root.awwwBackendEnabled && AwwwBackend.supportsMainWallpaper(normalizedPath)) {
             Config.setNestedValue("background.wallpaperPath", normalizedPath)
             Config.setNestedValue("background.thumbnailPath", "")
-            applyProc.exec([
-                Directories.wallpaperSwitchScriptPath,
-                "--image", normalizedPath,
-                "--mode", (darkMode ? "dark" : "light"),
-                "--skip-config-write"
-            ])
+            root._queueWallpaperScript(normalizedPath, darkMode, false)
             root.changed()
             return
         }
 
-        applyProc.exec([
-            Directories.wallpaperSwitchScriptPath,
-            "--image", normalizedPath,
-            "--mode", (darkMode ? "dark" : "light")
-        ])
+        // Always set wallpaper path from QML to avoid race condition with Config write timer
+        Config.setNestedValue("background.wallpaperPath", normalizedPath)
+        Config.setNestedValue("background.thumbnailPath", "")
+        root._queueWallpaperScript(normalizedPath, darkMode, false)
         root.changed()
+    }
+
+    // Apply only the color scheme from an image without changing the active wallpaper
+    function applyColorsOnly(imagePath, darkMode = Appearance.m3colors.darkmode) {
+        const normalizedPath = FileUtils.trimFileProtocol(String(imagePath ?? ""))
+        if (!normalizedPath || normalizedPath.length === 0) return
+
+        Config.setNestedValue("appearance.wallpaperTheming.previewSourcePath", normalizedPath)
+
+        root._applyInProgress = true
+        _applySuppressTimer.restart()
+
+        root._queueWallpaperScript(normalizedPath, darkMode, true)
     }
 
     function updatePerMonitorConfig(path: string, monitorName: string) {
@@ -477,10 +573,12 @@ Singleton {
         property string filePath: ""
         property bool darkMode: Appearance.m3colors.darkmode
         property string monitorName: ""
-        function select(filePath, darkMode = Appearance.m3colors.darkmode, monitorName = "") {
+        property string target: ""
+        function select(filePath, darkMode = Appearance.m3colors.darkmode, monitorName = "", target = "") {
             selectProc.filePath = filePath
             selectProc.darkMode = darkMode
             selectProc.monitorName = monitorName
+            selectProc.target = target
             selectProc.exec(["test", "-d", FileUtils.trimFileProtocol(filePath)])
         }
         onExited: (exitCode, exitStatus) => {
@@ -488,19 +586,48 @@ Singleton {
                 setDirectory(selectProc.filePath)
                 return
             }
+            const target = root.resolveSelectionTarget(selectProc.target, selectProc.monitorName)
+            if (target !== "main") {
+                root.applySelectionTarget(selectProc.filePath, target, selectProc.darkMode, selectProc.monitorName)
+                return
+            }
             root.apply(selectProc.filePath, selectProc.darkMode, selectProc.monitorName)
         }
     }
 
-    function select(filePath, darkMode = Appearance.m3colors.darkmode, monitorName = "") {
-        selectProc.select(filePath, darkMode, monitorName)
+    function resolveSelectionTarget(target = "", monitorName = ""): string {
+        const normalizedTarget = String(target ?? "")
+        if (normalizedTarget.length > 0)
+            return normalizedTarget
+        if (monitorName && monitorName.length > 0)
+            return "main"
+        return currentSelectionTarget()
     }
 
-    function randomFromCurrentFolder(darkMode = Appearance.m3colors.darkmode, monitorName = "") {
+    function currentSelectionTarget(): string {
+        const configTarget = Config.options?.wallpaperSelector?.selectionTarget ?? "main"
+        if (configTarget && configTarget !== "main")
+            return configTarget
+
+        const globalTarget = GlobalStates.wallpaperSelectionTarget ?? "main"
+        if (globalTarget && globalTarget !== "main")
+            return globalTarget
+
+        if ((Config.options?.panelFamily ?? "ii") === "waffle")
+            return (Config.options?.waffles?.background?.useMainWallpaper ?? true) ? "main" : "waffle"
+
+        return "main"
+    }
+
+    function select(filePath, darkMode = Appearance.m3colors.darkmode, monitorName = "", target = "") {
+        selectProc.select(filePath, darkMode, monitorName, target)
+    }
+
+    function randomFromCurrentFolder(darkMode = Appearance.m3colors.darkmode, monitorName = "", target = "") {
         if (folderModel.count === 0) return
         const randomIndex = Math.floor(Math.random() * folderModel.count)
         const filePath = folderModel.get(randomIndex, "filePath")
-        root.select(filePath, darkMode, monitorName)
+        root.select(filePath, darkMode, monitorName, target)
     }
 
     // Detect workspace range for a monitor (Niri-specific)
@@ -585,14 +712,15 @@ Singleton {
         showOnlyReadable: true
         sortField: FolderListModel.Time
         sortReversed: false
-        onCountChanged: {
-            root.wallpapers = []
-            for (let i = 0; i < folderModel.count; i++) {
-                const path = folderModel.get(i, "filePath") || FileUtils.trimFileProtocol(folderModel.get(i, "fileURL"))
-                if (path && path.length) root.wallpapers.push(path)
-            }
-        }
+        onCountChanged: root.rebuildWallpapersCache()
         onFolderChanged: root.folderChanged()
+    }
+
+    Timer {
+        id: wallpaperCacheTimer
+        interval: 0
+        repeat: false
+        onTriggered: root.appendWallpapersCacheBatch()
     }
 
     property string _pendingThumbnailSize: ""

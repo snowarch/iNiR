@@ -11,8 +11,8 @@ Button {
     implicitHeight: 36
 
     property color colBackground: ColorUtils.transparentize(Looks.colors.bg1)
-    property color colBackgroundHover: Looks.colors.bg1Hover
-    property color colBackgroundActive: Looks.colors.bg1Active
+    property color colBackgroundHover: Looks.colors.interactiveSurfaceHover
+    property color colBackgroundActive: Looks.colors.interactiveSurfaceActive
     property color color
     property color colForeground: Looks.colors.fg
     color: {
@@ -31,6 +31,8 @@ Button {
         id: background
         radius: Looks.radius.medium
         color: root.color
+        border.width: Looks.glassActive && ((root.hovered && !root.down) || root.checked) ? 1 : 0
+        border.color: Looks.colors.tooltipBorder
         
         // Subtle scale on press for tactile feedback
         scale: root.down ? 0.97 : 1.0

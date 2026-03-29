@@ -10,10 +10,18 @@ import qs.modules.common.widgets
 Scope {
     id: root
 
+    readonly property bool allowMultiplePanels: Config.options?.waffles?.behavior?.allowMultiplePanels ?? false
+
     Connections {
         target: GlobalStates
         function onSearchOpenChanged() {
-            if (GlobalStates.searchOpen) panelLoader.active = true
+            if (GlobalStates.searchOpen) {
+                if (!root.allowMultiplePanels) {
+                    GlobalStates.waffleActionCenterOpen = false
+                    GlobalStates.waffleNotificationCenterOpen = false
+                }
+                panelLoader.active = true
+            }
         }
     }
 

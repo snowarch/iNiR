@@ -1246,6 +1246,28 @@
   "Subtle zoom effect as the new wallpaper fades in": "Subtle zoom effect as the new wallpaper fades in",
   "The old wallpaper blurs away while the new one appears": "The old wallpaper blurs away while the new one appears",
   "Transition duration (ms)": "Transition duration (ms)",
-  "How long the transition animation takes in milliseconds. Lower values feel snappy, higher values feel cinematic.": "How long the transition animation takes in milliseconds. Lower values feel snappy, higher values feel cinematic."
- }
- 
+  "How long the transition animation takes in milliseconds. Lower values feel snappy, higher values feel cinematic.": "How long the transition animation takes in milliseconds. Lower values feel snappy, higher values feel cinematic.",
+  "Charge limit": "Charge limit",
+  "Enable charge limit": "Enable charge limit",
+  "Stop charging at a specific percentage to extend battery lifespan (requires polkit)": "Stop charging at a specific percentage to extend battery lifespan (requires polkit)",
+  "Not supported on this device": "Not supported on this device",
+  "Maximum charge percentage": "Maximum charge percentage",
+  "Current limit: %1%": "Current limit: %1%",
+  "No charge limit active": "No charge limit active",
+  "Battery conservation mode active": "Battery conservation mode active",
+  "Limit maximum charge to preserve battery health": "Limit maximum charge to preserve battery health",
+  "Use your device's built-in battery conservation mode (requires polkit)": "Use your device's built-in battery conservation mode (requires polkit)",
+  "Display scaling": "Display scaling",
+   "Shell scale (%)": "Shell scale (%)",
+   "Shell scale": "Shell scale",
+   "Scale the entire shell UI. Useful for HiDPI / 4K monitors. Requires restart.": "Scale the entire shell UI. Useful for HiDPI / 4K monitors. Requires restart.",
+   "Scale the entire shell UI for HiDPI / 4K monitors": "Scale the entire shell UI for HiDPI / 4K monitors",
+   "Current: %1%. Changes take effect after shell restart.": "Current: %1%. Changes take effect after shell restart.",
+   "Restart shell to apply": "Restart shell to apply",
+   "Reset to 100%": "Reset to 100%",
+   "UI scale (%)": "UI scale (%)",
+   "UI scale": "UI scale",
+   "Scale fonts and spacing throughout the shell. Takes effect immediately.": "Scale fonts and spacing throughout the shell. Takes effect immediately.",
+   "Current: %1%. Takes effect immediately.": "Current: %1%. Takes effect immediately.",
+   "Takes effect immediately": "Takes effect immediately"
+}

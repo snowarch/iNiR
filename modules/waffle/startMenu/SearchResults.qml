@@ -17,6 +17,9 @@ RowLayout {
     property int resultLimit: 20
     property StartMenuContext context
     property int currentIndex: context.currentIndex
+    readonly property int searchIconSize: Config.options?.waffles?.bar?.searchIconSize ?? 24
+    readonly property int searchPreviewIconSize: Math.max(36, Math.round(root.searchIconSize * 2))
+    readonly property int searchActionIconSize: Math.max(14, Math.round(root.searchIconSize * 0.58))
     
     function focusFirstItem() {
         context.currentIndex = 0;
@@ -77,7 +80,7 @@ RowLayout {
         currentIndex: root.context.currentIndex
         highlightFollowsCurrentItem: true
         // Use Looks.transition for consistent animation timing
-        highlightMoveDuration: Looks.transition.enabled ? Looks.transition.duration.normal : 0
+        highlightMoveDuration: Looks.transition.enabled ? Looks.transition.duration.chromeMove : 0
         highlightMoveVelocity: -1  // Disable velocity-based animation, use duration only
 
         model: {
@@ -123,8 +126,12 @@ RowLayout {
         property var entry
 
         Layout.fillHeight: true
-        color: Looks.colors.bg1
-        radius: Looks.radius.normal
+        color: Looks.glassActive ? Looks.colors.bgPanelBody : Looks.colors.bg1
+        radius: Looks.radius.medium
+        border.width: Looks.glassActive ? 1 : 0
+        border.color: Looks.glassActive
+            ? (Appearance.angelEverywhere ? Appearance.angel.colPanelBorder : Appearance.aurora.colTooltipBorder)
+            : "transparent"
 
         ColumnLayout {
             anchors.fill: parent
@@ -140,7 +147,7 @@ RowLayout {
                     Layout.topMargin: 8
                     Layout.bottomMargin: 6
                     entry: resultPreview.entry
-                    iconSize: 48
+                    iconSize: root.searchPreviewIconSize
                 }
                 WText {
                     Layout.fillWidth: true
@@ -213,7 +220,7 @@ RowLayout {
                         spacing: 8
                         SearchEntryIcon {
                             entry: actionButton.modelData
-                            iconSize: 14
+                            iconSize: root.searchActionIconSize
                         }
                         WText {
                             Layout.fillWidth: true

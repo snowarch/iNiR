@@ -111,7 +111,7 @@ if $DO_INSTALL; then
     sudo cmake --install build
     echo "    ✓ Installed to $INSTALL_PREFIX"
     echo ""
-    echo "Done! Restart your shell with: qs kill -c ii && qs -c ii"
+    echo "Done! Restart your shell with: inir restart"
 else
     echo "[5/5] Skipping install (run with --install to install system-wide)"
     echo ""

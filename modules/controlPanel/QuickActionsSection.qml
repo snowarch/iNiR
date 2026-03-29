@@ -40,13 +40,13 @@ Rectangle {
         ActionTile {
             icon: Audio.sink?.audio?.muted ? "volume_off" : "volume_up"
             active: !(Audio.sink?.audio?.muted ?? false)
-            onClicked: Audio.sink?.audio?.toggleMute()
+            onClicked: Audio.toggleMute()
         }
 
         ActionTile {
-            icon: Audio.source?.audio?.muted ? "mic_off" : "mic"
-            active: !(Audio.source?.audio?.muted ?? false)
-            onClicked: Audio.source?.audio?.toggleMute()
+            icon: Audio.micMuted ? "mic_off" : "mic"
+            active: !Audio.micMuted
+            onClicked: Audio.toggleMicMute()
         }
 
         ActionTile {
@@ -100,7 +100,7 @@ Rectangle {
             icon: "settings"
             onClicked: {
                 GlobalStates.controlPanelOpen = false
-                Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "settings", "open"])
+                Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"])
             }
         }
 
@@ -108,7 +108,7 @@ Rectangle {
             icon: "lock"
             onClicked: {
                 GlobalStates.controlPanelOpen = false
-                Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "lock", "activate"])
+                Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "lock", "activate"])
             }
         }
 

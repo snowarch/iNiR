@@ -12,8 +12,8 @@ MenuItem {
     id: root
 
     property color colBackground: ColorUtils.transparentize(Looks.colors.bg1)
-    property color colBackgroundHover: Looks.colors.bg2Hover
-    property color colBackgroundActive: Looks.colors.bg2Active
+    property color colBackgroundHover: Looks.colors.popupSurfaceHover
+    property color colBackgroundActive: Looks.colors.popupSurfaceActive
     property color colBackgroundToggled: Looks.colors.accent
     property color colBackgroundToggledHover: Looks.colors.accentHover
     property color colBackgroundToggledActive: Looks.colors.accentActive
@@ -62,6 +62,8 @@ MenuItem {
         id: backgroundRect
         radius: Looks.radius.medium
         color: root.color
+        border.width: Looks.glassActive && (root.hovered || root.checked || root.down) ? 1 : 0
+        border.color: Looks.colors.tooltipBorder
         Behavior on color {
             animation: ColorAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
         }

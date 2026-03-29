@@ -18,15 +18,26 @@ Rectangle {
     
     Layout.fillWidth: true
     implicitHeight: mainColumn.implicitHeight
-    radius: Looks.radius.large
-    color: Looks.colors.bgPanelFooter
+    radius: Looks.radius.xLarge
+    color: cardHoverArea.containsMouse ? Qt.lighter(Looks.colors.bgPanelFooter, 1.03) : Looks.colors.bgPanelFooter
     border.width: 1
     border.color: Looks.colors.bg2Border
     
-    // Subtle shadow for card elevation
+    Behavior on color {
+        animation: ColorAnimation { duration: Looks.transition.enabled ? 120 : 0; easing.type: Easing.OutQuad }
+    }
+    
+    // Card elevation shadow
     WRectangularShadow {
         target: root
-        opacity: 0.4
+    }
+    
+    // Subtle hover detection for entire card
+    MouseArea {
+        id: cardHoverArea
+        anchors.fill: parent
+        hoverEnabled: true
+        acceptedButtons: Qt.NoButton
     }
     
     ColumnLayout {
@@ -41,7 +52,7 @@ Rectangle {
         Item {
             visible: root.title !== ""
             Layout.fillWidth: true
-            implicitHeight: 44
+            implicitHeight: 52
             
             MouseArea {
                 anchors.fill: parent
@@ -65,24 +76,21 @@ Rectangle {
                 FluentIcon {
                     visible: root.icon !== ""
                     icon: root.icon
-                    implicitSize: 14
+                    implicitSize: 16
                     color: Looks.colors.accent
-                    opacity: 0.85
                 }
                 
                 WText {
                     Layout.fillWidth: true
                     text: root.title
-                    font.pixelSize: Looks.font.pixelSize.small
-                    font.weight: Looks.font.weight.regular
-                    color: Looks.colors.subfg
-                    font.capitalization: Font.AllUppercase
-                    font.letterSpacing: 0.5
+                    font.pixelSize: Looks.font.pixelSize.large
+                    font.weight: Looks.font.weight.strong
+                    color: Looks.colors.fg
                 }
                 
                 FluentIcon {
                     visible: root.collapsible
-                    icon: root.expanded ? "chevron-up" : "chevron-down"
+                    icon: "chevron-up"
                     implicitSize: 12
                     color: Looks.colors.subfg
                     
@@ -93,17 +101,33 @@ Rectangle {
                 }
             }
         }
-        
-        // Content
-        ColumnLayout {
-            id: contentColumn
-            visible: root.expanded
+
+        // Content with smooth collapse
+        Item {
             Layout.fillWidth: true
-            Layout.leftMargin: 0
-            Layout.rightMargin: 0
-            Layout.topMargin: root.title !== "" ? 0 : 4
-            Layout.bottomMargin: 6
-            spacing: 0
+            implicitHeight: root.expanded ? contentColumn.implicitHeight + contentColumn.anchors.topMargin + contentColumn.anchors.bottomMargin : 0
+            clip: true
+
+            Behavior on implicitHeight {
+                animation: NumberAnimation { duration: Looks.transition.enabled ? Looks.transition.duration.medium : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
+            }
+
+            ColumnLayout {
+                id: contentColumn
+                anchors {
+                    top: parent.top
+                    left: parent.left
+                    right: parent.right
+                    topMargin: root.title !== "" ? 4 : 6
+                    bottomMargin: 10
+                }
+                spacing: 0
+                opacity: root.expanded ? 1 : 0
+
+                Behavior on opacity {
+                    animation: NumberAnimation { duration: Looks.transition.enabled ? Looks.transition.duration.fast : 0; easing.type: Easing.OutQuad }
+                }
+            }
         }
     }
 }

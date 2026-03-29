@@ -10,8 +10,31 @@ import Quickshell.Hyprland
 
 Scope {
     id: root
-    property int panelWidth: 380
-    property int maxPanelHeight: (panelRoot.screen?.height ?? 1080) - Appearance.sizes.hyprlandGapsOut * 4 - Appearance.sizes.baseBarHeight - 40
+    readonly property real screenWidth: panelRoot.screen?.width ?? 1920
+    readonly property real screenHeight: panelRoot.screen?.height ?? 1080
+    readonly property var dockConfig: Config.options?.dock ?? ({})
+    readonly property bool dockEnabled: dockConfig?.enable ?? false
+    readonly property real safePadding: Math.max(
+        Appearance.sizes.hyprlandGapsOut * 2,
+        Math.round(Math.min(screenWidth, screenHeight) * 0.02)
+    )
+    readonly property real topReservedSpace: safePadding
+        + (!(Config.options?.bar?.bottom ?? false) ? Appearance.sizes.baseBarHeight + Appearance.sizes.hyprlandGapsOut * 2 : 0)
+        + ((dockEnabled && dockConfig?.position === "top") ? ((dockConfig?.height ?? 60) + safePadding) : 0)
+    readonly property real bottomReservedSpace: safePadding
+        + ((Config.options?.bar?.bottom ?? false) ? Appearance.sizes.baseBarHeight + Appearance.sizes.hyprlandGapsOut * 2 : 0)
+        + ((dockEnabled && dockConfig?.position === "bottom") ? ((dockConfig?.height ?? 60) + safePadding) : 0)
+    readonly property real leftReservedSpace: safePadding
+        + ((dockEnabled && dockConfig?.position === "left") ? ((dockConfig?.width ?? dockConfig?.height ?? 60) + safePadding) : 0)
+    readonly property real rightReservedSpace: safePadding
+        + ((dockEnabled && dockConfig?.position === "right") ? ((dockConfig?.width ?? dockConfig?.height ?? 60) + safePadding) : 0)
+    readonly property real availablePanelHeight: Math.max(260, screenHeight - topReservedSpace - bottomReservedSpace)
+    readonly property real availablePanelWidth: Math.max(280, screenWidth - leftReservedSpace - rightReservedSpace)
+    readonly property real panelWidth: Math.round(Math.min(availablePanelWidth, 380))
+    readonly property real panelVerticalOffset: Math.round(Math.min(
+        Appearance.sizes.baseBarHeight / 2,
+        Math.max(0, availablePanelHeight * 0.08)
+    ))
 
     PanelWindow {
         id: panelRoot
@@ -77,18 +100,29 @@ Scope {
             }
         }
 
+        Item {
+            id: safeBounds
+            anchors {
+                fill: parent
+                leftMargin: root.leftReservedSpace
+                rightMargin: root.rightReservedSpace
+                topMargin: root.topReservedSpace
+                bottomMargin: root.bottomReservedSpace
+            }
+        }
+
         Loader {
             id: contentLoader
             active: GlobalStates.controlPanelOpen || (Config?.options?.controlPanel?.keepLoaded ?? false)
             
             anchors {
-                horizontalCenter: parent.horizontalCenter
-                verticalCenter: parent.verticalCenter
-                verticalCenterOffset: Config.options?.bar?.bottom ? -Appearance.sizes.baseBarHeight / 2 : Appearance.sizes.baseBarHeight / 2
+                horizontalCenter: safeBounds.horizontalCenter
+                verticalCenter: safeBounds.verticalCenter
+                verticalCenterOffset: (Config.options?.bar?.bottom ?? false) ? -root.panelVerticalOffset : root.panelVerticalOffset
             }
             
             width: root.panelWidth
-            height: item?.implicitHeight ? Math.min(item.implicitHeight, root.maxPanelHeight) : root.maxPanelHeight
+            height: item?.implicitHeight ? Math.min(item.implicitHeight, root.availablePanelHeight) : root.availablePanelHeight
 
             // Smooth scale + slide + fade animation (GPU-accelerated)
             opacity: GlobalStates.controlPanelOpen ? 1 : 0

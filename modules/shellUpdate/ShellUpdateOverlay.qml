@@ -178,7 +178,7 @@ Scope {
                 source: wallpaperSource
                 blurEnabled: Appearance.effectsEnabled && !Appearance.inirEverywhere
                 blur: (Appearance.effectsEnabled && !Appearance.inirEverywhere) ? 1.0 : 0
-                blurMax: 64
+                blurMax: 100
                 blurMultiplier: 1.0
                 saturation: (Appearance.effectsEnabled && !Appearance.inirEverywhere) ? 0.2 : 0
                 visible: !Appearance.inirEverywhere
@@ -499,7 +499,7 @@ Scope {
                                 color: Appearance.m3colors.m3error
                             }
                             StyledText {
-                                text: Translation.tr("Updates Unavailable")
+                                text: ShellUpdates.unavailableTitle
                                 font {
                                     pixelSize: Appearance.font.pixelSize.normal
                                     weight: Font.DemiBold
@@ -511,7 +511,7 @@ Scope {
                         // Error message
                         StyledText {
                             Layout.fillWidth: true
-                            text: Translation.tr("Repository not found. The update system cannot locate the iNiR git repository.")
+                            text: ShellUpdates.unavailableMessage
                             font.pixelSize: Appearance.font.pixelSize.small
                             color: root.textColor
                             wrapMode: Text.WordWrap
@@ -520,7 +520,7 @@ Scope {
                         // Suggested action
                         StyledText {
                             Layout.fillWidth: true
-                            text: Translation.tr("Run './setup doctor' in your terminal to diagnose the issue, or use the diagnose command below.")
+                            text: ShellUpdates.unavailableHint
                             font.pixelSize: Appearance.font.pixelSize.small
                             color: root.subtextColor
                             wrapMode: Text.WordWrap
@@ -536,7 +536,7 @@ Scope {
                                 console.log("[ShellUpdates] Diagnostics:\n" + diag)
                                 Notifications.notify({
                                     summary: "Update System Diagnostics",
-                                    body: "Diagnostics printed to console. Run: qs log -c ii | tail -50",
+                                    body: "Diagnostics printed to console. Run: qs log -c inir | tail -50",
                                     urgency: NotificationUrgency.Normal,
                                     timeout: 8000,
                                     appName: "iNiR Shell"
@@ -1319,7 +1319,7 @@ Scope {
 
                     // Update button (only when update)
                     RippleButton {
-                        visible: root.hasUpdate
+                        visible: root.hasUpdate && ShellUpdates.selfUpdateSupported
                         enabled: !ShellUpdates.isUpdating
                         implicitWidth: updateBtnContent.implicitWidth + 32
                         implicitHeight: 36
@@ -1386,7 +1386,7 @@ Scope {
 
                     // Close button (when no update)
                     RippleButton {
-                        visible: !root.hasUpdate
+                        visible: !root.hasUpdate || !ShellUpdates.selfUpdateSupported
                         implicitWidth: closeLabel.implicitWidth + 28
                         implicitHeight: 36
                         onClicked: ShellUpdates.closeOverlay()

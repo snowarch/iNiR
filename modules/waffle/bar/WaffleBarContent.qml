@@ -1,9 +1,11 @@
 import QtQuick
 import QtQuick.Layouts
+import Qt5Compat.GraphicalEffects as GE
 import Quickshell
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.common.functions
 import qs.modules.waffle.looks
 import qs.modules.waffle.bar.tasks
 import qs.modules.waffle.bar.tray
@@ -11,8 +13,15 @@ import qs.modules.waffle.bar.tray
 Rectangle {
     id: root
 
-    color: Looks.colors.bg0
-    implicitHeight: 48
+    readonly property var panelScreen: root.QsWindow?.window?.screen ?? null
+    readonly property real panelScale: Looks.barScale(panelScreen)
+    readonly property bool glassActive: Looks.glassActive
+    readonly property bool barAtBottom: Config.options?.waffles?.bar?.bottom ?? false
+    readonly property real _screenW: panelScreen?.width ?? Quickshell.screens[0]?.width ?? 1920
+    readonly property real _screenH: panelScreen?.height ?? Quickshell.screens[0]?.height ?? 1080
+    color: root.glassActive ? "transparent" : Looks.colors.bg0
+    clip: true
+    implicitHeight: Looks.scaledBar(48, panelScreen)
 
     // Right-click context menu anchor (invisible, positioned at click)
     Item {
@@ -40,10 +49,10 @@ Rectangle {
 
         model: [
             {
-                iconName: "pulse",
+                iconName: "monitoring",
                 text: Translation.tr("Task Manager"),
                 action: () => {
-                    Quickshell.execDetached(["/usr/bin/missioncenter"])
+                    Session.launchTaskManager()
                 }
             },
             { type: "separator" },
@@ -51,10 +60,22 @@ Rectangle {
                 iconName: "settings",
                 text: Translation.tr("Taskbar settings"),
                 action: () => {
-                    Quickshell.execDetached(["/usr/bin/qs", "-c", "ii", "ipc", "call", "settings", "open"])
+                    Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"])
                 }
             }
         ]
+    }
+
+    // Glass background for aurora/angel styles
+    GlassBackground {
+        anchors.fill: parent
+        visible: root.glassActive
+        radius: 0
+        screenX: 0
+        screenY: root.barAtBottom ? (root._screenH - root.height) : 0
+        screenWidth: root._screenW
+        screenHeight: root._screenH
+        auroraTransparency: Appearance.aurora.overlayTransparentize
     }
 
     Rectangle {
@@ -62,10 +83,12 @@ Rectangle {
         anchors {
             left: parent.left
             right: parent.right
-            top: (Config.options?.waffles?.bar?.bottom ?? false) ? parent.top : undefined
-            bottom: (Config.options?.waffles?.bar?.bottom ?? false) ? undefined : parent.bottom
+            top: root.barAtBottom ? parent.top : undefined
+            bottom: root.barAtBottom ? undefined : parent.bottom
         }
-        color: Looks.colors.bg0Border
+        color: root.glassActive
+            ? (Appearance.angelEverywhere ? Appearance.angel.colPanelBorder : Appearance.aurora.colTooltipBorder)
+            : Looks.colors.bg0Border
         implicitHeight: 1
     }
 

@@ -210,7 +210,8 @@ Item {
 
                         StyledText {
                             Layout.fillWidth: true
-                            text: Weather.data.city
+                            text: Weather.visibleCity
+                            visible: Weather.showVisibleCity
                             font.pixelSize: Appearance.font.pixelSize.smallest
                             color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
                             elide: Text.ElideRight
@@ -219,7 +220,7 @@ Item {
 
                     SmallIconButton {
                         iconName: "refresh"
-                        onClicked: Weather.fetchWeather()
+                        onClicked: Weather.forceRefresh()
                         StyledToolTip { text: Translation.tr("Refresh") }
                     }
 

@@ -22,7 +22,6 @@ QuickToggleModel {
     }
     hasMenu: true
     altAction: () => {
-        const cmd = Config.options?.apps?.bluetooth ?? "blueman-manager"
-        ShellExec.execCmd(cmd)
+        AppLauncher.launch("bluetooth")
     }
 }

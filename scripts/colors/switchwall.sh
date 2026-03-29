@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 
-QUICKSHELL_CONFIG_NAME="ii"
 XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
 XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
-CONFIG_DIR="$XDG_CONFIG_HOME/quickshell/$QUICKSHELL_CONFIG_NAME"
 CACHE_DIR="$XDG_CACHE_HOME/quickshell"
 STATE_DIR="$XDG_STATE_HOME/quickshell"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SHELL_ROOT="$(cd "$SCRIPT_DIR/../.." 2>/dev/null && pwd)"
 SHELL_CONFIG_FILE="$XDG_CONFIG_HOME/illogical-impulse/config.json"
 MATUGEN_DIR="$XDG_CONFIG_HOME/matugen"
 terminalscheme="$SCRIPT_DIR/terminal/scheme-base.json"
@@ -26,7 +25,7 @@ fi
 
 repair_matugen_colors_template() {
     local user_template="$MATUGEN_DIR/templates/colors.json"
-    local default_template="$CONFIG_DIR/defaults/matugen/templates/colors.json"
+    local default_template="$SHELL_ROOT/defaults/matugen/templates/colors.json"
 
     # If user template is missing, restore from project defaults.
     if [[ ! -f "$user_template" && -f "$default_template" ]]; then
@@ -145,7 +144,7 @@ check_and_prompt_upscale() {
     local img="$1"
 
     # Check if upscale notifications are disabled in config
-    local config_file="$HOME/.config/illogical-impulse/config.json"
+    local config_file="${XDG_CONFIG_HOME:-$HOME/.config}/illogical-impulse/config.json"
     if [[ -f "$config_file" ]] && command -v jq &>/dev/null; then
         local hide_upscale
         hide_upscale=$(jq -r '.background.hideUpscaleNotification // false' "$config_file" 2>/dev/null)
@@ -579,14 +578,11 @@ switch() {
         fi
     fi
 
-    # enforce dark mode for terminal
+    # Shell/UI colors follow the requested real mode.
+    # Terminal colors may optionally force dark mode, but that must not darken the shell palette.
     if [[ -n "$mode_flag" ]]; then
         matugen_args+=(--mode "$mode_flag")
-        if [[ $(jq -r '.appearance.wallpaperTheming.terminalGenerationProps.forceDarkMode' "$SHELL_CONFIG_FILE") == "true" ]]; then
-            generate_colors_material_args+=(--mode "dark")
-        else
-            generate_colors_material_args+=(--mode "$mode_flag")
-        fi
+        generate_colors_material_args+=(--mode "$mode_flag")
     fi
     # If useBackdropForColors is enabled, override color source to use backdrop wallpaper
     # Respects active panel family: ii reads from background.backdrop, waffle from waffles.background.backdrop
@@ -623,6 +619,9 @@ switch() {
     fi
 
     [[ -n "$type_flag" ]] && matugen_args+=(--type "$type_flag") && generate_colors_material_args+=(--scheme "$type_flag")
+    if [[ "${matugen_args[0]:-}" == "image" ]] && matugen image --help 2>&1 | grep -q -- '--source-color-index'; then
+        matugen_args+=(--source-color-index 0)
+    fi
     generate_colors_material_args+=(--termscheme "$terminalscheme" --blend_bg_fg)
     generate_colors_material_args+=(--cache "$STATE_DIR/user/generated/color.txt")
 
@@ -678,27 +677,57 @@ switch() {
     _scss_tmp="$STATE_DIR/user/generated/material_colors.scss.tmp"
     _json_tmp="$STATE_DIR/user/generated/colors.json.tmp"
     _json_out="$STATE_DIR/user/generated/colors.json"
+    _palette_tmp="$STATE_DIR/user/generated/palette.json.tmp"
+    _palette_out="$STATE_DIR/user/generated/palette.json"
+    _terminal_tmp="$STATE_DIR/user/generated/terminal.json.tmp"
+    _terminal_out="$STATE_DIR/user/generated/terminal.json"
+    _meta_tmp="$STATE_DIR/user/generated/theme-meta.json.tmp"
+    _meta_out="$STATE_DIR/user/generated/theme-meta.json"
+
+    # 1) Generate authoritative shell/UI colors.json using the actual requested mode.
     if "$_ii_python" "$SCRIPT_DIR/generate_colors_material.py" "${generate_colors_material_args[@]}" \
         --json-output "$_json_tmp" \
+        --palette-output "$_palette_tmp" \
+        --terminal-output "$_terminal_tmp" \
+        --meta-output "$_meta_tmp" \
+        > /dev/null 2>/dev/null && [[ -s "$_json_tmp" ]]; then
+        mv "$_json_tmp" "$_json_out"
+        [[ -s "$_palette_tmp" ]] && mv "$_palette_tmp" "$_palette_out" || rm -f "$_palette_tmp"
+        [[ -s "$_terminal_tmp" ]] && mv "$_terminal_tmp" "$_terminal_out" || rm -f "$_terminal_tmp"
+        [[ -s "$_meta_tmp" ]] && mv "$_meta_tmp" "$_meta_out" || rm -f "$_meta_tmp"
+    else
+        echo "[switchwall] Warning: colors.json generation failed, keeping previous JSON" >&2
+        rm -f "$_json_tmp"
+        rm -f "$_palette_tmp"
+        rm -f "$_terminal_tmp"
+        rm -f "$_meta_tmp"
+    fi
+
+    # 2) Generate material_colors.scss for terminals/editors. This path may optionally
+    #    force dark mode without affecting the shell/UI palette above.
+    scss_generate_args=("${generate_colors_material_args[@]}")
+    if [[ $(jq -r '.appearance.wallpaperTheming.terminalGenerationProps.forceDarkMode' "$SHELL_CONFIG_FILE") == "true" ]]; then
+        for i in "${!scss_generate_args[@]}"; do
+            if [[ "${scss_generate_args[$i]}" == "--mode" && $((i + 1)) -lt ${#scss_generate_args[@]} ]]; then
+                scss_generate_args[$((i + 1))]="dark"
+                break
+            fi
+        done
+    fi
+
+    if "$_ii_python" "$SCRIPT_DIR/generate_colors_material.py" "${scss_generate_args[@]}" \
         > "$_scss_tmp" 2>/dev/null && [[ -s "$_scss_tmp" ]]; then
         mv "$_scss_tmp" "$STATE_DIR/user/generated/material_colors.scss"
-        if [[ -s "$_json_tmp" ]]; then
-            mv "$_json_tmp" "$_json_out"
-        else
-            rm -f "$_json_tmp"
-            echo "[switchwall] Warning: colors.json generation failed, keeping previous JSON" >&2
-        fi
     else
-        echo "[switchwall] Warning: generate_colors_material.py failed, keeping previous SCSS" >&2
+        echo "[switchwall] Warning: material_colors.scss generation failed, keeping previous SCSS" >&2
         rm -f "$_scss_tmp"
-        rm -f "$_json_tmp"
     fi
 
     # Generate Vesktop theme if enabled (only when app theming is on)
     if [ "$enable_apps_shell" != "false" ]; then
         enable_vesktop=$(jq -r '.appearance.wallpaperTheming.enableVesktop // true' "$SHELL_CONFIG_FILE" 2>/dev/null || echo "true")
         if [[ "$enable_vesktop" != "false" ]]; then
-            "$_ii_python" "$SCRIPT_DIR/system24_palette.py"
+            "$SCRIPT_DIR/system24_palette.sh"
         fi
     fi
 
@@ -776,7 +805,7 @@ main() {
                 ;;
             --noswitch)
                 noswitch_flag="1"
-                imgpath=$(jq -r '.background.wallpaperPath' "$SHELL_CONFIG_FILE" 2>/dev/null || echo "")
+                skip_config_write="1"
                 shift
                 ;;
             --skip-config-write)
@@ -817,7 +846,7 @@ main() {
     fi
 
     # Validate type_flag (allow 'auto' as well)
-    allowed_types=(scheme-content scheme-expressive scheme-fidelity scheme-fruit-salad scheme-monochrome scheme-neutral scheme-rainbow scheme-tonal-spot auto)
+    allowed_types=(scheme-content scheme-expressive scheme-fidelity scheme-fruit-salad scheme-monochrome scheme-neutral scheme-rainbow scheme-tonal-spot scheme-vibrant auto)
     valid_type=0
     for t in "${allowed_types[@]}"; do
         if [[ "$type_flag" == "$t" ]]; then

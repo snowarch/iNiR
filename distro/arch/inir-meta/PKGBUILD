@@ -1,0 +1,67 @@
+# Maintainer: snowarch
+
+pkgname=inir-meta
+pkgver=2.15.0
+pkgrel=1
+pkgdesc='Full iNiR desktop experience meta-package'
+arch=(any)
+url='https://github.com/snowarch/iNiR'
+license=('MIT')
+source=("LICENSE::https://raw.githubusercontent.com/snowarch/iNiR/main/LICENSE")
+sha256sums=('SKIP')
+depends=(
+  adw-gtk-theme
+  awww-bin
+  blueman
+  breeze-icons
+  capitaine-cursors
+  cava
+  darkly-bin
+  ddcutil
+  easyeffects
+  ffmpeg
+  fprintd
+  geoclue
+  gnome-keyring
+  gum
+  hyprpicker
+  imagemagick
+  inir-shell
+  kconfig
+  kdialog
+  kitty
+  kvantum
+  libdbusmenu-gtk3
+  libqalculate
+  mpv
+  mpv-mpris
+  nautilus
+  otf-space-grotesk
+  pacman-contrib
+  pavucontrol
+  plasma-integration
+  qt6ct
+  socat
+  songrec
+  swappy
+  tesseract
+  tesseract-data-eng
+  tesseract-data-spa
+  translate-shell
+  ttf-oxanium
+  ttf-readex-pro
+  ttf-rubik-vf
+  ttf-twemoji
+  upower
+  uv
+  wf-recorder
+  whitesur-icon-theme
+  wtype
+  ydotool
+  yt-dlp
+)
+
+package() {
+  install -dm755 "${pkgdir}/usr/share/doc/${pkgname}"
+  install -Dm644 "${srcdir}/LICENSE" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+}

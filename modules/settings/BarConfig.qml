@@ -100,10 +100,10 @@ ContentPage {
                     title: Translation.tr("Position")
 
                     ConfigSelectionArray {
-                        currentValue: (Config.options.bar.bottom ? 1 : 0) | (Config.options.bar.vertical ? 2 : 0)
+                        currentValue: ((Config.options?.bar?.bottom ?? false) ? 1 : 0) | ((Config.options?.bar?.vertical ?? false) ? 2 : 0)
                         onSelected: newValue => {
-                            Config.options.bar.bottom = (newValue & 1) !== 0;
-                            Config.options.bar.vertical = (newValue & 2) !== 0;
+                            Config.setNestedValue("bar.bottom", (newValue & 1) !== 0);
+                            Config.setNestedValue("bar.vertical", (newValue & 2) !== 0);
                         }
                         options: [
                             { displayName: Translation.tr("Top"), icon: "arrow_upward", value: 0 },
@@ -118,7 +118,7 @@ ContentPage {
                     title: Translation.tr("Corner style")
 
                     ConfigSelectionArray {
-                        currentValue: Config.options.bar.cornerStyle
+                        currentValue: Config.options?.bar?.cornerStyle ?? 0
                         onSelected: newValue => {
                             // HUG mode (0) is incompatible with Angel style — revert to Float
                             if (newValue === 0 && root.isAngel) {
@@ -190,9 +190,9 @@ ContentPage {
                     title: Translation.tr("Group style")
 
                     ConfigSelectionArray {
-                        currentValue: Config.options.bar.borderless
+                        currentValue: Config.options?.bar?.borderless ?? false
                         onSelected: newValue => {
-                            Config.options.bar.borderless = newValue;
+                            Config.setNestedValue("bar.borderless", newValue);
                         }
                         options: [
                             { displayName: Translation.tr("Pills"), icon: "location_chip", value: false },
@@ -205,9 +205,9 @@ ContentPage {
                     title: Translation.tr("Auto-hide")
 
                     ConfigSelectionArray {
-                        currentValue: Config.options.bar.autoHide.enable
+                        currentValue: Config.options?.bar?.autoHide?.enable ?? false
                         onSelected: newValue => {
-                            Config.options.bar.autoHide.enable = newValue;
+                            Config.setNestedValue("bar.autoHide.enable", newValue);
                         }
                         options: [
                             { displayName: Translation.tr("Off"), icon: "visibility", value: false },
@@ -229,8 +229,8 @@ ContentPage {
             SettingsSwitch {
                 buttonIcon: "layers"
                 text: Translation.tr("Show background")
-                checked: Config.options.bar.showBackground
-                onCheckedChanged: Config.options.bar.showBackground = checked
+                checked: Config.options?.bar?.showBackground ?? true
+                onCheckedChanged: Config.setNestedValue("bar.showBackground", checked)
                 StyledToolTip {
                     text: Translation.tr("Display a background behind the bar")
                 }
@@ -702,8 +702,8 @@ ContentPage {
                 SettingsSwitch {
                     buttonIcon: "counter_1"
                     text: Translation.tr("Always show numbers")
-                    checked: Config.options.bar.workspaces.alwaysShowNumbers
-                    onCheckedChanged: Config.options.bar.workspaces.alwaysShowNumbers = checked
+                    checked: Config.options?.bar?.workspaces?.alwaysShowNumbers ?? false
+                    onCheckedChanged: Config.setNestedValue("bar.workspaces.alwaysShowNumbers", checked)
                     StyledToolTip {
                         text: Translation.tr("Show numbers instead of only when Super is held")
                     }
@@ -711,8 +711,8 @@ ContentPage {
                 SettingsSwitch {
                     buttonIcon: "award_star"
                     text: Translation.tr("Show app icons")
-                    checked: Config.options.bar.workspaces.showAppIcons
-                    onCheckedChanged: Config.options.bar.workspaces.showAppIcons = checked
+                    checked: Config.options?.bar?.workspaces?.showAppIcons ?? true
+                    onCheckedChanged: Config.setNestedValue("bar.workspaces.showAppIcons", checked)
                 }
             }
 
@@ -721,16 +721,16 @@ ContentPage {
                 SettingsSwitch {
                     buttonIcon: "colors"
                     text: Translation.tr("Tint app icons")
-                    checked: Config.options.bar.workspaces.monochromeIcons
-                    onCheckedChanged: Config.options.bar.workspaces.monochromeIcons = checked
-                    enabled: Config.options.bar.workspaces.showAppIcons
+                    checked: Config.options?.bar?.workspaces?.monochromeIcons ?? true
+                    onCheckedChanged: Config.setNestedValue("bar.workspaces.monochromeIcons", checked)
+                    enabled: Config.options?.bar?.workspaces?.showAppIcons ?? true
                     opacity: enabled ? 1 : 0.5
                 }
                 SettingsSwitch {
                     buttonIcon: "dynamic_feed"
                     text: Translation.tr("Dynamic count")
-                    checked: Config.options.bar.workspaces.dynamicCount
-                    onCheckedChanged: Config.options.bar.workspaces.dynamicCount = checked
+                    checked: Config.options?.bar?.workspaces?.dynamicCount ?? true
+                    onCheckedChanged: Config.setNestedValue("bar.workspaces.dynamicCount", checked)
                     StyledToolTip {
                         text: Translation.tr("Only show existing workspaces (Niri)")
                     }
@@ -740,10 +740,21 @@ ContentPage {
             SettingsSwitch {
                 buttonIcon: "all_inclusive"
                 text: Translation.tr("Wrap around")
-                checked: Config.options.bar.workspaces.wrapAround
-                onCheckedChanged: Config.options.bar.workspaces.wrapAround = checked
+                checked: Config.options?.bar?.workspaces?.wrapAround ?? true
+                onCheckedChanged: Config.setNestedValue("bar.workspaces.wrapAround", checked)
                 StyledToolTip {
                     text: Translation.tr("Cycle from last to first and vice versa")
+                }
+            }
+
+            SettingsSwitch {
+                buttonIcon: "desktop_windows"
+                text: Translation.tr("Per-monitor")
+                checked: Config.options?.bar?.workspaces?.perMonitor ?? true
+                onCheckedChanged: Config.setNestedValue("bar.workspaces.perMonitor", checked)
+                visible: CompositorService.isNiri
+                StyledToolTip {
+                    text: Translation.tr("Each bar shows workspaces for its own monitor")
                 }
             }
 
@@ -764,39 +775,39 @@ ContentPage {
                 ConfigSpinBox {
                     icon: "view_column"
                     text: Translation.tr("Shown")
-                    value: Config.options.bar.workspaces.shown
+                    value: Config.options?.bar?.workspaces?.shown ?? 10
                     from: 1
                     to: 30
                     stepSize: 1
-                    onValueChanged: Config.options.bar.workspaces.shown = value
-                    enabled: !Config.options.bar.workspaces.dynamicCount
+                    onValueChanged: Config.setNestedValue("bar.workspaces.shown", value)
+                    enabled: !(Config.options?.bar?.workspaces?.dynamicCount ?? true)
                     opacity: enabled ? 1 : 0.5
                 }
                 ConfigSpinBox {
                     icon: "mouse"
                     text: Translation.tr("Scroll steps")
-                    value: Config.options.bar.workspaces.scrollSteps
+                    value: Config.options?.bar?.workspaces?.scrollSteps ?? 3
                     from: 1
                     to: 10
                     stepSize: 1
-                    onValueChanged: Config.options.bar.workspaces.scrollSteps = value
+                    onValueChanged: Config.setNestedValue("bar.workspaces.scrollSteps", value)
                 }
             }
 
             ConfigSpinBox {
                 icon: "touch_long"
                 text: Translation.tr("Number reveal delay (ms)")
-                value: Config.options.bar.workspaces.showNumberDelay
+                value: Config.options?.bar?.workspaces?.showNumberDelay ?? 300
                 from: 0
                 to: 1000
                 stepSize: 50
-                onValueChanged: Config.options.bar.workspaces.showNumberDelay = value
-                enabled: !Config.options.bar.workspaces.alwaysShowNumbers
+                onValueChanged: Config.setNestedValue("bar.workspaces.showNumberDelay", value)
+                enabled: !(Config.options?.bar?.workspaces?.alwaysShowNumbers ?? false)
                 opacity: enabled ? 1 : 0.5
             }
 
             ConflictNote {
-                visible: Config.options.bar.workspaces.alwaysShowNumbers
+                visible: Config.options?.bar?.workspaces?.alwaysShowNumbers ?? false
                 icon: "info"
                 text: Translation.tr("Number reveal delay is ignored when 'Always show numbers' is enabled")
             }
@@ -809,12 +820,12 @@ ContentPage {
                 ConfigSelectionArray {
                     enabled: Config.options?.bar?.workspaces?.alwaysShowNumbers ?? false
                     opacity: enabled ? 1 : 0.5
-                    currentValue: JSON.stringify(Config.options.bar.workspaces.numberMap)
+                    currentValue: JSON.stringify(Config.options?.bar?.workspaces?.numberMap ?? ["1","2"])
                     onSelected: newValue => {
-                        Config.options.bar.workspaces.numberMap = JSON.parse(newValue)
+                        Config.setNestedValue("bar.workspaces.numberMap", JSON.parse(newValue))
                     }
                     options: [
-                        { displayName: Translation.tr("Normal"), icon: "timer_10", value: '["1","2","3","4","5","6","7","8","9","10"]' },
+                        { displayName: Translation.tr("Normal"), icon: "123", value: '["1","2","3","4","5","6","7","8","9","10"]' },
                         { displayName: Translation.tr("Japanese"), icon: "square_dot", value: '["一","二","三","四","五","六","七","八","九","十"]' },
                         { displayName: Translation.tr("Roman"), icon: "account_balance", value: '["I","II","III","IV","V","VI","VII","VIII","IX","X"]' }
                     ]
@@ -842,8 +853,8 @@ ContentPage {
             SettingsSwitch {
                 buttonIcon: "keep"
                 text: Translation.tr("Pin icons by default")
-                checked: Config.options.bar.tray.invertPinnedItems
-                onCheckedChanged: Config.options.bar.tray.invertPinnedItems = checked
+                checked: Config.options?.bar?.tray?.invertPinnedItems ?? true
+                onCheckedChanged: Config.setNestedValue("bar.tray.invertPinnedItems", checked)
                 StyledToolTip {
                     text: Translation.tr("New tray icons are visible by default instead of hidden")
                 }
@@ -852,8 +863,8 @@ ContentPage {
             SettingsSwitch {
                 buttonIcon: "colors"
                 text: Translation.tr("Tint icons")
-                checked: Config.options.bar.tray.monochromeIcons
-                onCheckedChanged: Config.options.bar.tray.monochromeIcons = checked
+                checked: Config.options?.bar?.tray?.monochromeIcons ?? true
+                onCheckedChanged: Config.setNestedValue("bar.tray.monochromeIcons", checked)
                 StyledToolTip {
                     text: Translation.tr("Apply accent color tint to tray icons")
                 }
@@ -862,15 +873,15 @@ ContentPage {
             SettingsSwitch {
                 buttonIcon: "bug_report"
                 text: Translation.tr("Show item ID in tooltip")
-                checked: Config.options.bar.tray.showItemId
-                onCheckedChanged: Config.options.bar.tray.showItemId = checked
+                checked: Config.options?.bar?.tray?.showItemId ?? false
+                onCheckedChanged: Config.setNestedValue("bar.tray.showItemId", checked)
                 StyledToolTip {
                     text: Translation.tr("Useful for debugging tray issues")
                 }
             }
 
             ConflictNote {
-                visible: !Config.options.bar.modules.sysTray
+                visible: !(Config.options?.bar?.modules?.sysTray ?? true)
                 warning: true
                 icon: "visibility_off"
                 text: Translation.tr("System tray is disabled in Modules section above")
@@ -900,14 +911,14 @@ ContentPage {
                 SettingsSwitch {
                     buttonIcon: "content_cut"
                     text: Translation.tr("Screen snip")
-                    checked: Config.options.bar.utilButtons.showScreenSnip
-                    onCheckedChanged: Config.options.bar.utilButtons.showScreenSnip = checked
+                    checked: Config.options?.bar?.utilButtons?.showScreenSnip ?? true
+                    onCheckedChanged: Config.setNestedValue("bar.utilButtons.showScreenSnip", checked)
                 }
                 SettingsSwitch {
                     buttonIcon: "videocam"
                     text: Translation.tr("Screen record")
-                    checked: Config.options.bar.utilButtons.showScreenRecord
-                    onCheckedChanged: Config.options.bar.utilButtons.showScreenRecord = checked
+                    checked: Config.options?.bar?.utilButtons?.showScreenRecord ?? true
+                    onCheckedChanged: Config.setNestedValue("bar.utilButtons.showScreenRecord", checked)
                 }
             }
 
@@ -916,8 +927,8 @@ ContentPage {
                 SettingsSwitch {
                     buttonIcon: "visibility"
                     text: Translation.tr("Screen cast")
-                    checked: Config.options.bar.utilButtons.showScreenCast
-                    onCheckedChanged: Config.options.bar.utilButtons.showScreenCast = checked
+                    checked: Config.options?.bar?.utilButtons?.showScreenCast ?? false
+                    onCheckedChanged: Config.setNestedValue("bar.utilButtons.showScreenCast", checked)
                     StyledToolTip {
                         text: Translation.tr("Toggle Niri dynamic screen casting (mirroring) to a target output")
                     }
@@ -925,8 +936,8 @@ ContentPage {
                 SettingsSwitch {
                     buttonIcon: "colorize"
                     text: Translation.tr("Color picker")
-                    checked: Config.options.bar.utilButtons.showColorPicker
-                    onCheckedChanged: Config.options.bar.utilButtons.showColorPicker = checked
+                    checked: Config.options?.bar?.utilButtons?.showColorPicker ?? false
+                    onCheckedChanged: Config.setNestedValue("bar.utilButtons.showColorPicker", checked)
                 }
             }
 
@@ -935,15 +946,15 @@ ContentPage {
                 SettingsSwitch {
                     buttonIcon: "edit_note"
                     text: Translation.tr("Notepad")
-                    checked: Config.options.bar.utilButtons.showNotepad
-                    onCheckedChanged: Config.options.bar.utilButtons.showNotepad = checked
+                    checked: Config.options?.bar?.utilButtons?.showNotepad ?? true
+                    onCheckedChanged: Config.setNestedValue("bar.utilButtons.showNotepad", checked)
                 }
                 // Empty slot for future button
                 Item { Layout.fillWidth: true }
             }
 
             StyledText {
-                visible: Config.options.bar.utilButtons.showScreenCast
+                visible: Config.options?.bar?.utilButtons?.showScreenCast ?? false
                 Layout.fillWidth: true
                 text: Translation.tr("Toggle button to start/stop Niri dynamic casting (screen mirroring) to a target output.")
                 color: Appearance.colors.colSubtext
@@ -952,7 +963,7 @@ ContentPage {
             }
 
             MaterialTextArea {
-                visible: Config.options.bar.utilButtons.showScreenCast
+                visible: Config.options?.bar?.utilButtons?.showScreenCast ?? false
                 Layout.fillWidth: true
                 placeholderText: "HDMI-A-1"
                 text: Config.options?.bar?.utilButtons?.screenCastOutput ?? "HDMI-A-1"
@@ -963,7 +974,7 @@ ContentPage {
             }
 
             StyledText {
-                visible: Config.options.bar.utilButtons.showScreenCast
+                visible: Config.options?.bar?.utilButtons?.showScreenCast ?? false
                 Layout.fillWidth: true
                 text: Translation.tr("Run 'niri msg outputs' to find your output name")
                 color: Appearance.colors.colSubtext
@@ -978,14 +989,14 @@ ContentPage {
                 SettingsSwitch {
                     buttonIcon: "keyboard"
                     text: Translation.tr("Virtual keyboard")
-                    checked: Config.options.bar.utilButtons.showKeyboardToggle
-                    onCheckedChanged: Config.options.bar.utilButtons.showKeyboardToggle = checked
+                    checked: Config.options?.bar?.utilButtons?.showKeyboardToggle ?? true
+                    onCheckedChanged: Config.setNestedValue("bar.utilButtons.showKeyboardToggle", checked)
                 }
                 SettingsSwitch {
                     buttonIcon: "mic"
                     text: Translation.tr("Mic toggle")
-                    checked: Config.options.bar.utilButtons.showMicToggle
-                    onCheckedChanged: Config.options.bar.utilButtons.showMicToggle = checked
+                    checked: Config.options?.bar?.utilButtons?.showMicToggle ?? false
+                    onCheckedChanged: Config.setNestedValue("bar.utilButtons.showMicToggle", checked)
                 }
             }
 
@@ -994,14 +1005,14 @@ ContentPage {
                 SettingsSwitch {
                     buttonIcon: "dark_mode"
                     text: Translation.tr("Dark/Light mode")
-                    checked: Config.options.bar.utilButtons.showDarkModeToggle
-                    onCheckedChanged: Config.options.bar.utilButtons.showDarkModeToggle = checked
+                    checked: Config.options?.bar?.utilButtons?.showDarkModeToggle ?? true
+                    onCheckedChanged: Config.setNestedValue("bar.utilButtons.showDarkModeToggle", checked)
                 }
                 SettingsSwitch {
                     buttonIcon: "speed"
                     text: Translation.tr("Power profile")
-                    checked: Config.options.bar.utilButtons.showPerformanceProfileToggle
-                    onCheckedChanged: Config.options.bar.utilButtons.showPerformanceProfileToggle = checked
+                    checked: Config.options?.bar?.utilButtons?.showPerformanceProfileToggle ?? false
+                    onCheckedChanged: Config.setNestedValue("bar.utilButtons.showPerformanceProfileToggle", checked)
                 }
             }
         }
@@ -1020,8 +1031,8 @@ ContentPage {
             SettingsSwitch {
                 buttonIcon: "counter_2"
                 text: Translation.tr("Show unread count")
-                checked: Config.options.bar.indicators.notifications.showUnreadCount
-                onCheckedChanged: Config.options.bar.indicators.notifications.showUnreadCount = checked
+                checked: Config.options?.bar?.indicators?.notifications?.showUnreadCount ?? false
+                onCheckedChanged: Config.setNestedValue("bar.indicators.notifications.showUnreadCount", checked)
                 StyledToolTip {
                     text: Translation.tr("Show number instead of just a dot")
                 }

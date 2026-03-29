@@ -12,7 +12,7 @@ Item {
     property bool expanded: true
     property bool collapsible: true
     property int animationDuration: Appearance.animation.elementMove.duration
-    default property alias data: sectionContent.data
+    default property alias contentData: sectionContent.data
 
     property bool enableSettingsSearch: true
     property int settingsSearchOptionId: -1
@@ -71,14 +71,18 @@ Item {
         }
     }
 
-    // Shadow — standard for material/aurora, escalonado for angel
-    Loader {
-        active: !Appearance.angelEverywhere
-        anchors.fill: card
-        sourceComponent: StyledRectangularShadow {
-            anchors.fill: undefined
-            target: card
-        }
+    // Shadow — lightweight offset for material/aurora, escalonado for angel
+    // Material/aurora: simple offset rectangle instead of GPU-blurred RectangularShadow
+    // for much better performance (especially with many cards visible at once).
+    Rectangle {
+        visible: !Appearance.angelEverywhere && Appearance.effectsEnabled
+        x: card.x + 0.5
+        y: card.y + 1.5
+        width: card.width
+        height: card.height
+        radius: card.radius
+        color: Appearance.colors.colShadow
+        z: -1
     }
     Loader {
         active: Appearance.angelEverywhere

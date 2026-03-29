@@ -74,6 +74,10 @@ Item {
             : Translation.tr("Arrows, wheel or click to navigate")
 
     property string _lastThumbnailSizeName: "x-large"
+    readonly property string _filmstripThumbnailSizeName: Images.thumbnailSizeNameForDimensions(
+        Math.round((root.previewMode ? 108 : 132) * root._dpr * 1.2),
+        Math.round(root.filmstripHeight * root._dpr * 1.2)
+    )
     property int currentIndex: 0
     property bool previewMode: false
     property bool showKeyboardGuide: true
@@ -82,6 +86,7 @@ Item {
     property int _wheelAccum: 0
     property real _focusPulse: 0
     property int _activeColorReloadToken: 0
+    property int _activePreviewReloadToken: 0
 
     readonly property string activePath: hasItems ? _filePath(currentIndex) : ""
     readonly property string activeName: hasItems ? _fileName(currentIndex) : ""
@@ -94,13 +99,14 @@ Item {
     readonly property string activePreviewSource: {
         if (!hasItems || activePath.length === 0 || activeIsDir)
             return ""
-        if (activeKind === "video") {
-            const thumbPath = Wallpapers.getExpectedThumbnailPath(activePath, _lastThumbnailSizeName)
-            return thumbPath.length > 0
-                ? (thumbPath.startsWith("file://") ? thumbPath : ("file://" + thumbPath))
-                : ""
-        }
-        return activePath.startsWith("file://") ? activePath : ("file://" + activePath)
+        const thumbPath = Wallpapers.getExpectedThumbnailPath(activePath, _lastThumbnailSizeName)
+        if (thumbPath.length === 0)
+            return ""
+        const thumbUrl = thumbPath.startsWith("file://") ? thumbPath : ("file://" + thumbPath)
+        return thumbUrl + (thumbUrl.indexOf("?") >= 0 ? "&" : "?")
+            + "hero=" + encodeURIComponent(activePath)
+            + "&index=" + currentIndex
+            + "&reload=" + _activePreviewReloadToken
     }
     readonly property string activeColorSource: {
         if (!hasItems || activePath.length === 0 || activeIsDir)
@@ -189,6 +195,32 @@ Item {
             sizeName = "x-large"
         _lastThumbnailSizeName = sizeName
         Wallpapers.generateThumbnail(_lastThumbnailSizeName)
+        _prefetchAroundIndex(currentIndex)
+    }
+
+    function _prefetchAroundIndex(centerIndex) {
+        if (!hasItems)
+            return
+        const radius = previewMode ? 4 : 8
+        for (let offset = 0; offset <= radius; offset++) {
+            const leftIndex = centerIndex - offset
+            const rightIndex = offset === 0 ? -1 : centerIndex + offset
+            if (leftIndex >= 0)
+                _prefetchIndex(leftIndex)
+            if (rightIndex >= 0 && rightIndex < totalCount)
+                _prefetchIndex(rightIndex)
+        }
+    }
+
+    function _prefetchIndex(index) {
+        if (index < 0 || index >= totalCount)
+            return
+        if (_fileIsDir(index))
+            return
+        const filePath = _filePath(index)
+        if (!filePath || filePath.length === 0)
+            return
+        Wallpapers.ensureThumbnailForPath(filePath, _lastThumbnailSizeName)
     }
 
 
@@ -220,6 +252,7 @@ Item {
         if (bounded === currentIndex) return
         currentIndex = bounded
         showKeyboardGuide = false
+        _prefetchAroundIndex(currentIndex)
         if (Appearance.animationsEnabled)
             focusPulseAnim.restart()
     }
@@ -307,6 +340,8 @@ Item {
         updateThumbnails()
     }
 
+    onCurrentIndexChanged: _prefetchAroundIndex(currentIndex)
+
     onCurrentWallpaperPathChanged: {
         _initialized = false
         _syncToCurrentWallpaper(true)
@@ -323,8 +358,10 @@ Item {
             thumbnailDebounce.restart()
         }
         function onThumbnailGeneratedFile(filePath) {
-            if (FileUtils.trimFileProtocol(String(filePath ?? "")) === FileUtils.trimFileProtocol(root.activePath))
+            if (FileUtils.trimFileProtocol(String(filePath ?? "")) === FileUtils.trimFileProtocol(root.activePath)) {
+                root._activePreviewReloadToken += 1
                 root._activeColorReloadToken += 1
+            }
         }
     }
 
@@ -841,8 +878,10 @@ Item {
                         mipmap: true
                         fillMode: Image.PreserveAspectCrop
                         clip: true
-                        sourceSize.width: Math.round(heroCard.width * root._dpr * 1.5)
-                        sourceSize.height: Math.round(heroCard.height * root._dpr * 1.5)
+                        sourceSize.width: Math.round(heroCard.width * root._dpr)
+                        sourceSize.height: Math.round(heroCard.height * root._dpr)
+                        property string requestedSource: ""
+                        onStatusChanged: heroClipContent._promoteReadySlot(heroA)
                         Behavior on opacity {
                             enabled: Appearance.animationsEnabled
                             NumberAnimation { duration: Appearance.calcEffectiveDuration(280); easing.type: Easing.OutCubic }
@@ -859,8 +898,10 @@ Item {
                         mipmap: true
                         fillMode: Image.PreserveAspectCrop
                         clip: true
-                        sourceSize.width: Math.round(heroCard.width * root._dpr * 1.5)
-                        sourceSize.height: Math.round(heroCard.height * root._dpr * 1.5)
+                        sourceSize.width: Math.round(heroCard.width * root._dpr)
+                        sourceSize.height: Math.round(heroCard.height * root._dpr)
+                        property string requestedSource: ""
+                        onStatusChanged: heroClipContent._promoteReadySlot(heroB)
                         Behavior on opacity {
                             enabled: Appearance.animationsEnabled
                             NumberAnimation { duration: Appearance.calcEffectiveDuration(280); easing.type: Easing.OutCubic }
@@ -869,23 +910,43 @@ Item {
 
                     // Crossfade controller
                     property bool _heroSlotA: true
+                    property string _heroPendingSource: ""
                     readonly property bool _heroShouldShow: root.hasItems && !root.activeIsDir && root.activePreviewSource.length > 0 && Images.isValidMediaByName(root.activeName)
 
                     function _crossfadeTo(src) {
                         if (!_heroShouldShow) {
+                            _heroPendingSource = ""
                             heroA.opacity = 0; heroB.opacity = 0
                             return
                         }
-                        if (_heroSlotA) {
-                            heroA.source = src
+                        _heroPendingSource = src
+                        const target = _heroSlotA ? heroB : heroA
+                        if (target.requestedSource === src && target.status === Image.Ready) {
+                            _showSlot(target)
+                            return
+                        }
+                        target.requestedSource = src
+                        target.source = src
+                    }
+
+                    function _showSlot(target) {
+                        if (target === heroA) {
                             heroA.opacity = 1.0
                             heroB.opacity = 0.0
+                            _heroSlotA = true
                         } else {
-                            heroB.source = src
                             heroB.opacity = 1.0
                             heroA.opacity = 0.0
+                            _heroSlotA = false
                         }
-                        _heroSlotA = !_heroSlotA
+                    }
+
+                    function _promoteReadySlot(target) {
+                        if (target.status !== Image.Ready)
+                            return
+                        if (target.requestedSource !== _heroPendingSource)
+                            return
+                        _showSlot(target)
                     }
 
                     Connections {
@@ -965,8 +1026,16 @@ Item {
                                         anchors.centerIn: parent
                                         text: Translation.tr("Active")
                                         color: ColorUtils.contrastColor(root._accent)
-                                        font.pixelSize: Appearance.font.pixelSize.smaller
+                                        font.pixelSize: Appearance.font.pixelSize.small
                                         font.weight: Font.DemiBold
+                                        layer.enabled: true
+                                        layer.effect: GE.DropShadow {
+                                            verticalOffset: 1
+                                            horizontalOffset: 0
+                                            radius: 6
+                                            samples: 16
+                                            color: ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.55)
+                                        }
                                     }
                                 }
                             }
@@ -1132,9 +1201,7 @@ Item {
             spacing: 10
             clip: true
             model: root.totalCount
-            cacheBuffer: 2400
-            displayMarginBeginning: 600
-            displayMarginEnd: 600
+            cacheBuffer: 800
             boundsBehavior: Flickable.StopAtBounds
             currentIndex: root.currentIndex
 
@@ -1143,7 +1210,7 @@ Item {
             highlightRangeMode: ListView.StrictlyEnforceRange
             preferredHighlightBegin: (width / 2) - (_delegateWidth / 2)
             preferredHighlightEnd: (width / 2) + (_delegateWidth / 2)
-            highlightMoveDuration: root._initialized ? 300 : 0
+            highlightMoveDuration: root._initialized ? Appearance.calcEffectiveDuration(300) : 0
             highlightFollowsCurrentItem: true
 
             onCurrentIndexChanged: {
@@ -1167,7 +1234,7 @@ Item {
                 height: filmstripView.height
                 opacity: isCurrent ? 1.0 : absDist === 1 ? 0.78 : Math.max(0.42, 0.78 - (absDist - 1) * 0.09)
 
-                Behavior on opacity { NumberAnimation { duration: 400 } }
+                Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
 
                 Item {
                     id: thumbCard
@@ -1214,7 +1281,7 @@ Item {
                             visible: !fileIsDir && filePath.length > 0 && Images.isValidMediaByName(fileName)
                             generateThumbnail: true
                             sourcePath: filePath
-                            thumbnailSizeName: "large"
+                            thumbnailSizeName: root._filmstripThumbnailSizeName
                             cache: true
                             fillMode: Image.PreserveAspectCrop
                             clip: true
@@ -1387,6 +1454,7 @@ Item {
             onClicked: {
                 root.showKeyboardGuide = false
                 root.useDarkMode = !root.useDarkMode
+                MaterialThemeLoader.setDarkMode(root.useDarkMode)
             }
             text: root.useDarkMode ? "dark_mode" : "light_mode"
             StyledToolTip { text: Translation.tr("Toggle light/dark mode") }

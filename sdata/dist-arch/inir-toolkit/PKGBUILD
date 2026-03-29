@@ -1,7 +1,7 @@
 pkgname=inir-toolkit
 pkgver=1.0
 pkgrel=1
-pkgdesc='illogical-impulse on Niri - Input Toolkit Dependencies'
+pkgdesc='iNiR - input and desktop toolkit dependency bundle'
 arch=(any)
 license=(MIT)
 depends=(

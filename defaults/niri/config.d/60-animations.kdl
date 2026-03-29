@@ -1,0 +1,72 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// 60 — Animations
+// ─────────────────────────────────────────────────────────────────────────────
+// Docs: https://niri-wm.github.io/niri/Configuration:-Animations
+//
+// All animations use spring physics with three parameters:
+//
+//   damping-ratio  How quickly the spring settles.
+//                  < 1.0 = bouncy / oscillates (try 0.5 for visible bounce)
+//                  = 1.0 = critically damped (settles fastest, no overshoot)
+//                  > 1.0 = overdamped (slow, sluggish stop)
+//                  iNiR default: 0.98 = fast settle with barely any bounce.
+//
+//   stiffness      How "snappy" the spring is. Higher = faster movement.
+//                  300 = smooth, 600 = responsive, 900+ = near-instant.
+//
+//   epsilon        Threshold to consider the animation "done" (0.0001 is fine).
+//
+// You can also use duration-based easing instead of springs:
+//   duration-ms 250 curve "ease-out-expo"
+// ─────────────────────────────────────────────────────────────────────────────
+
+animations {
+    // Uncomment to disable all animations globally.
+    // off
+
+    // Slow down every animation by this factor (useful for debugging).
+    // Values below 1.0 speed them up. Default: 1.0
+    // slowdown 3.0
+
+    // ── Workspace transitions ───────────────────────────────────────────────
+    workspace-switch {
+        spring damping-ratio=0.98 stiffness=300 epsilon=0.0001
+    }
+
+    // ── Window lifecycle ────────────────────────────────────────────────────
+    window-open {
+        spring damping-ratio=0.98 stiffness=300 epsilon=0.0001
+    }
+
+    // Low damping = windows "poof" away with a quick fade.
+    window-close {
+        spring damping-ratio=0.18 stiffness=300 epsilon=0.0001
+    }
+
+    // ── Layout movement ─────────────────────────────────────────────────────
+    // Scrolling the horizontal strip when you focus a different column.
+    horizontal-view-movement {
+        spring damping-ratio=0.98 stiffness=300 epsilon=0.0001
+    }
+
+    // Dragging or moving a window between columns/workspaces.
+    window-movement {
+        spring damping-ratio=0.98 stiffness=900 epsilon=0.0001
+    }
+
+    // Interactive column/window resize.
+    window-resize {
+        spring damping-ratio=0.98 stiffness=300 epsilon=0.0001
+    }
+
+    // ── UI chrome ───────────────────────────────────────────────────────────
+    // The "config saved" toast that appears after editing this file.
+    config-notification-open-close {
+        spring damping-ratio=0.98 stiffness=300 epsilon=0.0001
+    }
+
+    // Niri's built-in screenshot UI opening.
+    screenshot-ui-open {
+        spring damping-ratio=0.98 stiffness=300 epsilon=0.0001
+    }
+}

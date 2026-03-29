@@ -78,6 +78,30 @@ WSettingsPage {
             checked: Config.options?.battery?.notifyFull ?? true
             onCheckedChanged: Config.setNestedValue("battery.notifyFull", checked)
         }
+
+        WSettingsSwitch {
+            label: Translation.tr("Charge limit")
+            icon: "battery-saver"
+            description: !Battery.chargeLimitSupported
+                ? Translation.tr("Not supported on this device")
+                : Battery.chargeLimitAdjustable
+                    ? Translation.tr("Limit maximum charge to preserve battery health")
+                    : Translation.tr("Use your device's built-in battery conservation mode (requires polkit)")
+            enabled: Battery.chargeLimitSupported
+            checked: Config.options?.battery?.chargeLimit?.enable ?? false
+            onCheckedChanged: Config.setNestedValue("battery.chargeLimit.enable", checked)
+        }
+
+        WSettingsSpinBox {
+            visible: Battery.chargeLimitAdjustable
+            enabled: Config.options?.battery?.chargeLimit?.enable ?? false
+            label: Translation.tr("Charge limit threshold")
+            icon: "battery-saver"
+            suffix: "%"
+            from: 20; to: 100; stepSize: 5
+            value: Config.options?.battery?.chargeLimit?.threshold ?? 80
+            onValueChanged: Config.setNestedValue("battery.chargeLimit.threshold", value)
+        }
     }
     
     WSettingsCard {
@@ -86,7 +110,7 @@ WSettingsPage {
         
         WSettingsSwitch {
             label: Translation.tr("Show seconds")
-            icon: "pulse"
+            icon: "timer"
             description: Translation.tr("Display seconds in clock")
             checked: Config.options?.time?.secondPrecision ?? false
             onCheckedChanged: Config.setNestedValue("time.secondPrecision", checked)
@@ -216,6 +240,22 @@ WSettingsPage {
             description: Translation.tr("Turn off compositor animations in game mode")
             checked: Config.options?.gameMode?.disableNiriAnimations ?? true
             onCheckedChanged: Config.setNestedValue("gameMode.disableNiriAnimations", checked)
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("Disable Discover overlay")
+            icon: "eye-off"
+            description: Translation.tr("Stop discover-overlay while game mode is active")
+            checked: Config.options?.gameMode?.disableDiscoverOverlay ?? true
+            onCheckedChanged: Config.setNestedValue("gameMode.disableDiscoverOverlay", checked)
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("Minimal mode")
+            icon: "auto"
+            description: Translation.tr("Make shell surfaces lighter while game mode is active")
+            checked: Config.options?.gameMode?.minimalMode ?? true
+            onCheckedChanged: Config.setNestedValue("gameMode.minimalMode", checked)
         }
 
         WSettingsSwitch {

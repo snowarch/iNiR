@@ -17,11 +17,20 @@ StyledImage {
     property string thumbnailSizeName: Images.thumbnailSizeNameForDimensions(sourceSize.width, sourceSize.height)
     property bool isVideo: Images.isValidVideoByName(sourcePath)
     property string thumbnailPath: {
-        if (sourcePath.length == 0) return "";
-        const resolvedUrlWithoutFileProtocol = FileUtils.trimFileProtocol(`${Qt.resolvedUrl(sourcePath)}`);
-        const encodedUrlWithoutFileProtocol = resolvedUrlWithoutFileProtocol.split("/").map(part => encodeURIComponent(part)).join("/");
-        const md5Hash = Qt.md5(`file://${encodedUrlWithoutFileProtocol}`);
-        return `${Directories.genericCache}/thumbnails/${thumbnailSizeName}/${md5Hash}.png`;
+        if (sourcePath.length === 0) return ""
+
+        let cleanPath = FileUtils.trimFileProtocol(String(sourcePath ?? ""))
+        if (!cleanPath.startsWith("/"))
+            cleanPath = Quickshell.env("PWD") + "/" + cleanPath
+
+        const encodedParts = cleanPath.split("/").map(part => {
+            return encodeURIComponent(part).replace(/[!'()*]/g, function(c) {
+                return '%' + c.charCodeAt(0).toString(16)
+            })
+        })
+
+        const md5Hash = Qt.md5("file://" + encodedParts.join("/"))
+        return `${Directories.genericCache}/thumbnails/${thumbnailSizeName}/${md5Hash}.png`
     }
     source: thumbnailPath
 

@@ -112,8 +112,7 @@ Item {
                 text: Translation.tr("More Bluetooth settings")
                 onClicked: {
                     GlobalStates.waffleActionCenterOpen = false
-                    const cmd = Config.options?.apps?.bluetooth ?? "blueman-manager"
-                    ShellExec.execCmd(cmd)
+                    AppLauncher.launch("bluetooth")
                 }
             }
             WBorderlessButton {

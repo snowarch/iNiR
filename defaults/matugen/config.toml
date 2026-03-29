@@ -1,9 +1,14 @@
 # Matugen configuration for iNiR
 #
 # Responsibility split:
-#   matugen  → shell colors (colors.json), GTK3/4 CSS, fuzzel, KDE source color, wallpaper path
-#   Python   → terminal colors (generate_colors_material.py → material_colors.scss)
+#   matugen  → GTK3/4 CSS, fuzzel, KDE source color, wallpaper path
+#   Python   → shell colors (colors.json via generate_colors_material.py)
+#              → terminal colors (material_colors.scss)
 #              → per-app configs (generate_terminal_configs.py via TERMINAL_REGISTRY)
+#
+# NOTE: colors.json is written exclusively by Python (generate_colors_material.py).
+#   matugen no longer writes colors.json to avoid a double-write race where
+#   matugen's output was always silently overwritten by the Python pass.
 #
 # Templates that exist but are NOT active in this config:
 #   terminals/  (kitty.conf, foot.ini, alacritty.toml, ghostty.conf)
@@ -15,11 +20,6 @@
 
 [config]
 version_check = false
-
-# Material You tokens for Quickshell (QML shell reads this)
-[templates.m3colors]
-input_path = '~/.config/matugen/templates/colors.json'
-output_path = '~/.local/state/quickshell/user/generated/colors.json'
 
 # GTK4/libadwaita theme (Nautilus, GNOME apps)
 [templates.gtk4]
