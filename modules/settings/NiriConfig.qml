@@ -136,7 +136,7 @@ ContentPage {
     property real previousScale: -1
     property string previousTransform: ""
     property bool confirmationPending: false
-    property int confirmCountdown: 15
+    property int confirmCountdown: 10
     property string pendingOutputName: ""
     property string pendingChangeType: ""
     property string pendingChangeValue: ""
@@ -324,7 +324,7 @@ ContentPage {
         pendingChangeValue = ""
         pendingPreviewKind = ""
         pendingActionLabel = ""
-        confirmCountdown = 15
+        confirmCountdown = 10
     }
 
     function clearApplyOutputState() {
@@ -450,7 +450,7 @@ ContentPage {
         pendingChangeValue = value
         pendingPreviewKind = changeType
         pendingActionLabel = Translation.tr("Previewing display change")
-        confirmCountdown = 15
+        confirmCountdown = 10
 
         startOutputApply(outputName, key, value, "preview", "", "")
     }
@@ -764,8 +764,29 @@ ContentPage {
         stderr: StdioCollector { id: applyOutputErrorCollector }
         onExited: (exitCode) => {
             const purpose = root.applyOutputPurpose
-            const text = (applyOutputErrorCollector.text || applyOutputCollector.text || "").trim()
-            if (exitCode === 0) {
+            const stdout = (applyOutputCollector.text || "").trim()
+            const stderr = (applyOutputErrorCollector.text || "").trim()
+
+            // Parse JSON results for detailed failure info
+            let jsonFailed = false
+            let failDetail = ""
+            try {
+                const parsed = JSON.parse(stdout)
+                if (parsed?.results) {
+                    const failed = parsed.results.filter(r => r.success === false)
+                    if (failed.length > 0) {
+                        jsonFailed = true
+                        failDetail = failed.map(r => `${r.key}: ${r.output || "failed"}`).join("; ")
+                    }
+                }
+            } catch (_) {
+                // Not JSON — fall through to text-based handling
+            }
+
+            const effectiveFailed = exitCode !== 0 || jsonFailed
+            const text = failDetail || stderr || stdout
+
+            if (!effectiveFailed) {
                 if (purpose === "preview") {
                     root.lastActionError = ""
                     root.confirmationPending = true
@@ -864,9 +885,31 @@ ContentPage {
     // DISPLAY CONFIRMATION OVERLAY
     // =====================
     Item {
+        id: confirmBanner
         visible: root.confirmationPending
         Layout.fillWidth: true
         implicitHeight: confirmCol.implicitHeight + 24
+
+        // Auto-scroll to this banner when confirmation becomes pending
+        onVisibleChanged: {
+            if (visible) {
+                // mapToItem(null, ...) gives the y in content coordinates via the layout
+                // Use a small delay so the layout has time to position the item
+                scrollToBannerTimer.restart()
+            }
+        }
+
+        Timer {
+            id: scrollToBannerTimer
+            interval: 50
+            onTriggered: {
+                // Scroll the flickable so the banner is near the top with some padding
+                const bannerY = confirmBanner.mapToItem(root.contentItem, 0, 0).y
+                if (bannerY < root.contentY || bannerY > root.contentY + root.height - confirmBanner.height) {
+                    root.contentY = Math.max(0, bannerY - 16)
+                }
+            }
+        }
 
         Rectangle {
             anchors.fill: parent
@@ -932,7 +975,7 @@ ContentPage {
                     color: Appearance.colors.colLayer1
 
                     Rectangle {
-                        width: parent.width * (root.confirmCountdown / 15.0)
+                        width: parent.width * (root.confirmCountdown / 10.0)
                         height: parent.height
                         radius: 2
                         color: Appearance.colors.colPrimary
