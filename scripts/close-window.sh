@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Close window — tries QS first (for confirm dialog), falls back to niri.
 #
 # Race condition protection:

@@ -23,5 +23,3 @@ jobs:
           scandir: scripts/
           severity: error
           ignore_paths: scripts/colors/modules
-        env:
-          SHELLCHECK_OPTS: -e SC1091 -e SC2034

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 for cmd in "$@"; do
     if command -v "$cmd" >/dev/null 2>&1; then
