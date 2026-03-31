@@ -687,6 +687,7 @@ QT_STYLE_OVERRIDE=Darkly
 GTK_THEME=adw-gtk3-dark
 ELECTRON_OZONE_PLATFORM_HINT=auto
 ILLOGICAL_IMPULSE_VIRTUAL_ENV=\$HOME/.local/state/quickshell/.venv
+INIR_VENV=\$HOME/.local/state/quickshell/.venv
 EOF
 
   log_success "Environment configuration set"

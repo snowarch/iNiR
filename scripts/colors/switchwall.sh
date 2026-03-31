@@ -645,7 +645,9 @@ switch() {
     fi
 
     # Generate colors and render templates in one unified Python pass
-    if [[ -n "${ILLOGICAL_IMPULSE_VIRTUAL_ENV:-}" ]]; then
+    if [[ -n "${INIR_VENV:-}" ]]; then
+        _ii_venv="$(eval echo "$INIR_VENV")"
+    elif [[ -n "${ILLOGICAL_IMPULSE_VIRTUAL_ENV:-}" ]]; then
         _ii_venv="$(eval echo "$ILLOGICAL_IMPULSE_VIRTUAL_ENV")"
     else
         _ii_venv="$HOME/.local/state/quickshell/.venv"
@@ -749,7 +751,9 @@ main() {
     detect_scheme_type_from_image() {
         local img="$1"
         local _det_venv
-        if [[ -n "${ILLOGICAL_IMPULSE_VIRTUAL_ENV:-}" ]]; then
+        if [[ -n "${INIR_VENV:-}" ]]; then
+            _det_venv="$(eval echo "$INIR_VENV")"
+        elif [[ -n "${ILLOGICAL_IMPULSE_VIRTUAL_ENV:-}" ]]; then
             _det_venv="$(eval echo "$ILLOGICAL_IMPULSE_VIRTUAL_ENV")"
         else
             _det_venv="$HOME/.local/state/quickshell/.venv"
