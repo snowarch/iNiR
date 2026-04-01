@@ -139,7 +139,7 @@ read_colors() {
 
 generate_color_ini() {
   local color_file="$1"
-  
+
   # COLORS array is now populated by configure_spicetify before this is called
 
   cat > "$color_file" << EOF
@@ -207,7 +207,7 @@ regenerate_user_css_bridge() {
   --spice-rgb-shadow:          $(hex_to_rgb "${COLORS[shadow]}");
   --spice-rgb-misc:            $(hex_to_rgb "${COLORS[outline]}");
 }
-/* === end iNiR CSS variable bridge ==="
+/* === end iNiR CSS variable bridge === */"
 
   # ── Replace only the bridge block in user.css (keep everything else) ──────
   # Use python3 for reliable multi-line regex replace without temp file races.
@@ -217,10 +217,10 @@ regenerate_user_css_bridge() {
   python3 - "$css_file" "$bridge_block" <<'PYEOF'
 import sys, re, pathlib
 css_path = pathlib.Path(sys.argv[1])
-new_block = sys.argv[2] + ' */'
+new_block = sys.argv[2]
 content = css_path.read_text()
 pattern = re.compile(
-    r'/\* === iNiR CSS variable bridge.*?end iNiR CSS variable bridge === \*/',
+    r'/\* === iNiR CSS variable bridge - auto-generated, do not edit === \*/.*?/\* === end iNiR CSS variable bridge === \*/\n?',
     re.DOTALL
 )
 # Strip ALL existing bridge blocks (including duplicates from prior bad runs)
@@ -233,6 +233,60 @@ css_path.write_text(content)
 PYEOF
 
   log "CSS variable bridge regenerated from current palette"
+}
+
+regenerate_playback_controls_fix() {
+  local css_file="$1"
+
+  [[ -f "$css_file" ]] || return 0
+
+  local playback_rgb
+  playback_rgb="$(hex_to_rgb "${COLORS[on_surface_variant]}")"
+
+  local playback_block
+  playback_block="/* === iNiR playback controls fix - auto-generated === */
+.main-playbackBar__slider,
+.playback-bar__progress-time-elapsed,
+.main-playbackBar__slider::before {
+  --spice-rgb-selected-row: $playback_rgb;
+}
+
+.control-button,
+.main-connectToDevice-button {
+  color: var(--spice-subtext) !important;
+}
+
+.control-button:hover,
+.main-connectToDevice-button:hover {
+  color: var(--spice-text) !important;
+}
+
+.progress-bar {
+  --spice-rgb-selected-row: $playback_rgb;
+}
+
+.progress-bar__bg {
+  background-color: rgba($playback_rgb, 0.3) !important;
+}
+/* === end iNiR playback controls fix === */"
+
+  python3 - "$css_file" "$playback_block" <<'PYEOF'
+import sys, re, pathlib
+css_path = pathlib.Path(sys.argv[1])
+new_block = sys.argv[2]
+content = css_path.read_text()
+pattern = re.compile(
+    r'/\* === iNiR playback controls fix - auto-generated === \*/.*?(?=(/\* === end iNiR playback controls fix === \*/|/\* === iNiR playback controls fix - auto-generated === \*/|\Z))',
+    re.DOTALL
+)
+content = pattern.sub('', content)
+content = re.sub(r'/\* === end iNiR playback controls fix === \*/\n?', '', content)
+content = content.lstrip('\n')
+content = new_block + '\n' + content
+css_path.write_text(content)
+PYEOF
+
+  log "Playback controls fix regenerated from current palette"
 }
 
 patch_existing_user_css() {
@@ -266,10 +320,10 @@ configure_spicetify() {
   local user_css="$theme_dir/user.css"
 
   mkdir -p "$theme_dir" 2>/dev/null || return 1
-  
+
   # Read the palette first so COLORS array is populated for both steps
   read_colors || return 1
-  
+
   download_sleek_css "$user_css"
   patch_existing_user_css "$user_css"
   # Write user.css bridge FIRST so that when color.ini lands (last) and
@@ -277,6 +331,7 @@ configure_spicetify() {
   # fully updated. Reversed order caused watch to reload Spotify from
   # color.ini before user.css was written — leaving bridge vars stale.
   regenerate_user_css_bridge "$user_css"
+  regenerate_playback_controls_fix "$user_css"
   generate_color_ini "$color_file" || return 1
 
   spicetify config inject_css 1 replace_colors 1 >> "$LOG_FILE" 2>&1 || true
