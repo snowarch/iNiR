@@ -143,9 +143,9 @@ return {
     config = function(_, opts)
       local uv = vim.uv or vim.loop
       local watched_files = {
-        [palette_file] = true,
-        [terminal_file] = true,
-        [legacy_colors_file] = true,
+        ["palette.json"] = true,
+        ["terminal.json"] = true,
+        ["colors.json"] = true,
       }
 
       local function apply_inir_theme(next_opts)
@@ -187,17 +187,18 @@ return {
         end, 120)
       end
 
-      for path in pairs(watched_files) do
-        local fs_event = uv.new_fs_event()
-        if fs_event then
-          fs_event:start(path, {}, function(err)
-            if err then
-              return
-            end
-            schedule_reload()
-          end)
-          watchers[#watchers + 1] = fs_event
-        end
+      local fs_event = uv.new_fs_event()
+      if fs_event then
+        fs_event:start(generated_dir, {}, function(err, fname)
+          if err then
+            return
+          end
+          if fname and not watched_files[fname] then
+            return
+          end
+          schedule_reload()
+        end)
+        watchers[#watchers + 1] = fs_event
       end
 
       if #watchers == 0 then
@@ -216,6 +217,11 @@ return {
   },
 }
 EOF
+  if [[ -f "$NEOVIM_THEME_FILE" ]] && cmp -s "$tmp_file" "$NEOVIM_THEME_FILE"; then
+    rm -f "$tmp_file"
+    return 0
+  fi
+
   mv "$tmp_file" "$NEOVIM_THEME_FILE"
 }
 
