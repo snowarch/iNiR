@@ -13,3 +13,4 @@ click>=8.0.0
 pygobject>=3.50.0
 pycairo>=1.26.0
 kde-material-you-colors>=2.0.0
+websockets>=13.0

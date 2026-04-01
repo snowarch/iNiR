@@ -65,35 +65,35 @@ generate_css_from_colors_json() {
 	--adw-success-rgb: $(read_token success) !important;
 	--adw-warning-bg-rgb: $(read_token tertiary) !important;
 	--adw-warning-fg-rgb: $(read_token on_tertiary) !important;
-	--adw-warning-fg-a: 1 !important;
+	--adw-warning-fg-a: 0.8 !important;
 	--adw-warning-rgb: $(read_token tertiary) !important;
 	--adw-error-bg-rgb: $(read_token error) !important;
 	--adw-error-fg-rgb: $(read_token on_error) !important;
 	--adw-error-rgb: $(read_token error) !important;
-	--adw-window-bg-rgb: $(read_token surface) !important;
+	--adw-window-bg-rgb: $(read_token surface_container_low) !important;
 	--adw-window-fg-rgb: $(read_token on_surface) !important;
-	--adw-view-bg-rgb: $(read_token surface_container_lowest) !important;
+	--adw-view-bg-rgb: $(read_token surface) !important;
 	--adw-view-fg-rgb: $(read_token on_surface) !important;
 	--adw-headerbar-bg-rgb: $(read_token surface_container) !important;
 	--adw-headerbar-fg-rgb: $(read_token on_surface) !important;
 	--adw-headerbar-border-rgb: $(read_token outline_variant) !important;
-	--adw-headerbar-backdrop-rgb: $(read_token surface) !important;
+	--adw-headerbar-backdrop-rgb: $(read_token surface_container_low) !important;
 	--adw-headerbar-shade-rgb: $(read_token shadow) !important;
 	--adw-headerbar-shade-a: 0.36 !important;
 	--adw-headerbar-darker-shade-rgb: $(read_token shadow) !important;
 	--adw-headerbar-darker-shade-a: 0.9 !important;
-	--adw-sidebar-bg-rgb: $(read_token surface_container_low) !important;
+	--adw-sidebar-bg-rgb: $(read_token surface_container) !important;
 	--adw-sidebar-fg-rgb: $(read_token on_surface) !important;
-	--adw-sidebar-backdrop-rgb: $(read_token surface_container_lowest) !important;
+	--adw-sidebar-backdrop-rgb: $(read_token surface_container_low) !important;
 	--adw-sidebar-shade-rgb: $(read_token shadow) !important;
-	--adw-sidebar-shade-a: 0.25 !important;
-	--adw-secondary-sidebar-bg-rgb: $(read_token surface_container_lowest) !important;
+	--adw-sidebar-shade-a: 0.36 !important;
+	--adw-secondary-sidebar-bg-rgb: $(read_token surface_container_low) !important;
 	--adw-secondary-sidebar-fg-rgb: $(read_token on_surface_variant) !important;
-	--adw-secondary-sidebar-backdrop-rgb: $(read_token surface_container_lowest) !important;
+	--adw-secondary-sidebar-backdrop-rgb: $(read_token surface) !important;
 	--adw-secondary-sidebar-shade-rgb: $(read_token shadow) !important;
-	--adw-secondary-sidebar-shade-a: 0.25 !important;
-	--adw-card-bg-rgb: $(read_token surface_container_high) !important;
-	--adw-card-bg-a: 1 !important;
+	--adw-secondary-sidebar-shade-a: 0.36 !important;
+	--adw-card-bg-rgb: 255, 255, 255 !important;
+	--adw-card-bg-a: 0.08 !important;
 	--adw-card-fg-rgb: $(read_token on_surface) !important;
 	--adw-card-shade-rgb: $(read_token shadow) !important;
 	--adw-card-shade-a: 0.36 !important;
@@ -103,10 +103,10 @@ generate_css_from_colors_json() {
 	--adw-popover-fg-rgb: $(read_token on_surface) !important;
 	--adw-popover-shade-rgb: $(read_token shadow) !important;
 	--adw-popover-shade-a: 0.25 !important;
-	--adw-thumbnail-bg-rgb: $(read_token surface_container_highest) !important;
+	--adw-thumbnail-bg-rgb: $(read_token surface_container_high) !important;
 	--adw-thumbnail-fg-rgb: $(read_token on_surface) !important;
 	--adw-shade-rgb: $(read_token shadow) !important;
-	--adw-shade-a: 0.25 !important;
+	--adw-shade-a: 0.36 !important;
 	--adw-user-offline-rgb: $(read_token outline) !important;
 	--adw-user-online-rgb: $(read_token primary) !important;
 	--adw-user-ingame-rgb: $(read_token success) !important;
@@ -166,11 +166,22 @@ deploy_css() {
   cp "$css_source" "$XDG_CONFIG_HOME/AdwSteamGtk/custom.css"
 
   # Every Steam installation that has the skin
-  local dir
+  local dir lcss
   for dir in "${STEAM_DIRS[@]}"; do
     [[ -d "$dir/steamui/adwaita" ]] || continue
     mkdir -p "$dir/steamui/adwaita/colorthemes/$THEME_NAME"
     cp "$css_source" "$dir/steamui/adwaita/colorthemes/$THEME_NAME/$THEME_NAME.css"
+
+    # Also copy to custom/custom.css for immediate CSS override
+    mkdir -p "$dir/steamui/adwaita/custom"
+    cp "$css_source" "$dir/steamui/adwaita/custom/custom.css"
+
+    # Ensure libraryroot.custom.css imports our colortheme
+    lcss="$dir/steamui/libraryroot.custom.css"
+    if [[ -f "$lcss" ]] && ! grep -q "colorthemes/$THEME_NAME/" "$lcss"; then
+      sed -i "s|colorthemes/[^/]*/[^\"]*\.css|colorthemes/$THEME_NAME/$THEME_NAME.css|" "$lcss"
+    fi
+
     deployed=$((deployed + 1))
   done
 
@@ -182,8 +193,20 @@ reload_steam() {
     log_module "Steam not running — CSS will apply on next launch"
     return 0
   fi
+
+  # Inject CSS via Chrome DevTools Protocol (instant, no flicker).
+  # Steam runs steamwebhelper with --remote-debugging-port=8080 by default.
+  local inject_script="$SCRIPT_DIR/steam-css-inject.py"
+  local py
+  py="$(venv_python)"
+  if [[ -f "$inject_script" ]] && "$py" "$inject_script" "$1" 2>/dev/null; then
+    log_module "injected CSS via CDP (live update)"
+    return 0
+  fi
+
+  # Fallback: kill steamwebhelper — Steam auto-restarts it and reloads CSS from disk.
   pkill -x steamwebhelper 2>/dev/null || true
-  log_module "restarted steamwebhelper for live CSS reload"
+  log_module "CDP unavailable — restarted steamwebhelper"
 }
 
 # --- Main ---
@@ -218,7 +241,7 @@ main() {
   fi
 
   deploy_css "$css_file"
-  reload_steam
+  reload_steam "$css_file"
   log_module "done"
 }
 
