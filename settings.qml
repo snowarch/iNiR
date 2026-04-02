@@ -524,7 +524,7 @@ ApplicationWindow {
             section: Translation.tr("Auto Theme"),
             label: Translation.tr("Auto Theme"),
             description: Translation.tr("Automatic colors from wallpaper"),
-            keywords: ["auto", "wallpaper", "dynamic", "colors", "matugen", "generate"]
+            keywords: ["auto", "wallpaper", "dynamic", "colors", "material you", "generate"]
         },
         {
             pageIndex: 4, pageName: pages[4].name,
@@ -1002,7 +1002,7 @@ ApplicationWindow {
             section: Translation.tr("Color generation"),
             label: Translation.tr("Color generation"),
             description: Translation.tr("Wallpaper-based color theming and palette type"),
-            keywords: ["color", "generation", "theming", "wallpaper", "matugen", "palette"]
+            keywords: ["color", "generation", "theming", "wallpaper", "material you", "palette"]
         },
         {
             pageIndex: 8, pageName: pages[8].name,
@@ -1682,29 +1682,39 @@ ApplicationWindow {
                         anchors.centerIn: parent
                         width: 32
                         height: 32
-                        source: Directories.userAvatarSourcePrimary
+                        source: settingsAvatarResolver.resolvedSource
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
                         cache: true
                         smooth: true
                         mipmap: true
-                        visible: false
-                        onStatusChanged: {
-                            if (status === Image.Error) {
-                                const nextSource = Directories.nextAvatarSource(source)
-                                if (nextSource.length > 0 && nextSource !== source)
-                                    source = nextSource
-                            }
+                        sourceSize.width: 64
+                        sourceSize.height: 64
+                        visible: status === Image.Ready
+                        layer.enabled: visible
+                        layer.effect: OpacityMask {
+                            maskSource: settingsAvatarMask
                         }
                     }
 
-                    OpacityMask {
-                        anchors.centerIn: parent
-                        width: 32
-                        height: 32
-                        source: settingsAvatarImage
-                        maskSource: settingsAvatarMask
-                        visible: settingsAvatarImage.status === Image.Ready
+                    // Reactive avatar resolver — retries fallback paths without breaking bindings
+                    QtObject {
+                        id: settingsAvatarResolver
+                        property int avatarIndex: 0
+                        readonly property string resolvedSource: Directories.avatarSourceAt(avatarIndex)
+
+                        // Reset to primary whenever Directories re-resolves (e.g. username changes)
+                        readonly property string primaryWatch: Directories.userAvatarSourcePrimary
+                        onPrimaryWatchChanged: avatarIndex = 0
+
+                        readonly property int imgStatus: settingsAvatarImage.status
+                        onImgStatusChanged: {
+                            if (imgStatus === Image.Error) {
+                                const nextIdx = avatarIndex + 1
+                                if (nextIdx < Directories.userAvatarPaths.length)
+                                    avatarIndex = nextIdx
+                            }
+                        }
                     }
 
                     MaterialSymbol {

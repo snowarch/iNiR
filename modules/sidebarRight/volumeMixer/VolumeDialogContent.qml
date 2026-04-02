@@ -148,11 +148,16 @@ ColumnLayout {
             required property var modelData
             node: modelData
         }
-        PagePlaceholder {
-            icon: "widgets"
-            title: Translation.tr("No applications")
+        MaterialPlaceholderMessage {
+            anchors.centerIn: parent
+            maximumWidth: 320
             shown: !root.hasApps
-            shape: MaterialShape.Shape.Cookie7Sided
+            icon: "widgets"
+            text: Translation.tr("No applications")
+            explanation: root.isSink
+                ? Translation.tr("Apps playing audio will appear here")
+                : Translation.tr("Apps using the microphone will appear here")
+            shape: MaterialShape.Shape.Clover4Leaf
         }
     }
 
@@ -170,5 +175,11 @@ ColumnLayout {
         clip: true
         spacing: 4
         animateAppearance: false
+
+        highlightRangeMode: ListView.StrictlyEnforceRange
+        preferredHighlightBegin: height * 0.5 - 34
+        preferredHighlightEnd: height * 0.5 + 34
+        highlightMoveDuration: Appearance.animationsEnabled ? Appearance.calcEffectiveDuration(180) : 0
+        highlightFollowsCurrentItem: true
     }
 }

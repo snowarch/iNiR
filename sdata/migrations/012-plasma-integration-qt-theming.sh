@@ -3,7 +3,7 @@
 # Root cause: qt6ct platform theme doesn't properly pass kdeglobals colors to Darkly style.
 # plasma-integration provides the kde QPA plugin that reads kdeglobals directly.
 
-MIGRATION_ID="011-plasma-integration-qt-theming"
+MIGRATION_ID="012-plasma-integration-qt-theming"
 MIGRATION_TITLE="Qt theming: plasma-integration"
 MIGRATION_DESCRIPTION="Installs plasma-integration and switches QT_QPA_PLATFORMTHEME from qt6ct to kde.
   This fixes black/unreadable text in Dolphin and other Qt apps by enabling direct
@@ -44,21 +44,20 @@ migration_apply() {
     return 0
   fi
 
-  # Install plasma-integration if on Arch and not already installed
+  # Install plasma-integration if not already installed
   if command -v pacman &>/dev/null; then
     if ! pacman -Q plasma-integration &>/dev/null 2>&1; then
       echo "Installing plasma-integration..."
-      sudo pacman -S --needed --noconfirm plasma-integration 2>/dev/null || {
+      pkg_sudo pacman -S --needed --noconfirm plasma-integration 2>/dev/null || {
         echo -e "${STY_YELLOW}Could not auto-install plasma-integration.${STY_RST}"
         echo -e "${STY_YELLOW}Install manually: sudo pacman -S plasma-integration${STY_RST}"
-        # Don't patch niri config if package install failed
         return 1
       }
     fi
   elif command -v apt &>/dev/null; then
     if ! dpkg -l plasma-integration 2>/dev/null | grep -q '^ii'; then
       echo "Installing plasma-integration..."
-      sudo apt install -y plasma-integration 2>/dev/null || {
+      pkg_sudo apt install -y plasma-integration 2>/dev/null || {
         echo -e "${STY_YELLOW}Could not auto-install plasma-integration.${STY_RST}"
         echo -e "${STY_YELLOW}Install manually: sudo apt install plasma-integration${STY_RST}"
         return 1
@@ -67,7 +66,7 @@ migration_apply() {
   elif command -v dnf &>/dev/null; then
     if ! rpm -q plasma-integration &>/dev/null 2>&1; then
       echo "Installing plasma-integration..."
-      sudo dnf install -y plasma-integration 2>/dev/null || {
+      pkg_sudo dnf install -y plasma-integration 2>/dev/null || {
         echo -e "${STY_YELLOW}Could not auto-install plasma-integration.${STY_RST}"
         echo -e "${STY_YELLOW}Install manually: sudo dnf install plasma-integration${STY_RST}"
         return 1

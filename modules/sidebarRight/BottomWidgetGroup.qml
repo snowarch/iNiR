@@ -330,10 +330,6 @@ Rectangle {
         StackLayout {
             id: tabStack
             Layout.fillWidth: true
-            // Use fixed/max height to prevent jumps, relying on internal scrolling if needed
-            // height: Math.min(500, Math.max(300, ...tabStack.children.map(child => child.tabLoader?.item?.implicitHeight || child.tabLoader?.implicitHeight || 300)))
-            // Restore implicit height behavior as requested ("como lo era originalmente")
-            // Added min 300 to prevent collapse during dynamic tab switching, ONLY if there are tabs
             height: (tabs.length > 0) ? Math.max(300, ...tabStack.children.map(child => child.tabLoader?.item?.implicitHeight || child.tabLoader?.implicitHeight || 0)) : 0
             Layout.alignment: Qt.AlignVCenter
             property int realIndex: root.selectedTab
@@ -435,6 +431,9 @@ Rectangle {
     Component {
         id: calculatorWidget
         CalculatorWidget {
+            compactMode: false
+            centerContentVertically: false
+            expandedInPanel: root.currentTabType === "calculator"
             anchors.fill: parent
             anchors.margins: 5
         }

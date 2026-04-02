@@ -10,6 +10,8 @@ import Quickshell.Io
 
 Singleton {
     id: root
+    // Shell entry animation gate — starts false, set true after delay so panels slide in
+    property bool shellEntryReady: false
     property bool barOpen: true
     property bool crosshairOpen: false
     property bool sidebarLeftOpen: false

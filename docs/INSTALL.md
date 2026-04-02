@@ -47,7 +47,7 @@ The bare minimum to not crash immediately:
 | `cliphist` | Clipboard history. |
 | `pipewire` + `wireplumber` | Audio. |
 | `grim` + `slurp` | Screenshots. |
-| `matugen` | Material You colors from wallpaper. |
+| `materialyoucolor` | Material You colors from wallpaper (Python, installed via venv). |
 | `plasma-integration` | KDE platform theme plugin (reads kdeglobals for Qt app colors). |
 | `darkly-bin` (AUR) | Darkly Qt style (Material You widget rendering). |
 
@@ -77,7 +77,7 @@ cp -r dots/.config/* ~/.config/
 
 This gives you:
 - Niri config wired to the `inir` launcher
-- Matugen templates for theming
+- Theming templates for Material You colors
 - GTK settings
 - Fuzzel config
 

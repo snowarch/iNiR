@@ -22,8 +22,8 @@ ContentPage {
         ],
         "waffle": [
             "wBar", "wBackground", "wBackdrop", "wStartMenu", "wActionCenter", "wNotificationCenter", "wNotificationPopup", "wOnScreenDisplay", "wWidgets", "wTaskView", "wLock", "wPolkit", "wSessionScreen",
-            "iiCheatsheet", "iiControlPanel", "iiLock", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit",
-            "iiRegionSelector", "iiScreenCorners", "iiSessionScreen", "iiTilingOverlay", "iiWallpaperSelector", "iiCoverflowSelector", "iiClipboard"
+            "iiCheatsheet", "iiControlPanel", "iiOnScreenKeyboard", "iiOverlay", "iiOverview",
+            "iiRegionSelector", "iiScreenCorners", "iiTilingOverlay", "iiWallpaperSelector", "iiCoverflowSelector", "iiClipboard"
         ]
     })
 
@@ -41,6 +41,27 @@ ContentPage {
             panels.splice(idx, 1)
         }
         
+        Config.setNestedValue("enabledPanels", panels)
+    }
+
+    function isIiBarEnabled(): bool {
+        const panels = Config.options?.enabledPanels ?? []
+        return panels.includes("iiBar") || panels.includes("iiVerticalBar")
+    }
+
+    function setIiBarEnabled(enabled: bool) {
+        let panels = [...(Config.options?.enabledPanels ?? [])]
+
+        const hasBar = panels.includes("iiBar")
+        const hasVerticalBar = panels.includes("iiVerticalBar")
+
+        if (enabled) {
+            if (!hasBar) panels.push("iiBar")
+            if (!hasVerticalBar) panels.push("iiVerticalBar")
+        } else {
+            panels = panels.filter(panel => panel !== "iiBar" && panel !== "iiVerticalBar")
+        }
+
         Config.setNestedValue("enabledPanels", panels)
     }
 
@@ -403,17 +424,9 @@ ContentPage {
             SettingsSwitch {
                 buttonIcon: "toolbar"
                 text: Translation.tr("Bar")
-                checked: modulesPage.isPanelEnabled("iiBar")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiBar", checked)
-                StyledToolTip { text: Translation.tr("Horizontal bar with clock, workspaces, system tray and utilities") }
-            }
-
-            SettingsSwitch {
-                buttonIcon: "view_column"
-                text: Translation.tr("Vertical Bar")
-                checked: modulesPage.isPanelEnabled("iiVerticalBar")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiVerticalBar", checked)
-                StyledToolTip { text: Translation.tr("Vertical bar layout (alternative to horizontal bar)") }
+                checked: modulesPage.isIiBarEnabled()
+                onCheckedChanged: modulesPage.setIiBarEnabled(checked)
+                StyledToolTip { text: Translation.tr("Main bar module. Orientation (horizontal/vertical) is configured in Bar settings.") }
             }
 
             SettingsSwitch {
@@ -696,7 +709,7 @@ ContentPage {
         SettingsGroup {
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("Modules shared with Material ii style")
+                text: Translation.tr("Supporting modules used alongside Waffle")
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 wrapMode: Text.WordWrap
@@ -729,24 +742,24 @@ ContentPage {
             SettingsSwitch {
                 buttonIcon: "lock"
                 text: Translation.tr("Lock Screen")
-                checked: modulesPage.isPanelEnabled("iiLock")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiLock", checked)
+                checked: modulesPage.isPanelEnabled("wLock")
+                onCheckedChanged: modulesPage.setPanelEnabled("wLock", checked)
                 StyledToolTip { text: Translation.tr("Custom lock screen with clock and password input") }
             }
 
             SettingsSwitch {
                 buttonIcon: "power_settings_new"
                 text: Translation.tr("Session Screen")
-                checked: modulesPage.isPanelEnabled("iiSessionScreen")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiSessionScreen", checked)
+                checked: modulesPage.isPanelEnabled("wSessionScreen")
+                onCheckedChanged: modulesPage.setPanelEnabled("wSessionScreen", checked)
                 StyledToolTip { text: Translation.tr("Power menu: lock, logout, suspend, reboot, shutdown") }
             }
 
             SettingsSwitch {
                 buttonIcon: "admin_panel_settings"
                 text: Translation.tr("Polkit Agent")
-                checked: modulesPage.isPanelEnabled("iiPolkit")
-                onCheckedChanged: modulesPage.setPanelEnabled("iiPolkit", checked)
+                checked: modulesPage.isPanelEnabled("wPolkit")
+                onCheckedChanged: modulesPage.setPanelEnabled("wPolkit", checked)
                 StyledToolTip { text: Translation.tr("Password prompt for administrative actions") }
             }
 

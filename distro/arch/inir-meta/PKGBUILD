@@ -1,7 +1,7 @@
 # Maintainer: snowarch
 
 pkgname=inir-meta
-pkgver=2.15.0
+pkgver=2.17.0
 pkgrel=1
 pkgdesc='Full iNiR desktop experience meta-package'
 arch=(any)

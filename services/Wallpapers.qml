@@ -800,7 +800,8 @@ Singleton {
         property string directory
         property string _size: ""
         environment: ({
-            "ILLOGICAL_IMPULSE_VIRTUAL_ENV": Quickshell.env("HOME") + "/.local/state/quickshell/.venv"
+            "INIR_VENV": Quickshell.env("INIR_VENV") || Quickshell.env("HOME") + "/.local/state/quickshell/.venv",
+            "ILLOGICAL_IMPULSE_VIRTUAL_ENV": Quickshell.env("INIR_VENV") || Quickshell.env("HOME") + "/.local/state/quickshell/.venv"
         })
         stdout: SplitParser {
             onRead: data => {

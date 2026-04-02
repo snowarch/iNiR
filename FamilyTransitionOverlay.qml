@@ -41,6 +41,22 @@ Scope {
     property real _bgScale: 1.05
     property real _blurAmount: 0
 
+    // ── Color snapshot (frozen at transition start) ─────────────────────
+    // Prevents palette shifts from affecting the overlay mid-animation.
+    // Material transition colors
+    property color _snapPrimaryContainer: "transparent"
+    property color _snapPrimary: "transparent"
+    property color _snapOnPrimaryContainer: "transparent"
+    property color _snapBackground: "transparent"
+    property color _snapOnSurface: "transparent"
+    property bool _snapDarkmode: true
+    // Waffle transition colors
+    property color _snapWaffleBg0: "transparent"
+    property color _snapWaffleBg1: "transparent"
+    property color _snapWaffleFg: "transparent"
+    property color _snapWaffleSubfg: "transparent"
+    property color _snapWaffleAccent: "transparent"
+
     // ════════════════════════════════════════════════════════════════════
     // TRIGGER
     // ════════════════════════════════════════════════════════════════════
@@ -56,6 +72,20 @@ Scope {
             root._isWaffle = GlobalStates.familyTransitionDirection === "left"
             root._phase = false
             root._active = true
+
+            // Snapshot colors at transition start so palette changes
+            // during animation don't cause color flicker.
+            root._snapPrimaryContainer = Appearance.colors.colPrimaryContainer
+            root._snapPrimary = Appearance.colors.colPrimary
+            root._snapOnPrimaryContainer = Appearance.colors.colOnPrimaryContainer
+            root._snapBackground = Appearance.m3colors.m3background
+            root._snapOnSurface = Appearance.m3colors.m3onSurface
+            root._snapDarkmode = Appearance.m3colors.darkmode
+            root._snapWaffleBg0 = Looks.colors.bg0
+            root._snapWaffleBg1 = Looks.colors.bg1
+            root._snapWaffleFg = Looks.colors.fg
+            root._snapWaffleSubfg = Looks.colors.subfg
+            root._snapWaffleAccent = Looks.colors.accent
 
             // Reset to pre-entry state
             root._overlayOpacity = 0
@@ -184,7 +214,7 @@ Scope {
                 // Solid fallback behind the blur (visible while image loads)
                 Rectangle {
                     anchors.fill: parent
-                    color: root._isWaffle ? Looks.colors.bg0 : Appearance.m3colors.m3background
+                    color: root._isWaffle ? root._snapWaffleBg0 : root._snapBackground
                 }
 
                 // ── Blurred wallpaper with cinematic zoom ──
@@ -230,7 +260,7 @@ Scope {
                     // Tint overlay — Material gets a subtle colored scrim, Waffle stays clean
                     Rectangle {
                         anchors.fill: parent
-                        color: Appearance.m3colors.m3background
+                        color: root._snapBackground
                         opacity: root._isWaffle ? 0.08 : 0.28
                     }
                 }
@@ -286,9 +316,9 @@ Scope {
                 width: 260
                 height: 180
                 radius: Looks.radius.xLarge
-                color: ColorUtils.transparentize(Looks.colors.bg1, 0.15)
+                color: ColorUtils.transparentize(root._snapWaffleBg1, 0.15)
                 border.width: 1
-                border.color: ColorUtils.transparentize(Looks.colors.fg, 0.9)
+                border.color: ColorUtils.transparentize(root._snapWaffleFg, 0.9)
 
                 opacity: root._phase ? 0 : (waffleRoot.expanded ? 1 : 0)
                 scale: root._phase ? 0.92 : (waffleRoot.expanded ? 1 : 0.82)
@@ -320,7 +350,7 @@ Scope {
                     width: waffleRoot.showAccent && !root._phase ? 48 : 0
                     height: 2.5
                     radius: 1.25
-                    color: Looks.colors.accent
+                    color: root._snapWaffleAccent
                     opacity: root._phase ? 0 : 1
 
                     Behavior on width {
@@ -363,7 +393,7 @@ Scope {
                 layer.enabled: Appearance.effectsEnabled
                 layer.effect: MultiEffect {
                     colorization: 1.0
-                    colorizationColor: Looks.colors.fg
+                    colorizationColor: root._snapWaffleFg
                 }
             }
 
@@ -396,7 +426,7 @@ Scope {
                     font.pixelSize: 19
                     font.family: Looks.font.family.ui
                     font.weight: Font.DemiBold
-                    color: Looks.colors.fg
+                    color: root._snapWaffleFg
                 }
 
                 Text {
@@ -404,7 +434,7 @@ Scope {
                     text: "Windows 11 Style"
                     font.pixelSize: Looks.font.pixelSize.small
                     font.family: Looks.font.family.ui
-                    color: Looks.colors.subfg
+                    color: root._snapWaffleSubfg
                 }
             }
         }
@@ -441,7 +471,7 @@ Scope {
                 width: materialRoot.expanded && !root._phase ? materialRoot.maxRadius * 2 : 0
                 height: width
                 radius: width / 2
-                color: ColorUtils.transparentize(Appearance.colors.colPrimaryContainer, 0.45)
+                color: ColorUtils.transparentize(root._snapPrimaryContainer, 0.45)
                 opacity: root._phase ? 0 : 1
 
                 Behavior on width {
@@ -469,7 +499,7 @@ Scope {
                 radius: width / 2
                 color: "transparent"
                 border.width: 1.5
-                border.color: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.78)
+                border.color: ColorUtils.transparentize(root._snapPrimary, 0.78)
                 opacity: root._phase ? 0 : 1
 
                 Behavior on width {
@@ -488,11 +518,11 @@ Scope {
             Rectangle {
                 id: badge
                 anchors.centerIn: parent
-                anchors.verticalCenterOffset: -18
-                width: 60
-                height: 60
-                radius: 30
-                color: Appearance.colors.colPrimaryContainer
+                anchors.verticalCenterOffset: -26
+                width: 68
+                height: 68
+                radius: 34
+                color: root._snapPrimaryContainer
 
                 opacity: root._phase ? 0 : (materialRoot.showBadge ? 1 : 0)
                 scale: root._phase ? 0.85 : (materialRoot.showBadge ? 1 : 0.6)
@@ -516,29 +546,27 @@ Scope {
                     }
                 }
 
+                // Logo shown at native colors — SVG has dark bg + teal gradients,
+                // MultiEffect colorization makes it a muddy blob at this size
                 Image {
                     anchors.centerIn: parent
-                    width: 34
-                    height: 34
+                    width: 40
+                    height: 40
                     source: Qt.resolvedUrl("assets/icons/illogical-impulse.svg")
-                    sourceSize: Qt.size(34, 34)
-
-                    layer.enabled: Appearance.effectsEnabled
-                    layer.effect: MultiEffect {
-                        colorization: 1.0
-                        colorizationColor: {
-                            const c = Appearance.colors.colOnPrimaryContainer
-                            return ColorUtils.hslLightness(c) < 0.2 ? Appearance.colors.colPrimary : c
-                        }
-                    }
+                    sourceSize: Qt.size(40, 40)
                 }
             }
 
-            // ── Text group ──
-            Column {
+            // ── Text ──
+            Text {
                 anchors.centerIn: parent
-                anchors.verticalCenterOffset: 30
-                spacing: 3
+                anchors.verticalCenterOffset: 38
+                text: "Material"
+                font.pixelSize: Appearance.font.pixelSize.larger
+                font.family: Appearance.font.family.main
+                font.weight: Font.Normal
+                color: root._snapOnSurface
+
                 opacity: root._phase ? 0 : (materialRoot.showSubtext ? 1 : 0)
                 scale: root._phase ? 0.92 : (materialRoot.showSubtext ? 1 : 0.85)
 
@@ -559,38 +587,12 @@ Scope {
                     }
                 }
 
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: "Material ii"
-                    font.pixelSize: Appearance.font.pixelSize.title
-                    font.family: Appearance.font.family.title
-                    font.weight: Font.Medium
-                    color: Appearance.m3colors.m3onSurface
-
-                    layer.enabled: Appearance.effectsEnabled
-                    layer.effect: MultiEffect {
-                        shadowEnabled: true
-                        shadowColor: Appearance.m3colors.darkmode ? "#40000000" : "#40FFFFFF"
-                        shadowBlur: 0.6
-                        shadowVerticalOffset: 1
-                    }
-                }
-
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: "Material Design"
-                    font.pixelSize: Appearance.font.pixelSize.small
-                    font.family: Appearance.font.family.main
-                    color: Appearance.m3colors.m3onSurface
-                    opacity: 0.65
-
-                    layer.enabled: Appearance.effectsEnabled
-                    layer.effect: MultiEffect {
-                        shadowEnabled: true
-                        shadowColor: Appearance.m3colors.darkmode ? "#30000000" : "#30FFFFFF"
-                        shadowBlur: 0.4
-                        shadowVerticalOffset: 1
-                    }
+                layer.enabled: Appearance.effectsEnabled
+                layer.effect: MultiEffect {
+                    shadowEnabled: true
+                    shadowColor: root._snapDarkmode ? "#40000000" : "#40FFFFFF"
+                    shadowBlur: 0.6
+                    shadowVerticalOffset: 1
                 }
             }
         }

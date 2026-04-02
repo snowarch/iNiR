@@ -57,7 +57,7 @@
 Elegís un wallpaper y todo se adapta — el shell, apps GTK/Qt, terminales, Firefox, Discord, hasta la pantalla de login SDDM. Automático.
 
 - **5 estilos visuales** — Material (sólido), Cards, Aurora (blur de vidrio), iNiR (inspirado en TUI), Angel (neo-brutalismo)
-- **Colores dinámicos del wallpaper** vía matugen — se propagan a todo el sistema
+- **Colores dinámicos del wallpaper** vía Material You — se propagan a todo el sistema
 - **10 herramientas de terminal auto-tematizadas** — foot, kitty, alacritty, starship, fuzzel, pywalfox, btop, lazygit, yazi
 - **Tematización de apps** — GTK3/4, Qt (vía plasma-integration + darkly), Firefox (MaterialFox), Discord/Vesktop (System24)
 - **Presets de temas** — Gruvbox, Catppuccin, Rosé Pine, y más — o creá el tuyo

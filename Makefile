@@ -5,8 +5,7 @@ APPLICATIONS_DIR = $(SHAREDIR)/applications
 ICON_DIR = $(SHAREDIR)/icons/hicolor/scalable/apps
 SHELL_INSTALL_DIR = $(SHAREDIR)/quickshell/inir
 DOC_DIR = $(SHAREDIR)/doc/inir-shell
-USER_HOME := $(if $(SUDO_USER),$(shell getent passwd $(SUDO_USER) | cut -d: -f6),$(HOME))
-SYSTEMD_USER_DIR ?= $(USER_HOME)/.config/systemd/user
+SYSTEMD_USER_DIR ?= $(PREFIX)/lib/systemd/user
 
 .PHONY: all build test-local install install-bin install-shell install-systemd install-icon install-desktop install-docs uninstall uninstall-bin uninstall-shell uninstall-systemd uninstall-icon uninstall-desktop uninstall-docs
 
@@ -47,7 +46,6 @@ install-systemd:
 	@mkdir -p $(SYSTEMD_USER_DIR)
 	@sed 's|^ExecStart=.*|ExecStart=$(BINDIR)/inir run --session|' assets/systemd/inir.service > $(SYSTEMD_USER_DIR)/inir.service
 	@chmod 644 $(SYSTEMD_USER_DIR)/inir.service
-	@systemctl --user daemon-reload 2>/dev/null || true
 
 install-icon:
 	@install -Dm644 assets/icons/desktop-symbolic.svg $(ICON_DIR)/inir.svg
@@ -72,7 +70,6 @@ uninstall-shell:
 
 uninstall-systemd:
 	@rm -f $(SYSTEMD_USER_DIR)/inir.service
-	@systemctl --user daemon-reload 2>/dev/null || true
 
 uninstall-icon:
 	@rm -f $(ICON_DIR)/inir.svg

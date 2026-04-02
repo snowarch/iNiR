@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Distribution tests
+        run: make test-local
+
+      - name: Shellcheck scripts
+        uses: ludeeus/action-shellcheck@2.0.0
+        with:
+          scandir: scripts/
+          severity: error
+          ignore_paths: scripts/colors/modules
+
+      - name: Shellcheck setup and sdata
+        uses: ludeeus/action-shellcheck@2.0.0
+        with:
+          additional_files: setup
+          scandir: sdata/
+          severity: error

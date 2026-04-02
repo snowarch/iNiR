@@ -30,6 +30,7 @@ environment {
     // Darkly is a modern Qt style that follows kdeglobals color schemes.
     QT_STYLE_OVERRIDE "Darkly"
 
-    // Python venv used by iNiR scripts (matugen, AI features, translations).
+    // Python venv used by iNiR scripts (color generation, AI features, translations).
+    INIR_VENV "$HOME/.local/state/quickshell/.venv"
     ILLOGICAL_IMPULSE_VIRTUAL_ENV "$HOME/.local/state/quickshell/.venv"
 }

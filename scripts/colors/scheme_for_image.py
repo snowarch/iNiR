@@ -53,46 +53,45 @@ def pick_scheme(colorfulness, saturation, hue_spread):
       - hue_spread    (hue std-dev, 0-~90)
 
     Design goals:
+      - tonal-spot is the safe default — most images should land here
       - Near-grayscale images → monochrome (preserves intent)
       - Low-color, muted images → neutral (calm palette)
-      - Nature/landscape with moderate color → content (faithful)
-      - High-color, single-dominant hue → fidelity (faithful + vibrant)
-      - High-color, wide hue spread → expressive or rainbow
-      - Mid-range default → tonal-spot (safe, balanced)
+      - Focused moderate color → content (faithful to source)
+      - High saturation + focused hue → fidelity (vibrant but faithful)
+      - Expressive/rainbow only for genuinely extreme images
     """
     # Near-grayscale: very low saturation regardless of other metrics
     if saturation < 20:
         return "scheme-monochrome"
 
     # Low colorfulness: muted/desaturated images
-    if colorfulness < 25:
+    if colorfulness < 30:
         return "scheme-neutral"
 
-    # Low-to-moderate colorfulness
-    if colorfulness < 50:
-        # If the image has a focused hue (low spread), content works well
-        if hue_spread < 25:
+    # Low-to-moderate colorfulness — tonal-spot or content
+    if colorfulness < 55:
+        if hue_spread < 22 and saturation < 100:
             return "scheme-content"
         return "scheme-tonal-spot"
 
-    # Moderate colorfulness
-    if colorfulness < 80:
-        if hue_spread > 40:
-            # Wide color variety → expressive
-            return "scheme-expressive"
-        if saturation > 120:
-            # Saturated but focused → fidelity
+    # Moderate colorfulness — mostly tonal-spot, fidelity for saturated
+    if colorfulness < 90:
+        if saturation > 140 and hue_spread < 35:
+            # Very saturated with focused hue → fidelity
             return "scheme-fidelity"
+        if hue_spread < 30:
+            # Focused color, moderate saturation → content
+            return "scheme-content"
         return "scheme-tonal-spot"
 
-    # High colorfulness
-    if hue_spread > 45:
-        # Very colorful + wide hue spread → rainbow
+    # High colorfulness (90+) — only here do expressive/rainbow appear
+    if hue_spread > 55 and saturation > 150:
         return "scheme-rainbow"
-    if saturation > 140:
-        # Very saturated, focused palette → fidelity
+    if saturation > 160:
         return "scheme-fidelity"
-    return "scheme-expressive"
+    if hue_spread > 45:
+        return "scheme-expressive"
+    return "scheme-tonal-spot"
 
 
 def main():

@@ -64,10 +64,13 @@ MouseArea {
 
     function updateThumbnails() {
         const totalImageMargin = (Appearance.sizes.wallpaperSelectorItemMargins + Appearance.sizes.wallpaperSelectorItemPadding) * 2
-        const thumbnailSizeName = Images.thumbnailSizeNameForDimensions(
+        let thumbnailSizeName = Images.thumbnailSizeNameForDimensions(
             Math.round((grid.cellWidth - totalImageMargin) * root._dpr),
             Math.round((grid.cellHeight - totalImageMargin) * root._dpr)
         )
+        // Force at least x-large (512px) for crisp grid thumbnails
+        if (thumbnailSizeName === "normal" || thumbnailSizeName === "large")
+            thumbnailSizeName = "x-large"
         root._lastThumbnailSizeName = thumbnailSizeName
         Wallpapers.generateThumbnail(thumbnailSizeName)
     }

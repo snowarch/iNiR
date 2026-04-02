@@ -570,6 +570,95 @@ ContentPage {
     SettingsCardSection {
         visible: root.isIiActive
         expanded: false
+        icon: "tune"
+        title: Translation.tr("Control panel")
+
+        SettingsGroup {
+            SettingsSwitch {
+                buttonIcon: "density_medium"
+                text: Translation.tr("Compact cards")
+                checked: Config.options?.controlPanel?.compactMode ?? true
+                onCheckedChanged: Config.setNestedValue("controlPanel.compactMode", checked)
+                StyledToolTip {
+                    text: Translation.tr("Use tighter spacing and shorter cards in the quick settings panel")
+                }
+            }
+
+            SettingsSwitch {
+                buttonIcon: "wallpaper"
+                text: Translation.tr("Show wallpaper card")
+                checked: Config.options?.controlPanel?.showWallpaperSection ?? true
+                onCheckedChanged: Config.setNestedValue("controlPanel.showWallpaperSection", checked)
+                StyledToolTip {
+                    text: Translation.tr("Show the wallpaper preview card in the quick settings panel")
+                }
+            }
+
+            SettingsSwitch {
+                buttonIcon: "palette"
+                text: Translation.tr("Show wallpaper scheme buttons")
+                enabled: Config.options?.controlPanel?.showWallpaperSection ?? true
+                checked: Config.options?.controlPanel?.showWallpaperSchemeChips ?? false
+                onCheckedChanged: Config.setNestedValue("controlPanel.showWallpaperSchemeChips", checked)
+                StyledToolTip {
+                    text: Translation.tr("Show the scheme variant buttons under the wallpaper preview")
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Visible sections")
+
+                SettingsSwitch {
+                    buttonIcon: "music_note"
+                    text: Translation.tr("Media")
+                    checked: Config.options?.controlPanel?.showMediaSection ?? true
+                    onCheckedChanged: Config.setNestedValue("controlPanel.showMediaSection", checked)
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "partly_cloudy_day"
+                    text: Translation.tr("Weather")
+                    checked: Config.options?.controlPanel?.showWeatherSection ?? true
+                    onCheckedChanged: Config.setNestedValue("controlPanel.showWeatherSection", checked)
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "monitoring"
+                    text: Translation.tr("System status")
+                    checked: Config.options?.controlPanel?.showSystemSection ?? true
+                    onCheckedChanged: Config.setNestedValue("controlPanel.showSystemSection", checked)
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "tune"
+                    text: Translation.tr("Sliders")
+                    checked: Config.options?.controlPanel?.showSlidersSection ?? true
+                    onCheckedChanged: Config.setNestedValue("controlPanel.showSlidersSection", checked)
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "apps"
+                    text: Translation.tr("Quick actions")
+                    checked: Config.options?.controlPanel?.showQuickActionsSection ?? true
+                    onCheckedChanged: Config.setNestedValue("controlPanel.showQuickActionsSection", checked)
+                }
+            }
+
+            SettingsSwitch {
+                buttonIcon: "memory"
+                text: Translation.tr("Keep control panel loaded")
+                checked: Config.options?.controlPanel?.keepLoaded ?? false
+                onCheckedChanged: Config.setNestedValue("controlPanel.keepLoaded", checked)
+                StyledToolTip {
+                    text: Translation.tr("Keep the quick settings panel in memory to reduce opening delay")
+                }
+            }
+        }
+    }
+
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
         icon: "side_navigation"
         title: Translation.tr("Sidebars")
 

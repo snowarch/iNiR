@@ -434,11 +434,11 @@ Singleton {
         command: [
             "/usr/bin/bash", "-c",
             "vfile='" + Directories.shellConfig + "/version.json'; " +
-            "if [[ -f \"$vfile\" ]] && command -v jq &>/dev/null; then " +
+            "if [[ -s \"$vfile\" ]] && command -v jq &>/dev/null; then " +
             "  tmp=$(mktemp); " +
-            "  jq --arg p '" + root.repoPath + "' --arg m '" + root.installMode + "' --arg u '" + root.updateStrategy + "' '.repo_path = $p | .repoPath = $p | .install_mode = $m | .installMode = $m | .update_strategy = $u | .updateStrategy = $u' \"$vfile\" > \"$tmp\" && mv \"$tmp\" \"$vfile\"; " +
+            "  jq --arg p '" + root.repoPath + "' --arg m '" + root.installMode + "' --arg u '" + root.updateStrategy + "' '.repo_path = $p | .repoPath = $p | .install_mode = $m | .installMode = $m | .update_strategy = $u | .updateStrategy = $u' \"$vfile\" > \"$tmp\" && mv \"$tmp\" \"$vfile\" && " +
             "  echo 'Updated'; " +
-            "elif [[ -f \"$vfile\" ]] && command -v python3 &>/dev/null; then " +
+            "elif command -v python3 &>/dev/null; then " +
             "  tmp=$(mktemp); " +
             "  python3 -c 'import json,sys; path=sys.argv[1]; repo=sys.argv[2]; " +
             "\ntry: data=json.load(open(path,\"r\",encoding=\"utf-8\"))" +

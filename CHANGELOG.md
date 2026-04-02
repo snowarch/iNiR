@@ -5,6 +5,68 @@ All notable changes to iNiR will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.17.0] - 2026-04-01
+
+### Added
+- **Shell entry animation**: Panels slide in on startup with a 400ms delay, and hide during wallpaper coverflow transitions for a cleaner visual flow.
+- **Family transition overlay**: Snapshotted color preservation during panel family switches, native iNiR logo, and cleaner Material Design text styling.
+- **Steam theming rewrite**: Template-based pipeline with CDP (Chrome DevTools Protocol) live injection replaces the old Adwaita for Steam approach. Includes visual quality overhaul and real-time color updates.
+- **Python-only color pipeline**: Unified Material You color generation using pure Python, removing the external `matugen` binary dependency entirely.
+- **MaterialPlaceholderMessage widget**: New M3-style empty-state component replaces `PagePlaceholder` across 17 modules for consistent placeholder messaging.
+- **Version divergence warning**: `inir` CLI warns when installed code version doesn't match the running runtime, preventing stale-code confusion after updates.
+- **Config directory compatibility layer**: Transparent bridge for the legacy config path, easing future migration without breaking existing setups.
+- **v1→v2 manifest upgrade protection**: `setup update` detects and preserves user modifications to runtime files when upgrading manifest versions.
+- **Wallpaper selector rewrite**: Skew view rebuilt with blur backdrop overlay, refined exit animation, and shell panel hiding during selection.
+- **Alt-tab switcher improvements**: Responsive geometry adapting to window count, Vim-style keybindings (`hjkl`), and `Shape` drop shadows.
+- **Control panel enhancements**: State-driven open/close animations, compact mode, and config-driven section visibility.
+- **Color strength and accent color config**: Extended schema with `color-strength` and `accent-color` options for finer theming control.
+- **Scheme variant control**: Material scheme variant (Content, Expressive, Fidelity, etc.) selection wired into QML theme services.
+- **Waffle display scaling**: `dp()` function applied across waffle panel layout dimensions for DPI-aware sizing.
+- **CI, code of conduct, and security policy**: GitHub Actions workflow, community standards, and vulnerability reporting process.
+
+### Changed
+- **INIR_VENV rename**: Environment variable `ILLOGICAL_IMPULSE_VIRTUAL_ENV` renamed to `INIR_VENV` across all scripts and services (migration 020).
+- **Auto scheme detection tuning**: Expressive and Rainbow scheme variants are now much rarer in automatic selection, favoring more predictable palettes.
+- **Spotify behavior**: Minimize to tray instead of close; moves to workspace 99 on shell exit to preserve session.
+- **Dual-path PopupToolTip**: Tooltip system refactored for both inline and popup rendering paths with migrations across consumers.
+- **GTK/KDE/Qt external app theming**: Enhanced template rendering for GTK3/4, KDE kdeglobals, and Qt Darkly color schemes.
+- **README and CONTRIBUTING rewrite**: Documentation refreshed for clarity and accuracy.
+- **Shebang standardization**: All shell scripts use consistent `#!/usr/bin/env bash` with project-wide shellcheck configuration.
+- **iceicerice legacy backend removed**: Old theming backend fully excised in favor of the unified Python pipeline.
+
+### Fixed
+- **Workspace numbers per monitor**: Bar workspace indicators now stay local to each screen instead of showing global workspace IDs (#90).
+- **Calculator sizing and focus**: Sidebar calculator no longer jitters on resize; focus management stabilized (#99).
+- **Niri center lone columns**: Default Niri config centers single columns instead of left-aligning them (#91).
+- **Crash restart loop**: Background launcher wrapper detects rapid crash loops and stops respawning after a threshold.
+- **Bar module toggle orientation**: Settings toggle for ii bar modules remains orientation-safe regardless of bar position.
+- **Migration 017 keybind dedup**: Full launcher path matching prevents false positives in keybind deduplication.
+- **kde-material-you-colors wrapper**: Proper process detachment prevents blocking the color pipeline.
+- **Spicetify color mapping**: Improved token mapping and prevented Spotify from auto-opening during theme application.
+- **YouTube Music OAuth**: Restructured OAuth section out of advanced popup to fix layout overflow.
+- **Qt session env preservation**: `inir` CLI no longer unsets Qt environment variables inherited from the session.
+- **Theme race conditions**: Serialized shell script writes to `config.json` with `flock`; theme switching sequences properly gated.
+- **GTK CSS symlink safety**: Color pipeline breaks symlinks before writing GTK4 CSS files to prevent cross-contamination.
+- **Update version persistence**: Handles empty `version.json` gracefully in update tracking.
+- **Avatar binding break**: QtObject resolver pattern prevents property binding loops in avatar component.
+- **Settings DropShadow import**: Qualified `DropShadow` with `GE` alias in SettingsOverlay to resolve import ambiguity.
+- **Hardcoded path resolution**: Distribution scripts use dynamic paths for AUR and system-wide install compatibility.
+- **Running instance detection**: Launcher detects running instance by path to resolve identity mismatches between dev and installed copies.
+- **Waffle fluent icons**: Expanded icon mappings for common applications in waffle taskbar.
+- **PropertyCache warnings**: Resolved duplicate IPC handler registrations and stale property cache warnings.
+- **Waffle UI bugs**: Six fixes across widgets, settings, theming, and family transition in waffle panels.
+
+### Removed
+- **matugen binary dependency**: Fully replaced by the Python-only color generation pipeline. External `matugen` package is no longer required.
+- **Adwaita for Steam script**: `apply-adwsteam-theme.sh` removed, replaced by template-based Steam theming.
+- **iceicerice theming backend**: Legacy color backend removed after migration to unified pipeline.
+- **Unused config key**: `adwSteamColorTheme` removed from config schema.
+
+### Performance
+- **Color output chroma scaling**: Chroma adjustments applied to output tokens instead of seed color for more predictable palette behavior.
+- **Doctor diagnostics**: Added missing dependency checks, dynamic Qt path detection, and clearer fix guidance messages.
+- **Bootstrap hardening**: Setup bootstrap and update flow made more resilient against partial failures.
+
 ## [2.16.0] - 2026-03-26
 
 ### Added

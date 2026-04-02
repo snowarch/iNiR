@@ -8,8 +8,26 @@
 # Migration System Configuration
 #####################################################################################
 MIGRATIONS_DIR="${REPO_ROOT}/sdata/migrations"
-MIGRATIONS_STATE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/illogical-impulse/migrations.json"
-MIGRATIONS_BACKUP_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/illogical-impulse/backups"
+if declare -F resolve_inir_config_dir >/dev/null; then
+    _inir_config_dir="$(resolve_inir_config_dir)"
+else
+    _xdg_config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
+    _config_new="${_xdg_config_home}/inir"
+    _config_legacy="${_xdg_config_home}/illogical-impulse"
+
+    if [[ -L "$_config_legacy" && -d "$_config_new" ]]; then
+        _inir_config_dir="$_config_new"
+    elif [[ -d "$_config_legacy" ]]; then
+        _inir_config_dir="$_config_legacy"
+    elif [[ -d "$_config_new" ]]; then
+        _inir_config_dir="$_config_new"
+    else
+        _inir_config_dir="$_config_new"
+    fi
+fi
+
+MIGRATIONS_STATE_FILE="${_inir_config_dir}/migrations.json"
+MIGRATIONS_BACKUP_DIR="${_inir_config_dir}/backups"
 
 #####################################################################################
 # Migration State Management

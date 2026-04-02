@@ -4,6 +4,6 @@
   "module": "30-editors.sh",
   "category": "editor",
   "inputs": ["palette.json", "terminal.json", "material_colors.scss"],
-  "description": "Apply themes for VSCode forks, Zed, and OpenCode using generated shell and terminal palettes.",
+  "description": "Apply themes for VSCode forks and OpenCode using generated shell and terminal palettes.",
   "configKey": "appearance.wallpaperTheming.enableVSCode"
 }

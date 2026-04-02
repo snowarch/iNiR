@@ -88,6 +88,11 @@ Scope {
 
     function closeWindowFast(win): void {
         if (!win?.id) return
+        const appId = String(win?.app_id ?? "").toLowerCase()
+        if (appId === "spotify") {
+            MinimizedWindows.minimize(win.id)
+            return
+        }
         // Use niri msg directly - more reliable than socket IPC for some apps
         Quickshell.execDetached(["niri", "msg", "action", "close-window", "--id", String(win.id)])
     }

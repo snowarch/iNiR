@@ -30,6 +30,20 @@ Item {
         }
         return NiriService.currentOutputWorkspaces ?? []
     }
+    function workspaceForSlot(slotNumber) {
+        if (!CompositorService.isNiri)
+            return null
+        if (!root.perMonitor)
+            return (NiriService.allWorkspaces ?? []).find(w => w.idx === slotNumber) ?? null
+        const slotIndex = slotNumber - 1
+        if (slotIndex < 0 || slotIndex >= root.outputWorkspaces.length)
+            return null
+        return root.outputWorkspaces[slotIndex] ?? null
+    }
+    function workspaceIndexForSlot(slotNumber) {
+        const ws = workspaceForSlot(slotNumber)
+        return ws?.idx ?? slotNumber
+    }
 
     // Scroll behavior: "workspace" = switch workspaces, "column" = cycle windows left/right in same workspace
     readonly property string scrollBehavior: wsConfig.scrollBehavior ?? "workspace"
@@ -38,8 +52,8 @@ Item {
     readonly property int currentWorkspaceNumber: {
         if (CompositorService.isNiri) {
             if (root.perMonitor) {
-                const activeWs = root.outputWorkspaces.find(w => w.is_active)
-                return activeWs?.idx ?? 1
+                const activeSlot = root.outputWorkspaces.findIndex(w => w.is_active)
+                return activeSlot >= 0 ? activeSlot + 1 : 1
             }
             return NiriService.getCurrentWorkspaceNumber()
         }
@@ -130,7 +144,7 @@ Item {
 
             workspaceOccupied = Array.from({ length: root.workspacesShown }, (_, i) => {
                 const targetNumber = base + i + 1
-                const ws = wsList.find(w => w.idx === targetNumber)
+                const ws = root.workspaceForSlot(targetNumber)
                 if (!ws) return false
                 return occupiedWorkspaceIds.has(ws.id)
             })
@@ -234,10 +248,10 @@ Item {
                     if (root.wrapAround) {
                         if (direction > 0 && currentWs >= wsCount) {
                             // At last, go to first
-                            NiriService.switchToWorkspace(1)
+                            NiriService.switchToWorkspace(root.workspaceIndexForSlot(1))
                         } else if (direction < 0 && currentWs <= 1) {
                             // At first, go to last
-                            NiriService.switchToWorkspace(wsCount)
+                            NiriService.switchToWorkspace(root.workspaceIndexForSlot(wsCount))
                         } else {
                             if (direction > 0) NiriService.focusWorkspaceDown()
                             else NiriService.focusWorkspaceUp()
@@ -356,8 +370,7 @@ Item {
                 implicitWidth: vertical ? Appearance.sizes.verticalBarWidth : Appearance.sizes.verticalBarWidth
                 onPressed: {
                     if (CompositorService.isNiri) {
-                        // workspaceValue is a 1-based logical slot; pass it directly as Niri idx.
-                        NiriService.switchToWorkspace(workspaceValue)
+                        NiriService.switchToWorkspace(root.workspaceIndexForSlot(workspaceValue))
                     } else if (CompositorService.isHyprland) {
                         Hyprland.dispatch(`workspace ${workspaceValue}`)
                     }
@@ -370,7 +383,7 @@ Item {
                     implicitWidth: workspaceButtonWidth
                     implicitHeight: workspaceButtonWidth
                     readonly property var niriWorkspace: CompositorService.isNiri 
-                        ? NiriService.allWorkspaces?.find(w => w.idx === button.workspaceValue) ?? null
+                        ? root.workspaceForSlot(button.workspaceValue)
                         : null
                     property var biggestWindow: {
                         if (CompositorService.isNiri) {

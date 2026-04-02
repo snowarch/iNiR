@@ -39,7 +39,6 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [curl]="curl"
     [git]="git"
     [python3]="python3"
-    [matugen]="matugen"
     [wlsunset]="wlsunset"
     [dunstify]="dunst"
     [fish]="fish"
@@ -427,9 +426,6 @@ fi
 # cliphist - clipboard manager
 install_github_binary "cliphist" "sentriz/cliphist" "linux-amd64$"
 
-# matugen - color generator
-install_github_binary "matugen" "InioX/matugen" "x86_64.*tar.gz"
-
 # xwayland-satellite - X11 compatibility (try cargo-binstall first)
 if ! command -v xwayland-satellite &>/dev/null; then
   log_info "Installing xwayland-satellite..."
@@ -754,7 +750,7 @@ echo "  - quickshell (errornointernet/quickshell)"
 echo "  - niri (yalter/niri)"
 echo ""
 log_info "Installed from GitHub releases:"
-echo "  - gum, cliphist, matugen, darkly, starship, eza"
+echo "  - gum, cliphist, darkly, starship, eza"
 echo ""
 log_info "Themes configured:"
 echo "  - GTK: adw-gtk3-dark"
@@ -765,7 +761,7 @@ echo ""
 
 # Verify critical commands
 tui_info "Verifying installation:"
-for cmd in qs niri fish gum matugen cliphist starship eza; do
+for cmd in qs niri fish gum cliphist starship eza; do
   if command -v "$cmd" &>/dev/null || command -v ~/.local/bin/$cmd &>/dev/null; then
     log_success "$cmd"
   else

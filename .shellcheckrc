@@ -1,0 +1,15 @@
+# shellcheck configuration for iNiR shell scripts
+# Used by CI (.github/workflows/ci.yml) and local development
+
+# SC1091: Not following sourced files — our scripts source from venvs,
+#         relative paths, and generated files that aren't available at lint time.
+disable=SC1091
+
+# SC2034: Variable appears unused — many scripts export or source variables
+#         consumed by other scripts in the pipeline.
+disable=SC2034
+
+# SC2155: Declare and assign separately — pervasive in switchwall.sh and
+#         color scripts. Fixing all instances risks regressions in the
+#         theming pipeline for marginal benefit.
+disable=SC2155

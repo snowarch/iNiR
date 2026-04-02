@@ -84,10 +84,33 @@ Scope {
         }
     }
 
+    // ─── Exit animation state ───
+    property bool _closing: false
+
+    Connections {
+        target: GlobalStates
+        function onCoverflowSelectorOpenChanged() {
+            if (!GlobalStates.coverflowSelectorOpen && coverflowLoader.item) {
+                // Start close animation
+                root._closing = true
+                coverflowLoader.item._entryReady = false
+                coverflowLoader.item._contentReady = false
+                _closeTimer.start()
+            }
+        }
+    }
+
+    Timer {
+        id: _closeTimer
+        interval: Appearance.animationsEnabled ? 450 : 0
+        repeat: false
+        onTriggered: root._closing = false
+    }
+
     // ─── Panel ───
     Loader {
         id: coverflowLoader
-        active: GlobalStates.coverflowSelectorOpen
+        active: GlobalStates.coverflowSelectorOpen || root._closing
 
         sourceComponent: PanelWindow {
             id: panelWindow
@@ -96,7 +119,7 @@ Scope {
             exclusionMode: ExclusionMode.Ignore
             WlrLayershell.namespace: "quickshell:coverflowSelector"
             WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+            WlrLayershell.keyboardFocus: root._closing ? WlrKeyboardFocus.None : WlrKeyboardFocus.OnDemand
             color: "transparent"
 
             anchors {
@@ -151,11 +174,10 @@ Scope {
                 }
             }
 
-            // Scrim (dark overlay behind cards)
-            Rectangle {
+            // ─── Blurred wallpaper backdrop ───
+            Item {
                 id: scrim
                 anchors.fill: parent
-                color: Appearance.colors.colScrim
                 opacity: panelWindow._entryReady ? 1.0 : 0.0
                 Behavior on opacity {
                     enabled: Appearance.animationsEnabled
@@ -165,24 +187,58 @@ Scope {
                     }
                 }
 
-                GE.RadialGradient {
+                // Blur edge compensation: MultiEffect fades at boundaries,
+                // so the source is oversized by blurOverflow on every side.
+                readonly property int blurOverflow: 64
+
+                Item {
+                    id: blurSource
                     anchors.fill: parent
-                    gradient: Gradient {
-                        GradientStop { position: 0.0; color: ColorUtils.transparentize(Appearance.colors.colScrim, 1) }
-                        GradientStop { position: 0.55; color: ColorUtils.transparentize(Appearance.colors.colScrim, 1) }
-                        GradientStop { position: 1.0; color: Appearance.colors.colScrim }
+                    anchors.margins: -scrim.blurOverflow
+
+                    Image {
+                        anchors.fill: parent
+                        anchors.margins: scrim.blurOverflow
+                        source: {
+                            const _dep1 = WallpaperListener.multiMonitorEnabled
+                            const _dep2 = WallpaperListener.effectivePerMonitor
+                            const _dep3 = Wallpapers.effectiveWallpaperUrl
+                            return WallpaperListener.wallpaperUrlForScreen(panelWindow.screen)
+                        }
+                        fillMode: Image.PreserveAspectCrop
+                        cache: true
+                        asynchronous: true
+                        sourceSize.width: panelWindow.screen?.width ?? 1920
+                        sourceSize.height: panelWindow.screen?.height ?? 1080
                     }
                 }
 
+                MultiEffect {
+                    id: backdropBlur
+                    source: blurSource
+                    anchors.fill: parent
+                    anchors.margins: -scrim.blurOverflow
+                    blurEnabled: Appearance.effectsEnabled
+                    blurMax: 64
+                    blur: Appearance.effectsEnabled ? 1.0 : 0
+                    saturation: Appearance.effectsEnabled ? 0.15 : 0
+                }
+
+                // Dark scrim over the blur
                 Rectangle {
                     anchors.fill: parent
+                    color: Appearance.colors.colScrim
+                    opacity: 0.55
+                }
+
+                // Vignette: darken edges for depth
+                GE.RadialGradient {
+                    anchors.fill: parent
                     gradient: Gradient {
-                        orientation: Gradient.Horizontal
-                        GradientStop { position: 0.0; color: ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.3) }
-                        GradientStop { position: 0.5; color: "transparent" }
-                        GradientStop { position: 1.0; color: ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.3) }
+                        GradientStop { position: 0.0; color: "transparent" }
+                        GradientStop { position: 0.6; color: "transparent" }
+                        GradientStop { position: 1.0; color: ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.4) }
                     }
-                    opacity: 0.85
                 }
             }
 
@@ -333,7 +389,7 @@ Scope {
             CompositorFocusGrab {
                 id: grab
                 windows: [ panelWindow ]
-                active: CompositorService.isHyprland && coverflowLoader.active
+                active: CompositorService.isHyprland && coverflowLoader.active && !root._closing
                 onCleared: () => {
                     if (!active) {
                         GlobalStates.coverflowSelectorOpen = false

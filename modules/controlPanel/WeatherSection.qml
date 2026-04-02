@@ -11,6 +11,7 @@ Rectangle {
     Layout.fillWidth: true
     implicitHeight: visible ? contentLayout.implicitHeight + 16 : 0
     visible: Weather.enabled && Weather.data.temp && !Weather.data.temp.startsWith("--")
+    readonly property bool compactMode: Config.options?.controlPanel?.compactMode ?? true
     
     readonly property bool inirEverywhere: Appearance.inirEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
@@ -34,8 +35,8 @@ Rectangle {
     ColumnLayout {
         id: contentLayout
         anchors.fill: parent
-        anchors.margins: 8
-        spacing: 4
+        anchors.margins: root.compactMode ? 6 : 8
+        spacing: root.compactMode ? 2 : 4
 
         RowLayout {
             Layout.fillWidth: true
@@ -43,7 +44,7 @@ Rectangle {
 
             MaterialSymbol {
                 text: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "cloud"
-                iconSize: 32
+                iconSize: root.compactMode ? 26 : 32
                 color: Appearance.angelEverywhere ? Appearance.angel.colPrimary
                      : root.inirEverywhere ? Appearance.inir.colPrimary
                      : root.auroraEverywhere ? Appearance.m3colors.m3primary
@@ -53,7 +54,7 @@ Rectangle {
 
             StyledText {
                 text: Weather.data?.temp ?? "--°"
-                font.pixelSize: Appearance.font.pixelSize.huge
+                font.pixelSize: root.compactMode ? Appearance.font.pixelSize.larger : Appearance.font.pixelSize.huge
                 font.weight: Font.Medium
                 font.family: Appearance.font.family.numbers
                 color: Appearance.angelEverywhere ? Appearance.angel.colText
@@ -94,8 +95,8 @@ Rectangle {
             }
 
             RippleButton {
-                implicitWidth: 28
-                implicitHeight: 28
+                implicitWidth: root.compactMode ? 24 : 28
+                implicitHeight: root.compactMode ? 24 : 28
                 buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
                     : root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
                 colBackground: "transparent"
@@ -107,7 +108,7 @@ Rectangle {
                 contentItem: MaterialSymbol {
                     anchors.centerIn: parent
                     text: "refresh"
-                    iconSize: 16
+                    iconSize: root.compactMode ? 14 : 16
                     color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
                          : root.inirEverywhere ? Appearance.inir.colTextSecondary
                          : root.auroraEverywhere ? Appearance.m3colors.m3onSurfaceVariant
@@ -119,7 +120,7 @@ Rectangle {
 
         StyledText {
             Layout.fillWidth: true
-            Layout.leftMargin: 42
+            Layout.leftMargin: root.compactMode ? 34 : 42
             text: root.secondaryText
             font.pixelSize: root.hideLocation ? Appearance.font.pixelSize.small : Appearance.font.pixelSize.smallest
             color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary

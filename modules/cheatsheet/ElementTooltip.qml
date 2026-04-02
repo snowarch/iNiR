@@ -13,6 +13,7 @@ import QtQuick.Layouts
 Item {
     id: root
     required property var element
+    property bool shown: false
 
     // Category display names - computed dynamically to handle Translation availability
     function getCategoryName(type) {
@@ -58,6 +59,26 @@ Item {
 
     implicitWidth: contentLayout.implicitWidth + 2 * Appearance.sizes.spacingSmall
     implicitHeight: contentLayout.implicitHeight + 2 * Appearance.sizes.spacingSmall
+    opacity: shown ? 1 : 0
+    scale: shown ? 1 : 0.92
+
+    Behavior on opacity {
+        enabled: Appearance.animationsEnabled
+        NumberAnimation {
+            duration: Appearance.animation.elementMoveFast.duration
+            easing.type: Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+        }
+    }
+
+    Behavior on scale {
+        enabled: Appearance.animationsEnabled
+        NumberAnimation {
+            duration: Appearance.animation.elementMoveFast.duration
+            easing.type: Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+        }
+    }
 
     Rectangle {
         anchors.fill: parent

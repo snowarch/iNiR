@@ -34,12 +34,21 @@ Item {
     }
 
     // Placeholder when list is empty
-    PagePlaceholder {
+    MaterialPlaceholderMessage {
+        anchors {
+            left: parent.left
+            right: parent.right
+            top: parent.top
+            bottom: statusRow.top
+            topMargin: 24
+            bottomMargin: 28
+        }
+        maximumWidth: 280
+        compact: true
         shown: Notifications.list.length === 0
         icon: "notifications_active"
-        description: Translation.tr("Nothing")
+        text: Notifications.silent ? Translation.tr("Muted") : Translation.tr("Clear")
         shape: MaterialShape.Shape.Ghostish
-        descriptionHorizontalAlignment: Text.AlignHCenter
     }
 
     ButtonGroup {

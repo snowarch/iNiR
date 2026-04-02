@@ -4,11 +4,28 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 from pathlib import Path
 
 
 GENERATED_DIR = Path.home() / ".local/state/quickshell/user/generated"
+
+
+def resolve_default_config_path() -> Path:
+    xdg_config_home = Path(
+        os.environ.get("XDG_CONFIG_HOME", str(Path.home() / ".config"))
+    )
+    new_file = xdg_config_home / "inir" / "config.json"
+    old_file = xdg_config_home / "illogical-impulse" / "config.json"
+
+    if old_file.is_symlink() and new_file.exists():
+        return new_file
+    if old_file.exists():
+        return old_file
+    if new_file.exists():
+        return new_file
+    return new_file
 
 
 def generated_input_path(name: str) -> Path:
@@ -213,7 +230,7 @@ def main() -> int:
     )
     parser.add_argument(
         "--config",
-        default=str(Path.home() / ".config/illogical-impulse/config.json"),
+        default=str(resolve_default_config_path()),
         help="Path to config.json",
     )
     parser.add_argument(

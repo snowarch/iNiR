@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Sync ii-pixel SDDM theme colors with current Material You palette.
 
-Reads generated colors from matugen's colors.json and updates
+Reads generated colors from iNiR's colors.json and updates
 the ii-pixel theme.conf with matching colors.
 Reads wallpaper path from iNiR state and updates background image.
 
@@ -43,10 +43,10 @@ CONFIG_JSON = os.path.join(
 
 
 def read_colors():
-    """Read Material You colors from matugen's colors.json.
+    """Read Material You colors from iNiR's generated colors.json.
 
     Handles both output formats:
-    - Flat:   { "primary": "#...", "on_primary": "#...", ... }   (modern matugen)
+    - Flat:   { "primary": "#...", "on_primary": "#...", ... }   (current contract)
     - Nested: { "colors": { "dark": { "primary": "#...", ... } } }
     """
     if not os.path.isfile(COLORS_JSON):

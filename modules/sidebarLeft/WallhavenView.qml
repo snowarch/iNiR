@@ -356,24 +356,17 @@ Item {
                 }
             }
 
-            Item {
+            MaterialPlaceholderMessage {
                 id: placeholderHost
                 z: 2
-                visible: root.responses.length === 0
+                shown: root.responses.length === 0
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.min(parent.width - 40, 420)
-                height: 220
-
-                PagePlaceholder {
-                    id: placeholderItem
-                    anchors.fill: parent
-                    shown: true
-                    icon: "image"
-                    title: Translation.tr("Wallhaven wallpapers")
-                    description: Translation.tr("Type tags and hit Enter to search on wallhaven.cc\nUse #tag for multi-word tags (spaces become underscores)")
-                    shape: MaterialShape.Shape.Bun
-                }
+                maximumWidth: 420
+                icon: "image"
+                text: Translation.tr("Wallhaven wallpapers")
+                explanation: Translation.tr("Type tags and hit Enter to search on wallhaven.cc\nUse #tag for multi-word tags (spaces become underscores)")
+                shape: MaterialShape.Shape.Bun
             }
 
             FlowButtonGroup {

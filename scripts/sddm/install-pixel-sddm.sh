@@ -187,14 +187,14 @@ cp "$SYNC_SCRIPT" "$SYNC_DST"
 chmod +x "$SYNC_DST"
 log_ok "Sync script installed to ${SYNC_DST}"
 
-# NOTE: We no longer mutate user matugen config here. The shipped config template
-# already includes a safe ii-pixel sync post_hook. Keep installer idempotent.
+# NOTE: We no longer mutate the user theming config here.
+# Color sync runs from the unified Python theming pipeline. Keep installer idempotent.
 
 # Cleanup stale sudo-based hook variants from very old setups if present
 MATUGEN_CONFIG="${XDG_CONFIG_HOME:-${HOME}/.config}/matugen/config.toml"
 if [[ -f "$MATUGEN_CONFIG" ]]; then
     if grep -qE "post_hook\s*=\s*'.*sudo.*sync-pixel-sddm\.py" "$MATUGEN_CONFIG" 2>/dev/null; then
-        log_warn "Detected legacy sudo SDDM matugen hook in user config"
+        log_warn "Detected legacy sudo SDDM theming hook in user config"
         log_warn "Please remove old ii-pixel-sddm hook block from: $MATUGEN_CONFIG"
     fi
 fi
@@ -226,5 +226,5 @@ fi
 
 log_ok "${THEME_NAME} installed and configured"
 log_info "Test with: sddm-greeter-qt6 --test-mode --theme ${THEME_DIR}"
-log_info "Colors auto-sync on wallpaper change via matugen hook"
+log_info "Colors auto-sync on wallpaper change via the iNiR theming pipeline"
 log_info "Manual re-sync: python3 ~/.local/bin/sync-pixel-sddm.py"

@@ -517,6 +517,30 @@ Singleton {
                 roundingScale: 1.2,
                 fontStyle: "serif"
             }
+        },
+        {
+            id: "vitesse-dark",
+            name: "Vitesse Dark",
+            description: "Refined and minimal, by Anthony Fu",
+            icon: "code",
+            colors: vitesseDarkColors,
+            tags: ["dark", "minimal"],
+            meta: {
+                fontStyle: "mono",
+                roundingScale: 0.9
+            }
+        },
+        {
+            id: "vitesse-light",
+            name: "Vitesse Light",
+            description: "Clean and warm, by Anthony Fu",
+            icon: "code",
+            colors: vitesseLightColors,
+            tags: ["light", "minimal"],
+            meta: {
+                fontStyle: "mono",
+                roundingScale: 0.9
+            }
         }
     ]
 
@@ -2957,6 +2981,158 @@ Singleton {
         m3onSuccessContainer: "#3d4a28"
     })
 
+    // Vitesse Dark — by Anthony Fu (antfu/vscode-theme-vitesse)
+    // Refined minimal aesthetic with green accent on near-black
+    readonly property var vitesseDarkColors: ({
+        darkmode: true,
+        m3background: "#121212",
+        m3onBackground: "#dbd7ca",
+        m3surface: "#121212",
+        m3surfaceDim: "#0e0e0e",
+        m3surfaceBright: "#222222",
+        m3surfaceContainerLowest: "#0e0e0e",
+        m3surfaceContainerLow: "#161616",
+        m3surfaceContainer: "#1e1e1e",
+        m3surfaceContainerHigh: "#252525",
+        m3surfaceContainerHighest: "#2c2c2c",
+        m3onSurface: "#dbd7ca",
+        m3surfaceVariant: "#2c2c2c",
+        m3onSurfaceVariant: "#a0a0a0",
+        m3inverseSurface: "#dbd7ca",
+        m3inverseOnSurface: "#121212",
+        m3outline: "#494b43",
+        m3outlineVariant: "#333333",
+        m3shadow: "#000000",
+        m3scrim: "#000000",
+        m3surfaceTint: "#4d9375",
+        m3primary: "#4d9375",
+        m3onPrimary: "#ffffff",
+        m3primaryContainer: "#264a3b",
+        m3onPrimaryContainer: "#80c4a4",
+        m3inversePrimary: "#1c6b48",
+        m3secondary: "#6394bf",
+        m3onSecondary: "#ffffff",
+        m3secondaryContainer: "#2e4860",
+        m3onSecondaryContainer: "#99c4e5",
+        m3tertiary: "#d9739f",
+        m3onTertiary: "#ffffff",
+        m3tertiaryContainer: "#6b3a50",
+        m3onTertiaryContainer: "#f0a8c8",
+        m3error: "#cb7676",
+        m3onError: "#ffffff",
+        m3errorContainer: "#5c3030",
+        m3onErrorContainer: "#e8a8a8",
+        m3primaryFixed: "#4d9375",
+        m3primaryFixedDim: "#3a7058",
+        m3onPrimaryFixed: "#ffffff",
+        m3onPrimaryFixedVariant: "#1e1e1e",
+        m3secondaryFixed: "#6394bf",
+        m3secondaryFixedDim: "#4a7198",
+        m3onSecondaryFixed: "#ffffff",
+        m3onSecondaryFixedVariant: "#1e1e1e",
+        m3tertiaryFixed: "#d9739f",
+        m3tertiaryFixedDim: "#a85878",
+        m3onTertiaryFixed: "#ffffff",
+        m3onTertiaryFixedVariant: "#1e1e1e",
+        m3success: "#4d9375",
+        m3onSuccess: "#ffffff",
+        m3successContainer: "#264a3b",
+        m3onSuccessContainer: "#80c4a4",
+        // Exact Vitesse terminal palette (bypasses harmonized generation)
+        term0:  "#121212",
+        term1:  "#cb7676",
+        term2:  "#4d9375",
+        term3:  "#e6cc77",
+        term4:  "#6394bf",
+        term5:  "#d9739f",
+        term6:  "#5eaab5",
+        term7:  "#dbd7ca",
+        term8:  "#393a34",
+        term9:  "#cb7676",
+        term10: "#4d9375",
+        term11: "#e6cc77",
+        term12: "#6394bf",
+        term13: "#d9739f",
+        term14: "#5eaab5",
+        term15: "#ffffff"
+    })
+
+    // Vitesse Light — by Anthony Fu (antfu/vscode-theme-vitesse)
+    // Clean warm minimal with deep green accent on white
+    readonly property var vitesseLightColors: ({
+        darkmode: false,
+        m3background: "#ffffff",
+        m3onBackground: "#393a34",
+        m3surface: "#ffffff",
+        m3surfaceDim: "#f0f0f0",
+        m3surfaceBright: "#ffffff",
+        m3surfaceContainerLowest: "#ffffff",
+        m3surfaceContainerLow: "#f7f7f7",
+        m3surfaceContainer: "#f0f0f0",
+        m3surfaceContainerHigh: "#e8e8e8",
+        m3surfaceContainerHighest: "#e0e0e0",
+        m3onSurface: "#393a34",
+        m3surfaceVariant: "#e0e0e0",
+        m3onSurfaceVariant: "#6e6e6e",
+        m3inverseSurface: "#393a34",
+        m3inverseOnSurface: "#ffffff",
+        m3outline: "#999999",
+        m3outlineVariant: "#c8c8c8",
+        m3shadow: "#000000",
+        m3scrim: "#000000",
+        m3surfaceTint: "#1c6b48",
+        m3primary: "#1c6b48",
+        m3onPrimary: "#ffffff",
+        m3primaryContainer: "#b8e8d0",
+        m3onPrimaryContainer: "#0d3520",
+        m3inversePrimary: "#4d9375",
+        m3secondary: "#296aa3",
+        m3onSecondary: "#ffffff",
+        m3secondaryContainer: "#b0d4f0",
+        m3onSecondaryContainer: "#143550",
+        m3tertiary: "#a13865",
+        m3onTertiary: "#ffffff",
+        m3tertiaryContainer: "#f0c0d8",
+        m3onTertiaryContainer: "#501c33",
+        m3error: "#ab5959",
+        m3onError: "#ffffff",
+        m3errorContainer: "#f0c8c8",
+        m3onErrorContainer: "#552c2c",
+        m3primaryFixed: "#1c6b48",
+        m3primaryFixedDim: "#155438",
+        m3onPrimaryFixed: "#ffffff",
+        m3onPrimaryFixedVariant: "#e8e8e8",
+        m3secondaryFixed: "#296aa3",
+        m3secondaryFixedDim: "#1f5480",
+        m3onSecondaryFixed: "#ffffff",
+        m3onSecondaryFixedVariant: "#e8e8e8",
+        m3tertiaryFixed: "#a13865",
+        m3tertiaryFixedDim: "#802d50",
+        m3onTertiaryFixed: "#ffffff",
+        m3onTertiaryFixedVariant: "#e8e8e8",
+        m3success: "#1c6b48",
+        m3onSuccess: "#ffffff",
+        m3successContainer: "#b8e8d0",
+        m3onSuccessContainer: "#0d3520",
+        // Exact Vitesse Light terminal palette (bypasses harmonized generation)
+        term0:  "#ffffff",
+        term1:  "#ab5959",
+        term2:  "#1e754f",
+        term3:  "#bda437",
+        term4:  "#296aa3",
+        term5:  "#a13865",
+        term6:  "#2993a3",
+        term7:  "#dbd7ca",
+        term8:  "#aaaaaa",
+        term9:  "#ab5959",
+        term10: "#1e754f",
+        term11: "#bda437",
+        term12: "#296aa3",
+        term13: "#a13865",
+        term14: "#2993a3",
+        term15: "#393a34"
+    })
+
     function getPreset(id) {
         for (let i = 0; i < presets.length; i++) {
             if (presets[i].id === id) return presets[i];
@@ -2985,7 +3161,7 @@ Singleton {
         return newColors;
     }
 
-    function applyPreset(id, applyExternal = true) {
+    function applyPreset(id, applyExternal = true, skipColorsJson = false) {
         console.log("[ThemePresets] Applying preset:", id);
         const preset = getPreset(id);
         if (!preset.colors) {
@@ -3058,8 +3234,10 @@ Singleton {
         m3.m3successContainer = c.m3successContainer;
         m3.m3onSuccessContainer = c.m3onSuccessContainer;
 
-        generateColorsJson(c);
-
+        if (!skipColorsJson) {
+            generateColorsJson(c);
+        }
+        
         if (applyExternal) {
             applyExternalThemes(c);
         }
@@ -3410,6 +3588,7 @@ Singleton {
             mode: c.darkmode ? "dark" : "light",
             scheme: "preset",
             transparent: c.transparent ?? false,
+            term_source: c.term1 !== undefined ? "preset-explicit" : "harmonized",
             generated_by: "ThemePresets.qml"
         };
     }

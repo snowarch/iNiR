@@ -160,23 +160,14 @@ Item {
             animation: NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Appearance.animation.elementMove.type; easing.bezierCurve: Appearance.animation.elementMove.bezierCurve }
         }
 
-        ColumnLayout {
+        MaterialPlaceholderMessage {
             anchors.centerIn: parent
-            spacing: 5
-
-            MaterialSymbol {
-                Layout.alignment: Qt.AlignHCenter
-                iconSize: 55
-                color: Appearance.m3colors.m3outline
-                text: emptyPlaceholderIcon
-            }
-            StyledText {
-                Layout.alignment: Qt.AlignHCenter
-                font.pixelSize: Appearance.font.pixelSize.normal
-                color: Appearance.m3colors.m3outline
-                horizontalAlignment: Text.AlignHCenter
-                text: emptyPlaceholderText
-            }
+            maximumWidth: Math.min(280, parent.width - 24)
+            shown: taskList.length === 0
+            icon: emptyPlaceholderIcon
+            text: emptyPlaceholderText
+            compact: true
+            shape: MaterialShape.Shape.Clover4Leaf
         }
     }
 }

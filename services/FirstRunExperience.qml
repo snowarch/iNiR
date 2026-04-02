@@ -57,9 +57,12 @@ Singleton {
         command: ["/usr/bin/test", "-f", root.firstRunFilePath]
         onExited: (exitCode) => {
             if (exitCode !== 0) {
-                // File doesn't exist, create it and run setup
+                // File doesn't exist — create parent dir but DON'T write first_run.txt yet.
+                // The welcome wizard writes config keys on exit;
+                // first_run.txt is written by disableNextTime() or the welcome process itself.
                 const parentDir = root.firstRunFilePath.substring(0, root.firstRunFilePath.lastIndexOf('/'))
-                Quickshell.execDetached(["/bin/sh", "-c", `mkdir -p "${parentDir}" && echo "${root.firstRunFileContent}" > "${root.firstRunFilePath}"`])
+                Quickshell.execDetached(["/bin/sh", "-c", `mkdir -p "${parentDir}"`])
+                root.disableNextTime()
                 root.handleFirstRun()
             }
         }

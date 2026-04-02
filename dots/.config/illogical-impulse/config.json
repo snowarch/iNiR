@@ -37,6 +37,7 @@
                 "termFgBoost": 0.5
             },
             "enableSpicetify": false,
+            "enableAdwSteam": false,
             "enableOpenCode": false,
             "vscodeEditors": {
                 "code": true,

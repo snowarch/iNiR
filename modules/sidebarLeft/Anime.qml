@@ -225,13 +225,13 @@ Item {
                 }
             }
 
-            PagePlaceholder {
+            MaterialPlaceholderMessage {
                 id: placeholderItem
                 z: 2
                 shown: root.responses.length === 0
                 icon: "bookmark_heart"
-                title: Translation.tr("Anime boorus")
-                description: ""
+                text: Translation.tr("Anime boorus")
+                explanation: ""
                 shape: MaterialShape.Shape.Bun
             }
 

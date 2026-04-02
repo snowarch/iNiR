@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import Qt5Compat.GraphicalEffects
+import org.kde.kirigami as Kirigami
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
@@ -162,21 +163,29 @@ Item {
             }
             
             // Error
-            PagePlaceholder {
+            MaterialPlaceholderMessage {
+                anchors.centerIn: parent
+                maximumWidth: 340
                 shown: RedditService.lastError.length > 0 && RedditService.posts.length === 0
                 icon: "error"
-                title: Translation.tr("Error")
-                description: RedditService.lastError
-                shape: MaterialShape.Shape.Diamond
+                actionIcon: "refresh"
+                text: Translation.tr("Error")
+                explanation: RedditService.lastError
+                helpfulAction: Kirigami.Action {
+                    icon.name: "refresh"
+                    text: Translation.tr("Retry")
+                    onTriggered: root.refreshCurrent()
+                }
             }
             
             // Empty
-            PagePlaceholder {
+            MaterialPlaceholderMessage {
+                anchors.centerIn: parent
+                maximumWidth: 340
                 shown: !RedditService.loading && RedditService.lastError.length === 0 && RedditService.posts.length === 0
                 icon: "forum"
-                title: Translation.tr("No posts")
-                description: Translation.tr("Try a different subreddit")
-                shape: MaterialShape.Shape.Clover4Leaf
+                text: Translation.tr("No posts")
+                explanation: Translation.tr("Try a different subreddit")
             }
             
             ScrollEdgeFade {

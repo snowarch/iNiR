@@ -59,7 +59,6 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [curl]="curl"
     [git]="git"
     [python3]="python3"
-    [matugen]="matugen"
     [wlsunset]="wlsunset"
     [dunstify]="dunst"
     [fish]="fish"
@@ -660,9 +659,6 @@ fi
 if ! command -v cliphist &>/dev/null; then
   install_github_binary "cliphist" "sentriz/cliphist" "linux-amd64$"
 fi
-
-# matugen - color generator
-install_github_binary "matugen" "InioX/matugen" "x86_64.*tar.gz"
 
 # songrec - music recognition (PPA for Ubuntu, Cargo for Debian)
 if ! command -v songrec &>/dev/null; then
@@ -1403,7 +1399,7 @@ if [[ ${#MISSING_REPO_PKGS[@]} -gt 0 ]]; then
   echo ""
 fi
 log_info "Installed from GitHub releases (no compilation):"
-echo "  - gum, cliphist, matugen, darkly, songrec (PPA/Cargo)"
+echo "  - gum, cliphist, darkly, songrec (PPA/Cargo)"
 echo "  - twemoji-color-font, adw-gtk3 theme"
 echo "  - Material Symbols fonts, JetBrains Mono Nerd Font"
 echo "  - WhiteSur, MacTahoe icon themes"
@@ -1415,7 +1411,7 @@ echo ""
 
 # Verify critical commands
 tui_info "Verifying installation:"
-for cmd in qs niri fish gum matugen cliphist; do
+for cmd in qs niri fish gum cliphist; do
   if command -v "$cmd" &>/dev/null; then
     log_success "$cmd"
   else

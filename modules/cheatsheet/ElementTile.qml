@@ -21,15 +21,14 @@ RippleButton {
     property bool justCopied: false
 
     // Tooltip with detailed element information (Requirements: 5.1)
-    ToolTip {
+    PopupToolTip {
         id: elementTooltip
-        visible: root.hovered && root.element.type !== "empty"
         delay: 300
-        background: null
-        padding: 0
-
+        extraVisibleCondition: root.element.type !== "empty"
+        anchorEdges: Edges.Top
         contentItem: ElementTooltip {
             element: root.element
+            shown: false
         }
     }
 

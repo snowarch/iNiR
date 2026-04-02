@@ -14,6 +14,30 @@ systemd_user_dir="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 launcher_root="$(cd -- "$script_dir/.." 2>/dev/null && pwd || printf '%s' "$script_dir")"
 
+source_config_path_helper() {
+    local helper_candidates=(
+        "$script_dir/lib/config-path.sh"
+        "$launcher_root/share/quickshell/inir/scripts/lib/config-path.sh"
+        "$user_config_dir/scripts/lib/config-path.sh"
+        "$system_config_dir/scripts/lib/config-path.sh"
+        "$fallback_system_config_dir/scripts/lib/config-path.sh"
+    )
+
+    local helper_path
+    for helper_path in "${helper_candidates[@]}"; do
+        if [[ -f "$helper_path" ]]; then
+            # shellcheck source=/dev/null
+            source "$helper_path"
+            return
+        fi
+    done
+
+    echo "Unable to locate config-path helper (scripts/lib/config-path.sh)." >&2
+    exit 1
+}
+
+source_config_path_helper
+
 usage() {
     cat <<'EOF'
 Usage: inir <command> [options]
@@ -91,6 +115,16 @@ find_qs() {
     if [[ -z "${qs_bin:-}" || ! -x "$qs_bin" ]]; then
         echo "qs not found" >&2
         exit 1
+    fi
+}
+
+# Lazy qs resolution: only validate qs binary for commands that actually need it.
+# Non-runtime commands (install, update, doctor, status, help, version, etc.)
+# must work without Quickshell installed.
+require_qs() {
+    if [[ -z "${_qs_resolved:-}" ]]; then
+        find_qs
+        _qs_resolved=1
     fi
 }
 
@@ -179,6 +213,46 @@ check_qs_abi() {
     exit 1
 }
 
+# Warn if code version differs from what setup last installed.
+# Catches the case where a user does `git pull` in a repo-link checkout
+# without running `./setup update` — new QML loads via hot-reload but
+# infrastructure (launcher, migrations, config dir) stays stale.
+check_setup_version_sync() {
+    local dir="$1"
+    local code_version=""
+    local installed_version=""
+
+    # Read VERSION from the code about to be loaded
+    if [[ -f "$dir/VERSION" ]]; then
+        code_version="$(<"$dir/VERSION")"
+        code_version="${code_version%%[[:space:]]*}"
+    fi
+
+    [[ -z "$code_version" ]] && return 0
+
+    # Read version from version.json (written by setup at install/update time)
+    local version_json
+    version_json="$(inir_version_file 2>/dev/null || echo "")"
+    [[ -z "$version_json" || ! -f "$version_json" ]] && return 0
+
+    if command -v jq >/dev/null 2>&1; then
+        installed_version="$(jq -r '.version // empty' "$version_json" 2>/dev/null || true)"
+    else
+        installed_version="$(grep -o '"version"[[:space:]]*:[[:space:]]*"[^"]*"' "$version_json" 2>/dev/null \
+            | head -1 | sed 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/' || true)"
+    fi
+
+    [[ -z "$installed_version" ]] && return 0
+
+    if [[ "$code_version" != "$installed_version" ]]; then
+        echo "" >&2
+        echo "WARNING: Code version ($code_version) differs from installed version ($installed_version)" >&2
+        echo "  This usually means you updated the code (git pull) without running setup." >&2
+        echo "  Run: ./setup update   or   inir update" >&2
+        echo "" >&2
+    fi
+}
+
 canonicalize_path() {
     local candidate="${1:-}"
     if [[ -z "$candidate" ]]; then
@@ -202,8 +276,8 @@ detect_running_instance_dir() {
         json_output="$($qs_bin list --all --json 2>/dev/null || true)"
         if [[ -n "$json_output" && "$json_output" != "[]" ]]; then
             running_path="$(printf '%s' "$json_output" | jq -r '
-                [.[] | select(.configPath | endswith("/shell.qml"))]
-                | .[0].configPath // empty
+                [.[] | (.config_path // .configPath // empty) | select(endswith("/shell.qml"))]
+                | .[0] // empty
             ' 2>/dev/null || true)"
         fi
     fi
@@ -234,6 +308,36 @@ apply_shell_scale() {
     # bugs where the compositor surface is larger than the Qt-rendered content area,
     # which causes wallpaper/blur layers to appear smaller than the screen.
     export QT_SCALE_FACTOR=1
+}
+
+apply_qt_runtime_env() {
+    # Preserve the session's Qt platform theme and style — unsetting these breaks
+    # icon theme resolution (QIcon::fromTheme) and Qt widget styling.
+    # Override via INIR_QT_QPA_PLATFORMTHEME / INIR_QT_STYLE_OVERRIDE if needed.
+    if [[ -n "${INIR_QT_QPA_PLATFORMTHEME+x}" ]]; then
+        export QT_QPA_PLATFORMTHEME="$INIR_QT_QPA_PLATFORMTHEME"
+    fi
+
+    if [[ -n "${INIR_QT_STYLE_OVERRIDE+x}" ]]; then
+        export QT_STYLE_OVERRIDE="$INIR_QT_STYLE_OVERRIDE"
+    fi
+}
+
+apply_qt_logging_rules() {
+    local extra_rules="quickshell.dbus.properties=false;qt.qml.settings.warning=false;qt.core.qsettings.warning=false;kf.xmlgui=false;kf.coreaddons=false;kf.config.core=false;kf.iconthemes=false"
+
+    if [[ -z "${QT_LOGGING_RULES:-}" ]]; then
+        export QT_LOGGING_RULES="$extra_rules"
+        return
+    fi
+
+    case ";${QT_LOGGING_RULES};" in
+        *";qt.core.qsettings.warning=false;"*)
+            ;;
+        *)
+            export QT_LOGGING_RULES="${QT_LOGGING_RULES};${extra_rules}"
+            ;;
+    esac
 }
 
 resolve_config_dir() {
@@ -275,6 +379,38 @@ has_instances() {
     local output
     output="$(list_instances "$1")"
     [[ -n "$output" && "$output" != No\ running\ instances* ]]
+}
+
+ensure_running_instance() {
+    local dir="$1"
+
+    if has_instances "$dir"; then
+        return 0
+    fi
+
+    apply_shell_scale
+    apply_qt_runtime_env
+    apply_qt_logging_rules
+    check_qs_abi
+    start_background "$dir"
+    wait_for_start "$dir"
+}
+
+ensure_running_instance_for_ipc() {
+    local dir="$1"
+    local function_name="${2:-}"
+
+    if has_instances "$dir"; then
+        return 0
+    fi
+
+    case "$function_name" in
+        close|hide|deactivate|dismiss)
+            return 0
+            ;;
+    esac
+
+    ensure_running_instance "$dir"
 }
 
 wait_for_start() {
@@ -323,8 +459,10 @@ start_background() {
         while true; do
             "$qs_bin" -n -p "$config_dir" &
             child_pid=$!
-            wait "$child_pid" 2>/dev/null || true
+            set +e
+            wait "$child_pid" 2>/dev/null
             exit_code=$?
+            set -e
             child_pid=""
             [[ $exit_code -eq 0 ]] && break
             now="$(date +%s)"
@@ -386,32 +524,44 @@ force_kill_qml_window() {
 
 restart_shell() {
     local dir="$1"
+    local quiet="${2:-}"
 
     if has_instances "$dir"; then
+        [[ -z "$quiet" ]] && printf 'Stopping iNiR... '
         kill_shell "$dir"
         if ! wait_for_stop "$dir"; then
             echo "Timed out waiting for iNiR to stop" >&2
             exit 1
         fi
+        [[ -z "$quiet" ]] && printf 'done.\n'
     fi
 
+    [[ -z "$quiet" ]] && printf 'Starting iNiR... '
     start_background "$dir"
     if ! wait_for_start "$dir"; then
         echo "Timed out waiting for iNiR to start" >&2
         exit 1
+    fi
+    [[ -z "$quiet" ]] && printf 'done.\n'
+
+    if [[ -z "$quiet" ]]; then
+        # Brief pause to let QML initialization settle before checking logs
+        sleep 1
+        local errors
+        errors="$("$qs_bin" -p "$dir" log 2>/dev/null | grep -iE 'error|ReferenceError|TypeError|binding loop' | tail -10 || true)"
+        if [[ -n "$errors" ]]; then
+            printf '\n\033[33m── errors in recent logs ──\033[0m\n'
+            printf '%s\n' "$errors"
+        fi
     fi
 }
 
 open_settings() {
     local dir="$1"
 
-    if ! has_instances "$dir"; then
-        apply_shell_scale
-        start_background "$dir"
-        if ! wait_for_start "$dir"; then
-            echo "Timed out waiting for iNiR to start" >&2
-            exit 1
-        fi
+    if ! ensure_running_instance "$dir"; then
+        echo "Timed out waiting for iNiR to start" >&2
+        exit 1
     fi
 
     exec "$qs_bin" -p "$dir" ipc call settings open
@@ -438,6 +588,8 @@ open_detached_qml_window() {
         fi
     fi
 
+    apply_qt_runtime_env
+    apply_qt_logging_rules
     exec "$qs_bin" -n -p "$qml_path"
 }
 
@@ -447,7 +599,8 @@ resolve_setup_dir() {
         return
     fi
 
-    local version_file="${XDG_CONFIG_HOME:-$HOME/.config}/illogical-impulse/version.json"
+    local version_file
+    version_file="$(inir_version_file)"
     local stored_repo=""
     if [[ -f "$version_file" ]]; then
         if command -v jq >/dev/null 2>&1; then
@@ -726,7 +879,8 @@ show_version() {
     fi
 
     local runtime_version_file=""
-    local local_version_file="${XDG_CONFIG_HOME:-$HOME/.config}/illogical-impulse/version.json"
+    local local_version_file
+    local_version_file="$(inir_version_file)"
     local version_file=""
 
     if [[ -n "$runtime_path" ]]; then
@@ -863,11 +1017,16 @@ run_ipc_target_command() {
     fi
 
     resolve_config_dir
+    if ! ensure_running_instance_for_ipc "$config_dir" "${1:-}"; then
+        echo "Timed out waiting for iNiR to start" >&2
+        exit 1
+    fi
     exec "$qs_bin" -p "$config_dir" ipc call "$target" "$@"
 }
 
 launch_configured_browser() {
-    local config_file="${XDG_CONFIG_HOME:-$HOME/.config}/illogical-impulse/config.json"
+    local config_file
+    config_file="$(inir_config_file)"
     local browser=""
 
     if [[ -f "$config_file" ]]; then
@@ -906,8 +1065,6 @@ parse_config_flag() {
     config_dir="$2"
 }
 
-find_qs
-
 command_name="${1:-help}"
 shift || true
 
@@ -917,6 +1074,7 @@ case "$command_name" in
         run_setup_command "$setup_dir" install "$@"
         ;;
     start)
+        require_qs
         while [[ $# -gt 0 ]]; do
             case "$1" in
                 -c|--config)
@@ -935,7 +1093,9 @@ case "$command_name" in
         done
         resolve_config_dir
         apply_shell_scale
+        apply_qt_runtime_env
         check_qs_abi
+        check_setup_version_sync "$config_dir"
         if has_instances "$config_dir"; then
             echo "iNiR is already running. Use 'inir restart' to restart." >&2
             exit 0
@@ -943,6 +1103,7 @@ case "$command_name" in
         start_background "$config_dir"
         ;;
     stop)
+        require_qs
         while [[ $# -gt 0 ]]; do
             case "$1" in
                 -c|--config)
@@ -963,6 +1124,7 @@ case "$command_name" in
         kill_shell "$config_dir"
         ;;
     run)
+        require_qs
         foreground=true
         while [[ $# -gt 0 ]]; do
             case "$1" in
@@ -990,7 +1152,10 @@ case "$command_name" in
         done
         resolve_config_dir
         apply_shell_scale
+        apply_qt_runtime_env
+        apply_qt_logging_rules
         check_qs_abi
+        check_setup_version_sync "$config_dir"
         if [[ "$foreground" == true ]]; then
             # Run with a restart loop so hot-reload failures don't kill the session.
             # Exit codes: 0 = clean exit (user quit), anything else = crash/reload failure -> restart.
@@ -1020,11 +1185,17 @@ case "$command_name" in
         exec "$qs_bin" -n -d -p "$config_dir"
         ;;
     restart)
+        require_qs
+        restart_quiet=""
         while [[ $# -gt 0 ]]; do
             case "$1" in
                 -c|--config)
                     parse_config_flag "$@"
                     shift 2
+                    ;;
+                -q|--quiet)
+                    restart_quiet="1"
+                    shift
                     ;;
                 -h|--help)
                     usage
@@ -1038,10 +1209,13 @@ case "$command_name" in
         done
         resolve_config_dir
         apply_shell_scale
+        apply_qt_runtime_env
+        apply_qt_logging_rules
         check_qs_abi
-        restart_shell "$config_dir"
+        restart_shell "$config_dir" "$restart_quiet"
         ;;
     kill)
+        require_qs
         while [[ $# -gt 0 ]]; do
             case "$1" in
                 -c|--config)
@@ -1062,6 +1236,7 @@ case "$command_name" in
         kill_shell "$config_dir"
         ;;
     logs)
+        require_qs
         if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
             usage
             exit 0
@@ -1134,6 +1309,7 @@ case "$command_name" in
         run_runtime_script "$config_dir" "scripts/close-window.sh"
         ;;
     ipc)
+        require_qs
         while [[ $# -gt 0 ]]; do
             case "$1" in
                 -c|--config)
@@ -1158,9 +1334,14 @@ case "$command_name" in
             exit 1
         fi
         resolve_config_dir
+        if ! ensure_running_instance_for_ipc "$config_dir" "${2:-}"; then
+            echo "Timed out waiting for iNiR to start" >&2
+            exit 1
+        fi
         exec "$qs_bin" -p "$config_dir" ipc call "$@"
         ;;
     settings|open)
+        require_qs
         while [[ $# -gt 0 ]]; do
             case "$1" in
                 -c|--config)
@@ -1181,6 +1362,7 @@ case "$command_name" in
         open_settings "$config_dir"
         ;;
     settings-window)
+        require_qs
         while [[ $# -gt 0 ]]; do
             case "$1" in
                 -c|--config)
@@ -1201,6 +1383,7 @@ case "$command_name" in
         open_detached_qml_window "$config_dir" "settings.qml"
         ;;
     waffle-settings-window)
+        require_qs
         while [[ $# -gt 0 ]]; do
             case "$1" in
                 -c|--config)
@@ -1221,6 +1404,7 @@ case "$command_name" in
         open_detached_qml_window "$config_dir" "waffleSettings.qml"
         ;;
     repair)
+        require_qs
         while [[ $# -gt 0 ]]; do
             case "$1" in
                 -c|--config)
@@ -1327,6 +1511,7 @@ case "$command_name" in
         usage
         ;;
     *)
+        require_qs
         run_ipc_target_command "$command_name" "$@"
         ;;
 esac

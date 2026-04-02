@@ -111,7 +111,6 @@ DEPS_NET_BLUEMAN="arch:blueman fedora:blueman debian:blueman ubuntu:blueman open
 ###############################################################################
 # Theming and appearance
 ###############################################################################
-DEPS_THEME_MATUGEN="arch:matugen fedora:CARGO:matugen debian:CARGO:matugen ubuntu:CARGO:matugen opensuse:CARGO:matugen void:CARGO:matugen"
 DEPS_THEME_QT6CT="arch:qt6ct fedora:qt6ct debian:qt6ct ubuntu:qt6ct opensuse:qt6ct void:qt6ct"
 DEPS_THEME_KVANTUM="arch:kvantum fedora:kvantum debian:qt6-style-kvantum ubuntu:qt6-style-kvantum opensuse:kvantum-qt6 void:kvantum"
 DEPS_THEME_BREEZE="arch:breeze fedora:breeze-gtk debian:breeze-gtk-theme ubuntu:breeze-gtk-theme opensuse:metatheme-breeze-common void:breeze"

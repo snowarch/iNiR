@@ -323,6 +323,13 @@ Scope {
                     easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
                 }
             }
+            Behavior on height {
+                NumberAnimation {
+                    duration: Appearance.animation.elementMoveEnter.duration
+                    easing.type: Appearance.animation.elementMoveEnter.type
+                    easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
+                }
+            }
 
             ColumnLayout {
                 id: contentColumn
@@ -458,6 +465,14 @@ Scope {
                             Math.max(0.12, Appearance.aurora.subSurfaceTransparentize - 0.14))
                         : Appearance.colors.colLayer2
                     clip: true
+
+                    Behavior on implicitHeight {
+                        NumberAnimation {
+                            duration: Appearance.animation.elementMoveEnter.duration
+                            easing.type: Appearance.animation.elementMoveEnter.type
+                            easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
+                        }
+                    }
 
                     ListView {
                         id: listView

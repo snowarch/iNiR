@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Close window — tries QS first (for confirm dialog), falls back to niri.
 #
 # Race condition protection:
@@ -12,10 +12,20 @@
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 launcher_path="$script_dir/inir"
 
-# Capture focused window ID immediately — this is the window the user intended to close.
-focused_id=$(niri msg -j focused-window 2>/dev/null | grep -o '"id":[0-9]*' | grep -o '[0-9]*')
+# Capture focused window JSON immediately — this is the window the user intended to close.
+focused_window_json=$(niri msg -j focused-window 2>/dev/null)
+focused_id=$(printf '%s' "$focused_window_json" | grep -o '"id":[0-9]*' | grep -o '[0-9]*')
+focused_app_id=$(printf '%s' "$focused_window_json" | grep -o '"app_id":"[^"]*"' | sed 's/"app_id":"\([^"]*\)"/\1/')
 
 close_focused() {
+    if [ "${focused_app_id,,}" = "spotify" ]; then
+        # Keep Spotify running but hide its window from current workspace.
+        if [ -n "$focused_id" ]; then
+            niri msg action move-window-to-workspace --window-id "$focused_id" --focus false 99 >/dev/null 2>&1
+            return 0
+        fi
+    fi
+
     if [ -n "$focused_id" ]; then
         niri msg action close-window --id "$focused_id"
     else

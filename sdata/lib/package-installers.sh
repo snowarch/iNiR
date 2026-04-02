@@ -550,10 +550,6 @@ install-cliphist(){
   install-github-binary "cliphist" "sentriz/cliphist" "linux-amd64$"
 }
 
-install-matugen(){
-  install-github-binary "matugen" "InioX/matugen" "x86_64.*tar.gz"
-}
-
 install-starship(){
   if command -v starship &>/dev/null; then
     log_success "Starship already installed"
@@ -691,6 +687,7 @@ QT_STYLE_OVERRIDE=Darkly
 GTK_THEME=adw-gtk3-dark
 ELECTRON_OZONE_PLATFORM_HINT=auto
 ILLOGICAL_IMPULSE_VIRTUAL_ENV=\$HOME/.local/state/quickshell/.venv
+INIR_VENV=\$HOME/.local/state/quickshell/.venv
 EOF
 
   log_success "Environment configuration set"
@@ -1057,7 +1054,6 @@ install-all-tools(){
   install-eza
   install-uv
   install-cliphist
-  install-matugen
 
   log_success "All tools installed"
 }

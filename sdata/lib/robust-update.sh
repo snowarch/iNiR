@@ -336,7 +336,10 @@ cleanup_orphans() {
 # Main Update Function
 #####################################################################################
 
-# Perform robust update with backup, verification, and rollback
+# NOTE: This function is currently unused — setup's run_update() reimplements
+# the sync logic inline (lines ~863-942). The individual helpers it calls
+# (generate_manifest, cleanup_orphans, create_update_backup, rollback_update)
+# ARE used elsewhere. This function is kept as reference for future consolidation.
 perform_robust_update() {
     local repo_root="$1"
     local target_dir="${2:-$II_TARGET}"

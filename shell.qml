@@ -41,6 +41,18 @@ ShellRoot {
         Hyprsunset.load();
         FirstRunExperience.load();
         ConflictKiller.load();
+        // Reset shell entry state (hot-reload may preserve singletons)
+        GlobalStates.shellEntryReady = false;
+        if (Config.ready) shellEntryTimer.start();
+    }
+
+    // Shell entry animation: panels start hidden, slide in after a brief delay
+    // 400ms ensures LazyLoader panels are created and rendered in hidden state first
+    Timer {
+        id: shellEntryTimer
+        interval: Appearance.animationsEnabled ? 400 : 0
+        repeat: false
+        onTriggered: GlobalStates.shellEntryReady = true
     }
 
     Connections {
@@ -50,6 +62,8 @@ ShellRoot {
                 root._log("[Shell] Config ready, applying theme");
                 Qt.callLater(() => ThemeService.applyCurrentTheme());
                 Qt.callLater(() => IconThemeService.ensureInitialized());
+                // Kick off shell entry animation after panels have been created
+                shellEntryTimer.start();
                 // Only reset enabledPanels if it's empty or undefined (first run / corrupted config)
                 if (!Config.options?.enabledPanels || Config.options.enabledPanels.length === 0) {
                     const family = Config.options?.panelFamily ?? "ii"

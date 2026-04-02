@@ -20,6 +20,9 @@ layout {
     //   "always"      — always center the focused column
     center-focused-column "never"
 
+    // Keep a lone column from hugging the left edge on empty workspaces.
+    always-center-single-column
+
     // Widths cycled by switch-preset-column-width (Mod+R).
     // "proportion" = fraction of output width accounting for gaps.
     preset-column-widths {

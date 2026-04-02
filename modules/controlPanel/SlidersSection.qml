@@ -13,6 +13,7 @@ Rectangle {
     id: root
     Layout.fillWidth: true
     implicitHeight: slidersRow.implicitHeight + 12
+    readonly property bool compactMode: Config.options?.controlPanel?.compactMode ?? true
 
     readonly property bool inirEverywhere: Appearance.inirEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
@@ -35,8 +36,8 @@ Rectangle {
     RowLayout {
         id: slidersRow
         anchors.fill: parent
-        anchors.margins: 6
-        spacing: 4
+        anchors.margins: root.compactMode ? 5 : 6
+        spacing: root.compactMode ? 3 : 4
 
         // Brightness
         Loader {
@@ -87,8 +88,8 @@ Rectangle {
         spacing: 4
 
         RippleButton {
-            implicitWidth: 28
-            implicitHeight: 28
+            implicitWidth: root.compactMode ? 24 : 28
+            implicitHeight: root.compactMode ? 24 : 28
             buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
                 : root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
             colBackground: "transparent"
@@ -100,7 +101,7 @@ Rectangle {
             contentItem: MaterialSymbol {
                 anchors.centerIn: parent
                 text: miniSlider.icon
-                iconSize: 16
+                iconSize: root.compactMode ? 14 : 16
                 color: Appearance.angelEverywhere ? Appearance.angel.colText
                      : root.inirEverywhere ? Appearance.inir.colText 
                      : root.auroraEverywhere ? Appearance.m3colors.m3onSurface

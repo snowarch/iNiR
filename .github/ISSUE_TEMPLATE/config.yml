@@ -4,5 +4,5 @@ contact_links:
     url: https://discord.gg/pAPTfAhZUJ
     about: Chat with the community or get help
   - name: Documentation
-    url: https://github.com/snowarch/iNiR/tree/main/docs
+    url: https://github.com/snowarch/inir/tree/main/docs
     about: Installation, configuration, and reference guides

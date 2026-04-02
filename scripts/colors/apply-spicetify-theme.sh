@@ -4,9 +4,9 @@
 # from iNiR Material colors using custom theme with live updates.
 #
 # Design:
-# - First run (Spotify not running): apply theme, start watch mode, launch Spotify
-# - Subsequent runs (watch running): just update color.ini, watch handles live reload
-# - No Spotify restarts on wallpaper change when watch mode is active
+# - If Spotify is not running: only regenerate theme files (never start/open Spotify)
+# - If Spotify is running and watch mode is active: just update files, watch reloads live
+# - If Spotify is running without watch mode: refresh once, then start watch mode
 #
 # Reads: palette.json first, then colors.json fallback
 # Writes: ~/.config/spicetify/Themes/Inir/color.ini
@@ -116,6 +116,7 @@ read_colors() {
 
   COLORS[primary]=$(jq -r '.primary // "#8caaee"' "$color_source")
   COLORS[on_primary]=$(jq -r '.on_primary // "#1e3a5f"' "$color_source")
+  COLORS[on_primary_container]=$(jq -r '.on_primary_container // "#dce0e8"' "$color_source")
   COLORS[on_surface]=$(jq -r '.on_surface // "#dce0e8"' "$color_source")
   COLORS[on_surface_variant]=$(jq -r '.on_surface_variant // "#a6adc8"' "$color_source")
   COLORS[surface]=$(jq -r '.surface // "#1e1e2e"' "$color_source")
@@ -150,14 +151,14 @@ sidebar            = $(strip_hash "${COLORS[surface_container_low]}")
 player             = $(strip_hash "${COLORS[surface_container]}")
 card               = $(strip_hash "${COLORS[surface_container_high]}")
 shadow             = $(strip_hash "${COLORS[shadow]}")
-selected-row       = $(strip_hash "${COLORS[primary_container]}")
+selected-row       = $(strip_hash "${COLORS[on_surface_variant]}")
 button             = $(strip_hash "${COLORS[primary]}")
-button-active      = $(strip_hash "${COLORS[secondary]}")
-button-disabled    = $(strip_hash "${COLORS[outline]}")
-tab-active         = $(strip_hash "${COLORS[primary_container]}")
+button-active      = $(strip_hash "${COLORS[secondary_container]}")
+button-disabled    = $(strip_hash "${COLORS[outline_variant]}")
+tab-active         = $(strip_hash "${COLORS[surface_container_highest]}")
 notification       = $(strip_hash "${COLORS[tertiary]}")
 notification-error = $(strip_hash "${COLORS[error]}")
-misc               = $(strip_hash "${COLORS[outline_variant]}")
+misc               = $(strip_hash "${COLORS[outline]}")
 EOF
 }
 
@@ -168,24 +169,18 @@ regenerate_user_css_bridge() {
   [[ -f "$css_file" ]] || return 0
 
   # ── Derive bridge values from matugen palette ─────────────────────────────
-  # main-secondary / highlight: one step above surface
+  # main-secondary / highlight: elevated surface layers for clear hierarchy
   local main_secondary="${COLORS[surface_container]}"
-  # main-elevated: same as surface_container
-  local main_elevated="${COLORS[surface_container]}"
-  # highlight: between surface and surface_container
-  local highlight="${COLORS[surface_container_low]}"
-  # highlight-elevated: surface_container_high
-  local highlight_elevated="${COLORS[surface_container_high]}"
-  # nav-active: primary_container (the active pill in left nav)
+  local main_elevated="${COLORS[surface_container_high]}"
+  local highlight="${COLORS[surface_container_high]}"
+  local highlight_elevated="${COLORS[surface_container_highest]}"
+  # nav-active uses an explicit container+on-container pair for readability
   local nav_active="${COLORS[primary_container]}"
-  # nav-active-text: on_surface (text on active nav pill)
-  local nav_active_text="${COLORS[on_surface]}"
-  # playback-bar: on_surface_variant (progress bar fill — muted accent)
+  local nav_active_text="${COLORS[on_primary_container]}"
   local playback_bar="${COLORS[on_surface_variant]}"
-  # play-button: primary (the play/pause icon color)
   local play_button="${COLORS[primary]}"
-  # play-button-active: secondary (hover/active state)
-  local play_button_active="${COLORS[secondary]}"
+  local play_button_active="${COLORS[secondary_container]}"
+  local button_secondary="${COLORS[on_surface_variant]}"
 
   # ── Build the bridge block ────────────────────────────────────────────────
   local bridge_block
@@ -201,22 +196,24 @@ regenerate_user_css_bridge() {
   --spice-playback-bar:        #$(strip_hash "$playback_bar");
   --spice-play-button:         #$(strip_hash "$play_button");
   --spice-play-button-active:  #$(strip_hash "$play_button_active");
+  --spice-button-secondary:    #$(strip_hash "$button_secondary");
 
   /* RGB variants used for rgba() calls */
   --spice-rgb-main:            $(hex_to_rgb "${COLORS[surface]}");
   --spice-rgb-main-secondary:  $(hex_to_rgb "$main_secondary");
   --spice-rgb-sidebar:         $(hex_to_rgb "${COLORS[surface_container_low]}");
-  --spice-rgb-selected-row:    $(hex_to_rgb "${COLORS[primary_container]}");
+  --spice-rgb-selected-row:    $(hex_to_rgb "${COLORS[on_surface_variant]}");
   --spice-rgb-button:          $(hex_to_rgb "${COLORS[primary]}");
   --spice-rgb-shadow:          $(hex_to_rgb "${COLORS[shadow]}");
-  --spice-rgb-misc:            $(hex_to_rgb "${COLORS[outline_variant]}");
+  --spice-rgb-misc:            $(hex_to_rgb "${COLORS[outline]}");
 }
 /* === end iNiR CSS variable bridge ==="
 
   # ── Replace only the bridge block in user.css (keep everything else) ──────
   # Use python3 for reliable multi-line regex replace without temp file races.
   # The regex removes ALL occurrences (handles stale duplicate blocks from
-  # previous buggy runs) and inserts a single fresh block at the top.
+  # previous buggy runs) and appends a single fresh block at the end so these
+  # vars win over any later Sleek defaults/redefinitions.
   python3 - "$css_file" "$bridge_block" <<'PYEOF'
 import sys, re, pathlib
 css_path = pathlib.Path(sys.argv[1])
@@ -228,8 +225,10 @@ pattern = re.compile(
 )
 # Strip ALL existing bridge blocks (including duplicates from prior bad runs)
 content = pattern.sub('', content).lstrip('\n')
-# Prepend the single fresh block
-content = new_block + '\n' + content
+# Append the single fresh block so it has final cascade priority
+if content and not content.endswith('\n'):
+    content += '\n'
+content = content + '\n' + new_block + '\n'
 css_path.write_text(content)
 PYEOF
 
@@ -355,13 +354,11 @@ main() {
   fi
 
   if ! $spotify_running; then
-    log "Spotify not running - applying theme and starting watch mode"
-    apply_spicetify_theme || {
-      log "Failed to apply theme"
-      exit 1
-    }
-    log "Theme applied: $THEME_NAME/$SCHEME_NAME"
-    start_watch_mode
+    # Important UX rule: color generation must never open Spotify by itself.
+    # Keep this path write-only (color.ini + user.css bridge already updated)
+    # and return without apply/watch operations.
+    log "Spotify not running - updated theme files only (no auto-open)"
+    exit 0
   else
     log "Spotify running without watch - starting watch mode (no restart)"
     # If watch wasn't running, the file changes we just wrote won't be picked up.

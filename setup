@@ -10,7 +10,22 @@ resolve_bootstrap_repo_root() {
         return
     fi
 
-    local version_file="${XDG_CONFIG_HOME:-$HOME/.config}/illogical-impulse/version.json"
+    local xdg_config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
+    local config_new="${xdg_config_home}/inir"
+    local config_legacy="${xdg_config_home}/illogical-impulse"
+    local config_dir=""
+
+    if [[ -L "$config_legacy" && -d "$config_new" ]]; then
+        config_dir="$config_new"
+    elif [[ -d "$config_legacy" ]]; then
+        config_dir="$config_legacy"
+    elif [[ -d "$config_new" ]]; then
+        config_dir="$config_new"
+    else
+        config_dir="$config_new"
+    fi
+
+    local version_file="${config_dir}/version.json"
     local stored_repo=""
 
     if [[ -f "$version_file" ]]; then
@@ -34,6 +49,13 @@ resolve_bootstrap_repo_root() {
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(resolve_bootstrap_repo_root "$SCRIPT_DIR")"
+
+if [[ ! -d "$REPO_ROOT" || ! -f "$REPO_ROOT/shell.qml" ]]; then
+    echo "Error: Could not find iNiR repository (resolved to: ${REPO_ROOT:-<empty>})" >&2
+    echo "Run this script from the iNiR repo directory, or fix ~/.config/inir/version.json" >&2
+    exit 1
+fi
+
 cd "$REPO_ROOT"
 
 # Handle Ctrl+C gracefully
@@ -274,7 +296,7 @@ tui_menu() {
 
     # Detect current state
     local is_installed=false
-    [[ -f "${XDG_CONFIG_HOME}/illogical-impulse/installed_true" ]] && is_installed=true
+    [[ -f "${FIRSTRUN_FILE}" ]] && is_installed=true
 
     if $is_installed; then
         show_version_info
@@ -295,7 +317,8 @@ tui_menu() {
     fi
 
     case "$choice" in
-        Install|Reinstall) run_install ;;
+        Install) run_install ;;
+        Reinstall) IS_UPDATE=true run_install ;;
         Update) run_update ;;
         Migrate) run_migrate ;;
         Doctor) run_doctor ;;
@@ -318,6 +341,7 @@ show_status() {
     local update_strategy=$(get_installed_update_strategy)
     local installed_repo_path=$(get_installed_repo_path)
     local update_hint=$(get_installed_package_update_hint)
+    local installed_version_file=$(get_installed_version_file)
     local repo_ver
     local repo_commit
     local runtime_dir=$(get_runtime_shell_dir)
@@ -384,6 +408,8 @@ show_status() {
 
     if [[ -f "$runtime_version_file" ]]; then
         tui_check_ok "Runtime metadata present"
+    elif [[ "$installed_mode" == "repo-link" && -n "$installed_version_file" ]] && version_file_has_core_metadata "$installed_version_file"; then
+        tui_check_ok "Repo-link metadata present via config tracking"
     else
         tui_check_warn "Runtime metadata missing"
     fi
@@ -427,20 +453,20 @@ run_install() {
     check_conflicts
 
     # 1. Dependencies
-    if [[ "${SKIP_DEPS}" != "true" ]]; then
-        tui_step 1 3 "Installing dependencies"
+    if [[ "${SKIP_ALLDEPS}" != "true" ]]; then
+        tui_step 1 3 "Installing dependencies" "Package managers, shell runtime pieces, and compositor requirements."
         source ./sdata/subcmd-install/1.deps-router.sh
     fi
 
     # 2. System setup (groups, services)
-    if [[ "${SKIP_SETUPS}" != "true" ]]; then
-        tui_step 2 3 "System configuration"
+    if [[ "${SKIP_ALLSETUPS}" != "true" ]]; then
+        tui_step 2 3 "System configuration" "Groups, services, permissions, and machine-level integration."
         source ./sdata/subcmd-install/2.setups.sh
     fi
 
     # 3. Config files
-    if [[ "${SKIP_FILES}" != "true" ]]; then
-        tui_step 3 3 "Installing config files"
+    if [[ "${SKIP_ALLFILES}" != "true" ]]; then
+        tui_step 3 3 "Installing config files" "User configs, backups, wallpaper defaults, and generated theme inputs."
         source ./sdata/subcmd-install/3.files.sh
     fi
 
@@ -779,47 +805,58 @@ run_update() {
     if [[ "${_II_POST_PULL:-}" == "1" ]]; then
         unset _II_POST_PULL
         tui_success "Libraries reloaded after pull"
-    elif check_remote_updates; then
-        show_pending_commits
-
-        if $ask; then
-            if ! tui_confirm "Pull and apply these updates?"; then
-                echo "Cancelled."
-                return 0
-            fi
-        fi
-
-        # Create snapshot BEFORE pulling
-        tui_info "Creating snapshot..."
-        local remote_commit=$(get_remote_commit)
-        local snapshot_id=$(create_snapshot "update" "Before update to ${remote_commit}" "$remote_commit")
-        tui_success "Snapshot: $snapshot_id"
-
-        # Pull changes
-        tui_info "Pulling changes..."
-        if ! git -C "$REPO_ROOT" pull --ff-only origin 2>/dev/null; then
-            tui_error "Git pull failed. You may have local changes."
-            tui_info "Try: git stash && ./setup update"
-            return 1
-        fi
-        tui_success "Changes pulled"
-
-        # Re-exec to pick up updated library code from the pull.
-        # Without this, functions sourced at startup (doctor, migrations, etc.)
-        # would still be the OLD versions in memory.
-        local reexec_args=("update")
-        $ask || reexec_args+=("-y")
-        $quiet && reexec_args+=("-q")
-        export _II_POST_PULL=1
-        exec "$REPO_ROOT/setup" "${reexec_args[@]}"
     else
+        local update_rc=0
+        check_remote_updates || update_rc=$?
+
+        if [[ "$update_rc" -eq 0 ]]; then
+            # Updates available
+            show_pending_commits
+
+            if $ask; then
+                if ! tui_confirm "Pull and apply these updates?"; then
+                    echo "Cancelled."
+                    return 0
+                fi
+            fi
+
+            # Create snapshot BEFORE pulling
+            tui_info "Creating snapshot..."
+            local remote_commit=$(get_remote_commit)
+            local snapshot_id=$(create_snapshot "update" "Before update to ${remote_commit}" "$remote_commit")
+            tui_success "Snapshot: $snapshot_id"
+
+            # Pull changes
+            tui_info "Pulling changes..."
+            if ! git -C "$REPO_ROOT" pull --ff-only origin 2>/dev/null; then
+                tui_error "Git pull failed. You may have local changes."
+                tui_info "Try: git stash && ./setup update"
+                return 1
+            fi
+            tui_success "Changes pulled"
+
+            # Re-exec to pick up updated library code from the pull.
+            # Without this, functions sourced at startup (doctor, migrations, etc.)
+            # would still be the OLD versions in memory.
+            local reexec_args=("update")
+            $ask || reexec_args+=("-y")
+            $quiet && reexec_args+=("-q")
+            export _II_POST_PULL=1
+            exec "$REPO_ROOT/setup" "${reexec_args[@]}"
+        elif [[ "$update_rc" -eq 2 ]]; then
+            # Could not check remote (offline or not a git repo)
+            tui_warn "Could not check for remote updates (offline or not a git repo)"
+            tui_info "Checking local repo vs installed version..."
+        fi
+        # Fall through: rc=1 (no updates) or rc=2 (error) — check local repo vs installed
+
         # Check if local repo is ahead of installed
         local installed_ver=$(get_installed_version)
         local installed_commit=$(get_installed_commit)
         local repo_ver=$(get_repo_version)
         local repo_commit=$(get_repo_commit)
 
-        if [[ "$installed_ver" == "0.0.0" ]] && [[ -f "${XDG_CONFIG_HOME}/illogical-impulse/installed_true" ]]; then
+        if [[ "$installed_ver" == "0.0.0" ]] && [[ -f "${FIRSTRUN_FILE}" ]]; then
             tui_info "Detected existing installation without version tracking"
         elif [[ "$installed_commit" == "$repo_commit" ]]; then
             tui_success "Already up to date ($installed_ver)"
@@ -900,6 +937,25 @@ run_update() {
             tui_info "Preserving legacy quickshell/ii runtime..."
             PRESERVED_MODS_DIR=$(preserve_runtime_tree "$runtime_compare_dir" "legacy-runtime")
             tui_success "Legacy runtime preserved"
+        elif [[ -f "${runtime_compare_dir}/shell.qml" ]]; then
+            # No checksum manifest (v1 or missing) — compare installed files
+            # directly against repo to catch user modifications before first v2 update
+            echo ""
+            tui_info "No checksum manifest — comparing installed files against repo..."
+
+            local modified_files_str
+            modified_files_str=$(detect_user_modifications_by_source_comparison "$runtime_compare_dir" "$REPO_ROOT")
+
+            local mod_count=0
+            [[ -n "$modified_files_str" ]] && mod_count=$(echo "$modified_files_str" | grep -c . || echo 0)
+
+            if [[ $mod_count -gt 0 ]]; then
+                if ! handle_user_modifications "$modified_files_str" "" "$runtime_compare_dir"; then
+                    return 1  # User cancelled
+                fi
+            else
+                tui_success "No local modifications detected"
+            fi
         fi
 
         echo ""
@@ -941,6 +997,9 @@ run_update() {
     # Generate manifest
     generate_manifest "$II_SOURCE" "${II_TARGET}/.inir-manifest"
 
+    # Remove orphan files left from previous versions
+    cleanup_orphans "$II_TARGET" "${II_TARGET}/.inir-manifest"
+
     # Fix permissions
     find "$II_TARGET/scripts" \( -name "*.sh" -o -name "*.fish" -o -name "*.py" \) -exec chmod +x {} \; 2>/dev/null || true
     [[ -f "${II_TARGET}/setup" ]] && chmod +x "${II_TARGET}/setup"
@@ -979,25 +1038,6 @@ run_update() {
     fi
 
     tui_success "Files synced"
-
-    # Ensure matugen config contains the ii-pixel SDDM sync post_hook template.
-    # We only append the missing block (idempotent) to avoid overwriting user templates.
-    if command -v matugen >/dev/null 2>&1; then
-        local matugen_cfg="${XDG_CONFIG_HOME}/matugen/config.toml"
-        if [[ -f "$matugen_cfg" ]]; then
-            if ! grep -q "\[templates\.ii_pixel_sddm_sync\]" "$matugen_cfg" 2>/dev/null; then
-                echo "" >> "$matugen_cfg"
-                cat >> "$matugen_cfg" << 'MATUGEN_SDDM_EOF'
-
-# SDDM ii-pixel theme sync (safe no-op if script/theme are not present)
-[templates.ii_pixel_sddm_sync]
-input_path = '/dev/null'
-output_path = '/dev/null'
-post_hook = 'bash -lc "[[ -x ~/.local/bin/sync-pixel-sddm.py && -d /usr/share/sddm/themes/ii-pixel ]] && nohup python3 ~/.local/bin/sync-pixel-sddm.py >/dev/null 2>&1 &"'
-MATUGEN_SDDM_EOF
-            fi
-        fi
-    fi
 
     # Refresh ii-pixel SDDM theme on update (keeps shipped theme in sync with fixes)
     # Intelligent behavior:
@@ -1264,16 +1304,14 @@ run_doctor() {
 # Parse args
 ###############################################################################
 COMMAND=""
+SUBCMD_ARGS=()
 while [[ $# -gt 0 ]]; do
     case $1 in
-        install) COMMAND="install"; shift ;;
-        update) COMMAND="update"; shift ;;
-        migrate) COMMAND="migrate"; shift ;;
-        doctor) COMMAND="doctor"; shift ;;
-        rollback) COMMAND="rollback"; shift ;;
-        my-changes) COMMAND="my-changes"; shift ;;
-        uninstall) COMMAND="uninstall"; shift ;;
-        status) COMMAND="status"; shift ;;
+        install|update|migrate|doctor|rollback|my-changes|uninstall|status)
+            COMMAND="$1"; shift
+            SUBCMD_ARGS=("$@")
+            break
+            ;;
         -y|--yes) ask=false; shift ;;
         -q|--quiet) quiet=true; shift ;;
         --set-default-shell) export INIR_SET_DEFAULT_SHELL=true; shift ;;
@@ -1284,6 +1322,10 @@ done
 
 # Check prerequisites for install command (after parsing flags)
 if [[ "$COMMAND" == "install" ]]; then
+  # Source install-specific option parser if there are subcommand args
+  if [[ ${#SUBCMD_ARGS[@]} -gt 0 ]]; then
+    source ./sdata/subcmd-install/options.sh "${SUBCMD_ARGS[@]}"
+  fi
   _check_privilege_prereqs "install"
 fi
 

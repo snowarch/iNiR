@@ -1,0 +1,9 @@
+{
+  "id": "zed",
+  "label": "Zed",
+  "module": "31-zed.sh",
+  "category": "editor",
+  "inputs": ["palette.json", "terminal.json", "material_colors.scss"],
+  "description": "Generate and apply Zed themes from the generated shell and terminal palettes.",
+  "configKey": "appearance.wallpaperTheming.enableZed"
+}

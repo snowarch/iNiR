@@ -86,14 +86,15 @@ StyledImage {
         command: {
             const maxSize = Images.thumbnailSizes[root.thumbnailSizeName];
             const thumbPath = FileUtils.trimFileProtocol(root.thumbnailPath);
+            const thumbDir = FileUtils.parentDirectory(thumbPath);
             if (root.isVideo) {
                 // Extract first frame from video with ffmpeg
                 return ["bash", "-c",
-                    `[ -f '${thumbPath}' ] && exit 0 || { ffmpeg -y -i '${root.sourcePath}' -vframes 1 -vf "scale='min(${maxSize},iw)':'min(${maxSize},ih)':force_original_aspect_ratio=decrease" '${thumbPath}' 2>/dev/null && exit 1; }`
+                    `mkdir -p '${thumbDir}' && [ -f '${thumbPath}' ] && exit 0 || { ffmpeg -y -i '${root.sourcePath}' -vframes 1 -vf "scale='min(${maxSize},iw)':'min(${maxSize},ih)':force_original_aspect_ratio=decrease" '${thumbPath}' 2>/dev/null && exit 1; }`
                 ]
             }
             return ["bash", "-c",
-                `[ -f '${thumbPath}' ] && exit 0 || { magick '${root.sourcePath}[0]' -resize ${maxSize}x${maxSize} '${thumbPath}' && exit 1; }`
+                `mkdir -p '${thumbDir}' && [ -f '${thumbPath}' ] && exit 0 || { magick '${root.sourcePath}[0]' -resize ${maxSize}x${maxSize} '${thumbPath}' && exit 1; }`
             ]
         }
         onExited: (exitCode, exitStatus) => {

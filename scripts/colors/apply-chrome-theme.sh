@@ -18,6 +18,9 @@ XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 STATE_DIR="$XDG_STATE_HOME/quickshell"
 CHROMIUM_THEME_FILE="$STATE_DIR/user/generated/chromium.theme"
 LOG_FILE="$STATE_DIR/user/generated/chrome_theme.log"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/lib/config-path.sh
+source "$SCRIPT_DIR/../lib/config-path.sh"
 mkdir -p "$STATE_DIR/user/generated" 2>/dev/null
 : > "$LOG_FILE" 2>/dev/null
 
@@ -326,7 +329,8 @@ apply_to_browser() {
 
 resolve_variant() {
   # Read variant from config
-  local config_file="${XDG_CONFIG_HOME:-$HOME/.config}/illogical-impulse/config.json"
+  local config_file
+  config_file="$(inir_config_file)"
   if [[ -f "$config_file" ]]; then
     local variant
     variant=$(jq -r '.appearance.palette.type // "auto"' "$config_file" 2>/dev/null)

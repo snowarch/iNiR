@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Memory optimization environment for Quickshell/iNiR
 #
 # Qt decodes wallpaper images in background threads. glibc malloc creates

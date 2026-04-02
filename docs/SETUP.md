@@ -307,7 +307,7 @@ These checks cover:
 | GTK themes | `~/.config/gtk-3.0/`, `~/.config/gtk-4.0/` |
 | Qt themes | `~/.config/kdeglobals`, `~/.config/Kvantum/` |
 | Color schemes | `~/.local/share/color-schemes/` |
-| Matugen config | `~/.config/matugen/` |
+| Theming templates | `~/.config/matugen/` |
 | Fuzzel config | `~/.config/fuzzel/` |
 | Vesktop themes | `~/.config/vesktop/themes/` |
 
@@ -385,7 +385,7 @@ These may be used by other applications. The script asks before removing:
 | Path | Type | Default Action |
 |------|------|----------------|
 | `~/.config/niri/config.kdl` | Essential | Keep (especially if in Niri session) |
-| `~/.config/matugen/` | Optional | Ask (remove if matugen not installed) |
+| `~/.config/matugen/` | Optional | Ask (remove if you do not want to keep iNiR theming templates) |
 | `~/.config/fuzzel/` | Optional | Ask (remove if fuzzel not installed) |
 | `~/.config/Kvantum/` | Optional | Ask (remove if Kvantum not installed) |
 | `~/.config/kdeglobals` | Optional | Ask |
@@ -408,7 +408,7 @@ The script lists packages installed by iNiR but does not remove them automatical
 - `wl-clipboard`, `brightnessctl`, `playerctl`, `dunst`
 
 **Optional tools:**
-- `matugen`, `cava`, `easyeffects`
+- `cava`, `easyeffects`
 
 The script provides distro-specific removal commands (pacman, dnf, apt) with safety recommendations.
 
@@ -456,7 +456,7 @@ rm -f ~/.config/Vesktop/themes/ii-colors.css
 
 # Remove shared configs (review before running)
 # rm -rf ~/.config/niri/config.kdl  # Only if not using Niri
-# rm -rf ~/.config/matugen
+# rm -rf ~/.config/matugen          # Optional: iNiR theming templates
 # rm -rf ~/.config/fuzzel
 # rm -rf ~/.config/Kvantum
 # rm -f ~/.config/kdeglobals

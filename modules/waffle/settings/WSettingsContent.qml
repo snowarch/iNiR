@@ -95,7 +95,7 @@ Item {
         { pageIndex: 3, pageName: "Background", section: "Backdrop (Overview)", label: "Enable backdrop", targetLabel: "Enable backdrop", keywords: ["backdrop", "overview", "background"] },
         { pageIndex: 3, pageName: "Background", section: "Backdrop (Overview)", label: "Use separate wallpaper", targetLabel: "Use separate wallpaper", keywords: ["backdrop", "wallpaper", "separate", "different"] },
         { pageIndex: 3, pageName: "Background", section: "Backdrop (Overview)", label: "Backdrop wallpaper", targetLabel: "Backdrop wallpaper", keywords: ["backdrop", "wallpaper", "change", "overview"] },
-        { pageIndex: 3, pageName: "Background", section: "Backdrop (Overview)", label: "Derive theme colors from backdrop", targetLabel: "Derive theme colors from backdrop", keywords: ["backdrop", "theme", "colors", "wallpaper", "matugen"] },
+        { pageIndex: 3, pageName: "Background", section: "Backdrop (Overview)", label: "Derive theme colors from backdrop", targetLabel: "Derive theme colors from backdrop", keywords: ["backdrop", "theme", "colors", "wallpaper", "material you"] },
         { pageIndex: 3, pageName: "Background", section: "Backdrop (Overview)", label: "Hide main wallpaper", targetLabel: "Hide main wallpaper", keywords: ["backdrop", "wallpaper", "hide", "main"] },
         { pageIndex: 3, pageName: "Background", section: "Backdrop (Overview)", label: "Backdrop blur", targetLabel: "Backdrop blur", keywords: ["backdrop", "blur", "radius"] },
         { pageIndex: 3, pageName: "Background", section: "Backdrop (Overview)", label: "Backdrop dim", targetLabel: "Backdrop dim", keywords: ["backdrop", "dim", "dark"] },
@@ -108,7 +108,7 @@ Item {
         // === Themes (4) ===
         { pageIndex: 4, pageName: "Themes", section: "Color Theme", label: "Color Theme", targetLabel: "Color Theme", keywords: ["theme", "color", "preset", "gruvbox", "catppuccin", "nord", "dracula", "monokai", "tokyo"] },
         { pageIndex: 4, pageName: "Themes", section: "Dark Mode", label: "Appearance", targetLabel: "Appearance", keywords: ["dark", "light", "mode", "theme", "appearance"] },
-        { pageIndex: 4, pageName: "Themes", section: "Color Scheme", label: "Palette type", targetLabel: "Palette type", keywords: ["palette", "scheme", "matugen", "material", "colors", "expressive", "fidelity"] },
+        { pageIndex: 4, pageName: "Themes", section: "Color Scheme", label: "Palette type", targetLabel: "Palette type", keywords: ["palette", "scheme", "material you", "material", "colors", "expressive", "fidelity"] },
         { pageIndex: 4, pageName: "Themes", section: "Waffle Typography", label: "Font family", targetLabel: "Font family", keywords: ["font", "family", "typography", "segoe", "inter", "roboto", "noto"] },
         { pageIndex: 4, pageName: "Themes", section: "Waffle Typography", label: "Font scale", targetLabel: "Font scale", keywords: ["font", "size", "scale", "typography", "bigger", "smaller"] },
         

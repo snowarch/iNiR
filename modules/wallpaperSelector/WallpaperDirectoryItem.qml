@@ -65,12 +65,29 @@ MouseArea {
                         id: thumbnailImage
                         generateThumbnail: true
                         sourcePath: fileModelData.filePath
+                        // Force x-large (512px) minimum for crisp grid thumbnails.
+                        // The default auto-detect can pick "large" (256px) for small cells,
+                        // producing visible blur on 300-400px wide grid items.
+                        thumbnailSizeName: {
+                            const auto = Images.thumbnailSizeNameForDimensions(
+                                Math.round(wallpaperItemImageContainer.width * root._dpr),
+                                Math.round(wallpaperItemImageContainer.height * root._dpr)
+                            )
+                            return (auto === "normal" || auto === "large") ? "x-large" : auto
+                        }
 
                         cache: true
                         fillMode: Image.PreserveAspectCrop
                         clip: true
-                        sourceSize.width: Math.round(wallpaperItemImageContainer.width * root._dpr)
-                        sourceSize.height: Math.round(wallpaperItemImageContainer.height * root._dpr)
+                        smooth: true
+                        sourceSize.width: Math.max(
+                            Math.round(wallpaperItemImageContainer.width * root._dpr),
+                            Images.thumbnailSizes[thumbnailSizeName] ?? 512
+                        )
+                        sourceSize.height: Math.max(
+                            Math.round(wallpaperItemImageContainer.height * root._dpr),
+                            Images.thumbnailSizes[thumbnailSizeName] ?? 512
+                        )
 
                         Connections {
                             target: Wallpapers

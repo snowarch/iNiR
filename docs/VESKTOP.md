@@ -29,7 +29,7 @@ Features:
 
 ### Wallpaper Changes (Auto mode)
 When you change your wallpaper:
-1. `switchwall.sh` runs matugen to generate Material You colors
+1. `switchwall.sh` runs `generate_colors_material.py` to generate Material You colors
 2. `system24_palette.sh` generates the complete theme with embedded palette
 3. Vesktop should auto-reload theme changes (if it doesn't, use Ctrl+R)
 

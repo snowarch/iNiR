@@ -9,12 +9,14 @@ import qs.modules.common.functions
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Qt5Compat.GraphicalEffects as GE
 import QtQuick.Effects
 import QtQuick.Shapes
 import QtMultimedia
 import Quickshell
 
+// Skew wallpaper selector — parallelogram slice layout ported from skwd.
+// Key design: expanded center card + narrow skewed slices, clean masking,
+// no ambient backdrop bleed-through, no dominant color probing bloat.
 Item {
     id: root
 
@@ -40,19 +42,11 @@ Item {
     readonly property real _dpr: root.window ? root.window.devicePixelRatio : 1
 
     // ─── Filtered index maps ───
-    // _imageIndexMap[i] = original model index of the i-th image/video item
-    // _folderItems = array of { name, path } for all folders in current dir
     property var _imageIndexMap: []
     property var _folderItems: []
-    property var _imageDominantColors: ({})
-    property var _pendingDominantColorIndices: []
-    property int _dominantProbeImageIndex: -1
-    property string _dominantProbeSource: ""
 
     // 0=all, 1=image, 2=video, 3=gif
     property int typeFilter: 0
-    // -1=all, 0..themeSwatches.length-1 = selected generated palette family
-    property int paletteFilterIndex: -1
 
     function _mediaKind(name: string): string {
         const l = name.toLowerCase()
@@ -63,136 +57,6 @@ Item {
 
     function _normalizedFilePath(path: string): string {
         return FileUtils.trimFileProtocol(String(path ?? ""))
-    }
-
-    function _paletteDistance(colorA: color, colorB: color): real {
-        const dr = colorA.r - colorB.r
-        const dg = colorA.g - colorB.g
-        const db = colorA.b - colorB.b
-        const dl = colorA.hslLightness - colorB.hslLightness
-        return dr * dr + dg * dg + db * db + dl * dl * 0.35
-    }
-
-    function _dominantSwatchIndexForColor(col: color): int {
-        let bestIndex = -1
-        let bestDistance = Number.POSITIVE_INFINITY
-        for (let i = 0; i < themeSwatches.length; i++) {
-            const dist = _paletteDistance(col, themeSwatches[i])
-            if (dist < bestDistance) {
-                bestDistance = dist
-                bestIndex = i
-            }
-        }
-        return bestIndex
-    }
-
-    function _dominantColorForImageIndex(imgIdx: int): color {
-        const path = _normalizedFilePath(_imgFilePath(imgIdx))
-        return _imageDominantColors[path]
-    }
-
-    function _itemQuantizerSource(imgIdx: int): string {
-        const path = _normalizedFilePath(_imgFilePath(imgIdx))
-        if (path.length === 0) return ""
-        const lower = _imgFileName(imgIdx).toLowerCase()
-        const isVideo = lower.endsWith(".mp4") || lower.endsWith(".webm") || lower.endsWith(".mkv") || lower.endsWith(".avi") || lower.endsWith(".mov")
-        const isGif = lower.endsWith(".gif")
-        if (isVideo || isGif) {
-            Wallpapers.ensureThumbnailForPath(path, root._thumbSizeName)
-            if (isVideo)
-                Wallpapers.ensureVideoFirstFrame(path)
-            const thumbPath = Wallpapers.getExpectedThumbnailPath(path, root._thumbSizeName)
-            return thumbPath.length > 0 ? ("file://" + thumbPath) : ""
-        }
-        return "file://" + path
-    }
-
-    function _modelQuantizerSource(modelIdx: int): string {
-        if (modelIdx < 0 || modelIdx >= totalCount)
-            return ""
-        const path = _normalizedFilePath(folderModel.get(modelIdx, "filePath") ?? "")
-        if (path.length === 0)
-            return ""
-        const lower = String(folderModel.get(modelIdx, "fileName") ?? "").toLowerCase()
-        const isVideo = lower.endsWith(".mp4") || lower.endsWith(".webm") || lower.endsWith(".mkv") || lower.endsWith(".avi") || lower.endsWith(".mov")
-        const isGif = lower.endsWith(".gif")
-        if (isVideo || isGif) {
-            Wallpapers.ensureThumbnailForPath(path, root._thumbSizeName)
-            if (isVideo)
-                Wallpapers.ensureVideoFirstFrame(path)
-            const thumbPath = Wallpapers.getExpectedThumbnailPath(path, root._thumbSizeName)
-            return thumbPath.length > 0 ? ("file://" + thumbPath) : ""
-        }
-        return "file://" + path
-    }
-
-    function _matchesPaletteFilter(filePath: string): bool {
-        if (paletteFilterIndex < 0)
-            return true
-        const dominant = _imageDominantColors[_normalizedFilePath(filePath)]
-        if (!dominant)
-            return false
-        return _dominantSwatchIndexForColor(dominant) === paletteFilterIndex
-    }
-
-    function _scheduleDominantColorScan(reset = false): void {
-        if (reset) {
-            _pendingDominantColorIndices = []
-            _dominantProbeImageIndex = -1
-            _dominantProbeSource = ""
-        }
-
-        // Only scan when palette filtering is active or about to be used
-        // Prioritize items near the current view position
-        const pending = []
-        const viewCenter = root.currentImageIndex
-        const nearRange = 20 // probe nearby items first
-        const addIfNeeded = (i) => {
-            const isDir = folderModel.get(i, "fileIsDir") ?? false
-            if (isDir) return
-            const path = _normalizedFilePath(folderModel.get(i, "filePath") ?? "")
-            if (path.length === 0 || _imageDominantColors[path]) return
-            pending.push(i)
-        }
-
-        // Near items first (sorted by distance from current view)
-        for (let d = 0; d < nearRange && d < totalCount; d++) {
-            const before = viewCenter - d
-            const after = viewCenter + d
-            if (before >= 0 && before < totalCount) addIfNeeded(before)
-            if (d > 0 && after >= 0 && after < totalCount) addIfNeeded(after)
-        }
-        // Then the rest
-        for (let i = 0; i < totalCount; i++) {
-            if (i >= viewCenter - nearRange && i <= viewCenter + nearRange) continue
-            addIfNeeded(i)
-        }
-
-        if (pending.length > 0) {
-            _pendingDominantColorIndices = pending
-            dominantColorProbeTimer.restart()
-        }
-    }
-
-    function _startNextDominantColorProbe(): void {
-        if (_pendingDominantColorIndices.length === 0) {
-            _dominantProbeImageIndex = -1
-            _dominantProbeSource = ""
-            dominantColorProbeTimeout.stop()
-            return
-        }
-
-        const next = _pendingDominantColorIndices[0]
-        _pendingDominantColorIndices = _pendingDominantColorIndices.slice(1)
-        _dominantProbeImageIndex = next
-        _dominantProbeSource = _modelQuantizerSource(next)
-
-        if (_dominantProbeSource.length === 0) {
-            Qt.callLater(_startNextDominantColorProbe)
-            return
-        }
-
-        dominantColorProbeTimeout.restart()
     }
 
     function _rebuildIndexMaps(): void {
@@ -207,13 +71,11 @@ Item {
                 })
             } else {
                 const fname = folderModel.get(i, "fileName") ?? ""
-                const filePath = folderModel.get(i, "filePath") ?? ""
                 const kind = _mediaKind(fname)
-                if ((typeFilter === 0
+                if (typeFilter === 0
                     || (typeFilter === 1 && kind === "image")
                     || (typeFilter === 2 && kind === "video")
-                    || (typeFilter === 3 && kind === "gif"))
-                    && _matchesPaletteFilter(filePath)) {
+                    || (typeFilter === 3 && kind === "gif")) {
                     imgMap.push(i)
                 }
             }
@@ -222,19 +84,11 @@ Item {
         _folderItems = folders
     }
 
-    // When typeFilter changes, rebuild index maps and reset position
     onTypeFilterChanged: {
         _snapDone = false
         currentImageIndex = 0
         _rebuildIndexMaps()
         _scheduleInitialScroll()
-    }
-    onPaletteFilterIndexChanged: {
-        _snapDone = false
-        currentImageIndex = 0
-        _rebuildIndexMaps()
-        _scheduleInitialScroll()
-        _scheduleDominantColorScan()
     }
 
     // ─── Image-only derived counts ───
@@ -246,7 +100,6 @@ Item {
     // ─── Active item (image-only index space) ───
     property int currentImageIndex: 0
 
-    // Map image-space index → model index
     function _imgModelIndex(imgIdx: int): int {
         if (imgIdx < 0 || imgIdx >= _imageIndexMap.length) return -1
         return _imageIndexMap[imgIdx]
@@ -263,28 +116,26 @@ Item {
 
     readonly property string activePath: hasImages ? _imgFilePath(currentImageIndex) : ""
     readonly property string activeName: hasImages ? _imgFileName(currentImageIndex) : ""
-    readonly property string activeQuantizerSource: {
-        if (!hasImages || activePath.length === 0) return ""
-        const lower = activeName.toLowerCase()
-        const isVideo = lower.endsWith(".mp4") || lower.endsWith(".webm") || lower.endsWith(".mkv") || lower.endsWith(".avi") || lower.endsWith(".mov")
-        const isGif = lower.endsWith(".gif")
-        if (isVideo || isGif) {
-            const thumbPath = Wallpapers.getExpectedThumbnailPath(activePath, "x-large")
-            return thumbPath.length > 0 ? ("file://" + thumbPath) : ""
-        }
-        return "file://" + activePath
+
+    property bool showKeyboardGuide: false
+    property bool animatePreview: Config.options?.wallpaperSelector?.animatePreview ?? false
+    property bool _snapDone: false
+    property int _wheelAccum: 0
+    property bool _contentVisible: false
+    readonly property string activeDisplayName: activePath.length > 0 ? FileUtils.fileNameForPath(activePath) : ""
+    readonly property string activeStatusText: {
+        if (!hasImages)
+            return Translation.tr("No wallpapers in this folder")
+        if (FileUtils.trimFileProtocol(String(currentWallpaperPath ?? "")) === FileUtils.trimFileProtocol(activePath))
+            return Translation.tr("Current wallpaper")
+        if (activeName.toLowerCase().endsWith(".gif"))
+            return Translation.tr("Animated image")
+        if (_mediaKind(activeName) === "video")
+            return Translation.tr("Video wallpaper")
+        return Translation.tr("Ready to apply")
     }
 
-    property bool showKeyboardGuide: true
-    property bool animatePreview: false
-    property bool _snapDone: false
-    property real _focusPulse: 0
-    property int _wheelAccum: 0
-
     // ─── Rapid-navigation velocity tracking ───
-    // When the user presses arrow keys (or wheel) quickly in succession,
-    // reduce highlightMoveDuration so animations don't queue up.
-    // Threshold is 3 steps so casual browsing stays at the normal pace.
     property bool _rapidNavigation: false
     property int _rapidNavSteps: 0
 
@@ -304,6 +155,13 @@ Item {
         rapidNavCooldown.restart()
     }
 
+    // ─── Fade-in on open (skwd pattern: 50ms delay → opacity 0→1, 400ms OutCubic) ───
+    Timer {
+        id: contentShowTimer
+        interval: 50
+        onTriggered: root._contentVisible = true
+    }
+
     // ─── Skew / layout parameters (matching skwd geometry) ───
     readonly property real thumbnailDecodeScale: 1.2
     readonly property int baseSliceWidth: 135
@@ -312,12 +170,11 @@ Item {
     readonly property int baseSkewExtent: 35
     readonly property int baseSliceSpacing: -22
     readonly property int visibleSliceCount: 12
-    // Top chrome inset references filterBar
     readonly property real topChromeLead: isTopBar ? 10 : isVerticalBar ? 12 : 14
-    readonly property real topChromeGap: 8
-    readonly property real topChromeInset: topChromeLead + filterBar.height + topChromeGap
-    readonly property real bottomChromeInset: toolbarArea.height + (hintBar.visible ? hintBar.height + 26 : 24) + 18
-    readonly property real availableStageHeight: Math.max(220, root.height - topChromeInset - bottomChromeInset)
+    // Filter bar overlays the slices (skwd style) — no top inset needed for the ListView.
+    // Only the bottom chrome (toolbar) eats vertical space.
+    readonly property real bottomChromeInset: toolbarArea.height + 28 + 20
+    readonly property real availableStageHeight: Math.max(220, root.height - topChromeLead - bottomChromeInset)
     readonly property real skewScale: Math.max(
         0.58,
         Math.min(
@@ -332,7 +189,6 @@ Item {
     readonly property int skewExtent: Math.round(baseSkewExtent * skewScale)
     readonly property int sliceSpacing: Math.round(baseSliceSpacing * skewScale)
     readonly property int deckWidth: Math.round(expandedCardWidth + (visibleSliceCount - 1) * (sliceWidth + sliceSpacing))
-    // skewFrameWidth for the expanded card (used for thumbnail decode budget)
     readonly property int skewFrameWidth: expandedCardWidth + skewExtent
 
     readonly property string _thumbSizeName: {
@@ -342,7 +198,6 @@ Item {
         if (s === "normal" || s === "large") s = "x-large"
         return s
     }
-
     // ═══════════════════════════════════════════════════
     // STYLE TOKENS
     // ═══════════════════════════════════════════════════
@@ -365,135 +220,11 @@ Item {
         : Appearance.rounding.small
     readonly property bool isVerticalBar: Config.options?.bar?.vertical ?? false
     readonly property bool isTopBar: !isVerticalBar && !(Config.options?.bar?.bottom ?? false)
-    readonly property color filterBarColor: Appearance.angelEverywhere ? ColorUtils.applyAlpha(Appearance.angel.colGlassCard, 0.92)
-        : Appearance.inirEverywhere ? ColorUtils.applyAlpha(Appearance.inir.colLayer1, 0.94)
-        : Appearance.auroraEverywhere ? ColorUtils.applyAlpha(Appearance.aurora.colSubSurface, 0.94)
-        : ColorUtils.applyAlpha(Appearance.colors.colLayer1, 0.94)
-    readonly property color filterBarHoverColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
-        : Appearance.colors.colLayer1Hover
-    readonly property color chipSelectedColor: Appearance.colors.colPrimaryContainer
-    readonly property color chipSelectedTextColor: Appearance.colors.colOnPrimaryContainer
     readonly property color badgeSurfaceColor: ColorUtils.applyAlpha(Appearance.colors.colLayer2, 0.90)
     readonly property color badgeTextColor: Appearance.colors.colOnLayer2
-    readonly property var themeSwatches: [
-        Appearance.m3colors.m3primary,
-        Appearance.m3colors.m3secondary,
-        Appearance.m3colors.m3tertiary,
-        Appearance.m3colors.m3surfaceContainerHigh
-    ]
 
-    // ═══════════════════════════════════════════════════
-    // ACCENT COLOR
-    // ═══════════════════════════════════════════════════
-    property string _debouncedQuantizerSource: ""
-    Timer {
-        id: quantizerDebounce
-        interval: 280
-        onTriggered: root._debouncedQuantizerSource = root.activeQuantizerSource
-    }
-    onActiveQuantizerSourceChanged: quantizerDebounce.restart()
-
-    Timer {
-        id: dominantColorProbeTimer
-        interval: 50
-        onTriggered: root._startNextDominantColorProbe()
-    }
-
-    Timer {
-        id: dominantColorProbeTimeout
-        interval: 220
-        onTriggered: root._startNextDominantColorProbe()
-    }
-
-    Timer {
-        id: paletteRebuildDebounce
-        interval: 60
-        onTriggered: {
-            const previousPath = root.activePath
-            root._rebuildIndexMaps()
-            if (root.imageCount <= 0) {
-                root.currentImageIndex = 0
-                return
-            }
-            let nextIndex = 0
-            for (let i = 0; i < root.imageCount; i++) {
-                if (root._imgFilePath(i) === previousPath) {
-                    nextIndex = i
-                    break
-                }
-            }
-            root.currentImageIndex = Math.max(0, Math.min(root.imageCount - 1, nextIndex))
-        }
-    }
-
-    ColorQuantizer {
-        id: quantizer
-        source: root._debouncedQuantizerSource
-        depth: 0
-        rescaleSize: 10
-    }
-
-    ColorQuantizer {
-        id: dominantProbeQuantizer
-        source: root._dominantProbeSource
-        depth: 0
-        rescaleSize: 8
-        onColorsChanged: {
-            if (root._dominantProbeImageIndex < 0)
-                return
-            const dominant = colors?.[0]
-            if (dominant) {
-                const path = root._normalizedFilePath(root.folderModel.get(root._dominantProbeImageIndex, "filePath") ?? "")
-                if (path.length > 0) {
-                    const copy = Object.assign({}, root._imageDominantColors)
-                    copy[path] = dominant
-                    root._imageDominantColors = copy
-                    if (root.paletteFilterIndex >= 0)
-                        paletteRebuildDebounce.restart()
-                }
-            }
-            dominantColorProbeTimeout.stop()
-            Qt.callLater(root._startNextDominantColorProbe)
-        }
-    }
-
-    readonly property color accentColor: {
-        const c = quantizer?.colors?.[0]
-        if (!c || root.activePath.length === 0)
-            return Appearance.colors.colPrimary
-        return ColorUtils.mix(c, Appearance.colors.colPrimary, 0.45)
-    }
-
-    property color _accent: accentColor
-    Behavior on _accent {
-        enabled: Appearance.animationsEnabled
-        ColorAnimation {
-            duration: Appearance.animation.elementMoveEnter.duration
-            easing.type: Appearance.animation.elementMoveEnter.type
-            easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
-        }
-    }
-
-    // ═══════════════════════════════════════════════════
-    // FOCUS PULSE
-    // ═══════════════════════════════════════════════════
-    SequentialAnimation {
-        id: focusPulseAnim
-        running: false
-        NumberAnimation {
-            target: root; property: "_focusPulse"; to: 1
-            duration: Math.max(1, Appearance.animation.clickBounce.duration * 0.5)
-            easing.type: Appearance.animation.clickBounce.type
-            easing.bezierCurve: Appearance.animation.clickBounce.bezierCurve
-        }
-        NumberAnimation {
-            target: root; property: "_focusPulse"; to: 0
-            duration: Math.max(1, Appearance.animation.clickBounce.duration * 0.8)
-            easing.type: Appearance.animation.clickBounce.type
-            easing.bezierCurve: Appearance.animation.clickBounce.bezierCurve
-        }
-    }
+    // Accent: simple primary color, no quantizer bloat
+    readonly property color accentColor: Appearance.colors.colPrimary
 
     // ═══════════════════════════════════════════════════
     // NAVIGATION
@@ -505,11 +236,17 @@ Item {
         _trackNavStep()
         currentImageIndex = next
         showKeyboardGuide = false
-        if (_snapDone) focusPulseAnim.restart()
     }
 
     function moveSelection(delta: int): void {
         _goToImageIndex(currentImageIndex + delta)
+    }
+
+    function toggleAnimatedPreview(): void {
+        if (!hasImages) return
+        showKeyboardGuide = false
+        animatePreview = !animatePreview
+        Config.setNestedValue("wallpaperSelector.animatePreview", animatePreview)
     }
 
     function activateCurrent(): void {
@@ -531,7 +268,6 @@ Item {
         directorySelected(path)
     }
 
-    // Find current wallpaper in image-only index space
     function _findCurrentWallpaperImageIndex(): int {
         const target = FileUtils.trimFileProtocol(String(currentWallpaperPath ?? ""))
         if (target.length === 0 || imageCount === 0) return -1
@@ -593,10 +329,7 @@ Item {
     Timer {
         id: indexMapRebuildDebounce
         interval: 30
-        onTriggered: {
-            root._rebuildIndexMaps()
-            root._scheduleDominantColorScan()
-        }
+        onTriggered: root._rebuildIndexMaps()
     }
 
     Component.onCompleted: {
@@ -604,7 +337,7 @@ Item {
         if (totalCount > 0)
             _scheduleInitialScroll()
         updateThumbnails()
-        _scheduleDominantColorScan(true)
+        contentShowTimer.restart()
         forceActiveFocus()
     }
 
@@ -613,20 +346,8 @@ Item {
         function onFolderChanged() {
             root._snapDone = false
             root.currentImageIndex = 0
-            root._imageDominantColors = ({})
             root._rebuildIndexMaps()
             root._scheduleInitialScroll()
-            root._scheduleDominantColorScan(true)
-        }
-    }
-
-    Connections {
-        target: Wallpapers
-        function onThumbnailGeneratedFile() {
-            // Only probe dominant colors when palette filtering is active;
-            // scanning the full folder on every thumbnail generation is expensive.
-            if (root.paletteFilterIndex >= 0)
-                root._scheduleDominantColorScan()
         }
     }
 
@@ -654,7 +375,6 @@ Item {
 
         switch (event.key) {
         case Qt.Key_Escape:
-            // Layered dismiss: search → animated preview → folder panel → close
             if ((Wallpapers.searchQuery ?? "").length > 0) {
                 Wallpapers.searchQuery = ""
                 searchField.text = ""
@@ -666,22 +386,46 @@ Item {
                 root.closeRequested()
             }
             break
+        case Qt.Key_Space:
+            root.toggleAnimatedPreview(); break
         case Qt.Key_Left:
             if (alt || ctrl) Wallpapers.navigateBack()
             else root.moveSelection(-(shift ? 3 : 1))
             break
+        case Qt.Key_H:
+            if (!alt && !ctrl) {
+                root.moveSelection(-(shift ? 3 : 1))
+                break
+            }
+            event.accepted = false; return
         case Qt.Key_Right:
             if (alt || ctrl) Wallpapers.navigateForward()
             else root.moveSelection(shift ? 3 : 1)
             break
+        case Qt.Key_L:
+            if (!alt && !ctrl) {
+                root.moveSelection(shift ? 3 : 1)
+                break
+            }
+            event.accepted = false; return
         case Qt.Key_Up:
-            root.navigateUpDirectory(); break
-        case Qt.Key_Down:
-            if (root.folderCount === 1)
-                root.navigateIntoFolder(root._folderItems[0].path)
-            else if (root.folderCount > 1)
-                folderPanel.expanded = !folderPanel.expanded
+            if (alt || ctrl) root.navigateUpDirectory()
+            else root.moveSelection(-(shift ? 8 : 4))
             break
+        case Qt.Key_K:
+            root.moveSelection(-(shift ? 8 : 4)); break
+        case Qt.Key_Down:
+            if (alt || ctrl) {
+                if (root.folderCount === 1)
+                    root.navigateIntoFolder(root._folderItems[0].path)
+                else if (root.folderCount > 1)
+                    folderPanel.expanded = !folderPanel.expanded
+            } else {
+                root.moveSelection(shift ? 8 : 4)
+            }
+            break
+        case Qt.Key_J:
+            root.moveSelection(shift ? 8 : 4); break
         case Qt.Key_PageUp:
             root.moveSelection(-6); break
         case Qt.Key_PageDown:
@@ -707,9 +451,6 @@ Item {
             root.showKeyboardGuide = false
             const d = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x
             root._wheelAccum += d
-
-            // High-resolution trackpads send small deltas (< 120).
-            // Use a smaller threshold so scrolling feels responsive.
             const threshold = Math.abs(d) < 60 ? 40 : 120
             const steps = root._wheelAccum >= 0
                 ? Math.floor(root._wheelAccum / threshold)
@@ -722,13 +463,28 @@ Item {
     }
 
     // ═══════════════════════════════════════════════════
-    // MAIN SKEW LISTVIEW — asymmetric widths (skwd style)
+    // BACKGROUND — simple scrim, no ambient backdrop bleed
+    // ═══════════════════════════════════════════════════
+    Rectangle {
+        anchors.fill: parent
+        visible: root.hasImages
+        z: -1
+        color: ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.25)
+        opacity: root._contentVisible ? 1 : 0
+        Behavior on opacity {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: 300 }
+        }
+    }
+
+    // ═══════════════════════════════════════════════════
+    // MAIN SKEW LISTVIEW — skwd-style parallelogram slices
     // ═══════════════════════════════════════════════════
     ListView {
         id: skewView
         anchors {
             top: parent.top
-            topMargin: root.topChromeInset
+            topMargin: root.topChromeLead
             bottom: parent.bottom
             bottomMargin: root.bottomChromeInset
             horizontalCenter: parent.horizontalCenter
@@ -738,16 +494,14 @@ Item {
         orientation: ListView.Horizontal
         spacing: root.sliceSpacing
         clip: false
-        cacheBuffer: 1400
+        cacheBuffer: root.expandedCardWidth * 4
         focus: false
 
-        // Snap the *current* (expanded) card to horizontal center.
-        // Because delegate widths are asymmetric, we use the expanded card half-width.
         highlightRangeMode: ListView.StrictlyEnforceRange
         preferredHighlightBegin: (width - root.expandedCardWidth) / 2
         preferredHighlightEnd: (width + root.expandedCardWidth) / 2
         highlightMoveDuration: root._snapDone
-            ? Appearance.calcEffectiveDuration(root._rapidNavigation ? 180 : 320)
+            ? (root._rapidNavigation ? 150 : 350)
             : 0
         highlightFollowsCurrentItem: true
         header: Item { width: (skewView.width - root.expandedCardWidth) / 2; height: 1 }
@@ -757,121 +511,229 @@ Item {
         model: root.imageCount
         currentIndex: root.currentImageIndex
 
+        // Fade-in animation (skwd: 400ms OutCubic)
+        opacity: root._contentVisible ? 1 : 0
+        Behavior on opacity {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: 400; easing.type: Easing.OutCubic }
+        }
+
         onCurrentIndexChanged: {
             if (currentIndex !== root.currentImageIndex)
                 root.currentImageIndex = currentIndex
         }
 
+        onCountChanged: {
+            // skwd pattern: snap on first model population (more reliable than timer alone)
+            if (count > 0 && !root._snapDone) {
+                const idx = root._findCurrentWallpaperImageIndex()
+                if (idx >= 0) {
+                    root.currentImageIndex = idx
+                    positionViewAtIndex(idx, ListView.Center)
+                }
+                root._snapDone = true
+            }
+        }
+
         delegate: Item {
-            id: delegateRoot
+            id: delegateItem
             required property int index
             readonly property string filePath: root._imgFilePath(index)
             readonly property string fileName: root._imgFileName(index)
             readonly property string mediaKind: root._mediaKind(fileName)
             readonly property bool isCurrent: ListView.isCurrentItem
-            readonly property bool isActive: filePath.length > 0 && filePath === root.currentWallpaperPath
+            readonly property bool isHovered: itemMouseArea.containsMouse
+            readonly property bool isActive: filePath.length > 0
+                && root._normalizedFilePath(filePath) === root._normalizedFilePath(root.currentWallpaperPath)
 
-            // skwd-style: expanded center, narrow slices for non-current
             width: isCurrent ? root.expandedCardWidth : root.sliceWidth
             height: root.cardHeight
             anchors.verticalCenter: parent ? parent.verticalCenter : undefined
-            z: isCurrent ? 10 : 1
+            z: isCurrent ? 100 : (isHovered ? 90 : 50 - Math.min(Math.abs(index - skewView.currentIndex), 50))
 
-            // Smooth width transition — faster during flick to avoid fighting momentum
             Behavior on width {
                 enabled: Appearance.animationsEnabled
                 NumberAnimation {
-                    duration: skewView.moving
-                        ? Appearance.calcEffectiveDuration(120)
-                        : Appearance.animation.elementMoveEnter.duration
-                    easing.type: Appearance.animation.elementMoveEnter.type
-                    easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
+                    duration: 200
+                    easing.type: Easing.OutQuad
                 }
             }
 
-            // Edge-fade: cards far from center fade out
-            readonly property real _distFromCenter: {
-                const midX = skewView.contentX + skewView.width / 2
-                const itemMidX = x + width / 2
-                return Math.abs(midX - itemMidX)
+            // Edge-fade: cards far from center fade out (skwd style)
+            readonly property real viewX: x - skewView.contentX
+            readonly property real fadeZone: root.sliceWidth * 1.5
+            readonly property real edgeOpacity: {
+                if (isCurrent) return 1.0
+                if (fadeZone <= 0) return 1.0
+                const center = viewX + width * 0.5
+                const leftFade = Math.min(1.0, Math.max(0.0, center / fadeZone))
+                const rightFade = Math.min(1.0, Math.max(0.0, (skewView.width - center) / fadeZone))
+                return Math.min(leftFade, rightFade)
             }
-            readonly property real _edgeOpacity: isCurrent ? 1.0
-                : Math.max(0.25, 1.0 - (_distFromCenter / (skewView.width * 0.55)) * 0.65)
+            opacity: edgeOpacity
 
-            opacity: _edgeOpacity
-            Behavior on opacity {
-                enabled: Appearance.animationsEnabled
-                NumberAnimation {
-                    duration: Appearance.animation.elementMoveFast.duration
-                    easing.type: Appearance.animation.elementMoveFast.type
-                    easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+            // Hit-test mask: only accept clicks inside the parallelogram shape
+            containmentMask: Item {
+                function contains(point: point): bool {
+                    const w = delegateItem.width
+                    const h = delegateItem.height
+                    const sk = root.skewExtent
+                    if (h <= 0 || w <= 0) return false
+                    const leftX = sk * (1.0 - point.y / h)
+                    const rightX = w - sk * (point.y / h)
+                    return point.x >= leftX && point.x <= rightX && point.y >= 0 && point.y <= h
                 }
             }
 
-            MouseArea {
+            // ── Shadow (current card only) ──
+            Canvas {
+                z: -1
                 anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    root.showKeyboardGuide = false
-                    if (root.currentImageIndex === index)
-                        root.activateCurrent()
-                    else
-                        root._goToImageIndex(index)
+                anchors.margins: -10
+                visible: delegateItem.isCurrent
+                property real shadowAlpha: 0.6
+                onWidthChanged: requestPaint()
+                onHeightChanged: requestPaint()
+                onPaint: {
+                    const ctx = getContext("2d")
+                    ctx.clearRect(0, 0, width, height)
+                    const ox = 10
+                    const oy = 10
+                    const w = delegateItem.width
+                    const h = delegateItem.height
+                    const sk = root.skewExtent
+                    const layers = [
+                        { dx: 4, dy: 10, alpha: shadowAlpha * 0.5 },
+                        { dx: 2.4, dy: 6, alpha: shadowAlpha * 0.3 },
+                        { dx: 5.6, dy: 14, alpha: shadowAlpha * 0.2 }
+                    ]
+                    for (let i = 0; i < layers.length; i++) {
+                        const l = layers[i]
+                        ctx.globalAlpha = l.alpha
+                        ctx.fillStyle = "#000000"
+                        ctx.beginPath()
+                        ctx.moveTo(ox + sk + l.dx, oy + l.dy)
+                        ctx.lineTo(ox + w + l.dx, oy + l.dy)
+                        ctx.lineTo(ox + w - sk + l.dx, oy + h + l.dy)
+                        ctx.lineTo(ox + l.dx, oy + h + l.dy)
+                        ctx.closePath()
+                        ctx.fill()
+                    }
                 }
             }
 
-            // ── Card visual (skewed parallelogram via Shape/MultiEffect masking) ──
-
-            // Shadow (current delegate only — one extra effect for the whole view)
+            // ── Image container — masked to parallelogram ──
             Item {
-                visible: delegateRoot.isCurrent
+                id: imageContainer
                 anchors.fill: parent
-                anchors.margins: -24
-                layer.enabled: visible
-                layer.smooth: true
-                opacity: 0.45
 
-                Shape {
-                    x: 24 + 3
-                    y: 24 + 8
-                    width: delegateRoot.width
-                    height: delegateRoot.height
-                    antialiasing: true
+                // Thumbnail (image / gif)
+                ThumbnailImage {
+                    visible: delegateItem.filePath.length > 0 && delegateItem.mediaKind !== "video"
+                        && !(delegateItem.isCurrent && root.animatePreview && delegateItem.mediaKind === "gif")
+                    anchors.fill: parent
+                    fillMode: Image.PreserveAspectCrop
+                    generateThumbnail: true
+                    sourcePath: delegateItem.filePath
+                    thumbnailSizeName: root._thumbSizeName
+                    cache: true
+                    asynchronous: true
+                    retainWhileLoading: true
+                    smooth: true
+                    mipmap: delegateItem.isCurrent
+                    sourceSize.width: delegateItem.isCurrent
+                        ? Math.round(root.skewFrameWidth * root.thumbnailDecodeScale * root._dpr)
+                        : Math.round(root.sliceWidth * 1.5 * root._dpr)
+                    sourceSize.height: delegateItem.isCurrent
+                        ? Math.round(root.cardHeight * root.thumbnailDecodeScale * root._dpr)
+                        : Math.round(root.cardHeight * 0.7 * root._dpr)
+                }
 
-                    ShapePath {
-                        fillColor: Appearance.colors.colShadow
-                        strokeColor: "transparent"
-                        startX: root.skewExtent; startY: 0
-                        PathLine { x: delegateRoot.width;               y: 0 }
-                        PathLine { x: delegateRoot.width - root.skewExtent; y: delegateRoot.height }
-                        PathLine { x: 0;                               y: delegateRoot.height }
-                        PathLine { x: root.skewExtent;                 y: 0 }
+                // Animated GIF preview (current only)
+                AnimatedImage {
+                    visible: delegateItem.isCurrent && root.animatePreview && delegateItem.mediaKind === "gif"
+                    anchors.fill: parent
+                    fillMode: Image.PreserveAspectCrop
+                    source: visible ? ("file://" + delegateItem.filePath) : ""
+                    playing: visible
+                    asynchronous: true
+                    cache: true
+                }
+
+                // Video first-frame preview
+                Image {
+                    visible: delegateItem.mediaKind === "video"
+                        && !(delegateItem.isCurrent && root.animatePreview)
+                    anchors.fill: parent
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    cache: true
+                    smooth: true
+                    mipmap: delegateItem.isCurrent
+                    sourceSize.width: delegateItem.isCurrent
+                        ? Math.round(root.skewFrameWidth * root.thumbnailDecodeScale * root._dpr)
+                        : Math.round(root.sliceWidth * 1.5 * root._dpr)
+                    sourceSize.height: delegateItem.isCurrent
+                        ? Math.round(root.cardHeight * root.thumbnailDecodeScale * root._dpr)
+                        : Math.round(root.cardHeight * 0.7 * root._dpr)
+                    source: {
+                        if (!visible) return ""
+                        const ff = Wallpapers.videoFirstFrames[delegateItem.filePath]
+                        return ff ? (ff.startsWith("file://") ? ff : "file://" + ff) : ""
+                    }
+                    Component.onCompleted: {
+                        if (delegateItem.mediaKind === "video")
+                            Wallpapers.ensureVideoFirstFrame(delegateItem.filePath)
                     }
                 }
 
-                layer.effect: MultiEffect {
-                    blurEnabled: true
-                    blur: 0.5
-                    blurMax: 24
-                }
-            }
+                // Video playback preview (current only)
+                VideoOutput {
+                    id: videoPreviewOutput
+                    visible: delegateItem.isCurrent && root.animatePreview && delegateItem.mediaKind === "video"
+                    anchors.fill: parent
+                    fillMode: VideoOutput.PreserveAspectCrop
 
-            // Image container — masked to parallelogram by MultiEffect
-            Item {
-                id: cardImageContainer
-                anchors.fill: parent
+                    property bool _shouldPlay: visible && delegateItem.filePath.length > 0
+
+                    MediaPlayer {
+                        id: videoPreviewPlayer
+                        source: videoPreviewOutput._shouldPlay
+                            ? ("file://" + delegateItem.filePath) : ""
+                        videoOutput: videoPreviewOutput
+                        loops: MediaPlayer.Infinite
+                        onSourceChanged: {
+                            if (source.toString().length > 0)
+                                play()
+                        }
+                    }
+                }
+
+                // Darkening overlay for non-current cards (skwd style)
+                Rectangle {
+                    anchors.fill: parent
+                    color: Qt.rgba(0, 0, 0,
+                        delegateItem.isCurrent ? 0 :
+                        delegateItem.isHovered ? 0.15 : 0.4)
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: 200 }
+                    }
+                }
+
+                // Parallelogram mask — high-quality anti-aliasing (skwd: samples: 8)
                 layer.enabled: true
                 layer.smooth: true
-                layer.samples: 2
+                layer.samples: 4
                 layer.effect: MultiEffect {
                     maskEnabled: true
                     maskSource: ShaderEffectSource {
                         sourceItem: Item {
-                            width: cardImageContainer.width
-                            height: cardImageContainer.height
+                            width: imageContainer.width
+                            height: imageContainer.height
                             layer.enabled: true
                             layer.smooth: true
-                            layer.samples: 4
+                            layer.samples: 8
 
                             Shape {
                                 anchors.fill: parent
@@ -882,9 +744,9 @@ Item {
                                     fillColor: "white"
                                     strokeColor: "transparent"
                                     startX: root.skewExtent; startY: 0
-                                    PathLine { x: delegateRoot.width;               y: 0 }
-                                    PathLine { x: delegateRoot.width - root.skewExtent; y: delegateRoot.height }
-                                    PathLine { x: 0;                               y: delegateRoot.height }
+                                    PathLine { x: delegateItem.width;               y: 0 }
+                                    PathLine { x: delegateItem.width - root.skewExtent; y: delegateItem.height }
+                                    PathLine { x: 0;                               y: delegateItem.height }
                                     PathLine { x: root.skewExtent;                 y: 0 }
                                 }
                             }
@@ -893,189 +755,101 @@ Item {
                     maskThresholdMin: 0.3
                     maskSpreadAtMin: 0.3
                 }
+            }
 
-                // Background fill
-                Rectangle {
-                    anchors.fill: parent
-                    color: root.baseColor
+            // ── Video/GIF type badge ──
+            Rectangle {
+                visible: delegateItem.mediaKind === "video" || delegateItem.mediaKind === "gif"
+                anchors {
+                    top: parent.top; right: parent.right
+                    topMargin: 10; rightMargin: root.skewExtent + 10
                 }
+                width: mediaTypeRow.implicitWidth + 10
+                height: 26
+                radius: 6
+                color: root.badgeSurfaceColor
 
-                // ── Thumbnail (image / gif) ──
-                ThumbnailImage {
-                    visible: delegateRoot.filePath.length > 0 && delegateRoot.mediaKind !== "video"
-                        && !(delegateRoot.isCurrent && root.animatePreview && delegateRoot.mediaKind === "gif")
-                    anchors.fill: parent
-                    fillMode: Image.PreserveAspectCrop
-                    generateThumbnail: true
-                    sourcePath: delegateRoot.filePath
-                    thumbnailSizeName: root._thumbSizeName
-                    cache: true
-                    asynchronous: true
-                    retainWhileLoading: true
-                    mipmap: delegateRoot.isCurrent
-                    sourceSize.width: delegateRoot.isCurrent
-                        ? Math.round(root.skewFrameWidth * root.thumbnailDecodeScale * root._dpr)
-                        : Math.round(root.sliceWidth * 1.5 * root._dpr)
-                    sourceSize.height: delegateRoot.isCurrent
-                        ? Math.round(root.cardHeight * root.thumbnailDecodeScale * root._dpr)
-                        : Math.round(root.cardHeight * 0.7 * root._dpr)
-                }
+                Row {
+                    id: mediaTypeRow
+                    anchors.centerIn: parent
+                    spacing: 3
 
-                // ── Animated GIF preview (current delegate only) ──
-                AnimatedImage {
-                    visible: delegateRoot.isCurrent && root.animatePreview && delegateRoot.mediaKind === "gif"
-                    anchors.fill: parent
-                    fillMode: Image.PreserveAspectCrop
-                    source: visible ? ("file://" + delegateRoot.filePath) : ""
-                    playing: visible
-                    asynchronous: true
-                    cache: true
-                }
-
-                // ── Video first-frame preview ──
-                Image {
-                    visible: delegateRoot.mediaKind === "video"
-                        && !(delegateRoot.isCurrent && root.animatePreview)
-                    anchors.fill: parent
-                    fillMode: Image.PreserveAspectCrop
-                    asynchronous: true
-                    cache: true
-                    smooth: true
-                    mipmap: delegateRoot.isCurrent
-                    sourceSize.width: delegateRoot.isCurrent
-                        ? Math.round(root.skewFrameWidth * root.thumbnailDecodeScale * root._dpr)
-                        : Math.round(root.sliceWidth * 1.5 * root._dpr)
-                    sourceSize.height: delegateRoot.isCurrent
-                        ? Math.round(root.cardHeight * root.thumbnailDecodeScale * root._dpr)
-                        : Math.round(root.cardHeight * 0.7 * root._dpr)
-                    source: {
-                        if (!visible) return ""
-                        const ff = Wallpapers.videoFirstFrames[delegateRoot.filePath]
-                        return ff ? (ff.startsWith("file://") ? ff : "file://" + ff) : ""
+                    MaterialSymbol {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: delegateItem.mediaKind === "video" ? "play_arrow" : "gif"
+                        iconSize: 14
+                        color: root.badgeTextColor
                     }
-                    Component.onCompleted: {
-                        if (delegateRoot.mediaKind === "video")
-                            Wallpapers.ensureVideoFirstFrame(delegateRoot.filePath)
-                    }
-                }
-
-                // ── Video playback preview (current delegate only) ──
-                VideoOutput {
-                    id: videoPreviewOutput
-                    visible: delegateRoot.isCurrent && root.animatePreview && delegateRoot.mediaKind === "video"
-                    anchors.fill: parent
-                    fillMode: VideoOutput.PreserveAspectCrop
-
-                    property bool _shouldPlay: visible && delegateRoot.filePath.length > 0
-
-                    MediaPlayer {
-                        id: videoPreviewPlayer
-                        source: videoPreviewOutput._shouldPlay
-                            ? ("file://" + delegateRoot.filePath) : ""
-                        videoOutput: videoPreviewOutput
-                        loops: MediaPlayer.Infinite
-                        onSourceChanged: {
-                            if (source.toString().length > 0)
-                                play()
-                        }
-                    }
-                }
-
-                // Darkening overlay for non-current cards
-                Rectangle {
-                    anchors.fill: parent
-                    color: root.baseColor
-                    opacity: delegateRoot.isCurrent ? 0.0 : 0.20
-                    Behavior on opacity {
-                        enabled: Appearance.animationsEnabled
-                        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
-                    }
-                }
-
-                // ── Video/GIF type badge (top-right, offset inward from skew edge) ──
-                Rectangle {
-                    visible: delegateRoot.mediaKind === "video" || delegateRoot.mediaKind === "gif"
-                    anchors {
-                        top: parent.top; right: parent.right
-                        topMargin: 10; rightMargin: root.skewExtent + 10
-                    }
-                    width: mediaTypeRow.implicitWidth + 10
-                    height: 26
-                    radius: 6
-                    color: root.badgeSurfaceColor
-
-                    Row {
-                        id: mediaTypeRow
-                        anchors.centerIn: parent
-                        spacing: 3
-
-                        MaterialSymbol {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: delegateRoot.mediaKind === "video" ? "play_arrow" : "gif"
-                            iconSize: 14
-                            color: root.badgeTextColor
-                        }
-                        StyledText {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: delegateRoot.mediaKind === "video" ? "VID" : "GIF"
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                            font.weight: Font.Bold
-                            color: root.badgeTextColor
-                        }
-                    }
-                }
-
-                // ── "Active" badge (bottom-right, inset from skew edge) ──
-                Rectangle {
-                    visible: delegateRoot.isActive
-                    anchors {
-                        bottom: parent.bottom; right: parent.right
-                        bottomMargin: 12; rightMargin: root.skewExtent + 10
-                    }
-                    implicitWidth: activeLabel.implicitWidth + 14
-                    implicitHeight: activeLabel.implicitHeight + 6
-                    radius: height / 2
-                    color: ColorUtils.applyAlpha(root._accent, 0.92)
-                    Behavior on color {
-                        enabled: Appearance.animationsEnabled
-                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
-                    }
-
                     StyledText {
-                        id: activeLabel
-                        anchors.centerIn: parent
-                        text: Translation.tr("Active")
-                        color: ColorUtils.contrastColor(root._accent)
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        font.weight: Font.DemiBold
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: delegateItem.mediaKind === "video" ? "VID" : "GIF"
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        font.weight: Font.Bold
+                        color: root.badgeTextColor
                     }
                 }
             }
 
-            // Glow border — only rendered on current and active cards
-            // Non-current cards rely on the mask clip edge for separation
+            // ── "Active" badge ──
+            Rectangle {
+                visible: delegateItem.isActive
+                anchors {
+                    bottom: parent.bottom; right: parent.right
+                    bottomMargin: 12; rightMargin: root.skewExtent + 10
+                }
+                implicitWidth: activeLabel.implicitWidth + 14
+                implicitHeight: activeLabel.implicitHeight + 6
+                radius: height / 2
+                color: ColorUtils.applyAlpha(root.accentColor, 0.92)
+
+                StyledText {
+                    id: activeLabel
+                    anchors.centerIn: parent
+                    text: Translation.tr("Active")
+                    color: ColorUtils.contrastColor(root.accentColor)
+                    font.pixelSize: Appearance.font.pixelSize.small
+                    font.weight: Font.DemiBold
+                }
+            }
+
+            // ── Glow border (skwd style — rendered on all cards) ──
             Shape {
-                id: glowBorder
                 anchors.fill: parent
-                visible: delegateRoot.isCurrent || delegateRoot.isActive
                 antialiasing: true
                 preferredRendererType: Shape.CurveRenderer
 
                 ShapePath {
                     fillColor: "transparent"
-                    strokeColor: delegateRoot.isCurrent ? root._accent
-                        : delegateRoot.isActive ? Appearance.colors.colPrimary
-                        : root.borderColor
+                    strokeColor: delegateItem.isCurrent
+                        ? root.accentColor
+                        : delegateItem.isHovered
+                            ? ColorUtils.applyAlpha(root.accentColor, 0.4)
+                            : Qt.rgba(0, 0, 0, 0.6)
                     Behavior on strokeColor {
                         enabled: Appearance.animationsEnabled
-                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                        ColorAnimation { duration: 200 }
                     }
-                    strokeWidth: delegateRoot.isCurrent ? 2.5 : delegateRoot.isActive ? 2.0 : 1.0
+                    strokeWidth: delegateItem.isCurrent ? 3 : 1
                     startX: root.skewExtent; startY: 0
-                    PathLine { x: delegateRoot.width;               y: 0 }
-                    PathLine { x: delegateRoot.width - root.skewExtent; y: delegateRoot.height }
-                    PathLine { x: 0;                               y: delegateRoot.height }
+                    PathLine { x: delegateItem.width;               y: 0 }
+                    PathLine { x: delegateItem.width - root.skewExtent; y: delegateItem.height }
+                    PathLine { x: 0;                               y: delegateItem.height }
                     PathLine { x: root.skewExtent;                 y: 0 }
+                }
+            }
+
+            // ── Mouse interaction (skwd style) ──
+            MouseArea {
+                id: itemMouseArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    root.showKeyboardGuide = false
+                    if (root.currentImageIndex === delegateItem.index)
+                        root.activateCurrent()
+                    else
+                        root._goToImageIndex(delegateItem.index)
                 }
             }
         }
@@ -1090,14 +864,13 @@ Item {
             right: parent.right
             rightMargin: 20
             verticalCenter: parent.verticalCenter
-            verticalCenterOffset: -(root.bottomChromeInset - root.topChromeInset) / 2
+            verticalCenterOffset: -(root.bottomChromeInset - root.topChromeLead) / 2
         }
         visible: root.hasFolders
         z: 200
 
         property bool expanded: false
 
-        // Size: collapsed = pill, expanded = list panel
         width: expanded ? folderPanelRect.implicitWidth : collapsedPill.implicitWidth + 24
         height: expanded
             ? Math.min(folderPanelRect.implicitHeight, root.availableStageHeight * 0.8)
@@ -1128,7 +901,7 @@ Item {
             radius: height / 2
             color: ColorUtils.applyAlpha(root.baseColor, 0.88)
             border.width: 1
-            border.color: ColorUtils.applyAlpha(root._accent, 0.4)
+            border.color: ColorUtils.applyAlpha(root.accentColor, 0.4)
 
             Row {
                 id: collapsedPill
@@ -1139,7 +912,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     text: "folder"
                     iconSize: 15
-                    color: root._accent
+                    color: root.accentColor
                     opacity: 0.9
                 }
                 StyledText {
@@ -1181,7 +954,6 @@ Item {
             implicitWidth: 220
             implicitHeight: panelHeader.implicitHeight + folderScroll.contentHeight + 24
 
-            // Header row
             Item {
                 id: panelHeader
                 anchors { top: parent.top; left: parent.left; right: parent.right; margins: 12 }
@@ -1197,7 +969,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         text: "folder_open"
                         iconSize: 15
-                        color: root._accent
+                        color: root.accentColor
                         opacity: 0.8
                     }
                     StyledText {
@@ -1210,7 +982,6 @@ Item {
                     }
                 }
 
-                // Close button
                 Rectangle {
                     anchors { right: parent.right; verticalCenter: parent.verticalCenter }
                     width: 24; height: 24; radius: 12
@@ -1240,14 +1011,12 @@ Item {
                 }
             }
 
-            // Thin divider
             Rectangle {
                 anchors { top: panelHeader.bottom; left: parent.left; right: parent.right; leftMargin: 12; rightMargin: 12 }
                 height: 1
                 color: ColorUtils.applyAlpha(root.borderColor, 0.5)
             }
 
-            // Scrollable folder list
             Flickable {
                 id: folderScroll
                 anchors {
@@ -1287,10 +1056,10 @@ Item {
                                 anchors.fill: parent
                                 radius: root.cardRadius * 0.6
                                 color: folderItemDelegate._hovered
-                                    ? ColorUtils.applyAlpha(root._accent, 0.14)
+                                    ? ColorUtils.applyAlpha(root.accentColor, 0.14)
                                     : "transparent"
                                 border.width: folderItemDelegate._hovered ? 1 : 0
-                                border.color: ColorUtils.applyAlpha(root._accent, 0.25)
+                                border.color: ColorUtils.applyAlpha(root.accentColor, 0.25)
                                 Behavior on color {
                                     enabled: Appearance.animationsEnabled
                                     ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
@@ -1309,7 +1078,7 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: "folder"
                                     iconSize: 15
-                                    color: root._accent
+                                    color: root.accentColor
                                     opacity: 0.85
                                 }
                                 StyledText {
@@ -1342,299 +1111,148 @@ Item {
     }
 
     // ═══════════════════════════════════════════════════
-    // TOP CHROME — skwd-style unified filter bar
+    // TOP CHROME — compact filter pill (Toolbar-style glass)
     // ═══════════════════════════════════════════════════
-    Rectangle {
+    Item {
         id: filterBar
         anchors {
-            top: parent.top
+            top: skewView.top
             horizontalCenter: parent.horizontalCenter
-            topMargin: root.topChromeLead
+            topMargin: 10
         }
         z: 220
         visible: root.hasImages
 
-        // Pill shape, auto-sized to content
-        implicitWidth: filterBarRow.implicitWidth + 28
-        implicitHeight: filterBarRow.implicitHeight + 14
+        implicitWidth: filterBarGlass.implicitWidth
+        implicitHeight: filterBarGlass.implicitHeight
         width: implicitWidth
         height: implicitHeight
 
-        radius: height / 2
-        color: root.filterBarColor
-        border.width: 1
-        border.color: ColorUtils.applyAlpha(root.borderColor, 0.55)
+        // Fade-in with content
+        opacity: root._contentVisible ? 1 : 0
+        Behavior on opacity {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: 400; easing.type: Easing.OutCubic }
+        }
 
-        // ── Filter bar content ──
+        // Shadow (matching Toolbar)
+        Loader {
+            active: Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere)
+            anchors.fill: filterBarGlass
+            sourceComponent: StyledRectangularShadow {
+                target: filterBarGlass
+                anchors.fill: undefined
+            }
+        }
+
+        GlassBackground {
+            id: filterBarGlass
+            anchors.fill: parent
+            fallbackColor: Appearance.m3colors.m3surfaceContainer
+            inirColor: Appearance.inir.colLayer2
+            auroraTransparency: Appearance.aurora.overlayTransparentize
+            screenX: { const p = filterBar.mapToGlobal(0, 0); return p.x }
+            screenY: { const p = filterBar.mapToGlobal(0, 0); return p.y }
+            screenWidth: Quickshell.screens[0]?.width ?? 1920
+            screenHeight: Quickshell.screens[0]?.height ?? 1080
+            border.width: (Appearance.angelEverywhere || Appearance.inirEverywhere || Appearance.auroraEverywhere) ? 1 : 0
+            border.color: Appearance.angelEverywhere ? Appearance.angel.colBorder
+                : Appearance.inirEverywhere ? Appearance.inir.colBorder
+                : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder : "transparent"
+            implicitHeight: 40
+            implicitWidth: filterBarRow.implicitWidth + 20
+            radius: height / 2
+        }
+
         Row {
             id: filterBarRow
             anchors.centerIn: parent
-            spacing: 0
+            spacing: 2
 
-            // ─ Up directory button ─
-            Rectangle {
-                width: upBtn.implicitWidth + 14
-                height: filterBarRow.implicitHeight
-                color: upBtnHover.containsMouse
-                    ? root.filterBarHoverColor
-                    : "transparent"
-                radius: height / 2
-                Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+            Repeater {
+                model: [
+                    { label: Translation.tr("All"), icon: "filter_list", filter: 0 },
+                    { label: "IMG", icon: "image", filter: 1 },
+                    { label: "VID", icon: "play_arrow", filter: 2 },
+                    { label: "GIF", icon: "gif", filter: 3 }
+                ]
 
-                Row {
-                    id: upBtn
-                    anchors.centerIn: parent
-                    spacing: 4
-                    MaterialSymbol {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "arrow_upward"
-                        iconSize: 13
-                        color: root.textColor
-                        opacity: 0.78
+                delegate: Rectangle {
+                    id: typeChip
+                    required property int index
+                    required property var modelData
+                    readonly property bool isSelected: root.typeFilter === modelData.filter
+
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: typeChipRow.implicitWidth + 14
+                    height: 24
+                    radius: height / 2
+
+                    color: isSelected
+                        ? Appearance.colors.colPrimaryContainer
+                        : typeChipHover.containsMouse
+                            ? ColorUtils.applyAlpha(Appearance.colors.colOnSurface, 0.08)
+                            : "transparent"
+
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
                     }
-                    StyledText {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: Translation.tr("Up")
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: root.textColor
-                        opacity: 0.78
+
+                    Row {
+                        id: typeChipRow
+                        anchors.centerIn: parent
+                        spacing: 3
+
+                        MaterialSymbol {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: typeChip.modelData.icon
+                            iconSize: 12
+                            color: typeChip.isSelected
+                                ? Appearance.colors.colOnPrimaryContainer
+                                : root.textColor
+                            opacity: typeChip.isSelected ? 1.0 : 0.70
+                        }
+                        StyledText {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: typeChip.modelData.label
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            font.weight: typeChip.isSelected ? Font.DemiBold : Font.Normal
+                            color: typeChip.isSelected
+                                ? Appearance.colors.colOnPrimaryContainer
+                                : root.textColor
+                            opacity: typeChip.isSelected ? 1.0 : 0.72
+                        }
                     }
-                }
-                MouseArea {
-                    id: upBtnHover
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.navigateUpDirectory()
-                }
-            }
 
-            // ─ Divider ─
-            Rectangle {
-                width: 1; height: 16
-                anchors.verticalCenter: parent.verticalCenter
-                color: ColorUtils.applyAlpha(root.textColor, 0.20)
-            }
-
-            // ─ Type filter chips ─
-            Row {
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 2
-                leftPadding: 6
-                rightPadding: 6
-
-                Repeater {
-                    model: [
-                        { label: Translation.tr("All"), icon: "filter_list", filter: 0 },
-                        { label: "IMG", icon: "image", filter: 1 },
-                        { label: "VID", icon: "play_arrow", filter: 2 },
-                        { label: "GIF", icon: "gif", filter: 3 }
-                    ]
-
-                    delegate: Rectangle {
-                        id: typeChip
-                        required property int index
-                        required property var modelData
-                        readonly property bool isSelected: root.typeFilter === modelData.filter
-
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: typeChipRow.implicitWidth + 12
-                        height: 24
-                        radius: height / 2
-
-                        color: isSelected
-                            ? root.chipSelectedColor
-                            : typeChipHover.containsMouse
-                                ? root.filterBarHoverColor
-                                : "transparent"
-
-                        Behavior on color {
-                            enabled: Appearance.animationsEnabled
-                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
-                        }
-
-                        Row {
-                            id: typeChipRow
-                            anchors.centerIn: parent
-                            spacing: 3
-
-                            MaterialSymbol {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: typeChip.modelData.icon
-                                iconSize: 12
-                                color: typeChip.isSelected
-                                    ? root.chipSelectedTextColor
-                                    : root.textColor
-                                opacity: typeChip.isSelected ? 1.0 : 0.70
-                            }
-                            StyledText {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: typeChip.modelData.label
-                                font.pixelSize: Appearance.font.pixelSize.smaller
-                                font.weight: typeChip.isSelected ? Font.DemiBold : Font.Normal
-                                color: typeChip.isSelected
-                                    ? root.chipSelectedTextColor
-                                    : root.textColor
-                                opacity: typeChip.isSelected ? 1.0 : 0.72
-                            }
-                        }
-
-                        MouseArea {
-                            id: typeChipHover
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.typeFilter = typeChip.modelData.filter
-                        }
+                    MouseArea {
+                        id: typeChipHover
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.typeFilter = typeChip.modelData.filter
                     }
                 }
             }
 
             // ─ Divider ─
             Rectangle {
-                width: 1; height: 16
+                width: 1; height: 14
                 anchors.verticalCenter: parent.verticalCenter
-                color: ColorUtils.applyAlpha(root.textColor, 0.20)
-            }
-
-            // ─ Theme swatches (generated palette, styled like settings UI) ─
-            Row {
-                id: hueDotsRow
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 0
-                leftPadding: 8
-                rightPadding: 8
-
-                Repeater {
-                    model: root.themeSwatches
-
-                    delegate: Rectangle {
-                        required property int index
-                        required property color modelData
-                        readonly property bool isSelected: root.paletteFilterIndex === index
-
-                        width: 14
-                        height: 14
-                        radius: 7
-                        anchors.verticalCenter: parent.verticalCenter
-                        color: modelData
-                        border.width: isSelected ? 2 : 1
-                        border.color: isSelected
-                            ? Appearance.colors.colOnPrimaryContainer
-                            : ColorUtils.applyAlpha(root.borderColor, 0.65)
-                        z: 4 - index
-
-                        x: index > 0 ? -index * 4 : 0
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.paletteFilterIndex = parent.isSelected ? -1 : index
-                        }
-                    }
-                }
-            }
-
-            // ─ Divider ─
-            Rectangle {
-                width: 1; height: 16
-                anchors.verticalCenter: parent.verticalCenter
-                color: ColorUtils.applyAlpha(root.textColor, 0.20)
+                color: ColorUtils.applyAlpha(root.textColor, 0.18)
             }
 
             // ─ Counter ─
-            Item {
-                width: counterInner.implicitWidth + 14
-                height: filterBarRow.implicitHeight
+            StyledText {
                 anchors.verticalCenter: parent.verticalCenter
-
-                Row {
-                    id: counterInner
-                    anchors.centerIn: parent
-                    spacing: 4
-
-                    // Folder badge (if folders exist)
-                    Item {
-                        visible: root.hasFolders
-                        width: folderBadgeRow.implicitWidth
-                        height: folderBadgeRow.implicitHeight
-
-                        Row {
-                            id: folderBadgeRow
-                            spacing: 3
-
-                            MaterialSymbol {
-                                text: "folder"
-                                iconSize: 11
-                                color: root._accent
-                                opacity: 0.85
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                            StyledText {
-                                text: root.folderCount.toString()
-                                font.pixelSize: Appearance.font.pixelSize.smaller
-                                font.family: Appearance.font.family.monospace
-                                color: root.textColor
-                                opacity: 0.75
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: root.hasFolders ? Qt.PointingHandCursor : Qt.ArrowCursor
-                            onClicked: if (root.hasFolders) folderPanel.expanded = true
-                        }
-                    }
-
-                    StyledText {
-                        visible: root.hasFolders
-                        text: "·"
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: root.textColor
-                        opacity: 0.35
-                    }
-
-                    StyledText {
-                        text: (root.currentImageIndex + 1) + " / " + root.imageCount
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        font.family: Appearance.font.family.monospace
-                        color: root.textColor
-                        opacity: 0.82
-                    }
-                }
+                leftPadding: 6
+                rightPadding: 4
+                text: (root.currentImageIndex + 1) + " / " + root.imageCount
+                font.pixelSize: Appearance.font.pixelSize.small
+                font.family: Appearance.font.family.monospace
+                color: root.textColor
+                opacity: 0.78
             }
-        }
-    }
-
-    // ─── Keyboard hint ───
-    Rectangle {
-        id: hintBar
-        anchors {
-            bottom: toolbarArea.top
-            bottomMargin: 12
-            horizontalCenter: parent.horizontalCenter
-        }
-        visible: root.showKeyboardGuide
-        opacity: visible ? 1.0 : 0.0
-        z: 220
-        radius: height / 2
-        color: ColorUtils.applyAlpha(root.baseColor, 0.88)
-        border.width: 1
-        border.color: ColorUtils.applyAlpha(root.borderColor, 0.45)
-        width: hintText.implicitWidth + 24
-        height: hintText.implicitHeight + 10
-        Behavior on opacity { enabled: Appearance.animationsEnabled; animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
-
-        StyledText {
-            id: hintText
-            anchors.centerIn: parent
-            text: root.hasFolders
-                ? Translation.tr("← → Browse  ·  ↑ Parent  ·  ↓ Folders  ·  / Search")
-                : Translation.tr("← → Browse  ·  ↑ Parent  ·  / Search")
-            font.pixelSize: Appearance.font.pixelSize.smaller
-            color: root.textColor
-            opacity: 0.75
         }
     }
 
@@ -1702,7 +1320,7 @@ Item {
         }
         IconToolbarButton {
             implicitWidth: height
-            onClicked: root.animatePreview = !root.animatePreview
+            onClicked: root.toggleAnimatedPreview()
             text: root.animatePreview ? "motion_photos_on" : "motion_photos_off"
             StyledToolTip { text: root.animatePreview ? Translation.tr("Disable animated preview") : Translation.tr("Enable animated preview") }
         }

@@ -57,69 +57,51 @@ elif [[ -f "VERSION" ]]; then
 fi
 
 #####################################################################################
-# Banner
+# Greeting Surface
 #####################################################################################
 clear
 
-if $HAS_GUM; then
-    echo ""
-    gum style \
-        --foreground "$TUI_ACCENT" \
-        --border-foreground "$TUI_ACCENT_DIM" \
-        --border double \
-        --align center \
-        --width 70 \
-        --margin "1 0" \
-        --padding "1" \
-        "██╗██╗      ███╗   ██╗██╗██████╗ ██╗" \
-        "██║██║      ████╗  ██║██║██╔══██╗██║" \
-        "██║██║█████╗██╔██╗ ██║██║██████╔╝██║" \
-        "██║██║╚════╝██║╚██╗██║██║██╔══██╗██║" \
-        "██║██║      ██║ ╚████║██║██║  ██║██║" \
-        "╚═╝╚═╝      ╚═╝  ╚═══╝╚═╝╚═╝  ╚═╝╚═╝" \
-        "" \
-        "$(gum style --foreground 245 'iNiR — your niri shell')"
-else
-    echo ""
-    echo -e "${STY_PURPLE}${STY_BOLD}"
-    cat << 'EOF'
- ╔═══════════════════════════════════════════════════════════════════╗
- ║                                                                   ║
- ║   ██╗██╗      ███╗   ██╗██╗██████╗ ██╗                            ║
- ║   ██║██║      ████╗  ██║██║██╔══██╗██║                            ║
- ║   ██║██║█████╗██╔██╗ ██║██║██████╔╝██║                            ║
- ║   ██║██║╚════╝██║╚██╗██║██║██╔══██╗██║                            ║
- ║   ██║██║      ██║ ╚████║██║██║  ██║██║                            ║
- ║   ╚═╝╚═╝      ╚═╝  ╚═══╝╚═╝╚═╝  ╚═╝╚═╝                            ║
- ║                                                                   ║
- ║                    iNiR — your niri shell                          ║
- ║                                                                   ║
- ╚═══════════════════════════════════════════════════════════════════╝
+local_visual_mode="plain"
+$HAS_GUM && local_visual_mode="gum"
+
+tui_hero_card \
+    "Setup bootstrap" \
+    "Install ${DETECTED_VERSION} with a shell-native first run tuned for ${DETECTED_DISTRO}." \
+    "This flow prepares packages, services, theming, and user files before the runtime shell takes over."
+
+tui_badge_row \
+    "Version" "$DETECTED_VERSION" "accent" \
+    "Distro" "$DETECTED_DISTRO_ID" "info" \
+    "Session" "$DETECTED_SESSION" "muted" \
+    "Compositor" "$DETECTED_DE" "accent-dim" \
+    "AUR" "$DETECTED_AUR" "success" \
+    "UI" "$local_visual_mode" "warning"
+
+echo ""
+
+system_snapshot=$(cat <<EOF
+Version        ${DETECTED_VERSION}
+Distro         ${DETECTED_DISTRO}
+Shell          ${DETECTED_SHELL}
+Session        ${DETECTED_SESSION}
+Compositor     ${DETECTED_DE}
+AUR helper     ${DETECTED_AUR}
 EOF
-    echo -e "${STY_RST}"
-fi
+)
 
-#####################################################################################
-# System Info Display
-#####################################################################################
-tui_title "System Information"
-
-tui_table_header "Property" "Value" 14 36
-tui_table_row "Version" "$DETECTED_VERSION" 14 36
-tui_table_row "Distro" "$DETECTED_DISTRO" 14 36
-tui_table_row "Shell" "$DETECTED_SHELL" 14 36
-tui_table_row "Session" "$DETECTED_SESSION" 14 36
-tui_table_row "Compositor" "$DETECTED_DE" 14 36
-tui_table_row "AUR Helper" "$DETECTED_AUR" 14 36
-tui_table_footer 14 36
+tui_box "$system_snapshot" "System snapshot" "accent-dim" 62
 
 echo ""
 
 # Arch check with better messaging
 if [[ "$DETECTED_DISTRO_ID" != "arch" && "$DETECTED_DISTRO_ID" != "endeavouros" && "$DETECTED_DISTRO_ID" != "manjaro" && "$DETECTED_DISTRO_ID" != "garuda" && "$DETECTED_DISTRO_ID" != "cachyos" ]]; then
-    tui_warn "This installer is designed for Arch-based distros"
-    tui_info "Detected: $DETECTED_DISTRO"
-    tui_info "You can continue, but package installation may fail"
+    distro_warning=$(cat <<EOF
+This installer is tuned for Arch-based distributions.
+Detected target: ${DETECTED_DISTRO}
+You can continue, but package resolution may fail outside the supported package ecosystem.
+EOF
+)
+    tui_box "$distro_warning" "Compatibility warning" "warning" 72
     echo ""
 fi
 
@@ -128,15 +110,22 @@ fi
 #####################################################################################
 tui_title "Installation Plan"
 
-tui_list_item "Install packages (Niri, Quickshell, Qt6, fonts...)"
-tui_list_item "Configure user groups and systemd services"
-tui_list_item "Setup GTK/Qt theming (Matugen, Kvantum)"
-tui_list_item "Copy configs to ~/.config/ (with backups)"
-tui_list_item "Set default wallpaper and generate theme"
+install_plan=$(cat <<EOF
+${ICON_ARROW} Install dependencies for Niri, Quickshell, Qt6, fonts, and shell runtime pieces
+${ICON_ARROW} Configure user groups, services, and machine-level integration
+${ICON_ARROW} Apply GTK/Qt theming, Material pipeline defaults, and Kvantum support
+${ICON_ARROW} Copy configs into ~/.config with backups before replacing anything
+${ICON_ARROW} Set the default wallpaper and generate the first terminal/theme payload
+EOF
+)
+
+tui_box "$install_plan" "What happens next" "accent" 78
 
 echo ""
-tui_subtitle "This may take a while depending on your internet speed."
+tui_subtitle "Network speed and package mirror health will dominate total time."
 tui_key_value "Backup location:" "$BACKUP_DIR"
+echo ""
+tui_info "You can cancel now without changing the system."
 echo ""
 
 if $ask; then

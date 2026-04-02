@@ -540,8 +540,7 @@ WSettingsPage {
                 if (ThemeService.isAutoTheme) {
                     ShellExec.execCmd(`${Directories.wallpaperSwitchScriptPath} --noswitch --type ${newValue}`)
                 } else {
-                    const primary = Appearance.m3colors.m3primary
-                    const hex = "#" + ((1 << 24) | (Math.round(primary.r * 255) << 16) | (Math.round(primary.g * 255) << 8) | Math.round(primary.b * 255)).toString(16).slice(1)
+                    const hex = MaterialThemeLoader.colorToHex(Appearance.m3colors.m3primary)
                     MaterialThemeLoader.applySchemeVariant(hex, newValue)
                 }
             }
@@ -575,6 +574,14 @@ WSettingsPage {
             description: Translation.tr("Generate and apply Spicetify theme from wallpaper colors")
             checked: Config.options?.appearance?.wallpaperTheming?.enableSpicetify ?? false
             onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.enableSpicetify", checked)
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("Steam theming")
+            icon: "gamepad"
+            description: Translation.tr("Apply Material You colors to Steam via Adwaita for Steam (requires AdwSteamGtk)")
+            checked: Config.options?.appearance?.wallpaperTheming?.enableAdwSteam ?? false
+            onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.enableAdwSteam", checked)
         }
 
         WSettingsSwitch {

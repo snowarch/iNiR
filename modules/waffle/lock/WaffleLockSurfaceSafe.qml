@@ -406,7 +406,7 @@ MouseArea {
                     Image {
                         id: avatarImage
                         anchors.fill: parent
-                        source: Directories.userAvatarSourcePrimary
+                        source: safeLockAvatarResolver.resolvedSource
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
                         cache: true
@@ -415,11 +415,20 @@ MouseArea {
                         sourceSize.width: avatarCircle.width * 2
                         sourceSize.height: avatarCircle.height * 2
                         visible: false
-                        onStatusChanged: {
-                            if (status === Image.Error) {
-                                const nextSource = Directories.nextAvatarSource(source)
-                                if (nextSource.length > 0 && nextSource !== source)
-                                    source = nextSource
+                    }
+
+                    QtObject {
+                        id: safeLockAvatarResolver
+                        property int avatarIndex: 0
+                        readonly property string resolvedSource: Directories.avatarSourceAt(avatarIndex)
+                        readonly property string primaryWatch: Directories.userAvatarSourcePrimary
+                        onPrimaryWatchChanged: avatarIndex = 0
+                        readonly property int imgStatus: avatarImage.status
+                        onImgStatusChanged: {
+                            if (imgStatus === Image.Error) {
+                                const nextIdx = avatarIndex + 1
+                                if (nextIdx < Directories.userAvatarPaths.length)
+                                    avatarIndex = nextIdx
                             }
                         }
                     }

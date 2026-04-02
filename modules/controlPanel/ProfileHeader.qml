@@ -74,7 +74,7 @@ Item {
                 Image {
                     id: avatarImg
                     anchors.fill: parent
-                    source: Directories.userAvatarSourcePrimary
+                    source: profileAvatarResolver.resolvedSource
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
                     cache: true
@@ -82,22 +82,30 @@ Item {
                     mipmap: true
                     sourceSize.width: 84
                     sourceSize.height: 84
-                    visible: false
-                    
-                    onStatusChanged: {
-                        if (status === Image.Error) {
-                            const nextSource = Directories.nextAvatarSource(source)
-                            if (nextSource.length > 0 && nextSource !== source)
-                                source = nextSource
-                        }
+                    visible: status === Image.Ready
+                    layer.enabled: visible
+                    layer.effect: GE.OpacityMask {
+                        maskSource: avatarMask
                     }
                 }
 
-                GE.OpacityMask {
-                    anchors.fill: parent
-                    source: avatarImg
-                    maskSource: avatarMask
-                    visible: avatarImg.status === Image.Ready
+                // Reactive avatar resolver — retries fallback paths without breaking bindings
+                QtObject {
+                    id: profileAvatarResolver
+                    property int avatarIndex: 0
+                    readonly property string resolvedSource: Directories.avatarSourceAt(avatarIndex)
+
+                    readonly property string primaryWatch: Directories.userAvatarSourcePrimary
+                    onPrimaryWatchChanged: avatarIndex = 0
+
+                    readonly property int imgStatus: avatarImg.status
+                    onImgStatusChanged: {
+                        if (imgStatus === Image.Error) {
+                            const nextIdx = avatarIndex + 1
+                            if (nextIdx < Directories.userAvatarPaths.length)
+                                avatarIndex = nextIdx
+                        }
+                    }
                 }
                 
                 // Fallback

@@ -28,7 +28,6 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [curl]="curl"
     [git]="git"
     [python3]="python"
-    [matugen]="matugen"
     [wlsunset]="wlsunset"
     [dunstify]="dunst"
     [fish]="fish"
@@ -222,9 +221,6 @@ OFFICIAL_PACKAGES=(
   gum
   starship
   xwayland-satellite
-  
-  # Theming
-  matugen
   
   # Emoji font (CRITICAL — overview search, notifications, etc.)
   noto-fonts-emoji

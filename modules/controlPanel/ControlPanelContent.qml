@@ -18,6 +18,13 @@ Item {
     id: root
     property int screenWidth: 1920
     property int screenHeight: 1080
+    readonly property bool compactMode: Config.options?.controlPanel?.compactMode ?? true
+    readonly property bool showMediaSection: Config.options?.controlPanel?.showMediaSection ?? true
+    readonly property bool showWeatherSection: Config.options?.controlPanel?.showWeatherSection ?? true
+    readonly property bool showWallpaperSection: Config.options?.controlPanel?.showWallpaperSection ?? true
+    readonly property bool showSystemSection: Config.options?.controlPanel?.showSystemSection ?? true
+    readonly property bool showSlidersSection: Config.options?.controlPanel?.showSlidersSection ?? true
+    readonly property bool showQuickActionsSection: Config.options?.controlPanel?.showQuickActionsSection ?? true
     
     implicitHeight: background.implicitHeight
     
@@ -127,7 +134,7 @@ Item {
         Flickable {
             id: flickable
             anchors.fill: parent
-            anchors.margins: 12
+            anchors.margins: root.compactMode ? 10 : 12
             clip: true
             contentWidth: width
             contentHeight: contentLayout.implicitHeight
@@ -137,7 +144,7 @@ Item {
             ColumnLayout {
                 id: contentLayout
                 width: flickable.width
-                spacing: 10
+                spacing: root.compactMode ? 8 : 10
 
                 // Header with User Profile
                 ProfileHeader {}
@@ -145,23 +152,47 @@ Item {
                 // Date/Time header
                 DateTimeHeader {}
 
-                // Weather Section
-                WeatherSection {}
-
                 // Media Section
-                MediaSection {}
+                Loader {
+                    Layout.fillWidth: true
+                    active: root.showMediaSection
+                    sourceComponent: Component { MediaSection {} }
+                }
 
                 // Wallpaper Section
-                WallpaperSection {}
+                Loader {
+                    Layout.fillWidth: true
+                    active: root.showWallpaperSection
+                    sourceComponent: Component { WallpaperSection {} }
+                }
 
-                // System Info Section  
-                SystemSection {}
+                // Weather Section
+                Loader {
+                    Layout.fillWidth: true
+                    active: root.showWeatherSection
+                    sourceComponent: Component { WeatherSection {} }
+                }
+
+                // System Info Section
+                Loader {
+                    Layout.fillWidth: true
+                    active: root.showSystemSection
+                    sourceComponent: Component { SystemSection {} }
+                }
 
                 // Volume & Brightness Sliders
-                SlidersSection {}
+                Loader {
+                    Layout.fillWidth: true
+                    active: root.showSlidersSection
+                    sourceComponent: Component { SlidersSection {} }
+                }
 
                 // Quick actions
-                QuickActionsSection {}
+                Loader {
+                    Layout.fillWidth: true
+                    active: root.showQuickActionsSection
+                    sourceComponent: Component { QuickActionsSection {} }
+                }
 
                 Item { Layout.preferredHeight: 8 }
             }

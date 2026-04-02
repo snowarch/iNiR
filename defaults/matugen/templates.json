@@ -1,0 +1,39 @@
+{
+  "templates": [
+    {
+      "name": "gtk4",
+      "input": "gtk-4.0/gtk.css",
+      "output": "~/.config/gtk-4.0/gtk.css"
+    },
+    {
+      "name": "gtk3",
+      "input": "gtk-3.0/gtk.css",
+      "output": "~/.config/gtk-3.0/gtk.css"
+    },
+    {
+      "name": "fuzzel",
+      "input": "fuzzel/fuzzel_theme.ini",
+      "output": "~/.config/fuzzel/fuzzel_theme.ini"
+    },
+    {
+      "name": "kde_colors",
+      "input": "kde/color.txt",
+      "output": "~/.local/state/quickshell/user/generated/color.txt"
+    },
+    {
+      "name": "wallpaper",
+      "input": "wallpaper.txt",
+      "output": "~/.local/state/quickshell/user/generated/wallpaper/path.txt"
+    },
+    {
+      "name": "firefox_materialfox",
+      "input": "firefox/materialfox.css",
+      "output": "~/.local/state/quickshell/user/generated/firefox-materialfox.css"
+    },
+    {
+      "name": "steam_adwsteam",
+      "input": "steam/adw-colortheme.css",
+      "output": "~/.local/state/quickshell/user/generated/steam-colortheme.css"
+    }
+  ]
+}

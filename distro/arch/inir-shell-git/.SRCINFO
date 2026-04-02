@@ -1,6 +1,6 @@
 pkgbase = inir-shell-git
 	pkgdesc = iNiR shell payload, launcher, and user service (git)
-	pkgver = 2.15.0.r0.g0000000
+	pkgver = 2.17.0.r0.g0000000
 	pkgrel = 1
 	url = https://github.com/snowarch/iNiR
 	install = inir-shell-git.install
@@ -16,7 +16,6 @@ pkgbase = inir-shell-git
 	depends = jq
 	depends = kirigami
 	depends = libnotify
-	depends = matugen
 	depends = networkmanager
 	depends = niri
 	depends = noto-fonts-emoji

@@ -692,8 +692,7 @@ WBarAttachedPanelContent {
                                 if (ThemeService.isAutoTheme) {
                                     Quickshell.execDetached(["/usr/bin/bash", "-c", `${Directories.wallpaperSwitchScriptPath} --noswitch --type ${newValue}`]);
                                 } else {
-                                    const primary = Appearance.m3colors.m3primary
-                                    const hex = "#" + ((1 << 24) | (Math.round(primary.r * 255) << 16) | (Math.round(primary.g * 255) << 8) | Math.round(primary.b * 255)).toString(16).slice(1)
+                                    const hex = MaterialThemeLoader.colorToHex(Appearance.m3colors.m3primary)
                                     MaterialThemeLoader.applySchemeVariant(hex, newValue)
                                 }
                             }

@@ -18,6 +18,7 @@ Item {
     Layout.fillWidth: true
     implicitHeight: visible ? card.implicitHeight : 0
     visible: hasPlayer
+    readonly property bool compactMode: Config.options?.controlPanel?.compactMode ?? true
     
     readonly property MprisPlayer player: MprisController.activePlayer
     readonly property bool isYtMusicActive: MprisController.isYtMusicActive
@@ -157,11 +158,18 @@ Item {
     readonly property color jiraColPrimary: Appearance.inir.colPrimary
     readonly property color jiraColLayer1: Appearance.inir.colLayer1
     readonly property color jiraColLayer2: Appearance.inir.colLayer2
+    readonly property int cardHeight: root.compactMode ? 128 : 160
+    readonly property int coverArtSize: root.compactMode ? 104 : 136
+    readonly property int outerMargin: root.compactMode ? 10 : 12
+    readonly property int controlButtonSize: root.compactMode ? 28 : 32
+    readonly property int primaryControlButtonSize: root.compactMode ? 38 : 44
+    readonly property int controlIconSize: root.compactMode ? 20 : 22
+    readonly property int primaryControlIconSize: root.compactMode ? 22 : 26
 
     Rectangle {
         id: card
         anchors.fill: parent
-        implicitHeight: 160
+        implicitHeight: root.cardHeight
         radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
              : root.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
         color: Appearance.angelEverywhere ? "transparent"
@@ -219,7 +227,7 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            height: 40
+            height: root.compactMode ? 28 : 40
             live: root.player?.isPlaying ?? false
             points: root.visualizerPoints
             maxVisualizerValue: 1000
@@ -233,14 +241,14 @@ Item {
 
         RowLayout {
             anchors.fill: parent
-            anchors.margins: 12
-            spacing: 12
+            anchors.margins: root.outerMargin
+            spacing: root.compactMode ? 10 : 12
 
             // Cover art
             Rectangle {
                 id: coverArtContainer
-                Layout.preferredWidth: 136
-                Layout.preferredHeight: 136
+                Layout.preferredWidth: root.coverArtSize
+                Layout.preferredHeight: root.coverArtSize
                 radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
                     : root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
                 color: "transparent"
@@ -249,8 +257,8 @@ Item {
                 layer.enabled: true
                 layer.effect: GE.OpacityMask {
                     maskSource: Rectangle { 
-                        width: 136
-                        height: 136
+                        width: root.coverArtSize
+                        height: root.coverArtSize
                         radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
                             : root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small 
                     }
@@ -265,8 +273,8 @@ Item {
                     cache: true
                     smooth: true
                     mipmap: true
-                    sourceSize.width: 272
-                    sourceSize.height: 272
+                    sourceSize.width: root.coverArtSize * 2
+                    sourceSize.height: root.coverArtSize * 2
                 }
 
                 Rectangle {
@@ -278,7 +286,7 @@ Item {
                     MaterialSymbol {
                         anchors.centerIn: parent
                         text: "music_note"
-                        iconSize: 48
+                        iconSize: root.compactMode ? 36 : 48
                         color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
                             : root.inirEverywhere ? root.jiraColTextSecondary : (root.blendedColors?.colSubtext ?? Appearance.colors.colSubtext)
                     }
@@ -292,7 +300,7 @@ Item {
                 StyledText {
                     Layout.fillWidth: true
                     text: StringUtils.cleanMusicTitle(root.effectiveTitle) || "—"
-                    font.pixelSize: Appearance.font.pixelSize.normal
+                    font.pixelSize: root.compactMode ? Appearance.font.pixelSize.smaller : Appearance.font.pixelSize.normal
                     font.weight: Font.Medium
                     color: Appearance.angelEverywhere ? Appearance.angel.colText
                         : root.inirEverywhere ? root.jiraColText : (root.blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
@@ -302,7 +310,7 @@ Item {
                 StyledText {
                     Layout.fillWidth: true
                     text: root.effectiveArtist || ""
-                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    font.pixelSize: root.compactMode ? Appearance.font.pixelSize.smallest : Appearance.font.pixelSize.smaller
                     color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
                         : root.inirEverywhere ? root.jiraColTextSecondary : (root.blendedColors?.colSubtext ?? Appearance.colors.colSubtext)
                     elide: Text.ElideRight
@@ -315,7 +323,7 @@ Item {
                 // Progress bar
                 Item {
                     Layout.fillWidth: true
-                    implicitHeight: 16
+                    implicitHeight: root.compactMode ? 12 : 16
 
                     Loader {
                         anchors.fill: parent
@@ -368,8 +376,8 @@ Item {
 
                     // Controls
                     RippleButton {
-                        implicitWidth: 32
-                        implicitHeight: 32
+                        implicitWidth: root.controlButtonSize
+                        implicitHeight: root.controlButtonSize
                         buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
                             : root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
                         colBackground: "transparent"
@@ -383,7 +391,7 @@ Item {
                             MaterialSymbol {
                                 anchors.centerIn: parent
                                 text: "skip_previous"
-                                iconSize: 22
+                                iconSize: root.controlIconSize
                                 fill: 1
                                 color: Appearance.angelEverywhere ? Appearance.angel.colText
                                     : root.inirEverywhere ? root.jiraColText : (root.blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
@@ -395,8 +403,8 @@ Item {
 
                     RippleButton {
                         id: playPauseButton
-                        implicitWidth: 44
-                        implicitHeight: 44
+                        implicitWidth: root.primaryControlButtonSize
+                        implicitHeight: root.primaryControlButtonSize
                         buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
                             : root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
                         colBackground: "transparent"
@@ -420,7 +428,7 @@ Item {
                             MaterialSymbol {
                                 anchors.centerIn: parent
                                 text: root.player?.isPlaying ? "pause" : "play_arrow"
-                                iconSize: 26
+                                iconSize: root.primaryControlIconSize
                                 fill: 1
                                 color: Appearance.angelEverywhere
                                     ? Appearance.angel.colPrimary
@@ -436,8 +444,8 @@ Item {
                     }
 
                     RippleButton {
-                        implicitWidth: 32
-                        implicitHeight: 32
+                        implicitWidth: root.controlButtonSize
+                        implicitHeight: root.controlButtonSize
                         buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
                             : root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
                         colBackground: "transparent"
@@ -451,7 +459,7 @@ Item {
                             MaterialSymbol {
                                 anchors.centerIn: parent
                                 text: "skip_next"
-                                iconSize: 22
+                                iconSize: root.controlIconSize
                                 fill: 1
                                 color: Appearance.angelEverywhere ? Appearance.angel.colText
                                     : root.inirEverywhere ? root.jiraColText : (root.blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)

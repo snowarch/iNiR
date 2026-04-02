@@ -168,7 +168,6 @@ Fonts, theming, and utilities.
 | `glib2` | GLib utilities |
 | `translate-shell` | Translation CLI |
 | `kvantum` | Qt theming |
-| `matugen` | Material You colors |
 
 ### From AUR
 

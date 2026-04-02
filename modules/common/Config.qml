@@ -298,7 +298,9 @@ Singleton {
                     property bool enableVSCode: true
                     property bool enableChrome: true
                     property bool enableSpicetify: false
+                    property bool enableAdwSteam: false
                     property bool enableOpenCode: false
+                    property real colorStrength: 1.0
                     property JsonObject vscodeEditors: JsonObject {
                         property bool code: true           // Official VSCode
                         property bool codium: true         // VSCodium (FOSS)
@@ -346,6 +348,7 @@ Singleton {
                 }
                 property JsonObject palette: JsonObject {
                     property string type: "auto" // Allowed: auto, scheme-content, scheme-expressive, scheme-fidelity, scheme-fruit-salad, scheme-monochrome, scheme-neutral, scheme-rainbow, scheme-tonal-spot
+                    property string accentColor: "" // Seed color hex for scheme variant (e.g. "#ab1234"), empty = use theme primary
                 }
                 property JsonObject typography: JsonObject {
                     property string mainFont: "Roboto Flex"
@@ -786,6 +789,18 @@ Singleton {
                 property bool keepPreviewOnClick: false // Keep preview open when clicking a window thumbnail
                 // Drag & drop reordering
                 property bool enableDragReorder: true // Allow drag to reorder pinned apps
+            }
+
+            property JsonObject controlPanel: JsonObject {
+                property bool keepLoaded: false
+                property bool compactMode: true
+                property bool showMediaSection: true
+                property bool showWeatherSection: true
+                property bool showWallpaperSection: true
+                property bool showSystemSection: true
+                property bool showSlidersSection: true
+                property bool showQuickActionsSection: true
+                property bool showWallpaperSchemeChips: false
             }
 
             property JsonObject interactions: JsonObject {

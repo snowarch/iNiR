@@ -25,6 +25,9 @@ CACHE_DIR="$XDG_CACHE_HOME/quickshell"
 STATE_DIR="$XDG_STATE_HOME/quickshell"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# shellcheck source=scripts/lib/config-path.sh
+source "$SCRIPT_DIR/../../lib/config-path.sh"
+
 mkdir -p "$PICTURES_DIR/Wallpapers"
 
 response=$(curl "https://osu.ppy.sh/api/v2/seasonal-backgrounds")
@@ -33,7 +36,7 @@ randomIndex=$((RANDOM % images));
 link=$(echo "$response" | jq ".backgrounds[$randomIndex].url" -r)
 ext=$(echo "$link" | awk -F. '{print $NF}')
 downloadPath="$PICTURES_DIR/Wallpapers/random_wallpaper.$ext"
-illogicalImpulseConfigPath="${XDG_CONFIG_HOME:-$HOME/.config}/illogical-impulse/config.json"
+illogicalImpulseConfigPath="$(inir_config_file)"
 currentWallpaperPath=$(jq -r '.background.wallpaperPath' $illogicalImpulseConfigPath)
 if [ "$downloadPath" == "$currentWallpaperPath" ]; then
     downloadPath="$PICTURES_DIR/Wallpapers/random_wallpaper-1.$ext"

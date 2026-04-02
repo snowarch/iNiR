@@ -2,7 +2,11 @@
 # Launch the configured terminal emulator
 # Reads from iNiR config, falls back to kitty (project default)
 
-CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/illogical-impulse/config.json"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/lib/config-path.sh
+source "$SCRIPT_DIR/lib/config-path.sh"
+
+CONFIG_FILE="$(inir_config_file)"
 
 if [[ -f "$CONFIG_FILE" ]]; then
     TERMINAL=$(grep -o '"terminal"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" \

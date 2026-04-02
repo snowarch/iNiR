@@ -201,6 +201,7 @@ environment {
     QT_STYLE_OVERRIDE "Darkly"
     
     // Quickshell Python virtual environment
+    INIR_VENV "$HOME/.local/state/quickshell/.venv"
     ILLOGICAL_IMPULSE_VIRTUAL_ENV "$HOME/.local/state/quickshell/.venv"
 }
 

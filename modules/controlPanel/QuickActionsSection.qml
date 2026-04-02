@@ -12,6 +12,7 @@ Rectangle {
     id: root
     Layout.fillWidth: true
     implicitHeight: actionsGrid.implicitHeight + 16
+    readonly property bool compactMode: Config.options?.controlPanel?.compactMode ?? true
     
     readonly property bool inirEverywhere: Appearance.inirEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
@@ -31,10 +32,10 @@ Rectangle {
     GridLayout {
         id: actionsGrid
         anchors.fill: parent
-        anchors.margins: 8
+        anchors.margins: root.compactMode ? 6 : 8
         columns: 4
-        rowSpacing: 6
-        columnSpacing: 6
+        rowSpacing: root.compactMode ? 4 : 6
+        columnSpacing: root.compactMode ? 4 : 6
 
         // Row 1: Audio
         ActionTile {
@@ -141,7 +142,7 @@ Rectangle {
         signal clicked()
 
         Layout.fillWidth: true
-        implicitHeight: 36
+        implicitHeight: root.compactMode ? 30 : 36
         radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
             : root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
         
@@ -179,7 +180,7 @@ Rectangle {
         MaterialSymbol {
             anchors.centerIn: parent
             text: tile.icon
-            iconSize: 18
+            iconSize: root.compactMode ? 16 : 18
             color: tile.iconColor
 
             Behavior on color {

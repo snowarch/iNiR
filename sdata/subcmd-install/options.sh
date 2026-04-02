@@ -36,9 +36,9 @@ Examples:
 "
 }
 
-# Default values
-ask=true
-quiet=false
+# Default values (preserve globals already set by top-level parser)
+ask=${ask:-true}
+quiet=${quiet:-false}
 INSTALL_FIRSTRUN=""
 RESET_DOLPHIN_LAYOUT=false
 SKIP_ALLDEPS=${SKIP_ALLDEPS:-false}

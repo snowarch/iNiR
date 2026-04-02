@@ -50,7 +50,6 @@ check_dependencies() {
         "curl:curl"
         "git:git"
         "python3:python3"
-        "matugen:matugen"
         "fish:fish"
         "magick:ImageMagick"
         "grim:grim"
@@ -62,6 +61,8 @@ check_dependencies() {
         "hyprpicker:hyprpicker"
         "playerctl:playerctl"
         "notify-send:libnotify"
+        "flock:util-linux"
+        "go:go"
     )
     
     # Optional but recommended
@@ -260,7 +261,7 @@ check_script_permissions() {
 }
 
 check_user_config() {
-    local config="${XDG_CONFIG_HOME}/illogical-impulse/config.json"
+    local config="${DOTS_CORE_CONFDIR}/config.json"
     
     if [[ ! -f "$config" ]]; then
         doctor_pass "User config (using defaults)"
@@ -276,7 +277,7 @@ check_user_config() {
 }
 
 check_state_directories() {
-    local dirs=("${XDG_STATE_HOME}/quickshell/user" "${XDG_CACHE_HOME}/quickshell" "${XDG_CONFIG_HOME}/illogical-impulse")
+    local dirs=("${XDG_STATE_HOME}/quickshell/user" "${XDG_CACHE_HOME}/quickshell" "${DOTS_CORE_CONFDIR}")
     local created=0
     
     for dir in "${dirs[@]}"; do
@@ -583,22 +584,43 @@ check_niri_running() {
 }
 
 check_version_tracking() {
-    local version_file="${XDG_CONFIG_HOME}/illogical-impulse/version.json"
+    local version_file="${DOTS_CORE_CONFDIR}/version.json"
+    local legacy_version_file="${XDG_CONFIG_HOME}/illogical-impulse/version.json"
     local runtime_version_file
-    local installed_marker="${XDG_CONFIG_HOME}/illogical-impulse/installed_true"
+    local installed_marker="${DOTS_CORE_CONFDIR}/installed_true"
+    local repair_source=""
     runtime_version_file="$(get_runtime_version_file)"
+
+    if [[ ! -f "$version_file" && -f "$legacy_version_file" ]]; then
+        mkdir -p "${DOTS_CORE_CONFDIR}"
+        cp "$legacy_version_file" "$version_file"
+        doctor_fix "Migrated version tracking to active config directory"
+    fi
     
-    if [[ -f "$installed_marker" && ! -f "$version_file" ]]; then
-        if [[ -f "$runtime_version_file" ]]; then
+    if [[ -f "$installed_marker" && -f "$version_file" ]] && ! version_file_has_core_metadata "$version_file"; then
+        repair_source="incomplete"
+    elif [[ -f "$installed_marker" && ! -f "$version_file" ]]; then
+        repair_source="missing"
+    fi
+
+    if [[ -n "$repair_source" ]]; then
+        if [[ -f "$runtime_version_file" ]] && version_file_has_core_metadata "$runtime_version_file"; then
             mkdir -p "$(dirname "$version_file")"
             cp "$runtime_version_file" "$version_file"
-            doctor_fix "Created version tracking from runtime metadata"
+            if [[ "$repair_source" == "incomplete" ]]; then
+                doctor_fix "Repaired version tracking from runtime metadata"
+            else
+                doctor_fix "Created version tracking from runtime metadata"
+            fi
         else
-            # Existing install without tracking - create it
             local repo_ver=$(get_repo_version 2>/dev/null || echo "unknown")
             local repo_commit=$(get_repo_commit 2>/dev/null || echo "unknown")
             set_installed_version "$repo_ver" "$repo_commit" "doctor"
-            doctor_fix "Created version tracking"
+            if [[ "$repair_source" == "incomplete" ]]; then
+                doctor_fix "Repaired incomplete version tracking"
+            else
+                doctor_fix "Created version tracking"
+            fi
         fi
     else
         doctor_pass "Version tracking OK"
@@ -613,7 +635,7 @@ check_manifest() {
         return 0
     fi
     local manifest="${target}/.inir-manifest"
-    local installed_marker="${XDG_CONFIG_HOME}/illogical-impulse/installed_true"
+    local installed_marker="${DOTS_CORE_CONFDIR}/installed_true"
     local installed_strategy
     installed_strategy=$(get_installed_update_strategy)
 
@@ -852,7 +874,7 @@ check_matugen_colors() {
         # Try to auto-generate from current wallpaper
         local wallpaper=""
         local wallpaper_source="configured wallpaper"
-        local config="${XDG_CONFIG_HOME}/illogical-impulse/config.json"
+        local config="${DOTS_CORE_CONFDIR}/config.json"
         if [[ -f "$config" ]] && command -v jq &>/dev/null; then
             wallpaper=$(jq -r '.background.wallpaperPath // empty' "$config" 2>/dev/null)
         fi
@@ -862,13 +884,8 @@ check_matugen_colors() {
             [[ -n "$wallpaper" ]] && wallpaper_source="bundled fallback wallpaper"
         fi
         
-        if [[ -n "$wallpaper" && -f "$wallpaper" && -s "$wallpaper" ]] && command -v matugen &>/dev/null; then
-            local matugen_cfg="${XDG_CONFIG_HOME}/matugen/config.toml"
-            if [[ -f "$matugen_cfg" ]]; then
-                matugen -c "$matugen_cfg" image "$wallpaper" 2>/dev/null
-            else
-                matugen image "$wallpaper" 2>/dev/null
-            fi
+        if [[ -n "$wallpaper" && -f "$wallpaper" && -s "$wallpaper" ]]; then
+            local template_dir="${XDG_CONFIG_HOME}/matugen"
 
             local runtime_dir
             runtime_dir="$(doctor_runtime_dir)"
@@ -883,7 +900,7 @@ check_matugen_colors() {
                 fi
             fi
 
-            if [[ ! -f "$colors_json" && -n "$gen_material_script" ]]; then
+            if [[ -n "$gen_material_script" ]]; then
                 local python_cmd=""
                 local venv_python="${XDG_STATE_HOME}/quickshell/.venv/bin/python3"
                 if [[ -x "$venv_python" ]]; then
@@ -894,10 +911,13 @@ check_matugen_colors() {
 
                 if [[ -n "$python_cmd" ]]; then
                     mkdir -p "$(dirname "$colors_json")"
+                    local _render_args=()
+                    [[ -d "$template_dir" && -f "$template_dir/templates.json" ]] && _render_args+=(--render-templates "$template_dir")
                     "$python_cmd" "$gen_material_script" \
                         --path "$wallpaper" \
                         --mode dark \
                         --json-output "$colors_json" \
+                        "${_render_args[@]}" \
                         >/dev/null 2>&1 || true
                 fi
             fi
@@ -906,16 +926,12 @@ check_matugen_colors() {
                 doctor_fix "Regenerated theme colors from ${wallpaper_source}"
             else
                 doctor_fail "Theme colors regeneration failed"
-                echo -e "    ${STY_FAINT}matugen ran but no generated color files were produced${STY_RST}"
+                echo -e "    ${STY_FAINT}Python color generation failed — check venv${STY_RST}"
                 return 1
             fi
         else
             doctor_fail "Theme colors not generated"
-            if ! command -v matugen &>/dev/null; then
-                echo -e "    ${STY_FAINT}Install matugen, then run: ./setup doctor${STY_RST}"
-            else
-                echo -e "    ${STY_FAINT}Set a wallpaper via settings or run: matugen image /path/to/wallpaper.png${STY_RST}"
-            fi
+            echo -e "    ${STY_FAINT}Set a wallpaper via settings, then run: ./setup doctor${STY_RST}"
             return 1
         fi
     else
@@ -964,12 +980,11 @@ check_conflicting_services() {
     done
     
     if [[ ${#running[@]} -gt 0 ]]; then
-        # Auto-kill conflicting notification daemons
         for proc in "${running[@]}"; do
             pkill -x "$proc" 2>/dev/null
             systemctl --user disable --now "${proc}.service" 2>/dev/null || true
         done
-        doctor_fix "Killed conflicting: ${running[*]} (Quickshell has built-in notifications)"
+        doctor_fix "Stopped conflicting: ${running[*]} (iNiR has built-in notifications, re-enable with: systemctl --user enable <service>)"
     else
         doctor_pass "No conflicting notification daemons"
     fi
@@ -1028,12 +1043,13 @@ check_environment_vars() {
     local venv_path="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/.venv"
     local fixed=0
     
-    # Check bash
-    if [[ -f "$HOME/.bashrc" ]] && ! grep -q "ILLOGICAL_IMPULSE_VIRTUAL_ENV" "$HOME/.bashrc" 2>/dev/null; then
+    # Check bash — look for INIR_VENV (canonical) or ILLOGICAL_IMPULSE_VIRTUAL_ENV (legacy)
+    if [[ -f "$HOME/.bashrc" ]] && ! grep -q "INIR_VENV" "$HOME/.bashrc" 2>/dev/null; then
         cat >> "$HOME/.bashrc" << BEOF
 
 # iNiR environment
-export ILLOGICAL_IMPULSE_VIRTUAL_ENV="${venv_path}"
+export INIR_VENV="${venv_path}"
+export ILLOGICAL_IMPULSE_VIRTUAL_ENV="\$INIR_VENV"
 # end iNiR
 BEOF
         ((fixed++)) || true
@@ -1045,17 +1061,19 @@ BEOF
         mkdir -p "$(dirname "$fish_conf")"
         cat > "$fish_conf" << FEOF
 # iNiR environment — auto-generated by doctor
-set -gx ILLOGICAL_IMPULSE_VIRTUAL_ENV "${venv_path}"
+set -gx INIR_VENV "${venv_path}"
+set -gx ILLOGICAL_IMPULSE_VIRTUAL_ENV "\$INIR_VENV"
 FEOF
         ((fixed++)) || true
     fi
     
     # Check zsh
-    if [[ -f "$HOME/.zshrc" ]] && ! grep -q "ILLOGICAL_IMPULSE_VIRTUAL_ENV" "$HOME/.zshrc" 2>/dev/null; then
+    if [[ -f "$HOME/.zshrc" ]] && ! grep -q "INIR_VENV" "$HOME/.zshrc" 2>/dev/null; then
         cat >> "$HOME/.zshrc" << ZEOF
 
 # iNiR environment
-export ILLOGICAL_IMPULSE_VIRTUAL_ENV="${venv_path}"
+export INIR_VENV="${venv_path}"
+export ILLOGICAL_IMPULSE_VIRTUAL_ENV="\$INIR_VENV"
 # end iNiR
 ZEOF
         ((fixed++)) || true
@@ -1072,8 +1090,26 @@ check_qt_theming() {
     # Check that plasma-integration is installed (required for kde platform theme)
     # Without it, Darkly style can't read kdeglobals colors → black text on dark bg
     local plugin_found=false
-    for plugindir in /usr/lib/qt6/plugins/platformthemes /usr/lib64/qt6/plugins/platformthemes \
-                     /usr/lib/x86_64-linux-gnu/qt6/plugins/platformthemes; do
+    
+    # Try dynamic resolution first, then known paths as fallback
+    local search_dirs=()
+    if command -v qtpaths6 &>/dev/null; then
+        local qt_plugin_dir
+        qt_plugin_dir=$(qtpaths6 --plugin-dir 2>/dev/null || true)
+        [[ -n "$qt_plugin_dir" ]] && search_dirs+=("${qt_plugin_dir}/platformthemes")
+    elif command -v qtpaths &>/dev/null; then
+        local qt_plugin_dir
+        qt_plugin_dir=$(qtpaths --plugin-dir 2>/dev/null || true)
+        [[ -n "$qt_plugin_dir" ]] && search_dirs+=("${qt_plugin_dir}/platformthemes")
+    fi
+    # Known fallback paths for common distros
+    search_dirs+=(
+        /usr/lib/qt6/plugins/platformthemes
+        /usr/lib64/qt6/plugins/platformthemes
+        /usr/lib/x86_64-linux-gnu/qt6/plugins/platformthemes
+    )
+    
+    for plugindir in "${search_dirs[@]}"; do
         if [[ -f "${plugindir}/KDEPlasmaPlatformTheme6.so" ]]; then
             plugin_found=true
             break
@@ -1101,8 +1137,22 @@ check_qt_theming() {
 
     # Check Darkly style is installed
     local darkly_found=false
-    for styledir in /usr/lib/qt6/plugins/styles /usr/lib64/qt6/plugins/styles \
-                    /usr/lib/x86_64-linux-gnu/qt6/plugins/styles; do
+    local style_dirs=()
+    if command -v qtpaths6 &>/dev/null; then
+        local qt_plugin_dir
+        qt_plugin_dir=$(qtpaths6 --plugin-dir 2>/dev/null || true)
+        [[ -n "$qt_plugin_dir" ]] && style_dirs+=("${qt_plugin_dir}/styles")
+    elif command -v qtpaths &>/dev/null; then
+        local qt_plugin_dir
+        qt_plugin_dir=$(qtpaths --plugin-dir 2>/dev/null || true)
+        [[ -n "$qt_plugin_dir" ]] && style_dirs+=("${qt_plugin_dir}/styles")
+    fi
+    style_dirs+=(
+        /usr/lib/qt6/plugins/styles
+        /usr/lib64/qt6/plugins/styles
+        /usr/lib/x86_64-linux-gnu/qt6/plugins/styles
+    )
+    for styledir in "${style_dirs[@]}"; do
         if [[ -f "${styledir}/darkly6.so" ]]; then
             darkly_found=true
             break

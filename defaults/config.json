@@ -44,7 +44,8 @@
             "nightStart": "18:00"
         },
         "palette": {
-            "type": "auto"
+            "type": "auto",
+            "accentColor": ""
         },
         "angel": {
             "blur": {
@@ -125,6 +126,8 @@
             "enableVSCode": true,
             "enableChrome": true,
             "enableSpicetify": false,
+            "enableAdwSteam": false,
+            "colorStrength": 1.0,
             "useBackdropForColors": false,
             "colorsOnlyMode": false,
             "previewSourcePath": "",
@@ -535,6 +538,17 @@
         "enableDragReorder": true,
         "style": "panel"
     },
+    "controlPanel": {
+        "keepLoaded": false,
+        "compactMode": true,
+        "showMediaSection": true,
+        "showWeatherSection": true,
+        "showWallpaperSection": true,
+        "showSystemSection": true,
+        "showSlidersSection": true,
+        "showQuickActionsSection": true,
+        "showWallpaperSchemeChips": false
+    },
     "settingsUi": {
         "overlayMode": false,
         "overlayAppearance": {
@@ -939,7 +953,8 @@
         "style": "grid",
         "coverflowView": "gallery",
         "targetMonitor": "",
-        "useSystemFileDialog": false
+        "useSystemFileDialog": false,
+        "animatePreview": false
     },
     "screenRecord": {
         "savePath": "",

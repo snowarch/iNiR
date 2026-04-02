@@ -6,7 +6,8 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Qt5Compat.GraphicalEffects
+import QtQuick.Effects
+import Qt5Compat.GraphicalEffects as GE
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
@@ -21,8 +22,12 @@ Scope {
     property string firstRunFileContent: "This file is just here to confirm you've been greeted :>"
     property int currentStep: 0
     readonly property int totalSteps: 5
-    property bool wizardVisible: true
     property var focusedScreen: GlobalStates.primaryScreen
+
+    // ─── Entry/exit animation state (gate pattern) ───
+    property bool _entryReady: false
+    property bool _contentReady: false
+    property bool _closing: false
 
     readonly property var steps: [
         { icon: "waving_hand", title: Translation.tr("Welcome") },
@@ -32,55 +37,133 @@ Scope {
         { icon: "rocket_launch", title: Translation.tr("Ready") }
     ]
 
-    function finish() {
-        ShellExec.writeFileViaShell(root.firstRunFilePath, root.firstRunFileContent)
-        Quickshell.execDetached(["/usr/bin/notify-send", Translation.tr("Welcome to inir"), Translation.tr("Press Super+/ for all keyboard shortcuts."), "-a", "Shell"])
-        Qt.quit()
+    function finish(skipped: bool): void {
+        if (root._closing) return
+        root._closing = true
+        // Write config keys
+        Config.setNestedValue("welcomeWizard.completed", !skipped)
+        Config.setNestedValue("welcomeWizard.skipped", skipped)
+        // Reverse the entry animation
+        root._contentReady = false
+        root._entryReady = false
+        _exitTimer.start()
+    }
+
+    Timer {
+        id: _exitTimer
+        interval: Appearance.animationsEnabled ? 400 : 0
+        repeat: false
+        onTriggered: {
+            // first_run.txt is already written by FirstRunExperience before launching us
+            Quickshell.execDetached(["/usr/bin/notify-send", Translation.tr("Welcome to inir"), Translation.tr("Press Super+/ for all keyboard shortcuts."), "-a", "Shell"])
+            Qt.quit()
+        }
     }
 
     Component.onCompleted: {
         MaterialThemeLoader.reapplyTheme()
         Config.readWriteDelay = 0
+        // Staggered entry: scrim first, then card content
+        if (Appearance.animationsEnabled) {
+            _entryTimer.start()
+        } else {
+            root._entryReady = true
+            root._contentReady = true
+        }
+    }
+
+    Timer {
+        id: _entryTimer
+        interval: 80
+        repeat: false
+        onTriggered: {
+            root._entryReady = true
+            _contentEntryTimer.start()
+        }
+    }
+    Timer {
+        id: _contentEntryTimer
+        interval: 120
+        repeat: false
+        onTriggered: root._contentReady = true
     }
 
     PanelWindow {
         id: wizardPanel
-        visible: root.wizardVisible
+        visible: true
         color: "transparent"
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.namespace: "quickshell:welcome"
         WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+        WlrLayershell.keyboardFocus: root._closing ? WlrKeyboardFocus.None : WlrKeyboardFocus.Exclusive
         anchors { top: true; bottom: true; left: true; right: true }
         implicitWidth: root.focusedScreen?.width ?? 1920
         implicitHeight: root.focusedScreen?.height ?? 1080
 
-        // Blurred wallpaper background
-        Image {
-            id: bgWallpaper
+        // ─── Blurred wallpaper backdrop (scrim) ───
+        Item {
+            id: scrim
             anchors.fill: parent
-            source: Config.options?.background?.wallpaperPath ?? ""
-            fillMode: Image.PreserveAspectCrop
-            asynchronous: true
-            layer.enabled: Appearance.effectsEnabled
-            layer.effect: FastBlur { radius: 64 }
-            transform: Scale {
-                origin.x: bgWallpaper.width / 2
-                origin.y: bgWallpaper.height / 2
-                xScale: 1.1; yScale: 1.1
+            opacity: root._entryReady ? 1.0 : 0.0
+            Behavior on opacity {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation {
+                    duration: Appearance.calcEffectiveDuration(320)
+                    easing.type: Easing.OutCubic
+                }
+            }
+
+            // Blur edge compensation: MultiEffect fades at boundaries
+            readonly property int blurOverflow: 64
+
+            Item {
+                id: blurSource
+                anchors.fill: parent
+                anchors.margins: -scrim.blurOverflow
+
+                Image {
+                    anchors.fill: parent
+                    anchors.margins: scrim.blurOverflow
+                    source: Config.options?.background?.wallpaperPath ?? ""
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    cache: true
+                    sourceSize.width: wizardPanel.implicitWidth
+                    sourceSize.height: wizardPanel.implicitHeight
+                }
+            }
+
+            MultiEffect {
+                source: blurSource
+                anchors.fill: parent
+                anchors.margins: -scrim.blurOverflow
+                blurEnabled: Appearance.effectsEnabled
+                blurMax: 64
+                blur: Appearance.effectsEnabled ? 1.0 : 0
+                saturation: Appearance.effectsEnabled ? 0.15 : 0
+            }
+
+            // Scrim overlay
+            Rectangle {
+                anchors.fill: parent
+                color: Appearance.colors.colScrim
+                opacity: 0.55
+            }
+
+            // Vignette
+            GE.RadialGradient {
+                anchors.fill: parent
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: "transparent" }
+                    GradientStop { position: 0.6; color: "transparent" }
+                    GradientStop { position: 1.0; color: ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.35) }
+                }
             }
         }
 
-        // Dim overlay
-        Rectangle {
-            anchors.fill: parent
-            color: Qt.rgba(0, 0, 0, 0.45)
-        }
-
-        // Click outside to skip
+        // Click outside does NOT dismiss — just absorb clicks
         MouseArea {
             anchors.fill: parent
-            onClicked: root.finish()
         }
 
         // Main wizard card
@@ -91,30 +174,32 @@ Scope {
             height: Math.min(parent.height * 0.85, parent.height - 60)
             focus: true
 
-            // Entrance animation - using project animation system
-            scale: root.wizardVisible ? 1 : 0.95
-            opacity: root.wizardVisible ? 1 : 0
+            // Staggered entry animation — card comes in after scrim
+            transformOrigin: Item.Center
+            scale: root._contentReady ? 1.0 : 0.92
+            opacity: root._contentReady ? 1.0 : 0.0
             Behavior on scale {
+                enabled: Appearance.animationsEnabled
                 NumberAnimation {
-                    duration: Appearance.animation.elementMoveEnter.duration
+                    duration: Appearance.calcEffectiveDuration(420)
                     easing.type: Appearance.animation.elementMoveEnter.type
                     easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
                 }
             }
             Behavior on opacity {
+                enabled: Appearance.animationsEnabled
                 NumberAnimation {
-                    duration: Appearance.animation.elementMoveEnter.duration
-                    easing.type: Appearance.animation.elementMoveEnter.type
-                    easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
+                    duration: Appearance.calcEffectiveDuration(350)
+                    easing.type: Easing.OutCubic
                 }
             }
 
             // Keyboard navigation
-            Keys.onEscapePressed: root.finish()
+            Keys.onEscapePressed: root.finish(true)
             Keys.onLeftPressed: if (root.currentStep > 0) root.currentStep--
             Keys.onRightPressed: if (root.currentStep < root.totalSteps - 1) root.currentStep++
-            Keys.onReturnPressed: root.currentStep < root.totalSteps - 1 ? root.currentStep++ : root.finish()
-            Keys.onEnterPressed: root.currentStep < root.totalSteps - 1 ? root.currentStep++ : root.finish()
+            Keys.onReturnPressed: root.currentStep < root.totalSteps - 1 ? root.currentStep++ : root.finish(false)
+            Keys.onEnterPressed: root.currentStep < root.totalSteps - 1 ? root.currentStep++ : root.finish(false)
 
             // Shadow (hide in aurora)
             StyledRectangularShadow {
@@ -143,20 +228,29 @@ Scope {
                 Behavior on border.color { ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
 
                 // Aurora: Wallpaper blur inside card
-                Image {
+                Item {
+                    id: auroraBlurSource
                     visible: Appearance.auroraEverywhere
                     anchors.fill: parent
-                    source: Config.options?.background?.wallpaperPath ?? ""
-                    fillMode: Image.PreserveAspectCrop
 
-                    // Position to align with background wallpaper
-                    x: -wizardCard.x
-                    y: -wizardCard.y
-                    width: wizardPanel.width
-                    height: wizardPanel.height
+                    Image {
+                        x: -wizardCard.x
+                        y: -wizardCard.y
+                        width: wizardPanel.width
+                        height: wizardPanel.height
+                        source: Config.options?.background?.wallpaperPath ?? ""
+                        fillMode: Image.PreserveAspectCrop
+                    }
+                }
 
-                    layer.enabled: Appearance.effectsEnabled
-                    layer.effect: FastBlur { radius: 40 }
+                MultiEffect {
+                    visible: Appearance.auroraEverywhere
+                    source: auroraBlurSource
+                    anchors.fill: parent
+                    blurEnabled: Appearance.effectsEnabled
+                    blurMax: 40
+                    blur: Appearance.effectsEnabled ? 1.0 : 0
+                    saturation: Appearance.effectsEnabled ? 0.1 : 0
                 }
 
                 // Aurora: Tinted overlay
@@ -175,7 +269,7 @@ Scope {
 
                 // Clip content to rounded corners
                 layer.enabled: Appearance.effectsEnabled
-                layer.effect: OpacityMask {
+                layer.effect: GE.OpacityMask {
                     maskSource: Rectangle {
                         width: cardBg.width
                         height: cardBg.height
@@ -443,7 +537,7 @@ Scope {
                         buttonText: Translation.tr("Skip")
                         colBackground: "transparent"
                         colBackgroundHover: Appearance.colors.colLayer2Hover
-                        onClicked: root.finish()
+                        onClicked: root.finish(true)
                     }
 
                     DialogButton {
@@ -451,7 +545,7 @@ Scope {
                         colBackground: Appearance.colors.colPrimary
                         colBackgroundHover: Appearance.colors.colPrimaryHover
                         colText: Appearance.colors.colOnPrimary
-                        onClicked: root.currentStep < root.totalSteps - 1 ? root.currentStep++ : root.finish()
+                        onClicked: root.currentStep < root.totalSteps - 1 ? root.currentStep++ : root.finish(false)
                     }
                 }
             }
@@ -583,11 +677,11 @@ Scope {
                     StyledText {
                         text: {
                             const style = Config.options?.appearance?.globalStyle ?? "material"
-                            return style === "material" ? "Clean & Solid"
-                                 : style === "cards" ? "Rounded Cards"
-                                 : style === "aurora" ? "Glass & Blur"
-                                 : style === "angel" ? "Neo-Brutalism Glass"
-                                 : "Terminal Style"
+                            return style === "material" ? Translation.tr("Clean & Solid")
+                                 : style === "cards" ? Translation.tr("Rounded Cards")
+                                 : style === "aurora" ? Translation.tr("Glass & Blur")
+                                 : style === "angel" ? Translation.tr("Neo-Brutalism Glass")
+                                 : Translation.tr("Terminal Style")
                         }
                         color: Appearance.colors.colSubtext
                         font.pixelSize: Appearance.font.pixelSize.smaller
@@ -627,7 +721,7 @@ Scope {
 
             Process {
                 id: wallpaperScanProc
-                command: ["/usr/bin/fish", "-c", `find '${wallpaperGroup.wallpapersPath}' -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' -o -iname '*.avif' \\) -printf '%C@\\t%p\\n'`]
+                command: ["/bin/sh", "-c", `find '${wallpaperGroup.wallpapersPath}' -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' -o -iname '*.avif' \\) -printf '%C@\\t%p\\n' 2>/dev/null`]
                 stdout: SplitParser {
                     splitMarker: ""
                     onRead: data => {
@@ -724,7 +818,7 @@ Scope {
                                     sourceSize.height: wallpaperGroup.itemHeight * 2
 
                                     layer.enabled: Appearance.effectsEnabled
-                                    layer.effect: OpacityMask {
+                                    layer.effect: GE.OpacityMask {
                                         maskSource: Rectangle {
                                             width: wpThumb.width
                                             height: wpThumb.height
@@ -786,27 +880,6 @@ Scope {
                             Layout.alignment: Qt.AlignHCenter
                             text: Translation.tr("No wallpapers found in ~/Pictures/Wallpapers")
                             color: Appearance.colors.colSubtext
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                        }
-                    }
-                }
-
-                // Browse button
-                RippleButton {
-                    Layout.fillWidth: true
-                    implicitHeight: 36
-                    buttonRadius: Appearance.rounding.small
-                    colBackground: Appearance.colors.colLayer2
-                    colBackgroundHover: Appearance.colors.colLayer2Hover
-                    onClicked: GlobalStates.wallpaperSelectorOpen = true
-
-                    RowLayout {
-                        anchors.centerIn: parent
-                        spacing: 8
-                        MaterialSymbol { text: "folder_open"; iconSize: 18; color: Appearance.colors.colOnLayer1 }
-                        StyledText {
-                            text: Translation.tr("Browse for more...")
-                            color: Appearance.colors.colOnLayer1
                             font.pixelSize: Appearance.font.pixelSize.smaller
                         }
                     }

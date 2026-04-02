@@ -238,9 +238,7 @@ ContentPage {
                     if (ThemeService.isAutoTheme) {
                         Quickshell.execDetached(["/usr/bin/bash", "-c", `${Directories.wallpaperSwitchScriptPath} --noswitch --type ${newValue}`]);
                     } else {
-                        // For non-auto themes, regenerate using current primary as seed
-                        const primary = Appearance.m3colors.m3primary
-                        const hex = "#" + ((1 << 24) | (Math.round(primary.r * 255) << 16) | (Math.round(primary.g * 255) << 8) | Math.round(primary.b * 255)).toString(16).slice(1)
+                        const hex = MaterialThemeLoader.colorToHex(Appearance.m3colors.m3primary)
                         MaterialThemeLoader.applySchemeVariant(hex, newValue)
                     }
                 }
@@ -282,6 +280,27 @@ ContentPage {
                         "displayName": Translation.tr("Tonal Spot")
                     }
                 ]
+            }
+
+            ConfigSpinBox {
+                icon: "palette"
+                text: Translation.tr("Wallpaper color strength") + " (%)"
+                value: Math.round((Config.options?.appearance?.wallpaperTheming?.colorStrength ?? 1.0) * 100)
+                from: 60
+                to: 180
+                stepSize: 5
+                property bool _ready: false
+                Component.onCompleted: _ready = true
+                onValueChanged: {
+                    if (!_ready) return;
+                    Config.setNestedValue("appearance.wallpaperTheming.colorStrength", value / 100)
+                    if (ThemeService.isAutoTheme)
+                        Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--noswitch"])
+                }
+
+                StyledToolTip {
+                    text: Translation.tr("Controls how vivid wallpaper-derived accent colors are. 100% keeps the default balance; higher values produce richer accents.")
+                }
             }
 
             // ── Options strip ──
@@ -532,11 +551,14 @@ ContentPage {
                         }
 
                         // Empty state
-                        PagePlaceholder {
+                        MaterialPlaceholderMessage {
+                            anchors.centerIn: parent
+                            maximumWidth: 360
                             shown: Wallpapers.folderModel.count === 0
                             icon: "image"
-                            description: Translation.tr("No images found")
-                            shape: MaterialShape.Shape.Cookie7Sided
+                            text: Translation.tr("No images found")
+                            explanation: Translation.tr("Add wallpapers to this folder or choose a different location")
+                            shape: MaterialShape.Shape.Bun
                         }
                     }
                 }
@@ -1093,6 +1115,7 @@ ContentPage {
                                             sourceSize.height: splitMonCard.height * 2
                                             cache: true
                                             layer.enabled: true
+                                            layer.smooth: true
                                             layer.effect: OpacityMask {
                                                 maskSource: Rectangle {
                                                     width: splitMonCard.width
@@ -1116,6 +1139,7 @@ ContentPage {
                                             cache: true
                                             playing: false
                                             layer.enabled: true
+                                            layer.smooth: true
                                             layer.effect: OpacityMask {
                                                 maskSource: Rectangle {
                                                     width: splitMonCard.width
@@ -1136,6 +1160,7 @@ ContentPage {
                                             }
                                             cache: true
                                             layer.enabled: true
+                                            layer.smooth: true
                                             layer.effect: OpacityMask {
                                                 maskSource: Rectangle {
                                                     width: splitMonCard.width

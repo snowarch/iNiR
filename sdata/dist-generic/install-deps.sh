@@ -54,7 +54,6 @@ check_cmd "curl" "curl"
 check_cmd "wl-copy" "wl-clipboard"
 check_cmd "grim" "grim"
 check_cmd "slurp" "slurp"
-check_cmd "matugen" "matugen"
 check_cmd "cliphist" "cliphist"
 check_cmd "pipewire" "PipeWire"
 check_cmd "wpctl" "WirePlumber"
@@ -122,7 +121,6 @@ echo -e "${STY_CYAN}════════════════════
 echo ""
 
 CARGO_PACKAGES=(
-  "matugen:Color scheme generator"
   "xwayland-satellite:X11 compatibility layer"
   "uv:Fast Python package manager"
 )

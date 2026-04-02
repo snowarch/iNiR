@@ -6,11 +6,12 @@
 
 SNAPSHOTS_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/snapshots"
 MAX_SNAPSHOTS=10
+INIR_CONFIG_DIR="${DOTS_CORE_CONFDIR:-${XDG_CONFIG_HOME}/illogical-impulse}"
 
 # Paths to snapshot
 SNAPSHOT_PATHS=(
     "${XDG_CONFIG_HOME}/quickshell/inir"
-    "${XDG_CONFIG_HOME}/illogical-impulse/config.json"
+    "${INIR_CONFIG_DIR}/config.json"
     "${XDG_CONFIG_HOME}/niri/config.kdl"
 )
 
@@ -40,8 +41,8 @@ create_snapshot() {
     fi
     
     # Copy user config
-    if [[ -f "${XDG_CONFIG_HOME}/illogical-impulse/config.json" ]]; then
-        cp "${XDG_CONFIG_HOME}/illogical-impulse/config.json" "${snapshot_dir}/"
+    if [[ -f "${INIR_CONFIG_DIR}/config.json" ]]; then
+        cp "${INIR_CONFIG_DIR}/config.json" "${snapshot_dir}/"
     fi
     
     # Copy niri config
@@ -50,8 +51,8 @@ create_snapshot() {
     fi
     
     # Copy migrations state
-    if [[ -f "${XDG_CONFIG_HOME}/illogical-impulse/migrations.json" ]]; then
-        cp "${XDG_CONFIG_HOME}/illogical-impulse/migrations.json" "${snapshot_dir}/"
+    if [[ -f "${INIR_CONFIG_DIR}/migrations.json" ]]; then
+        cp "${INIR_CONFIG_DIR}/migrations.json" "${snapshot_dir}/"
     fi
     
     # Create metadata
@@ -160,7 +161,8 @@ restore_snapshot() {
     # Restore user config
     if [[ -f "${snapshot_dir}/config.json" ]]; then
         log_info "Restoring user config..."
-        cp "${snapshot_dir}/config.json" "${XDG_CONFIG_HOME}/illogical-impulse/"
+        mkdir -p "${INIR_CONFIG_DIR}"
+        cp "${snapshot_dir}/config.json" "${INIR_CONFIG_DIR}/"
     fi
     
     # Restore niri config
@@ -171,7 +173,8 @@ restore_snapshot() {
     
     # Restore migrations state
     if [[ -f "${snapshot_dir}/migrations.json" ]]; then
-        cp "${snapshot_dir}/migrations.json" "${XDG_CONFIG_HOME}/illogical-impulse/"
+        mkdir -p "${INIR_CONFIG_DIR}"
+        cp "${snapshot_dir}/migrations.json" "${INIR_CONFIG_DIR}/"
     fi
     
     # Checkout git to that commit (stay on branch if possible)
@@ -316,12 +319,15 @@ cleanup_old_snapshots() {
 # Check remote for updates
 ###############################################################################
 check_remote_updates() {
+    # Returns: 0 = updates available, 1 = no updates, 2 = error (offline/no git)
     if [[ ! -d "${REPO_ROOT}/.git" ]]; then
-        return 1
+        return 2
     fi
     
-    # Fetch silently
-    git -C "$REPO_ROOT" fetch origin --quiet 2>/dev/null || return 1
+    # Fetch silently — distinguish network failure from no-updates
+    if ! git -C "$REPO_ROOT" fetch origin --quiet 2>/dev/null; then
+        return 2
+    fi
     
     local branch=$(git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null)
     [[ -z "$branch" || "$branch" == "HEAD" ]] && branch="main"

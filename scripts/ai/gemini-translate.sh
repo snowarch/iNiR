@@ -8,8 +8,11 @@ fi
 # Variables
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
-SHELL_CONFIG_DIR="$XDG_CONFIG_HOME/illogical-impulse"
-SHELL_CONFIG_FILE="${SHELL_CONFIG_DIR}/config.json"
+
+# shellcheck source=scripts/lib/config-path.sh
+source "$SCRIPT_DIR/../lib/config-path.sh"
+SHELL_CONFIG_DIR="$(inir_config_dir)"
+SHELL_CONFIG_FILE="$(inir_config_file)"
 TRANSLATIONS_DIR="${SCRIPT_DIR}/../../translations"
 TRANSLATIONS_TARGET_DIR="${SHELL_CONFIG_DIR}/translations"
 SOURCE_LOCALE="en_US"
@@ -61,5 +64,8 @@ response=$(curl "https://generativelanguage.googleapis.com/v1beta/models/${MODEL
 
 # Write the result
 echo "$response" | jq -r '.candidates[0].content.parts[0].text' > "${TRANSLATIONS_TARGET_DIR}/${TARGET_LOCALE}.json"
-jq --arg locale "$TARGET_LOCALE" '.language.ui = $locale' "$SHELL_CONFIG_FILE" > "${SHELL_CONFIG_FILE}.tmp" && mv "${SHELL_CONFIG_FILE}.tmp" "$SHELL_CONFIG_FILE"
+(
+    flock -w 5 200 || { echo "config lock timeout" >&2; exit 1; }
+    jq --arg locale "$TARGET_LOCALE" '.language.ui = $locale' "$SHELL_CONFIG_FILE" > "${SHELL_CONFIG_FILE}.tmp" && mv "${SHELL_CONFIG_FILE}.tmp" "$SHELL_CONFIG_FILE"
+) 200>"${SHELL_CONFIG_FILE}.lock"
 notify-send "Translation complete" "Enjoy! In case you wanna refine it, the file is in ${TRANSLATIONS_TARGET_DIR}/${TARGET_LOCALE}.json" -a "$NOTIFICATION_APP_NAME"

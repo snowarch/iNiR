@@ -477,6 +477,15 @@ ContentPage {
                 radius: Appearance.rounding.small
                 clip: true
 
+                Behavior on Layout.preferredHeight {
+                    enabled: Appearance.animationsEnabled
+                    animation: NumberAnimation {
+                        duration: Appearance.animation.elementMove.duration
+                        easing.type: Appearance.animation.elementMove.type
+                        easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
+                    }
+                }
+
                 ScrollView {
                     id: themeScrollView
                     anchors.fill: parent
@@ -506,26 +515,59 @@ ContentPage {
                 }
 
                 // Empty state overlay
-                ColumnLayout {
-                    visible: themesGroup.filteredPresets.length === 0
+                MaterialPlaceholderMessage {
                     anchors.centerIn: parent
-                    spacing: 8
+                    maximumWidth: 300
+                    shown: themesGroup.filteredPresets.length === 0
+                    icon: "search_off"
+                    text: Translation.tr("No themes found")
+                    explanation: themesGroup.searchQuery.length > 0
+                        ? Translation.tr("Try a broader search or clear the filter")
+                        : Translation.tr("Theme presets will appear here")
+                    compact: true
+                    shape: MaterialShape.Shape.Bun
+                }
+            }
+        }
+    }
 
-                    MaterialSymbol {
-                        Layout.alignment: Qt.AlignHCenter
-                        text: "search_off"
-                        iconSize: 32
-                        color: Appearance.colors.colSubtext
-                        opacity: 0.5
-                    }
+    // Scheme Variant Section
+    SettingsCardSection {
+        expanded: true
+        icon: "tune"
+        title: Translation.tr("Scheme Variant")
 
-                    StyledText {
-                        Layout.alignment: Qt.AlignHCenter
-                        text: Translation.tr("No themes found")
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colSubtext
+        SettingsGroup {
+            StyledText {
+                text: Translation.tr("Adjust the color generation algorithm. Applies to both wallpaper-based and static themes.")
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: Appearance.colors.colSubtext
+            }
+
+            ConfigSelectionArray {
+                currentValue: Config.options?.appearance?.palette?.type ?? "auto"
+                onSelected: newValue => {
+                    Config.setNestedValue("appearance.palette.type", newValue)
+                    if (ThemeService.isAutoTheme) {
+                        Quickshell.execDetached(["/usr/bin/bash", "-c", `${Directories.wallpaperSwitchScriptPath} --noswitch --type ${newValue}`]);
+                    } else {
+                        const hex = MaterialThemeLoader.colorToHex(Appearance.m3colors.m3primary)
+                        MaterialThemeLoader.applySchemeVariant(hex, newValue)
                     }
                 }
+                options: [
+                    { "value": "auto", "displayName": Translation.tr("Auto") },
+                    { "value": "scheme-content", "displayName": Translation.tr("Content") },
+                    { "value": "scheme-expressive", "displayName": Translation.tr("Expressive") },
+                    { "value": "scheme-fidelity", "displayName": Translation.tr("Fidelity") },
+                    { "value": "scheme-fruit-salad", "displayName": Translation.tr("Fruit Salad") },
+                    { "value": "scheme-monochrome", "displayName": Translation.tr("Monochrome") },
+                    { "value": "scheme-neutral", "displayName": Translation.tr("Neutral") },
+                    { "value": "scheme-rainbow", "displayName": Translation.tr("Rainbow") },
+                    { "value": "scheme-tonal-spot", "displayName": Translation.tr("Tonal Spot") }
+                ]
             }
         }
     }
@@ -1653,7 +1695,7 @@ ContentPage {
         SettingsGroup {
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("Themes apply a Material 3 color palette. 'Auto' generates colors from your wallpaper using matugen.")
+                text: Translation.tr("Themes apply a Material 3 color palette. 'Auto' generates colors from your wallpaper automatically.")
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 wrapMode: Text.WordWrap

@@ -54,17 +54,47 @@ Scope {
     property bool overviewOpenedByAltSwitcher: false
     // Pre-warm flag para evitar lag en primera apertura
     property bool _warmedUp: false
-    // Slice geometry constants (scaled for better fit)
-    readonly property int skewSliceWidth: 135
-    readonly property int skewExpandedWidth: 924
-    readonly property int skewSliceHeight: 520
-    readonly property int skewOffset: 35
-    readonly property int skewSliceSpacing: -22
+    // Slice geometry base values and responsive scaling
+    readonly property int baseSkewSliceWidth: 135
+    readonly property int baseSkewExpandedWidth: 924
+    readonly property int baseSkewSliceHeight: 520
+    readonly property int baseSkewOffset: 35
+    readonly property int baseSkewSliceSpacing: -22
     readonly property int skewVisibleCount: 12
-    readonly property int skewCardWidth: 1600
-    readonly property int skewCardHeight: root.skewSliceHeight + 40
-    readonly property int skewPanelWidth: root.skewCardWidth
+
+    readonly property real skewScale: Math.max(0.58, Math.min(1.0,
+        (window.height - 120) / baseSkewSliceHeight,
+        (window.width - 96) / baseSkewExpandedWidth
+    ))
+
+    readonly property int skewSliceWidth: Math.round(baseSkewSliceWidth * skewScale)
+    readonly property int skewExpandedWidth: Math.round(baseSkewExpandedWidth * skewScale)
+    readonly property int skewSliceHeight: Math.round(baseSkewSliceHeight * skewScale)
+    readonly property int skewOffset: Math.round(baseSkewOffset * skewScale)
+    readonly property int skewSliceSpacing: Math.round(baseSkewSliceSpacing * skewScale)
+    readonly property int skewCardWidth: skewExpandedWidth + (skewVisibleCount - 1) * (skewSliceWidth + skewSliceSpacing)
+    readonly property int skewCardHeight: skewSliceHeight + Math.round(40 * skewScale)
+    readonly property int skewPanelWidth: skewCardWidth
     property bool skewCardVisible: false
+
+    property bool _rapidNavigation: false
+    property int _rapidNavSteps: 0
+
+    Timer {
+        id: skewRapidNavCooldown
+        interval: 350
+        onTriggered: {
+            root._rapidNavigation = false
+            root._rapidNavSteps = 0
+        }
+    }
+
+    function _trackSkewNavStep(): void {
+        _rapidNavSteps++
+        if (_rapidNavSteps >= 3)
+            _rapidNavigation = true
+        skewRapidNavCooldown.restart()
+    }
     
     readonly property int windowCount: itemSnapshot ? itemSnapshot.length : 0
     readonly property bool isHighLoad: windowCount > 15
@@ -442,6 +472,10 @@ Scope {
                 } else if (event.key === Qt.Key_Left || event.key === Qt.Key_Up || event.key === Qt.Key_K) {
                     root.previousItem()
                     event.accepted = true
+                } else if (event.key === Qt.Key_C || event.key === Qt.Key_Delete) {
+                    if (root.skewStyle)
+                        root.closeSelectedWindow()
+                    event.accepted = true
                 }
             }
         }
@@ -578,7 +612,7 @@ Scope {
                     target: cardContainer
                     property: "opacity"
                     from: 0; to: 1
-                    duration: 400
+                    duration: Appearance.calcEffectiveDuration(400)
                     easing.type: Easing.OutCubic
                 }
 
@@ -616,7 +650,7 @@ Scope {
                 visible: root.skewStyle && root.skewCardVisible
 
                 highlightFollowsCurrentItem: true
-                highlightMoveDuration: 350
+                highlightMoveDuration: Appearance.calcEffectiveDuration(root._rapidNavigation ? 150 : 240)
                 highlight: Item {}
                 preferredHighlightBegin: (width - root.skewExpandedWidth) / 2
                 preferredHighlightEnd: (width + root.skewExpandedWidth) / 2
@@ -624,26 +658,49 @@ Scope {
                 header: Item { width: (skewDeck.width - root.skewExpandedWidth) / 2; height: 1 }
                 footer: Item { width: (skewDeck.width - root.skewExpandedWidth) / 2; height: 1 }
 
+                Text {
+                    anchors.centerIn: parent
+                    visible: root.windowCount === 0
+                    text: "NO WINDOWS"
+                    font.family: Appearance.font.family.main
+                    font.weight: Font.Bold
+                    font.pixelSize: 18
+                    font.letterSpacing: 2
+                    color: Appearance.colors.colOutline
+                }
+
                 delegate: Item {
                     id: skewSlice
                     required property var modelData
                     required property int index
                     property bool isCurrent: ListView.isCurrentItem
-                    property real viewX: x - skewDeck.contentX
-                    property real fadeZone: root.skewSliceWidth * 1.5
-                    property real edgeOpacity: {
-                        if (fadeZone <= 0)
-                            return 1.0
-                        const center = viewX + width * 0.5
-                        const leftFade = Math.min(1.0, Math.max(0.0, center / fadeZone))
-                        const rightFade = Math.min(1.0, Math.max(0.0, (skewDeck.width - center) / fadeZone))
-                        return Math.min(leftFade, rightFade)
+                    readonly property real _distFromCenter: {
+                        const midX = skewDeck.contentX + skewDeck.width / 2
+                        const itemMidX = x + width / 2
+                        return Math.abs(midX - itemMidX)
                     }
+                    readonly property real edgeOpacity: isCurrent ? 1.0
+                        : Math.max(0.25, 1.0 - (_distFromCenter / (skewDeck.width * 0.55)) * 0.65)
                     property string previewUrl: ""
                     width: isCurrent ? root.skewExpandedWidth : root.skewSliceWidth
                     height: skewDeck.height
+                    y: isCurrent ? -8 : 0
+                    scale: isCurrent ? 1.018 : 1.0
                     z: isCurrent ? 100 : 50 - Math.min(Math.abs(index - listView.currentIndex), 50)
                     opacity: edgeOpacity
+
+                    containmentMask: Item {
+                        function contains(point: point): bool {
+                            const w = skewSlice.width
+                            const h = skewSlice.height
+                            const sk = root.skewOffset
+                            if (h <= 0 || w <= 0)
+                                return false
+                            const leftX = sk * (1.0 - point.y / h)
+                            const rightX = w - sk * (point.y / h)
+                            return point.x >= leftX && point.x <= rightX && point.y >= 0 && point.y <= h
+                        }
+                    }
 
                     function refreshPreview(): void {
                         if (modelData?.id === undefined)
@@ -656,7 +713,31 @@ Scope {
                     Behavior on width {
                         enabled: root.effectiveEnableAnimation
                         NumberAnimation {
-                            duration: 200
+                            duration: Appearance.calcEffectiveDuration(root._rapidNavigation ? 120 : 180)
+                            easing.type: Easing.OutQuad
+                        }
+                    }
+
+                    Behavior on y {
+                        enabled: root.effectiveEnableAnimation
+                        NumberAnimation {
+                            duration: Appearance.calcEffectiveDuration(200)
+                            easing.type: Easing.OutQuad
+                        }
+                    }
+
+                    Behavior on scale {
+                        enabled: root.effectiveEnableAnimation
+                        NumberAnimation {
+                            duration: Appearance.calcEffectiveDuration(200)
+                            easing.type: Easing.OutQuad
+                        }
+                    }
+
+                    Behavior on opacity {
+                        enabled: root.effectiveEnableAnimation
+                        NumberAnimation {
+                            duration: Appearance.calcEffectiveDuration(150)
                             easing.type: Easing.OutQuad
                         }
                     }
@@ -674,44 +755,37 @@ Scope {
                         }
                     }
 
-                    Canvas {
-                        id: shadowCanvas
-                        z: -1
+                    // Shadow (current delegate only)
+                    Item {
+                        visible: skewSlice.isCurrent
                         anchors.fill: parent
-                        anchors.margins: -10
-                        property real shadowOffsetX: skewSlice.isCurrent ? 4 : 2
-                        property real shadowOffsetY: skewSlice.isCurrent ? 10 : 5
-                        property real shadowAlpha: skewSlice.isCurrent ? 0.6 : 0.4
-                        onWidthChanged: requestPaint()
-                        onHeightChanged: requestPaint()
-                        onShadowAlphaChanged: requestPaint()
-                        onPaint: {
-                            const ctx = getContext("2d")
-                            ctx.clearRect(0, 0, width, height)
-                            const ox = 10
-                            const oy = 10
-                            const w = skewSlice.width
-                            const h = skewSlice.height
-                            const sk = root.skewOffset
-                            const sx = shadowOffsetX
-                            const sy = shadowOffsetY
-                            const layers = [
-                                { dx: sx, dy: sy, alpha: shadowAlpha * 0.5 },
-                                { dx: sx * 0.6, dy: sy * 0.6, alpha: shadowAlpha * 0.3 },
-                                { dx: sx * 1.4, dy: sy * 1.4, alpha: shadowAlpha * 0.2 }
-                            ]
-                            for (let i = 0; i < layers.length; i++) {
-                                const layer = layers[i]
-                                ctx.globalAlpha = layer.alpha
-                                ctx.fillStyle = "#000000"
-                                ctx.beginPath()
-                                ctx.moveTo(ox + sk + layer.dx, oy + layer.dy)
-                                ctx.lineTo(ox + w + layer.dx, oy + layer.dy)
-                                ctx.lineTo(ox + w - sk + layer.dx, oy + h + layer.dy)
-                                ctx.lineTo(ox + layer.dx, oy + h + layer.dy)
-                                ctx.closePath()
-                                ctx.fill()
+                        anchors.margins: -24
+                        layer.enabled: visible
+                        layer.smooth: true
+                        opacity: 0.45
+
+                        Shape {
+                            x: 24 + 3
+                            y: 24 + 8
+                            width: skewSlice.width
+                            height: skewSlice.height
+                            antialiasing: true
+
+                            ShapePath {
+                                fillColor: Appearance.colors.colShadow
+                                strokeColor: "transparent"
+                                startX: root.skewOffset; startY: 0
+                                PathLine { x: skewSlice.width; y: 0 }
+                                PathLine { x: skewSlice.width - root.skewOffset; y: skewSlice.height }
+                                PathLine { x: 0; y: skewSlice.height }
+                                PathLine { x: root.skewOffset; y: 0 }
                             }
+                        }
+
+                        layer.effect: MultiEffect {
+                            blurEnabled: true
+                            blur: 0.5
+                            blurMax: 24
                         }
                     }
 
@@ -729,7 +803,7 @@ Scope {
                                         height: skewImageContainer.height
                                         layer.enabled: true
                                         layer.smooth: true
-                                        layer.samples: 8
+                                        layer.samples: 4
 
                                         Shape {
                                             anchors.fill: parent
@@ -758,11 +832,17 @@ Scope {
                                 gradient: Gradient {
                                     GradientStop {
                                         position: 0.0
-                                        color: Appearance.auroraEverywhere ? Appearance.colors.colLayer1Base : Appearance.colors.colLayer1
+                                        color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                                            : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+                                            : Appearance.auroraEverywhere ? Appearance.colors.colLayer1Base
+                                            : Appearance.colors.colLayer1
                                     }
                                     GradientStop {
                                         position: 1.0
-                                        color: Appearance.auroraEverywhere ? Appearance.colors.colLayer0Base : Appearance.colors.colLayer0
+                                        color: Appearance.angelEverywhere ? Appearance.angel.colGlassPanel
+                                            : Appearance.inirEverywhere ? Appearance.inir.colLayer0
+                                            : Appearance.auroraEverywhere ? Appearance.colors.colLayer0Base
+                                            : Appearance.colors.colLayer0
                                     }
                                 }
                             }
@@ -785,7 +865,7 @@ Scope {
                                 color: Qt.rgba(0, 0, 0, skewSlice.isCurrent ? 0.0 : 0.4)
                                 Behavior on color {
                                     ColorAnimation {
-                                        duration: 200
+                                        duration: Appearance.calcEffectiveDuration(200)
                                     }
                                 }
                             }
@@ -800,10 +880,10 @@ Scope {
                                 font.pixelSize: iconSize
                                 font.family: Appearance.font.family.monospace
                                 opacity: previewImage.visible ? 0.7 : 1.0
-                                Behavior on opacity { NumberAnimation { duration: 200 } }
+                                Behavior on opacity { NumberAnimation { duration: Appearance.calcEffectiveDuration(200) } }
                                 color: skewSlice.isCurrent ? Appearance.colors.colPrimary : Qt.rgba(Appearance.colors.colTertiary.r, Appearance.colors.colTertiary.g, Appearance.colors.colTertiary.b, 0.5)
-                                Behavior on iconSize { NumberAnimation { duration: 200; easing.type: Easing.OutQuad } }
-                                Behavior on color { ColorAnimation { duration: 200 } }
+                                Behavior on iconSize { NumberAnimation { duration: Appearance.calcEffectiveDuration(200); easing.type: Easing.OutQuad } }
+                                Behavior on color { ColorAnimation { duration: Appearance.calcEffectiveDuration(200) } }
                                 visible: !skewSlice.modelData?.icon
                             }
                             
@@ -816,8 +896,8 @@ Scope {
                                 source: skewSlice.modelData?.icon || ""
                                 opacity: previewImage.visible ? 0.7 : 1.0
                                 visible: !!skewSlice.modelData?.icon
-                                Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutQuad } }
-                                Behavior on opacity { NumberAnimation { duration: 200 } }
+                                Behavior on width { NumberAnimation { duration: Appearance.calcEffectiveDuration(200); easing.type: Easing.OutQuad } }
+                                Behavior on opacity { NumberAnimation { duration: Appearance.calcEffectiveDuration(200) } }
                             }
                         }
 
@@ -831,7 +911,7 @@ Scope {
                             ShapePath {
                                 fillColor: "transparent"
                                 strokeColor: skewSlice.isCurrent ? Appearance.colors.colPrimary : Qt.rgba(0, 0, 0, 0.6)
-                                Behavior on strokeColor { ColorAnimation { duration: 200 } }
+                                Behavior on strokeColor { ColorAnimation { duration: Appearance.calcEffectiveDuration(200) } }
                                 strokeWidth: skewSlice.isCurrent ? 3 : 1
                                 startX: root.skewOffset
                                 startY: 0
@@ -882,7 +962,7 @@ Scope {
 
                             Behavior on opacity {
                                 NumberAnimation {
-                                    duration: 200
+                                    duration: Appearance.calcEffectiveDuration(200)
                                 }
                             }
 
@@ -909,7 +989,7 @@ Scope {
                                     }
                                     font.family: Appearance.font.family.main
                                     font.pixelSize: 11
-                                    color: Qt.rgba(1, 1, 1, 0.6)
+                                    color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.6)
                                     width: Math.min(implicitWidth, skewSlice.width - 80)
                                     elide: Text.ElideRight
                                     horizontalAlignment: Text.AlignHCenter
@@ -972,7 +1052,13 @@ Scope {
                         MouseArea {
                             anchors.fill: parent
                             hoverEnabled: true
-                            onClicked: listView.currentIndex = index
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                if (skewSlice.isCurrent)
+                                    root.confirmCurrentSelection()
+                                else
+                                    listView.currentIndex = skewSlice.index
+                            }
                         }
                     }
                 }
@@ -1650,12 +1736,25 @@ Scope {
         listView.currentIndex = defaultSkewIndex()
     }
 
+    function closeSelectedWindow(): void {
+        if (!itemSnapshot || itemSnapshot.length === 0)
+            return
+        const idx = listView.currentIndex
+        if (idx < 0 || idx >= itemSnapshot.length)
+            return
+        const win = itemSnapshot[idx]
+        if (win?.id !== undefined)
+            NiriService.closeWindow(win.id)
+    }
+
     function confirmCurrentSelection() {
         root.activateCurrent()
         GlobalStates.altSwitcherOpen = false
     }
 
     function nextItem() {
+        if (root.skewStyle)
+            root._trackSkewNavStep()
         ensureSnapshot()
         const total = itemSnapshot ? itemSnapshot.length : 0
         if (total === 0)
@@ -1668,6 +1767,8 @@ Scope {
     }
 
     function previousItem() {
+        if (root.skewStyle)
+            root._trackSkewNavStep()
         ensureSnapshot()
         const total = itemSnapshot ? itemSnapshot.length : 0
         if (total === 0)

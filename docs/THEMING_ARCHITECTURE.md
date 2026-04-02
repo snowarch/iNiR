@@ -59,10 +59,15 @@ Important practical rule:
 - `palette.json` is the explicit shell palette contract for future target consumers
 - `terminal.json` is the explicit terminal palette contract for future target consumers
 - `theme-meta.json` carries generation metadata such as source, mode, scheme, and generator
-- `matugen` is still part of the ecosystem, but it is not the sole palette authority for iNiR runtime colors
+- `generate_colors_material.py` is the single authoritative palette generator — it handles
+  both Material You color extraction AND template rendering (GTK, fuzzel, KDE, etc.)
 
-Current migration state:
+Current state:
 
+- `matugen` has been removed as a dependency — all color generation and template rendering
+  is handled by Python (`materialyoucolor` library + built-in template engine)
+- templates use `{{colors.token.mode.hex}}` syntax (compatible with former matugen templates)
+- template manifest: `defaults/matugen/templates.json` (declares input/output paths)
 - first shell/UI consumers now prefer `palette.json` and fall back to `colors.json`
 - terminal/editor generators and terminal escape-sequence application now prefer `terminal.json` + `palette.json` and keep `material_colors.scss` as compatibility fallback
 - browser mode detection now prefers `theme-meta.json` instead of scraping SCSS state

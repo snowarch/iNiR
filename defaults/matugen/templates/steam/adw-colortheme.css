@@ -1,0 +1,104 @@
+/**
+ * iNiR Material You for Adwaita-for-Steam
+ * Auto-generated from wallpaper colors. Do not edit.
+ *
+ * Surface hierarchy (3 clear tiers + card overlay):
+ *   RECESSED  — surface                 (darkest: content wells, game detail views)
+ *   BASE      — surface_container_low   (window background, secondary sidebar)
+ *   CHROME    — surface_container       (headerbar, sidebar — unified navigation)
+ *   ELEVATED  — surface_container_high  (dialogs, popovers, thumbnails)
+ *   CARDS     — white 8% overlay        (glass-like depth, matches libadwaita convention)
+ *
+ * Reference: libadwaita _defaults.scss + all community AdwSteam colorthemes
+ */
+
+:root
+{
+	/* Accent */
+	--adw-accent-bg-rgb: {{colors.primary.dark.rgb}} !important;
+	--adw-accent-fg-rgb: {{colors.on_primary.dark.rgb}} !important;
+	--adw-accent-rgb: {{colors.primary.dark.rgb}} !important;
+
+	/* Destructive */
+	--adw-destructive-bg-rgb: {{colors.error.dark.rgb}} !important;
+	--adw-destructive-fg-rgb: {{colors.on_error.dark.rgb}} !important;
+	--adw-destructive-rgb: {{colors.error.dark.rgb}} !important;
+
+	/* Success */
+	--adw-success-bg-rgb: {{colors.success.dark.rgb}} !important;
+	--adw-success-fg-rgb: {{colors.on_success.dark.rgb}} !important;
+	--adw-success-rgb: {{colors.success.dark.rgb}} !important;
+
+	/* Warning */
+	--adw-warning-bg-rgb: {{colors.tertiary.dark.rgb}} !important;
+	--adw-warning-fg-rgb: {{colors.on_tertiary.dark.rgb}} !important;
+	--adw-warning-fg-a: 0.8 !important;
+	--adw-warning-rgb: {{colors.tertiary.dark.rgb}} !important;
+
+	/* Error */
+	--adw-error-bg-rgb: {{colors.error.dark.rgb}} !important;
+	--adw-error-fg-rgb: {{colors.on_error.dark.rgb}} !important;
+	--adw-error-rgb: {{colors.error.dark.rgb}} !important;
+
+	/* Window — BASE tier */
+	--adw-window-bg-rgb: {{colors.surface_container_low.dark.rgb}} !important;
+	--adw-window-fg-rgb: {{colors.on_surface.dark.rgb}} !important;
+
+	/* Views — RECESSED tier (darker inset for content wells) */
+	--adw-view-bg-rgb: {{colors.surface.dark.rgb}} !important;
+	--adw-view-fg-rgb: {{colors.on_surface.dark.rgb}} !important;
+
+	/* Header bar — CHROME tier */
+	--adw-headerbar-bg-rgb: {{colors.surface_container.dark.rgb}} !important;
+	--adw-headerbar-fg-rgb: {{colors.on_surface.dark.rgb}} !important;
+	--adw-headerbar-border-rgb: {{colors.outline_variant.dark.rgb}} !important;
+	--adw-headerbar-backdrop-rgb: {{colors.surface_container_low.dark.rgb}} !important;
+	--adw-headerbar-shade-rgb: {{colors.shadow.dark.rgb}} !important;
+	--adw-headerbar-shade-a: 0.36 !important;
+	--adw-headerbar-darker-shade-rgb: {{colors.shadow.dark.rgb}} !important;
+	--adw-headerbar-darker-shade-a: 0.9 !important;
+
+	/* Sidebar — CHROME tier (unified with headerbar) */
+	--adw-sidebar-bg-rgb: {{colors.surface_container.dark.rgb}} !important;
+	--adw-sidebar-fg-rgb: {{colors.on_surface.dark.rgb}} !important;
+	--adw-sidebar-backdrop-rgb: {{colors.surface_container_low.dark.rgb}} !important;
+	--adw-sidebar-shade-rgb: {{colors.shadow.dark.rgb}} !important;
+	--adw-sidebar-shade-a: 0.36 !important;
+
+	/* Secondary sidebar — BASE tier (recedes behind primary sidebar) */
+	--adw-secondary-sidebar-bg-rgb: {{colors.surface_container_low.dark.rgb}} !important;
+	--adw-secondary-sidebar-fg-rgb: {{colors.on_surface_variant.dark.rgb}} !important;
+	--adw-secondary-sidebar-backdrop-rgb: {{colors.surface.dark.rgb}} !important;
+	--adw-secondary-sidebar-shade-rgb: {{colors.shadow.dark.rgb}} !important;
+	--adw-secondary-sidebar-shade-a: 0.36 !important;
+
+	/* Cards — white overlay for glass-like depth */
+	--adw-card-bg-rgb: 255, 255, 255 !important;
+	--adw-card-bg-a: 0.08 !important;
+	--adw-card-fg-rgb: {{colors.on_surface.dark.rgb}} !important;
+	--adw-card-shade-rgb: {{colors.shadow.dark.rgb}} !important;
+	--adw-card-shade-a: 0.36 !important;
+
+	/* Dialogs — ELEVATED tier */
+	--adw-dialog-bg-rgb: {{colors.surface_container_high.dark.rgb}} !important;
+	--adw-dialog-fg-rgb: {{colors.on_surface.dark.rgb}} !important;
+
+	/* Popovers — ELEVATED tier */
+	--adw-popover-bg-rgb: {{colors.surface_container_high.dark.rgb}} !important;
+	--adw-popover-fg-rgb: {{colors.on_surface.dark.rgb}} !important;
+	--adw-popover-shade-rgb: {{colors.shadow.dark.rgb}} !important;
+	--adw-popover-shade-a: 0.25 !important;
+
+	/* Thumbnails — ELEVATED tier */
+	--adw-thumbnail-bg-rgb: {{colors.surface_container_high.dark.rgb}} !important;
+	--adw-thumbnail-fg-rgb: {{colors.on_surface.dark.rgb}} !important;
+
+	/* Miscellaneous */
+	--adw-shade-rgb: {{colors.shadow.dark.rgb}} !important;
+	--adw-shade-a: 0.36 !important;
+
+	/* Skin-specific */
+	--adw-user-offline-rgb: {{colors.outline.dark.rgb}} !important;
+	--adw-user-online-rgb: {{colors.primary.dark.rgb}} !important;
+	--adw-user-ingame-rgb: {{colors.success.dark.rgb}} !important;
+}

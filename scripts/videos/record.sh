@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/lib/config-path.sh
+source "$SCRIPT_DIR/../lib/config-path.sh"
+
 getdate() {
     date '+%Y-%m-%d_%H.%M.%S'
 }
@@ -315,7 +319,7 @@ start_recording_command() {
 }
 
 # Try to get save path from config, fallback to XDG Videos
-CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/illogical-impulse/config.json"
+CONFIG_FILE="$(inir_config_file)"
 SAVE_PATH=""
 QUALITY_PRESET="balanced"
 VIDEO_CODEC=""

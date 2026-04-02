@@ -490,6 +490,23 @@ WSettingsPage {
                 }
             }
         }
+
+        WSettingsSpinBox {
+            label: Translation.tr("Wallpaper color strength")
+            icon: "eyedropper"
+            description: Translation.tr("Controls how vivid wallpaper-derived accent colors are. 100% keeps the default balance; higher values produce richer accents.")
+            suffix: "%"
+            from: 60; to: 180; stepSize: 5
+            value: Math.round((Config.options?.appearance?.wallpaperTheming?.colorStrength ?? 1.0) * 100)
+            property bool _ready: false
+            Component.onCompleted: _ready = true
+            onValueChanged: {
+                if (!_ready) return
+                Config.setNestedValue("appearance.wallpaperTheming.colorStrength", value / 100)
+                if (ThemeService.isAutoTheme)
+                    ShellExec.execCmd(`${Directories.wallpaperSwitchScriptPath} --noswitch`)
+            }
+        }
         
         WSettingsSwitch {
             label: Translation.tr("Transparency")

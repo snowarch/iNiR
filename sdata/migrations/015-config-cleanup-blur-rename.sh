@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Migration: Clean orphan config keys and rename videoBlurStrength
 #
 # Removes deprecated blurStatic keys (blur now only activates with windows)
@@ -9,11 +9,20 @@ MIGRATION_TITLE="Clean deprecated blur config keys"
 MIGRATION_DESCRIPTION="Removes blurStatic (replaced by windows-only blur) and renames
   videoBlurStrength → thumbnailBlurStrength in user config.
   Old values are preserved where applicable."
-MIGRATION_TARGET_FILE="~/.config/illogical-impulse/config.json"
+MIGRATION_TARGET_FILE="~/.config/inir/config.json"
 MIGRATION_REQUIRED=true
 
 _config_path() {
-  echo "${XDG_CONFIG_HOME:-$HOME/.config}/illogical-impulse/config.json"
+  local xdg_config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
+  local config_new="${xdg_config_home}/inir/config.json"
+  local config_legacy="${xdg_config_home}/illogical-impulse/config.json"
+
+  if [[ -f "$config_legacy" ]]; then
+    echo "$config_legacy"
+    return
+  fi
+
+  echo "$config_new"
 }
 
 migration_check() {

@@ -82,6 +82,18 @@ ContentPage {
                 }
             }
             SettingsSwitch {
+                buttonIcon: "sports_esports"
+                text: Translation.tr("Steam (Adwaita for Steam)")
+                checked: Config.options?.appearance?.wallpaperTheming?.enableAdwSteam ?? false
+                onCheckedChanged: {
+                    Config.setNestedValue("appearance.wallpaperTheming.enableAdwSteam", checked)
+                    colorRegenTimer.restart()
+                }
+                StyledToolTip {
+                    text: Translation.tr("Apply Material You colors to Steam via Adwaita for Steam (requires AdwSteamGtk)")
+                }
+            }
+            SettingsSwitch {
                 buttonIcon: "code"
                 text: Translation.tr("Zed editor")
                 checked: Config.options?.appearance?.wallpaperTheming?.enableZed ?? true

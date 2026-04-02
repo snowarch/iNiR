@@ -32,27 +32,55 @@ TabButton {
     PointingHandInteraction {}
 
     // Primary colored bubble tooltip that appears to the right when collapsed
-    ToolTip {
+    PopupToolTip {
         id: hoverBubble
-        visible: !root.expanded && root.hovered
         delay: 0
-        x: root.width + 4
-        y: (root.height - height) / 2
-        padding: 0
-        background: Rectangle {
-            color: Appearance.colors.colPrimary
-            radius: Appearance.rounding.full
-            implicitWidth: bubbleText.implicitWidth + 24
-            implicitHeight: root.baseHighlightHeight
-        }
-        contentItem: StyledText {
-            id: bubbleText
-            text: root.buttonText
-            font.pixelSize: Appearance.font.pixelSize.small
-            font.weight: Font.Medium
-            color: Appearance.colors.colOnPrimary
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
+        extraVisibleCondition: !root.expanded
+        anchorEdges: Edges.Right
+        contentItem: Item {
+            id: bubbleContent
+            property bool shown: false
+            implicitWidth: bubbleBackground.implicitWidth
+            implicitHeight: bubbleBackground.implicitHeight
+            opacity: shown ? 1 : 0
+            scale: shown ? 1 : 0.92
+
+            Behavior on opacity {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation {
+                    duration: Appearance.animation.elementMoveFast.duration
+                    easing.type: Appearance.animation.elementMoveFast.type
+                    easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                }
+            }
+
+            Behavior on scale {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation {
+                    duration: Appearance.animation.elementMoveFast.duration
+                    easing.type: Appearance.animation.elementMoveFast.type
+                    easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                }
+            }
+
+            Rectangle {
+                id: bubbleBackground
+                color: Appearance.colors.colPrimary
+                radius: Appearance.rounding.full
+                implicitWidth: bubbleText.implicitWidth + 24
+                implicitHeight: root.baseHighlightHeight
+
+                StyledText {
+                    id: bubbleText
+                    anchors.centerIn: parent
+                    text: root.buttonText
+                    font.pixelSize: Appearance.font.pixelSize.small
+                    font.weight: Font.Medium
+                    color: Appearance.colors.colOnPrimary
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
         }
     }
 

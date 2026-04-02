@@ -1,4 +1,4 @@
-#!/usr/bin/env -S\_/bin/sh\_-c\_"source\_\$(eval\_echo\_\$ILLOGICAL_IMPULSE_VIRTUAL_ENV)/bin/activate&&exec\_python\_-E\_"\$0"\_"\$@""
+#!/usr/bin/env -S\_/bin/sh\_-c\_"source\_\$(eval\_echo\_\${INIR_VENV:-\$ILLOGICAL_IMPULSE_VIRTUAL_ENV})/bin/activate&&exec\_python\_-E\_"\$0"\_"\$@""
 import argparse
 import re
 import os
@@ -7,11 +7,16 @@ from typing import Dict, List
 
 TITLE_REGEX = "#+!"
 HIDE_COMMENT = "[hidden]"
-MOD_SEPARATORS = ['+', ' ']
+MOD_SEPARATORS = ["+", " "]
 COMMENT_BIND_PATTERN = "#/#"
 
-parser = argparse.ArgumentParser(description='Hyprland keybind reader')
-parser.add_argument('--path', type=str, default="$HOME/.config/hypr/hyprland.conf", help='path to keybind file (sourcing isn\'t supported)')
+parser = argparse.ArgumentParser(description="Hyprland keybind reader")
+parser.add_argument(
+    "--path",
+    type=str,
+    default="$HOME/.config/hypr/hyprland.conf",
+    help="path to keybind file (sourcing isn't supported)",
+)
 args = parser.parse_args()
 content_lines = []
 reading_line = 0
@@ -28,6 +33,7 @@ class KeyBinding(dict):
         self["params"] = params
         self["comment"] = comment
 
+
 class Section(dict):
     def __init__(self, children, keybinds, name) -> None:
         self["children"] = children
@@ -36,28 +42,29 @@ class Section(dict):
 
 
 def read_content(path: str) -> str:
-    if (not os.access(os.path.expanduser(os.path.expandvars(path)), os.R_OK)):
-        return ("error")
+    if not os.access(os.path.expanduser(os.path.expandvars(path)), os.R_OK):
+        return "error"
     with open(os.path.expanduser(os.path.expandvars(path)), "r") as file:
         return file.read()
 
 
 def autogenerate_comment(dispatcher: str, params: str = "") -> str:
     match dispatcher:
-
         case "resizewindow":
             return "Resize window"
 
         case "movewindow":
-            if(params == ""):
+            if params == "":
                 return "Move window"
             else:
-                return "Window: move in {} direction".format({
-                    "l": "left",
-                    "r": "right",
-                    "u": "up",
-                    "d": "down",
-                }.get(params, "null"))
+                return "Window: move in {} direction".format(
+                    {
+                        "l": "left",
+                        "r": "right",
+                        "u": "up",
+                        "d": "down",
+                    }.get(params, "null")
+                )
 
         case "pin":
             return "Window: pin (show on all workspaces)"
@@ -136,7 +143,8 @@ def autogenerate_comment(dispatcher: str, params: str = "") -> str:
         case _:
             return ""
 
-def get_keybind_at_line(line_number, line_start = 0):
+
+def get_keybind_at_line(line_number, line_start=0):
     global content_lines
     line = content_lines[line_number]
     _, keys = line.split("=", 1)
@@ -156,56 +164,66 @@ def get_keybind_at_line(line_number, line_start = 0):
         comment = autogenerate_comment(dispatcher, params)
 
     if mods:
-        modstring = mods + MOD_SEPARATORS[0] # Add separator at end to ensure last mod is read
+        modstring = (
+            mods + MOD_SEPARATORS[0]
+        )  # Add separator at end to ensure last mod is read
         mods = []
         p = 0
         for index, char in enumerate(modstring):
-            if(char in MOD_SEPARATORS):
-                if(index - p > 1):
+            if char in MOD_SEPARATORS:
+                if index - p > 1:
                     mods.append(modstring[p:index])
-                p = index+1
+                p = index + 1
     else:
         mods = []
 
     return KeyBinding(mods, key, dispatcher, params, comment)
 
+
 def get_binds_recursive(current_content, scope):
     global content_lines
     global reading_line
     # print("get_binds_recursive({0}, {1}) [@L{2}]".format(current_content, scope, reading_line + 1))
-    while reading_line < len(content_lines): # TODO: Adjust condition
+    while reading_line < len(content_lines):  # TODO: Adjust condition
         line = content_lines[reading_line]
         heading_search_result = re.search(TITLE_REGEX, line)
         # print("Read line {0}: {1}\tisHeading: {2}".format(reading_line + 1, content_lines[reading_line], "[{0}, {1}, {2}]".format(heading_search_result.start(), heading_search_result.start() == 0, ((heading_search_result != None) and (heading_search_result.start() == 0))) if heading_search_result != None else "No"))
-        if ((heading_search_result != None) and (heading_search_result.start() == 0)): # Found title
+        if (heading_search_result != None) and (
+            heading_search_result.start() == 0
+        ):  # Found title
             # Determine scope
-            heading_scope = line.find('!')
+            heading_scope = line.find("!")
             # Lower? Return
-            if(heading_scope <= scope):
+            if heading_scope <= scope:
                 reading_line -= 1
                 return current_content
 
-            section_name = line[(heading_scope+1):].strip()
+            section_name = line[(heading_scope + 1) :].strip()
             # print("[[ Found h{0} at line {1} ]] {2}".format(heading_scope, reading_line+1, content_lines[reading_line]))
             reading_line += 1
-            current_content["children"].append(get_binds_recursive(Section([], [], section_name), heading_scope))
+            current_content["children"].append(
+                get_binds_recursive(Section([], [], section_name), heading_scope)
+            )
 
         elif line.startswith(COMMENT_BIND_PATTERN):
-            keybind = get_keybind_at_line(reading_line, line_start=len(COMMENT_BIND_PATTERN))
-            if(keybind != None):
+            keybind = get_keybind_at_line(
+                reading_line, line_start=len(COMMENT_BIND_PATTERN)
+            )
+            if keybind != None:
                 current_content["keybinds"].append(keybind)
 
-        elif line == "" or not line.lstrip().startswith("bind"): # Comment, ignore
+        elif line == "" or not line.lstrip().startswith("bind"):  # Comment, ignore
             pass
 
-        else: # Normal keybind
+        else:  # Normal keybind
             keybind = get_keybind_at_line(reading_line)
-            if(keybind != None):
+            if keybind != None:
                 current_content["keybinds"].append(keybind)
 
         reading_line += 1
 
-    return current_content;
+    return current_content
+
 
 def parse_keys(path: str) -> Dict[str, List[KeyBinding]]:
     global content_lines

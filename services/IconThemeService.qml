@@ -30,8 +30,9 @@ Singleton {
             const isVolatile = volatilePaths.some(vp => {
                 if (vp === "/home/") {
                     // Only consider /home/ volatile if it's inside a download-like folder
+                    // (not permanent locations like .local/share/icons, Steam, etc.)
                     return path.includes("/Descargas/") || path.includes("/Downloads/") || 
-                           path.includes("/tmp/") || path.includes("/.local/share/Steam/") === false;
+                           path.includes("/tmp/") || (path.includes("/resources/") && !path.includes("/.local/share/Steam/"));
                 }
                 return path.includes(vp);
             });
@@ -352,6 +353,43 @@ else:
         ]
         onExited: (exitCode, exitStatus) => {
             console.log("[IconThemeService] qt6ct updated:", exitCode === 0 ? "success" : "failed")
+            // Also sync to GTK settings.ini files
+            gtkSettingsProc.themeName = qt6ctProc.themeName
+            gtkSettingsProc.running = false
+            gtkSettingsProc.running = true
+        }
+    }
+
+    // Sync icon theme to GTK settings.ini (gtk-3.0 and gtk-4.0)
+    Process {
+        id: gtkSettingsProc
+        property string themeName: ""
+        command: [
+            "/usr/bin/python3",
+            "-c",
+            `
+import os, re
+
+theme = "${gtkSettingsProc.themeName}"
+
+for subdir in ["gtk-3.0", "gtk-4.0"]:
+    path = os.path.expanduser(f"~/.config/{subdir}/settings.ini")
+    if not os.path.isfile(path):
+        continue
+    with open(path, "r") as f:
+        content = f.read()
+    content = re.sub(
+        r"^gtk-icon-theme-name=.*$",
+        f"gtk-icon-theme-name={theme}",
+        content,
+        flags=re.MULTILINE,
+    )
+    with open(path, "w") as f:
+        f.write(content)
+`
+        ]
+        onExited: (exitCode, exitStatus) => {
+            console.log("[IconThemeService] GTK settings.ini updated:", exitCode === 0 ? "success" : "failed")
         }
     }
 

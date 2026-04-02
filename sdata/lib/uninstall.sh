@@ -4,6 +4,8 @@
 
 # shellcheck shell=bash
 
+INIR_CONFIG_DIR="${DOTS_CORE_CONFDIR:-${XDG_CONFIG_HOME}/illogical-impulse}"
+
 ###############################################################################
 # Configuration - What iNiR installs/manages
 ###############################################################################
@@ -16,7 +18,7 @@
 # iNiR-exclusive files (safe to remove)
 declare -A INIR_ONLY_PATHS=(
     ["${XDG_CONFIG_HOME}/quickshell/inir"]="iNiR shell configuration"
-    ["${XDG_CONFIG_HOME}/illogical-impulse"]="iNiR user preferences"
+    ["${INIR_CONFIG_DIR}"]="iNiR user preferences"
     ["${XDG_STATE_HOME}/quickshell/user"]="iNiR state (notifications, todo)"
     ["${XDG_CACHE_HOME}/quickshell/inir"]="iNiR cache"
     ["${XDG_BIN_HOME}/inir"]="iNiR launcher"
@@ -36,7 +38,7 @@ declare -A INIR_ONLY_PATHS=(
 # critical_level: essential (user likely needs), optional (can remove), inir_default (iNiR created)
 declare -A SHARED_PATHS=(
     ["${XDG_CONFIG_HOME}/niri/config.kdl"]="Niri compositor config|niri|essential"
-    ["${XDG_CONFIG_HOME}/matugen"]="Matugen color config|matugen|optional"
+    ["${XDG_CONFIG_HOME}/matugen"]="iNiR theming templates|python3|optional"
     ["${XDG_CONFIG_HOME}/fuzzel"]="Fuzzel launcher config|fuzzel|optional"
     ["${XDG_CONFIG_HOME}/Kvantum"]="Kvantum Qt theme|kvantummanager|optional"
     ["${XDG_CONFIG_HOME}/kdeglobals"]="KDE global settings||optional"
@@ -59,7 +61,6 @@ declare -A QUICKSHELL_SHARED=(
 declare -A INIR_PACKAGES=(
     ["qs"]="quickshell|Shell framework|inir_only"
     ["niri"]="niri|Wayland compositor|compositor"
-    ["matugen"]="matugen|Color scheme generator|optional_tool"
     ["cliphist"]="cliphist|Clipboard history|system_tool"
     ["fuzzel"]="fuzzel|Application launcher|system_tool"
     ["swaylock"]="swaylock|Screen locker|system_tool"
@@ -139,7 +140,7 @@ niri_config_has_user_customizations() {
     done
     
     # Check if file was modified after iNiR install
-    local install_marker="${XDG_CONFIG_HOME}/illogical-impulse/installed_true"
+    local install_marker="${INIR_CONFIG_DIR}/installed_true"
     if [[ -f "$install_marker" && -f "$config" ]]; then
         [[ "$config" -nt "$install_marker" ]] && return 0
     fi
@@ -150,9 +151,12 @@ niri_config_has_user_customizations() {
 # Check if a config file was modified by user (compare to defaults if available)
 config_was_user_modified() {
     local config_path="$1"
-    local default_path="${REPO_dots}/.config/${config_path#${XDG_CONFIG_HOME}/}"
+    local runtime_dir
+    runtime_dir="$(get_runtime_shell_dir)"
+    local repo_dots="${runtime_dir:+${runtime_dir}/dots}"
+    local default_path="${repo_dots:+${repo_dots}/.config/${config_path#${XDG_CONFIG_HOME}/}}"
     
-    if [[ -f "$default_path" && -f "$config_path" ]]; then
+    if [[ -n "$default_path" && -f "$default_path" && -f "$config_path" ]]; then
         ! diff -q "$config_path" "$default_path" &>/dev/null
     else
         # If no default to compare, assume user modified
@@ -292,8 +296,8 @@ uninstall_create_backup() {
         cp -r "${XDG_CONFIG_HOME}/quickshell/inir" "$backup_dir/quickshell-inir"
     fi
 
-    if [[ -d "${XDG_CONFIG_HOME}/illogical-impulse" ]]; then
-        cp -r "${XDG_CONFIG_HOME}/illogical-impulse" "$backup_dir/illogical-impulse"
+    if [[ -d "${INIR_CONFIG_DIR}" ]]; then
+        cp -r "${INIR_CONFIG_DIR}" "$backup_dir/$(basename "$INIR_CONFIG_DIR")"
     fi
 
     # Backup niri config
@@ -800,9 +804,9 @@ run_uninstall() {
     fi
 
     # Check if installed
-    if [[ ! -f "${XDG_CONFIG_HOME}/illogical-impulse/installed_true" ]] && \
+    if [[ ! -f "${INIR_CONFIG_DIR}/installed_true" ]] && \
        [[ ! -d "${XDG_CONFIG_HOME}/quickshell/inir" ]] && \
-       [[ ! -f "${XDG_CONFIG_HOME}/illogical-impulse/version.json" ]] && \
+       [[ ! -f "${INIR_CONFIG_DIR}/version.json" ]] && \
        [[ ! -f "${XDG_BIN_HOME}/inir" ]]; then
         tui_warn "iNiR does not appear to be installed"
         return 1

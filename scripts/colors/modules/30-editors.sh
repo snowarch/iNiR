@@ -11,7 +11,6 @@ LEGACY_COLORS_FILE="$STATE_DIR/user/generated/colors.json"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 VSCODE_THEMEGEN_BIN="$STATE_DIR/user/generated/bin/inir-vscode-themegen"
 OPENCODE_THEMEGEN_BIN="$STATE_DIR/user/generated/bin/inir-opencode-themegen"
-ZED_THEMEGEN_BIN="$STATE_DIR/user/generated/bin/inir-zed-themegen"
 
 ensure_vscode_themegen() {
   command -v go &>/dev/null || return 1
@@ -31,15 +30,6 @@ ensure_opencode_themegen() {
   [[ -x "$OPENCODE_THEMEGEN_BIN" ]]
 }
 
-ensure_zed_themegen() {
-  command -v go &>/dev/null || return 1
-  mkdir -p "$STATE_DIR/user/generated/bin"
-  if [[ ! -x "$ZED_THEMEGEN_BIN" || "$REPO_ROOT/go.mod" -nt "$ZED_THEMEGEN_BIN" || "$SCRIPT_DIR/zed_themegen/main.go" -nt "$ZED_THEMEGEN_BIN" || "$SCRIPT_DIR/themegencommon/common.go" -nt "$ZED_THEMEGEN_BIN" ]]; then
-    (cd "$REPO_ROOT" && go build -o "$ZED_THEMEGEN_BIN" ./scripts/colors/zed_themegen) >/dev/null 2>&1 || return 1
-  fi
-  [[ -x "$ZED_THEMEGEN_BIN" ]]
-}
-
 apply_code_editors() {
   [[ -f "$SCSS_FILE" ]] || return 0
   local colors_file="$PALETTE_FILE"
@@ -47,17 +37,8 @@ apply_code_editors() {
   local python_cmd
   python_cmd=$(venv_python)
 
-  local enable_zed enable_vscode
-  enable_zed=$(config_json 'if .appearance.wallpaperTheming | has("enableZed") then .appearance.wallpaperTheming.enableZed else true end' true)
+  local enable_vscode
   enable_vscode=$(config_json 'if .appearance.wallpaperTheming | has("enableVSCode") then .appearance.wallpaperTheming.enableVSCode else true end' true)
-
-  if [[ "$enable_zed" == 'true' ]] && { command -v zed &>/dev/null || command -v zeditor &>/dev/null; }; then
-    if ensure_zed_themegen; then
-      "$ZED_THEMEGEN_BIN" "$SCSS_FILE" "$colors_file" "$TERMINAL_FILE" >> "$STATE_DIR/user/generated/code_editor_themes.log" 2>&1 || true
-    else
-      "$python_cmd" "$SCRIPT_DIR/generate_terminal_configs.py" --scss "$SCSS_FILE" --colors "$colors_file" --terminal-json "$TERMINAL_FILE" --zed >> "$STATE_DIR/user/generated/code_editor_themes.log" 2>&1 || true
-    fi
-  fi
 
   if [[ "$enable_vscode" == 'true' ]]; then
     local enabled_forks=()

@@ -1,0 +1,9 @@
+{
+  "id": "steam",
+  "label": "Steam (Adwaita-for-Steam)",
+  "module": "70-steam.sh",
+  "category": "app",
+  "inputs": ["colors.json"],
+  "description": "Apply Material You colors to Steam via Adwaita-for-Steam skin.",
+  "configKey": "appearance.wallpaperTheming.enableAdwSteam"
+}

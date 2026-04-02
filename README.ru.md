@@ -57,7 +57,7 @@
 Выбираете обои — и всё адаптируется: шелл, GTK/Qt приложения, терминалы, Firefox, Discord, даже экран входа SDDM. Автоматически.
 
 - **5 визуальных стилей** — Material (сплошной), Cards, Aurora (стеклянное размытие), iNiR (в духе TUI), Angel (нео-брутализм)
-- **Динамические цвета обоев** через matugen — распространяются на всю систему
+- **Динамические цвета обоев** через Material You — распространяются на всю систему
 - **10 терминальных инструментов с авто-темой** — foot, kitty, alacritty, starship, fuzzel, pywalfox, btop, lazygit, yazi
 - **Тематизация приложений** — GTK3/4, Qt (через plasma-integration + darkly), Firefox (MaterialFox), Discord/Vesktop (System24)
 - **Пресеты тем** — Gruvbox, Catppuccin, Rosé Pine и другие — или создайте свой

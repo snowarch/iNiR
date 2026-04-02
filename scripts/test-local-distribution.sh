@@ -18,9 +18,9 @@ step "shell syntax"
 bash -n \
     "$runtime_root/setup" \
     "$runtime_root/scripts/inir" \
-    "$runtime_root/sdata/lib/versioning.sh" \
-    "$runtime_root/sdata/lib/doctor.sh" \
-    "$runtime_root/sdata/lib/package-installers.sh"
+    "$runtime_root/sdata/lib/"*.sh \
+    "$runtime_root/sdata/subcmd-install/"*.sh \
+    "$runtime_root/sdata/migrations/"*.sh
 
 step "runtime payload manifests"
 while IFS= read -r runtime_file; do
@@ -44,6 +44,16 @@ if [[ -d "$runtime_root/distro/arch" ]]; then
         "$runtime_root/distro/arch/inir-shell/PKGBUILD" \
         "$runtime_root/distro/arch/inir-shell-git/PKGBUILD" \
         "$runtime_root/distro/arch/inir-meta/PKGBUILD"
+
+    step "version consistency"
+    version="$(cat "$runtime_root/VERSION")"
+    for pkg in inir-shell inir-meta; do
+        pkg_ver="$(grep -m1 '^pkgver=' "$runtime_root/distro/arch/$pkg/PKGBUILD" | cut -d= -f2)"
+        if [[ "$pkg_ver" != "$version" ]]; then
+            printf 'FAIL: %s pkgver=%s != VERSION=%s\n' "$pkg" "$pkg_ver" "$version" >&2
+            exit 1
+        fi
+    done
 fi
 
 step "launcher resolution"

@@ -106,14 +106,14 @@ ii is built for **Niri**. Some features were inherited from the original Hyprlan
 
 ## Theming
 
-### Matugen
+### Color Generation
 
-- **Required for wallpaper theming**: Without `matugen`, changing wallpapers won't update colors.
+- **Python venv required for wallpaper theming**: The `materialyoucolor` library must be installed in the project venv.
 - **First run is slow**: Initial theme generation can take a few seconds on slower machines.
 
 ### Theme Presets
 
-- Theme presets (Gruvbox, Catppuccin, etc.) override matugen colors. You can't have both "wallpaper-based colors" and "Catppuccin" at the same time.
+- Theme presets (Gruvbox, Catppuccin, etc.) override wallpaper-generated colors. You can't have both "wallpaper-based colors" and "Catppuccin" at the same time.
 
 ### Terminal Theming
 

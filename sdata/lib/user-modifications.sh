@@ -97,6 +97,65 @@ detect_user_additions() {
     rm -f "$manifest_paths"
 }
 
+# Detect modifications by comparing installed files directly against repo source
+# Used when no checksum-based manifest exists (v1 manifests or fresh installs
+# coming from main branch). Compares code files only.
+detect_user_modifications_by_source_comparison() {
+    local target_dir="$1"
+    local repo_root="$2"
+
+    local runtime_root_manifest="${repo_root}/sdata/runtime-root-files.txt"
+    local runtime_dirs_manifest="${repo_root}/sdata/runtime-payload-dirs.txt"
+    local checksum_extensions="qml|js|py|sh|fish"
+
+    _compare_file() {
+        local rel_path="$1"
+        local ext="${rel_path##*.}"
+        [[ "$ext" =~ ^($checksum_extensions)$ ]] || return 0
+
+        local installed="${target_dir}/${rel_path}"
+        local repo_file="${repo_root}/${rel_path}"
+        [[ -f "$installed" ]] || return 0
+        [[ -f "$repo_file" ]] || return 0
+
+        local installed_hash repo_hash
+        installed_hash=$(sha256sum "$installed" 2>/dev/null | cut -d' ' -f1)
+        repo_hash=$(sha256sum "$repo_file" 2>/dev/null | cut -d' ' -f1)
+
+        if [[ "$installed_hash" != "$repo_hash" ]]; then
+            echo "$rel_path"
+        fi
+    }
+
+    # Root QML files
+    for qml in "$target_dir"/*.qml; do
+        [[ -f "$qml" ]] || continue
+        _compare_file "$(basename "$qml")"
+    done
+
+    # Root manifest files
+    if [[ -f "$runtime_root_manifest" ]]; then
+        while IFS= read -r runtime_file; do
+            [[ -n "$runtime_file" ]] || continue
+            _compare_file "$runtime_file"
+        done < "$runtime_root_manifest"
+    fi
+
+    # Payload directory files
+    if [[ -f "$runtime_dirs_manifest" ]]; then
+        while IFS= read -r dir; do
+            [[ -n "$dir" ]] || continue
+            [[ -d "$target_dir/$dir" ]] || continue
+            find "$target_dir/$dir" -type f ! -name 'AGENTS.md' 2>/dev/null | while read -r file; do
+                local rel_path="${file#$target_dir/}"
+                _compare_file "$rel_path"
+            done
+        done < "$runtime_dirs_manifest"
+    fi
+
+    unset -f _compare_file
+}
+
 ###############################################################################
 # Preservation
 ###############################################################################
