@@ -97,6 +97,26 @@ post_process() {
     # Best-effort live refresh is handled by apply-gtk-theme.sh for GTK/KDE apps.
 }
 
+hex_to_rgb_triplet() {
+    local hex="$1"
+    hex="${hex#\#}"
+    [[ "$hex" =~ ^[A-Fa-f0-9]{6}$ ]] || return 1
+    printf "%d,%d,%d\n" "0x${hex:0:2}" "0x${hex:2:2}" "0x${hex:4:2}"
+}
+
+write_chromium_theme_contract() {
+    local source_json="$1"
+    local output_path="$2"
+    local hex_color=""
+    local rgb_color=""
+
+    [[ -f "$source_json" ]] || return 1
+    hex_color=$(jq -r '.surface_container_low // .surface // .background // empty' "$source_json" 2>/dev/null)
+    [[ "$hex_color" =~ ^#[A-Fa-f0-9]{6}$ ]] || return 1
+    rgb_color=$(hex_to_rgb_triplet "$hex_color") || return 1
+    printf '%s\n' "$rgb_color" > "$output_path"
+}
+
 write_generated_wallpaper_path() {
     local wallpaper_path="$1"
     local wallpaper_state_path="$STATE_DIR/user/generated/wallpaper/path.txt"
@@ -235,17 +255,17 @@ for output in $outputs; do
 done
 LAUNCHER_EOF
     chmod +x "$launcher_script"
-    
+
     # Execute launcher in a completely detached way using at if available, otherwise nohup
     if command -v at >/dev/null 2>&1; then
         echo "$launcher_script '$video_path' $outputs" | at now 2>/dev/null
     else
         (nohup "$launcher_script" "$video_path" $outputs > /dev/null 2>&1 &)
     fi
-    
+
     # Small delay to let the launcher start
     sleep 0.3
-    
+
     # Clean up launcher script after a delay
     (sleep 5 && rm -f "$launcher_script") &
 }
@@ -630,7 +650,7 @@ switch() {
         # Legacy props for backwards compatibility
         harmonize_threshold=$(jq -r '.appearance.wallpaperTheming.terminalGenerationProps.harmonizeThreshold // 100' "$SHELL_CONFIG_FILE")
         soften_colors=$(jq -r '.appearance.softenColors' "$SHELL_CONFIG_FILE")
-        
+
         # Pass new parameters to Python script
         [[ "$term_saturation" != "null" && -n "$term_saturation" ]] && generate_colors_material_args+=(--term_saturation "$term_saturation")
         [[ "$term_brightness" != "null" && -n "$term_brightness" ]] && generate_colors_material_args+=(--term_brightness "$term_brightness")
@@ -662,6 +682,8 @@ switch() {
     _terminal_out="$STATE_DIR/user/generated/terminal.json"
     _meta_tmp="$STATE_DIR/user/generated/theme-meta.json.tmp"
     _meta_out="$STATE_DIR/user/generated/theme-meta.json"
+    _chromium_tmp="$STATE_DIR/user/generated/chromium.theme.tmp"
+    _chromium_out="$STATE_DIR/user/generated/chromium.theme"
 
     # 1) Generate authoritative shell/UI colors.json + render app templates.
     if "$_ii_python" "$SCRIPT_DIR/generate_colors_material.py" "${generate_colors_material_args[@]}" \
@@ -675,12 +697,18 @@ switch() {
         [[ -s "$_palette_tmp" ]] && mv "$_palette_tmp" "$_palette_out" || rm -f "$_palette_tmp"
         [[ -s "$_terminal_tmp" ]] && mv "$_terminal_tmp" "$_terminal_out" || rm -f "$_terminal_tmp"
         [[ -s "$_meta_tmp" ]] && mv "$_meta_tmp" "$_meta_out" || rm -f "$_meta_tmp"
+        if write_chromium_theme_contract "$_palette_out" "$_chromium_tmp" && [[ -s "$_chromium_tmp" ]]; then
+            mv "$_chromium_tmp" "$_chromium_out"
+        else
+            rm -f "$_chromium_tmp"
+        fi
     else
         echo "[switchwall] Warning: colors.json generation failed, keeping previous JSON" >&2
         rm -f "$_json_tmp"
         rm -f "$_palette_tmp"
         rm -f "$_terminal_tmp"
         rm -f "$_meta_tmp"
+        rm -f "$_chromium_tmp"
     fi
 
     # 2) Generate material_colors.scss for terminals/editors. This path may optionally

@@ -52,6 +52,7 @@ Singleton {
     property string generatedPalettePath: FileUtils.trimFileProtocol(`${Directories.state}/user/generated/palette.json`)
     property string generatedTerminalPalettePath: FileUtils.trimFileProtocol(`${Directories.state}/user/generated/terminal.json`)
     property string generatedThemeMetaPath: FileUtils.trimFileProtocol(`${Directories.state}/user/generated/theme-meta.json`)
+    property string generatedChromiumThemePath: FileUtils.trimFileProtocol(`${Directories.state}/user/generated/chromium.theme`)
     property string generatedWallpaperCategoryPath: FileUtils.trimFileProtocol(`${Directories.state}/user/generated/wallpaper/category.txt`)
     property string cliphistDecode: FileUtils.trimFileProtocol(`/tmp/quickshell/media/cliphist`)
     property string screenshotTemp: "/tmp/quickshell/media/screenshot"
@@ -85,6 +86,7 @@ Singleton {
     Component.onCompleted: {
         Quickshell.execDetached(["mkdir", "-p", `${shellConfig}`])
         Quickshell.execDetached(["mkdir", "-p", FileUtils.trimFileProtocol(`${state}/user`)])
+        Quickshell.execDetached(["mkdir", "-p", FileUtils.trimFileProtocol(`${state}/user/generated`)])
         Quickshell.execDetached(["mkdir", "-p", `${favicons}`])
         Quickshell.execDetached(["rm", "-rf", `${coverArt}`])
         Quickshell.execDetached(["mkdir", "-p", `${coverArt}`])

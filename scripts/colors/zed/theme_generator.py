@@ -4,6 +4,7 @@ Generate Zed editor theme from Material You colors and SCSS terminal colors.
 Creates both dark and light theme variants with auto-detected palette scheme.
 """
 
+import copy
 import json
 import os
 import re
@@ -15,9 +16,15 @@ def generate_zed_config(
     colors, scss_path, output_path, palette_json_path=None, terminal_json_path=None
 ):
     """Generate Zed editor theme from Material You colors and SCSS terminal colors."""
+    input_colors = colors if isinstance(colors, dict) else {}
     colors_json_path = palette_json_path or os.path.expanduser(
         "~/.local/state/quickshell/user/generated/palette.json"
     )
+
+    def _is_hex_color(value):
+        return isinstance(value, str) and re.fullmatch(
+            r"#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})", value.strip()
+        )
 
     try:
         with open(colors_json_path, "r") as f:
@@ -42,7 +49,10 @@ def generate_zed_config(
             "on_primary": "#1a1b26",
         }
 
-    my_colors = {k: v.lower() for k, v in my_colors.items()}
+    my_colors = {k: v.lower() for k, v in my_colors.items() if _is_hex_color(v)}
+    for key, value in input_colors.items():
+        if _is_hex_color(value):
+            my_colors[key] = value.lower()
 
     def parse_scss_colors(scss_path):
         """Parse material_colors.scss compatibility values."""
@@ -53,12 +63,52 @@ def generate_zed_config(
                     match = re.match(r"\$(\w+):\s*(#[A-Fa-f0-9]{6});", line.strip())
                     if match:
                         name, value = match.groups()
-                        term_colors[name] = value
+                        if re.fullmatch(r"term\d{1,2}", name):
+                            term_colors[name] = value.lower()
         except FileNotFoundError:
             pass
         return term_colors
 
-    term_colors = parse_scss_colors(scss_path)
+    def parse_terminal_json(json_path):
+        parsed = {}
+        if not json_path:
+            return parsed
+        try:
+            with open(json_path, "r") as f:
+                data = json.load(f)
+                for key, value in data.items():
+                    if re.fullmatch(r"term\d{1,2}", str(key)) and _is_hex_color(value):
+                        parsed[str(key)] = value.lower()
+        except (FileNotFoundError, json.JSONDecodeError):
+            pass
+        return parsed
+
+    term_colors = {
+        k: v.lower()
+        for k, v in input_colors.items()
+        if re.fullmatch(r"term\d{1,2}", str(k)) and _is_hex_color(v)
+    }
+    term_colors.update(parse_scss_colors(scss_path))
+    term_colors.update(parse_terminal_json(terminal_json_path))
+
+    default_term_colors = {
+        "term0": "#1d1f21",
+        "term1": "#cc6666",
+        "term2": "#b5bd68",
+        "term3": "#f0c674",
+        "term4": "#81a2be",
+        "term5": "#b294bb",
+        "term6": "#8abeb7",
+        "term7": "#c5c8c6",
+        "term8": "#666666",
+        "term9": "#d54e53",
+        "term10": "#b9ca4a",
+        "term11": "#e7c547",
+        "term12": "#7aa6da",
+        "term13": "#c397d8",
+        "term14": "#70c0ba",
+        "term15": "#ffffff",
+    }
 
     def hex_with_alpha(hex_color, alpha_hex):
         """Add alpha hex value to color"""
@@ -115,8 +165,14 @@ def generate_zed_config(
 
         return f"#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}"
 
-    def saturate(hex_color, factor):
-        """Increase saturation of hex color (factor > 1 = more saturated)"""
+    def saturate(
+        hex_color,
+        factor,
+        min_saturation=0.38,
+        additive_floor=0.22,
+        hue_hint=0.0,
+    ):
+        """Increase saturation with an additive floor for very muted colors."""
         hex_color = hex_color.lstrip("#")
         r = int(hex_color[0:2], 16) / 255.0
         g = int(hex_color[2:4], 16) / 255.0
@@ -127,19 +183,23 @@ def generate_zed_config(
         l = (max_c + min_c) / 2.0
 
         if max_c == min_c:
-            return f"#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}"
-
-        d = max_c - min_c
-        s = d / (2.0 - max_c - min_c) if l > 0.5 else d / (max_c + min_c)
-        if max_c == r:
-            h = (g - b) / d + (6 if g < b else 0)
-        elif max_c == g:
-            h = (b - r) / d + 2
+            h = hue_hint % 1.0
+            s = 0.0
         else:
-            h = (r - g) / d + 4
-        h /= 6.0
+            d = max_c - min_c
+            s = d / (2.0 - max_c - min_c) if l > 0.5 else d / (max_c + min_c)
+            if max_c == r:
+                h = (g - b) / d + (6 if g < b else 0)
+            elif max_c == g:
+                h = (b - r) / d + 2
+            else:
+                h = (r - g) / d + 4
+            h /= 6.0
 
-        s = min(1.0, s * factor)
+        boosted = min(1.0, s * factor + additive_floor * (1.0 - s))
+        if boosted < min_saturation:
+            boosted = min(1.0, boosted + min_saturation)
+        s = boosted
 
         def hue_to_rgb(p, q, t):
             if t < 0:
@@ -154,16 +214,140 @@ def generate_zed_config(
                 return p + (q - p) * (2 / 3 - t) * 6
             return p
 
-        if s == 0:
-            r = g = b = l
-        else:
-            q = l * (1 + s) if l < 0.5 else l + s - l * s
-            p = 2 * l - q
-            r = hue_to_rgb(p, q, h + 1 / 3)
-            g = hue_to_rgb(p, q, h)
-            b = hue_to_rgb(p, q, h - 1 / 3)
+        q = l * (1 + s) if l < 0.5 else l + s - l * s
+        p = 2 * l - q
+        r = hue_to_rgb(p, q, h + 1 / 3)
+        g = hue_to_rgb(p, q, h)
+        b = hue_to_rgb(p, q, h - 1 / 3)
 
         return f"#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}"
+
+    def blend_colors(base_hex, mix_hex, mix_ratio):
+        """Blend mix_hex into base_hex by mix_ratio."""
+        ratio = max(0.0, min(1.0, mix_ratio))
+        base_hex = base_hex.lstrip("#")
+        mix_hex = mix_hex.lstrip("#")
+        br, bg, bb = (
+            int(base_hex[0:2], 16),
+            int(base_hex[2:4], 16),
+            int(base_hex[4:6], 16),
+        )
+        mr, mg, mb = (
+            int(mix_hex[0:2], 16),
+            int(mix_hex[2:4], 16),
+            int(mix_hex[4:6], 16),
+        )
+        r = int(round(br * (1.0 - ratio) + mr * ratio))
+        g = int(round(bg * (1.0 - ratio) + mg * ratio))
+        b = int(round(bb * (1.0 - ratio) + mb * ratio))
+        return f"#{r:02x}{g:02x}{b:02x}"
+
+    def get_term_color(index):
+        key = f"term{index}"
+        return term_colors.get(key, default_term_colors.get(key, "#ffffff"))
+
+    # Blend 50% of theme primary into Zed default syntax colors.
+    mix_ratio = 0.50
+
+    def build_syntax_map(primary, appearance):
+        # Keep external editor syntax aligned with shell code blocks defaults in
+        # modules/common/Appearance.qml: Monokai (dark) and ayu Light (light).
+        defaults = (
+            {
+                # Monokai
+                "red": "#f92672",
+                "green": "#a6e22e",
+                "yellow": "#e6db74",
+                "blue": "#66d9ef",
+                "magenta": "#ae81ff",
+                "cyan": "#a1efe4",
+                "foreground": "#f8f8f2",
+                "muted": "#b0ada0",
+                "comment": "#75715e",
+                "orange": "#fd971f",
+            }
+            if appearance == "dark"
+            else {
+                # ayu Light
+                "red": "#f07178",
+                "green": "#86b300",
+                "yellow": "#f2ae49",
+                "blue": "#399ee6",
+                "magenta": "#a37acc",
+                "cyan": "#4cbf99",
+                "foreground": "#5c6166",
+                "muted": "#8a9199",
+                "comment": "#abb0b6",
+                "orange": "#fa8d3e",
+            }
+        )
+
+        def syntax_color(base_color):
+            return blend_colors(base_color, primary, mix_ratio)
+
+        accent_red = syntax_color(defaults["red"])
+        accent_green = syntax_color(defaults["green"])
+        accent_yellow = syntax_color(defaults["yellow"])
+        accent_blue = syntax_color(defaults["blue"])
+        accent_magenta = syntax_color(defaults["magenta"])
+        accent_cyan = syntax_color(defaults["cyan"])
+        foreground = syntax_color(defaults["foreground"])
+        muted = syntax_color(defaults["muted"])
+        comment = syntax_color(defaults["comment"])
+        comment_doc = comment
+
+        def sx(color, font_style=None, font_weight=None):
+            return {
+                "color": hex_with_alpha(color, "ff"),
+                "font_style": font_style,
+                "font_weight": font_weight,
+            }
+
+        return {
+            "attribute": sx(accent_blue),
+            "boolean": sx(accent_yellow),
+            "comment": sx(comment),
+            "comment.doc": sx(comment_doc),
+            "constant": sx(accent_yellow),
+            "constructor": sx(accent_magenta),
+            "embedded": sx(foreground),
+            "emphasis": sx(accent_blue),
+            "emphasis.strong": sx(accent_blue, font_weight=700),
+            "enum": sx(accent_cyan),
+            "function": sx(accent_blue),
+            "hint": sx(accent_cyan),
+            "keyword": sx(accent_magenta),
+            "label": sx(accent_blue),
+            "link_text": sx(accent_blue, font_style="normal"),
+            "link_uri": sx(accent_cyan),
+            "namespace": sx(foreground),
+            "number": sx(accent_yellow),
+            "operator": sx(accent_cyan),
+            "predictive": sx(accent_cyan, font_style="italic"),
+            "preproc": sx(accent_magenta),
+            "primary": sx(foreground),
+            "property": sx(accent_blue),
+            "punctuation": sx(muted),
+            "punctuation.bracket": sx(accent_cyan),
+            "punctuation.delimiter": sx(muted),
+            "punctuation.list_marker": sx(accent_magenta),
+            "punctuation.markup": sx(accent_magenta),
+            "punctuation.special": sx(accent_red),
+            "selector": sx(accent_magenta),
+            "selector.pseudo": sx(accent_blue),
+            "string": sx(accent_green),
+            "string.escape": sx(syntax_color(defaults["orange"])),
+            "string.regex": sx(accent_green),
+            "string.special": sx(accent_green),
+            "string.special.symbol": sx(accent_cyan),
+            "tag": sx(accent_magenta),
+            "text.literal": sx(accent_green),
+            "title": sx(accent_blue, font_weight=400),
+            "type": sx(accent_cyan),
+            "variable": sx(foreground),
+            "variable.special": sx(accent_red),
+            "variant": sx(accent_blue),
+        }
 
     def _luminance(hex_color):
         hex_color = hex_color.lstrip("#")
@@ -214,6 +398,126 @@ def generate_zed_config(
         _dk_surface_high = adjust_lightness(_dk_surface, 1.55)
         _dk_surface_highest = adjust_lightness(_dk_surface, 1.75)
 
+    def _hex6(hex_color):
+        return f"#{hex_color.lstrip('#')[:6].lower()}"
+
+    def build_mode_palette(appearance):
+        palette = dict(my_colors)
+        if appearance == "dark":
+            palette.update(
+                {
+                    "surface": _dk_surface,
+                    "surface_container_low": _dk_surface_low,
+                    "surface_container": _dk_surface_std,
+                    "surface_container_high": _dk_surface_high,
+                    "surface_container_highest": _dk_surface_highest,
+                    "on_surface": _dk_on_surface,
+                    "on_surface_variant": _dk_on_surface_variant,
+                    "outline": _dk_outline,
+                    "outline_variant": _dk_outline_variant,
+                }
+            )
+            palette.setdefault("surface_dim", adjust_lightness(_dk_surface, 0.92))
+        else:
+            palette.update(
+                {
+                    "surface": _lt_surface,
+                    "surface_container_low": _lt_surface_low,
+                    "surface_container": _lt_surface_std,
+                    "surface_container_high": _lt_surface_high,
+                    "surface_container_highest": _lt_surface_highest,
+                    "on_surface": _lt_on_surface,
+                    "on_surface_variant": _lt_on_surface_variant,
+                    "outline": _lt_outline,
+                    "outline_variant": _lt_outline_variant,
+                }
+            )
+            palette.setdefault("surface_dim", adjust_lightness(_lt_surface, 0.95))
+        palette.setdefault(
+            "surface_variant", palette.get("surface_container", palette["surface"])
+        )
+        return palette
+
+    mode_palettes = {
+        "dark": build_mode_palette("dark"),
+        "light": build_mode_palette("light"),
+    }
+
+    def resolve_material_color(token, mode):
+        palette = mode_palettes.get(mode, mode_palettes["dark"])
+        raw = palette.get(token)
+        if _is_hex_color(raw):
+            return _hex6(raw)
+
+        fallback_map = {
+            "primary": "#7aa2f7",
+            "secondary": "#bb9af7",
+            "tertiary": "#9ece6a",
+            "error": "#f7768e",
+            "surface": "#1a1b26" if mode == "dark" else "#faf4f2",
+            "surface_container": "#24283b" if mode == "dark" else "#f0e8e6",
+            "surface_container_low": "#1f2230" if mode == "dark" else "#f7efed",
+            "surface_container_high": "#2d3246" if mode == "dark" else "#ece2df",
+            "surface_container_highest": "#3a415b" if mode == "dark" else "#e5d9d6",
+            "surface_dim": "#14161d" if mode == "dark" else "#ece2df",
+            "on_surface": "#c0caf5" if mode == "dark" else "#2a2022",
+            "on_surface_variant": "#9aa5ce" if mode == "dark" else "#5a4b4e",
+            "outline": "#565f89" if mode == "dark" else "#7e6e72",
+            "outline_variant": "#434a68" if mode == "dark" else "#ccb8bc",
+            "primary_container": "#39426a" if mode == "dark" else "#dbe2ff",
+            "on_primary_container": "#d7e2ff" if mode == "dark" else "#1f2a4d",
+            "secondary_container": "#4a4064" if mode == "dark" else "#e8defc",
+            "on_secondary_container": "#e8defd" if mode == "dark" else "#352d4b",
+            "tertiary_container": "#334f2e" if mode == "dark" else "#d9f4bf",
+            "on_tertiary_container": "#d2f0b8" if mode == "dark" else "#243a1e",
+            "error_container": "#5d1f2d" if mode == "dark" else "#f9d8df",
+            "on_error_container": "#ffd9df" if mode == "dark" else "#5b1b2a",
+        }
+        if token in fallback_map:
+            return fallback_map[token]
+        if token.startswith("on_"):
+            return resolve_material_color("on_surface", mode)
+        if token.endswith("_container"):
+            return resolve_material_color("surface_container", mode)
+        if token.startswith("surface"):
+            return resolve_material_color("surface", mode)
+        return resolve_material_color("primary", mode)
+
+    _alt_template_path = (
+        Path(__file__).resolve().parents[3]
+        / "dots/.config/matugen/templates/zed-colors.json"
+    )
+    _alt_placeholder_re = re.compile(r"\{\{colors\.([a-z0-9_]+)\.(dark|light)\.hex\}\}")
+
+    def render_alt_template(node):
+        if isinstance(node, dict):
+            return {k: render_alt_template(v) for k, v in node.items()}
+        if isinstance(node, list):
+            return [render_alt_template(item) for item in node]
+        if isinstance(node, str):
+            return _alt_placeholder_re.sub(
+                lambda match: resolve_material_color(match.group(1), match.group(2)),
+                node,
+            )
+        return node
+
+    def load_alt_template_styles():
+        try:
+            with open(_alt_template_path, "r") as f:
+                data = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            return {}
+
+        styles = {}
+        for theme in data.get("themes", []):
+            appearance = theme.get("appearance")
+            style = theme.get("style")
+            if appearance in ("dark", "light") and isinstance(style, dict):
+                styles[appearance] = style
+        return styles
+
+    alt_template_styles = load_alt_template_styles()
+
     def build_zed_dark_theme():
         primary = my_colors.get("primary", "#7aa2f7")
         secondary = my_colors.get("secondary", "#bb9af7")
@@ -224,16 +528,17 @@ def generate_zed_config(
         surface_std = _dk_surface_std
         surface_high = _dk_surface_high
         outline = _dk_outline
+        outline_variant = _dk_outline_variant
         on_surface = _dk_on_surface
         on_surface_variant = _dk_on_surface_variant
 
         theme = {
-            "border": hex_with_alpha(outline, "ff"),
-            "border.variant": hex_with_alpha(adjust_lightness(surface_low, 0.8), "ff"),
-            "border.focused": hex_with_alpha(primary, "ff"),
-            "border.selected": hex_with_alpha(adjust_lightness(primary, 0.7), "ff"),
-            "border.transparent": "#00000000",
-            "border.disabled": hex_with_alpha(adjust_lightness(outline, 0.5), "ff"),
+            "border": hex_with_alpha(on_surface, "20"),
+            "border.variant": hex_with_alpha(surface, "20"),
+            "border.focused": hex_with_alpha(surface, "40"),
+            "border.selected": hex_with_alpha(surface, "ff"),
+            "border.transparent": hex_with_alpha(surface, "20"),
+            "border.disabled": hex_with_alpha(outline_variant, "60"),
             "elevated_surface.background": hex_with_alpha(surface_low, "ff"),
             "surface.background": hex_with_alpha(surface_low, "ff"),
             "background": hex_with_alpha(surface, "ff"),
@@ -371,27 +676,11 @@ def generate_zed_config(
             "warning.border": hex_with_alpha(adjust_lightness(tertiary, 0.9), "ff"),
         }
 
-        for i in range(16):
-            term_color = term_colors.get(
-                f"term{i}", f"#{282828 if i == 0 else 'ffffff'}"
-            )
-            theme[f"terminal.ansi.black"] = (
-                hex_with_alpha(term_colors.get("term0", "#000000"), "ff")
-                if i == 0
-                else theme.get("terminal.ansi.black")
-            )
-            theme[f"terminal.ansi.bright_black"] = (
-                hex_with_alpha(term_colors.get("term8", "#555555"), "ff")
-                if i == 8
-                else theme.get("terminal.ansi.bright_black")
-            )
-            theme[f"terminal.ansi.dim_black"] = (
-                hex_with_alpha(
-                    adjust_lightness(term_colors.get("term0", "#000000"), 0.6), "ff"
-                )
-                if i == 0
-                else theme.get("terminal.ansi.dim_black")
-            )
+        theme["terminal.ansi.black"] = hex_with_alpha(get_term_color(0), "ff")
+        theme["terminal.ansi.bright_black"] = hex_with_alpha(get_term_color(8), "ff")
+        theme["terminal.ansi.dim_black"] = hex_with_alpha(
+            adjust_lightness(get_term_color(0), 0.6), "ff"
+        )
 
         color_map = {
             "red": 1,
@@ -418,7 +707,7 @@ def generate_zed_config(
         }
 
         for name, idx in color_map.items():
-            base_color = term_colors.get(f"term{idx}", "#ffffff")
+            base_color = get_term_color(idx)
             if "bright" in name:
                 color = adjust_lightness(base_color, 1.2)
             elif "dim" in name:
@@ -446,222 +735,10 @@ def generate_zed_config(
             for color in player_colors
         ]
 
-        theme["syntax"] = {
-            "attribute": {
-                "color": hex_with_alpha(primary, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "boolean": {
-                "color": hex_with_alpha(tertiary, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "comment": {
-                "color": hex_with_alpha(
-                    adjust_lightness(on_surface_variant, 0.7), "ff"
-                ),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "comment.doc": {
-                "color": hex_with_alpha(
-                    adjust_lightness(on_surface_variant, 0.8), "ff"
-                ),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "constant": {
-                "color": hex_with_alpha(adjust_lightness(tertiary, 0.9), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "constructor": {
-                "color": hex_with_alpha(primary, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "embedded": {
-                "color": hex_with_alpha(on_surface, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "emphasis": {
-                "color": hex_with_alpha(primary, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "emphasis.strong": {
-                "color": hex_with_alpha(adjust_lightness(tertiary, 0.8), "ff"),
-                "font_style": None,
-                "font_weight": 700,
-            },
-            "enum": {
-                "color": hex_with_alpha(secondary, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "function": {
-                "color": hex_with_alpha(primary, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "hint": {
-                "color": hex_with_alpha(adjust_lightness(primary, 0.7), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "keyword": {
-                "color": hex_with_alpha(secondary, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "label": {
-                "color": hex_with_alpha(primary, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "link_text": {
-                "color": hex_with_alpha(primary, "ff"),
-                "font_style": "normal",
-                "font_weight": None,
-            },
-            "link_uri": {
-                "color": hex_with_alpha(secondary, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "namespace": {
-                "color": hex_with_alpha(on_surface, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "number": {
-                "color": hex_with_alpha(adjust_lightness(tertiary, 0.8), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "operator": {
-                "color": hex_with_alpha(secondary, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "predictive": {
-                "color": hex_with_alpha(adjust_lightness(secondary, 0.8), "ff"),
-                "font_style": "italic",
-                "font_weight": None,
-            },
-            "preproc": {
-                "color": hex_with_alpha(on_surface, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "primary": {
-                "color": hex_with_alpha(on_surface, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "property": {
-                "color": hex_with_alpha(adjust_lightness(primary, 0.85), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "punctuation": {
-                "color": hex_with_alpha(on_surface, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "punctuation.bracket": {
-                "color": hex_with_alpha(adjust_lightness(on_surface, 0.9), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "punctuation.delimiter": {
-                "color": hex_with_alpha(adjust_lightness(on_surface, 0.9), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "punctuation.list_marker": {
-                "color": hex_with_alpha(adjust_lightness(primary, 0.85), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "punctuation.markup": {
-                "color": hex_with_alpha(adjust_lightness(primary, 0.85), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "punctuation.special": {
-                "color": hex_with_alpha(adjust_lightness(error, 0.8), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "selector": {
-                "color": hex_with_alpha(adjust_lightness(tertiary, 0.9), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "selector.pseudo": {
-                "color": hex_with_alpha(primary, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "string": {
-                "color": hex_with_alpha(tertiary, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "string.escape": {
-                "color": hex_with_alpha(on_surface_variant, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "string.regex": {
-                "color": hex_with_alpha(tertiary, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "string.special": {
-                "color": hex_with_alpha(tertiary, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "string.special.symbol": {
-                "color": hex_with_alpha(tertiary, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "text.literal": {
-                "color": hex_with_alpha(tertiary, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "title": {
-                "color": hex_with_alpha(primary, "ff"),
-                "font_style": None,
-                "font_weight": 400,
-            },
-            "variable.special": {
-                "color": hex_with_alpha(tertiary, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "variable": {
-                "color": hex_with_alpha(on_surface, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "variable.special": {
-                "color": hex_with_alpha(adjust_lightness(tertiary, 0.8), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "variant": {
-                "color": hex_with_alpha(primary, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-        }
+        theme["syntax"] = build_syntax_map(
+            primary=primary,
+            appearance="dark",
+        )
 
         return theme
 
@@ -679,7 +756,6 @@ def generate_zed_config(
         on_surface_variant = _lt_on_surface_variant
         outline = _lt_outline
         outline_variant = _lt_outline_variant
-        on_primary = my_colors.get("on_primary", "#ffffff")
 
         def lighten(color, factor=1.15):
             return adjust_lightness(color, factor)
@@ -688,12 +764,12 @@ def generate_zed_config(
             return adjust_lightness(color, factor)
 
         light_theme = {
-            "border": hex_with_alpha(outline_variant, "ff"),
-            "border.variant": hex_with_alpha(lighten(outline_variant, 1.1), "ff"),
-            "border.focused": hex_with_alpha(primary, "ff"),
-            "border.selected": hex_with_alpha(darken(primary, 0.9), "ff"),
-            "border.transparent": "#00000000",
-            "border.disabled": hex_with_alpha(lighten(outline_variant, 1.2), "ff"),
+            "border": hex_with_alpha(on_surface, "20"),
+            "border.variant": hex_with_alpha(surface, "20"),
+            "border.focused": hex_with_alpha(surface, "40"),
+            "border.selected": hex_with_alpha(surface, "ff"),
+            "border.transparent": hex_with_alpha(surface, "20"),
+            "border.disabled": hex_with_alpha(outline_variant, "60"),
             "elevated_surface.background": hex_with_alpha(surface_low, "ff"),
             "surface.background": hex_with_alpha(surface_low, "ff"),
             "background": hex_with_alpha(surface, "ff"),
@@ -809,22 +885,16 @@ def generate_zed_config(
             "warning.border": hex_with_alpha(saturate(tertiary, 1.5), "ff"),
         }
 
-        for i in range(16):
-            term_color = term_colors.get(f"term{i}", "#000000")
-            if i == 0:
-                light_theme[f"terminal.ansi.black"] = hex_with_alpha(term_color, "ff")
-            elif i == 7:
-                light_theme[f"terminal.ansi.white"] = hex_with_alpha(
-                    darken(term_color, 0.5), "ff"
-                )
-            elif i == 8:
-                light_theme[f"terminal.ansi.bright_black"] = hex_with_alpha(
-                    darken(term_color, 0.6), "ff"
-                )
-            elif i == 15:
-                light_theme[f"terminal.ansi.bright_white"] = hex_with_alpha(
-                    darken(term_color, 0.3), "ff"
-                )
+        light_theme["terminal.ansi.black"] = hex_with_alpha(get_term_color(0), "ff")
+        light_theme["terminal.ansi.white"] = hex_with_alpha(
+            darken(get_term_color(7), 0.5), "ff"
+        )
+        light_theme["terminal.ansi.bright_black"] = hex_with_alpha(
+            darken(get_term_color(8), 0.6), "ff"
+        )
+        light_theme["terminal.ansi.bright_white"] = hex_with_alpha(
+            darken(get_term_color(15), 0.3), "ff"
+        )
 
         color_map = {
             "red": 1,
@@ -848,7 +918,7 @@ def generate_zed_config(
         }
 
         for name, idx in color_map.items():
-            base_color = term_colors.get(f"term{idx}", "#000000")
+            base_color = get_term_color(idx)
             if "bright" in name:
                 color = darken(base_color, 0.75)
             elif "dim" in name:
@@ -872,228 +942,59 @@ def generate_zed_config(
             for color in player_colors
         ]
 
-        light_theme["syntax"] = {
-            "attribute": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "boolean": {
-                "color": hex_with_alpha(saturate(tertiary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "comment": {
-                "color": hex_with_alpha(on_surface_variant, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "comment.doc": {
-                "color": hex_with_alpha(on_surface_variant, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "constant": {
-                "color": hex_with_alpha(saturate(tertiary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "constructor": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "embedded": {
-                "color": hex_with_alpha(on_surface, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "emphasis": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "emphasis.strong": {
-                "color": hex_with_alpha(saturate(tertiary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": 700,
-            },
-            "enum": {
-                "color": hex_with_alpha(saturate(secondary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "function": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "hint": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "keyword": {
-                "color": hex_with_alpha(saturate(secondary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "label": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "link_text": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
-                "font_style": "normal",
-                "font_weight": None,
-            },
-            "link_uri": {
-                "color": hex_with_alpha(saturate(secondary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "namespace": {
-                "color": hex_with_alpha(on_surface, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "number": {
-                "color": hex_with_alpha(saturate(tertiary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "operator": {
-                "color": hex_with_alpha(saturate(secondary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "predictive": {
-                "color": hex_with_alpha(saturate(secondary, 1.5), "ff"),
-                "font_style": "italic",
-                "font_weight": None,
-            },
-            "preproc": {
-                "color": hex_with_alpha(on_surface, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "primary": {
-                "color": hex_with_alpha(on_surface, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "property": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "punctuation": {
-                "color": hex_with_alpha(on_surface, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "punctuation.bracket": {
-                "color": hex_with_alpha(on_surface_variant, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "punctuation.delimiter": {
-                "color": hex_with_alpha(on_surface_variant, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "punctuation.list_marker": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "punctuation.markup": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "punctuation.special": {
-                "color": hex_with_alpha(saturate(error, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "selector": {
-                "color": hex_with_alpha(saturate(tertiary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "selector.pseudo": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "string": {
-                "color": hex_with_alpha(saturate(tertiary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "string.escape": {
-                "color": hex_with_alpha(on_surface_variant, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "string.regex": {
-                "color": hex_with_alpha(saturate(tertiary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "string.special": {
-                "color": hex_with_alpha(saturate(tertiary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "string.special.symbol": {
-                "color": hex_with_alpha(saturate(tertiary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "tag": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "text.literal": {
-                "color": hex_with_alpha(saturate(tertiary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "title": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": 400,
-            },
-            "type": {
-                "color": hex_with_alpha(saturate(secondary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "variable": {
-                "color": hex_with_alpha(on_surface, "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "variable.special": {
-                "color": hex_with_alpha(saturate(tertiary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-            "variant": {
-                "color": hex_with_alpha(saturate(primary, 1.5), "ff"),
-                "font_style": None,
-                "font_weight": None,
-            },
-        }
+        light_theme["syntax"] = build_syntax_map(
+            primary=primary,
+            appearance="light",
+        )
 
         return light_theme
 
+    def build_zed_alt_theme(appearance):
+        template_style = alt_template_styles.get(appearance)
+
+        if template_style:
+            style = render_alt_template(template_style)
+        else:
+            style = (
+                build_zed_dark_theme()
+                if appearance == "dark"
+                else build_zed_light_theme()
+            )
+
+        primary = resolve_material_color("primary", appearance)
+        # Keep syntax vivid and cohesive even on desaturated wallpapers.
+        style["syntax"] = build_syntax_map(
+            primary=primary,
+            appearance=appearance,
+        )
+
+        return style
+
+    def make_borderless_style(style):
+        borderless = copy.deepcopy(style)
+        border_keys = [
+            "border",
+            "border.variant",
+            "border.focused",
+            "border.selected",
+            "border.transparent",
+            "border.disabled",
+            "scrollbar.thumb.border",
+            "scrollbar.track.border",
+        ]
+        for key in border_keys:
+            if key in borderless:
+                borderless[key] = "#00000000"
+        borderless["panel.focused_border"] = None
+        borderless["pane.focused_border"] = None
+        return borderless
+
     dark_style = build_zed_dark_theme()
     light_style = build_zed_light_theme()
+    alt_dark_style = build_zed_alt_theme("dark")
+    alt_light_style = build_zed_alt_theme("light")
+    borderless_dark_style = make_borderless_style(dark_style)
+    borderless_light_style = make_borderless_style(light_style)
 
     theme_data = {
         "$schema": "https://zed.dev/schema/themes/v0.2.0.json",
@@ -1102,6 +1003,22 @@ def generate_zed_config(
         "themes": [
             {"name": "iNiR Dark", "appearance": "dark", "style": dark_style},
             {"name": "iNiR Light", "appearance": "light", "style": light_style},
+            {
+                "name": "iNiR Borderless Dark",
+                "appearance": "dark",
+                "style": borderless_dark_style,
+            },
+            {
+                "name": "iNiR Borderless Light",
+                "appearance": "light",
+                "style": borderless_light_style,
+            },
+            {"name": "iNiR-alt Dark", "appearance": "dark", "style": alt_dark_style},
+            {
+                "name": "iNiR-alt Light",
+                "appearance": "light",
+                "style": alt_light_style,
+            },
         ],
     }
 
