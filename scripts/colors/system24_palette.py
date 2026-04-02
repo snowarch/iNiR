@@ -50,8 +50,8 @@ MIDNIGHT_OUTPUT_FILE = Path(
 def _resolve_output_files(env_var: str, default_path: Path) -> list[Path]:
     """Return a list of paths to write the theme to.
 
-    Different builds/packaging may use different XDG config folder casing
-    (e.g. ~/.config/vesktop vs ~/.config/Vesktop).
+    Different Discord client builds may use different config folders/casing
+    (e.g. ~/.config/vesktop, ~/.config/Vesktop, ~/.config/equicord).
     If the env var is set, it remains authoritative.
     """
 
@@ -63,6 +63,8 @@ def _resolve_output_files(env_var: str, default_path: Path) -> list[Path]:
     candidates = [
         Path(f"~/.config/vesktop/themes/{basename}").expanduser(),
         Path(f"~/.config/Vesktop/themes/{basename}").expanduser(),
+        Path(f"~/.config/equicord/themes/{basename}").expanduser(),
+        Path(f"~/.config/Equicord/themes/{basename}").expanduser(),
     ]
 
     existing_dirs = [p for p in candidates if p.parent.exists()]
