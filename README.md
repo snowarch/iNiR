@@ -10,10 +10,8 @@
 
 <p align="center">
   <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.17.0-blue?style=flat-square" alt="Version"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/snowarch/inir?style=flat-square" alt="License"></a>
   <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
-  <a href="https://github.com/snowarch/inir/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/snowarch/inir/ci.yml?style=flat-square&label=CI" alt="CI"></a>
 </p>
 
 <p align="center">
@@ -27,28 +25,6 @@
 <p align="center">
   <sub>Languages: <a href="README.md">English</a> · <a href="README.es.md">Español</a> · <a href="README.ru.md">Русский</a></sub>
 </p>
-
----
-
-## What is iNiR
-
-iNiR is an **opinionated desktop shell** — not a framework, not a dotfiles repo. You install it, pick a wallpaper, and everything works: panels, notifications, theming, widgets, app integration. Users configure behavior through a **settings UI**, not by writing QML.
-
-Originally forked from [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland) (illogical-impulse). Now its own project with versioned releases, migrations, and update rollback.
-
-**What it is NOT:**
-- Not a framework — you use it as-is, not build on top of it
-- Not a rice — it's a structured project with CI, packaging, and multi-distro support
-- Not Hyprland-only — built for **Niri**, maintained on Hyprland too
-
-### Compositor Support
-
-| | Niri | Hyprland |
-|:--|:--:|:--:|
-| Panels & overlays | Full | Full |
-| Workspace overview | Adapted for scrolling model | Standard grid |
-| Window management | Native IPC | Native IPC |
-| Keybind cheatsheet | Parsed from niri config | Not available |
 
 ---
 
