@@ -60,6 +60,8 @@ vscode_themegen
 opencode_themegen
 system24_themegen
 zed_themegen
+!scripts/colors/zed_themegen/
+!scripts/colors/zed_themegen/main.go
 
 # ── Python ────────────────────────────────────────────────────
 __pycache__/
