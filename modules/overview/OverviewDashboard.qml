@@ -21,7 +21,7 @@ Item {
     readonly property bool angelStyle: Appearance.angelEverywhere
     readonly property bool inirStyle: Appearance.inirEverywhere
     readonly property bool auroraStyle: Appearance.auroraEverywhere
-    
+
     // ── Screen & wallpaper for blur (angel/aurora) ──
     property int screenWidth: root.QsWindow?.window?.screen?.width ?? 1920
     property int screenHeight: root.QsWindow?.window?.screen?.height ?? 1080
@@ -122,7 +122,7 @@ Item {
     // ── Style tokens ──
     readonly property color colText: angelStyle ? Appearance.angel.colText : inirStyle ? Appearance.inir.colText : Appearance.colors.colOnLayer1
     readonly property color colSubtext: angelStyle ? Appearance.angel.colTextSecondary : inirStyle ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
-    readonly property color colCardBg: angelStyle 
+    readonly property color colCardBg: angelStyle
         ? ColorUtils.transparentize(Appearance.colors.colLayer0Base, Appearance.angel.overlayOpacity)
         : inirStyle ? Appearance.inir.colLayer0
         : auroraStyle ? ColorUtils.transparentize(
@@ -130,7 +130,7 @@ Item {
             Math.max(0.10, Appearance.aurora.overlayTransparentize - 0.12)
         )
         : Appearance.colors.colBackgroundSurfaceContainer
-    readonly property color colCard: angelStyle 
+    readonly property color colCard: angelStyle
         ? ColorUtils.transparentize(Appearance.colors.colLayer1Base, Appearance.angel.overlayOpacity)
         : inirStyle ? Appearance.inir.colLayer1
         : auroraStyle ? ColorUtils.transparentize(
@@ -619,7 +619,7 @@ Item {
 
                 // Blurred wallpaper background (angel/aurora)
                 BlurredCardBg { targetCard: mediaCard }
-                
+
                 // Solid background for material/inir
                 Rectangle { anchors.fill: parent; radius: mediaCard.radius; visible: !root.angelStyle && !root.auroraStyle; color: root.colCard }
 
@@ -1170,10 +1170,10 @@ Item {
 
                             MaterialSymbol {
                                 text: Battery.isCharging ? "battery_charging_full"
-                                    : (Battery.percentage * 100) > 80 ? "battery_full"
-                                    : (Battery.percentage * 100) > 60 ? "battery_5_bar"
-                                    : (Battery.percentage * 100) > 40 ? "battery_3_bar"
-                                    : (Battery.percentage * 100) > 20 ? "battery_2_bar" : "battery_1_bar"
+                                    : ((Battery.percentage * 100) ?? 0) > 80 ? "battery_full"
+                                    : ((Battery.percentage * 100) ?? 0) > 60 ? "battery_5_bar"
+                                    : ((Battery.percentage * 100) ?? 0) > 40 ? "battery_3_bar"
+                                    : ((Battery.percentage * 100) ?? 0) > 20 ? "battery_2_bar" : "battery_1_bar"
                                 iconSize: 14
                                 fill: 1
                                 color: (Battery.percentage * 100) <= 20 && !Battery.isCharging ? Appearance.colors.colError
@@ -1181,7 +1181,7 @@ Item {
                                     : root.colSubtext
                             }
                             StyledText {
-                                text: Battery.percentage + "%"
+                                text: ((Battery.percentage * 100) ?? 0) + "%"
                                 font { pixelSize: Appearance.font.pixelSize.smallest; family: Appearance.font.family.numbers; weight: Font.Medium }
                                 color: (Battery.percentage * 100) <= 20 && !Battery.isCharging ? Appearance.colors.colError
                                     : Battery.isCharging ? Appearance.colors.colTertiary

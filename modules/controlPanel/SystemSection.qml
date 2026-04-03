@@ -11,6 +11,7 @@ Rectangle {
     id: root
     Layout.fillWidth: true
     implicitHeight: statsRow.implicitHeight + 12
+
     readonly property bool compactMode: Config.options?.controlPanel?.compactMode ?? true
     
     readonly property bool inirEverywhere: Appearance.inirEverywhere
@@ -39,7 +40,7 @@ Rectangle {
             Layout.fillWidth: true
             label: "CPU"
             value: (ResourceUsage.cpuUsage ?? 0) * 100
-            barColor: ((ResourceUsage.cpuUsage ?? 0) * 100) > 80 ? Appearance.colors.colError 
+            barColor: ((ResourceUsage.cpuUsage ?? 0) * 100) > 80 ? Appearance.colors.colError
                     : (Appearance.angelEverywhere ? Appearance.angel.colPrimary
                     : root.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
         }
@@ -49,7 +50,7 @@ Rectangle {
             Layout.fillWidth: true
             label: "RAM"
             value: (ResourceUsage.memoryUsedPercentage ?? 0) * 100
-            barColor: (ResourceUsage.memoryUsedPercentage ?? 0) > 0.85 ? Appearance.colors.colError 
+            barColor: (ResourceUsage.memoryUsedPercentage ?? 0) > 0.85 ? Appearance.colors.colError
                     : (Appearance.angelEverywhere ? Appearance.angel.colPrimary
                     : root.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
         }
@@ -60,9 +61,9 @@ Rectangle {
             active: Battery.available
             sourceComponent: StatBar {
                 label: "BAT"
-                value: Battery.percentage ?? 0
-                barColor: (Battery.percentage ?? 0) < 20 ? Appearance.colors.colError 
-                        : Battery.charging ? Appearance.colors.colSuccess 
+                value: (Battery.percentage ?? 0) * 100
+                barColor: (Battery.percentage ?? 0) * 100 < 20 ? Appearance.colors.colError
+                        : Battery.charging ? Appearance.colors.colSuccess
                         : (Appearance.angelEverywhere ? Appearance.angel.colPrimary
                         : root.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
             }
@@ -105,7 +106,7 @@ Rectangle {
             height: root.compactMode ? 3 : 4
             radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : 2
             color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                 : root.inirEverywhere ? Appearance.inir.colLayer2 
+                 : root.inirEverywhere ? Appearance.inir.colLayer2
                  : root.auroraEverywhere ? ColorUtils.transparentize(Appearance.aurora.colSubSurface, 0.5)
                  : Appearance.colors.colLayer2
 
