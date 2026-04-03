@@ -5,6 +5,26 @@ All notable changes to iNiR will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.17.1] - 2026-04-02
+
+### Added
+- **SDDM session popup selector**: Session switcher on the login screen now opens a popup list instead of blindly cycling through entries.
+- **CLI command forwarding**: `inir config`, `inir info`, `inir backup`, and `inir logs` forwarded through the launcher to the setup TUI.
+- **TUI library expansion**: Rich chooser menus, task progress tracker, key-value detail views, and section helpers for setup subcommands.
+
+### Fixed
+- **Dock/taskbar icon resolution**: Reverse-lookup maps in AppSearch match Electron, AppImage, and reverse-domain window IDs to their desktop entries (#105).
+- **Backdrop hideWallpaper gate**: `hideWallpaper` now respects `backdrop.enable` instead of firing unconditionally (#104).
+- **Repo-link version detection**: `get_installed_version()` and `get_installed_commit()` return live git state for repo-link installs instead of stale `version.json`.
+- **Migration 009 modular config**: Handles both monolithic `config.kdl` and post-018 `config.d/40-environment.kdl` layouts for the dbus log spam fix.
+- **SDDM theme idempotent copy**: Checksum comparison skips the copy when source and target are already identical.
+
+### Changed
+- **PKGBUILD optdepends**: Added `gowall-bin` and `nm-connection-editor`; synced `.SRCINFO`.
+
+### Removed
+- **CI workflow**: GitHub Actions workflow removed — not viable on current repo plan.
+
 ## [2.17.0] - 2026-04-01
 
 ### Added
