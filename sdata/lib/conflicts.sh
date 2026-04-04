@@ -36,6 +36,11 @@ check_conflicts() {
     conflict_map["mpvpaper"]="Wallpaper Daemon"
     conflict_map["wpaperd"]="Wallpaper Daemon"
     
+    # CachyOS Noctalia shell (conflicts with iNiR's Quickshell setup)
+    conflict_map["noctalia-qs"]="Shell System (Noctalia)"
+    conflict_map["noctalia-shell"]="Shell System (Noctalia)"
+    conflict_map["cachyos-niri-noctalia"]="Shell System (Noctalia)"
+    
     # Check for installed conflicts
     for pkg in "${!conflict_map[@]}"; do
         local installed=false

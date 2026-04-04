@@ -94,7 +94,7 @@ optdepends=(
 makedepends=(git)
 install=inir-shell-git.install
 provides=('inir-shell')
-conflicts=('inir-shell')
+conflicts=('inir-shell' 'noctalia-qs' 'noctalia-shell' 'cachyos-niri-noctalia')
 source=(
   'inir::git+https://github.com/snowarch/iNiR.git'
 )

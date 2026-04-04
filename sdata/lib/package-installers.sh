@@ -210,17 +210,9 @@ ensure_aur_helper(){
   AUR_HELPER="yay"
 }
 
-install-local-pkgbuild() {
-  local location=$1
-  local installflags=$2
-
-  x pushd $location
-
-  source ./PKGBUILD
-  x $AUR_HELPER -S --sudoloop $installflags --asdeps "${depends[@]}"
-  x makepkg -Afsi --noconfirm
-  x popd
-}
+# NOTE: install-local-pkgbuild() removed — was dead code with --asdeps flag
+# that would mark deps as orphan-eligible. Dependency installation now goes
+# through install_pkgbuild_deps() in install-deps.sh (no --asdeps).
 
 #####################################################################################
 # Python Environment (All distros)

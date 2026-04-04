@@ -89,6 +89,9 @@ pkgbase = inir-shell-git
 	optdepends = yt-dlp: YouTube media backend
 	provides = inir-shell
 	conflicts = inir-shell
+	conflicts = noctalia-qs
+	conflicts = noctalia-shell
+	conflicts = cachyos-niri-noctalia
 	source = inir::git+https://github.com/snowarch/iNiR.git
 	sha256sums = SKIP
 

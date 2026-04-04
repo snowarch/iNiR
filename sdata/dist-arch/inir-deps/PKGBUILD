@@ -1,0 +1,181 @@
+# Meta-package: registers iNiR dependencies with pacman
+# Purpose: prevents "clean orphans" from removing iNiR's deps
+# This package contains no files — it only declares dependencies.
+#
+# Built and installed automatically by ./setup install.
+# Safe to remove with: sudo pacman -R inir-deps
+
+pkgname=inir-deps
+pkgver=2.17.2
+pkgrel=1
+pkgdesc='iNiR desktop shell - dependency tracker (meta-package)'
+url='https://github.com/snowarch/inir'
+arch=(any)
+license=(MIT)
+
+# All dependencies from official Arch repos.
+# Having this package installed tells pacman these are needed,
+# so "clean orphans" won't remove them.
+depends=(
+  #--- Quickshell + Qt6 runtime ---
+  quickshell
+  qt6-base
+  qt6-declarative
+  qt6-svg
+  qt6-wayland
+  qt6-5compat
+  qt6-imageformats
+  qt6-multimedia
+  qt6-multimedia-ffmpeg
+  qt6-positioning
+  qt6-quicktimeline
+  qt6-sensors
+  qt6-tools
+  qt6-translations
+  qt6-virtualkeyboard
+
+  #--- System libs for Quickshell ---
+  jemalloc
+  libpipewire
+  libxcb
+  wayland
+  libdrm
+  mesa
+
+  #--- KDE/Qt integration ---
+  kirigami
+  kdialog
+  syntax-highlighting
+  qt6ct
+  kvantum
+  plasma-integration
+  frameworkintegration
+  kdecoration
+  breeze-icons
+  hicolor-icon-theme
+  adwaita-icon-theme
+
+  #--- Compositor ---
+  niri
+
+  #--- Core utilities ---
+  bc
+  coreutils
+  cliphist
+  curl
+  wget
+  ripgrep
+  jq
+  python
+  rsync
+  git
+  fish
+  gum
+  wl-clipboard
+  libnotify
+  pacman-contrib
+  xdg-user-dirs
+  xdg-utils
+  fontconfig
+
+  #--- Wayland tools ---
+  wlsunset
+  swayidle
+  swaylock
+  grim
+  slurp
+  swappy
+  wf-recorder
+  xwayland-satellite
+
+  #--- XDG Portals ---
+  xdg-desktop-portal
+  xdg-desktop-portal-gtk
+  xdg-desktop-portal-gnome
+
+  #--- Audio stack ---
+  pipewire
+  pipewire-pulse
+  pipewire-alsa
+  wireplumber
+  playerctl
+  libdbusmenu-gtk3
+  pavucontrol
+  mpv
+  mpv-mpris
+  yt-dlp
+  socat
+
+  #--- Theming ---
+  noto-fonts-emoji
+  ttf-dejavu
+  ttf-liberation
+  ttf-roboto
+  ttf-roboto-mono
+  papirus-icon-theme
+
+  #--- Desktop integration ---
+  polkit
+  polkit-gnome
+  networkmanager
+  gnome-keyring
+  nautilus
+  kitty
+  fuzzel
+  glib2
+  starship
+
+  #--- Input / HW ---
+  upower
+  wtype
+  ydotool
+  brightnessctl
+  ddcutil
+  geoclue
+  fprintd
+  blueman
+  kconfig
+
+  #--- Media / image processing ---
+  imagemagick
+  ffmpeg
+  tesseract
+  tesseract-data-eng
+  libqalculate
+
+  #--- Login manager ---
+  sddm
+)
+
+# AUR / optional packages — listed here so pacman knows about them
+# but won't block install if missing.
+optdepends=(
+  'cava: audio visualizer for bar'
+  'easyeffects: audio effects panel'
+  'songrec: song recognition'
+  'translate-shell: translation widget'
+  'hyprpicker: color picker'
+  'python-evdev: input device access'
+  'python-pillow: image processing in scripts'
+  'darkly-bin: Material You Qt style'
+  'ttf-material-symbols-variable-git: Material icons (critical for UI)'
+  'ttf-jetbrains-mono-nerd: terminal/code font'
+  'ttf-roboto-flex: default UI font'
+  'ttf-twemoji: emoji font'
+  'otf-space-grotesk: display font'
+  'ttf-readex-pro: Arabic font support'
+  'ttf-rubik-vf: alternate UI font'
+  'ttf-oxanium: display font'
+  'adw-gtk-theme: GTK theme for Material colors'
+  'capitaine-cursors: cursor theme'
+  'whitesur-icon-theme: macOS-style icons'
+  'qt6-avif-image-plugin: AVIF wallpaper support'
+  'uv: Python package manager for color pipeline'
+  'awww-bin: wallpaper daemon'
+  'tesseract-data-spa: Spanish OCR'
+)
+
+# Empty package — no files, only dependency tracking
+package() {
+  : # intentionally empty
+}
