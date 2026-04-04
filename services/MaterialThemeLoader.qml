@@ -224,7 +224,7 @@ Singleton {
             if (!root.defaultApplyExternal) return;
             Quickshell.execDetached([
                 "/usr/bin/bash",
-                Directories.scriptPath + "/colors/applycolor.sh"
+                Directories.scriptsPath + "/colors/applycolor.sh"
             ])
         }
     }

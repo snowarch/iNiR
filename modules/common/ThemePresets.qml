@@ -3253,7 +3253,7 @@ Singleton {
         // Apply GTK theme (if enabled)
         if (enableAppsAndShell) {
             Qt.callLater(() => {
-                const script = Directories.scriptPath + "/colors/apply-gtk-theme.sh";
+                const script = Directories.scriptsPath + "/colors/apply-gtk-theme.sh";
                 Quickshell.execDetached([
                     script,
                     c.m3background,
@@ -3275,7 +3275,7 @@ Singleton {
     function applyTerminalColors(c) {
         // Generate material_colors.scss from preset colors for terminal theming
         const scssContent = generateScssFromColors(c);
-        const scssPath = Directories.state + "/user/generated/material_colors.scss";
+        const scssPath = Directories.generatedMaterialScssPath;
         
         // Write scss file
         presetScssFileView.path = Qt.resolvedUrl(scssPath);
@@ -3285,7 +3285,7 @@ Singleton {
         Qt.callLater(() => {
             Quickshell.execDetached([
                 "/usr/bin/bash",
-                Directories.scriptPath + "/colors/applycolor.sh"
+                Directories.scriptsPath + "/colors/applycolor.sh"
             ]);
         });
     }
@@ -3556,7 +3556,7 @@ Singleton {
             console.log("[ThemePresets] Triggering Vesktop theme generation wrapper")
             Quickshell.execDetached([
                 "/usr/bin/bash",
-                Directories.scriptPath + "/colors/system24_palette.sh"
+                Directories.scriptsPath + "/colors/system24_palette.sh"
             ])
         }
         console.log("[ThemePresets] colors.json written to:", outputPath);

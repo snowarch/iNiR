@@ -8,6 +8,8 @@ import QtQuick
 import Quickshell
 
 Singleton {
+    id: root
+
     // XDG Dirs, with "file://"
     readonly property string home: StandardPaths.standardLocations(StandardPaths.HomeLocation)[0]
     readonly property string config: StandardPaths.standardLocations(StandardPaths.ConfigLocation)[0]
@@ -19,52 +21,78 @@ Singleton {
     readonly property string pictures: StandardPaths.standardLocations(StandardPaths.PicturesLocation)[0]
     readonly property string music: StandardPaths.standardLocations(StandardPaths.MusicLocation)[0]
     readonly property string videos: StandardPaths.standardLocations(StandardPaths.MoviesLocation)[0]
+    readonly property string homePath: FileUtils.trimFileProtocol(home)
+    readonly property string configPath: FileUtils.trimFileProtocol(config)
+    readonly property string statePath: FileUtils.trimFileProtocol(state)
+    readonly property string cachePath: FileUtils.trimFileProtocol(cache)
+    readonly property string genericCachePath: FileUtils.trimFileProtocol(genericCache)
+    readonly property string documentsPath: FileUtils.trimFileProtocol(documents)
+    readonly property string downloadsPath: FileUtils.trimFileProtocol(downloads)
+    readonly property string picturesPath: FileUtils.trimFileProtocol(pictures)
+    readonly property string musicPath: FileUtils.trimFileProtocol(music)
+    readonly property string videosPath: FileUtils.trimFileProtocol(videos)
 
     // Other dirs used by the shell, without "file://"
     property string assetsPath: Quickshell.shellPath("assets")
     property string scriptPath: Quickshell.shellPath("scripts")
-    property string favicons: FileUtils.trimFileProtocol(`${Directories.cache}/media/favicons`)
+    property string scriptsPath: FileUtils.trimFileProtocol(scriptPath)
+    property string stateUserPath: `${Directories.statePath}/user`
+    property string wallpapersPath: `${Directories.picturesPath}/Wallpapers`
+    property string screenshotsPath: `${Directories.picturesPath}/Screenshots`
+    property string persistentStatesPath: `${Directories.statePath}/states.json`
+    property string eventsPath: `${Directories.stateUserPath}/events.json`
+    property string generatedMaterialScssPath: `${Directories.stateUserPath}/generated/material_colors.scss`
+    property string favicons: `${Directories.cachePath}/media/favicons`
     // User avatar paths
     property string userAvatarPathAccountsService: FileUtils.trimFileProtocol(`/var/lib/AccountsService/icons/${SystemInfo.username}`)
-    property string userAvatarPathRicersAndWeirdSystems: FileUtils.trimFileProtocol(`${Directories.home}/.face`)
-    property string userAvatarPathRicersAndWeirdSystems2: FileUtils.trimFileProtocol(`${Directories.home}/.face.icon`)
+    property string userAvatarPathRicersAndWeirdSystems: `${Directories.homePath}/.face`
+    property string userAvatarPathRicersAndWeirdSystems2: `${Directories.homePath}/.face.icon`
     readonly property var userAvatarPaths: [
         userAvatarPathAccountsService,
         userAvatarPathRicersAndWeirdSystems,
         userAvatarPathRicersAndWeirdSystems2
     ]
     readonly property string userAvatarSourcePrimary: avatarSourceAt(0)
-    property string coverArt: FileUtils.trimFileProtocol(`${Directories.cache}/media/coverart`)
+    property string coverArt: `${Directories.cachePath}/media/coverart`
     property string tempImages: "/tmp/quickshell/media/images"
-    property string booruPreviews: FileUtils.trimFileProtocol(`${Directories.cache}/media/boorus`)
-    property string booruDownloads: FileUtils.trimFileProtocol(Directories.pictures  + "/Wallpapers")
-    property string booruDownloadsNsfw: FileUtils.trimFileProtocol(Directories.pictures + "/Wallpapers/🌶️")
-    property string latexOutput: FileUtils.trimFileProtocol(`${Directories.cache}/media/latex`)
-    property string shellConfig: FileUtils.trimFileProtocol(`${Directories.config}/illogical-impulse`)
+    property string booruPreviews: `${Directories.cachePath}/media/boorus`
+    property string booruDownloads: Directories.wallpapersPath
+    property string booruDownloadsNsfw: `${Directories.wallpapersPath}/🌶️`
+    property string latexOutput: `${Directories.cachePath}/media/latex`
+    property string shellConfig: `${Directories.configPath}/illogical-impulse`
     property string shellConfigName: "config.json"
     property string shellConfigPath: `${Directories.shellConfig}/${Directories.shellConfigName}`
-    property string updateLogPath: FileUtils.trimFileProtocol(`${Directories.state}/user/update.log`)
-    property string updateStatusPath: FileUtils.trimFileProtocol(`${Directories.state}/user/update-status`)
-    property string todoPath: FileUtils.trimFileProtocol(`${Directories.state}/user/todo.json`)
-    property string todoTxtPath: FileUtils.trimFileProtocol(`${Directories.state}/user/todo.txt`)
-    property string notepadPath: FileUtils.trimFileProtocol(`${Directories.state}/user/notepad.txt`)
-    property string notesPath: FileUtils.trimFileProtocol(`${Directories.state}/user/notes.txt`)
-    property string conflictCachePath: FileUtils.trimFileProtocol(`${Directories.cache}/conflict-killer`)
-    property string notificationsPath: FileUtils.trimFileProtocol(`${Directories.state}/user/notifications.json`)
-    property string generatedMaterialThemePath: FileUtils.trimFileProtocol(`${Directories.state}/user/generated/colors.json`)
-    property string generatedPalettePath: FileUtils.trimFileProtocol(`${Directories.state}/user/generated/palette.json`)
-    property string generatedTerminalPalettePath: FileUtils.trimFileProtocol(`${Directories.state}/user/generated/terminal.json`)
-    property string generatedThemeMetaPath: FileUtils.trimFileProtocol(`${Directories.state}/user/generated/theme-meta.json`)
-    property string generatedWallpaperCategoryPath: FileUtils.trimFileProtocol(`${Directories.state}/user/generated/wallpaper/category.txt`)
+    property string updateLogPath: `${Directories.stateUserPath}/update.log`
+    property string updateStatusPath: `${Directories.stateUserPath}/update-status`
+    property string todoPath: `${Directories.stateUserPath}/todo.json`
+    property string todoTxtPath: `${Directories.stateUserPath}/todo.txt`
+    property string notepadPath: `${Directories.stateUserPath}/notepad.txt`
+    property string notesPath: `${Directories.stateUserPath}/notes.txt`
+    property string conflictCachePath: `${Directories.cachePath}/conflict-killer`
+    property string notificationsPath: `${Directories.stateUserPath}/notifications.json`
+    property string generatedMaterialThemePath: `${Directories.stateUserPath}/generated/colors.json`
+    property string generatedPalettePath: `${Directories.stateUserPath}/generated/palette.json`
+    property string generatedTerminalPalettePath: `${Directories.stateUserPath}/generated/terminal.json`
+    property string generatedThemeMetaPath: `${Directories.stateUserPath}/generated/theme-meta.json`
+    property string generatedWallpaperCategoryPath: `${Directories.stateUserPath}/generated/wallpaper/category.txt`
     property string cliphistDecode: FileUtils.trimFileProtocol(`/tmp/quickshell/media/cliphist`)
     property string screenshotTemp: "/tmp/quickshell/media/screenshot"
-    property string wallpaperSwitchScriptPath: FileUtils.trimFileProtocol(`${Directories.scriptPath}/colors/switchwall.sh`)
+    property string wallpaperSwitchScriptPath: `${Directories.scriptsPath}/colors/switchwall.sh`
     property string defaultAiPrompts: Quickshell.shellPath("defaults/ai/prompts")
     property string userAiPrompts: FileUtils.trimFileProtocol(`${Directories.shellConfig}/ai/prompts`)
     property string userActions: FileUtils.trimFileProtocol(`${Directories.shellConfig}/actions`)
-    property string aiChats: FileUtils.trimFileProtocol(`${Directories.state}/user/ai/chats`)
-    property string aiTranslationScriptPath: FileUtils.trimFileProtocol(`${Directories.scriptPath}/ai/gemini-translate.sh`)
-    property string recordScriptPath: FileUtils.trimFileProtocol(`${Directories.scriptPath}/videos/record.sh`)
+    property string aiChats: `${Directories.stateUserPath}/ai/chats`
+    property string aiTranslationScriptPath: `${Directories.scriptsPath}/ai/gemini-translate.sh`
+    property string recordScriptPath: `${Directories.scriptsPath}/videos/record.sh`
+
+    function shortHomePath(path: string): string {
+        const cleaned = FileUtils.trimFileProtocol(path)
+        if (cleaned === root.homePath)
+            return "~"
+        if (cleaned.startsWith(root.homePath + "/"))
+            return "~" + cleaned.slice(root.homePath.length)
+        return cleaned
+    }
 
     function avatarSourceAt(index: int): string {
         if (index < 0 || index >= userAvatarPaths.length)
@@ -87,7 +115,7 @@ Singleton {
     // Cleanup on init
     Component.onCompleted: {
         Quickshell.execDetached(["mkdir", "-p", `${shellConfig}`])
-        Quickshell.execDetached(["mkdir", "-p", FileUtils.trimFileProtocol(`${state}/user`)])
+        Quickshell.execDetached(["mkdir", "-p", `${stateUserPath}`])
         Quickshell.execDetached(["mkdir", "-p", `${favicons}`])
         Quickshell.execDetached(["rm", "-rf", `${coverArt}`])
         Quickshell.execDetached(["mkdir", "-p", `${coverArt}`])

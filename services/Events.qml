@@ -8,7 +8,7 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    property string filePath: `${Directories.state}/user/events.json`
+    property string filePath: Directories.eventsPath
     property var list: []
     property int nextId: 1
     

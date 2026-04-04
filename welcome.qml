@@ -713,7 +713,7 @@ Scope {
             Layout.alignment: Qt.AlignHCenter
 
             property var wallpapersList: []
-            readonly property string wallpapersPath: `${FileUtils.trimFileProtocol(Directories.pictures)}/Wallpapers`
+            readonly property string wallpapersPath: Directories.wallpapersPath
             readonly property real itemWidth: 130
             readonly property real itemHeight: 78
 
@@ -878,7 +878,7 @@ Scope {
                         MaterialSymbol { Layout.alignment: Qt.AlignHCenter; text: "image"; iconSize: 24; color: Appearance.colors.colSubtext }
                         StyledText {
                             Layout.alignment: Qt.AlignHCenter
-                            text: Translation.tr("No wallpapers found in ~/Pictures/Wallpapers")
+                            text: Translation.tr("No wallpapers found in ~/Pictures/Wallpapers").replace("~/Pictures/Wallpapers", Directories.shortHomePath(Directories.wallpapersPath))
                             color: Appearance.colors.colSubtext
                             font.pixelSize: Appearance.font.pixelSize.smaller
                         }

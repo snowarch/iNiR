@@ -516,7 +516,7 @@ Singleton {
     Process {
         id: getOllamaModels
         running: false
-        command: ["/usr/bin/bash", "-c", `${Directories.scriptPath}/ai/show-installed-ollama-models.sh`.replace(/file:\/\//, "")]
+        command: ["/usr/bin/bash", `${Directories.scriptsPath}/ai/show-installed-ollama-models.sh`]
         property string _stderr: ""
         stdout: SplitParser {
             onRead: data => {

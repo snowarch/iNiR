@@ -21,7 +21,7 @@ ContentPage {
     Process {
         id: randomWallProc
         property string status: ""
-        property string scriptPath: `${Directories.scriptPath}/colors/random/random_konachan_wall.sh`
+        property string scriptPath: `${Directories.scriptsPath}/colors/random/random_konachan_wall.sh`
         command: ["/usr/bin/bash", "-c", FileUtils.trimFileProtocol(randomWallProc.scriptPath)]
         stdout: SplitParser {
             onRead: data => {
@@ -159,11 +159,11 @@ ContentPage {
                             }
                         }
                         onClicked: {
-                            randomWallProc.scriptPath = `${Directories.scriptPath}/colors/random/random_konachan_wall.sh`;
+                            randomWallProc.scriptPath = `${Directories.scriptsPath}/colors/random/random_konachan_wall.sh`;
                             randomWallProc.running = true;
                         }
                         StyledToolTip {
-                            text: Translation.tr("Random SFW Anime wallpaper from Konachan\nImage is saved to ~/Pictures/Wallpapers")
+                            text: Translation.tr("Random SFW Anime wallpaper from Konachan\nImage is saved to ~/Pictures/Wallpapers").replace("~/Pictures/Wallpapers", Directories.shortHomePath(Directories.wallpapersPath))
                         }
                     }
                     RippleButtonWithIcon {
@@ -181,11 +181,11 @@ ContentPage {
                             }
                         }
                         onClicked: {
-                            randomWallProc.scriptPath = `${Directories.scriptPath}/colors/random/random_osu_wall.sh`;
+                            randomWallProc.scriptPath = `${Directories.scriptsPath}/colors/random/random_osu_wall.sh`;
                             randomWallProc.running = true;
                         }
                         StyledToolTip {
-                            text: Translation.tr("Random osu! seasonal background\nImage is saved to ~/Pictures/Wallpapers")
+                            text: Translation.tr("Random osu! seasonal background\nImage is saved to ~/Pictures/Wallpapers").replace("~/Pictures/Wallpapers", Directories.shortHomePath(Directories.wallpapersPath))
                         }
                     }
                 }

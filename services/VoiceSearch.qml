@@ -78,7 +78,7 @@ Singleton {
     Process {
         id: recordProc
         running: false
-        command: ["/usr/bin/bash", `${Directories.scriptPath}/voiceSearch/record-voice.sh`, String(root.recordDuration)]
+        command: ["/usr/bin/bash", `${Directories.scriptsPath}/voiceSearch/record-voice.sh`, String(root.recordDuration)]
         stdout: StdioCollector {
             onStreamFinished: {
                 const path = this.text.trim()

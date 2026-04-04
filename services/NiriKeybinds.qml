@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.modules.common.functions
 
 /**
  * Keybinds for Niri compositor with iNiR shell.
@@ -35,8 +36,8 @@ Singleton {
     signal bindError(string message)
 
     // ── Script paths ──────────────────────────────────────────────────────
-    readonly property string parserScript: Qt.resolvedUrl("../scripts/parse_niri_keybinds.py").toString().replace("file://", "")
-    readonly property string niriConfigScript: Qt.resolvedUrl("../scripts/niri-config.py").toString().replace("file://", "")
+    readonly property string parserScript: FileUtils.trimFileProtocol(Qt.resolvedUrl("../scripts/parse_niri_keybinds.py"))
+    readonly property string niriConfigScript: FileUtils.trimFileProtocol(Qt.resolvedUrl("../scripts/niri-config.py"))
 
     // Internal: pending key combos tracked for signal emission
     property string _pendingSetCombo: ""

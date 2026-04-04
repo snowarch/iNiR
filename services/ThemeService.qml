@@ -93,7 +93,7 @@ Singleton {
         Qt.callLater(() => {
             Quickshell.execDetached([
                 "/usr/bin/bash",
-                Directories.scriptPath + "/colors/system24_palette.sh"
+                Directories.scriptsPath + "/colors/system24_palette.sh"
             ]);
         });
     }
@@ -109,7 +109,7 @@ Singleton {
                 Qt.callLater(() => {
                     Quickshell.execDetached([
                         "/usr/bin/bash",
-                        Directories.scriptPath + "/colors/applycolor.sh"
+                        Directories.scriptsPath + "/colors/applycolor.sh"
                     ]);
                 });
             }
