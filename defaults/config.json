@@ -816,6 +816,9 @@
         "tools": {
             "enable": false
         },
+        "software": {
+            "enable": false
+        },
         "plugins": {
             "enable": false,
             "lastActivePlugin": ""

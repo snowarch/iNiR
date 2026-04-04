@@ -808,6 +808,16 @@ ContentPage {
                 }
 
                 SettingsSwitch {
+                    buttonIcon: "store"
+                    text: Translation.tr("Software")
+                    checked: Config.options.sidebar?.software?.enable ?? false
+                    onCheckedChanged: Config.setNestedValue("sidebar.software.enable", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Browse and install curated companion apps")
+                    }
+                }
+
+                SettingsSwitch {
                     buttonIcon: "library_music"
                     text: Translation.tr("YT Music")
                     checked: Config.options.sidebar?.ytmusic?.enable ?? false

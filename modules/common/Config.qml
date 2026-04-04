@@ -1103,6 +1103,10 @@ Singleton {
                 property JsonObject tools: JsonObject {
                     property bool enable: false
                 }
+                // Software catalog tab - curated app install/remove
+                property JsonObject software: JsonObject {
+                    property bool enable: false
+                }
                 // Web Apps / Plugins tab - embedded webapps in sidebar
                 property JsonObject plugins: JsonObject {
                     property bool enable: false

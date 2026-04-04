@@ -2,6 +2,7 @@ module qs.services
 singleton AwwwBackend 1.0 AwwwBackend.qml
 singleton Ai 1.0 Ai.qml
 singleton AnimeService 1.0 AnimeService.qml
+singleton AppCatalog 1.0 AppCatalog.qml
 singleton AppLauncher 1.0 AppLauncher.qml
 singleton AppSearch 1.0 AppSearch.qml
 singleton Audio 1.0 Audio.qml
