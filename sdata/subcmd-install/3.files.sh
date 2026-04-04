@@ -210,9 +210,18 @@ case "${SKIP_NIRI}" in
   *)
     NIRI_CONFIG="${XDG_CONFIG_HOME}/niri/config.kdl"
 
-    # Never replace an existing user config.kdl.
-    # If it exists, keep it and patch only the minimal launcher/theme bits below.
-    if [[ -f "$NIRI_CONFIG" ]]; then
+    # On updates, preserve the user's config and only patch launcher/theme bits.
+    # On first run, always install iNiR defaults (backup_clashing_targets already
+    # saved the pre-existing config to the backup dir).
+    if [[ "${INSTALL_FIRSTRUN}" == true ]]; then
+      if [[ -d "defaults/niri" ]]; then
+        install_dir__sync "defaults/niri" "${XDG_CONFIG_HOME}/niri"
+        log_success "Niri config installed (defaults)"
+      elif [[ -d "dots/.config/niri" ]]; then
+        install_dir__sync "dots/.config/niri" "${XDG_CONFIG_HOME}/niri"
+        log_success "Niri config installed (dots)"
+      fi
+    elif [[ -f "$NIRI_CONFIG" ]]; then
       log_success "Preserving existing Niri config"
     elif [[ -d "defaults/niri" ]]; then
       install_dir__sync "defaults/niri" "${XDG_CONFIG_HOME}/niri"
@@ -356,6 +365,17 @@ fi
 if [[ -f "dots/.config/kitty/kitty.conf" ]]; then
   install_file__auto_backup "dots/.config/kitty/kitty.conf" "${XDG_CONFIG_HOME}/kitty/kitty.conf"
   log_success "Kitty terminal config installed"
+fi
+
+# Alacritty: patch legacy fields that cause parse errors on Alacritty ≥0.14
+# CachyOS and other distros ship default configs with deprecated top-level fields
+# like live_config_reload that were moved under [general] in 0.14+.
+_alacritty_conf="${XDG_CONFIG_HOME}/alacritty/alacritty.toml"
+if [[ -f "$_alacritty_conf" ]]; then
+  if grep -qE '^live_config_reload\s*=' "$_alacritty_conf" 2>/dev/null; then
+    sed -i '/^live_config_reload\s*=/d' "$_alacritty_conf"
+    log_success "Alacritty: removed deprecated live_config_reload (moved to [general] in 0.14+)"
+  fi
 fi
 
 # Konsole config (if installed)
@@ -789,7 +809,12 @@ tui_info "Copying wallpapers..."
 #####################################################################################
 # Ensure II_TARGET is defined (in case SKIP_QUICKSHELL was set)
 II_TARGET="${II_TARGET:-${XDG_CONFIG_HOME}/quickshell/inir}"
-USER_WALLPAPERS_DIR="$(xdg-user-dir PICTURES 2>/dev/null || echo "$HOME/Pictures")/Wallpapers"
+# Validate xdg-user-dir output: must be absolute and not equal to $HOME itself
+_xdg_pictures="$(xdg-user-dir PICTURES 2>/dev/null || true)"
+if [[ -z "$_xdg_pictures" || "$_xdg_pictures" != /* || "$_xdg_pictures" == "$HOME" ]]; then
+  _xdg_pictures="$HOME/Pictures"
+fi
+USER_WALLPAPERS_DIR="${_xdg_pictures}/Wallpapers"
 if [[ -d "${II_TARGET}/assets/wallpapers" ]]; then
   mkdir -p "${USER_WALLPAPERS_DIR}"
   COPIED_COUNT=0

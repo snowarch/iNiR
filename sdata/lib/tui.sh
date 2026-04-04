@@ -1,6 +1,6 @@
 #!/bin/bash
 # TUI functions for iNiR setup
-# Professional design with gum fallback
+# Ink design: whitespace over borders, color over chrome.
 # This script is meant to be sourced.
 
 # shellcheck shell=bash
@@ -8,17 +8,15 @@
 ###############################################################################
 # Theme Configuration
 ###############################################################################
-# Primary palette (matches iNiR accent colors)
-TUI_ACCENT="212"        # Magenta/Pink - primary accent
-TUI_ACCENT_DIM="99"     # Purple - secondary accent
-TUI_SUCCESS="82"        # Green
-TUI_WARNING="214"       # Orange
-TUI_ERROR="196"         # Red
-TUI_INFO="39"           # Blue
-TUI_MUTED="245"         # Gray
-TUI_DIM="240"           # Darker gray
+TUI_ACCENT="212"
+TUI_ACCENT_DIM="99"
+TUI_SUCCESS="82"
+TUI_WARNING="214"
+TUI_ERROR="196"
+TUI_INFO="39"
+TUI_MUTED="245"
+TUI_DIM="240"
 
-# Rich palette for gum-backed terminals. Falls back to ANSI-safe values above.
 TUI_GUM_ACCENT="$TUI_ACCENT"
 TUI_GUM_ACCENT_DIM="$TUI_ACCENT_DIM"
 TUI_GUM_SUCCESS="$TUI_SUCCESS"
@@ -31,15 +29,7 @@ TUI_GUM_SURFACE="236"
 TUI_GUM_SURFACE_ALT="238"
 TUI_GUM_TEXT="252"
 
-# Box drawing characters (Unicode)
-BOX_TL="╭"  BOX_TR="╮"
-BOX_BL="╰"  BOX_BR="╯"
-BOX_H="─"   BOX_V="│"
-BOX_DTL="╔" BOX_DTR="╗"
-BOX_DBL="╚" BOX_DBR="╝"
-BOX_DH="═"  BOX_DV="║"
-
-# Icons (Nerd Font compatible, with fallbacks)
+# Icons
 ICON_CHECK="✓"
 ICON_CROSS="✗"
 ICON_WARN="⚠"
@@ -56,17 +46,13 @@ HAS_GUM=false
 command -v gum &>/dev/null && HAS_GUM=true
 
 _tui_json_value() {
-    local file="$1"
-    local key="$2"
-
+    local file="$1" key="$2"
     [[ -f "$file" ]] || return 1
     sed -n "s/.*\"${key}\"[[:space:]]*:[[:space:]]*\"\([^\"]*\)\".*/\1/p" "$file" | head -1
 }
 
 _tui_use_palette_candidate() {
-    local current="$1"
-    local candidate="$2"
-
+    local current="$1" candidate="$2"
     if [[ -n "$candidate" ]]; then
         printf '%s' "$candidate"
     else
@@ -104,20 +90,19 @@ _tui_load_palette() {
 
 _tui_color_value() {
     local tone="$1"
-
     case "$tone" in
-        accent) printf '%s' "$TUI_GUM_ACCENT" ;;
-        accent-dim) printf '%s' "$TUI_GUM_ACCENT_DIM" ;;
-        success) printf '%s' "$TUI_GUM_SUCCESS" ;;
-        warning) printf '%s' "$TUI_GUM_WARNING" ;;
-        error) printf '%s' "$TUI_GUM_ERROR" ;;
-        info) printf '%s' "$TUI_GUM_INFO" ;;
-        muted) printf '%s' "$TUI_GUM_MUTED" ;;
-        dim) printf '%s' "$TUI_GUM_DIM" ;;
-        surface) printf '%s' "$TUI_GUM_SURFACE" ;;
+        accent)      printf '%s' "$TUI_GUM_ACCENT" ;;
+        accent-dim)  printf '%s' "$TUI_GUM_ACCENT_DIM" ;;
+        success)     printf '%s' "$TUI_GUM_SUCCESS" ;;
+        warning)     printf '%s' "$TUI_GUM_WARNING" ;;
+        error)       printf '%s' "$TUI_GUM_ERROR" ;;
+        info)        printf '%s' "$TUI_GUM_INFO" ;;
+        muted)       printf '%s' "$TUI_GUM_MUTED" ;;
+        dim)         printf '%s' "$TUI_GUM_DIM" ;;
+        surface)     printf '%s' "$TUI_GUM_SURFACE" ;;
         surface-alt) printf '%s' "$TUI_GUM_SURFACE_ALT" ;;
-        text) printf '%s' "$TUI_GUM_TEXT" ;;
-        *) printf '%s' "$tone" ;;
+        text)        printf '%s' "$TUI_GUM_TEXT" ;;
+        *)           printf '%s' "$tone" ;;
     esac
 }
 
@@ -131,7 +116,6 @@ _color() {
     if $HAS_GUM; then
         echo "$text" | gum style --foreground "$(_tui_color_value "$fg")"
     else
-        # Map 256 colors to basic ANSI where possible
         case "$fg" in
             212|99|accent|accent-dim)  echo -e "${STY_PURPLE}${text}${STY_RST}" ;;
             82|success)                echo -e "${STY_GREEN}${text}${STY_RST}" ;;
@@ -153,12 +137,27 @@ _bold() {
     fi
 }
 
+_repeat_char() {
+    local char="$1" count="$2" result="" i
+    for ((i=0; i<count; i++)); do result+="$char"; done
+    echo "$result"
+}
+
+_draw_line() {
+    local color="${1:-dim}" width="${2:-40}" char="${3:-─}"
+    local line=$(_repeat_char "$char" "$width")
+    if $HAS_GUM; then
+        echo "$line" | gum style --foreground "$(_tui_color_value "$color")"
+    else
+        echo -e "${STY_FAINT}  ${line}${STY_RST}"
+    fi
+}
+
 ###############################################################################
-# Spinner / Progress
+# Spinner
 ###############################################################################
 tui_spin() {
-    local title="$1"
-    shift
+    local title="$1"; shift
     if $HAS_GUM; then
         gum spin --spinner dot --title "$title" --spinner.foreground "$(_tui_color_value accent)" -- "$@"
     else
@@ -173,15 +172,13 @@ tui_spin() {
 ###############################################################################
 tui_title() {
     local text="$1"
+    echo ""
     if $HAS_GUM; then
-        echo ""
         echo "$text" | gum style --foreground "$(_tui_color_value accent)" --bold --padding "0 1"
-        _draw_line "accent-dim" 40
     else
-        echo ""
-        echo -e "${STY_PURPLE}${STY_BOLD}  $text${STY_RST}"
-        echo -e "${STY_FAINT}  $(printf '%.0s─' {1..40})${STY_RST}"
+        echo -e "  ${STY_PURPLE}${STY_BOLD}$text${STY_RST}"
     fi
+    echo ""
 }
 
 tui_subtitle() {
@@ -189,7 +186,7 @@ tui_subtitle() {
     if $HAS_GUM; then
         echo "$text" | gum style --foreground "$(_tui_color_value muted)" --italic
     else
-        echo -e "${STY_FAINT}  $text${STY_RST}"
+        echo -e "  ${STY_FAINT}$text${STY_RST}"
     fi
 }
 
@@ -242,9 +239,7 @@ tui_dim() {
 # Prompts
 ###############################################################################
 tui_confirm() {
-    local prompt="${1:-Continue?}"
-    local default="${2:-yes}"
-    
+    local prompt="${1:-Continue?}" default="${2:-yes}"
     if $HAS_GUM; then
         if [[ "$default" == "yes" ]]; then
             gum confirm --default=yes --prompt.foreground "$(_tui_color_value accent)" "$prompt"
@@ -254,10 +249,8 @@ tui_confirm() {
     else
         local yn_hint="[Y/n]"
         [[ "$default" != "yes" ]] && yn_hint="[y/N]"
-        
         echo -ne "  ${STY_PURPLE}?${STY_RST} $prompt $yn_hint "
-        read -n 1 -r
-        echo
+        read -n 1 -r; echo
         if [[ "$default" == "yes" ]]; then
             [[ ! $REPLY =~ ^[Nn]$ ]]
         else
@@ -267,9 +260,7 @@ tui_confirm() {
 }
 
 tui_input() {
-    local prompt="$1"
-    local default="$2"
-    
+    local prompt="$1" default="$2"
     if $HAS_GUM; then
         gum input --placeholder "$default" --prompt "$prompt " \
             --prompt.foreground "$(_tui_color_value accent)" \
@@ -283,10 +274,8 @@ tui_input() {
 }
 
 tui_choose() {
-    local header="$1"
-    shift
+    local header="$1"; shift
     local options=("$@")
-    
     if $HAS_GUM; then
         gum choose --header "$header" \
             --header.foreground "$(_tui_color_value accent)" \
@@ -294,8 +283,7 @@ tui_choose() {
             --selected.foreground "$(_tui_color_value accent)" \
             "${options[@]}"
     else
-        echo -e "\n  ${STY_PURPLE}${STY_BOLD}$header${STY_RST}"
-        echo ""
+        echo -e "\n  ${STY_PURPLE}${STY_BOLD}$header${STY_RST}\n"
         local i=1
         for opt in "${options[@]}"; do
             echo -e "    ${STY_FAINT}$i)${STY_RST} $opt"
@@ -313,10 +301,8 @@ tui_choose() {
 }
 
 tui_choose_multi() {
-    local header="$1"
-    shift
+    local header="$1"; shift
     local options=("$@")
-    
     if $HAS_GUM; then
         gum choose --no-limit --header "$header" \
             --header.foreground "$(_tui_color_value accent)" \
@@ -325,8 +311,7 @@ tui_choose_multi() {
             "${options[@]}"
     else
         echo -e "\n  ${STY_PURPLE}${STY_BOLD}$header${STY_RST}"
-        echo -e "  ${STY_FAINT}(enter numbers separated by space, or 'all')${STY_RST}"
-        echo ""
+        echo -e "  ${STY_FAINT}(enter numbers separated by space, or 'all')${STY_RST}\n"
         local i=1
         for opt in "${options[@]}"; do
             echo -e "    ${STY_FAINT}$i)${STY_RST} $opt"
@@ -335,7 +320,6 @@ tui_choose_multi() {
         echo ""
         echo -ne "  ${STY_PURPLE}${ICON_ARROW}${STY_RST} "
         read -r selection
-        
         if [[ "$selection" == "all" ]]; then
             printf '%s\n' "${options[@]}"
         else
@@ -347,216 +331,152 @@ tui_choose_multi() {
 }
 
 ###############################################################################
-# Drawing Helpers
-###############################################################################
-_repeat_char() {
-    local char="$1"
-    local count="$2"
-    local result=""
-    local i
-    for ((i=0; i<count; i++)); do
-        result+="$char"
-    done
-    echo "$result"
-}
-
-_draw_line() {
-    local color="${1:-$TUI_DIM}"
-    local width="${2:-50}"
-    local char="${3:-$BOX_H}"
-    local line=$(_repeat_char "$char" "$width")
-    
-    if $HAS_GUM; then
-        echo "$line" | gum style --foreground "$(_tui_color_value "$color")"
-    else
-        echo -e "${STY_FAINT}  ${line}${STY_RST}"
-    fi
-}
-
-###############################################################################
-# Boxes & Panels
+# Content Blocks — no borders, just space and indent
 ###############################################################################
 tui_box() {
-    local content="$1"
-    local title="${2:-}"
-    local color="${3:-$TUI_ACCENT_DIM}"
-    local width="${4:-56}"
-    
-    if $HAS_GUM; then
-        if [[ -n "$title" ]]; then
-            gum join --vertical \
-                "$(echo "$title" | gum style --foreground "$(_tui_color_value accent)" --bold --padding '0 1')" \
-                "$(echo "$content" | gum style --border rounded --border-foreground "$(_tui_color_value "$color")" --padding '0 2' --margin '0 1')"
-        else
-            echo "$content" | gum style \
-                --border rounded \
-                --border-foreground "$(_tui_color_value "$color")" \
-                --padding "0 2" \
-                --margin "0 1"
-        fi
-    else
-        local inner_width=$((width - 4))
-        local h_line=$(_repeat_char "$BOX_H" $((width-2)))
-        
-        [[ -n "$title" ]] && echo -e "  ${STY_PURPLE}${STY_BOLD}${title}${STY_RST}"
+    local content="$1" title="${2:-}" color="${3:-}" width="${4:-}"
 
-        # Top border
-        echo -e "  ${STY_FAINT}${BOX_TL}${h_line}${BOX_TR}${STY_RST}"
-        
-        # Content
+    echo ""
+    if $HAS_GUM; then
+        [[ -n "$title" ]] && echo "$title" | gum style --foreground "$(_tui_color_value accent)" --bold --padding "0 1"
+        echo "$content" | gum style --padding "0 3"
+    else
+        [[ -n "$title" ]] && echo -e "  ${STY_PURPLE}${STY_BOLD}${title}${STY_RST}"
         while IFS= read -r line || [[ -n "$line" ]]; do
-            printf "  ${STY_FAINT}${BOX_V}${STY_RST} %-${inner_width}s ${STY_FAINT}${BOX_V}${STY_RST}\n" "$line"
+            echo "    $line"
         done <<< "$content"
-        
-        # Bottom border
-        echo -e "  ${STY_FAINT}${BOX_BL}${h_line}${BOX_BR}${STY_RST}"
     fi
+    echo ""
 }
 
 tui_badge() {
-    local label="$1"
-    local value="$2"
-    local tone="${3:-accent}"
-
+    local label="$1" value="$2" tone="${3:-accent}"
     if $HAS_GUM; then
-        gum style \
-            --foreground "$(_tui_color_value text)" \
-            --background "$(_tui_color_value surface)" \
-            --border rounded \
-            --border-foreground "$(_tui_color_value "$tone")" \
-            --padding "0 1" \
-            "${label}: ${value}"
+        local styled_label styled_value
+        styled_label=$(echo "$label" | gum style --foreground "$(_tui_color_value muted)")
+        styled_value=$(echo "$value" | gum style --foreground "$(_tui_color_value "$tone")" --bold)
+        printf '%s %s' "$styled_label" "$styled_value"
     else
-        printf '%b[%s: %s]%b' "$STY_BOLD" "$label" "$value" "$STY_RST"
+        printf '  %b%s%b %b%s%b' "$STY_FAINT" "$label" "$STY_RST" "$STY_BOLD" "$value" "$STY_RST"
     fi
 }
 
 tui_badge_row() {
     [[ $# -gt 0 ]] || return 0
-
+    echo ""
     if $HAS_GUM; then
         local rendered=()
+        local row=""
         local label value tone
         while [[ $# -ge 2 ]]; do
-            label="$1"
-            value="$2"
-            tone="${3:-accent}"
+            label="$1"; value="$2"; tone="${3:-accent}"
             rendered+=("$(tui_badge "$label" "$value" "$tone")")
             shift 3 || true
         done
-        gum join --horizontal "${rendered[@]}"
+        local i
+        for ((i=0; i<${#rendered[@]}; i++)); do
+            [[ "$i" -gt 0 ]] && row+="    "
+            row+="${rendered[$i]}"
+        done
+        echo "$row" | gum style --padding "0 1"
     else
         local first=true
         while [[ $# -ge 2 ]]; do
-            $first || printf ' '
+            $first || printf '    '
             first=false
-            tui_badge "$1" "$2" "${3:-accent}"
+            printf '%b%s%b %b%s%b' "$STY_FAINT" "$1" "$STY_RST" "$STY_BOLD" "$2" "$STY_RST"
             shift 3 || true
         done
         echo ""
     fi
+    echo ""
 }
 
 tui_banner() {
+    echo ""
     if $HAS_GUM; then
         gum style \
             --foreground "$(_tui_color_value accent)" \
-            --border-foreground "$(_tui_color_value accent-dim)" \
-            --border double \
             --align center \
-            --width 70 \
-            --margin "1 0" \
-            --padding "1" \
+            --width 50 \
+            --padding "1 0" \
             "██╗██╗      ███╗   ██╗██╗██████╗ ██╗" \
             "██║██║      ████╗  ██║██║██╔══██╗██║" \
             "██║██║█████╗██╔██╗ ██║██║██████╔╝██║" \
             "██║██║╚════╝██║╚██╗██║██║██╔══██╗██║" \
             "██║██║      ██║ ╚████║██║██║  ██║██║" \
-            "╚═╝╚═╝      ╚═╝  ╚═══╝╚═╝╚═╝  ╚═╝╚═╝" \
-            "" \
-            "$(gum style --foreground "$(_tui_color_value muted)" 'iNiR — your niri shell')"
+            "╚═╝╚═╝      ╚═╝  ╚═══╝╚═╝╚═╝  ╚═╝╚═╝"
+        echo "iNiR — your niri shell" | gum style \
+            --foreground "$(_tui_color_value muted)" \
+            --align center \
+            --width 50
     else
-        echo ""
+        local tagline="iNiR — your niri shell"
+        local banner_width=50
+        local left_pad=$(( (banner_width - ${#tagline}) / 2 ))
+        (( left_pad < 0 )) && left_pad=0
+
         echo -e "${STY_PURPLE}${STY_BOLD}"
         cat << 'EOF'
- ╔═══════════════════════════════════════════════════════════════════╗
- ║                                                                   ║
- ║   ██╗██╗      ███╗   ██╗██╗██████╗ ██╗                            ║
- ║   ██║██║      ████╗  ██║██║██╔══██╗██║                            ║
- ║   ██║██║█████╗██╔██╗ ██║██║██████╔╝██║                            ║
- ║   ██║██║╚════╝██║╚██╗██║██║██╔══██╗██║                            ║
- ║   ██║██║      ██║ ╚████║██║██║  ██║██║                            ║
- ║   ╚═╝╚═╝      ╚═╝  ╚═══╝╚═╝╚═╝  ╚═╝╚═╝                            ║
- ║                                                                   ║
- ║                    iNiR — your niri shell                          ║
- ║                                                                   ║
- ╚═══════════════════════════════════════════════════════════════════╝
+   ██╗██╗      ███╗   ██╗██╗██████╗ ██╗
+   ██║██║      ████╗  ██║██║██╔══██╗██║
+   ██║██║█████╗██╔██╗ ██║██║██████╔╝██║
+   ██║██║╚════╝██║╚██╗██║██║██╔══██╗██║
+   ██║██║      ██║ ╚████║██║██║  ██║██║
+   ╚═╝╚═╝      ╚═╝  ╚═══╝╚═╝╚═╝  ╚═╝╚═╝
 EOF
         echo -e "${STY_RST}"
+        printf "%*s%b%s%b\n" "$left_pad" "" "$STY_FAINT" "$tagline" "$STY_RST"
     fi
+    echo ""
 }
 
 tui_hero_card() {
-    local eyebrow="$1"
-    local subtitle="$2"
-    local detail="${3:-}"
+    local eyebrow="$1" subtitle="$2" detail="${3:-}"
 
     tui_banner
     if $HAS_GUM; then
-        local card
-        card=$(gum join --vertical \
-            "$(echo "$eyebrow" | gum style --foreground "$(_tui_color_value accent)" --bold)" \
-            "$(echo "$subtitle" | gum style --foreground "$(_tui_color_value text)")")
-        if [[ -n "$detail" ]]; then
-            card=$(gum join --vertical "$card" "$(echo "$detail" | gum style --foreground "$(_tui_color_value muted)")")
-        fi
-        echo "$card" | gum style --border rounded --border-foreground "$(_tui_color_value accent-dim)" --padding "0 2" --margin "0 1"
+        echo "$eyebrow" | gum style --foreground "$(_tui_color_value accent)" --bold --padding "0 1"
+        echo "$subtitle" | gum style --foreground "$(_tui_color_value text)" --padding "0 1"
+        [[ -n "$detail" ]] && echo "$detail" | gum style --foreground "$(_tui_color_value muted)" --padding "0 1"
     else
         echo -e "  ${STY_PURPLE}${STY_BOLD}${eyebrow}${STY_RST}"
         echo -e "  ${subtitle}"
         [[ -n "$detail" ]] && echo -e "  ${STY_FAINT}${detail}${STY_RST}"
-        echo ""
     fi
+    echo ""
 }
 
 ###############################################################################
 # Status Display
 ###############################################################################
 tui_status_line() {
-    local label="$1"
-    local value="$2"
-    local status="${3:-}"  # ok, warn, error, or empty
-    
-    local color=""
-    local icon=""
+    local label="$1" value="$2" status="${3:-}"
+    local color="" icon=""
     case "$status" in
         ok)    color="${STY_GREEN}"; icon="$ICON_DOT" ;;
         warn)  color="${STY_YELLOW}"; icon="$ICON_DOT" ;;
         error) color="${STY_RED}"; icon="$ICON_DOT" ;;
         *)     color="${STY_RST}"; icon=" " ;;
     esac
-    
     printf "  ${STY_FAINT}%s${STY_RST} ${STY_BOLD}%-12s${STY_RST} ${color}%s${STY_RST}\n" "$icon" "$label" "$value"
 }
 
 tui_divider() {
-    local width="${1:-48}"
+    local width="${1:-40}"
+    echo ""
     _draw_line "dim" "$width"
+    echo ""
 }
 
 ###############################################################################
 # Progress Steps
 ###############################################################################
 tui_step() {
-    local current="$1"
-    local total="$2"
-    local description="$3"
-    local subtitle="${4:-}"
-    
+    local current="$1" total="$2" description="$3" subtitle="${4:-}"
     echo ""
     if $HAS_GUM; then
-        local step_badge
-        local step_title
+        local step_badge step_title
         step_badge=$(echo " $current/$total " | gum style --foreground "$(_tui_color_value text)" --background "$(_tui_color_value accent)")
         step_title=$(echo "$description" | gum style --foreground "$(_tui_color_value accent)" --bold --padding "0 1")
         if [[ -n "$subtitle" ]]; then
@@ -564,31 +484,23 @@ tui_step() {
                 "$(gum join --horizontal "$step_badge" "$step_title")" \
                 "$(echo "$subtitle" | gum style --foreground "$(_tui_color_value muted)")"
         else
-            gum join --horizontal \
-                "$step_badge" \
-                "$step_title"
+            gum join --horizontal "$step_badge" "$step_title"
         fi
     else
         echo -e "  ${STY_PURPLE}${STY_BOLD}[$current/$total]${STY_RST} ${STY_BOLD}$description${STY_RST}"
         [[ -n "$subtitle" ]] && echo -e "  ${STY_FAINT}${subtitle}${STY_RST}"
     fi
-    _draw_line "dim" 40
+    echo ""
 }
 
 tui_progress_bar() {
-    local current="$1"
-    local total="$2"
-    local width="${3:-30}"
-    
+    local current="$1" total="$2" width="${3:-30}"
     local percent=$((current * 100 / total))
     local filled=$((current * width / total))
     local empty=$((width - filled))
-    
-    local bar=""
-    local i
+    local bar="" i
     for ((i=0; i<filled; i++)); do bar+="█"; done
     for ((i=0; i<empty; i++)); do bar+="░"; done
-    
     if $HAS_GUM; then
         echo "$bar $percent%" | gum style --foreground "$(_tui_color_value accent)"
     else
@@ -597,53 +509,31 @@ tui_progress_bar() {
 }
 
 ###############################################################################
-# Tables (Professional Unicode borders)
+# Tables — clean aligned columns, no box drawing
 ###############################################################################
 tui_table_header() {
-    local col1="$1"
-    local col2="$2"
-    local col1_width="${3:-16}"
-    local col2_width="${4:-32}"
-    
-    local line1=$(_repeat_char "$BOX_H" $((col1_width+2)))
-    local line2=$(_repeat_char "$BOX_H" $((col2_width+2)))
-    
-    # Top border
-    echo -e "  ${STY_FAINT}${BOX_TL}${line1}┬${line2}${BOX_TR}${STY_RST}"
-    
-    # Header row
-    printf "  ${STY_FAINT}${BOX_V}${STY_RST} ${STY_BOLD}%-${col1_width}s${STY_RST} ${STY_FAINT}${BOX_V}${STY_RST} ${STY_BOLD}%-${col2_width}s${STY_RST} ${STY_FAINT}${BOX_V}${STY_RST}\n" "$col1" "$col2"
-    
-    # Separator
-    echo -e "  ${STY_FAINT}├${line1}┼${line2}┤${STY_RST}"
+    local col1="$1" col2="$2" col1_width="${3:-16}" col2_width="${4:-32}"
+    echo ""
+    printf "  ${STY_BOLD}%-${col1_width}s${STY_RST}  ${STY_BOLD}%-${col2_width}s${STY_RST}\n" "$col1" "$col2"
+    local total_width=$((col1_width + col2_width + 2))
+    echo -e "  ${STY_FAINT}$(_repeat_char "─" "$total_width")${STY_RST}"
 }
 
 tui_table_row() {
-    local col1="$1"
-    local col2="$2"
-    local col1_width="${3:-16}"
-    local col2_width="${4:-32}"
-    
-    printf "  ${STY_FAINT}${BOX_V}${STY_RST} %-${col1_width}s ${STY_FAINT}${BOX_V}${STY_RST} %-${col2_width}s ${STY_FAINT}${BOX_V}${STY_RST}\n" "$col1" "$col2"
+    local col1="$1" col2="$2" col1_width="${3:-16}" col2_width="${4:-32}"
+    printf "  %-${col1_width}s  %-${col2_width}s\n" "$col1" "$col2"
 }
 
 tui_table_footer() {
-    local col1_width="${1:-16}"
-    local col2_width="${2:-32}"
-    
-    local line1=$(_repeat_char "$BOX_H" $((col1_width+2)))
-    local line2=$(_repeat_char "$BOX_H" $((col2_width+2)))
-    
-    echo -e "  ${STY_FAINT}${BOX_BL}${line1}┴${line2}${BOX_BR}${STY_RST}"
+    local col1_width="${1:-16}" col2_width="${2:-32}"
+    echo ""
 }
 
 ###############################################################################
 # Special Components
 ###############################################################################
 tui_header_block() {
-    local title="$1"
-    local subtitle="${2:-}"
-    
+    local title="$1" subtitle="${2:-}"
     echo ""
     if $HAS_GUM; then
         if [[ -n "$subtitle" ]]; then
@@ -661,17 +551,12 @@ tui_header_block() {
 }
 
 tui_key_value() {
-    local key="$1"
-    local value="$2"
-    local key_width="${3:-14}"
-    
+    local key="$1" value="$2" key_width="${3:-14}"
     printf "  ${STY_FAINT}%-${key_width}s${STY_RST} %s\n" "$key" "$value"
 }
 
 tui_list_item() {
-    local text="$1"
-    local bullet="${2:-$ICON_ARROW}"
-    
+    local text="$1" bullet="${2:-$ICON_ARROW}"
     echo -e "  ${STY_PURPLE}$bullet${STY_RST} $text"
 }
 
@@ -679,21 +564,18 @@ tui_section_start() {
     local title="$1"
     echo ""
     if $HAS_GUM; then
-        echo " $title" | gum style --foreground "$(_tui_color_value accent)" --bold --border-foreground "$(_tui_color_value dim)" --border normal --padding "0 1"
+        echo "$title" | gum style --foreground "$(_tui_color_value accent)" --bold --padding "0 1"
     else
-        echo -e "  ${STY_FAINT}┌─${STY_RST} ${STY_PURPLE}${STY_BOLD}$title${STY_RST} ${STY_FAINT}─────────────────────────────${STY_RST}"
+        echo -e "  ${STY_PURPLE}${STY_BOLD}$title${STY_RST}"
     fi
 }
 
 tui_section_end() {
-    if ! $HAS_GUM; then
-        echo -e "  ${STY_FAINT}└──────────────────────────────────────────────${STY_RST}"
-    fi
     echo ""
 }
 
 ###############################################################################
-# Compact Status (for doctor/status commands)
+# Compact Status
 ###############################################################################
 tui_check_ok() {
     local text="$1"
@@ -716,7 +598,7 @@ tui_check_skip() {
 }
 
 ###############################################################################
-# Timer / Elapsed Helpers
+# Timer
 ###############################################################################
 tui_elapsed() {
     local start_s="$1"
@@ -729,11 +611,10 @@ tui_elapsed() {
 }
 
 ###############################################################################
-# Verification Item Display (for post-install/uninstall checks)
+# Verification
 ###############################################################################
 tui_verify_ok() {
-    local label="$1"
-    local detail="${2:-}"
+    local label="$1" detail="${2:-}"
     if $HAS_GUM; then
         local line="$ICON_CHECK $label"
         [[ -n "$detail" ]] && line+="  $detail"
@@ -746,8 +627,7 @@ tui_verify_ok() {
 }
 
 tui_verify_fail() {
-    local label="$1"
-    local detail="${2:-}"
+    local label="$1" detail="${2:-}"
     if $HAS_GUM; then
         local line="$ICON_CROSS $label"
         [[ -n "$detail" ]] && line+="  $detail"
@@ -760,8 +640,7 @@ tui_verify_fail() {
 }
 
 tui_verify_skip() {
-    local label="$1"
-    local detail="${2:-}"
+    local label="$1" detail="${2:-}"
     if $HAS_GUM; then
         local line="$ICON_CIRCLE $label"
         [[ -n "$detail" ]] && line+="  $detail"
@@ -774,61 +653,44 @@ tui_verify_skip() {
 }
 
 ###############################################################################
-# Stage Header with Step Counter and Elapsed Time
+# Stage Header
 ###############################################################################
 tui_stage_header() {
-    local step="$1"
-    local total="$2"
-    local title="$3"
-    local start_s="${4:-}"
+    local step="$1" total="$2" title="$3" start_s="${4:-}"
     local elapsed_str=""
     [[ -n "$start_s" ]] && elapsed_str="  ${STY_FAINT}($(tui_elapsed "$start_s"))${STY_RST}"
     echo ""
     if $HAS_GUM; then
-        local stage_badge
-        local stage_title
+        local stage_badge stage_title
         stage_badge=$(echo " $step/$total " | gum style --foreground "$(_tui_color_value text)" --background "$(_tui_color_value accent)")
         stage_title=$(echo "$title" | gum style --foreground "$(_tui_color_value accent)" --bold --padding "0 1")
         if [[ -n "$start_s" ]]; then
-            gum join --horizontal \
-                "$stage_badge" \
-                "$stage_title" \
+            gum join --horizontal "$stage_badge" "$stage_title" \
                 "$(echo "$(tui_elapsed "$start_s")" | gum style --foreground "$(_tui_color_value muted)")"
         else
-            gum join --horizontal \
-                "$stage_badge" \
-                "$stage_title"
+            gum join --horizontal "$stage_badge" "$stage_title"
         fi
     else
         echo -e "  ${STY_PURPLE}${STY_BOLD}[$step/$total]${STY_RST} ${STY_BOLD}$title${STY_RST}${elapsed_str}"
     fi
-    _draw_line "dim" 40
+    echo ""
 }
 
 ###############################################################################
-# Rich Choose — Menu with icons + aligned descriptions (Ink Select-inspired)
-# Usage: tui_choose_rich "header" "icon|Label|Description" ...
-# Returns the Label part of the selected item.
+# Rich Choose
 ###############################################################################
 tui_choose_rich() {
-    local header="$1"
-    shift
+    local header="$1"; shift
     local items=("$@")
 
     if $HAS_GUM; then
-        # Build formatted display strings
-        local display_items=()
-        local labels=()
-        local max_label_len=0
-
+        local display_items=() labels=() max_label_len=0
         for item in "${items[@]}"; do
-            local label
-            label="$(echo "$item" | cut -d'|' -f2)"
+            local label; label="$(echo "$item" | cut -d'|' -f2)"
             labels+=("$label")
             local len=${#label}
             (( len > max_label_len )) && max_label_len=$len
         done
-
         for item in "${items[@]}"; do
             local icon label desc
             icon="$(echo "$item" | cut -d'|' -f1)"
@@ -840,7 +702,6 @@ tui_choose_rich() {
                 display_items+=("$(printf '%s %s' "$icon" "$label")")
             fi
         done
-
         local chosen
         chosen=$(gum choose --header "$header" \
             --header.foreground "$(_tui_color_value accent)" \
@@ -848,32 +709,22 @@ tui_choose_rich() {
             --selected.foreground "$(_tui_color_value accent)" \
             --item.foreground "$(_tui_color_value text)" \
             "${display_items[@]}")
-
         [[ -z "$chosen" ]] && return 1
-
-        # Extract label from the chosen display string
         for i in "${!display_items[@]}"; do
             if [[ "${display_items[$i]}" == "$chosen" ]]; then
-                echo "${labels[$i]}"
-                return 0
+                echo "${labels[$i]}"; return 0
             fi
         done
         echo "$chosen"
     else
-        echo -e "\n  ${STY_PURPLE}${STY_BOLD}$header${STY_RST}"
-        echo ""
-        local i=1
-        local labels=()
-        local max_label_len=0
-
+        echo -e "\n  ${STY_PURPLE}${STY_BOLD}$header${STY_RST}\n"
+        local i=1 labels=() max_label_len=0
         for item in "${items[@]}"; do
-            local label
-            label="$(echo "$item" | cut -d'|' -f2)"
+            local label; label="$(echo "$item" | cut -d'|' -f2)"
             labels+=("$label")
             local len=${#label}
             (( len > max_label_len )) && max_label_len=$len
         done
-
         for item in "${items[@]}"; do
             local icon label desc
             icon="$(echo "$item" | cut -d'|' -f1)"
@@ -898,16 +749,7 @@ tui_choose_rich() {
 }
 
 ###############################################################################
-# Task List — Tasuku-inspired task progress tracker
-# Shows tasks with states: ◻ pending, ◉ running, ✓ done, ✗ failed, ⚠ warn
-#
-# Usage:
-#   tui_task_init "Task 1" "Task 2" "Task 3"
-#   tui_task_run 0        # Mark task 0 as running
-#   tui_task_done 0       # Mark task 0 as done
-#   tui_task_fail 1       # Mark task 1 as failed
-#   tui_task_warn 2       # Mark task 2 as warning
-#   tui_task_render        # Redraw the task list
+# Task List
 ###############################################################################
 declare -a _TUI_TASKS=()
 declare -a _TUI_TASK_STATES=()
@@ -915,21 +757,19 @@ declare -a _TUI_TASK_DETAILS=()
 _TUI_TASK_LINES=0
 
 _tui_task_state_icon() {
-    local state="$1"
-    case "$state" in
-        pending)  echo -e "${STY_FAINT}◻${STY_RST}" ;;
-        running)  echo -e "${STY_PURPLE}◉${STY_RST}" ;;
+    case "$1" in
+        pending)  echo -e "${STY_FAINT}·${STY_RST}" ;;
+        running)  echo -e "${STY_PURPLE}▸${STY_RST}" ;;
         done)     echo -e "${STY_GREEN}✓${STY_RST}" ;;
         fail)     echo -e "${STY_RED}✗${STY_RST}" ;;
         warn)     echo -e "${STY_YELLOW}⚠${STY_RST}" ;;
         skip)     echo -e "${STY_FAINT}○${STY_RST}" ;;
-        *)        echo -e "${STY_FAINT}◻${STY_RST}" ;;
+        *)        echo -e "${STY_FAINT}·${STY_RST}" ;;
     esac
 }
 
 _tui_task_state_color() {
-    local state="$1"
-    case "$state" in
+    case "$1" in
         pending)  echo "$STY_FAINT" ;;
         running)  echo "$STY_BOLD" ;;
         done)     echo "$STY_GREEN" ;;
@@ -952,162 +792,72 @@ tui_task_init() {
     tui_task_render
 }
 
-tui_task_run() {
-    local idx="$1"
-    local detail="${2:-}"
-    _TUI_TASK_STATES[$idx]="running"
-    [[ -n "$detail" ]] && _TUI_TASK_DETAILS[$idx]="$detail"
-    tui_task_render
-}
-
-tui_task_done() {
-    local idx="$1"
-    local detail="${2:-}"
-    _TUI_TASK_STATES[$idx]="done"
-    [[ -n "$detail" ]] && _TUI_TASK_DETAILS[$idx]="$detail"
-    tui_task_render
-}
-
-tui_task_fail() {
-    local idx="$1"
-    local detail="${2:-}"
-    _TUI_TASK_STATES[$idx]="fail"
-    [[ -n "$detail" ]] && _TUI_TASK_DETAILS[$idx]="$detail"
-    tui_task_render
-}
-
-tui_task_warn() {
-    local idx="$1"
-    local detail="${2:-}"
-    _TUI_TASK_STATES[$idx]="warn"
-    [[ -n "$detail" ]] && _TUI_TASK_DETAILS[$idx]="$detail"
-    tui_task_render
-}
-
-tui_task_skip() {
-    local idx="$1"
-    local detail="${2:-}"
-    _TUI_TASK_STATES[$idx]="skip"
-    [[ -n "$detail" ]] && _TUI_TASK_DETAILS[$idx]="$detail"
-    tui_task_render
-}
+tui_task_run()  { _TUI_TASK_STATES[$1]="running"; [[ -n "${2:-}" ]] && _TUI_TASK_DETAILS[$1]="$2"; tui_task_render; }
+tui_task_done() { _TUI_TASK_STATES[$1]="done";    [[ -n "${2:-}" ]] && _TUI_TASK_DETAILS[$1]="$2"; tui_task_render; }
+tui_task_fail() { _TUI_TASK_STATES[$1]="fail";    [[ -n "${2:-}" ]] && _TUI_TASK_DETAILS[$1]="$2"; tui_task_render; }
+tui_task_warn() { _TUI_TASK_STATES[$1]="warn";    [[ -n "${2:-}" ]] && _TUI_TASK_DETAILS[$1]="$2"; tui_task_render; }
+tui_task_skip() { _TUI_TASK_STATES[$1]="skip";    [[ -n "${2:-}" ]] && _TUI_TASK_DETAILS[$1]="$2"; tui_task_render; }
 
 tui_task_render() {
-    # Move cursor up to overwrite previous render
     if [[ $_TUI_TASK_LINES -gt 0 ]]; then
-        printf '\033[%dA' "$_TUI_TASK_LINES"
-        printf '\033[J'  # Clear from cursor to end
+        printf '\033[%dA\033[J' "$_TUI_TASK_LINES"
     fi
-
     _TUI_TASK_LINES=0
     for (( i=0; i<${#_TUI_TASKS[@]}; i++ )); do
         local state="${_TUI_TASK_STATES[$i]}"
-        local icon
-        icon="$(_tui_task_state_icon "$state")"
-        local color
-        color="$(_tui_task_state_color "$state")"
+        local icon; icon="$(_tui_task_state_icon "$state")"
+        local color; color="$(_tui_task_state_color "$state")"
         local detail="${_TUI_TASK_DETAILS[$i]}"
         local detail_str=""
         [[ -n "$detail" ]] && detail_str=" ${STY_FAINT}${detail}${STY_RST}"
-
         printf "  %b %b%s%b%b\n" "$icon" "$color" "${_TUI_TASKS[$i]}" "$STY_RST" "$detail_str"
         (( _TUI_TASK_LINES++ ))
     done
 }
 
-# Finalize task list (print newline, prevent further overwrites)
 tui_task_finalize() {
     _TUI_TASK_LINES=0
     echo ""
 }
 
 ###############################################################################
-# Alert — Ink UI Alert component (colored box with icon and message)
-# Usage: tui_alert "variant" "title" "message"
-# Variants: info, success, warning, error
+# Alert — icon + color, no border
 ###############################################################################
 tui_alert() {
-    local variant="${1:-info}"
-    local title="$2"
-    local message="${3:-}"
-
-    local icon color border_color
+    local variant="${1:-info}" title="$2" message="${3:-}"
+    local icon color_name
     case "$variant" in
-        success) icon="$ICON_CHECK"; color="success"; border_color="success" ;;
-        warning) icon="$ICON_WARN";  color="warning"; border_color="warning" ;;
-        error)   icon="$ICON_CROSS"; color="error";   border_color="error" ;;
-        *)       icon="$ICON_INFO";  color="info";     border_color="info" ;;
+        success) icon="$ICON_CHECK"; color_name="success" ;;
+        warning) icon="$ICON_WARN";  color_name="warning" ;;
+        error)   icon="$ICON_CROSS"; color_name="error" ;;
+        *)       icon="$ICON_INFO";  color_name="info" ;;
     esac
 
-    local content="${icon} ${title}"
-    [[ -n "$message" ]] && content="${content}\n${message}"
-
+    echo ""
     if $HAS_GUM; then
-        local styled_title
-        styled_title=$(echo "${icon} ${title}" | gum style --foreground "$(_tui_color_value "$color")" --bold)
-        if [[ -n "$message" ]]; then
-            local styled_msg
-            styled_msg=$(echo "$message" | gum style --foreground "$(_tui_color_value text)")
-            gum join --vertical "$styled_title" "$styled_msg" | \
-                gum style --border rounded \
-                    --border-foreground "$(_tui_color_value "$border_color")" \
-                    --padding "0 2" \
-                    --margin "0 1"
-        else
-            echo "$styled_title" | \
-                gum style --border rounded \
-                    --border-foreground "$(_tui_color_value "$border_color")" \
-                    --padding "0 2" \
-                    --margin "0 1"
-        fi
+        echo "$icon $title" | gum style --foreground "$(_tui_color_value "$color_name")" --bold --padding "0 1"
+        [[ -n "$message" ]] && echo "$message" | gum style --foreground "$(_tui_color_value text)" --padding "0 3"
     else
-        local inner_width=60
-        local h_line=$(_repeat_char "$BOX_H" $((inner_width)))
-
         case "$variant" in
-            success) echo -e "  ${STY_GREEN}${BOX_TL}${h_line}${BOX_TR}${STY_RST}" ;;
-            warning) echo -e "  ${STY_YELLOW}${BOX_TL}${h_line}${BOX_TR}${STY_RST}" ;;
-            error)   echo -e "  ${STY_RED}${BOX_TL}${h_line}${BOX_TR}${STY_RST}" ;;
-            *)       echo -e "  ${STY_BLUE}${BOX_TL}${h_line}${BOX_TR}${STY_RST}" ;;
+            success) echo -e "  ${STY_GREEN}${STY_BOLD}${icon} ${title}${STY_RST}" ;;
+            warning) echo -e "  ${STY_YELLOW}${STY_BOLD}${icon} ${title}${STY_RST}" ;;
+            error)   echo -e "  ${STY_RED}${STY_BOLD}${icon} ${title}${STY_RST}" ;;
+            *)       echo -e "  ${STY_BLUE}${STY_BOLD}${icon} ${title}${STY_RST}" ;;
         esac
-
-        case "$variant" in
-            success) printf "  ${STY_GREEN}${BOX_V} ${STY_BOLD}%s %s${STY_RST}%*s${STY_GREEN}${BOX_V}${STY_RST}\n" "$icon" "$title" $((inner_width - ${#title} - 3)) "" ;;
-            warning) printf "  ${STY_YELLOW}${BOX_V} ${STY_BOLD}%s %s${STY_RST}%*s${STY_YELLOW}${BOX_V}${STY_RST}\n" "$icon" "$title" $((inner_width - ${#title} - 3)) "" ;;
-            error)   printf "  ${STY_RED}${BOX_V} ${STY_BOLD}%s %s${STY_RST}%*s${STY_RED}${BOX_V}${STY_RST}\n" "$icon" "$title" $((inner_width - ${#title} - 3)) "" ;;
-            *)       printf "  ${STY_BLUE}${BOX_V} ${STY_BOLD}%s %s${STY_RST}%*s${STY_BLUE}${BOX_V}${STY_RST}\n" "$icon" "$title" $((inner_width - ${#title} - 3)) "" ;;
-        esac
-
         if [[ -n "$message" ]]; then
             while IFS= read -r line || [[ -n "$line" ]]; do
-                local pad=$((inner_width - ${#line} - 2))
-                (( pad < 0 )) && pad=0
-                case "$variant" in
-                    success) printf "  ${STY_GREEN}${BOX_V}${STY_RST} %-*s ${STY_GREEN}${BOX_V}${STY_RST}\n" $((inner_width - 2)) "$line" ;;
-                    warning) printf "  ${STY_YELLOW}${BOX_V}${STY_RST} %-*s ${STY_YELLOW}${BOX_V}${STY_RST}\n" $((inner_width - 2)) "$line" ;;
-                    error)   printf "  ${STY_RED}${BOX_V}${STY_RST} %-*s ${STY_RED}${BOX_V}${STY_RST}\n" $((inner_width - 2)) "$line" ;;
-                    *)       printf "  ${STY_BLUE}${BOX_V}${STY_RST} %-*s ${STY_BLUE}${BOX_V}${STY_RST}\n" $((inner_width - 2)) "$line" ;;
-                esac
+                echo "    $line"
             done <<< "$message"
         fi
-
-        case "$variant" in
-            success) echo -e "  ${STY_GREEN}${BOX_BL}${h_line}${BOX_BR}${STY_RST}" ;;
-            warning) echo -e "  ${STY_YELLOW}${BOX_BL}${h_line}${BOX_BR}${STY_RST}" ;;
-            error)   echo -e "  ${STY_RED}${BOX_BL}${h_line}${BOX_BR}${STY_RST}" ;;
-            *)       echo -e "  ${STY_BLUE}${BOX_BL}${h_line}${BOX_BR}${STY_RST}" ;;
-        esac
     fi
+    echo ""
 }
 
 ###############################################################################
-# Filter — Fuzzy search wrapper (Ink TextInput-inspired)
-# Usage: result=$(echo "$items" | tui_filter "Search...")
+# Filter
 ###############################################################################
 tui_filter() {
-    local placeholder="${1:-Filter...}"
-    local limit="${2:-1}"
-
+    local placeholder="${1:-Filter...}" limit="${2:-1}"
     if $HAS_GUM; then
         gum filter --placeholder "$placeholder" \
             --indicator.foreground "$(_tui_color_value accent)" \
@@ -1117,10 +867,8 @@ tui_filter() {
             --text.foreground "$(_tui_color_value text)" \
             --limit "$limit"
     else
-        # Simple grep-based fallback
         echo -ne "  ${STY_PURPLE}?${STY_RST} $placeholder: "
-        local query
-        read -r query
+        local query; read -r query
         if [[ -n "$query" ]]; then
             grep -i "$query" || true
         else
@@ -1130,27 +878,16 @@ tui_filter() {
 }
 
 ###############################################################################
-# Columns — Side-by-side card layout (Ink Box flexDirection-inspired)
-# Usage: tui_columns "left_content" "right_content" [gap]
+# Columns — side by side, no borders
 ###############################################################################
 tui_columns() {
-    local left="$1"
-    local right="$2"
-    local gap="${3:-2}"
-
+    local left="$1" right="$2" gap="${3:-4}"
     if $HAS_GUM; then
         local left_styled right_styled
-        left_styled=$(echo "$left" | gum style \
-            --border rounded \
-            --border-foreground "$(_tui_color_value accent-dim)" \
-            --padding "0 2")
-        right_styled=$(echo "$right" | gum style \
-            --border rounded \
-            --border-foreground "$(_tui_color_value accent-dim)" \
-            --padding "0 2")
+        left_styled=$(echo "$left" | gum style --padding "0 2")
+        right_styled=$(echo "$right" | gum style --padding "0 2")
         gum join --horizontal "$left_styled" "$(printf '%*s' "$gap" '')" "$right_styled"
     else
-        # Fallback: stack vertically
         echo "$left"
         echo ""
         echo "$right"
@@ -1158,69 +895,53 @@ tui_columns() {
 }
 
 ###############################################################################
-# Summary Card — Compact key-value card with title (Ink StatusMessage-inspired)
-# Usage: tui_summary_card "title" "key1:value1" "key2:value2" ...
+# Summary Card — title + key-value pairs, no border
 ###############################################################################
 tui_summary_card() {
-    local title="$1"
-    shift
+    local title="$1"; shift
     local pairs=("$@")
-
-    local content=""
     local max_key_len=0
 
     for pair in "${pairs[@]}"; do
-        local key="${pair%%:*}"
-        local len=${#key}
+        local key="${pair%%:*}" len=${#key}
         (( len > max_key_len )) && max_key_len=$len
     done
 
-    for pair in "${pairs[@]}"; do
-        local key="${pair%%:*}"
-        local value="${pair#*:}"
-        content+="$(printf '%-*s  %s' "$max_key_len" "$key" "$value")"$'\n'
-    done
-    content="${content%$'\n'}"  # trim trailing newline
-
+    echo ""
     if $HAS_GUM; then
-        local styled_title
-        styled_title=$(echo "$title" | gum style --foreground "$(_tui_color_value accent)" --bold)
-        local styled_content
-        styled_content=$(echo "$content" | gum style --foreground "$(_tui_color_value text)")
-        gum join --vertical "$styled_title" "$styled_content" | \
-            gum style --border rounded \
-                --border-foreground "$(_tui_color_value accent-dim)" \
-                --padding "0 2" \
-                --margin "0 1"
+        echo "$title" | gum style --foreground "$(_tui_color_value accent)" --bold --padding "0 1"
+        for pair in "${pairs[@]}"; do
+            local key="${pair%%:*}" value="${pair#*:}"
+            printf "   ${STY_FAINT}%-*s${STY_RST}  %s\n" "$max_key_len" "$key" "$value"
+        done
     else
-        tui_box "$content" "$title" "$TUI_ACCENT_DIM" 56
+        echo -e "  ${STY_PURPLE}${STY_BOLD}${title}${STY_RST}"
+        for pair in "${pairs[@]}"; do
+            local key="${pair%%:*}" value="${pair#*:}"
+            printf "    ${STY_FAINT}%-*s${STY_RST}  %s\n" "$max_key_len" "$key" "$value"
+        done
     fi
+    echo ""
 }
 
 ###############################################################################
-# Keybind Hint — Bottom bar with key hints (Ink useInput-inspired)
-# Usage: tui_keyhints "↑↓ Navigate" "Enter Select" "q Quit"
+# Keybind Hints
 ###############################################################################
 tui_keyhints() {
     local hints=("$@")
-
     if $HAS_GUM; then
         local parts=()
         for hint in "${hints[@]}"; do
-            local key="${hint%% *}"
-            local desc="${hint#* }"
-            local styled
-            styled=$(gum join --horizontal \
+            local key="${hint%% *}" desc="${hint#* }"
+            parts+=("$(gum join --horizontal \
                 "$(echo "$key" | gum style --foreground "$(_tui_color_value accent)" --bold)" \
-                "$(echo " $desc" | gum style --foreground "$(_tui_color_value muted)")")
-            parts+=("$styled")
+                "$(echo " $desc" | gum style --foreground "$(_tui_color_value muted)")")")
         done
         gum join --horizontal "${parts[@]}" | gum style --margin "0 1"
     else
         local line=""
         for hint in "${hints[@]}"; do
-            local key="${hint%% *}"
-            local desc="${hint#* }"
+            local key="${hint%% *}" desc="${hint#* }"
             line+="  ${STY_PURPLE}${STY_BOLD}${key}${STY_RST} ${STY_FAINT}${desc}${STY_RST}"
         done
         echo -e "$line"

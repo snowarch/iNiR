@@ -227,6 +227,7 @@ show_help() {
     tui_subtitle "Options"
     tui_list_item "-y, --yes              Skip prompts (auto-yes)"
     tui_list_item "-q, --quiet            Minimal output"
+    tui_list_item "--local                Sync local repo to install (skip git pull)"
     tui_list_item "--set-default-shell    Set Fish as default shell (uses chsh)"
     tui_list_item "-h, --help             Show this help"
     echo ""
@@ -337,16 +338,16 @@ tui_menu() {
     if $is_installed; then
         choice=$(tui_choose_rich "What would you like to do?" \
             "${ICON_ARROW}|Update|Check for updates and apply them" \
+            "${ICON_CHECK}|Doctor|Diagnose and fix problems" \
+            "${ICON_DOT}|Config|View and edit shell settings" \
             "${ICON_STAR}|Theme|Change wallpaper and color scheme" \
             "${ICON_DOT}|Extras|Install optional extras (iNiR-Walls / SDDM)" \
-            "${ICON_DOT}|Config|View and edit shell settings" \
             "${ICON_INFO}|Info|System and shell details dashboard" \
-            "${ICON_CHECK}|Doctor|Diagnose and fix problems" \
+            "${ICON_DOT}|Logs|View recent runtime logs" \
             "${ICON_DOT}|Migrate|Review and apply config migrations" \
             "${ICON_DOT}|Backup|Create a manual snapshot" \
             "${ICON_DOT}|Rollback|Restore a previous snapshot" \
             "${ICON_DOT}|My Changes|View your preserved modifications" \
-            "${ICON_DOT}|Logs|View recent runtime logs" \
             "${ICON_DOT}|Reinstall|Full reinstall from scratch" \
             "${ICON_CROSS}|Uninstall|Remove iNiR from the system" \
             "${ICON_CIRCLE}|Help|Show commands and usage" \
@@ -374,8 +375,11 @@ tui_menu() {
         Logs) run_logs ;;
         Uninstall) run_uninstall ;;
         Help) show_help; read -rp "Press Enter to continue..." ;;
-        *) exit 0 ;;
+        Exit|"") return 1 ;;
+        *) return 1 ;;
     esac
+
+    return 0
 }
 
 ###############################################################################
@@ -739,6 +743,27 @@ run_theme() {
     local state_dir="${XDG_STATE_HOME}/quickshell/user/generated"
     local theme_meta="${state_dir}/theme-meta.json"
     local colors_file="${state_dir}/colors.json"
+    local wallpaper_state_path="${state_dir}/wallpaper/path.txt"
+
+    resolve_switchwall_script() {
+        local candidate="${REPO_ROOT}/scripts/colors/switchwall.sh"
+        if [[ -x "$candidate" ]]; then
+            printf '%s' "$candidate"
+            return 0
+        fi
+
+        if command -v inir &>/dev/null; then
+            local runtime_dir
+            runtime_dir="$(inir path 2>/dev/null || true)"
+            candidate="${runtime_dir}/scripts/colors/switchwall.sh"
+            if [[ -x "$candidate" ]]; then
+                printf '%s' "$candidate"
+                return 0
+            fi
+        fi
+
+        return 1
+    }
 
     # Show current theme info
     local current_wallpaper="none"
@@ -766,52 +791,25 @@ run_theme() {
 
     local action
     action=$(tui_choose_rich "Theme Options" \
-        "${ICON_STAR}|Set Wallpaper|Choose a new wallpaper image" \
+        "${ICON_STAR}|Browse Defaults|Pick from default wallpapers" \
         "${ICON_DOT}|Regenerate|Rebuild colors from current wallpaper" \
-        "${ICON_DOT}|Browse Defaults|Pick from default wallpapers" \
         "${ICON_CIRCLE}|Back|Return to main menu")
 
     case "$action" in
-        "Set Wallpaper")
-            echo ""
-            local wall_path
-            if $HAS_GUM; then
-                tui_info "Select a wallpaper image..."
-                wall_path=$(gum file "$HOME" --all 2>/dev/null || true)
-            else
-                echo -ne "  ${STY_PURPLE}?${STY_RST} Path to wallpaper image: "
-                read -r wall_path
-            fi
-
-            if [[ -n "$wall_path" && -f "$wall_path" ]]; then
-                tui_info "Applying wallpaper: $(basename "$wall_path")"
-                local switchwall="${REPO_ROOT}/scripts/colors/switchwall.sh"
-                if [[ -x "$switchwall" ]]; then
-                    bash "$switchwall" "$wall_path" 2>/dev/null &
-                    disown
-                    tui_success "Wallpaper pipeline started"
-                    tui_dim "  Colors will regenerate in the background."
-                elif command -v inir &>/dev/null; then
-                    inir theme setWallpaper "$wall_path" 2>/dev/null || true
-                    tui_success "Wallpaper set via IPC"
-                else
-                    tui_error "No wallpaper setter available"
-                fi
-            else
-                tui_info "No file selected"
-            fi
-            ;;
         "Regenerate")
             echo ""
             tui_info "Regenerating theme from current wallpaper..."
-            local switchwall="${REPO_ROOT}/scripts/colors/switchwall.sh"
-            if [[ -x "$switchwall" && -n "$current_wallpaper" && -f "$current_wallpaper" ]]; then
-                bash "$switchwall" "$current_wallpaper" 2>/dev/null &
+            local switchwall
+            switchwall="$(resolve_switchwall_script || true)"
+            local regen_wallpaper="$current_wallpaper"
+            if [[ ( -z "$regen_wallpaper" || "$regen_wallpaper" == "none" || ! -f "$regen_wallpaper" ) && -f "$wallpaper_state_path" ]]; then
+                regen_wallpaper="$(<"$wallpaper_state_path")"
+            fi
+
+            if [[ -n "$switchwall" && -n "$regen_wallpaper" && -f "$regen_wallpaper" ]]; then
+                bash "$switchwall" "$regen_wallpaper" 2>/dev/null &
                 disown
                 tui_success "Color regeneration started"
-            elif command -v inir &>/dev/null; then
-                inir theme regenerate 2>/dev/null || true
-                tui_success "Regeneration requested via IPC"
             else
                 tui_warn "Cannot regenerate — wallpaper path unknown or switchwall.sh missing"
             fi
@@ -843,11 +841,14 @@ run_theme() {
                     if [[ -n "$chosen_wall" ]]; then
                         local full_path="${defaults_dir}/${chosen_wall}"
                         tui_info "Applying: $chosen_wall"
-                        local switchwall="${REPO_ROOT}/scripts/colors/switchwall.sh"
-                        if [[ -x "$switchwall" ]]; then
+                        local switchwall
+                        switchwall="$(resolve_switchwall_script || true)"
+                        if [[ -n "$switchwall" ]]; then
                             bash "$switchwall" "$full_path" 2>/dev/null &
                             disown
                             tui_success "Wallpaper pipeline started"
+                        else
+                            tui_error "switchwall.sh not found or not executable"
                         fi
                     fi
                 fi
@@ -864,7 +865,6 @@ run_theme() {
     read -rp "Press Enter to continue..."
 }
 
-
 ###############################################################################
 # Extras — Optional post-install components
 ###############################################################################
@@ -874,7 +874,11 @@ run_extras() {
     echo ""
 
     local action
-    action=$(tui_choose_rich "Extras"         "${ICON_DOT}|Install iNiR-Walls|Download optional wallpaper pack and copy image files"         "${ICON_DOT}|Install ii-pixel-sddm|Install/apply iNiR SDDM login theme"         "${ICON_DOT}|Install both|Run both optional installers"         "${ICON_CIRCLE}|Back|Return to main menu")
+    action=$(tui_choose_rich "Extras" \
+        "${ICON_DOT}|Install iNiR-Walls|Download optional wallpaper pack and copy image files" \
+        "${ICON_DOT}|Install ii-pixel-sddm|Install/apply iNiR SDDM login theme" \
+        "${ICON_DOT}|Install both|Run both optional installers" \
+        "${ICON_CIRCLE}|Back|Return to main menu")
 
     case "$action" in
         "Install iNiR-Walls")
@@ -1440,9 +1444,17 @@ run_update() {
     # After a git pull, the setup script re-execs itself so that updated library
     # code (doctor, migrations, etc.) is loaded fresh. _II_POST_PULL signals that
     # we already pulled and should skip straight to the sync phase.
+    # Values: "1" = re-exec after pull, "local" = --local flag (skip pull entirely)
     if [[ "${_II_POST_PULL:-}" == "1" ]]; then
         unset _II_POST_PULL
         tui_success "Libraries reloaded after pull"
+    elif [[ "${_II_POST_PULL:-}" == "local" ]]; then
+        unset _II_POST_PULL
+        tui_info "Syncing from local repo (git pull skipped)"
+        # Still create a snapshot before sync
+        local repo_commit=$(get_repo_commit)
+        local snapshot_id=$(create_snapshot "update" "Before local sync to ${repo_commit}" "$repo_commit")
+        tui_success "Snapshot: $snapshot_id"
     else
         local update_rc=0
         check_remote_updates || update_rc=$?
@@ -1955,6 +1967,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         -y|--yes) ask=false; shift ;;
         -q|--quiet) quiet=true; shift ;;
+        --local) export _II_POST_PULL=local; shift ;;
         --set-default-shell) export INIR_SET_DEFAULT_SHELL=true; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "Unknown: $1"; show_help; exit 1 ;;
@@ -1975,7 +1988,14 @@ fi
 ###############################################################################
 case "$COMMAND" in
     install) run_install ;;
-    update) run_update ;;
+    update)
+        for _arg in "${SUBCMD_ARGS[@]}"; do
+            case "$_arg" in
+                --local) export _II_POST_PULL=local ;;
+            esac
+        done
+        run_update
+        ;;
     migrate) run_migrate ;;
     doctor) run_doctor ;;
     rollback) run_rollback ;;
@@ -1988,5 +2008,5 @@ case "$COMMAND" in
     backup) run_backup ;;
     logs) run_logs ;;
     extras) run_extras ;;
-    "") tui_menu ;;
+    "") while tui_menu; do :; done ;;
 esac
