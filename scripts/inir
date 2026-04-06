@@ -38,54 +38,109 @@ source_config_path_helper() {
 
 source_config_path_helper
 
+_ipc_registry_loaded=false
+
+source_ipc_registry() {
+    if [[ "$_ipc_registry_loaded" == true ]]; then
+        return
+    fi
+
+    local registry_candidates=(
+        "$script_dir/lib/ipc-registry.sh"
+        "$launcher_root/share/quickshell/inir/scripts/lib/ipc-registry.sh"
+        "$user_config_dir/scripts/lib/ipc-registry.sh"
+        "$system_config_dir/scripts/lib/ipc-registry.sh"
+        "$fallback_system_config_dir/scripts/lib/ipc-registry.sh"
+    )
+
+    local registry_path
+    for registry_path in "${registry_candidates[@]}"; do
+        if [[ -f "$registry_path" ]]; then
+            # shellcheck source=/dev/null
+            source "$registry_path"
+            _ipc_registry_loaded=true
+            return
+        fi
+    done
+
+    # Registry not found — not fatal, features degrade gracefully.
+    return 1
+}
+
 usage() {
     cat <<'EOF'
 Usage: inir <command> [options]
 
-Launcher/runtime commands:
-  start [-c PATH]
-  stop [-c PATH]
-  run [--daemon] [--session] [-c PATH]
-  restart [-c PATH]
-  kill [-c PATH]
-  logs [--full]
-  terminal [-c PATH] [args...]
-  browser [-c PATH] [url]
-  close-window [-c PATH]
-  ipc [-c PATH] <target> <function> [args...]
-  <ipc-target> [-c PATH] <function> [args...]
-  settings [-c PATH]
-  settings-window [-c PATH]
-  waffle-settings-window [-c PATH]
-  repair [-c PATH]
-  path [-c PATH]
-  test-local [-c PATH] [--with-runtime]
-  service <install|uninstall|enable|disable|start|stop|restart|status|logs> [args...]
+Quick start:
+  inir run               Start the shell
+  inir settings          Open settings
+  inir restart           Restart the shell
+  inir logs              View runtime logs
+  inir status            Shell status info
+  inir doctor            Health checks
 
-Setup-backed maintenance commands:
-  install [args...]
-  update [-c PATH]
-  doctor [-c PATH]
-  status [-c PATH]
-  migrate [-c PATH]
-  rollback [-c PATH]
-  my-changes [-c PATH]
-  uninstall [-c PATH]
-  config [-c PATH]               View and edit shell settings
-  info [-c PATH]                 System and shell details dashboard
-  backup [-c PATH]               Create a manual snapshot
-  logs [-c PATH]                 Browse runtime logs
-  setup [-c PATH] [args...]
+EOF
+
+    # Dynamic IPC target listing from registry
+    if source_ipc_registry 2>/dev/null; then
+        printf 'IPC targets (inir <target> <function>):\n'
+        _usage_print_targets "  Shared:" "shared"
+        _usage_print_targets "  ii panel family:" "ii"
+        _usage_print_targets "  waffle panel family:" "waffle"
+        printf '\n  Run '\''inir <target> --help'\'' for available functions.\n\n'
+    else
+        cat <<'EOF'
+IPC targets (inir <target> <function>):
+  Use 'inir <target> --help' for available functions.
+  See docs/IPC.md for the full reference.
+
+EOF
+    fi
+
+    cat <<'EOF'
+Runtime:
+  start, stop, run, restart, kill, terminal, browser, close-window
+
+Maintenance (delegates to setup):
+  install, update, doctor, status, migrate, rollback, my-changes, uninstall
+  config, info, backup, logs, setup
 
 Other:
   version [--json]
   theme <list-targets|inspect|doctor|apply|scaffold> [args...]
-
-Notes:
-  - `inir` is the daily launcher/operator CLI.
-  - The maintenance commands above delegate to `setup`; they do not implement a separate install/update engine.
-  - Use `./setup` directly for the interactive TUI or when you want the underlying installer/updater entrypoint.
+  completions <bash|zsh|fish>
+  service <install|uninstall|enable|disable|start|stop|restart|status|logs>
+  repair, path, test-local, settings-window, waffle-settings-window
 EOF
+}
+
+_usage_print_targets() {
+    local header="$1"
+    local family="$2"
+    local targets=()
+    local t
+
+    for t in "${IPC_ALL_TARGETS[@]}"; do
+        if [[ "${IPC_TARGET_FAMILY[$t]:-}" == "$family" ]]; then
+            targets+=("$t")
+        fi
+    done
+
+    if [[ ${#targets[@]} -eq 0 ]]; then
+        return
+    fi
+
+    printf '%s\n' "$header"
+    for t in "${targets[@]}"; do
+        local desc="${IPC_TARGET_DESC[$t]:-}"
+        # Truncate description to first sentence for compact display
+        desc="${desc%%.*}"
+        if [[ -n "$desc" ]]; then
+            printf '    %-24s %s\n' "$t" "$desc"
+        else
+            printf '    %s\n' "$t"
+        fi
+    done
 }
 
 usage_short() {
@@ -736,6 +791,13 @@ run_runtime_script() {
 }
 
 normalize_ipc_target() {
+    # Try registry aliases first (comprehensive, auto-generated).
+    if source_ipc_registry 2>/dev/null && [[ -n "${IPC_KEBAB_ALIASES[$1]+_}" ]]; then
+        printf '%s\n' "${IPC_KEBAB_ALIASES[$1]}"
+        return
+    fi
+
+    # Hardcoded fallback for when registry is unavailable.
     case "$1" in
         alt-switcher) printf '%s\n' "altSwitcher" ;;
         close-confirm) printf '%s\n' "closeConfirm" ;;
@@ -752,6 +814,162 @@ normalize_ipc_target() {
             printf '%s\n' "$1"
             ;;
     esac
+}
+
+# --- IPC target help and validation (Steps 5-7) ---
+
+ipc_target_help() {
+    local target="$1"
+
+    if ! source_ipc_registry 2>/dev/null; then
+        printf '%s — no registry available. See docs/IPC.md.\n' "$target" >&2
+        return 1
+    fi
+
+    if [[ -z "${IPC_TARGET_FUNCTIONS[$target]+_}" ]]; then
+        return 1
+    fi
+
+    local desc="${IPC_TARGET_DESC[$target]:-}"
+    local family="${IPC_TARGET_FAMILY[$target]:-shared}"
+    local funcs_str="${IPC_TARGET_FUNCTIONS[$target]:-}"
+    local example="${IPC_TARGET_EXAMPLE[$target]:-}"
+
+    # Header
+    if [[ -n "$desc" ]]; then
+        printf '%s — %s\n' "$target" "$desc"
+    else
+        printf '%s\n' "$target"
+    fi
+    printf '\n'
+
+    # Functions
+    if [[ -n "$funcs_str" ]]; then
+        printf 'Available functions:\n'
+        local fn
+        for fn in $funcs_str; do
+            local fn_desc="${IPC_FUNCTION_DESC["$target:$fn"]:-}"
+            local fn_args="${IPC_FUNCTION_ARGS["$target:$fn"]:-}"
+            local display_name="$fn"
+            if [[ -n "$fn_args" ]]; then
+                display_name="$fn $fn_args"
+            fi
+            if [[ -n "$fn_desc" ]]; then
+                printf '  %-28s %s\n' "$display_name" "$fn_desc"
+            else
+                printf '  %s\n' "$display_name"
+            fi
+        done
+        printf '\n'
+    fi
+
+    # Family
+    case "$family" in
+        shared) printf 'Family: shared (works with both ii and waffle)\n' ;;
+        ii)     printf 'Family: ii panel family only\n' ;;
+        waffle) printf 'Family: waffle panel family only\n' ;;
+    esac
+
+    # Example keybind
+    if [[ -n "$example" ]]; then
+        printf '\nExample keybind:\n'
+        local line
+        while IFS= read -r line; do
+            printf '  %s\n' "$line"
+        done <<< "$example"
+    fi
+}
+
+suggest_ipc_target() {
+    local input="$1"
+
+    if ! source_ipc_registry 2>/dev/null; then
+        return 1
+    fi
+
+    local suggestions=()
+    local t
+
+    # 1. Exact kebab alias match (already handled by normalize, but just in case)
+    if [[ -n "${IPC_KEBAB_ALIASES[$input]+_}" ]]; then
+        suggestions+=("${IPC_KEBAB_ALIASES[$input]}")
+    fi
+
+    # 2. Substring match
+    for t in "${IPC_ALL_TARGETS[@]}"; do
+        if [[ "$t" == *"$input"* || "${t,,}" == *"${input,,}"* ]]; then
+            local already=false
+            local s
+            for s in "${suggestions[@]+"${suggestions[@]}"}"; do
+                if [[ "$s" == "$t" ]]; then already=true; break; fi
+            done
+            if [[ "$already" == false ]]; then
+                suggestions+=("$t")
+            fi
+        fi
+    done
+
+    # 3. Prefix match (first 3+ chars)
+    if [[ ${#input} -ge 3 ]]; then
+        local prefix="${input:0:3}"
+        for t in "${IPC_ALL_TARGETS[@]}"; do
+            if [[ "${t:0:3}" == "$prefix" || "${t,,}" == "${prefix,,}"* ]]; then
+                local already=false
+                local s
+                for s in "${suggestions[@]+"${suggestions[@]}"}"; do
+                    if [[ "$s" == "$t" ]]; then already=true; break; fi
+                done
+                if [[ "$already" == false ]]; then
+                    suggestions+=("$t")
+                fi
+            fi
+        done
+    fi
+
+    if [[ ${#suggestions[@]} -eq 0 ]]; then
+        return 1
+    fi
+
+    printf 'Did you mean?\n'
+    for t in "${suggestions[@]}"; do
+        local desc="${IPC_TARGET_DESC[$t]:-}"
+        desc="${desc%%.*}"
+        if [[ -n "$desc" ]]; then
+            printf '  %-24s %s\n' "$t" "$desc"
+        else
+            printf '  %s\n' "$t"
+        fi
+    done
+    return 0
+}
+
+validate_ipc_function() {
+    local target="$1"
+    local func="$2"
+
+    # Only validate if registry is available and target is known.
+    # Unknown targets pass through for plugin extensibility.
+    if ! source_ipc_registry 2>/dev/null; then
+        return 0
+    fi
+
+    if [[ -z "${IPC_TARGET_FUNCTIONS[$target]+_}" ]]; then
+        # Target not in registry — could be a plugin target, pass through.
+        return 0
+    fi
+
+    local funcs_str="${IPC_TARGET_FUNCTIONS[$target]}"
+    local fn
+    for fn in $funcs_str; do
+        if [[ "$fn" == "$func" ]]; then
+            return 0
+        fi
+    done
+
+    # Function not found — show available functions
+    printf "Unknown function '%s' for target '%s'.\n\n" "$func" "$target" >&2
+    ipc_target_help "$target" >&2
+    exit 1
 }
 
 require_command() {
@@ -1006,6 +1224,9 @@ run_ipc_target_command() {
                 break
                 ;;
             -h|--help)
+                if ipc_target_help "$target"; then
+                    exit 0
+                fi
                 echo "Usage: inir $target [-c PATH] <function> [args...]" >&2
                 exit 0
                 ;;
@@ -1016,9 +1237,16 @@ run_ipc_target_command() {
     done
 
     if [[ $# -lt 1 ]]; then
+        # No function given — show target help instead of bare error.
+        if ipc_target_help "$target" 2>/dev/null; then
+            exit 1
+        fi
         echo "Usage: inir $target <function> [args...]" >&2
         exit 1
     fi
+
+    # Validate function name against registry before forwarding to qs.
+    validate_ipc_function "$target" "$1"
 
     resolve_config_dir
     if ! ensure_running_instance_for_ipc "$config_dir" "${1:-}"; then
@@ -1509,12 +1737,56 @@ case "$command_name" in
     theme)
         run_theme_command "$@"
         ;;
+    completions)
+        _comp_shell="${1:-}"
+        case "$_comp_shell" in
+            bash|zsh|fish)
+                _comp_file="$script_dir/completions/inir.${_comp_shell}"
+                if [[ -f "$_comp_file" ]]; then
+                    cat "$_comp_file"
+                else
+                    printf "Error: %s completion file not found at %s\n" "$_comp_shell" "$_comp_file" >&2
+                    exit 1
+                fi
+                ;;
+            "")
+                printf "Usage: inir completions <bash|zsh|fish>\n\n"
+                printf "Print shell completion script to stdout.\n\n"
+                printf "Examples:\n"
+                printf "  eval \"\$(inir completions bash)\"     # Add to .bashrc\n"
+                printf "  inir completions zsh > ~/.zsh/completions/_inir\n"
+                printf "  inir completions fish | source        # Add to config.fish\n"
+                ;;
+            *)
+                printf "Unknown shell: '%s'. Supported: bash, zsh, fish\n" "$_comp_shell" >&2
+                exit 1
+                ;;
+        esac
+        ;;
     help|-h|--help|"")
         usage_short
         printf '\n'
         usage
         ;;
     *)
+        # Pre-validate: if registry is available and target is completely unknown,
+        # show suggestions before forwarding to Quickshell's bare "Target not found."
+        normalized="$(normalize_ipc_target "$command_name")"
+
+        if source_ipc_registry 2>/dev/null; then
+            # Check if target is known in registry
+            if [[ -z "${IPC_TARGET_FUNCTIONS[$normalized]+_}" ]]; then
+                # Unknown target — try to suggest similar ones
+                printf "Unknown command: '%s'\n\n" "$command_name" >&2
+                if ! suggest_ipc_target "$normalized" >&2; then
+                    printf "Run 'inir help' for all commands.\n" >&2
+                else
+                    printf "\nRun 'inir help' for all commands.\n" >&2
+                fi
+                exit 1
+            fi
+        fi
+
         require_qs
         run_ipc_target_command "$command_name" "$@"
         ;;

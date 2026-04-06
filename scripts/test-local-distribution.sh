@@ -60,6 +60,11 @@ step "launcher resolution"
 bash "$launcher" path >/dev/null
 bash "$launcher" status >/dev/null
 
+if command -v python3 &>/dev/null && [[ -f "$runtime_root/scripts/lib/generate-ipc-registry.py" ]]; then
+    step "IPC registry freshness"
+    python3 "$runtime_root/scripts/lib/generate-ipc-registry.py" --check
+fi
+
 if [[ "$run_runtime" == true ]]; then
     step "runtime restart"
     bash scripts/inir kill >/dev/null 2>&1 || true

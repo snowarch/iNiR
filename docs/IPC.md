@@ -2,6 +2,9 @@
 
 iNiR exposes IPC targets you can call from Niri keybinds, scripts, or your terminal.
 
+> **Quick discovery:** `inir help` lists all targets, `inir <target> --help` shows available functions.
+> Shell completions: `eval "$(inir completions bash)"` (also zsh, fish).
+
 From terminal (for testing, or showing off):
 
 ```bash
