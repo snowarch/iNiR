@@ -86,13 +86,13 @@ Scope {
         // Listen to volume changes
         target: Audio.sink?.audio ?? null
         function onVolumeChanged() {
-            if (!Audio.ready)
+            if (!Audio.ready || GameMode.suppressNiriToast)
                 return;
             root.currentIndicator = "volume";
             root.triggerOsd();
         }
         function onMutedChanged() {
-            if (!Audio.ready)
+            if (!Audio.ready || GameMode.suppressNiriToast)
                 return;
             root.currentIndicator = "volume";
             root.triggerOsd();

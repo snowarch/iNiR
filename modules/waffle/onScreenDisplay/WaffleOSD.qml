@@ -12,6 +12,7 @@ import qs.modules.waffle.looks
 Scope {
     id: root
 
+    property bool initialized: false
     property var focusedScreen: CompositorService.isNiri 
         ? (Quickshell.screens.find(s => s.name === NiriService.currentOutput) ?? GlobalStates.primaryScreen)
         : (Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? GlobalStates.primaryScreen)
@@ -33,6 +34,14 @@ Scope {
             globalStateValue: "osdMediaOpen"
         },
     ]
+
+    // Suppress OSD during startup and gamemode niri-reload transitions
+    Timer {
+        id: initDelay
+        interval: 1500
+        running: true
+        onTriggered: root.initialized = true
+    }
 
     function triggerBrightnessOsd() {
         root.currentIndicator = "brightness";
@@ -61,11 +70,11 @@ Scope {
     Connections {
         target: Audio.sink?.audio ?? null
         function onVolumeChanged() {
-            if (Audio.ready)
+            if (Audio.ready && root.initialized && !GameMode.suppressNiriToast)
                 root.triggerVolumeOSD();
         }
         function onMutedChanged() {
-            if (Audio.ready)
+            if (Audio.ready && root.initialized && !GameMode.suppressNiriToast)
                 root.triggerVolumeOSD();
         }
     }
