@@ -224,7 +224,27 @@ def cmd_persist_output(args):
         return 1
 
     output_name = args[0]
-    changes = dict(c.split("=", 1) for c in args[1:] if "=" in c)
+    invalid_args = [arg for arg in args[1:] if "=" not in arg or arg.startswith("=")]
+    if invalid_args:
+        print(
+            json.dumps(
+                {"error": f"Invalid output change arguments: {', '.join(invalid_args)}"}
+            )
+        )
+        return 1
+
+    changes = dict(arg.split("=", 1) for arg in args[1:])
+    if not changes:
+        print(json.dumps({"error": "No output changes provided."}))
+        return 1
+
+    allowed_keys = {"mode", "scale", "transform", "vrr", "position"}
+    unknown_keys = sorted([key for key in changes.keys() if key not in allowed_keys])
+    if unknown_keys:
+        print(
+            json.dumps({"error": f"Unknown output key(s): {', '.join(unknown_keys)}"})
+        )
+        return 1
 
     outputs_file = resolve_niri_section_file("config.d/15-outputs.kdl")
     outputs_file.parent.mkdir(parents=True, exist_ok=True)
@@ -1257,7 +1277,12 @@ def cmd_set(args):
         if len(parts) != 2:
             print(json.dumps({"error": "output key must be <name>.<prop>"}))
             return 1
-        return cmd_persist_output([parts[0], f"{parts[1]}={value}"])
+        output_name, output_key = parts
+        allowed_output_keys = {"mode", "scale", "transform", "vrr", "position"}
+        if output_key not in allowed_output_keys:
+            print(json.dumps({"error": f"Unknown output prop: {output_key}"}))
+            return 1
+        return cmd_persist_output([output_name, f"{output_key}={value}"])
     else:
         print(json.dumps({"error": f"Unknown section: {section}"}))
         return 1
