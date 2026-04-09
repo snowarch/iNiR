@@ -370,15 +370,31 @@ apply_shell_scale() {
 }
 
 apply_qt_runtime_env() {
-    # Preserve the session's Qt platform theme and style — unsetting these breaks
-    # icon theme resolution (QIcon::fromTheme) and Qt widget styling.
+    # Qt platform theme drives icon resolution (QIcon::fromTheme) and widget styling.
     # Override via INIR_QT_QPA_PLATFORMTHEME / INIR_QT_STYLE_OVERRIDE if needed.
     if [[ -n "${INIR_QT_QPA_PLATFORMTHEME+x}" ]]; then
         export QT_QPA_PLATFORMTHEME="$INIR_QT_QPA_PLATFORMTHEME"
+    elif [[ -z "${QT_QPA_PLATFORMTHEME:-}" ]]; then
+        # Session doesn't provide a platform theme — detect a sane default.
+        # Without this, Qt can't resolve icon themes and all icons show as missing.
+        if command -v kwriteconfig6 &>/dev/null || [[ -f /usr/lib/qt6/plugins/platformthemes/KDEPlasmaPlatformTheme.so ]] || [[ -f /usr/lib64/qt6/plugins/platformthemes/KDEPlasmaPlatformTheme.so ]]; then
+            export QT_QPA_PLATFORMTHEME=kde
+        elif command -v gsettings &>/dev/null && [[ -f /usr/lib/qt6/plugins/platformthemes/libqgtk3.so || -f /usr/lib64/qt6/plugins/platformthemes/libqgtk3.so ]]; then
+            export QT_QPA_PLATFORMTHEME=gtk3
+        fi
     fi
 
     if [[ -n "${INIR_QT_STYLE_OVERRIDE+x}" ]]; then
         export QT_STYLE_OVERRIDE="$INIR_QT_STYLE_OVERRIDE"
+    fi
+
+    # Ensure XDG_DATA_DIRS includes standard icon paths — some sessions omit it.
+    if [[ -z "${XDG_DATA_DIRS:-}" ]]; then
+        export XDG_DATA_DIRS="/usr/local/share:/usr/share"
+        [[ -d "$HOME/.local/share/flatpak/exports/share" ]] && \
+            XDG_DATA_DIRS="$HOME/.local/share/flatpak/exports/share:$XDG_DATA_DIRS"
+        [[ -d "/var/lib/flatpak/exports/share" ]] && \
+            XDG_DATA_DIRS="/var/lib/flatpak/exports/share:$XDG_DATA_DIRS"
     fi
 }
 
