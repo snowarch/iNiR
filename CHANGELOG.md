@@ -5,6 +5,57 @@ All notable changes to iNiR will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.18.0] - 2026-04-09
+
+### Added
+- **Systemd shell startup**: Shell startup migrated from niri `spawn-at-startup` to a systemd user service (`inir.service`). Migration 021 handles the transition — removes compositor startup lines, installs and enables the service. `KillMode=process` prevents systemd from terminating child apps on shell restart.
+- **CLI discoverability overhaul**: Rich `--help` with dynamic IPC target listing by panel family, per-target `--help`, typo suggestions, function validation. New shell completions for bash, zsh, and fish. IPC registry generated from source with `generate-ipc-registry.py`.
+- **Waffle settings redesign**: Complete Fluent-styled redesign of Quick Settings, Background, Themes, Interface, Modules, Bar, Shortcuts, and Waffle Style pages. New shared components: `WSettingsSection`, `WSettingsSlider`, `WSettingsInfoBar`, `WSettingsChoiceGroup`.
+- **Gowall wallpaper editor**: New gowall page in waffle settings with theme browser, preview, and apply. Apply routes by active panel family. Shim dir prevents gowall from spawning image viewers after processing.
+- **Pear Desktop theming**: New color module (`80-pear-desktop.sh`) with live CSS injection via Chrome DevTools Protocol. Config toggle `enablePearDesktop` with settings UI integration.
+- **All-apps grid view**: Grid layout with letter jump strip added to waffle start menu.
+- **Overview active-screen-only**: New `overview.activeScreenOnly` config option — shows overview only on the focused monitor in multi-monitor setups.
+- **Equicord Discord client support**: Vesktop theme generation now includes `~/.config/equicord/` and `~/.config/Equicord/` paths.
+
+### Changed
+- **GameMode rewrite**: Replaced size-based fullscreen heuristic (60px margin) with niri's native `is_fullscreen` flag. New `shouldHidePanels` property — panels only hide when auto-detected AND focused window is fullscreen. Manual GameMode never hides panels. Eliminates false positives on maximized windows with small gaps.
+- **Context-aware panel hiding**: Bar, Dock, and VerticalBar use `GameMode.shouldHidePanels` instead of blunt `GameMode.active`. Panels return when user opens Niri overview. Input regions (mask + exclusiveZone) nullified during gamemode to prevent invisible mouse traps.
+- **Unified external theming**: Manual preset themes now fan out through the same `applycolor.sh` pipeline as wallpaper auto-generation. 120ms debounced timer ensures FileView flush before script execution. All targets (terminals, editors, chrome, spicetify, steam, pear) stay in sync.
+- **GTK/Qt theme overhaul**: Selection colors changed from raw accent to blended surface tones. New hover/active/focus interaction states for buttons, menus, and entries. Added `Colors:Header` section for Darkly. qt6ct/qt5ct config generation hardened.
+- **Parallax defaults**: Disabled by default for fresh installs. Zoom values normalized to 1.0 — headroom is now applied internally by the parallax engine.
+- **ThemeService family awareness**: Detects `panelFamily` change and re-runs full color pipeline even for manual themes. Waffle wallpaper apply now triggers color regeneration.
+- **Terminal color generation**: WCAG contrast-aware tone search prevents low-contrast terminal output. Tone capping prevents whitewash on bright colors. Force-dark terminal mode generates isolated `terminal.json`.
+- **Discord theme rename**: Vesktop/midnight themes renamed from `ii-midnight` to `inir-midnight`. Subtler hover/active states, refined mention gradients, softer borders. Legacy CSS auto-cleaned on next color generation.
+- **Compact sidebar media**: Redesigned media player and controls cards layout.
+- **Bar/dock stale monitor guard**: Screen filter fallback prevents stale monitor names (e.g. after VRR re-enumeration) from hiding all panels.
+- **Steam/Pear reload safety**: Removed `pkill` fallbacks for steamwebhelper and youtube-music. Apps are never force-killed — CSS deploys to disk and applies on next app restart.
+
+### Fixed
+- **Gowall waffle apply bleeding into ii**: Apply now routes by active panel family and restores waffle color regen.
+- **Looks.ensureMinOpacity null guard**: `Qt.color()` returns null, not an invalid object — guard updated.
+- **Gowall opening image viewer**: Shim dir with no-op `kitty`/`xdg-open` prevents unwanted window spawns.
+- **WaffleWidgets layer**: Changed to `Top` with missing `WButton` import added.
+- **Broken fluent icons in WInterfacePage**: Missing `WButton` import restored.
+- **Glass opacity floor**: Enforced minimum for waffle aurora/angel surfaces.
+- **Overview vertical centering**: Replaced anchor-based centering with calculated `topMargin` approach to prevent subpixel blur and erratic positioning.
+- **Volume OSD on gamemode activation**: Prevented spurious OSD trigger during gamemode state change.
+- **Slider handle-track desync**: Fixed during drag interaction, added tabular numbers for consistent width.
+- **Parallax sizing and crossfader artifacts**: Reworked transition logic and hardened skew selector sync.
+- **Click-outside backdrops**: Declarative visibility prevents orphaned input capture layers.
+- **Niri output key rejection**: Compositor settings backend now rejects unsupported output keys.
+- **Volume controls after output switch**: Fixed, with easyeffects crash avoidance.
+- **Alacritty migration**: Hoisted misplaced `live_config_reload` key.
+- **Duplicate inir instances**: Guard on `inir run`, kill foreground wrappers on stop, loop `qs kill` for multi-instance cleanup.
+- **Foot terminal colors**: Switched to `[colors-dark]` section to drop deprecation spam.
+- **Keyboard layout save key**: Fixed save path, stopped language fallback to `en_US`.
+- **Theme regen consistency**: Aligned regeneration across settings, family switch, and external targets.
+- **Preset theme color propagation**: Fixed propagation to external apps and family switch regen.
+- **Fullscreen surface handling**: Unmap all shell surfaces during fullscreen for direct scanout.
+
+### Removed
+- **`overview.centerLauncher`**: Config option removed — overview always uses calculated vertical centering.
+- **`spawn-at-startup` compositor entry**: Shell startup ownership moved to systemd user service.
+
 ## [2.17.4] - 2026-04-05
 
 ### Added

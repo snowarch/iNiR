@@ -1,6 +1,6 @@
 pkgbase = inir-shell
 	pkgdesc = iNiR shell payload, launcher, and user service
-	pkgver = 2.17.4
+	pkgver = 2.18.0
 	pkgrel = 1
 	url = https://github.com/snowarch/iNiR
 	arch = any
@@ -89,7 +89,7 @@ pkgbase = inir-shell
 	conflicts = noctalia-qs
 	conflicts = noctalia-shell
 	conflicts = cachyos-niri-noctalia
-	source = inir-2.17.4.tar.gz::https://github.com/snowarch/iNiR/archive/refs/tags/v2.17.4.tar.gz
+	source = inir-2.18.0.tar.gz::https://github.com/snowarch/iNiR/archive/refs/tags/v2.18.0.tar.gz
 	sha256sums = SKIP
 
 pkgname = inir-shell
