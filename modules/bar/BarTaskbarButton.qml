@@ -62,7 +62,7 @@ RippleButton {
     }
     property bool hasWindows: toplevels.length > 0
     property bool isSeparator: appEntry?.appId === "SEPARATOR"
-    property var desktopEntry: isSeparator ? null : DesktopEntries.heuristicLookup(appEntry?.originalAppId ?? appEntry?.appId ?? "")
+    property var desktopEntry: isSeparator ? null : AppSearch.lookupDesktopEntry(appEntry?.originalAppId ?? appEntry?.appId ?? "")
     property int lastFocused: -1
 
     // Focused window index for smart indicator

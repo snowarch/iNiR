@@ -10,7 +10,7 @@ import qs.modules.waffle.settings
 
 WSettingsPage {
     id: root
-    settingsPageIndex: 6
+    settingsPageIndex: 7
     pageTitle: Translation.tr("Modules")
     pageIcon: "settings-cog-multiple"
     pageDescription: Translation.tr("Panel style and modules")
@@ -35,26 +35,10 @@ WSettingsPage {
         Config.setNestedValue("enabledPanels", panels)
     }
 
-    WSettingsCard {
+    WSettingsInfoBar {
         visible: !root.isWaffleActive
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 12
-
-            FluentIcon {
-                icon: "info"
-                implicitSize: 24
-                color: Looks.colors.accent
-            }
-
-            WText {
-                Layout.fillWidth: true
-                text: Translation.tr("These Waffle modules are currently inactive because another panel family is selected. You can still pre-configure them here before switching.")
-                wrapMode: Text.WordWrap
-                color: Looks.colors.subfg
-            }
-        }
+        severity: WSettingsInfoBar.Severity.Info
+        message: Translation.tr("These Waffle modules are currently inactive because another panel family is selected. You can still pre-configure them here before switching.")
     }
 
     WSettingsCard {

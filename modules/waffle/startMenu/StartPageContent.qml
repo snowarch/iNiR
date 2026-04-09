@@ -167,6 +167,7 @@ WPanelPageColumn {
         }
         
         contentItem: ColumnLayout {
+            anchors.centerIn: parent
             spacing: 4
             Image {
                 Layout.alignment: Qt.AlignHCenter

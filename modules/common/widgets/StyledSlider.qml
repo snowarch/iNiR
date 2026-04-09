@@ -216,7 +216,7 @@ Slider {
                 verticalCenter: parent.verticalCenter
                 left: parent.left
             }
-            width: root.handleMargins + (root.visualPosition * root.effectiveDraggingWidth) - (root.handleWidth / 2 + root.handleMargins)
+            width: root.handleMargins + (root.visualPosition * root.effectiveDraggingWidth) - (handle.implicitWidth / 2 + root.handleMargins)
             height: root.trackWidth
             active: !root.wavy
             sourceComponent: Rectangle {
@@ -233,7 +233,7 @@ Slider {
                 verticalCenter: parent.verticalCenter
                 left: parent.left
             }
-            width: root.handleMargins + (root.visualPosition * root.effectiveDraggingWidth) - (root.handleWidth / 2 + root.handleMargins)
+            width: root.handleMargins + (root.visualPosition * root.effectiveDraggingWidth) - (handle.implicitWidth / 2 + root.handleMargins)
             height: root.height
             active: root.wavy
             sourceComponent: WavyLine {
@@ -242,7 +242,7 @@ Slider {
                 fullLength: root.width
                 color: root.highlightColor
                 amplitudeMultiplier: root.wavy ? 0.5 : 0
-                width: root.handleMargins + (root.visualPosition * root.effectiveDraggingWidth) - (root.handleWidth / 2 + root.handleMargins)
+                width: root.handleMargins + (root.visualPosition * root.effectiveDraggingWidth) - (handle.implicitWidth / 2 + root.handleMargins)
                 height: root.trackWidth
                 Connections {
                     target: root
@@ -264,7 +264,7 @@ Slider {
                 verticalCenter: parent.verticalCenter
                 right: parent.right
             }
-            width: root.handleMargins + ((1 - root.visualPosition) * root.effectiveDraggingWidth) - (root.handleWidth / 2 + root.handleMargins)
+            width: root.handleMargins + ((1 - root.visualPosition) * root.effectiveDraggingWidth) - (handle.implicitWidth / 2 + root.handleMargins)
             height: trackWidth
             color: root.trackColor
             topRightRadius: root.trackRadius
@@ -289,7 +289,7 @@ Slider {
 
         implicitWidth: root.handleWidth
         implicitHeight: root.handleHeight
-        x: root.handleMargins + (root.visualPosition * root.effectiveDraggingWidth) - (root.handleWidth / 2)
+        x: root.handleMargins + (root.visualPosition * root.effectiveDraggingWidth) - (implicitWidth / 2)
         anchors.verticalCenter: parent.verticalCenter
         radius: Appearance.rounding.full
         color: root.handleColor
@@ -304,6 +304,7 @@ Slider {
             font {
                 family: Appearance.font.family.numbers
                 variableAxes: Appearance.font.variableAxes.numbers
+                features: { "tnum": 1 }
             }
         }
     }

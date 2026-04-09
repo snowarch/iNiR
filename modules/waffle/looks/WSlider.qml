@@ -124,6 +124,7 @@ Slider {
             extraVisibleCondition: root.pressed
             text: root.tooltipContent
             font.pixelSize: Looks.font.pixelSize.larger
+            font.features: { "tnum": 1 }
             verticalPadding: 3
             horizontalPadding: 8
         }

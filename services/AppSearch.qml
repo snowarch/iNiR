@@ -175,6 +175,11 @@ Singleton {
     property var _cachedList: []
     property var _cachedPreppedNames: []
     property var _cachedPreppedIcons: []
+    // Reverse-lookup maps for matching running windows to desktop entries
+    // Key: lowercased startupClass/exec-basename/desktop-id-stem → DesktopEntry
+    property var _startupClassMap: ({})
+    property var _execBasenameMap: ({})
+    property var _desktopIdStemMap: ({})
 
     readonly property var list: _cachedList
     readonly property var preppedNames: _cachedPreppedNames
@@ -201,6 +206,54 @@ Singleton {
         _cachedList = entries
         _cachedPreppedNames = entries.map(a => ({ name: Fuzzy.prepare(`${a.name} `), entry: a }))
         _cachedPreppedIcons = entries.map(a => ({ name: Fuzzy.prepare(`${a.icon} `), entry: a }))
+
+        // Build reverse-lookup maps for matching toplevel appIds to desktop entries.
+        // This is how we find icons for AppImages, Electron apps, and other apps whose
+        // window appId doesn't match their desktop entry id.
+        const scMap = {};
+        const ebMap = {};
+        const idMap = {};
+        for (const entry of entries) {
+            // Map by StartupWMClass (case-insensitive)
+            const sc = (entry.startupClass ?? "").trim();
+            if (sc.length > 0) {
+                scMap[sc.toLowerCase()] = entry;
+            }
+
+            // Map by executable basename from the parsed command
+            const cmd = entry.command;
+            if (cmd && cmd.length > 0) {
+                const execPath = cmd[0] ?? "";
+                const basename = execPath.split("/").pop().toLowerCase();
+                if (basename.length > 0 && !["bash", "sh", "env", "python", "python3", "java", "electron", "node"].includes(basename)) {
+                    ebMap[basename] = entry;
+                    // Also try without common extensions (.appimage, .AppImage, etc.)
+                    const noExt = basename.replace(/\.(appimage|app|bin|exe)$/i, "");
+                    if (noExt !== basename && noExt.length > 0) {
+                        ebMap[noExt] = entry;
+                    }
+                }
+            }
+
+            // Map by desktop entry id stem (without .desktop suffix, and last segment of reverse-domain)
+            const id = (entry.id ?? "").trim();
+            if (id.length > 0) {
+                const stem = id.replace(/\.desktop$/, "").toLowerCase();
+                idMap[stem] = entry;
+                // Also index the last segment of reverse-domain IDs
+                // e.g., "it.mijorus.gearlever" → "gearlever"
+                const parts = stem.split(".");
+                if (parts.length > 1) {
+                    const lastPart = parts[parts.length - 1];
+                    if (lastPart.length > 2 && !idMap[lastPart]) {
+                        idMap[lastPart] = entry;
+                    }
+                }
+            }
+        }
+        _startupClassMap = scMap;
+        _execBasenameMap = ebMap;
+        _desktopIdStemMap = idMap;
     }
 
     function fuzzyQuery(search: string): var {
@@ -290,6 +343,101 @@ Singleton {
         return str.toLowerCase().replace(/_/g, "-");
     }
 
+    // Enhanced desktop entry lookup: tries heuristicLookup first, then aggressive
+    // normalization for Electron/AppImage apps whose window appId doesn't match
+    // their .desktop file (e.g., "@trezor/suite-desktop" → "trezor-suite.desktop").
+    function lookupDesktopEntry(appId) {
+        if (!appId || appId.length === 0) return null;
+
+        // 1. Quickshell's built-in heuristic (handles simple cases)
+        const entry = DesktopEntries.heuristicLookup(appId);
+        if (entry) return entry;
+
+        // 2. Direct map lookups (case-insensitive, kebab-normalized)
+        const lowered = appId.toLowerCase();
+        const kebab = lowered.replace(/\s+/g, "-");
+        const direct = _startupClassMap[lowered]
+            ?? _execBasenameMap[lowered]
+            ?? _desktopIdStemMap[lowered]
+            ?? _execBasenameMap[kebab]
+            ?? _desktopIdStemMap[kebab];
+        if (direct) return direct;
+
+        // 3. Aggressive normalization for scoped/prefixed appIds
+        //    "@trezor/suite-desktop" → strip @ → split on / → join with - → strip -desktop suffix
+        //    "com.example.app-desktop" → reverse-domain last segment → "app-desktop" → "app"
+        const stripped = lowered.replace(/^@/, "");
+        const segments = stripped.split("/").filter(s => s.length > 0);
+
+        // Try joining all segments with hyphen: "trezor-suite-desktop"
+        if (segments.length > 1) {
+            const joined = segments.join("-");
+            const joinedNoSuffix = joined.replace(/-(desktop|app|electron|bin)$/, "");
+            const candidates = [joined, joinedNoSuffix];
+            // Also try reversed segment order: "suite-desktop-trezor" → "suite-trezor"
+            if (segments.length === 2) {
+                const reversed = segments[1] + "-" + segments[0];
+                const reversedNoSuffix = reversed.replace(/-(desktop|app|electron|bin)$/, "");
+                candidates.push(reversed, reversedNoSuffix);
+            }
+            for (const c of candidates) {
+                const found = _execBasenameMap[c] ?? _desktopIdStemMap[c] ?? _startupClassMap[c];
+                if (found) return found;
+            }
+            // Try each segment individually
+            for (const seg of segments) {
+                const segClean = seg.replace(/-(desktop|app|electron|bin)$/, "");
+                const found = _execBasenameMap[seg] ?? _desktopIdStemMap[seg]
+                    ?? _execBasenameMap[segClean] ?? _desktopIdStemMap[segClean]
+                    ?? _startupClassMap[seg] ?? _startupClassMap[segClean];
+                if (found) return found;
+            }
+        }
+
+        // 4. Strip common suffixes on the full appId and retry
+        const noSuffix = kebab.replace(/-(desktop|app|electron|bin)$/, "");
+        if (noSuffix !== kebab) {
+            const found = _execBasenameMap[noSuffix] ?? _desktopIdStemMap[noSuffix] ?? _startupClassMap[noSuffix];
+            if (found) return found;
+        }
+
+        // 5. Token overlap scoring as last resort — extract meaningful tokens from the appId
+        //    and score against all desktop entries' names, ids, and exec basenames
+        const tokens = stripped.replace(/[^a-z0-9]+/g, " ").trim().split(/\s+/).filter(t => t.length > 2);
+        if (tokens.length > 0) {
+            let bestEntry = null;
+            let bestScore = 0;
+            for (const [key, mapEntry] of Object.entries(_desktopIdStemMap)) {
+                const keyTokens = key.replace(/[^a-z0-9]+/g, " ").trim().split(/\s+/);
+                let overlap = 0;
+                for (const t of tokens) {
+                    if (keyTokens.some(kt => kt === t || kt.includes(t) || t.includes(kt))) overlap++;
+                }
+                const score = overlap / Math.max(tokens.length, keyTokens.length);
+                if (score > bestScore && score >= 0.5) {
+                    bestScore = score;
+                    bestEntry = mapEntry;
+                }
+            }
+            // Also check startupClassMap tokens
+            for (const [key, mapEntry] of Object.entries(_startupClassMap)) {
+                const keyTokens = key.replace(/[^a-z0-9]+/g, " ").trim().split(/\s+/);
+                let overlap = 0;
+                for (const t of tokens) {
+                    if (keyTokens.some(kt => kt === t || kt.includes(t) || t.includes(kt))) overlap++;
+                }
+                const score = overlap / Math.max(tokens.length, keyTokens.length);
+                if (score > bestScore && score >= 0.5) {
+                    bestScore = score;
+                    bestEntry = mapEntry;
+                }
+            }
+            if (bestEntry) return bestEntry;
+        }
+
+        return null;
+    }
+
     function guessIcon(str) {
         if (!str || str.length == 0) return "image-missing";
 
@@ -314,7 +462,6 @@ Singleton {
         // Icon exists -> return as is
         if (iconExists(str)) return str;
 
-
         // Simple guesses
         const lowercased = str.toLowerCase();
         if (iconExists(lowercased)) return lowercased;
@@ -330,6 +477,11 @@ Singleton {
 
         const undescoreToKebabGuess = getUndescoreToKebabAppName(str);
         if (iconExists(undescoreToKebabGuess)) return undescoreToKebabGuess;
+
+        // Reverse-lookup: use the full lookupDesktopEntry which handles scoped appIds,
+        // token normalization, and aggressive matching for AppImages/Electron apps.
+        const mapMatch = lookupDesktopEntry(str);
+        if (mapMatch?.icon) return mapMatch.icon;
 
         // Search in desktop entries
         if (_cachedPreppedIcons.length > 0) {

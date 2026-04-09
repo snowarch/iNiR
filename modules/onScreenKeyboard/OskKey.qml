@@ -114,6 +114,7 @@ RippleButton {
         horizontalAlignment: Text.AlignHCenter
         color: root.toggled ? Appearance.m3colors.m3onPrimary : Appearance.colors.colOnLayer1
         text: root.isBackspace ? "backspace" : root.isEnter ? "subdirectory_arrow_left" :
+            (root.toggled && root.keyData.labelToggled) ? root.keyData.labelToggled :
             Ydotool.shiftMode == 2 ? (root.keyData.labelCaps || root.keyData.labelShift || root.keyData.label) :
             Ydotool.shiftMode == 1 ? (root.keyData.labelShift || root.keyData.label) : 
             root.keyData.label

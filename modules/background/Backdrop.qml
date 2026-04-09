@@ -35,6 +35,7 @@ Variants {
         anchors.right: true
 
         color: "transparent"
+        visible: !GameMode.shouldHidePanels
 
         // Material ii backdrop config (independent)
         readonly property var iiBackdrop: Config.options?.background?.backdrop ?? {}

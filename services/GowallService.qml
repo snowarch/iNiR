@@ -47,6 +47,12 @@ Singleton {
     readonly property string _outputDir: FileUtils.trimFileProtocol(`${Directories.pictures}/Wallpapers/Gowall`)
     readonly property string _generatedThemePath: Directories.generatedMaterialThemePath
 
+    // Shim dir with no-op kitty/xdg-open to prevent gowall from opening image viewers
+    readonly property string _shimDir: "/tmp/inir-gowall-shim"
+    readonly property var _gowallEnv: ({
+        PATH: `${_shimDir}:${Quickshell.env("PATH") ?? "/usr/bin:/usr/local/bin"}`
+    })
+
     // --- Helpers ---
     function _norm(path: string): string {
         return FileUtils.trimFileProtocol(String(path ?? ""))
@@ -226,8 +232,10 @@ Singleton {
             "--output", _previewPathFor(fmt)], fmt, "", false, _basenameWithoutExt(src) + "-upscaled")
     }
 
-    // Apply current preview as wallpaper — copies to final destination, then calls Wallpapers.apply
-    // Uses source-based naming to avoid spamming multiple files for the same wallpaper
+    // Apply current preview as wallpaper — copies to final destination, then applies via Wallpapers.apply()
+    // Always sets the main wallpaper and runs the full color pipeline (switchwall.sh),
+    // identical to selecting a wallpaper from the wallpaper selector.
+    // Uses source-based naming to avoid spamming multiple files for the same wallpaper.
     function applyPreview(): void {
         if (!_previewReady || _currentPreviewPath.length === 0) return
         if (busy) return
@@ -350,8 +358,18 @@ Singleton {
         onStarted: { root.available = false; root.error = "" }
         onExited: (exitCode) => {
             root.available = exitCode === 0
-            if (root.available) root.refreshThemes()
+            if (root.available) {
+                root.refreshThemes()
+                shimSetupProc.running = true
+            }
         }
+    }
+
+    // Create no-op shims so gowall can't spawn kitty/xdg-open after processing
+    Process {
+        id: shimSetupProc
+        command: ["/usr/bin/bash", "-c",
+            `d=${root._shimDir} && mkdir -p "$d" && printf '#!/bin/sh\\nexit 0\\n' > "$d/kitty" && printf '#!/bin/sh\\nexit 0\\n' > "$d/xdg-open" && chmod +x "$d/kitty" "$d/xdg-open"`]
     }
 
     Process {
@@ -406,6 +424,7 @@ Singleton {
 
     Process {
         id: operationProc
+        environment: root._gowallEnv
         onExited: (exitCode) => {
             if (exitCode !== 0) { root.error = "gowall operation failed"; return }
             root._currentPreviewPath = root._previewPathFor(root._pendingFormat)
@@ -419,12 +438,23 @@ Singleton {
         property string _destPath: ""
         onExited: (exitCode) => {
             if (exitCode !== 0) { root.error = "Failed to copy result to wallpapers"; return }
-            Wallpapers.apply(_destPath, Appearance.m3colors.darkmode)
+            // Route by active family — each family owns its own wallpaper surface.
+            // Mirrors what the wallpaper selector does via currentSelectionTarget().
+            const isWaffle = (Config.options?.panelFamily ?? "ii") === "waffle"
+            const waffleOwnWallpaper = isWaffle && !(Config.options?.waffles?.background?.useMainWallpaper ?? true)
+            if (waffleOwnWallpaper) {
+                // Waffle has its own wallpaper — apply only to waffle surface + regen colors
+                Wallpapers.applySelectionTarget(_destPath, "waffle", Appearance.m3colors.darkmode)
+            } else {
+                // ii, or waffle following main → full pipeline on main wallpaper
+                Wallpapers.apply(_destPath, Appearance.m3colors.darkmode)
+            }
         }
     }
 
     Process {
         id: extractProc
+        environment: root._gowallEnv
         command: ["/usr/bin/gowall", "extract", "/dev/null"]
         stdout: SplitParser {
             onRead: data => {
@@ -441,6 +471,7 @@ Singleton {
 
     Process {
         id: compressProc
+        environment: root._gowallEnv
         property string _outputPath: ""
         stdout: SplitParser {
             onRead: data => {

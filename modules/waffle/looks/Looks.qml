@@ -20,7 +20,7 @@ Singleton {
         const style = Config.options?.appearance?.globalStyle ?? "material"
         return style === "aurora" || style === "angel"
     }
-    property bool useMaterial: (Config.options?.waffles?.theming?.useMaterialColors ?? false) || root.auroraEverywhere
+    property bool useMaterial: Config.options?.waffles?.theming?.useMaterialColors ?? false
     // Glass mode: aurora/angel active (not iNiR which has its own aesthetic)
     readonly property bool glassActive: root.auroraEverywhere && !Appearance.inirEverywhere
     
@@ -79,6 +79,12 @@ Singleton {
     }
     function applyContentTransparency(col) {
         return ColorUtils.applyAlpha(col, 1 - root.contentTransparency)
+    }
+    function ensureMinOpacity(col, minAlpha) {
+        const c = Qt.color(col)
+        if (!c || c.valid === false)
+            return col
+        return Qt.rgba(c.r, c.g, c.b, Math.max(c.a, minAlpha))
     }
     lightColors: QtObject {
         id: lightColors
@@ -200,25 +206,25 @@ Singleton {
             ? Appearance.colors.colOutlineVariant 
             : ColorUtils.transparentize(root.dark ? root.darkColors.bg2Border : root.lightColors.bg2Border, root.contentTransparency)
         property color interactiveSurface: root.glassActive
-            ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCard : Appearance.aurora.colSubSurface)
+            ? root.ensureMinOpacity(Appearance.angelEverywhere ? Appearance.angel.colGlassCard : Appearance.aurora.colSubSurface, 0.84)
             : bg1
         property color interactiveSurfaceHover: root.glassActive
-            ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover : Appearance.aurora.colSubSurfaceHover)
+            ? root.ensureMinOpacity(Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover : Appearance.aurora.colSubSurfaceHover, 0.89)
             : bg2Hover
         property color interactiveSurfaceActive: root.glassActive
-            ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive : Appearance.aurora.colSubSurfaceActive)
+            ? root.ensureMinOpacity(Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive : Appearance.aurora.colSubSurfaceActive, 0.93)
             : bg2Active
         property color popupSurface: root.glassActive
-            ? (Appearance.angelEverywhere ? Appearance.angel.colGlassPopup : Appearance.aurora.colPopupSurface)
+            ? root.ensureMinOpacity(Appearance.angelEverywhere ? Appearance.angel.colGlassPopup : Appearance.aurora.colPopupSurface, 0.92)
             : bg2
         property color popupSurfaceHover: root.glassActive
-            ? (Appearance.angelEverywhere ? Appearance.angel.colGlassPopupHover : Appearance.aurora.colPopupSurfaceHover)
+            ? root.ensureMinOpacity(Appearance.angelEverywhere ? Appearance.angel.colGlassPopupHover : Appearance.aurora.colPopupSurfaceHover, 0.94)
             : bg2Hover
         property color popupSurfaceActive: root.glassActive
-            ? (Appearance.angelEverywhere ? Appearance.angel.colGlassPopupActive : Appearance.aurora.colPopupSurfaceActive)
+            ? root.ensureMinOpacity(Appearance.angelEverywhere ? Appearance.angel.colGlassPopupActive : Appearance.aurora.colPopupSurfaceActive, 0.96)
             : bg2Active
         property color tooltipSurface: root.glassActive
-            ? (Appearance.angelEverywhere ? Appearance.angel.colGlassTooltip : Appearance.aurora.colTooltipSurface)
+            ? root.ensureMinOpacity(Appearance.angelEverywhere ? Appearance.angel.colGlassTooltip : Appearance.aurora.colTooltipSurface, 0.96)
             : bg2
         property color tooltipBorder: root.glassActive
             ? (Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle : Appearance.aurora.colTooltipBorder)

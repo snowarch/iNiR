@@ -11,7 +11,7 @@ import qs.modules.waffle.settings
 
 WSettingsPage {
     id: root
-    settingsPageIndex: 9
+    settingsPageIndex: 10
     pageTitle: Translation.tr("About")
     pageIcon: "info"
     pageDescription: Translation.tr("Project information and links")

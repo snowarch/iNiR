@@ -314,7 +314,6 @@ ContentPage {
     }
 
     function clearPreviewState() {
-        confirmTimer.stop()
         confirmationPending = false
         previousMode = ""
         previousScale = -1
@@ -461,7 +460,6 @@ ContentPage {
 
         const rollback = previewRollbackRequest()
 
-        confirmTimer.stop()
         confirmationPending = false
         pendingActionLabel = Translation.tr("Saving display settings")
         startOutputPersist(pendingOutputName, pendingChangeType, pendingChangeValue, "preview-confirm", rollback ? rollback.key : "", rollback ? rollback.value : "")
@@ -474,7 +472,6 @@ ContentPage {
         const outputName = pendingOutputName
         const rollback = previewRollbackRequest()
 
-        confirmTimer.stop()
         confirmationPending = false
 
         if (!rollback) {
@@ -567,6 +564,20 @@ ContentPage {
     onCurrentOutputChanged: armPositionEditor()
     onLayoutDataChanged: armShadowEditor()
 
+    // Force-resync display combo boxes when output data refreshes.
+    // Inline bindings on currentIndex get broken by user interaction (classic QML issue),
+    // and Binding elements inside ContentSubsection resolve `root` to ContentSubsection's
+    // own root, not NiriConfig. So we resync imperatively here.
+    onOutputListChanged: Qt.callLater(resyncDisplayCombos)
+    onSelectedOutputIndexChanged: Qt.callLater(resyncDisplayCombos)
+
+    function resyncDisplayCombos() {
+        resolutionCombo.currentIndex = choiceIndex(resolutionCombo.model, currentResolution)
+        refreshRateCombo.currentIndex = choiceIndex(refreshRateCombo.model, currentRate)
+        scaleCombo.currentIndex = choiceIndex(scaleCombo.model, currentScale)
+        rotationCombo.currentIndex = choiceIndex(rotationCombo.model, currentTransform.toLowerCase())
+    }
+
     // =====================
     // CONFIRMATION TIMER
     // =====================
@@ -574,6 +585,7 @@ ContentPage {
         id: confirmTimer
         interval: 1000
         repeat: true
+        running: root.confirmationPending
         onTriggered: {
             root.confirmCountdown--
             if (root.confirmCountdown <= 0) {
@@ -587,6 +599,15 @@ ContentPage {
         interval: 1
         repeat: false
         onTriggered: root.positionEditorReady = true
+    }
+
+    // Deferred output refresh — gives Niri time to commit display changes
+    // before we query the new state (avoids stale reads after scale/mode changes).
+    Timer {
+        id: _deferredOutputRefresh
+        interval: 300
+        repeat: false
+        onTriggered: root.loadOutputs()
     }
 
     Timer {
@@ -790,7 +811,6 @@ ContentPage {
                 if (purpose === "preview") {
                     root.lastActionError = ""
                     root.confirmationPending = true
-                    root.confirmTimer.start()
                 } else if (purpose === "preview-revert") {
                     root.lastActionError = ""
                     root.clearPreviewState()
@@ -806,7 +826,7 @@ ContentPage {
                 } else {
                     root.lastActionError = ""
                 }
-                root.loadOutputs()
+                root._deferredOutputRefresh.restart()
             } else {
                 if (purpose === "preview" || purpose === "preview-revert" || purpose === "preview-revert-after-failure")
                     root.clearPreviewState()
@@ -1060,78 +1080,114 @@ ContentPage {
     }
 
     Item {
+        id: statusBanner
         Layout.fillWidth: true
         visible: root.lastActionError.length > 0 || root.lastActionInfo.length > 0 || !root.validationData.valid || root.hasAnyProcessError
-        implicitHeight: statusColumn.implicitHeight + 20
+        implicitHeight: statusColumn.implicitHeight + 24
+
+        readonly property bool isError: root.lastActionError.length > 0 || !root.validationData.valid || root.hasAnyProcessError
+        readonly property color accentColor: isError ? Appearance.colors.colError : Appearance.colors.colPrimary
 
         Rectangle {
             anchors.fill: parent
-            color: root.lastActionError.length > 0 || !root.validationData.valid || root.hasAnyProcessError
-                ? Qt.rgba(Appearance.colors.colError.r, Appearance.colors.colError.g, Appearance.colors.colError.b, 0.12)
-                : Qt.rgba(Appearance.colors.colPrimary.r, Appearance.colors.colPrimary.g, Appearance.colors.colPrimary.b, 0.10)
+            color: Qt.rgba(statusBanner.accentColor.r, statusBanner.accentColor.g, statusBanner.accentColor.b, 0.10)
             radius: Appearance.rounding.screenRounding
-            border.width: 1
-            border.color: root.lastActionError.length > 0 || !root.validationData.valid || root.hasAnyProcessError
-                ? Appearance.colors.colError
-                : Appearance.colors.colPrimary
+            border.width: 2
+            border.color: statusBanner.accentColor
 
             ColumnLayout {
                 id: statusColumn
                 anchors.fill: parent
-                anchors.margins: 12
-                spacing: 6
+                anchors.margins: 16
+                spacing: 12
 
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 8
 
                     MaterialSymbol {
-                        text: root.lastActionError.length > 0 || !root.validationData.valid || root.hasAnyProcessError ? "error" : "check_circle"
-                        color: root.lastActionError.length > 0 || !root.validationData.valid || root.hasAnyProcessError ? Appearance.colors.colError : Appearance.colors.colPrimary
-                        iconSize: Appearance.font.pixelSize.large
+                        text: statusBanner.isError ? "error" : "check_circle"
+                        color: statusBanner.accentColor
+                        iconSize: Appearance.font.pixelSize.hugeass
                     }
 
-                    StyledText {
+                    ColumnLayout {
                         Layout.fillWidth: true
-                        text: root.lastActionError.length > 0
-                            ? root.lastActionError
-                            : !root.validationData.valid
-                                ? (root.validationData.output?.length > 0 ? root.validationData.output : Translation.tr("Niri config validation failed."))
-                                : root.hasAnyProcessError
-                                    ? root.processErrorSummary()
-                                    : root.lastActionInfo
-                        wrapMode: Text.WordWrap
-                        color: Appearance.colors.colOnLayer1
-                        font.pixelSize: Appearance.font.pixelSize.small
-                    }
-                }
+                        spacing: 2
 
-                StyledText {
-                    Layout.fillWidth: true
-                    visible: root.niriConfigPath.length > 0
-                    text: Translation.tr("Config file: %1").arg(root.niriConfigPath)
-                    wrapMode: Text.WrapAnywhere
-                    color: Appearance.colors.colSubtext
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                    font.family: Appearance.font.family.monospace
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: root.lastActionError.length > 0
+                                ? root.lastActionError
+                                : !root.validationData.valid
+                                    ? (root.validationData.output?.length > 0 ? root.validationData.output : Translation.tr("Niri config validation failed."))
+                                    : root.hasAnyProcessError
+                                        ? root.processErrorSummary()
+                                        : root.lastActionInfo
+                            wrapMode: Text.WordWrap
+                            color: Appearance.colors.colOnLayer1
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            font.weight: Font.Medium
+                        }
+
+                        StyledText {
+                            Layout.fillWidth: true
+                            visible: root.niriConfigPath.length > 0
+                            text: Translation.tr("Config file: %1").arg(root.niriConfigPath)
+                            wrapMode: Text.WrapAnywhere
+                            color: Appearance.colors.colSubtext
+                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            font.family: Appearance.font.family.monospace
+                        }
+                    }
                 }
 
                 RowLayout {
-                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignRight
                     spacing: 8
 
                     Button {
                         visible: !root.validationData.valid || root.hasAnyProcessError
                         text: Translation.tr("Retry")
                         onClicked: root.refreshAll()
+
+                        background: Rectangle {
+                            implicitWidth: 80
+                            implicitHeight: 36
+                            radius: Appearance.rounding.small
+                            color: Appearance.colors.colPrimary
+                        }
+
+                        contentItem: StyledText {
+                            text: parent.text
+                            color: Appearance.colors.colOnPrimary
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            font.pixelSize: Appearance.font.pixelSize.small
+                        }
                     }
 
                     Button {
                         visible: root.lastActionError.length > 0 || root.lastActionInfo.length > 0
-                        text: Translation.tr("Clear")
+                        text: Translation.tr("Dismiss")
                         onClicked: {
                             root.lastActionError = ""
                             root.lastActionInfo = ""
+                        }
+
+                        background: Rectangle {
+                            implicitWidth: 80
+                            implicitHeight: 36
+                            radius: Appearance.rounding.small
+                            color: Appearance.colors.colLayer1
+                        }
+
+                        contentItem: StyledText {
+                            text: parent.text
+                            color: Appearance.colors.colOnLayer1
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            font.pixelSize: Appearance.font.pixelSize.small
                         }
                     }
                 }
@@ -1218,12 +1274,42 @@ ContentPage {
                     visible: root.niriConfigDir.length > 0
                     text: Translation.tr("Open config folder")
                     onClicked: root.openPathExternally(root.niriConfigDir)
+
+                    background: Rectangle {
+                        implicitWidth: 140
+                        implicitHeight: 36
+                        radius: Appearance.rounding.small
+                        color: Appearance.colors.colLayer2
+                    }
+
+                    contentItem: StyledText {
+                        text: parent.text
+                        color: Appearance.colors.colOnLayer1
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.pixelSize: Appearance.font.pixelSize.small
+                    }
                 }
 
                 Button {
                     visible: root.niriConfigPath.length > 0
                     text: Translation.tr("Open config file")
                     onClicked: root.openPathExternally(root.niriConfigPath)
+
+                    background: Rectangle {
+                        implicitWidth: 120
+                        implicitHeight: 36
+                        radius: Appearance.rounding.small
+                        color: Appearance.colors.colLayer2
+                    }
+
+                    contentItem: StyledText {
+                        text: parent.text
+                        color: Appearance.colors.colOnLayer1
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.pixelSize: Appearance.font.pixelSize.small
+                    }
                 }
             }
 
@@ -1415,11 +1501,11 @@ ContentPage {
                 visible: root.resolutionOptions.length > 0
 
                 StyledComboBox {
+                    id: resolutionCombo
                     Layout.fillWidth: true
                     enabled: !root.displayControlsLocked
                     model: root.resolutionOptions
                     textRole: "displayName"
-                    currentIndex: root.choiceIndex(model, root.currentResolution)
                     onActivated: {
                         const selectedValue = model[currentIndex].value
                         const match = root.currentOutput?.resolutions?.find(r => `${r.width}x${r.height}` === selectedValue)
@@ -1436,11 +1522,11 @@ ContentPage {
                 visible: root.refreshOptions.length > 1
 
                 StyledComboBox {
+                    id: refreshRateCombo
                     Layout.fillWidth: true
                     enabled: !root.displayControlsLocked
                     model: root.refreshOptions
                     textRole: "displayName"
-                    currentIndex: root.choiceIndex(model, root.currentRate)
                     onActivated: root.safeApplyOutput("mode", "mode", `${root.currentResolution}@${model[currentIndex].rateString}`)
                 }
             }
@@ -1490,11 +1576,11 @@ ContentPage {
                 title: Translation.tr("Scale")
 
                 StyledComboBox {
+                    id: scaleCombo
                     Layout.fillWidth: true
                     enabled: !root.displayControlsLocked
                     model: root.scaleOptions
                     textRole: "displayName"
-                    currentIndex: root.choiceIndex(model, root.currentScale)
                     onActivated: root.safeApplyOutput("scale", "scale", String(model[currentIndex].value))
                 }
             }
@@ -1503,11 +1589,11 @@ ContentPage {
                 title: Translation.tr("Rotation")
 
                 StyledComboBox {
+                    id: rotationCombo
                     Layout.fillWidth: true
                     enabled: !root.displayControlsLocked
                     model: root.transformOptions
                     textRole: "displayName"
-                    currentIndex: root.choiceIndex(model, root.currentTransform.toLowerCase())
                     onActivated: root.safeApplyOutput("transform", "transform", model[currentIndex].value)
                 }
             }
@@ -2087,7 +2173,7 @@ ContentPage {
                     onActivated: {
                         const selected = model[currentIndex].value
                         if (selected !== "__custom__")
-                            root.setConfig("input", "keyboard.xkb.layout", selected)
+                            root.setConfig("input", "keyboard.layout", selected)
                     }
                 }
 
@@ -2099,7 +2185,7 @@ ContentPage {
                     onEditingFinished: {
                         const val = text.trim()
                         if (val.length > 0)
-                            root.setConfig("input", "keyboard.xkb.layout", val)
+                            root.setConfig("input", "keyboard.layout", val)
                     }
                 }
             }

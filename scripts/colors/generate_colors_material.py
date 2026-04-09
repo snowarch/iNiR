@@ -175,9 +175,23 @@ def harmonize(
     return Hct.from_hct(output_hue, from_hct.chroma, from_hct.tone).to_int()
 
 
-def boost_chroma_tone(argb: int, chroma: float = 1, tone: float = 1) -> int:
+def boost_chroma_tone(
+    argb: int, chroma: float = 1, tone: float = 1, tone_cap: float = 95.0
+) -> int:
+    """Scale chroma and tone of a color.
+
+    Args:
+        argb: Input color in ARGB format
+        chroma: Chroma multiplier (1 = no change)
+        tone: Tone multiplier (1 = no change)
+        tone_cap: Maximum tone value to prevent white-washing bright colors
+
+    Returns:
+        Adjusted color in ARGB format
+    """
     hct = Hct.from_int(argb)
-    return Hct.from_hct(hct.hue, hct.chroma * chroma, hct.tone * tone).to_int()
+    new_tone = min(tone_cap, hct.tone * tone)
+    return Hct.from_hct(hct.hue, hct.chroma * chroma, new_tone).to_int()
 
 
 def ensure_min_chroma(argb: int, min_chroma: float = 40) -> int:
@@ -197,6 +211,146 @@ def scale_chroma(argb: int, factor: float, maximum: float | None = None) -> int:
     if maximum is not None:
         new_chroma = min(maximum, new_chroma)
     return Hct.from_hct(hct.hue, new_chroma, hct.tone).to_int()
+
+
+def relative_luminance(argb: int) -> float:
+    """Calculate relative luminance per WCAG 2.1 spec."""
+    r = ((argb >> 16) & 0xFF) / 255.0
+    g = ((argb >> 8) & 0xFF) / 255.0
+    b = (argb & 0xFF) / 255.0
+
+    def linearize(c):
+        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+
+    return 0.2126 * linearize(r) + 0.7152 * linearize(g) + 0.0722 * linearize(b)
+
+
+def contrast_ratio(fg_argb: int, bg_argb: int) -> float:
+    """Calculate WCAG contrast ratio between two colors."""
+    l1 = relative_luminance(fg_argb)
+    l2 = relative_luminance(bg_argb)
+    lighter = max(l1, l2)
+    darker = min(l1, l2)
+    return (lighter + 0.05) / (darker + 0.05)
+
+
+def find_tone_for_contrast(
+    hue: float,
+    chroma: float,
+    start_tone: float,
+    limit_tone: float,
+    bg_argb: int,
+    min_ratio: float,
+    is_dark: bool,
+    step: float = 0.25,
+) -> tuple[int, float, bool, float]:
+    """Search tone values for contrast.
+
+    Returns:
+        (color_argb, tone, met_min_ratio, achieved_ratio)
+    """
+    direction = 1.0 if is_dark else -1.0
+    tone = start_tone
+    max_steps = max(1, int(math.ceil(abs(limit_tone - start_tone) / step)) + 2)
+
+    initial = Hct.from_hct(hue, chroma, max(0.0, min(100.0, start_tone))).to_int()
+    best_color = initial
+    best_tone = start_tone
+    best_ratio = contrast_ratio(initial, bg_argb)
+
+    for _ in range(max_steps):
+        clamped_tone = max(0.0, min(100.0, tone))
+        candidate = Hct.from_hct(hue, chroma, clamped_tone).to_int()
+        ratio = contrast_ratio(candidate, bg_argb)
+
+        if ratio > best_ratio:
+            best_color = candidate
+            best_tone = clamped_tone
+            best_ratio = ratio
+
+        if ratio >= min_ratio:
+            return candidate, clamped_tone, True, ratio
+
+        if is_dark and clamped_tone >= limit_tone:
+            break
+        if not is_dark and clamped_tone <= limit_tone:
+            break
+
+        tone += direction * step
+        if is_dark and tone > limit_tone:
+            tone = limit_tone
+        if not is_dark and tone < limit_tone:
+            tone = limit_tone
+
+    return best_color, best_tone, False, best_ratio
+
+
+def ensure_contrast(
+    fg_argb: int, bg_argb: int, min_ratio: float = 4.5, is_dark: bool = True
+) -> int:
+    """Adjust foreground tone to ensure minimum contrast ratio against background.
+
+    For dark mode, increases tone (lighter). For light mode, decreases tone (darker).
+    Preserves hue and boosts chroma when tone approaches extremes to prevent washed-out colors.
+    """
+    current_ratio = contrast_ratio(fg_argb, bg_argb)
+    if current_ratio >= min_ratio:
+        return fg_argb
+
+    hct = Hct.from_int(fg_argb)
+    original_tone = hct.tone
+    original_chroma = hct.chroma
+
+    # Tone limits to prevent colors from washing out to pure white/black.
+    # If min ratio is unreachable inside limits, return highest-contrast option.
+    tone_limit = 88.0 if is_dark else 20.0
+
+    best, best_tone, met_min, best_ratio = find_tone_for_contrast(
+        hct.hue,
+        hct.chroma,
+        original_tone,
+        tone_limit,
+        bg_argb,
+        min_ratio,
+        is_dark,
+    )
+
+    # Compensate for tone shift by boosting chroma
+    # When tone moves far from original, colors lose perceptual saturation
+    # Boost chroma proportionally to maintain color identity
+    tone_shift = abs(best_tone - original_tone)
+    if tone_shift > 10:
+        # Boost chroma by up to 40% for large tone shifts
+        # The further we shift, the more we compensate
+        boost_factor = 1.0 + min(0.4, (tone_shift - 10) / 50)
+        boosted_chroma = min(original_chroma * boost_factor, 80.0)
+        boosted_same_tone = Hct.from_hct(hct.hue, boosted_chroma, best_tone).to_int()
+        boosted_ratio = contrast_ratio(boosted_same_tone, bg_argb)
+
+        if met_min and boosted_ratio >= min_ratio:
+            return boosted_same_tone
+
+        boosted_best, _, boosted_met, boosted_best_ratio = find_tone_for_contrast(
+            hct.hue,
+            boosted_chroma,
+            best_tone,
+            tone_limit,
+            bg_argb,
+            min_ratio,
+            is_dark,
+        )
+
+        if met_min:
+            # Keep strict contrast if we already had a valid candidate.
+            if boosted_met:
+                return boosted_best
+            return best
+
+        # If target contrast is unreachable, keep the best achievable ratio.
+        if boosted_best_ratio > best_ratio:
+            return boosted_best
+
+    return best
 
 
 darkmode = args.mode == "dark"
@@ -404,6 +558,10 @@ if args.termscheme is not None:
             # Apply user saturation and brightness
             # Brightness affects tone: higher = lighter in dark mode, darker in light mode
             tone_mult = 1 + ((user_brightness - 0.5) * 0.8 * (1 if darkmode else -1))
+            # Foreground boost gently pushes ANSI colors away from background tone.
+            # Keep this bounded so high values don't collapse colors to white/black.
+            fg_boost_delta = args.term_fg_boost * 0.25 * (1 if darkmode else -1)
+            tone_mult = max(0.60, min(1.45, tone_mult + fg_boost_delta))
             harmonized = boost_chroma_tone(harmonized, user_saturation * 2.0, tone_mult)
             # Ensure minimum chroma for visual distinctiveness
             harmonized = ensure_min_chroma(harmonized, 40)
@@ -417,6 +575,29 @@ if args.termscheme is not None:
             harmonized = boost_chroma_tone(harmonized, 0.55, 1)
 
         term_colors[color] = argb_to_hex(harmonized)
+
+    # Second pass: ensure all foreground colors have sufficient contrast against background
+    # WCAG AA requires 4.5:1 for normal text, 3:1 for large text
+    # Normal colors (term1-6) use 4.5:1, bright colors (term9-14) use 3.5:1 since they're
+    # already intended to be lighter and we don't want to wash them out to white
+    if "term0" in term_colors:
+        bg_argb = hex_to_argb(term_colors["term0"])
+
+        # Normal semantic colors: stricter contrast (4.5:1)
+        normal_colors = ["term1", "term2", "term3", "term4", "term5", "term6"]
+        for color in normal_colors:
+            if color in term_colors:
+                fg_argb = hex_to_argb(term_colors[color])
+                adjusted = ensure_contrast(fg_argb, bg_argb, 4.5, darkmode)
+                term_colors[color] = argb_to_hex(adjusted)
+
+        # Bright semantic colors: lighter contrast requirement (3.5:1) to preserve vibrancy
+        bright_colors = ["term9", "term10", "term11", "term12", "term13", "term14"]
+        for color in bright_colors:
+            if color in term_colors:
+                fg_argb = hex_to_argb(term_colors[color])
+                adjusted = ensure_contrast(fg_argb, bg_argb, 3.5, darkmode)
+                term_colors[color] = argb_to_hex(adjusted)
 
 # Fallback: derive term colors from material colors when no termscheme provided
 if not term_colors and material_colors:
@@ -553,6 +734,8 @@ theme_meta = {
     "term_saturation": args.term_saturation,
     "term_brightness": args.term_brightness,
     "term_bg_brightness": args.term_bg_brightness,
+    "term_fg_boost": args.term_fg_boost,
+    "harmonize_threshold": args.harmonize_threshold,
     "color_strength": args.color_strength,
     "blend_bg_fg": args.blend_bg_fg,
     "generated_by": "generate_colors_material.py",

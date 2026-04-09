@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -18,8 +20,22 @@ AbstractWidget {
     property bool visibleWhenLocked: false
     property var configEntry: Config.options?.background?.widgets?.[configEntryName] ?? {}
     property string placementStrategy: configEntry.placementStrategy
-    property real targetX: Math.max(0, Math.min(configEntry.x, scaledScreenWidth - width))
-    property real targetY : Math.max(0, Math.min(configEntry.y, scaledScreenHeight - height))
+    function _snapToPixel(value: real): real {
+        const numeric = Number(value)
+        return Math.round(Number.isFinite(numeric) ? numeric : 0)
+    }
+    property real targetX: {
+        const rawX = Number(configEntry?.x ?? 0)
+        const safeX = Number.isFinite(rawX) ? rawX : 0
+        const maxX = Math.max(0, scaledScreenWidth - width)
+        return _snapToPixel(Math.max(0, Math.min(safeX, maxX)))
+    }
+    property real targetY: {
+        const rawY = Number(configEntry?.y ?? 0)
+        const safeY = Number.isFinite(rawY) ? rawY : 0
+        const maxY = Math.max(0, scaledScreenHeight - height)
+        return _snapToPixel(Math.max(0, Math.min(safeY, maxY)))
+    }
 
     Binding {
         target: root
@@ -63,8 +79,8 @@ AbstractWidget {
 
     onReleased: {
         if (GlobalStates.screenLocked) return;
-        root.targetX = root.x;
-        root.targetY  = root.y;
+        root.targetX = root._snapToPixel(root.x);
+        root.targetY  = root._snapToPixel(root.y);
         configEntry.x = root.targetX;
         configEntry.y = root.targetY ;
     }
@@ -139,10 +155,9 @@ AbstractWidget {
                 const parsedContent = JSON.parse(output);
                 root.dominantColor = parsedContent.dominant_color || Appearance.colors.colPrimary;
                 if (root.placementStrategy === "free") return;
-                root.targetX = parsedContent.center_x * root.wallpaperScale - root.width / 2;
-                root.targetY  = parsedContent.center_y * root.wallpaperScale - root.height / 2;
+                root.targetX = root._snapToPixel(parsedContent.center_x * root.wallpaperScale - root.width / 2);
+                root.targetY  = root._snapToPixel(parsedContent.center_y * root.wallpaperScale - root.height / 2);
             }
         }
     }
 }
-

@@ -24,6 +24,15 @@ Item {
     
     // Complete search index with all individual options + targetLabel for spotlight
     property var searchIndex: [
+        // === Quick (0) ===
+        { pageIndex: 0, pageName: "Quick", section: "Wallpaper & Colors", label: "Dark mode", targetLabel: "Dark mode", keywords: ["quick", "dark", "light", "mode", "theme", "scheme"] },
+        { pageIndex: 0, pageName: "Quick", section: "Wallpaper & Colors", label: "Per-monitor wallpapers", targetLabel: "Per-monitor wallpapers", keywords: ["quick", "wallpaper", "monitor", "display", "multi-monitor", "per-monitor"] },
+        { pageIndex: 0, pageName: "Quick", section: "Wallpaper & Colors", label: "Colors only mode", targetLabel: "Colors only mode", keywords: ["quick", "wallpaper", "colors", "theme source", "preview", "palette"] },
+        { pageIndex: 0, pageName: "Quick", section: "Wallpaper & Colors", label: "Color scheme", targetLabel: "Color scheme", keywords: ["quick", "colors", "scheme", "palette", "material", "theme"] },
+        { pageIndex: 0, pageName: "Quick", section: "Wallpaper & Colors", label: "Color strength", targetLabel: "Color strength", keywords: ["quick", "wallpaper", "color", "strength", "vivid", "accent"] },
+        { pageIndex: 0, pageName: "Quick", section: "Wallpaper & Colors", label: "Transparency", targetLabel: "Transparency", keywords: ["quick", "transparency", "glass", "blur", "appearance"] },
+        { pageIndex: 0, pageName: "Quick", section: "Quick actions", label: "Show reload notifications", targetLabel: "Show reload notifications", keywords: ["quick", "reload", "notifications", "toast", "quickshell", "niri"] },
+
         // === General (1) ===
         // Audio
         { pageIndex: 1, pageName: "General", section: "Audio", label: "Volume protection", targetLabel: "Volume protection", keywords: ["volume", "sound", "audio", "protection", "limit", "hearing", "damage", "loud"] },
@@ -61,6 +70,7 @@ Item {
         { pageIndex: 2, pageName: "Taskbar", section: "Desktop Peek", label: "Hover delay", targetLabel: "Hover delay", keywords: ["desktop", "peek", "delay", "timeout"] },
         { pageIndex: 2, pageName: "Taskbar", section: "Clock & Notifications", label: "Show seconds", targetLabel: "Show seconds", keywords: ["clock", "seconds", "time", "taskbar"] },
         { pageIndex: 2, pageName: "Taskbar", section: "Clock & Notifications", label: "Show unread count", targetLabel: "Show unread count", keywords: ["notification", "badge", "count", "unread", "clock"] },
+        { pageIndex: 2, pageName: "Taskbar", section: "Clock & Notifications", label: "Activation watermark", targetLabel: "Activation watermark", keywords: ["taskbar", "activation", "watermark", "activate", "windows"] },
         
         // === Background (3) ===
         { pageIndex: 3, pageName: "Background", section: "Wallpaper", label: "Use Material ii wallpaper", targetLabel: "Use Material ii wallpaper", keywords: ["wallpaper", "background", "material", "share", "image"] },
@@ -112,51 +122,65 @@ Item {
         { pageIndex: 4, pageName: "Themes", section: "Waffle Typography", label: "Font family", targetLabel: "Font family", keywords: ["font", "family", "typography", "segoe", "inter", "roboto", "noto"] },
         { pageIndex: 4, pageName: "Themes", section: "Waffle Typography", label: "Font scale", targetLabel: "Font scale", keywords: ["font", "size", "scale", "typography", "bigger", "smaller"] },
         
-        // === Interface (5) ===
-        { pageIndex: 5, pageName: "Interface", section: "Notifications", label: "Normal timeout", targetLabel: "Normal timeout", keywords: ["notification", "timeout", "duration", "normal"] },
-        { pageIndex: 5, pageName: "Interface", section: "Notifications", label: "Low priority timeout", targetLabel: "Low priority timeout", keywords: ["notification", "timeout", "low", "priority"] },
-        { pageIndex: 5, pageName: "Interface", section: "Notifications", label: "Critical timeout", targetLabel: "Critical timeout", keywords: ["notification", "timeout", "critical", "urgent"] },
-        { pageIndex: 5, pageName: "Interface", section: "Notifications", label: "Ignore app timeout", targetLabel: "Ignore app timeout", keywords: ["notification", "timeout", "app", "ignore", "override"] },
-        { pageIndex: 5, pageName: "Interface", section: "Notifications", label: "Popup position", targetLabel: "Popup position", keywords: ["notification", "position", "popup", "corner", "top", "bottom", "left", "right"] },
-        { pageIndex: 5, pageName: "Interface", section: "Notifications", label: "Do Not Disturb", targetLabel: "Do Not Disturb", keywords: ["notification", "dnd", "silent", "mute", "disturb", "quiet"] },
-        { pageIndex: 5, pageName: "Interface", section: "On-Screen Display", label: "OSD timeout", targetLabel: "OSD timeout", keywords: ["osd", "volume", "brightness", "timeout", "duration"] },
-        { pageIndex: 5, pageName: "Interface", section: "Lock Screen", label: "Enable blur", targetLabel: "Enable blur", keywords: ["lock", "screen", "blur", "background"] },
-        { pageIndex: 5, pageName: "Interface", section: "Lock Screen", label: "Blur radius", targetLabel: "Blur radius", keywords: ["lock", "screen", "blur", "radius"] },
-        { pageIndex: 5, pageName: "Interface", section: "Lock Screen", label: "Center clock", targetLabel: "Center clock", keywords: ["lock", "screen", "clock", "center", "position"] },
-        { pageIndex: 5, pageName: "Interface", section: "Lock Screen", label: "Show 'Locked' text", targetLabel: "Show 'Locked' text", keywords: ["lock", "screen", "text", "locked"] },
-        { pageIndex: 5, pageName: "Interface", section: "Screen Corners", label: "Fake rounded corners", targetLabel: "Fake rounded corners", keywords: ["screen", "corners", "rounded", "rounding", "fake"] },
+        // === Gowall (5) ===
+        { pageIndex: 5, pageName: "Gowall", section: "Source Image", label: "Source image", targetLabel: "Source image", keywords: ["gowall", "wallpaper", "image", "source", "browse"] },
+        { pageIndex: 5, pageName: "Gowall", section: "Source Image", label: "Use current wallpaper", targetLabel: "Use current wallpaper", keywords: ["gowall", "wallpaper", "current"] },
+        { pageIndex: 5, pageName: "Gowall", section: "Operation", label: "Recolor", targetLabel: "Operation", keywords: ["gowall", "recolor", "convert", "palette", "theme"] },
+        { pageIndex: 5, pageName: "Gowall", section: "Operation", label: "Effects", targetLabel: "Operation", keywords: ["gowall", "effects", "grayscale", "flip", "mirror", "brightness"] },
+        { pageIndex: 5, pageName: "Gowall", section: "Operation", label: "Invert", targetLabel: "Operation", keywords: ["gowall", "invert", "colors", "negative"] },
+        { pageIndex: 5, pageName: "Gowall", section: "Operation", label: "Pixelate", targetLabel: "Operation", keywords: ["gowall", "pixelate", "pixel", "8bit"] },
+        { pageIndex: 5, pageName: "Gowall", section: "Operation", label: "Upscale", targetLabel: "Operation", keywords: ["gowall", "upscale", "ai", "esrgan", "quality"] },
+        { pageIndex: 5, pageName: "Gowall", section: "Color Scheme Source", label: "Built-in theme", targetLabel: "Color Scheme Source", keywords: ["gowall", "builtin", "theme", "catppuccin", "nord", "gruvbox"] },
+        { pageIndex: 5, pageName: "Gowall", section: "Color Scheme Source", label: "iNiR theme", targetLabel: "Color Scheme Source", keywords: ["gowall", "inir", "palette", "material you"] },
+        { pageIndex: 5, pageName: "Gowall", section: "Color Scheme Source", label: "Custom palette", targetLabel: "Color Scheme Source", keywords: ["gowall", "custom", "palette", "colors"] },
+        { pageIndex: 5, pageName: "Gowall", section: "Output", label: "Format", targetLabel: "Format", keywords: ["gowall", "output", "format", "png", "webp", "jpg"] },
+        { pageIndex: 5, pageName: "Gowall", section: "Extract Palette", label: "Extract colors", targetLabel: "Extract colors", keywords: ["gowall", "extract", "palette", "colors", "picker"] },
         
-        // === Modules (6) ===
-        { pageIndex: 6, pageName: "Modules", section: "Panel Style", label: "Panel family", targetLabel: "Panel family", keywords: ["panel", "family", "style", "material", "waffle", "windows"] },
-        { pageIndex: 6, pageName: "Modules", section: "Material Modules in Waffle", label: "Left Sidebar", targetLabel: "Left Sidebar", keywords: ["sidebar", "left", "ai", "chat", "translator"] },
-        { pageIndex: 6, pageName: "Modules", section: "Material Modules in Waffle", label: "Right Sidebar", targetLabel: "Right Sidebar", keywords: ["sidebar", "right", "quick", "settings", "calendar"] },
-        { pageIndex: 6, pageName: "Modules", section: "Material Modules in Waffle", label: "Dock", targetLabel: "Dock", keywords: ["dock", "macos", "pinned", "apps"] },
-        { pageIndex: 6, pageName: "Modules", section: "Material Modules in Waffle", label: "Media Controls Overlay", targetLabel: "Media Controls Overlay", keywords: ["media", "controls", "overlay", "music", "player"] },
-        { pageIndex: 6, pageName: "Modules", section: "Material Modules in Waffle", label: "Screen Corners", targetLabel: "Screen Corners", keywords: ["screen", "corners", "hot", "rounded"] },
-        { pageIndex: 6, pageName: "Modules", section: "Waffle Modules", label: "Widgets Panel", targetLabel: "Widgets Panel", keywords: ["widgets", "panel", "weather", "system", "media"] },
-        { pageIndex: 6, pageName: "Modules", section: "Waffle Modules", label: "Desktop Backdrop", targetLabel: "Desktop Backdrop", keywords: ["backdrop", "desktop", "overview", "blur"] },
+        // === Interface (6) ===
+        { pageIndex: 6, pageName: "Interface", section: "Notifications", label: "Normal timeout", targetLabel: "Normal timeout", keywords: ["notification", "timeout", "duration", "normal"] },
+        { pageIndex: 6, pageName: "Interface", section: "Notifications", label: "Low priority timeout", targetLabel: "Low priority timeout", keywords: ["notification", "timeout", "low", "priority"] },
+        { pageIndex: 6, pageName: "Interface", section: "Notifications", label: "Critical timeout", targetLabel: "Critical timeout", keywords: ["notification", "timeout", "critical", "urgent"] },
+        { pageIndex: 6, pageName: "Interface", section: "Notifications", label: "Ignore app timeout", targetLabel: "Ignore app timeout", keywords: ["notification", "timeout", "app", "ignore", "override"] },
+        { pageIndex: 6, pageName: "Interface", section: "Notifications", label: "Popup position", targetLabel: "Popup position", keywords: ["notification", "position", "popup", "corner", "top", "bottom", "left", "right"] },
+        { pageIndex: 6, pageName: "Interface", section: "Notifications", label: "Do Not Disturb", targetLabel: "Do Not Disturb", keywords: ["notification", "dnd", "silent", "mute", "disturb", "quiet"] },
+        { pageIndex: 6, pageName: "Interface", section: "On-Screen Display", label: "OSD timeout", targetLabel: "OSD timeout", keywords: ["osd", "volume", "brightness", "timeout", "duration"] },
+        { pageIndex: 6, pageName: "Interface", section: "Lock Screen", label: "Enable blur", targetLabel: "Enable blur", keywords: ["lock", "screen", "blur", "background"] },
+        { pageIndex: 6, pageName: "Interface", section: "Lock Screen", label: "Blur radius", targetLabel: "Blur radius", keywords: ["lock", "screen", "blur", "radius"] },
+        { pageIndex: 6, pageName: "Interface", section: "Lock Screen", label: "Center clock", targetLabel: "Center clock", keywords: ["lock", "screen", "clock", "center", "position"] },
+        { pageIndex: 6, pageName: "Interface", section: "Lock Screen", label: "Show 'Locked' text", targetLabel: "Show 'Locked' text", keywords: ["lock", "screen", "text", "locked"] },
+        { pageIndex: 6, pageName: "Interface", section: "Screen Corners", label: "Fake rounded corners", targetLabel: "Fake rounded corners", keywords: ["screen", "corners", "rounded", "rounding", "fake"] },
         
-        // === Waffle Style (7) ===
-        { pageIndex: 7, pageName: "Waffle Style", section: "Theming", label: "Use Material colors", targetLabel: "Use Material colors", keywords: ["material", "colors", "theme", "grey", "accent"] },
-        { pageIndex: 7, pageName: "Waffle Style", section: "Alt+Tab Switcher", label: "Style", targetLabel: "Style", keywords: ["alt", "tab", "switcher", "style", "thumbnails", "cards", "compact", "list"] },
-        { pageIndex: 7, pageName: "Waffle Style", section: "Alt+Tab Switcher", label: "Quick switch", targetLabel: "Quick switch", keywords: ["alt", "tab", "quick", "switch", "fast"] },
-        { pageIndex: 7, pageName: "Waffle Style", section: "Alt+Tab Switcher", label: "Most recent first", targetLabel: "Most recent first", keywords: ["alt", "tab", "recent", "order", "mru"] },
-        { pageIndex: 7, pageName: "Waffle Style", section: "Alt+Tab Switcher", label: "Auto-hide", targetLabel: "Auto-hide", keywords: ["alt", "tab", "auto", "hide", "timeout"] },
-        { pageIndex: 7, pageName: "Waffle Style", section: "Alt+Tab Switcher", label: "Auto-hide delay", targetLabel: "Auto-hide delay", keywords: ["alt", "tab", "auto", "hide", "delay", "timeout"] },
-        { pageIndex: 7, pageName: "Waffle Style", section: "Behavior", label: "Allow multiple panels open", targetLabel: "Allow multiple panels open", keywords: ["panels", "multiple", "open", "start", "action"] },
-        { pageIndex: 7, pageName: "Waffle Style", section: "Behavior", label: "Smoother menu animations", targetLabel: "Smoother menu animations", keywords: ["menu", "animations", "smooth", "popup"] },
-        { pageIndex: 7, pageName: "Waffle Style", section: "Widgets Panel", label: "Show date & time", targetLabel: "Show date & time", keywords: ["widgets", "date", "time", "clock"] },
-        { pageIndex: 7, pageName: "Waffle Style", section: "Widgets Panel", label: "Show weather", targetLabel: "Show weather", keywords: ["widgets", "weather", "temperature", "forecast"] },
-        { pageIndex: 7, pageName: "Waffle Style", section: "Widgets Panel", label: "Show system info", targetLabel: "Show system info", keywords: ["widgets", "system", "info", "cpu", "ram", "memory"] },
-        { pageIndex: 7, pageName: "Waffle Style", section: "Widgets Panel", label: "Show media controls", targetLabel: "Show media controls", keywords: ["widgets", "media", "controls", "music", "player"] },
-        { pageIndex: 7, pageName: "Waffle Style", section: "Widgets Panel", label: "Show quick actions", targetLabel: "Show quick actions", keywords: ["widgets", "quick", "actions", "buttons"] },
-        { pageIndex: 7, pageName: "Waffle Style", section: "Calendar", label: "Force 2-char day names", targetLabel: "Force 2-char day names", keywords: ["calendar", "day", "names", "short", "2char"] },
+        // === Modules (7) ===
+        { pageIndex: 7, pageName: "Modules", section: "Panel Style", label: "Panel family", targetLabel: "Panel family", keywords: ["panel", "family", "style", "material", "waffle", "windows"] },
+        { pageIndex: 7, pageName: "Modules", section: "Material Modules in Waffle", label: "Left Sidebar", targetLabel: "Left Sidebar", keywords: ["sidebar", "left", "ai", "chat", "translator"] },
+        { pageIndex: 7, pageName: "Modules", section: "Material Modules in Waffle", label: "Right Sidebar", targetLabel: "Right Sidebar", keywords: ["sidebar", "right", "quick", "settings", "calendar"] },
+        { pageIndex: 7, pageName: "Modules", section: "Material Modules in Waffle", label: "Dock", targetLabel: "Dock", keywords: ["dock", "macos", "pinned", "apps"] },
+        { pageIndex: 7, pageName: "Modules", section: "Material Modules in Waffle", label: "Media Controls Overlay", targetLabel: "Media Controls Overlay", keywords: ["media", "controls", "overlay", "music", "player"] },
+        { pageIndex: 7, pageName: "Modules", section: "Material Modules in Waffle", label: "Screen Corners", targetLabel: "Screen Corners", keywords: ["screen", "corners", "hot", "rounded"] },
+        { pageIndex: 7, pageName: "Modules", section: "Waffle Modules", label: "Widgets Panel", targetLabel: "Widgets Panel", keywords: ["widgets", "panel", "weather", "system", "media"] },
+        { pageIndex: 7, pageName: "Modules", section: "Waffle Modules", label: "Desktop Backdrop", targetLabel: "Desktop Backdrop", keywords: ["backdrop", "desktop", "overview", "blur"] },
         
-        // === Shortcuts (8) ===
-        { pageIndex: 8, pageName: "Shortcuts", section: "", label: "Keyboard Shortcuts", targetLabel: "", keywords: ["shortcuts", "keybinds", "hotkeys", "keyboard", "niri", "super", "mod"] },
+        // === Waffle Style (8) ===
+        { pageIndex: 8, pageName: "Waffle Style", section: "Theming", label: "Use Material colors", targetLabel: "Use Material colors", keywords: ["material", "colors", "theme", "grey", "accent"] },
+        { pageIndex: 8, pageName: "Waffle Style", section: "Alt+Tab Switcher", label: "Style", targetLabel: "Style", keywords: ["alt", "tab", "switcher", "style", "thumbnails", "cards", "compact", "list"] },
+        { pageIndex: 8, pageName: "Waffle Style", section: "Alt+Tab Switcher", label: "Quick switch", targetLabel: "Quick switch", keywords: ["alt", "tab", "quick", "switch", "fast"] },
+        { pageIndex: 8, pageName: "Waffle Style", section: "Alt+Tab Switcher", label: "Most recent first", targetLabel: "Most recent first", keywords: ["alt", "tab", "recent", "order", "mru"] },
+        { pageIndex: 8, pageName: "Waffle Style", section: "Alt+Tab Switcher", label: "Auto-hide", targetLabel: "Auto-hide", keywords: ["alt", "tab", "auto", "hide", "timeout"] },
+        { pageIndex: 8, pageName: "Waffle Style", section: "Alt+Tab Switcher", label: "Auto-hide delay", targetLabel: "Auto-hide delay", keywords: ["alt", "tab", "auto", "hide", "delay", "timeout"] },
+        { pageIndex: 8, pageName: "Waffle Style", section: "Behavior", label: "Allow multiple panels open", targetLabel: "Allow multiple panels open", keywords: ["panels", "multiple", "open", "start", "action"] },
+        { pageIndex: 8, pageName: "Waffle Style", section: "Behavior", label: "Smoother menu animations", targetLabel: "Smoother menu animations", keywords: ["menu", "animations", "smooth", "popup"] },
+        { pageIndex: 8, pageName: "Waffle Style", section: "Widgets Panel", label: "Show date & time", targetLabel: "Show date & time", keywords: ["widgets", "date", "time", "clock"] },
+        { pageIndex: 8, pageName: "Waffle Style", section: "Widgets Panel", label: "Show weather", targetLabel: "Show weather", keywords: ["widgets", "weather", "temperature", "forecast"] },
+        { pageIndex: 8, pageName: "Waffle Style", section: "Widgets Panel", label: "Show system info", targetLabel: "Show system info", keywords: ["widgets", "system", "info", "cpu", "ram", "memory"] },
+        { pageIndex: 8, pageName: "Waffle Style", section: "Widgets Panel", label: "Show media controls", targetLabel: "Show media controls", keywords: ["widgets", "media", "controls", "music", "player"] },
+        { pageIndex: 8, pageName: "Waffle Style", section: "Widgets Panel", label: "Show quick actions", targetLabel: "Show quick actions", keywords: ["widgets", "quick", "actions", "buttons"] },
+        { pageIndex: 8, pageName: "Waffle Style", section: "Calendar", label: "Force 2-char day names", targetLabel: "Force 2-char day names", keywords: ["calendar", "day", "names", "short", "2char"] },
         
-        // === About (9) ===
-        { pageIndex: 9, pageName: "About", section: "", label: "About ii", targetLabel: "", keywords: ["about", "version", "credits", "github", "info"] }
+        // === Shortcuts (9) ===
+        { pageIndex: 9, pageName: "Shortcuts", section: "", label: "Keyboard Shortcuts", targetLabel: "", keywords: ["shortcuts", "keybinds", "hotkeys", "keyboard", "niri", "super", "mod"] },
+        
+        // === About (10) ===
+        { pageIndex: 10, pageName: "About", section: "", label: "About ii", targetLabel: "", keywords: ["about", "version", "credits", "github", "info"] }
     ]
     
     function highlightTerms(text: string, terms: list<string>): string {
@@ -336,7 +360,7 @@ Item {
         Rectangle {
             Layout.fillHeight: true
             Layout.preferredWidth: root.navExpanded ? 240 : 56
-            color: Looks.colors.bgPanelFooterBase
+            color: Looks.colors.bg1Base
             
             Behavior on Layout.preferredWidth {
                 animation: NumberAnimation { duration: Looks.transition.enabled ? Looks.transition.duration.medium : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
@@ -345,7 +369,10 @@ Item {
             ColumnLayout {
                 anchors {
                     fill: parent
-                    margins: 14
+                    topMargin: 10
+                    bottomMargin: 10
+                    leftMargin: 12
+                    rightMargin: 12
                 }
                 spacing: 4
                 
@@ -413,23 +440,22 @@ Item {
                     Layout.bottomMargin: 6
                     height: 1
                     color: Looks.colors.bg2Border
-                    opacity: 0.3
+                    opacity: 0.15
                 }
                 
-                // Header icon (collapsed) — larger, with accent tint
+                // Header icon (collapsed)
                 Item {
                     visible: !root.navExpanded
                     Layout.preferredWidth: 32
                     Layout.preferredHeight: 32
                     Layout.alignment: Qt.AlignHCenter
-                    Layout.bottomMargin: 8
+                    Layout.bottomMargin: 6
                     
                     FluentIcon {
                         anchors.centerIn: parent
                         icon: "settings"
-                        implicitSize: 22
-                        color: Looks.colors.accent
-                        opacity: 0.8
+                        implicitSize: 20
+                        color: Looks.colors.subfg
                     }
                 }
                 
@@ -438,8 +464,8 @@ Item {
                     id: searchBarContainer
                     visible: root.navExpanded
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 38
-                    radius: Looks.radius.medium + 1
+                    Layout.preferredHeight: 34
+                    radius: Looks.radius.medium
                     color: Looks.colors.inputBg
                     border.width: searchInput.activeFocus ? 2 : 1
                     border.color: searchInput.activeFocus ? Looks.colors.accent : Looks.colors.bg2Border
@@ -451,14 +477,14 @@ Item {
                     RowLayout {
                         anchors {
                             fill: parent
-                            leftMargin: 10
-                            rightMargin: 10
+                            leftMargin: 9
+                            rightMargin: 9
                         }
-                        spacing: 8
+                        spacing: 7
                         
                         FluentIcon {
                             icon: "search"
-                            implicitSize: 16
+                            implicitSize: 14
                             color: Looks.colors.subfg
                         }
                         
@@ -509,7 +535,8 @@ Item {
                                 color: Looks.colors.subfg
                                 font.family: Looks.font.family.ui
                                 font.pixelSize: Looks.font.pixelSize.normal
-                                visible: !searchInput.text && !searchInput.activeFocus
+                                visible: !searchInput.text
+                                opacity: 0.6
                             }
                         }
                         
@@ -553,15 +580,15 @@ Item {
                     Layout.fillWidth: true
                     Layout.preferredHeight: Math.min((searchResultsList.contentHeight || 0) + 8, 300)
                     radius: Looks.radius.large
-                    color: Looks.colors.bg1Base
+                    color: Looks.colors.bg2Base
                     border.width: 1
                     border.color: Looks.colors.bg2Border
                     
                     layer.enabled: Appearance.effectsEnabled
                     layer.effect: DropShadow {
                         color: Looks.colors.shadow
-                        radius: 8
-                        samples: 9
+                        radius: 6
+                        samples: 7
                         verticalOffset: 2
                     }
                     
@@ -696,7 +723,7 @@ Item {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 36
                     radius: Looks.radius.medium
-                    color: Looks.colors.bg1Base
+                    color: Looks.colors.bg2Base
                     
                     RowLayout {
                         anchors.centerIn: parent
@@ -716,7 +743,7 @@ Item {
                     }
                 }
 
-                Item { height: 8 }
+                Item { height: 4 }
                 
                 // Navigation items
                 Flickable {
@@ -729,7 +756,7 @@ Item {
                     ColumnLayout {
                         id: navColumn
                         width: parent.width
-                        spacing: 3
+                        spacing: 2
                         
                         Repeater {
                             model: root.pages
@@ -750,10 +777,19 @@ Item {
                     }
                 }
                 
+                // Separator above collapse button
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.topMargin: 4
+                    height: 1
+                    color: Looks.colors.bg2Border
+                    opacity: 0.15
+                }
+                
                 // Expand/collapse button
                 WBorderlessButton {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 36
+                    Layout.preferredHeight: 32
                     
                     contentItem: RowLayout {
                         spacing: 10
@@ -761,7 +797,9 @@ Item {
                         Item {
                             implicitWidth: 20
                             implicitHeight: 20
-                            Layout.leftMargin: root.navExpanded ? 12 : 14
+                            Layout.leftMargin: root.navExpanded ? 12 : 0
+                            Layout.fillWidth: !root.navExpanded
+                            Layout.alignment: root.navExpanded ? Qt.AlignVCenter : Qt.AlignCenter
                             
                             FluentIcon {
                                 anchors.centerIn: parent
@@ -785,12 +823,12 @@ Item {
             }
         }
         
-        // Separator — subtle gradient-like line
+        // Separator — subtle divider
         Rectangle {
             Layout.fillHeight: true
             width: 1
             color: Looks.colors.bg2Border
-            opacity: 0.4
+            opacity: 0.2
         }
         
         // Content area
@@ -842,15 +880,15 @@ Item {
                     }
                 }
                 
-                Repeater {
-                    id: pageRepeater
-                    model: root.pages.length
+                 Repeater {
+                     id: pageRepeater
+                     model: root.pages.length
                     
-                    Loader {
-                        id: pageLoader
-                        required property int index
-                        anchors.fill: parent
-                        active: Config.ready && (pageStack.visitedPages[index] === true)
+                     Loader {
+                         id: pageLoader
+                         required property int index
+                         anchors.fill: parent
+                         active: Config.ready && (pageStack.visitedPages[index] === true)
                         asynchronous: index !== root.currentPage
                         source: root.pages[index].component
                         visible: index === root.currentPage && status === Loader.Ready
@@ -858,14 +896,26 @@ Item {
                         // Disabled pages must not intercept mouse events even at opacity 0
                         enabled: visible
 
-                        Behavior on opacity {
-                            animation: NumberAnimation { duration: Looks.transition.enabled ? Looks.transition.duration.normal : 0; easing.type: Easing.OutCubic }
-                        }
-                    }
-                }
-            }
-        }
-    }
+                         Behavior on opacity {
+                             animation: NumberAnimation { duration: Looks.transition.enabled ? Looks.transition.duration.normal : 0; easing.type: Easing.OutCubic }
+                         }
+
+                         Connections {
+                             target: pageLoader.item
+                             ignoreUnknownSignals: true
+
+                             function onNavigateRequested(pageIndex) {
+                                 if (pageIndex < 0 || pageIndex >= root.pages.length)
+                                     return
+
+                                 root.currentPage = pageIndex
+                             }
+                         }
+                     }
+                 }
+             }
+         }
+     }
     
     // Keyboard shortcut for search
     Shortcut {

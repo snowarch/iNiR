@@ -388,49 +388,74 @@ Item {
 
         signal clicked()
 
-        implicitHeight: value !== "" ? 50 : 44
+        implicitHeight: 48
 
-        RippleButton {
-            id: chipButton
+        // Style helpers
+        readonly property color _colPrimary: bg.inirEverywhere ? Appearance.inir.colPrimary
+            : bg.angelEverywhere ? Appearance.angel.colPrimary
+            : Appearance.colors.colPrimary
+        readonly property color _colText: bg.inirEverywhere ? Appearance.inir.colText
+            : bg.angelEverywhere ? Appearance.angel.colText
+            : Appearance.colors.colOnLayer1
+        readonly property color _colSub: bg.inirEverywhere ? Appearance.inir.colTextSecondary
+            : bg.angelEverywhere ? Appearance.angel.colTextSecondary
+            : Appearance.colors.colSubtext
+
+        Rectangle {
+            id: chipBg
             anchors.fill: parent
-            buttonRadius: bg.angelEverywhere ? Appearance.angel.roundingSmall
+            radius: bg.angelEverywhere ? Appearance.angel.roundingSmall
                 : bg.inirEverywhere ? Appearance.inir.roundingSmall
                 : Appearance.rounding.small
-            colBackground: bg.angelEverywhere ? Appearance.angel.colGlassCard
-                : bg.inirEverywhere ? Appearance.inir.colLayer1
-                : bg.colDarkSurface
-            colBackgroundHover: bg.angelEverywhere ? Appearance.angel.colGlassCardHover
-                : bg.inirEverywhere ? Appearance.inir.colLayer2Hover
-                : bg.colDarkSurfaceHover
-            colRipple: bg.angelEverywhere ? Appearance.angel.colGlassCardActive
-                : bg.inirEverywhere ? Appearance.inir.colLayer2Active
-                : bg.colDarkSurfaceActive
-            onClicked: chip.clicked()
+            color: {
+                if (chipMA.containsPress)
+                    return bg.inirEverywhere ? Appearance.inir.colLayer2Active
+                        : bg.angelEverywhere ? Appearance.angel.colGlassCardActive
+                        : bg.colDarkSurfaceActive
+                if (chipMA.containsMouse)
+                    return bg.inirEverywhere ? Appearance.inir.colLayer2Hover
+                        : bg.angelEverywhere ? Appearance.angel.colGlassCardHover
+                        : bg.colDarkSurfaceHover
+                return "transparent"
+            }
+            border.width: 0
 
-            contentItem: RowLayout {
+            Behavior on color {
+                enabled: Appearance.animationsEnabled
+                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+            }
+
+            RowLayout {
                 anchors.fill: parent
-                anchors.margins: 9
-                spacing: 7
+                anchors.leftMargin: 8
+                anchors.rightMargin: 10
+                spacing: 9
 
-                MaterialSymbol {
-                    iconSize: 19
-                    text: chip.chipIcon
-                    color: bg.inirEverywhere ? Appearance.inir.colPrimary
-                        : bg.angelEverywhere ? Appearance.angel.colPrimary
-                        : Appearance.colors.colPrimary
+                // Icon in accent-tinted circle
+                Rectangle {
+                    Layout.preferredWidth: 32
+                    Layout.preferredHeight: 32
+                    radius: 16
+                    color: ColorUtils.transparentize(chip._colPrimary, 0.84)
+
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        iconSize: 17
+                        text: chip.chipIcon
+                        color: chip._colPrimary
+                    }
                 }
 
                 ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: 0
+                    spacing: 1
 
                     StyledText {
                         Layout.fillWidth: true
                         text: chip.chipLabel
                         font.pixelSize: Appearance.font.pixelSize.small
-                        color: bg.inirEverywhere ? Appearance.inir.colText
-                            : bg.angelEverywhere ? Appearance.angel.colText
-                            : Appearance.colors.colOnLayer1
+                        font.weight: Font.Medium
+                        color: chip._colText
                         elide: Text.ElideRight
                     }
 
@@ -439,27 +464,35 @@ Item {
                         visible: chip.value !== ""
                         text: chip.value
                         font.pixelSize: Appearance.font.pixelSize.smallest
-                        font.weight: Font.Medium
-                        color: bg.inirEverywhere ? Appearance.inir.colTextSecondary
-                            : bg.angelEverywhere ? Appearance.angel.colTextSecondary
-                            : Appearance.colors.colSubtext
+                        color: chip._colSub
                         elide: Text.ElideRight
                     }
                 }
 
                 MaterialSymbol {
                     Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-                    iconSize: 16
+                    iconSize: 14
                     text: "chevron_right"
-                    color: bg.inirEverywhere ? Appearance.inir.colTextSecondary
-                        : bg.angelEverywhere ? Appearance.angel.colTextSecondary
-                        : Appearance.colors.colSubtext
+                    color: chip._colSub
+                    opacity: chipMA.containsMouse ? 0.9 : 0.5
+                    Behavior on opacity {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation { duration: 120 }
+                    }
                 }
+            }
+
+            MouseArea {
+                id: chipMA
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: chip.clicked()
             }
         }
 
         BubbleToolTip {
-            visible: chipButton.hovered
+            visible: chipMA.containsMouse
             position: "left"
             text: chip.chipLabel
         }
@@ -1218,12 +1251,14 @@ Item {
                                             anchors.fill: parent
                                             implicitHeight: ccCard.implicitHeight + 10
                                             radius: bg.angelEverywhere ? Appearance.angel.roundingNormal : bg.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-                                            color: bg.angelEverywhere ? Appearance.angel.colGlassCard : bg.inirEverywhere ? Appearance.inir.colLayer1 : bg.colDarkSurface
-                                            border.width: bg.angelEverywhere ? Appearance.angel.cardBorderWidth : 1
+                                            color: bg.angelEverywhere ? Appearance.angel.colGlassCard
+                                                : bg.inirEverywhere ? Appearance.inir.colLayer1
+                                                : "transparent"
+                                            border.width: bg.angelEverywhere ? Appearance.angel.cardBorderWidth
+                                                : bg.inirEverywhere ? 1 : 0
                                             border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.22)
                                                 : bg.inirEverywhere ? Appearance.inir.colBorder
-                                                : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.78)
-                                                : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.72)
+                                                : "transparent"
                                             ControlsCard { id: ccCard; anchors.fill: parent; anchors.margins: 4 }
                                             AngelPartialBorder { targetRadius: ccSurface.radius }
                                         }
@@ -1276,8 +1311,8 @@ Item {
                                     GridLayout {
                                         Layout.fillWidth: true
                                         columns: 2
-                                        columnSpacing: 6
-                                        rowSpacing: 6
+                                        columnSpacing: 5
+                                        rowSpacing: 5
 
                                         ControlChipButton { Layout.fillWidth: true; chipIcon: "media_output"; chipLabel: Translation.tr("Output"); value: Audio.sink?.description ?? ""; onClicked: root.showAudioOutputDialog = true }
                                         ControlChipButton { Layout.fillWidth: true; chipIcon: "mic_external_on"; chipLabel: Translation.tr("Input"); value: Audio.source?.description ?? ""; onClicked: root.showAudioInputDialog = true }
@@ -1704,8 +1739,8 @@ Item {
         GridLayout {
             Layout.fillWidth: true
             columns: 3
-            columnSpacing: 6
-            rowSpacing: 6
+            columnSpacing: 5
+            rowSpacing: 5
 
             QuickActionButton {
                 Layout.fillWidth: true
@@ -1829,7 +1864,21 @@ Item {
 
         signal clicked()
 
-        implicitHeight: 44
+        implicitHeight: 52
+
+        // Style helpers
+        readonly property color _colPrimary: bg.inirEverywhere ? Appearance.inir.colPrimary
+            : bg.angelEverywhere ? Appearance.angel.colPrimary
+            : Appearance.colors.colPrimary
+        readonly property color _colText: bg.inirEverywhere ? Appearance.inir.colText
+            : bg.angelEverywhere ? Appearance.angel.colText
+            : Appearance.colors.colOnLayer1
+        readonly property color _colOnToggle: bg.inirEverywhere ? Appearance.inir.colOnSecondaryContainer
+            : bg.angelEverywhere ? Appearance.angel.colOnPrimary
+            : Appearance.m3colors.m3onSecondaryContainer
+        readonly property color _colToggleBg: bg.inirEverywhere ? Appearance.inir.colSecondaryContainer
+            : bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimary, 0.6)
+            : Appearance.colors.colSecondaryContainer
 
         Rectangle {
             id: qaBtnBg
@@ -1847,60 +1896,56 @@ Item {
                         : bg.angelEverywhere ? Appearance.angel.colGlassCardHover
                         : bg.colDarkSurfaceHover
                 if (qaBtn.toggled)
-                    return bg.inirEverywhere ? Appearance.inir.colSecondaryContainer
-                        : bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimary, 0.6)
-                        : Appearance.colors.colSecondaryContainer
-                return bg.inirEverywhere ? Appearance.inir.colLayer1
-                    : bg.angelEverywhere ? Appearance.angel.colGlassCard
-                    : bg.colDarkSurface
+                    return qaBtn._colToggleBg
+                return "transparent"
             }
-            border.width: bg.angelEverywhere ? Appearance.angel.cardBorderWidth : 1
-            border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.28)
-                : bg.inirEverywhere ? Appearance.inir.colBorder
-                : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.78)
-                : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.72)
-            
+            border.width: 0
+
             scale: qaBtnMA.containsPress ? 0.94 : 1.0
             Behavior on scale {
                 enabled: Appearance.animationsEnabled
                 NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
             }
-            Behavior on color { 
+            Behavior on color {
                 enabled: Appearance.animationsEnabled
-                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } 
+                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
             }
 
             ColumnLayout {
                 anchors.centerIn: parent
-                spacing: 2
+                spacing: 4
 
-                MaterialSymbol {
+                // Icon in accent circle
+                Rectangle {
                     Layout.alignment: Qt.AlignHCenter
-                    text: qaBtn.icon
-                    iconSize: 18
-                    fill: qaBtn.toggled ? 1 : 0
+                    Layout.preferredWidth: 28
+                    Layout.preferredHeight: 28
+                    radius: 14
                     color: qaBtn.toggled
-                        ? (bg.inirEverywhere ? Appearance.inir.colOnSecondaryContainer
-                         : bg.angelEverywhere ? Appearance.angel.colOnPrimary
-                         : Appearance.m3colors.m3onSecondaryContainer)
-                        : (bg.inirEverywhere ? Appearance.inir.colPrimary
-                         : bg.angelEverywhere ? Appearance.angel.colPrimary
-                         : Appearance.colors.colPrimary)
+                        ? ColorUtils.transparentize(qaBtn._colOnToggle, 0.82)
+                        : ColorUtils.transparentize(qaBtn._colPrimary, 0.86)
+
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: 180 }
+                    }
+
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: qaBtn.icon
+                        iconSize: 17
+                        fill: qaBtn.toggled ? 1 : 0
+                        color: qaBtn.toggled ? qaBtn._colOnToggle : qaBtn._colPrimary
+                    }
                 }
 
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter
-                    Layout.maximumWidth: qaBtnBg.width - 8
+                    Layout.maximumWidth: qaBtnBg.width - 6
                     text: qaBtn.label
                     font.pixelSize: Appearance.font.pixelSize.smallest
                     font.weight: Font.Medium
-                    color: qaBtn.toggled
-                        ? (bg.inirEverywhere ? Appearance.inir.colOnSecondaryContainer
-                         : bg.angelEverywhere ? Appearance.angel.colOnPrimary
-                         : Appearance.m3colors.m3onSecondaryContainer)
-                        : (bg.inirEverywhere ? Appearance.inir.colText
-                         : bg.angelEverywhere ? Appearance.angel.colText
-                         : Appearance.colors.colOnLayer1)
+                    color: qaBtn.toggled ? qaBtn._colOnToggle : qaBtn._colText
                     elide: Text.ElideRight
                     horizontalAlignment: Text.AlignHCenter
                 }

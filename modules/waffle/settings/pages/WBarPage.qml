@@ -17,27 +17,10 @@ WSettingsPage {
     
     property bool isWaffleActive: Config.options?.panelFamily === "waffle"
     
-    // Warning when ii is active
-    WSettingsCard {
+    WSettingsInfoBar {
         visible: !root.isWaffleActive
-        
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 12
-            
-            FluentIcon {
-                icon: "info"
-                implicitSize: 24
-                color: Looks.colors.accent
-            }
-            
-            WText {
-                Layout.fillWidth: true
-                text: Translation.tr("These settings only apply when using the Windows 11 (Waffle) panel style. Go to Modules to enable it.")
-                wrapMode: Text.WordWrap
-                color: Looks.colors.subfg
-            }
-        }
+        severity: WSettingsInfoBar.Severity.Info
+        message: Translation.tr("These settings only apply when using the Windows 11 (Waffle) panel style. Go to Modules to enable it.")
     }
     
     WSettingsCard {
@@ -145,6 +128,14 @@ WSettingsPage {
             description: Translation.tr("Display notification count badge on clock")
             checked: Config.options?.waffles?.bar?.notifications?.showUnreadCount ?? true
             onCheckedChanged: Config.setNestedValue("waffles.bar.notifications.showUnreadCount", checked)
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("Activation watermark")
+            icon: "key"
+            description: Translation.tr("Show a fake activation message on the taskbar")
+            checked: Config.options?.waffles?.bar?.activationWatermark?.enable ?? false
+            onCheckedChanged: Config.setNestedValue("waffles.bar.activationWatermark.enable", checked)
         }
     }
     

@@ -19,6 +19,8 @@ session-*.md
 **/codemap.md
 
 # AI tool directories
+.agents/
+.vera/
 .claude/
 .cursor/
 .continue/
@@ -129,3 +131,4 @@ sys
 modules/ii/overlay/floatingImage/undefined/
 docs-site/
 prompt-framework-opencode.md
+version.json

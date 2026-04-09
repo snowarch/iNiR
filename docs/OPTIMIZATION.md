@@ -223,18 +223,24 @@ Rectangle {
 
 ## 12. Null Safety & Config Access
 
-iNiR's config uses Quickshell's `JsonAdapter` + `FileView`. Every property is declared in `Config.qml` with a typed default. When the user's `config.json` has a value, JsonAdapter reads it; when it doesn't, the schema default applies. Nothing crashes — the property always exists.
+iNiR's config uses Quickshell's `JsonAdapter` + `FileView`. Every property is declared in `Config.qml` with a typed default. When the user's `config.json` has a value, JsonAdapter reads it; when it doesn't, the schema default applies. The property always exists for declared schema keys.
 
 ```qml
-// Config access — schema guarantees existence, no ?. needed
+// Config access — schema properties are guaranteed by JsonAdapter
 property int value: Config.options.bar.cornerStyle  //  always valid
-Config.options.bar.bottom = true                    //  persists to config.json automatically
+
+// Direct assignment persists to config.json automatically
+Config.options.bar.bottom = true
+
+// Use setNestedValue() when you need the configChanged() signal
+// (5 listeners depend on it — settings pages, bar layout, etc.)
+Config.setNestedValue("bar.bottom", true)
 
 // Runtime data — may genuinely be null, USE optional chaining here
 property string title: NiriService.activeWindow?.title ?? ""
 ```
 
-**When to use `setNestedValue()`**: Only when you need the `configChanged()` signal (5 listeners depend on it). Direct assignment persists fine but doesn't emit that signal.
+> **Project convention:** use `?.` + `??` on config access in module code anyway. It protects against edge cases like key renames during migrations or malformed user configs. JsonAdapter guarantees schema defaults, but defensive access is the safer habit.
 
 ## Quickshell-Specific
 

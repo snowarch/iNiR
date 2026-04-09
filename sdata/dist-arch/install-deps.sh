@@ -201,8 +201,30 @@ for qs_conflict in quickshell-git quickshell-bin; do
 done
 
 #####################################################################################
-# Install official repo packages (NO COMPILATION NEEDED)
+# Pre-install: resolve Noctalia shell package conflicts (CachyOS)
+# CachyOS ships noctalia-qs / noctalia-shell / cachyos-niri-noctalia which own
+# overlapping Quickshell configs and compositor integration files.
 #####################################################################################
+for noctalia_pkg in noctalia-qs noctalia-shell cachyos-niri-noctalia; do
+  if pacman -Qi "$noctalia_pkg" &>/dev/null 2>&1; then
+    log_warning "$noctalia_pkg is installed and conflicts with iNiR"
+    if $ask; then
+      if tui_confirm "Remove $noctalia_pkg? (required for iNiR)"; then
+        log_info "Removing $noctalia_pkg..."
+        v pkg_sudo pacman -Rdd --noconfirm "$noctalia_pkg" 2>/dev/null \
+          || v pkg_sudo pacman -R --noconfirm "$noctalia_pkg" \
+          || log_warning "Could not remove $noctalia_pkg — install may fail"
+      else
+        log_warning "Keeping $noctalia_pkg — iNiR may not work correctly"
+      fi
+    else
+      log_info "Non-interactive: removing $noctalia_pkg"
+      pkg_sudo pacman -Rdd --noconfirm "$noctalia_pkg" 2>/dev/null \
+        || pkg_sudo pacman -R --noconfirm "$noctalia_pkg" 2>/dev/null \
+        || log_warning "Could not remove $noctalia_pkg — install may fail"
+    fi
+  fi
+done
 tui_info "Installing official repo packages..."
 
 # These packages are now in official Arch repos (extra) - NO AUR, NO COMPILATION!
@@ -384,6 +406,48 @@ fi
 #####################################################################################
 showfun install-python-packages
 v install-python-packages
+
+#####################################################################################
+# Register dependencies with pacman via meta-package
+# This prevents "clean orphans" from removing iNiR's deps.
+# The meta-package contains no files — only dependency declarations.
+#####################################################################################
+tui_info "Registering dependencies with pacman..."
+
+_meta_dir="./sdata/dist-arch/inir-deps"
+if [[ -f "$_meta_dir/PKGBUILD" ]]; then
+  # Update pkgver from VERSION file
+  _inir_ver="$(cat ./VERSION 2>/dev/null || echo '2.18.0')"
+  sed -i "s/^pkgver=.*/pkgver=${_inir_ver}/" "$_meta_dir/PKGBUILD"
+
+  (
+    cd "$_meta_dir"
+    # -d: skip dependency checks during build (they're already installed)
+    # -f: force rebuild if .pkg.tar.zst already exists
+    # -C: clean build dir first
+    if makepkg -dfC 2>/dev/null; then
+      # Install the meta-package (overwrite if already installed)
+      local_pkg=(*.pkg.tar.zst)
+      if [[ -f "${local_pkg[0]}" ]]; then
+        if pkg_sudo pacman -U --noconfirm --needed "${local_pkg[0]}" 2>/dev/null; then
+          log_success "Meta-package inir-deps registered — orphan cleaner will skip iNiR deps"
+        else
+          # Some deps might be AUR-only and not satisfy pacman's check.
+          # Fall back to installing without dep verification.
+          pkg_sudo pacman -Udd --noconfirm "${local_pkg[0]}" 2>/dev/null && \
+            log_success "Meta-package inir-deps registered (forced)" || \
+            log_warning "Could not register meta-package — orphan protection unavailable"
+        fi
+        rm -f "${local_pkg[@]}" 2>/dev/null
+      fi
+    else
+      log_warning "Could not build meta-package — orphan protection unavailable"
+    fi
+  )
+else
+  log_warning "Meta-package PKGBUILD not found at $_meta_dir"
+fi
+unset _meta_dir _inir_ver
 
 #####################################################################################
 # Post-install: Check for Qt/Quickshell ABI mismatch

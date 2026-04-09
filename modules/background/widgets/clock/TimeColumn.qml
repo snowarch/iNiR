@@ -28,7 +28,7 @@ Column {
             anchors.horizontalCenter: root.horizontalCenter
             color: root.color
             font {
-                family: Appearance.font.family.expressive
+                family: Config.options?.background?.widgets?.clock?.fontFamily ?? "Space Grotesk"
                 weight: Font.Bold
                 pixelSize: numberSize
             }

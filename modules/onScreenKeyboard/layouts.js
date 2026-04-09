@@ -103,11 +103,10 @@ const byName = {
             ],
             [
                 { keytype: "modkey", label: "Ctrl", shape: "control", keycode: 29 },
-                // { label: "Super", shape: "normal", keycode: 125 }, // dangerous
+                { keytype: "modkey", label: "Super", labelToggled: "🫃🏻", shape: "normal", keycode: 125 },
                 { keytype: "modkey", label: "Alt", shape: "normal", keycode: 56 },
                 { keytype: "normal", label: "Space", shape: "space", keycode: 57 },
                 { keytype: "modkey", label: "Alt", shape: "normal", keycode: 100 },
-                // { label: "Super", shape: "normal", keycode: 126 }, // dangerous
                 { keytype: "normal", label: "Menu", shape: "normal", keycode: 139 },
                 { keytype: "modkey", label: "Ctrl", shape: "control", keycode: 97 }
             ]
@@ -203,12 +202,10 @@ const byName = {
             ],
             [
                 { keytype: "modkey", label: "Strg", shape: "control", keycode: 29 },
-                //{ keytype: "normal", label: "", shape: "normal", keycode: 125 }, // dangerous
+                { keytype: "modkey", label: "Super", labelToggled: "🫃🏻", shape: "normal", keycode: 125 },
                 { keytype: "modkey", label: "Alt", shape: "normal", keycode: 56 },
                 { keytype: "normal", label: "Leertaste", shape: "space", keycode: 57 },
-                { keytype: "modkey", label: "Alt Gr", shape: "normal", keycode: 100 },
-                // { label: "Super", shape: "normal", keycode: 126 }, // dangerous
-                //{ keytype: "normal", label: "Menu", shape: "normal", keycode: 139 }, // doesn't work?
+                { keytype: "modkey", label: "Alt Gr", shape: "normal", keycode: 100 },
                 { keytype: "modkey", label: "Strg", shape: "control", keycode: 97 },
                 { keytype: "normal", label: "⇦", shape: "normal", keycode: 105 },
                 { keytype: "normal", label: "⇨", shape: "normal", keycode: 106 },
@@ -301,6 +298,7 @@ const byName = {
             ],
             [
                 { keytype: "modkey", label: "Ctrl", shape: "control", keycode: 29 },
+                { keytype: "modkey", label: "Super", labelToggled: "🫃🏻", shape: "normal", keycode: 125 },
                 { keytype: "modkey", label: "Alt", shape: "normal", keycode: 56 },
                 { keytype: "normal", label: "Space", shape: "space", keycode: 57 },
                 { keytype: "modkey", label: "Alt", shape: "normal", keycode: 100 },

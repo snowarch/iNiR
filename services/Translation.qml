@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 pragma Singleton
 
 import QtQuick
@@ -55,6 +56,14 @@ Singleton {
         generatedTranslationFileView.reread();
     }
 
+    onAvailableLanguagesChanged: {
+        translationFileView.reread();
+    }
+
+    onAvailableGeneratedLanguagesChanged: {
+        generatedTranslationFileView.reread();
+    }
+
     TranslationReader {
         id: translationFileView
         translationsDir: root.translationsDir
@@ -103,8 +112,10 @@ Singleton {
         stdout: StdioCollector {
             id: languagesCollector
             onStreamFinished: {
-                const output = languagesCollector.text;
-                const files = output.trim().split('\n').map(f => f.trim());
+                const output = languagesCollector.text ?? "";
+                const files = output.trim().length > 0
+                    ? output.trim().split('\n').map(f => f.trim()).filter(f => f.length > 0)
+                    : [];
                 translationScanner.languagesScanned(files);
             }
         }

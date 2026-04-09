@@ -106,7 +106,7 @@ PopupWindow {
                 bottomMargin: root.bottom ? sourceEdgeMargin : (root.ambientShadowWidth + root.visualMargin)
                 topMargin: root.bottom ? (root.ambientShadowWidth + root.visualMargin) : sourceEdgeMargin
             }
-            color: Looks.colors.bg1Base
+            color: Looks.colors.popupSurface
             radius: Looks.radius.large
 
             layer.enabled: Appearance.effectsEnabled

@@ -60,6 +60,7 @@ optdepends=(
   'fprintd: fingerprint authentication integration'
   'geoclue: GPS-backed weather location detection'
   'gnome-keyring: secret storage for API keys and credentials'
+  'gowall-bin: wallpaper theme conversion and effects editor'
   'gum: setup TUI helpers'
   'hyprpicker: color picker support'
   'imagemagick: image conversion helpers'
@@ -72,6 +73,7 @@ optdepends=(
   'mpv: media playback and YouTube Music support'
   'mpv-mpris: richer mpv media session integration'
   'nautilus: default file manager integration'
+  'nm-connection-editor: default network settings GUI'
   'pavucontrol: advanced audio mixer UI'
   'pacman-contrib: package update checking'
   'plasma-integration: Qt platform theme integration'
@@ -92,7 +94,7 @@ optdepends=(
 makedepends=(git)
 install=inir-shell-git.install
 provides=('inir-shell')
-conflicts=('inir-shell')
+conflicts=('inir-shell' 'noctalia-qs' 'noctalia-shell' 'cachyos-niri-noctalia')
 source=(
   'inir::git+https://github.com/snowarch/iNiR.git'
 )

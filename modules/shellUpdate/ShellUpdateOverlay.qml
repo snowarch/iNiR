@@ -1237,6 +1237,44 @@ Scope {
                 }
 
                 // ── Footer with actions ──
+                // ── Update error banner ──
+                Rectangle {
+                    visible: ShellUpdates.lastError.length > 0
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 24
+                    Layout.rightMargin: 24
+                    Layout.topMargin: 8
+                    implicitHeight: updateErrorRow.implicitHeight + 20
+                    radius: root.sectionRadius
+                    color: ColorUtils.transparentize(Appearance.m3colors.m3error, 0.92)
+                    border.width: 1
+                    border.color: ColorUtils.transparentize(Appearance.m3colors.m3error, 0.7)
+
+                    RowLayout {
+                        id: updateErrorRow
+                        anchors {
+                            left: parent.left; right: parent.right
+                            verticalCenter: parent.verticalCenter
+                            margins: 10
+                        }
+                        spacing: 8
+
+                        MaterialSymbol {
+                            text: "error"
+                            iconSize: Appearance.font.pixelSize.normal
+                            color: Appearance.m3colors.m3error
+                        }
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: ShellUpdates.lastError
+                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            color: Appearance.m3colors.m3error
+                            wrapMode: Text.WordWrap
+                        }
+                    }
+                }
+
+                // ── Action bar ──
                 RowLayout {
                     Layout.fillWidth: true
                     Layout.leftMargin: 24

@@ -52,14 +52,14 @@ RippleButton {
         return text.length <= maxLen ? text : text.substring(0, maxLen).trim() + "..."
     }
     
-    // Custom watch site from config, or HiAnime as default
+    // Custom watch site from config, or 9anime as default
     function getWatchUrl() {
         const title = root.anime?.title ?? ""
         const customSite = Config.options?.sidebar?.animeSchedule?.watchSite ?? ""
         if (customSite) {
             return customSite.replace("%s", encodeURIComponent(title))
         }
-        return "https://hianime.to/search?keyword=" + encodeURIComponent(title)
+        return "https://9animetv.to/search?keyword=" + encodeURIComponent(title)
     }
     
     ContextMenu {

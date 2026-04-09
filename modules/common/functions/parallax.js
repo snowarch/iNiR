@@ -1,9 +1,14 @@
 .pragma library
 
+// Minimum scale floor above screen-cover.  Guarantees a small travel distance
+// even when the user's zoom is <= 1.0, without the old 10% unconditional
+// multiplier that caused oversized containers.
+var PARALLAX_MIN_TRAVEL = 1.02
+
 var presets = {
-    subtle: { zoom: 1.03, workspaceShift: 0.7, panelShift: 0.08, widgetDepth: 0.9 },
-    balanced: { zoom: 1.07, workspaceShift: 1.0, panelShift: 0.15, widgetDepth: 1.2 },
-    immersive: { zoom: 1.12, workspaceShift: 1.25, panelShift: 0.22, widgetDepth: 1.38 }
+    subtle: { zoom: 0.95, workspaceShift: 0.7, panelShift: 0.08, widgetDepth: 0.9 },
+    balanced: { zoom: 1.0, workspaceShift: 1.0, panelShift: 0.15, widgetDepth: 1.2 },
+    immersive: { zoom: 1.08, workspaceShift: 1.25, panelShift: 0.22, widgetDepth: 1.38 }
 }
 
 function clamp(value, minValue, maxValue) {
@@ -15,6 +20,42 @@ function clamp(value, minValue, maxValue) {
 
 function clamp01(value) {
     return clamp(value, 0, 1)
+}
+
+function _safeDimension(value, fallback) {
+    var numeric = Number(value)
+    if (!Number.isFinite(numeric) || numeric <= 0)
+        return fallback
+    return numeric
+}
+
+function minSuitableScale(imageWidth, imageHeight, screenWidth, screenHeight) {
+    var safeImageWidth = _safeDimension(imageWidth, 1)
+    var safeImageHeight = _safeDimension(imageHeight, 1)
+    var safeScreenWidth = _safeDimension(screenWidth, safeImageWidth)
+    var safeScreenHeight = _safeDimension(screenHeight, safeImageHeight)
+    return Math.max(safeScreenWidth / safeImageWidth, safeScreenHeight / safeImageHeight)
+}
+
+function effectiveScale(imageWidth, imageHeight, screenWidth, screenHeight, additionalZoom) {
+    var base = minSuitableScale(imageWidth, imageHeight, screenWidth, screenHeight)
+    var zoomed = base * clamp(additionalZoom ?? 1, 0.1, 2.0)
+    // Ensure the image is at least slightly larger than the screen so there
+    // is travel distance for the parallax effect, but never inflate beyond
+    // what the user's zoom already provides.
+    return Math.max(zoomed, base * PARALLAX_MIN_TRAVEL)
+}
+
+function parallaxTotalPixels(scaledDimension, screenDimension) {
+    return Math.max(0, _safeDimension(scaledDimension, 0) - _safeDimension(screenDimension, 0))
+}
+
+function parallaxPosition(totalPixels, fraction) {
+    return -Math.max(0, Number(totalPixels) || 0) * clamp01(fraction)
+}
+
+function centerOffset(scaledDimension, screenDimension) {
+    return (_safeDimension(screenDimension, 0) - _safeDimension(scaledDimension, 0)) / 2
 }
 
 function resolveAxis(axisValue, legacyAutoVertical, legacyVertical, width, height) {
@@ -59,7 +100,7 @@ function axisValue(axis, workspaceAxis, workspaceEnabled, workspaceProgress, wor
 }
 
 function resolveZoom(options, fallback) {
-    return clamp(options?.zoom ?? options?.workspaceZoom ?? fallback ?? 1.07, 1, 1.4)
+    return clamp(options?.zoom ?? options?.workspaceZoom ?? fallback ?? 1.0, 0.1, 2.0)
 }
 
 function resolveWidgetDepth(options, fallback) {

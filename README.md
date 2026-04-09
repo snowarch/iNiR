@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.17.0-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.18.0-blue?style=flat-square" alt="Version"></a>
   <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
@@ -23,8 +23,60 @@
 </p>
 
 <p align="center">
-  <sub>Languages: <a href="README.md">English</a> · <a href="README.es.md">Español</a> · <a href="README.ru.md">Русский</a></sub>
+  <sub>
+    <a href="README.md">English</a> · <a href="docs/readme/README.es.md">Español</a> · <a href="docs/readme/README.ru.md">Русский</a> · <a href="docs/readme/README.zh.md">中文</a> · <a href="docs/readme/README.ja.md">日本語</a> · <a href="docs/readme/README.pt.md">Português</a> · <a href="docs/readme/README.fr.md">Français</a> · <a href="docs/readme/README.de.md">Deutsch</a> · <a href="docs/readme/README.ko.md">한국어</a> · <a href="docs/readme/README.hi.md">हिन्दी</a> · <a href="docs/readme/README.ar.md">العربية</a> · <a href="docs/readme/README.it.md">Italiano</a>
+  </sub>
 </p>
+
+---
+
+<details>
+<summary><b>🤔 New here? Click if you have no idea what any of this is</b></summary>
+
+### What is this?
+
+iNiR is your entire desktop. The bar at the top, the dock, notifications, settings, wallpapers, all of it. Not a theme, not dotfiles you paste. A full shell that runs on Linux.
+
+### What do I need to run it?
+
+A compositor. That's the thing that handles your windows and puts pixels on screen. iNiR is made for [Niri](https://github.com/YaLTeR/niri) (a tiling Wayland compositor). There's some old Hyprland code from when this was a fork of end-4's dots, but Niri is what I actually use and test.
+
+The shell runs on [Quickshell](https://quickshell.outfoxxed.me/), a framework for building shells in QML (Qt's UI language). You don't need to know any of that to use it though, everything is configurable through the GUI or a JSON file.
+
+### How it all connects
+
+```
+your apps
+   ↓
+iNiR (shell: bar, sidebars, dock, notifications, settings...)
+   ↓
+Quickshell (runs QML shells)
+   ↓
+Niri (compositor: windows, rendering)
+   ↓
+Wayland → GPU
+```
+
+### Is it stable?
+
+It's a personal project that got out of hand. I use it daily, lots of people in the Discord do too. But stuff breaks sometimes, code is messy in places, I'm learning as I go.
+
+If something doesn't work, `inir doctor` fixes most things. Discord is active if that doesn't help. Just don't expect polished software, this is one person's rice that others happen to like.
+
+### Why does it exist?
+
+I wanted my desktop to look and work a certain way and nothing else did exactly that. Started as end-4's Hyprland dots, became a full rewrite for Niri with way more features.
+
+### Words you'll see around
+
+- **Shell**: the UI layer (bar, panels, overlays)
+- **Compositor**: manages windows, draws to screen (Niri, Hyprland, Sway...)
+- **Wayland**: Linux display protocol (the new one, replaces X11)
+- **QML**: Qt's declarative UI language, what iNiR is written in
+- **Material You**: Google's color system that makes palettes from images (that's the auto-theming)
+- **ii / waffle**: the two panel styles. ii = Material Design vibes, waffle = Windows 11 vibes. `Super+Shift+W` switches between them
+
+</details>
 
 ---
 
@@ -63,41 +115,68 @@
 - 10 terminal tools auto-themed (foot, kitty, alacritty, starship, fuzzel, btop, lazygit, yazi)
 - Theme presets: Gruvbox, Catppuccin, Rosé Pine, and custom
 
+**Compositor** — built for Niri.
+
 <details>
 <summary><b>Full feature list</b></summary>
+
+### Theming & Appearance
+
+Pick a wallpaper and the entire system follows — shell, GTK/Qt apps, terminals, Firefox, Discord, SDDM login screen. All automatic.
+
+- **5 visual styles** — Material (solid), Cards, Aurora (glass blur), iNiR (TUI-inspired), Angel (neo-brutalism)
+- **Dynamic wallpaper colors** via Material You — propagated system-wide
+- **10 terminal tools auto-themed** — foot, kitty, alacritty, starship, fuzzel, pywalfox, btop, lazygit, yazi
+- **App theming** — GTK3/4, Qt (via plasma-integration + darkly), Firefox (MaterialFox), Discord/Vesktop (System24)
+- **Theme presets** — Gruvbox, Catppuccin, Rosé Pine, and more — or create your own
+- **Video wallpapers** — mp4/webm/gif with optional blur, or frozen first frame for performance
+- **SDDM login theme** — Material You colors synced to your wallpaper
+- **Desktop widgets** — clock (multiple styles), weather, media controls on the wallpaper layer
 
 ### Sidebars & Widgets (Material ii)
 
 Left sidebar (app drawer):
-- AI Chat (Gemini, Mistral, OpenRouter, Ollama)
-- YT Music player with search and queue
-- Wallhaven browser — search and apply wallpapers
-- Anime tracker (AniList), Reddit feed, Translator
-- Draggable widgets: crypto, media, notes, calendar
+- **AI Chat** — Gemini, Mistral, OpenRouter, or local models via Ollama
+- **YT Music** — full player with search, queue, and controls
+- **Wallhaven browser** — search and apply wallpapers directly
+- **Anime tracker** — AniList integration with schedule view
+- **Reddit feed** — browse subreddits inline
+- **Translator** — via Gemini or translate-shell
+- **Draggable widgets** — crypto, media player, quick notes, status rings, weekly calendar
 
 Right sidebar:
-- Calendar with events, notifications center
-- Quick toggles: WiFi, Bluetooth, night light, DND, power profiles, WARP VPN, EasyEffects
-- Volume mixer (per-app), Bluetooth & WiFi managers
-- Pomodoro timer, todo list, calculator, notepad, system monitor
+- **Calendar** with event integration
+- **Notification center**
+- **Quick toggles** — WiFi, Bluetooth, night light, DND, power profiles, WARP VPN, EasyEffects
+- **Volume mixer** — per-app control
+- **Bluetooth & WiFi** device management
+- **Pomodoro timer**, **todo list**, **calculator**, **notepad**
+- **System monitor** — CPU, RAM, temperature
 
 ### Tools
 
-- Workspace overview adapted for Niri's scrolling model
-- Alt+Tab window switcher across all workspaces
-- Clipboard manager with image preview
-- Screenshot, screen recording, OCR, reverse image search
-- Keybind cheatsheet from Niri config
-- MPRIS media controls, OSD, song recognition, voice search
+- **Workspace overview** — adapted for Niri's scrolling model, with app search and calculator
+- **Window switcher** — Alt+Tab across all workspaces
+- **Clipboard manager** — history with search and image preview
+- **Region tools** — screenshots, screen recording, OCR, reverse image search
+- **Cheatsheet** — keybind viewer pulled from your Niri config
+- **Media controls** — full MPRIS player with multiple layout presets
+- **On-screen display** — volume, brightness, and media OSD
+- **Song recognition** — Shazam-style identification via SongRec
+- **Voice search** — record and search via Gemini
 
 ### System
 
-- GUI settings — configure everything without config files
-- GameMode — auto-disables effects for fullscreen apps
-- Auto-updates with rollback, migrations, and change preservation
-- Lock screen, session screen, polkit agent, on-screen keyboard
-- 15+ languages with auto-detection
-- Night light, weather, battery management
+- **GUI settings** — configure everything without touching files
+- **GameMode** — auto-disables effects for fullscreen apps
+- **Auto-updates** — `inir update` with rollback, migrations, and user change preservation
+- **Lock screen** and **session screen** (logout/reboot/shutdown/suspend)
+- **Polkit agent**, **on-screen keyboard**, **autostart manager**
+- **9 languages** — auto-detection, with AI-assisted translation generation
+- **Night light** — scheduled or manual
+- **Weather** — Open-Meteo, supports GPS, manual coordinates, or city name
+- **Battery management** — configurable thresholds, auto-suspend on critical
+- **Shell update checker** — notifies when new versions are available
 
 </details>
 
@@ -108,30 +187,27 @@ Right sidebar:
 ```bash
 git clone https://github.com/snowarch/inir.git
 cd inir
-./setup install
-inir run
+./setup install       # interactive — asks before each step
+./setup install -y    # automatic — no questions asked
 ```
 
-Install once with `./setup install`. After that, use `inir` for everything:
+The installer handles dependencies, system config, theming — everything. After install, run `inir run` to start the shell, or log out and back in.
 
 ```bash
-inir run                        # Launch the shell
-inir settings                   # Open settings GUI
-inir logs                       # Check runtime logs
-inir doctor                     # Auto-diagnose and fix
-inir status                     # Runtime health check
-inir update                     # Pull + migrate + restart
+inir run                        # launch the shell
+inir settings                   # open settings GUI
+inir logs                       # check runtime logs
+inir doctor                     # auto-diagnose and fix
+inir update                     # pull + migrate + restart
 ```
 
-**Other install methods:**
+**Supported distros:** Arch (automated installer). Other distros can install manually — see [PACKAGES.md](docs/PACKAGES.md).
 
 | Method | Command |
 |--------|---------|
 | System install | `sudo make install && inir run` |
-| Advanced TUI | `./setup` |
+| TUI menu | `./setup` |
 | Rollback | `./setup rollback` |
-
-**Arch only** for the automated installer. Manual guide for other distros: [docs/INSTALL.md](docs/INSTALL.md).
 
 ---
 
@@ -148,6 +224,12 @@ inir update                     # Pull + migrate + restart
 | `Super+Shift+W` | Switch panel family |
 
 Full list: [docs/KEYBINDS.md](docs/KEYBINDS.md)
+
+---
+
+## Wallpapers
+
+15 wallpapers ship bundled. For more, check [iNiR-Walls](https://github.com/snowarch/iNiR-Walls) — a curated collection that works well with the Material You pipeline.
 
 ---
 
@@ -168,12 +250,11 @@ Full list: [docs/KEYBINDS.md](docs/KEYBINDS.md)
 ## Troubleshooting
 
 ```bash
-inir logs                       # Check recent runtime logs
-inir restart                    # Restart the active runtime
-inir repair                     # Doctor + restart + filtered log check
-inir test-local --with-runtime  # Validate launcher + runtime + logs
-./setup doctor                  # Auto-diagnose and fix common problems
-./setup rollback                # Undo the last update
+inir logs                       # check recent runtime logs
+inir restart                    # restart the active runtime
+inir repair                     # doctor + restart + filtered log check
+./setup doctor                  # auto-diagnose and fix common problems
+./setup rollback                # undo the last update
 ```
 
 Check [LIMITATIONS.md](docs/LIMITATIONS.md) before opening an issue.
@@ -188,9 +269,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code patterns, and
 
 ## Credits
 
-- [**end-4**](https://github.com/end-4/dots-hyprland) — original illogical-impulse for Hyprland
-- [**Quickshell**](https://quickshell.outfoxxed.me/) — the framework powering this shell
-- [**Niri**](https://github.com/YaLTeR/niri) — the scrolling tiling Wayland compositor
+- [**end-4**](https://github.com/end-4/dots-hyprland): original illogical-impulse for Hyprland
+- [**Quickshell**](https://quickshell.outfoxxed.me/): the framework powering this shell
+- [**Niri**](https://github.com/YaLTeR/niri): the scrolling tiling Wayland compositor
 
 ---
 

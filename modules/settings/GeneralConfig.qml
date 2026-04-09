@@ -178,15 +178,16 @@ ContentPage {
                             onCheckedChanged: {
                                 const screens = Quickshell.screens
                                 let current = [...(Config.options?.bar?.screenList ?? [])]
+                                const allNames = screens.map(s => s?.name ?? "").filter(n => n.length > 0)
+                                current = current.filter(n => allNames.includes(n))
                                 if (current.length === 0 && !checked) {
-                                    current = screens.map(s => s.name).filter(Boolean)
+                                    current = allNames
                                 }
                                 if (checked && !current.includes(screenName)) {
                                     current.push(screenName)
                                 } else if (!checked) {
                                     current = current.filter(n => n !== screenName)
                                 }
-                                const allNames = screens.map(s => s.name).filter(Boolean)
                                 if (allNames.length > 0 && allNames.every(n => current.includes(n))) {
                                     current = []
                                 }
@@ -222,15 +223,16 @@ ContentPage {
                             onCheckedChanged: {
                                 const screens = Quickshell.screens
                                 let current = [...(Config.options?.dock?.screenList ?? [])]
+                                const allNames = screens.map(s => s?.name ?? "").filter(n => n.length > 0)
+                                current = current.filter(n => allNames.includes(n))
                                 if (current.length === 0 && !checked) {
-                                    current = screens.map(s => s.name).filter(Boolean)
+                                    current = allNames
                                 }
                                 if (checked && !current.includes(screenName)) {
                                     current.push(screenName)
                                 } else if (!checked) {
                                     current = current.filter(n => n !== screenName)
                                 }
-                                const allNames = screens.map(s => s.name).filter(Boolean)
                                 if (allNames.length > 0 && allNames.every(n => current.includes(n))) {
                                     current = []
                                 }
@@ -743,6 +745,16 @@ ContentPage {
                     }
                     StyledToolTip {
                         text: Translation.tr("Show different geometric shapes instead of bullets for password input")
+                    }
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "play_circle"
+                    text: Translation.tr("Animate video/GIF wallpapers")
+                    checked: Config.options?.lock?.enableAnimation ?? false
+                    onCheckedChanged: Config.setNestedValue("lock.enableAnimation", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Play video and GIF wallpapers on the lock screen instead of showing a still frame. May increase GPU/battery usage.")
                     }
                 }
             }

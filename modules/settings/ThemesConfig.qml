@@ -1262,7 +1262,7 @@ ContentPage {
 
                 Process {
                     id: applyTerminalColorsProcess
-                    command: ["/usr/bin/bash", Directories.scriptPath + "/colors/applycolor.sh"]
+                    command: ["/usr/bin/bash", Directories.scriptsPath + "/colors/applycolor.sh"]
                 }
             }
         }

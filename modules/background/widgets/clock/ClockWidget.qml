@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import qs
 import qs.services
 import qs.modules.common
@@ -21,6 +22,49 @@ AbstractBackgroundWidget {
     property bool wallpaperSafetyTriggered: false
     needsColText: clockStyle === "digital"
     visibleWhenLocked: true
+
+    // --- Clock customization config ---
+    property string clockFontFamily: Config.options?.background?.widgets?.clock?.fontFamily ?? "Space Grotesk"
+    property string timeFormat: Config.options?.background?.widgets?.clock?.timeFormat ?? "system"
+    property bool showSeconds: Config.options?.background?.widgets?.clock?.showSeconds ?? false
+    property bool showDate: Config.options?.background?.widgets?.clock?.showDate ?? true
+    property string dateStyle: Config.options?.background?.widgets?.clock?.dateStyle ?? "long"
+    property int timeScale: Config.options?.background?.widgets?.clock?.timeScale ?? 100
+    property int dateScale: Config.options?.background?.widgets?.clock?.dateScale ?? 100
+    property bool showShadow: Config.options?.background?.widgets?.clock?.showShadow ?? true
+
+    // Local clock with seconds precision when needed
+    SystemClock {
+        id: displayClock
+        precision: root.showSeconds || GlobalStates.screenLocked ? SystemClock.Seconds : SystemClock.Minutes
+    }
+
+    // --- Resolved format patterns (reactive) ---
+    property string _timePattern: {
+        const fmt = root.timeFormat;
+        const sec = root.showSeconds;
+        if (fmt === "24h") return sec ? "HH:mm:ss" : "HH:mm";
+        if (fmt === "12h") return sec ? "hh:mm:ss AP" : "hh:mm AP";
+        // "system" — use global config format, smart seconds append
+        const base = Config.options?.time?.format ?? "hh:mm";
+        if (sec && !base.includes("s")) {
+            const apIdx = base.indexOf(" AP");
+            if (apIdx >= 0) return base.slice(0, apIdx) + ":ss" + base.slice(apIdx);
+            return base + ":ss";
+        }
+        return base;
+    }
+    property string _datePattern: {
+        const style = root.dateStyle;
+        if (style === "weekday") return "dddd";
+        if (style === "numeric") return Config.options?.time?.shortDateFormat ?? "dd/MM";
+        if (style === "minimal") return "ddd, d MMM";
+        // "long" or default
+        return Config.options?.time?.dateFormat ?? "dddd, dd/MM";
+    }
+
+    property string timeText: Qt.locale().toString(displayClock.date, root._timePattern)
+    property string dateText: Qt.locale().toString(displayClock.date, root._datePattern)
 
     Binding {
         target: root
@@ -89,12 +133,14 @@ AbstractBackgroundWidget {
                 spacing: 6
 
                 ClockText {
-                    font.pixelSize: Math.round(90 * Appearance.fontSizeScale)
-                    text: DateTime.time
+                    font.pixelSize: Math.round(90 * Appearance.fontSizeScale * root.timeScale / 100)
+                    text: root.timeText
                 }
                 ClockText {
+                    visible: root.showDate
                     Layout.topMargin: -5
-                    text: DateTime.date
+                    font.pixelSize: Math.round(20 * root.dateScale / 100)
+                    text: root.dateText
                 }
                 StyledText {
                     // Somehow gets fucked up if made a ClockText???
@@ -107,7 +153,7 @@ AbstractBackgroundWidget {
                         weight: 350
                     }
                     color: root.clockTextColor
-                    style: Text.Raised
+                    style: root.showShadow ? Text.Raised : Text.Normal
                     styleColor: Appearance.colors.colShadow
                     text: Config.options?.background?.widgets?.clock?.quote?.text ?? ""
                 }
@@ -177,12 +223,12 @@ AbstractBackgroundWidget {
         Layout.fillWidth: true
         horizontalAlignment: root.textHorizontalAlignment
         font {
-            family: Appearance.font.family.expressive
+            family: root.clockFontFamily
             pixelSize: 20
             weight: Font.DemiBold
         }
         color: root.clockTextColor
-        style: Text.Raised
+        style: root.showShadow ? Text.Raised : Text.Normal
         styleColor: Appearance.colors.colShadow
         animateChange: Config.options?.background?.widgets?.clock?.digital?.animateChange ?? false
     }
@@ -207,7 +253,7 @@ AbstractBackgroundWidget {
             anchors.verticalCenter: statusTextRow.verticalCenter
             iconSize: Appearance.font.pixelSize.huge
             color: statusTextRow.textColor
-            style: Text.Raised
+            style: root.showShadow ? Text.Raised : Text.Normal
             styleColor: Appearance.colors.colShadow
         }
         ClockText {
@@ -218,7 +264,7 @@ AbstractBackgroundWidget {
                 pixelSize: Appearance.font.pixelSize.large
                 weight: Font.Normal
             }
-            style: Text.Raised
+            style: root.showShadow ? Text.Raised : Text.Normal
             styleColor: Appearance.colors.colShadow
         }
     }

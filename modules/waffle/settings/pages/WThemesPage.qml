@@ -133,6 +133,8 @@ WSettingsPage {
         // Search + filter row
         RowLayout {
             Layout.fillWidth: true
+            Layout.leftMargin: 14
+            Layout.rightMargin: 14
             spacing: 8
 
             // Search field
@@ -191,34 +193,40 @@ WSettingsPage {
                 }
             }
 
-            // Dark/Light/All tab pills
+        // Dark/Light/All segmented tabs
             Row {
-                spacing: 4
+                spacing: 2
 
                 Repeater {
                     model: [
-                        { icon: "apps", tip: Translation.tr("All") },
-                        { icon: "weather-moon", tip: Translation.tr("Dark") },
-                        { icon: "weather-sunny", tip: Translation.tr("Light") }
+                        { label: Translation.tr("All"), icon: "apps" },
+                        { label: Translation.tr("Dark"), icon: "weather-moon" },
+                        { label: Translation.tr("Light"), icon: "weather-sunny" }
                     ]
 
                     Rectangle {
                         required property var modelData
                         required property int index
 
-                        width: 28; height: 28
-                        radius: 14
-                        color: colorThemeCard.selectedTab === index
+                        readonly property bool isSelected: colorThemeCard.selectedTab === index
+
+                        width: tabLabel.implicitWidth + 24; height: 28
+                        radius: Looks.radius.medium
+                        color: isSelected
                             ? Looks.colors.accent
                             : tabMouseArea.containsMouse ? Looks.colors.bg2Hover : Looks.colors.bg1
 
-                        FluentIcon {
+                        Behavior on color {
+                            animation: ColorAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
+                        }
+
+                        WText {
+                            id: tabLabel
                             anchors.centerIn: parent
-                            icon: modelData.icon
-                            implicitSize: 14
-                            color: colorThemeCard.selectedTab === index
-                                ? Looks.colors.bg0
-                                : Looks.colors.fg
+                            text: modelData.label
+                            font.pixelSize: Looks.font.pixelSize.small
+                            font.weight: parent.isSelected ? Looks.font.weight.regular : Looks.font.weight.thin
+                            color: parent.isSelected ? Looks.colors.bg0 : Looks.colors.fg
                         }
 
                         MouseArea {
@@ -228,8 +236,6 @@ WSettingsPage {
                             cursorShape: Qt.PointingHandCursor
                             onClicked: colorThemeCard.selectedTab = index
                         }
-
-                        WToolTip { text: modelData.tip; extraVisibleCondition: tabMouseArea.containsMouse }
                     }
                 }
             }
@@ -238,6 +244,8 @@ WSettingsPage {
         // Tag filters
         Flow {
             Layout.fillWidth: true
+            Layout.leftMargin: 14
+            Layout.rightMargin: 14
             spacing: 4
 
             Repeater {
@@ -248,12 +256,16 @@ WSettingsPage {
 
                     readonly property bool isActive: colorThemeCard.selectedTag === modelData.id
 
-                    width: tagRowLayout.implicitWidth + 12
+                    width: tagRowLayout.implicitWidth + 16
                     height: 24
-                    radius: 12
+                    radius: Looks.radius.medium
                     color: isActive ? Qt.alpha(Looks.colors.accent, 0.15)
                          : tagFilterMouse.containsMouse ? Looks.colors.bg2Hover
                          : Looks.colors.bg1
+
+                    Behavior on color {
+                        animation: ColorAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
+                    }
 
                     RowLayout {
                         id: tagRowLayout
@@ -281,8 +293,12 @@ WSettingsPage {
             Rectangle {
                 visible: colorThemeCard.selectedTag.length > 0
                 width: 24; height: 24
-                radius: 12
+                radius: Looks.radius.medium
                 color: clearTagMouse.containsMouse ? Looks.colors.bg2Hover : Looks.colors.bg1
+
+                Behavior on color {
+                    animation: ColorAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
+                }
 
                 FluentIcon {
                     anchors.centerIn: parent
@@ -302,26 +318,32 @@ WSettingsPage {
         }
 
         // Theme grid — 3 columns
-        Rectangle {
+        Item {
             Layout.fillWidth: true
-            Layout.preferredHeight: Math.min(300, themeGridContent.implicitHeight + 12)
-            color: Looks.colors.bg1
-            radius: Looks.radius.small
-            clip: true
+            Layout.leftMargin: 14
+            Layout.rightMargin: 14
+            Layout.bottomMargin: 4
+            implicitHeight: Math.min(300, themeGridContent.implicitHeight + 12)
 
-            Flickable {
-                id: themeGridFlickable
+            Rectangle {
                 anchors.fill: parent
-                anchors.margins: 6
-                contentHeight: themeGridContent.implicitHeight
-                boundsBehavior: Flickable.StopAtBounds
+                color: Looks.colors.bg0
+                radius: Looks.radius.small
+                clip: true
 
-                Grid {
-                    id: themeGridContent
-                    width: themeGridFlickable.width
-                    columns: 3
-                    columnSpacing: 4
-                    rowSpacing: 4
+                Flickable {
+                    id: themeGridFlickable
+                    anchors.fill: parent
+                    anchors.margins: 6
+                    contentHeight: themeGridContent.implicitHeight
+                    boundsBehavior: Flickable.StopAtBounds
+
+                    Grid {
+                        id: themeGridContent
+                        width: themeGridFlickable.width
+                        columns: 3
+                        columnSpacing: 4
+                        rowSpacing: 4
 
                     Repeater {
                         model: colorThemeCard.filteredPresets
@@ -345,6 +367,10 @@ WSettingsPage {
                             color: isActive
                                 ? Qt.alpha(Looks.colors.accent, 0.12)
                                 : cardMouseArea.containsMouse ? Looks.colors.bg2Hover : Looks.colors.bg2
+
+                            Behavior on color {
+                                animation: ColorAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
+                            }
 
                             border.width: isActive ? 1 : 0
                             border.color: Qt.alpha(Looks.colors.accent, 0.4)
@@ -436,6 +462,7 @@ WSettingsPage {
                 }
             }
         }
+    }
     }
 
     // Global Style card
@@ -600,6 +627,8 @@ WSettingsPage {
 
         WText {
             Layout.fillWidth: true
+            Layout.leftMargin: 14
+            Layout.rightMargin: 14
             text: Translation.tr("These settings only affect the Windows 11 (Waffle) style panels.")
             font.pixelSize: Looks.font.pixelSize.small
             color: Looks.colors.subfg

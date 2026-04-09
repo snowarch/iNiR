@@ -23,7 +23,7 @@ At runtime, it is not a single monolithic UI. It is a composition of:
 - setup and update tooling
 - user-facing documentation and translation assets
 
-The shell primarily targets Niri, with secondary Hyprland support for features that depend on compositor capabilities.
+The shell is built for the Niri compositor. Legacy Hyprland code paths exist from the end-4 fork origin but are not actively maintained or supported.
 
 ## The shortest accurate mental model
 

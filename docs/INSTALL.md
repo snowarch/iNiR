@@ -81,12 +81,11 @@ This gives you:
 - GTK settings
 - Fuzzel config
 
-### 4. Tell Niri to start iNiR
+### 4. Enable the iNiR user service
 
-Add this to `~/.config/niri/config.kdl`:
-
-```kdl
-spawn-at-startup "inir" "start"
+```bash
+inir service install
+systemctl --user enable --now inir.service
 ```
 
 ### 5. Restart Niri

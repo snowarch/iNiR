@@ -64,9 +64,14 @@ def pick_scheme(colorfulness, saturation, hue_spread):
     if saturation < 20:
         return "scheme-monochrome"
 
-    # Low colorfulness: muted/desaturated images
+    # Very low colorfulness can still carry enough saturation to avoid a flat
+    # neutral palette. Keep neutral for truly muted frames only.
     if colorfulness < 30:
-        return "scheme-neutral"
+        if saturation < 55:
+            return "scheme-neutral"
+        if hue_spread < 22:
+            return "scheme-content"
+        return "scheme-tonal-spot"
 
     # Low-to-moderate colorfulness — tonal-spot or content
     if colorfulness < 55:

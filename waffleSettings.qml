@@ -48,6 +48,11 @@ ApplicationWindow {
             component: Qt.resolvedUrl("modules/waffle/settings/pages/WThemesPage.qml")
         },
         {
+            name: Translation.tr("Gowall"),
+            icon: "wand",
+            component: Qt.resolvedUrl("modules/waffle/settings/pages/WGowallPage.qml")
+        },
+        {
             name: Translation.tr("Interface"),
             icon: "apps",
             component: Qt.resolvedUrl("modules/waffle/settings/pages/WInterfacePage.qml")

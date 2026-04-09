@@ -299,6 +299,7 @@ Singleton {
                     property bool enableChrome: true
                     property bool enableSpicetify: false
                     property bool enableAdwSteam: false
+                    property bool enablePearDesktop: false
                     property bool enableOpenCode: false
                     property real colorStrength: 1.0
                     property JsonObject vscodeEditors: JsonObject {
@@ -465,6 +466,14 @@ Singleton {
                         property real y: 100
                         property string style: "cookie" // Options: "cookie", "digital"
                         property int dim: 0 // Extra dim for clock text (0-100)
+                        property string fontFamily: "Space Grotesk"
+                        property string timeFormat: "system" // "system", "24h", "12h"
+                        property string dateStyle: "long" // "long", "minimal", "weekday", "numeric"
+                        property bool showDate: true
+                        property bool showSeconds: false
+                        property bool showShadow: true
+                        property int timeScale: 100
+                        property int dateScale: 100
                         property JsonObject cookie: JsonObject {
                             property bool aiStyling: false
                             property int sides: 14
@@ -547,14 +556,14 @@ Singleton {
                     property real auroraOverlayOpacity: 0.38
                 }
                 property JsonObject parallax: JsonObject {
-                    property bool enable: true
+                    property bool enable: false
                     property string axis: "vertical"
                     property bool vertical: false
                     property bool autoVertical: false
                     property bool enableWorkspace: true
                     property real workspaceShift: 1.0
-                    property real workspaceZoom: 1.07 // Relative to your screen, not wallpaper size
-                    property real zoom: 1.07
+                    property real workspaceZoom: 1.0 // Relative to wallpaper size, with headroom applied internally
+                    property real zoom: 1.0
                     property bool enableSidebar: true
                     property real panelShift: 0.15
                     property real widgetsFactor: 1.2
@@ -853,6 +862,7 @@ Singleton {
                     property bool requirePasswordToPower: false
                 }
                 property bool materialShapeChars: true
+                property bool enableAnimation: false // Play video/GIF wallpapers on lock screen (default: show first frame)
             }
 
             property JsonObject media: JsonObject {
@@ -922,7 +932,6 @@ Singleton {
                 property int scrimDim: 35
                 property int topMargin: 0
                 property int bottomMargin: 0
-                property bool centerLauncher: false
                 property bool respectBar: true
                 property real maxPanelWidthRatio: 1.0
                 property int workspaceSpacing: 5
@@ -938,6 +947,7 @@ Singleton {
                 property bool keepOverviewOpenOnWindowClick: true
                 property bool closeAfterWindowMove: true
                 property bool showPreviews: false // Show window thumbnails in overview
+                property bool activeScreenOnly: false // Show only on active screen (multi-monitor)
                 property JsonObject dashboard: JsonObject {
                     property bool enable: false
                     property bool showToggles: true
@@ -1052,6 +1062,7 @@ Singleton {
                 property bool keepRightSidebarLoaded: true
                 property bool keepLeftSidebarLoaded: true
                 property bool instantOpen: false
+                property string animationType: "slide" // "slide" | "fade" | "pop" | "reveal"
                 property bool openFolderOnDownload: false // Open file manager after wallpaper download
                 property JsonObject translator: JsonObject {
                     property bool enable: true
@@ -1082,7 +1093,7 @@ Singleton {
                     property bool enable: false
                     property bool showNsfw: false
                     // Custom streaming site URL (use %s for search query placeholder)
-                    // Examples: "https://hianime.to/search?keyword=%s", "https://9animetv.to/search?keyword=%s"
+                    // Examples: "https://9animetv.to/search?keyword=%s", "https://anitaku.pe/search.html?keyword=%s"
                     property string watchSite: ""
                 }
                 // Reddit tab - public JSON API
@@ -1093,6 +1104,10 @@ Singleton {
                 }
                 // Tools tab - Niri debug options and quick actions
                 property JsonObject tools: JsonObject {
+                    property bool enable: false
+                }
+                // Software catalog tab - curated app install/remove
+                property JsonObject software: JsonObject {
                     property bool enable: false
                 }
                 // Web Apps / Plugins tab - embedded webapps in sidebar
@@ -1410,8 +1425,8 @@ Singleton {
                         property bool autoVertical: true
                         property bool enableWorkspace: false
                         property real workspaceShift: 1.0
-                        property real workspaceZoom: 1.05
-                        property real zoom: 1.05
+                        property real workspaceZoom: 1.0
+                        property real zoom: 1.0
                         property bool enableSidebar: false
                         property real panelShift: 0.12
                         property real widgetsFactor: 1.0
@@ -1450,6 +1465,9 @@ Singleton {
                     property bool tintTrayIcons: false
                     property int iconSize: 26
                     property int searchIconSize: 24
+                    property JsonObject activationWatermark: JsonObject {
+                        property bool enable: false
+                    }
                     property JsonObject desktopPeek: JsonObject {
                         property bool hoverPeek: false
                         property int hoverDelay: 500

@@ -17,29 +17,19 @@ Singleton {
     readonly property int transitionFps: Config.options?.background?.backend?.awww?.transitionFps ?? 60
     readonly property int simpleStep: Config.options?.background?.backend?.awww?.simpleStep ?? 5
     readonly property int spatialStep: Config.options?.background?.backend?.awww?.spatialStep ?? 30
-    readonly property bool _usingWaffleOwnWallpaper: panelFamily === "waffle" && !waffleUsesMainWallpaper
-    readonly property var _waffleTransition: Config.options?.waffles?.background?.transition ?? {}
-    readonly property int transitionDurationMs: _usingWaffleOwnWallpaper
-        ? (_waffleTransition.duration ?? 800)
-        : (Config.options?.background?.transition?.duration ?? 800)
+    readonly property int transitionDurationMs: Config.options?.background?.transition?.duration ?? 800
     readonly property var transitionBezier: Config.options?.background?.transition?.bezier ?? [0.54, 0.0, 0.34, 0.99]
-    readonly property bool transitionsEnabled: _usingWaffleOwnWallpaper
-        ? (_waffleTransition.enable ?? true)
-        : (Config.options?.background?.transition?.enable ?? true)
-    readonly property string transitionType: _usingWaffleOwnWallpaper
-        ? (_waffleTransition.type ?? "crossfade")
-        : (Config.options?.background?.transition?.type ?? "crossfade")
-    readonly property string transitionDirection: _usingWaffleOwnWallpaper
-        ? (_waffleTransition.direction ?? "right")
-        : (Config.options?.background?.transition?.direction ?? "right")
+    readonly property bool transitionsEnabled: Config.options?.background?.transition?.enable ?? true
+    readonly property string transitionType: Config.options?.background?.transition?.type ?? "crossfade"
+    readonly property string transitionDirection: Config.options?.background?.transition?.direction ?? "right"
     readonly property string fillMode: Config.options?.background?.fillMode ?? "fill"
     readonly property bool animationEnabled: Config.options?.background?.enableAnimation ?? true
     readonly property string panelFamily: Config.options?.panelFamily ?? "ii"
-    readonly property bool hideMainWallpaper: panelFamily === "waffle"
-        ? (Config.options?.waffles?.background?.backdrop?.hideWallpaper ?? false)
-        : (Config.options?.background?.backdrop?.hideWallpaper ?? false)
     readonly property bool waffleUsesMainWallpaper: Config.options?.waffles?.background?.useMainWallpaper ?? true
     readonly property string waffleWallpaperPath: Config.options?.waffles?.background?.wallpaperPath ?? ""
+    readonly property bool hideMainWallpaper: panelFamily === "waffle"
+        ? ((Config.options?.waffles?.background?.backdrop?.enable ?? false) && (Config.options?.waffles?.background?.backdrop?.hideWallpaper ?? false))
+        : ((Config.options?.background?.backdrop?.enable ?? false) && (Config.options?.background?.backdrop?.hideWallpaper ?? false))
     readonly property bool multiMonitorEnabled: WallpaperListener.multiMonitorEnabled
     readonly property var effectivePerMonitor: WallpaperListener.effectivePerMonitor
     readonly property string globalWallpaperPath: Config.options?.background?.wallpaperPath ?? ""
@@ -95,6 +85,11 @@ Singleton {
     }
 
     function scheduleSync(): void {
+        syncDebounce.restart()
+    }
+
+    function forceSync(): void {
+        lastSyncSignature = ""
         syncDebounce.restart()
     }
 
@@ -181,10 +176,10 @@ Singleton {
                 continue
 
             const monitorData = multiMonitorEnabled ? (effectivePerMonitor[monitorName] ?? null) : null
-            const usingWaffleCustomWallpaper = panelFamily === "waffle" && !waffleUsesMainWallpaper
-            const rawPath = usingWaffleCustomWallpaper
-                ? waffleWallpaperPath
-                : (monitorData && monitorData.path ? monitorData.path : globalWallpaperPath)
+            const waffleOwnPath = (!multiMonitorEnabled && panelFamily === "waffle" && !(waffleUsesMainWallpaper ?? true))
+                ? (waffleWallpaperPath || globalWallpaperPath)
+                : ""
+            const rawPath = waffleOwnPath || ((monitorData && monitorData.path) ? monitorData.path : globalWallpaperPath)
             const cleanPath = FileUtils.trimFileProtocol(String(rawPath ?? ""))
             if (!supportsMainWallpaper(cleanPath))
                 continue

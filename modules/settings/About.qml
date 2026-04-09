@@ -172,6 +172,37 @@ ContentPage {
                         color: Appearance.m3colors.m3primary
                     }
 
+                    // Avatar interaction feedback
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: _avatarFx.restart()
+                    }
+
+                    Text {
+                        id: _avatarFxLabel
+                        text: "\ud83e\udec3\ud83c\udffb"
+                        font.pixelSize: 36
+                        anchors.centerIn: parent
+                        visible: false
+                        z: 10
+
+                        SequentialAnimation {
+                            id: _avatarFx
+                            PropertyAction { target: _avatarFxLabel; property: "visible"; value: true }
+                            PropertyAction { target: _avatarFxLabel; property: "scale"; value: 0 }
+                            PropertyAction { target: _avatarFxLabel; property: "opacity"; value: 1 }
+                            NumberAnimation { target: _avatarFxLabel; property: "scale"; to: 1.5; duration: 300; easing.type: Easing.OutBack }
+                            NumberAnimation { target: _avatarFxLabel; property: "scale"; to: 1.0; duration: 200 }
+                            PauseAnimation { duration: 800 }
+                            ParallelAnimation {
+                                NumberAnimation { target: _avatarFxLabel; property: "opacity"; to: 0; duration: 400 }
+                                NumberAnimation { target: _avatarFxLabel; property: "scale"; to: 2.0; duration: 400 }
+                            }
+                            PropertyAction { target: _avatarFxLabel; property: "visible"; value: false }
+                        }
+                    }
+
                 }
 
                 ColumnLayout {

@@ -103,22 +103,38 @@ fi
 # If user already owns the theme dir (from a previous install), skip sudo entirely.
 # This allows IPC-triggered updates (inir shell update) to refresh the theme
 # without needing a terminal for sudo prompts.
-log_info "Installing ${THEME_NAME} to ${THEME_DIR}..."
-if [[ -d "${THEME_DIR}" ]] && [[ -O "${THEME_DIR}" ]]; then
-    # User already owns the directory — no sudo needed
-    mkdir -p "${THEME_DIR}/assets"
-    cp -rf "${THEME_SRC}/." "${THEME_DIR}/"
-    log_ok "Theme files updated (no sudo needed — user owns dir)"
-else
-    # First install or owned by root — requires elevation (sudo or pkexec)
-    elevate mkdir -p "${THEME_DIR}/assets"
-    elevate cp -rf "${THEME_SRC}/." "${THEME_DIR}/"
-    log_ok "Theme files installed"
 
-    # Transfer ownership to the current user so the sync script can update colors
-    # and wallpaper on every wallpaper change without triggering sudo/polkit prompts.
-    elevate chown -R "${USER}:${USER}" "${THEME_DIR}"
-    log_ok "Theme directory owned by ${USER} — sync requires no sudo"
+# Checksum comparison: skip copy if source and target are identical.
+# Only compare QML/JS/conf files (not assets like background.png which are user-generated).
+theme_needs_update=true
+if [[ -d "${THEME_DIR}" ]]; then
+    src_hash=$(find "${THEME_SRC}" -maxdepth 1 -type f \( -name '*.qml' -o -name '*.js' -o -name '*.conf' -o -name 'metadata.desktop' \) -exec sha256sum {} + 2>/dev/null | sort | sha256sum | cut -d' ' -f1)
+    tgt_hash=$(find "${THEME_DIR}" -maxdepth 1 -type f \( -name '*.qml' -o -name '*.js' -o -name '*.conf' -o -name 'metadata.desktop' \) -exec sha256sum {} + 2>/dev/null | sort | sha256sum | cut -d' ' -f1)
+    if [[ -n "$src_hash" && "$src_hash" == "$tgt_hash" ]]; then
+        theme_needs_update=false
+    fi
+fi
+
+if $theme_needs_update; then
+    log_info "Installing ${THEME_NAME} to ${THEME_DIR}..."
+    if [[ -d "${THEME_DIR}" ]] && [[ -O "${THEME_DIR}" ]]; then
+        # User already owns the directory — no sudo needed
+        mkdir -p "${THEME_DIR}/assets"
+        cp -rf "${THEME_SRC}/." "${THEME_DIR}/"
+        log_ok "Theme files updated (no sudo needed — user owns dir)"
+    else
+        # First install or owned by root — requires elevation (sudo or pkexec)
+        elevate mkdir -p "${THEME_DIR}/assets"
+        elevate cp -rf "${THEME_SRC}/." "${THEME_DIR}/"
+        log_ok "Theme files installed"
+
+        # Transfer ownership to the current user so the sync script can update colors
+        # and wallpaper on every wallpaper change without triggering sudo/polkit prompts.
+        elevate chown -R "${USER}:${USER}" "${THEME_DIR}"
+        log_ok "Theme directory owned by ${USER} — sync requires no sudo"
+    fi
+else
+    log_ok "Theme files already up to date — skipping copy"
 fi
 
 # Create a placeholder background (symlinked to wallpaper later by sync script)

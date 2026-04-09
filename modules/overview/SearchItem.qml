@@ -37,18 +37,25 @@ RippleButton {
     readonly property color normalTextColor: Appearance.angelEverywhere ? Appearance.angel.colText
         : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
     readonly property color selectedTextColor: Appearance.angelEverywhere ? Appearance.angel.colText
-        : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnPrimaryContainer
-    readonly property color selectedBackgroundColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer2
-        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-        : Appearance.colors.colPrimaryContainer
-    readonly property color hoverBackgroundColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
-        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-        : Appearance.colors.colLayer2Hover
-    readonly property color pressedBackgroundColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
-        : Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive : Appearance.colors.colPrimaryContainerActive
-    readonly property color activeRippleColor: Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive : Appearance.colors.colPrimaryContainerActive
+        : Appearance.inirEverywhere ? Appearance.inir.colText
+        : Appearance.colors.colOnLayer1
+    readonly property color descriptionTextColor: root.isHighlighted
+        ? root.selectedTextColor
+        : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+        : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
+        : Appearance.colors.colSubtext
+    readonly property color selectedBackgroundColor: Appearance.angelEverywhere
+        ? Appearance.angel.colGlassCardHover
+        : Appearance.colors.colLayer1
+    readonly property color hoverBackgroundColor: Appearance.angelEverywhere
+        ? Appearance.angel.colGlassCardHover
+        : Appearance.colors.colLayer1
+    readonly property color pressedBackgroundColor: Appearance.angelEverywhere
+        ? Appearance.angel.colGlassCardActive
+        : Appearance.colors.colLayer1Hover
+    readonly property color activeRippleColor: Appearance.angelEverywhere
+        ? Appearance.angel.colGlassCardActive
+        : Appearance.colors.colLayer1Hover
 
     // No fade-in animation - prevents flickering when results update rapidly
     opacity: 1
@@ -208,7 +215,7 @@ RippleButton {
             spacing: 0
             StyledText {
                 font.pixelSize: Appearance.font.pixelSize.smaller
-                color: Appearance.colors.colSubtext
+                color: root.descriptionTextColor
                 visible: root.itemType && root.itemType != Translation.tr("App")
                 text: root.itemType
             }

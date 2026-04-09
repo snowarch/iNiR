@@ -13,7 +13,7 @@ AppButton {
     required property var appEntry
     property var tasksParent: null  // Reference to Tasks for closing other menus
     readonly property bool isSeparator: appEntry.appId === "SEPARATOR"
-    readonly property var desktopEntry: DesktopEntries.heuristicLookup(appEntry.appId)
+    readonly property var desktopEntry: AppSearch.lookupDesktopEntry(appEntry.appId)
     property bool active: root.appEntry.toplevels.some(t => t.activated)
     property bool hasWindows: appEntry.toplevels.length > 0
 

@@ -148,17 +148,8 @@ get_installed_version_json() {
 
 # Get just the version string
 get_installed_version() {
-    local version_file
-    local value=""
-    version_file="$(get_installed_version_file)"
-    if [[ -n "$version_file" ]] && command -v jq &>/dev/null; then
-        value=$(jq -r '.version // empty' "$version_file" 2>/dev/null || true)
-        if [[ -n "$value" && "$value" != "null" ]]; then
-            printf '%s\n' "$value"
-            return
-        fi
-    fi
-
+    # For repo-link mode the runtime IS the repo — use live VERSION file,
+    # not the stale value frozen in version.json at last ./setup update.
     if [[ "$(get_installed_install_mode)" == "repo-link" ]]; then
         local runtime_dir
         runtime_dir="$(get_runtime_shell_dir)"
@@ -167,6 +158,17 @@ get_installed_version() {
             return
         elif [[ -f "$VERSION_FILE_REPO" ]]; then
             get_repo_version
+            return
+        fi
+    fi
+
+    local version_file
+    local value=""
+    version_file="$(get_installed_version_file)"
+    if [[ -n "$version_file" ]] && command -v jq &>/dev/null; then
+        value=$(jq -r '.version // empty' "$version_file" 2>/dev/null || true)
+        if [[ -n "$value" && "$value" != "null" ]]; then
+            printf '%s\n' "$value"
             return
         fi
     fi
@@ -181,17 +183,8 @@ get_installed_version() {
 
 # Get installed commit hash
 get_installed_commit() {
-    local version_file
-    local value=""
-    version_file="$(get_installed_version_file)"
-    if [[ -n "$version_file" ]] && command -v jq &>/dev/null; then
-        value=$(jq -r '.commit // empty' "$version_file" 2>/dev/null || true)
-        if [[ -n "$value" && "$value" != "null" ]]; then
-            printf '%s\n' "$value"
-            return
-        fi
-    fi
-
+    # For repo-link mode the runtime IS the repo — use live git HEAD,
+    # not the stale commit frozen in version.json at last ./setup update.
     if [[ "$(get_installed_install_mode)" == "repo-link" ]]; then
         local runtime_dir
         runtime_dir="$(get_runtime_shell_dir)"
@@ -200,6 +193,17 @@ get_installed_commit() {
             return
         elif [[ -d "${REPO_ROOT}/.git" ]]; then
             get_repo_commit
+            return
+        fi
+    fi
+
+    local version_file
+    local value=""
+    version_file="$(get_installed_version_file)"
+    if [[ -n "$version_file" ]] && command -v jq &>/dev/null; then
+        value=$(jq -r '.commit // empty' "$version_file" 2>/dev/null || true)
+        if [[ -n "$value" && "$value" != "null" ]]; then
+            printf '%s\n' "$value"
             return
         fi
     fi
@@ -703,12 +707,12 @@ show_version_status() {
         local hint
         hint=$(get_installed_package_update_hint)
         [[ -n "$hint" ]] && echo -e "  ${STY_BOLD}Command:${STY_RST}   $hint"
-    else
+    elif [[ "$installed_mode" != "repo-link" ]]; then
         echo -e "  ${STY_BOLD}Repository:${STY_RST} $repo_version (${repo_commit})"
     fi
     
-    # Check if local repo is ahead/behind
-    if [[ "$installed_strategy" != "package-manager" ]] && ([[ "$installed" != "$repo_version" ]] || [[ "$installed_commit" != "$repo_commit" ]]); then
+    # Check if local repo is ahead/behind (skip for repo-link: installed IS the repo)
+    if [[ "$installed_strategy" != "package-manager" && "$installed_mode" != "repo-link" ]] && ([[ "$installed" != "$repo_version" ]] || [[ "$installed_commit" != "$repo_commit" ]]); then
         echo ""
         echo -e "  ${STY_YELLOW}→ Repository has newer version${STY_RST}"
         echo -e "  ${STY_YELLOW}  Run: ./setup update${STY_RST}"

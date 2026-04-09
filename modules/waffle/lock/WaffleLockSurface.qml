@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import QtMultimedia
 import Qt5Compat.GraphicalEffects
 import Quickshell.Services.UPower
 import Quickshell.Services.Mpris
@@ -25,14 +26,6 @@ MouseArea {
     // Track if we've attempted unlock at least once (to prevent shake on load)
     property bool hasAttemptedUnlock: false
     
-    // Emergency fallback - 5 rapid right-clicks to force unlock (safety net)
-    property int emergencyClickCount: 0
-    Timer {
-        id: emergencyClickTimer
-        interval: 1000
-        onTriggered: root.emergencyClickCount = 0
-    }
-    
     // Windows 11 Lock Screen Design Tokens (from Looks.qml)
     readonly property color textColor: Looks.colors.fg
     readonly property color textShadowColor: Looks.colors.shadow
@@ -42,6 +35,7 @@ MouseArea {
     readonly property bool blurEnabled: Config.options?.lock?.blur?.enable ?? true
 
     readonly property bool effectsSafe: !CompositorService.isNiri
+    readonly property bool enableAnimation: Config.options?.lock?.enableAnimation ?? false
     
     // Smoke material (Windows 11 - dimming overlay)
     readonly property color smokeColor: ColorUtils.transparentize(Looks.colors.bg0Opaque, 0.5)
@@ -82,12 +76,12 @@ MouseArea {
     }
     
     readonly property bool wallpaperIsVideo: {
-        const lowerPath = _wallpaperPath.toLowerCase();
+        const lowerPath = _wallpaperSource.toLowerCase();
         return lowerPath.endsWith(".mp4") || lowerPath.endsWith(".webm") || lowerPath.endsWith(".mkv") || lowerPath.endsWith(".avi") || lowerPath.endsWith(".mov");
     }
     
     readonly property bool wallpaperIsGif: {
-        return _wallpaperPath.toLowerCase().endsWith(".gif");
+        return _wallpaperSource.toLowerCase().endsWith(".gif");
     }
 
     // Background wallpaper with Acrylic blur effect
@@ -114,15 +108,15 @@ MouseArea {
         }
     }
     
-    // Animated GIF support
+    // Animated GIF support — shows first frame when enableAnimation is false
     AnimatedImage {
         id: gifBackgroundWallpaper
         anchors.fill: parent
-        source: root.wallpaperIsGif ? root._wallpaperPath : ""
+        source: root.wallpaperIsGif ? root._wallpaperSource : ""
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         visible: root.wallpaperIsGif
-        playing: visible
+        playing: visible && root.enableAnimation
         
         layer.enabled: root.blurEnabled && root.effectsSafe
         layer.effect: FastBlur {
@@ -133,6 +127,64 @@ MouseArea {
         transform: Scale {
             origin.x: gifBackgroundWallpaper.width / 2
             origin.y: gifBackgroundWallpaper.height / 2
+            xScale: root.blurEnabled ? 1.1 : 1
+            yScale: root.blurEnabled ? 1.1 : 1
+        }
+    }
+    
+    // Video wallpaper — shows first frame (paused) when enableAnimation is false
+    Video {
+        id: videoWallpaper
+        anchors.fill: parent
+        visible: root.wallpaperIsVideo
+        source: {
+            if (!root.wallpaperIsVideo || !root._wallpaperSource) return "";
+            const path = root._wallpaperSource;
+            return path.startsWith("file://") ? path : ("file://" + path);
+        }
+        fillMode: VideoOutput.PreserveAspectCrop
+        loops: MediaPlayer.Infinite
+        muted: true
+        autoPlay: true
+
+        readonly property bool shouldPlay: root.enableAnimation
+
+        function pauseAndShowFirstFrame() {
+            pause()
+            seek(0)
+        }
+
+        onPlaybackStateChanged: {
+            if (playbackState === MediaPlayer.PlayingState && !shouldPlay)
+                pauseAndShowFirstFrame()
+            if (playbackState === MediaPlayer.StoppedState && visible && shouldPlay)
+                play()
+        }
+
+        onShouldPlayChanged: {
+            if (visible && root.wallpaperIsVideo) {
+                if (shouldPlay) play()
+                else pauseAndShowFirstFrame()
+            }
+        }
+        
+        onVisibleChanged: {
+            if (visible && root.wallpaperIsVideo) {
+                if (shouldPlay) play()
+                else pauseAndShowFirstFrame()
+            } else {
+                pause()
+            }
+        }
+        
+        layer.enabled: root.blurEnabled && root.effectsSafe
+        layer.effect: FastBlur {
+            radius: root.blurRadius
+        }
+        
+        transform: Scale {
+            origin.x: videoWallpaper.width / 2
+            origin.y: videoWallpaper.height / 2
             xScale: root.blurEnabled ? 1.1 : 1
             yScale: root.blurEnabled ? 1.1 : 1
         }
@@ -994,7 +1046,7 @@ MouseArea {
     // ===== INPUT HANDLING =====
     
     hoverEnabled: true
-    acceptedButtons: Qt.LeftButton | Qt.RightButton
+    acceptedButtons: Qt.LeftButton
     focus: true
     activeFocusOnTab: true
     
@@ -1020,18 +1072,6 @@ MouseArea {
     }
     
     onClicked: mouse => {
-        // Emergency fallback: 5 rapid right-clicks to force unlock
-        if (mouse.button === Qt.RightButton) {
-            root.emergencyClickCount++
-            emergencyClickTimer.restart()
-            if (root.emergencyClickCount >= 5) {
-                console.warn("[WaffleLockSurface] Emergency unlock triggered!")
-                root.emergencyClickCount = 0
-                GlobalStates.screenLocked = false
-            }
-            return
-        }
-        
         if (!root.showLoginView) {
             root.switchToLogin()
         } else {

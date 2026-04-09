@@ -732,6 +732,39 @@ Singleton {
                 root.runLauncher(["panelFamily", "set", "waffle"])
             }
         },
+        {
+            id: "toggle-control-panel",
+            name: Translation.tr("Toggle Quick Settings"),
+            description: Translation.tr("Open or close the quick settings panel"),
+            icon: "toggle_on",
+            category: "system",
+            keywords: ["control", "panel", "quick", "settings", "toggles", "wifi", "bluetooth"],
+            execute: () => {
+                root.runLauncher(["controlPanel", "toggle"])
+            }
+        },
+        {
+            id: "toggle-media-controls",
+            name: Translation.tr("Toggle Media Controls"),
+            description: Translation.tr("Open or close fullscreen media controls"),
+            icon: "featured_play_list",
+            category: "media",
+            keywords: ["media", "controls", "fullscreen", "player", "music", "album"],
+            execute: () => {
+                root.runLauncher(["mediaControls", "toggle"])
+            }
+        },
+        {
+            id: "toggle-tiling",
+            name: Translation.tr("Toggle Tiling Overlay"),
+            description: Translation.tr("Open or close the tiling layout picker"),
+            icon: "grid_on",
+            category: "tools",
+            keywords: ["tiling", "layout", "grid", "snap", "window", "arrange"],
+            execute: () => {
+                root.runLauncher(["tiling", "toggle"])
+            }
+        },
     ]
 
     // PACKAGES: Run package manager commands (supports yay, paru, pacman)

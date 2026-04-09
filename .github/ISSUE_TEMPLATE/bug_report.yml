@@ -36,7 +36,9 @@ body:
     id: logs
     attributes:
       label: Logs
-      description: Output from inir logs (last 50 lines or relevant errors)
+      description: |
+        Output from `inir logs` (last 50 lines or relevant errors).
+        If the shell crashed, also include crash output if available.
       render: shell
     validations:
       required: true
@@ -45,8 +47,8 @@ body:
     id: version
     attributes:
       label: Version
-      description: Output of cat ~/.config/quickshell/inir/VERSION
-      placeholder: 2.11.11
+      description: "Output of: cat ~/.config/quickshell/inir/VERSION"
+      placeholder: "2.17.4"
     validations:
       required: true
 
@@ -54,8 +56,35 @@ body:
     id: compositor
     attributes:
       label: Compositor
-      description: Niri or Hyprland with version
-      placeholder: Niri 25.11
+      description: "Output of: niri msg version (or hyprctl version)"
+      placeholder: "25.11"
+    validations:
+      required: true
+
+  - type: input
+    id: quickshell
+    attributes:
+      label: Quickshell version
+      description: "Output of: qs --version"
+      placeholder: "quickshell 0.2.1, revision abc1234, distributed by: Arch Linux"
+    validations:
+      required: true
+
+  - type: input
+    id: qt
+    attributes:
+      label: Qt version
+      description: "Output of: pacman -Q qt6-base (or equivalent for your distro)"
+      placeholder: "qt6-base 6.11.0-1.1"
+    validations:
+      required: true
+
+  - type: input
+    id: distro
+    attributes:
+      label: Distro
+      description: Distribution name and version
+      placeholder: "Arch Linux"
     validations:
       required: true
 
@@ -80,4 +109,4 @@ body:
     id: notes
     attributes:
       label: Additional notes
-      description: Screenshots, system information, or other context
+      description: Screenshots, display scale, GPU info, or other context

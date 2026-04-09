@@ -18,6 +18,11 @@ This suite is used to manage project translation files, automatically extract tr
 - Displays translation status
 - Simplifies common operations
 
+### 4. `auto-translate.js` - Bulk Auto-Translation Tool
+- Uses Google Translate to automatically fill empty or missing translations.
+- Processes keys in batches to avoid API limits.
+- **Usage**: `node auto-translate.js <lang_code>` (e.g. `node auto-translate.js es_AR`)
+
 ## Quick Start
 
 ### Using the Wrapper Script (Recommended)

@@ -111,7 +111,9 @@ DockButton {
 
     property bool isSeparator: appToplevel.appId === "SEPARATOR"
     // Use originalAppId (preserves case) for desktop entry lookup, fallback to appId for backwards compat
-    property var desktopEntry: DesktopEntries.heuristicLookup(appToplevel.originalAppId ?? appToplevel.appId)
+    // AppSearch.lookupDesktopEntry adds StartupWMClass, exec-basename, and desktop-id-stem matching
+    // which covers AppImages and other apps where heuristicLookup alone fails.
+    property var desktopEntry: AppSearch.lookupDesktopEntry(appToplevel.originalAppId ?? appToplevel.appId)
     enabled: !isSeparator
 
     readonly property real dockHeight: Config.options?.dock?.height ?? 70

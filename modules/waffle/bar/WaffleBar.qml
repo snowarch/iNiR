@@ -6,9 +6,12 @@ import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.waffle.looks
 
 Scope {
     id: root
+    
+    readonly property bool isBottom: Config.options?.waffles?.bar?.bottom ?? false
     
     LazyLoader {
         id: barLoader
@@ -19,15 +22,19 @@ Scope {
                 id: barRoot
                 required property var modelData
                 screen: modelData
+                visible: !GameMode.shouldHidePanels
                 exclusionMode: ExclusionMode.Ignore
-                exclusiveZone: implicitHeight
+                exclusiveZone: GameMode.shouldHidePanels ? 0 : implicitHeight
                 WlrLayershell.namespace: "quickshell:bar"
+                mask: Region {
+                    item: GameMode.shouldHidePanels ? null : content
+                }
 
                 anchors {
                     left: true
                     right: true
-                    bottom: Config.options?.waffles?.bar?.bottom ?? false
-                    top: !(Config.options?.waffles?.bar?.bottom ?? false)
+                    bottom: root.isBottom
+                    top: !root.isBottom
                 }
 
                 color: "transparent"
@@ -36,7 +43,29 @@ Scope {
 
                 WaffleBarContent {
                     id: content
-                    anchors.fill: parent
+                    anchors {
+                        left: parent.left
+                        right: parent.right
+                        top: !root.isBottom ? parent.top : undefined
+                        bottom: root.isBottom ? parent.bottom : undefined
+                    }
+                    anchors.topMargin: !root.isBottom && GameMode.shouldHidePanels ? -implicitHeight : 0
+                    anchors.bottomMargin: root.isBottom && GameMode.shouldHidePanels ? -implicitHeight : 0
+
+                    Behavior on anchors.topMargin {
+                        animation: NumberAnimation {
+                            duration: Looks.transition.enabled ? Looks.transition.duration.panel : 0
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: Looks.transition.easing.bezierCurve.decelerate
+                        }
+                    }
+                    Behavior on anchors.bottomMargin {
+                        animation: NumberAnimation {
+                            duration: Looks.transition.enabled ? Looks.transition.duration.panel : 0
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: Looks.transition.easing.bezierCurve.decelerate
+                        }
+                    }
                 }
             }
         }

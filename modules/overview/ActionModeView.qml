@@ -338,24 +338,21 @@ Item {
                     : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
                 readonly property color selectedTextColor: Appearance.angelEverywhere ? Appearance.angel.colText
                     : Appearance.inirEverywhere ? Appearance.inir.colText
-                    : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer1
-                    : Appearance.colors.colOnPrimaryContainer
+                    : Appearance.colors.colOnLayer1
                 readonly property color descriptionTextColor: delegateBtn.isHighlighted
                     ? (Appearance.angelEverywhere ? Appearance.angel.colText
                         : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
-                        : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer1
-                        : Appearance.colors.colOnPrimaryContainer)
+                        : Appearance.colors.colOnLayer1)
                     : (Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext)
-                readonly property color selectedBackgroundColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                    : Appearance.inirEverywhere ? Appearance.inir.colLayer2
-                    : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                    : Appearance.colors.colPrimaryContainer
-                readonly property color hoverBackgroundColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                    : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
-                    : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                    : Appearance.colors.colLayer2Hover
-                readonly property color pressedBackgroundColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
-                    : Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive : Appearance.colors.colPrimaryContainerActive
+                readonly property color selectedBackgroundColor: Appearance.angelEverywhere
+                    ? Appearance.angel.colGlassCardHover
+                    : Appearance.colors.colLayer1
+                readonly property color hoverBackgroundColor: Appearance.angelEverywhere
+                    ? Appearance.angel.colGlassCardHover
+                    : Appearance.colors.colLayer1
+                readonly property color pressedBackgroundColor: Appearance.angelEverywhere
+                    ? Appearance.angel.colGlassCardActive
+                    : Appearance.colors.colLayer1Hover
 
                 anchors.left: parent?.left
                 anchors.right: parent?.right
@@ -375,7 +372,9 @@ Item {
                         ? delegateBtn.selectedBackgroundColor
                         : (delegateBtn.hovered ? delegateBtn.hoverBackgroundColor : "transparent"))
                 colBackgroundHover: delegateBtn.hoverBackgroundColor
-                colRipple: Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive : Appearance.colors.colPrimaryContainerActive
+                colRipple: Appearance.angelEverywhere
+                    ? Appearance.angel.colGlassCardActive
+                    : Appearance.colors.colLayer1Hover
 
                 background {
                     anchors.fill: delegateBtn
@@ -420,7 +419,7 @@ Item {
                                 return ColorUtils.transparentize(
                                     Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary, 0.3)
                             return delegateBtn.isHighlighted
-                                ? (Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
+                                ? (Appearance.angelEverywhere ? Appearance.angel.colGlassElevatedHover : Appearance.colors.colLayer2Hover)
                                 : (Appearance.inirEverywhere ? Appearance.inir.colLayer2
                                     : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
@@ -454,7 +453,9 @@ Item {
                                 if (isPackage && entry.pkg?.installed)
                                     return Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
                                 return delegateBtn.isHighlighted
-                                    ? delegateBtn.selectedTextColor
+                                    ? (Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                                        : Appearance.inirEverywhere ? Appearance.inir.colPrimary
+                                        : Appearance.colors.colPrimary)
                                     : delegateBtn.normalTextColor
                             }
                             Behavior on color {

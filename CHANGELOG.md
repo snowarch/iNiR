@@ -5,6 +5,127 @@ All notable changes to iNiR will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.18.0] - 2026-04-09
+
+### Added
+- **Systemd shell startup**: Shell startup migrated from niri `spawn-at-startup` to a systemd user service (`inir.service`). Migration 021 handles the transition — removes compositor startup lines, installs and enables the service. `KillMode=process` prevents systemd from terminating child apps on shell restart.
+- **CLI discoverability overhaul**: Rich `--help` with dynamic IPC target listing by panel family, per-target `--help`, typo suggestions, function validation. New shell completions for bash, zsh, and fish. IPC registry generated from source with `generate-ipc-registry.py`.
+- **Waffle settings redesign**: Complete Fluent-styled redesign of Quick Settings, Background, Themes, Interface, Modules, Bar, Shortcuts, and Waffle Style pages. New shared components: `WSettingsSection`, `WSettingsSlider`, `WSettingsInfoBar`, `WSettingsChoiceGroup`.
+- **Gowall wallpaper editor**: New gowall page in waffle settings with theme browser, preview, and apply. Apply routes by active panel family. Shim dir prevents gowall from spawning image viewers after processing.
+- **Pear Desktop theming**: New color module (`80-pear-desktop.sh`) with live CSS injection via Chrome DevTools Protocol. Config toggle `enablePearDesktop` with settings UI integration.
+- **All-apps grid view**: Grid layout with letter jump strip added to waffle start menu.
+- **Overview active-screen-only**: New `overview.activeScreenOnly` config option — shows overview only on the focused monitor in multi-monitor setups.
+- **Equicord Discord client support**: Vesktop theme generation now includes `~/.config/equicord/` and `~/.config/Equicord/` paths.
+
+### Changed
+- **GameMode rewrite**: Replaced size-based fullscreen heuristic (60px margin) with niri's native `is_fullscreen` flag. New `shouldHidePanels` property — panels only hide when auto-detected AND focused window is fullscreen. Manual GameMode never hides panels. Eliminates false positives on maximized windows with small gaps.
+- **Context-aware panel hiding**: Bar, Dock, and VerticalBar use `GameMode.shouldHidePanels` instead of blunt `GameMode.active`. Panels return when user opens Niri overview. Input regions (mask + exclusiveZone) nullified during gamemode to prevent invisible mouse traps.
+- **Unified external theming**: Manual preset themes now fan out through the same `applycolor.sh` pipeline as wallpaper auto-generation. 120ms debounced timer ensures FileView flush before script execution. All targets (terminals, editors, chrome, spicetify, steam, pear) stay in sync.
+- **GTK/Qt theme overhaul**: Selection colors changed from raw accent to blended surface tones. New hover/active/focus interaction states for buttons, menus, and entries. Added `Colors:Header` section for Darkly. qt6ct/qt5ct config generation hardened.
+- **Parallax defaults**: Disabled by default for fresh installs. Zoom values normalized to 1.0 — headroom is now applied internally by the parallax engine.
+- **ThemeService family awareness**: Detects `panelFamily` change and re-runs full color pipeline even for manual themes. Waffle wallpaper apply now triggers color regeneration.
+- **Terminal color generation**: WCAG contrast-aware tone search prevents low-contrast terminal output. Tone capping prevents whitewash on bright colors. Force-dark terminal mode generates isolated `terminal.json`.
+- **Discord theme rename**: Vesktop/midnight themes renamed from `ii-midnight` to `inir-midnight`. Subtler hover/active states, refined mention gradients, softer borders. Legacy CSS auto-cleaned on next color generation.
+- **Compact sidebar media**: Redesigned media player and controls cards layout.
+- **Bar/dock stale monitor guard**: Screen filter fallback prevents stale monitor names (e.g. after VRR re-enumeration) from hiding all panels.
+- **Steam/Pear reload safety**: Removed `pkill` fallbacks for steamwebhelper and youtube-music. Apps are never force-killed — CSS deploys to disk and applies on next app restart.
+
+### Fixed
+- **Gowall waffle apply bleeding into ii**: Apply now routes by active panel family and restores waffle color regen.
+- **Looks.ensureMinOpacity null guard**: `Qt.color()` returns null, not an invalid object — guard updated.
+- **Gowall opening image viewer**: Shim dir with no-op `kitty`/`xdg-open` prevents unwanted window spawns.
+- **WaffleWidgets layer**: Changed to `Top` with missing `WButton` import added.
+- **Broken fluent icons in WInterfacePage**: Missing `WButton` import restored.
+- **Glass opacity floor**: Enforced minimum for waffle aurora/angel surfaces.
+- **Overview vertical centering**: Replaced anchor-based centering with calculated `topMargin` approach to prevent subpixel blur and erratic positioning.
+- **Volume OSD on gamemode activation**: Prevented spurious OSD trigger during gamemode state change.
+- **Slider handle-track desync**: Fixed during drag interaction, added tabular numbers for consistent width.
+- **Parallax sizing and crossfader artifacts**: Reworked transition logic and hardened skew selector sync.
+- **Click-outside backdrops**: Declarative visibility prevents orphaned input capture layers.
+- **Niri output key rejection**: Compositor settings backend now rejects unsupported output keys.
+- **Volume controls after output switch**: Fixed, with easyeffects crash avoidance.
+- **Alacritty migration**: Hoisted misplaced `live_config_reload` key.
+- **Duplicate inir instances**: Guard on `inir run`, kill foreground wrappers on stop, loop `qs kill` for multi-instance cleanup.
+- **Foot terminal colors**: Switched to `[colors-dark]` section to drop deprecation spam.
+- **Keyboard layout save key**: Fixed save path, stopped language fallback to `en_US`.
+- **Theme regen consistency**: Aligned regeneration across settings, family switch, and external targets.
+- **Preset theme color propagation**: Fixed propagation to external apps and family switch regen.
+- **Fullscreen surface handling**: Unmap all shell surfaces during fullscreen for direct scanout.
+
+### Removed
+- **`overview.centerLauncher`**: Config option removed — overview always uses calculated vertical centering.
+- **`spawn-at-startup` compositor entry**: Shell startup ownership moved to systemd user service.
+
+## [2.17.4] - 2026-04-05
+
+### Added
+- **Complete Internationalization**: 14 new languages fully translated with 3400+ keys each (es_AR, fr_FR, de_DE, it_IT, pt_BR, ru_RU, uk_UA, hi_IN, ar_SA, he_HE, zh_CN, ja_JP, ko_KR, vi_VN).
+- **Translation Auto-Updater**: Added `translations/tools/auto-translate.js` script to bulk translate missing keys via Google Translate API without hitting limits.
+
+### Changed
+- **Bug Report Template**: Updated GitHub issue templates to require explicit Qt, Quickshell, and Distro version fields for better debugging.
+
+### Fixed
+- **Niri Display Config State**: Fixed combo box bindings breaking after user interaction. State is now imperatively resynced after output data refreshes, and reads are deferred by 300ms to avoid stale values.
+- **Settings Status Banner UI**: Improved the error/info status banner in NiriConfig with distinct colors (error/primary), larger icons, and solid-styled Dismiss/Retry buttons.
+
+## [2.17.3] - 2026-04-04
+
+### Added
+- **Configurable sidebar animations**: Sidebars now support 4 animation types — slide (default), fade, pop, and reveal — selectable from Settings > Panels. Uses Material Design motion tokens with enter/exit transitions.
+- **Lock screen video/GIF support**: Video and animated GIF wallpapers now render on the lock screen with first-frame fallback. Animation is off by default (Settings > Lock Screen toggle). Supports both ii and waffle families including the Niri-safe variant.
+
+### Fixed
+- **YTMusic track selection race**: Clicking a song while another was playing could advance to the next track instead of the selected one. Added `_userInitiatedPlay` guard to suppress spurious `playNext()` from the old mpv's exit handler during the 200ms handoff window.
+- **Cloudflare WARP toggle misalignment**: WARP toggle in the classic quick panel broke grid alignment because its `contentItem` lacked the Item wrapper other toggles use.
+- **Classic quick toggles left-aligned in compact mode**: Grid was anchored to left/right edges in compact mode instead of centering. Now always horizontally centered.
+- **Waffle lock screen GIF detection**: `wallpaperIsVideo`/`wallpaperIsGif` were checking the thumbnail-resolved path instead of the raw source path, which could miss animated wallpapers when a thumbnail was set.
+
+## [2.17.2] - 2026-04-04
+
+### Added
+- **Arch dependency tracker meta-package**: New `inir-deps` package registered during setup so pacman orphan cleanup does not remove iNiR runtime dependencies.
+- **Post-install extras flow**: `./setup extras` now exposes optional installs for iNiR-Walls and ii-pixel-sddm after initial setup.
+- **Curated software catalog sidebar tab**: Added software discovery surface with bundled catalog data and AppCatalog service wiring.
+- **Material background clock controls**: Added full clock customization for the ii background widget (schema/defaults/settings + widget surfaces).
+
+### Changed
+- **Arch install hardening**: Dependency install flow now handles known Noctalia package conflicts before iNiR package resolution.
+- **Path model normalization**: Runtime/services/settings/welcome surfaces now consume centralized XDG-derived paths from `Directories.qml` instead of scattered literals.
+- **Setup UX flow**: Fresh install keeps optional content opt-in (SDDM/iNiR-Walls), update path handling and theme actions were hardened, and the setup TUI received the new Ink visual refactor.
+- **README localization refresh**: Main README and localized docs/readme pages were rewritten/synced for current project messaging.
+- **Technical docs sync**: IPC, theming, package, and project-map docs were aligned with real runtime/distribution behavior.
+
+### Fixed
+- **Wallpaper status resolution**: Setup now reads `theme-meta.json` via `.wallpaper` with `.source_path` fallback so active wallpaper no longer shows as `none` when metadata uses source-path shape.
+- **iNiR-Walls feedback**: Extras flow now shows visible clone/download progress and no longer suppresses user-facing install logs.
+- **Theming target wiring**: Spicetify target config key corrected to `appearance.wallpaperTheming.enableSpicetify`, and terminal theming applies with safer terminal ancestry detection.
+- **Runtime interaction edge cases**: Cheatsheet key handling and wallpaper coverflow monitor targeting/cleanup were corrected for more reliable focus and close behavior.
+- **YTMusic playback/state reliability**: Fixed media source switching sync and autoplay recovery when mpv hangs at EOF.
+- **Background media widget blur placement**: Corrected half-pixel placement artifact that caused blur instability.
+- **Settings/overlay alignment polish**: Fixed variable-width action tab underline alignment, removed settings nav scrollbar rail bleed, and prevented overlay-mode hover bubble from shifting nav alignment.
+- **Anime schedule watch fallback**: Migrated fallback target to 9animetv for broken/legacy watch links.
+
+## [2.17.1] - 2026-04-02
+
+### Added
+- **SDDM session popup selector**: Session switcher on the login screen now opens a popup list instead of blindly cycling through entries.
+- **CLI command forwarding**: `inir config`, `inir info`, `inir backup`, and `inir logs` forwarded through the launcher to the setup TUI.
+- **TUI library expansion**: Rich chooser menus, task progress tracker, key-value detail views, and section helpers for setup subcommands.
+
+### Fixed
+- **Dock/taskbar icon resolution**: Reverse-lookup maps in AppSearch match Electron, AppImage, and reverse-domain window IDs to their desktop entries (#105).
+- **Backdrop hideWallpaper gate**: `hideWallpaper` now respects `backdrop.enable` instead of firing unconditionally (#104).
+- **Repo-link version detection**: `get_installed_version()` and `get_installed_commit()` return live git state for repo-link installs instead of stale `version.json`.
+- **Migration 009 modular config**: Handles both monolithic `config.kdl` and post-018 `config.d/40-environment.kdl` layouts for the dbus log spam fix.
+- **SDDM theme idempotent copy**: Checksum comparison skips the copy when source and target are already identical.
+
+### Changed
+- **PKGBUILD optdepends**: Added `gowall-bin` and `nm-connection-editor`; synced `.SRCINFO`.
+
+### Removed
+- **CI workflow**: GitHub Actions workflow removed — not viable on current repo plan.
+
 ## [2.17.0] - 2026-04-01
 
 ### Added

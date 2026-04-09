@@ -27,14 +27,16 @@ Scope {
             property bool monitorIsFocused: CompositorService.isHyprland 
                 ? (Hyprland.focusedMonitor?.id == monitor?.id)
                 : (NiriService.currentOutput === root.screen?.name)
+            readonly property bool activeScreenOnly: Config.options?.overview?.activeScreenOnly ?? false
+            readonly property bool shouldShow: GlobalStates.overviewOpen && (!activeScreenOnly || monitorIsFocused)
             screen: modelData
 
-            Component.onCompleted: visible = GlobalStates.overviewOpen
+            Component.onCompleted: visible = root.shouldShow
 
             Connections {
-                target: GlobalStates
-                function onOverviewOpenChanged() {
-                    if (GlobalStates.overviewOpen) {
+                target: root
+                function onShouldShowChanged() {
+                    if (root.shouldShow) {
                         _overviewCloseTimer.stop()
                         root.visible = true
                     } else {
@@ -53,8 +55,8 @@ Scope {
 
             WlrLayershell.namespace: "quickshell:overview"
             WlrLayershell.layer: WlrLayer.Overlay
-            // En Niri necesitamos foco explícito para que el buscador reciba input
-            WlrLayershell.keyboardFocus: GlobalStates.overviewOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+            // Keyboard focus only on the monitor that should show
+            WlrLayershell.keyboardFocus: root.shouldShow ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
             color: "transparent"
 
             anchors {
@@ -202,55 +204,43 @@ Scope {
                 visible: GlobalStates.overviewOpen
                 transformOrigin: Item.Top
                 scale: GlobalStates.overviewOpen ? 1.0 : 0.97
+                
+                // Always center the overview vertically - this is the default behavior.
+                // Never use verticalCenter anchor with dynamic Column - causes blur and erratic positioning.
+                // Use top anchor with calculated topMargin to center instead.
+                
                 anchors {
                     horizontalCenter: parent.horizontalCenter
-                    top: (Config.options?.overview?.centerLauncher ?? false) ? undefined : parent.top
-                    bottom: (Config.options?.overview?.centerLauncher ?? false) ? undefined : parent.bottom
-                    verticalCenter: (Config.options?.overview?.centerLauncher ?? false) ? parent.verticalCenter : undefined
+                    top: parent.top
                     topMargin: {
-                        if (Config.options?.overview?.centerLauncher ?? false)
-                            return 0;
                         const ov = Config?.options?.overview;
-                        const base = (ov && ov.topMargin !== undefined) ? ov.topMargin : 0;
                         const respectBar = ov && ov.respectBar !== undefined ? ov.respectBar : true;
-                        let margin = base;
-
+                        
+                        // Calculate bar/dock offset at top
+                        let barOffset = 0;
                         if (respectBar && !(Config.options?.bar?.bottom ?? false)) {
-                            const barH = Appearance.sizes.barHeight + Appearance.rounding.screenRounding;
-                            margin += barH;
+                            barOffset = Appearance.sizes.barHeight + Appearance.rounding.screenRounding;
                         }
-
                         const dock = Config.options?.dock;
                         if (dock?.enable && dock?.position === "top") {
-                            margin += (dock.height ?? 60) + 20;
+                            barOffset += (dock.height ?? 60) + 20;
                         }
-
-                        return margin;
-                    }
-                    bottomMargin: {
-                        if (Config.options?.overview?.centerLauncher ?? false)
-                            return 0;
-                        const ov = Config?.options?.overview;
-                        const base = (ov && ov.bottomMargin !== undefined) ? ov.bottomMargin : 0;
-                        const respectBar = ov && ov.respectBar !== undefined ? ov.respectBar : true;
-                        let margin = base;
                         
-                        // Respect bar at bottom
+                        // Calculate bar/dock offset at bottom
+                        let bottomOffset = 8;
                         if (respectBar && (Config.options?.bar?.bottom ?? false)) {
-                            const barH = Appearance.sizes.barHeight + Appearance.rounding.screenRounding;
-                            margin += barH;
+                            bottomOffset += Appearance.sizes.barHeight + Appearance.rounding.screenRounding;
                         }
-                        
-                        // Respect dock at bottom (if enabled)
-                        const dock = Config.options?.dock;
                         if (dock?.enable && dock?.position === "bottom") {
-                            const dockH = (dock.height ?? 60) + 20; // dock height + breathing space
-                            margin += dockH;
+                            bottomOffset += (dock.height ?? 60) + 20;
                         }
-
-                        margin += 8; // keep overview cards from touching panel edges
                         
-                        return margin;
+                        // Center the content vertically in available space
+                        const availableHeight = root.height - barOffset - bottomOffset;
+                        const contentHeight = columnLayout.implicitHeight;
+                        // Round to avoid subpixel positioning that causes blur
+                        const centeredMargin = barOffset + Math.round(Math.max(0, (availableHeight - contentHeight) / 2));
+                        return centeredMargin;
                     }
                 }
                 spacing: -8
@@ -291,13 +281,8 @@ Scope {
                     id: searchWidget
                     anchors.horizontalCenter: parent.horizontalCenter
                     searchingText: root.searchingText
-                    availableHeight: Math.max(
-                        220,
-                        root.height
-                            - columnLayout.anchors.topMargin
-                            - columnLayout.anchors.bottomMargin
-                            - Appearance.sizes.elevationMargin * 2
-                    )
+                    // Centered mode: limit search results to 60% of screen height
+                    availableHeight: Math.max(220, root.height * 0.6)
                     onSearchingTextChanged: if (searchingText !== root.searchingText) root.searchingText = searchingText
                 }
 

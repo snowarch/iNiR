@@ -13,13 +13,14 @@ Flickable {
     property string pageIcon: ""
     property string pageDescription: ""
     default property alias content: contentColumn.data
+    signal navigateRequested(int pageIndex)
     
     // Settings search context
     property int settingsPageIndex: -1
     property string settingsPageName: pageTitle
     
     clip: true
-    contentHeight: contentColumn.implicitHeight + 56
+    contentHeight: contentColumn.implicitHeight + 48
     boundsBehavior: Flickable.StopAtBounds
     pressDelay: 50
     
@@ -31,15 +32,15 @@ Flickable {
             top: parent.top
             left: parent.left
             right: parent.right
-            topMargin: 32
-            leftMargin: 36
-            rightMargin: 36
-            bottomMargin: 28
+            topMargin: 24
+            leftMargin: 28
+            rightMargin: 28
+            bottomMargin: 20
         }
-        spacing: 16
+        spacing: 10
 
         opacity: 0
-        transform: Translate { id: contentTranslate; y: Looks.transition.enabled ? 18 : 0 }
+        transform: Translate { id: contentTranslate; y: Looks.transition.enabled ? 14 : 0 }
 
         Component.onCompleted: {
             if (Looks.transition.enabled) {
@@ -56,46 +57,37 @@ Flickable {
                 target: contentColumn
                 property: "opacity"
                 from: 0; to: 1
-                duration: Looks.transition.duration.medium
-                easing.type: Easing.OutCubic
+                duration: Looks.transition.duration.page
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Looks.transition.easing.bezierCurve.decelerate
             }
             NumberAnimation {
                 target: contentTranslate
                 property: "y"
-                from: 18; to: 0
-                duration: Looks.transition.duration.medium
-                easing.type: Easing.OutCubic
+                from: 14; to: 0
+                duration: Looks.transition.duration.page
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Looks.transition.easing.bezierCurve.decelerate
             }
         }
 
         // Page header
         ColumnLayout {
             Layout.fillWidth: true
-            Layout.bottomMargin: 16
-            spacing: 10
+            Layout.bottomMargin: 6
+            spacing: 4
 
-            RowLayout {
-                spacing: 14
-
-                FluentIcon {
-                    visible: root.pageIcon !== ""
-                    icon: root.pageIcon
-                    implicitSize: 28
-                    color: Looks.colors.accent
-                }
-
-                WText {
-                    text: root.pageTitle
-                    font.pixelSize: Looks.font.pixelSize.xlarger * 1.6
-                    font.weight: Looks.font.weight.strong
-                }
+            WText {
+                text: root.pageTitle
+                font.pixelSize: Looks.font.pixelSize.xlarger * 1.5
+                font.weight: Looks.font.weight.stronger
             }
             
             WText {
                 visible: root.pageDescription !== ""
                 Layout.fillWidth: true
                 text: root.pageDescription
-                font.pixelSize: Looks.font.pixelSize.normal
+                font.pixelSize: Looks.font.pixelSize.small
                 color: Looks.colors.subfg
                 wrapMode: Text.WordWrap
                 lineHeight: 1.3

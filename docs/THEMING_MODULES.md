@@ -25,6 +25,7 @@ Examples:
 - `40-chrome.sh`
 - `50-spicetify.sh`
 - `60-sddm.sh`
+- `70-steam.sh`
 
 Rules:
 

@@ -17,7 +17,7 @@ ContentPage {
     property bool isIiActive: Config.options?.panelFamily !== "waffle"
     readonly property var iiParallax: Config.options?.background?.parallax ?? {}
     readonly property string iiParallaxPreset: ParallaxMath.detectPreset(
-        iiParallax.zoom ?? iiParallax.workspaceZoom ?? 1.07,
+        iiParallax.zoom ?? iiParallax.workspaceZoom ?? 1.0,
         iiParallax.workspaceShift ?? 1,
         iiParallax.panelShift ?? iiParallax.sidebarShift ?? 0.15,
         iiParallax.widgetDepth ?? iiParallax.widgetsFactor ?? 1.2
@@ -138,16 +138,16 @@ ContentPage {
             ConfigSpinBox {
                 icon: "loupe"
                 text: Translation.tr("Wallpaper zoom (%)")
-                value: Math.round((root.iiParallax.zoom ?? root.iiParallax.workspaceZoom ?? 1.07) * 100)
-                from: 100
-                to: 140
+                value: Math.round((root.iiParallax.zoom ?? root.iiParallax.workspaceZoom ?? 1.0) * 100)
+                from: 10
+                to: 200
                 stepSize: 1
                 onValueChanged: {
                     Config.setNestedValue("background.parallax.zoom", value / 100)
                     Config.setNestedValue("background.parallax.workspaceZoom", value / 100)
                 }
                 StyledToolTip {
-                    text: Translation.tr("Extra wallpaper scale reserved for parallax movement")
+                    text: Translation.tr("Extra wallpaper zoom after fit-to-cover. 100% keeps the default parallax headroom; lower values zoom out, higher values zoom in.")
                 }
             }
 
@@ -2147,6 +2147,120 @@ ContentPage {
                         text: Translation.tr("Smoothly animate digits when time changes")
                     }
                 }
+
+                ContentSubsection {
+                    title: Translation.tr("Time format")
+                    ConfigSelectionArray {
+                        currentValue: Config.options?.background?.widgets?.clock?.timeFormat ?? "system"
+                        onSelected: newValue => {
+                            Config.setNestedValue("background.widgets.clock.timeFormat", newValue);
+                        }
+                        options: [
+                            {
+                                displayName: Translation.tr("System"),
+                                icon: "settings",
+                                value: "system"
+                            },
+                            {
+                                displayName: Translation.tr("24h"),
+                                icon: "schedule",
+                                value: "24h"
+                            },
+                            {
+                                displayName: Translation.tr("12h"),
+                                icon: "nest_clock_farsight_analog",
+                                value: "12h"
+                            }
+                        ]
+                    }
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "timer"
+                    text: Translation.tr("Show seconds")
+                    checked: Config.options?.background?.widgets?.clock?.showSeconds ?? false
+                    onCheckedChanged: {
+                        Config.setNestedValue("background.widgets.clock.showSeconds", checked);
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Display seconds in the time string")
+                    }
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "calendar_today"
+                    text: Translation.tr("Show date")
+                    checked: Config.options?.background?.widgets?.clock?.showDate ?? true
+                    onCheckedChanged: {
+                        Config.setNestedValue("background.widgets.clock.showDate", checked);
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Show a date line below the time")
+                    }
+                }
+
+                ContentSubsection {
+                    visible: Config.options?.background?.widgets?.clock?.showDate ?? true
+                    title: Translation.tr("Date style")
+                    ConfigSelectionArray {
+                        currentValue: Config.options?.background?.widgets?.clock?.dateStyle ?? "long"
+                        onSelected: newValue => {
+                            Config.setNestedValue("background.widgets.clock.dateStyle", newValue);
+                        }
+                        options: [
+                            {
+                                displayName: Translation.tr("Long"),
+                                icon: "calendar_month",
+                                value: "long"
+                            },
+                            {
+                                displayName: Translation.tr("Minimal"),
+                                icon: "event_note",
+                                value: "minimal"
+                            },
+                            {
+                                displayName: Translation.tr("Weekday"),
+                                icon: "today",
+                                value: "weekday"
+                            },
+                            {
+                                displayName: Translation.tr("Numeric"),
+                                icon: "123",
+                                value: "numeric"
+                            }
+                        ]
+                    }
+                }
+
+                ConfigSpinBox {
+                    icon: "format_size"
+                    text: Translation.tr("Time scale (%)")
+                    value: Config.options?.background?.widgets?.clock?.timeScale ?? 100
+                    from: 50
+                    to: 200
+                    stepSize: 5
+                    onValueChanged: {
+                        Config.setNestedValue("background.widgets.clock.timeScale", value);
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Scale the time text size")
+                    }
+                }
+
+                ConfigSpinBox {
+                    icon: "format_size"
+                    text: Translation.tr("Date scale (%)")
+                    value: Config.options?.background?.widgets?.clock?.dateScale ?? 100
+                    from: 50
+                    to: 200
+                    stepSize: 5
+                    onValueChanged: {
+                        Config.setNestedValue("background.widgets.clock.dateScale", value);
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Scale the date text size")
+                    }
+                }
             }
 
             ContentSubsection {
@@ -2164,6 +2278,37 @@ ContentPage {
                     }
                     StyledToolTip {
                         text: Translation.tr("Only affects the clock widget text, independent from the global wallpaper dim.")
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Clock appearance")
+
+                FontSelector {
+                    id: clockFontSelector
+                    label: Translation.tr("Clock font")
+                    icon: "font_download"
+                    selectedFont: Config.options?.background?.widgets?.clock?.fontFamily ?? "Space Grotesk"
+                    onSelectedFontChanged: {
+                        if (Config.options?.background?.widgets?.clock)
+                            Config.setNestedValue("background.widgets.clock.fontFamily", selectedFont);
+                    }
+                    Connections {
+                        target: Config.options?.background?.widgets?.clock ?? null
+                        function onFontFamilyChanged() { clockFontSelector.selectedFont = Config.options.background.widgets.clock.fontFamily }
+                    }
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "shadow"
+                    text: Translation.tr("Show text shadow")
+                    checked: Config.options?.background?.widgets?.clock?.showShadow ?? true
+                    onCheckedChanged: {
+                        Config.setNestedValue("background.widgets.clock.showShadow", checked);
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Draw a subtle shadow behind clock text for better readability")
                     }
                 }
             }
@@ -2459,6 +2604,45 @@ ContentPage {
                     wrapMode: TextEdit.Wrap
                     onTextChanged: {
                         Config.setNestedValue("background.widgets.clock.quote.text", text);
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Reset")
+
+                RippleButton {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 34
+                    buttonRadius: Appearance.rounding.small
+                    colBackground: Appearance.colors.colLayer2
+                    colBackgroundHover: Appearance.colors.colLayer2Hover
+                    onClicked: {
+                        Config.setNestedValue("background.widgets.clock.fontFamily", "Space Grotesk");
+                        Config.setNestedValue("background.widgets.clock.timeFormat", "system");
+                        Config.setNestedValue("background.widgets.clock.showSeconds", false);
+                        Config.setNestedValue("background.widgets.clock.showDate", true);
+                        Config.setNestedValue("background.widgets.clock.dateStyle", "long");
+                        Config.setNestedValue("background.widgets.clock.timeScale", 100);
+                        Config.setNestedValue("background.widgets.clock.dateScale", 100);
+                        Config.setNestedValue("background.widgets.clock.showShadow", true);
+                        Config.setNestedValue("background.widgets.clock.dim", 70);
+                        Config.setNestedValue("background.widgets.clock.digital.animateChange", true);
+                    }
+                    contentItem: RowLayout {
+                        spacing: 6
+                        Item { Layout.fillWidth: true }
+                        MaterialSymbol {
+                            text: "restart_alt"
+                            iconSize: 15
+                            color: Appearance.colors.colOnLayer1
+                        }
+                        StyledText {
+                            text: Translation.tr("Reset clock settings to defaults")
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            color: Appearance.colors.colOnLayer1
+                        }
+                        Item { Layout.fillWidth: true }
                     }
                 }
             }

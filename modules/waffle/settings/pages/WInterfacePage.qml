@@ -11,7 +11,7 @@ import qs.modules.waffle.settings
 
 WSettingsPage {
     id: root
-    settingsPageIndex: 5
+    settingsPageIndex: 6
     pageTitle: Translation.tr("Interface")
     pageIcon: "apps"
     pageDescription: Translation.tr("Notifications, OSD, and other UI elements")
@@ -224,12 +224,12 @@ WSettingsPage {
     
     WSettingsCard {
         title: Translation.tr("Display scaling")
-        icon: "aspect-ratio"
+        icon: "desktop"
 
         WSettingsSpinBox {
             id: scaleSpinBox
             label: Translation.tr("UI scale")
-            icon: "zoom-in"
+            icon: "add"
             description: Translation.tr("Takes effect immediately")
             suffix: "%"
             from: 50; to: 200; stepSize: 5
@@ -240,13 +240,35 @@ WSettingsPage {
         WSettingsButton {
             visible: Math.abs((Config.options?.appearance?.typography?.sizeScale ?? 1.0) - 1.0) > 0.01
             label: Translation.tr("Reset to 100%")
-            icon: "zoom-out"
+            icon: "arrow-counterclockwise"
             buttonText: Translation.tr("Reset")
             onButtonClicked: {
                 Config.setNestedValue("appearance.typography.sizeScale", 1.0)
                 scaleSpinBox.value = 100
             }
         }
+    }
+
+    WSettingsCard {
+        title: Translation.tr("Display")
+        icon: "desktop"
+        
+        WSettingsDropdown {
+            label: Translation.tr("Fake rounded corners")
+            icon: "desktop"
+            description: Translation.tr("Add rounded corners to flat screens")
+            currentValue: Config.options?.appearance?.fakeScreenRounding ?? 0
+            options: [
+                { value: 0, displayName: Translation.tr("None") },
+                { value: 1, displayName: Translation.tr("Always") },
+                { value: 2, displayName: Translation.tr("When not fullscreen") }
+            ]
+            onSelected: newValue => Config.setNestedValue("appearance.fakeScreenRounding", newValue)
+        }
+    }
+
+    WSettingsSection {
+        title: Translation.tr("Notifications & Alerts")
     }
 
     WSettingsCard {
@@ -327,6 +349,10 @@ WSettingsPage {
         }
     }
     
+    WSettingsSection {
+        title: Translation.tr("Lock Screen")
+    }
+
     WSettingsCard {
         title: Translation.tr("Lock Screen")
         icon: "lock-closed"
@@ -362,24 +388,9 @@ WSettingsPage {
             onCheckedChanged: Config.setNestedValue("lock.showLockedText", checked)
         }
     }
-    
-    WSettingsCard {
-        title: Translation.tr("Display")
-        icon: "desktop"
-        
-        WSettingsDropdown {
-            label: Translation.tr("Fake rounded corners")
-            icon: "desktop"
-            description: Translation.tr("Add rounded corners to flat screens")
-            currentValue: Config.options?.appearance?.fakeScreenRounding ?? 0
-            options: [
-                { value: 0, displayName: Translation.tr("None") },
-                { value: 1, displayName: Translation.tr("Always") },
-                { value: 2, displayName: Translation.tr("When not fullscreen") }
-            ]
-            onSelected: newValue => Config.setNestedValue("appearance.fakeScreenRounding", newValue)
-        }
 
+    WSettingsSection {
+        title: Translation.tr("Screen Recording")
     }
 
     WSettingsCard {

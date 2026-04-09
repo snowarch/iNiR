@@ -37,7 +37,7 @@ Variants {
             return Math.max(200, screenHeight * vignetteRadius)
         }
 
-        visible: vignetteEnabled
+        visible: vignetteEnabled && !GameMode.shouldHidePanels
 
         anchors {
             left: true

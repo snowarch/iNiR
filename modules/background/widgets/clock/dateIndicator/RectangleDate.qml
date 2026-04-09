@@ -13,7 +13,7 @@ Rectangle {
         color: Appearance.colors.colSecondaryHover
         text: Qt.locale().toString(DateTime.clock.date, "dd")
         font {
-            family: Appearance.font.family.expressive
+            family: Config.options?.background?.widgets?.clock?.fontFamily ?? "Space Grotesk"
             pixelSize: 20
             weight: 1000
         }

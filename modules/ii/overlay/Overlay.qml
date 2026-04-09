@@ -75,14 +75,14 @@ Scope {
             // None otherwise (avoids input capture during GameMode)
             WlrLayershell.keyboardFocus: GlobalStates.overlayOpen
                 ? WlrKeyboardFocus.Exclusive
-                : (OverlayContext.clickableWidgets.length > 0 && !GameMode.active
+                : (OverlayContext.clickableWidgets.length > 0 && !GameMode.shouldHidePanels
                     ? WlrKeyboardFocus.OnDemand
                     : WlrKeyboardFocus.None)
             color: "transparent"
 
             mask: Region {
                 item: GlobalStates.overlayOpen ? overlayContent : null
-                regions: OverlayContext.clickableWidgets.map((widget) => regionComponent.createObject(this, {
+                regions: GameMode.shouldHidePanels ? [] : OverlayContext.clickableWidgets.map((widget) => regionComponent.createObject(this, {
                     item: widget
                 }));
             }

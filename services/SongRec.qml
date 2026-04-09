@@ -84,7 +84,7 @@ Singleton {
     Process {
         id: recognizeMusicProc
         running: false
-        command: ["/usr/bin/bash", `${Directories.scriptPath}/musicRecognition/recognize-music.sh`, "-i", String(root.timeoutInterval), "-t", String(root.timeoutDuration), "-s", root.monitorSourceString]
+        command: ["/usr/bin/bash", `${Directories.scriptsPath}/musicRecognition/recognize-music.sh`, "-i", String(root.timeoutInterval), "-t", String(root.timeoutDuration), "-s", root.monitorSourceString]
         stdout: StdioCollector {
             onStreamFinished: {
                 if (root.manuallyStopped) {

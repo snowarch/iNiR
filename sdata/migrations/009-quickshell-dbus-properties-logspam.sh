@@ -9,11 +9,18 @@ MIGRATION_TARGET_FILE="~/.config/niri/config.kdl"
 MIGRATION_REQUIRED=false
 
 migration_check() {
-  local config="${XDG_CONFIG_HOME:-$HOME/.config}/niri/config.kdl"
+  local niri_dir="${XDG_CONFIG_HOME:-$HOME/.config}/niri"
+  local config="${niri_dir}/config.kdl"
+  local env_file="${niri_dir}/config.d/40-environment.kdl"
+
   [[ -f "$config" ]] || return 1
 
-  # Apply only if QT_LOGGING_RULES is missing
-  ! grep -q 'QT_LOGGING_RULES' "$config"
+  # Check both main config and modular environment file (after migration 018)
+  grep -q 'QT_LOGGING_RULES' "$config" 2>/dev/null && return 1
+  [[ -f "$env_file" ]] && grep -q 'QT_LOGGING_RULES' "$env_file" 2>/dev/null && return 1
+
+  # Rule not found anywhere — migration needed
+  return 0
 }
 
 migration_preview() {
@@ -21,17 +28,17 @@ migration_preview() {
 }
 
 migration_diff() {
-  local config="${XDG_CONFIG_HOME:-$HOME/.config}/niri/config.kdl"
+  local niri_dir="${XDG_CONFIG_HOME:-$HOME/.config}/niri"
+  local config="${niri_dir}/config.kdl"
+  local env_file="${niri_dir}/config.d/40-environment.kdl"
   echo "Current:"
-  grep "QT_LOGGING_RULES" "$config" 2>/dev/null || echo "  (not set)"
+  grep "QT_LOGGING_RULES" "$config" "$env_file" 2>/dev/null || echo "  (not set)"
   echo ""
   echo "After migration:"
   echo "  QT_LOGGING_RULES \"quickshell.dbus.properties=false\""
 }
 
 migration_apply() {
-  local config="${XDG_CONFIG_HOME:-$HOME/.config}/niri/config.kdl"
-
   if ! migration_check; then
     return 0
   fi
@@ -39,11 +46,21 @@ migration_apply() {
   /usr/bin/python3 - <<'PY'
 import os
 import sys
+from pathlib import Path
 
-path = os.path.expanduser(os.environ.get("XDG_CONFIG_HOME", "~/.config")) + "/niri/config.kdl"
+xdg = os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config"))
+niri_dir = Path(xdg) / "niri"
+config_kdl = niri_dir / "config.kdl"
+env_file = niri_dir / "config.d" / "40-environment.kdl"
 
-with open(path, "r", encoding="utf-8") as f:
-    lines = f.read().splitlines(True)
+# Prefer modular env file if it exists (post-migration-018)
+target = env_file if env_file.is_file() else config_kdl
+
+if not target.is_file():
+    sys.stderr.write(f"Target not found: {target}\n")
+    sys.exit(1)
+
+lines = target.read_text(encoding="utf-8").splitlines(True)
 
 if any("QT_LOGGING_RULES" in l for l in lines):
     sys.exit(0)
@@ -52,7 +69,7 @@ out = []
 in_env = False
 inserted = False
 
-for i, line in enumerate(lines):
+for line in lines:
     stripped = line.strip()
 
     if stripped.startswith("environment") and stripped.endswith("{"):
@@ -70,10 +87,9 @@ for i, line in enumerate(lines):
     out.append(line)
 
 if not inserted:
-    sys.stderr.write("Could not find environment block in niri config.kdl\n")
+    sys.stderr.write(f"Could not find environment block in {target}\n")
     sys.exit(1)
 
-with open(path, "w", encoding="utf-8") as f:
-    f.write("".join(out))
+target.write_text("".join(out), encoding="utf-8")
 PY
 }

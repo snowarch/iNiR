@@ -38,7 +38,7 @@ WSettingsRow {
                     opacity: decrementBtn.enabled ? 1 : 0.35
                     
                     Behavior on color {
-                        animation: ColorAnimation { duration: Looks.transition.enabled ? 80 : 0 }
+                        animation: ColorAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
                     }
                 }
                 
@@ -82,7 +82,7 @@ WSettingsRow {
                     opacity: incrementBtn.enabled ? 1 : 0.35
                     
                     Behavior on color {
-                        animation: ColorAnimation { duration: Looks.transition.enabled ? 80 : 0 }
+                        animation: ColorAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
                     }
                 }
                 

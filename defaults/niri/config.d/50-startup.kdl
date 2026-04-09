@@ -21,6 +21,5 @@ spawn-at-startup "bash" "-c" "wl-paste --watch cliphist store &"
 spawn-at-startup "/usr/lib/mate-polkit/polkit-mate-authentication-agent-1"
 
 // ── iNiR shell ──────────────────────────────────────────────────────────────
-// Starts Quickshell with the iNiR configuration (bar, sidebars, overlays…).
-// The launcher path is patched by iNiR's setup to the absolute path.
-spawn-at-startup "inir" "start"
+// iNiR is managed by the user systemd service (inir.service).
+// Do not add a compositor startup entry here or you'll get two shells.

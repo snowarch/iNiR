@@ -32,6 +32,7 @@ Variants {
         anchors.right: true
 
         color: "transparent"
+        visible: !GameMode.shouldHidePanels
 
         // Multi-monitor wallpaper support
         readonly property string _perMonitorMainPath: {

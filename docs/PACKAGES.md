@@ -1,12 +1,14 @@
 # Package Reference
 
-Complete list of packages used by ii, organized by category. These are what the setup script installs on Arch-based systems.
+Complete list of packages used by iNiR, organized by category. These are what the setup script installs on Arch-based systems.
 
 The PKGBUILDs live in `sdata/dist-arch/`.
 
+> **`inir-deps`** is a meta-package that depends on all the groups below. It exists so that `pacman -Qdtq | pacman -Rns -` (clean orphans) doesn't remove iNiR's dependencies. It has no files of its own.
+
 ---
 
-## Core (`iNiR-core`)
+## Core (`inir-core`)
 
 Essential packages for Niri + ii to function.
 
@@ -45,7 +47,7 @@ Essential packages for Niri + ii to function.
 
 ---
 
-## Quickshell (`iNiR-quickshell`)
+## Quickshell (`inir-quickshell`)
 
 Qt6 stack and Quickshell runtime.
 
@@ -87,7 +89,7 @@ Qt6 stack and Quickshell runtime.
 
 ---
 
-## Audio (`iNiR-audio`)
+## Audio (`inir-audio`)
 
 Audio stack and media controls.
 
@@ -111,7 +113,7 @@ Audio stack and media controls.
 
 ---
 
-## Screenshots & Recording (`iNiR-screencapture`)
+## Screenshots & Recording (`inir-screencapture`)
 
 Region tools dependencies.
 
@@ -128,7 +130,7 @@ Region tools dependencies.
 
 ---
 
-## Input Toolkit (`iNiR-toolkit`)
+## Input Toolkit (`inir-toolkit`)
 
 Input simulation, hardware control, and idle management.
 
@@ -153,7 +155,7 @@ Input simulation, hardware control, and idle management.
 
 ---
 
-## Fonts & Theming (`iNiR-fonts`)
+## Fonts & Theming (`inir-fonts`)
 
 Fonts, theming, and utilities.
 
@@ -202,6 +204,6 @@ Not installed by default, but useful. The shell handles their absence gracefully
 | `mpv` | Media player | YTMusic sidebar |
 | `deno` / `node` / `bun` | JavaScript runtime for yt-dlp | YTMusic sidebar (YouTube anti-bot) |
 
-> **Note:** `cava` and `easyeffects` are included in `iNiR-audio` but are optional features. The toggles will be hidden if the packages aren't installed.
+> **Note:** `cava` and `easyeffects` are included in `inir-audio` but are optional features. The toggles will be hidden if the packages aren't installed.
 
 > **YTMusic Requirements:** The YTMusic sidebar requires `yt-dlp` and `mpv` for playback. Additionally, yt-dlp needs a JavaScript runtime (`deno`, `node` ≥20, or `bun` ≥1.0.31) to solve YouTube's anti-bot challenges. Install at least one: `deno` (recommended), `nodejs`, or `bun`.

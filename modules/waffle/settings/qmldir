@@ -11,3 +11,7 @@ WSettingsNavItem 1.0 WSettingsNavItem.qml
 WSettingsContent 1.0 WSettingsContent.qml
 WKeybindRow 1.0 WKeybindRow.qml
 WSettingsTextField 1.0 WSettingsTextField.qml
+WSettingsSection 1.0 WSettingsSection.qml
+WSettingsSlider 1.0 WSettingsSlider.qml
+WSettingsInfoBar 1.0 WSettingsInfoBar.qml
+WSettingsChoiceGroup 1.0 WSettingsChoiceGroup.qml

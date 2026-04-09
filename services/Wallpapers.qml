@@ -15,6 +15,8 @@ import "root:modules/common/functions/md5.js" as MD5
 Singleton {
     id: root
 
+    signal wallpaperBlurTransitionRequested(var targetMonitors, int durationMs)
+
     readonly property bool _debugWallpaperUrls: (Quickshell.env("INIR_DEBUG_WALLPAPER_URLS") ?? "") === "1"
 
     // Suppression flag: prevents ThemeService from firing a duplicate
@@ -29,8 +31,8 @@ Singleton {
     // Wallpaper path resolution for aurora/backdrop
     readonly property bool isWaffleFamily: (Config.options?.panelFamily ?? "ii") === "waffle"
     readonly property bool useBackdropWallpaper: isWaffleFamily
-        ? (Config.options?.waffles?.background?.backdrop?.hideWallpaper ?? false)
-        : (Config.options?.background?.backdrop?.hideWallpaper ?? false)
+        ? ((Config.options?.waffles?.background?.backdrop?.enable ?? false) && (Config.options?.waffles?.background?.backdrop?.hideWallpaper ?? false))
+        : ((Config.options?.background?.backdrop?.enable ?? false) && (Config.options?.background?.backdrop?.hideWallpaper ?? false))
 
     // Resolve the "main" wallpaper path — multi-monitor aware
     // When multi-monitor is enabled, uses the focused monitor's wallpaper
@@ -51,13 +53,12 @@ Singleton {
     function currentThemingWallpaperPath(monitorName = ""): string {
         const targetMonitor = monitorName || (WallpaperListener.multiMonitorEnabled ? WallpaperListener.getFocusedMonitor() : "")
         const mainPath = currentMainWallpaperPath(targetMonitor)
+        const waffleMainPath = currentWaffleWallpaperPath(targetMonitor)
 
         if (root.useBackdropWallpaper || root.useBackdropForColors) {
             if (root.isWaffleFamily) {
                 const waffleBackdrop = Config.options?.waffles?.background?.backdrop ?? {}
-                const waffleBackground = Config.options?.waffles?.background ?? {}
-                const waffleMain = (waffleBackground.useMainWallpaper ?? true) ? mainPath : (waffleBackground.wallpaperPath || mainPath)
-                return (waffleBackdrop.useMainWallpaper ?? true) ? waffleMain : (waffleBackdrop.wallpaperPath || waffleMain)
+                return (waffleBackdrop.useMainWallpaper ?? true) ? waffleMainPath : (waffleBackdrop.wallpaperPath || waffleMainPath)
             }
 
             const iiBackdrop = Config.options?.background?.backdrop ?? {}
@@ -71,12 +72,7 @@ Singleton {
             return iiBackdrop.wallpaperPath || mainPath
         }
 
-        if (root.isWaffleFamily) {
-            const waffleBackground = Config.options?.waffles?.background ?? {}
-            return (waffleBackground.useMainWallpaper ?? true) ? mainPath : (waffleBackground.wallpaperPath || mainPath)
-        }
-
-        return mainPath
+        return root.isWaffleFamily ? waffleMainPath : mainPath
     }
 
     readonly property string effectiveWallpaperPath: {
@@ -296,6 +292,12 @@ Singleton {
         return Config.options?.background?.wallpaperPath ?? ""
     }
 
+    function currentWaffleWallpaperPath(monitorName = ""): string {
+        const mainPath = currentMainWallpaperPath(monitorName)
+        const waffleBackground = Config.options?.waffles?.background ?? {}
+        return (waffleBackground.useMainWallpaper ?? true) ? mainPath : (waffleBackground.wallpaperPath || mainPath)
+    }
+
     function currentWallpaperPathForTarget(target = "main", monitorName = ""): string {
         const normalizedTarget = target && target.length > 0 ? target : "main"
         const mainPath = currentMainWallpaperPath(monitorName)
@@ -314,14 +316,19 @@ Singleton {
             return iiBackdrop.wallpaperPath || mainPath
         }
         case "waffle": {
-            const waffleBackground = Config.options?.waffles?.background ?? {}
-            return (waffleBackground.useMainWallpaper ?? true) ? mainPath : (waffleBackground.wallpaperPath || mainPath)
+            return currentWaffleWallpaperPath(monitorName)
         }
         case "waffle-backdrop": {
             const waffleBackdrop = Config.options?.waffles?.background?.backdrop ?? {}
-            const waffleBackground = Config.options?.waffles?.background ?? {}
-            const waffleMain = (waffleBackground.useMainWallpaper ?? true) ? mainPath : (waffleBackground.wallpaperPath || mainPath)
-            return (waffleBackdrop.useMainWallpaper ?? true) ? waffleMain : (waffleBackdrop.wallpaperPath || waffleMain)
+            const waffleMain = currentWaffleWallpaperPath(monitorName)
+            if (waffleBackdrop.useMainWallpaper ?? true)
+                return waffleMain
+            if (WallpaperListener.multiMonitorEnabled && monitorName) {
+                const monitorData = WallpaperListener.effectivePerMonitor[monitorName] ?? null
+                if (monitorData && monitorData.backdropPath)
+                    return monitorData.backdropPath
+            }
+            return waffleBackdrop.wallpaperPath || waffleMain
         }
         default:
             return mainPath
@@ -336,6 +343,33 @@ Singleton {
 
     function _applyRequestKey(path: string, darkMode: bool, noSwitch: bool): string {
         return [noSwitch ? "noswitch" : "switch", FileUtils.trimFileProtocol(String(path ?? "")), darkMode ? "dark" : "light"].join("|")
+    }
+
+    function _allMonitorNames(): var {
+        const names = []
+        for (const screen of Quickshell.screens) {
+            const name = WallpaperListener.getMonitorName(screen)
+            if (name && name.length > 0)
+                names.push(name)
+        }
+        return names
+    }
+
+    function _transitionTargetMonitors(monitorName = ""): var {
+        if (monitorName && monitorName.length > 0)
+            return [monitorName]
+        return _allMonitorNames()
+    }
+
+    function _wallpaperTransitionSettleMs(): int {
+        return Math.max(
+            AwwwBackend.active ? (AwwwBackend.transitionDurationMs + 400) : 0,
+            Appearance.calcEffectiveDuration(Config.options?.background?.transition?.duration ?? 800)
+        )
+    }
+
+    function requestWallpaperBlurTransition(monitorName = ""): void {
+        root.wallpaperBlurTransitionRequested(_transitionTargetMonitors(monitorName), _wallpaperTransitionSettleMs())
     }
 
     function _runWallpaperScript(path: string, darkMode: bool, noSwitch: bool): void {
@@ -444,11 +478,19 @@ Singleton {
             root.changed()
             return
         case "waffle":
+            if ((Config.options?.panelFamily ?? "ii") === "waffle")
+                root.requestWallpaperBlurTransition("")
             Config.setNestedValue("waffles.background.useMainWallpaper", false)
             Config.setNestedValue("waffles.background.wallpaperPath", normalizedPath)
             Config.setNestedValue("waffles.background.thumbnailPath", thumbnailPath)
             if (needsThumbnail)
                 root.ensureThumbnailForPath(normalizedPath, "large")
+            // Regen colors from this wallpaper when waffle is active
+            if ((Config.options?.panelFamily ?? "ii") === "waffle") {
+                root._applyInProgress = true
+                _applySuppressTimer.restart()
+                root._queueWallpaperScript(normalizedPath, darkMode, true)
+            }
             root.changed()
             return
         case "waffle-backdrop":
@@ -457,6 +499,12 @@ Singleton {
             Config.setNestedValue("waffles.background.backdrop.thumbnailPath", thumbnailPath)
             if (needsThumbnail)
                 root.ensureThumbnailForPath(normalizedPath, "large")
+            if ((Config.options?.panelFamily ?? "ii") === "waffle"
+                    && (Config.options?.appearance?.wallpaperTheming?.useBackdropForColors ?? false)) {
+                root._applyInProgress = true
+                _applySuppressTimer.restart()
+                root._queueWallpaperScript(normalizedPath, darkMode, true)
+            }
             root.changed()
             return
         default:
@@ -468,6 +516,8 @@ Singleton {
     function apply(path, darkMode = Appearance.m3colors.darkmode, monitorName = "") {
         const normalizedPath = FileUtils.trimFileProtocol(String(path ?? ""))
         if (!normalizedPath || normalizedPath.length === 0) return
+
+        root.requestWallpaperBlurTransition(monitorName)
 
         if (monitorName !== "") {
             // Per-monitor: update config directly in QML to avoid race condition

@@ -11,7 +11,7 @@ import qs.modules.waffle.settings
 
 WSettingsPage {
     id: root
-    settingsPageIndex: 8
+    settingsPageIndex: 9
     pageTitle: Translation.tr("Shortcuts")
     pageIcon: "keyboard"
     pageDescription: Translation.tr("Keyboard shortcuts from Niri config")
@@ -63,27 +63,10 @@ WSettingsPage {
         }
     }
     
-    // Not Niri warning
-    WSettingsCard {
+    WSettingsInfoBar {
         visible: !CompositorService.isNiri
-        
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 12
-            
-            FluentIcon {
-                icon: "alert"
-                implicitSize: 24
-                color: Looks.colors.accent
-            }
-            
-            WText {
-                Layout.fillWidth: true
-                text: Translation.tr("Shortcuts are only available when running on Niri compositor.")
-                wrapMode: Text.WordWrap
-                color: Looks.colors.subfg
-            }
-        }
+        severity: WSettingsInfoBar.Severity.Warning
+        message: Translation.tr("Shortcuts are only available when running on Niri compositor.")
     }
     
     // Categories

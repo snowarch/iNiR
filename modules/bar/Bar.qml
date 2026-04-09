@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Effects
 import Qt5Compat.GraphicalEffects as GE
@@ -23,7 +25,13 @@ Scope {
             const list = Config.options?.bar?.screenList ?? [];
             if (!list || list.length === 0)
                 return screens;
-            return screens.filter(screen => list.includes(screen.name));
+            const matchedScreens = screens.filter(screen => {
+                const screenName = screen?.name ?? "";
+                return screenName.length > 0 && list.includes(screenName);
+            });
+            // Fallback safety: stale monitor names (e.g. output re-enumeration after VRR changes)
+            // should never hide the bar on every screen.
+            return matchedScreens.length > 0 ? matchedScreens : screens;
         }
         LazyLoader {
             id: barLoader
@@ -32,6 +40,7 @@ Scope {
             component: PanelWindow { // Bar window
                 id: barRoot
                 screen: barLoader.modelData
+                visible: !GameMode.shouldHidePanels
 
                 property var brightnessMonitor: Brightness.getMonitorForScreen(barLoader.modelData)
                 property real useShortenedForm: (Appearance.sizes.barHellaShortenScreenWidthThreshold >= screen.width) ? 2 : (Appearance.sizes.barShortenScreenWidthThreshold >= screen.width) ? 1 : 0
@@ -59,12 +68,13 @@ Scope {
                 property bool superShow: false
                 property bool mustShow: hoverRegion.containsMouse || superShow
                 exclusionMode: ExclusionMode.Ignore
-                exclusiveZone: (GlobalStates.coverflowSelectorOpen || (Config?.options.bar.autoHide.enable && (!mustShow || !Config?.options.bar.autoHide.pushWindows))) ? 0 :
+                exclusiveZone: GameMode.shouldHidePanels ? 0 :
+                    (GlobalStates.coverflowSelectorOpen || (Config?.options.bar.autoHide.enable && (!mustShow || !Config?.options.bar.autoHide.pushWindows))) ? 0 :
                     Appearance.sizes.baseBarHeight + ((((Config.options?.bar?.cornerStyle ?? 0) === 1) || ((Config.options?.bar?.cornerStyle ?? 0) === 3)) ? (Appearance.sizes.hyprlandGapsOut * 2) : 0)
                 WlrLayershell.namespace: "quickshell:bar"
                 implicitHeight: Appearance.sizes.barHeight + Appearance.rounding.screenRounding
                 mask: Region {
-                    item: hoverMaskRegion
+                    item: GameMode.shouldHidePanels ? null : hoverMaskRegion
                 }
                 color: "transparent"
 

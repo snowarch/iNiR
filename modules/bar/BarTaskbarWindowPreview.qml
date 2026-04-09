@@ -58,7 +58,7 @@ Button {
                 Layout.alignment: Qt.AlignVCenter
                 source: {
                     const appId = root.toplevel?.appId ?? "";
-                    const de = DesktopEntries.heuristicLookup(appId);
+                    const de = AppSearch.lookupDesktopEntry(appId);
                     const icon = de?.icon || AppSearch.guessIcon(appId);
                     const resolved = IconThemeService.smartIconName(icon, appId);
                     return Quickshell.iconPath(resolved, "application-x-executable");

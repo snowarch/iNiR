@@ -25,6 +25,7 @@ ASSETS_DIR = os.path.join(THEME_DIR, "assets")
 _sudo_user = os.environ.get("SUDO_USER", "")
 if _sudo_user:
     import pwd
+
     _real_home = pwd.getpwnam(_sudo_user).pw_dir
 else:
     _real_home = os.path.expanduser("~")
@@ -37,7 +38,7 @@ COLORS_JSON = os.path.join(STATE_DIR, "user", "generated", "colors.json")
 
 CONFIG_JSON = os.path.join(
     os.environ.get("XDG_CONFIG_HOME") or os.path.join(_real_home, ".config"),
-    "illogical-impulse",
+    "inir",
     "config.json",
 )
 
@@ -66,14 +67,14 @@ def read_colors():
             return None
 
     return {
-        "primaryColor":          dark.get("primary",                "#cba6f7"),
-        "onPrimaryColor":        dark.get("on_primary",             "#1e1e2e"),
-        "surfaceColor":          dark.get("surface",                "#1e1e2e"),
-        "surfaceContainerColor": dark.get("surface_container",      "#181825"),
-        "onSurfaceColor":        dark.get("on_surface",             "#cdd6f4"),
-        "onSurfaceVariantColor": dark.get("on_surface_variant",     "#9399b2"),
-        "backgroundColor":       dark.get("background",             "#1e1e2e"),
-        "errorColor":            dark.get("error",                  "#f38ba8"),
+        "primaryColor": dark.get("primary", "#cba6f7"),
+        "onPrimaryColor": dark.get("on_primary", "#1e1e2e"),
+        "surfaceColor": dark.get("surface", "#1e1e2e"),
+        "surfaceContainerColor": dark.get("surface_container", "#181825"),
+        "onSurfaceColor": dark.get("on_surface", "#cdd6f4"),
+        "onSurfaceVariantColor": dark.get("on_surface_variant", "#9399b2"),
+        "backgroundColor": dark.get("background", "#1e1e2e"),
+        "errorColor": dark.get("error", "#f38ba8"),
     }
 
 
@@ -84,7 +85,20 @@ def read_wallpaper():
     try:
         with open(CONFIG_JSON) as f:
             config = json.load(f)
-        path = (config.get("background", {}) or {}).get("wallpaperPath", "")
+
+        panel_family = config.get("panelFamily", "ii")
+        background = config.get("background", {}) or {}
+        waffles = config.get("waffles", {}) or {}
+        waffles_background = waffles.get("background", {}) or {}
+
+        main_path = background.get("wallpaperPath", "")
+        if panel_family == "waffle":
+            use_main = waffles_background.get("useMainWallpaper", True)
+            waffle_path = waffles_background.get("wallpaperPath", "")
+            path = main_path if use_main else (waffle_path or main_path)
+        else:
+            path = main_path
+
         if path and path.startswith("file://"):
             path = path[7:]
         return path if path and os.path.isfile(path) else None
@@ -194,14 +208,28 @@ def extract_video_frame(video_path, dest_png):
     tmp = os.path.join("/tmp", "sddm-pixel-frame.tmp.png")
     try:
         proc = subprocess.run(
-            ["ffmpeg", "-y", "-i", video_path, "-vframes", "1", "-update", "1", "-f", "image2", tmp],
+            [
+                "ffmpeg",
+                "-y",
+                "-i",
+                video_path,
+                "-vframes",
+                "1",
+                "-update",
+                "1",
+                "-f",
+                "image2",
+                tmp,
+            ],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             timeout=15,
         )
         if proc.returncode == 0 and os.path.isfile(tmp):
             return tmp
-        print(f"[sddm-pixel] ffmpeg frame extraction failed for {os.path.basename(video_path)}")
+        print(
+            f"[sddm-pixel] ffmpeg frame extraction failed for {os.path.basename(video_path)}"
+        )
         return None
     except Exception as e:
         print(f"[sddm-pixel] ffmpeg error: {e}")
@@ -252,7 +280,9 @@ def update_background(wallpaper_path):
 
 def main():
     if not os.path.isdir(THEME_DIR):
-        print(f"[sddm-pixel] Theme not installed at {THEME_DIR}. Run install-pixel-sddm.sh first.")
+        print(
+            f"[sddm-pixel] Theme not installed at {THEME_DIR}. Run install-pixel-sddm.sh first."
+        )
         return
 
     colors = read_colors()

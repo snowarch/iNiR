@@ -24,9 +24,9 @@ Item {
     signal clicked()
     
     Layout.fillWidth: true
-    Layout.leftMargin: 16
-    Layout.rightMargin: 16
-    implicitHeight: Math.max(56, contentRow.implicitHeight + 22)
+    Layout.leftMargin: 14
+    Layout.rightMargin: 14
+    implicitHeight: Math.max(52, contentRow.implicitHeight + 20)
     
     // Highlight animation for search focus
     Behavior on opacity {
@@ -119,9 +119,9 @@ Item {
     Rectangle {
         id: background
         anchors.fill: parent
-        anchors.leftMargin: 4
-        anchors.rightMargin: 4
-        radius: Looks.radius.large
+        anchors.leftMargin: 2
+        anchors.rightMargin: 2
+        radius: Looks.radius.medium
         color: {
             if (root.clickable && mouseArea.pressed) return Looks.colors.bg2Active
             if (mouseArea.containsMouse) return Looks.colors.bg2Hover
@@ -130,10 +130,10 @@ Item {
         scale: root.clickable && mouseArea.pressed ? 0.985 : 1.0
         
         Behavior on color {
-            animation: ColorAnimation { duration: Looks.transition.enabled ? 100 : 0; easing.type: Easing.OutQuad }
+            animation: ColorAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
         }
         Behavior on scale {
-            animation: NumberAnimation { duration: Looks.transition.enabled ? 80 : 0; easing.type: Easing.OutQuad }
+            animation: NumberAnimation { duration: Looks.transition.enabled ? Looks.transition.duration.ultraFast : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
         }
     }
     
@@ -156,8 +156,7 @@ Item {
     MouseArea {
         id: mouseArea
         anchors.fill: parent
-        enabled: root.clickable
-        hoverEnabled: root.clickable
+        hoverEnabled: true
         cursorShape: root.clickable ? Qt.PointingHandCursor : Qt.ArrowCursor
         onClicked: if (root.clickable) root.clicked()
     }
@@ -173,10 +172,10 @@ Item {
         }
         height: 1
         color: Looks.colors.bg2Border
-        opacity: mouseArea.containsMouse ? 0.08 : 0.15
+        opacity: mouseArea.containsMouse ? 0.03 : 0.08
         
         Behavior on opacity {
-            animation: NumberAnimation { duration: Looks.transition.enabled ? 100 : 0 }
+            animation: NumberAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
         }
     }
     
@@ -184,10 +183,10 @@ Item {
         id: contentRow
         anchors {
             fill: parent
-            leftMargin: 14
-            rightMargin: 14
+            leftMargin: 12
+            rightMargin: 12
         }
-        spacing: 12
+        spacing: 10
         
         FluentIcon {
             visible: root.icon !== ""
@@ -197,7 +196,7 @@ Item {
             color: mouseArea.containsMouse ? Looks.colors.accent : Looks.colors.subfg
             
             Behavior on color {
-                animation: ColorAnimation { duration: Looks.transition.enabled ? 100 : 0 }
+                animation: ColorAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
             }
         }
         

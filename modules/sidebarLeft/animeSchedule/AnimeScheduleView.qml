@@ -161,6 +161,7 @@ Item {
             
             ButtonGroup {
                 id: dayGroup
+                anchors.horizontalCenter: parent.horizontalCenter
                 spacing: 2
                 property int clickIndex: -1
                 

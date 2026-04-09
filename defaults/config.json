@@ -127,6 +127,7 @@
             "enableChrome": true,
             "enableSpicetify": false,
             "enableAdwSteam": false,
+            "enablePearDesktop": false,
             "colorStrength": 1.0,
             "useBackdropForColors": false,
             "colorsOnlyMode": false,
@@ -255,20 +256,20 @@
         },
         "hideWhenFullscreen": true,
         "parallax": {
-            "enable": true,
+            "enable": false,
             "axis": "vertical",
             "autoVertical": false,
             "enableSidebar": true,
             "enableWorkspace": true,
             "workspaceShift": 1.0,
             "vertical": true,
-            "zoom": 1.07,
+            "zoom": 1.0,
             "panelShift": 0.15,
             "widgetDepth": 1.2,
             "pauseDuringTransitions": true,
             "transitionSettleMs": 220,
             "widgetsFactor": 1.2,
-            "workspaceZoom": 1.07
+            "workspaceZoom": 1.0
         },
         "thumbnailPath": "",
         "wallpaperPath": "",
@@ -319,17 +320,25 @@
                     "timeIndicators": false,
                     "useSineCookie": false
                 },
+                "dateStyle": "long",
                 "digital": {
                     "animateChange": true
                 },
                 "dim": 70,
                 "enable": true,
+                "fontFamily": "Space Grotesk",
                 "placementStrategy": "free",
                 "quote": {
                     "enable": false,
                     "text": ""
                 },
+                "showDate": true,
+                "showSeconds": false,
+                "showShadow": true,
                 "style": "digital",
+                "timeFormat": "system",
+                "timeScale": 100,
+                "dateScale": 100,
                 "x": 100,
                 "y": 100
             },
@@ -599,6 +608,7 @@
         "centerClock": true,
         "launchOnStartup": false,
         "materialShapeChars": true,
+        "enableAnimation": false,
         "security": {
             "requirePasswordToPower": false,
             "unlockKeyring": true
@@ -645,6 +655,7 @@
         "scrimDim": 100
     },
     "overview": {
+        "activeScreenOnly": false,
         "backgroundBlurEnable": true,
         "backgroundBlurRadius": 50,
         "backgroundDim": 40,
@@ -758,6 +769,7 @@
         },
         "keepRightSidebarLoaded": true,
         "instantOpen": false,
+        "animationType": "slide",
         "layout": "default",
         "quickSliders": {
             "enable": true,
@@ -806,6 +818,9 @@
             "enable": false
         },
         "tools": {
+            "enable": false
+        },
+        "software": {
             "enable": false
         },
         "plugins": {
@@ -1140,8 +1155,8 @@
                 "enableWorkspace": false,
                 "enableSidebar": false,
                 "workspaceShift": 1.0,
-                "workspaceZoom": 1.05,
-                "zoom": 1.05,
+                "workspaceZoom": 1.0,
+                "zoom": 1.0,
                 "autoVertical": true,
                 "vertical": false,
                 "panelShift": 0.12,
@@ -1179,6 +1194,9 @@
             "iconSize": 26,
             "leftAlignApps": false,
             "monochromeIcons": false,
+            "activationWatermark": {
+                "enable": false
+            },
             "desktopPeek": {
                 "hoverPeek": false,
                 "hoverDelay": 500

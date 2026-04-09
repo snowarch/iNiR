@@ -147,10 +147,11 @@ The scaffold refuses to overwrite existing files.
 - `chrome`
 - `spicetify`
 - `sddm`
+- `steam` — Adwaita-for-Steam Material You CSS
 
 Current declared input model:
 
-- palette-first targets: `gtk-kde`, `chrome`, `spicetify`, `sddm`
+- palette-first targets: `gtk-kde`, `chrome`, `spicetify`, `sddm`, `steam`
 - terminal-first targets: `terminals`
 - mixed targets: `editors`
 

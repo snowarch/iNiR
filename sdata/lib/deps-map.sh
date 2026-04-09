@@ -105,6 +105,7 @@ DEPS_AUDIO_SOCAT="arch:socat fedora:socat debian:socat ubuntu:socat opensuse:soc
 # Network
 ###############################################################################
 DEPS_NET_NETWORKMANAGER="arch:networkmanager fedora:NetworkManager debian:network-manager ubuntu:network-manager opensuse:NetworkManager void:NetworkManager"
+DEPS_NET_NMCONNECTIONEDITOR="arch:nm-connection-editor fedora:nm-connection-editor debian:network-manager-gnome ubuntu:network-manager-gnome opensuse:NetworkManager-connection-editor void:network-manager-applet"
 DEPS_NET_GNOMEKEYRING="arch:gnome-keyring fedora:gnome-keyring debian:gnome-keyring ubuntu:gnome-keyring opensuse:gnome-keyring void:gnome-keyring"
 DEPS_NET_BLUEMAN="arch:blueman fedora:blueman debian:blueman ubuntu:blueman opensuse:blueman void:blueman"
 
@@ -153,6 +154,7 @@ DEPS_MISC_FOOT="arch:foot fedora:foot debian:foot ubuntu:foot opensuse:foot void
 DEPS_MISC_KITTY="arch:kitty fedora:kitty debian:kitty ubuntu:kitty opensuse:kitty void:kitty"
 DEPS_MISC_POLKIT="arch:polkit fedora:polkit debian:policykit-1 ubuntu:policykit-1 opensuse:polkit void:polkit"
 DEPS_MISC_UV="arch:AUR:uv fedora:CARGO:uv debian:CARGO:uv ubuntu:CARGO:uv opensuse:CARGO:uv void:CARGO:uv"
+DEPS_MISC_GOWALL="arch:AUR:gowall-bin fedora:CARGO:gowall debian:CARGO:gowall ubuntu:CARGO:gowall opensuse:CARGO:gowall void:CARGO:gowall"
 DEPS_MISC_KCONFIG="arch:kconfig fedora:kf6-kconfig debian:libkf6config-bin ubuntu:libkf6config-bin opensuse:kconfig void:kconfig"
 
 ###############################################################################

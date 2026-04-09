@@ -31,8 +31,8 @@ if [[ -f "$SHELL_CONFIG_FILE" ]] && command -v jq &>/dev/null; then
     enable_qt_apps=$(jq -r '.appearance.wallpaperTheming.enableQtApps // true' "$SHELL_CONFIG_FILE")
 fi
 
-# Exit if shell theming is disabled
-if [[ "$enable_apps_shell" == "false" ]]; then
+# Exit only when both shell/GTK and Qt app theming are disabled
+if [[ "$enable_apps_shell" == "false" && "$enable_qt_apps" == "false" ]]; then
     exit 0
 fi
 
@@ -51,6 +51,8 @@ BG=$(jq -r '.background // empty' "$COLOR_SOURCE" 2>/dev/null || echo "#1e1e2e")
 FG=$(jq -r '.on_background // empty' "$COLOR_SOURCE" 2>/dev/null || echo "#cdd6f4")
 PRIMARY=$(jq -r '.primary // empty' "$COLOR_SOURCE" 2>/dev/null || echo "#cba6f7")
 ON_PRIMARY=$(jq -r '.on_primary // empty' "$COLOR_SOURCE" 2>/dev/null || echo "#1e1e2e")
+PRIMARY_CONTAINER=$(jq -r '.primary_container // empty' "$COLOR_SOURCE" 2>/dev/null)
+ON_PRIMARY_CONTAINER=$(jq -r '.on_primary_container // empty' "$COLOR_SOURCE" 2>/dev/null)
 SURFACE=$(jq -r '.surface // empty' "$COLOR_SOURCE" 2>/dev/null || echo "$BG")
 ON_SURFACE=$(jq -r '.on_surface // empty' "$COLOR_SOURCE" 2>/dev/null || echo "$FG")
 SURFACE_CONTAINER=$(jq -r '.surface_container // empty' "$COLOR_SOURCE" 2>/dev/null)
@@ -64,6 +66,7 @@ SURFACE_CONTAINER_HIGHEST=$(jq -r '.surface_container_highest // empty' "$COLOR_
 ERROR_COLOR=$(jq -r '.error // empty' "$COLOR_SOURCE" 2>/dev/null)
 TERTIARY=$(jq -r '.tertiary // empty' "$COLOR_SOURCE" 2>/dev/null)
 SECONDARY=$(jq -r '.secondary // empty' "$COLOR_SOURCE" 2>/dev/null)
+SECONDARY_CONTAINER=$(jq -r '.secondary_container // empty' "$COLOR_SOURCE" 2>/dev/null)
 
 # If ThemePresets passes args (bg fg primary on_primary surface surface_dim), use them
 # This avoids the race condition between generateColorsJson() writing to disk and this script reading
@@ -72,6 +75,8 @@ if [[ -n "${1:-}" ]]; then
     FG="${2:-$FG}"
     PRIMARY="${3:-$PRIMARY}"
     ON_PRIMARY="${4:-$ON_PRIMARY}"
+    PRIMARY_CONTAINER="${7:-$PRIMARY_CONTAINER}"
+    ON_PRIMARY_CONTAINER="${8:-$ON_PRIMARY_CONTAINER}"
     SURFACE="${5:-$SURFACE}"
     SURFACE_DIM="${6:-$SURFACE_DIM}"
     # Derive extra colors from available values when args provided
@@ -99,7 +104,9 @@ adjust_color() {
 # Break a symlink, replacing it with a regular file slot.
 # Prevents writing through symlinks to external themes.
 break_symlink() {
-    [[ -L "$1" ]] && rm -f "$1"
+    if [[ -L "$1" ]]; then
+        rm -f "$1"
+    fi
 }
 
 # Derive missing surface variants from BG — fallback when palette.json is incomplete
@@ -109,11 +116,14 @@ break_symlink() {
 [[ -z "$SURFACE_CONTAINER_HIGH" ]]   && SURFACE_CONTAINER_HIGH=$(adjust_color "$BG" 23)
 [[ -z "$SURFACE_CONTAINER_HIGHEST" ]] && SURFACE_CONTAINER_HIGHEST=$(adjust_color "$BG" 34)
 [[ -z "$OUTLINE_VARIANT" ]]          && OUTLINE_VARIANT=$(adjust_color "$BG" 52)
+[[ -z "$PRIMARY_CONTAINER" ]]        && PRIMARY_CONTAINER=$(adjust_color "$PRIMARY" -26)
+[[ -z "$ON_PRIMARY_CONTAINER" ]]     && ON_PRIMARY_CONTAINER="$FG"
 
 # Derive semantic color fallbacks from Material tokens
 [[ -z "$ERROR_COLOR" ]] && ERROR_COLOR="#ff6b6b"
 [[ -z "$TERTIARY" ]]    && TERTIARY="#ffa94d"
 [[ -z "$SECONDARY" ]]   && SECONDARY="#69db7c"
+[[ -z "$SECONDARY_CONTAINER" ]] && SECONDARY_CONTAINER=$(adjust_color "$PRIMARY_CONTAINER" 8)
 
 # Map to KDE semantic names
 FG_NEGATIVE="$ERROR_COLOR"
@@ -197,7 +207,7 @@ IntensityEffect=0
 BackgroundAlternate=${BG_ALT}
 BackgroundNormal=${SURFACE}
 DecorationFocus=${PRIMARY}
-DecorationHover=${PRIMARY}
+DecorationHover=${PRIMARY_CONTAINER}
 ForegroundActive=${FG}
 ForegroundInactive=${FG_INACTIVE}
 ForegroundLink=${PRIMARY}
@@ -208,18 +218,18 @@ ForegroundPositive=${FG_POSITIVE}
 ForegroundVisited=${PRIMARY}
 
 [Colors:Selection]
-BackgroundAlternate=${PRIMARY}
-BackgroundNormal=${PRIMARY}
+BackgroundAlternate=${ROW_ACTIVE_BG}
+BackgroundNormal=${ROW_ACTIVE_HOVER_BG}
 DecorationFocus=${PRIMARY}
-DecorationHover=${PRIMARY}
-ForegroundActive=${ON_PRIMARY}
-ForegroundInactive=${ON_PRIMARY}
-ForegroundLink=${ON_PRIMARY}
-ForegroundNegative=${ON_PRIMARY}
-ForegroundNeutral=${ON_PRIMARY}
-ForegroundNormal=${ON_PRIMARY}
-ForegroundPositive=${ON_PRIMARY}
-ForegroundVisited=${ON_PRIMARY}
+DecorationHover=${ROW_ACTIVE_HOVER_BG}
+ForegroundActive=${ROW_SELECTED_FG}
+ForegroundInactive=${FG_INACTIVE}
+ForegroundLink=${ROW_SELECTED_FG}
+ForegroundNegative=${ROW_SELECTED_FG}
+ForegroundNeutral=${ROW_SELECTED_FG}
+ForegroundNormal=${ROW_SELECTED_FG}
+ForegroundPositive=${ROW_SELECTED_FG}
+ForegroundVisited=${ROW_SELECTED_FG}
 
 [Colors:Tooltip]
 BackgroundAlternate=${BG_ALT}
@@ -239,7 +249,7 @@ ForegroundVisited=${PRIMARY}
 BackgroundAlternate=${BG}
 BackgroundNormal=${BG}
 DecorationFocus=${PRIMARY}
-DecorationHover=${PRIMARY}
+DecorationHover=${ROW_HOVER_BG}
 ForegroundActive=${FG}
 ForegroundInactive=${FG_INACTIVE}
 ForegroundLink=${PRIMARY}
@@ -253,7 +263,7 @@ ForegroundVisited=${PRIMARY}
 BackgroundAlternate=${BG}
 BackgroundNormal=${BG}
 DecorationFocus=${PRIMARY}
-DecorationHover=${PRIMARY}
+DecorationHover=${ROW_HOVER_BG}
 ForegroundActive=${FG}
 ForegroundInactive=${FG_INACTIVE}
 ForegroundLink=${PRIMARY}
@@ -267,7 +277,7 @@ ForegroundVisited=${PRIMARY}
 BackgroundAlternate=${BG_DARK}
 BackgroundNormal=${BG}
 DecorationFocus=${PRIMARY}
-DecorationHover=${PRIMARY}
+DecorationHover=${ROW_HOVER_BG}
 ForegroundActive=${FG}
 ForegroundInactive=${FG_INACTIVE}
 ForegroundLink=${PRIMARY}
@@ -281,7 +291,7 @@ ForegroundVisited=${PRIMARY}
 BackgroundAlternate=${BG}
 BackgroundNormal=${BG}
 DecorationFocus=${PRIMARY}
-DecorationHover=${PRIMARY}
+DecorationHover=${ROW_HOVER_BG}
 ForegroundActive=${FG}
 ForegroundInactive=${FG_INACTIVE}
 ForegroundLink=${PRIMARY}
@@ -295,7 +305,7 @@ ForegroundVisited=${PRIMARY}
 BackgroundAlternate=${BG}
 BackgroundNormal=${BG}
 DecorationFocus=${PRIMARY}
-DecorationHover=${PRIMARY}
+DecorationHover=${ROW_HOVER_BG}
 ForegroundActive=${FG}
 ForegroundInactive=${FG_INACTIVE}
 ForegroundLink=${PRIMARY}
@@ -309,7 +319,7 @@ ForegroundVisited=${PRIMARY}
 BackgroundAlternate=${BG_ALT}
 BackgroundNormal=${BG}
 DecorationFocus=${PRIMARY}
-DecorationHover=${PRIMARY}
+DecorationHover=${ROW_HOVER_BG}
 ForegroundActive=${FG}
 ForegroundInactive=${FG_INACTIVE}
 ForegroundLink=${PRIMARY}
@@ -347,6 +357,42 @@ hex_to_rgb() {
     echo "$r,$g,$b"
 }
 
+# Blend two hex colors using integer percent of top over base.
+# blend_rgb_percent "#base" "#top" 20  => 20% top, 80% base
+blend_rgb_percent() {
+    local base="${1#\#}"
+    local top="${2#\#}"
+    local pct="${3:-20}"
+    local inv=$((100 - pct))
+
+    local br=$((0x${base:0:2}))
+    local bg=$((0x${base:2:2}))
+    local bb=$((0x${base:4:2}))
+
+    local tr=$((0x${top:0:2}))
+    local tg=$((0x${top:2:2}))
+    local tb=$((0x${top:4:2}))
+
+    local r=$(((br * inv + tr * pct + 50) / 100))
+    local g=$(((bg * inv + tg * pct + 50) / 100))
+    local b=$(((bb * inv + tb * pct + 50) / 100))
+    echo "$r,$g,$b"
+}
+
+blend_hex_percent() {
+    local rgb
+    rgb=$(blend_rgb_percent "$1" "$2" "${3:-20}")
+    local r g b
+    IFS=',' read -r r g b <<< "$rgb"
+    printf "#%02X%02X%02X" "$r" "$g" "$b"
+}
+
+# Shared interaction tones (Vesktop-like subtle states, not raw accent blocks)
+ROW_HOVER_BG=$(blend_hex_percent "$SURFACE_CONTAINER" "$PRIMARY" 12)
+ROW_ACTIVE_BG=$(blend_hex_percent "$SURFACE_CONTAINER_HIGH" "$PRIMARY" 18)
+ROW_ACTIVE_HOVER_BG=$(blend_hex_percent "$SURFACE_CONTAINER_HIGH" "$PRIMARY" 26)
+ROW_SELECTED_FG="$FG"
+
 # Generate Darkly.colors for Qt style override
 generate_darkly_colors() {
     local bg_rgb=$(hex_to_rgb "$BG")
@@ -360,6 +406,9 @@ generate_darkly_colors() {
     local error_rgb=$(hex_to_rgb "$FG_NEGATIVE")
     local neutral_rgb=$(hex_to_rgb "$FG_NEUTRAL")
     local positive_rgb=$(hex_to_rgb "$FG_POSITIVE")
+    local selection_bg_rgb=$(blend_rgb_percent "$SURFACE_CONTAINER_HIGH" "$PRIMARY" 18)
+    local selection_bg_alt_rgb=$(blend_rgb_percent "$SURFACE_CONTAINER" "$PRIMARY" 14)
+    local selection_hover_rgb=$(blend_rgb_percent "$SURFACE_CONTAINER_HIGH" "$PRIMARY" 28)
     
     cat << EOF
 [ColorEffects:Disabled]
@@ -386,7 +435,7 @@ IntensityEffect=0
 BackgroundAlternate=${bg_alt_rgb}
 BackgroundNormal=${surface_rgb}
 DecorationFocus=${primary_rgb}
-DecorationHover=${primary_rgb}
+DecorationHover=$(hex_to_rgb "$PRIMARY_CONTAINER")
 ForegroundActive=${fg_rgb}
 ForegroundInactive=${fg_inactive_rgb}
 ForegroundLink=${primary_rgb}
@@ -400,7 +449,7 @@ ForegroundVisited=${primary_rgb}
 BackgroundAlternate=${bg_dark_rgb}
 BackgroundNormal=${bg_rgb}
 DecorationFocus=${primary_rgb}
-DecorationHover=${primary_rgb}
+DecorationHover=$(hex_to_rgb "$PRIMARY_CONTAINER")
 ForegroundActive=${fg_rgb}
 ForegroundInactive=${fg_inactive_rgb}
 ForegroundLink=${primary_rgb}
@@ -411,18 +460,32 @@ ForegroundPositive=${positive_rgb}
 ForegroundVisited=${primary_rgb}
 
 [Colors:Selection]
-BackgroundAlternate=${primary_rgb}
-BackgroundNormal=${primary_rgb}
+BackgroundAlternate=${selection_bg_alt_rgb}
+BackgroundNormal=${selection_bg_rgb}
 DecorationFocus=${primary_rgb}
-DecorationHover=${primary_rgb}
-ForegroundActive=${on_primary_rgb}
-ForegroundInactive=${on_primary_rgb}
-ForegroundLink=${on_primary_rgb}
-ForegroundNegative=${on_primary_rgb}
-ForegroundNeutral=${on_primary_rgb}
-ForegroundNormal=${on_primary_rgb}
-ForegroundPositive=${on_primary_rgb}
-ForegroundVisited=${on_primary_rgb}
+DecorationHover=${selection_hover_rgb}
+ForegroundActive=${fg_rgb}
+ForegroundInactive=${fg_inactive_rgb}
+ForegroundLink=${fg_rgb}
+ForegroundNegative=${fg_rgb}
+ForegroundNeutral=${fg_rgb}
+ForegroundNormal=${fg_rgb}
+ForegroundPositive=${fg_rgb}
+ForegroundVisited=${fg_rgb}
+
+[Colors:Header]
+BackgroundAlternate=${bg_alt_rgb}
+BackgroundNormal=${bg_rgb}
+DecorationFocus=${primary_rgb}
+DecorationHover=$(hex_to_rgb "$PRIMARY_CONTAINER")
+ForegroundActive=${fg_rgb}
+ForegroundInactive=${fg_inactive_rgb}
+ForegroundLink=${primary_rgb}
+ForegroundNegative=${error_rgb}
+ForegroundNeutral=${neutral_rgb}
+ForegroundNormal=${fg_rgb}
+ForegroundPositive=${positive_rgb}
+ForegroundVisited=${primary_rgb}
 
 [Colors:Tooltip]
 BackgroundAlternate=${bg_alt_rgb}
@@ -442,7 +505,7 @@ ForegroundVisited=${primary_rgb}
 BackgroundAlternate=${bg_rgb}
 BackgroundNormal=${bg_rgb}
 DecorationFocus=${primary_rgb}
-DecorationHover=${primary_rgb}
+DecorationHover=$(hex_to_rgb "$PRIMARY_CONTAINER")
 ForegroundActive=${fg_rgb}
 ForegroundInactive=${fg_inactive_rgb}
 ForegroundLink=${primary_rgb}
@@ -456,7 +519,7 @@ ForegroundVisited=${primary_rgb}
 BackgroundAlternate=${bg_alt_rgb}
 BackgroundNormal=${bg_rgb}
 DecorationFocus=${primary_rgb}
-DecorationHover=${primary_rgb}
+DecorationHover=$(hex_to_rgb "$PRIMARY_CONTAINER")
 ForegroundActive=${fg_rgb}
 ForegroundInactive=${fg_inactive_rgb}
 ForegroundLink=${primary_rgb}
@@ -556,13 +619,13 @@ placessidebar row {
 }
 
 placessidebar row:hover {
-    background-color: alpha(${PRIMARY}, 0.08) !important;
+    background-color: ${ROW_HOVER_BG} !important;
 }
 
 placessidebar row:selected,
 placessidebar row:selected:hover {
-    background-color: alpha(${PRIMARY}, 0.15) !important;
-    color: ${PRIMARY} !important;
+    background-color: ${ROW_ACTIVE_BG} !important;
+    color: ${ROW_SELECTED_FG} !important;
 }
 
 placessidebar image {
@@ -598,7 +661,29 @@ menuitem {
 
 menuitem:hover,
 menuitem:selected {
-    background-color: alpha(${PRIMARY}, 0.12) !important;
+    background-color: ${ROW_HOVER_BG} !important;
+}
+
+menuitem:active,
+menuitem:selected:active {
+    background-color: ${ROW_ACTIVE_BG} !important;
+    color: ${ROW_SELECTED_FG} !important;
+}
+
+button:hover {
+    background-color: ${ROW_HOVER_BG} !important;
+}
+
+button:active {
+    background-color: ${ROW_ACTIVE_BG} !important;
+    color: ${ROW_SELECTED_FG} !important;
+}
+
+entry:focus,
+textview:focus,
+spinbutton:focus {
+    border-color: alpha(${PRIMARY}, 0.60) !important;
+    box-shadow: 0 0 0 1px alpha(${PRIMARY}, 0.25) inset !important;
 }
 
 menu separator {
@@ -677,13 +762,13 @@ placessidebar row {
 }
 
 placessidebar row:hover {
-    background-color: alpha(${PRIMARY}, 0.08) !important;
+    background-color: ${ROW_HOVER_BG} !important;
 }
 
 placessidebar row:selected,
 placessidebar row:selected:hover {
-    background-color: alpha(${PRIMARY}, 0.15) !important;
-    color: ${PRIMARY} !important;
+    background-color: ${ROW_ACTIVE_BG} !important;
+    color: ${ROW_SELECTED_FG} !important;
 }
 
 placessidebar image {
@@ -715,12 +800,20 @@ popover > contents {
 
 popover modelbutton:hover,
 popover row:hover {
-    background-color: alpha(${PRIMARY}, 0.08) !important;
+    background-color: ${ROW_HOVER_BG} !important;
+}
+
+popover modelbutton:active,
+popover row:active,
+popover modelbutton:selected:active,
+popover row:selected:active {
+    background-color: ${ROW_ACTIVE_BG} !important;
+    color: ${ROW_SELECTED_FG} !important;
 }
 
 popover modelbutton:selected,
 popover row:selected {
-    background-color: alpha(${PRIMARY}, 0.14) !important;
+    background-color: ${ROW_ACTIVE_HOVER_BG} !important;
 }
 
 popover separator {
@@ -739,7 +832,32 @@ popover.menu modelbutton {
 }
 
 popover.menu modelbutton:hover {
-    background-color: alpha(${PRIMARY}, 0.08) !important;
+    background-color: ${ROW_HOVER_BG} !important;
+}
+
+popover.menu modelbutton:active,
+popover.menu modelbutton:selected:active {
+    background-color: ${ROW_ACTIVE_BG} !important;
+    color: ${ROW_SELECTED_FG} !important;
+}
+
+entry:focus,
+textview:focus,
+spinbutton:focus,
+searchentry:focus {
+    border-color: alpha(${PRIMARY}, 0.60) !important;
+    box-shadow: 0 0 0 1px alpha(${PRIMARY}, 0.25) inset !important;
+}
+
+button:hover,
+modelbutton:hover {
+    background-color: ${ROW_HOVER_BG} !important;
+}
+
+button:active,
+modelbutton:active {
+    background-color: ${ROW_ACTIVE_BG} !important;
+    color: ${ROW_SELECTED_FG} !important;
 }
 
 popover.menu accelerator {
@@ -751,9 +869,10 @@ EOF
 # qt6ct is the platform theme (QT_QPA_PLATFORMTHEME=qt6ct) — it needs a color scheme
 QT6CT_CONF="$HOME/.config/qt6ct/qt6ct.conf"
 mkdir -p "$(dirname "$QT6CT_CONF")"
-CURRENT_ICON_THEME=$(grep '^icon_theme=' "$QT6CT_CONF" 2>/dev/null | cut -d= -f2)
+touch "$QT6CT_CONF"
+CURRENT_ICON_THEME=$(grep '^icon_theme=' "$QT6CT_CONF" 2>/dev/null | cut -d= -f2 || true)
 [[ -z "$CURRENT_ICON_THEME" ]] && CURRENT_ICON_THEME="Adwaita"
-CURRENT_QT_STYLE=$(grep '^style=' "$QT6CT_CONF" 2>/dev/null | cut -d= -f2)
+CURRENT_QT_STYLE=$(grep '^style=' "$QT6CT_CONF" 2>/dev/null | cut -d= -f2 || true)
 [[ -z "$CURRENT_QT_STYLE" ]] && CURRENT_QT_STYLE="Darkly"
 cat > "$QT6CT_CONF" << EOF
 [Appearance]
@@ -766,9 +885,10 @@ EOF
 # Configure qt5ct to use the Darkly color scheme (mirrors qt6ct setup above)
 QT5CT_CONF="$HOME/.config/qt5ct/qt5ct.conf"
 mkdir -p "$(dirname "$QT5CT_CONF")"
-CURRENT_QT5_ICON_THEME=$(grep '^icon_theme=' "$QT5CT_CONF" 2>/dev/null | cut -d= -f2)
+touch "$QT5CT_CONF"
+CURRENT_QT5_ICON_THEME=$(grep '^icon_theme=' "$QT5CT_CONF" 2>/dev/null | cut -d= -f2 || true)
 [[ -z "$CURRENT_QT5_ICON_THEME" ]] && CURRENT_QT5_ICON_THEME="$CURRENT_ICON_THEME"
-CURRENT_QT5_STYLE=$(grep '^style=' "$QT5CT_CONF" 2>/dev/null | cut -d= -f2)
+CURRENT_QT5_STYLE=$(grep '^style=' "$QT5CT_CONF" 2>/dev/null | cut -d= -f2 || true)
 [[ -z "$CURRENT_QT5_STYLE" ]] && CURRENT_QT5_STYLE="Darkly"
 cat > "$QT5CT_CONF" << EOF
 [Appearance]

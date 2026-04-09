@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import qs
 import qs.services
 import qs.modules.common
@@ -35,7 +37,13 @@ Scope {
             const list = Config.options?.dock?.screenList ?? [];
             if (!list || list.length === 0)
                 return screens;
-            return screens.filter(screen => list.includes(screen.name));
+            const matchedScreens = screens.filter(screen => {
+                const screenName = screen?.name ?? "";
+                return screenName.length > 0 && list.includes(screenName);
+            });
+            // Fallback safety: stale monitor names (e.g. output re-enumeration after VRR changes)
+            // should never hide the dock on every screen.
+            return matchedScreens.length > 0 ? matchedScreens : screens;
         }
 
         Loader {
@@ -59,7 +67,7 @@ Scope {
             sourceComponent: PanelWindow {
                 id: dockRoot
                 screen: panelLoader.modelData
-                visible: !GlobalStates.screenLocked
+                visible: !GlobalStates.screenLocked && !GameMode.shouldHidePanels
 
                 property bool reveal: !GlobalStates.coverflowSelectorOpen && GlobalStates.shellEntryReady && (root.pinned || (Config.options?.dock?.hoverToReveal && dockMouseArea.containsMouse) || (dockApps?.requestDockShow || dockAppsVertical?.requestDockShow) || (Config.options?.dock?.showOnDesktop !== false && !ToplevelManager.activeToplevel?.activated))
 
@@ -72,7 +80,7 @@ Scope {
                     right: !root.isLeft || !root.isVertical
                 }
 
-                exclusiveZone: root.pinned ? (dockHeight + Appearance.sizes.elevationMargin) : 0
+                exclusiveZone: GameMode.shouldHidePanels ? 0 : root.pinned ? (dockHeight + Appearance.sizes.elevationMargin) : 0
 
                 implicitWidth: root.isVertical ? (dockHeight + Appearance.sizes.elevationMargin + Appearance.sizes.hyprlandGapsOut) : dockBackground.implicitWidth
                 implicitHeight: root.isVertical ? dockBackground.implicitHeight : (dockHeight + Appearance.sizes.elevationMargin + Appearance.sizes.hyprlandGapsOut)
@@ -80,7 +88,7 @@ Scope {
                 WlrLayershell.namespace: "quickshell:dock"
                 color: "transparent"
 
-                mask: Region { item: dockMouseArea }
+                mask: Region { item: GameMode.shouldHidePanels ? null : dockMouseArea }
 
                 MouseArea {
                     id: dockMouseArea

@@ -99,6 +99,4 @@ The intended next improvements are:
 - migrate target consumers from compatibility files toward the explicit generated contracts
 - cleaner separation between `generate`, `apply`, and `reload`
 
-For the incremental compiled-language plan after this contract cleanup, see:
-
-- `docs/THEMING_GO_MIGRATION_PLAN.md`
+A compiled-language migration (Go themegen) is partially in place for some targets. See `scripts/colors/system24_themegen/` for the current Go generator.

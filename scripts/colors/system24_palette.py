@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import os
+import math
 from colorsys import rgb_to_hls, hls_to_rgb
 from pathlib import Path
 from typing import Dict, Tuple
@@ -42,7 +43,7 @@ OUTPUT_FILE = Path(
 MIDNIGHT_OUTPUT_FILE = Path(
     os.environ.get(
         "MIDNIGHT_DMS_CSS",
-        "~/.config/vesktop/themes/ii-midnight.theme.css",
+        "~/.config/vesktop/themes/inir-midnight.theme.css",
     )
 ).expanduser()
 
@@ -50,8 +51,8 @@ MIDNIGHT_OUTPUT_FILE = Path(
 def _resolve_output_files(env_var: str, default_path: Path) -> list[Path]:
     """Return a list of paths to write the theme to.
 
-    Different builds/packaging may use different XDG config folder casing
-    (e.g. ~/.config/vesktop vs ~/.config/Vesktop).
+    Different Discord client builds may use different XDG config folders/casing
+    (e.g. ~/.config/vesktop, ~/.config/Vesktop, ~/.config/equicord).
     If the env var is set, it remains authoritative.
     """
 
@@ -63,6 +64,8 @@ def _resolve_output_files(env_var: str, default_path: Path) -> list[Path]:
     candidates = [
         Path(f"~/.config/vesktop/themes/{basename}").expanduser(),
         Path(f"~/.config/Vesktop/themes/{basename}").expanduser(),
+        Path(f"~/.config/equicord/themes/{basename}").expanduser(),
+        Path(f"~/.config/Equicord/themes/{basename}").expanduser(),
     ]
 
     existing_dirs = [p for p in candidates if p.parent.exists()]
@@ -97,7 +100,7 @@ body {{
     letter-spacing: -0.02ch;
     --gap: 12px;
     --divider-thickness: 4px;
-    --border-thickness: 2px;
+    --border-thickness: 1px;
     --border-hover-transition: 0.2s ease;
     --animations: on;
     --list-item-transition: 0.2s ease;
@@ -137,8 +140,8 @@ body {{
 """
 
 MIDNIGHT_THEME_TEMPLATE = """/**
- * @name ii-midnight
- * @description dank-discord / midnight style theme using iNiR Material You colors.
+ * @name iNiR Midnight
+ * @description iNiR Midnight Discord theme with Material You colors.
  * @author iNiR (Material palette injection)
  * @version 2.2.0
  * @source https://github.com/end-4/iNiR
@@ -149,7 +152,7 @@ MIDNIGHT_THEME_TEMPLATE = """/**
  * - Prefer your local copy (if you have it in the same folder).
  * - Fallback to remote so the theme works on fresh installs.
  */
-@import url('dank-discord.css');
+@import url('midnight-discord.local.css');
 @import url('https://refact0r.github.io/midnight-discord/build/midnight.css');
 
 /* Material You Palette - Auto-generated */
@@ -160,10 +163,10 @@ MIDNIGHT_THEME_TEMPLATE = """/**
  * The base theme can still style hover states, but the strong accent overlay is removed.
  */
 :root, :root:root, body, #app-mount {{
-    --hover: transparent;
-    --active: transparent;
-    --active-2: transparent;
-    --message-hover: transparent;
+    --hover: color-mix(in hsl, var(--text-3), transparent 92%);
+    --active: color-mix(in hsl, var(--text-3), transparent 86%);
+    --active-2: color-mix(in hsl, var(--text-3), transparent 80%);
+    --message-hover: color-mix(in hsl, var(--text-3), transparent 94%);
     --border-hover: var(--border);
     --border-light: var(--border);
     --button-border: var(--border);
@@ -193,7 +196,11 @@ def _hex_to_rgb(color: str) -> Tuple[int, int, int]:
 
 
 def _rgb_to_hex(rgb) -> str:
-    r, g, b = (max(0, min(int(round(v)), 255)) for v in rgb)
+    # Keep parity with Go generator (math.Round rounds .5 away from zero).
+    def _round_half_up(v: float) -> int:
+        return int(math.floor(v + 0.5))
+
+    r, g, b = (max(0, min(_round_half_up(v), 255)) for v in rgb)
     return f"#{r:02x}{g:02x}{b:02x}"
 
 
@@ -285,19 +292,19 @@ def _build_palette(colors: Dict[str, str]) -> Dict[str, str]:
     # === MENTION/REPLY GRADIENTS ===
     palette["--mention"] = (
         f"linear-gradient(to right, "
-        f"color-mix(in hsl, {primary}, transparent 70%) 40%, transparent)"
+        f"color-mix(in hsl, {primary}, transparent 90%) 40%, transparent)"
     )
     palette["--mention-hover"] = (
         f"linear-gradient(to right, "
-        f"color-mix(in hsl, {primary}, transparent 85%) 40%, transparent)"
+        f"color-mix(in hsl, {primary}, transparent 95%) 40%, transparent)"
     )
     palette["--reply"] = (
         f"linear-gradient(to right, "
-        f"color-mix(in hsl, {on_surface_variant}, transparent 85%) 40%, transparent)"
+        f"color-mix(in hsl, {on_surface_variant}, transparent 90%) 40%, transparent)"
     )
     palette["--reply-hover"] = (
         f"linear-gradient(to right, "
-        f"color-mix(in hsl, {on_surface_variant}, transparent 92%) 40%, transparent)"
+        f"color-mix(in hsl, {on_surface_variant}, transparent 95%) 40%, transparent)"
     )
 
     # === STATUS COLORS ===
@@ -308,10 +315,10 @@ def _build_palette(colors: Dict[str, str]) -> Dict[str, str]:
     palette["--offline"] = on_surface_variant
 
     # === BORDER COLORS ===
-    palette["--border-light"] = _rgba(outline, 0.15)
-    palette["--border"] = _rgba(outline, 0.30)
-    palette["--border-hover"] = primary
-    palette["--button-border"] = _rgba(outline, 0.12)
+    palette["--border-light"] = _rgba(outline, 0.12)
+    palette["--border"] = _rgba(outline, 0.22)
+    palette["--border-hover"] = _rgba(_mix(outline, primary, 0.35), 0.50)
+    palette["--button-border"] = _rgba(outline, 0.16)
 
     # === BASE COLOR LADDERS ===
     # These are used throughout system24 for various UI elements
@@ -394,6 +401,9 @@ def _write_palette(palette: Dict[str, str]) -> None:
     for out in midnight_outputs:
         with out.open("w", encoding="utf-8") as fh:
             fh.write(midnight_content)
+        legacy_out = out.parent / "ii-midnight.theme.css"
+        if legacy_out != out:
+            legacy_out.unlink(missing_ok=True)
         print(f"Generated: {out}")
 
 

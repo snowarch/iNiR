@@ -221,7 +221,7 @@ Useful when you want to see what you've changed or restore defaults after custom
 | `./setup my-changes` | View and restore user modifications |
 | `./setup uninstall` | Remove iNiR from system |
 | `inir install` | Wrapper around `./setup install` from the repo/runtime root |
-| `inir start` | Start iNiR in the background |
+| `inir start` | Start iNiR (uses inir.service when enabled) |
 | `inir stop` | Stop the active runtime |
 | `inir run` | Launch iNiR from the active runtime |
 | `inir restart` | Restart the active runtime |
@@ -315,6 +315,7 @@ These checks cover:
 
 - First install: Existing configs are backed up to `~/inir-backup/`
 - Updates: Your configs are never touched, only QML code is synced
+- Shell ownership: `inir.service` is the canonical startup path; do not also add `spawn-at-startup "inir" "start"` in Niri
 - Package-managed installs: `inir update` defers shell payload updates to the package manager instead of syncing from the current repo checkout
 - Shared configs: Only installed if they don't exist or you approve overwrite
 

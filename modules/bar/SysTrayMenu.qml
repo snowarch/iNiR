@@ -36,12 +36,10 @@ PopupWindow {
 
     function open() {
         root.visible = true;
-        if (CompositorService.isNiri) clickOutsideBackdrop.visible = true;
         root.menuOpened(root);
     }
 
     function close() {
-        clickOutsideBackdrop.visible = false;
         root.visible = false;
         while (stackView.depth > 1)
             stackView.pop();
@@ -51,7 +49,7 @@ PopupWindow {
     // Fullscreen transparent backdrop for Niri to detect clicks outside
     PanelWindow {
         id: clickOutsideBackdrop
-        visible: false
+        visible: root.visible && CompositorService.isNiri
         color: "transparent"
         exclusiveZone: 0
         WlrLayershell.layer: WlrLayer.Top

@@ -165,6 +165,21 @@ case "${SKIP_QUICKSHELL}" in
       log_success "Launcher path configured for interactive shells"
     fi
 
+    local _service_refresh_status=1
+    if sync_user_inir_service_from_repo_if_present; then
+      _service_refresh_status=0
+    else
+      _service_refresh_status=$?
+    fi
+    if [[ $_service_refresh_status -eq 0 ]]; then
+      log_success "User inir.service refreshed"
+    fi
+
+    if [[ -f "${XDG_CONFIG_HOME}/systemd/user/inir.service" ]]; then
+      systemctl --user enable inir.service >/dev/null 2>&1 || true
+      log_success "User inir.service enabled"
+    fi
+
     if [[ -f "${REPO_ROOT}/assets/icons/desktop-symbolic.svg" ]]; then
       install_file "${REPO_ROOT}/assets/icons/desktop-symbolic.svg" "${INIR_ICON_DIR}/inir.svg"
       log_success "Launcher icon installed"
@@ -210,9 +225,18 @@ case "${SKIP_NIRI}" in
   *)
     NIRI_CONFIG="${XDG_CONFIG_HOME}/niri/config.kdl"
 
-    # Never replace an existing user config.kdl.
-    # If it exists, keep it and patch only the minimal launcher/theme bits below.
-    if [[ -f "$NIRI_CONFIG" ]]; then
+    # On updates, preserve the user's config and only patch launcher/theme bits.
+    # On first run, always install iNiR defaults (backup_clashing_targets already
+    # saved the pre-existing config to the backup dir).
+    if [[ "${INSTALL_FIRSTRUN}" == true ]]; then
+      if [[ -d "defaults/niri" ]]; then
+        install_dir__sync "defaults/niri" "${XDG_CONFIG_HOME}/niri"
+        log_success "Niri config installed (defaults)"
+      elif [[ -d "dots/.config/niri" ]]; then
+        install_dir__sync "dots/.config/niri" "${XDG_CONFIG_HOME}/niri"
+        log_success "Niri config installed (dots)"
+      fi
+    elif [[ -f "$NIRI_CONFIG" ]]; then
       log_success "Preserving existing Niri config"
     elif [[ -d "defaults/niri" ]]; then
       install_dir__sync "defaults/niri" "${XDG_CONFIG_HOME}/niri"
@@ -268,9 +292,6 @@ case "${SKIP_NIRI}" in
         -e 's|spawn "bash" "-lc" "exec \"\$(inir path)/scripts/close-window.sh\""|spawn "'"${_launcher_path_escaped}"'" "close-window"|' \
         "$NIRI_BINDS_TARGET"
       sed -i \
-        -e 's|spawn-at-startup "inir" "start"|spawn-at-startup "'"${_launcher_path_escaped}"'" "start"|' \
-        "$NIRI_STARTUP_TARGET"
-      sed -i \
         -e 's|spawn "inir" "|spawn "'"${_launcher_path_escaped}"'" "|g' \
         "$NIRI_BINDS_TARGET"
     fi
@@ -290,22 +311,18 @@ fi
 # This MUST run AFTER theming templates are deployed above, because the distributed
 # config includes the SDDM sync post_hook template.
 if command -v sddm &>/dev/null; then
-  function setup_sddm_theme(){
-    tui_info "Setting up ii-pixel-sddm login theme..."
-    local sddm_script="${REPO_ROOT}/scripts/sddm/install-pixel-sddm.sh"
-    if [[ -f "$sddm_script" ]]; then
-      chmod +x "$sddm_script"
-      # Fresh install: apply theme automatically (user chose to install iNiR)
-      # Non-interactive (-y): also apply automatically (scripted installs want full setup)
-      # Only "ask" makes sense for updates where user might have another theme
-      local _sddm_auto_apply="yes"
-      INIR_SDDM_AUTO_APPLY="${_sddm_auto_apply}" bash "$sddm_script" || log_warning "ii-pixel-sddm setup had issues (non-fatal)"
+  if [[ "${INSTALL_FIRSTRUN}" == true ]]; then
+    if [[ "${ask}" == "true" ]]; then
+      tui_info "Optional: install ii-pixel-sddm login theme (matches iNiR lockscreen)."
+      if tui_confirm "Install ii-pixel-sddm now?" "no"; then
+        extras_install_sddm_theme "yes"
+      else
+        log_info "Skipping ii-pixel-sddm setup"
+      fi
     else
-      log_warning "ii-pixel-sddm install script not found, skipping"
+      log_info "Skipping ii-pixel-sddm setup in non-interactive install"
     fi
-  }
-  showfun setup_sddm_theme
-  v setup_sddm_theme
+  fi
 fi
 
 # Fuzzel (launcher)
@@ -360,6 +377,17 @@ fi
 if [[ -f "dots/.config/kitty/kitty.conf" ]]; then
   install_file__auto_backup "dots/.config/kitty/kitty.conf" "${XDG_CONFIG_HOME}/kitty/kitty.conf"
   log_success "Kitty terminal config installed"
+fi
+
+# Alacritty: patch legacy fields that cause parse errors on Alacritty ≥0.14
+# CachyOS and other distros ship default configs with deprecated top-level fields
+# like live_config_reload that were moved under [general] in 0.14+.
+_alacritty_conf="${XDG_CONFIG_HOME}/alacritty/alacritty.toml"
+if [[ -f "$_alacritty_conf" ]]; then
+  if grep -qE '^live_config_reload\s*=' "$_alacritty_conf" 2>/dev/null; then
+    sed -i '/^live_config_reload\s*=/d' "$_alacritty_conf"
+    log_success "Alacritty: removed deprecated live_config_reload (moved to [general] in 0.14+)"
+  fi
 fi
 
 # Konsole config (if installed)
@@ -793,7 +821,12 @@ tui_info "Copying wallpapers..."
 #####################################################################################
 # Ensure II_TARGET is defined (in case SKIP_QUICKSHELL was set)
 II_TARGET="${II_TARGET:-${XDG_CONFIG_HOME}/quickshell/inir}"
-USER_WALLPAPERS_DIR="$(xdg-user-dir PICTURES 2>/dev/null || echo "$HOME/Pictures")/Wallpapers"
+# Validate xdg-user-dir output: must be absolute and not equal to $HOME itself
+_xdg_pictures="$(xdg-user-dir PICTURES 2>/dev/null || true)"
+if [[ -z "$_xdg_pictures" || "$_xdg_pictures" != /* || "$_xdg_pictures" == "$HOME" ]]; then
+  _xdg_pictures="$HOME/Pictures"
+fi
+USER_WALLPAPERS_DIR="${_xdg_pictures}/Wallpapers"
 if [[ -d "${II_TARGET}/assets/wallpapers" ]]; then
   mkdir -p "${USER_WALLPAPERS_DIR}"
   COPIED_COUNT=0
@@ -811,16 +844,34 @@ if [[ -d "${II_TARGET}/assets/wallpapers" ]]; then
   fi
 fi
 
+# Optional extra wallpapers (fresh install interactive only)
+INIR_WALLS_DEFAULT_OVERRIDE=""
+if [[ "${INSTALL_FIRSTRUN}" == true && "${ask}" == "true" ]]; then
+  if tui_confirm "Download and install iNiR-Walls wallpapers?" "no"; then
+    EXTRAS_INIR_WALLS_FIRST_IMAGE=""
+    extras_install_inir_walls
+    INIR_WALLS_FIRST="${EXTRAS_INIR_WALLS_FIRST_IMAGE}"
+    if [[ -n "$INIR_WALLS_FIRST" ]] && tui_confirm "Replace iNiR default wallpaper selection with an iNiR-Walls wallpaper?" "yes"; then
+      INIR_WALLS_DEFAULT_OVERRIDE="$INIR_WALLS_FIRST"
+      log_success "Default wallpaper source switched to iNiR-Walls"
+    fi
+  fi
+fi
+
 #####################################################################################
 # Set default wallpaper and generate initial theme (first run only)
 #####################################################################################
 # Pick the first available wallpaper (don't hardcode a filename that may not exist)
 DEFAULT_WALLPAPER=""
+if [[ -n "$INIR_WALLS_DEFAULT_OVERRIDE" && -f "$INIR_WALLS_DEFAULT_OVERRIDE" && -s "$INIR_WALLS_DEFAULT_OVERRIDE" ]]; then
+  DEFAULT_WALLPAPER="$INIR_WALLS_DEFAULT_OVERRIDE"
+fi
 for candidate in \
   "${USER_WALLPAPERS_DIR}/G5uBmitWkAAyk8s.jpg" \
   "${USER_WALLPAPERS_DIR}/Angel1.png" \
   "${USER_WALLPAPERS_DIR}/qs-niri.jpg"
 do
+  [[ -n "$DEFAULT_WALLPAPER" ]] && break
   if [[ -f "$candidate" && -s "$candidate" ]]; then
     DEFAULT_WALLPAPER="$candidate"
     break

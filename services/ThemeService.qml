@@ -1,4 +1,5 @@
 pragma Singleton
+pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
@@ -20,8 +21,12 @@ Singleton {
     readonly property bool vesktopEnabled: (Config.options?.appearance?.wallpaperTheming?.enableVesktop ?? true) !== false
     readonly property var wallpaperThemingCfg: Config.options?.appearance?.wallpaperTheming ?? null
     readonly property var terminalAdjCfg: wallpaperThemingCfg?.terminalColorAdjustments ?? null
+    readonly property string panelFamily: Config.options?.panelFamily ?? "ii"
+    readonly property bool waffleUsesMainWallpaper: Config.options?.waffles?.background?.useMainWallpaper ?? true
     readonly property string liveRegenSignature: JSON.stringify({
         theme: currentTheme,
+        panelFamily: root.panelFamily,
+        waffleUsesMainWallpaper: root.waffleUsesMainWallpaper,
         paletteType: Config.options?.appearance?.palette?.type ?? "auto",
         themingWallpaperPath: Wallpapers.effectiveWallpaperPath ?? "",
         enableAppsAndShell: wallpaperThemingCfg?.enableAppsAndShell ?? true,
@@ -39,6 +44,7 @@ Singleton {
         softenColors: Config.options?.appearance?.softenColors ?? true,
     })
     property string _lastLiveRegenSignature: ""
+    property string _lastPanelFamily: ""
     property real _lastRegenTimestamp: 0
     property bool _regenPending: false
     readonly property int _regenCooldownMs: 700
@@ -93,7 +99,7 @@ Singleton {
         Qt.callLater(() => {
             Quickshell.execDetached([
                 "/usr/bin/bash",
-                Directories.scriptPath + "/colors/system24_palette.sh"
+                Directories.scriptsPath + "/colors/system24_palette.sh"
             ]);
         });
     }
@@ -109,7 +115,7 @@ Singleton {
                 Qt.callLater(() => {
                     Quickshell.execDetached([
                         "/usr/bin/bash",
-                        Directories.scriptPath + "/colors/applycolor.sh"
+                        Directories.scriptsPath + "/colors/applycolor.sh"
                     ]);
                 });
             }
@@ -191,7 +197,14 @@ Singleton {
         // Otherwise switching manual→auto sees the stale auto signature
         // and skips regeneration.
         root._lastLiveRegenSignature = root.liveRegenSignature
-        if (!isAutoTheme) return
+
+        // Detect family change — switchwall.sh is family-aware so the full
+        // pipeline must re-run even for manual themes (different wallpaper
+        // resolution, different external-app color targets).
+        const familyChanged = root.panelFamily !== root._lastPanelFamily
+        root._lastPanelFamily = root.panelFamily
+
+        if (!isAutoTheme && !familyChanged) return
         // Skip if a direct Wallpapers.apply() already launched switchwall.sh
         if (Wallpapers._applyInProgress) return
         root.regenerateAutoTheme()
@@ -205,6 +218,7 @@ Singleton {
         function onReadyChanged() {
             if (Config.ready) {
                 root._lastLiveRegenSignature = ""
+                root._lastPanelFamily = root.panelFamily
                 liveRegenerateDebounce.restart()
             }
         }

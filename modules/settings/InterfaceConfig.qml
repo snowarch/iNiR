@@ -702,6 +702,47 @@ ContentPage {
                 }
             }
 
+            ColumnLayout {
+                Layout.fillWidth: true
+                visible: !(Config.options?.sidebar?.instantOpen ?? false)
+                spacing: 4
+
+                RowLayout {
+                    spacing: 8
+                    MaterialSymbol {
+                        text: "swipe_right"
+                        iconSize: Appearance.font.pixelSize.hugeass
+                        color: Appearance.m3colors?.m3OnSurface ?? Appearance.colors.colOnLayer1
+                    }
+                    StyledText {
+                        text: Translation.tr("Sidebar animation")
+                        font.pixelSize: Appearance.font.pixelSize.normal
+                        color: Appearance.m3colors?.m3OnSurface ?? Appearance.colors.colOnLayer1
+                    }
+                }
+
+                StyledComboBox {
+                    Layout.fillWidth: true
+                    readonly property var animOptions: [
+                        { displayName: Translation.tr("Slide"), value: "slide" },
+                        { displayName: Translation.tr("Fade"), value: "fade" },
+                        { displayName: Translation.tr("Pop"), value: "pop" },
+                        { displayName: Translation.tr("Reveal"), value: "reveal" }
+                    ]
+                    model: animOptions
+                    textRole: "displayName"
+                    currentIndex: {
+                        const current = Config.options?.sidebar?.animationType ?? "slide"
+                        const idx = animOptions.findIndex(o => o.value === current)
+                        return idx >= 0 ? idx : 0
+                    }
+                    onActivated: index => {
+                        if (index >= 0 && index < animOptions.length)
+                            Config.setNestedValue("sidebar.animationType", animOptions[index].value)
+                    }
+                }
+            }
+
             SettingsSwitch {
                 buttonIcon: "folder_open"
                 text: Translation.tr("Open folder after wallpaper download")
@@ -804,6 +845,16 @@ ContentPage {
                     onCheckedChanged: Config.setNestedValue("sidebar.tools.enable", checked)
                     StyledToolTip {
                         text: Translation.tr("Niri debug options and quick actions")
+                    }
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "store"
+                    text: Translation.tr("Software")
+                    checked: Config.options.sidebar?.software?.enable ?? false
+                    onCheckedChanged: Config.setNestedValue("sidebar.software.enable", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Browse and install curated companion apps")
                     }
                 }
 
@@ -1057,7 +1108,7 @@ ContentPage {
 
                         MaterialTextField {
                             Layout.fillWidth: true
-                            placeholderText: "https://hianime.to/search?keyword=%s"
+                            placeholderText: "https://9animetv.to/search?keyword=%s"
                             text: Config.options.sidebar?.animeSchedule?.watchSite ?? ""
                             font.pixelSize: Appearance.font.pixelSize.smaller
                             color: Appearance.m3colors.m3onSurface
@@ -2038,6 +2089,15 @@ ContentPage {
                     text: Translation.tr("Display thumbnail previews of windows in the overview")
                 }
             }
+            SettingsSwitch {
+                buttonIcon: "screen_share"
+                text: Translation.tr("Active screen only")
+                checked: Config.options?.overview?.activeScreenOnly ?? false
+                onCheckedChanged: Config.setNestedValue("overview.activeScreenOnly", checked)
+                StyledToolTip {
+                    text: Translation.tr("Show overview only on the currently focused screen (multi-monitor)")
+                }
+            }
             ConfigSpinBox {
                 icon: "loupe"
                 text: Translation.tr("Scale (%)")
@@ -2154,20 +2214,9 @@ ContentPage {
                 title: Translation.tr("Positioning")
 
                 SettingsSwitch {
-                    buttonIcon: "vertical_align_center"
-                    text: Translation.tr("Center launcher panel")
-                    checked: Config.options?.overview?.centerLauncher ?? false
-                    onCheckedChanged: Config.setNestedValue("overview.centerLauncher", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Center the Super+Space launcher vertically. Disables top/bottom margin adjustments while enabled")
-                    }
-                }
-
-                SettingsSwitch {
                     buttonIcon: "dashboard_customize"
                     text: Translation.tr("Respect bar area (never overlap)")
                     checked: !Config.options.overview || Config.options.overview.respectBar !== false
-                    enabled: !(Config.options?.overview?.centerLauncher ?? false)
                     onCheckedChanged: {
                         Config.setNestedValue("overview.respectBar", checked);
                     }
@@ -2181,7 +2230,6 @@ ContentPage {
                     ConfigSpinBox {
                         icon: "vertical_align_top"
                         text: Translation.tr("Extra top margin (px)")
-                        enabled: !(Config.options?.overview?.centerLauncher ?? false)
                         value: Config.options.overview && Config.options.overview.topMargin !== undefined
                                ? Config.options.overview.topMargin
                                : 0
@@ -2198,7 +2246,6 @@ ContentPage {
                     ConfigSpinBox {
                         icon: "vertical_align_bottom"
                         text: Translation.tr("Extra bottom margin (px)")
-                        enabled: !(Config.options?.overview?.centerLauncher ?? false)
                         value: Config.options.overview && Config.options.overview.bottomMargin !== undefined
                                ? Config.options.overview.bottomMargin
                                : 0

@@ -399,7 +399,13 @@ Item {
                                     weight: Font.DemiBold
                                     family: Appearance.font.family.expressive
                                 }
-                                color: ColorUtils.transparentize(Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1, 0.8)
+                                color: ColorUtils.transparentize(
+                                    Appearance.angelEverywhere ? Appearance.angel.colText
+                                    : Appearance.inirEverywhere ? Appearance.inir.colText
+                                    : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer1
+                                    : Appearance.colors.colOnLayer1,
+                                    0.7
+                                )
                                 horizontalAlignment: Text.AlignHCenter
                                 verticalAlignment: Text.AlignVCenter
                                 visible: root.showWorkspaceNumber

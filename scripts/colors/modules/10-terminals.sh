@@ -9,6 +9,50 @@ PALETTE_FILE="$STATE_DIR/user/generated/palette.json"
 TERMINAL_FILE="$STATE_DIR/user/generated/terminal.json"
 SEQUENCES_TEMPLATE="$SCRIPT_DIR/terminal/sequences.txt"
 
+# Known terminal emulators and their config keys.
+# Maps /proc/*/comm name → config key under .appearance.wallpaperTheming.terminals
+declare -A KNOWN_TERMINALS=(
+  [kitty]=kitty
+  [alacritty]=alacritty
+  [foot]=foot
+  [footclient]=foot
+  [wezterm]=wezterm
+  [wezterm-gui]=wezterm
+  [ghostty]=ghostty
+  [konsole]=konsole
+)
+
+# Walk /proc ancestor chain from $1 to find the terminal emulator.
+# Returns the config key (e.g. "alacritty") or empty string if unknown.
+find_terminal_ancestor() {
+  local pid="$1"
+  local visited=0
+  while [[ "$pid" -gt 1 ]] && [[ $visited -lt 20 ]]; do
+    local comm
+    comm=$(< "/proc/$pid/comm" 2>/dev/null) || break
+    [[ -n "$comm" ]] || break
+    if [[ -n "$comm" && -n "${KNOWN_TERMINALS[$comm]+_}" ]]; then
+      printf '%s\n' "${KNOWN_TERMINALS[$comm]}"
+      return 0
+    fi
+    local ppid
+    ppid=$(awk '/^PPid:/{print $2}' "/proc/$pid/status" 2>/dev/null) || break
+    [[ "$ppid" != "$pid" ]] || break
+    pid="$ppid"
+    ((visited++))
+  done
+  return 1
+}
+
+# Check if a terminal has theming enabled in config.
+# $1 = config key (e.g. "alacritty")
+is_terminal_themed() {
+  local term_key="$1"
+  local enabled
+  enabled=$(config_bool ".appearance.wallpaperTheming.terminals.${term_key}" true)
+  [[ "$enabled" == 'true' ]]
+}
+
 apply_term_sequences() {
   [[ -f "$SEQUENCES_TEMPLATE" ]] || return 0
   mkdir -p "$STATE_DIR/user/generated/terminal"
@@ -37,18 +81,35 @@ apply_term_sequences() {
   shell_pids=$(pgrep -x 'fish|bash|zsh|nu|elvish|xonsh' 2>/dev/null || true)
   [[ -n "$shell_pids" ]] || return 0
 
+  # Collect pts numbers grouped by their terminal emulator.
+  # Only include pts devices whose terminal ancestor has theming enabled.
   local safe_pts=()
   for pid in $shell_pids; do
-    local tty_nr
-    tty_nr=$(readlink "/proc/$pid/fd/0" 2>/dev/null || true)
-    if [[ "$tty_nr" =~ ^/dev/pts/([0-9]+)$ ]]; then
-      local pts_num="${BASH_REMATCH[1]}"
-      local seen=false
-      for existing in "${safe_pts[@]}"; do
-        [[ "$existing" == "$pts_num" ]] && seen=true && break
-      done
-      $seen || safe_pts+=("$pts_num")
-    fi
+    [[ -d "/proc/$pid" ]] || continue
+
+    local tty_link
+    tty_link=$(readlink "/proc/$pid/fd/0" 2>/dev/null || true)
+    [[ "$tty_link" =~ ^/dev/pts/([0-9]+)$ ]] || continue
+    local pts_num="${BASH_REMATCH[1]}"
+
+    # Deddup check
+    local seen=false
+    for existing in "${safe_pts[@]}"; do
+      [[ "$existing" == "$pts_num" ]] && seen=true && break
+    done
+    $seen && continue
+
+    # Identify which terminal emulator owns this shell
+    local term_key
+    term_key=$(find_terminal_ancestor "$pid") || {
+      # Unknown terminal — send sequences (backwards compat)
+      safe_pts+=("$pts_num")
+      continue
+    }
+
+    # Skip if this terminal's theming is disabled
+    is_terminal_themed "$term_key" || continue
+    safe_pts+=("$pts_num")
   done
 
   for pts_num in "${safe_pts[@]}"; do

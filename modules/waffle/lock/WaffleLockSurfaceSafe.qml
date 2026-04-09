@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Effects
 import QtQuick.Layouts
+import QtMultimedia
 import Quickshell.Services.UPower
 import Quickshell.Services.Mpris
 import qs
@@ -24,14 +25,6 @@ MouseArea {
 
     property bool hasAttemptedUnlock: false
 
-     // Emergency fallback (safety net)
-     property int emergencyClickCount: 0
-     Timer {
-         id: emergencyClickTimer
-         interval: 1000
-         onTriggered: root.emergencyClickCount = 0
-     }
-
     readonly property color textColor: Looks.colors.fg
     readonly property color textShadowColor: Looks.colors.shadow
     readonly property real clockFontSize: 96 * Looks.fontScale
@@ -50,6 +43,12 @@ MouseArea {
         if (wBg?.useMainWallpaper ?? true) return Config.options?.background?.wallpaperPath ?? ""
         return wBg?.wallpaperPath ?? Config.options?.background?.wallpaperPath ?? ""
     }
+    readonly property bool enableAnimation: Config.options?.lock?.enableAnimation ?? false
+    readonly property bool wallpaperIsVideo: {
+        const lp = _wallpaperPath.toLowerCase();
+        return lp.endsWith(".mp4") || lp.endsWith(".webm") || lp.endsWith(".mkv") || lp.endsWith(".avi") || lp.endsWith(".mov");
+    }
+    readonly property bool wallpaperIsGif: _wallpaperPath.toLowerCase().endsWith(".gif")
 
     // Safe base background
     Rectangle {
@@ -58,21 +57,74 @@ MouseArea {
         z: -2
     }
 
-     // Wallpaper (no blur, no effects)
+     // Wallpaper (piped through MultiEffect for blur)
      Image {
          id: backgroundWallpaperSource
          anchors.fill: parent
-         source: root._wallpaperPath
+         source: (!root.wallpaperIsGif && !root.wallpaperIsVideo) ? root._wallpaperPath : ""
          fillMode: Image.PreserveAspectCrop
          asynchronous: true
          visible: false
          z: -2
      }
 
+     // Animated GIF wallpaper — first frame when animation disabled
+     AnimatedImage {
+         id: gifWallpaperSource
+         anchors.fill: parent
+         source: root.wallpaperIsGif ? root._wallpaperPath : ""
+         fillMode: Image.PreserveAspectCrop
+         asynchronous: true
+         cache: false
+         playing: visible && root.enableAnimation
+         visible: false
+         z: -2
+     }
+
+     // Video wallpaper — first frame (paused) when animation disabled
+     Video {
+         id: videoWallpaperSource
+         anchors.fill: parent
+         visible: false
+         z: -2
+         source: {
+             if (!root.wallpaperIsVideo || !root._wallpaperPath) return "";
+             const path = root._wallpaperPath;
+             return path.startsWith("file://") ? path : ("file://" + path);
+         }
+         fillMode: VideoOutput.PreserveAspectCrop
+         loops: MediaPlayer.Infinite
+         muted: true
+         autoPlay: true
+
+         readonly property bool shouldPlay: root.enableAnimation
+
+         function pauseAndShowFirstFrame() {
+             pause()
+             seek(0)
+         }
+
+         onPlaybackStateChanged: {
+             if (playbackState === MediaPlayer.PlayingState && !shouldPlay)
+                 pauseAndShowFirstFrame()
+             if (playbackState === MediaPlayer.StoppedState && visible && shouldPlay)
+                 play()
+         }
+
+         onShouldPlayChanged: {
+             if (root.wallpaperIsVideo) {
+                 if (shouldPlay) play()
+                 else pauseAndShowFirstFrame()
+             }
+         }
+     }
+
      MultiEffect {
          id: backgroundWallpaper
          anchors.fill: parent
-         source: backgroundWallpaperSource
+         source: root.wallpaperIsGif ? gifWallpaperSource
+               : root.wallpaperIsVideo ? videoWallpaperSource
+               : backgroundWallpaperSource
          visible: true
          z: -1
 
@@ -731,7 +783,7 @@ MouseArea {
     // ===== INPUT HANDLING =====
 
     hoverEnabled: true
-    acceptedButtons: Qt.LeftButton | Qt.RightButton
+    acceptedButtons: Qt.LeftButton
     focus: true
     activeFocusOnTab: true
 
@@ -756,15 +808,6 @@ MouseArea {
     }
 
     onClicked: mouse => {
-        if (mouse.button === Qt.RightButton) {
-            root.emergencyClickCount++
-            emergencyClickTimer.restart()
-            if (root.emergencyClickCount >= 5) {
-                root.emergencyClickCount = 0
-                GlobalStates.screenLocked = false
-            }
-            return
-        }
         if (!root.showLoginView) {
             root.switchToLogin()
         } else {

@@ -127,7 +127,7 @@ WSettingsRow {
                     opacity: delegateItem.index === combo.currentIndex ? 0.15 : 1.0
                     
                     Behavior on color {
-                        animation: ColorAnimation { duration: Looks.transition.enabled ? 80 : 0 }
+                        animation: ColorAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
                     }
                 }
                 

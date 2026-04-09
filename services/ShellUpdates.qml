@@ -185,17 +185,23 @@ Singleton {
         root.isUpdating = true
         root.lastError = ""
         root.overlayOpen = false
-        // Use execDetached so the update script survives shell restart
-        // (./setup update calls qs kill -c ii at the end)
-        // Must cd to repo dir first — setup expects to run from its own directory
-        Quickshell.execDetached(["/usr/bin/bash", "-c",
-            "cd '" + root.repoPath + "' && ./setup update -y -q"])
-        print("[ShellUpdates] Update launched (detached) from: " + root.repoPath)
-        // Shell will be restarted by ./setup update, so just mark state
-        root.hasUpdate = false
-        root.commitsBehind = 0
-        root.lastError = ""
         Config.setNestedValue("shellUpdates.dismissedCommit", "")
+        // Detached bash wrapper: writes status markers + logs all output.
+        // On success, ./setup update restarts the shell — new instance clears hasUpdate naturally.
+        // On failure, status file lets the watchdog detect it and restore the update indicator.
+        const logPath = Directories.updateLogPath
+        const statusPath = Directories.updateStatusPath
+        const repoDir = root.repoPath
+        Quickshell.execDetached(["/usr/bin/bash", "-c",
+            "echo 'updating' > '" + statusPath + "'; " +
+            "cd '" + repoDir + "' && ./setup update -y -q > '" + logPath + "' 2>&1; " +
+            "rc=$?; " +
+            "if [ $rc -ne 0 ]; then echo \"failed:$rc\" > '" + statusPath + "'; fi"
+        ])
+        print("[ShellUpdates] Update launched (detached) from: " + repoDir)
+        print("[ShellUpdates] Log: " + logPath + " | Status: " + statusPath)
+        // Start watchdog — if shell hasn't restarted after timeout, check status file
+        updateWatchdog.restart()
     }
 
     function dismiss(): void {
@@ -881,4 +887,56 @@ Singleton {
 
     // Note: Update runs via Quickshell.execDetached() in performUpdate()
     // so it survives the shell restart that ./setup update triggers.
+
+    // Watchdog: if the shell is still alive after 120s, the update likely failed.
+    // On success, ./setup update restarts the shell — this timer never fires.
+    Timer {
+        id: updateWatchdog
+        interval: 120000
+        repeat: false
+        onTriggered: {
+            if (!root.isUpdating) return
+            print("[ShellUpdates] Watchdog: shell still alive after update launch — reading status file")
+            updateStatusReader.running = true
+        }
+    }
+
+    // Read the status file to determine if the update failed
+    Process {
+        id: updateStatusReader
+        running: false
+        command: ["cat", Directories.updateStatusPath]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const status = (text ?? "").trim()
+                print("[ShellUpdates] Update status file: " + status)
+                if (status.startsWith("failed")) {
+                    // Update process exited with error
+                    const parts = status.split(":")
+                    const code = parts.length > 1 ? parts[1] : "unknown"
+                    root.isUpdating = false
+                    root.lastError = "Update failed (exit " + code + "). Check " + Directories.updateLogPath + " for details."
+                    print("[ShellUpdates] Update FAILED with exit code " + code)
+                } else if (status === "updating") {
+                    // Still running after 120s — likely stuck
+                    root.isUpdating = false
+                    root.lastError = "Update appears stuck. Check " + Directories.updateLogPath + " for details."
+                    print("[ShellUpdates] Update appears stuck (still 'updating' after watchdog)")
+                } else {
+                    // Empty or unexpected — assume failed
+                    root.isUpdating = false
+                    root.lastError = "Update outcome unknown. Check " + Directories.updateLogPath + " for details."
+                    print("[ShellUpdates] Update status unclear: '" + status + "'")
+                }
+            }
+        }
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0 && root.isUpdating) {
+                // Status file doesn't exist — update process may not have started
+                root.isUpdating = false
+                root.lastError = "Update may not have started. Check " + Directories.updateLogPath + " for details."
+                print("[ShellUpdates] Status file not found (cat exited " + exitCode + ")")
+            }
+        }
+    }
 }

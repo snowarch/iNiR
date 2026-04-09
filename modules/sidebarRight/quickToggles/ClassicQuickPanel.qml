@@ -18,14 +18,11 @@ AbstractQuickPanel {
     Grid {
         id: grid
         anchors.top: parent.top
-        anchors.horizontalCenter: root.compactMode ? undefined : parent.horizontalCenter
-        anchors.left: root.compactMode ? parent.left : undefined
-        anchors.right: root.compactMode ? parent.right : undefined
-        width: root.compactMode ? parent.width : implicitWidth
+        anchors.horizontalCenter: parent.horizontalCenter
         
-        // Approximate width of a toggle (40) + spacing (12)
-        property int itemSlotWidth: 52 
-        columns: Math.max(1, Math.floor((root.compactMode ? grid.width : root.width) / itemSlotWidth))
+        // Approximate width of a toggle (40) + spacing
+        property int itemSlotWidth: root.compactMode ? 48 : 52
+        columns: Math.max(1, Math.floor(root.width / itemSlotWidth))
         
         spacing: root.compactMode ? 8 : 12
         

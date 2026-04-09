@@ -101,29 +101,6 @@ Scope {
             right: true
         }
 
-        Item {
-            id: keyHandler
-            anchors.fill: parent
-            focus: root.cheatsheetOpen
-
-            Keys.onPressed: function(event) {
-                if (!root.cheatsheetOpen) return
-                
-                if (event.key === Qt.Key_Escape) {
-                    root.close()
-                    event.accepted = true
-                } else if (event.modifiers === Qt.ControlModifier) {
-                    if (event.key === Qt.Key_PageDown || event.key === Qt.Key_Tab) {
-                        root.currentPage = (root.currentPage + 1) % root.pages.length
-                        event.accepted = true
-                    } else if (event.key === Qt.Key_PageUp || event.key === Qt.Key_Backtab) {
-                        root.currentPage = (root.currentPage - 1 + root.pages.length) % root.pages.length
-                        event.accepted = true
-                    }
-                }
-            }
-        }
-
         // Scrim backdrop (matches Overview pattern)
         Rectangle {
             anchors.fill: parent
@@ -199,6 +176,25 @@ Scope {
             property real padding: 8
             width: Math.min(parent.width - 80, 1100)
             height: Math.min(parent.height - 80, 750)
+
+            // Key handler on the content ancestor so events from any
+            // focused child (search field, nav buttons) propagate here.
+            Keys.onPressed: event => {
+                if (!root.cheatsheetOpen) return
+
+                if (event.key === Qt.Key_Escape) {
+                    root.close()
+                    event.accepted = true
+                } else if (event.modifiers === Qt.ControlModifier) {
+                    if (event.key === Qt.Key_PageDown || event.key === Qt.Key_Tab) {
+                        root.currentPage = (root.currentPage + 1) % root.pages.length
+                        event.accepted = true
+                    } else if (event.key === Qt.Key_PageUp || event.key === Qt.Key_Backtab) {
+                        root.currentPage = (root.currentPage - 1 + root.pages.length) % root.pages.length
+                        event.accepted = true
+                    }
+                }
+            }
 
             // Scale animation for open/close
             scale: root.cheatsheetOpen ? 1.0 : 0.95

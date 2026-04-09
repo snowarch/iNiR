@@ -25,18 +25,19 @@ QuickToggleButton {
         startServiceProc.running = true;
     }
     
-    contentItem: CustomIcon {
-        id: distroIcon
-        source: 'cloudflare-dns-symbolic'
+    contentItem: Item {
+        CustomIcon {
+            id: distroIcon
+            source: 'cloudflare-dns-symbolic'
+            anchors.centerIn: parent
+            width: 16
+            height: 16
+            colorize: true
+            color: root.toggled ? Appearance.m3colors.m3onPrimary : Appearance.colors.colOnLayer1
 
-        anchors.centerIn: parent
-        width: 16
-        height: 16
-        colorize: true
-        color: root.toggled ? Appearance.m3colors.m3onPrimary : Appearance.colors.colOnLayer1
-
-        Behavior on color {
-            animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            Behavior on color {
+                animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
         }
     }
 

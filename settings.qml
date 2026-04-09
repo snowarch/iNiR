@@ -1971,7 +1971,7 @@ ApplicationWindow {
                     boundsBehavior: Flickable.StopAtBounds
                     interactive: contentHeight > height
                     ScrollBar.vertical: StyledScrollBar {
-                        policy: navRailFlickable.contentHeight > navRailFlickable.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+                        policy: ScrollBar.AlwaysOff
                     }
 
                     NavigationRail {
@@ -2039,6 +2039,7 @@ ApplicationWindow {
                     anchors.bottom: parent.bottom
                     anchors.left: parent.left
                     anchors.right: parent.right
+                    anchors.bottomMargin: 0
                     height: 36
                     buttonRadius: Appearance.rounding.small
                     colBackground: "transparent"
@@ -2075,8 +2076,56 @@ ApplicationWindow {
                         }
                     }
 
-                    StyledToolTip {
-                        text: Translation.tr("Switch to overlay mode (live preview)")
+                    PopupToolTip {
+                        id: overlayToggleHoverBubble
+                        delay: 0
+                        extraVisibleCondition: !navRail.expanded
+                        anchorEdges: Edges.Right
+                        contentItem: Item {
+                            id: overlayBubbleContent
+                            property bool shown: false
+                            implicitWidth: overlayBubbleBackground.implicitWidth
+                            implicitHeight: overlayBubbleBackground.implicitHeight
+                            opacity: shown ? 1 : 0
+                            scale: shown ? 1 : 0.92
+
+                            Behavior on opacity {
+                                enabled: Appearance.animationsEnabled
+                                NumberAnimation {
+                                    duration: Appearance.animation.elementMoveFast.duration
+                                    easing.type: Appearance.animation.elementMoveFast.type
+                                    easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                                }
+                            }
+
+                            Behavior on scale {
+                                enabled: Appearance.animationsEnabled
+                                NumberAnimation {
+                                    duration: Appearance.animation.elementMoveFast.duration
+                                    easing.type: Appearance.animation.elementMoveFast.type
+                                    easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                                }
+                            }
+
+                            Rectangle {
+                                id: overlayBubbleBackground
+                                color: Appearance.colors.colPrimary
+                                radius: Appearance.rounding.full
+                                implicitWidth: overlayBubbleText.implicitWidth + 24
+                                implicitHeight: 32
+
+                                StyledText {
+                                    id: overlayBubbleText
+                                    anchors.centerIn: parent
+                                    text: Translation.tr("Switch to overlay mode")
+                                    font.pixelSize: Appearance.font.pixelSize.small
+                                    font.weight: Font.Medium
+                                    color: Appearance.colors.colOnPrimary
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                            }
+                        }
                     }
                 }
 

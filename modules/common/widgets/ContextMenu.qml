@@ -57,12 +57,6 @@ Loader {
         Component.onCompleted: {
             openAnim.start();
             Qt.callLater(() => keyHandler.forceActiveFocus());
-            if (CompositorService.isNiri && root.closeOnFocusLost) {
-                clickOutsideBackdrop.visible = true;
-            }
-        }
-        Component.onDestruction: {
-            clickOutsideBackdrop.visible = false;
         }
 
         Item {
@@ -105,7 +99,6 @@ Loader {
         }
 
         function close(): void {
-            clickOutsideBackdrop.visible = false;
             if (root.noSmoothClosing) root.active = false;
             else closeAnim.start();
         }
@@ -288,7 +281,7 @@ Loader {
 
         PanelWindow {
             id: clickOutsideBackdrop
-            visible: false
+            visible: popupWindow.visible && CompositorService.isNiri && root.closeOnFocusLost
             color: "transparent"
             exclusiveZone: 0
             WlrLayershell.layer: WlrLayer.Top

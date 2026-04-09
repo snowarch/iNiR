@@ -43,15 +43,52 @@ Scope {
 
     // ─── Selected monitor (for per-monitor wallpaper) ───
     readonly property bool multiMonitorActive: Config.options?.background?.multiMonitor?.enable ?? false
+    property string _lockedTarget: ""
+    property string _capturedMonitor: ""
     readonly property string selectedMonitor: {
         if (!multiMonitorActive) return ""
-        const gsTarget = GlobalStates.wallpaperSelectorTargetMonitor ?? ""
-        if (gsTarget && gsTarget.length > 0) return gsTarget
-        const configTarget = Config.options?.wallpaperSelector?.targetMonitor ?? ""
-        return configTarget ?? ""
+        if (_lockedTarget && _lockedTarget.length > 0) return _lockedTarget
+        return _capturedMonitor ?? ""
     }
     readonly property string currentSelectionTarget: Wallpapers.currentSelectionTarget()
     readonly property string currentSelectionPath: Wallpapers.currentWallpaperPathForTarget(currentSelectionTarget, selectedMonitor)
+
+    function captureSelectedMonitor() {
+        if (!multiMonitorActive) {
+            _lockedTarget = ""
+            _capturedMonitor = ""
+            return
+        }
+
+        const gsTarget = GlobalStates.wallpaperSelectorTargetMonitor ?? ""
+        if (gsTarget && gsTarget.length > 0) {
+            _lockedTarget = gsTarget
+            _capturedMonitor = ""
+            return
+        }
+
+        const configTarget = Config.options?.wallpaperSelector?.targetMonitor ?? ""
+        if (configTarget && configTarget.length > 0) {
+            _lockedTarget = configTarget
+            _capturedMonitor = ""
+            return
+        }
+
+        const screenTarget = root.targetScreen?.name ?? ""
+        if (screenTarget && screenTarget.length > 0) {
+            _lockedTarget = screenTarget
+            _capturedMonitor = ""
+            return
+        }
+
+        _lockedTarget = ""
+        if (CompositorService.isNiri)
+            _capturedMonitor = NiriService.currentOutput ?? ""
+        else if (CompositorService.isHyprland)
+            _capturedMonitor = Hyprland.focusedMonitor?.name ?? ""
+        else
+            _capturedMonitor = ""
+    }
 
     // ─── Selection logic (mirrors WallpaperSelectorContent.selectWallpaperPath) ───
     function selectWallpaperPath(filePath, useDarkMode) {
@@ -141,6 +178,8 @@ Scope {
             }
 
             Component.onCompleted: {
+                root.captureSelectedMonitor()
+
                 // Auto-detect selection target based on active family
                 // (mirrors WallpaperSelector.qml's family-aware target logic)
                 const explicitTarget = Config.options?.wallpaperSelector?.selectionTarget ?? "main"
@@ -156,7 +195,8 @@ Scope {
                 //  because the Loader creates us AFTER coverflowSelectorOpen changed)
                 const wp = root.currentSelectionPath
                 const wpDir = FileUtils.parentDirectory(FileUtils.trimFileProtocol(String(wp)))
-                if (wpDir && wpDir.length > 0)
+                const currentDir = Wallpapers.effectiveDirectory
+                if (wpDir && wpDir.length > 0 && currentDir !== wpDir)
                     Wallpapers.setDirectory(wpDir)
                 Wallpapers.searchQuery = ""
                 // Update thumbnails on the active view
@@ -316,34 +356,10 @@ Scope {
                     folderModel: Wallpapers.folderModel
                     currentWallpaperPath: root.currentSelectionPath
 
-                    // Staggered entry animation
-                    transformOrigin: Item.Center
-                    scale: panelWindow._contentReady ? 1.0 : 0.92
-                    opacity: panelWindow._contentReady ? 1.0 : 0.0
-                    y: panelWindow._contentReady ? 0 : 18
-                    Behavior on scale {
-                        enabled: Appearance.animationsEnabled
-                        NumberAnimation {
-                            duration: Appearance.calcEffectiveDuration(420)
-                            easing.type: Appearance.animation.elementMoveEnter.type
-                            easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
-                        }
-                    }
-                    Behavior on opacity {
-                        enabled: Appearance.animationsEnabled
-                        NumberAnimation {
-                            duration: Appearance.calcEffectiveDuration(300)
-                            easing.type: Easing.OutCubic
-                        }
-                    }
-                    Behavior on y {
-                        enabled: Appearance.animationsEnabled
-                        NumberAnimation {
-                            duration: Appearance.calcEffectiveDuration(380)
-                            easing.type: Appearance.animation.elementMoveEnter.type
-                            easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
-                        }
-                    }
+                    // SkewView manages its own staggered enter/exit internally
+                    // via _contentVisible. We only feed it the parent's ready signal
+                    // so it knows when to reverse (close animation).
+                    contentReady: panelWindow._contentReady
 
                     onWallpaperSelected: filePath => {
                         root.selectWallpaperPath(filePath, skewContent.useDarkMode)
@@ -372,15 +388,20 @@ Scope {
                 target: GlobalStates
                 function onCoverflowSelectorOpenChanged() {
                     if (GlobalStates.coverflowSelectorOpen && panelWindow._contentReady) {
+                        root.captureSelectedMonitor()
                         const wp = root.currentSelectionPath
                         const wpDir = FileUtils.parentDirectory(FileUtils.trimFileProtocol(String(wp)))
-                        if (wpDir && wpDir.length > 0)
+                        const currentDir = Wallpapers.effectiveDirectory
+                        if (wpDir && wpDir.length > 0 && currentDir !== wpDir)
                             Wallpapers.setDirectory(wpDir)
                         Wallpapers.searchQuery = ""
                         // Update thumbnails on the active view
                         const activeView = viewLoader.item
                         if (activeView && typeof activeView.updateThumbnails === "function")
                             activeView.updateThumbnails()
+                    } else if (!GlobalStates.coverflowSelectorOpen) {
+                        root._lockedTarget = ""
+                        root._capturedMonitor = ""
                     }
                 }
             }

@@ -1,20 +1,20 @@
-import qs
-import qs.services
-import qs.modules.common
-import qs.modules.common.widgets
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Quickshell.Io
 import Quickshell
+import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Hyprland
+import qs
+import qs.modules.common
+import qs.modules.common.widgets
+import qs.services
 
 Scope { // Scope
     id: root
     property bool pinned: Config.options?.osk.pinnedOnStartup ?? false
 
-    component OskControlButton: GroupButton { // Pin button
+    component OskControlButton: GroupButton {
         baseWidth: 40
         baseHeight: 40
         clickedWidth: baseWidth
@@ -30,12 +30,14 @@ Scope { // Scope
                 Ydotool.releaseAllKeys();
             }
         }
-        
-        sourceComponent: PanelWindow { // Window
+
+        sourceComponent: PanelWindow {
             id: oskRoot
             visible: oskLoader.active && !GlobalStates.screenLocked
 
+            // Full-screen overlay — mask limits input to keyboard area only
             anchors {
+                top: true
                 bottom: true
                 left: true
                 right: true
@@ -44,9 +46,33 @@ Scope { // Scope
             function hide() {
                 GlobalStates.oskOpen = false
             }
-            exclusiveZone: root.pinned ? implicitHeight - Appearance.sizes.hyprlandGapsOut : 0
-            implicitWidth: oskBackground.width + Appearance.sizes.elevationMargin * 2
-            implicitHeight: oskBackground.height + Appearance.sizes.elevationMargin * 2
+
+            function snapToNearestEdge() {
+                const margin = Appearance.sizes.elevationMargin
+                const kw = oskBackground.width
+                const kh = oskBackground.height
+                const pw = oskRoot.width
+                const ph = oskRoot.height
+                const cx = oskBackground.x + kw / 2
+                const cy = oskBackground.y + kh / 2
+
+                // Horizontal: snap to left third, center, or right third
+                let targetX
+                if (cx < pw / 3) targetX = margin
+                else if (cx > pw * 2 / 3) targetX = pw - kw - margin
+                else targetX = (pw - kw) / 2
+
+                // Vertical: snap to top or bottom
+                let targetY
+                if (cy < ph / 2) targetY = margin
+                else targetY = ph - kh - margin
+
+                oskBackground.animatePosition = true
+                oskBackground.x = targetX
+                oskBackground.y = targetY
+            }
+
+            exclusiveZone: 0
             WlrLayershell.namespace: "quickshell:osk"
             WlrLayershell.layer: WlrLayer.Overlay
             // Hyprland 0.49: Focus is always exclusive and setting this breaks mouse focus grab
@@ -57,32 +83,58 @@ Scope { // Scope
                 item: oskBackground
             }
 
-
-            // Background
+            // Background shadow follows keyboard
             StyledRectangularShadow {
                 target: oskBackground
             }
             Rectangle {
                 id: oskBackground
-                anchors.centerIn: parent
+                property bool animatePosition: false
+                property real padding: 10
+
+                width: oskRowLayout.implicitWidth + padding * 2
+                height: oskRowLayout.implicitHeight + padding * 2
+
+                // Initial position: bottom center (binding breaks on first drag)
+                x: parent ? (parent.width - width) / 2 : 0
+                y: parent ? parent.height - height - Appearance.sizes.elevationMargin : 0
+
                 color: Appearance.colors.colLayer0
                 radius: Appearance.rounding.windowRounding
-                transformOrigin: Item.Bottom
+                transformOrigin: Item.Center
                 property real initScale: 0.98
                 scale: initScale
-                property real padding: 10
-                implicitWidth: oskRowLayout.implicitWidth + padding * 2
-                implicitHeight: oskRowLayout.implicitHeight + padding * 2
 
                 Component.onCompleted: {
                     initScale = 1.0
                 }
 
                 Behavior on scale {
-                    animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    animation: NumberAnimation {
+                        duration: Appearance.animation.elementMoveFast.duration
+                        easing.type: Appearance.animation.elementMoveFast.type
+                        easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                    }
                 }
 
-                Keys.onPressed: (event) => { // Esc to close
+                Behavior on x {
+                    enabled: oskBackground.animatePosition
+                    NumberAnimation {
+                        duration: Appearance.animation.elementMove.duration
+                        easing.type: Appearance.animation.elementMove.type
+                        easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
+                    }
+                }
+                Behavior on y {
+                    enabled: oskBackground.animatePosition
+                    NumberAnimation {
+                        duration: Appearance.animation.elementMove.duration
+                        easing.type: Appearance.animation.elementMove.type
+                        easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
+                    }
+                }
+
+                Keys.onPressed: (event) => {
                     if (event.key === Qt.Key_Escape) {
                         oskRoot.hide()
                     }
@@ -92,28 +144,74 @@ Scope { // Scope
                     id: oskRowLayout
                     anchors.centerIn: parent
                     spacing: 5
-                    VerticalButtonGroup {
-                        OskControlButton { // Pin button
-                            toggled: root.pinned
-                            downAction: () => root.pinned = !root.pinned
-                            contentItem: MaterialSymbol {
-                                text: "keep"
-                                horizontalAlignment: Text.AlignHCenter
-                                iconSize: Appearance.font.pixelSize.larger
-                                color: root.pinned ? Appearance.m3colors.m3onPrimary : Appearance.colors.colOnLayer0
+
+                    ColumnLayout {
+                        spacing: 2
+
+                        VerticalButtonGroup {
+                            OskControlButton { // Pin (locks position)
+                                toggled: root.pinned
+                                downAction: () => root.pinned = !root.pinned
+                                contentItem: MaterialSymbol {
+                                    text: root.pinned ? "lock" : "keep"
+                                    horizontalAlignment: Text.AlignHCenter
+                                    iconSize: Appearance.font.pixelSize.larger
+                                    color: root.pinned ? Appearance.m3colors.m3onPrimary : Appearance.colors.colOnLayer0
+                                }
+                            }
+                            OskControlButton {
+                                onClicked: () => {
+                                    oskRoot.hide()
+                                }
+                                contentItem: MaterialSymbol {
+                                    horizontalAlignment: Text.AlignHCenter
+                                    text: "keyboard_hide"
+                                    iconSize: Appearance.font.pixelSize.larger
+                                }
                             }
                         }
-                        OskControlButton {
-                            onClicked: () => {
-                                oskRoot.hide()
+
+                        // Drag handle
+                        Item {
+                            id: oskDragHandle
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            Layout.minimumHeight: 30
+                            opacity: root.pinned ? 0.25 : 0.6
+
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: Appearance.animation.elementMoveFast.duration
+                                    easing.type: Appearance.animation.elementMoveFast.type
+                                }
                             }
-                            contentItem: MaterialSymbol {
-                                horizontalAlignment: Text.AlignHCenter
-                                text: "keyboard_hide"
+
+                            MaterialSymbol {
+                                anchors.centerIn: parent
+                                text: "drag_indicator"
                                 iconSize: Appearance.font.pixelSize.larger
+                                color: Appearance.colors.colOnLayer0
+                            }
+
+                            DragHandler {
+                                id: oskDragHandler
+                                enabled: !root.pinned
+                                target: oskBackground
+                                xAxis.minimum: 0
+                                xAxis.maximum: oskRoot.width - oskBackground.width
+                                yAxis.minimum: 0
+                                yAxis.maximum: oskRoot.height - oskBackground.height
+                                onActiveChanged: {
+                                    if (active) {
+                                        oskBackground.animatePosition = false
+                                    } else {
+                                        oskRoot.snapToNearestEdge()
+                                    }
+                                }
                             }
                         }
                     }
+
                     Rectangle {
                         Layout.topMargin: 20
                         Layout.bottomMargin: 20

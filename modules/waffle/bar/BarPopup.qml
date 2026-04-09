@@ -52,13 +52,6 @@ Loader {
         visible: true
         Component.onCompleted: {
             openAnim.start();
-            // For Niri: show the click-outside backdrop
-            if (CompositorService.isNiri && root.closeOnFocusLost) {
-                clickOutsideBackdrop.visible = true;
-            }
-        }
-        Component.onDestruction: {
-            clickOutsideBackdrop.visible = false;
         }
 
         anchor {
@@ -93,7 +86,6 @@ Loader {
         }
 
         function close() {
-            clickOutsideBackdrop.visible = false;
             if (root.noSmoothClosing) root.active = false;
             else closeAnim.start();
         }
@@ -210,7 +202,7 @@ Loader {
         // Uses WlrLayer.Top so it's below the popup (Overlay) but above normal windows
         PanelWindow {
             id: clickOutsideBackdrop
-            visible: false
+            visible: popupWindow.visible && CompositorService.isNiri && root.closeOnFocusLost
             color: "transparent"
             exclusiveZone: 0
             WlrLayershell.layer: WlrLayer.Top

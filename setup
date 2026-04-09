@@ -100,6 +100,7 @@ source ./sdata/lib/conflicts.sh
 source ./sdata/lib/versioning.sh
 source ./sdata/lib/migrations.sh
 source ./sdata/lib/robust-update.sh
+source ./sdata/lib/extras.sh
 source ./sdata/lib/doctor.sh
 source ./sdata/lib/snapshots.sh
 source ./sdata/lib/uninstall.sh
@@ -189,6 +190,56 @@ sync_launcher_from_repo() {
     fi
 }
 
+sync_user_inir_service_from_repo_if_present() {
+    local service_asset="${REPO_ROOT}/assets/systemd/inir.service"
+    local service_target_dir="${XDG_CONFIG_HOME}/systemd/user"
+    local service_target="${service_target_dir}/inir.service"
+    local launcher_target="${XDG_BIN_HOME}/inir"
+    local tmp_file
+    local changed=false
+
+    [[ -f "$service_asset" ]] || return 1
+    [[ -f "$service_target" ]] || return 1
+
+    mkdir -p "$service_target_dir"
+    mkdir -p "${XDG_CACHE_HOME:-$HOME/.cache}"
+    tmp_file="${XDG_CACHE_HOME:-$HOME/.cache}/inir.service.$$"
+
+    sed "s|^ExecStart=.*|ExecStart=${launcher_target//&/\\&} run --session|" "$service_asset" > "$tmp_file"
+
+    if ! cmp -s "$tmp_file" "$service_target"; then
+        changed=true
+        cp -f "$tmp_file" "$service_target"
+    fi
+
+    rm -f "$tmp_file"
+
+    if [[ "$changed" == true ]] && command -v systemctl >/dev/null 2>&1; then
+        systemctl --user daemon-reload >/dev/null 2>&1 || true
+    fi
+
+    if [[ "$changed" == true ]]; then
+        return 0
+    fi
+
+    return 1
+}
+
+ensure_user_inir_service_enabled() {
+    if ! command -v systemctl >/dev/null 2>&1; then
+        return 1
+    fi
+
+    local service_path="${XDG_CONFIG_HOME}/systemd/user/inir.service"
+    if [[ ! -f "$service_path" ]]; then
+        return 1
+    fi
+
+    systemctl --user daemon-reload >/dev/null 2>&1 || true
+    systemctl --user enable inir.service >/dev/null 2>&1 || true
+    return 0
+}
+
 ###############################################################################
 # Help
 ###############################################################################
@@ -215,24 +266,33 @@ show_help() {
     tui_list_item "rollback    Restore previous snapshot"
     tui_list_item "my-changes  View/restore your preserved modifications"
     tui_list_item "uninstall   Remove iNiR from system"
+    tui_list_item "config      View and edit shell settings"
+    tui_list_item "theme       Change wallpaper and color scheme"
+    tui_list_item "info        System and shell details dashboard"
+    tui_list_item "backup      Create a manual snapshot"
+    tui_list_item "logs        View recent runtime logs"
+    tui_list_item "extras      Install optional extras (iNiR-Walls / SDDM theme)"
     echo ""
 
     tui_subtitle "Options"
     tui_list_item "-y, --yes              Skip prompts (auto-yes)"
     tui_list_item "-q, --quiet            Minimal output"
+    tui_list_item "--local                Sync local repo to install (skip git pull)"
     tui_list_item "--set-default-shell    Set Fish as default shell (uses chsh)"
     tui_list_item "-h, --help             Show this help"
     echo ""
 
     tui_subtitle "Examples"
     tui_dim "  ./setup install      # Install iNiR once"
+    tui_dim "  ./setup theme        # Change wallpaper & colors"
+    tui_dim "  ./setup config       # View/edit shell settings"
+    tui_dim "  ./setup info         # Rich system dashboard"
+    tui_dim "  ./setup backup       # Create a manual snapshot"
+    tui_dim "  ./setup logs         # Browse runtime logs"
+    tui_dim "  ./setup extras       # Optional extras installer"
     tui_dim "  inir update          # Wrapper around ./setup update"
     tui_dim "  inir doctor          # Wrapper around ./setup doctor"
-    tui_dim "  inir status          # Wrapper around ./setup status"
     tui_dim "  inir run             # Start iNiR"
-    tui_dim "  inir settings        # Open settings"
-    tui_dim "  inir logs            # Check recent runtime logs"
-    tui_dim "  inir repair          # Fix + restart + log-check"
     tui_dim "  ./setup              # Advanced interactive menu"
     echo ""
 }
@@ -260,17 +320,23 @@ show_version_info() {
         repo_commit=$(get_repo_commit)
     fi
 
+    # Badge row for quick glance
+    echo ""
+    local badges_args=("Version" "$installed_ver" "accent")
+    badges_args+=("Mode" "$installed_mode" "info")
+    badges_args+=("Updates" "$update_strategy" "muted")
+    tui_badge_row "${badges_args[@]}"
+
     echo ""
     tui_status_line "Installed:" "$installed_ver ($installed_commit)" "ok"
-    tui_status_line "Mode:" "$installed_mode" ""
-    tui_status_line "Updates:" "$update_strategy" ""
     tui_status_line "Runtime:" "$runtime_dir_display" ""
 
     if [[ "$update_strategy" == "package-manager" ]]; then
         local update_hint
         update_hint=$(get_installed_package_update_hint)
         [[ -n "$update_hint" ]] && tui_status_line "Command:" "$update_hint" ""
-    else
+    elif [[ "$installed_mode" != "repo-link" ]]; then
+        # For repo-copy: show what the local repo has vs what's deployed
         tui_status_line "Available:" "$repo_ver ($repo_commit)" ""
     fi
 
@@ -280,10 +346,21 @@ show_version_info() {
         tui_status_line "Migrations:" "$pending pending" "warn"
     fi
 
+    # Shell running status
+    if [[ -n "$runtime_dir" && -f "$runtime_dir/shell.qml" ]]; then
+        local running_output
+        running_output="$(qs -p "$runtime_dir" list 2>/dev/null || true)"
+        if [[ -n "$running_output" && "$running_output" != No\ running\ instances* ]]; then
+            tui_status_line "Shell:" "running" "ok"
+        else
+            tui_status_line "Shell:" "stopped" "warn"
+        fi
+    fi
+
     # Check for updates
     if [[ "$update_strategy" != "package-manager" && "$installed_commit" != "$repo_commit" ]]; then
         echo ""
-        tui_warn "Update available"
+        tui_alert "info" "Update available" "Run './setup update' or 'inir update' to apply."
     fi
 }
 
@@ -306,29 +383,53 @@ tui_menu() {
 
     echo ""
 
-    # Menu options based on state
+    # Menu options based on state with rich descriptions
     local choice
     if $is_installed; then
-        choice=$(tui_choose "What would you like to do?" \
-            "Update" "Migrate" "Doctor" "Rollback" "My Changes" "Reinstall" "Uninstall" "Status" "Help" "Exit")
+        choice=$(tui_choose_rich "What would you like to do?" \
+            "${ICON_ARROW}|Update|Check for updates and apply them" \
+            "${ICON_CHECK}|Doctor|Diagnose and fix problems" \
+            "${ICON_DOT}|Config|View and edit shell settings" \
+            "${ICON_STAR}|Theme|Change wallpaper and color scheme" \
+            "${ICON_DOT}|Extras|Install optional extras (iNiR-Walls / SDDM)" \
+            "${ICON_INFO}|Info|System and shell details dashboard" \
+            "${ICON_DOT}|Logs|View recent runtime logs" \
+            "${ICON_DOT}|Migrate|Review and apply config migrations" \
+            "${ICON_DOT}|Backup|Create a manual snapshot" \
+            "${ICON_DOT}|Rollback|Restore a previous snapshot" \
+            "${ICON_DOT}|My Changes|View your preserved modifications" \
+            "${ICON_DOT}|Reinstall|Full reinstall from scratch" \
+            "${ICON_CROSS}|Uninstall|Remove iNiR from the system" \
+            "${ICON_CIRCLE}|Help|Show commands and usage" \
+            "${ICON_CIRCLE}|Exit|")
     else
-        choice=$(tui_choose "What would you like to do?" \
-            "Install" "Help" "Exit")
+        choice=$(tui_choose_rich "What would you like to do?" \
+            "${ICON_STAR}|Install|Full installation with dependencies" \
+            "${ICON_CIRCLE}|Help|Show commands and usage" \
+            "${ICON_CIRCLE}|Exit|")
     fi
 
     case "$choice" in
         Install) run_install ;;
         Reinstall) IS_UPDATE=true run_install ;;
         Update) run_update ;;
+        Theme) run_theme ;;
+        Extras) run_extras ;;
+        Config) run_config ;;
+        Info) show_info; read -rp "Press Enter to continue..." ;;
         Migrate) run_migrate ;;
         Doctor) run_doctor ;;
+        Backup) run_backup ;;
         Rollback) run_rollback ;;
         "My Changes") run_my_changes ;;
+        Logs) run_logs ;;
         Uninstall) run_uninstall ;;
-        Status) show_status; read -p "Press Enter to continue..." ;;
-        Help) show_help; read -p "Press Enter to continue..." ;;
-        *) exit 0 ;;
+        Help) show_help; read -rp "Press Enter to continue..." ;;
+        Exit|"") return 1 ;;
+        *) return 1 ;;
     esac
+
+    return 0
 }
 
 ###############################################################################
@@ -441,6 +542,535 @@ show_status() {
 }
 
 ###############################################################################
+# Info — Rich system & shell details dashboard (Ink StatusMessage-inspired)
+###############################################################################
+show_info() {
+    echo ""
+    tui_title "iNiR System Information"
+    echo ""
+
+    # System detection
+    local distro_name="Unknown"
+    local distro_id="unknown"
+    if [[ -f /etc/os-release ]]; then
+        source /etc/os-release
+        distro_name="${PRETTY_NAME:-$NAME}"
+        distro_id="${ID}"
+    fi
+
+    local current_shell
+    current_shell=$(basename "${SHELL:-unknown}")
+    local session_type="${XDG_SESSION_TYPE:-unknown}"
+
+    local compositor="Not detected"
+    if [[ -n "$NIRI_SOCKET" ]]; then
+        compositor="Niri"
+    elif [[ -n "$HYPRLAND_INSTANCE_SIGNATURE" ]]; then
+        compositor="Hyprland"
+    elif [[ -n "$SWAYSOCK" ]]; then
+        compositor="Sway"
+    elif [[ -n "$XDG_CURRENT_DESKTOP" ]]; then
+        compositor="$XDG_CURRENT_DESKTOP"
+    fi
+
+    local kernel
+    kernel=$(uname -r 2>/dev/null || echo "unknown")
+
+    # iNiR details
+    local installed_ver=$(get_installed_version)
+    local installed_commit=$(get_installed_commit)
+    local installed_mode=$(get_installed_install_mode)
+    local runtime_dir
+    runtime_dir="$(get_runtime_shell_dir)"
+    local config_dir
+    config_dir="$(resolve_inir_config_dir)"
+    local config_file="${config_dir}/config.json"
+    local state_dir="${XDG_STATE_HOME}/quickshell/user/generated"
+
+    # Panel family detection
+    local panel_family="unknown"
+    if [[ -f "$config_file" ]]; then
+        if command -v jq &>/dev/null; then
+            panel_family=$(jq -r '.panelFamily // "ii"' "$config_file" 2>/dev/null || echo "ii")
+        else
+            panel_family=$(sed -n 's/.*"panelFamily"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$config_file" 2>/dev/null | head -1)
+            [[ -z "$panel_family" ]] && panel_family="ii"
+        fi
+    fi
+
+    # Current wallpaper
+    local current_wallpaper="none"
+    local theme_meta="${state_dir}/theme-meta.json"
+    if [[ -f "$theme_meta" ]]; then
+        if command -v jq &>/dev/null; then
+            current_wallpaper=$(jq -r '.wallpaper // .source_path // "none"' "$theme_meta" 2>/dev/null || echo "none")
+        else
+            current_wallpaper=$(sed -n 's/.*"wallpaper"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$theme_meta" 2>/dev/null | head -1)
+            [[ -n "$current_wallpaper" ]] || current_wallpaper=$(sed -n 's/.*"source_path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$theme_meta" 2>/dev/null | head -1)
+        fi
+        [[ -n "$current_wallpaper" && "$current_wallpaper" != "null" ]] && current_wallpaper="$(basename "$current_wallpaper")"
+    fi
+
+    # Display using summary cards and columns
+    local sys_info
+    sys_info=$(printf '%s\n%s\n%s\n%s\n%s' \
+        "Distro:      $distro_name" \
+        "Kernel:      $kernel" \
+        "Session:     $session_type" \
+        "Compositor:  $compositor" \
+        "Shell:       $current_shell")
+
+    local shell_info
+    shell_info=$(printf '%s\n%s\n%s\n%s\n%s\n%s' \
+        "Version:     $installed_ver ($installed_commit)" \
+        "Mode:        $installed_mode" \
+        "Family:      $panel_family" \
+        "Wallpaper:   $current_wallpaper" \
+        "Config:      $config_dir" \
+        "Runtime:     ${runtime_dir:-"(missing)"}")
+
+    tui_columns "$sys_info" "$shell_info" 2
+
+    echo ""
+
+    # Paths
+    tui_subtitle "Paths"
+    tui_key_value "Config:" "$config_file"
+    tui_key_value "State:" "$state_dir"
+    tui_key_value "Runtime:" "${runtime_dir:-"(not set)"}"
+    tui_key_value "Repo:" "$REPO_ROOT"
+    tui_key_value "Launcher:" "$(command -v inir 2>/dev/null || echo "${XDG_BIN_HOME}/inir")"
+
+    echo ""
+
+    # Quick health
+    tui_subtitle "Quick Health"
+    if [[ -n "$runtime_dir" && -f "$runtime_dir/shell.qml" ]]; then
+        local running_output
+        running_output="$(qs -p "$runtime_dir" list 2>/dev/null || true)"
+        if [[ -n "$running_output" && "$running_output" != No\ running\ instances* ]]; then
+            tui_check_ok "Shell is running"
+        else
+            tui_check_warn "Shell is not running"
+        fi
+    else
+        tui_check_warn "Runtime payload missing"
+    fi
+
+    local pending=$(count_pending_migrations 2>/dev/null || echo "0")
+    if [[ "$pending" -gt 0 ]]; then
+        tui_check_warn "$pending pending migration(s)"
+    else
+        tui_check_ok "No pending migrations"
+    fi
+
+    local snapshot_count=$(list_snapshots 2>/dev/null | wc -l)
+    tui_check_ok "$snapshot_count snapshot(s) available"
+
+    echo ""
+}
+
+###############################################################################
+# Config — View and edit shell settings (Ink Select-inspired interactive)
+###############################################################################
+run_config() {
+    echo ""
+    tui_title "iNiR Configuration"
+    echo ""
+
+    local config_dir
+    config_dir="$(resolve_inir_config_dir)"
+    local config_file="${config_dir}/config.json"
+
+    if [[ ! -f "$config_file" ]]; then
+        tui_warn "Config file not found: $config_file"
+        tui_info "Run './setup install' first."
+        echo ""
+        read -rp "Press Enter to continue..."
+        return 0
+    fi
+
+    # Show current key settings
+    local panel_family="ii"
+    local bar_position="top"
+    local clock_format="12h"
+    local search_engine="google"
+    local animations="true"
+    local blur="true"
+
+    if command -v jq &>/dev/null; then
+        panel_family=$(jq -r '.panelFamily // "ii"' "$config_file" 2>/dev/null)
+        bar_position=$(jq -r '.bar?.position // "top"' "$config_file" 2>/dev/null)
+        clock_format=$(jq -r '.time?.format // "12h"' "$config_file" 2>/dev/null)
+        search_engine=$(jq -r '.search?.engine // "google"' "$config_file" 2>/dev/null)
+        animations=$(jq -r '.animations?.enabled // true' "$config_file" 2>/dev/null)
+        blur=$(jq -r '.appearance?.blur // true' "$config_file" 2>/dev/null)
+    fi
+
+    tui_summary_card "Current Settings" \
+        "Panel Family:$panel_family" \
+        "Bar Position:$bar_position" \
+        "Clock Format:$clock_format" \
+        "Search Engine:$search_engine" \
+        "Animations:$animations" \
+        "Blur:$blur"
+
+    echo ""
+
+    local action
+    action=$(tui_choose_rich "Configuration" \
+        "${ICON_ARROW}|Edit in Editor|Open config.json in your editor" \
+        "${ICON_DOT}|Panel Family|Switch between ii and waffle" \
+        "${ICON_DOT}|Open Config Dir|Open the config directory" \
+        "${ICON_DOT}|Reset to Defaults|Restore default configuration" \
+        "${ICON_CIRCLE}|Back|Return to main menu")
+
+    case "$action" in
+        "Edit in Editor")
+            local editor="${EDITOR:-${VISUAL:-nano}}"
+            tui_info "Opening $config_file with $editor..."
+            "$editor" "$config_file"
+            tui_success "Config saved"
+            tui_info "Run 'inir restart' to apply changes"
+            ;;
+        "Panel Family")
+            echo ""
+            local new_family
+            new_family=$(tui_choose "Select panel family:" "ii" "waffle")
+            if [[ -n "$new_family" && "$new_family" != "$panel_family" ]]; then
+                if command -v jq &>/dev/null; then
+                    local tmp_file
+                    tmp_file=$(mktemp)
+                    jq --arg f "$new_family" '.panelFamily = $f' "$config_file" > "$tmp_file" && mv "$tmp_file" "$config_file"
+                    tui_success "Panel family set to: $new_family"
+                    tui_info "Run 'inir restart' to apply"
+                else
+                    tui_warn "jq required to edit config programmatically"
+                    tui_info "Edit $config_file manually"
+                fi
+            else
+                tui_info "No change"
+            fi
+            ;;
+        "Open Config Dir")
+            if command -v xdg-open &>/dev/null; then
+                xdg-open "$config_dir" &>/dev/null &
+                tui_success "Opened in file manager"
+            else
+                tui_info "Path: $config_dir"
+            fi
+            ;;
+        "Reset to Defaults")
+            tui_warn "This will replace your config with defaults."
+            if tui_confirm "Are you sure?" "no"; then
+                if [[ -f "${REPO_ROOT}/defaults/config.json" ]]; then
+                    cp "$config_file" "${config_file}.backup.$(date +%Y%m%d%H%M%S)"
+                    cp "${REPO_ROOT}/defaults/config.json" "$config_file"
+                    tui_success "Config reset to defaults (backup created)"
+                    tui_info "Run 'inir restart' to apply"
+                else
+                    tui_error "Default config not found"
+                fi
+            fi
+            ;;
+        *)
+            return 0
+            ;;
+    esac
+
+    echo ""
+    read -rp "Press Enter to continue..."
+}
+
+###############################################################################
+# Theme — Quick wallpaper and color scheme operations
+###############################################################################
+run_theme() {
+    echo ""
+    tui_title "Theme & Wallpaper"
+    echo ""
+
+    local state_dir="${XDG_STATE_HOME}/quickshell/user/generated"
+    local theme_meta="${state_dir}/theme-meta.json"
+    local colors_file="${state_dir}/colors.json"
+    local wallpaper_state_path="${state_dir}/wallpaper/path.txt"
+
+    resolve_switchwall_script() {
+        local candidate="${REPO_ROOT}/scripts/colors/switchwall.sh"
+        if [[ -x "$candidate" ]]; then
+            printf '%s' "$candidate"
+            return 0
+        fi
+
+        if command -v inir &>/dev/null; then
+            local runtime_dir
+            runtime_dir="$(inir path 2>/dev/null || true)"
+            candidate="${runtime_dir}/scripts/colors/switchwall.sh"
+            if [[ -x "$candidate" ]]; then
+                printf '%s' "$candidate"
+                return 0
+            fi
+        fi
+
+        return 1
+    }
+
+    # Show current theme info
+    local current_wallpaper="none"
+    local current_scheme="unknown"
+    if [[ -f "$theme_meta" ]]; then
+        if command -v jq &>/dev/null; then
+            current_wallpaper=$(jq -r '.wallpaper // .source_path // "none"' "$theme_meta" 2>/dev/null)
+            current_scheme=$(jq -r '.scheme // .variant // "unknown"' "$theme_meta" 2>/dev/null)
+        else
+            current_wallpaper=$(sed -n 's/.*"wallpaper"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$theme_meta" 2>/dev/null | head -1)
+            [[ -n "$current_wallpaper" ]] || current_wallpaper=$(sed -n 's/.*"source_path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$theme_meta" 2>/dev/null | head -1)
+            current_scheme=$(sed -n 's/.*"scheme"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$theme_meta" 2>/dev/null | head -1)
+            [[ -n "$current_scheme" ]] || current_scheme="unknown"
+        fi
+    fi
+
+    local display_wallpaper="$current_wallpaper"
+    [[ "$current_wallpaper" != "none" && -n "$current_wallpaper" && "$current_wallpaper" != "null" ]] && display_wallpaper="$(basename "$current_wallpaper")"
+
+    tui_summary_card "Current Theme" \
+        "Wallpaper:${display_wallpaper}" \
+        "Scheme:${current_scheme}"
+
+    echo ""
+
+    local action
+    action=$(tui_choose_rich "Theme Options" \
+        "${ICON_STAR}|Browse Defaults|Pick from default wallpapers" \
+        "${ICON_DOT}|Regenerate|Rebuild colors from current wallpaper" \
+        "${ICON_CIRCLE}|Back|Return to main menu")
+
+    case "$action" in
+        "Regenerate")
+            echo ""
+            tui_info "Regenerating theme from current wallpaper..."
+            local switchwall
+            switchwall="$(resolve_switchwall_script || true)"
+            local regen_wallpaper="$current_wallpaper"
+            if [[ ( -z "$regen_wallpaper" || "$regen_wallpaper" == "none" || ! -f "$regen_wallpaper" ) && -f "$wallpaper_state_path" ]]; then
+                regen_wallpaper="$(<"$wallpaper_state_path")"
+            fi
+
+            if [[ -n "$switchwall" && -n "$regen_wallpaper" && -f "$regen_wallpaper" ]]; then
+                bash "$switchwall" "$regen_wallpaper" 2>/dev/null &
+                disown
+                tui_success "Color regeneration started"
+            else
+                tui_warn "Cannot regenerate — wallpaper path unknown or switchwall.sh missing"
+            fi
+            ;;
+        "Browse Defaults")
+            echo ""
+            local defaults_dir="${REPO_ROOT}/defaults/wallpapers"
+            if [[ ! -d "$defaults_dir" ]]; then
+                # Try alternate paths
+                for try_dir in \
+                    "${REPO_ROOT}/assets/wallpapers" \
+                    "${REPO_ROOT}/defaults/backgrounds" \
+                    "${DOTS_CORE_CONFDIR}/wallpapers"; do
+                    [[ -d "$try_dir" ]] && defaults_dir="$try_dir" && break
+                done
+            fi
+
+            if [[ -d "$defaults_dir" ]]; then
+                local wallpapers=()
+                while IFS= read -r f; do
+                    wallpapers+=("$(basename "$f")")
+                done < <(find "$defaults_dir" -maxdepth 1 -type f \( -name "*.jpg" -o -name "*.jpeg" -o -name "*.png" -o -name "*.webp" \) | sort)
+
+                if [[ ${#wallpapers[@]} -eq 0 ]]; then
+                    tui_info "No wallpapers found in $defaults_dir"
+                else
+                    local chosen_wall
+                    chosen_wall=$(printf '%s\n' "${wallpapers[@]}" | tui_filter "Search wallpapers...")
+                    if [[ -n "$chosen_wall" ]]; then
+                        local full_path="${defaults_dir}/${chosen_wall}"
+                        tui_info "Applying: $chosen_wall"
+                        local switchwall
+                        switchwall="$(resolve_switchwall_script || true)"
+                        if [[ -n "$switchwall" ]]; then
+                            bash "$switchwall" "$full_path" 2>/dev/null &
+                            disown
+                            tui_success "Wallpaper pipeline started"
+                        else
+                            tui_error "switchwall.sh not found or not executable"
+                        fi
+                    fi
+                fi
+            else
+                tui_info "No default wallpapers directory found"
+            fi
+            ;;
+        *)
+            return 0
+            ;;
+    esac
+
+    echo ""
+    read -rp "Press Enter to continue..."
+}
+
+###############################################################################
+# Extras — Optional post-install components
+###############################################################################
+run_extras() {
+    echo ""
+    tui_title "Optional Extras"
+    echo ""
+
+    local action
+    action=$(tui_choose_rich "Extras" \
+        "${ICON_DOT}|Install iNiR-Walls|Download optional wallpaper pack and copy image files" \
+        "${ICON_DOT}|Install ii-pixel-sddm|Install/apply iNiR SDDM login theme" \
+        "${ICON_DOT}|Install both|Run both optional installers" \
+        "${ICON_CIRCLE}|Back|Return to main menu")
+
+    case "$action" in
+        "Install iNiR-Walls")
+            echo ""
+            extras_install_inir_walls
+            ;;
+        "Install ii-pixel-sddm")
+            echo ""
+            extras_install_sddm_theme "ask"
+            ;;
+        "Install both")
+            echo ""
+            extras_install_inir_walls
+            echo ""
+            extras_install_sddm_theme "ask"
+            ;;
+        *)
+            return 0
+            ;;
+    esac
+
+    echo ""
+    read -rp "Press Enter to continue..."
+}
+
+###############################################################################
+# Backup — Create a manual snapshot
+###############################################################################
+run_backup() {
+    echo ""
+    tui_title "Manual Backup"
+    echo ""
+
+    # Show existing snapshots
+    local snapshot_count=$(list_snapshots 2>/dev/null | wc -l)
+    tui_info "$snapshot_count existing snapshot(s)"
+    echo ""
+
+    if tui_confirm "Create a new snapshot of the current state?"; then
+        echo ""
+        tui_info "Creating snapshot..."
+
+        local current_ver=$(get_installed_version)
+        local current_commit=$(get_installed_commit)
+        local snapshot_id
+        snapshot_id=$(create_snapshot "manual" "Manual backup via setup TUI" "$current_commit")
+
+        if [[ -n "$snapshot_id" ]]; then
+            tui_alert "success" "Snapshot created" "ID: $snapshot_id\nVersion: $current_ver ($current_commit)\nRestore with: ./setup rollback"
+        else
+            tui_error "Failed to create snapshot"
+        fi
+    else
+        tui_info "Cancelled"
+    fi
+
+    echo ""
+    read -rp "Press Enter to continue..."
+}
+
+###############################################################################
+# Logs — View recent runtime logs via pager
+###############################################################################
+run_logs() {
+    echo ""
+    tui_title "Runtime Logs"
+    echo ""
+
+    local log_sources=()
+    local log_labels=()
+
+    # Quickshell logs
+    local qs_log="${XDG_STATE_HOME}/quickshell/log"
+    local qs_log_alt="${XDG_CACHE_HOME}/quickshell/log"
+    local journal_available=false
+    command -v journalctl &>/dev/null && journal_available=true
+
+    [[ -f "$qs_log" ]] && log_sources+=("$qs_log") && log_labels+=("Quickshell log (state)")
+    [[ -f "$qs_log_alt" ]] && log_sources+=("$qs_log_alt") && log_labels+=("Quickshell log (cache)")
+
+    if $journal_available; then
+        log_sources+=("__journal_qs__")
+        log_labels+=("Journal: quickshell (last 200 lines)")
+        log_sources+=("__journal_niri__")
+        log_labels+=("Journal: niri (last 100 lines)")
+    fi
+
+    if [[ ${#log_sources[@]} -eq 0 ]]; then
+        tui_warn "No log sources found"
+        tui_info "Start iNiR first: inir run"
+        echo ""
+        read -rp "Press Enter to continue..."
+        return 0
+    fi
+
+    log_labels+=("Back")
+    local choice
+    choice=$(tui_choose "Select log source:" "${log_labels[@]}")
+
+    [[ "$choice" == "Back" ]] && return 0
+
+    # Find matching source
+    local source_idx=0
+    for i in "${!log_labels[@]}"; do
+        if [[ "${log_labels[$i]}" == "$choice" ]]; then
+            source_idx=$i
+            break
+        fi
+    done
+
+    local source="${log_sources[$source_idx]}"
+
+    echo ""
+    case "$source" in
+        __journal_qs__)
+            tui_info "Showing last 200 lines from journalctl..."
+            if $HAS_GUM; then
+                journalctl --user -u quickshell --no-pager -n 200 2>/dev/null | gum pager
+            else
+                journalctl --user -u quickshell --no-pager -n 200 2>/dev/null | less
+            fi
+            ;;
+        __journal_niri__)
+            tui_info "Showing last 100 lines from niri journal..."
+            if $HAS_GUM; then
+                journalctl --user -u niri --no-pager -n 100 2>/dev/null | gum pager
+            else
+                journalctl --user -u niri --no-pager -n 100 2>/dev/null | less
+            fi
+            ;;
+        *)
+            tui_info "Viewing: $source"
+            if $HAS_GUM; then
+                gum pager < "$source"
+            else
+                less "$source"
+            fi
+            ;;
+    esac
+}
+
+###############################################################################
 # Install
 ###############################################################################
 run_install() {
@@ -452,22 +1082,78 @@ run_install() {
     # Check conflicts
     check_conflicts
 
+    # Show tasuku-style task overview before starting
+    echo ""
+    tui_subtitle "Installation progress"
+    echo ""
+    tui_task_init \
+        "Install dependencies" \
+        "System configuration" \
+        "Install config files" \
+        "Version tracking"
+
     # 1. Dependencies
     if [[ "${SKIP_ALLDEPS}" != "true" ]]; then
+        tui_task_run 0 "packages, runtime, compositor"
+        tui_task_finalize
         tui_step 1 3 "Installing dependencies" "Package managers, shell runtime pieces, and compositor requirements."
         source ./sdata/subcmd-install/1.deps-router.sh
+        # Reinit after step output to show updated state
+        echo ""
+        tui_task_init \
+            "Install dependencies" \
+            "System configuration" \
+            "Install config files" \
+            "Version tracking"
+        _TUI_TASK_STATES[0]="done"
+        _TUI_TASK_DETAILS[0]="complete"
+        tui_task_render
+    else
+        tui_task_skip 0 "skipped"
     fi
 
     # 2. System setup (groups, services)
     if [[ "${SKIP_ALLSETUPS}" != "true" ]]; then
+        tui_task_run 1 "groups, services, permissions"
+        tui_task_finalize
         tui_step 2 3 "System configuration" "Groups, services, permissions, and machine-level integration."
         source ./sdata/subcmd-install/2.setups.sh
+        echo ""
+        tui_task_init \
+            "Install dependencies" \
+            "System configuration" \
+            "Install config files" \
+            "Version tracking"
+        _TUI_TASK_STATES[0]="done"
+        _TUI_TASK_DETAILS[0]="complete"
+        _TUI_TASK_STATES[1]="done"
+        _TUI_TASK_DETAILS[1]="complete"
+        tui_task_render
+    else
+        tui_task_skip 1 "skipped"
     fi
 
     # 3. Config files
     if [[ "${SKIP_ALLFILES}" != "true" ]]; then
+        tui_task_run 2 "configs, backups, theming"
+        tui_task_finalize
         tui_step 3 3 "Installing config files" "User configs, backups, wallpaper defaults, and generated theme inputs."
         source ./sdata/subcmd-install/3.files.sh
+        echo ""
+        tui_task_init \
+            "Install dependencies" \
+            "System configuration" \
+            "Install config files" \
+            "Version tracking"
+        _TUI_TASK_STATES[0]="done"
+        _TUI_TASK_DETAILS[0]="complete"
+        _TUI_TASK_STATES[1]="done"
+        _TUI_TASK_DETAILS[1]="complete"
+        _TUI_TASK_STATES[2]="done"
+        _TUI_TASK_DETAILS[2]="complete"
+        tui_task_render
+    else
+        tui_task_skip 2 "skipped"
     fi
 
     # DISABLED: webapps — requires quickshell-webengine rebuild, re-enable when ready
@@ -526,7 +1212,13 @@ run_install() {
     # fi
 
     # Set version tracking
+    tui_task_run 3 "recording version"
     set_installed_version "$(get_repo_version)" "$(get_repo_commit)" "setup"
+    tui_task_done 3 "$(get_repo_version)"
+    tui_task_finalize
+
+    echo ""
+    tui_alert "success" "Installation complete" "Version $(get_repo_version) is ready.\nRun 'inir run' to start the shell, or log out and back in."
 }
 
 ###############################################################################
@@ -794,6 +1486,12 @@ run_update() {
             fi
         fi
 
+        ensure_user_inir_service_enabled >/dev/null 2>&1 || true
+        if [[ -n "${NIRI_SOCKET:-}" || -n "${WAYLAND_DISPLAY:-}" ]]; then
+            systemctl --user reset-failed inir.service >/dev/null 2>&1 || true
+            systemctl --user start inir.service >/dev/null 2>&1 || true
+        fi
+
         echo ""
         tui_success "Package-managed installation left unchanged"
         return 0
@@ -802,9 +1500,17 @@ run_update() {
     # After a git pull, the setup script re-execs itself so that updated library
     # code (doctor, migrations, etc.) is loaded fresh. _II_POST_PULL signals that
     # we already pulled and should skip straight to the sync phase.
+    # Values: "1" = re-exec after pull, "local" = --local flag (skip pull entirely)
     if [[ "${_II_POST_PULL:-}" == "1" ]]; then
         unset _II_POST_PULL
         tui_success "Libraries reloaded after pull"
+    elif [[ "${_II_POST_PULL:-}" == "local" ]]; then
+        unset _II_POST_PULL
+        tui_info "Syncing from local repo (git pull skipped)"
+        # Still create a snapshot before sync
+        local repo_commit=$(get_repo_commit)
+        local snapshot_id=$(create_snapshot "update" "Before local sync to ${repo_commit}" "$repo_commit")
+        tui_success "Snapshot: $snapshot_id"
     else
         local update_rc=0
         check_remote_updates || update_rc=$?
@@ -1015,6 +1721,8 @@ run_update() {
         fi
     fi
 
+    local _service_refresh_status=1
+
     if [[ -f "${REPO_ROOT}/assets/icons/desktop-symbolic.svg" ]]; then
         local icon_target_dir="${XDG_DATA_HOME}/icons/hicolor/scalable/apps"
         mkdir -p "$icon_target_dir"
@@ -1033,7 +1741,10 @@ run_update() {
     # Update version
     set_installed_version "$repo_ver" "$repo_commit" "update"
 
-    if [[ -d "$II_TARGET" ]]; then
+    # Write runtime version.json only for repo-copy (separate target dir).
+    # For repo-link (src==tgt) this would pollute the repo root — skip it;
+    # the canonical tracking is already in the config dir via set_installed_version.
+    if [[ -d "$II_TARGET" && "$src_real" != "$tgt_real" ]]; then
         write_version_info_json "${II_TARGET}/version.json" "$repo_ver" "$repo_commit" "setup-update"
     fi
 
@@ -1098,22 +1809,29 @@ run_update() {
         fi
     fi
 
+    _service_refresh_status=1
+    if sync_user_inir_service_from_repo_if_present; then
+        _service_refresh_status=0
+    else
+        _service_refresh_status=$?
+    fi
+    if [[ $_service_refresh_status -eq 0 ]]; then
+        tui_success "Updated existing user inir.service"
+    fi
+
+    ensure_user_inir_service_enabled >/dev/null 2>&1 || true
+
+    if [[ -n "${NIRI_SOCKET:-}" || -n "${WAYLAND_DISPLAY:-}" ]]; then
+        systemctl --user reset-failed inir.service >/dev/null 2>&1 || true
+        systemctl --user start inir.service >/dev/null 2>&1 || true
+    fi
+
     local niri_config="${XDG_CONFIG_HOME}/niri/config.kdl"
     local niri_startup_cfg="${XDG_CONFIG_HOME}/niri/config.d/50-startup.kdl"
     local niri_binds_cfg="${XDG_CONFIG_HOME}/niri/config.d/70-binds.kdl"
     if [[ -f "$niri_config" && -x "${XDG_BIN_HOME}/inir" ]]; then
         local launcher_target_escaped="${XDG_BIN_HOME}/inir"
         launcher_target_escaped="${launcher_target_escaped//&/\\&}"
-        if [[ -f "$niri_startup_cfg" ]]; then
-            sed -i \
-                -e 's|spawn-at-startup "inir" "start"|spawn-at-startup "'"${launcher_target_escaped}"'" "start"|' \
-                "$niri_startup_cfg"
-        else
-            sed -i \
-                -e 's|spawn-at-startup "inir" "start"|spawn-at-startup "'"${launcher_target_escaped}"'" "start"|' \
-                "$niri_config"
-        fi
-
         if [[ -f "$niri_binds_cfg" ]]; then
             sed -i \
                 -e 's|spawn "bash" "-lc" "exec \"\$(inir path)/scripts/launch-terminal.sh\""|spawn "'"${launcher_target_escaped}"'" "terminal"|' \
@@ -1156,7 +1874,10 @@ run_update() {
     echo ""
     if [[ -n "$NIRI_SOCKET" ]] || [[ -n "$WAYLAND_DISPLAY" ]]; then
         tui_info "Restarting shell..."
-        if [[ -x "${II_TARGET}/scripts/inir" ]]; then
+        if command -v systemctl >/dev/null 2>&1 && systemctl --user cat inir.service >/dev/null 2>&1; then
+            nohup systemctl --user restart inir.service >/dev/null 2>&1 &
+            disown
+        elif [[ -x "${II_TARGET}/scripts/inir" ]]; then
             nohup bash "${II_TARGET}/scripts/inir" restart -c "${II_TARGET}" >/dev/null 2>&1 &
             disown
         else
@@ -1287,7 +2008,7 @@ run_update() {
     fi
 
     echo ""
-    tui_subtitle "Tip: Run './setup rollback' if something breaks"
+    tui_alert "success" "Update complete" "Version $repo_ver ($repo_commit) synced.\nRun './setup rollback' if something breaks."
 }
 
 ###############################################################################
@@ -1307,13 +2028,14 @@ COMMAND=""
 SUBCMD_ARGS=()
 while [[ $# -gt 0 ]]; do
     case $1 in
-        install|update|migrate|doctor|rollback|my-changes|uninstall|status)
+        install|update|migrate|doctor|rollback|my-changes|uninstall|status|config|theme|info|backup|logs|extras)
             COMMAND="$1"; shift
             SUBCMD_ARGS=("$@")
             break
             ;;
         -y|--yes) ask=false; shift ;;
         -q|--quiet) quiet=true; shift ;;
+        --local) export _II_POST_PULL=local; shift ;;
         --set-default-shell) export INIR_SET_DEFAULT_SHELL=true; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "Unknown: $1"; show_help; exit 1 ;;
@@ -1334,12 +2056,25 @@ fi
 ###############################################################################
 case "$COMMAND" in
     install) run_install ;;
-    update) run_update ;;
+    update)
+        for _arg in "${SUBCMD_ARGS[@]}"; do
+            case "$_arg" in
+                --local) export _II_POST_PULL=local ;;
+            esac
+        done
+        run_update
+        ;;
     migrate) run_migrate ;;
     doctor) run_doctor ;;
     rollback) run_rollback ;;
     my-changes) run_my_changes ;;
     uninstall) run_uninstall ;;
     status) show_status ;;
-    "") tui_menu ;;
+    config) run_config ;;
+    theme) run_theme ;;
+    info) show_info ;;
+    backup) run_backup ;;
+    logs) run_logs ;;
+    extras) run_extras ;;
+    "") while tui_menu; do :; done ;;
 esac

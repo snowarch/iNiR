@@ -54,6 +54,7 @@ Item {
     property bool wallhavenEnabled: Config.options?.sidebar?.wallhaven?.enable !== false
     property bool widgetsEnabled: Config.options?.sidebar?.widgets?.enable ?? true
     property bool toolsEnabled: Config.options?.sidebar?.tools?.enable ?? false
+    property bool softwareEnabled: Config.options?.sidebar?.software?.enable ?? false
     property bool ytMusicEnabled: Config.options?.sidebar?.ytmusic?.enable ?? false
     // DISABLED: webapps — requires quickshell-webengine rebuild
     property bool pluginsEnabled: false // Config.options?.sidebar?.plugins?.enable ?? false
@@ -97,6 +98,7 @@ Item {
         if (root.wallhavenEnabled) result.push({ icon: "collections", name: Translation.tr("Wallhaven") })
         if (root.ytMusicEnabled) result.push({ icon: "library_music", name: Translation.tr("YT Music") })
         if (root.toolsEnabled) result.push({ icon: "build", name: Translation.tr("Tools") })
+        if (root.softwareEnabled) result.push({ icon: "store", name: Translation.tr("Software") })
         // DISABLED: webapps — requires quickshell-webengine rebuild
         // if (root.pluginsEnabled) result.push({ icon: "extension", name: Translation.tr("Web Apps") })
         return result
@@ -307,6 +309,7 @@ Item {
                                     case "collections": return wallhavenComp
                                     case "library_music": return ytMusicComp
                                     case "build": return toolsComp
+                                    case "store": return softwareComp
                                     // DISABLED: webapps
                                     // case "extension": return pluginsComp
                                     default: return null
@@ -338,6 +341,7 @@ Item {
         Component { id: wallhavenComp; WallhavenView {} }
         Component { id: ytMusicComp; YtMusicView {} }
         Component { id: toolsComp; ToolsView {} }
+        Component { id: softwareComp; SoftwareView {} }
         // DISABLED: webapps — requires quickshell-webengine rebuild
         // Component {
         //     id: pluginsComp

@@ -5,5 +5,5 @@
   "category": "music",
   "inputs": ["palette.json"],
   "description": "Apply the current generated palette to Spicetify themes.",
-  "configKey": "appearance.wallpaperTheming.enableAppsAndShell"
+  "configKey": "appearance.wallpaperTheming.enableSpicetify"
 }

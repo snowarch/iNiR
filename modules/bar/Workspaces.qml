@@ -416,7 +416,14 @@ Item {
                             pixelSize: Appearance.font.pixelSize.small - ((text.length - 1) * (text !== "10") * 2)
                             family: wsConfig.useNerdFont ? Appearance.font.family.iconNerd : defaultFont
                         }
-                        text: wsConfig.numberMap?.[button.workspaceValue - 1] || button.workspaceValue
+                        text: {
+                            if (CompositorService.isNiri && workspaceButtonBackground.niriWorkspace) {
+                                const niriWs = workspaceButtonBackground.niriWorkspace;
+                                const mapped = wsConfig.numberMap?.[niriWs.idx - 1];
+                                return niriWs.name || mapped || niriWs.idx.toString();
+                            }
+                            return wsConfig.numberMap?.[button.workspaceValue - 1] || button.workspaceValue
+                        }
                         elide: Text.ElideRight
                         color: (currentWorkspaceNumber == button.workspaceValue) ? 
                             Appearance.m3colors.m3onPrimary : 

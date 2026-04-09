@@ -181,6 +181,9 @@ regenerate_user_css_bridge() {
   local play_button="${COLORS[primary]}"
   local play_button_active="${COLORS[secondary_container]}"
   local button_secondary="${COLORS[on_surface_variant]}"
+  local spice_hover="rgba($(hex_to_rgb "${COLORS[primary]}"), 0.10)"
+  local spice_active="rgba($(hex_to_rgb "${COLORS[primary]}"), 0.18)"
+  local spice_border="${COLORS[outline_variant]}"
 
   # ── Build the bridge block ────────────────────────────────────────────────
   local bridge_block
@@ -197,6 +200,9 @@ regenerate_user_css_bridge() {
   --spice-play-button:         #$(strip_hash "$play_button");
   --spice-play-button-active:  #$(strip_hash "$play_button_active");
   --spice-button-secondary:    #$(strip_hash "$button_secondary");
+  --spice-hover:               ${spice_hover};
+  --spice-active:              ${spice_active};
+  --spice-border:              #$(strip_hash "$spice_border");
 
   /* RGB variants used for rgba() calls */
   --spice-rgb-main:            $(hex_to_rgb "${COLORS[surface]}");

@@ -1,0 +1,668 @@
+[
+  {
+    "id": "firefox",
+    "name": "Firefox",
+    "description": "Privacy-focused web browser from Mozilla",
+    "icon": "language",
+    "desktopIcon": "firefox",
+    "category": "browsers",
+    "tags": ["browser", "mozilla", "web", "privacy"],
+    "targets": {
+      "pacman": "firefox",
+      "apt": "firefox",
+      "dnf": "firefox",
+      "flatpak": "org.mozilla.firefox"
+    }
+  },
+  {
+    "id": "chromium",
+    "name": "Chromium",
+    "description": "Open-source browser engine behind Chrome",
+    "icon": "language",
+    "desktopIcon": "chromium",
+    "category": "browsers",
+    "tags": ["browser", "chrome", "web", "google"],
+    "targets": {
+      "pacman": "chromium",
+      "apt": "chromium-browser",
+      "dnf": "chromium",
+      "flatpak": "org.chromium.Chromium"
+    }
+  },
+  {
+    "id": "brave",
+    "name": "Brave",
+    "description": "Privacy browser with built-in ad blocking",
+    "icon": "shield",
+    "desktopIcon": "brave-browser",
+    "category": "browsers",
+    "tags": ["browser", "privacy", "web", "adblock"],
+    "targets": {
+      "aur": "brave-bin",
+      "flatpak": "com.brave.Browser"
+    }
+  },
+  {
+    "id": "zen-browser",
+    "name": "Zen Browser",
+    "description": "Firefox-based browser focused on minimalism",
+    "icon": "spa",
+    "desktopIcon": "zen-browser",
+    "category": "browsers",
+    "tags": ["browser", "firefox", "minimal", "zen"],
+    "targets": {
+      "aur": "zen-browser-bin",
+      "flatpak": "app.zen_browser.zen"
+    }
+  },
+  {
+    "id": "kitty",
+    "name": "Kitty",
+    "description": "GPU-accelerated terminal emulator",
+    "icon": "terminal",
+    "desktopIcon": "kitty",
+    "category": "terminals",
+    "tags": ["terminal", "gpu", "fast"],
+    "targets": {
+      "pacman": "kitty",
+      "apt": "kitty",
+      "dnf": "kitty"
+    }
+  },
+  {
+    "id": "foot",
+    "name": "Foot",
+    "description": "Lightweight Wayland-native terminal",
+    "icon": "terminal",
+    "desktopIcon": "foot",
+    "category": "terminals",
+    "tags": ["terminal", "wayland", "lightweight", "fast"],
+    "targets": {
+      "pacman": "foot",
+      "apt": "foot",
+      "dnf": "foot"
+    }
+  },
+  {
+    "id": "wezterm",
+    "name": "WezTerm",
+    "description": "Terminal with multiplexing and Lua config",
+    "icon": "terminal",
+    "desktopIcon": "org.wezfurlong.wezterm",
+    "category": "terminals",
+    "tags": ["terminal", "multiplexer", "lua", "gpu"],
+    "targets": {
+      "pacman": "wezterm",
+      "flatpak": "org.wezfurlong.wezterm"
+    }
+  },
+  {
+    "id": "alacritty",
+    "name": "Alacritty",
+    "description": "Simple GPU-accelerated terminal",
+    "icon": "terminal",
+    "desktopIcon": "Alacritty",
+    "category": "terminals",
+    "tags": ["terminal", "gpu", "minimal", "rust"],
+    "targets": {
+      "pacman": "alacritty",
+      "apt": "alacritty",
+      "dnf": "alacritty",
+      "flatpak": "org.alacritty.Alacritty"
+    }
+  },
+  {
+    "id": "vscode",
+    "name": "VS Code",
+    "description": "Microsoft's code editor with extensions",
+    "icon": "code",
+    "desktopIcon": "visual-studio-code",
+    "category": "editors",
+    "tags": ["editor", "code", "ide", "microsoft", "vscode"],
+    "targets": {
+      "aur": "visual-studio-code-bin",
+      "flatpak": "com.visualstudio.code"
+    }
+  },
+  {
+    "id": "neovim",
+    "name": "Neovim",
+    "description": "Hyperextensible Vim-based text editor",
+    "icon": "edit_note",
+    "desktopIcon": "nvim",
+    "category": "editors",
+    "tags": ["editor", "vim", "terminal", "lua"],
+    "targets": {
+      "pacman": "neovim",
+      "apt": "neovim",
+      "dnf": "neovim"
+    }
+  },
+  {
+    "id": "kate",
+    "name": "Kate",
+    "description": "KDE's advanced text editor with LSP support",
+    "icon": "edit_note",
+    "desktopIcon": "kate",
+    "category": "editors",
+    "tags": ["editor", "kde", "text", "lsp"],
+    "targets": {
+      "pacman": "kate",
+      "apt": "kate",
+      "dnf": "kate",
+      "flatpak": "org.kde.kate"
+    }
+  },
+  {
+    "id": "zed",
+    "name": "Zed",
+    "description": "High-performance collaborative code editor",
+    "icon": "code",
+    "desktopIcon": "dev.zed.Zed",
+    "category": "editors",
+    "tags": ["editor", "code", "fast", "rust", "collaborative"],
+    "targets": {
+      "aur": "zed-bin",
+      "flatpak": "dev.zed.Zed"
+    }
+  },
+  {
+    "id": "vlc",
+    "name": "VLC",
+    "description": "Plays everything — the universal media player",
+    "icon": "play_circle",
+    "desktopIcon": "vlc",
+    "category": "media",
+    "tags": ["video", "audio", "player", "media", "codec"],
+    "targets": {
+      "pacman": "vlc",
+      "apt": "vlc",
+      "dnf": "vlc",
+      "flatpak": "org.videolan.VLC"
+    }
+  },
+  {
+    "id": "mpv",
+    "name": "mpv",
+    "description": "Minimalist video player with scriptable config",
+    "icon": "movie",
+    "desktopIcon": "mpv",
+    "category": "media",
+    "tags": ["video", "player", "minimal", "scriptable"],
+    "targets": {
+      "pacman": "mpv",
+      "apt": "mpv",
+      "dnf": "mpv",
+      "flatpak": "io.mpv.Mpv"
+    }
+  },
+  {
+    "id": "spotify",
+    "name": "Spotify",
+    "description": "Music streaming service",
+    "icon": "music_note",
+    "desktopIcon": "spotify",
+    "category": "media",
+    "tags": ["music", "streaming", "audio", "spotify"],
+    "targets": {
+      "pacman": "spotify-launcher",
+      "flatpak": "com.spotify.Client"
+    }
+  },
+  {
+    "id": "obs-studio",
+    "name": "OBS Studio",
+    "description": "Screen recording and live streaming",
+    "icon": "videocam",
+    "desktopIcon": "com.obsproject.Studio",
+    "category": "media",
+    "tags": ["streaming", "recording", "video", "screen"],
+    "targets": {
+      "pacman": "obs-studio",
+      "apt": "obs-studio",
+      "dnf": "obs-studio",
+      "flatpak": "com.obsproject.Studio"
+    }
+  },
+  {
+    "id": "easyeffects",
+    "name": "EasyEffects",
+    "description": "Audio effects for PipeWire (EQ, compressor, etc.)",
+    "icon": "equalizer",
+    "desktopIcon": "com.github.wwmm.easyeffects",
+    "category": "media",
+    "tags": ["audio", "equalizer", "pipewire", "effects"],
+    "targets": {
+      "pacman": "easyeffects",
+      "apt": "easyeffects",
+      "dnf": "easyeffects",
+      "flatpak": "com.github.wwmm.easyeffects"
+    }
+  },
+  {
+    "id": "cava",
+    "name": "Cava",
+    "description": "Terminal audio visualizer",
+    "icon": "graphic_eq",
+    "desktopIcon": "cava",
+    "category": "media",
+    "tags": ["audio", "visualizer", "terminal", "music"],
+    "targets": {
+      "pacman": "cava",
+      "apt": "cava",
+      "dnf": "cava"
+    }
+  },
+  {
+    "id": "vesktop",
+    "name": "Vesktop",
+    "description": "Discord client with Wayland + Vencord built-in",
+    "icon": "chat",
+    "desktopIcon": "vesktop",
+    "category": "communication",
+    "tags": ["discord", "chat", "voice", "wayland", "vencord"],
+    "targets": {
+      "aur": "vesktop-bin",
+      "flatpak": "dev.vencord.Vesktop"
+    }
+  },
+  {
+    "id": "telegram",
+    "name": "Telegram",
+    "description": "Fast messaging with cloud sync",
+    "icon": "send",
+    "desktopIcon": "telegram",
+    "category": "communication",
+    "tags": ["messaging", "chat", "telegram", "cloud"],
+    "targets": {
+      "pacman": "telegram-desktop",
+      "apt": "telegram-desktop",
+      "dnf": "telegram-desktop",
+      "flatpak": "org.telegram.desktop"
+    }
+  },
+  {
+    "id": "signal",
+    "name": "Signal",
+    "description": "End-to-end encrypted messaging",
+    "icon": "lock",
+    "desktopIcon": "signal-desktop",
+    "category": "communication",
+    "tags": ["messaging", "chat", "encrypted", "privacy", "signal"],
+    "targets": {
+      "aur": "signal-desktop",
+      "flatpak": "org.signal.Signal"
+    }
+  },
+  {
+    "id": "btop",
+    "name": "btop",
+    "description": "Beautiful resource monitor for terminal",
+    "icon": "monitoring",
+    "desktopIcon": "btop",
+    "category": "system",
+    "tags": ["monitor", "resources", "cpu", "memory", "terminal"],
+    "targets": {
+      "pacman": "btop",
+      "apt": "btop",
+      "dnf": "btop"
+    }
+  },
+  {
+    "id": "fastfetch",
+    "name": "Fastfetch",
+    "description": "System info tool — like neofetch but fast",
+    "icon": "info",
+    "desktopIcon": "fastfetch",
+    "category": "system",
+    "tags": ["system", "info", "fetch", "neofetch"],
+    "targets": {
+      "pacman": "fastfetch",
+      "apt": "fastfetch",
+      "dnf": "fastfetch"
+    }
+  },
+  {
+    "id": "timeshift",
+    "name": "Timeshift",
+    "description": "System restore tool with btrfs/rsync snapshots",
+    "icon": "restore",
+    "desktopIcon": "timeshift",
+    "category": "system",
+    "tags": ["backup", "restore", "snapshot", "btrfs"],
+    "targets": {
+      "pacman": "timeshift",
+      "apt": "timeshift",
+      "dnf": "timeshift"
+    }
+  },
+  {
+    "id": "gnome-disk-utility",
+    "name": "GNOME Disks",
+    "description": "Disk management and partition tool",
+    "icon": "storage",
+    "desktopIcon": "org.gnome.DiskUtility",
+    "category": "system",
+    "tags": ["disk", "partition", "storage", "gnome"],
+    "targets": {
+      "pacman": "gnome-disk-utility",
+      "apt": "gnome-disk-utility",
+      "dnf": "gnome-disk-utility"
+    }
+  },
+  {
+    "id": "filelight",
+    "name": "Filelight",
+    "description": "Visual disk usage analyzer",
+    "icon": "pie_chart",
+    "desktopIcon": "org.kde.filelight",
+    "category": "system",
+    "tags": ["disk", "usage", "storage", "visualization"],
+    "targets": {
+      "pacman": "filelight",
+      "apt": "filelight",
+      "dnf": "filelight",
+      "flatpak": "org.kde.filelight"
+    }
+  },
+  {
+    "id": "docker",
+    "name": "Docker",
+    "description": "Container runtime and management",
+    "icon": "deployed_code",
+    "desktopIcon": "docker",
+    "category": "development",
+    "tags": ["container", "docker", "devops", "virtualization"],
+    "targets": {
+      "pacman": "docker",
+      "apt": "docker.io",
+      "dnf": "docker"
+    }
+  },
+  {
+    "id": "nodejs",
+    "name": "Node.js",
+    "description": "JavaScript runtime for server and tooling",
+    "icon": "javascript",
+    "desktopIcon": "nodejs",
+    "category": "development",
+    "tags": ["javascript", "node", "npm", "runtime"],
+    "targets": {
+      "pacman": "nodejs",
+      "apt": "nodejs",
+      "dnf": "nodejs"
+    }
+  },
+  {
+    "id": "deno",
+    "name": "Deno",
+    "description": "Secure TypeScript/JS runtime with built-in tools",
+    "icon": "javascript",
+    "desktopIcon": "deno",
+    "category": "development",
+    "tags": ["javascript", "typescript", "deno", "runtime"],
+    "targets": {
+      "pacman": "deno",
+      "dnf": "deno"
+    }
+  },
+  {
+    "id": "bun",
+    "name": "Bun",
+    "description": "Fast all-in-one JS runtime, bundler and package manager",
+    "icon": "javascript",
+    "desktopIcon": "bun",
+    "category": "development",
+    "tags": ["javascript", "bun", "runtime", "bundler", "fast"],
+    "targets": {
+      "aur": "bun-bin"
+    }
+  },
+  {
+    "id": "nwg-look",
+    "name": "nwg-look",
+    "description": "GTK3/4 settings editor for Wayland",
+    "icon": "palette",
+    "desktopIcon": "nwg-look",
+    "category": "theming",
+    "tags": ["gtk", "theme", "appearance", "wayland"],
+    "targets": {
+      "pacman": "nwg-look",
+      "aur": "nwg-look"
+    }
+  },
+  {
+    "id": "qt6ct",
+    "name": "qt6ct",
+    "description": "Qt6 configuration tool (fonts, icons, style)",
+    "icon": "tune",
+    "desktopIcon": "qt6ct",
+    "category": "theming",
+    "tags": ["qt", "theme", "fonts", "style"],
+    "targets": {
+      "pacman": "qt6ct",
+      "apt": "qt6ct",
+      "dnf": "qt6ct"
+    }
+  },
+  {
+    "id": "kvantum",
+    "name": "Kvantum",
+    "description": "SVG-based theme engine for Qt applications",
+    "icon": "brush",
+    "desktopIcon": "kvantum",
+    "category": "theming",
+    "tags": ["qt", "theme", "svg", "kvantum"],
+    "targets": {
+      "pacman": "kvantum",
+      "apt": "qt6-style-kvantum",
+      "dnf": "kvantum"
+    }
+  },
+  {
+    "id": "gowall",
+    "name": "Gowall",
+    "description": "Convert wallpaper color schemes and palettes",
+    "icon": "wallpaper",
+    "desktopIcon": "gowall",
+    "category": "theming",
+    "tags": ["wallpaper", "color", "palette", "theme", "gowall"],
+    "targets": {
+      "aur": "gowall-bin"
+    }
+  },
+  {
+    "id": "jetbrains-mono-nerd",
+    "name": "JetBrains Mono Nerd",
+    "description": "JetBrains Mono with Nerd Font icons patched in",
+    "icon": "font_download",
+    "category": "fonts",
+    "tags": ["font", "nerd", "jetbrains", "monospace", "coding"],
+    "targets": {
+      "pacman": "ttf-jetbrains-mono-nerd",
+      "apt": "fonts-jetbrains-mono"
+    }
+  },
+  {
+    "id": "firacode-nerd",
+    "name": "Fira Code Nerd",
+    "description": "Fira Code with ligatures and Nerd Font icons",
+    "icon": "font_download",
+    "category": "fonts",
+    "tags": ["font", "nerd", "firacode", "ligatures", "coding"],
+    "targets": {
+      "pacman": "ttf-firacode-nerd"
+    }
+  },
+  {
+    "id": "cascadia-code-nerd",
+    "name": "Cascadia Code Nerd",
+    "description": "Microsoft's Cascadia Code with Nerd Font glyphs",
+    "icon": "font_download",
+    "category": "fonts",
+    "tags": ["font", "nerd", "cascadia", "microsoft", "coding"],
+    "targets": {
+      "pacman": "ttf-cascadia-code-nerd"
+    }
+  },
+  {
+    "id": "steam",
+    "name": "Steam",
+    "description": "Valve's game store and launcher",
+    "icon": "sports_esports",
+    "desktopIcon": "steam",
+    "category": "gaming",
+    "tags": ["games", "valve", "store", "proton", "gaming"],
+    "targets": {
+      "pacman": "steam",
+      "apt": "steam-installer",
+      "dnf": "steam",
+      "flatpak": "com.valvesoftware.Steam"
+    }
+  },
+  {
+    "id": "lutris",
+    "name": "Lutris",
+    "description": "Open gaming platform for Linux",
+    "icon": "sports_esports",
+    "desktopIcon": "lutris",
+    "category": "gaming",
+    "tags": ["games", "wine", "emulation", "gaming"],
+    "targets": {
+      "pacman": "lutris",
+      "apt": "lutris",
+      "dnf": "lutris",
+      "flatpak": "net.lutris.Lutris"
+    }
+  },
+  {
+    "id": "heroic",
+    "name": "Heroic Launcher",
+    "description": "Epic Games and GOG launcher for Linux",
+    "icon": "sports_esports",
+    "desktopIcon": "com.heroicgameslauncher.hgl",
+    "category": "gaming",
+    "tags": ["games", "epic", "gog", "gaming", "launcher"],
+    "targets": {
+      "aur": "heroic-games-launcher-bin",
+      "flatpak": "com.heroicgameslauncher.hgl"
+    }
+  },
+  {
+    "id": "mangohud",
+    "name": "MangoHud",
+    "description": "Vulkan/OpenGL overlay for monitoring FPS and performance",
+    "icon": "speed",
+    "category": "gaming",
+    "tags": ["games", "fps", "overlay", "monitoring", "vulkan"],
+    "targets": {
+      "pacman": "mangohud",
+      "apt": "mangohud",
+      "dnf": "mangohud",
+      "flatpak": "org.freedesktop.Platform.VulkanLayer.MangoHud"
+    }
+  },
+  {
+    "id": "gamemode",
+    "name": "GameMode",
+    "description": "Feral's daemon to optimize Linux performance for gaming",
+    "icon": "videogame_asset",
+    "desktopIcon": "gamemode",
+    "category": "gaming",
+    "tags": ["games", "performance", "optimization", "feral"],
+    "targets": {
+      "pacman": "gamemode",
+      "apt": "gamemode",
+      "dnf": "gamemode"
+    }
+  },
+  {
+    "id": "thunar",
+    "name": "Thunar",
+    "description": "Xfce's lightweight file manager",
+    "icon": "folder",
+    "desktopIcon": "org.xfce.thunar",
+    "category": "system",
+    "tags": ["files", "file-manager", "xfce"],
+    "targets": {
+      "pacman": "thunar",
+      "apt": "thunar",
+      "dnf": "thunar"
+    }
+  },
+  {
+    "id": "nautilus",
+    "name": "Nautilus",
+    "description": "GNOME's default file manager",
+    "icon": "folder",
+    "desktopIcon": "org.gnome.Nautilus",
+    "category": "system",
+    "tags": ["files", "file-manager", "gnome"],
+    "targets": {
+      "pacman": "nautilus",
+      "apt": "nautilus",
+      "dnf": "nautilus",
+      "flatpak": "org.gnome.Nautilus"
+    }
+  },
+  {
+    "id": "dolphin",
+    "name": "Dolphin",
+    "description": "KDE's powerful file manager",
+    "icon": "folder",
+    "desktopIcon": "org.kde.dolphin",
+    "category": "system",
+    "tags": ["files", "file-manager", "kde"],
+    "targets": {
+      "pacman": "dolphin",
+      "apt": "dolphin",
+      "dnf": "dolphin",
+      "flatpak": "org.kde.dolphin"
+    }
+  },
+  {
+    "id": "gimp",
+    "name": "GIMP",
+    "description": "GNU Image Manipulation Program",
+    "icon": "palette",
+    "desktopIcon": "gimp",
+    "category": "media",
+    "tags": ["image", "editor", "photo", "graphics"],
+    "targets": {
+      "pacman": "gimp",
+      "apt": "gimp",
+      "dnf": "gimp",
+      "flatpak": "org.gimp.GIMP"
+    }
+  },
+  {
+    "id": "inkscape",
+    "name": "Inkscape",
+    "description": "Professional vector graphics editor",
+    "icon": "draw",
+    "desktopIcon": "org.inkscape.Inkscape",
+    "category": "media",
+    "tags": ["vector", "svg", "graphics", "editor"],
+    "targets": {
+      "pacman": "inkscape",
+      "apt": "inkscape",
+      "dnf": "inkscape",
+      "flatpak": "org.inkscape.Inkscape"
+    }
+  },
+  {
+    "id": "kdenlive",
+    "name": "Kdenlive",
+    "description": "KDE's non-linear video editor",
+    "icon": "movie",
+    "desktopIcon": "org.kde.kdenlive",
+    "category": "media",
+    "tags": ["video", "editor", "editing", "kde"],
+    "targets": {
+      "pacman": "kdenlive",
+      "apt": "kdenlive",
+      "dnf": "kdenlive",
+      "flatpak": "org.kde.kdenlive"
+    }
+  }
+]

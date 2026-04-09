@@ -10,7 +10,7 @@ import qs.modules.waffle.settings
 
 WSettingsPage {
     id: root
-    settingsPageIndex: 7
+    settingsPageIndex: 8
     pageTitle: Translation.tr("Waffle Style")
     pageIcon: "desktop"
     pageDescription: Translation.tr("Windows 11 style customization")
@@ -25,29 +25,17 @@ WSettingsPage {
         return moduleName + " " + Translation.tr("is currently disabled in Modules. These settings will apply when you enable it.")
     }
     
-    // Warning when not active
-    WSettingsCard {
+    WSettingsInfoBar {
         visible: !root.isWaffleActive
-        
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 12
-            
-            FluentIcon {
-                icon: "info"
-                implicitSize: 24
-                color: Looks.colors.accent
-            }
-            
-            WText {
-                Layout.fillWidth: true
-                text: Translation.tr("These settings only apply when using the Windows 11 (Waffle) panel style. Go to Modules to enable it.")
-                wrapMode: Text.WordWrap
-                color: Looks.colors.subfg
-            }
-        }
+        severity: WSettingsInfoBar.Severity.Info
+        message: Translation.tr("These settings only apply when using the Windows 11 (Waffle) panel style. Go to Modules to enable it.")
     }
-    
+
+    WSettingsSection {
+        visible: root.isWaffleActive
+        title: Translation.tr("Window Management")
+    }
+
     WSettingsCard {
         visible: root.isWaffleActive
         title: Translation.tr("Alt+Tab Switcher")
@@ -203,7 +191,12 @@ WSettingsPage {
             onCheckedChanged: Config.setNestedValue("waffles.taskView.closeOnSelect", checked)
         }
     }
-    
+
+    WSettingsSection {
+        visible: root.isWaffleActive
+        title: Translation.tr("Behavior")
+    }
+
     WSettingsCard {
         visible: root.isWaffleActive
         title: Translation.tr("Behavior")
@@ -232,6 +225,11 @@ WSettingsPage {
             checked: Config.options?.waffles?.tweaks?.switchHandlePositionFix ?? true
             onCheckedChanged: Config.setNestedValue("waffles.tweaks.switchHandlePositionFix", checked)
         }
+    }
+
+    WSettingsSection {
+        visible: root.isWaffleActive
+        title: Translation.tr("Panels")
     }
 
     WSettingsCard {
@@ -407,6 +405,10 @@ WSettingsPage {
             checked: Config.options?.waffles?.widgetsPanel?.showColorScheme ?? true
             onCheckedChanged: Config.setNestedValue("waffles.widgetsPanel.showColorScheme", checked)
         }
+    }
+
+    WSettingsSection {
+        title: Translation.tr("Weather")
     }
     
     // Weather configuration - shared with ii family

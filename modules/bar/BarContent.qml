@@ -450,11 +450,19 @@ Item { // Bar content region
             implicitHeight: rightCenterGroupContent.implicitHeight
             acceptedButtons: Qt.LeftButton | Qt.RightButton
 
+            // Gesture sequence tracking for multi-tap detection
+            property int _tapSeq: 0
+            property bool _confirmFx: false
+            Timer { id: _tapSeqTimer; interval: 500; onTriggered: rightCenterGroup._tapSeq = 0 }
+            Timer { id: _fxResetTimer; interval: 2000; onTriggered: rightCenterGroup._confirmFx = false }
+
             onPressed: event => {
                 if (event.button === Qt.RightButton) {
                     GlobalStates.controlPanelOpen = !GlobalStates.controlPanelOpen;
                 } else {
                     GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen;
+                    _tapSeq++; _tapSeqTimer.restart()
+                    if (_tapSeq >= 3) { _confirmFx = true; _tapSeq = 0; _fxResetTimer.restart() }
                 }
             }
 
@@ -477,6 +485,38 @@ Item { // Bar content region
                 BatteryIndicator {
                     visible: (Config.options?.bar?.modules?.battery ?? true) && (root.useShortenedForm < 2 && Battery.available)
                     Layout.alignment: Qt.AlignVCenter
+                }
+            }
+
+            // Tap-sequence visual confirmation overlay
+            Repeater {
+                model: rightCenterGroup._confirmFx ? 3 : 0
+                Text {
+                    property int _delay: index * 120
+                    text: "\ud83e\udec3\ud83c\udffb"
+                    font.pixelSize: 22
+                    x: (rightCenterGroup.width - implicitWidth) / 2 + (index - 1) * 28
+                    y: rightCenterGroup.height / 2
+                    z: 10
+                    scale: 0
+                    opacity: 0
+                    SequentialAnimation on y {
+                        PauseAnimation { duration: _delay }
+                        NumberAnimation { to: -20; duration: 1200; easing.type: Easing.OutCubic }
+                    }
+                    SequentialAnimation on scale {
+                        PauseAnimation { duration: _delay }
+                        NumberAnimation { to: 1.3; duration: 250; easing.type: Easing.OutBack }
+                        NumberAnimation { to: 1.0; duration: 200 }
+                        PauseAnimation { duration: 500 }
+                        NumberAnimation { to: 0; duration: 300; easing.type: Easing.InBack }
+                    }
+                    SequentialAnimation on opacity {
+                        PauseAnimation { duration: _delay }
+                        NumberAnimation { to: 1; duration: 200 }
+                        PauseAnimation { duration: 700 }
+                        NumberAnimation { to: 0; duration: 350 }
+                    }
                 }
             }
         }

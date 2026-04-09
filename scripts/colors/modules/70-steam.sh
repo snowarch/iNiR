@@ -204,9 +204,9 @@ reload_steam() {
     return 0
   fi
 
-  # Fallback: kill steamwebhelper — Steam auto-restarts it and reloads CSS from disk.
-  pkill -x steamwebhelper 2>/dev/null || true
-  log_module "CDP unavailable — restarted steamwebhelper"
+  # CDP unavailable — CSS is already deployed to disk and will apply on next Steam restart.
+  # Never kill steamwebhelper as fallback: the user perceives it as Steam closing/crashing.
+  log_module "CDP unavailable — CSS deployed to disk, will apply on next Steam restart"
 }
 
 # --- Main ---

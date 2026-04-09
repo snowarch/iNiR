@@ -968,7 +968,7 @@ Scope {
                                 boundsBehavior: Flickable.StopAtBounds
 
                                 ScrollBar.vertical: StyledScrollBar {
-                                    policy: ScrollBar.AsNeeded
+                                    policy: ScrollBar.AlwaysOff
                                 }
 
                                 ColumnLayout {

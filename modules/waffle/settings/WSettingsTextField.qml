@@ -24,10 +24,10 @@ WSettingsRow {
             border.color: fieldInput.activeFocus ? Looks.colors.accent : Looks.colors.bg1Border
 
             Behavior on border.color {
-                animation: ColorAnimation { duration: Looks.transition.enabled ? 100 : 0; easing.type: Easing.OutQuad }
+                animation: ColorAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
             }
             Behavior on border.width {
-                animation: NumberAnimation { duration: Looks.transition.enabled ? 80 : 0 }
+                animation: NumberAnimation { duration: Looks.transition.enabled ? Looks.transition.duration.ultraFast : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
             }
 
             Item {
