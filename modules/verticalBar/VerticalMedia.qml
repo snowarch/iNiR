@@ -57,10 +57,11 @@ MouseArea {
         }
     }
     onWheel: (event) => {
-        if (!activePlayer?.volumeSupported) return
+        if (!MprisController.canChangeVolume) return
         const step = 0.05
-        if (event.angleDelta.y > 0) activePlayer.volume = Math.min(1, activePlayer.volume + step)
-        else if (event.angleDelta.y < 0) activePlayer.volume = Math.max(0, activePlayer.volume - step)
+        const current = MprisController.getVolume()
+        if (event.angleDelta.y > 0) MprisController.setVolume(Math.min(1, current + step))
+        else if (event.angleDelta.y < 0) MprisController.setVolume(Math.max(0, current - step))
         root.volumePopupVisible = true
         volumeHideTimer.restart()
     }

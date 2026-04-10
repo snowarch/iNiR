@@ -37,6 +37,7 @@ Item {
 
     // Volume popup
     property bool volumePopupVisible: false
+    property real volumePopupValue: Math.max(0, Math.min(1, MprisController.getVolume()))
     
     // Bar-anchored media popup
     property bool barMediaPopupVisible: false
@@ -45,6 +46,15 @@ Item {
         id: hideTimer
         interval: 1000
         onTriggered: root.volumePopupVisible = false
+    }
+
+    Connections {
+        target: activePlayer
+        function onVolumeChanged() {
+            if (!root.volumePopupVisible) {
+                root.volumePopupValue = Math.max(0, Math.min(1, root.activePlayer?.volume ?? 0))
+            }
+        }
     }
 
     Loader {
@@ -86,13 +96,13 @@ Item {
                     spacing: 4
                     MaterialSymbol {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: (root.activePlayer?.volume ?? 0) === 0 ? "volume_off" : "volume_up"
+                        text: root.volumePopupValue === 0 ? "volume_off" : "volume_up"
                         iconSize: Appearance.font.pixelSize.small
                         color: Appearance.colors.colOnLayer3
                     }
                     StyledText {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: Math.round((root.activePlayer?.volume ?? 0) * 100) + "%"
+                        text: Math.round(root.volumePopupValue * 100) + "%"
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         color: Appearance.colors.colOnLayer3
                     }
@@ -202,10 +212,14 @@ Item {
             }
         }
         onWheel: (event) => {
-            if (!activePlayer?.volumeSupported) return
+            if (!MprisController.canChangeVolume) return
             const step = 0.05
-            if (event.angleDelta.y > 0) activePlayer.volume = Math.min(1, activePlayer?.volume + step)
-            else if (event.angleDelta.y < 0) activePlayer.volume = Math.max(0, activePlayer?.volume - step)
+            const current = root.volumePopupVisible
+                ? root.volumePopupValue
+                : Math.max(0, Math.min(1, MprisController.getVolume()))
+            if (event.angleDelta.y > 0) root.volumePopupValue = Math.min(1, current + step)
+            else if (event.angleDelta.y < 0) root.volumePopupValue = Math.max(0, current - step)
+            MprisController.setVolume(root.volumePopupValue)
             volumePopupVisible = true
             hideTimer.restart()
         }

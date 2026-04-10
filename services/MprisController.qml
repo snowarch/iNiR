@@ -61,12 +61,12 @@ Singleton {
 		const _ = _playbackStateVersion;
 		// Only consider tracked if it survived filtering
 		const tracked = players.includes(trackedPlayer) ? trackedPlayer : null;
-		// If user manually selected a player, keep it active immediately
-		if (tracked) return tracked;
-		// Otherwise, find any player that IS playing (iterate to ensure reactivity)
+		// First, prefer any player that is actively playing
 		for (let i = 0; i < players.length; i++) {
 			if (players[i]?.isPlaying) return players[i];
 		}
+		// If nothing is playing, keep user's tracked selection
+		if (tracked) return tracked;
 		// Final fallback
 		return players[0] ?? null;
 	}
@@ -452,7 +452,7 @@ Singleton {
 			filtered.push(allPlayers[chosenIdx]);
 			group.forEach(idx => used.add(idx));
 		}
-		
+
 		return filtered;
 	}
 
@@ -576,7 +576,24 @@ Singleton {
 		}
 	}
 
-	property bool canChangeVolume: this.activePlayer && this.activePlayer.volumeSupported && this.activePlayer.canControl;
+	property bool canChangeVolume: (root.isYtMusicActive && YtMusic.currentVideoId) ||
+		(this.activePlayer && this.activePlayer.volumeSupported && this.activePlayer.canControl);
+
+	function getVolume(): real {
+		if (root.isYtMusicActive && YtMusic.currentVideoId) {
+			return YtMusic.getVolume();
+		}
+		return this.activePlayer?.volume ?? 0;
+	}
+
+	function setVolume(vol: real): void {
+		const clamped = Math.max(0, Math.min(1, vol));
+		if (root.isYtMusicActive && YtMusic.currentVideoId) {
+			YtMusic.setVolume(clamped);
+		} else if (this.activePlayer && this.activePlayer.volumeSupported && this.activePlayer.canControl) {
+			this.activePlayer.volume = clamped;
+		}
+	}
 
 	property bool loopSupported: this.activePlayer && this.activePlayer.loopSupported && this.activePlayer.canControl;
 	property var loopState: this.activePlayer?.loopState ?? MprisLoopState.None;

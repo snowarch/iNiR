@@ -458,12 +458,13 @@ WBarAttachedPanelContent {
                     anchors.fill: parent
                     acceptedButtons: Qt.NoButton
                     onWheel: wheel => {
-                        if (!MprisController.activePlayer?.volumeSupported) return
+                        if (!MprisController.canChangeVolume) return
                         const step = 0.05
+                        const current = MprisController.getVolume()
                         if (wheel.angleDelta.y > 0)
-                            MprisController.activePlayer.volume = Math.min(1, MprisController.activePlayer.volume + step)
+                            MprisController.setVolume(Math.min(1, current + step))
                         else if (wheel.angleDelta.y < 0)
-                            MprisController.activePlayer.volume = Math.max(0, MprisController.activePlayer.volume - step)
+                            MprisController.setVolume(Math.max(0, current - step))
 
                         // Show volume feedback
                         mediaVolumeOverlay.opacity = 1

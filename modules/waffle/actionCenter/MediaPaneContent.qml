@@ -64,12 +64,13 @@ Rectangle {
         anchors.fill: parent
         acceptedButtons: Qt.NoButton
         onWheel: wheel => {
-            if (!root.activePlayer?.volumeSupported) return
+            if (!MprisController.canChangeVolume) return
             const step = 0.05
+            const current = MprisController.getVolume()
             if (wheel.angleDelta.y > 0)
-                root.activePlayer.volume = Math.min(1, root.activePlayer.volume + step)
+                MprisController.setVolume(Math.min(1, current + step))
             else if (wheel.angleDelta.y < 0)
-                root.activePlayer.volume = Math.max(0, root.activePlayer.volume - step)
+                MprisController.setVolume(Math.max(0, current - step))
             
             // Show volume feedback
             volumeOverlay.opacity = 1
