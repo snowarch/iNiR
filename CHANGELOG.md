@@ -5,6 +5,28 @@ All notable changes to iNiR will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.20.0] - 2026-04-11
+
+Community contributions edition. Turns out people actually use this thing and want to make it better. Who knew.
+
+### Added
+- **YTMusic "Up Next" notifications** ([@SecArt1](https://github.com/SecArt1)): When a track auto-advances, a transient notification shows what's coming next. Suppressed during gamemode and fullscreen. Configurable via `sidebar.ytmusic.upNextNotifications` and `sidebar.ytmusic.suppressUpNextInFullscreen`. *(PR #111)*
+- **Zed editor Go-based theme pipeline** ([@yukazakiri](https://github.com/yukazakiri)): Zed theming split into its own module (`31-zed.sh`) with a compiled Go generator for significantly faster theme generation. Supports variant-based themes and input signature caching to skip redundant rebuilds. *(PR #98)*
+- **Neovim/LazyVim wallpaper theming** ([@yukazakiri](https://github.com/yukazakiri)): Generates an `aether.nvim` colorscheme plugin that maps Material 3 palette to Neovim highlight groups. Includes file watchers for live hot-reload when colors change. *(PR #103)*
+- **Equicord theme support** ([@yukazakiri](https://github.com/yukazakiri)): System24 theme generation now discovers Equicord config directories alongside standard Discord client paths. *(PR #100)*
+
+### Fixed
+- **Battery info display** ([@orcusforyou](https://github.com/orcusforyou)): Fixed wrong battery percentage and status shown in the Overview dashboard and Control Panel. Turns out displaying the correct number matters. *(PR #95)*
+- **Spicetify playback theme refresh** ([@yukazakiri](https://github.com/yukazakiri)): Playback CSS color blocks now properly rewrite on theme changes instead of going stale. *(PR #101)*
+- **YTMusic double-advance race condition**: Fixed a timing bug where the old mpv process exiting during the play-delay window would trigger a second `playNext()`, sending two "Up Next" notifications and skipping a track. The `_userInitiatedPlay` guard now stays active until the new mpv confirms started.
+- **Zed theme rebuild detection**: The Go binary now checks timestamps of `main.go`, `common.go`, and `go.mod` before running, preventing a stale binary from silently succeeding and caching the input signature.
+
+### Improved
+- **pt-BR translations** ([@Guilherme4Colamarco](https://github.com/Guilherme4Colamarco)): 651 human-written translations replacing auto-generated ones, plus 38 new keys. Fixed broken `%1` format string placeholders that had spaces injected by machine translation. Total coverage: 3435 keys. *(PR #97)*
+
+### Contributors
+Shoutout to [@yukazakiri](https://github.com/yukazakiri) for basically adopting the color pipeline this release (4 PRs!), [@SecArt1](https://github.com/SecArt1) for the YTMusic notify feature, [@orcusforyou](https://github.com/orcusforyou) for catching the battery display bug, and [@Guilherme4Colamarco](https://github.com/Guilherme4Colamarco) for making pt-BR speakers not suffer through Google Translate's interpretation of UI strings.
+
 ## [2.19.0] - 2026-04-11
 
 ### Added
