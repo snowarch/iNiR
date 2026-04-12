@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Qt5Compat.GraphicalEffects as GE
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
@@ -22,7 +23,7 @@ Rectangle {
     property bool showAddToQueue: true
 
     readonly property bool isCurrentTrack: track?.videoId === YtMusic.currentVideoId
-    readonly property bool hovered: mouseArea.containsMouse
+    readonly property bool hovered: hoverHandler.hovered
 
     signal playRequested()
     signal removeRequested()
@@ -47,12 +48,15 @@ Rectangle {
         animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
     }
 
-    MouseArea {
-        id: mouseArea
-        anchors.fill: parent
-        hoverEnabled: true
+    // HoverHandler instead of MouseArea for hover — doesn't steal hover from child MouseAreas
+    HoverHandler {
+        id: hoverHandler
         cursorShape: Qt.PointingHandCursor
-        onClicked: root.playRequested()
+    }
+
+    // Tap handler for play — doesn't interfere with icon button clicks
+    TapHandler {
+        onTapped: root.playRequested()
     }
 
     RowLayout {
@@ -94,6 +98,11 @@ Rectangle {
                 : Appearance.colors.colLayer2
             clip: true
 
+            layer.enabled: true
+            layer.effect: GE.OpacityMask {
+                maskSource: Rectangle { width: 48; height: 48; radius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small }
+            }
+
             Image {
                 id: thumbImage
                 anchors.fill: parent
@@ -120,8 +129,8 @@ Rectangle {
                 anchors.margins: 2
                 width: durText.implicitWidth + 6
                 height: 14
-                radius: 3
-                color: ColorUtils.transparentize("black", 0.2)
+                radius: Appearance.rounding.unsharpen
+                color: ColorUtils.transparentize(Appearance.colors.colLayer0, 0.2)
                 visible: root.showDuration && (root.track?.duration ?? 0) > 0
 
                 StyledText {
@@ -130,7 +139,7 @@ Rectangle {
                     text: StringUtils.friendlyTimeForSeconds(root.track?.duration ?? 0)
                     font.pixelSize: Appearance.font.pixelSize.smallest
                     font.family: Appearance.font.family.numbers
-                    color: "white"
+                    color: Appearance.colors.colOnLayer0
                 }
             }
         }

@@ -55,8 +55,8 @@ Item {
         property bool compact: false
 
         implicitWidth: chipContent.implicitWidth + (compact ? 18 : 22)
-        implicitHeight: compact ? 28 : 32
-        buttonRadius: compact ? 14 : root.radiusSmall
+        implicitHeight: compact ? 30 : 32
+        buttonRadius: compact ? Appearance.rounding.full : root.radiusSmall
         colBackground: chipBackground
         colBackgroundHover: chipBackgroundHover
 
@@ -230,8 +230,7 @@ Item {
                                 color: root.currentView === "queue" ? root.colPrimary : root.colTextSecondary
                             }
                             StyledText {
-                                visible: root.hasQueue
-                                text: `${YtMusic.queue.length}`
+                                text: root.hasQueue ? Translation.tr("Queue") + ` (${YtMusic.queue.length})` : Translation.tr("Queue")
                                 font.pixelSize: Appearance.font.pixelSize.smaller
                                 color: root.currentView === "queue" ? root.colPrimary : root.colText
                             }
@@ -249,11 +248,13 @@ Item {
                     active: YtMusic.error !== ""
                     visible: active
                     sourceComponent: Rectangle {
-                        implicitHeight: 36
+                        implicitHeight: errorRow.implicitHeight + 16
                         radius: root.radiusSmall
                         color: Appearance.colors.colErrorContainer
                         RowLayout {
-                            anchors.centerIn: parent
+                            id: errorRow
+                            anchors.verticalCenter: parent.verticalCenter
+                            x: 8
                             width: parent.width - 16
                             spacing: 8
                             MaterialSymbol { text: "error"; iconSize: 18; color: Appearance.colors.colOnErrorContainer }
@@ -262,6 +263,8 @@ Item {
                                 text: YtMusic.error
                                 color: Appearance.colors.colOnErrorContainer
                                 font.pixelSize: Appearance.font.pixelSize.small
+                                wrapMode: Text.WordWrap
+                                maximumLineCount: 3
                                 elide: Text.ElideRight 
                             }
                             RippleButton { 
@@ -556,7 +559,7 @@ Item {
                             anchors.fill: parent
                             anchors.margins: 8
                             spacing: 6
-                            StyledText { text: YtMusic.browserInfo[modelData]?.icon ?? "🌐"; font.pixelSize: 14 }
+                            MaterialSymbol { text: YtMusic.browserInfo[modelData]?.icon ?? "language"; iconSize: 16; color: isConnected ? root.colPrimary : root.colTextSecondary }
                             StyledText {
                                 text: YtMusic.browserInfo[modelData]?.name ?? modelData
                                 color: isConnected ? root.colPrimary : root.colText
@@ -1029,14 +1032,26 @@ Item {
                 anchors.rightMargin: 10
                 spacing: 10
                 
-                MaterialSymbol { 
-                    text: YtMusic.searching ? "hourglass_empty" : "search"
+                MaterialSymbol {
+                    id: searchIcon
+                    text: YtMusic.searching ? "progress_activity" : "search"
                     iconSize: 20
                     color: root.colTextSecondary
-                    RotationAnimation on rotation { 
+                    rotation: 0
+
+                    RotationAnimation on rotation {
                         from: 0; to: 360; duration: 1000
                         loops: Animation.Infinite
-                        running: YtMusic.searching 
+                        running: YtMusic.searching
+                    }
+
+                    // Reset rotation to 0 when search ends so icon doesn't stay tilted
+                    Connections {
+                        target: YtMusic
+                        function onSearchingChanged() {
+                            if (!YtMusic.searching)
+                                searchIcon.rotation = 0
+                        }
                     }
                 }
                 
@@ -1154,85 +1169,39 @@ Item {
                 header: Column {
                     width: parent.width
                     spacing: 8
-                    
-                    // Artist header card - shows when artist info is available
-                    Rectangle {
+
+                    // Search result count
+                    RowLayout {
                         width: parent.width
-                        height: YtMusic.currentArtistInfo ? 56 : 0
-                        visible: YtMusic.currentArtistInfo !== null
-                        radius: root.radiusSmall
-                        color: Appearance.inirEverywhere ? Appearance.inir.colLayer2
-                             : Appearance.auroraEverywhere ? Appearance.colors.colLayer1Base
-                             : root.colLayer2
-                        border.width: root.borderWidth
-                        border.color: root.colBorder
-                        
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.margins: 8
-                            spacing: 10
-                            
-                            // Artist avatar
-                            Rectangle {
-                                Layout.preferredWidth: 40
-                                Layout.preferredHeight: 40
-                                radius: 20
-                                color: root.colSurfaceHover
-                                
-                                Image {
-                                    anchors.fill: parent
-                                    anchors.margins: 1
-                                    source: YtMusic.currentArtistInfo?.thumbnail ?? ""
-                                    fillMode: Image.PreserveAspectCrop
-                                    asynchronous: true
-                                    visible: source !== ""
-                                    layer.enabled: true
-                                    layer.effect: GE.OpacityMask {
-                                        maskSource: Rectangle { width: 38; height: 38; radius: 19 }
-                                    }
-                                }
-                                
-                                MaterialSymbol {
-                                    anchors.centerIn: parent
-                                    visible: !YtMusic.currentArtistInfo?.thumbnail
-                                    text: "person"
-                                    iconSize: 24
-                                    color: root.colTextSecondary
-                                }
+                        visible: root.hasResults && !YtMusic.searching
+                        spacing: 6
+
+                        StyledText {
+                            text: Translation.tr("%1 results").arg(YtMusic.searchResults.length)
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            color: root.colTextSecondary
+                        }
+
+                        Item { Layout.fillWidth: true }
+
+                        // Play all results
+                        RippleButton {
+                            implicitWidth: 28
+                            implicitHeight: 28
+                            buttonRadius: 14
+                            colBackground: root.colPrimary
+                            onClicked: {
+                                if (YtMusic.searchResults.length > 0)
+                                    YtMusic.playFromSearch(0)
                             }
-                            
-                            // Artist name
-                            StyledText {
-                                Layout.fillWidth: true
-                                text: YtMusic.currentArtistInfo?.name ?? ""
-                                font.pixelSize: Appearance.font.pixelSize.normal
-                                font.weight: Font.Medium
-                                color: root.colText
-                                elide: Text.ElideRight
+                            contentItem: MaterialSymbol {
+                                anchors.centerIn: parent
+                                text: "play_arrow"
+                                iconSize: 16
+                                fill: 1
+                                color: Appearance.colors.colOnPrimary
                             }
-                            
-                            // Play all from this artist
-                            RippleButton {
-                                Layout.preferredWidth: 32
-                                Layout.preferredHeight: 32
-                                buttonRadius: 16
-                                colBackground: root.colPrimary
-                                visible: root.hasResults
-                                onClicked: {
-                                    // Play first result
-                                    if (YtMusic.searchResults.length > 0) {
-                                        YtMusic.playFromSearch(0)
-                                    }
-                                }
-                                contentItem: MaterialSymbol {
-                                    anchors.centerIn: parent
-                                    text: "play_arrow"
-                                    iconSize: 20
-                                    fill: 1
-                                    color: Appearance.colors.colOnPrimary
-                                }
-                                StyledToolTip { text: Translation.tr("Play") }
-                            }
+                            StyledToolTip { text: Translation.tr("Play all") }
                         }
                     }
                     
@@ -1921,10 +1890,7 @@ Item {
                 showIndex: true
                 showRemoveButton: true
                 showAddToQueue: false
-                onPlayRequested: { 
-                    YtMusic.queue = YtMusic.queue.slice(index)
-                    YtMusic.playQueue() 
-                }
+                onPlayRequested: YtMusic.playFromQueue(index)
                 onRemoveRequested: YtMusic.removeFromQueue(index)
             }
             MaterialPlaceholderMessage {

@@ -908,6 +908,19 @@ ContentPage {
                         text: Translation.tr("Suppress Up Next notifications when a fullscreen app is active or GameMode is enabled")
                     }
                 }
+
+                ConfigSelectionArray {
+                    options: [
+                        { displayName: Translation.tr("Best"), icon: "high_quality", value: "best" },
+                        { displayName: Translation.tr("Medium (≤128 kbps)"), icon: "graphic_eq", value: "medium" },
+                        { displayName: Translation.tr("Low"), icon: "data_saver_on", value: "low" }
+                    ]
+                    currentValue: Config.options.sidebar?.ytmusic?.audioQuality ?? "best"
+                    onSelected: (newValue) => Config.setNestedValue("sidebar.ytmusic.audioQuality", newValue)
+                    StyledToolTip {
+                        text: Translation.tr("Audio quality for playback — lower quality uses less bandwidth")
+                    }
+                }
             }
 
             ContentSubsection {

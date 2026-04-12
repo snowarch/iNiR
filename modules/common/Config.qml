@@ -1143,8 +1143,11 @@ Singleton {
                     property bool hideSyncBanner: false
                     property string browser: "firefox"
                     property string cookiesPath: ""
+                    property bool useManualCookies: false
                     property bool connected: false
                     property string resolvedBrowserArg: ""
+                    property string audioQuality: "best"
+                    property bool verbose: false
                     property bool shuffleMode: false
                     property int repeatMode: 0
                     property list<string> recentSearches: []

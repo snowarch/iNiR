@@ -171,7 +171,7 @@ Item {
                 // Loading overlay
                 Rectangle {
                     anchors.fill: parent
-                    color: ColorUtils.transparentize("black", 0.5)
+                    color: ColorUtils.transparentize(root.colBg, 0.5)
                     visible: YtMusic.loading
 
                     MaterialLoadingIndicator { anchors.centerIn: parent; implicitSize: 24; loading: true }
@@ -185,7 +185,7 @@ Item {
                     width: 24
                     height: 16
                     radius: 4
-                    color: ColorUtils.transparentize("black", 0.4)
+                    color: ColorUtils.transparentize(root.colBg, 0.4)
                     visible: root.isPlaying && !YtMusic.loading
 
                     Row {
@@ -197,7 +197,7 @@ Item {
                                 required property int index
                                 width: 3
                                 height: 4 + Math.random() * 6
-                                radius: 1
+                                radius: Appearance.rounding.unsharpen
                                 color: root.colPrimary
                                 
                                 SequentialAnimation on height {
@@ -276,11 +276,11 @@ Item {
                     // Shuffle
                     RippleButton {
                         implicitWidth: 24; implicitHeight: 24
-                        buttonRadius: 12
+                        buttonRadius: root.radiusSmall
                         colBackground: YtMusic.shuffleMode ? root.colPrimary : "transparent"
                         colBackgroundHover: YtMusic.shuffleMode ? root.colPrimary : root.colLayer2
                         onClicked: YtMusic.toggleShuffle()
-                        contentItem: MaterialSymbol { anchors.centerIn: parent; text: "shuffle"; iconSize: 14; color: YtMusic.shuffleMode ? Appearance.colors.colOnPrimary : root.colTextSecondary }
+                        contentItem: MaterialSymbol { anchors.centerIn: parent; text: "shuffle"; iconSize: 13; color: YtMusic.shuffleMode ? Appearance.colors.colOnPrimary : root.colTextSecondary }
                         StyledToolTip { text: YtMusic.shuffleMode ? Translation.tr("Shuffle On") : Translation.tr("Shuffle Off") }
                     }
 
@@ -290,6 +290,8 @@ Item {
                         buttonRadius: 14
                         colBackground: "transparent"
                         colBackgroundHover: root.colLayer2
+                        enabled: YtMusic.canGoPrevious
+                        opacity: enabled ? 1.0 : 0.35
                         onClicked: YtMusic.playPrevious()
                         contentItem: MaterialSymbol { anchors.centerIn: parent; text: "skip_previous"; iconSize: 18; fill: 1; color: root.colText }
                     }
@@ -297,7 +299,7 @@ Item {
                     // Play/Pause
                     RippleButton {
                         implicitWidth: 36; implicitHeight: 36
-                        buttonRadius: root.isPlaying ? root.radiusSmall : 18
+                        buttonRadius: root.isPlaying ? root.radiusSmall : Appearance.rounding.full
                         colBackground: "transparent"
                         colBackgroundHover: root.colLayer2
                         onClicked: YtMusic.togglePlaying()
@@ -316,6 +318,8 @@ Item {
                         buttonRadius: 14
                         colBackground: "transparent"
                         colBackgroundHover: root.colLayer2
+                        enabled: YtMusic.canGoNext
+                        opacity: enabled ? 1.0 : 0.35
                         onClicked: YtMusic.playNext()
                         contentItem: MaterialSymbol { anchors.centerIn: parent; text: "skip_next"; iconSize: 18; fill: 1; color: root.colText }
                     }
@@ -323,14 +327,14 @@ Item {
                     // Repeat
                     RippleButton {
                         implicitWidth: 24; implicitHeight: 24
-                        buttonRadius: 12
+                        buttonRadius: root.radiusSmall
                         colBackground: YtMusic.repeatMode > 0 ? root.colPrimary : "transparent"
                         colBackgroundHover: YtMusic.repeatMode > 0 ? root.colPrimary : root.colLayer2
                         onClicked: YtMusic.cycleRepeatMode()
                         contentItem: MaterialSymbol { 
                             anchors.centerIn: parent
                             text: YtMusic.repeatMode === 1 ? "repeat_one" : "repeat"
-                            iconSize: 14
+                            iconSize: 13
                             color: YtMusic.repeatMode > 0 ? Appearance.colors.colOnPrimary : root.colTextSecondary
                         }
                         StyledToolTip { text: YtMusic.repeatMode === 0 ? Translation.tr("Repeat Off") : YtMusic.repeatMode === 1 ? Translation.tr("Repeat One") : Translation.tr("Repeat All") }
@@ -340,7 +344,7 @@ Item {
                     RippleButton {
                         id: volumeBtn
                         implicitWidth: 24; implicitHeight: 24
-                        buttonRadius: 12
+                        buttonRadius: root.radiusSmall
                         colBackground: "transparent"
                         colBackgroundHover: root.colLayer2
                         property real previousVolume: 1.0
@@ -356,7 +360,7 @@ Item {
                             MaterialSymbol { 
                                 anchors.centerIn: parent
                                 text: YtMusic.volume <= 0 ? "volume_off" : YtMusic.volume < 0.5 ? "volume_down" : "volume_up"
-                                iconSize: 14
+                                iconSize: 13
                                 color: YtMusic.volume <= 0 ? root.colTextSecondary : root.colText
                             }
                             MouseArea {
@@ -375,14 +379,14 @@ Item {
                     RippleButton {
                         readonly property bool isLiked: YtMusic.likedSongs.some(s => s.videoId === YtMusic.currentVideoId)
                         implicitWidth: 24; implicitHeight: 24
-                        buttonRadius: 12
+                        buttonRadius: root.radiusSmall
                         colBackground: "transparent"
                         colBackgroundHover: root.colLayer2
                         onClicked: isLiked ? YtMusic.unlikeSong(YtMusic.currentVideoId) : YtMusic.likeSong()
                         contentItem: MaterialSymbol { 
                             anchors.centerIn: parent
                             text: parent.isLiked ? "favorite" : "favorite_border"
-                            iconSize: 14
+                            iconSize: 13
                             fill: parent.isLiked ? 1 : 0
                             color: parent.isLiked ? Appearance.colors.colError : root.colTextSecondary
                         }
