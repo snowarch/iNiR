@@ -29,7 +29,11 @@ AbstractQuickPanel {
         NetworkToggle {
             altAction: () => root.openWifiDialog()
         }
-        
+
+        HotspotToggle {
+            altAction: () => root.openHotspotDialog()
+        }
+
         BluetoothToggle {
             altAction: () => root.openBluetoothDialog()
         }

@@ -30,6 +30,7 @@ import qs.modules.sidebarRight.quickToggles
 import qs.modules.sidebarRight.quickToggles.classicStyle
 import qs.modules.sidebarRight.bluetoothDevices
 import qs.modules.sidebarRight.nightLight
+import qs.modules.sidebarRight.hotspot
 import qs.modules.sidebarRight.volumeMixer
 import qs.modules.sidebarRight.wifiNetworks
 import qs.modules.sidebarLeft.widgets
@@ -56,6 +57,7 @@ Item {
     property bool showAudioInputDialog: false
     property bool showBluetoothDialog: false
     property bool showEventsDialog: false
+    property bool showHotspotDialog: false
     property bool showNightLightDialog: false
     property bool showWifiDialog: false
     property bool editMode: false
@@ -526,6 +528,7 @@ Item {
                 root.showAudioOutputDialog = false
                 root.showAudioInputDialog  = false
                 root.showNightLightDialog  = false
+                root.showHotspotDialog     = false
                 root.eventsDialogEditEvent = null
             }
         }
@@ -1278,6 +1281,7 @@ Item {
                                             function onOpenAudioInputDialog()  { root.showAudioInputDialog  = true }
                                             function onOpenBluetoothDialog()   { root.showBluetoothDialog   = true }
                                             function onOpenNightLightDialog()  { root.showNightLightDialog  = true }
+                                            function onOpenHotspotDialog()     { root.showHotspotDialog     = true }
                                             function onOpenWifiDialog()        { root.showWifiDialog        = true }
                                         }
                                     }
@@ -1294,6 +1298,7 @@ Item {
                                             function onOpenAudioInputDialog()  { root.showAudioInputDialog  = true }
                                             function onOpenBluetoothDialog()   { root.showBluetoothDialog   = true }
                                             function onOpenNightLightDialog()  { root.showNightLightDialog  = true }
+                                            function onOpenHotspotDialog()     { root.showHotspotDialog     = true }
                                             function onOpenWifiDialog()        { root.showWifiDialog        = true }
                                         }
                                     }
@@ -1423,6 +1428,10 @@ Item {
     ToggleDialog {
         shownPropertyString: "showNightLightDialog"
         dialog: NightLightDialog {}
+    }
+    ToggleDialog {
+        shownPropertyString: "showHotspotDialog"
+        dialog: HotspotDialog {}
     }
     ToggleDialog {
         shownPropertyString: "showWifiDialog"

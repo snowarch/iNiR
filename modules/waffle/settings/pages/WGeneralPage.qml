@@ -274,4 +274,33 @@ WSettingsPage {
             onCheckedChanged: Config.setNestedValue("gameMode.disableReloadToasts", checked)
         }
     }
+
+    WSettingsCard {
+        title: Translation.tr("Hotspot")
+        icon: "wifi-tethering"
+
+        WSettingsTextField {
+            label: Translation.tr("Network name (SSID)")
+            icon: "wifi-tethering"
+            description: Translation.tr("The name your hotspot will broadcast")
+            text: Config.options?.hotspot?.ssid ?? "iNiR Hotspot"
+            onTextEdited: (newText) => Config.setNestedValue("hotspot.ssid", newText)
+        }
+
+        WSettingsTextField {
+            label: Translation.tr("Password")
+            icon: "key"
+            description: Translation.tr("WPA2 passphrase for the hotspot")
+            text: Config.options?.hotspot?.password ?? "inirhotspot"
+            onTextEdited: (newText) => Config.setNestedValue("hotspot.password", newText)
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("Use 5 GHz band")
+            icon: "pulse"
+            description: Translation.tr("Use 5 GHz (802.11a) instead of 2.4 GHz. Requires adapter support.")
+            checked: (Config.options?.hotspot?.band ?? "bg") === "a"
+            onCheckedChanged: Config.setNestedValue("hotspot.band", checked ? "a" : "bg")
+        }
+    }
 }

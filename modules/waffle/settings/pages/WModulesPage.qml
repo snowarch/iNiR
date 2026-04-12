@@ -35,6 +35,45 @@ WSettingsPage {
         Config.setNestedValue("enabledPanels", panels)
     }
 
+    // Helper functions for Action Center toggles management
+    function isToggleEnabled(toggleId: string): bool {
+        return (Config.options?.waffles?.actionCenter?.toggles ?? []).includes(toggleId)
+    }
+
+    function setToggleEnabled(toggleId: string, enabled: bool): void {
+        let toggles = [...(Config.options?.waffles?.actionCenter?.toggles ?? [])]
+        const idx = toggles.indexOf(toggleId)
+
+        if (enabled && idx === -1) {
+            toggles.push(toggleId)
+        } else if (!enabled && idx !== -1) {
+            toggles.splice(idx, 1)
+        }
+
+        Config.setNestedValue("waffles.actionCenter.toggles", toggles)
+    }
+
+    readonly property var allToggles: [
+        { id: "network",          label: Translation.tr("Network / Wi-Fi"),   icon: "wifi-4"         },
+        { id: "bluetooth",        label: Translation.tr("Bluetooth"),          icon: "bluetooth"      },
+        { id: "hotspot",          label: Translation.tr("Hotspot"),            icon: "wifi-tethering" },
+        { id: "audio",            label: Translation.tr("Audio output"),       icon: "speaker"        },
+        { id: "mic",              label: Translation.tr("Microphone"),         icon: "mic"            },
+        { id: "easyEffects",      label: Translation.tr("EasyEffects"),        icon: "device-eq"      },
+        { id: "nightLight",       label: Translation.tr("Night Light"),        icon: "weather-moon"   },
+        { id: "darkMode",         label: Translation.tr("Dark Mode"),          icon: "dark-theme"     },
+        { id: "antiFlashbang",    label: Translation.tr("Anti-Flashbang"),     icon: "flash-off"      },
+        { id: "powerProfile",     label: Translation.tr("Power Profile"),      icon: "flash-on"       },
+        { id: "idleInhibitor",    label: Translation.tr("Idle Inhibitor"),     icon: "drink-coffee"   },
+        { id: "notifications",    label: Translation.tr("Notifications"),      icon: "alert"          },
+        { id: "onScreenKeyboard", label: Translation.tr("On-Screen Keyboard"), icon: "keyboard"       },
+        { id: "cloudflareWarp",   label: Translation.tr("Cloudflare WARP"),   icon: "cloudflare"     },
+        { id: "gameMode",         label: Translation.tr("Game Mode"),          icon: "games"          },
+        { id: "musicRecognition", label: Translation.tr("Music Recognition"),  icon: "music-note-2"   },
+        { id: "screenSnip",       label: Translation.tr("Screen Snip"),        icon: "cut"            },
+        { id: "colorPicker",      label: Translation.tr("Color Picker"),       icon: "eyedropper"     }
+    ]
+
     WSettingsInfoBar {
         visible: !root.isWaffleActive
         severity: WSettingsInfoBar.Severity.Info
@@ -153,6 +192,27 @@ WSettingsPage {
             description: Translation.tr("Overview of all workspaces and windows. Supports carousel and centered focus modes.")
             checked: root.isPanelEnabled("wTaskView")
             onCheckedChanged: root.setPanelEnabled("wTaskView", checked)
+        }
+    }
+
+    WSettingsSection {
+        title: Translation.tr("Action Center Toggles")
+        icon: "options"
+    }
+
+    WSettingsCard {
+        title: Translation.tr("Visible toggles")
+        icon: "checkmark"
+
+        Repeater {
+            model: root.allToggles
+            delegate: WSettingsSwitch {
+                required property var modelData
+                label: modelData.label
+                icon: modelData.icon
+                checked: root.isToggleEnabled(modelData.id)
+                onCheckedChanged: root.setToggleEnabled(modelData.id, checked)
+            }
         }
     }
 }

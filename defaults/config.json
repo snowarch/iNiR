@@ -1039,6 +1039,11 @@
         "niriWindowListUpdateIntervalMs": 100,
         "niriWindowListUpdateIntervalMsGameMode": 500
     },
+    "hotspot": {
+        "ssid": "iNiR Hotspot",
+        "password": "inirhotspot",
+        "band": "bg"
+    },
     "reloadToasts": {
         "enable": true
     },
@@ -1226,6 +1231,7 @@
         "actionCenter": {
             "toggles": [
                 "network",
+                "hotspot",
                 "bluetooth",
                 "audio",
                 "mic",

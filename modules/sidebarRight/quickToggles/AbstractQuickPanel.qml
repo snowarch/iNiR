@@ -27,6 +27,7 @@ Rectangle {
     signal openAudioOutputDialog()
     signal openAudioInputDialog()
     signal openBluetoothDialog()
+    signal openHotspotDialog()
     signal openNightLightDialog()
     signal openWifiDialog()
 }

@@ -8,6 +8,7 @@ ColorPickerToggle 1.0 ColorPickerToggle.qml
 DarkModeToggle 1.0 DarkModeToggle.qml
 EasyEffectsToggle 1.0 EasyEffectsToggle.qml
 GameModeToggle 1.0 GameModeToggle.qml
+HotspotToggle 1.0 HotspotToggle.qml
 IdleInhibitorToggle 1.0 IdleInhibitorToggle.qml
 MicToggle 1.0 MicToggle.qml
 MusicRecognitionToggle 1.0 MusicRecognitionToggle.qml

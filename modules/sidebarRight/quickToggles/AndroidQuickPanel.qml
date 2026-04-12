@@ -28,7 +28,7 @@ AbstractQuickPanel {
     readonly property real baseCellHeight: 56
 
     // Toggles
-    readonly property list<string> availableToggleTypes: ["network", "bluetooth", "idleInhibitor", "easyEffects", "nightLight", "darkMode", "cloudflareWarp", "gameMode", "screenSnip", "colorPicker", "onScreenKeyboard", "mic", "audio", "notifications", "powerProfile", "musicRecognition", "voiceSearch", "antiFlashbang"]
+    readonly property list<string> availableToggleTypes: ["network", "hotspot", "bluetooth", "idleInhibitor", "easyEffects", "nightLight", "darkMode", "cloudflareWarp", "gameMode", "screenSnip", "colorPicker", "onScreenKeyboard", "mic", "audio", "notifications", "powerProfile", "musicRecognition", "voiceSearch", "antiFlashbang"]
     readonly property int columns: Config.options?.sidebar?.quickToggles?.android?.columns ?? 4
     readonly property list<var> toggles: Config.ready ? (Config.options?.sidebar?.quickToggles?.android?.toggles ?? []) : []
     readonly property list<var> toggleRows: toggleRowsForList(toggles)
@@ -112,6 +112,7 @@ AbstractQuickPanel {
                                 onOpenAudioOutputDialog: root.openAudioOutputDialog()
                                 onOpenAudioInputDialog: root.openAudioInputDialog()
                                 onOpenBluetoothDialog: root.openBluetoothDialog()
+                                onOpenHotspotDialog: root.openHotspotDialog()
                                 onOpenNightLightDialog: root.openNightLightDialog()
                                 onOpenWifiDialog: root.openWifiDialog()
                             }

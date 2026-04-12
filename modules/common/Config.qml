@@ -887,6 +887,12 @@ Singleton {
                 property string popupMode: "dock"
             }
 
+            property JsonObject hotspot: JsonObject {
+                property string ssid: "iNiR Hotspot"
+                property string password: "inirhotspot"
+                property string band: "bg" // "bg" = 2.4GHz, "a" = 5GHz
+            }
+
             property JsonObject networking: JsonObject {
                 property string userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
             }
@@ -1510,7 +1516,7 @@ Singleton {
                     property bool showUnreadCount: true
                 }
                 property JsonObject actionCenter: JsonObject {
-                    property list<string> toggles: [ "network", "bluetooth", "easyEffects", "powerProfile", "idleInhibitor", "nightLight", "darkMode", "antiFlashbang", "cloudflareWarp", "mic", "musicRecognition", "notifications", "onScreenKeyboard", "gameMode", "screenSnip", "colorPicker" ]
+                    property list<string> toggles: [ "network", "hotspot", "bluetooth", "easyEffects", "powerProfile", "idleInhibitor", "nightLight", "darkMode", "antiFlashbang", "cloudflareWarp", "mic", "musicRecognition", "notifications", "onScreenKeyboard", "gameMode", "screenSnip", "colorPicker" ]
                 }
                 property JsonObject calendar: JsonObject {
                     property bool force2CharDayOfWeek: true
