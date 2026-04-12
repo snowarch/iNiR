@@ -3341,20 +3341,12 @@ Singleton {
             if (value) scss += `$${key}: ${value};\n`;
         }
 
-        // Generate terminal colors from material palette
-        // Using the theme's actual colors with configurable adjustments
+        // Generate terminal colors
+        // If the color object provides explicit terminal colors (term1-term14),
+        // use them directly — this allows preset themes to ship their exact
+        // terminal palette instead of relying on harmonized generation.
+        const hasExplicitTermColors = c.term1 !== undefined;
         const isDark = c.darkmode;
-
-        // Get user adjustments from config
-        const termAdj = Config.options?.appearance?.wallpaperTheming?.terminalColorAdjustments ?? {};
-        const userSaturation = termAdj.saturation ?? 0.65;
-        const userBrightness = termAdj.brightness ?? 0.60;
-        const userHarmony = termAdj.harmony ?? 0.40;
-
-        // Get primary color for harmonization
-        const primaryColor = Qt.color(c.m3primary);
-        const primaryHue = primaryColor.hslHue;
-        const primarySat = primaryColor.hslSaturation;
 
         // Helper to convert Qt color to hex
         function colorToHex(col) {
@@ -3364,67 +3356,87 @@ Singleton {
             return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
         }
 
-        // Helper to create harmonized color with fixed semantic hue
-        function harmonizedColor(targetHue, saturation, lightness, harmony) {
-            let finalHue = targetHue;
-            if (primarySat > 0.08 && harmony > 0) {
-                let hueDiff = primaryHue - targetHue;
-                if (hueDiff > 0.5) hueDiff -= 1;
-                if (hueDiff < -0.5) hueDiff += 1;
-                finalHue = (targetHue + hueDiff * harmony + 1) % 1;
-            }
-            // Clamp saturation and lightness to valid ranges
-            const clampedSat = Math.max(0.20, Math.min(0.55, saturation));
-            const clampedLight = Math.max(0.30, Math.min(0.70, lightness));
-            const col = Qt.hsla(finalHue, clampedSat, clampedLight, 1.0);
-            return colorToHex(col);
-        }
-
         // Background colors - directly from theme (use surfaceContainerLow for slightly lighter bg)
         const bgColor = Qt.color(c.m3surfaceContainerLow ?? c.m3background);
-        const term0 = colorToHex(bgColor);
+        const term0 = c.term0 ?? colorToHex(bgColor);
 
         // Foreground colors - from theme
         const fgColor = Qt.color(c.m3onBackground);
-        const term15 = colorToHex(fgColor);
+        const term15 = c.term15 ?? colorToHex(fgColor);
 
         // Gray tones - from theme's surface variant and outline
-        const term7 = colorToHex(Qt.color(c.m3onSurfaceVariant));
-        const term8 = colorToHex(Qt.color(c.m3outline));
+        const term7 = c.term7 ?? colorToHex(Qt.color(c.m3onSurfaceVariant));
+        const term8 = c.term8 ?? colorToHex(Qt.color(c.m3outline));
 
-        // Calculate lightness values based on user brightness setting
-        // For dark mode: higher brightness = lighter colors (0.45-0.65 range)
-        // For light mode: higher brightness = darker colors (0.35-0.55 range)
-        const normalLight = isDark ? (0.40 + userBrightness * 0.30) : (0.60 - userBrightness * 0.30);
-        const brightLight = isDark ? (0.50 + userBrightness * 0.30) : (0.50 - userBrightness * 0.30);
+        let term1, term2, term3, term4, term5, term6;
+        let term9, term10, term11, term12, term13, term14;
 
-        // Saturation values - use user setting directly
-        const normalSat = userSaturation;
-        const brightSat = Math.min(0.55, userSaturation + 0.05);
+        if (hasExplicitTermColors) {
+            // Preset provides exact terminal colors — use as-is
+            term1 = c.term1;   term9  = c.term9;
+            term2 = c.term2;   term10 = c.term10;
+            term3 = c.term3;   term11 = c.term11;
+            term4 = c.term4;   term12 = c.term12;
+            term5 = c.term5;   term13 = c.term13;
+            term6 = c.term6;   term14 = c.term14;
+        } else {
+            // Harmonized generation from fixed semantic hues + theme primary
+            const termAdj = Config.options?.appearance?.wallpaperTheming?.terminalColorAdjustments ?? {};
+            const userSaturation = termAdj.saturation ?? 0.65;
+            const userBrightness = termAdj.brightness ?? 0.60;
+            const userHarmony = termAdj.harmony ?? 0.40;
 
-        // Red - always use semantic red (error colors often have wrong hue)
-        const term1 = harmonizedColor(0.98, normalSat, normalLight, userHarmony);
-        const term9 = harmonizedColor(0.98, brightSat, brightLight, userHarmony);
+            const primaryColor = Qt.color(c.m3primary);
+            const primaryHue = primaryColor.hslHue;
+            const primarySat = primaryColor.hslSaturation;
 
-        // Green - semantic green harmonized with theme
-        const term2 = harmonizedColor(0.36, normalSat, normalLight, userHarmony);
-        const term10 = harmonizedColor(0.36, brightSat, brightLight, userHarmony);
+            // Helper to create harmonized color with fixed semantic hue
+            // Harmony is intentionally gentle (~12° max shift) to preserve
+            // semantic color identity while adding subtle theme warmth.
+            function harmonizedColor(targetHue, saturation, lightness, harmony) {
+                let finalHue = targetHue;
+                if (primarySat > 0.08 && harmony > 0) {
+                    let hueDiff = primaryHue - targetHue;
+                    if (hueDiff > 0.5) hueDiff -= 1;
+                    if (hueDiff < -0.5) hueDiff += 1;
+                    const maxShift = 0.033;
+                    const rawShift = hueDiff * harmony * 0.3;
+                    const clampedShift = Math.max(-maxShift, Math.min(maxShift, rawShift));
+                    finalHue = (targetHue + clampedShift + 1) % 1;
+                }
+                const clampedSat = Math.max(0.25, Math.min(0.85, saturation));
+                const clampedLight = Math.max(0.25, Math.min(0.75, lightness));
+                const col = Qt.hsla(finalHue, clampedSat, clampedLight, 1.0);
+                return colorToHex(col);
+            }
 
-        // Yellow - semantic yellow/orange
-        const term3 = harmonizedColor(0.12, normalSat + 0.10, normalLight, userHarmony);
-        const term11 = harmonizedColor(0.12, brightSat + 0.10, brightLight, userHarmony);
+            // Calculate lightness values based on user brightness setting
+            const normalLight = isDark ? (0.42 + userBrightness * 0.35) : (0.58 - userBrightness * 0.30);
+            const brightLight = isDark ? (0.55 + userBrightness * 0.30) : (0.48 - userBrightness * 0.30);
 
-        // Blue - semantic blue
-        const term4 = harmonizedColor(0.58, normalSat, normalLight, userHarmony);
-        const term12 = harmonizedColor(0.58, brightSat, brightLight, userHarmony);
+            // Saturation values - boost for vivid terminal colors
+            const normalSat = Math.min(0.85, userSaturation * 1.3);
+            const brightSat = Math.min(0.90, userSaturation * 1.3 + 0.05);
 
-        // Magenta - semantic magenta/purple
-        const term5 = harmonizedColor(0.85, normalSat, normalLight, userHarmony);
-        const term13 = harmonizedColor(0.85, brightSat, brightLight, userHarmony);
-
-        // Cyan - semantic cyan
-        const term6 = harmonizedColor(0.48, normalSat, normalLight, userHarmony);
-        const term14 = harmonizedColor(0.48, brightSat, brightLight, userHarmony);
+            // Red
+            term1 = harmonizedColor(0.98, normalSat, normalLight, userHarmony);
+            term9 = harmonizedColor(0.98, brightSat, brightLight, userHarmony);
+            // Green
+            term2 = harmonizedColor(0.36, normalSat, normalLight, userHarmony);
+            term10 = harmonizedColor(0.36, brightSat, brightLight, userHarmony);
+            // Yellow
+            term3 = harmonizedColor(0.12, normalSat + 0.10, normalLight, userHarmony);
+            term11 = harmonizedColor(0.12, brightSat + 0.10, brightLight, userHarmony);
+            // Blue
+            term4 = harmonizedColor(0.58, normalSat, normalLight, userHarmony);
+            term12 = harmonizedColor(0.58, brightSat, brightLight, userHarmony);
+            // Magenta
+            term5 = harmonizedColor(0.85, normalSat, normalLight, userHarmony);
+            term13 = harmonizedColor(0.85, brightSat, brightLight, userHarmony);
+            // Cyan
+            term6 = harmonizedColor(0.48, normalSat, normalLight, userHarmony);
+            term14 = harmonizedColor(0.48, brightSat, brightLight, userHarmony);
+        }
 
         scss += `$term0: ${term0};\n`;
         scss += `$term1: ${term1};\n`;
@@ -3596,6 +3608,9 @@ Singleton {
 
         themeMetaFileView.path = Qt.resolvedUrl(Directories.generatedThemeMetaPath)
         themeMetaFileView.setText(JSON.stringify(buildThemeMeta(c), null, 2))
+
+        scssFileView.path = Qt.resolvedUrl(Directories.generatedMaterialScssPath)
+        scssFileView.setText(generateScssFromColors(c))
 
         const chromiumThemeRgb = hexToRgbTriplet(c.m3surfaceContainerLow || c.m3surface || c.m3background || "")
         if (chromiumThemeRgb.length > 0) {

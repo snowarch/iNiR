@@ -62,7 +62,10 @@ Singleton {
     property string shellConfig: `${Directories.configPath}/illogical-impulse`
     property string shellConfigName: "config.json"
     property string shellConfigPath: `${Directories.shellConfig}/${Directories.shellConfigName}`
+    property string updateLogPath: `${Directories.stateUserPath}/update.log`
+    property string updateStatusPath: `${Directories.stateUserPath}/update-status`
     property string todoPath: FileUtils.trimFileProtocol(`${Directories.state}/user/todo.json`)
+    property string todoTxtPath: `${Directories.stateUserPath}/todo.txt`
     property string notepadPath: FileUtils.trimFileProtocol(`${Directories.state}/user/notepad.txt`)
     property string notesPath: FileUtils.trimFileProtocol(`${Directories.state}/user/notes.txt`)
     property string conflictCachePath: FileUtils.trimFileProtocol(`${Directories.cache}/conflict-killer`)

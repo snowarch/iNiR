@@ -60,21 +60,34 @@ is_omarchy() {
 }
 
 elevate() {
+  # 1. Interactive terminal — use sudo directly (user sees password prompt)
   if [[ -t 0 ]] && [[ -t 1 ]]; then
     sudo "$@"
     return $?
   fi
 
+  # 2. Non-interactive but cached sudo credentials available
   if sudo -n true 2>/dev/null; then
     sudo "$@"
     return $?
   fi
 
+  # 3. Graphical session with polkit — try pkexec, but warn if no agent
   if command -v pkexec >/dev/null 2>&1 && [[ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]]; then
-    pkexec "$@"
-    return $?
+    # Check for a running polkit agent; without one pkexec hangs or fails silently
+    if pgrep -xf 'polkit-.+-authentication-agent' >/dev/null 2>&1 \
+       || pgrep -xf 'polkitd' >/dev/null 2>&1 \
+       || pgrep -xf 'gnome-shell' >/dev/null 2>&1 \
+       || pgrep -xf 'kwin_wayland' >/dev/null 2>&1; then
+      pkexec "$@"
+      return $?
+    else
+      log "elevate: pkexec available but no polkit agent detected — skipping elevation"
+      return 1
+    fi
   fi
 
+  log "elevate: no elevation method available (need sudo/pkexec with agent)"
   return 1
 }
 
