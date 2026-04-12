@@ -562,6 +562,7 @@ Singleton {
     function setVolume(vol): void {
         const clamped = Math.max(0, Math.min(1, vol))
         root._savedVolume = Math.round(clamped * 100)
+        Config.setNestedValue("sidebar.ytmusic.volume", root._savedVolume)
         if (root._mpvPlayer) {
             root._mpvPlayer.volume = clamped
         } else {
@@ -574,7 +575,7 @@ Singleton {
     }
     
     property real _ipcVolume: 1.0
-    property int _savedVolume: 100
+    property int _savedVolume: Config.options?.sidebar?.ytmusic?.volume ?? 100
 
     function toggleShuffle(): void {
         root.shuffleMode = !root.shuffleMode

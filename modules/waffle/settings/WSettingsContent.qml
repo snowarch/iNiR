@@ -60,6 +60,7 @@ Item {
         { pageIndex: 1, pageName: "General", section: "Game Mode", label: "Disable animations", targetLabel: "Disable animations", keywords: ["game", "gaming", "animations", "performance"] },
         { pageIndex: 1, pageName: "General", section: "Game Mode", label: "Disable effects", targetLabel: "Disable effects", keywords: ["game", "gaming", "effects", "blur", "shadows", "performance"] },
         { pageIndex: 1, pageName: "General", section: "Game Mode", label: "Disable Niri animations", targetLabel: "Disable Niri animations", keywords: ["game", "gaming", "niri", "compositor", "animations"] },
+        { pageIndex: 1, pageName: "General", section: "Game Mode", label: "Suppress notifications", targetLabel: "Suppress notifications", keywords: ["game", "gaming", "notifications", "suppress", "hide", "popup", "silent"] },
         
         // === Taskbar (2) ===
         { pageIndex: 2, pageName: "Taskbar", section: "Position & Layout", label: "Bottom position", targetLabel: "Bottom position", keywords: ["taskbar", "bar", "position", "bottom", "top"] },

@@ -136,9 +136,18 @@ Singleton {
     property var _cachedPopupAppNameList: []
     property bool _groupsDirty: true
 
-    property bool popupInhibited: (GlobalStates?.sidebarRightOpen ?? false) || (GlobalStates?.waffleNotificationCenterOpen ?? false) || silent
+    property bool popupInhibited: (GlobalStates?.sidebarRightOpen ?? false) || (GlobalStates?.waffleNotificationCenterOpen ?? false) || silent || (GameMode?.active && GameMode?.suppressNotifications)
     property var latestTimeForApp: ({})
 
+    // When GameMode activates with suppressNotifications, dismiss existing popups
+    Connections {
+        target: GameMode
+        function onActiveChanged() {
+            if (GameMode.active && GameMode.suppressNotifications) {
+                root.timeoutAll()
+            }
+        }
+    }
     // Debounce timer for group updates - 100ms is sufficient for responsive UI
     Timer {
         id: groupUpdateTimer

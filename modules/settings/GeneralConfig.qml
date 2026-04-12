@@ -151,9 +151,12 @@ ContentPage {
                 }
             }
 
-            SettingsDivider {}
+            SettingsDivider {
+                visible: Quickshell.screens.length > 1
+            }
 
             ContentSubsection {
+                visible: Quickshell.screens.length > 1
                 title: Translation.tr("Bar visibility")
                 tooltip: Translation.tr("Choose which monitors show the bar. All enabled = shown everywhere.")
 
@@ -168,6 +171,8 @@ ContentPage {
                             required property var modelData
                             required property int index
                             readonly property string screenName: modelData.name ?? ""
+                            property bool _ready: false
+                            Component.onCompleted: _ready = true
                             Layout.fillWidth: true
                             buttonIcon: "web_asset"
                             text: screenName || ("Monitor " + (index + 1))
@@ -176,6 +181,7 @@ ContentPage {
                                 return list.length === 0 || list.includes(screenName)
                             }
                             onCheckedChanged: {
+                                if (!_ready) return
                                 const screens = Quickshell.screens
                                 let current = [...(Config.options?.bar?.screenList ?? [])]
                                 const allNames = screens.map(s => s?.name ?? "").filter(n => n.length > 0)
@@ -199,6 +205,7 @@ ContentPage {
             }
 
             ContentSubsection {
+                visible: Quickshell.screens.length > 1
                 title: Translation.tr("Dock visibility")
                 tooltip: Translation.tr("Choose which monitors show the dock. All enabled = shown everywhere.")
 
@@ -213,6 +220,8 @@ ContentPage {
                             required property var modelData
                             required property int index
                             readonly property string screenName: modelData.name ?? ""
+                            property bool _ready: false
+                            Component.onCompleted: _ready = true
                             Layout.fillWidth: true
                             buttonIcon: "call_to_action"
                             text: screenName || ("Monitor " + (index + 1))
@@ -221,6 +230,7 @@ ContentPage {
                                 return list.length === 0 || list.includes(screenName)
                             }
                             onCheckedChanged: {
+                                if (!_ready) return
                                 const screens = Quickshell.screens
                                 let current = [...(Config.options?.dock?.screenList ?? [])]
                                 const allNames = screens.map(s => s?.name ?? "").filter(n => n.length > 0)

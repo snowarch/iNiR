@@ -259,6 +259,14 @@ WSettingsPage {
         }
 
         WSettingsSwitch {
+            label: Translation.tr("Suppress notifications")
+            icon: "alert-off"
+            description: Translation.tr("Hide notification popups while game mode is active")
+            checked: Config.options?.gameMode?.suppressNotifications ?? true
+            onCheckedChanged: Config.setNestedValue("gameMode.suppressNotifications", checked)
+        }
+
+        WSettingsSwitch {
             label: Translation.tr("Hide reload toasts")
             icon: "alert-off"
             description: Translation.tr("Suppress reload notifications when Game Mode is active")

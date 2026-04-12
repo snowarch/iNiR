@@ -3169,15 +3169,15 @@ Singleton {
             return false;
         }
         console.log("[ThemePresets] Applying colors to Appearance.m3colors");
-        
+
         var cSource = preset.colors === "custom" ? (Config.options?.appearance?.customTheme ?? {}) : preset.colors;
-        
+
         // Soften colors for built-in presets (not custom) if enabled in config
         var shouldSoften = (Config.options?.appearance?.softenColors ?? true) && (id !== "custom");
         var c = shouldSoften ? softenColors(cSource) : cSource;
 
         const m3 = Appearance.m3colors;
-        
+
         m3.darkmode = c.darkmode;
         m3.transparent = c.transparent ?? false;
         m3.m3background = c.m3background;
@@ -3241,10 +3241,10 @@ Singleton {
         if (applyExternal) {
             applyExternalThemes(c);
         }
-        
+
         return true;
     }
-    
+
     function applyExternalThemes(c) {
         const enableAppsAndShell = Config.options?.appearance?.wallpaperTheming?.enableAppsAndShell ?? true;
         const enableTerminal = Config.options?.appearance?.wallpaperTheming?.enableTerminal ?? true;
@@ -3274,12 +3274,12 @@ Singleton {
             ]);
         }
     }
-    
+
     function generateScssFromColors(c) {
         // Generate SCSS format matching generate_colors_material.py output
         let scss = `$darkmode: ${c.darkmode};\n`;
         scss += `$transparent: ${c.transparent ?? false};\n`;
-        
+
         // Map m3* properties to scss variables
         const colorMap = {
             "background": c.m3background,
@@ -3336,11 +3336,11 @@ Singleton {
             "successContainer": c.m3successContainer,
             "onSuccessContainer": c.m3onSuccessContainer,
         };
-        
+
         for (const [key, value] of Object.entries(colorMap)) {
             if (value) scss += `$${key}: ${value};\n`;
         }
-        
+
         // Generate terminal colors
         // If the color object provides explicit terminal colors (term1-term14),
         // use them directly — this allows preset themes to ship their exact
@@ -3359,11 +3359,11 @@ Singleton {
         // Background colors - directly from theme (use surfaceContainerLow for slightly lighter bg)
         const bgColor = Qt.color(c.m3surfaceContainerLow ?? c.m3background);
         const term0 = c.term0 ?? colorToHex(bgColor);
-        
+
         // Foreground colors - from theme
         const fgColor = Qt.color(c.m3onBackground);
         const term15 = c.term15 ?? colorToHex(fgColor);
-        
+
         // Gray tones - from theme's surface variant and outline
         const term7 = c.term7 ?? colorToHex(Qt.color(c.m3onSurfaceVariant));
         const term8 = c.term8 ?? colorToHex(Qt.color(c.m3outline));
@@ -3437,7 +3437,7 @@ Singleton {
             term6 = harmonizedColor(0.48, normalSat, normalLight, userHarmony);
             term14 = harmonizedColor(0.48, brightSat, brightLight, userHarmony);
         }
-        
+
         scss += `$term0: ${term0};\n`;
         scss += `$term1: ${term1};\n`;
         scss += `$term2: ${term2};\n`;
@@ -3454,7 +3454,7 @@ Singleton {
         scss += `$term13: ${term13};\n`;
         scss += `$term14: ${term14};\n`;
         scss += `$term15: ${term15};\n`;
-        
+
         return scss;
     }
     
@@ -3520,7 +3520,7 @@ Singleton {
             on_success_container: c.m3onSuccessContainer
         };
     }
-    
+
     function generateColorsJson(c) {
         console.log("[ThemePresets] Generating colors.json for preset theme");
         const colorsJson = generateColorsJsonObject(c);
@@ -3586,6 +3586,19 @@ Singleton {
         };
     }
 
+    function hexToRgbTriplet(hex) {
+        const normalized = String(hex ?? "").trim();
+        const match = normalized.match(/^#?([0-9A-Fa-f]{6})$/);
+        if (!match)
+            return "";
+
+        const value = match[1];
+        const r = parseInt(value.slice(0, 2), 16);
+        const g = parseInt(value.slice(2, 4), 16);
+        const b = parseInt(value.slice(4, 6), 16);
+        return `${r},${g},${b}`;
+    }
+
     function writeGeneratedThemeContracts(c) {
         paletteJsonFileView.path = Qt.resolvedUrl(Directories.generatedPalettePath)
         paletteJsonFileView.setText(JSON.stringify(generateColorsJsonObject(c), null, 2))
@@ -3598,6 +3611,12 @@ Singleton {
 
         scssFileView.path = Qt.resolvedUrl(Directories.generatedMaterialScssPath)
         scssFileView.setText(generateScssFromColors(c))
+
+        const chromiumThemeRgb = hexToRgbTriplet(c.m3surfaceContainerLow || c.m3surface || c.m3background || "")
+        if (chromiumThemeRgb.length > 0) {
+            chromiumThemeFileView.path = Qt.resolvedUrl(Directories.generatedChromiumThemePath)
+            chromiumThemeFileView.setText(`${chromiumThemeRgb}\n`)
+        }
     }
 
     // ========== Hover Preview System ==========
@@ -3667,27 +3686,27 @@ Singleton {
 
     function previewPreset(id) {
         if (!id || id === "auto") return;
-        
+
         const preset = getPreset(id);
         if (!preset?.colors) return;
-        
+
         // Capture current colors if not already previewing
         if (!_isPreviewing) {
             _previewBackup = captureCurrentColors();
             _isPreviewing = true;
         }
-        
+
         // Apply preview (no external apps)
         var cSource = preset.colors === "custom" ? Config.options?.appearance?.customTheme : preset.colors;
         var shouldSoften = (Config.options?.appearance?.softenColors ?? true) && (id !== "custom");
         var c = shouldSoften ? softenColors(cSource) : cSource;
-        
+
         applyColorsToAppearance(c);
     }
 
     function restoreFromPreview() {
         if (!_isPreviewing || !_previewBackup) return;
-        
+
         applyColorsToAppearance(_previewBackup);
         _previewBackup = null;
         _isPreviewing = false;

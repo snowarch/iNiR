@@ -23,7 +23,7 @@ Scope {
     PanelWindow {
         id: panelWindow
         // Hide during GameMode to avoid input interference
-        visible: (Notifications.popupList.length > 0) && !GlobalStates.screenLocked && !GlobalStates.waffleNotificationCenterOpen && !GameMode.shouldHidePanels
+        visible: (Notifications.popupList.length > 0) && !GlobalStates.screenLocked && !GlobalStates.waffleNotificationCenterOpen && !(GameMode.active && GameMode.suppressNotifications)
 
         screen: CompositorService.isNiri
             ? Quickshell.screens.find(s => s.name === NiriService.currentOutput) ?? GlobalStates.primaryScreen

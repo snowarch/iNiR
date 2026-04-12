@@ -64,17 +64,18 @@ Singleton {
     property string shellConfigPath: `${Directories.shellConfig}/${Directories.shellConfigName}`
     property string updateLogPath: `${Directories.stateUserPath}/update.log`
     property string updateStatusPath: `${Directories.stateUserPath}/update-status`
-    property string todoPath: `${Directories.stateUserPath}/todo.json`
+    property string todoPath: FileUtils.trimFileProtocol(`${Directories.state}/user/todo.json`)
     property string todoTxtPath: `${Directories.stateUserPath}/todo.txt`
-    property string notepadPath: `${Directories.stateUserPath}/notepad.txt`
-    property string notesPath: `${Directories.stateUserPath}/notes.txt`
-    property string conflictCachePath: `${Directories.cachePath}/conflict-killer`
-    property string notificationsPath: `${Directories.stateUserPath}/notifications.json`
-    property string generatedMaterialThemePath: `${Directories.stateUserPath}/generated/colors.json`
-    property string generatedPalettePath: `${Directories.stateUserPath}/generated/palette.json`
-    property string generatedTerminalPalettePath: `${Directories.stateUserPath}/generated/terminal.json`
-    property string generatedThemeMetaPath: `${Directories.stateUserPath}/generated/theme-meta.json`
-    property string generatedWallpaperCategoryPath: `${Directories.stateUserPath}/generated/wallpaper/category.txt`
+    property string notepadPath: FileUtils.trimFileProtocol(`${Directories.state}/user/notepad.txt`)
+    property string notesPath: FileUtils.trimFileProtocol(`${Directories.state}/user/notes.txt`)
+    property string conflictCachePath: FileUtils.trimFileProtocol(`${Directories.cache}/conflict-killer`)
+    property string notificationsPath: FileUtils.trimFileProtocol(`${Directories.state}/user/notifications.json`)
+    property string generatedMaterialThemePath: FileUtils.trimFileProtocol(`${Directories.state}/user/generated/colors.json`)
+    property string generatedPalettePath: FileUtils.trimFileProtocol(`${Directories.state}/user/generated/palette.json`)
+    property string generatedTerminalPalettePath: FileUtils.trimFileProtocol(`${Directories.state}/user/generated/terminal.json`)
+    property string generatedThemeMetaPath: FileUtils.trimFileProtocol(`${Directories.state}/user/generated/theme-meta.json`)
+    property string generatedChromiumThemePath: FileUtils.trimFileProtocol(`${Directories.state}/user/generated/chromium.theme`)
+    property string generatedWallpaperCategoryPath: FileUtils.trimFileProtocol(`${Directories.state}/user/generated/wallpaper/category.txt`)
     property string cliphistDecode: FileUtils.trimFileProtocol(`/tmp/quickshell/media/cliphist`)
     property string screenshotTemp: "/tmp/quickshell/media/screenshot"
     property string wallpaperSwitchScriptPath: `${Directories.scriptsPath}/colors/switchwall.sh`
@@ -115,7 +116,8 @@ Singleton {
     // Cleanup on init
     Component.onCompleted: {
         Quickshell.execDetached(["mkdir", "-p", `${shellConfig}`])
-        Quickshell.execDetached(["mkdir", "-p", `${stateUserPath}`])
+        Quickshell.execDetached(["mkdir", "-p", FileUtils.trimFileProtocol(`${state}/user`)])
+        Quickshell.execDetached(["mkdir", "-p", FileUtils.trimFileProtocol(`${state}/user/generated`)])
         Quickshell.execDetached(["mkdir", "-p", `${favicons}`])
         Quickshell.execDetached(["rm", "-rf", `${coverArt}`])
         Quickshell.execDetached(["mkdir", "-p", `${coverArt}`])

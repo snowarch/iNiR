@@ -195,9 +195,7 @@ Singleton {
     }
 
     function isWindowFullscreenLikeForAutoExpand(window): bool {
-        if (!window || window.is_fullscreen === true)
-            return true
-
+        if (!window) return true
         return GameMode.isWindowFullscreen(window)
     }
 
@@ -392,12 +390,16 @@ Singleton {
     function handleNiriEvent(event) {
         const eventType = Object.keys(event)[0]
 
-        // During GameMode, skip non-essential events to reduce CPU usage
+        // During GameMode, skip non-essential events to reduce CPU usage.
+        // WindowsChanged and WindowLayoutsChanged MUST remain — they carry the
+        // window size updates that GameMode needs to detect fullscreen exit.
         if (GameMode.active) {
             const criticalEvents = [
                 'WindowFocusChanged',
                 'WindowClosed',
                 'WindowOpenedOrChanged',
+                'WindowsChanged',
+                'WindowLayoutsChanged',
                 'WorkspaceActivated',
                 'WorkspaceActiveWindowChanged',
                 'WorkspacesChanged',

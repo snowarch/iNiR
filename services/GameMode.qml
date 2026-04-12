@@ -79,11 +79,16 @@ Singleton {
 
     // External process control (optional)
     readonly property bool disableDiscoverOverlay: Config.options?.gameMode?.disableDiscoverOverlay ?? true
+    readonly property bool suppressNotifications: Config.options?.gameMode?.suppressNotifications ?? true
     readonly property string _discoverOverlayServiceName: "discover-overlay.service"
 
-    // Hysteresis: require multiple consecutive checks to change auto state
+    // Hysteresis: require N consecutive fullscreen checks before activating
+    // (prevents false triggers during workspace animations or brief fullscreen).
+    // Deactivation is immediate — user leaving fullscreen should feel instant.
+    // The tight 2px size tolerance already prevents false positives on maximized
+    // windows with gaps (which triggered the old 60px heuristic).
     property int _fullscreenCount: 0
-    readonly property int _hysteresisThreshold: 1
+    readonly property int _activationThreshold: 1
 
     // State file path
     readonly property string _stateFile: Quickshell.env("HOME") + "/.local/state/quickshell/user/gamemode_active"
@@ -127,13 +132,31 @@ Singleton {
         stateReader.reload()
     }
 
-    // Check if a window is fullscreen using niri's native is_fullscreen flag.
-    // The old size-based heuristic (60px margin) caused false positives on maximized
-    // windows with small gaps, triggering GameMode and all its side effects unexpectedly.
+    // Check if a window is fullscreen.
+    // Niri 25.11+ doesn't expose is_fullscreen on windows.
+    // We detect fullscreen by comparing window_size to the output's logical
+    // resolution (via workspace → output mapping). A small tolerance (2px)
+    // accounts for sub-pixel rounding differences.
     function isWindowFullscreen(window) {
         if (!window) return false
         if (!CompositorService.isNiri) return false
-        return window.is_fullscreen === true
+
+        // If niri ever adds is_fullscreen back, prefer it
+        if (window.is_fullscreen === true) return true
+
+        // Fallback: compare window size to output logical size
+        const winSize = window.layout?.window_size
+        if (!winSize || winSize.length < 2) return false
+
+        const ws = NiriService.workspaces[window.workspace_id]
+        if (!ws) return false
+
+        const output = NiriService.outputs[ws.output]
+        if (!output?.logical) return false
+
+        const tolerance = 2
+        return Math.abs(winSize[0] - output.logical.width) <= tolerance
+            && Math.abs(winSize[1] - output.logical.height) <= tolerance
     }
     
     // Check if ANY window across all workspaces is fullscreen
@@ -190,15 +213,19 @@ Singleton {
             return
         }
         
-        // Hysteresis: require consistent state before changing
+        // Asymmetric hysteresis:
+        // - Activation: require _activationThreshold consecutive fullscreen checks
+        //   to avoid false triggers during workspace switches or brief fullscreen.
+        // - Deactivation: immediate (count resets to 0) so exiting fullscreen
+        //   feels instant. The 300ms debounce already filters event noise.
         if (isFullscreen) {
-            _fullscreenCount = Math.min(_fullscreenCount + 1, _hysteresisThreshold + 1)
+            _fullscreenCount = Math.min(_fullscreenCount + 1, _activationThreshold + 1)
         } else {
-            _fullscreenCount = Math.max(_fullscreenCount - 1, 0)
+            _fullscreenCount = 0
         }
         
         const wasActive = _autoActive
-        const shouldBeActive = _fullscreenCount >= _hysteresisThreshold
+        const shouldBeActive = _fullscreenCount >= _activationThreshold
         
         if (shouldBeActive !== wasActive) {
             _autoActive = shouldBeActive

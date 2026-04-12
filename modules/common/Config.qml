@@ -431,6 +431,7 @@ Singleton {
                 property bool disableNiriAnimations: true
                 property bool disableReloadToasts: true
                 property bool disableDiscoverOverlay: true
+                property bool suppressNotifications: true // Hide notification popups during GameMode
                 property bool minimalMode: true // Make panels transparent/minimal during GameMode
                 // Throttle Niri window list updates - 100ms = 10 FPS, sufficient for smooth UI
                 // Lower values increase CPU usage with diminishing returns on perceived smoothness
@@ -1144,6 +1145,9 @@ Singleton {
                     property list<var> playlists: []
                     property list<var> liked: []
                     property string lastLikedSync: ""
+                    property bool upNextNotifications: true
+                    property bool suppressUpNextInFullscreen: true
+                    property int volume: 100
                     property JsonObject profile: JsonObject {
                         property string name: ""
                         property string avatar: ""

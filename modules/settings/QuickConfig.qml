@@ -1642,6 +1642,18 @@ ContentPage {
                     text: Translation.tr("Make panels transparent and hide backgrounds for maximum performance")
                 }
             }
+
+            SettingsSwitch {
+                buttonIcon: "notifications_off"
+                text: Translation.tr("Suppress notifications")
+                checked: Config.options?.gameMode?.suppressNotifications ?? true
+                onCheckedChanged: {
+                    Config.setNestedValue("gameMode.suppressNotifications", checked)
+                }
+                StyledToolTip {
+                    text: Translation.tr("Hide notification popups while Game Mode is active")
+                }
+            }
         }
     }
 
