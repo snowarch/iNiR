@@ -118,6 +118,18 @@ ContentPage {
                 }
             }
             SettingsSwitch {
+                buttonIcon: "terminal"
+                text: Translation.tr("Neovim")
+                checked: Config.options?.appearance?.wallpaperTheming?.enableNeovim ?? true
+                onCheckedChanged: {
+                    Config.setNestedValue("appearance.wallpaperTheming.enableNeovim", checked)
+                    colorRegenTimer.restart()
+                }
+                StyledToolTip {
+                    text: Translation.tr("Generate and auto-apply the iNiR Neovim colorscheme from wallpaper colors")
+                }
+            }
+            SettingsSwitch {
                 buttonIcon: "code"
                 text: Translation.tr("VSCode editors")
                 checked: Config.options?.appearance?.wallpaperTheming?.enableVSCode ?? true

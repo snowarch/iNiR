@@ -641,6 +641,14 @@ WSettingsPage {
         }
 
         WSettingsSwitch {
+            label: Translation.tr("Neovim theming")
+            icon: "window-console"
+            description: Translation.tr("Generate and auto-apply the iNiR Neovim colorscheme from wallpaper colors")
+            checked: Config.options?.appearance?.wallpaperTheming?.enableNeovim ?? true
+            onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.enableNeovim", checked)
+        }
+
+        WSettingsSwitch {
             label: Translation.tr("Steam theming")
             icon: "gamepad"
             description: Translation.tr("Apply Material You colors to Steam via Adwaita for Steam (requires AdwSteamGtk)")

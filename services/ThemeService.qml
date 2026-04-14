@@ -34,6 +34,7 @@ Singleton {
         enableVesktop: wallpaperThemingCfg?.enableVesktop ?? true,
         enableChrome: wallpaperThemingCfg?.enableChrome ?? true,
         enableZed: wallpaperThemingCfg?.enableZed ?? true,
+        enableNeovim: wallpaperThemingCfg?.enableNeovim ?? true,
         enableVSCode: wallpaperThemingCfg?.enableVSCode ?? true,
         useBackdropForColors: wallpaperThemingCfg?.useBackdropForColors ?? false,
         forceTerminalDarkMode: wallpaperThemingCfg?.terminalGenerationProps?.forceDarkMode ?? false,

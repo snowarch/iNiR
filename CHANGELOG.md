@@ -5,6 +5,11 @@ All notable changes to iNiR will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **Neovim wallpaper theming override**: Added missing Neovim enable/disable toggles in both settings surfaces, included `enableNeovim` in `ThemeService`'s live regeneration signature, and remove the generated `~/.config/nvim/lua/plugins/neovim.lua` override when disabled so iNiR stops forcibly reapplying `aether` on Neovim startup.
+
 ## [2.21.0] - 2026-04-12
 
 ### Added

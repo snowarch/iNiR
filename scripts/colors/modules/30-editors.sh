@@ -215,6 +215,14 @@ EOF
   mv "$tmp_file" "$NEOVIM_THEME_FILE"
 }
 
+strip_neovim_spec() {
+  [[ -f "$NEOVIM_THEME_FILE" ]] || return 0
+
+  if grep -Fq '"bjarneo/aether.nvim"' "$NEOVIM_THEME_FILE" && grep -Fq 'name = "inir-neovim"' "$NEOVIM_THEME_FILE"; then
+    rm -f "$NEOVIM_THEME_FILE"
+  fi
+}
+
 apply_code_editors() {
   [[ -f "$SCSS_FILE" ]] || return 0
   local colors_file="$PALETTE_FILE"
@@ -228,6 +236,8 @@ apply_code_editors() {
 
   if [[ "$enable_neovim" == 'true' ]] && [[ -d "$NEOVIM_CONFIG_DIR" || -x "$(command -v nvim 2>/dev/null)" ]]; then
     generate_neovim_spec "$colors_file" "$TERMINAL_FILE"
+  else
+    strip_neovim_spec
   fi
 
   if [[ "$enable_vscode" == 'true' ]]; then
