@@ -12,7 +12,7 @@ iNiR is a single-runtime shell built on [Quickshell](https://quickshell.outfoxxe
 
 - :material-download: **Getting Started**
 
-  ***
+  ---
 
   Install iNiR, run the setup wizard, and get up and running.
 
@@ -20,7 +20,7 @@ iNiR is a single-runtime shell built on [Quickshell](https://quickshell.outfoxxe
 
 - :material-cog: **Setup & Update**
 
-  ***
+  ---
 
   Post-install configuration, updates, migrations, and rollback.
 
@@ -28,7 +28,7 @@ iNiR is a single-runtime shell built on [Quickshell](https://quickshell.outfoxxe
 
 - :material-console: **IPC Reference**
 
-  ***
+  ---
 
   All targets and functions you can call from keybinds or scripts.
 
@@ -36,7 +36,7 @@ iNiR is a single-runtime shell built on [Quickshell](https://quickshell.outfoxxe
 
 - :material-palette: **Theming**
 
-  ***
+  ---
 
   Wallpaper-based color pipeline and how theming modules work.
 
