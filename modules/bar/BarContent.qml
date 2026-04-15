@@ -357,7 +357,7 @@ Item { // Bar content region
             LeftSidebarButton { // Left sidebar button
                 visible: Config.options?.bar?.modules?.leftSidebarButton ?? true
                 Layout.alignment: Qt.AlignVCenter
-                colBackground: barLeftSideMouseArea.hovered
+                colBackground: buttonHovered
                     ? (Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer1Hover)
                     : "transparent"
             }
@@ -577,7 +577,7 @@ Item { // Bar content region
 
                 buttonRadius: Appearance.rounding.full
 
-                colBackground: barRightSideMouseArea.hovered
+                colBackground: buttonHovered
                     ? (Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer1Hover)
                     : "transparent"
                 colBackgroundHover: Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer1Hover
