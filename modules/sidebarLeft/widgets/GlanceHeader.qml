@@ -29,7 +29,7 @@ Item {
             spacing: 8
 
             StyledText {
-                text: Qt.formatTime(DateTime.clock.date, "HH:mm")
+                text: DateTime.time
                 font.pixelSize: Appearance.font.pixelSize.huge * 2
                 font.weight: Font.Light
                 font.family: Appearance.font.family.numbers

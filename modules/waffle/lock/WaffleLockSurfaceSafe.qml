@@ -328,18 +328,11 @@ MouseArea {
             Text {
                 id: clockText
                 Layout.alignment: Qt.AlignHCenter
-                text: Qt.formatTime(new Date(), "hh:mm")
+                text: DateTime.time
                 font.pixelSize: root.clockFontSize
                 font.weight: Looks.font.weight.thin
                 font.family: Looks.font.family.ui
                 color: root.textColor
-
-                Timer {
-                    interval: 1000
-                    running: true
-                    repeat: true
-                    onTriggered: clockText.text = Qt.formatTime(new Date(), "hh:mm")
-                }
             }
 
             Text {
