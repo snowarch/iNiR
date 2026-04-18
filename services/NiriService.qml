@@ -405,6 +405,8 @@ Singleton {
                 'WorkspacesChanged',
                 'OutputsChanged',
                 'ConfigLoaded',
+                'KeyboardLayoutsChanged',
+                'KeyboardLayoutSwitched',
             ]
             if (!criticalEvents.includes(eventType)) {
                 return
