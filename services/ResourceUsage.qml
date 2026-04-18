@@ -399,13 +399,13 @@ Singleton {
             for card in /sys/class/drm/card*/; do
                 name=$(basename "$card")
                 echo "$name" | grep -qE '^card[0-9]+$' || continue
-                bvga_file="${card}device/boot_vga"
+                bvga_file="\${card}device/boot_vga"
                 [ -f "$bvga_file" ] || continue
                 bvga=$(cat "$bvga_file" 2>/dev/null)
                 if [ "$bvga" = "1" ]; then
                     igpu_found=1
                 elif [ "$bvga" = "0" ]; then
-                    runtime="${card}device/power/runtime_status"
+                    runtime="\${card}device/power/runtime_status"
                     [ -f "$runtime" ] && dgpu_runtime="$runtime"
                 fi
             done
