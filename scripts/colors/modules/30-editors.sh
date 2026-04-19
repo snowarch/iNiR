@@ -13,7 +13,7 @@ VSCODE_THEMEGEN_BIN="$STATE_DIR/user/generated/bin/inir-vscode-themegen"
 OPENCODE_THEMEGEN_BIN="$STATE_DIR/user/generated/bin/inir-opencode-themegen"
 NEOVIM_CONFIG_DIR="$XDG_CONFIG_HOME/nvim"
 NEOVIM_PLUGIN_DIR="$NEOVIM_CONFIG_DIR/lua/plugins"
-NEOVIM_THEME_FILE="$NEOVIM_PLUGIN_DIR/neovim.lua"
+NEOVIM_THEMEGEN="$SCRIPT_DIR/neovim_themegen.sh"
 
 ensure_vscode_themegen() {
   command -v go &>/dev/null || return 1
@@ -33,135 +33,8 @@ ensure_opencode_themegen() {
   [[ -x "$OPENCODE_THEMEGEN_BIN" ]]
 }
 
-json_color() {
-  local file_path="$1"
-  local key="$2"
-  local fallback="$3"
-  if [[ -f "$file_path" ]]; then
-    jq -r --arg key "$key" --arg fallback "$fallback" '.[$key] // $fallback' "$file_path" 2>/dev/null || printf '%s\n' "$fallback"
-  else
-    printf '%s\n' "$fallback"
-  fi
-}
-
 generate_neovim_spec() {
-  mkdir -p "$NEOVIM_PLUGIN_DIR"
-  local tmp_file="${NEOVIM_THEME_FILE}.tmp"
-
-  # Read dynamic colors from generated palette/terminal JSON files
-  local bg dark_bg darker_bg lighter_bg
-  local fg dark_fg muted
-  local red yellow orange green cyan blue purple brown
-  local bright_red bright_yellow bright_green bright_cyan bright_blue bright_purple
-  local accent selection selection_bg
-
-  bg=$(json_color "$PALETTE_FILE" "background" "#1E1D2E")
-  dark_bg=$(json_color "$PALETTE_FILE" "surface_container_low" "#171623")
-  darker_bg=$(json_color "$PALETTE_FILE" "surface_container_lowest" "#0f0f17")
-  lighter_bg=$(json_color "$PALETTE_FILE" "surface_container_highest" "#353443")
-
-  fg=$(json_color "$PALETTE_FILE" "on_background" "#DAC1C5")
-  dark_fg=$(json_color "$PALETTE_FILE" "on_surface_variant" "#a49194")
-  muted=$(json_color "$PALETTE_FILE" "outline" "#6e6e74")
-
-  red=$(json_color "$TERMINAL_FILE" "term1" "#D99F9F")
-  yellow=$(json_color "$TERMINAL_FILE" "term11" "#9b9e73")
-  orange=$(json_color "$PALETTE_FILE" "primary" "#dfadad")
-  green=$(json_color "$TERMINAL_FILE" "term2" "#88a480")
-  cyan=$(json_color "$TERMINAL_FILE" "term6" "#99B3CE")
-  blue=$(json_color "$TERMINAL_FILE" "term4" "#7B8DAB")
-  purple=$(json_color "$TERMINAL_FILE" "term5" "#a28798")
-  brown=$(json_color "$PALETTE_FILE" "secondary_container" "#866868")
-
-  bright_red=$(json_color "$TERMINAL_FILE" "term9" "#febcbc")
-  bright_yellow=$(json_color "$TERMINAL_FILE" "term11" "#c0c58c")
-  bright_green=$(json_color "$TERMINAL_FILE" "term10" "#aacc9c")
-  bright_cyan=$(json_color "$TERMINAL_FILE" "term14" "#b6d2f4")
-  bright_blue=$(json_color "$TERMINAL_FILE" "term12" "#9eb1d8")
-  bright_purple=$(json_color "$TERMINAL_FILE" "term13" "#caaac0")
-
-  accent=$(json_color "$PALETTE_FILE" "primary" "#7B8DAB")
-  selection=$(json_color "$PALETTE_FILE" "surface_container_high" "#353443")
-  selection_bg=$(json_color "$PALETTE_FILE" "surface_container_high" "#353443")
-
-  cat > "$tmp_file" <<EOF
-return {
-  {
-    "bjarneo/aether.nvim",
-    branch = "v3",
-    name = "aether",
-    priority = 1000,
-    opts = {
-      colors = {
-        bg         = "${bg}",
-        dark_bg    = "${dark_bg}",
-        darker_bg  = "${darker_bg}",
-        lighter_bg = "${lighter_bg}",
-
-        fg         = "${fg}",
-        dark_fg    = "${dark_fg}",
-        light_fg   = "${fg}",
-        bright_fg  = "${fg}",
-        muted      = "${muted}",
-
-        red        = "${red}",
-        yellow     = "${yellow}",
-        orange     = "${orange}",
-        green      = "${green}",
-        cyan       = "${cyan}",
-        blue       = "${blue}",
-        purple     = "${purple}",
-        brown      = "${brown}",
-
-        bright_red    = "${bright_red}",
-        bright_yellow = "${bright_yellow}",
-        bright_green  = "${bright_green}",
-        bright_cyan   = "${bright_cyan}",
-        bright_blue   = "${bright_blue}",
-        bright_purple = "${bright_purple}",
-
-        accent               = "${accent}",
-        cursor               = "${fg}",
-        foreground           = "${fg}",
-        background           = "${bg}",
-        selection             = "${selection}",
-        selection_foreground = "${fg}",
-        selection_background = "${selection_bg}",
-      },
-    },
-    config = function(_, opts)
-      require("aether").setup(opts)
-      vim.cmd.colorscheme("aether")
-      -- Re-apply highlights to all active windows/buffers so plugins
-      -- like neo-tree, nvim-tree, oil, etc. are fully re-themed.
-      vim.schedule(function()
-        for _, win in ipairs(vim.api.nvim_list_wins()) do
-          local buf = vim.api.nvim_win_get_buf(win)
-          if vim.api.nvim_buf_is_valid(buf) then
-            pcall(vim.api.nvim_buf_call, buf, function()
-              vim.cmd("syntax sync fromstart")
-            end)
-          end
-        end
-        vim.cmd("redraw!")
-      end)
-      require("aether.hotreload").setup()
-    end,
-  },
-  {
-    "LazyVim/LazyVim",
-    opts = {
-      colorscheme = "aether",
-    },
-  },
-}
-EOF
-  if [[ -f "$NEOVIM_THEME_FILE" ]] && cmp -s "$tmp_file" "$NEOVIM_THEME_FILE"; then
-    rm -f "$tmp_file"
-    return 0
-  fi
-
-  mv "$tmp_file" "$NEOVIM_THEME_FILE"
+  bash "$NEOVIM_THEMEGEN" "$PALETTE_FILE" "$TERMINAL_FILE" "$NEOVIM_PLUGIN_DIR"
 }
 
 apply_code_editors() {
