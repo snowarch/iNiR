@@ -178,8 +178,17 @@ EOF
 }
 
 generate_kdeglobals() {
-    local icon_theme
+    local icon_theme font font_size monospace_font  monospace_font_size
     icon_theme=$(gsettings get org.gnome.desktop.interface icon-theme 2>/dev/null | tr -d "'")
+    font=$(gsettings get org.gnome.desktop.interface font-name 2>/dev/null | tr -d "'")
+    monospace_font=$(gsettings get org.gnome.desktop.interface monospace-font-name 2>/dev/null | tr -d "'")
+
+    font_name=$(awk '{ $NF=""; print $0 }' <<< "$font")
+    font_size=$(awk '{ print $NF }' <<< "$font")
+    
+    monospace_font_name=$(awk '{ $NF=""; print $0 }' <<< "$monospace_font")
+    monospace_font_size=$(awk '{ print $NF }' <<< "$monospace_font")
+
     if [[ -z "$icon_theme" ]]; then
         if [[ -d "$HOME/.local/share/icons/WhiteSur-dark" || -d "/usr/share/icons/WhiteSur-dark" ]]; then
             icon_theme="WhiteSur-dark"
@@ -337,6 +346,10 @@ ForegroundVisited=${PRIMARY}
 
 [General]
 ColorScheme=Darkly
+fixed=${monospace_font_name},${monospace_font_size}
+font=${font_name},${font_size}
+menuFont=${font_name},${font_size}
+toolBarFont=${font_name},${font_size}
 
 [Icons]
 Theme=${icon_theme}
