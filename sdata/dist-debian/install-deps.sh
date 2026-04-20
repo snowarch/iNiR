@@ -360,6 +360,9 @@ DEBIAN_CORE_PKGS=(
   # Translation widget
   translate-shell
   
+  # Smart cd
+  zoxide
+  
   # Build essentials (needed for compiling niri/quickshell)
   build-essential
   cmake

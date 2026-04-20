@@ -155,6 +155,7 @@ DEPS_MISC_KITTY="arch:kitty fedora:kitty debian:kitty ubuntu:kitty opensuse:kitt
 DEPS_MISC_POLKIT="arch:polkit fedora:polkit debian:policykit-1 ubuntu:policykit-1 opensuse:polkit void:polkit"
 DEPS_MISC_UV="arch:AUR:uv fedora:CARGO:uv debian:CARGO:uv ubuntu:CARGO:uv opensuse:CARGO:uv void:CARGO:uv"
 DEPS_MISC_GOWALL="arch:AUR:gowall-bin fedora:CARGO:gowall debian:CARGO:gowall ubuntu:CARGO:gowall opensuse:CARGO:gowall void:CARGO:gowall"
+DEPS_MISC_ZOXIDE="arch:zoxide fedora:zoxide debian:zoxide ubuntu:zoxide opensuse:zoxide void:zoxide"
 DEPS_MISC_MISSIONCENTER="arch:AUR:mission-center fedora:FLATPAK:io.missioncenter.MissionCenter debian:FLATPAK:io.missioncenter.MissionCenter ubuntu:FLATPAK:io.missioncenter.MissionCenter opensuse:FLATPAK:io.missioncenter.MissionCenter void:FLATPAK:io.missioncenter.MissionCenter"
 DEPS_MISC_KCONFIG="arch:kconfig fedora:kf6-kconfig debian:libkf6config-bin ubuntu:libkf6config-bin opensuse:kconfig void:kconfig"
 
