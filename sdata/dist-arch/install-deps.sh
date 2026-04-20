@@ -42,6 +42,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [fuzzel]="fuzzel"
     [hyprpicker]="hyprpicker"
     [songrec]="songrec"
+    [zoxide]="zoxide"
     [trans]="translate-shell"
     # Package-level checks from doctor (no direct command binary)
     [syntax-highlighting]="syntax-highlighting"
@@ -243,6 +244,7 @@ OFFICIAL_PACKAGES=(
   gum
   starship
   xwayland-satellite
+  zoxide
   
   # Emoji font (CRITICAL — overview search, notifications, etc.)
   noto-fonts-emoji

@@ -209,6 +209,9 @@ FEDORA_CORE_PKGS=(
   
   # Translation
   translate-shell
+  
+  # Smart cd
+  zoxide
 )
 
 # Qt6 packages
@@ -765,7 +768,7 @@ echo ""
 
 # Verify critical commands
 tui_info "Verifying installation:"
-for cmd in qs niri fish gum cliphist starship eza; do
+for cmd in qs niri fish gum cliphist starship eza zoxide; do
   if command -v "$cmd" &>/dev/null || command -v ~/.local/bin/$cmd &>/dev/null; then
     log_success "$cmd"
   else
