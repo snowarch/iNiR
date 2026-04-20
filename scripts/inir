@@ -759,6 +759,29 @@ ensure_systemd_graphical_env() {
         vars_to_import+=("XDG_SESSION_TYPE=wayland")
     fi
 
+    # DISPLAY — the XWayland display (e.g. :0 or :1).  Required by Steam, Wine,
+    # and any X11-only app.  The compositor starts XWayland and sets DISPLAY, but
+    # may not have exported it to systemd yet when this function runs (race with
+    # graphical-session.target).  Detect it from the process env (already imported
+    # in apply_qt_runtime_env) or from the live X socket.
+    if ! grep -q '^DISPLAY=' <<< "$sys_env" 2>/dev/null; then
+        if [[ -n "${DISPLAY:-}" ]]; then
+            vars_to_import+=("DISPLAY=$DISPLAY")
+        else
+            # Probe for XWayland socket — compositor may have started it but not
+            # yet exported DISPLAY to systemd.
+            local _xsock
+            for _xsock in /tmp/.X11-unix/X*; do
+                if [[ -S "$_xsock" ]]; then
+                    local _xnum
+                    _xnum="$(basename "$_xsock" | sed 's/^X//')"
+                    vars_to_import+=("DISPLAY=:${_xnum}")
+                    break
+                fi
+            done
+        fi
+    fi
+
     if [[ ${#vars_to_import[@]} -gt 0 ]]; then
         systemctl --user set-environment "${vars_to_import[@]}" 2>/dev/null || true
     fi
