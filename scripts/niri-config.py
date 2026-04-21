@@ -1288,6 +1288,84 @@ def cmd_set(args):
         return 1
 
 
+def _sync_cursor_env(theme=None, size=None):
+    """Sync cursor theme/size to environment.d, gsettings, and running session.
+
+    When the user changes cursor in Settings > Niri, we update the KDL file
+    (what Niri itself uses) but also need to sync to all the other places
+    that apps read cursor from:
+    - ~/.config/environment.d/ (session env for new processes)
+    - gsettings org.gnome.desktop.interface (GTK apps)
+    - systemctl --user set-environment (already-running session)
+
+    The install may place XCURSOR_THEME in inir.conf or the user might have
+    a standalone cursor.conf. We update whichever file already has the key,
+    falling back to cursor.conf if neither does.
+    """
+    env_dir = Path.home() / ".config" / "environment.d"
+    env_dir.mkdir(parents=True, exist_ok=True)
+
+    # Find which file has XCURSOR_THEME currently
+    target_file = None
+    for candidate in ["inir.conf", "cursor.conf"]:
+        path = env_dir / candidate
+        if path.exists():
+            content = path.read_text()
+            if "XCURSOR_THEME=" in content or "XCURSOR_SIZE=" in content:
+                target_file = path
+                break
+
+    if target_file is None:
+        target_file = env_dir / "cursor.conf"
+
+    # Read and update the file
+    lines = []
+    found_theme = False
+    found_size = False
+    if target_file.exists():
+        for line in target_file.read_text().splitlines():
+            stripped = line.strip()
+            if stripped.startswith("XCURSOR_THEME=") and theme is not None:
+                lines.append(f"XCURSOR_THEME={theme}")
+                found_theme = True
+            elif stripped.startswith("XCURSOR_SIZE=") and size is not None:
+                lines.append(f"XCURSOR_SIZE={size}")
+                found_size = True
+            else:
+                lines.append(line)
+
+    if theme is not None and not found_theme:
+        lines.append(f"XCURSOR_THEME={theme}")
+    if size is not None and not found_size:
+        lines.append(f"XCURSOR_SIZE={size}")
+
+    target_file.write_text("\n".join(lines) + "\n")
+
+    # Sync to gsettings (GTK apps)
+    if theme is not None:
+        subprocess.run(
+            ["gsettings", "set", "org.gnome.desktop.interface", "cursor-theme", theme],
+            capture_output=True,
+        )
+    if size is not None:
+        subprocess.run(
+            ["gsettings", "set", "org.gnome.desktop.interface", "cursor-size", str(size)],
+            capture_output=True,
+        )
+
+    # Update running session env so new processes pick it up immediately
+    env_vars = []
+    if theme is not None:
+        env_vars.append(f"XCURSOR_THEME={theme}")
+    if size is not None:
+        env_vars.append(f"XCURSOR_SIZE={size}")
+    if env_vars:
+        subprocess.run(
+            ["systemctl", "--user", "set-environment"] + env_vars,
+            capture_output=True,
+        )
+
+
 def _set_input(config_dir, key, value):
     """Surgical edit in 10-input-and-cursor.kdl."""
     input_file = resolve_niri_section_file("config.d/10-input-and-cursor.kdl")
@@ -1423,10 +1501,12 @@ def _set_input(config_dir, key, value):
             content = _set_value_in_block(
                 content, "cursor", prop, f'"{value}"', top_level=True
             )
+            _sync_cursor_env(theme=value)
         elif prop == "xcursor-size":
             content = _set_value_in_block(
                 content, "cursor", prop, str(value), top_level=True
             )
+            _sync_cursor_env(size=value)
         elif prop == "hide-when-typing":
             content = _toggle_flag(
                 content, "cursor", "hide-when-typing", value == "on", top_level=True
