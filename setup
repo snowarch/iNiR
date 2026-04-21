@@ -356,10 +356,11 @@ show_version_info() {
         tui_status_line "Migrations:" "$pending pending" "warn"
     fi
 
-    # Shell running status
+    # Shell running status (resolve symlinks so qs -p matches the running instance)
     if [[ -n "$runtime_dir" && -f "$runtime_dir/shell.qml" ]]; then
-        local running_output
-        running_output="$(qs -p "$runtime_dir" list 2>/dev/null || true)"
+        local running_output resolved_runtime_dir
+        resolved_runtime_dir="$(readlink -f "$runtime_dir" 2>/dev/null || printf '%s' "$runtime_dir")"
+        running_output="$(qs -p "$resolved_runtime_dir" list 2>/dev/null || true)"
         if [[ -n "$running_output" && "$running_output" != No\ running\ instances* ]]; then
             tui_status_line "Shell:" "running" "ok"
         else
@@ -499,9 +500,11 @@ show_status() {
 
     tui_title "Health Checks"
 
-    # Check shell status
+    # Check shell status (resolve symlinks so qs -p matches the running instance)
     if [[ -n "$runtime_dir" && -f "$runtime_dir/shell.qml" ]]; then
-        running_output="$(qs -p "$runtime_dir" list 2>/dev/null || true)"
+        local resolved_runtime_dir
+        resolved_runtime_dir="$(readlink -f "$runtime_dir" 2>/dev/null || printf '%s' "$runtime_dir")"
+        running_output="$(qs -p "$resolved_runtime_dir" list 2>/dev/null || true)"
         if [[ -n "$running_output" && "$running_output" != No\ running\ instances* ]]; then
             tui_check_ok "Shell is running"
         else
@@ -653,11 +656,12 @@ show_info() {
 
     echo ""
 
-    # Quick health
+    # Quick health (resolve symlinks so qs -p matches the running instance)
     tui_subtitle "Quick Health"
     if [[ -n "$runtime_dir" && -f "$runtime_dir/shell.qml" ]]; then
-        local running_output
-        running_output="$(qs -p "$runtime_dir" list 2>/dev/null || true)"
+        local running_output resolved_runtime_dir
+        resolved_runtime_dir="$(readlink -f "$runtime_dir" 2>/dev/null || printf '%s' "$runtime_dir")"
+        running_output="$(qs -p "$resolved_runtime_dir" list 2>/dev/null || true)"
         if [[ -n "$running_output" && "$running_output" != No\ running\ instances* ]]; then
             tui_check_ok "Shell is running"
         else
