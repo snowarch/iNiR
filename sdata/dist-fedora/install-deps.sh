@@ -194,6 +194,7 @@ FEDORA_CORE_PKGS=(
   wlsunset
   dunst
   uv
+  unzip
   
   # XDG Portals
   xdg-desktop-portal
