@@ -335,20 +335,23 @@ $ask || installflags="-y --skip-unavailable"
 # If noctalia-qs present, replace with quickshell
 # If quickshell-git present, proceed normally
 #####################################################################################
-
+$QS_INSTALL=false
 if rpm -q noctalia-qs &>/dev/null; then
   log_info "noctalia-qs present. iNir needs quickshell (preferable) or quickshell-git. Removing?"
   if ! sudo dnf remove noctalia-qs; then
     log_warning "noctalia-qs not removed. There may be problems with running iNir with noctalia-qs"
   else
-    v sudo dnf install quickshell -y
+    $QS_INSTALL=true
   fi
 fi
 if ! rpm -q quickshell-git &>/dev/null; then
-  v sudo dnf install quickshell -y
+  $QS_INSTALL=true
 fi
 # Install core packages. Need weak deps, in case dnf is configured to always ignore weak deps.
 log_info "Installing core packages (Quickshell + Niri)..."
+if $QS_INSTALL; then
+  v sudo dnf install quickshell -y
+fi
 v sudo dnf install --setopt=install_weak_deps=True $installflags "${FEDORA_CORE_PKGS[@]}"
 
 # Install Qt6 packages
