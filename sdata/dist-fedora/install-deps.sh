@@ -75,10 +75,11 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
       dnf copr list --enabled 2>/dev/null | grep -q "errornointernet/quickshell" || \
         v sudo dnf copr enable -y errornointernet/quickshell
     fi
-    if [[ " ${_fed_miss_pkgs[*]} " == *" niri " ]]; then
-      dnf copr list --enabled 2>/dev/null | grep -q "yalter/niri" || \
-        v sudo dnf copr enable -y yalter/niri
-    fi
+    #if [[ " ${_fed_miss_pkgs[*]} " == *" niri " ]]; then
+    #  dnf copr list --enabled 2>/dev/null | grep -q "yalter/niri" || \
+    #    v sudo dnf copr enable -y yalter/niri
+    #fi
+    # Unecessary as niri(release version) is in the official repos
 
     v sudo dnf install $_fed_installflags "${_fed_miss_pkgs[@]}"
   fi
@@ -115,10 +116,11 @@ if ! dnf copr list --enabled 2>/dev/null | grep -q "errornointernet/quickshell";
 fi
 
 # Niri compositor
-if ! dnf copr list --enabled 2>/dev/null | grep -q "yalter/niri"; then
-  log_info "Enabling Niri COPR..."
-  v sudo dnf copr enable -y yalter/niri
-fi
+# if ! dnf copr list --enabled 2>/dev/null | grep -q "yalter/niri"; then
+#  log_info "Enabling Niri COPR..."
+#  v sudo dnf copr enable -y yalter/niri
+# fi
+# Unecessary as niri(release version) is in the official repos
 
 #####################################################################################
 # Enable RPM Fusion (for ffmpeg, etc.)
@@ -224,6 +226,8 @@ FEDORA_QT6_PKGS=(
   qt6-qtpositioning
   qt6-qtsensors
   qt6-qttools
+  qt6-qttranslations
+  qt6-qtquicktimeline
   
   # System libs
   jemalloc
@@ -244,12 +248,6 @@ FEDORA_QT6_PKGS=(
 
 # Audio packages
 FEDORA_AUDIO_PKGS=(
-  pipewire
-  pipewire-pulseaudio
-  pipewire-alsa
-  wireplumber
-  playerctl
-  libdbusmenu-gtk3
   pavucontrol
   cava
   easyeffects
@@ -260,7 +258,7 @@ FEDORA_AUDIO_PKGS=(
 
 # Toolkit packages
 FEDORA_TOOLKIT_PKGS=(
-  upower
+  python3
   wtype
   ydotool
   python3-evdev
