@@ -758,19 +758,6 @@ if ! fc-list | grep -qi "Rubik"; then
     log_success "Rubik installed"
 fi
 
-# Geist (used by default in iNiR)
-if ! fc-list | grep -qi "Geist"; then
-  log_info "Downloading Geist font..."
-  TEMP_DIR="/tmp/geist-font-$$"
-  mkdir -p "$TEMP_DIR"
-  if curl -fsSL -o "$TEMP_DIR/geist.zip" \
-    "https://github.com/vercel/geist-font/releases/latest/download/Geist.zip"; then
-    unzip -o "$TEMP_DIR/geist.zip" -d "$TEMP_DIR" >/dev/null 2>&1
-    find "$TEMP_DIR" -name "*.ttf" -exec cp {} "$FONT_DIR/" \;
-    log_success "Geist font installed"
-  fi
-  rm -rf "$TEMP_DIR"
-fi
 
 # Refresh font cache
 fc-cache -f "$FONT_DIR" 2>/dev/null
@@ -780,17 +767,7 @@ fc-cache -f "$FONT_DIR" 2>/dev/null
 #####################################################################################
 tui_info "Installing CLI tools..."
 
-# Starship prompt
-if ! command -v starship &>/dev/null; then
-  log_info "Installing Starship prompt..."
-  v sudo dnf install -y starship
-fi
-
-# Eza (modern ls replacement) Now in the official repos
-if ! command -v eza &>/dev/null; then
-  log_info "Installing Eza..."
-  v sudo dnf install -y eza
-fi
+v sudo dnf install -y starship eza
 
 #####################################################################################
 # Install adw-gtk3 theme
