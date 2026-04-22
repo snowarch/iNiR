@@ -254,6 +254,7 @@ FEDORA_QT6_PKGS=(
   kf6-kirigami
   kdialog
   kf6-syntax-highlighting
+  kdecoration
   
   # Qt theming
   qt6ct
@@ -261,6 +262,10 @@ FEDORA_QT6_PKGS=(
   breeze-gtk
 
   sddm  
+)
+
+FEDORA_QT_PKGS_2=(
+  plasma-integration
 )
 
 # Audio packages
@@ -358,6 +363,9 @@ sudo dnf install --setopt=install_weak_deps=True -y $installflags "${FEDORA_CORE
 # Install Qt6 packages
 log_info "Installing Qt6 packages..."
 v sudo dnf install $installflags "${FEDORA_QT6_PKGS[@]}"
+
+log_info "Installing Qt6 packages (2)..."
+v sudo dnf install --setopt=install_weak_deps=False "${FEDORA_QT_PKGS_2[@]}"
 
 # Install based on flags
 if ${INSTALL_AUDIO:-true}; then
