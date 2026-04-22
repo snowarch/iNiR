@@ -70,10 +70,14 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
       *) v sudo dnf upgrade -y --refresh ;;
     esac
 
-    # quickshell and niri come from COPR on Fedora; ensure repos are enabled
+    # quickshell and starship come from COPR on Fedora; ensure repos are enabled
     if [[ " ${_fed_miss_pkgs[*]} " == *" quickshell " ]]; then
       dnf copr list --enabled 2>/dev/null | grep -q "errornointernet/quickshell" || \
         v sudo dnf copr enable -y errornointernet/quickshell
+    fi
+    if [[ " ${_fed_miss_pkgs[*]} " == *" quickshell " ]]; then
+      dnf copr list --enabled 2>/dev/null | grep -q "atim/starship" || \
+        v sudo dnf copr enable -y atim/starship
     fi
     #if [[ " ${_fed_miss_pkgs[*]} " == *" niri " ]]; then
     #  dnf copr list --enabled 2>/dev/null | grep -q "yalter/niri" || \
@@ -112,6 +116,14 @@ if ! dnf copr list --enabled 2>/dev/null | grep -q "errornointernet/quickshell";
   v sudo dnf copr enable -y errornointernet/quickshell || {
     log_error "Failed to enable Quickshell COPR — install manually:"
     log_warning "https://copr.fedorainfracloud.org/coprs/errornointernet/quickshell/"
+  }
+fi
+
+if ! dnf copr list --enabled 2>/dev/null | grep -q "atim/starship"; then
+  log_info "Enabling Quickshell COPR (precompiled)..."
+  v sudo dnf copr enable -y atim/starship || {
+    log_error "Failed to enable Starship COPR — install manually:"
+    log_warning "https://copr.fedorainfracloud.org/coprs/atim/starship/"
   }
 fi
 
@@ -314,6 +326,23 @@ FEDORA_FONT_PKGS=(
 installflags=""
 $ask || installflags="-y --skip-unavailable"
 
+#####################################################################################
+# Ensuring no conflicts with noctalia-qs, quickshell-git and niri-git
+# If noctalia-qs present, replace with quickshell
+# If quickshell-git present, proceed normally
+#####################################################################################
+
+if rpm -q noctalia-qs &>/dev/null; then
+  log_info "noctalia-qs present. iNir needs quickshell (preferable) or quickshell-git. Removing?"
+  if ! sudo dnf remove noctalia-qs; then
+    log_warning "noctalia-qs not removed. There may be problems with running iNir with noctalia-qs"
+  else
+    v sudo dnf install quickshell -y
+  fi
+fi
+if ! rpm -q quickshell-git &>/dev/null; then
+  v sudo dnf install quickshell -y
+
 # Install core packages
 log_info "Installing core packages (Quickshell + Niri)..."
 v sudo dnf install $installflags "${FEDORA_CORE_PKGS[@]}"
@@ -413,16 +442,18 @@ install_github_binary() {
 
 # gum - TUI tool (download .rpm from GitHub)
 if ! command -v gum &>/dev/null; then
-  log_info "Installing gum from GitHub..."
-  GUM_RPM_URL=$(curl -s "https://api.github.com/repos/charmbracelet/gum/releases/latest" | \
-    jq -r '.assets[] | select(.name | test("linux.*x86_64.*rpm$")) | .browser_download_url' | head -1)
-  if [[ -n "$GUM_RPM_URL" && "$GUM_RPM_URL" != "null" ]]; then
-    v sudo dnf install -y "$GUM_RPM_URL"
-  fi
+  log_info "Installing gum from official repo..."
+  v sudo dnf install -y gum
 fi
 
 # cliphist - clipboard manager
-install_github_binary "cliphist" "sentriz/cliphist" "linux-amd64$"
+if ! command -v cliphist &>/dev/null; then
+  log_info "Installing cliphist from official repo...."
+  if ! sudo dnf install -y cliphist; then # Cliphist available on fedra 44
+    log_warn "dnf install failed, falling back to GitHub binary..."
+    install_github_binary "cliphist" "sentriz/cliphist" "linux-amd64$"
+  fi
+fi
 
 # xwayland-satellite - X11 compatibility (try cargo-binstall first)
 if ! command -v xwayland-satellite &>/dev/null; then
@@ -681,17 +712,10 @@ if ! command -v starship &>/dev/null; then
     log_warning "Could not install Starship"
 fi
 
-# Eza (modern ls replacement)
+# Eza (modern ls replacement) Now in the official repos
 if ! command -v eza &>/dev/null; then
   log_info "Installing Eza..."
-  mkdir -p ~/.local/bin
-  if curl -fsSL -o /tmp/eza.tar.gz \
-    'https://github.com/eza-community/eza/releases/latest/download/eza_x86_64-unknown-linux-musl.tar.gz'; then
-    tar -xzf /tmp/eza.tar.gz -C ~/.local/bin
-    chmod +x ~/.local/bin/eza
-    log_success "Eza installed"
-  fi
-  rm -f /tmp/eza.tar.gz
+  v sudo dnf install -y eza
 fi
 
 #####################################################################################
@@ -749,7 +773,6 @@ log_success "══════════════════════�
 echo ""
 log_info "Installed from COPR (no compilation):"
 echo "  - quickshell (errornointernet/quickshell)"
-echo "  - niri (yalter/niri)"
 echo ""
 log_info "Installed from GitHub releases:"
 echo "  - gum, cliphist, darkly, starship, eza"
