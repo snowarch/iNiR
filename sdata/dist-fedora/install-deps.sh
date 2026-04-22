@@ -120,7 +120,7 @@ if ! dnf copr list --enabled 2>/dev/null | grep -q "errornointernet/quickshell";
 fi
 
 if ! dnf copr list --enabled 2>/dev/null | grep -q "atim/starship"; then
-  log_info "Enabling Quickshell COPR (precompiled)..."
+  log_info "Enabling Starship COPR (precompiled)..."
   v sudo dnf copr enable -y atim/starship || {
     log_error "Failed to enable Starship COPR — install manually:"
     log_warning "https://copr.fedorainfracloud.org/coprs/atim/starship/"
@@ -346,7 +346,7 @@ if rpm -q noctalia-qs &>/dev/null; then
 fi
 if ! rpm -q quickshell-git &>/dev/null; then
   v sudo dnf install quickshell -y
-
+fi
 # Install core packages. Need weak deps, in case dnf is configured to always ignore weak deps.
 log_info "Installing core packages (Quickshell + Niri)..."
 v sudo dnf install --setopt=install_weak_deps=True $installflags "${FEDORA_CORE_PKGS[@]}"
