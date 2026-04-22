@@ -25,6 +25,9 @@ Hotfix round. Half the install pipeline was quietly broken and nobody noticed be
 - **VSCode/Cursor/OpenCode theming broken**: orphaned `strip_neovim_spec()` referencing undefined variable crashed the editors module with `set -euo pipefail`, killing all editor theming.
 - **Phantom dock icons for uninstalled apps**: pinned apps with no `.desktop` file (e.g. Firefox on Fedora) no longer show ghost icons. The pin stays in config so the icon comes back if you install the app later.
 
+### Changed
+- **Removed stale legacy config**: `dots/.config/illogical-impulse/config.json` was a 349-key relic from the end-4 era. Fresh installs always used `defaults/config.json` (856 keys) — the fallback was dead code that would have delivered a broken config if it ever triggered.
+
 ## [2.22.0] - 2026-04-21
 
 The "community contributions edition". Turns out people actually use this thing and want to make it better. Who knew.

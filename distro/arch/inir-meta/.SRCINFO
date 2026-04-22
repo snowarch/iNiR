@@ -1,6 +1,6 @@
 pkgbase = inir-meta
 	pkgdesc = Full iNiR desktop experience meta-package
-	pkgver = 2.22.0
+	pkgver = 2.22.1
 	pkgrel = 1
 	url = https://github.com/snowarch/iNiR
 	arch = any
