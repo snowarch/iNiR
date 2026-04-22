@@ -258,6 +258,8 @@ FEDORA_QT6_PKGS=(
   qt6ct
   kde-gtk-config
   breeze-gtk
+
+  sddm  
 )
 
 # Audio packages
@@ -579,6 +581,65 @@ if ! fc-list | grep -qi "JetBrainsMono Nerd"; then
   rm -rf "$TEMP_DIR"
 fi
 
+# Roboto Flex 
+if ! fc-list | grep -qi "Roboto Flex"; then
+  log_info "Downloading Roboto Flex Font..."
+  
+  NERD_FONTS_URL="https://github.com/googlefonts/roboto-flex/releases/download/3.200/roboto-flex-fonts.zip"
+  TEMP_DIR="/tmp/fonts-$$"
+  mkdir -p "$TEMP_DIR"
+  
+  if curl -fsSL -o "$TEMP_DIR/RobotoFlex.zip" "$NERD_FONTS_URL"; then
+    unzip -o "$TEMP_DIR/RobotoFlex.zip" -d "$FONT_DIR" >/dev/null 2>&1
+    mv $FONT_DIR/roboto-flex-fonts/fonts/variable/ $FONT_DIR
+    rm -rf $FONT_DIR/roboto-flex-fonts
+    fc-cache -f "$FONT_DIR"
+    log_success "Roboto Flex installed"
+  else
+    log_warning "Could not download Roboto Flex"
+  fi
+  
+  rm -rf "$TEMP_DIR"
+fi
+
+# Oxanium
+if ! fc-list | grep -qi "Oxanium"; then
+  log_info "Downloading Oxanium Font..."
+  
+  NERD_FONTS_URL="https://github.com/sevmeyer/oxanium/releases/download/2.000/oxanium-2.000.zip"
+  TEMP_DIR="/tmp/fonts-$$"
+  mkdir -p "$TEMP_DIR"
+  
+  if curl -fsSL -o "$TEMP_DIR/Oxanium.zip" "$NERD_FONTS_URL"; then
+    unzip -o "$TEMP_DIR/Oxanium.zip" -d "$FONT_DIR/temp" >/dev/null 2>&1
+    mv $FONT_DIR/temp/fonts/ttf/* $FONT_DIR
+    rm -rf $FONT_DIR/temp
+    fc-cache -f "$FONT_DIR"
+    log_success "Oxanium font installed"
+  else
+    log_warning "Could not download Oxanium Font"
+  fi
+  
+  rm -rf "$TEMP_DIR"
+fi
+# Oxanium, but using variable font
+#if ! fc-list | grep -qi "Oxanium"; then
+#  log_info "Downloading Oxanium Font..."
+  
+#  NERD_FONTS_URL="https://github.com/google/fonts/raw/main/ofl/oxanium/Oxanium%5Bwght%5D.ttf"
+#  TEMP_DIR="/tmp/fonts-$$"
+#  mkdir -p "$TEMP_DIR"
+  
+#  if curl -fsSL -o "$TEMP_DIR/Oxanium.zip" "$NERD_FONTS_URL"; then
+#    unzip -o "$TEMP_DIR/Oxanium.zip" -d "$FONT_DIR" >/dev/null 2>&1
+#    fc-cache -f "$FONT_DIR"
+#    log_success "Oxanium font installed"
+#  else
+#    log_warning "Could not download Oxanium Font"
+#  fi
+#  
+#  rm -rf "$TEMP_DIR"
+#fi
 #####################################################################################
 # Icon themes (WhiteSur, MacTahoe)
 #####################################################################################
@@ -674,6 +735,14 @@ if ! fc-list | grep -qi "Space Grotesk"; then
   curl -fsSL -o "$FONT_DIR/SpaceGrotesk.ttf" \
     "https://github.com/floriankarsten/space-grotesk/raw/master/fonts/ttf/SpaceGrotesk%5Bwght%5D.ttf" 2>/dev/null && \
     log_success "Space Grotesk installed"
+fi
+
+# Readex Pro
+if ! fc-list | grep -qi "Readex Pro"; then
+  log_info "Downloading Readex font..."
+  curl -fsSL -o "$FONT_DIR/Readex.ttf" \
+    "https://raw.githubusercontent.com/ThomasJockin/readexpro/master/fonts/variable/Readexpro%5BHEXP%2Cwght%5D.ttf" 2>/dev/null && \
+    log_success "Readex installed"
 fi
 
 # Rubik
