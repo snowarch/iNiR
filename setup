@@ -213,7 +213,9 @@ sync_user_inir_service_from_repo_if_present() {
     mkdir -p "${XDG_CACHE_HOME:-$HOME/.cache}"
     tmp_file="${XDG_CACHE_HOME:-$HOME/.cache}/inir.service.$$"
 
-    sed "s|^ExecStart=.*|ExecStart=${launcher_target//&/\\&} run --session|" "$service_asset" > "$tmp_file"
+    sed -e "s|^ExecStart=.*|ExecStart=${launcher_target//&/\\&} run --session|" \
+        -e "s|^ExecStopPost=-.*|ExecStopPost=-${launcher_target//&/\\&} cleanup-orphans|" \
+        "$service_asset" > "$tmp_file"
 
     if ! cmp -s "$tmp_file" "$service_target"; then
         changed=true
