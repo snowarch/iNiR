@@ -526,6 +526,7 @@ fi
 #    fi
 #  }
 #fi
+uv python install 3.12
 
 #####################################################################################
 # Install critical fonts
@@ -594,7 +595,7 @@ if ! fc-list | grep -qi "Roboto Flex"; then
   
   if curl -fsSL -o "$TEMP_DIR/RobotoFlex.zip" "$NERD_FONTS_URL"; then
     unzip -o "$TEMP_DIR/RobotoFlex.zip" -d "$FONT_DIR" >/dev/null 2>&1
-    mv $FONT_DIR/roboto-flex-fonts/fonts/variable/ $FONT_DIR
+    mv $FONT_DIR/roboto-flex-fonts/fonts/variable/* $FONT_DIR
     rm -rf $FONT_DIR/roboto-flex-fonts
     fc-cache -f "$FONT_DIR"
     log_success "Roboto Flex installed"
@@ -781,9 +782,7 @@ tui_info "Installing CLI tools..."
 # Starship prompt
 if ! command -v starship &>/dev/null; then
   log_info "Installing Starship prompt..."
-  mkdir -p ~/.local/bin
-  curl -sS https://starship.rs/install.sh | sh -s -- -y -b ~/.local/bin 2>/dev/null || \
-    log_warning "Could not install Starship"
+  v sudo dnf install -y starship
 fi
 
 # Eza (modern ls replacement) Now in the official repos
