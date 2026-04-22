@@ -512,7 +512,17 @@ ContentPage {
                                     ? Translation.tr("Branch: %1").arg(ShellUpdates.currentBranch)
                                     : ""
                                 font.pixelSize: Appearance.font.pixelSize.smaller
-                                color: Appearance.colors.colSubtext
+                                color: ShellUpdates.isNonMainBranch
+                                    ? Appearance.m3colors.m3tertiary
+                                    : Appearance.colors.colSubtext
+                            }
+
+                            StyledText {
+                                visible: ShellUpdates.isNonMainBranch && !ShellUpdates.isChecking && !ShellUpdates.isUpdating
+                                text: Translation.tr("Non-release branch — updates track %1").arg(ShellUpdates.currentBranch)
+                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                color: Appearance.m3colors.m3tertiary
+                                wrapMode: Text.WordWrap
                             }
 
                             StyledText {

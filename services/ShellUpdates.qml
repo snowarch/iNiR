@@ -39,6 +39,7 @@ Singleton {
     property string remoteCommit: ""
     property string currentBranch: "main"  // Current git branch
     property string _remoteBranch: "main"  // Resolved remote branch (may differ from currentBranch if not pushed)
+    readonly property bool isNonMainBranch: currentBranch.length > 0 && currentBranch !== "main" && currentBranch !== "master"
     property bool isChecking: false
     property bool isUpdating: false
     property string lastError: ""

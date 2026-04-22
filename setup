@@ -1505,6 +1505,15 @@ run_update() {
     tui_title "Checking for updates..."
     echo ""
 
+    # Show current branch for awareness
+    local current_branch
+    current_branch="$(git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")"
+    if [[ "$current_branch" != "main" && "$current_branch" != "master" && "$current_branch" != "unknown" ]]; then
+        tui_warn "On branch '$current_branch' (non-release). Updates will track this branch."
+    else
+        tui_info "Branch: $current_branch"
+    fi
+
     local installed_mode=$(get_installed_install_mode)
     local installed_strategy=$(get_installed_update_strategy)
     local package_name=$(get_installed_package_name)

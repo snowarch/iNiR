@@ -213,6 +213,39 @@ ContentPage {
                         font.pixelSize: Appearance.font.pixelSize.title
                     }
 
+                    RowLayout {
+                        spacing: 6
+
+                        StyledText {
+                            text: ShellUpdates.localVersion || "—"
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: Appearance.colors.colSubtext
+                        }
+
+                        Rectangle {
+                            visible: ShellUpdates.currentBranch.length > 0
+                            implicitWidth: branchLabel.implicitWidth + 12
+                            implicitHeight: branchLabel.implicitHeight + 4
+                            radius: Appearance.rounding.small
+                            color: ShellUpdates.isNonMainBranch
+                                ? ColorUtils.transparentize(Appearance.m3colors.m3tertiary, 0.8)
+                                : ColorUtils.transparentize(Appearance.colors.colSubtext, 0.85)
+
+                            StyledText {
+                                id: branchLabel
+                                anchors.centerIn: parent
+                                text: ShellUpdates.currentBranch
+                                font {
+                                    pixelSize: Appearance.font.pixelSize.smallest
+                                    family: Appearance.font.family.monospace
+                                }
+                                color: ShellUpdates.isNonMainBranch
+                                    ? Appearance.m3colors.m3tertiary
+                                    : Appearance.colors.colSubtext
+                            }
+                        }
+                    }
+
                     StyledText {
                         text: "[https://github.com/snowarch/inir](https://github.com/snowarch/inir)"
                         font.pixelSize: Appearance.font.pixelSize.small

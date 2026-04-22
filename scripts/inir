@@ -1757,6 +1757,20 @@ show_version() {
             printf 'update strategy: %s\n' "$(jq -r '.updateStrategy // .update_strategy // "unknown"' "$version_file")"
             printf 'source: %s\n' "$(jq -r '.source // "unknown"' "$version_file")"
             printf 'runtime: %s\n' "$runtime_path"
+            # Show git branch if in a repo
+            local repo_dir=""
+            repo_dir="$(jq -r '.repoPath // empty' "$version_file" 2>/dev/null || true)"
+            [[ -z "$repo_dir" ]] && repo_dir="$runtime_path"
+            if [[ -n "$repo_dir" && -d "$repo_dir/.git" ]]; then
+                local git_branch
+                git_branch="$(git -C "$repo_dir" rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+                if [[ -n "$git_branch" ]]; then
+                    printf 'branch: %s\n' "$git_branch"
+                    if [[ "$git_branch" != "main" && "$git_branch" != "master" ]]; then
+                        printf 'note: non-release branch\n'
+                    fi
+                fi
+            fi
             return
         fi
     fi

@@ -287,7 +287,9 @@ MouseArea {
                 MaterialSymbol {
                     text: "account_tree"
                     iconSize: Appearance.font.pixelSize.large
-                    color: Appearance.colors.colOnSurfaceVariant
+                    color: ShellUpdates.isNonMainBranch
+                        ? Appearance.m3colors.m3tertiary
+                        : Appearance.colors.colOnSurfaceVariant
                 }
                 StyledText {
                     text: Translation.tr("Branch:")
@@ -298,8 +300,21 @@ MouseArea {
                     horizontalAlignment: Text.AlignRight
                     text: ShellUpdates.currentBranch
                     font.family: Appearance.font.family.monospace
-                    color: Appearance.colors.colOnSurfaceVariant
+                    color: ShellUpdates.isNonMainBranch
+                        ? Appearance.m3colors.m3tertiary
+                        : Appearance.colors.colOnSurfaceVariant
                 }
+            }
+
+            // Non-main branch hint
+            StyledText {
+                visible: ShellUpdates.isNonMainBranch && !ShellUpdates.isUpdating
+                Layout.fillWidth: true
+                text: Translation.tr("You are on a non-release branch. Updates track this branch.")
+                font.pixelSize: Appearance.font.pixelSize.smallest
+                color: Appearance.m3colors.m3tertiary
+                wrapMode: Text.WordWrap
+                opacity: 0.85
             }
 
             // Error display

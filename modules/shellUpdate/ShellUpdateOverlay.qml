@@ -415,7 +415,9 @@ Scope {
                                 MaterialSymbol {
                                     text: "account_tree"
                                     iconSize: Appearance.font.pixelSize.smallest
-                                    color: root.subtextColor
+                                    color: ShellUpdates.isNonMainBranch
+                                        ? Appearance.m3colors.m3tertiary
+                                        : root.subtextColor
                                 }
                                 StyledText {
                                     text: ShellUpdates.currentBranch
@@ -423,7 +425,9 @@ Scope {
                                         pixelSize: Appearance.font.pixelSize.smallest
                                         family: Appearance.font.family.monospace
                                     }
-                                    color: root.subtextColor
+                                    color: ShellUpdates.isNonMainBranch
+                                        ? Appearance.m3colors.m3tertiary
+                                        : root.subtextColor
                                 }
                             }
                         }
@@ -743,7 +747,9 @@ Scope {
                                                 pixelSize: Appearance.font.pixelSize.small
                                                 family: Appearance.font.family.monospace
                                             }
-                                            color: root.textColor
+                                            color: ShellUpdates.isNonMainBranch
+                                                ? Appearance.m3colors.m3tertiary
+                                                : root.textColor
                                         }
 
                                     // Status
