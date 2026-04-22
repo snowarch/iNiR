@@ -157,7 +157,8 @@ tui_info "Installing packages from repositories..."
 # Core system packages (including Quickshell and Niri from COPR)
 FEDORA_CORE_PKGS=(
   # Quickshell (from COPR - no compilation needed!)
-  quickshell
+  # quickshell
+  # due to possible conflict with quickshell-git or noctalia-qs, resolved later
   
   # Niri compositor (from COPR)
   niri
@@ -192,6 +193,7 @@ FEDORA_CORE_PKGS=(
   libnotify
   wlsunset
   dunst
+  uv
   
   # XDG Portals
   xdg-desktop-portal
@@ -343,9 +345,9 @@ fi
 if ! rpm -q quickshell-git &>/dev/null; then
   v sudo dnf install quickshell -y
 
-# Install core packages
+# Install core packages. Need weak deps, in case dnf is configured to always ignore weak deps.
 log_info "Installing core packages (Quickshell + Niri)..."
-v sudo dnf install $installflags "${FEDORA_CORE_PKGS[@]}"
+v sudo dnf install --setopt=install_weak_deps=True $installflags "${FEDORA_CORE_PKGS[@]}"
 
 # Install Qt6 packages
 log_info "Installing Qt6 packages..."
@@ -505,20 +507,20 @@ if ${INSTALL_FONTS:-true}; then
 fi
 
 #####################################################################################
-# Install uv (Python package manager)
+# Install uv (Python package manager) Unecessary for now because uv in fedora rpos
 #####################################################################################
-tui_info "Installing uv (Python package manager)..."
-if ! command -v uv &>/dev/null; then
+#tui_info "Installing uv (Python package manager)..."
+#if ! command -v uv &>/dev/null; then
   # Try the official installer first (fastest)
-  curl -LsSf https://astral.sh/uv/install.sh | sh 2>/dev/null || {
+#  curl -LsSf https://astral.sh/uv/install.sh | sh 2>/dev/null || {
     # Fallback to cargo
-    if command -v cargo &>/dev/null; then
-      cargo install uv
-    else
-      log_warning "Could not install uv. Install manually: https://github.com/astral-sh/uv"
-    fi
-  }
-fi
+#    if command -v cargo &>/dev/null; then
+#      cargo install uv
+#    else
+#      log_warning "Could not install uv. Install manually: https://github.com/astral-sh/uv"
+#    fi
+#  }
+#fi
 
 #####################################################################################
 # Install critical fonts
