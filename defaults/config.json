@@ -493,6 +493,15 @@
       "threshold": 80
     }
   },
+  "calendar": {
+    "externalSync": {
+      "enable": false,
+      "refreshMinutes": 15,
+      "sources": []
+    },
+    "showUpcoming": true,
+    "upcomingDays": 3
+  },
   "closeConfirm": {
     "enabled": false
   },

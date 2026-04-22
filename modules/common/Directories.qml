@@ -70,6 +70,7 @@ Singleton {
     property string notesPath: `${Directories.stateUserPath}/notes.txt`
     property string conflictCachePath: `${Directories.cachePath}/conflict-killer`
     property string notificationsPath: `${Directories.stateUserPath}/notifications.json`
+    property string calendarSyncCachePath: `${Directories.stateUserPath}/calendar-sync-cache.json`
     property string generatedMaterialThemePath: `${Directories.stateUserPath}/generated/colors.json`
     property string generatedPalettePath: `${Directories.stateUserPath}/generated/palette.json`
     property string generatedTerminalPalettePath: `${Directories.stateUserPath}/generated/terminal.json`

@@ -768,6 +768,20 @@ Singleton {
                 }
             }
 
+            // External calendar integration (ICS/iCal URL sync)
+            property JsonObject calendar: JsonObject {
+                property JsonObject externalSync: JsonObject {
+                    property bool enable: false
+                    property int refreshMinutes: 15
+                    // Array of calendar sources: { id, name, url, color, enabled }
+                    property list<var> sources: []
+                }
+                // Show upcoming events below calendar grid
+                property bool showUpcoming: true
+                // Number of days to show in upcoming view
+                property int upcomingDays: 3
+            }
+
             property JsonObject closeConfirm: JsonObject {
                 property bool enabled: false
             }
