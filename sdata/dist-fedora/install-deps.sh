@@ -352,7 +352,7 @@ log_info "Installing core packages (Quickshell + Niri)..."
 if $QS_INSTALL; then
   v sudo dnf install quickshell -y
 fi
-v sudo dnf install --setopt=install_weak_deps=True $installflags "${FEDORA_CORE_PKGS[@]}"
+sudo dnf install --setopt=install_weak_deps=True -y $installflags "${FEDORA_CORE_PKGS[@]}"
 
 # Install Qt6 packages
 log_info "Installing Qt6 packages..."
