@@ -178,7 +178,7 @@ if should_apply_theme; then
     # Use X11 as display server - Wayland (kwin_wayland) crashes in some environments (VMs, etc.)
     elevate tee "${SDDM_CONF}" > /dev/null << SDDM_EOF
 [General]
-DisplayServer=x11
+DisplayServer=wayland
 
 [Theme]
 Current=${THEME_NAME}
