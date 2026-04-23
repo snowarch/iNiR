@@ -150,6 +150,20 @@ if ! rpm -q rpmfusion-nonfree-release &>/dev/null; then
 fi
 
 #####################################################################################
+# Install flatpak if it doesn't exist
+#####################################################################################
+tui_info "Configuring flatpak, if not present (Usually present in fedora workstation)"
+if ! command -v flatpak >/dev/null 2>&1; then
+    v sudo dnf install -y flatpak flatpak-libs
+fi
+log_info "Flatpak is installed"
+
+if ! flatpak remote-list | grep -q "^flathub"; then
+  flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+fi
+log_info "Flathub repository configured"
+
+#####################################################################################
 # Install official repository packages
 #####################################################################################
 tui_info "Installing packages from repositories..."
@@ -231,7 +245,9 @@ FEDORA_CORE_PKGS=(
   # Translation
   translate-shell
 )
-
+FEDORA_FLATPAKS={
+  io.missioncenter.MissionCenter
+}
 # Qt6 packages
 FEDORA_QT6_PKGS=(
   qt6-qtbase
@@ -369,6 +385,9 @@ v sudo dnf install $installflags "${FEDORA_QT6_PKGS[@]}"
 
 log_info "Installing Qt6 packages (2)..."
 v sudo dnf install --setopt=install_weak_deps=False "${FEDORA_QT_PKGS_2[@]}"
+
+log_info "Installing flatpaks..."
+v flatpak install flathub ${FEDORA_FLATPAKS[@]} -y"
 
 # Install based on flags
 if ${INSTALL_AUDIO:-true}; then
