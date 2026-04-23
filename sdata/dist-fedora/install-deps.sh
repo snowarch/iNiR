@@ -215,6 +215,11 @@ FEDORA_CORE_PKGS=(
   
   # Shell (required for scripts)
   fish
+
+  # tuned
+  tuned
+  tuned-gui
+  tuned-ppd
   
   # System monitor (not available in all Fedora versions)
   # mission-center
@@ -279,7 +284,6 @@ FEDORA_AUDIO_PKGS=(
 
 # Toolkit packages
 FEDORA_TOOLKIT_PKGS=(
-  #python3
   wtype
   ydotool
   python3-evdev
