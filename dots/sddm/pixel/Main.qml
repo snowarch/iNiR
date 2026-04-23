@@ -2,8 +2,7 @@
 // States: "clock" (initial) ↔ "login" (password entry), same layout + transitions.
 import QtQuick 2.15
 import QtQuick.Layouts 1.15
-//import QtGraphicalEffects 1.0
-import Qt5Compat.GraphicalEffects 1.0
+import QtGraphicalEffects 1.0
 import SddmComponents 2.0
 import "."
 
