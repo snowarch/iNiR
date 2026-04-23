@@ -192,7 +192,6 @@ FEDORA_CORE_PKGS=(
   wl-clipboard
   libnotify
   wlsunset
-  dunst
   uv
   unzip
   
@@ -280,7 +279,7 @@ FEDORA_AUDIO_PKGS=(
 
 # Toolkit packages
 FEDORA_TOOLKIT_PKGS=(
-  python3
+  #python3
   wtype
   ydotool
   python3-evdev
@@ -468,18 +467,6 @@ if ! command -v cliphist &>/dev/null; then
   if ! sudo dnf install -y cliphist; then # Cliphist available on fedra 44
     log_warn "dnf install failed, falling back to GitHub binary..."
     install_github_binary "cliphist" "sentriz/cliphist" "linux-amd64$"
-  fi
-fi
-
-# xwayland-satellite - X11 compatibility (try cargo-binstall first)
-if ! command -v xwayland-satellite &>/dev/null; then
-  log_info "Installing xwayland-satellite..."
-  if command -v cargo-binstall &>/dev/null; then
-    cargo-binstall -y xwayland-satellite
-  elif command -v cargo &>/dev/null; then
-    cargo install xwayland-satellite
-  else
-    log_warning "xwayland-satellite requires Rust — install with: cargo install xwayland-satellite"
   fi
 fi
 
@@ -801,7 +788,7 @@ fi
 tui_info "Setting up configuration files..."
 
 # GTK configuration
-setup-gtk-config "Bibata-Modern-Classic" "WhiteSur-dark" "adw-gtk3-dark" "Geist"
+setup-gtk-config "Bibata-Modern-Classic" "WhiteSur-dark" "adw-gtk3-dark"
 
 # Kvantum configuration
 setup-kvantum-config "MaterialAdw"
