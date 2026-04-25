@@ -10,57 +10,29 @@ Built on [Quickshell](https://quickshell.outfoxxed.me/) (QML shell framework) fo
 
 ## Quick navigation
 
-<div class="grid cards" markdown>
-
-- :material-download: **Getting Started**
-
-  ---
-
+- **Getting Started**
   Install iNiR, run the setup wizard, get a shell on screen.
+  [Installation](INSTALL.md)
 
-  [:octicons-arrow-right-24: Installation](INSTALL.md)
-
-- :material-view-dashboard: **Panel Families**
-
-  ---
-
+- **Panel Families**
   Material ii (5 styles) and Waffle (Windows 11). How they work, how to switch.
+  [Panel families](PANEL_FAMILIES.md)
 
-  [:octicons-arrow-right-24: Panel families](PANEL_FAMILIES.md)
-
-- :material-palette: **Theming**
-
-  ---
-
+- **Theming**
   Wallpaper-based colors, 44 presets, and the pipeline that themes your entire system.
+  [Theming architecture](THEMING_ARCHITECTURE.md)
 
-  [:octicons-arrow-right-24: Theming architecture](THEMING_ARCHITECTURE.md)
-
-- :material-console: **IPC Reference**
-
-  ---
-
+- **IPC Reference**
   All targets and functions you can call from keybinds, scripts, or terminal.
+  [IPC targets](IPC.md)
 
-  [:octicons-arrow-right-24: IPC targets](IPC.md)
-
-- :material-calendar-sync: **Calendar**
-
-  ---
-
+- **Calendar**
   Sync Google Calendar, Outlook, Nextcloud, or any ICS calendar.
+  [Calendar setup](CALENDAR.md)
 
-  [:octicons-arrow-right-24: Calendar setup](CALENDAR.md)
-
-- :material-wrench: **Architecture**
-
-  ---
-
+- **Architecture**
   How it all fits together. Entry point, services, config, panel loading.
-
-  [:octicons-arrow-right-24: Architecture](ARCHITECTURE_OVERVIEW.md)
-
-</div>
+  [Architecture overview](ARCHITECTURE_OVERVIEW.md)
 
 ---
 
