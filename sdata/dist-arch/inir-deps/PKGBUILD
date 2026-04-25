@@ -124,6 +124,7 @@ depends=(
   fuzzel
   glib2
   starship
+  eza
 
   #--- Input / HW ---
   upower

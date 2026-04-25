@@ -273,6 +273,7 @@ OFFICIAL_PACKAGES=(
   cliphist
   gum
   starship
+  eza
   xwayland-satellite
   
   # Emoji font (CRITICAL — overview search, notifications, etc.)
