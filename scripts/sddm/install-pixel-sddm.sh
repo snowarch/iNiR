@@ -10,7 +10,13 @@ THEME_SRC="${REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}/dot
 THEME_DIR="/usr/share/sddm/themes/${THEME_NAME}"
 SYNC_SCRIPT="${REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}/scripts/sddm/sync-pixel-sddm.py"
 SDDM_CONF="/etc/sddm.conf.d/inir-theme.conf"
+WESTON_CONF="/etc/xdg/weston/weston.ini"
+SDDM_DISPLAY_SERVER="x11"
 AUTO_APPLY_MODE="${INIR_SDDM_AUTO_APPLY:-ask}" # ask|yes|no
+
+if grep -qi fedora /etc/os-release; then
+    SDDM_DISPLAY_SERVER="wayland"
+fi
 
 log_info() { echo -e "\033[0;36m[sddm] $*\033[0m"; }
 log_ok()   { echo -e "\033[0;32m[sddm] ✓ $*\033[0m"; }
@@ -178,12 +184,22 @@ if should_apply_theme; then
     # Use X11 as display server - Wayland (kwin_wayland) crashes in some environments (VMs, etc.)
     elevate tee "${SDDM_CONF}" > /dev/null << SDDM_EOF
 [General]
-DisplayServer=wayland
+DisplayServer=${SDDM_DISPLAY_SERVER}
 
 [Theme]
 Current=${THEME_NAME}
 SDDM_EOF
-    log_ok "SDDM configured (${SDDM_CONF}) with X11 display server"
+
+    if grep -qi fedora /etc/os-release && command -v weston > /dev/null 2>&1; then
+
+        elevate mkdir -p /etc/xdg/weston
+        # Enable tap on touchpads (weston)
+        elevate tee "${WESTON_CONF}" > /dev/null << WESTON_EOF
+[libinput]
+enable-tap=true
+WESTON_EOF
+    fi
+    log_ok "SDDM configured (${SDDM_CONF}) with ${SDDM_DISPLAY_SERVER} display server"
 else
     log_info "Installed ${THEME_NAME}, but did not change SDDM Current theme"
 fi
