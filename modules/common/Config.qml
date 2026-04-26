@@ -85,6 +85,7 @@ Singleton {
         repeat: false
         onTriggered: {
             configFileView.reload();
+            root.configChanged();
         }
     }
 

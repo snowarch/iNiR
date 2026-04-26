@@ -561,11 +561,8 @@ Singleton {
     Connections {
         target: Config
         function onReadyChanged() { root._syncExtraModels() }
+        function onConfigChanged() { root._syncExtraModels() }
     }
-
-    // Reactively watch for changes to extraModels (e.g. from settings UI)
-    property var _watchedExtraModels: Config.options?.ai?.extraModels ?? []
-    on_WatchedExtraModelsChanged: root._syncExtraModels()
 
     property string requestScriptFilePath: "/tmp/quickshell/ai/request.sh"
     property string pendingFilePath: ""

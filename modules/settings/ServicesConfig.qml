@@ -365,33 +365,6 @@ ContentPage {
 
                     ColumnLayout {
                         spacing: 4
-                        Layout.fillWidth: true
-
-                        StyledText {
-                            text: Translation.tr("Model code")
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            color: Appearance.colors.colSubtext
-                        }
-
-                        MaterialTextField {
-                            id: providerModelInput
-                            Layout.fillWidth: true
-                            placeholderText: "gpt-4.1"
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            color: Appearance.m3colors.m3onSurface
-                            placeholderTextColor: Appearance.colors.colSubtext
-                            background: Rectangle {
-                                color: Appearance.colors.colLayer1
-                                radius: Appearance.rounding.small
-                                border.width: providerModelInput.activeFocus ? 2 : 1
-                                border.color: providerModelInput.activeFocus ? Appearance.m3colors.m3primary : Appearance.colors.colLayer0Border
-                            }
-                        }
-                    }
-
-                    // API format selector
-                    ColumnLayout {
-                        spacing: 4
 
                         StyledText {
                             text: Translation.tr("API format")
@@ -468,75 +441,55 @@ ContentPage {
                         }
                     }
 
-                    // Requires API key toggle
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 8
-
-                        StyledText {
-                            text: Translation.tr("Requires API key")
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            color: Appearance.colors.colSubtext
-                            Layout.fillWidth: true
-                        }
-
-                        Switch {
-                            id: requiresKeySwitch
-                            checked: true
-                        }
-                    }
-
-                    // Key ID field (shown only when requires key)
                     ColumnLayout {
                         spacing: 4
                         Layout.fillWidth: true
-                        visible: requiresKeySwitch.checked
 
                         StyledText {
-                            text: Translation.tr("Key ID (share keys across models with the same ID)")
+                            text: Translation.tr("Model code")
                             font.pixelSize: Appearance.font.pixelSize.small
                             color: Appearance.colors.colSubtext
                         }
 
                         MaterialTextField {
-                            id: providerKeyIdInput
+                            id: providerModelInput
                             Layout.fillWidth: true
-                            placeholderText: Translation.tr("e.g. openai, my-provider")
+                            placeholderText: "gpt-4.1"
                             font.pixelSize: Appearance.font.pixelSize.small
                             color: Appearance.m3colors.m3onSurface
                             placeholderTextColor: Appearance.colors.colSubtext
                             background: Rectangle {
                                 color: Appearance.colors.colLayer1
                                 radius: Appearance.rounding.small
-                                border.width: providerKeyIdInput.activeFocus ? 2 : 1
-                                border.color: providerKeyIdInput.activeFocus ? Appearance.m3colors.m3primary : Appearance.colors.colLayer0Border
+                                border.width: providerModelInput.activeFocus ? 2 : 1
+                                border.color: providerModelInput.activeFocus ? Appearance.m3colors.m3primary : Appearance.colors.colLayer0Border
                             }
                         }
                     }
 
-                    // Icon name (optional)
                     ColumnLayout {
                         spacing: 4
                         Layout.fillWidth: true
 
                         StyledText {
-                            text: Translation.tr("Icon name (optional)")
+                            text: Translation.tr("API key (optional)")
                             font.pixelSize: Appearance.font.pixelSize.small
                             color: Appearance.colors.colSubtext
                         }
 
                         MaterialTextField {
-                            id: providerIconInput
+                            id: providerApiKeyInput
                             Layout.fillWidth: true
-                            placeholderText: Translation.tr("e.g. ollama-symbolic, deepseek-symbolic")
+                            placeholderText: "sk-..."
                             font.pixelSize: Appearance.font.pixelSize.small
                             color: Appearance.m3colors.m3onSurface
                             placeholderTextColor: Appearance.colors.colSubtext
+                            echoMode: TextInput.Password
                             background: Rectangle {
                                 color: Appearance.colors.colLayer1
                                 radius: Appearance.rounding.small
-                                border.width: providerIconInput.activeFocus ? 2 : 1
-                                border.color: providerIconInput.activeFocus ? Appearance.m3colors.m3primary : Appearance.colors.colLayer0Border
+                                border.width: providerApiKeyInput.activeFocus ? 2 : 1
+                                border.color: providerApiKeyInput.activeFocus ? Appearance.m3colors.m3primary : Appearance.colors.colLayer0Border
                             }
                         }
                     }
@@ -558,11 +511,9 @@ ContentPage {
                                 addProviderForm.expanded = false
                                 providerNameInput.text = ""
                                 providerEndpointInput.text = ""
-                                providerModelInput.text = ""
                                 apiFormatRow.selectedFormat = "openai"
-                                requiresKeySwitch.checked = true
-                                providerKeyIdInput.text = ""
-                                providerIconInput.text = ""
+                                providerModelInput.text = ""
+                                providerApiKeyInput.text = ""
                             }
 
                             contentItem: StyledText {
@@ -583,30 +534,33 @@ ContentPage {
                             enabled: providerEndpointInput.text.trim() !== "" && providerModelInput.text.trim() !== ""
                             opacity: enabled ? 1 : 0.5
                             onClicked: {
+                                const modelCode = providerModelInput.text.trim()
+                                const apiKey = providerApiKeyInput.text.trim()
+                                const keyId = modelCode.toLowerCase().replace(/[:\/ ]/g, "-")
+
                                 const newModel = {
-                                    name: providerNameInput.text.trim() || providerModelInput.text.trim(),
+                                    name: providerNameInput.text.trim() || modelCode,
                                     endpoint: providerEndpointInput.text.trim(),
-                                    model: providerModelInput.text.trim(),
+                                    model: modelCode,
                                     api_format: apiFormatRow.selectedFormat,
-                                    requires_key: requiresKeySwitch.checked,
-                                    key_id: requiresKeySwitch.checked ? (providerKeyIdInput.text.trim() || providerModelInput.text.trim().toLowerCase().replace(/[:\/ ]/g, "-")) : "",
-                                }
-                                if (providerIconInput.text.trim()) {
-                                    newModel.icon = providerIconInput.text.trim()
+                                    requires_key: apiKey.length > 0,
+                                    key_id: keyId,
                                 }
 
                                 let models = [...(Config.options?.ai?.extraModels ?? [])]
                                 models.push(newModel)
                                 Config.setNestedValue("ai.extraModels", models)
 
+                                if (apiKey.length > 0) {
+                                    KeyringStorage.setNestedField(["apiKeys", keyId], apiKey)
+                                }
+
                                 addProviderForm.expanded = false
                                 providerNameInput.text = ""
                                 providerEndpointInput.text = ""
-                                providerModelInput.text = ""
                                 apiFormatRow.selectedFormat = "openai"
-                                requiresKeySwitch.checked = true
-                                providerKeyIdInput.text = ""
-                                providerIconInput.text = ""
+                                providerModelInput.text = ""
+                                providerApiKeyInput.text = ""
                             }
 
                             contentItem: StyledText {
