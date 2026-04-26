@@ -540,18 +540,32 @@ Singleton {
     }
     property ApiStrategy currentApiStrategy: apiStrategies[models[currentModelId]?.api_format || "openai"]
 
+    property var _loadedExtraModelIds: []
+
+    function _syncExtraModels() {
+        if (!Config.ready) return
+        root._loadedExtraModelIds.forEach(id => {
+            if (root.models[id]) delete root.models[id]
+        })
+        root._loadedExtraModelIds = []
+        const policy = Config.options?.policies?.ai ?? 0
+        ;(Config.options?.ai?.extraModels ?? []).forEach(model => {
+            if (policy === 2 && !(model?.endpoint ?? "").includes("localhost")) return
+            const safeModelName = root.safeModelName(model["model"])
+            root.addModel(safeModelName, model)
+            root._loadedExtraModelIds.push(safeModelName)
+        })
+        root.modelList = Object.keys(root.models)
+    }
+
     Connections {
         target: Config
-        function onReadyChanged() {
-            if (!Config.ready) return;
-            const policy = (Config.options?.policies?.ai ?? 0)
-            ;(Config.options?.ai?.extraModels ?? []).forEach(model => {
-                if (policy === 2 && !(model?.endpoint ?? "").includes("localhost")) return
-                const safeModelName = root.safeModelName(model["model"]);
-                root.addModel(safeModelName, model)
-            });
-        }
+        function onReadyChanged() { root._syncExtraModels() }
     }
+
+    // Reactively watch for changes to extraModels (e.g. from settings UI)
+    property var _watchedExtraModels: Config.options?.ai?.extraModels ?? []
+    on_WatchedExtraModelsChanged: root._syncExtraModels()
 
     property string requestScriptFilePath: "/tmp/quickshell/ai/request.sh"
     property string pendingFilePath: ""
