@@ -129,7 +129,6 @@ sys
 *.ps
 
 # ── Wiki / MkDocs (WIP, not shipped yet) ─────────────────────
-wiki/
 mkdocs.yml
 site/
 

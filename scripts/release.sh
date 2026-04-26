@@ -10,6 +10,7 @@ Usage:
 Commands:
   notes    Extract the matching CHANGELOG section and append release footer links.
   publish  Create the GitHub release for an existing local tag v<version>.
+
 EOF
 }
 

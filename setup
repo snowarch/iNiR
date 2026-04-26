@@ -1500,6 +1500,24 @@ _report_progress() {
     echo "progress:${step}:${_update_total_steps}:${msg}" > "$_update_status_file" 2>/dev/null || true
 }
 
+refresh_sddm_theme_on_update() {
+    local ask_mode="${1:-true}"
+
+    if ! command -v sddm >/dev/null 2>&1; then
+        return 0
+    fi
+
+    echo ""
+    tui_info "Refreshing ii-pixel SDDM theme..."
+
+    local auto_apply_mode="ask"
+    if [[ "$ask_mode" != "true" ]]; then
+        auto_apply_mode="no"
+    fi
+
+    extras_install_sddm_theme "$auto_apply_mode" || tui_warn "SDDM refresh had issues (non-fatal)"
+}
+
 run_update() {
     echo ""
     tui_title "Checking for updates..."
@@ -1549,6 +1567,11 @@ run_update() {
             systemctl --user reset-failed inir.service >/dev/null 2>&1 || true
             systemctl --user start inir.service >/dev/null 2>&1 || true
         fi
+
+        # Even on package-managed installs, refresh the shipped ii-pixel theme from
+        # the current checkout so SDDM import/theme fixes are not stranded behind
+        # the separate extras flow.
+        refresh_sddm_theme_on_update "$ask"
 
         echo ""
         tui_success "Package-managed installation left unchanged"
@@ -1814,21 +1837,9 @@ run_update() {
     tui_success "Files synced"
 
     # Refresh ii-pixel SDDM theme on update (keeps shipped theme in sync with fixes)
-    # Intelligent behavior:
-    # - interactive mode: installer decides (prompt if another SDDM theme is active)
-    # - non-interactive mode: never force-switch Current theme
-    if command -v sddm >/dev/null 2>&1; then
-        local sddm_script="${II_TARGET}/scripts/sddm/install-pixel-sddm.sh"
-        if [[ -f "$sddm_script" ]]; then
-            echo ""
-            tui_info "Refreshing ii-pixel SDDM theme..."
-            local _sddm_auto_apply="ask"
-            if [[ "$ask" != "true" ]]; then
-                _sddm_auto_apply="no"
-            fi
-            INIR_SDDM_AUTO_APPLY="${_sddm_auto_apply}" bash "$sddm_script" || tui_warn "SDDM refresh had issues (non-fatal)"
-        fi
-    fi
+    # Interactive mode can prompt before switching Current theme; non-interactive
+    # mode only refreshes the installed theme files.
+    refresh_sddm_theme_on_update "$ask"
 
     # Update Vesktop themes (themes live outside quickshell/ii tree)
     if [[ -d "${REPO_ROOT}/dots/.config/vesktop/themes" ]]; then
