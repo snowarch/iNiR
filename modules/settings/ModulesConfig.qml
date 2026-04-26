@@ -578,7 +578,7 @@ ContentPage {
             SettingsSwitch {
                 buttonIcon: "tab"
                 text: Translation.tr("Alt-Tab Switcher")
-                checked: true
+                checked: false
                 enabled: false
                 StyledToolTip { text: Translation.tr("Window switcher popup") }
             }
@@ -619,7 +619,7 @@ ContentPage {
             SettingsSwitch {
                 buttonIcon: "center_focus_strong"
                 text: Translation.tr("Crosshair")
-                checked: true
+                checked: false
                 enabled: false
                 StyledToolTip { text: Translation.tr("Gaming crosshair overlay for games without built-in crosshair") }
             }
@@ -798,7 +798,7 @@ ContentPage {
             SettingsSwitch {
                 buttonIcon: "tab"
                 text: Translation.tr("Alt-Tab Switcher")
-                checked: true
+                checked: false
                 enabled: false
                 StyledToolTip { text: Translation.tr("Window switcher popup") }
             }
@@ -814,7 +814,7 @@ ContentPage {
             SettingsSwitch {
                 buttonIcon: "center_focus_strong"
                 text: Translation.tr("Crosshair")
-                checked: true
+                checked: false
                 enabled: false
                 StyledToolTip { text: Translation.tr("Gaming crosshair overlay") }
             }
