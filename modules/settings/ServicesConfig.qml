@@ -282,7 +282,7 @@ ContentPage {
 
                 property bool expanded: false
 
-                implicitHeight: expanded ? addFormCol.implicitHeight + 24 : 0
+                implicitHeight: expanded ? aiAddFormCol.implicitHeight + 24 : 0
                 visible: expanded
                 clip: true
                 radius: Appearance.rounding.small
@@ -299,7 +299,7 @@ ContentPage {
                 }
 
                 ColumnLayout {
-                    id: addFormCol
+                    id: aiAddFormCol
                     anchors.fill: parent
                     anchors.margins: 12
                     spacing: 12
