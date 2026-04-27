@@ -201,7 +201,7 @@ ContentPage {
                             Rectangle {
                                 width: fmtLabel.implicitWidth + 12
                                 height: 20
-                                radius: 10
+                                radius: Appearance.rounding.small
                                 color: ColorUtils.transparentize(Appearance.m3colors.m3tertiary, 0.85)
 
                                 readonly property var formatLabels: ({
