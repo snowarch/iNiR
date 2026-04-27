@@ -129,6 +129,7 @@ ContentPage {
                         providerNameInput.text = ""
                         providerEndpointInput.text = ""
                         apiFormatRow.selectedFormat = "openai"
+                        apiFormatRow._manualOverride = false
                         providerModelInput.text = ""
                         providerApiKeyInput.text = ""
                         providerForm.expanded = true
@@ -237,6 +238,7 @@ ContentPage {
                                     providerNameInput.text = m?.name ?? ""
                                     providerEndpointInput.text = m?.endpoint ?? ""
                                     apiFormatRow.selectedFormat = m?.api_format ?? "openai"
+                                    apiFormatRow._manualOverride = true
                                     providerModelInput.text = m?.model ?? ""
                                     providerApiKeyInput.text = ""
                                     providerForm.expanded = true
@@ -404,6 +406,18 @@ ContentPage {
                                 border.width: providerEndpointInput.activeFocus ? 2 : 1
                                 border.color: providerEndpointInput.activeFocus ? Appearance.m3colors.m3primary : Appearance.colors.colLayer0Border
                             }
+
+                            onTextChanged: {
+                                if (apiFormatRow._manualOverride) return
+                                const url = text.toLowerCase()
+                                if (url.includes("generativelanguage.googleapis.com")) {
+                                    apiFormatRow.selectedFormat = "gemini"
+                                } else if (url.includes("api.anthropic.com") || url.includes("/v1/messages")) {
+                                    apiFormatRow.selectedFormat = "anthropic"
+                                } else if (url.includes("api.openai.com") || url.includes("/v1/chat/completions")) {
+                                    apiFormatRow.selectedFormat = "openai"
+                                }
+                            }
                         }
                     }
 
@@ -422,10 +436,12 @@ ContentPage {
                             Layout.fillWidth: true
 
                             property string selectedFormat: "openai"
+                            property bool _manualOverride: false
 
                             Repeater {
                                 model: [
                                     { value: "openai", label: "OpenAI Chat", desc: Translation.tr("OpenAI / Mistral / Ollama / OpenRouter / vLLM / ...") },
+                                    { value: "gemini", label: "Gemini", desc: Translation.tr("Google Gemini API") },
                                     { value: "anthropic", label: "Anthropic", desc: Translation.tr("Anthropic Messages API") },
                                     { value: "openai-response", label: "OpenAI Response", desc: Translation.tr("New OpenAI Responses API") }
                                 ]
@@ -478,7 +494,10 @@ ContentPage {
                                         anchors.fill: parent
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
-                                        onClicked: apiFormatRow.selectedFormat = modelData.value
+                                        onClicked: {
+                                            apiFormatRow.selectedFormat = modelData.value
+                                            apiFormatRow._manualOverride = true
+                                        }
                                     }
                                 }
                             }
@@ -616,6 +635,7 @@ ContentPage {
                                 providerNameInput.text = ""
                                 providerEndpointInput.text = ""
                                 apiFormatRow.selectedFormat = "openai"
+                                apiFormatRow._manualOverride = false
                                 providerModelInput.text = ""
                                 providerApiKeyInput.text = ""
                             }
