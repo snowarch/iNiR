@@ -99,7 +99,7 @@ ContentPage {
             }
         }
 
-        // Custom AI Providers
+        // AI Providers
         SettingsGroup {
             // Section header
             RowLayout {
@@ -110,7 +110,7 @@ ContentPage {
 
                 StyledText {
                     Layout.fillWidth: true
-                    text: Translation.tr("Custom Providers")
+                    text: Translation.tr("AI Providers")
                     font.pixelSize: Appearance.font.pixelSize.normal
                     font.weight: Font.Medium
                     color: Appearance.colors.colOnLayer1
@@ -122,7 +122,17 @@ ContentPage {
                     buttonRadius: Appearance.rounding.small
                     colBackground: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.88)
                     colBackgroundHover: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.80)
-                    onClicked: addProviderForm.expanded = true
+                    onClicked: {
+                        providerForm.editingIndex = -1
+                        providerForm.titleText = Translation.tr("Add AI Provider")
+                        providerForm.saveLabelText = Translation.tr("Add")
+                        providerNameInput.text = ""
+                        providerEndpointInput.text = ""
+                        apiFormatRow.selectedFormat = "openai"
+                        providerModelInput.text = ""
+                        providerApiKeyInput.text = ""
+                        providerForm.expanded = true
+                    }
 
                     contentItem: RowLayout {
                         id: addProviderBtnRow
@@ -188,7 +198,6 @@ ContentPage {
                                 }
                             }
 
-                            // API format badge
                             Rectangle {
                                 width: fmtLabel.implicitWidth + 12
                                 height: 20
@@ -210,6 +219,38 @@ ContentPage {
                                     font.pixelSize: Appearance.font.pixelSize.smallest
                                     font.weight: Font.Medium
                                     color: Appearance.m3colors.m3tertiary
+                                }
+                            }
+
+                            // Edit button
+                            RippleButton {
+                                implicitWidth: 28
+                                implicitHeight: 28
+                                buttonRadius: 14
+                                colBackground: "transparent"
+                                colBackgroundHover: Appearance.colors.colLayer1Hover
+                                onClicked: {
+                                    const m = providerItem.modelData
+                                    providerForm.editingIndex = providerItem.index
+                                    providerForm.titleText = Translation.tr("Edit AI Provider")
+                                    providerForm.saveLabelText = Translation.tr("Save")
+                                    providerNameInput.text = m?.name ?? ""
+                                    providerEndpointInput.text = m?.endpoint ?? ""
+                                    apiFormatRow.selectedFormat = m?.api_format ?? "openai"
+                                    providerModelInput.text = m?.model ?? ""
+                                    providerApiKeyInput.text = ""
+                                    providerForm.expanded = true
+                                }
+
+                                contentItem: MaterialSymbol {
+                                    anchors.centerIn: parent
+                                    text: "edit"
+                                    iconSize: 14
+                                    color: Appearance.colors.colSubtext
+                                }
+
+                                StyledToolTip {
+                                    text: Translation.tr("Edit")
                                 }
                             }
 
@@ -255,7 +296,7 @@ ContentPage {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.topMargin: 8
                 Layout.bottomMargin: 8
-                text: Translation.tr("No custom providers added yet")
+                text: Translation.tr("No AI providers configured")
                 font.pixelSize: Appearance.font.pixelSize.small
                 color: Appearance.colors.colSubtext
                 font.italic: true
@@ -267,20 +308,23 @@ ContentPage {
                 Layout.topMargin: 4
                 Layout.leftMargin: 4
                 Layout.rightMargin: 4
-                text: Translation.tr("Add custom API endpoints using standard protocols. After adding, restart the shell and use /model in the AI sidebar to switch to your provider.")
+                text: Translation.tr("Manage AI providers here. Providers are shared with the AI sidebar — use /model to switch between them.")
                 font.pixelSize: Appearance.font.pixelSize.smallest
                 color: Appearance.colors.colSubtext
                 wrapMode: Text.WordWrap
                 opacity: 0.7
             }
 
-            // Inline add-provider form
+            // Inline add/edit form
             Rectangle {
-                id: addProviderForm
+                id: providerForm
                 Layout.fillWidth: true
                 Layout.topMargin: 4
 
                 property bool expanded: false
+                property int editingIndex: -1
+                property string titleText: Translation.tr("Add AI Provider")
+                property string saveLabelText: Translation.tr("Add")
 
                 implicitHeight: expanded ? aiAddFormCol.implicitHeight + 24 : 0
                 visible: expanded
@@ -305,7 +349,7 @@ ContentPage {
                     spacing: 12
 
                     StyledText {
-                        text: Translation.tr("Add Custom AI Provider")
+                        text: providerForm.titleText
                         font.pixelSize: Appearance.font.pixelSize.normal
                         font.weight: Font.DemiBold
                         color: Appearance.colors.colOnLayer1
@@ -508,7 +552,8 @@ ContentPage {
                             colBackground: "transparent"
                             colBackgroundHover: Appearance.colors.colLayer1Hover
                             onClicked: {
-                                addProviderForm.expanded = false
+                                providerForm.expanded = false
+                                providerForm.editingIndex = -1
                                 providerNameInput.text = ""
                                 providerEndpointInput.text = ""
                                 apiFormatRow.selectedFormat = "openai"
@@ -538,7 +583,7 @@ ContentPage {
                                 const apiKey = providerApiKeyInput.text.trim()
                                 const keyId = modelCode.toLowerCase().replace(/[:\/ ]/g, "-")
 
-                                const newModel = {
+                                const entry = {
                                     name: providerNameInput.text.trim() || modelCode,
                                     endpoint: providerEndpointInput.text.trim(),
                                     model: modelCode,
@@ -548,14 +593,26 @@ ContentPage {
                                 }
 
                                 let models = [...(Config.options?.ai?.extraModels ?? [])]
-                                models.push(newModel)
+                                if (providerForm.editingIndex >= 0) {
+                                    // Preserve extra fields from the original entry
+                                    const orig = models[providerForm.editingIndex]
+                                    if (orig) {
+                                        for (let k in orig) {
+                                            if (!(k in entry) && k !== "index") entry[k] = orig[k]
+                                        }
+                                    }
+                                    models[providerForm.editingIndex] = entry
+                                } else {
+                                    models.push(entry)
+                                }
                                 Config.setNestedValue("ai.extraModels", models)
 
                                 if (apiKey.length > 0) {
                                     KeyringStorage.setNestedField(["apiKeys", keyId], apiKey)
                                 }
 
-                                addProviderForm.expanded = false
+                                providerForm.expanded = false
+                                providerForm.editingIndex = -1
                                 providerNameInput.text = ""
                                 providerEndpointInput.text = ""
                                 apiFormatRow.selectedFormat = "openai"
@@ -566,7 +623,7 @@ ContentPage {
                             contentItem: StyledText {
                                 id: saveProviderLabel
                                 anchors.centerIn: parent
-                                text: Translation.tr("Add")
+                                text: providerForm.saveLabelText
                                 font.pixelSize: Appearance.font.pixelSize.small
                                 font.weight: Font.Medium
                                 color: Appearance.colors.colOnPrimary
