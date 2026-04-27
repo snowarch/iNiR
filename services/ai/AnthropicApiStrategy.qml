@@ -5,7 +5,11 @@ ApiStrategy {
     property bool isThinking: false
 
     function buildEndpoint(model: AiModel): string {
-        return model.endpoint;
+        let ep = model.endpoint;
+        if (!ep.includes("/v1/messages")) {
+            ep = ep.replace(/\/+$/, "") + "/v1/messages";
+        }
+        return ep;
     }
 
     function buildRequestData(model: AiModel, messages, systemPrompt: string, temperature: real, tools: list<var>, filePath: string) {
