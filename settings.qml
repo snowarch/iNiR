@@ -1,8 +1,9 @@
 //@ pragma UseQApplication
+//@ pragma DropExpensiveFonts
 //@ pragma Env QS_NO_RELOAD_POPUP=1
 //@ pragma Env INIR_STANDALONE_WINDOW=1
 //@ pragma Env QT_QUICK_CONTROLS_STYLE=Basic
-//@ pragma Env QT_QUICK_FLICKABLE_WHEEL_DECELERATION=10000
+//@ pragma DefaultEnv QT_QUICK_FLICKABLE_WHEEL_DECELERATION=10000
 // Launcher keeps QT_SCALE_FACTOR=1; shell scaling lives in appearance.typography.sizeScale
 
 import QtQuick
