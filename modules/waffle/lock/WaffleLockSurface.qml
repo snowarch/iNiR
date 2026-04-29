@@ -39,6 +39,11 @@ MouseArea {
 
     readonly property bool effectsSafe: !CompositorService.isNiri
     readonly property bool enableAnimation: Config.options?.lock?.enableAnimation ?? false
+
+    function safeLockNotificationImage(source): string {
+        const value = String(source ?? "")
+        return value.startsWith("image://qsimage/") ? "" : value
+    }
     
     // Smoke material (Windows 11 - dimming overlay)
     readonly property color smokeColor: ColorUtils.transparentize(Looks.colors.bg0Opaque, 0.5)
@@ -849,7 +854,7 @@ MouseArea {
                                                 implicitSize: 28
                                                 asynchronous: true
                                                 source: {
-                                                    const img = wGroupDelegate.latestNotif?.image ?? ""
+                                                    const img = root.safeLockNotificationImage(wGroupDelegate.latestNotif?.image)
                                                     const icon = wGroupDelegate.latestNotif?.appIcon ?? ""
                                                     if (img && img !== "") return img
                                                     if (icon && icon !== "") return Quickshell.iconPath(icon, "image-missing")

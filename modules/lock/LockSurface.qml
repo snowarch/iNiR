@@ -30,6 +30,11 @@ MouseArea {
     readonly property real blurRadius: Config.options?.lock?.blur?.radius ?? 64
     readonly property real blurZoom: Config.options?.lock?.blur?.extraZoom ?? 1.1
     readonly property bool enableAnimation: Config.options?.lock?.enableAnimation ?? false
+
+    function safeLockNotificationImage(source): string {
+        const value = String(source ?? "")
+        return value.startsWith("image://qsimage/") ? "" : value
+    }
     
     // Wallpaper path resolution
     readonly property string _wallpaperSource: Config.options?.background?.wallpaperPath ?? ""
@@ -667,7 +672,7 @@ MouseArea {
                                         NotificationAppIcon {
                                             anchors.fill: parent
                                             appIcon: groupDelegate.latestNotif?.appIcon ?? ""
-                                            image: groupDelegate.latestNotif?.image ?? ""
+                                            image: root.safeLockNotificationImage(groupDelegate.latestNotif?.image)
                                             summary: groupDelegate.latestNotif?.summary ?? ""
                                             urgency: groupDelegate.latestNotif?.urgency ?? 0
                                         }
@@ -788,7 +793,7 @@ MouseArea {
                                                 Layout.preferredWidth: 22
                                                 Layout.preferredHeight: 22
                                                 appIcon: expandedCard.modelData?.appIcon ?? ""
-                                                image: expandedCard.modelData?.image ?? ""
+                                                image: root.safeLockNotificationImage(expandedCard.modelData?.image)
                                                 summary: expandedCard.modelData?.summary ?? ""
                                                 urgency: expandedCard.modelData?.urgency ?? 0
                                             }

@@ -37,6 +37,11 @@ MouseArea {
     readonly property real blurAmount: 0.8
     readonly property real blurMax: Config.options?.lock?.blur?.radius ?? 64
 
+    function safeLockNotificationImage(source): string {
+        const value = String(source ?? "")
+        return value.startsWith("image://qsimage/") ? "" : value
+    }
+
     readonly property color smokeColor: ColorUtils.transparentize(Looks.colors.bg0Opaque, 0.5)
 
     readonly property MprisPlayer activePlayer: MprisController.activePlayer
@@ -671,7 +676,7 @@ MouseArea {
                                                 implicitSize: 28
                                                 asynchronous: true
                                                 source: {
-                                                    const img = safeGroupDelegate.latestNotif?.image ?? ""
+                                                    const img = root.safeLockNotificationImage(safeGroupDelegate.latestNotif?.image)
                                                     const icon = safeGroupDelegate.latestNotif?.appIcon ?? ""
                                                     if (img && img !== "") return img
                                                     if (icon && icon !== "") return Quickshell.iconPath(icon, "image-missing")
