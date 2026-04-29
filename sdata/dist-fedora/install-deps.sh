@@ -489,21 +489,25 @@ fi
 
 # darkly - Qt theme (download .rpm from GitHub)
 if ${INSTALL_FONTS:-true}; then
-  if ! rpm -q darkly &>/dev/null; then
-    log_info "Installing darkly theme from GitHub..."
-    DARKLY_RPM_URL=$(curl -s "https://api.github.com/repos/Bali10050/darkly/releases/latest" | \
-      jq -r ".assets[] | select(.name | test(\"fc${FEDORA_VERSION}.*x86_64.rpm$\")) | .browser_download_url" | head -1)
-    
-    # Fallback to any Fedora RPM if exact version not found
-    if [[ -z "$DARKLY_RPM_URL" || "$DARKLY_RPM_URL" == "null" ]]; then
+  log_info "Installing Darkly from COPR"
+  if ! sudo dnf install darkly -y; then
+    log_warning "Failed to install from COPR. Falling back to GitHub Releases..."
+    if ! rpm -q darkly &>/dev/null; then
+      log_info "Installing darkly theme from GitHub..."
       DARKLY_RPM_URL=$(curl -s "https://api.github.com/repos/Bali10050/darkly/releases/latest" | \
-        jq -r '.assets[] | select(.name | test("fc[0-9]+.*x86_64.rpm$")) | .browser_download_url' | head -1)
-    fi
+        jq -r ".assets[] | select(.name | test(\"fc${FEDORA_VERSION}.*x86_64.rpm$\")) | .browser_download_url" | head -1)
     
-    if [[ -n "$DARKLY_RPM_URL" && "$DARKLY_RPM_URL" != "null" ]]; then
-      v sudo dnf install -y "$DARKLY_RPM_URL"
-    else
-      log_warning "darkly RPM not found for Fedora ${FEDORA_VERSION}"
+      # Fallback to any Fedora RPM if exact version not found
+      if [[ -z "$DARKLY_RPM_URL" || "$DARKLY_RPM_URL" == "null" ]]; then
+        DARKLY_RPM_URL=$(curl -s "https://api.github.com/repos/Bali10050/darkly/releases/latest" | \
+          jq -r '.assets[] | select(.name | test("fc[0-9]+.*x86_64.rpm$")) | .browser_download_url' | head -1)
+      fi
+    
+      if [[ -n "$DARKLY_RPM_URL" && "$DARKLY_RPM_URL" != "null" ]]; then
+        v sudo dnf install -y "$DARKLY_RPM_URL"
+      else
+        log_warning "darkly RPM not found for Fedora ${FEDORA_VERSION}"
+      fi
     fi
   fi
 fi
