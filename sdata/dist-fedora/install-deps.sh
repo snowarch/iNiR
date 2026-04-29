@@ -265,7 +265,8 @@ FEDORA_QT6_PKGS=(
   kde-gtk-config
   breeze-gtk
 
-  sddm  
+  sddm
+  qalculate
 )
 
 FEDORA_QT_PKGS_2=(
@@ -284,6 +285,7 @@ FEDORA_AUDIO_PKGS=(
 
 # Toolkit packages
 FEDORA_TOOLKIT_PKGS=(
+  gum
   wtype
   ydotool
   python3-evdev
@@ -357,11 +359,12 @@ if ! rpm -q quickshell-git &>/dev/null; then
   QS_INSTALL=true
 fi
 # Install core packages. Need weak deps, in case dnf is configured to always ignore weak deps.
-log_info "Installing core packages (Quickshell + Niri)..."
+log_info "Installing Quickshell..."
 if $QS_INSTALL; then
   v sudo dnf install quickshell -y
 fi
-sudo dnf install --setopt=install_weak_deps=True -y $installflags "${FEDORA_CORE_PKGS[@]}"
+log_info "Installing Core packages (Niri and others)..."
+v sudo dnf install --setopt=install_weak_deps=True -y $installflags "${FEDORA_CORE_PKGS[@]}"
 
 # Install Qt6 packages
 log_info "Installing Qt6 packages..."
@@ -459,12 +462,6 @@ install_github_binary() {
   rm -rf "$temp_dir"
 }
 
-# gum - TUI tool (download .rpm from GitHub)
-if ! command -v gum &>/dev/null; then
-  log_info "Installing gum from official repo..."
-  v sudo dnf install -y gum
-fi
-
 # cliphist - clipboard manager
 if ! command -v cliphist &>/dev/null; then
   log_info "Installing cliphist from official repo...."
@@ -526,6 +523,7 @@ fi
 #    fi
 #  }
 #fi
+tui_info "Installing python runtime 3.12"
 uv python install 3.12
 
 #####################################################################################
