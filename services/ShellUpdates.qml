@@ -197,19 +197,40 @@ Singleton {
         root._lastWatchdogStatus = ""
         root.overlayOpen = false
         Config.setNestedValue("shellUpdates.dismissedCommit", "")
-        // Detached bash wrapper: writes status markers + logs all output.
-        // On success, ./setup update restarts the shell — new instance clears hasUpdate naturally.
-        // On failure, status file lets the watchdog detect it and restore the update indicator.
+
         const logPath = Directories.updateLogPath
         const statusPath = Directories.updateStatusPath
         const repoDir = root.repoPath
-        Quickshell.execDetached(["/usr/bin/bash", "-c",
-            "echo 'updating' > '" + statusPath + "'; " +
-            "cd '" + repoDir + "' && ./setup -y -q update > '" + logPath + "' 2>&1; " +
-            "rc=$?; " +
-            "if [ $rc -ne 0 ]; then echo \"failed:$rc\" > '" + statusPath + "'; fi"
-        ])
-        print("[ShellUpdates] Update launched (detached) from: " + repoDir)
+        const useTerminal = Config.options?.shellUpdates?.openTerminalOnUpdate ?? true
+
+        // Bash one-liner: writes the initial 'updating' marker, runs setup, captures
+        // exit code, writes 'failed:N' on error. Terminal mode pipes through tee so
+        // both the user (TUI) and the log file see everything; detached mode redirects
+        // to the log file only. The trailing read in terminal mode keeps the window
+        // open on failure so the user can read the error before closing.
+        const teeCmd = useTerminal
+            ? "./setup -y update 2>&1 | tee '" + logPath + "'; rc=${PIPESTATUS[0]}"
+            : "./setup -y -q update > '" + logPath + "' 2>&1; rc=$?"
+        const failTail = useTerminal
+            ? "if [ $rc -ne 0 ]; then echo \"failed:$rc\" > '" + statusPath + "'; echo; echo \"Update failed (exit $rc). Press Enter to close.\"; read -r _; fi"
+            : "if [ $rc -ne 0 ]; then echo \"failed:$rc\" > '" + statusPath + "'; fi"
+        const bashCmd = "echo 'updating' > '" + statusPath + "'; " +
+            "cd '" + repoDir + "' && " + teeCmd + "; " + failTail
+
+        if (useTerminal) {
+            // First token of the configured terminal command (e.g. "kitty -1" -> "kitty").
+            // Most supported terminals (foot, kitty, ghostty, alacritty, wezterm, konsole)
+            // accept '-e' for "execute this command". WezTerm accepts it via its compat layer.
+            const termSlot = (AppLauncher && typeof AppLauncher.commandFor === "function")
+                ? AppLauncher.commandFor("terminal") : ""
+            const termBin = (termSlot.length > 0 ? termSlot : "kitty").trim().split(/\s+/)[0]
+            Quickshell.execDetached([termBin, "-e", "/usr/bin/bash", "-c", bashCmd])
+            print("[ShellUpdates] Update launched in terminal (" + termBin + ") from: " + repoDir)
+        } else {
+            // Detached background — same path as before the terminal toggle existed.
+            Quickshell.execDetached(["/usr/bin/bash", "-c", bashCmd])
+            print("[ShellUpdates] Update launched (detached) from: " + repoDir)
+        }
         print("[ShellUpdates] Log: " + logPath + " | Status: " + statusPath)
         // Start watchdog — if shell hasn't restarted after timeout, check status file
         updateWatchdog.restart()

@@ -1081,7 +1081,8 @@
     "enabled": true,
     "checkIntervalMinutes": 360,
     "dismissedCommit": "",
-    "lastNotifiedCommit": ""
+    "lastNotifiedCommit": "",
+    "openTerminalOnUpdate": true
   },
   "updates": {
     "checkInterval": 120,

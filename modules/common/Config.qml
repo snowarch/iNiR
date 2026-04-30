@@ -1450,6 +1450,11 @@ Singleton {
                 property int checkIntervalMinutes: 360
                 property string dismissedCommit: ""
                 property string lastNotifiedCommit: ""
+                // When true, performUpdate() launches setup in a terminal window so the
+                // user sees the full TUI output (progress bars, success/warn/error lines)
+                // instead of just the bar pill X/N indicator. Auto-closes on success,
+                // pauses on failure so the user can read the error.
+                property bool openTerminalOnUpdate: true
             }
             property JsonObject welcomeWizard: JsonObject {
                 property bool completed: false
