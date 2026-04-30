@@ -1,11 +1,12 @@
-[Desktop Entry]
+[SddmGreeterTheme]
 Name=ii-pixel
-Comment=iNiR SDDM login screen — Material You dynamic colors
-Type=Service
-X-KDE-PluginInfo-Author=iNiR project
-X-KDE-PluginInfo-Email=
-X-KDE-PluginInfo-Name=ii-pixel
-X-KDE-PluginInfo-Version=1.0
-X-KDE-PluginInfo-Website=https://github.com/snowarch/iNiR
-X-KDE-PluginInfo-Category=Plasma Look And Feel
-X-KDE-ServiceTypes=SDDM/Theme
+Description=iNiR SDDM login screen — Material You dynamic colors
+Author=iNiR Project
+Type=sddm-theme
+Version=1.0
+Website=https://github.com/snowarch/iNiR
+MainScript=Main.qml
+ConfigFile=theme.conf
+Theme-Id=ii-pixel
+Theme-API=2.11
+QtVersion=6
