@@ -107,12 +107,7 @@ StyledOverlayWidget {
 
         property string _lastCheckedPath: ""
         function checkAndDownloadArt() {
-            if (!artUrl || artUrl.length === 0) {
-                downloaded = false
-                _downloadRetryCount = 0
-                _lastCheckedPath = ""
-                return
-            }
+            if (!artUrl || artUrl.length === 0 || !artFilePath) return
             if (artFilePath === _lastCheckedPath && downloaded) return
             _lastCheckedPath = artFilePath
             artExistsChecker.running = true
@@ -139,6 +134,7 @@ StyledOverlayWidget {
         }
 
         onArtFilePathChanged: {
+            if (!artFilePath) return
             _downloadRetryCount = 0
             checkAndDownloadArt()
         }
@@ -156,15 +152,15 @@ StyledOverlayWidget {
             onTriggered: activePlayer?.positionChanged()
         }
 
-        Process { // Check if cover art exists
+        Process {
             id: artExistsChecker
             command: ["/usr/bin/test", "-f", musicContent.artFilePath]
             onExited: (exitCode, exitStatus) => {
+                if (exitCode !== 0 && exitCode !== 1) return
                 if (exitCode === 0) {
                     musicContent.downloaded = true
                     musicContent._downloadRetryCount = 0
                 } else {
-                    musicContent.downloaded = false
                     coverArtDownloader.targetFile = musicContent.artUrl ?? ""
                     coverArtDownloader.artFilePath = musicContent.artFilePath ?? ""
                     coverArtDownloader.running = true
@@ -172,7 +168,7 @@ StyledOverlayWidget {
             }
         }
 
-        Process { // Descarga ligera de carátula a caché
+        Process {
             id: coverArtDownloader
             property string targetFile: artUrl ?? ""
             property string artFilePath: musicContent.artFilePath ?? ""
@@ -189,8 +185,7 @@ StyledOverlayWidget {
                 if (exitCode === 0) {
                     musicContent.downloaded = true
                     musicContent._downloadRetryCount = 0
-                } else {
-                    musicContent.downloaded = false
+                } else if (exitCode === 1) {
                     musicContent.retryDownload()
                 }
             }

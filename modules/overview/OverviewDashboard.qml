@@ -71,21 +71,21 @@ Item {
 
     property string _lastCheckedPath: ""
     function checkAndDownloadArt(): void {
-        if (!effectiveArtUrl) { downloaded = false; _downloadRetryCount = 0; _lastCheckedPath = ""; return }
+        if (!effectiveArtUrl || !artFilePath) return
         if (artFilePath === _lastCheckedPath && downloaded) return
         _lastCheckedPath = artFilePath
         artExistsChecker.running = true
     }
-    onArtFilePathChanged: { _downloadRetryCount = 0; checkAndDownloadArt() }
-    onEffectiveArtUrlChanged: { _downloadRetryCount = 0; checkAndDownloadArt() }
+    onArtFilePathChanged: { if (!artFilePath) return; _downloadRetryCount = 0; checkAndDownloadArt() }
+    onEffectiveArtUrlChanged: { if (!effectiveArtUrl) return; _downloadRetryCount = 0; checkAndDownloadArt() }
 
     Process {
         id: artExistsChecker
         command: ["/usr/bin/test", "-f", root.artFilePath]
         onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0 && exitCode !== 1) return
             if (exitCode === 0) { root.downloaded = true }
             else {
-                root.downloaded = false
                 artDownloader.targetFile = root.effectiveArtUrl ?? ""
                 artDownloader.artPath = root.artFilePath
                 artDownloader.running = true

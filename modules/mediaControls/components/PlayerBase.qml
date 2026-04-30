@@ -110,18 +110,13 @@ QtObject {
         }
     }
     
-    // Art download logic
+    // Art download logic — mirrors BarMediaPlayerItem (the known-good impl)
     property string _lastCheckedPath: ""
+
     function checkAndDownloadArt(): void {
-        if (!effectiveArtUrl) {
-            downloaded = false
-            _downloadRetryCount = 0
-            _lastCheckedPath = ""
-            return
-        }
+        if (!effectiveArtUrl || !artFilePath) return
         if (artFilePath === _lastCheckedPath && downloaded) return
         _lastCheckedPath = artFilePath
-        artExistsChecker.running = false
         artExistsChecker.running = true
     }
     
@@ -140,7 +135,6 @@ QtObject {
             if (root.effectiveArtUrl && !root.downloaded) {
                 coverArtDownloader.targetFile = root.effectiveArtUrl
                 coverArtDownloader.artFilePath = root.artFilePath
-                coverArtDownloader.running = false
                 coverArtDownloader.running = true
             }
         }
@@ -149,14 +143,13 @@ QtObject {
     property var artExistsChecker: Process {
         command: ["/usr/bin/test", "-f", root.artFilePath]
         onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0 && exitCode !== 1) return
             if (exitCode === 0) {
                 root.downloaded = true
                 root._downloadRetryCount = 0
             } else {
-                root.downloaded = false
                 coverArtDownloader.targetFile = root.effectiveArtUrl
                 coverArtDownloader.artFilePath = root.artFilePath
-                coverArtDownloader.running = false
                 coverArtDownloader.running = true
             }
         }
@@ -185,8 +178,7 @@ QtObject {
             if (exitCode === 0) {
                 root.downloaded = true
                 root._downloadRetryCount = 0
-            } else {
-                root.downloaded = false
+            } else if (exitCode === 1) {
                 root.retryDownload()
             }
         }
@@ -199,23 +191,15 @@ QtObject {
         onTriggered: root.player?.positionChanged()
     }
     
-    property var playerConnections: Connections {
-        target: root.player
-        function onTrackArtUrlChanged() {
-            if (!root.isYtMusicPlayer) {
-                root._downloadRetryCount = 0
-                root.checkAndDownloadArt()
-            }
-        }
-    }
-    
-    // Watchers
+    // Watchers — only react when we have a valid path
     onArtFilePathChanged: {
+        if (!artFilePath) return
         _downloadRetryCount = 0
         checkAndDownloadArt()
     }
     
     onEffectiveArtUrlChanged: {
+        if (!effectiveArtUrl) return
         _downloadRetryCount = 0
         checkAndDownloadArt()
     }

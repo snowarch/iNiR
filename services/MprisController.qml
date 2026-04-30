@@ -55,19 +55,26 @@ Singleton {
 	property var _playerGrace: ({})  // dbusName -> timestamp
 	
 	// Prioritize playing players over paused ones
-	// Uses _playbackStateVersion to force re-evaluation on state changes
+	// Uses _playbackStateVersion to force activePlayer re-evaluation on state changes
 	property MprisPlayer activePlayer: {
 		// Touch version to create dependency
 		const _ = _playbackStateVersion;
-		// Only consider tracked if it survived filtering
-		const tracked = players.includes(trackedPlayer) ? trackedPlayer : null;
-		// First, prefer any player that is actively playing
+		const visiblePlayers = displayPlayers ?? [];
+		// Only consider tracked if it survived display filtering
+		const trackedVisible = visiblePlayers.includes(trackedPlayer) ? trackedPlayer : null;
+		// Prefer the same deduped/art-capable player set used by popup surfaces
+		for (let i = 0; i < visiblePlayers.length; i++) {
+			if (visiblePlayers[i]?.isPlaying) return visiblePlayers[i];
+		}
+		if (trackedVisible) return trackedVisible;
+		if (visiblePlayers.length > 0) return visiblePlayers[0];
+
+		// Raw fallback only for transient gaps while filtered players rebuild
+		const trackedRaw = players.includes(trackedPlayer) ? trackedPlayer : null;
 		for (let i = 0; i < players.length; i++) {
 			if (players[i]?.isPlaying) return players[i];
 		}
-		// If nothing is playing, keep user's tracked selection
-		if (tracked) return tracked;
-		// Final fallback
+		if (trackedRaw) return trackedRaw;
 		return players[0] ?? null;
 	}
 
@@ -613,7 +620,7 @@ Singleton {
 
 	function setActivePlayer(player: MprisPlayer): void {
 		// Only allow players that survived filtering
-		const filtered = players;
+		const filtered = (displayPlayers?.length ?? 0) > 0 ? displayPlayers : players;
 		let targetPlayer = player;
 		if (!targetPlayer || !filtered.includes(targetPlayer)) {
 			targetPlayer = filtered[0] ?? null;

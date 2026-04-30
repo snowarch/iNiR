@@ -48,12 +48,7 @@ Item {
 
     property string _lastCheckedPath: ""
     function checkAndDownloadArt() {
-        if (!root.effectiveArtUrl) {
-            downloaded = false
-            _downloadRetryCount = 0
-            _lastCheckedPath = ""
-            return
-        }
+        if (!root.effectiveArtUrl || !artFilePath) return
         if (artFilePath === _lastCheckedPath && downloaded) return
         _lastCheckedPath = artFilePath
         artExistsChecker.running = true
@@ -80,11 +75,13 @@ Item {
     }
 
     onArtFilePathChanged: {
+        if (!artFilePath) return
         _downloadRetryCount = 0
         checkAndDownloadArt()
     }
     
     onEffectiveArtUrlChanged: {
+        if (!effectiveArtUrl) return
         _downloadRetryCount = 0
         checkAndDownloadArt()
     }
@@ -100,11 +97,11 @@ Item {
         id: artExistsChecker
         command: ["/usr/bin/test", "-f", root.artFilePath]
         onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0 && exitCode !== 1) return
             if (exitCode === 0) {
                 root.downloaded = true
                 root._downloadRetryCount = 0
             } else {
-                root.downloaded = false
                 coverArtDownloader.targetFile = root.effectiveArtUrl ?? ""
                 coverArtDownloader.artFilePath = root.artFilePath
                 coverArtDownloader.running = true
@@ -127,8 +124,7 @@ Item {
             if (exitCode === 0) {
                 root.downloaded = true
                 root._downloadRetryCount = 0
-            } else {
-                root.downloaded = false
+            } else if (exitCode === 1) {
                 root.retryDownload()
             }
         }

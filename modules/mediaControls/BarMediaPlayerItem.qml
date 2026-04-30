@@ -88,10 +88,10 @@ Item { // Player instance - Old style design
         id: artExistsChecker
         command: ["/usr/bin/test", "-f", root.artFilePath]
         onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0 && exitCode !== 1) return
             if (exitCode === 0) {
                 root.downloaded = true
             } else {
-                root.downloaded = false
                 coverArtDownloader.targetFile = root.artUrl ?? ""
                 coverArtDownloader.artFilePath = root.artFilePath
                 coverArtDownloader.running = true
@@ -119,7 +119,7 @@ Item { // Player instance - Old style design
         root.artDownloadLocation
         ]
         onExited: (exitCode) => {
-            root.downloaded = (exitCode === 0)
+            if (exitCode === 0) root.downloaded = true
         }
     }
 
