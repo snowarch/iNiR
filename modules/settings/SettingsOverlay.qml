@@ -206,11 +206,15 @@ Scope {
 
         var isWaffleActive = Config.options?.panelFamily === "waffle";
         var wafflePageIndex = getWaffleSettingsPageIndex();
+        var easyOn = root.easyMode;
 
         // 1. Static index
         for (var i = 0; i < overlaySearchIndex.length; i++) {
             var entry = overlaySearchIndex[i];
             if (wafflePageIndex >= 0 && entry.pageIndex === wafflePageIndex && !isWaffleActive)
+                continue;
+            if (easyOn && entry.pageIndex >= 0 && entry.pageIndex < overlayPages.length
+                && overlayPages[entry.pageIndex].essential !== true)
                 continue;
 
             var label = (entry.label || "").toLowerCase();
@@ -254,6 +258,11 @@ Scope {
             var widgetResults = SettingsSearchRegistry.buildResults(overlaySearchText);
             if (!isWaffleActive && wafflePageIndex >= 0) {
                 widgetResults = widgetResults.filter(r => r.pageIndex !== wafflePageIndex);
+            }
+            if (easyOn) {
+                widgetResults = widgetResults.filter(r =>
+                    r.pageIndex >= 0 && r.pageIndex < overlayPages.length
+                    && overlayPages[r.pageIndex].essential === true);
             }
             // Prefer real controls (dynamic registry entries with optionId)
             for (var wr = 0; wr < widgetResults.length; wr++) {
@@ -474,6 +483,11 @@ Scope {
             root._lastFamily = Config.options?.panelFamily ?? "ii";
             root.overlayCurrentPage = 0;
         }
+    }
+
+    // Re-run search when easy mode flips (entries from filtered pages must drop in/out)
+    onEasyModeChanged: {
+        if (root.overlaySearchText.length > 0) root.recomputeOverlaySearchResults();
     }
 
     Connections {
@@ -719,14 +733,59 @@ Scope {
                         ColumnLayout {
                             spacing: 0
 
-                            StyledText {
-                                text: Translation.tr("Settings")
-                                font {
-                                    family: Appearance.font.family.title
-                                    pixelSize: Appearance.font.pixelSize.title
-                                    variableAxes: Appearance.font.variableAxes.title
+                            RowLayout {
+                                spacing: 8
+                                StyledText {
+                                    text: Translation.tr("Settings")
+                                    font {
+                                        family: Appearance.font.family.title
+                                        pixelSize: Appearance.font.pixelSize.title
+                                        variableAxes: Appearance.font.variableAxes.title
+                                    }
+                                    color: Appearance.colors.colOnLayer0
                                 }
-                                color: Appearance.colors.colOnLayer0
+
+                                // Easy mode pill — shows current mode, click to switch
+                                Rectangle {
+                                    Layout.alignment: Qt.AlignVCenter
+                                    visible: root.easyMode
+                                    implicitHeight: easyPillRow.implicitHeight + 6
+                                    implicitWidth: easyPillRow.implicitWidth + 14
+                                    radius: Appearance.rounding.full
+                                    color: Appearance.colors.colPrimaryContainer
+                                    opacity: visible ? 1 : 0
+                                    Behavior on opacity {
+                                        enabled: Appearance.animationsEnabled
+                                        animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                                    }
+
+                                    RowLayout {
+                                        id: easyPillRow
+                                        anchors.centerIn: parent
+                                        spacing: 4
+                                        MaterialSymbol {
+                                            text: "school"
+                                            iconSize: 13
+                                            color: Appearance.colors.colOnPrimaryContainer
+                                        }
+                                        StyledText {
+                                            text: Translation.tr("Easy")
+                                            font.pixelSize: Appearance.font.pixelSize.smaller
+                                            font.weight: Font.Medium
+                                            color: Appearance.colors.colOnPrimaryContainer
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.setEasyMode(false)
+                                    }
+
+                                    StyledToolTip {
+                                        text: Translation.tr("Easy mode is on. Click to show all settings.")
+                                    }
+                                }
                             }
 
                             StyledText {
@@ -915,6 +974,33 @@ Scope {
 
                         Item { Layout.fillWidth: true; Layout.minimumWidth: 8 }
 
+                        // Easy / Advanced mode toggle
+                        RippleButton {
+                            id: easyModeToggle
+                            buttonRadius: Appearance.rounding.full
+                            implicitWidth: 36
+                            implicitHeight: 36
+                            onClicked: root.setEasyMode(!root.easyMode)
+                            contentItem: MaterialSymbol {
+                                anchors.centerIn: parent
+                                horizontalAlignment: Text.AlignHCenter
+                                text: root.easyMode ? "school" : "tune"
+                                iconSize: 20
+                                color: root.easyMode
+                                    ? Appearance.colors.colPrimary
+                                    : Appearance.colors.colOnSurfaceVariant
+                                Behavior on color {
+                                    enabled: Appearance.animationsEnabled
+                                    animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                                }
+                            }
+                            StyledToolTip {
+                                text: root.easyMode
+                                    ? Translation.tr("Easy mode — click to show all settings")
+                                    : Translation.tr("Advanced mode — click to switch to Easy mode (essentials only)")
+                            }
+                        }
+
                         // Close button
                         RippleButton {
                             buttonRadius: Appearance.rounding.full
@@ -977,17 +1063,20 @@ Scope {
                                     spacing: 2
 
                                     Repeater {
-                                        model: overlayPages
+                                        model: root.visibleNavPages
                                         delegate: RippleButton {
                                             id: navBtn
                                             required property int index
                                             required property var modelData
 
+                                            // realIndex maps back to overlayPages index regardless of easy-mode filtering
+                                            readonly property int pageRealIndex: modelData.realIndex !== undefined ? modelData.realIndex : index
+
                                             Layout.fillWidth: true
                                             implicitHeight: 38
                                             buttonRadius: Appearance.rounding.small
 
-                                            toggled: overlayCurrentPage === index
+                                            toggled: overlayCurrentPage === pageRealIndex
                                             colBackground: "transparent"
                                             colBackgroundToggled: Appearance.angelEverywhere
                                                 ? Appearance.angel.colGlassCard
@@ -1011,7 +1100,7 @@ Scope {
                                                         ? Appearance.aurora.colSubSurface
                                                         : CF.ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 0.5)
 
-                                            onClicked: overlayCurrentPage = index
+                                            onClicked: overlayCurrentPage = pageRealIndex
 
                                             contentItem: Item {
                                                 anchors.fill: parent
@@ -1577,6 +1666,7 @@ Scope {
             shortName: "",
             icon: "instant_mix",
             desc: Translation.tr("Wallpaper & quick tweaks"),
+            essential: true,
             component: Quickshell.shellPath("modules/settings/QuickConfig.qml")
         },
         {
@@ -1584,6 +1674,7 @@ Scope {
             shortName: "",
             icon: "browse",
             desc: Translation.tr("Audio, battery, language, lock"),
+            essential: true,
             component: Quickshell.shellPath("modules/settings/GeneralConfig.qml")
         },
         {
@@ -1592,6 +1683,7 @@ Scope {
             icon: "toast",
             iconRotation: 180,
             desc: Translation.tr("Position, tray, modules"),
+            essential: true,
             component: Quickshell.shellPath("modules/settings/BarConfig.qml")
         },
         {
@@ -1599,6 +1691,7 @@ Scope {
             shortName: "",
             icon: "texture",
             desc: Translation.tr("Parallax, effects, widgets"),
+            essential: false,
             component: Quickshell.shellPath("modules/settings/BackgroundConfig.qml")
         },
         {
@@ -1606,6 +1699,7 @@ Scope {
             shortName: "",
             icon: "palette",
             desc: Translation.tr("Colors, fonts, styles"),
+            essential: true,
             component: Quickshell.shellPath("modules/settings/ThemesConfig.qml")
         },
         {
@@ -1613,6 +1707,7 @@ Scope {
             shortName: "",
             icon: "bottom_app_bar",
             desc: Translation.tr("Dock, sidebar, overview"),
+            essential: true,
             component: Quickshell.shellPath("modules/settings/InterfaceConfig.qml")
         },
         {
@@ -1620,6 +1715,7 @@ Scope {
             shortName: "",
             icon: "build",
             desc: Translation.tr("Recording, crosshair, overlays"),
+            essential: false,
             component: Quickshell.shellPath("modules/settings/ToolsConfig.qml")
         },
         {
@@ -1627,6 +1723,7 @@ Scope {
             shortName: "",
             icon: "settings",
             desc: Translation.tr("Weather, AI, apps"),
+            essential: false,
             component: Quickshell.shellPath("modules/settings/ServicesConfig.qml")
         },
         {
@@ -1634,6 +1731,7 @@ Scope {
             shortName: "",
             icon: "construction",
             desc: Translation.tr("Color gen, performance"),
+            essential: false,
             component: Quickshell.shellPath("modules/settings/AdvancedConfig.qml")
         },
         {
@@ -1641,6 +1739,7 @@ Scope {
             shortName: "",
             icon: "keyboard",
             desc: Translation.tr("Keybindings reference"),
+            essential: true,
             component: Quickshell.shellPath("modules/settings/CheatsheetConfig.qml")
         },
         {
@@ -1648,6 +1747,7 @@ Scope {
             shortName: "",
             icon: "extension",
             desc: Translation.tr("Enable/disable panels, scaling"),
+            essential: false,
             component: Quickshell.shellPath("modules/settings/ModulesConfig.qml")
         },
         {
@@ -1655,6 +1755,7 @@ Scope {
             shortName: "",
             icon: "window",
             desc: Translation.tr("Win11-style taskbar"),
+            essential: false,
             component: Quickshell.shellPath("modules/settings/WaffleConfig.qml")
         },
         {
@@ -1662,6 +1763,7 @@ Scope {
             shortName: "",
             icon: "desktop_windows",
             desc: Translation.tr("Display, input, layout"),
+            essential: false,
             component: Quickshell.shellPath("modules/settings/NiriConfig.qml")
         },
         {
@@ -1669,7 +1771,39 @@ Scope {
             shortName: "",
             icon: "info",
             desc: Translation.tr("Version & credits"),
+            essential: true,
             component: Quickshell.shellPath("modules/settings/About.qml")
         }
     ]
+
+    // Easy mode helpers — derived list filtered to essentials when on
+    readonly property bool easyMode: Config.options?.settingsUi?.easyMode ?? false
+    readonly property var visibleNavPages: {
+        var list = [];
+        for (var i = 0; i < overlayPages.length; i++) {
+            if (!easyMode || overlayPages[i].essential === true) {
+                var entry = Object.assign({}, overlayPages[i]);
+                entry.realIndex = i;
+                list.push(entry);
+            }
+        }
+        return list;
+    }
+
+    function setEasyMode(enabled) {
+        Config.setNestedValue("settingsUi.easyMode", enabled === true);
+    }
+
+    // If user toggles easy mode while on a non-essential page, fall back to first essential one (Quick)
+    Connections {
+        target: Config.options?.settingsUi ?? null
+        function onEasyModeChanged() {
+            if (root.easyMode) {
+                var current = root.overlayPages[root.overlayCurrentPage];
+                if (current && current.essential !== true) {
+                    root.overlayCurrentPage = 0;
+                }
+            }
+        }
+    }
 }

@@ -1421,6 +1421,7 @@ Singleton {
 
             property JsonObject settingsUi: JsonObject {
                 property bool overlayMode: false // true = layer shell overlay (live preview), false = separate window (default)
+                property bool easyMode: false    // true = curated essentials only; nav and sub-sections filter to a friendlier subset
                 property JsonObject overlayAppearance: JsonObject {
                     property int scrimDim: 35           // % dim of the backdrop scrim behind the settings panel (0-100)
                     property real backgroundOpacity: 1.0 // opacity of the settings panel background itself (0.2-1.0)

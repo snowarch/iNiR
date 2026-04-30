@@ -460,6 +460,7 @@ ContentPage {
     }
 
     SettingsCardSection {
+        visible: !(Config.options?.settingsUi?.easyMode ?? false)
         expanded: false
         icon: "rule"
         title: Translation.tr("Policies")
@@ -607,6 +608,7 @@ ContentPage {
     }
 
     SettingsCardSection {
+        visible: !(Config.options?.settingsUi?.easyMode ?? false)
         expanded: false
         icon: "select_window"
         title: Translation.tr("Window Management")
@@ -627,6 +629,7 @@ ContentPage {
     }
 
     SettingsCardSection {
+        visible: !(Config.options?.settingsUi?.easyMode ?? false)
         expanded: false
         icon: "work_alert"
         title: Translation.tr("Work safety")

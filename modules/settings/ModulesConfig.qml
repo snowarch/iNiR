@@ -930,6 +930,16 @@ ContentPage {
             }
 
             SettingsSwitch {
+                buttonIcon: "school"
+                text: Translation.tr("Easy mode (essentials only)")
+                checked: Config.options?.settingsUi?.easyMode ?? false
+                onCheckedChanged: Config.setNestedValue("settingsUi.easyMode", checked)
+                StyledToolTip {
+                    text: Translation.tr("Show a curated set of essential settings and hide the more advanced pages and sections. You can switch back to Advanced anytime from the title bar.")
+                }
+            }
+
+            SettingsSwitch {
                 buttonIcon: "layers"
                 text: Translation.tr("Overlay mode (live preview)")
                 checked: Config.options?.settingsUi?.overlayMode ?? false

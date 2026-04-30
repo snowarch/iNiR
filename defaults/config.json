@@ -544,6 +544,7 @@
   },
   "settingsUi": {
     "overlayMode": true,
+    "easyMode": false,
     "overlayAppearance": {
       "scrimDim": 35,
       "backgroundOpacity": 1.0,
@@ -1168,7 +1169,6 @@
         "enableAnimatedBlur": false,
         "thumbnailPath": ""
       },
-      "hideWhenFullscreen": true,
       "parallax": {
         "enable": false,
         "axis": "horizontal",

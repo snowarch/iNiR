@@ -27,77 +27,118 @@ ApplicationWindow {
         {
             name: Translation.tr("Quick"),
             icon: "instant_mix",
+            essential: true,
             component: "modules/settings/QuickConfig.qml"
         },
         {
             name: Translation.tr("System"),
             icon: "browse",
+            essential: true,
             component: "modules/settings/GeneralConfig.qml"
         },
         {
             name: Translation.tr("Bar"),
             icon: "toast",
             iconRotation: 180,
+            essential: true,
             component: "modules/settings/BarConfig.qml"
         },
         {
             name: Translation.tr("Background"),
             icon: "texture",
+            essential: false,
             component: "modules/settings/BackgroundConfig.qml"
         },
         {
             name: Translation.tr("Themes"),
             icon: "palette",
+            essential: true,
             component: "modules/settings/ThemesConfig.qml"
         },
         {
             name: Translation.tr("Panels"),
             icon: "bottom_app_bar",
+            essential: true,
             component: "modules/settings/InterfaceConfig.qml"
         },
         {
             name: Translation.tr("Tools"),
             icon: "build",
+            essential: false,
             component: "modules/settings/ToolsConfig.qml"
         },
         {
             name: Translation.tr("Services"),
             icon: "settings",
+            essential: false,
             component: "modules/settings/ServicesConfig.qml"
         },
         {
             name: Translation.tr("Advanced"),
             icon: "construction",
+            essential: false,
             component: "modules/settings/AdvancedConfig.qml"
         },
         {
             name: Translation.tr("Shortcuts"),
             icon: "keyboard",
+            essential: true,
             component: "modules/settings/CheatsheetConfig.qml"
         },
         {
             name: Translation.tr("Modules"),
             icon: "extension",
+            essential: false,
             component: "modules/settings/ModulesConfig.qml"
         },
         {
             name: Translation.tr("Waffle Style"),
             icon: "window",
+            essential: false,
             component: "modules/settings/WaffleConfig.qml"
         },
         {
             name: Translation.tr("Compositor"),
             icon: "desktop_windows",
+            essential: false,
             component: "modules/settings/NiriConfig.qml"
         },
         {
             name: Translation.tr("About"),
             icon: "info",
+            essential: true,
             component: "modules/settings/About.qml"
         }
     ]
     property int currentPage: 0
     property bool uiReady: Config.ready
+
+    // Easy mode helpers — derived list filtered to essentials when on
+    readonly property bool easyMode: Config.options?.settingsUi?.easyMode ?? false
+    readonly property var visibleNavPages: {
+        var list = [];
+        for (var i = 0; i < pages.length; i++) {
+            if (!easyMode || pages[i].essential === true) {
+                var entry = Object.assign({}, pages[i]);
+                entry.realIndex = i;
+                list.push(entry);
+            }
+        }
+        return list;
+    }
+
+    function setEasyMode(enabled) {
+        Config.setNestedValue("settingsUi.easyMode", enabled === true);
+    }
+
+    // Auto-bounce off non-essential pages when easy mode is enabled
+    onEasyModeChanged: {
+        if (easyMode) {
+            var current = pages[currentPage];
+            if (current && current.essential !== true) currentPage = 0;
+        }
+        if (settingsSearchText.length > 0) recomputeSettingsSearchResults();
+    }
 
     // Global settings search
     property string settingsSearchText: ""
@@ -1303,6 +1344,7 @@ ApplicationWindow {
         // Check if waffle family is active
         var isWaffleActive = Config.options?.panelFamily === "waffle";
         var wafflePageIndex = getWaffleSettingsPageIndex();
+        var easyOn = root.easyMode;
 
         // 1. Buscar en el índice estático de secciones (para navegación rápida a secciones)
         for (var i = 0; i < settingsSearchIndex.length; i++) {
@@ -1310,6 +1352,12 @@ ApplicationWindow {
 
             // Skip Waffle Style page if waffle family is not active
             if (wafflePageIndex >= 0 && entry.pageIndex === wafflePageIndex && !isWaffleActive) {
+                continue;
+            }
+
+            // Skip non-essential pages in easy mode
+            if (easyOn && entry.pageIndex >= 0 && entry.pageIndex < pages.length
+                && pages[entry.pageIndex].essential !== true) {
                 continue;
             }
 
@@ -1355,6 +1403,11 @@ ApplicationWindow {
             // Filter out Waffle Style widgets if waffle family is not active
             if (!isWaffleActive) {
                 widgetResults = widgetResults.filter(r => r.pageIndex !== wafflePageIndex);
+            }
+            if (easyOn) {
+                widgetResults = widgetResults.filter(r =>
+                    r.pageIndex >= 0 && r.pageIndex < pages.length
+                    && pages[r.pageIndex].essential === true);
             }
             // Prefer real controls (dynamic registry entries with optionId)
             for (var wr = 0; wr < widgetResults.length; wr++) {
@@ -1939,6 +1992,30 @@ ApplicationWindow {
 
                 Item { Layout.fillWidth: true; Layout.minimumWidth: 8 }
 
+                // Easy / Advanced mode toggle
+                RippleButton {
+                    buttonRadius: Appearance.rounding.full
+                    implicitWidth: 35
+                    implicitHeight: 35
+                    onClicked: root.setEasyMode(!root.easyMode)
+                    contentItem: MaterialSymbol {
+                        anchors.centerIn: parent
+                        horizontalAlignment: Text.AlignHCenter
+                        text: root.easyMode ? "school" : "tune"
+                        iconSize: 20
+                        color: root.easyMode ? Appearance.colors.colPrimary : Appearance.colors.colOnSurfaceVariant
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
+                    }
+                    StyledToolTip {
+                        text: root.easyMode
+                            ? Translation.tr("Easy mode — click to show all settings")
+                            : Translation.tr("Advanced mode — click to switch to Easy mode (essentials only)")
+                    }
+                }
+
                 RippleButton {
                     buttonRadius: Appearance.rounding.full
                     implicitWidth: 35
@@ -2032,12 +2109,13 @@ ApplicationWindow {
                             currentIndex: root.currentPage
                             expanded: navRail.expanded
                             Repeater {
-                                model: root.pages
+                                model: root.visibleNavPages
                                 NavigationRailButton {
                                     required property var index
                                     required property var modelData
-                                    toggled: root.currentPage === index
-                                    onPressed: root.currentPage = index;
+                                    readonly property int pageRealIndex: modelData.realIndex !== undefined ? modelData.realIndex : index
+                                    toggled: root.currentPage === pageRealIndex
+                                    onPressed: root.currentPage = pageRealIndex;
                                     expanded: navRail.expanded
                                     buttonIcon: modelData.icon
                                     buttonIconRotation: modelData.iconRotation || 0

@@ -576,6 +576,7 @@ ContentPage {
 
     // Theme Scheduling Section
     SettingsCardSection {
+        visible: !(Config.options?.settingsUi?.easyMode ?? false)
         expanded: false
         icon: "schedule"
         title: Translation.tr("Theme Scheduling")
@@ -810,6 +811,7 @@ ContentPage {
     // Terminal Colors Section
     SettingsCardSection {
         id: terminalColorsSection
+        visible: !(Config.options?.settingsUi?.easyMode ?? false)
         expanded: false
         icon: "terminal"
         title: Translation.tr("Terminal Colors")
@@ -1394,7 +1396,7 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: ThemeService.currentTheme === "custom"
+        visible: ThemeService.currentTheme === "custom" && !(Config.options?.settingsUi?.easyMode ?? false)
         expanded: true
         icon: "edit"
         title: Translation.tr("Custom Theme Editor")
@@ -1410,6 +1412,7 @@ ContentPage {
 
     SettingsCardSection {
         id: gowallEditorSection
+        visible: !(Config.options?.settingsUi?.easyMode ?? false)
         expanded: false
         icon: "wallpaper"
         title: Translation.tr("Gowall Wallpaper Editor")
@@ -1690,6 +1693,7 @@ ContentPage {
     }
 
     SettingsCardSection {
+        visible: !(Config.options?.settingsUi?.easyMode ?? false)
         expanded: false
         icon: "info"
         title: Translation.tr("About Themes")
