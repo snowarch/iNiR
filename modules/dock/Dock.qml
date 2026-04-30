@@ -96,20 +96,18 @@ Scope {
                     hoverEnabled: true
                     acceptedButtons: Qt.NoButton
 
-                    width: root.isVertical ? parent.width : undefined
-                    height: root.isVertical ? undefined : parent.height
-                    implicitWidth: root.isVertical ? parent.width : (dockBackground.implicitWidth + Appearance.sizes.elevationMargin * 2)
-                    implicitHeight: root.isVertical ? (dockBackground.implicitHeight + Appearance.sizes.elevationMargin * 2) : parent.height
+                    width: root.isVertical
+                        ? parent.width
+                        : (dockBackground.implicitWidth + Appearance.sizes.elevationMargin * 2)
+                    height: root.isVertical
+                        ? (dockBackground.implicitHeight + Appearance.sizes.elevationMargin * 2)
+                        : parent.height
 
                     anchors {
-                        // For bottom dock: anchor to top, move down with topMargin
-                        // For top dock: anchor to bottom, move up with bottomMargin  
-                        // For left dock: anchor to right, move left with rightMargin
-                        // For right dock: anchor to left, move right with leftMargin
-                        top: root.position === "bottom" ? parent.top : (root.isTop ? undefined : (!root.isVertical ? parent.top : undefined))
-                        bottom: root.isTop ? parent.bottom : (!root.isVertical ? undefined : (root.isLeft ? undefined : parent.bottom))
-                        left: root.position === "right" ? parent.left : (root.isLeft ? undefined : (root.isVertical ? parent.left : undefined))
-                        right: root.isLeft ? parent.right : (root.isVertical ? undefined : (root.position === "right" ? undefined : parent.right))
+                        top: root.position === "bottom" ? parent.top : undefined
+                        bottom: root.isTop ? parent.bottom : undefined
+                        left: root.position === "right" ? parent.left : undefined
+                        right: root.isLeft ? parent.right : undefined
                         horizontalCenter: !root.isVertical ? parent.horizontalCenter : undefined
                         verticalCenter: root.isVertical ? parent.verticalCenter : undefined
                     }
