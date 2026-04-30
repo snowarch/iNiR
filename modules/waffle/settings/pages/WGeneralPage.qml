@@ -115,6 +115,24 @@ WSettingsPage {
             checked: Config.options?.time?.secondPrecision ?? false
             onCheckedChanged: Config.setNestedValue("time.secondPrecision", checked)
         }
+
+        WSettingsTextField {
+            label: Translation.tr("Long date format")
+            icon: "calendar"
+            description: Translation.tr("Used by clocks and full date labels. Example: dddd, MMMM dd")
+            placeholderText: Translation.tr("e.g. dddd, MMMM dd")
+            text: Config.options?.time?.dateFormat ?? "ddd, dd/MM"
+            onTextEdited: newText => Config.setNestedValue("time.dateFormat", newText)
+        }
+
+        WSettingsTextField {
+            label: Translation.tr("Short date format")
+            icon: "calendar-month"
+            description: Translation.tr("Used by compact date surfaces. Example: dd/MM")
+            placeholderText: Translation.tr("e.g. dd/MM")
+            text: Config.options?.time?.shortDateFormat ?? "dd/MM"
+            onTextEdited: newText => Config.setNestedValue("time.shortDateFormat", newText)
+        }
         
         WSettingsDropdown {
             label: Translation.tr("Language")
@@ -133,6 +151,75 @@ WSettingsPage {
                 { value: "ja_JP", displayName: "日本語" }
             ]
             onSelected: newValue => Config.setNestedValue("language.ui", newValue)
+        }
+    }
+
+    WSettingsCard {
+        title: Translation.tr("Keyboard indicators")
+        icon: "keyboard"
+
+        WSettingsSwitch {
+            label: Translation.tr("Keyboard popups")
+            icon: "keyboard"
+            description: Translation.tr("Show a popup when Caps Lock, Num Lock, or the keyboard layout changes")
+            checked: Config.options?.keyboardIndicators?.showPopup ?? true
+            onCheckedChanged: Config.setNestedValue("keyboardIndicators.showPopup", checked)
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("Layout popup")
+            icon: "globe"
+            description: Translation.tr("Show a popup when the keyboard layout changes")
+            checked: Config.options?.keyboardIndicators?.popup?.layout ?? true
+            onCheckedChanged: Config.setNestedValue("keyboardIndicators.popup.layout", checked)
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("Caps Lock popup")
+            icon: "key"
+            description: Translation.tr("Show a popup when Caps Lock changes")
+            checked: Config.options?.keyboardIndicators?.popup?.caps ?? true
+            onCheckedChanged: Config.setNestedValue("keyboardIndicators.popup.caps", checked)
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("Num Lock popup")
+            icon: "keyboard-dock"
+            description: Translation.tr("Show a popup when Num Lock changes")
+            checked: Config.options?.keyboardIndicators?.popup?.num ?? true
+            onCheckedChanged: Config.setNestedValue("keyboardIndicators.popup.num", checked)
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("Keyboard panel indicators")
+            icon: "keyboard-dock"
+            description: Translation.tr("Show layout and lock state indicators in the bar or taskbar")
+            checked: Config.options?.keyboardIndicators?.showPanel ?? true
+            onCheckedChanged: Config.setNestedValue("keyboardIndicators.showPanel", checked)
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("Layout indicator")
+            icon: "globe"
+            description: Translation.tr("Show the current keyboard layout in the taskbar")
+            checked: Config.options?.keyboardIndicators?.panel?.layout ?? true
+            onCheckedChanged: Config.setNestedValue("keyboardIndicators.panel.layout", checked)
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("Caps Lock indicator")
+            icon: "key"
+            description: Translation.tr("Show Caps Lock in the taskbar")
+            checked: Config.options?.keyboardIndicators?.panel?.caps ?? true
+            onCheckedChanged: Config.setNestedValue("keyboardIndicators.panel.caps", checked)
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("Num Lock indicator")
+            icon: "keyboard-dock"
+            description: Translation.tr("Show Num Lock in the taskbar")
+            checked: Config.options?.keyboardIndicators?.panel?.num ?? true
+            onCheckedChanged: Config.setNestedValue("keyboardIndicators.panel.num", checked)
         }
     }
     

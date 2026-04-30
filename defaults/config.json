@@ -1044,6 +1044,20 @@
     "password": "inirhotspot",
     "band": "bg"
   },
+  "keyboardIndicators": {
+    "showPopup": true,
+    "showPanel": true,
+    "popup": {
+      "layout": true,
+      "caps": true,
+      "num": true
+    },
+    "panel": {
+      "layout": true,
+      "caps": true,
+      "num": true
+    }
+  },
   "reloadToasts": {
     "enable": true
   },

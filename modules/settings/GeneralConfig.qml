@@ -604,6 +604,123 @@ ContentPage {
                     ]
                 }
             }
+
+            SettingsDivider {}
+
+            ContentSubsection {
+                title: Translation.tr("Date formats")
+                tooltip: Translation.tr("Customize how dates are shown across the shell")
+
+                ContentSubsectionLabel {
+                    text: Translation.tr("Long date format")
+                }
+
+                MaterialTextField {
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("e.g. dddd, MMMM dd")
+                    text: Config.options?.time?.dateFormat ?? "ddd, dd/MM"
+                    onEditingFinished: Config.setNestedValue("time.dateFormat", text)
+                }
+
+                ContentSubsectionLabel {
+                    text: Translation.tr("Short date format")
+                }
+
+                MaterialTextField {
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("e.g. dd/MM")
+                    text: Config.options?.time?.shortDateFormat ?? "dd/MM"
+                    onEditingFinished: Config.setNestedValue("time.shortDateFormat", text)
+                }
+            }
+        }
+    }
+
+    SettingsCardSection {
+        expanded: false
+        icon: "keyboard"
+        title: Translation.tr("Keyboard")
+
+        SettingsGroup {
+            SettingsSwitch {
+                buttonIcon: "keyboard"
+                text: Translation.tr("Keyboard popups")
+                checked: Config.options?.keyboardIndicators?.showPopup ?? true
+                onCheckedChanged: Config.setNestedValue("keyboardIndicators.showPopup", checked)
+                StyledToolTip {
+                    text: Translation.tr("Show a popup when Caps Lock, Num Lock, or the keyboard layout changes")
+                }
+            }
+
+            SettingsSwitch {
+                buttonIcon: "language"
+                text: Translation.tr("Layout popup")
+                checked: Config.options?.keyboardIndicators?.popup?.layout ?? true
+                onCheckedChanged: Config.setNestedValue("keyboardIndicators.popup.layout", checked)
+                StyledToolTip {
+                    text: Translation.tr("Show a popup when the keyboard layout changes")
+                }
+            }
+
+            SettingsSwitch {
+                buttonIcon: "keyboard_capslock"
+                text: Translation.tr("Caps Lock popup")
+                checked: Config.options?.keyboardIndicators?.popup?.caps ?? true
+                onCheckedChanged: Config.setNestedValue("keyboardIndicators.popup.caps", checked)
+                StyledToolTip {
+                    text: Translation.tr("Show a popup when Caps Lock changes")
+                }
+            }
+
+            SettingsSwitch {
+                buttonIcon: "dialpad"
+                text: Translation.tr("Num Lock popup")
+                checked: Config.options?.keyboardIndicators?.popup?.num ?? true
+                onCheckedChanged: Config.setNestedValue("keyboardIndicators.popup.num", checked)
+                StyledToolTip {
+                    text: Translation.tr("Show a popup when Num Lock changes")
+                }
+            }
+
+            SettingsSwitch {
+                buttonIcon: "dock_to_right"
+                text: Translation.tr("Keyboard panel indicators")
+                checked: Config.options?.keyboardIndicators?.showPanel ?? true
+                onCheckedChanged: Config.setNestedValue("keyboardIndicators.showPanel", checked)
+                StyledToolTip {
+                    text: Translation.tr("Show layout and lock state indicators in the bar or taskbar")
+                }
+            }
+
+            SettingsSwitch {
+                buttonIcon: "language"
+                text: Translation.tr("Layout indicator")
+                checked: Config.options?.keyboardIndicators?.panel?.layout ?? true
+                onCheckedChanged: Config.setNestedValue("keyboardIndicators.panel.layout", checked)
+                StyledToolTip {
+                    text: Translation.tr("Show the current keyboard layout in the bar or taskbar")
+                }
+            }
+
+            SettingsSwitch {
+                buttonIcon: "keyboard_capslock"
+                text: Translation.tr("Caps Lock indicator")
+                checked: Config.options?.keyboardIndicators?.panel?.caps ?? true
+                onCheckedChanged: Config.setNestedValue("keyboardIndicators.panel.caps", checked)
+                StyledToolTip {
+                    text: Translation.tr("Show Caps Lock in the bar or taskbar")
+                }
+            }
+
+            SettingsSwitch {
+                buttonIcon: "dialpad"
+                text: Translation.tr("Num Lock indicator")
+                checked: Config.options?.keyboardIndicators?.panel?.num ?? true
+                onCheckedChanged: Config.setNestedValue("keyboardIndicators.panel.num", checked)
+                StyledToolTip {
+                    text: Translation.tr("Show Num Lock in the bar or taskbar")
+                }
+            }
         }
     }
 

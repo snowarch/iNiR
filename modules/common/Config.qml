@@ -927,6 +927,21 @@ Singleton {
                 property string band: "bg" // "bg" = 2.4GHz, "a" = 5GHz
             }
 
+            property JsonObject keyboardIndicators: JsonObject {
+                property bool showPopup: true
+                property bool showPanel: true
+                property JsonObject popup: JsonObject {
+                    property bool layout: true
+                    property bool caps: true
+                    property bool num: true
+                }
+                property JsonObject panel: JsonObject {
+                    property bool layout: true
+                    property bool caps: true
+                    property bool num: true
+                }
+            }
+
             property JsonObject networking: JsonObject {
                 property string userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
             }

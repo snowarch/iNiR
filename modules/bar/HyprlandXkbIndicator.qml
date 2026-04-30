@@ -7,28 +7,77 @@ Loader {
     id: root
     property bool vertical: false
     property color color: Appearance.colors.colOnSurfaceVariant
-    active: HyprlandXkb.layoutCodes.length > 1
+    active: KeyboardIndicators.hasPanelIndicators
     visible: active
 
-    function abbreviateLayoutCode(fullCode) {
-    return fullCode.split(':').map(layout => {
-            const baseLayout = layout.split('-')[0];
-            return baseLayout.slice(0, 4);
-        }).join('\n');
-    }
-
     sourceComponent: Item {
-        implicitWidth: root.vertical ? null : layoutCodeText.implicitWidth
-        implicitHeight: root.vertical ? layoutCodeText.implicitHeight : null
+        implicitWidth: root.vertical ? indicatorColumn.implicitWidth : indicatorRow.implicitWidth
+        implicitHeight: root.vertical ? indicatorColumn.implicitHeight : indicatorRow.implicitHeight
 
-        StyledText {
-            id: layoutCodeText
+        Row {
+            id: indicatorRow
+            visible: !root.vertical
             anchors.centerIn: parent
-            horizontalAlignment: Text.AlignHCenter
-            text: abbreviateLayoutCode(HyprlandXkb.currentLayoutCode)
-            font.pixelSize: text.includes("\n") ? Appearance.font.pixelSize.smallie : Appearance.font.pixelSize.small
-            color: root.color
-            animateChange: true
+            spacing: Appearance.sizes.spacingSmall
+
+            MaterialSymbol {
+                visible: KeyboardIndicators.capsLockVisible
+                text: KeyboardIndicators.capsMaterialIcon
+                iconSize: Appearance.font.pixelSize.large
+                fill: 1
+                color: root.color
+            }
+
+            MaterialSymbol {
+                visible: KeyboardIndicators.numLockVisible
+                text: KeyboardIndicators.numMaterialIcon
+                iconSize: Appearance.font.pixelSize.large
+                fill: 1
+                color: root.color
+            }
+
+            StyledText {
+                visible: KeyboardIndicators.layoutVisible
+                horizontalAlignment: Text.AlignHCenter
+                text: KeyboardIndicators.currentLayoutCodeInline
+                font.pixelSize: Appearance.font.pixelSize.small
+                color: root.color
+                animateChange: true
+            }
+        }
+
+        Column {
+            id: indicatorColumn
+            visible: root.vertical
+            anchors.centerIn: parent
+            spacing: Appearance.sizes.spacingSmall / 2
+
+            MaterialSymbol {
+                visible: KeyboardIndicators.capsLockVisible
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: KeyboardIndicators.capsMaterialIcon
+                iconSize: Appearance.font.pixelSize.large
+                fill: 1
+                color: root.color
+            }
+
+            MaterialSymbol {
+                visible: KeyboardIndicators.numLockVisible
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: KeyboardIndicators.numMaterialIcon
+                iconSize: Appearance.font.pixelSize.large
+                fill: 1
+                color: root.color
+            }
+
+            StyledText {
+                visible: KeyboardIndicators.layoutVisible
+                horizontalAlignment: Text.AlignHCenter
+                text: KeyboardIndicators.currentLayoutCodeMultiline
+                font.pixelSize: text.includes("\n") ? Appearance.font.pixelSize.smallie : Appearance.font.pixelSize.small
+                color: root.color
+                animateChange: true
+            }
         }
     }
 }
