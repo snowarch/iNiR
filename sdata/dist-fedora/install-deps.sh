@@ -475,8 +475,8 @@ fi
 if ! command -v awww &>/dev/null; then
   log_info "Installing awww (wallpaper daemon)..."
   if command -v cargo &>/dev/null; then
-    sudo dnf install -y lz4-devel
-    if cargo install --git https://codeberg.org/LGFae/awww.git awww 2>/dev/null; then
+    sudo dnf install -y lz4-devel wayland-protocols-devel
+    if cargo install --git https://codeberg.org/LGFae/awww.git awww-daemon awww 2>/dev/null; then
       log_success "awww installed via Cargo"
     else
       log_warning "awww build failed — install manually: cargo install --git https://codeberg.org/LGFae/awww.git awww"
