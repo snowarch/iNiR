@@ -744,48 +744,6 @@ Scope {
                                     }
                                     color: Appearance.colors.colOnLayer0
                                 }
-
-                                // Easy mode pill — shows current mode, click to switch
-                                Rectangle {
-                                    Layout.alignment: Qt.AlignVCenter
-                                    visible: root.easyMode
-                                    implicitHeight: easyPillRow.implicitHeight + 6
-                                    implicitWidth: easyPillRow.implicitWidth + 14
-                                    radius: Appearance.rounding.full
-                                    color: Appearance.colors.colPrimaryContainer
-                                    opacity: visible ? 1 : 0
-                                    Behavior on opacity {
-                                        enabled: Appearance.animationsEnabled
-                                        animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                                    }
-
-                                    RowLayout {
-                                        id: easyPillRow
-                                        anchors.centerIn: parent
-                                        spacing: 4
-                                        MaterialSymbol {
-                                            text: "school"
-                                            iconSize: 13
-                                            color: Appearance.colors.colOnPrimaryContainer
-                                        }
-                                        StyledText {
-                                            text: Translation.tr("Easy")
-                                            font.pixelSize: Appearance.font.pixelSize.smaller
-                                            font.weight: Font.Medium
-                                            color: Appearance.colors.colOnPrimaryContainer
-                                        }
-                                    }
-
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: root.setEasyMode(false)
-                                    }
-
-                                    StyledToolTip {
-                                        text: Translation.tr("Switch to Advanced mode")
-                                    }
-                                }
                             }
 
                             StyledText {

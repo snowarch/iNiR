@@ -204,18 +204,28 @@ Singleton {
         const useTerminal = Config.options?.shellUpdates?.openTerminalOnUpdate ?? true
 
         // Bash one-liner: writes the initial 'updating' marker, runs setup, captures
-        // exit code, writes 'failed:N' on error. Terminal mode pipes through tee so
-        // both the user (TUI) and the log file see everything; detached mode redirects
-        // to the log file only. The trailing read in terminal mode keeps the window
-        // open on failure so the user can read the error before closing.
+        // exit code. Terminal mode pipes through tee so both the user and the log
+        // file see everything; detached mode redirects to the log file only.
+        // Terminal always stays open with a summary so people can read what happened.
         const teeCmd = useTerminal
             ? "./setup -y update 2>&1 | tee '" + logPath + "'; rc=${PIPESTATUS[0]}"
             : "./setup -y -q update > '" + logPath + "' 2>&1; rc=$?"
-        const failTail = useTerminal
-            ? "if [ $rc -ne 0 ]; then echo \"failed:$rc\" > '" + statusPath + "'; echo; echo \"Update failed (exit $rc). Press Enter to close.\"; read -r _; fi"
-            : "if [ $rc -ne 0 ]; then echo \"failed:$rc\" > '" + statusPath + "'; fi"
+        const termTail =
+            "echo; " +
+            "if [ $rc -eq 0 ]; then " +
+                "echo 'All good — iNiR updated successfully. The shell will restart on its own.'; " +
+                "echo 'You can close this window whenever you want.'; " +
+            "else " +
+                "echo \"failed:$rc\" > '" + statusPath + "'; " +
+                "echo \"Something went wrong (exit $rc). Check the output above for details.\"; " +
+                "echo 'You can close this window whenever you want.'; " +
+            "fi; " +
+            "read -r _"
+        const detachedTail =
+            "if [ $rc -ne 0 ]; then echo \"failed:$rc\" > '" + statusPath + "'; fi"
+        const tail = useTerminal ? termTail : detachedTail
         const bashCmd = "echo 'updating' > '" + statusPath + "'; " +
-            "cd '" + repoDir + "' && " + teeCmd + "; " + failTail
+            "cd '" + repoDir + "' && " + teeCmd + "; " + tail
 
         if (useTerminal) {
             // First token of the configured terminal command (e.g. "kitty -1" -> "kitty").
