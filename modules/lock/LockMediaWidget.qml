@@ -38,12 +38,16 @@ Item {
 
     property list<real> visualizerPoints: cavaProcess.points
 
+    property string _lastCheckedPath: ""
     function checkAndDownloadArt() {
         if (!player?.trackArtUrl) {
             downloaded = false
             _downloadRetryCount = 0
+            _lastCheckedPath = ""
             return
         }
+        if (artFilePath === _lastCheckedPath && downloaded) return
+        _lastCheckedPath = artFilePath
         artExistsChecker.running = true
     }
 

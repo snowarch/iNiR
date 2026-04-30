@@ -39,12 +39,16 @@ Item {
     property int _downloadRetryCount: 0
     readonly property int _maxRetries: 3
 
+    property string _lastCheckedPath: ""
     function checkAndDownloadArt() {
         if (!effectiveArtUrl) {
             downloaded = false
             _downloadRetryCount = 0
+            _lastCheckedPath = ""
             return
         }
+        if (artFilePath === _lastCheckedPath && downloaded) return
+        _lastCheckedPath = artFilePath
         artExistsChecker.running = true
     }
 

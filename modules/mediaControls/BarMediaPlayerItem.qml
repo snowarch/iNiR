@@ -72,13 +72,15 @@ Item { // Player instance - Old style design
         }
     }
 
+    property string _lastCheckedPath: ""
     onArtFilePathChanged: {
         if (!root.artUrl || root.artUrl.length == 0) {
             root.artDominantColor = Appearance.m3colors.m3secondaryContainer
+            root._lastCheckedPath = ""
             return;
         }
-
-        // Check if file exists first
+        if (root.artFilePath === root._lastCheckedPath && root.downloaded) return
+        root._lastCheckedPath = root.artFilePath
         artExistsChecker.running = true
     }
 

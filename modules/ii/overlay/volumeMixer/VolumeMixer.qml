@@ -105,12 +105,16 @@ StyledOverlayWidget {
         readonly property int _maxRetries: 3
         property string displayedArtFilePath: downloaded && artFilePath.length > 0 ? Qt.resolvedUrl(artFilePath) : ""
 
+        property string _lastCheckedPath: ""
         function checkAndDownloadArt() {
             if (!artUrl || artUrl.length === 0) {
                 downloaded = false
                 _downloadRetryCount = 0
+                _lastCheckedPath = ""
                 return
             }
+            if (artFilePath === _lastCheckedPath && downloaded) return
+            _lastCheckedPath = artFilePath
             artExistsChecker.running = true
         }
 

@@ -69,8 +69,11 @@ Item {
     property string displayedArtFilePath: downloaded ? Qt.resolvedUrl(artFilePath) : ""
     property int _downloadRetryCount: 0
 
+    property string _lastCheckedPath: ""
     function checkAndDownloadArt(): void {
-        if (!effectiveArtUrl) { downloaded = false; _downloadRetryCount = 0; return }
+        if (!effectiveArtUrl) { downloaded = false; _downloadRetryCount = 0; _lastCheckedPath = ""; return }
+        if (artFilePath === _lastCheckedPath && downloaded) return
+        _lastCheckedPath = artFilePath
         artExistsChecker.running = true
     }
     onArtFilePathChanged: { _downloadRetryCount = 0; checkAndDownloadArt() }

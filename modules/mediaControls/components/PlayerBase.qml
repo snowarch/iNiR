@@ -111,13 +111,16 @@ QtObject {
     }
     
     // Art download logic
+    property string _lastCheckedPath: ""
     function checkAndDownloadArt(): void {
         if (!effectiveArtUrl) {
             downloaded = false
             _downloadRetryCount = 0
+            _lastCheckedPath = ""
             return
         }
-        downloaded = false
+        if (artFilePath === _lastCheckedPath && downloaded) return
+        _lastCheckedPath = artFilePath
         artExistsChecker.running = false
         artExistsChecker.running = true
     }
