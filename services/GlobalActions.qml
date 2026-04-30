@@ -82,7 +82,7 @@ Singleton {
     }
 
     readonly property list<string> categories: [
-        "system", "appearance", "tools", "settings", "media", "custom"
+        "system", "appearance", "tools", "settings", "media", "setup", "custom"
     ]
 
     // ── IPC ─────────────────────────────────────────────────────────────
@@ -816,6 +816,69 @@ Singleton {
         },
     ]
 
+    // ── SETUP: One-shot recipes auto-discovered from scripts/setup/*.sh ─
+    //
+    // Maintainers add, edit or remove a script in scripts/setup/; the
+    // launcher rebuilds itself reactively. No QML edits required.
+    // See scripts/setup/README.md for the @meta header contract and the
+    // _scan.sh JSON output format.
+    property var _setupTargets: []
+
+    FolderListModel {
+        id: setupScriptsFolder
+        folder: Qt.resolvedUrl(`file://${Directories.scriptsPath}/setup`)
+        nameFilters: ["*.sh"]
+        showDirs: false; showHidden: false; sortField: FolderListModel.Name
+        onCountChanged: { setupScanner.running = false; setupScanner.running = true }
+    }
+
+    Process {
+        id: setupScanner
+        command: ["/usr/bin/bash", `${Directories.scriptsPath}/setup/_scan.sh`]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try { root._setupTargets = JSON.parse(this.text || "[]") }
+                catch (e) { root._setupTargets = [] }
+            }
+        }
+    }
+
+    Component.onCompleted: { setupScanner.running = false; setupScanner.running = true }
+
+    function _safeTerminal(): string {
+        const t = (Config.options?.apps?.terminal ?? "kitty").trim()
+        return /^[A-Za-z0-9._+-]+$/.test(t) ? t : "kitty"
+    }
+
+    function _runSetup(target): void {
+        const path = `${Directories.scriptsPath}/setup/${target.slug}.sh`
+        const term = root._safeTerminal()
+        Quickshell.execDetached(term === "wezterm"
+            ? [term, "start", "--always-new-process", "--", "/usr/bin/bash", path]
+            : [term, "-e", "/usr/bin/bash", path])
+        // Initial notification; _lib.sh's setup_progress/setup_done replace it
+        // in place via the shared x-canonical-private-synchronous tag.
+        Quickshell.execDetached(["/usr/bin/notify-send",
+            "-a", "Setup", "-i", target.icon || "download",
+            "-h", `string:x-canonical-private-synchronous:setup-${target.slug}`,
+            "--", target.name, Translation.tr("Starting setup in terminal…")])
+    }
+
+    readonly property var _setupActions: _setupTargets.map(t => {
+        const display = t.slug.charAt(0).toUpperCase() + t.slug.slice(1)
+        const name = t.name || Translation.tr("Setup %1").arg(display)
+        const target = { slug: t.slug, name: name, icon: t.icon || "download" }
+        return {
+            id: `setup-${t.slug}`,
+            name: name,
+            description: t.description || Translation.tr("Run the %1 setup recipe").arg(t.slug),
+            icon: target.icon,
+            category: "setup",
+            keywords: ["setup", "install", t.slug].concat(t.keywords ? t.keywords.split(/\s+/) : []),
+            execute: () => root._runSetup(target)
+        }
+    })
+
     // ── User Script Provider ────────────────────────────────────────────
     property var _userScriptActions: {
         const actions = []
@@ -859,6 +922,7 @@ Singleton {
         if (cfg?.enableMedia ?? true)      result = result.concat(_mediaActions)
         if (cfg?.enableSettings ?? true)   result = result.concat(_settingsActions)
         if (cfg?.enablePackages ?? true)   result = result.concat(_packageActions)
+        if (cfg?.enableSetup ?? true)      result = result.concat(_setupActions)
         if (cfg?.enableCustom ?? true)     result = result.concat(_userScriptActions)
         return result
     }

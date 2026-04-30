@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# scripts/setup/<slug>.sh
+# /setup-<slug> — one-line summary of what this recipe does.
+#
+# @meta name: Setup <Display Name>
+# @meta description: Short description shown under the action in the launcher
+# @meta icon: download
+# @meta keywords: <space> <separated> <extra> <search> <terms>
+#
+# Arch family : describe the AUR/repo path here.
+# Other       : describe the Flatpak/fallback path (or say "unsupported").
+#
+# Copy this file to <slug>.sh, edit the @meta block + body, then `chmod +x`.
+# The launcher discovers it automatically — no QML edits required.
+#
+# @meta header rules:
+#   - Each field is optional; missing fields fall back to defaults derived
+#     from the slug (e.g. `Setup <Slug>`, icon `download`).
+#   - Only the first 60 lines of the file are scanned, so put @meta near the
+#     top.
+#   - Use a Material Symbols name for `icon` (e.g. music_note, forum,
+#     terminal, download, extension).
+
+set -Eeuo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck disable=SC1091
+. "$SCRIPT_DIR/_lib.sh"
+
+# 1. Required: tag the recipe. The slug here should match the file's basename
+#    (without `.sh`) so notification tags line up with the launcher action id.
+setup_init "<slug>" "Setup <Display Name>"
+
+if is_arch_like; then
+    TOTAL=2
+
+    setup_progress 1 $TOTAL "Installing <packages>"
+    # Repo pkgs before `--`, AUR pkgs after `--`. Either side is optional.
+    install_arch <repo-pkg> -- <aur-pkg>
+
+    setup_progress 2 $TOTAL "Post-install configuration"
+    # e.g. enable a service, run a CLI tool, copy a default config…
+    # configure_command_here
+
+    setup_done "<Display Name> ready"
+else
+    TOTAL=1
+    setup_progress 1 $TOTAL "Installing <Display Name> via Flatpak"
+    install_flatpak <com.example.App>
+
+    setup_done "<Display Name> installed via Flatpak"
+fi
+
+# Always last — keeps the terminal open so users can read the output.
+setup_finish_pause
