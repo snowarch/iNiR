@@ -893,6 +893,21 @@ if [[ "${INSTALL_FIRSTRUN}" == true && "${ask}" == "true" ]]; then
   fi
 fi
 
+# Optional monochrome icon theme (YAMIS by dirn-typo).
+# Preinstalled on fresh installs, but non-intrusive: only places the theme files
+# in user-scope. Does NOT change the user's icon theme — they switch via Settings.
+if [[ "${INSTALL_FIRSTRUN}" == true ]]; then
+  if [[ "${ask}" == "true" ]]; then
+    if tui_confirm "Install YAMIS monochrome icon theme? (~23 MiB, GPL-3, optional)" "yes"; then
+      extras_install_yamis_icons
+    else
+      log_info "Skipping YAMIS icons (can install later via './setup extras')"
+    fi
+  else
+    extras_install_yamis_icons
+  fi
+fi
+
 #####################################################################################
 # Set default wallpaper and generate initial theme (first run only)
 #####################################################################################

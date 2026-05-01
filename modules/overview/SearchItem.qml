@@ -28,9 +28,9 @@ RippleButton {
     property bool compactClipboardPreview: entry?.compactClipboardPreview ?? false
     
     visible: root.entryShown
-    property int horizontalMargin: 10
-    property int buttonHorizontalPadding: 10
-    property int buttonVerticalPadding: 6
+    property int horizontalMargin: Appearance.sizes.elevationMargin
+    property int buttonHorizontalPadding: Appearance.sizes.elevationMargin
+    property int buttonVerticalPadding: Appearance.sizes.wallpaperSelectorItemPadding
     property bool keyboardDown: false
     readonly property bool isCurrentItem: ListView.isCurrentItem
     readonly property bool isHighlighted: root.isCurrentItem
@@ -311,6 +311,7 @@ RippleButton {
                     property string materialIconName: modelData.materialIcon ?? ""
                     implicitHeight: 34
                     implicitWidth: 34
+                    buttonRadius: Appearance.rounding.full
 
                     colBackgroundHover: root.hoverBackgroundColor
                     colRipple: root.activeRippleColor

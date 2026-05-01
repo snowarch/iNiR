@@ -756,8 +756,12 @@ switch() {
         fi
     fi
 
-    # Always run applycolor.sh - it has its own checks for enableTerminal and enableAppsAndShell
-    "$SCRIPT_DIR"/applycolor.sh
+    # Note: applycolor.sh is NOT invoked here.  The shell's MaterialThemeLoader
+    # watches colors.json and runs applycolor.sh exactly once when the file
+    # changes (see services/MaterialThemeLoader.qml — delayedExternalApply).
+    # Running it here on top caused 2x app theming per regen and races between
+    # the parallel module workers.  CLI standalone use (shell not running) can
+    # invoke applycolor.sh manually if app theming is desired.
     deactivate 2>/dev/null || true
 
     # Pass screen width, height, and wallpaper path to post_process (only when app theming is on)

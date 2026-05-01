@@ -48,15 +48,17 @@ QtObject {
     readonly property bool effectiveCanSeek: isYtMusicPlayer 
         ? YtMusic.canSeek 
         : (player?.canSeek ?? false)
+    readonly property bool effectiveCanGoPrevious: isYtMusicPlayer
+        ? YtMusic.canGoPrevious
+        : MprisController.canGoPreviousForPlayer(root.player)
+    readonly property bool effectiveCanGoNext: isYtMusicPlayer
+        ? YtMusic.canGoNext
+        : MprisController.canGoNextForPlayer(root.player)
     
     // Art download management
     property string artDownloadLocation: Directories.coverArt
-    property string artFileName: effectiveArtUrl ? Qt.md5(effectiveArtUrl) : ""
-    property string artFilePath: artFileName ? `${artDownloadLocation}/${artFileName}` : ""
-    property bool downloaded: false
-    readonly property string displayedArtFilePath: downloaded ? Qt.resolvedUrl(artFilePath) : ""
-    property int _downloadRetryCount: 0
-    readonly property int _maxRetries: 3
+    readonly property bool downloaded: artworkResolver.ready
+    readonly property string displayedArtFilePath: artworkResolver.displaySource
     
     // Color extraction
     property var colorQuantizer: ColorQuantizer {
@@ -87,18 +89,18 @@ QtObject {
     }
     
     function previous(): void {
-        if (isYtMusicPlayer) {
+        if (isYtMusicPlayer && YtMusic.canGoPrevious) {
             YtMusic.playPrevious()
         } else {
-            player?.previous()
+            MprisController.previousForPlayer(root.player)
         }
     }
     
     function next(): void {
-        if (isYtMusicPlayer) {
+        if (isYtMusicPlayer && YtMusic.canGoNext) {
             YtMusic.playNext()
         } else {
-            player?.next()
+            MprisController.nextForPlayer(root.player)
         }
     }
     
@@ -110,83 +112,60 @@ QtObject {
         }
     }
     
-    // Art download logic
+    // Art download logic — mirrors BarMediaPlayerItem (the known-good impl)
     function checkAndDownloadArt(): void {
-        if (!effectiveArtUrl) {
-            downloaded = false
-            _downloadRetryCount = 0
-            return
-        }
-        downloaded = false
-        artExistsChecker.running = false
-        artExistsChecker.running = true
+        artworkResolver.refresh()
     }
-    
-    function retryDownload(): void {
-        if (_downloadRetryCount < _maxRetries && effectiveArtUrl) {
-            _downloadRetryCount++
-            retryTimer.start()
+
+    onPlayerChanged: Qt.callLater(root.checkAndDownloadArt)
+
+    property var playerConnections: Connections {
+        target: root.player
+
+        function onTrackArtUrlChanged(): void {
+            if (!root.isYtMusicPlayer)
+                Qt.callLater(root.checkAndDownloadArt)
+        }
+
+        function onTrackTitleChanged(): void {
+            Qt.callLater(root.checkAndDownloadArt)
+        }
+
+        function onTrackArtistChanged(): void {
+            Qt.callLater(root.checkAndDownloadArt)
+        }
+
+        function onTrackAlbumChanged(): void {
+            Qt.callLater(root.checkAndDownloadArt)
+        }
+    }
+
+    property var ytMusicConnections: Connections {
+        target: YtMusic
+
+        function onCurrentThumbnailChanged(): void {
+            if (root.isYtMusicPlayer)
+                Qt.callLater(root.checkAndDownloadArt)
+        }
+
+        function onCurrentTitleChanged(): void {
+            if (root.isYtMusicPlayer)
+                Qt.callLater(root.checkAndDownloadArt)
+        }
+
+        function onCurrentArtistChanged(): void {
+            if (root.isYtMusicPlayer)
+                Qt.callLater(root.checkAndDownloadArt)
         }
     }
     
     // Internal components
-    property var retryTimer: Timer {
-        interval: 1000 * root._downloadRetryCount
-        repeat: false
-        onTriggered: {
-            if (root.effectiveArtUrl && !root.downloaded) {
-                coverArtDownloader.targetFile = root.effectiveArtUrl
-                coverArtDownloader.artFilePath = root.artFilePath
-                coverArtDownloader.running = false
-                coverArtDownloader.running = true
-            }
-        }
-    }
-    
-    property var artExistsChecker: Process {
-        command: ["/usr/bin/test", "-f", root.artFilePath]
-        onExited: (exitCode, exitStatus) => {
-            if (exitCode === 0) {
-                root.downloaded = true
-                root._downloadRetryCount = 0
-            } else {
-                root.downloaded = false
-                coverArtDownloader.targetFile = root.effectiveArtUrl
-                coverArtDownloader.artFilePath = root.artFilePath
-                coverArtDownloader.running = false
-                coverArtDownloader.running = true
-            }
-        }
-    }
-    
-    property var coverArtDownloader: Process {
-        property string targetFile
-        property string artFilePath
-        command: ["/usr/bin/bash", "-c", `
-            target="$1"
-            out="$2"
-            dir="$3"
-            
-            if [ -f "$out" ]; then exit 0; fi
-            mkdir -p "$dir"
-            tmp="$out.tmp"
-            /usr/bin/curl -sSL --connect-timeout 10 --max-time 30 "$target" -o "$tmp" && \
-            [ -s "$tmp" ] && /usr/bin/mv -f "$tmp" "$out" || { rm -f "$tmp"; exit 1; }
-        `, 
-        "_", 
-        targetFile, 
-        artFilePath, 
-        root.artDownloadLocation
-        ]
-        onExited: (exitCode) => {
-            if (exitCode === 0) {
-                root.downloaded = true
-                root._downloadRetryCount = 0
-            } else {
-                root.downloaded = false
-                root.retryDownload()
-            }
-        }
+    property var artworkResolver: MediaArtworkResolver {
+        sourceUrl: root.effectiveArtUrl
+        title: root.effectiveTitle
+        artist: root.effectiveArtist
+        album: root.player?.trackAlbum ?? ""
+        cacheDirectory: root.artDownloadLocation
     }
     
     property var positionUpdateTimer: Timer {
@@ -194,26 +173,5 @@ QtObject {
         interval: 1000
         repeat: true
         onTriggered: root.player?.positionChanged()
-    }
-    
-    property var playerConnections: Connections {
-        target: root.player
-        function onTrackArtUrlChanged() {
-            if (!root.isYtMusicPlayer) {
-                root._downloadRetryCount = 0
-                root.checkAndDownloadArt()
-            }
-        }
-    }
-    
-    // Watchers
-    onArtFilePathChanged: {
-        _downloadRetryCount = 0
-        checkAndDownloadArt()
-    }
-    
-    onEffectiveArtUrlChanged: {
-        _downloadRetryCount = 0
-        checkAndDownloadArt()
     }
 }

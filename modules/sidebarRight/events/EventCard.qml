@@ -30,8 +30,8 @@ Item {
         : Appearance.m3colors.m3error
     readonly property color colBadge: Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
         : Appearance.inirEverywhere ? ColorUtils.transparentize(Appearance.inir.colBorder, 0.5)
-        : Appearance.auroraEverywhere ? (Appearance.aurora?.colSubSurface ?? Appearance.colors.colLayer2)
-        : Appearance.colors.colLayer2
+        : Appearance.auroraEverywhere ? (Appearance.aurora?.colSubSurface ?? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.90))
+        : ColorUtils.transparentize(Appearance.colors.colPrimary, 0.90)
 
     // Source color for external events, priority color for local
     readonly property color indicatorColor: {
@@ -64,18 +64,20 @@ Item {
         color: {
             if (editMA.containsMouse && !root.isExternal) {
                 if (Appearance.angelEverywhere) return Appearance.angel.colGlassCardHover
-                if (Appearance.inirEverywhere) return Appearance.inir.colLayer1Hover
-                if (Appearance.auroraEverywhere) return Appearance.aurora?.colSubSurface ?? Appearance.colors.colLayer1Hover
-                return Appearance.colors.colLayer1Hover
+                if (Appearance.inirEverywhere) return Appearance.inir.colLayer2Hover
+                if (Appearance.auroraEverywhere) return Appearance.aurora?.colSubSurface ?? Appearance.colors.colLayer2Hover
+                return Appearance.colors.colLayer2Hover
             }
             if (Appearance.angelEverywhere) return Appearance.angel.colGlassCard
-            if (Appearance.inirEverywhere) return Appearance.inir.colLayer1
-            if (Appearance.auroraEverywhere) return Appearance.aurora?.colSubSurface ?? Appearance.colors.colLayer1
-            return Appearance.colors.colLayer1
+            if (Appearance.inirEverywhere) return Appearance.inir.colLayer2
+            if (Appearance.auroraEverywhere) return Appearance.aurora?.colSubSurface ?? Appearance.colors.colLayer2
+            return Appearance.m3colors?.m3surfaceContainerHigh ?? Appearance.colors.colLayer2
         }
-        border.width: (Appearance.inirEverywhere || Appearance.angelEverywhere) ? 1 : 0
+        border.width: 1
         border.color: Appearance.angelEverywhere ? Appearance.angel.colBorder
-            : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+            : Appearance.inirEverywhere ? Appearance.inir.colBorder
+            : Appearance.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.78)
+            : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.72)
         Behavior on color {
             enabled: Appearance.animationsEnabled
             animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }

@@ -48,6 +48,13 @@ ContentPage {
         { value: "yuv444p", displayName: Translation.tr("yuv444p — sharper text, bigger files") }
     ]
     readonly property var recordingCrfOptions: [14, 18, 21, 23, 26, 28, 30, 35].map(value => ({ value: value, displayName: `CRF ${value}` }))
+    readonly property var recordingDiscordTargetSizeOptions: [
+        { value: 8, displayName: Translation.tr("8 MB") },
+        { value: 10, displayName: Translation.tr("10 MB") },
+        { value: 25, displayName: Translation.tr("25 MB") },
+        { value: 50, displayName: Translation.tr("50 MB") }
+    ]
+    readonly property var recordingDiscordDimensionOptions: [540, 720, 960, 1280, 1440, 1920].map(value => ({ value: value, displayName: `${value}px` }))
     readonly property var recordingAudioBackendOptions: [
         { value: "", displayName: Translation.tr("Auto") },
         { value: "pipewire", displayName: "PipeWire" },
@@ -348,6 +355,77 @@ ContentPage {
                 text: Translation.tr("Fallback to safe mode if preferred encoder fails")
                 checked: Config.options?.screenRecord?.enableFallback ?? true
                 onCheckedChanged: root.setRecordingConfig("screenRecord.enableFallback", checked)
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Discord compression")
+
+                SettingsSwitch {
+                    buttonIcon: "compress"
+                    text: Translation.tr("Compress recordings for Discord")
+                    checked: Config.options?.screenRecord?.discordCompress?.enabled ?? false
+                    onCheckedChanged: Config.setNestedValue("screenRecord.discordCompress.enabled", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Creates a separate Discord-ready copy after recording")
+                    }
+                }
+
+                NoticeBox {
+                    visible: Config.options?.screenRecord?.discordCompress?.enabled ?? false
+                    Layout.fillWidth: true
+                    materialIcon: "info"
+                    text: Translation.tr("Uses two-pass H.264 compression and keeps the original recording untouched. Your CPU gets exercise, not a demolition derby.")
+                }
+
+                ConfigRow {
+                    visible: Config.options?.screenRecord?.discordCompress?.enabled ?? false
+                    uniform: true
+
+                    RecordingDropdownField {
+                        title: Translation.tr("Target size")
+                        description: Translation.tr("10 MB fits Discord Free. A safety margin is applied automatically.")
+                        options: root.recordingDiscordTargetSizeOptions
+                        currentValue: Config.options?.screenRecord?.discordCompress?.targetSizeMb ?? 10
+                        onSelected: newValue => Config.setNestedValue("screenRecord.discordCompress.targetSizeMb", newValue)
+                    }
+
+                    RecordingDropdownField {
+                        title: Translation.tr("Max dimension")
+                        description: Translation.tr("Lower values help long clips fit without turning into soup.")
+                        options: root.recordingDiscordDimensionOptions
+                        currentValue: Config.options?.screenRecord?.discordCompress?.maxDimension ?? 1280
+                        onSelected: newValue => Config.setNestedValue("screenRecord.discordCompress.maxDimension", newValue)
+                    }
+                }
+
+                ConfigRow {
+                    visible: Config.options?.screenRecord?.discordCompress?.enabled ?? false
+                    uniform: true
+
+                    RecordingDropdownField {
+                        title: Translation.tr("Encoder speed")
+                        description: Translation.tr("Slower is smaller and cleaner, because physics remains annoying.")
+                        options: root.recordingSoftwarePresetOptions
+                        currentValue: Config.options?.screenRecord?.discordCompress?.preset ?? "slow"
+                        onSelected: newValue => Config.setNestedValue("screenRecord.discordCompress.preset", newValue)
+                    }
+
+                    RecordingDropdownField {
+                        title: Translation.tr("Audio bitrate")
+                        description: Translation.tr("Automatically reduced if the clip needs more video budget.")
+                        options: root.recordingAudioBitrateOptions
+                        currentValue: Config.options?.screenRecord?.discordCompress?.audioBitrateKbps ?? 96
+                        onSelected: newValue => Config.setNestedValue("screenRecord.discordCompress.audioBitrateKbps", newValue)
+                    }
+                }
+
+                SettingsSwitch {
+                    visible: Config.options?.screenRecord?.discordCompress?.enabled ?? false
+                    buttonIcon: "done_all"
+                    text: Translation.tr("Skip compression when already under target")
+                    checked: Config.options?.screenRecord?.discordCompress?.onlyIfNeeded ?? true
+                    onCheckedChanged: Config.setNestedValue("screenRecord.discordCompress.onlyIfNeeded", checked)
+                }
             }
 
             ContentSubsection {

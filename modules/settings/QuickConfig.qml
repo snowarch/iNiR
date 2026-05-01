@@ -155,7 +155,7 @@ ContentPage {
                             StyledText {
                                 text: randomWallProc.running ? Translation.tr("...") : Translation.tr("Konachan")
                                 font.pixelSize: Appearance.font.pixelSize.smaller
-                                color: "white"
+                                color: Appearance.colors.colOnLayer0
                             }
                         }
                         onClicked: {
@@ -177,7 +177,7 @@ ContentPage {
                             StyledText {
                                 text: randomWallProc.running ? Translation.tr("...") : Translation.tr("osu!")
                                 font.pixelSize: Appearance.font.pixelSize.smaller
-                                color: "white"
+                                color: Appearance.colors.colOnLayer0
                             }
                         }
                         onClicked: {
@@ -208,7 +208,7 @@ ContentPage {
                             StyledText {
                                 font.pixelSize: Appearance.font.pixelSize.smaller
                                 text: Translation.tr("Choose file")
-                                color: "white"
+                                color: Appearance.colors.colOnLayer0
                             }
                             RowLayout {
                                 spacing: 2
@@ -217,7 +217,7 @@ ContentPage {
                                 StyledText {
                                     Layout.alignment: Qt.AlignVCenter
                                     text: "+"
-                                    color: Qt.rgba(1, 1, 1, 0.6)
+                                    color: ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.4)
                                     font.pixelSize: Appearance.font.pixelSize.smaller
                                 }
                                 KeyboardKey { key: "T" }
@@ -780,13 +780,13 @@ ContentPage {
                                             MaterialSymbol {
                                                 text: "blur_on"
                                                 font.pixelSize: Appearance.font.pixelSize.smaller
-                                                color: "white"
+                                                color: Appearance.colors.colOnLayer0
                                                 anchors.verticalCenter: parent.verticalCenter
                                             }
                                             StyledText {
                                                 text: Translation.tr("Backdrop")
                                                 font.pixelSize: Appearance.font.pixelSize.smaller
-                                                color: "white"
+                                                color: Appearance.colors.colOnLayer0
                                                 anchors.verticalCenter: parent.verticalCenter
                                             }
                                         }

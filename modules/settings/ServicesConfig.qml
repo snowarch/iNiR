@@ -403,6 +403,17 @@ ContentPage {
                 }
             }
 
+            SettingsSwitch {
+                buttonIcon: "terminal"
+                text: Translation.tr("Open terminal during update")
+                checked: Config.options?.shellUpdates?.openTerminalOnUpdate ?? true
+                enabled: Config.options?.shellUpdates?.enabled ?? true
+                onCheckedChanged: Config.setNestedValue("shellUpdates.openTerminalOnUpdate", checked)
+                StyledToolTip {
+                    text: Translation.tr("Run setup in your configured terminal so the full TUI output is visible. Off = silent background update with only the bar pill indicator.")
+                }
+            }
+
             // Status card with visual states
             Rectangle {
                 Layout.fillWidth: true

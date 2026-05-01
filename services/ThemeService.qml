@@ -16,7 +16,7 @@ Singleton {
     property bool ready: false
     readonly property string currentTheme: Config.options?.appearance?.theme ?? "auto"
     readonly property bool isAutoTheme: currentTheme === "auto"
-    readonly property bool isStandaloneSettingsWindow: (Quickshell.env("QS_NO_RELOAD_POPUP") ?? "") === "1"
+    readonly property bool isStandaloneSettingsWindow: (Quickshell.env("INIR_STANDALONE_WINDOW") ?? "") === "1"
     readonly property bool defaultApplyExternal: !isStandaloneSettingsWindow
     readonly property bool vesktopEnabled: (Config.options?.appearance?.wallpaperTheming?.enableVesktop ?? true) !== false
     readonly property var wallpaperThemingCfg: Config.options?.appearance?.wallpaperTheming ?? null
@@ -163,6 +163,12 @@ Singleton {
             return
         }
 
+        // Sync the live-regen signature now so the debounce path that
+        // tails an explicit regen call (config write + manual call from a
+        // settings widget) doesn't fire a redundant second switchwall.sh
+        // once the cooldown lifts.
+        root._lastLiveRegenSignature = root.liveRegenSignature
+        root._lastPanelFamily = root.panelFamily
         root._regenPending = false
         regenCooldownTimer.stop()
         root._lastRegenTimestamp = now
@@ -219,11 +225,15 @@ Singleton {
             liveRegenerateDebounce.restart()
         }
         function onReadyChanged() {
-            if (Config.ready) {
-                root._lastLiveRegenSignature = ""
-                root._lastPanelFamily = root.panelFamily
-                liveRegenerateDebounce.restart()
-            }
+            if (!Config.ready) return
+            // Prime the signature to current value so the first config write
+            // doesn't get treated as a delta-from-empty.  The forced regen on
+            // shell startup is still done explicitly by shell.qml via
+            // ThemeService.applyCurrentTheme() — no need to do it here too.
+            // Standalone settings windows must NEVER run a phantom regen on
+            // open: they're observers, not orchestrators.
+            root._lastLiveRegenSignature = root.liveRegenSignature
+            root._lastPanelFamily = root.panelFamily
         }
     }
 
@@ -251,13 +261,10 @@ Singleton {
         interval: 100  // > Config FileView 50ms flush timer
         repeat: false
         running: false
-        onTriggered: {
-            const paletteType = Config.options?.appearance?.palette?.type ?? "auto"
-            const command = [Directories.wallpaperSwitchScriptPath, "--noswitch"]
-            if (paletteType !== "auto")
-                command.push("--type", paletteType)
-            Quickshell.execDetached(command)
-        }
+        // Route through regenerateAutoTheme so the signature stays in sync —
+        // this prevents the configChanged debounce 260ms later from firing a
+        // duplicate switchwall.sh.
+        onTriggered: root.regenerateAutoTheme()
     }
 
     // Theme Scheduling

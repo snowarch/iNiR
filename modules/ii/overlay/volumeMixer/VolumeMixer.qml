@@ -98,49 +98,15 @@ StyledOverlayWidget {
         // Datos de carátula (cover art) y progreso para la pestaña Music
         property var artUrl: activePlayer?.trackArtUrl
         property string artDownloadLocation: Directories.coverArt
-        property string artFileName: artUrl ? Qt.md5(artUrl) : ""
-        property string artFilePath: artUrl && artUrl.length > 0 ? (artDownloadLocation + "/" + artFileName) : ""
-        property bool downloaded: false
-        property int _downloadRetryCount: 0
-        readonly property int _maxRetries: 3
-        property string displayedArtFilePath: downloaded && artFilePath.length > 0 ? Qt.resolvedUrl(artFilePath) : ""
+        readonly property bool downloaded: artworkResolver.ready
+        property string displayedArtFilePath: artworkResolver.displaySource
 
         function checkAndDownloadArt() {
-            if (!artUrl || artUrl.length === 0) {
-                downloaded = false
-                _downloadRetryCount = 0
-                return
-            }
-            artExistsChecker.running = true
-        }
-
-        function retryDownload() {
-            if (_downloadRetryCount < _maxRetries && artUrl) {
-                _downloadRetryCount++
-                retryTimer.start()
-            }
-        }
-
-        Timer {
-            id: retryTimer
-            interval: 1000 * musicContent._downloadRetryCount
-            repeat: false
-            onTriggered: {
-                if (musicContent.artUrl && !musicContent.downloaded) {
-                    coverArtDownloader.targetFile = musicContent.artUrl
-                    coverArtDownloader.artFilePath = musicContent.artFilePath
-                    coverArtDownloader.running = true
-                }
-            }
-        }
-
-        onArtFilePathChanged: {
-            _downloadRetryCount = 0
-            checkAndDownloadArt()
+            artworkResolver.refresh()
         }
 
         onVisibleChanged: {
-            if (visible && artFilePath) {
+            if (visible && artUrl) {
                 checkAndDownloadArt()
             }
         }
@@ -152,44 +118,13 @@ StyledOverlayWidget {
             onTriggered: activePlayer?.positionChanged()
         }
 
-        Process { // Check if cover art exists
-            id: artExistsChecker
-            command: ["/usr/bin/test", "-f", musicContent.artFilePath]
-            onExited: (exitCode, exitStatus) => {
-                if (exitCode === 0) {
-                    musicContent.downloaded = true
-                    musicContent._downloadRetryCount = 0
-                } else {
-                    musicContent.downloaded = false
-                    coverArtDownloader.targetFile = musicContent.artUrl ?? ""
-                    coverArtDownloader.artFilePath = musicContent.artFilePath ?? ""
-                    coverArtDownloader.running = true
-                }
-            }
-        }
-
-        Process { // Descarga ligera de carátula a caché
-            id: coverArtDownloader
-            property string targetFile: artUrl ?? ""
-            property string artFilePath: musicContent.artFilePath ?? ""
-            command: [
-                "/usr/bin/bash",
-                "-c",
-                `if [ -f '${artFilePath}' ]; then exit 0; fi
-                mkdir -p '${musicContent.artDownloadLocation}'
-                tmp='${artFilePath}.tmp'
-                /usr/bin/curl -sSL --connect-timeout 10 --max-time 30 '${targetFile}' -o "$tmp" && \
-                [ -s "$tmp" ] && /usr/bin/mv -f "$tmp" '${artFilePath}' || { rm -f "$tmp"; exit 1; }`
-            ]
-            onExited: (exitCode, exitStatus) => {
-                if (exitCode === 0) {
-                    musicContent.downloaded = true
-                    musicContent._downloadRetryCount = 0
-                } else {
-                    musicContent.downloaded = false
-                    musicContent.retryDownload()
-                }
-            }
+        MediaArtworkResolver {
+            id: artworkResolver
+            sourceUrl: musicContent.artUrl ?? ""
+            title: musicContent.activePlayer?.trackTitle ?? ""
+            artist: musicContent.activePlayer?.trackArtist ?? ""
+            album: musicContent.activePlayer?.trackAlbum ?? ""
+            cacheDirectory: musicContent.artDownloadLocation
         }
 
         ColumnLayout {

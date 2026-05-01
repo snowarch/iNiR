@@ -56,7 +56,7 @@ Item {
             source: playerBase.displayedArtFilePath
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
-            cache: true
+            cache: false
             smooth: true
             mipmap: true
             visible: playerBase.displayedArtFilePath !== ""
@@ -158,6 +158,8 @@ Item {
                 Item { Layout.fillWidth: true }
                 
                 PlayerControls {
+                    canGoPrevious: playerBase.effectiveCanGoPrevious
+                    canGoNext: playerBase.effectiveCanGoNext
                     isPlaying: playerBase.effectiveIsPlaying
                     buttonSize: 36
                     playButtonSize: 48

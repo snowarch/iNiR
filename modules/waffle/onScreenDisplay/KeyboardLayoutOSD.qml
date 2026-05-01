@@ -17,9 +17,8 @@ WBarAttachedPanelContent {
     }
 
     Connections {
-        target: NiriService
-        enabled: CompositorService.isNiri
-        function onCurrentKeyboardLayoutIndexChanged() {
+        target: KeyboardIndicators
+        function onPopupSequenceChanged() {
             autoCloseTimer.restart()
         }
     }
@@ -41,13 +40,13 @@ WBarAttachedPanelContent {
 
                 FluentIcon {
                     Layout.alignment: Qt.AlignVCenter
-                    icon: "keyboard"
+                    icon: KeyboardIndicators.popupFluentIcon
                     implicitSize: 18
                 }
 
                 WText {
                     Layout.fillWidth: true
-                    text: NiriService.getCurrentKeyboardLayoutName()
+                    text: KeyboardIndicators.popupText
                     font.pixelSize: Looks.font.pixelSize.normal
                     font.weight: Font.DemiBold
                     elide: Text.ElideRight

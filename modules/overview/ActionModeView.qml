@@ -195,7 +195,7 @@ Item {
             left: parent.left
             right: parent.right
         }
-        spacing: 8
+        spacing: Appearance.sizes.spacingSmall
 
         // ── Category Tab Bar (uses existing SecondaryTabBar widget) ──
         SecondaryTabBar {
@@ -265,7 +265,7 @@ Item {
             topMargin: 10
             bottomMargin: 8
             spacing: 2
-            highlightMoveDuration: 100
+            highlightMoveDuration: Appearance.animation.elementMoveFast.duration / 2
             focus: true
 
             model: root.displayItems
@@ -447,7 +447,7 @@ Item {
                         MaterialSymbol {
                             anchors.centerIn: parent
                             text: entry?.icon ?? "settings"
-                            iconSize: 22
+                            iconSize: Appearance.font.pixelSize.huge
                             fill: (isPackage && entry.pkg?.installed) ? 1 : 0
                             color: {
                                 if (isPackage && entry.pkg?.installed)
@@ -637,7 +637,7 @@ Item {
             Layout.bottomMargin: 8
             Layout.leftMargin: 20
             Layout.rightMargin: 20
-            spacing: 16
+            spacing: Appearance.sizes.spacingLarge
             opacity: 0.5
 
             Repeater {

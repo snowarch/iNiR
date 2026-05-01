@@ -482,7 +482,7 @@ ContentPage {
     // RESOURCES
     // ═══════════════════════════════════════════════════════════════════
     SettingsCardSection {
-        visible: root.isIiActive
+        visible: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false)
         expanded: false
         icon: "browse_activity"
         title: Translation.tr("Resources")
@@ -675,7 +675,7 @@ ContentPage {
     // WORKSPACES
     // ═══════════════════════════════════════════════════════════════════
     SettingsCardSection {
-        visible: root.isIiActive
+        visible: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false)
         expanded: false
         icon: "workspaces"
         title: Translation.tr("Workspaces")

@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Layouts
 import QtMultimedia
 import Qt5Compat.GraphicalEffects
@@ -27,9 +28,16 @@ MouseArea {
     
     readonly property bool requirePasswordToPower: Config.options?.lock?.security?.requirePasswordToPower ?? true
     readonly property bool blurEnabled: Config.options?.lock?.blur?.enable ?? true
+    readonly property bool useSafeBlurPipeline: CompositorService.isNiri
+    readonly property real blurAmount: 0.8
     readonly property real blurRadius: Config.options?.lock?.blur?.radius ?? 64
     readonly property real blurZoom: Config.options?.lock?.blur?.extraZoom ?? 1.1
     readonly property bool enableAnimation: Config.options?.lock?.enableAnimation ?? false
+
+    function safeLockNotificationImage(source): string {
+        const value = String(source ?? "")
+        return value.startsWith("image://qsimage/") ? "" : value
+    }
     
     // Wallpaper path resolution
     readonly property string _wallpaperSource: Config.options?.background?.wallpaperPath ?? ""
@@ -49,7 +57,7 @@ MouseArea {
     // Safe fallback background color (prevents red screen on errors)
     Rectangle {
         anchors.fill: parent
-        color: Appearance.m3colors?.m3background ?? "#1a1a2e"
+        color: Appearance.colors.colLayer0
         z: -1
     }
     
@@ -57,12 +65,16 @@ MouseArea {
     Image {
         id: backgroundWallpaper
         anchors.fill: parent
-        source: root._staticWallpaperPath
+        // Drop source on the safe blur path so the FastBlur layer never
+        // allocates a shader on Niri (where the MultiEffect path is the
+        // only renderer used).  Some GPU drivers leak a red buffer when the
+        // FastBlur shader fails to load even on an invisible item.
+        source: root.useSafeBlurPipeline ? "" : root._staticWallpaperPath
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
-        visible: !root.wallpaperIsGif && !root.wallpaperIsVideo
+        visible: !root.wallpaperIsGif && !root.wallpaperIsVideo && !root.useSafeBlurPipeline
         
-        layer.enabled: root.blurEnabled
+        layer.enabled: root.blurEnabled && !root.useSafeBlurPipeline
         layer.effect: FastBlur {
             radius: root.blurRadius
         }
@@ -74,20 +86,31 @@ MouseArea {
             yScale: root.blurEnabled ? root.blurZoom : 1
         }
     }
+
+    Image {
+        id: backgroundWallpaperSource
+        anchors.fill: parent
+        source: root.useSafeBlurPipeline && !root.wallpaperIsGif && !root.wallpaperIsVideo ? root._staticWallpaperPath : ""
+        fillMode: Image.PreserveAspectCrop
+        asynchronous: true
+        visible: false
+        z: -2
+    }
     
     // Animated GIF wallpaper
     // Shows first frame when enableAnimation is false, plays when true
     AnimatedImage {
         id: gifWallpaper
         anchors.fill: parent
-        visible: root.wallpaperIsGif
-        source: root.wallpaperIsGif ? root._wallpaperSource : ""
+        visible: root.wallpaperIsGif && !root.useSafeBlurPipeline
+        // Same red-buffer guard as backgroundWallpaper above.
+        source: (root.wallpaperIsGif && !root.useSafeBlurPipeline) ? root._wallpaperSource : ""
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         cache: false
         playing: visible && root.enableAnimation
         
-        layer.enabled: root.blurEnabled
+        layer.enabled: root.blurEnabled && !root.useSafeBlurPipeline
         layer.effect: FastBlur {
             radius: root.blurRadius
         }
@@ -99,15 +122,29 @@ MouseArea {
             yScale: root.blurEnabled ? root.blurZoom : 1
         }
     }
+
+    AnimatedImage {
+        id: gifWallpaperSource
+        anchors.fill: parent
+        source: root.useSafeBlurPipeline && root.wallpaperIsGif ? root._wallpaperSource : ""
+        fillMode: Image.PreserveAspectCrop
+        asynchronous: true
+        cache: false
+        playing: root.enableAnimation
+        visible: false
+        z: -2
+    }
     
     // Video wallpaper
     // Shows first frame (paused) when enableAnimation is false, plays when true
     Video {
         id: videoWallpaper
         anchors.fill: parent
-        visible: root.wallpaperIsVideo
+        visible: root.wallpaperIsVideo && !root.useSafeBlurPipeline
+        // source already gates on useSafeBlurPipeline below; layer.enabled
+        // is gated to keep the FastBlur shader from being compiled on Niri.
         source: {
-            if (!root.wallpaperIsVideo || !root._wallpaperSource) return "";
+            if (!root.wallpaperIsVideo || root.useSafeBlurPipeline || !root._wallpaperSource) return "";
             const path = root._wallpaperSource;
             return path.startsWith("file://") ? path : ("file://" + path);
         }
@@ -146,7 +183,7 @@ MouseArea {
             }
         }
         
-        layer.enabled: root.blurEnabled
+        layer.enabled: root.blurEnabled && !root.useSafeBlurPipeline
         layer.effect: FastBlur {
             radius: root.blurRadius
         }
@@ -154,6 +191,65 @@ MouseArea {
         transform: Scale {
             origin.x: videoWallpaper.width / 2
             origin.y: videoWallpaper.height / 2
+            xScale: root.blurEnabled ? root.blurZoom : 1
+            yScale: root.blurEnabled ? root.blurZoom : 1
+        }
+    }
+
+    Video {
+        id: videoWallpaperSource
+        anchors.fill: parent
+        visible: false
+        z: -2
+        source: {
+            if (!root.useSafeBlurPipeline || !root.wallpaperIsVideo || !root._wallpaperSource) return "";
+            const path = root._wallpaperSource;
+            return path.startsWith("file://") ? path : ("file://" + path);
+        }
+        fillMode: VideoOutput.PreserveAspectCrop
+        loops: MediaPlayer.Infinite
+        muted: true
+        autoPlay: true
+
+        readonly property bool shouldPlay: root.enableAnimation
+
+        function pauseAndShowFirstFrame() {
+            pause()
+            seek(0)
+        }
+
+        onPlaybackStateChanged: {
+            if (playbackState === MediaPlayer.PlayingState && !shouldPlay)
+                pauseAndShowFirstFrame()
+            if (playbackState === MediaPlayer.StoppedState && root.useSafeBlurPipeline && root.wallpaperIsVideo && shouldPlay)
+                play()
+        }
+
+        onShouldPlayChanged: {
+            if (root.useSafeBlurPipeline && root.wallpaperIsVideo) {
+                if (shouldPlay) play()
+                else pauseAndShowFirstFrame()
+            }
+        }
+    }
+
+    MultiEffect {
+        id: backgroundWallpaperSafe
+        anchors.fill: parent
+        source: root.wallpaperIsGif ? gifWallpaperSource
+              : root.wallpaperIsVideo ? videoWallpaperSource
+              : backgroundWallpaperSource
+        visible: root.useSafeBlurPipeline
+        z: -1
+
+        blurEnabled: root.blurEnabled
+        blur: root.blurAmount
+        blurMax: root.blurRadius
+        saturation: 0.5
+
+        transform: Scale {
+            origin.x: backgroundWallpaperSafe.width / 2
+            origin.y: backgroundWallpaperSafe.height / 2
             xScale: root.blurEnabled ? root.blurZoom : 1
             yScale: root.blurEnabled ? root.blurZoom : 1
         }
@@ -187,7 +283,7 @@ MouseArea {
     Rectangle {
         id: unlockOverlay
         anchors.fill: parent
-        color: Appearance.m3colors?.m3background ?? "#1a1a2e"
+        color: Appearance.colors.colLayer0
         opacity: 0
         z: 100
         
@@ -667,7 +763,7 @@ MouseArea {
                                         NotificationAppIcon {
                                             anchors.fill: parent
                                             appIcon: groupDelegate.latestNotif?.appIcon ?? ""
-                                            image: groupDelegate.latestNotif?.image ?? ""
+                                            image: root.safeLockNotificationImage(groupDelegate.latestNotif?.image)
                                             summary: groupDelegate.latestNotif?.summary ?? ""
                                             urgency: groupDelegate.latestNotif?.urgency ?? 0
                                         }
@@ -788,7 +884,7 @@ MouseArea {
                                                 Layout.preferredWidth: 22
                                                 Layout.preferredHeight: 22
                                                 appIcon: expandedCard.modelData?.appIcon ?? ""
-                                                image: expandedCard.modelData?.image ?? ""
+                                                image: root.safeLockNotificationImage(expandedCard.modelData?.image)
                                                 summary: expandedCard.modelData?.summary ?? ""
                                                 urgency: expandedCard.modelData?.urgency ?? 0
                                             }

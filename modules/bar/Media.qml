@@ -198,11 +198,11 @@ Item {
         acceptedButtons: Qt.MiddleButton | Qt.BackButton | Qt.ForwardButton | Qt.RightButton | Qt.LeftButton
         onPressed: (event) => {
             if (event.button === Qt.MiddleButton) {
-                activePlayer?.togglePlaying();
+                MprisController.togglePlaying();
             } else if (event.button === Qt.BackButton) {
-                activePlayer?.previous();
+                MprisController.previous();
             } else if (event.button === Qt.ForwardButton || event.button === Qt.RightButton) {
-                activePlayer?.next();
+                MprisController.next();
             } else if (event.button === Qt.LeftButton) {
                 if (root.popupMode === "bar") {
                     root.barMediaPopupVisible = !root.barMediaPopupVisible

@@ -4,7 +4,7 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.services
 
-// Clean section divider - just text with subtle styling, no lines
+// Section divider — thin rule + label for visual grouping
 Item {
     id: root
     
@@ -13,19 +13,34 @@ Item {
     property int fontWeight: Font.Medium
     
     Layout.fillWidth: true
-    implicitHeight: labelText.implicitHeight + 8
-    
-    StyledText {
-        id: labelText
+    implicitHeight: dividerCol.implicitHeight
+
+    ColumnLayout {
+        id: dividerCol
         anchors.left: parent.left
-        anchors.verticalCenter: parent.verticalCenter
-        text: root.text
-        font.pixelSize: root.fontSize
-        font.weight: root.fontWeight
-        font.letterSpacing: 0.5
-        color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
-            : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
-            : Appearance.colors.colSubtext
-        opacity: 0.8
+        anchors.right: parent.right
+        spacing: Appearance.sizes.spacingSmall / 2
+
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.topMargin: 2
+            height: 1
+            color: Appearance.inirEverywhere ? Appearance.inir.colBorder
+                : Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
+                : Appearance.colors.colOutlineVariant
+            opacity: 0.35
+        }
+
+        StyledText {
+            id: labelText
+            text: root.text
+            font.pixelSize: root.fontSize
+            font.weight: root.fontWeight
+            font.letterSpacing: 0.5
+            color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
+                : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+                : Appearance.colors.colSubtext
+            opacity: 0.8
+        }
     }
 }

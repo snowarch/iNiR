@@ -71,9 +71,9 @@ const byName = {
                 { keytype: "normal", label: "\\", labelShift: "|", shape: "expand", keycode: 43 }
             ],
             [
-                //{ keytype: "normal", label: "Caps", shape: "caps", keycode: 58 }, // not needed as double-pressing shift does that
-                { keytype: "spacer", label: "", shape: "empty" },
-                { keytype: "spacer", label: "", shape: "empty" },
+                // Caps disabled (double-tap shift does caps lock). Single caps-shaped
+                // spacer keeps home-row alignment with Tab / Shift above & below.
+                { keytype: "spacer", label: "", shape: "caps" },
                 { keytype: "normal", label: "a", labelShift: "A", shape: "normal", keycode: 30 },
                 { keytype: "normal", label: "s", labelShift: "S", shape: "normal", keycode: 31 },
                 { keytype: "normal", label: "d", labelShift: "D", shape: "normal", keycode: 32 },
@@ -103,7 +103,7 @@ const byName = {
             ],
             [
                 { keytype: "modkey", label: "Ctrl", shape: "control", keycode: 29 },
-                { keytype: "modkey", label: "Super", labelToggled: "🫃🏻", shape: "normal", keycode: 125 },
+                { keytype: "modkey", label: "Super", shape: "normal", keycode: 125 },
                 { keytype: "modkey", label: "Alt", shape: "normal", keycode: 56 },
                 { keytype: "normal", label: "Space", shape: "space", keycode: 57 },
                 { keytype: "modkey", label: "Alt", shape: "normal", keycode: 100 },
@@ -167,9 +167,8 @@ const byName = {
                 { keytype: "normal", label: "↵", shape: "expand", keycode: 28 }
             ],
             [
-                //{ keytype: "normal", label: "Umschalt ⇩", shape: "caps", keycode: 58 },
-                { keytype: "spacer", label: "", shape: "empty" },
-                { keytype: "spacer", label: "", shape: "empty" },
+                // Caps disabled (double-tap shift). Single caps-shaped spacer for alignment.
+                { keytype: "spacer", label: "", shape: "caps" },
                 { keytype: "normal", label: "a", labelShift: "A", labelAlt: "æ", shape: "normal", keycode: 30 },
                 { keytype: "normal", label: "s", labelShift: "S", labelAlt: "ſ", shape: "normal", keycode: 31 },
                 { keytype: "normal", label: "d", labelShift: "D", labelAlt: "ð", shape: "normal", keycode: 32 },
@@ -202,7 +201,7 @@ const byName = {
             ],
             [
                 { keytype: "modkey", label: "Strg", shape: "control", keycode: 29 },
-                { keytype: "modkey", label: "Super", labelToggled: "🫃🏻", shape: "normal", keycode: 125 },
+                { keytype: "modkey", label: "Super", shape: "normal", keycode: 125 },
                 { keytype: "modkey", label: "Alt", shape: "normal", keycode: 56 },
                 { keytype: "normal", label: "Leertaste", shape: "space", keycode: 57 },
                 { keytype: "modkey", label: "Alt Gr", shape: "normal", keycode: 100 },
@@ -267,8 +266,8 @@ const byName = {
                 { keytype: "normal", label: "\\", labelShift: "/", shape: "expand", keycode: 43 }
             ],
             [
-                { keytype: "spacer", label: "", shape: "empty" },
-                { keytype: "spacer", label: "", shape: "empty" },
+                // Caps disabled (double-tap shift). Single caps-shaped spacer for alignment.
+                { keytype: "spacer", label: "", shape: "caps" },
                 { keytype: "normal", label: "ф", labelShift: "Ф", shape: "normal", keycode: 30 },
                 { keytype: "normal", label: "ы", labelShift: "Ы", shape: "normal", keycode: 31 },
                 { keytype: "normal", label: "в", labelShift: "В", shape: "normal", keycode: 32 },
@@ -298,7 +297,7 @@ const byName = {
             ],
             [
                 { keytype: "modkey", label: "Ctrl", shape: "control", keycode: 29 },
-                { keytype: "modkey", label: "Super", labelToggled: "🫃🏻", shape: "normal", keycode: 125 },
+                { keytype: "modkey", label: "Super", shape: "normal", keycode: 125 },
                 { keytype: "modkey", label: "Alt", shape: "normal", keycode: 56 },
                 { keytype: "normal", label: "Space", shape: "space", keycode: 57 },
                 { keytype: "modkey", label: "Alt", shape: "normal", keycode: 100 },

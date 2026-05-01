@@ -39,11 +39,13 @@ Restart=on-failure
 RestartSec=5
 TimeoutStopSec=15
 
-# Disable coredumps for this service.  Quickshell segfaults on QML hot-reload
-# and other internal teardown paths; each dump is 45-90 MB and accumulates fast
-# in /var/lib/systemd/coredump.  These are QS-internal crashes, not iNiR bugs —
-# debugging them requires a QS developer build, not production coredumps.
+# Disable coredumps and QS crash reports.  Unpatched Quickshell segfaults
+# on hot-reload (use-after-free in IpcHandlerRegistry — extensions freed
+# before root destruction).  Each coredump is 45-90 MB and QS crash reports
+# accumulate in ~/.cache/quickshell/crashes/.  See patches/quickshell/ for
+# the upstream fix.
 LimitCORE=0
+Environment=QS_DISABLE_CRASH_HANDLER=1
 
 # Clean up stale Quickshell runtime entries (by-pid, by-id) left behind
 # after crashes.  KillMode=process only kills the main PID, so orphaned

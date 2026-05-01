@@ -247,7 +247,7 @@ ContentPage {
                     Config.setNestedValue("resources.monitorGpu", checked);
                 }
                 StyledToolTip {
-                    text: Translation.tr("Enable GPU usage and temperature polling. Disable on hybrid GPU laptops to prevent keeping the discrete GPU awake.")
+                    text: Translation.tr("Poll GPU usage and temperature. Disable on hybrid laptops to keep the dGPU asleep — also pins Qt to the iGPU on next restart.")
                 }
             }
         }

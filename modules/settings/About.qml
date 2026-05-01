@@ -182,7 +182,7 @@ ContentPage {
                     Text {
                         id: _avatarFxLabel
                         text: "\ud83e\udec3\ud83c\udffb"
-                        font.pixelSize: 36
+                        font.pixelSize: Appearance.font.pixelSize.hugeass
                         anchors.centerIn: parent
                         visible: false
                         z: 10

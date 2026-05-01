@@ -63,49 +63,61 @@ Item {
 
     // ── Cover art download ──
     property string artDownloadLocation: Directories.coverArt
-    property string artFileName: effectiveArtUrl ? Qt.md5(effectiveArtUrl) : ""
-    property string artFilePath: artFileName ? `${artDownloadLocation}/${artFileName}` : ""
-    property bool downloaded: false
-    property string displayedArtFilePath: downloaded ? Qt.resolvedUrl(artFilePath) : ""
-    property int _downloadRetryCount: 0
+    readonly property bool downloaded: artworkResolver.ready
+    property string displayedArtFilePath: artworkResolver.displaySource
 
     function checkAndDownloadArt(): void {
-        if (!effectiveArtUrl) { downloaded = false; _downloadRetryCount = 0; return }
-        artExistsChecker.running = true
+        artworkResolver.refresh()
     }
-    onArtFilePathChanged: { _downloadRetryCount = 0; checkAndDownloadArt() }
-    onEffectiveArtUrlChanged: { _downloadRetryCount = 0; checkAndDownloadArt() }
 
-    Process {
-        id: artExistsChecker
-        command: ["/usr/bin/test", "-f", root.artFilePath]
-        onExited: (exitCode, exitStatus) => {
-            if (exitCode === 0) { root.downloaded = true }
-            else {
-                root.downloaded = false
-                artDownloader.targetFile = root.effectiveArtUrl ?? ""
-                artDownloader.artPath = root.artFilePath
-                artDownloader.running = true
-            }
+    Connections {
+        target: root.player
+
+        function onTrackArtUrlChanged(): void {
+            if (!root.isYtMusic)
+                Qt.callLater(root.checkAndDownloadArt)
+        }
+
+        function onTrackTitleChanged(): void {
+            Qt.callLater(root.checkAndDownloadArt)
+        }
+
+        function onTrackArtistChanged(): void {
+            Qt.callLater(root.checkAndDownloadArt)
+        }
+
+        function onTrackAlbumChanged(): void {
+            Qt.callLater(root.checkAndDownloadArt)
         }
     }
-    Process {
-        id: artDownloader
-        property string targetFile
-        property string artPath
-        command: ["/usr/bin/bash", "-c", `
-            if [ -f '${artPath}' ]; then exit 0; fi
-            mkdir -p '${root.artDownloadLocation}'
-            tmp='${artPath}.tmp'
-            /usr/bin/curl -sSL --connect-timeout 8 --max-time 20 '${targetFile}' -o "$tmp" && \
-            [ -s "$tmp" ] && /usr/bin/mv -f "$tmp" '${artPath}' || { rm -f "$tmp"; exit 1; }
-        `]
-        onExited: (exitCode) => {
-            if (exitCode === 0) root.downloaded = true
-            else if (root._downloadRetryCount < 2) { root._downloadRetryCount++; retryTimer.start() }
+
+    Connections {
+        target: YtMusic
+
+        function onCurrentThumbnailChanged(): void {
+            if (root.isYtMusic)
+                Qt.callLater(root.checkAndDownloadArt)
+        }
+
+        function onCurrentTitleChanged(): void {
+            if (root.isYtMusic)
+                Qt.callLater(root.checkAndDownloadArt)
+        }
+
+        function onCurrentArtistChanged(): void {
+            if (root.isYtMusic)
+                Qt.callLater(root.checkAndDownloadArt)
         }
     }
-    Timer { id: retryTimer; interval: 1500; onTriggered: root.checkAndDownloadArt() }
+
+    MediaArtworkResolver {
+        id: artworkResolver
+        sourceUrl: root.effectiveArtUrl
+        title: root.effectiveTitle
+        artist: root.effectiveArtist
+        album: root.player?.trackAlbum ?? ""
+        cacheDirectory: root.artDownloadLocation
+    }
 
     // ── Adaptive colors from album art ──
     ColorQuantizer {
@@ -629,6 +641,7 @@ Item {
                     source: root.downloaded ? root.displayedArtFilePath : ""
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
+                    cache: false
                     visible: root.displayedArtFilePath !== "" && status === Image.Ready
                     opacity: root.inirStyle ? 0.15 : (root.auroraStyle ? 0.25 : 0.4)
                     layer.enabled: Appearance.effectsEnabled
@@ -678,6 +691,7 @@ Item {
                                 source: root.downloaded ? root.displayedArtFilePath : ""
                                 fillMode: Image.PreserveAspectCrop
                                 asynchronous: true
+                                cache: false
                                 sourceSize { width: 192; height: 192 }
                             }
 
@@ -783,6 +797,7 @@ Item {
                             RippleButton {
                                 implicitWidth: 36
                                 implicitHeight: 36
+                                enabled: MprisController.canGoPrevious
                                 buttonRadius: 18
                                 colBackground: "transparent"
                                 colBackgroundHover: root.mediaHover
@@ -819,6 +834,7 @@ Item {
                             RippleButton {
                                 implicitWidth: 36
                                 implicitHeight: 36
+                                enabled: MprisController.canGoNext
                                 buttonRadius: 18
                                 colBackground: "transparent"
                                 colBackgroundHover: root.mediaHover

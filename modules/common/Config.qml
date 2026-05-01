@@ -9,7 +9,7 @@ Singleton {
     property string filePath: Directories.shellConfigPath
     property alias options: configOptionsJsonAdapter
     property bool ready: false
-    property bool isSettingsProcess: (Quickshell.env("QS_NO_RELOAD_POPUP") ?? "") === "1"
+    property bool isSettingsProcess: (Quickshell.env("INIR_STANDALONE_WINDOW") ?? "") === "1"
     property int readWriteDelay: 50 // milliseconds
     property bool blockWrites: false
 
@@ -927,6 +927,21 @@ Singleton {
                 property string band: "bg" // "bg" = 2.4GHz, "a" = 5GHz
             }
 
+            property JsonObject keyboardIndicators: JsonObject {
+                property bool showPopup: true
+                property bool showPanel: true
+                property JsonObject popup: JsonObject {
+                    property bool layout: true
+                    property bool caps: true
+                    property bool num: false
+                }
+                property JsonObject panel: JsonObject {
+                    property bool layout: true
+                    property bool caps: true
+                    property bool num: false
+                }
+            }
+
             property JsonObject networking: JsonObject {
                 property string userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
             }
@@ -958,6 +973,7 @@ Singleton {
             property JsonObject osk: JsonObject {
                 property string layout: "qwerty_full"
                 property bool pinnedOnStartup: false
+                property bool keepOnTop: false
             }
 
             property JsonObject overlay: JsonObject {
@@ -1411,6 +1427,15 @@ Singleton {
                 property int crf: 21
                 property string vaapiFilter: "scale_vaapi=format=nv12:out_range=full"
                 property bool enableFallback: true
+                property JsonObject discordCompress: JsonObject {
+                    property bool enabled: false
+                    property real targetSizeMb: 10
+                    property real safetyMarginMb: 0.5
+                    property bool onlyIfNeeded: true
+                    property int audioBitrateKbps: 96
+                    property string preset: "slow"
+                    property int maxDimension: 1280
+                }
             }
 
             property JsonObject windows: JsonObject {
@@ -1420,6 +1445,7 @@ Singleton {
 
             property JsonObject settingsUi: JsonObject {
                 property bool overlayMode: false // true = layer shell overlay (live preview), false = separate window (default)
+                property bool easyMode: false    // true = curated essentials only; nav and sub-sections filter to a friendlier subset
                 property JsonObject overlayAppearance: JsonObject {
                     property int scrimDim: 35           // % dim of the backdrop scrim behind the settings panel (0-100)
                     property real backgroundOpacity: 1.0 // opacity of the settings panel background itself (0.2-1.0)
@@ -1448,6 +1474,11 @@ Singleton {
                 property int checkIntervalMinutes: 360
                 property string dismissedCommit: ""
                 property string lastNotifiedCommit: ""
+                // When true, performUpdate() launches setup in a terminal window so the
+                // user sees the full TUI output (progress bars, success/warn/error lines)
+                // instead of just the bar pill X/N indicator. Auto-closes on success,
+                // pauses on failure so the user can read the error.
+                property bool openTerminalOnUpdate: true
             }
             property JsonObject welcomeWizard: JsonObject {
                 property bool completed: false

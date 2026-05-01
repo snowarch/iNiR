@@ -92,11 +92,11 @@ Scope {
     // Media OSD is triggered via IPC only (not on every track change)
     // See services/MprisController.qml IpcHandler
 
-    // Listen to keyboard layout changes (Niri only)
     Connections {
-        target: NiriService
-        enabled: CompositorService.isNiri && root.initialized
-        function onCurrentKeyboardLayoutIndexChanged() {
+        target: KeyboardIndicators
+        function onPopupSequenceChanged() {
+            if (!root.initialized)
+                return;
             root.triggerKeyboardLayoutOSD();
         }
     }
@@ -152,8 +152,8 @@ Scope {
             WlrLayershell.namespace: "quickshell:wOnScreenDisplay"
             WlrLayershell.layer: WlrLayer.Overlay
             anchors {
-                top: !(Config.options?.waffles?.bar?.bottom ?? false)
-                bottom: Config.options?.waffles?.bar?.bottom ?? false
+                top: root.currentIndicator === "keyboardLayout" ? true : !(Config.options?.waffles?.bar?.bottom ?? false)
+                bottom: root.currentIndicator === "keyboardLayout" ? false : Config.options?.waffles?.bar?.bottom ?? false
             }
             mask: Region {
                 item: osdIndicatorLoader

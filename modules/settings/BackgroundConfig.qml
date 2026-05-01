@@ -569,7 +569,7 @@ ContentPage {
                                                 text: bgMonDelegate.monName || ("Monitor " + (bgMonDelegate.index + 1))
                                                 font.pixelSize: Appearance.font.pixelSize.smaller
                                                 font.weight: Font.Medium
-                                                color: "#ffffff"
+                                                color: Appearance.colors.colOnLayer0
                                             }
                                             StyledText {
                                                 Layout.alignment: Qt.AlignHCenter
@@ -598,13 +598,13 @@ ContentPage {
                                             MaterialSymbol {
                                                 text: WallpaperListener.isVideoPath(bgMonDelegate.wpPath) ? "movie" : "gif"
                                                 font.pixelSize: 11
-                                                color: "#ffffff"
+                                                color: Appearance.colors.colOnLayer0
                                                 anchors.verticalCenter: parent.verticalCenter
                                             }
                                             StyledText {
                                                 text: WallpaperListener.mediaTypeLabel(bgMonDelegate.wpPath)
                                                 font.pixelSize: Appearance.font.pixelSize.smaller - 2
-                                                color: "#ffffff"
+                                                color: Appearance.colors.colOnLayer0
                                                 anchors.verticalCenter: parent.verticalCenter
                                             }
                                         }
@@ -744,7 +744,7 @@ ContentPage {
                                             text: bgMultiMonPanel.selectedMonitor || Translation.tr("No monitor selected")
                                             font.pixelSize: Appearance.font.pixelSize.large
                                             font.weight: Font.Medium
-                                            color: "#ffffff"
+                                            color: Appearance.colors.colOnLayer0
                                         }
                                         StyledText {
                                             text: {
@@ -805,13 +805,13 @@ ContentPage {
                                             MaterialSymbol {
                                                 text: WallpaperListener.mediaTypeIcon(bgMonPreviewCard._activePath)
                                                 font.pixelSize: 12
-                                                color: "#ffffff"
+                                                color: Appearance.colors.colOnLayer0
                                                 anchors.verticalCenter: parent.verticalCenter
                                             }
                                             StyledText {
                                                 text: WallpaperListener.mediaTypeLabel(bgMonPreviewCard._activePath)
                                                 font.pixelSize: Appearance.font.pixelSize.smaller - 1
-                                                color: "#ffffff"
+                                                color: Appearance.colors.colOnLayer0
                                                 anchors.verticalCenter: parent.verticalCenter
                                             }
                                         }

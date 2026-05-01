@@ -576,6 +576,7 @@ ContentPage {
 
     // Theme Scheduling Section
     SettingsCardSection {
+        visible: !(Config.options?.settingsUi?.easyMode ?? false)
         expanded: false
         icon: "schedule"
         title: Translation.tr("Theme Scheduling")
@@ -764,7 +765,7 @@ ContentPage {
                     from: 0; to: 23
                     value: parseInt((Config.options?.appearance?.themeSchedule?.dayStart ?? "06:00").split(":")[0]) || 6
                     textFromValue: (v) => v.toString().padStart(2, '0')
-                    onValueModified: Config.setNestedValue("appearance.themeSchedule.dayStart",
+                    onValueChanged: Config.setNestedValue("appearance.themeSchedule.dayStart",
                         `${textFromValue(value)}:${dayMinSpin.textFromValue(dayMinSpin.value)}`)
                 }
                 StyledText { text: ":"; font.pixelSize: Appearance.font.pixelSize.large; color: Appearance.colors.colSubtext }
@@ -773,7 +774,7 @@ ContentPage {
                     from: 0; to: 59; stepSize: 5
                     value: parseInt((Config.options?.appearance?.themeSchedule?.dayStart ?? "06:00").split(":")[1]) || 0
                     textFromValue: (v) => v.toString().padStart(2, '0')
-                    onValueModified: Config.setNestedValue("appearance.themeSchedule.dayStart",
+                    onValueChanged: Config.setNestedValue("appearance.themeSchedule.dayStart",
                         `${dayHourSpin.textFromValue(dayHourSpin.value)}:${textFromValue(value)}`)
                 }
             }
@@ -791,7 +792,7 @@ ContentPage {
                     from: 0; to: 23
                     value: parseInt((Config.options?.appearance?.themeSchedule?.nightStart ?? "18:00").split(":")[0]) || 18
                     textFromValue: (v) => v.toString().padStart(2, '0')
-                    onValueModified: Config.setNestedValue("appearance.themeSchedule.nightStart",
+                    onValueChanged: Config.setNestedValue("appearance.themeSchedule.nightStart",
                         `${textFromValue(value)}:${nightMinSpin.textFromValue(nightMinSpin.value)}`)
                 }
                 StyledText { text: ":"; font.pixelSize: Appearance.font.pixelSize.large; color: Appearance.colors.colSubtext }
@@ -800,7 +801,7 @@ ContentPage {
                     from: 0; to: 59; stepSize: 5
                     value: parseInt((Config.options?.appearance?.themeSchedule?.nightStart ?? "18:00").split(":")[1]) || 0
                     textFromValue: (v) => v.toString().padStart(2, '0')
-                    onValueModified: Config.setNestedValue("appearance.themeSchedule.nightStart",
+                    onValueChanged: Config.setNestedValue("appearance.themeSchedule.nightStart",
                         `${nightHourSpin.textFromValue(nightHourSpin.value)}:${textFromValue(value)}`)
                 }
             }
@@ -810,6 +811,7 @@ ContentPage {
     // Terminal Colors Section
     SettingsCardSection {
         id: terminalColorsSection
+        visible: !(Config.options?.settingsUi?.easyMode ?? false)
         expanded: false
         icon: "terminal"
         title: Translation.tr("Terminal Colors")
@@ -1394,7 +1396,7 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: ThemeService.currentTheme === "custom"
+        visible: ThemeService.currentTheme === "custom" && !(Config.options?.settingsUi?.easyMode ?? false)
         expanded: true
         icon: "edit"
         title: Translation.tr("Custom Theme Editor")
@@ -1410,6 +1412,7 @@ ContentPage {
 
     SettingsCardSection {
         id: gowallEditorSection
+        visible: !(Config.options?.settingsUi?.easyMode ?? false)
         expanded: false
         icon: "wallpaper"
         title: Translation.tr("Gowall Wallpaper Editor")
@@ -1690,6 +1693,7 @@ ContentPage {
     }
 
     SettingsCardSection {
+        visible: !(Config.options?.settingsUi?.easyMode ?? false)
         expanded: false
         icon: "info"
         title: Translation.tr("About Themes")

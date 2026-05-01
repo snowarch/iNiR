@@ -6,6 +6,7 @@ import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.functions
+import qs.modules.common.widgets
 import qs.modules.waffle.looks
 
 WBarAttachedPanelContent {
@@ -14,6 +15,18 @@ WBarAttachedPanelContent {
     readonly property string action: GlobalStates.osdMediaAction
     readonly property var player: MprisController.activePlayer
     readonly property bool hasPlayer: player !== null
+    readonly property string effectiveArtUrl: MprisController.isYtMusicActive ? YtMusic.currentThumbnail : (player?.trackArtUrl ?? "")
+    readonly property string effectiveTitle: MprisController.isYtMusicActive ? YtMusic.currentTitle : (player?.trackTitle ?? "")
+    readonly property string effectiveArtist: MprisController.isYtMusicActive ? YtMusic.currentArtist : (player?.trackArtist ?? "")
+
+    MediaArtworkResolver {
+        id: artworkResolver
+        sourceUrl: root.effectiveArtUrl
+        title: root.effectiveTitle
+        artist: root.effectiveArtist
+        album: root.player?.trackAlbum ?? ""
+        cacheDirectory: Directories.coverArt
+    }
 
     property Timer timer: Timer {
         id: autoCloseTimer
@@ -61,12 +74,12 @@ WBarAttachedPanelContent {
                     Image {
                         id: artImage
                         anchors.fill: parent
-                        source: root.player?.trackArtUrl ?? ""
+                        source: artworkResolver.displaySource
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
-                        cache: true
+                        cache: false
                         sourceSize: Qt.size(140, 140)
-                        visible: status === Image.Ready
+                        visible: artworkResolver.ready && status === Image.Ready
 
                         layer.enabled: visible
                         layer.effect: OpacityMask {
@@ -99,7 +112,7 @@ WBarAttachedPanelContent {
                         icon: "music-note-2"
                         implicitSize: 28
                         color: Looks.colors.subfg
-                        visible: artImage.status !== Image.Ready && root.action === ""
+                        visible: (!artworkResolver.ready || artImage.status !== Image.Ready) && root.action === ""
                     }
                 }
 
@@ -139,6 +152,7 @@ WBarAttachedPanelContent {
                         WBorderlessButton {
                             implicitWidth: 28
                             implicitHeight: 28
+                            enabled: MprisController.canGoPrevious
                             contentItem: FluentIcon {
                                 anchors.centerIn: parent
                                 icon: "previous"
@@ -171,6 +185,7 @@ WBarAttachedPanelContent {
                         WBorderlessButton {
                             implicitWidth: 28
                             implicitHeight: 28
+                            enabled: MprisController.canGoNext
                             contentItem: FluentIcon {
                                 anchors.centerIn: parent
                                 icon: "next"

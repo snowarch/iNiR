@@ -6,6 +6,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Services.UPower
 import qs.modules.common
+import qs.modules.common.functions
 import qs.services
 
 Singleton {
@@ -295,25 +296,8 @@ Singleton {
 
     onIsSuspendingAndNotChargingChanged: {
         if (root.available && isSuspendingAndNotCharging) {
-            if (!suspendSystemctl.running && !suspendLoginctl.running) {
-                suspendSystemctl.running = true
-            }
+            Session.suspend()
         }
-    }
-
-    Process {
-        id: suspendSystemctl
-        command: ["/usr/bin/systemctl", "suspend"]
-        onExited: (exitCode, exitStatus) => {
-            if (exitCode !== 0) {
-                suspendLoginctl.running = true
-            }
-        }
-    }
-
-    Process {
-        id: suspendLoginctl
-        command: ["/usr/bin/loginctl", "suspend"]
     }
 
     onIsFullAndChargingChanged: {

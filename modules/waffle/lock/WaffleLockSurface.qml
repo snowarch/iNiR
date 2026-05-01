@@ -39,6 +39,11 @@ MouseArea {
 
     readonly property bool effectsSafe: !CompositorService.isNiri
     readonly property bool enableAnimation: Config.options?.lock?.enableAnimation ?? false
+
+    function safeLockNotificationImage(source): string {
+        const value = String(source ?? "")
+        return value.startsWith("image://qsimage/") ? "" : value
+    }
     
     // Smoke material (Windows 11 - dimming overlay)
     readonly property color smokeColor: ColorUtils.transparentize(Looks.colors.bg0Opaque, 0.5)
@@ -607,6 +612,18 @@ MouseArea {
                     border.width: 1
                     
                     readonly property MprisPlayer player: root.activePlayer
+                    readonly property string effectiveArtUrl: MprisController.isYtMusicActive ? YtMusic.currentThumbnail : (player?.trackArtUrl ?? "")
+                    readonly property string effectiveTitle: MprisController.isYtMusicActive ? YtMusic.currentTitle : (player?.trackTitle ?? "")
+                    readonly property string effectiveArtist: MprisController.isYtMusicActive ? YtMusic.currentArtist : (player?.trackArtist ?? "")
+
+                    MediaArtworkResolver {
+                        id: artworkResolver
+                        sourceUrl: mediaWidget.effectiveArtUrl
+                        title: mediaWidget.effectiveTitle
+                        artist: mediaWidget.effectiveArtist
+                        album: mediaWidget.player?.trackAlbum ?? ""
+                        cacheDirectory: Directories.coverArt
+                    }
                     
                     layer.enabled: root.effectsSafe
                     layer.effect: DropShadow {
@@ -642,11 +659,13 @@ MouseArea {
                             }
                             
                             Image {
+                                id: mediaArtImage
                                 anchors.fill: parent
-                                source: mediaWidget.player?.trackArtUrl ?? ""
+                                source: artworkResolver.displaySource
                                 fillMode: Image.PreserveAspectCrop
                                 asynchronous: true
-                                visible: status === Image.Ready
+                                cache: false
+                                visible: artworkResolver.ready && status === Image.Ready
                             }
                             
                             FluentIcon {
@@ -654,7 +673,7 @@ MouseArea {
                                 icon: "music-note-2"
                                 implicitSize: 24
                                 color: Looks.colors.subfg
-                                visible: !mediaWidget.player?.trackArtUrl
+                                visible: !artworkResolver.ready || mediaArtImage.status !== Image.Ready
                             }
                         }
                         
@@ -692,18 +711,20 @@ MouseArea {
                             
                             WaffleLockMediaButton {
                                 icon: "previous"
-                                onClicked: mediaWidget.player?.previous()
+                                enabled: MprisController.canGoPrevious
+                                onClicked: MprisController.previous()
                             }
                             
                             WaffleLockMediaButton {
                                 icon: mediaWidget.player?.isPlaying ? "pause" : "play"
                                 size: 40
-                                onClicked: mediaWidget.player?.togglePlaying()
+                                onClicked: MprisController.togglePlaying()
                             }
                             
                             WaffleLockMediaButton {
                                 icon: "next"
-                                onClicked: mediaWidget.player?.next()
+                                enabled: MprisController.canGoNext
+                                onClicked: MprisController.next()
                             }
                         }
                     }
@@ -849,7 +870,7 @@ MouseArea {
                                                 implicitSize: 28
                                                 asynchronous: true
                                                 source: {
-                                                    const img = wGroupDelegate.latestNotif?.image ?? ""
+                                                    const img = root.safeLockNotificationImage(wGroupDelegate.latestNotif?.image)
                                                     const icon = wGroupDelegate.latestNotif?.appIcon ?? ""
                                                     if (img && img !== "") return img
                                                     if (icon && icon !== "") return Quickshell.iconPath(icon, "image-missing")

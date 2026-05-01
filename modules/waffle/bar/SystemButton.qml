@@ -112,6 +112,38 @@ BarButton {
             }
 
             IconHoverArea {
+                id: capsHoverArea
+                visible: KeyboardIndicators.capsLockVisible
+                iconItem: FluentIcon {
+                    anchors.verticalCenter: parent.verticalCenter
+                    icon: KeyboardIndicators.capsFluentIcon
+                    implicitSize: 18
+                }
+            }
+
+            IconHoverArea {
+                id: numHoverArea
+                visible: KeyboardIndicators.numLockVisible
+                iconItem: FluentIcon {
+                    anchors.verticalCenter: parent.verticalCenter
+                    icon: KeyboardIndicators.numFluentIcon
+                    implicitSize: 18
+                }
+            }
+
+            IconHoverArea {
+                id: layoutHoverArea
+                visible: KeyboardIndicators.layoutVisible
+                iconItem: WText {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: KeyboardIndicators.currentLayoutCodeInline
+                    font.pixelSize: Looks.font.pixelSize.small
+                    font.weight: Font.DemiBold
+                    color: Looks.colors.fg
+                }
+            }
+
+            IconHoverArea {
                 id: internetHoverArea
                 iconItem: FluentIcon {
                     anchors.verticalCenter: parent.verticalCenter
@@ -178,6 +210,18 @@ BarButton {
     BarToolTip {
         extraVisibleCondition: root.shouldShowTooltip && screenShareHoverArea.containsMouse
         text: Translation.tr("Screen sharing: Active")
+    }
+    BarToolTip {
+        extraVisibleCondition: root.shouldShowTooltip && layoutHoverArea.containsMouse
+        text: Translation.tr("Keyboard layout: %1").arg(KeyboardIndicators.currentLayoutName || KeyboardIndicators.currentLayoutCodeInline)
+    }
+    BarToolTip {
+        extraVisibleCondition: root.shouldShowTooltip && capsHoverArea.containsMouse
+        text: Translation.tr("Caps Lock: On")
+    }
+    BarToolTip {
+        extraVisibleCondition: root.shouldShowTooltip && numHoverArea.containsMouse
+        text: Translation.tr("Num Lock: On")
     }
     BarToolTip {
         extraVisibleCondition: root.shouldShowTooltip && internetHoverArea.containsMouse

@@ -130,6 +130,8 @@ Item {
                 
                 // Controls centered
                 PlayerControls {
+                    canGoPrevious: playerBase.effectiveCanGoPrevious
+                    canGoNext: playerBase.effectiveCanGoNext
                     Layout.alignment: Qt.AlignHCenter
                     isPlaying: playerBase.effectiveIsPlaying
                     buttonRadius: Appearance.inirEverywhere 

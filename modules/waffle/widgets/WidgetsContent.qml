@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
 import Quickshell
 import Quickshell.Widgets
+import Quickshell.Services.Mpris
 import qs
 import qs.services
 import qs.modules.common
@@ -479,12 +480,27 @@ WBarAttachedPanelContent {
                     color: Looks.colors.bgPanelBody
                     clip: true
 
+                    readonly property MprisPlayer activePlayer: MprisController.activePlayer
+                    readonly property string effectiveArtUrl: MprisController.isYtMusicActive ? YtMusic.currentThumbnail : (activePlayer?.trackArtUrl ?? "")
+                    readonly property string effectiveTitle: MprisController.isYtMusicActive ? YtMusic.currentTitle : (activePlayer?.trackTitle ?? "")
+                    readonly property string effectiveArtist: MprisController.isYtMusicActive ? YtMusic.currentArtist : (activePlayer?.trackArtist ?? "")
+
+                    MediaArtworkResolver {
+                        id: artworkResolver
+                        sourceUrl: mediaContent.effectiveArtUrl
+                        title: mediaContent.effectiveTitle
+                        artist: mediaContent.effectiveArtist
+                        album: mediaContent.activePlayer?.trackAlbum ?? ""
+                        cacheDirectory: Directories.coverArt
+                    }
+
                     // Blurred album art background
                     Image {
                         id: bgArt
                         anchors.fill: parent
-                        source: MprisController.activePlayer?.trackArtUrl ?? ""
+                        source: artworkResolver.displaySource
                         fillMode: Image.PreserveAspectCrop
+                        cache: false
                         visible: false
                     }
                     FastBlur {
@@ -513,16 +529,19 @@ WBarAttachedPanelContent {
                             clip: true
 
                             Image {
+                                id: mediaArtImage
                                 anchors.fill: parent
-                                source: MprisController.activePlayer?.trackArtUrl ?? ""
+                                source: artworkResolver.displaySource
                                 fillMode: Image.PreserveAspectCrop
-                                visible: source != ""
+                                asynchronous: true
+                                cache: false
+                                visible: artworkResolver.ready && status === Image.Ready
                             }
                             FluentIcon {
                                 anchors.centerIn: parent
                                 icon: "music-note-2"
                                 implicitSize: Looks.dp(40)
-                                visible: !MprisController.activePlayer?.trackArtUrl
+                                visible: !artworkResolver.ready || mediaArtImage.status !== Image.Ready
                             }
                         }
 
@@ -595,8 +614,9 @@ WBarAttachedPanelContent {
                                 WBorderlessButton {
                                     implicitWidth: Looks.dp(40)
                                     implicitHeight: Looks.dp(40)
+                                    enabled: MprisController.canGoPrevious
                                     contentItem: FluentIcon { anchors.centerIn: parent; icon: "previous"; implicitSize: Looks.dp(18) }
-                                    onClicked: MprisController.activePlayer?.previous()
+                                    onClicked: MprisController.previous()
                                 }
                                 WBorderlessButton {
                                     implicitWidth: Looks.dp(48)
@@ -606,13 +626,14 @@ WBarAttachedPanelContent {
                                         icon: MprisController.activePlayer?.isPlaying ? "pause" : "play"
                                         implicitSize: Looks.dp(24)
                                     }
-                                    onClicked: MprisController.activePlayer?.togglePlaying()
+                                    onClicked: MprisController.togglePlaying()
                                 }
                                 WBorderlessButton {
                                     implicitWidth: Looks.dp(40)
                                     implicitHeight: Looks.dp(40)
+                                    enabled: MprisController.canGoNext
                                     contentItem: FluentIcon { anchors.centerIn: parent; icon: "next"; implicitSize: Looks.dp(18) }
-                                    onClicked: MprisController.activePlayer?.next()
+                                    onClicked: MprisController.next()
                                 }
                             }
                         }

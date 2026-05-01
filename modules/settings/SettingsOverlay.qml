@@ -61,6 +61,16 @@ Scope {
         { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Time"), label: Translation.tr("Time"), description: Translation.tr("Clock format and seconds"), keywords: ["time", "clock", "24h", "12h", "format"] },
         { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Time"), label: Translation.tr("Clock format"), description: Translation.tr("Time display format (e.g., hh:mm or h:mm AP)"), keywords: ["time", "clock", "format", "24h", "12h", "am", "pm", "hour", "minute"] },
         { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Time"), label: Translation.tr("Show seconds"), description: Translation.tr("Update clock every second"), keywords: ["time", "seconds", "precision", "clock", "update"] },
+        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Time"), label: Translation.tr("Long date format"), description: Translation.tr("Customize the full date format shown by clocks"), keywords: ["date", "format", "long", "weekday", "month", "clock", "bar", "taskbar"] },
+        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Time"), label: Translation.tr("Short date format"), description: Translation.tr("Customize the compact date format used by shell surfaces"), keywords: ["date", "format", "short", "compact", "clock", "calendar"] },
+        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Keyboard"), label: Translation.tr("Keyboard popups"), description: Translation.tr("Show popups for Caps Lock, Num Lock, and layout changes"), keywords: ["keyboard", "caps", "num", "layout", "language", "popup", "indicator"] },
+        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Keyboard"), label: Translation.tr("Layout popup"), description: Translation.tr("Show a popup when the keyboard layout changes"), keywords: ["keyboard", "layout", "language", "popup", "indicator", "show", "hide"] },
+        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Keyboard"), label: Translation.tr("Caps Lock popup"), description: Translation.tr("Show a popup when Caps Lock changes"), keywords: ["keyboard", "caps", "capslock", "lock", "popup", "indicator", "show", "hide"] },
+        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Keyboard"), label: Translation.tr("Num Lock popup"), description: Translation.tr("Show a popup when Num Lock changes"), keywords: ["keyboard", "num", "numlock", "lock", "popup", "indicator", "show", "hide"] },
+        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Keyboard"), label: Translation.tr("Keyboard panel indicators"), description: Translation.tr("Show keyboard status in the bar or taskbar"), keywords: ["keyboard", "caps", "num", "layout", "language", "bar", "taskbar", "indicator"] },
+        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Keyboard"), label: Translation.tr("Layout indicator"), description: Translation.tr("Show the current keyboard layout in the bar or taskbar"), keywords: ["keyboard", "layout", "language", "indicator", "bar", "taskbar", "show", "hide"] },
+        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Keyboard"), label: Translation.tr("Caps Lock indicator"), description: Translation.tr("Show Caps Lock in the bar or taskbar"), keywords: ["keyboard", "caps", "capslock", "lock", "indicator", "bar", "taskbar", "show", "hide"] },
+        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Keyboard"), label: Translation.tr("Num Lock indicator"), description: Translation.tr("Show Num Lock in the bar or taskbar"), keywords: ["keyboard", "num", "numlock", "lock", "indicator", "bar", "taskbar", "show", "hide"] },
         { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Work Safety"), label: Translation.tr("Work Safety"), description: Translation.tr("Hide sensitive content on public networks"), keywords: ["work", "safety", "nsfw", "public", "network", "hide", "clipboard", "wallpaper"] },
         { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Lock screen"), label: Translation.tr("Lock screen"), description: Translation.tr("Lock screen behaviour and style"), keywords: ["lock", "screen", "hyprlock", "blur", "password", "security"] },
         // Bar (page 2)
@@ -206,11 +216,15 @@ Scope {
 
         var isWaffleActive = Config.options?.panelFamily === "waffle";
         var wafflePageIndex = getWaffleSettingsPageIndex();
+        var easyOn = root.easyMode;
 
         // 1. Static index
         for (var i = 0; i < overlaySearchIndex.length; i++) {
             var entry = overlaySearchIndex[i];
             if (wafflePageIndex >= 0 && entry.pageIndex === wafflePageIndex && !isWaffleActive)
+                continue;
+            if (easyOn && entry.pageIndex >= 0 && entry.pageIndex < overlayPages.length
+                && overlayPages[entry.pageIndex].essential !== true)
                 continue;
 
             var label = (entry.label || "").toLowerCase();
@@ -254,6 +268,11 @@ Scope {
             var widgetResults = SettingsSearchRegistry.buildResults(overlaySearchText);
             if (!isWaffleActive && wafflePageIndex >= 0) {
                 widgetResults = widgetResults.filter(r => r.pageIndex !== wafflePageIndex);
+            }
+            if (easyOn) {
+                widgetResults = widgetResults.filter(r =>
+                    r.pageIndex >= 0 && r.pageIndex < overlayPages.length
+                    && overlayPages[r.pageIndex].essential === true);
             }
             // Prefer real controls (dynamic registry entries with optionId)
             for (var wr = 0; wr < widgetResults.length; wr++) {
@@ -474,6 +493,11 @@ Scope {
             root._lastFamily = Config.options?.panelFamily ?? "ii";
             root.overlayCurrentPage = 0;
         }
+    }
+
+    // Re-run search when easy mode flips (entries from filtered pages must drop in/out)
+    onEasyModeChanged: {
+        if (root.overlaySearchText.length > 0) root.recomputeOverlaySearchResults();
     }
 
     Connections {
@@ -719,14 +743,17 @@ Scope {
                         ColumnLayout {
                             spacing: 0
 
-                            StyledText {
-                                text: Translation.tr("Settings")
-                                font {
-                                    family: Appearance.font.family.title
-                                    pixelSize: Appearance.font.pixelSize.title
-                                    variableAxes: Appearance.font.variableAxes.title
+                            RowLayout {
+                                spacing: 8
+                                StyledText {
+                                    text: Translation.tr("Settings")
+                                    font {
+                                        family: Appearance.font.family.title
+                                        pixelSize: Appearance.font.pixelSize.title
+                                        variableAxes: Appearance.font.variableAxes.title
+                                    }
+                                    color: Appearance.colors.colOnLayer0
                                 }
-                                color: Appearance.colors.colOnLayer0
                             }
 
                             StyledText {
@@ -915,6 +942,34 @@ Scope {
 
                         Item { Layout.fillWidth: true; Layout.minimumWidth: 8 }
 
+                        // Easy / Advanced mode toggle
+                        RippleButton {
+                            id: easyModeToggle
+                            buttonRadius: Appearance.rounding.full
+                            implicitWidth: 36
+                            implicitHeight: 36
+                            onClicked: root.setEasyMode(!root.easyMode)
+                            contentItem: MaterialSymbol {
+                                anchors.centerIn: parent
+                                horizontalAlignment: Text.AlignHCenter
+                                text: root.easyMode ? "school" : "tune"
+                                iconSize: 20
+                                color: root.easyMode
+                                    ? Appearance.colors.colPrimary
+                                    : Appearance.colors.colOnSurfaceVariant
+                                Behavior on color {
+                                    enabled: Appearance.animationsEnabled
+                                    animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                                }
+                            }
+                            StyledToolTip {
+                                position: "left"
+                                text: root.easyMode
+                                    ? Translation.tr("Switch to Advanced mode")
+                                    : Translation.tr("Switch to Easy mode")
+                            }
+                        }
+
                         // Close button
                         RippleButton {
                             buttonRadius: Appearance.rounding.full
@@ -977,17 +1032,20 @@ Scope {
                                     spacing: 2
 
                                     Repeater {
-                                        model: overlayPages
+                                        model: root.visibleNavPages
                                         delegate: RippleButton {
                                             id: navBtn
                                             required property int index
                                             required property var modelData
 
+                                            // realIndex maps back to overlayPages index regardless of easy-mode filtering
+                                            readonly property int pageRealIndex: modelData.realIndex !== undefined ? modelData.realIndex : index
+
                                             Layout.fillWidth: true
                                             implicitHeight: 38
                                             buttonRadius: Appearance.rounding.small
 
-                                            toggled: overlayCurrentPage === index
+                                            toggled: overlayCurrentPage === pageRealIndex
                                             colBackground: "transparent"
                                             colBackgroundToggled: Appearance.angelEverywhere
                                                 ? Appearance.angel.colGlassCard
@@ -1011,7 +1069,7 @@ Scope {
                                                         ? Appearance.aurora.colSubSurface
                                                         : CF.ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 0.5)
 
-                                            onClicked: overlayCurrentPage = index
+                                            onClicked: overlayCurrentPage = pageRealIndex
 
                                             contentItem: Item {
                                                 anchors.fill: parent
@@ -1107,9 +1165,14 @@ Scope {
                                             : CF.ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 0.5)
 
                                 onClicked: {
+                                    // Launch the window FIRST — once overlayMode flips,
+                                    // the LazyLoader in shell.qml unloads this whole
+                                    // component (timers and all), so a deferred restart
+                                    // never gets to fire.  The spawned process survives
+                                    // independently of our QML scope.
+                                    Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings-window"])
                                     Config.setNestedValue("settingsUi.overlayMode", false)
                                     GlobalStates.settingsOverlayOpen = false
-                                    overlayRestartTimer.restart()
                                 }
 
                                 contentItem: RowLayout {
@@ -1138,14 +1201,6 @@ Scope {
 
                                 StyledToolTip {
                                     text: Translation.tr("Switch to window mode")
-                                }
-                            }
-
-                            Timer {
-                                id: overlayRestartTimer
-                                interval: 500
-                                onTriggered: {
-                                    Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings-window"])
                                 }
                             }
                         }
@@ -1580,6 +1635,7 @@ Scope {
             shortName: "",
             icon: "instant_mix",
             desc: Translation.tr("Wallpaper & quick tweaks"),
+            essential: true,
             component: Quickshell.shellPath("modules/settings/QuickConfig.qml")
         },
         {
@@ -1587,6 +1643,7 @@ Scope {
             shortName: "",
             icon: "browse",
             desc: Translation.tr("Audio, battery, language, lock"),
+            essential: true,
             component: Quickshell.shellPath("modules/settings/GeneralConfig.qml")
         },
         {
@@ -1595,6 +1652,7 @@ Scope {
             icon: "toast",
             iconRotation: 180,
             desc: Translation.tr("Position, tray, modules"),
+            essential: true,
             component: Quickshell.shellPath("modules/settings/BarConfig.qml")
         },
         {
@@ -1602,6 +1660,7 @@ Scope {
             shortName: "",
             icon: "texture",
             desc: Translation.tr("Parallax, effects, widgets"),
+            essential: false,
             component: Quickshell.shellPath("modules/settings/BackgroundConfig.qml")
         },
         {
@@ -1609,6 +1668,7 @@ Scope {
             shortName: "",
             icon: "palette",
             desc: Translation.tr("Colors, fonts, styles"),
+            essential: true,
             component: Quickshell.shellPath("modules/settings/ThemesConfig.qml")
         },
         {
@@ -1616,6 +1676,7 @@ Scope {
             shortName: "",
             icon: "bottom_app_bar",
             desc: Translation.tr("Dock, sidebar, overview"),
+            essential: true,
             component: Quickshell.shellPath("modules/settings/InterfaceConfig.qml")
         },
         {
@@ -1623,6 +1684,7 @@ Scope {
             shortName: "",
             icon: "build",
             desc: Translation.tr("Recording, crosshair, overlays"),
+            essential: false,
             component: Quickshell.shellPath("modules/settings/ToolsConfig.qml")
         },
         {
@@ -1630,6 +1692,7 @@ Scope {
             shortName: "",
             icon: "settings",
             desc: Translation.tr("Weather, AI, apps"),
+            essential: false,
             component: Quickshell.shellPath("modules/settings/ServicesConfig.qml")
         },
         {
@@ -1637,6 +1700,7 @@ Scope {
             shortName: "",
             icon: "construction",
             desc: Translation.tr("Color gen, performance"),
+            essential: false,
             component: Quickshell.shellPath("modules/settings/AdvancedConfig.qml")
         },
         {
@@ -1644,6 +1708,7 @@ Scope {
             shortName: "",
             icon: "keyboard",
             desc: Translation.tr("Keybindings reference"),
+            essential: true,
             component: Quickshell.shellPath("modules/settings/CheatsheetConfig.qml")
         },
         {
@@ -1651,6 +1716,7 @@ Scope {
             shortName: "",
             icon: "extension",
             desc: Translation.tr("Enable/disable panels, scaling"),
+            essential: false,
             component: Quickshell.shellPath("modules/settings/ModulesConfig.qml")
         },
         {
@@ -1658,6 +1724,7 @@ Scope {
             shortName: "",
             icon: "window",
             desc: Translation.tr("Win11-style taskbar"),
+            essential: false,
             component: Quickshell.shellPath("modules/settings/WaffleConfig.qml")
         },
         {
@@ -1665,6 +1732,7 @@ Scope {
             shortName: "",
             icon: "desktop_windows",
             desc: Translation.tr("Display, input, layout"),
+            essential: false,
             component: Quickshell.shellPath("modules/settings/NiriConfig.qml")
         },
         {
@@ -1672,7 +1740,39 @@ Scope {
             shortName: "",
             icon: "info",
             desc: Translation.tr("Version & credits"),
+            essential: true,
             component: Quickshell.shellPath("modules/settings/About.qml")
         }
     ]
+
+    // Easy mode helpers — derived list filtered to essentials when on
+    readonly property bool easyMode: Config.options?.settingsUi?.easyMode ?? false
+    readonly property var visibleNavPages: {
+        var list = [];
+        for (var i = 0; i < overlayPages.length; i++) {
+            if (!easyMode || overlayPages[i].essential === true) {
+                var entry = Object.assign({}, overlayPages[i]);
+                entry.realIndex = i;
+                list.push(entry);
+            }
+        }
+        return list;
+    }
+
+    function setEasyMode(enabled) {
+        Config.setNestedValue("settingsUi.easyMode", enabled === true);
+    }
+
+    // If user toggles easy mode while on a non-essential page, fall back to first essential one (Quick)
+    Connections {
+        target: Config.options?.settingsUi ?? null
+        function onEasyModeChanged() {
+            if (root.easyMode) {
+                var current = root.overlayPages[root.overlayCurrentPage];
+                if (current && current.essential !== true) {
+                    root.overlayCurrentPage = 0;
+                }
+            }
+        }
+    }
 }

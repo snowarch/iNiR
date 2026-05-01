@@ -657,7 +657,7 @@ WSettingsPage {
                                         text: multiMonCard.selectedMonitor || Translation.tr("No monitor selected")
                                         font.pixelSize: Looks.font.pixelSize.large
                                         font.weight: Font.DemiBold
-                                        color: "#ffffff"
+                                        color: Looks.colors.fg
                                     }
                                     WText {
                                         text: {
@@ -687,13 +687,13 @@ WSettingsPage {
                                         FluentIcon {
                                             icon: WallpaperListener.isVideoPath(wMonPreviewCard.displayPath) ? "video" : "gif"
                                             implicitSize: 8
-                                            color: "#ffffff"
+                                            color: Looks.colors.fg
                                             anchors.verticalCenter: parent.verticalCenter
                                         }
                                         WText {
                                             text: WallpaperListener.mediaTypeLabel(wMonPreviewCard.displayPath)
                                             font.pixelSize: Looks.font.pixelSize.small - 2
-                                            color: "#ffffff"
+                                            color: Looks.colors.fg
                                             anchors.verticalCenter: parent.verticalCenter
                                         }
                                     }

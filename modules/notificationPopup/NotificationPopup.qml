@@ -44,6 +44,7 @@ Scope {
         }
 
         color: "transparent"
+
         implicitWidth: Appearance.sizes.notificationPopupWidth
         // Add height buffer to account for Wayland compositor resize delay
         // This prevents content clipping while the window catches up to new content size

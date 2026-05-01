@@ -71,7 +71,11 @@ Singleton {
         return muted ? "mic-off" : "mic";
     }
 
-    property string bluetoothIcon: (BluetoothStatus?.connected ?? false) ? "bluetooth-connected" : (BluetoothStatus?.enabled ?? false) ? "bluetooth" : "bluetooth-disabled"
+    property string bluetoothIcon: {
+        if (!(BluetoothStatus?.enabled ?? false)) return "bluetooth-disabled";
+        if (!(BluetoothStatus?.connected ?? false)) return "bluetooth";
+        return root.bluetoothDeviceIcon(BluetoothStatus?.firstActiveDevice);
+    }
 
     property string nightLightIcon: (Hyprsunset?.active ?? false) ? "weather-moon" : "weather-moon-off"
 

@@ -46,6 +46,7 @@ opencode.json
 .mcp.json
 .memory/
 .task/
+.devin/
 .tmp/
 .knowledge/
 context-architect/

@@ -24,6 +24,17 @@ Item {
 
     readonly property bool hasTrack: YtMusic.currentVideoId !== ""
     readonly property bool isPlaying: YtMusic.isPlaying
+    readonly property bool downloaded: artworkResolver.ready
+    readonly property string displayedArtFilePath: artworkResolver.displaySource
+
+    MediaArtworkResolver {
+        id: artworkResolver
+        sourceUrl: YtMusic.currentThumbnail
+        title: YtMusic.currentTitle
+        artist: YtMusic.currentArtist
+        album: ""
+        cacheDirectory: Directories.coverArt
+    }
 
     // Cava visualizer - using shared CavaProcess component
     CavaProcess {
@@ -36,7 +47,7 @@ Item {
     // Adaptive colors from thumbnail
     ColorQuantizer {
         id: colorQuantizer
-        source: YtMusic.currentThumbnail
+        source: root.displayedArtFilePath
         depth: 0
         rescaleSize: 1
     }
@@ -87,11 +98,12 @@ Item {
         // Background art blur
         Image {
             anchors.fill: parent
-            source: YtMusic.currentThumbnail
+            source: root.displayedArtFilePath
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
+            cache: false
             opacity: Appearance.inirEverywhere ? 0.15 : (Appearance.auroraEverywhere ? 0.25 : 0.5)
-            visible: YtMusic.currentThumbnail !== ""
+            visible: root.downloaded
             layer.enabled: Appearance.effectsEnabled
             layer.effect: MultiEffect { blurEnabled: true; blur: 0.2; blurMax: 16; saturation: 0.2 }
         }
@@ -155,14 +167,16 @@ Item {
 
                 Image {
                     anchors.fill: parent
-                    source: YtMusic.currentThumbnail
+                    source: root.displayedArtFilePath
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
+                    cache: false
+                    visible: root.downloaded
                 }
 
                 MaterialSymbol {
                     anchors.centerIn: parent
-                    visible: !YtMusic.currentThumbnail
+                    visible: !root.downloaded
                     text: "music_note"
                     iconSize: 32
                     color: root.colTextSecondary

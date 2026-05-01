@@ -144,10 +144,10 @@ Item {
                             return parts.join(" • ")
                         }
                         progressValue: ResourceUsage.tempPercentage
-                        progressColor: ResourceUsage.maxTemp >= ResourceUsage.tempWarningThreshold 
-                            ? Appearance.colors.colError 
-                            : ResourceUsage.maxTemp >= 60 
-                                ? Appearance.colors.colWarning ?? "#FFA500"
+                        progressColor: ResourceUsage.maxTemp >= ResourceUsage.tempWarningThreshold
+                            ? Appearance.colors.colError
+                            : ResourceUsage.maxTemp >= 60
+                                ? Appearance.colors.colWarning
                                 : Appearance.colors.colPrimary
                         showGraph: false
                     }

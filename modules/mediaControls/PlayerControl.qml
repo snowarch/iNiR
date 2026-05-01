@@ -37,18 +37,18 @@ Item {
     }
     
     function doPrevious(): void {
-        if (isYtMusicPlayer) {
+        if (isYtMusicPlayer && YtMusic.canGoPrevious) {
             YtMusic.playPrevious()
         } else {
-            player?.previous()
+            MprisController.previousForPlayer(root.player)
         }
     }
     
     function doNext(): void {
-        if (isYtMusicPlayer) {
+        if (isYtMusicPlayer && YtMusic.canGoNext) {
             YtMusic.playNext()
         } else {
-            player?.next()
+            MprisController.nextForPlayer(root.player)
         }
     }
     
@@ -57,108 +57,33 @@ Item {
     property real screenY: 0
 
     readonly property string effectiveArtUrl: isYtMusicPlayer ? YtMusic.currentThumbnail : (player?.trackArtUrl ?? "")
+    readonly property string effectiveTitle: isYtMusicPlayer ? YtMusic.currentTitle : (player?.trackTitle ?? "")
+    readonly property string effectiveArtist: isYtMusicPlayer ? YtMusic.currentArtist : (player?.trackArtist ?? "")
     property string artDownloadLocation: Directories.coverArt
-    property string artFileName: effectiveArtUrl ? Qt.md5(effectiveArtUrl) : ""
-    property string artFilePath: artFileName ? `${artDownloadLocation}/${artFileName}` : ""
-    property bool downloaded: false
-    property string displayedArtFilePath: downloaded ? Qt.resolvedUrl(artFilePath) : ""
-    property int _downloadRetryCount: 0
-    readonly property int _maxRetries: 3
+    readonly property bool downloaded: artworkResolver.ready
+    property string displayedArtFilePath: artworkResolver.displaySource
+    readonly property bool effectiveCanGoPrevious: isYtMusicPlayer ? YtMusic.canGoPrevious : MprisController.canGoPreviousForPlayer(root.player)
+    readonly property bool effectiveCanGoNext: isYtMusicPlayer ? YtMusic.canGoNext : MprisController.canGoNextForPlayer(root.player)
 
     function checkAndDownloadArt() {
-        if (!effectiveArtUrl) {
-            downloaded = false
-            _downloadRetryCount = 0
-            return
-        }
-        artExistsChecker.running = true
-    }
-
-    function retryDownload() {
-        if (_downloadRetryCount < _maxRetries && effectiveArtUrl) {
-            _downloadRetryCount++
-            retryTimer.start()
-        }
-    }
-
-    Timer {
-        id: retryTimer
-        interval: 1000 * root._downloadRetryCount
-        repeat: false
-        onTriggered: {
-            if (root.effectiveArtUrl && !root.downloaded) {
-                coverArtDownloader.targetFile = root.effectiveArtUrl
-                coverArtDownloader.artFilePath = root.artFilePath
-                coverArtDownloader.running = true
-            }
-        }
-    }
-
-    onArtFilePathChanged: {
-        _downloadRetryCount = 0
-        checkAndDownloadArt()
-    }
-    
-    onEffectiveArtUrlChanged: {
-        _downloadRetryCount = 0
-        checkAndDownloadArt()
+        artworkResolver.refresh()
     }
 
     Connections {
         target: root.player
         function onTrackArtUrlChanged() {
-            if (!root.isYtMusicPlayer) {
-                root._downloadRetryCount = 0
+            if (!root.isYtMusicPlayer)
                 root.checkAndDownloadArt()
-            }
         }
     }
 
-    Process {
-        id: artExistsChecker
-        command: ["/usr/bin/test", "-f", root.artFilePath]
-        onExited: (exitCode, exitStatus) => {
-            if (exitCode === 0) {
-                root.downloaded = true
-                root._downloadRetryCount = 0
-            } else {
-                root.downloaded = false
-                coverArtDownloader.targetFile = root.effectiveArtUrl
-                coverArtDownloader.artFilePath = root.artFilePath
-                coverArtDownloader.running = true
-            }
-        }
-    }
-
-    Process {
-        id: coverArtDownloader
-        property string targetFile
-        property string artFilePath
-        command: ["/usr/bin/bash", "-c", `
-            target="$1"
-            out="$2"
-            dir="$3"
-            
-            if [ -f "$out" ]; then exit 0; fi
-            mkdir -p "$dir"
-            tmp="$out.tmp"
-            /usr/bin/curl -sSL --connect-timeout 10 --max-time 30 "$target" -o "$tmp" && \
-            [ -s "$tmp" ] && /usr/bin/mv -f "$tmp" "$out" || { rm -f "$tmp"; exit 1; }
-        `, 
-        "_", 
-        targetFile, 
-        artFilePath, 
-        root.artDownloadLocation
-        ]
-        onExited: (exitCode) => {
-            if (exitCode === 0) {
-                root.downloaded = true
-                root._downloadRetryCount = 0
-            } else {
-                root.downloaded = false
-                root.retryDownload()
-            }
-        }
+    MediaArtworkResolver {
+        id: artworkResolver
+        sourceUrl: root.effectiveArtUrl
+        title: root.effectiveTitle
+        artist: root.effectiveArtist
+        album: root.player?.trackAlbum ?? ""
+        cacheDirectory: root.artDownloadLocation
     }
 
     Timer {
@@ -260,7 +185,7 @@ Item {
             source: root.displayedArtFilePath
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
-            cache: true
+            cache: false
             smooth: true
             mipmap: true
             opacity: Appearance.inirEverywhere ? 0.15 : (Appearance.auroraEverywhere ? 0.2 : 0.5)
@@ -332,6 +257,7 @@ Item {
                     anchors.fill: parent
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
+                    cache: false
 
                     layer.enabled: Appearance.effectsEnabled
                     layer.effect: MultiEffect {
@@ -367,6 +293,10 @@ Item {
                     target: root
                     function onDisplayedArtFilePathChanged() {
                         if (!root.displayedArtFilePath) {
+                            blurInTimer.stop()
+                            blurOutTimer.stop()
+                            coverArtContainer.pendingSource = ""
+                            coverArtContainer.transitioning = false
                             coverArt.source = ""
                             return
                         }
@@ -486,6 +416,7 @@ Item {
 
                     RippleButton {
                         implicitWidth: 32; implicitHeight: 32
+                        enabled: root.effectiveCanGoPrevious
                         buttonRadius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
                         colBackground: "transparent"
                         colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
@@ -539,6 +470,7 @@ Item {
 
                     RippleButton {
                         implicitWidth: 32; implicitHeight: 32
+                        enabled: root.effectiveCanGoNext
                         buttonRadius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
                         colBackground: "transparent"
                         colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover

@@ -38,6 +38,8 @@ RowLayout {
         : Appearance.inirEverywhere ? Appearance.inir.colPrimary 
         : Appearance.colors.colOnLayer1
     property bool showLabels: true
+    property bool canGoPrevious: true
+    property bool canGoNext: true
     
     // Signals
     signal previousClicked()
@@ -50,6 +52,7 @@ RowLayout {
     RippleButton {
         implicitWidth: root.buttonSize
         implicitHeight: root.buttonSize
+        enabled: root.canGoPrevious
         buttonRadius: root.buttonRadius
         colBackground: root.buttonColor
         colBackgroundHover: root.buttonHoverColor
@@ -107,6 +110,7 @@ RowLayout {
     RippleButton {
         implicitWidth: root.buttonSize
         implicitHeight: root.buttonSize
+        enabled: root.canGoNext
         buttonRadius: root.buttonRadius
         colBackground: root.buttonColor
         colBackgroundHover: root.buttonHoverColor

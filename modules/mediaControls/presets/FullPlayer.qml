@@ -103,7 +103,7 @@ Item {
             source: playerBase.displayedArtFilePath
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
-            cache: true
+            cache: false
             smooth: true
             mipmap: true
             opacity: Appearance.inirEverywhere ? 0.15 : (Appearance.auroraEverywhere ? 0.2 : 0.5)
@@ -247,6 +247,8 @@ Item {
                     Item { Layout.fillWidth: true }
                     
                     PlayerControls {
+                        canGoPrevious: playerBase.effectiveCanGoPrevious
+                        canGoNext: playerBase.effectiveCanGoNext
                         isPlaying: playerBase.effectiveIsPlaying
                         buttonRadius: Appearance.inirEverywhere 
                             ? Appearance.inir.roundingSmall 

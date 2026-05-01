@@ -18,6 +18,7 @@ Item { // Bar content region
 
     property var screen: root.QsWindow.window?.screen
     property var brightnessMonitor: Brightness.getMonitorForScreen(screen)
+    property alias backgroundItem: barBackground
 
     // Right-click context menu anchor (invisible, positioned at click)
     Item {
@@ -119,10 +120,22 @@ Item { // Bar content region
             margins: floatingStyle ? Appearance.sizes.hyprlandGapsOut : 0
         }
         visible: (Config.options?.bar?.showBackground ?? true) && !root.gameModeMinimal
-        color: Appearance.angelEverywhere ? ColorUtils.applyAlpha((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
-            : root.inirEverywhere ? Appearance.inir.colLayer0
-            : root.auroraEverywhere ? ColorUtils.applyAlpha((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
-            : (root.cardStyleEverywhere ? Appearance.colors.colLayer1 : ((Config.options?.bar?.cornerStyle ?? 0) === 3 ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0))
+        color: {
+            if (root.angelEverywhere) {
+                const base = root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0
+                if (Appearance.compositorBlurActive)
+                    return ColorUtils.transparentize(base, Appearance.angel.compositorPanelTransparentize)
+                return ColorUtils.applyAlpha(base, 1)
+            }
+            if (root.inirEverywhere) return Appearance.inir.colLayer0
+            if (root.auroraEverywhere) {
+                const base = root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0
+                if (Appearance.compositorBlurActive)
+                    return ColorUtils.transparentize(base, Appearance.aurora.compositorOverlayTransparentize)
+                return ColorUtils.applyAlpha(base, 1)
+            }
+            return root.cardStyleEverywhere ? Appearance.colors.colLayer1 : ((Config.options?.bar?.cornerStyle ?? 0) === 3 ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
+        }
         radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
             : root.inirEverywhere ? Appearance.inir.roundingNormal
             : floatingStyle ? ((Config.options?.bar?.cornerStyle ?? 0) === 3 ? Appearance.rounding.normal : Appearance.rounding.windowRounding) : 0
@@ -157,7 +170,7 @@ Item { // Bar content region
         id: auroraBlurLayer
         anchors.fill: barBackground
         visible: root.auroraEverywhere && !root.inirEverywhere && !root.gameModeMinimal
-            && (Config.options?.bar?.showBackground ?? true)
+            && (Config.options?.bar?.showBackground ?? true) && !Appearance.compositorBlurActive
 
         // Clip + mask to barBackground shape
         clip: true
@@ -181,14 +194,14 @@ Item { // Bar content region
             y: -barMargin
             width: root.screen?.width ?? 1920
             height: root.screen?.height ?? 1080
-            source: root.wallpaperUrl
+            source: Appearance.compositorBlurActive ? "" : root.wallpaperUrl
             fillMode: Image.PreserveAspectCrop
             cache: true
             sourceSize.width: root.screen?.width ?? 1920
             sourceSize.height: root.screen?.height ?? 1080
             asynchronous: true
 
-            layer.enabled: Appearance.effectsEnabled && root.auroraEverywhere && !root.inirEverywhere
+            layer.enabled: Appearance.effectsEnabled && root.auroraEverywhere && !root.inirEverywhere && !Appearance.compositorBlurActive
             layer.effect: MultiEffect {
                 source: blurredWallpaper
                 anchors.fill: source
@@ -520,7 +533,7 @@ Item { // Bar content region
                     }
                     MaterialSymbol {
                         visible: BluetoothStatus.available
-                        text: BluetoothStatus.connected ? "bluetooth_connected" : BluetoothStatus.enabled ? "bluetooth" : "bluetooth_disabled"
+                        text: BluetoothStatus.activeIcon
                         iconSize: Appearance.font.pixelSize.larger
                         color: rightSidebarButton.colText
                     }

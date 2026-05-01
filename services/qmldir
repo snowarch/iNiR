@@ -32,6 +32,7 @@ singleton HyprlandXkb 1.0 HyprlandXkb.qml
 singleton Hyprsunset 1.0 Hyprsunset.qml
 singleton IconThemeService 1.0 IconThemeService.qml
 singleton Idle 1.0 Idle.qml
+singleton KeyboardIndicators 1.0 KeyboardIndicators.qml
 singleton KeyringStorage 1.0 KeyringStorage.qml
 singleton LatexRenderer 1.0 LatexRenderer.qml
 singleton LauncherSearch 1.0 LauncherSearch.qml

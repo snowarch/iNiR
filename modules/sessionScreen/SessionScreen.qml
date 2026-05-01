@@ -244,7 +244,7 @@ Scope {
                         onClicked:  { Session.lock(); sessionRoot.hide() }
                         onFocusChanged: { if (focus) sessionRoot.subtitle = buttonText }
                         KeyNavigation.right: sessionSleep
-                        KeyNavigation.down: sessionHibernate
+                        KeyNavigation.down: Session.showHibernateAction ? sessionHibernate : sessionShutdown
                     }
                     SessionActionButton {
                         id: sessionSleep
@@ -257,7 +257,7 @@ Scope {
                         onFocusChanged: { if (focus) sessionRoot.subtitle = buttonText }
                         KeyNavigation.left: sessionLock
                         KeyNavigation.right: sessionLogout
-                        KeyNavigation.down: sessionShutdown
+                        KeyNavigation.down: Session.showHibernateAction ? sessionShutdown : sessionReboot
                     }
                     SessionActionButton {
                         id: sessionLogout
@@ -267,7 +267,7 @@ Scope {
                         onFocusChanged: { if (focus) sessionRoot.subtitle = buttonText }
                         KeyNavigation.left: sessionSleep
                         KeyNavigation.right: sessionTaskManager
-                        KeyNavigation.down: sessionReboot
+                        KeyNavigation.down: Session.showHibernateAction ? sessionReboot : sessionFirmwareReboot
                     }
                     SessionActionButton {
                         id: sessionTaskManager
@@ -281,6 +281,7 @@ Scope {
 
                     SessionActionButton {
                         id: sessionHibernate
+                        visible: Session.showHibernateAction
                         buttonIcon: "downloading"
                         buttonText: Translation.tr("Hibernate")
                         onClicked:  { Session.hibernate(); sessionRoot.hide() }
@@ -294,9 +295,9 @@ Scope {
                         buttonText: Translation.tr("Shutdown")
                         onClicked:  { Session.poweroff(); sessionRoot.hide() }
                         onFocusChanged: { if (focus) sessionRoot.subtitle = buttonText }
-                        KeyNavigation.left: sessionHibernate
+                        KeyNavigation.left: Session.showHibernateAction ? sessionHibernate : null
                         KeyNavigation.right: sessionReboot
-                        KeyNavigation.up: sessionSleep
+                        KeyNavigation.up: Session.showHibernateAction ? sessionSleep : sessionLock
                     }
                     SessionActionButton {
                         id: sessionReboot
@@ -306,7 +307,7 @@ Scope {
                         onFocusChanged: { if (focus) sessionRoot.subtitle = buttonText }
                         KeyNavigation.left: sessionShutdown
                         KeyNavigation.right: sessionFirmwareReboot
-                        KeyNavigation.up: sessionLogout
+                        KeyNavigation.up: Session.showHibernateAction ? sessionLogout : sessionSleep
                     }
                     SessionActionButton {
                         id: sessionFirmwareReboot
@@ -314,7 +315,7 @@ Scope {
                         buttonText: Translation.tr("Reboot to firmware settings")
                         onClicked:  { Session.rebootToFirmware(); sessionRoot.hide() }
                         onFocusChanged: { if (focus) sessionRoot.subtitle = buttonText }
-                        KeyNavigation.up: sessionTaskManager
+                        KeyNavigation.up: Session.showHibernateAction ? sessionTaskManager : sessionLogout
                         KeyNavigation.left: sessionReboot
                     }
                 }

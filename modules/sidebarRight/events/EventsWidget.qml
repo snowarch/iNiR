@@ -55,23 +55,25 @@ Item {
     }
 
     function _buildMergedEvents(): var {
+        const now = new Date()
         const local = Events.getUpcomingEvents(30).map(e => Object.assign({}, e, {
             _source: "local"
         }))
 
-        // Get external events for the next 30 days
-        const now = new Date()
-        now.setHours(0, 0, 0, 0)
+        // Get external events for the next 30 days, skip past ones
+        const startDay = new Date(now)
+        startDay.setHours(0, 0, 0, 0)
         const externalAll = []
         for (let i = 0; i < 30; i++) {
-            const d = new Date(now)
+            const d = new Date(startDay)
             d.setDate(d.getDate() + i)
             const dayEvents = CalendarSync.getEventsForDate(d) || []
             for (const e of dayEvents) {
+                const evtTime = new Date(e.startDate || e.dateTime)
+                if (evtTime < now && !(e.allDay && evtTime >= startDay)) continue
                 externalAll.push(Object.assign({}, e, {
                     _source: "external",
                     dateTime: e.startDate || e.dateTime,
-                    // Map external fields for EventCard compatibility
                     category: "general",
                     priority: "normal"
                 }))
