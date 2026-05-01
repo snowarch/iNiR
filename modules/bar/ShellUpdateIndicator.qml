@@ -137,6 +137,9 @@ MouseArea {
         hoverTarget: root
 
         ColumnLayout {
+            anchors.centerIn: parent
+            Layout.maximumWidth: 300
+            width: Math.min(implicitWidth, 300)
             spacing: 6
 
             // Header row — icon + title
@@ -241,6 +244,7 @@ MouseArea {
                 StyledText {
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignRight
+                    elide: Text.ElideMiddle
                     text: "v" + ShellUpdates.localVersion + "  →  v" + ShellUpdates.remoteVersion
                     font {
                         family: Appearance.font.family.monospace
@@ -268,6 +272,7 @@ MouseArea {
                 StyledText {
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignRight
+                    elide: Text.ElideMiddle
                     text: (ShellUpdates.localCommit || "\u2014") +
                         (ShellUpdates.remoteCommit.length > 0 ? ("  →  " + ShellUpdates.remoteCommit) : "")
                     font {

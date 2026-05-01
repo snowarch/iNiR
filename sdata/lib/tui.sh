@@ -653,6 +653,120 @@ tui_verify_skip() {
 }
 
 ###############################################################################
+# Animated Steps — dot indicator + braille spinner + inline updates
+###############################################################################
+# Background spinner state (lives across tui_step_start/done pairs)
+_TUI_STEP_CURRENT=""
+_TUI_STEP_TOTAL=""
+_TUI_STEP_MSG=""
+_TUI_STEP_START_TIME=""
+_TUI_SPINNER_PID=""
+
+# Render the global progress dots row: "● ● ◉ ○ ○ ○"
+# done = solid green, current = filled accent, pending = hollow dim.
+_tui_step_dots() {
+    local current="$1" total="$2" out="" i
+    for ((i=1; i<=total; i++)); do
+        if (( i < current )); then
+            out+="$(printf '%b●%b' "$STY_GREEN" "$STY_RST")"
+        elif (( i == current )); then
+            out+="$(printf '%b◉%b' "$STY_PURPLE" "$STY_RST")"
+        else
+            out+="$(printf '%b○%b' "$STY_FAINT" "$STY_RST")"
+        fi
+        (( i < total )) && out+=" "
+    done
+    printf '%b' "$out"
+}
+
+# Kill any background spinner. Safe to call when no spinner is running.
+# Also restores cursor visibility in case it was hidden.
+_tui_kill_spinner() {
+    if [[ -n "$_TUI_SPINNER_PID" ]] && kill -0 "$_TUI_SPINNER_PID" 2>/dev/null; then
+        kill "$_TUI_SPINNER_PID" 2>/dev/null || true
+        wait "$_TUI_SPINNER_PID" 2>/dev/null || true
+    fi
+    _TUI_SPINNER_PID=""
+    [[ -t 1 ]] && printf '\033[?25h' >/dev/tty 2>/dev/null || true
+}
+
+# Begin a step: shows `dots [c/t] ⠋ msg` with an animated braille spinner on
+# TTY, or a single static line on non-TTY (pipe, redirect, tee).
+# Spinner runs in a backgrounded subshell that prints to /dev/tty so it
+# doesn't pollute pipes (the log file gets the static start/done lines only).
+tui_step_start() {
+    _TUI_STEP_CURRENT="$1"
+    _TUI_STEP_TOTAL="$2"
+    _TUI_STEP_MSG="$3"
+    _TUI_STEP_START_TIME="$SECONDS"
+
+    _tui_kill_spinner
+
+    local dots
+    dots="$(_tui_step_dots "$_TUI_STEP_CURRENT" "$_TUI_STEP_TOTAL")"
+
+    if [[ -t 1 ]]; then
+        # Hide cursor while spinner is animating
+        printf '\033[?25l' >/dev/tty 2>/dev/null || true
+        (
+            # Exit cleanly on signal — the parent kills us with SIGTERM in
+            # _tui_kill_spinner. Trapping with `exit 0` (instead of ignoring)
+            # is what makes the kill actually take effect.
+            trap 'exit 0' INT TERM
+            local frames=("⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏")
+            local i=0
+            while true; do
+                printf '\r\033[K  %b %b[%d/%d]%b %b%s%b %s' \
+                    "$dots" \
+                    "$STY_FAINT" "$_TUI_STEP_CURRENT" "$_TUI_STEP_TOTAL" "$STY_RST" \
+                    "$STY_PURPLE" "${frames[i]}" "$STY_RST" \
+                    "$_TUI_STEP_MSG" >/dev/tty 2>/dev/null || exit 0
+                i=$(( (i+1) % 10 ))
+                sleep 0.08
+            done
+        ) &
+        _TUI_SPINNER_PID=$!
+    else
+        printf '  %b %b[%d/%d]%b %s\n' \
+            "$dots" \
+            "$STY_FAINT" "$_TUI_STEP_CURRENT" "$_TUI_STEP_TOTAL" "$STY_RST" \
+            "$_TUI_STEP_MSG"
+    fi
+}
+
+# Internal: stop spinner, print final state line with status icon + elapsed.
+_tui_step_finalize() {
+    local icon_color="$1" icon="$2" final_msg="${3:-$_TUI_STEP_MSG}"
+
+    _tui_kill_spinner
+
+    local elapsed=$(( SECONDS - _TUI_STEP_START_TIME ))
+    local elapsed_str=""
+    (( elapsed > 0 )) && elapsed_str=" $(printf '%b(%ds)%b' "$STY_FAINT" "$elapsed" "$STY_RST")"
+
+    local dots
+    dots="$(_tui_step_dots "$_TUI_STEP_CURRENT" "$_TUI_STEP_TOTAL")"
+
+    if [[ -t 1 ]]; then
+        # Clear the spinner line on the TTY, then print the resolved line to
+        # both TTY and stdout (so log file via tee captures it cleanly).
+        printf '\r\033[K' >/dev/tty 2>/dev/null || true
+        printf '  %b %b[%d/%d]%b %b%s%b %s%b\n' \
+            "$dots" \
+            "$STY_FAINT" "$_TUI_STEP_CURRENT" "$_TUI_STEP_TOTAL" "$STY_RST" \
+            "$icon_color" "$icon" "$STY_RST" \
+            "$final_msg" "$elapsed_str"
+    else
+        printf '  %b%s%b %s%b\n' "$icon_color" "$icon" "$STY_RST" "$final_msg" "$elapsed_str"
+    fi
+}
+
+tui_step_done() { _tui_step_finalize "$STY_GREEN"  "✓" "${1:-$_TUI_STEP_MSG}"; }
+tui_step_fail() { _tui_step_finalize "$STY_RED"    "✗" "${1:-$_TUI_STEP_MSG}"; }
+tui_step_warn() { _tui_step_finalize "$STY_YELLOW" "⚠" "${1:-$_TUI_STEP_MSG}"; }
+tui_step_skip() { _tui_step_finalize "$STY_FAINT"  "○" "${1:-$_TUI_STEP_MSG}"; }
+
+###############################################################################
 # Stage Header
 ###############################################################################
 tui_stage_header() {

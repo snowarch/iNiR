@@ -318,33 +318,53 @@ cleanup_old_snapshots() {
 ###############################################################################
 # Check remote for updates
 ###############################################################################
+get_update_tracking_branch() {
+    local branch=$(git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null)
+    [[ -z "$branch" || "$branch" == "HEAD" ]] && branch="main"
+    printf '%s' "$branch"
+}
+
 check_remote_updates() {
-    # Returns: 0 = updates available, 1 = no updates, 2 = error (offline/no git)
+    # Returns:
+    #   0 = remote ahead (safe fast-forward pull available)
+    #   1 = up to date
+    #   2 = error (offline/no git/no tracked remote branch)
+    #   3 = local ahead of remote
+    #   4 = diverged
     if [[ ! -d "${REPO_ROOT}/.git" ]]; then
         return 2
     fi
-    
-    # Fetch silently — distinguish network failure from no-updates
+
     if ! git -C "$REPO_ROOT" fetch origin --quiet 2>/dev/null; then
         return 2
     fi
-    
-    local branch=$(git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null)
-    [[ -z "$branch" || "$branch" == "HEAD" ]] && branch="main"
-    
-    local local_commit=$(git -C "$REPO_ROOT" rev-parse HEAD 2>/dev/null)
-    local remote_commit=$(git -C "$REPO_ROOT" rev-parse "origin/${branch}" 2>/dev/null)
-    
-    if [[ "$local_commit" == "$remote_commit" ]]; then
-        return 1  # No updates
+
+    local branch
+    branch="$(get_update_tracking_branch)"
+
+    local counts
+    counts="$(git -C "$REPO_ROOT" rev-list --left-right --count "HEAD...origin/${branch}" 2>/dev/null)" || return 2
+
+    local local_only=0
+    local remote_only=0
+    read -r local_only remote_only <<< "$counts"
+
+    if [[ "$local_only" -eq 0 && "$remote_only" -eq 0 ]]; then
+        return 1
     fi
-    
-    return 0  # Updates available
+    if [[ "$local_only" -eq 0 ]]; then
+        return 0
+    fi
+    if [[ "$remote_only" -eq 0 ]]; then
+        return 3
+    fi
+
+    return 4
 }
 
 show_pending_commits() {
-    local branch=$(git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null)
-    [[ -z "$branch" || "$branch" == "HEAD" ]] && branch="main"
+    local branch
+    branch="$(get_update_tracking_branch)"
     local remote="origin/${branch}"
     
     echo -e "${STY_CYAN}New commits available:${STY_RST}"
@@ -355,8 +375,40 @@ show_pending_commits() {
     echo ""
 }
 
+show_local_ahead_commits() {
+    local branch
+    branch="$(get_update_tracking_branch)"
+    local remote="origin/${branch}"
+
+    echo -e "${STY_CYAN}Local commits not on ${remote}:${STY_RST}"
+    echo ""
+    git -C "$REPO_ROOT" log --oneline "${remote}..HEAD" 2>/dev/null | head -10 | while read -r line; do
+        echo -e "  ${STY_YELLOW}-${STY_RST} $line"
+    done
+    echo ""
+}
+
+show_diverged_commits() {
+    local branch
+    branch="$(get_update_tracking_branch)"
+    local remote="origin/${branch}"
+
+    echo -e "${STY_CYAN}${remote} has commits this checkout does not:${STY_RST}"
+    echo ""
+    git -C "$REPO_ROOT" log --oneline "HEAD..${remote}" 2>/dev/null | head -10 | while read -r line; do
+        echo -e "  ${STY_GREEN}+${STY_RST} $line"
+    done
+    echo ""
+    echo -e "${STY_CYAN}This checkout has commits not on ${remote}:${STY_RST}"
+    echo ""
+    git -C "$REPO_ROOT" log --oneline "${remote}..HEAD" 2>/dev/null | head -10 | while read -r line; do
+        echo -e "  ${STY_YELLOW}-${STY_RST} $line"
+    done
+    echo ""
+}
+
 get_remote_commit() {
-    local branch=$(git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null)
-    [[ -z "$branch" || "$branch" == "HEAD" ]] && branch="main"
+    local branch
+    branch="$(get_update_tracking_branch)"
     git -C "$REPO_ROOT" rev-parse --short "origin/${branch}" 2>/dev/null || echo "unknown"
 }

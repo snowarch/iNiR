@@ -13,7 +13,7 @@ QuickToggleModel {
         (BluetoothStatus.firstActiveDevice?.name ?? Translation.tr("Bluetooth"))
         + (BluetoothStatus.activeDeviceCount > 1 ? ` +${BluetoothStatus.activeDeviceCount - 1}` : "")
     )
-    icon: BluetoothStatus.connected ? "bluetooth_connected" : BluetoothStatus.enabled ? "bluetooth" : "bluetooth_disabled"
+    icon: BluetoothStatus.activeIcon
 
     available: BluetoothStatus.available
     toggled: BluetoothStatus.enabled

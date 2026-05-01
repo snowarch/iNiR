@@ -155,6 +155,8 @@ Item {
                     spacing: 4
                     
                     PlayerControls {
+                        canGoPrevious: playerBase.effectiveCanGoPrevious
+                        canGoNext: playerBase.effectiveCanGoNext
                         buttonSize: 28
                         playButtonSize: 36
                         iconSize: 18

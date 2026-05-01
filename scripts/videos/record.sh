@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/lib/config-path.sh
@@ -52,6 +53,18 @@ json_array() {
     printf ']'
 }
 
+config_value() {
+    local expr="$1"
+    local fallback="${2:-}"
+    local value
+    value="$(jq -r "$expr" "$CONFIG_FILE" 2>/dev/null || true)"
+    if [[ -z "$value" || "$value" == "null" ]]; then
+        printf '%s\n' "$fallback"
+    else
+        printf '%s\n' "$value"
+    fi
+}
+
 resolve_hardware_device() {
     local requested="$1"
     if [[ -n "$requested" && "$requested" != "null" && -c "$requested" ]]; then
@@ -66,6 +79,7 @@ resolve_hardware_device() {
             return
         fi
     done
+    return 0
 }
 
 collect_video_codecs() {
@@ -100,7 +114,7 @@ collect_audio_codecs() {
 }
 
 collect_audio_sources() {
-    pactl list sources short 2>/dev/null | awk 'NF >= 2 { print $2 }'
+    pactl list sources short 2>/dev/null | awk 'NF >= 2 { print $2 }' || true
 }
 
 collect_hardware_devices() {
@@ -108,12 +122,13 @@ collect_hardware_devices() {
     for device in /dev/dri/renderD*; do
         [[ -c "$device" ]] && printf '%s\n' "$device"
     done
+    return 0
 }
 
 probe_capabilities() {
     local resolved_device="$1"
     local default_sink
-    default_sink="$(pactl get-default-sink 2>/dev/null)"
+    default_sink="$(pactl get-default-sink 2>/dev/null || true)"
     local preferred_codec
     preferred_codec="$(detect_hw_video_codec)"
 
@@ -142,18 +157,17 @@ probe_capabilities() {
 
 getaudiooutput() {
     local default_sink
-    default_sink="$(pactl get-default-sink 2>/dev/null)"
+    default_sink="$(pactl get-default-sink 2>/dev/null || true)"
     if [[ -n "$default_sink" && "$default_sink" != "null" ]]; then
         printf '%s.monitor\n' "$default_sink"
         return
     fi
 
-    pactl info 2>/dev/null | sed -n 's/^Default Sink: //p' | head -n 1 | awk 'NF { print $0 ".monitor"; found=1; exit } END { if (!found) exit 1 }'
-    if [[ $? -eq 0 ]]; then
+    if pactl info 2>/dev/null | sed -n 's/^Default Sink: //p' | head -n 1 | awk 'NF { print $0 ".monitor"; found=1; exit } END { if (!found) exit 1 }'; then
         return
     fi
 
-    pactl list sources short 2>/dev/null | awk '/monitor/ { print $2; exit }'
+    pactl list sources short 2>/dev/null | awk '/monitor/ { print $2; exit }' || true
 }
 
 resolve_audio_device() {
@@ -166,10 +180,86 @@ resolve_audio_device() {
 
 getactivemonitor() {
     if command -v niri >/dev/null 2>&1 && niri msg focused-output >/dev/null 2>&1; then
-        niri msg focused-output | head -n 1 | sed -n 's/.*(\(.*\))/\1/p'
+        niri msg focused-output 2>/dev/null | head -n 1 | sed -n 's/.*(\(.*\))/\1/p' || true
     elif command -v hyprctl >/dev/null 2>&1; then
-        hyprctl monitors -j | jq -r '.[] | select(.focused) | .name'
+        hyprctl monitors -j 2>/dev/null | jq -r '.[] | select(.focused) | .name' || true
     fi
+}
+
+maybe_compress_recording() {
+    local input_file="$1"
+    if ! is_truthy "$DISCORD_COMPRESS_ENABLED"; then
+        return 0
+    fi
+    if [[ ! -s "$input_file" ]]; then
+        return 0
+    fi
+
+    local compressor="$SCRIPT_DIR/compress-discord.py"
+    local python_cmd=""
+    if command -v python3 >/dev/null 2>&1; then
+        python_cmd="$(command -v python3)"
+    fi
+    if [[ -z "$python_cmd" || ! -f "$compressor" ]] || ! command -v ffmpeg >/dev/null 2>&1 || ! command -v ffprobe >/dev/null 2>&1; then
+        if is_truthy "$SHOW_NOTIFICATIONS"; then notify-send "Discord compression skipped" "Missing python3, ffmpeg, or ffprobe" -a 'Recorder' & disown; fi
+        return 0
+    fi
+
+    local input_dir input_base input_stem output_file
+    input_dir="$(dirname "$input_file")"
+    input_base="$(basename "$input_file")"
+    input_stem="${input_base%.*}"
+    output_file="$input_dir/${input_stem}.discord.mp4"
+    local cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/inir"
+    local lock_file="$cache_dir/discord-compress.lock"
+    mkdir -p "$cache_dir"
+
+    (
+        if command -v flock >/dev/null 2>&1; then
+            exec 9>"$lock_file"
+            if ! flock -n 9; then
+                if is_truthy "$SHOW_NOTIFICATIONS"; then notify-send "Discord compression queued" "Another recording is already compressing" -a 'Recorder' & disown; fi
+                flock 9
+            fi
+        fi
+
+        if is_truthy "$SHOW_NOTIFICATIONS"; then notify-send "Compressing recording" "Creating Discord-ready copy under ${DISCORD_COMPRESS_TARGET_MB} MB" -a 'Recorder' & disown; fi
+
+        local -a compress_cmd=(
+            "$python_cmd" "$compressor"
+            --input "$input_file"
+            --output "$output_file"
+            --target-mb "$DISCORD_COMPRESS_TARGET_MB"
+            --safety-margin-mb "$DISCORD_COMPRESS_SAFETY_MARGIN_MB"
+            --audio-kbps "$DISCORD_COMPRESS_AUDIO_BITRATE_KBPS"
+            --preset "$DISCORD_COMPRESS_PRESET"
+            --max-dimension "$DISCORD_COMPRESS_MAX_DIMENSION"
+            --quiet
+            --json
+        )
+        if ! is_truthy "$DISCORD_COMPRESS_ONLY_IF_NEEDED"; then
+            compress_cmd+=(--force)
+        fi
+
+        local result=""
+        if result="$("${compress_cmd[@]}" 2>&1)"; then
+            local status=""
+            local result_output="$output_file"
+            if command -v jq >/dev/null 2>&1; then
+                status="$(printf '%s' "$result" | jq -r '.status // empty' 2>/dev/null || true)"
+                result_output="$(printf '%s' "$result" | jq -r '.output // empty' 2>/dev/null || printf '%s' "$output_file")"
+            fi
+            if [[ "$status" == "skipped" ]]; then
+                if is_truthy "$SHOW_NOTIFICATIONS"; then notify-send "Recording already Discord-ready" "$(basename "$input_file") is under ${DISCORD_COMPRESS_TARGET_MB} MB" -a 'Recorder' & disown; fi
+            elif [[ -s "$result_output" ]]; then
+                if is_truthy "$SHOW_NOTIFICATIONS"; then notify-send "Discord-ready recording" "$(basename "$result_output")" -a 'Recorder' & disown; fi
+            elif is_truthy "$SHOW_NOTIFICATIONS"; then
+                notify-send "Discord compression finished" "$(basename "$input_file")" -a 'Recorder' & disown
+            fi
+        else
+            if is_truthy "$SHOW_NOTIFICATIONS"; then notify-send "Discord compression failed" "Original recording was kept. Obviously." -a 'Recorder' & disown; fi
+        fi
+    )
 }
 
 has_ffmpeg_encoder() {
@@ -338,25 +428,39 @@ VIDEO_CRF="21"
 VAAPI_FILTER="scale_vaapi=format=nv12:out_range=full"
 ENABLE_FALLBACK="true"
 SHOW_NOTIFICATIONS="true"
+DISCORD_COMPRESS_ENABLED="false"
+DISCORD_COMPRESS_TARGET_MB="10"
+DISCORD_COMPRESS_SAFETY_MARGIN_MB="0.5"
+DISCORD_COMPRESS_ONLY_IF_NEEDED="true"
+DISCORD_COMPRESS_AUDIO_BITRATE_KBPS="96"
+DISCORD_COMPRESS_PRESET="slow"
+DISCORD_COMPRESS_MAX_DIMENSION="1280"
 if [[ -f "$CONFIG_FILE" ]] && command -v jq >/dev/null 2>&1; then
-    SAVE_PATH=$(jq -r '.screenRecord.savePath // empty' "$CONFIG_FILE" 2>/dev/null)
-    QUALITY_PRESET=$(jq -r '.screenRecord.qualityPreset // "balanced"' "$CONFIG_FILE" 2>/dev/null)
-    VIDEO_CODEC=$(jq -r '.screenRecord.videoCodec // empty' "$CONFIG_FILE" 2>/dev/null)
-    AUDIO_CODEC=$(jq -r '.screenRecord.audioCodec // "aac"' "$CONFIG_FILE" 2>/dev/null)
-    ACCELERATION_MODE=$(jq -r '.screenRecord.accelerationMode // "auto"' "$CONFIG_FILE" 2>/dev/null)
-    HARDWARE_DEVICE=$(jq -r '.screenRecord.hardwareDevice // "/dev/dri/renderD128"' "$CONFIG_FILE" 2>/dev/null)
-    FPS=$(jq -r '.screenRecord.fps // 60' "$CONFIG_FILE" 2>/dev/null)
-    VIDEO_BITRATE_KBPS=$(jq -r '.screenRecord.videoBitrateKbps // 12000' "$CONFIG_FILE" 2>/dev/null)
-    AUDIO_BITRATE_KBPS=$(jq -r '.screenRecord.audioBitrateKbps // 192' "$CONFIG_FILE" 2>/dev/null)
-    AUDIO_SOURCE=$(jq -r '.screenRecord.audioSource // empty' "$CONFIG_FILE" 2>/dev/null)
-    AUDIO_BACKEND=$(jq -r '.screenRecord.audioBackend // empty' "$CONFIG_FILE" 2>/dev/null)
-    AUDIO_SAMPLE_RATE=$(jq -r '.screenRecord.audioSampleRate // 48000' "$CONFIG_FILE" 2>/dev/null)
-    PIXEL_FORMAT=$(jq -r '.screenRecord.pixelFormat // "yuv420p"' "$CONFIG_FILE" 2>/dev/null)
-    VIDEO_PRESET=$(jq -r '.screenRecord.preset // "veryfast"' "$CONFIG_FILE" 2>/dev/null)
-    VIDEO_CRF=$(jq -r '.screenRecord.crf // 21' "$CONFIG_FILE" 2>/dev/null)
-    VAAPI_FILTER=$(jq -r '.screenRecord.vaapiFilter // "scale_vaapi=format=nv12:out_range=full"' "$CONFIG_FILE" 2>/dev/null)
-    ENABLE_FALLBACK=$(jq -r 'if .screenRecord.enableFallback == null then "true" else .screenRecord.enableFallback end' "$CONFIG_FILE" 2>/dev/null)
-    SHOW_NOTIFICATIONS=$(jq -r 'if .screenRecord.showNotifications == null then "true" else .screenRecord.showNotifications end' "$CONFIG_FILE" 2>/dev/null)
+    SAVE_PATH=$(config_value '.screenRecord.savePath // empty')
+    QUALITY_PRESET=$(config_value '.screenRecord.qualityPreset // "balanced"' "balanced")
+    VIDEO_CODEC=$(config_value '.screenRecord.videoCodec // empty')
+    AUDIO_CODEC=$(config_value '.screenRecord.audioCodec // "aac"' "aac")
+    ACCELERATION_MODE=$(config_value '.screenRecord.accelerationMode // "auto"' "auto")
+    HARDWARE_DEVICE=$(config_value '.screenRecord.hardwareDevice // "/dev/dri/renderD128"' "/dev/dri/renderD128")
+    FPS=$(config_value '.screenRecord.fps // 60' "60")
+    VIDEO_BITRATE_KBPS=$(config_value '.screenRecord.videoBitrateKbps // 12000' "12000")
+    AUDIO_BITRATE_KBPS=$(config_value '.screenRecord.audioBitrateKbps // 192' "192")
+    AUDIO_SOURCE=$(config_value '.screenRecord.audioSource // empty')
+    AUDIO_BACKEND=$(config_value '.screenRecord.audioBackend // empty')
+    AUDIO_SAMPLE_RATE=$(config_value '.screenRecord.audioSampleRate // 48000' "48000")
+    PIXEL_FORMAT=$(config_value '.screenRecord.pixelFormat // "yuv420p"' "yuv420p")
+    VIDEO_PRESET=$(config_value '.screenRecord.preset // "veryfast"' "veryfast")
+    VIDEO_CRF=$(config_value '.screenRecord.crf // 21' "21")
+    VAAPI_FILTER=$(config_value '.screenRecord.vaapiFilter // "scale_vaapi=format=nv12:out_range=full"' "scale_vaapi=format=nv12:out_range=full")
+    ENABLE_FALLBACK=$(config_value 'if .screenRecord.enableFallback == null then "true" else .screenRecord.enableFallback end' "true")
+    SHOW_NOTIFICATIONS=$(config_value 'if .screenRecord.showNotifications == null then "true" else .screenRecord.showNotifications end' "true")
+    DISCORD_COMPRESS_ENABLED=$(config_value 'if .screenRecord.discordCompress.enabled == null then "false" else .screenRecord.discordCompress.enabled end' "false")
+    DISCORD_COMPRESS_TARGET_MB=$(config_value '.screenRecord.discordCompress.targetSizeMb // 10' "10")
+    DISCORD_COMPRESS_SAFETY_MARGIN_MB=$(config_value '.screenRecord.discordCompress.safetyMarginMb // 0.5' "0.5")
+    DISCORD_COMPRESS_ONLY_IF_NEEDED=$(config_value 'if .screenRecord.discordCompress.onlyIfNeeded == null then "true" else .screenRecord.discordCompress.onlyIfNeeded end' "true")
+    DISCORD_COMPRESS_AUDIO_BITRATE_KBPS=$(config_value '.screenRecord.discordCompress.audioBitrateKbps // 96' "96")
+    DISCORD_COMPRESS_PRESET=$(config_value '.screenRecord.discordCompress.preset // "slow"' "slow")
+    DISCORD_COMPRESS_MAX_DIMENSION=$(config_value '.screenRecord.discordCompress.maxDimension // 1280' "1280")
 fi
 
 HARDWARE_DEVICE="$(resolve_hardware_device "$HARDWARE_DEVICE")"
@@ -393,7 +497,7 @@ fi
 
 # Fallback to XDG Videos if config path is empty
 if [[ -z "$SAVE_PATH" ]]; then
-    xdgvideo="$(xdg-user-dir VIDEOS)"
+    xdgvideo="$(xdg-user-dir VIDEOS 2>/dev/null || true)"
     if [[ $xdgvideo = "$HOME" ]]; then
         SAVE_PATH="$HOME/Videos"
     else
@@ -435,7 +539,11 @@ else
     build_audio_args
     build_safe_fallback_common_args
     if [[ $FULLSCREEN_FLAG -eq 1 ]]; then
-        start_recording_command "" "$output_name"
+        if start_recording_command "" "$output_name"; then
+            maybe_compress_recording "$output_file"
+        else
+            exit $?
+        fi
     else
         # If a manual region was provided via --region, use it; otherwise run slurp as before.
         if [[ -n "$MANUAL_REGION" ]]; then
@@ -447,6 +555,10 @@ else
             fi
         fi
 
-        start_recording_command "$region" "$output_name"
+        if start_recording_command "$region" "$output_name"; then
+            maybe_compress_recording "$output_file"
+        else
+            exit $?
+        fi
     fi
 fi

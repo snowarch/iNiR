@@ -11,8 +11,8 @@ Item { // Full hitbox
 
     implicitHeight: content.implicitHeight
     implicitWidth: Appearance.sizes.verticalBarWidth
-    property var dayOfMonth: DateTime.shortDate.split(/[-\/]/)[0]  // What if 🍔murica🦅? good question
-    property var monthOfYear: DateTime.shortDate.split(/[-\/]/)[1]
+    property string dayOfMonth: Qt.locale().toString(DateTime.clock.date, "dd")  // What if 🍔murica🦅? good question
+    property string monthOfYear: Qt.locale().toString(DateTime.clock.date, "MM")
 
     Item { // Boundaries for date numbers
         id: content

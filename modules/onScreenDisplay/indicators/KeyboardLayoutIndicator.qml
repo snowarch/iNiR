@@ -50,16 +50,16 @@ Item {
 
                 MaterialSymbol {
                     anchors.centerIn: parent
-                    text: "language"
+                    text: KeyboardIndicators.popupMaterialIcon
                     iconSize: Appearance.font.pixelSize.hugeass
                     fill: 1
-                    color: Appearance.colors.colPrimary
+                    color: KeyboardIndicators.popupActive ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer0
                 }
             }
 
             StyledText {
                 Layout.fillWidth: true
-                text: NiriService.getCurrentKeyboardLayoutName()
+                text: KeyboardIndicators.popupText
                 font.pixelSize: Appearance.font.pixelSize.normal
                 color: Appearance.angelEverywhere ? Appearance.angel.colText
                      : Appearance.inirEverywhere ? Appearance.inir.colText

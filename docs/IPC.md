@@ -666,3 +666,19 @@ Waffle Alt+Tab window switcher. Separate from the ii `altSwitcher` — supports 
 | `toggle` | Toggle switcher |
 | `next` | Focus next window |
 | `previous` | Focus previous window |
+
+---
+
+## Standalone Commands
+
+These are top-level `inir` commands that work directly, without going through IPC.
+
+### colorpicker
+
+Launch `hyprpicker` to pick a color from anywhere on the screen. The hex value is copied to the clipboard (`-a` flag).
+
+```kdl
+bind "Super+Shift+C" { spawn "inir" "colorpicker"; }
+```
+
+Requires `hyprpicker` installed.

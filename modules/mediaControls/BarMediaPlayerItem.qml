@@ -22,12 +22,10 @@ Item { // Player instance - Old style design
 
     property var artUrl: player?.trackArtUrl
     property string artDownloadLocation: Directories.coverArt
-    property string artFileName: artUrl ? Qt.md5(artUrl) : ""
-    property string artFilePath: artFileName ? `${artDownloadLocation}/${artFileName}` : ""
     property color artDominantColor: ColorUtils.mix((colorQuantizer?.colors[0] ?? Appearance.colors.colPrimary), Appearance.colors.colPrimaryContainer, 0.8) || Appearance.m3colors.m3secondaryContainer
-    property bool downloaded: false
+    readonly property bool downloaded: artworkResolver.ready
 
-    property string displayedArtFilePath: root.downloaded ? Qt.resolvedUrl(artFilePath) : ""
+    property string displayedArtFilePath: artworkResolver.displaySource
 
     component TrackChangeButton: RippleButton {
         implicitWidth: 24
@@ -72,53 +70,13 @@ Item { // Player instance - Old style design
         }
     }
 
-    onArtFilePathChanged: {
-        if (!root.artUrl || root.artUrl.length == 0) {
-            root.artDominantColor = Appearance.m3colors.m3secondaryContainer
-            return;
-        }
-
-        // Check if file exists first
-        artExistsChecker.running = true
-    }
-
-    Process {
-        id: artExistsChecker
-        command: ["/usr/bin/test", "-f", root.artFilePath]
-        onExited: (exitCode, exitStatus) => {
-            if (exitCode === 0) {
-                root.downloaded = true
-            } else {
-                root.downloaded = false
-                coverArtDownloader.targetFile = root.artUrl ?? ""
-                coverArtDownloader.artFilePath = root.artFilePath
-                coverArtDownloader.running = true
-            }
-        }
-    }
-
-    Process { // Cover art downloader
-        id: coverArtDownloader
-        property string targetFile
-        property string artFilePath
-        command: ["/usr/bin/bash", "-c", `
-            target="$1"
-            out="$2"
-            dir="$3"
-            if [ -f "$out" ]; then exit 0; fi
-            mkdir -p "$dir"
-            tmp="$out.tmp"
-            /usr/bin/curl -sSL --connect-timeout 10 --max-time 30 "$target" -o "$tmp" && \
-            [ -s "$tmp" ] && /usr/bin/mv -f "$tmp" "$out" || { rm -f "$tmp"; exit 1; }
-        `,
-        "_",
-        targetFile,
-        artFilePath,
-        root.artDownloadLocation
-        ]
-        onExited: (exitCode) => {
-            root.downloaded = (exitCode === 0)
-        }
+    MediaArtworkResolver {
+        id: artworkResolver
+        sourceUrl: root.artUrl ?? ""
+        title: root.player?.trackTitle ?? ""
+        artist: root.player?.trackArtist ?? ""
+        album: root.player?.trackAlbum ?? ""
+        cacheDirectory: root.artDownloadLocation
     }
 
     ColorQuantizer {
@@ -205,7 +163,7 @@ Item { // Player instance - Old style design
             sourceSize.width: background.width
             sourceSize.height: background.height
             fillMode: Image.PreserveAspectCrop
-            cache: true
+            cache: false
             antialiasing: true
             asynchronous: true
             opacity: Appearance.inirEverywhere ? 0.5 : 0.3
@@ -273,7 +231,7 @@ Item { // Player instance - Old style design
 
                     source: root.displayedArtFilePath
                     fillMode: Image.PreserveAspectCrop
-                    cache: true
+                    cache: false
                     antialiasing: true
 
                     width: size
@@ -343,7 +301,8 @@ Item { // Player instance - Old style design
                         }
                         TrackChangeButton {
                             iconName: "skip_previous"
-                            downAction: () => root.player?.previous()
+                            enabled: MprisController.canGoPreviousForPlayer(root.player)
+                            downAction: () => MprisController.previousForPlayer(root.player)
                         }
                         Item {
                             id: progressBarContainer
@@ -394,7 +353,8 @@ Item { // Player instance - Old style design
                         }
                         TrackChangeButton {
                             iconName: "skip_next"
-                            downAction: () => root.player?.next()
+                            enabled: MprisController.canGoNextForPlayer(root.player)
+                            downAction: () => MprisController.nextForPlayer(root.player)
                         }
                     }
 

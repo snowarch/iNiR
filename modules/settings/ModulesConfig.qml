@@ -578,7 +578,7 @@ ContentPage {
             SettingsSwitch {
                 buttonIcon: "tab"
                 text: Translation.tr("Alt-Tab Switcher")
-                checked: true
+                checked: false
                 enabled: false
                 StyledToolTip { text: Translation.tr("Window switcher popup") }
             }
@@ -619,7 +619,7 @@ ContentPage {
             SettingsSwitch {
                 buttonIcon: "center_focus_strong"
                 text: Translation.tr("Crosshair")
-                checked: true
+                checked: false
                 enabled: false
                 StyledToolTip { text: Translation.tr("Gaming crosshair overlay for games without built-in crosshair") }
             }
@@ -798,7 +798,7 @@ ContentPage {
             SettingsSwitch {
                 buttonIcon: "tab"
                 text: Translation.tr("Alt-Tab Switcher")
-                checked: true
+                checked: false
                 enabled: false
                 StyledToolTip { text: Translation.tr("Window switcher popup") }
             }
@@ -814,7 +814,7 @@ ContentPage {
             SettingsSwitch {
                 buttonIcon: "center_focus_strong"
                 text: Translation.tr("Crosshair")
-                checked: true
+                checked: false
                 enabled: false
                 StyledToolTip { text: Translation.tr("Gaming crosshair overlay") }
             }
@@ -927,6 +927,16 @@ ContentPage {
                 color: Appearance.colors.colOnSurfaceVariant
                 font.pixelSize: Appearance.font.pixelSize.small
                 wrapMode: Text.WordWrap
+            }
+
+            SettingsSwitch {
+                buttonIcon: "school"
+                text: Translation.tr("Easy mode (essentials only)")
+                checked: Config.options?.settingsUi?.easyMode ?? false
+                onCheckedChanged: Config.setNestedValue("settingsUi.easyMode", checked)
+                StyledToolTip {
+                    text: Translation.tr("Show a curated set of essential settings and hide the more advanced pages and sections. You can switch back to Advanced anytime from the title bar.")
+                }
             }
 
             SettingsSwitch {

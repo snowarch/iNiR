@@ -65,7 +65,7 @@ RowLayout {
         id: searchInput
         Layout.topMargin: 4
         Layout.bottomMargin: 4
-        implicitHeight: 40
+        implicitHeight: Appearance.sizes.baseBarHeight
         focus: GlobalStates.overviewOpen
         font.pixelSize: Appearance.font.pixelSize.small
         placeholderText: Translation.tr("Search, calculate or run")

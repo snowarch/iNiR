@@ -39,6 +39,7 @@ Singleton {
 		players = newList;
 		// Keep trackedPlayer consistent with filtered list
 		if (trackedPlayer && !players.includes(trackedPlayer)) {
+			_manualPlayerSelection = false;
 			trackedPlayer = players[0] ?? null;
 		}
 	}
@@ -47,6 +48,7 @@ Singleton {
 	readonly property var displayPlayers: _filterYtMusicDuplicates(players)
 	
 	property MprisPlayer trackedPlayer: null;
+	property bool _manualPlayerSelection: false;
 	
 	// Reactive counter that forces re-evaluation when any player's state changes
 	property int _playbackStateVersion: 0
@@ -54,20 +56,29 @@ Singleton {
 	// Grace period tracking - keeps players visible during track transitions
 	property var _playerGrace: ({})  // dbusName -> timestamp
 	
-	// Prioritize playing players over paused ones
-	// Uses _playbackStateVersion to force re-evaluation on state changes
+	// Prioritize manual selection, then playing players over paused ones
+	// Uses _playbackStateVersion to force activePlayer re-evaluation on state changes
 	property MprisPlayer activePlayer: {
 		// Touch version to create dependency
 		const _ = _playbackStateVersion;
-		// Only consider tracked if it survived filtering
-		const tracked = players.includes(trackedPlayer) ? trackedPlayer : null;
-		// First, prefer any player that is actively playing
+		const visiblePlayers = displayPlayers ?? [];
+		// Only consider tracked if it survived display filtering
+		const trackedVisible = visiblePlayers.includes(trackedPlayer) ? trackedPlayer : null;
+		if (_manualPlayerSelection && trackedVisible) return trackedVisible;
+		// Prefer the same deduped/art-capable player set used by popup surfaces
+		for (let i = 0; i < visiblePlayers.length; i++) {
+			if (visiblePlayers[i]?.isPlaying) return visiblePlayers[i];
+		}
+		if (trackedVisible) return trackedVisible;
+		if (visiblePlayers.length > 0) return visiblePlayers[0];
+
+		// Raw fallback only for transient gaps while filtered players rebuild
+		const trackedRaw = players.includes(trackedPlayer) ? trackedPlayer : null;
+		if (_manualPlayerSelection && trackedRaw) return trackedRaw;
 		for (let i = 0; i < players.length; i++) {
 			if (players[i]?.isPlaying) return players[i];
 		}
-		// If nothing is playing, keep user's tracked selection
-		if (tracked) return tracked;
-		// Final fallback
+		if (trackedRaw) return trackedRaw;
 		return players[0] ?? null;
 	}
 
@@ -81,11 +92,15 @@ Singleton {
 	}
 	
 	property bool hasPlasmaIntegration: false
+	property bool hasWtype: false
 	Process {
 		id: plasmaIntegrationCheckProc
 		running: false
-		command: ["/usr/bin/bash", "-c", "command -v plasma-browser-integration-host"]
-		onExited: (exitCode) => { root.hasPlasmaIntegration = (exitCode === 0); }
+		command: ["/usr/bin/bash", "-c", "command -v plasma-browser-integration-host >/dev/null; plasma=$?; command -v wtype >/dev/null; wtype=$?; exit $((plasma + wtype * 10))"]
+		onExited: (exitCode) => {
+			root.hasPlasmaIntegration = (exitCode % 10) === 0;
+			root.hasWtype = Math.floor(exitCode / 10) === 0;
+		}
 	}
 
 	Timer {
@@ -372,6 +387,112 @@ Singleton {
 	function _normTitle(s): string {
 		return (s ?? "").toLowerCase().replace(/[\t\r\n|•·]+/g, " ").replace(/\s+/g, " ").trim();
 	}
+
+	function _isBrowserYoutubePlayer(player): bool {
+		if (!player) return false;
+		const name = (player.dbusName ?? "").toLowerCase();
+		const identity = (player.identity ?? "").toLowerCase();
+		const entry = (player.desktopEntry ?? "").toLowerCase();
+		const isBrowser = name.includes("plasma-browser-integration") || name.includes("firefox") ||
+			name.includes("chrome") || name.includes("chromium") || name.includes("brave") ||
+			name.includes("vivaldi") || name.includes("opera") || identity.includes("firefox") ||
+			identity.includes("zen") || entry.includes("zen") || entry.includes("firefox");
+		const url = (player.metadata?.["xesam:url"] ?? "").toLowerCase();
+		const title = (player.trackTitle ?? "").toLowerCase();
+		return isBrowser && (url.includes("youtube.com") || url.includes("youtu.be") || title.includes("youtube"));
+	}
+
+	function _matchingBrowserWindow(player) {
+		if (!CompositorService.isNiri || !player)
+			return null;
+
+		const playerTitle = root._normTitle(player.trackTitle).replace(/\s+-\s+youtube$/, "");
+		const wins = NiriService.windows ?? [];
+		let bestWindow = null;
+		let bestScore = 0;
+		for (let i = 0; i < wins.length; i++) {
+			const win = wins[i];
+			const appId = (win.app_id ?? "").toLowerCase();
+			const winTitle = root._normTitle(win.title);
+			let score = 0;
+			if (appId.includes("zen") || appId.includes("firefox") || appId.includes("brave") ||
+				appId.includes("chrome") || appId.includes("chromium") || appId.includes("vivaldi") ||
+				appId.includes("opera") || appId.includes("librewolf") || appId.includes("floorp") ||
+				appId.includes("waterfox"))
+				score += 2;
+			if (playerTitle.length > 0 && winTitle.length > 0 && (winTitle.includes(playerTitle) || playerTitle.includes(winTitle)))
+				score += 5;
+			if (winTitle.includes("youtube"))
+				score += 2;
+			if (win.is_focused)
+				score += 1;
+			if (score > bestScore) {
+				bestScore = score;
+				bestWindow = win;
+			}
+		}
+		return bestScore >= 5 ? bestWindow : null;
+	}
+
+	function _canUseBrowserNavigationFallback(player): bool {
+		return root.hasWtype && !GlobalStates.screenLocked && CompositorService.isNiri && root._isBrowserYoutubePlayer(player) && root._matchingBrowserWindow(player) !== null;
+	}
+
+	function _navigateBrowserYoutube(player, direction: string): void {
+		const win = root._matchingBrowserWindow(player);
+		if (!win)
+			return;
+
+		const restoreWindow = NiriService.activeWindow;
+		const restoreId = restoreWindow && restoreWindow.id !== win.id ? String(restoreWindow.id) : "";
+		const key = direction === "previous" ? "p" : "n";
+		Quickshell.execDetached(["/usr/bin/bash", "-c", `
+			target="$1"
+			restore="$2"
+			key="$3"
+			command -v niri >/dev/null 2>&1 || exit 0
+			command -v wtype >/dev/null 2>&1 || exit 0
+			niri msg action focus-window --id "$target" >/dev/null 2>&1 || exit 0
+			sleep 0.08
+			wtype -M shift -k "$key" >/dev/null 2>&1 || true
+			sleep 0.05
+			if [ -n "$restore" ] && [ "$restore" != "$target" ]; then
+				niri msg action focus-window --id "$restore" >/dev/null 2>&1 || true
+			fi
+		`, "_", String(win.id), restoreId, key]);
+	}
+
+	function canGoPreviousForPlayer(player): bool {
+		if (_isYtMusicMpv(player) && YtMusic.currentVideoId)
+			return YtMusic.canGoPrevious;
+		return (player?.canGoPrevious ?? false) || root._canUseBrowserNavigationFallback(player);
+	}
+
+	function canGoNextForPlayer(player): bool {
+		if (_isYtMusicMpv(player) && YtMusic.currentVideoId)
+			return YtMusic.canGoNext;
+		return (player?.canGoNext ?? false) || root._canUseBrowserNavigationFallback(player);
+	}
+
+	function previousForPlayer(player): void {
+		if (_isYtMusicMpv(player) && YtMusic.currentVideoId && YtMusic.canGoPrevious) {
+			YtMusic.playPrevious();
+		} else if (player?.canGoPrevious ?? false) {
+			player.previous();
+		} else if (root._canUseBrowserNavigationFallback(player)) {
+			root._navigateBrowserYoutube(player, "previous");
+		}
+	}
+
+	function nextForPlayer(player): void {
+		if (_isYtMusicMpv(player) && YtMusic.currentVideoId && YtMusic.canGoNext) {
+			YtMusic.playNext();
+		} else if (player?.canGoNext ?? false) {
+			player.next();
+		} else if (root._canUseBrowserNavigationFallback(player)) {
+			root._navigateBrowserYoutube(player, "next");
+		}
+	}
 	
 	// Check if player is related to YtMusic (for duplicate filtering)
 	function _isYtMusicRelated(player): bool {
@@ -465,7 +586,7 @@ Singleton {
 
 			Component.onCompleted: {
 				// Only track if it's a real player
-				if (isRealPlayer(modelData) && (root.trackedPlayer == null || modelData.isPlaying)) {
+				if (!root._manualPlayerSelection && isRealPlayer(modelData) && (root.trackedPlayer == null || modelData.isPlaying)) {
 					root.trackedPlayer = modelData;
 				}
 				// Rebuild player list when new player is added
@@ -475,8 +596,9 @@ Singleton {
 			Component.onDestruction: {
 				if (root.trackedPlayer === modelData) {
 					root.trackedPlayer = null;
+					root._manualPlayerSelection = false;
 				}
-				if (root.trackedPlayer == null || !root.trackedPlayer.isPlaying) {
+				if (!root._manualPlayerSelection && (root.trackedPlayer == null || !root.trackedPlayer.isPlaying)) {
 					for (const player of Mpris.players.values) {
 						if (player.isPlaying) {
 							root.trackedPlayer = player;
@@ -498,7 +620,7 @@ Singleton {
 				// Increment version to force activePlayer re-evaluation
 				root._playbackStateVersion++;
 				// Update tracked player if this one started playing
-				if (modelData.isPlaying && root.trackedPlayer !== modelData && isRealPlayer(modelData)) {
+				if (!root._manualPlayerSelection && modelData.isPlaying && root.trackedPlayer !== modelData && isRealPlayer(modelData)) {
 					root.trackedPlayer = modelData;
 				}
 				// Rebuild on playback state change (affects filtering)
@@ -509,6 +631,10 @@ Singleton {
 			function onTrackTitleChanged() {
 				root._rebuildPlayerList();
 			}
+
+			function onTrackArtUrlChanged() {
+				root._rebuildPlayerList();
+			}
 		}
 	}
 
@@ -516,6 +642,18 @@ Singleton {
 		target: activePlayer
 
 		function onPostTrackChanged() {
+			root.updateTrack();
+		}
+
+		function onTrackTitleChanged() {
+			root.updateTrack();
+		}
+
+		function onTrackArtistChanged() {
+			root.updateTrack();
+		}
+
+		function onTrackAlbumChanged() {
 			root.updateTrack();
 		}
 
@@ -554,25 +692,29 @@ Singleton {
 		}
 	}
 
-	property bool canGoPrevious: this.activePlayer?.canGoPrevious ?? false;
+	property bool canGoPrevious: (root.isYtMusicActive && YtMusic.currentVideoId)
+		? YtMusic.canGoPrevious
+		: root.canGoPreviousForPlayer(this.activePlayer);
 	function previous(): void {
-		if (root.isYtMusicActive && YtMusic.currentVideoId) {
+		if (root.isYtMusicActive && YtMusic.currentVideoId && YtMusic.canGoPrevious) {
 			this.__reverse = true;
 			YtMusic.playPrevious();
-		} else if (this.canGoPrevious) {
+		} else if (root.canGoPreviousForPlayer(this.activePlayer)) {
 			this.__reverse = true;
-			this.activePlayer.previous();
+			root.previousForPlayer(this.activePlayer);
 		}
 	}
 
-	property bool canGoNext: this.activePlayer?.canGoNext ?? false;
+	property bool canGoNext: (root.isYtMusicActive && YtMusic.currentVideoId)
+		? YtMusic.canGoNext
+		: root.canGoNextForPlayer(this.activePlayer);
 	function next(): void {
-		if (root.isYtMusicActive && YtMusic.currentVideoId) {
+		if (root.isYtMusicActive && YtMusic.currentVideoId && YtMusic.canGoNext) {
 			this.__reverse = false;
 			YtMusic.playNext();
-		} else if (this.canGoNext) {
+		} else if (root.canGoNextForPlayer(this.activePlayer)) {
 			this.__reverse = false;
-			this.activePlayer.next();
+			root.nextForPlayer(this.activePlayer);
 		}
 	}
 
@@ -613,7 +755,7 @@ Singleton {
 
 	function setActivePlayer(player: MprisPlayer): void {
 		// Only allow players that survived filtering
-		const filtered = players;
+		const filtered = (displayPlayers?.length ?? 0) > 0 ? displayPlayers : players;
 		let targetPlayer = player;
 		if (!targetPlayer || !filtered.includes(targetPlayer)) {
 			targetPlayer = filtered[0] ?? null;
@@ -626,6 +768,7 @@ Singleton {
 		}
 
 		this.trackedPlayer = targetPlayer;
+		this._manualPlayerSelection = targetPlayer !== null;
 	}
 
 	// Sanitize art URL to prevent invalid URLs from breaking image loading

@@ -17,6 +17,18 @@ Rectangle {
     color: Looks.colors.bgPanelBody
 
     readonly property var activePlayer: MprisController.activePlayer
+    readonly property string effectiveArtUrl: MprisController.isYtMusicActive ? YtMusic.currentThumbnail : (activePlayer?.trackArtUrl ?? "")
+    readonly property string effectiveTitle: MprisController.isYtMusicActive ? YtMusic.currentTitle : (activePlayer?.trackTitle ?? "")
+    readonly property string effectiveArtist: MprisController.isYtMusicActive ? YtMusic.currentArtist : (activePlayer?.trackArtist ?? "")
+
+    MediaArtworkResolver {
+        id: artworkResolver
+        sourceUrl: root.effectiveArtUrl
+        title: root.effectiveTitle
+        artist: root.effectiveArtist
+        album: root.activePlayer?.trackAlbum ?? ""
+        cacheDirectory: Directories.coverArt
+    }
 
     // Volume feedback overlay
     Rectangle {
@@ -94,15 +106,16 @@ Rectangle {
             StyledImage {
                 id: artImage
                 anchors.fill: parent
-                source: MprisController.activeTrack?.artUrl || ""
+                source: artworkResolver.displaySource
                 fillMode: Image.PreserveAspectCrop
+                cache: false
             }
 
             FluentIcon {
                 anchors.centerIn: parent
                 icon: "music-note-2"
                 implicitSize: 32
-                visible: !artImage.source || artImage.status !== Image.Ready
+                visible: !artworkResolver.ready || artImage.status !== Image.Ready
             }
         }
 
@@ -179,17 +192,19 @@ Rectangle {
 
                 MediaBtn {
                     iconName: "previous"
-                    onClicked: root.activePlayer?.previous()
+                    enabled: MprisController.canGoPrevious
+                    onClicked: MprisController.previous()
                 }
                 MediaBtn {
                     iconName: root.activePlayer?.isPlaying ? "pause" : "play"
                     size: 36
                     iconSize: 18
-                    onClicked: root.activePlayer?.togglePlaying()
+                    onClicked: MprisController.togglePlaying()
                 }
                 MediaBtn {
                     iconName: "next"
-                    onClicked: root.activePlayer?.next()
+                    enabled: MprisController.canGoNext
+                    onClicked: MprisController.next()
                 }
             }
         }

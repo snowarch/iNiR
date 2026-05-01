@@ -130,39 +130,179 @@ Item {
         Item {
             anchors.fill: parent
 
-            StyledRectangularShadow {
-                target: calendarSurface
-                visible: !bg.inirEverywhere && !bg.auroraEverywhere && !bg.angelEverywhere
-                blur: 0.35 * Appearance.sizes.elevationMargin
-            }
-
-            Rectangle {
-                id: calendarSurface
+            ColumnLayout {
                 anchors.fill: parent
                 anchors.margins: 8
-                radius: bg.angelEverywhere ? Appearance.angel.roundingNormal
-                    : bg.inirEverywhere ? Appearance.inir.roundingNormal
-                    : Appearance.rounding.normal
-                color: bg.angelEverywhere ? Appearance.angel.colGlassCard
-                    : bg.inirEverywhere ? Appearance.inir.colLayer1
-                    : bg.colDarkSurface
-                border.width: bg.angelEverywhere ? Appearance.angel.cardBorderWidth : 1
-                border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.22)
-                    : bg.inirEverywhere ? Appearance.inir.colBorder
-                    : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.78)
-                    : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.72)
-                clip: true
+                spacing: Appearance.sizes.spacingSmall
 
-                CalendarWidget {
-                    anchors.fill: parent
-                    anchors.margins: 6
-                    onDayWithEventsClicked: (date) => {
-                        const eventsIdx = root.sections.findIndex(s => s.id === "events")
-                        if (eventsIdx !== -1) root.activeSection = eventsIdx
+                // Calendar grid card
+                Item {
+                    Layout.fillWidth: true
+                    implicitHeight: calendarSurface.implicitHeight
+
+                    StyledRectangularShadow {
+                        target: calendarSurface
+                        visible: !bg.inirEverywhere && !bg.auroraEverywhere && !bg.angelEverywhere
+                        blur: 0.35 * Appearance.sizes.elevationMargin
                     }
-                    onOpenEventsDialog: (editEvent) => {
-                        const eventsIdx = root.sections.findIndex(s => s.id === "events")
-                        if (eventsIdx !== -1) root.activeSection = eventsIdx
+
+                    Rectangle {
+                        id: calendarSurface
+                        anchors.fill: parent
+                        implicitHeight: calWidget.implicitHeight + 12
+                        radius: bg.angelEverywhere ? Appearance.angel.roundingNormal
+                            : bg.inirEverywhere ? Appearance.inir.roundingNormal
+                            : Appearance.rounding.normal
+                        color: bg.angelEverywhere ? Appearance.angel.colGlassCard
+                            : bg.inirEverywhere ? Appearance.inir.colLayer1
+                            : bg.colDarkSurface
+                        border.width: bg.angelEverywhere ? Appearance.angel.cardBorderWidth : 1
+                        border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.22)
+                            : bg.inirEverywhere ? Appearance.inir.colBorder
+                            : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.78)
+                            : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.72)
+                        clip: true
+
+                        CalendarWidget {
+                            id: calWidget
+                            anchors.fill: parent
+                            anchors.margins: 6
+                            onDayWithEventsClicked: (date) => {
+                                const eventsIdx = root.sections.findIndex(s => s.id === "events")
+                                if (eventsIdx !== -1) root.activeSection = eventsIdx
+                            }
+                            onOpenEventsDialog: (editEvent) => {
+                                const eventsIdx = root.sections.findIndex(s => s.id === "events")
+                                if (eventsIdx !== -1) root.activeSection = eventsIdx
+                            }
+                        }
+                    }
+                }
+
+                // Upcoming events below the calendar
+                Item {
+                    id: upcomingArea
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+
+                    readonly property color _colText: bg.inirEverywhere ? Appearance.inir.colText
+                        : bg.angelEverywhere ? Appearance.angel.colText
+                        : Appearance.colors.colOnLayer1
+                    readonly property color _colSub: bg.inirEverywhere ? Appearance.inir.colTextSecondary
+                        : bg.angelEverywhere ? Appearance.angel.colTextSecondary
+                        : Appearance.colors.colSubtext
+                    readonly property color _colPrimary: bg.inirEverywhere ? Appearance.inir.colPrimary
+                        : bg.angelEverywhere ? Appearance.angel.colPrimary
+                        : Appearance.colors.colPrimary
+
+                    // Merged upcoming events (next 14 days)
+                    property int _eventsTrigger: 0
+                    Connections {
+                        target: Events
+                        function onEventAdded(event) { upcomingArea._eventsTrigger++ }
+                        function onEventRemoved(id) { upcomingArea._eventsTrigger++ }
+                        function onEventUpdated(event) { upcomingArea._eventsTrigger++ }
+                    }
+                    property int _externalTrigger: 0
+                    Connections {
+                        target: CalendarSync
+                        function onEventsUpdated() { upcomingArea._externalTrigger++ }
+                    }
+                    readonly property var upcomingEvents: {
+                        const _t = _eventsTrigger
+                        const _t2 = _externalTrigger
+                        const now = new Date()
+                        const local = Events.getUpcomingEvents(14).map(e => Object.assign({}, e, { _source: "local" }))
+                        const startDay = new Date(now); startDay.setHours(0,0,0,0)
+                        const ext = []
+                        for (let i = 0; i < 14; i++) {
+                            const d = new Date(startDay); d.setDate(d.getDate() + i)
+                            const dayEvts = CalendarSync.getEventsForDate(d) || []
+                            for (const e of dayEvts) {
+                                const evtTime = new Date(e.startDate || e.dateTime)
+                                if (evtTime >= now || (e.allDay && evtTime >= startDay))
+                                    ext.push(Object.assign({}, e, { _source: "external", dateTime: e.startDate || e.dateTime, category: "general", priority: "normal" }))
+                            }
+                        }
+                        const all = local.concat(ext)
+                        all.sort((a,b) => new Date(a.dateTime || a.startDate) - new Date(b.dateTime || b.startDate))
+                        return all
+                    }
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        spacing: 0
+
+                        // "Upcoming" header
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.bottomMargin: Appearance.sizes.spacingSmall
+                            spacing: 6
+
+                            MaterialSymbol {
+                                text: "event_upcoming"
+                                iconSize: 16
+                                fill: 1
+                                color: upcomingArea._colPrimary
+                            }
+                            StyledText {
+                                Layout.fillWidth: true
+                                text: Translation.tr("Upcoming")
+                                font.pixelSize: Appearance.font.pixelSize.small
+                                font.weight: Font.Medium
+                                color: upcomingArea._colText
+                            }
+                        }
+
+                        // Event list or empty hint
+                        Flickable {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            contentHeight: upcomingCol.implicitHeight
+                            clip: true
+                            boundsBehavior: Flickable.StopAtBounds
+                            ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+
+                            ColumnLayout {
+                                id: upcomingCol
+                                width: parent.width
+                                spacing: 4
+
+                                Repeater {
+                                    model: upcomingArea.upcomingEvents.slice(0, 8)
+                                    delegate: EventCard {
+                                        required property var modelData
+                                        Layout.fillWidth: true
+                                        event: modelData
+                                        isExternal: (modelData?._source ?? "local") === "external"
+                                        onEditClicked: (evt) => {
+                                            if (!isExternal) {
+                                                root.eventsDialogEditEvent = evt
+                                                root.showEventsDialog = true
+                                            }
+                                        }
+                                        onRemoveClicked: {
+                                            if (!isExternal) Events.removeEvent(modelData.id)
+                                        }
+                                    }
+                                }
+
+                                // Empty state
+                                Item {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 60
+                                    visible: upcomingArea.upcomingEvents.length === 0
+
+                                    StyledText {
+                                        anchors.centerIn: parent
+                                        text: Translation.tr("No upcoming events")
+                                        font.pixelSize: Appearance.font.pixelSize.smaller
+                                        color: upcomingArea._colSub
+                                        opacity: 0.7
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -1150,7 +1290,7 @@ Item {
                 ColumnLayout {
                     id: controlsColumn
                     width: controlsFlickable.width - ((controlsVScroll.visible ? controlsVScroll.width : 0) + 6)
-                    spacing: Appearance.sizes.spacingSmall
+                    spacing: Appearance.sizes.spacingMedium
 
                     // Section header
                     SectionHeader {
@@ -1181,7 +1321,8 @@ Item {
                             required property int index
                             
                             Layout.fillWidth: true
-                            spacing: 4
+                            Layout.topMargin: sectionDelegate.index > 0 ? Appearance.sizes.spacingSmall : 0
+                            spacing: Appearance.sizes.spacingSmall
                             
                             // Move buttons (visible in edit mode)
                             RowLayout {
@@ -1250,7 +1391,7 @@ Item {
                                 active: sectionDelegate.modelData === "toggles"
                                 visible: active
                                 sourceComponent: ColumnLayout {
-                                    spacing: 4
+                                    spacing: Appearance.sizes.spacingSmall
                                     
                                     // ControlsCard
                                     Item {
@@ -1318,7 +1459,7 @@ Item {
                                 active: sectionDelegate.modelData === "devices"
                                 visible: active
                                 sourceComponent: ColumnLayout {
-                                    spacing: 6
+                                    spacing: Appearance.sizes.spacingSmall
                                     SectionDivider { text: Translation.tr("Devices"); visible: !root.layoutEditMode }
 
                                     GridLayout {
@@ -1340,7 +1481,7 @@ Item {
                                 active: sectionDelegate.modelData === "media"
                                 visible: active
                                 sourceComponent: ColumnLayout {
-                                    spacing: 8
+                                    spacing: Appearance.sizes.spacingSmall
                                     SectionDivider { text: Translation.tr("Media"); visible: !root.layoutEditMode }
 
                                     CompactMediaPlayer {

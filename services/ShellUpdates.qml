@@ -51,6 +51,16 @@ Singleton {
     property string updateStepMessage: "" // Human-readable step label
     property string _lastWatchdogStatus: "" // Staleness detection for watchdog
 
+    function clearUpdateProgressUi(): void {
+        updateProgressPoller.running = false
+        updateWatchdog.stop()
+        root.isUpdating = false
+        root.updateStep = 0
+        root.updateTotalSteps = 0
+        root.updateStepMessage = ""
+        root._lastWatchdogStatus = ""
+    }
+
     // Notification tracking (prevent spam)
     property bool initialAvailabilityChecked: false
     property bool initialUpdateCheckDone: false
@@ -197,19 +207,50 @@ Singleton {
         root._lastWatchdogStatus = ""
         root.overlayOpen = false
         Config.setNestedValue("shellUpdates.dismissedCommit", "")
-        // Detached bash wrapper: writes status markers + logs all output.
-        // On success, ./setup update restarts the shell — new instance clears hasUpdate naturally.
-        // On failure, status file lets the watchdog detect it and restore the update indicator.
+
         const logPath = Directories.updateLogPath
         const statusPath = Directories.updateStatusPath
         const repoDir = root.repoPath
-        Quickshell.execDetached(["/usr/bin/bash", "-c",
-            "echo 'updating' > '" + statusPath + "'; " +
-            "cd '" + repoDir + "' && ./setup -y -q update > '" + logPath + "' 2>&1; " +
-            "rc=$?; " +
+        const useTerminal = Config.options?.shellUpdates?.openTerminalOnUpdate ?? true
+
+        // Bash one-liner: writes the initial 'updating' marker, runs setup, captures
+        // exit code. Terminal mode pipes through tee so both the user and the log
+        // file see everything; detached mode redirects to the log file only.
+        // Terminal always stays open with a summary so people can read what happened.
+        const teeCmd = useTerminal
+            ? "./setup -y update 2>&1 | tee '" + logPath + "'; rc=${PIPESTATUS[0]}"
+            : "./setup -y -q update > '" + logPath + "' 2>&1; rc=$?"
+        const termTail =
+            "echo; " +
+            "if [ $rc -eq 0 ]; then " +
+                "echo 'All good — iNiR updated successfully. The shell will restart on its own.'; " +
+                "echo 'You can close this window whenever you want.'; " +
+            "else " +
+                "echo \"failed:$rc\" > '" + statusPath + "'; " +
+                "echo \"Something went wrong (exit $rc). Check the output above for details.\"; " +
+                "echo 'You can close this window whenever you want.'; " +
+            "fi; " +
+            "read -r _"
+        const detachedTail =
             "if [ $rc -ne 0 ]; then echo \"failed:$rc\" > '" + statusPath + "'; fi"
-        ])
-        print("[ShellUpdates] Update launched (detached) from: " + repoDir)
+        const tail = useTerminal ? termTail : detachedTail
+        const bashCmd = "echo 'updating' > '" + statusPath + "'; " +
+            "cd '" + repoDir + "' && " + teeCmd + "; " + tail
+
+        if (useTerminal) {
+            // First token of the configured terminal command (e.g. "kitty -1" -> "kitty").
+            // Most supported terminals (foot, kitty, ghostty, alacritty, wezterm, konsole)
+            // accept '-e' for "execute this command". WezTerm accepts it via its compat layer.
+            const termSlot = (AppLauncher && typeof AppLauncher.commandFor === "function")
+                ? AppLauncher.commandFor("terminal") : ""
+            const termBin = (termSlot.length > 0 ? termSlot : "kitty").trim().split(/\s+/)[0]
+            Quickshell.execDetached([termBin, "-e", "/usr/bin/bash", "-c", bashCmd])
+            print("[ShellUpdates] Update launched in terminal (" + termBin + ") from: " + repoDir)
+        } else {
+            // Detached background — same path as before the terminal toggle existed.
+            Quickshell.execDetached(["/usr/bin/bash", "-c", bashCmd])
+            print("[ShellUpdates] Update launched (detached) from: " + repoDir)
+        }
         print("[ShellUpdates] Log: " + logPath + " | Status: " + statusPath)
         // Start watchdog — if shell hasn't restarted after timeout, check status file
         updateWatchdog.restart()
@@ -265,6 +306,115 @@ Singleton {
             print("[ShellUpdates] Loading repo path from version.json...")
             loadRepoPathProc.running = true
         }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Resume update display after shell restart
+    // ─────────────────────────────────────────────────────────────────────────
+    // `setup update` triggers `systemctl --user restart inir.service` as its
+    // last step, killing the shell mid-flow. The new shell instance must
+    // detect the prior state from the status file and either clean up
+    // (if the final step was reached) or resume polling so the bar indicator
+    // and overlay don't go silent while the update keeps running underneath.
+    Timer {
+        id: resumeUpdateCheck
+        interval: 1000  // 1s — get the indicator back up fast
+        repeat: false
+        running: true
+        onTriggered: updateResumeReader.running = true
+    }
+
+    Process {
+        id: updateResumeReader
+        running: false
+        command: ["/usr/bin/bash", "-c", `
+            status_file="$1"
+            if [ ! -f "$status_file" ]; then exit 1; fi
+
+            now=$(/usr/bin/date +%s)
+            if read -r uptime _ < /proc/uptime; then
+                uptime_s=$(/usr/bin/printf '%s\n' "$uptime" | /usr/bin/cut -d. -f1)
+            else
+                uptime_s=0
+            fi
+            boot_epoch=$((now - uptime_s))
+            mtime=$(/usr/bin/stat -c %Y "$status_file" 2>/dev/null || echo 0)
+
+            if [ "$mtime" -lt "$boot_epoch" ]; then
+                echo "stale"
+            else
+                /usr/bin/cat "$status_file"
+            fi
+        `, "_", Directories.updateStatusPath]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const status = (text ?? "").trim()
+                if (status.length === 0) return
+
+                if (status === "stale") {
+                    print("[ShellUpdates] Clearing stale update-status from previous boot")
+                    clearStatusFileProc.running = true
+                    return
+                }
+
+                if (status === "success") {
+                    // Previous update finished cleanly — clear stale marker
+                    clearStatusFileProc.running = true
+                    return
+                }
+
+                if (status.startsWith("failed")) {
+                    const code = status.split(":")[1] || "unknown"
+                    root.lastError = "Last update failed (exit " + code + "). Check " + Directories.updateLogPath + " for details."
+                    print("[ShellUpdates] Detected failed update from previous shell: exit " + code)
+                    clearStatusFileProc.running = true
+                    return
+                }
+
+                if (status.startsWith("progress:")) {
+                    const parts = status.split(":")
+                    const step = parts.length > 1 ? (parseInt(parts[1]) || 0) : 0
+                    const total = parts.length > 2 ? (parseInt(parts[2]) || 0) : 0
+                    const msg = parts.length > 3 ? parts.slice(3).join(":") : ""
+
+                    // Final step reached — the restart we just survived was
+                    // the last action. Mark complete and clear.
+                    if (total > 0 && step >= total) {
+                        print("[ShellUpdates] Resume detected final step (" + step + "/" + total + "), assuming complete: " + msg)
+                        clearStatusFileProc.running = true
+                        return
+                    }
+
+                    // Mid-flight update — restore visible state and keep polling
+                    root.updateStep = step
+                    root.updateTotalSteps = total
+                    root.updateStepMessage = msg
+                    root._lastWatchdogStatus = status
+                    root.isUpdating = true
+                    updateProgressPoller.restart()
+                    updateWatchdog.restart()
+                    print("[ShellUpdates] Resuming in-flight update display: " + status)
+                    return
+                }
+
+                if (status === "updating") {
+                    // Initial marker, no granular progress yet
+                    root.isUpdating = true
+                    updateProgressPoller.restart()
+                    updateWatchdog.restart()
+                    print("[ShellUpdates] Resuming update display (no granular progress yet)")
+                    return
+                }
+
+                print("[ShellUpdates] Unknown status file content on resume: '" + status + "'")
+            }
+        }
+    }
+
+    Process {
+        id: clearStatusFileProc
+        running: false
+        command: ["rm", "-f", Directories.updateStatusPath]
     }
 
     // Load repo path from version.json (stored in shellConfig dir, NOT in quickshell config dir)
@@ -982,22 +1132,16 @@ Singleton {
                     // Update process exited with error
                     const parts = status.split(":")
                     const code = parts.length > 1 ? parts[1] : "unknown"
-                    updateProgressPoller.running = false
-                    root.isUpdating = false
-                    root.updateStep = 0
-                    root.updateTotalSteps = 0
-                    root.updateStepMessage = ""
+                    root.clearUpdateProgressUi()
                     root.lastError = "Update failed (exit " + code + "). Check " + Directories.updateLogPath + " for details."
+                    clearStatusFileProc.running = true
                     print("[ShellUpdates] Update FAILED with exit code " + code)
                 } else if (status.startsWith("progress:")) {
                     if (status === root._lastWatchdogStatus) {
                         // Same progress marker seen twice — update is stuck
-                        updateProgressPoller.running = false
-                        root.isUpdating = false
-                        root.updateStep = 0
-                        root.updateTotalSteps = 0
-                        root.updateStepMessage = ""
+                        root.clearUpdateProgressUi()
                         root.lastError = "Update stuck at: " + status.split(":").slice(3).join(":") + ". Check " + Directories.updateLogPath + " for details."
+                        clearStatusFileProc.running = true
                         print("[ShellUpdates] Update stuck — same progress seen twice: " + status)
                     } else {
                         // Different progress marker — still moving, extend watchdog
@@ -1007,29 +1151,20 @@ Singleton {
                     }
                 } else if (status === "updating") {
                     // Still running after 120s — likely stuck
-                    updateProgressPoller.running = false
-                    root.isUpdating = false
-                    root.updateStep = 0
-                    root.updateTotalSteps = 0
-                    root.updateStepMessage = ""
+                    root.clearUpdateProgressUi()
                     root.lastError = "Update appears stuck. Check " + Directories.updateLogPath + " for details."
+                    clearStatusFileProc.running = true
                     print("[ShellUpdates] Update appears stuck (still 'updating' after watchdog)")
                 } else if (status === "success") {
                     // Update completed successfully but shell wasn't restarted
-                    updateProgressPoller.running = false
-                    root.isUpdating = false
-                    root.updateStep = 0
-                    root.updateTotalSteps = 0
-                    root.updateStepMessage = ""
+                    root.clearUpdateProgressUi()
+                    clearStatusFileProc.running = true
                     print("[ShellUpdates] Update completed successfully (no restart)")
                 } else {
                     // Empty or unexpected — assume failed
-                    updateProgressPoller.running = false
-                    root.isUpdating = false
-                    root.updateStep = 0
-                    root.updateTotalSteps = 0
-                    root.updateStepMessage = ""
+                    root.clearUpdateProgressUi()
                     root.lastError = "Update outcome unknown. Check " + Directories.updateLogPath + " for details."
+                    clearStatusFileProc.running = true
                     print("[ShellUpdates] Update status unclear: '" + status + "'")
                 }
             }
@@ -1037,11 +1172,7 @@ Singleton {
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0 && root.isUpdating) {
                 // Status file doesn't exist — update process may not have started
-                updateProgressPoller.running = false
-                root.isUpdating = false
-                root.updateStep = 0
-                root.updateTotalSteps = 0
-                root.updateStepMessage = ""
+                root.clearUpdateProgressUi()
                 root.lastError = "Update may not have started. Check " + Directories.updateLogPath + " for details."
                 print("[ShellUpdates] Status file not found (cat exited " + exitCode + ")")
             }

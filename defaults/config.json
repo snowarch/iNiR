@@ -584,6 +584,7 @@
   },
   "settingsUi": {
     "overlayMode": true,
+    "easyMode": false,
     "overlayAppearance": {
       "scrimDim": 35,
       "backgroundOpacity": 1.0,
@@ -680,7 +681,8 @@
   },
   "osk": {
     "layout": "qwerty_full",
-    "pinnedOnStartup": false
+    "pinnedOnStartup": false,
+    "keepOnTop": false
   },
   "overlay": {
     "animationDurationMs": 120,
@@ -1041,7 +1043,16 @@
     "preset": "veryfast",
     "crf": 21,
     "vaapiFilter": "scale_vaapi=format=nv12:out_range=full",
-    "enableFallback": true
+    "enableFallback": true,
+    "discordCompress": {
+      "enabled": false,
+      "targetSizeMb": 10,
+      "safetyMarginMb": 0.5,
+      "onlyIfNeeded": true,
+      "audioBitrateKbps": 96,
+      "preset": "slow",
+      "maxDimension": 1280
+    }
   },
   "windows": {
     "centerTitle": true,
@@ -1082,6 +1093,20 @@
     "password": "inirhotspot",
     "band": "bg"
   },
+  "keyboardIndicators": {
+    "showPopup": true,
+    "showPanel": true,
+    "popup": {
+      "layout": true,
+      "caps": true,
+      "num": false
+    },
+    "panel": {
+      "layout": true,
+      "caps": true,
+      "num": false
+    }
+  },
   "reloadToasts": {
     "enable": true
   },
@@ -1119,7 +1144,8 @@
     "enabled": true,
     "checkIntervalMinutes": 360,
     "dismissedCommit": "",
-    "lastNotifiedCommit": ""
+    "lastNotifiedCommit": "",
+    "openTerminalOnUpdate": true
   },
   "updates": {
     "checkInterval": 120,
@@ -1207,7 +1233,6 @@
         "enableAnimatedBlur": false,
         "thumbnailPath": ""
       },
-      "hideWhenFullscreen": true,
       "parallax": {
         "enable": false,
         "axis": "horizontal",

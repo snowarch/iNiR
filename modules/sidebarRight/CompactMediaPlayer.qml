@@ -104,6 +104,7 @@ Item {
             source: playerBase.displayedArtFilePath
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
+            cache: false
             visible: playerBase.displayedArtFilePath !== ""
             opacity: root.artBgOpacity
 
@@ -377,6 +378,7 @@ Item {
 
                 TransportBtn {
                     icon: "skip_previous"
+                    enabled: playerBase.effectiveCanGoPrevious
                     iconFill: true
                     onClicked: playerBase.previous()
                     tooltipText: Translation.tr("Previous")
@@ -442,6 +444,7 @@ Item {
 
                 TransportBtn {
                     icon: "skip_next"
+                    enabled: playerBase.effectiveCanGoNext
                     iconFill: true
                     onClicked: playerBase.next()
                     tooltipText: Translation.tr("Next")
@@ -474,7 +477,6 @@ Item {
         id: playerSwitcherMenu
 
         model: (MprisController.displayPlayers ?? []).map((player, index) => ({
-            type: "item",
             text: player?.identity ?? "",
             iconName: "",
             checkable: true,
@@ -522,6 +524,7 @@ Item {
 
         signal clicked()
 
+        enabled: true
         implicitWidth: small ? 30 : 34
         implicitHeight: small ? 30 : 34
 
@@ -555,7 +558,7 @@ Item {
                 color: tBtn.toggled
                     ? (root.inirStyle ? Appearance.inir.colOnSecondaryContainer
                         : root.accentColor)
-                    : root.colText
+                    : (tBtn.enabled ? root.colText : root.colTextSecondary)
 
                 Behavior on color {
                     enabled: Appearance.animationsEnabled
@@ -572,8 +575,9 @@ Item {
             MouseArea {
                 id: tBtnMA
                 anchors.fill: parent
+                enabled: tBtn.enabled
                 hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
+                cursorShape: tBtn.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                 onClicked: tBtn.clicked()
             }
 

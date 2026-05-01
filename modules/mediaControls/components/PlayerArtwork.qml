@@ -46,7 +46,7 @@ Rectangle {
         anchors.fill: parent
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
-        cache: true
+        cache: false
         smooth: true
         mipmap: true
         
@@ -84,6 +84,10 @@ Rectangle {
     // Watch for art source changes
     onArtSourceChanged: {
         if (!artSource) {
+            blurInTimer.stop()
+            blurOutTimer.stop()
+            pendingSource = ""
+            transitioning = false
             coverArt.source = ""
             return
         }

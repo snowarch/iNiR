@@ -44,7 +44,18 @@ Item {
         { pageIndex: 1, pageName: "General", section: "Battery", label: "Full battery notification", targetLabel: "Full battery notification", keywords: ["battery", "full", "charged", "notification"] },
         // Time & Language
         { pageIndex: 1, pageName: "General", section: "Time & Language", label: "Show seconds", targetLabel: "Show seconds", keywords: ["time", "clock", "seconds", "format"] },
+        { pageIndex: 1, pageName: "General", section: "Time & Language", label: "Long date format", targetLabel: "Long date format", keywords: ["date", "format", "long", "weekday", "month", "clock", "taskbar"] },
+        { pageIndex: 1, pageName: "General", section: "Time & Language", label: "Short date format", targetLabel: "Short date format", keywords: ["date", "format", "short", "compact", "clock", "calendar"] },
         { pageIndex: 1, pageName: "General", section: "Time & Language", label: "Language", targetLabel: "Language", keywords: ["language", "locale", "translation", "idioma", "español", "english"] },
+        // Keyboard indicators
+        { pageIndex: 1, pageName: "General", section: "Keyboard indicators", label: "Keyboard popups", targetLabel: "Keyboard popups", keywords: ["keyboard", "caps", "num", "layout", "language", "popup", "indicator"] },
+        { pageIndex: 1, pageName: "General", section: "Keyboard indicators", label: "Layout popup", targetLabel: "Layout popup", keywords: ["keyboard", "layout", "language", "popup", "indicator", "show", "hide"] },
+        { pageIndex: 1, pageName: "General", section: "Keyboard indicators", label: "Caps Lock popup", targetLabel: "Caps Lock popup", keywords: ["keyboard", "caps", "capslock", "lock", "popup", "indicator", "show", "hide"] },
+        { pageIndex: 1, pageName: "General", section: "Keyboard indicators", label: "Num Lock popup", targetLabel: "Num Lock popup", keywords: ["keyboard", "num", "numlock", "lock", "popup", "indicator", "show", "hide"] },
+        { pageIndex: 1, pageName: "General", section: "Keyboard indicators", label: "Keyboard panel indicators", targetLabel: "Keyboard panel indicators", keywords: ["keyboard", "caps", "num", "layout", "language", "bar", "taskbar", "indicator"] },
+        { pageIndex: 1, pageName: "General", section: "Keyboard indicators", label: "Layout indicator", targetLabel: "Layout indicator", keywords: ["keyboard", "layout", "language", "indicator", "bar", "taskbar", "show", "hide"] },
+        { pageIndex: 1, pageName: "General", section: "Keyboard indicators", label: "Caps Lock indicator", targetLabel: "Caps Lock indicator", keywords: ["keyboard", "caps", "capslock", "lock", "indicator", "bar", "taskbar", "show", "hide"] },
+        { pageIndex: 1, pageName: "General", section: "Keyboard indicators", label: "Num Lock indicator", targetLabel: "Num Lock indicator", keywords: ["keyboard", "num", "numlock", "lock", "indicator", "bar", "taskbar", "show", "hide"] },
         // Window Management
         { pageIndex: 1, pageName: "General", section: "Window Management", label: "Confirm before closing", targetLabel: "Confirm before closing", keywords: ["close", "confirm", "window", "dialog", "super+q"] },
         // Sounds

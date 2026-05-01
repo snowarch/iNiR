@@ -37,6 +37,11 @@ MouseArea {
     readonly property real blurAmount: 0.8
     readonly property real blurMax: Config.options?.lock?.blur?.radius ?? 64
 
+    function safeLockNotificationImage(source): string {
+        const value = String(source ?? "")
+        return value.startsWith("image://qsimage/") ? "" : value
+    }
+
     readonly property color smokeColor: ColorUtils.transparentize(Looks.colors.bg0Opaque, 0.5)
 
     readonly property MprisPlayer activePlayer: MprisController.activePlayer
@@ -252,6 +257,18 @@ MouseArea {
                     border.width: 1
 
                     readonly property MprisPlayer player: root.activePlayer
+                    readonly property string effectiveArtUrl: MprisController.isYtMusicActive ? YtMusic.currentThumbnail : (player?.trackArtUrl ?? "")
+                    readonly property string effectiveTitle: MprisController.isYtMusicActive ? YtMusic.currentTitle : (player?.trackTitle ?? "")
+                    readonly property string effectiveArtist: MprisController.isYtMusicActive ? YtMusic.currentArtist : (player?.trackArtist ?? "")
+
+                    MediaArtworkResolver {
+                        id: artworkResolver
+                        sourceUrl: mediaWidget.effectiveArtUrl
+                        title: mediaWidget.effectiveTitle
+                        artist: mediaWidget.effectiveArtist
+                        album: mediaWidget.player?.trackAlbum ?? ""
+                        cacheDirectory: Directories.coverArt
+                    }
 
                     RowLayout {
                         id: mediaRow
@@ -268,11 +285,13 @@ MouseArea {
                             clip: true
 
                             Image {
+                                id: mediaArtImage
                                 anchors.fill: parent
-                                source: mediaWidget.player?.trackArtUrl ?? ""
+                                source: artworkResolver.displaySource
                                 fillMode: Image.PreserveAspectCrop
                                 asynchronous: true
-                                visible: status === Image.Ready
+                                cache: false
+                                visible: artworkResolver.ready && status === Image.Ready
                             }
 
                             FluentIcon {
@@ -280,7 +299,7 @@ MouseArea {
                                 icon: "music-note-2"
                                 implicitSize: 24
                                 color: Looks.colors.subfg
-                                visible: !(mediaWidget.player?.trackArtUrl?.length > 0)
+                                visible: !artworkResolver.ready || mediaArtImage.status !== Image.Ready
                             }
                         }
 
@@ -316,18 +335,20 @@ MouseArea {
 
                             WaffleLockMediaButton {
                                 icon: "previous"
-                                onClicked: mediaWidget.player?.previous()
+                                enabled: MprisController.canGoPrevious
+                                onClicked: MprisController.previous()
                             }
 
                             WaffleLockMediaButton {
                                 icon: mediaWidget.player?.isPlaying ? "pause" : "play"
                                 size: 40
-                                onClicked: mediaWidget.player?.togglePlaying()
+                                onClicked: MprisController.togglePlaying()
                             }
 
                             WaffleLockMediaButton {
                                 icon: "next"
-                                onClicked: mediaWidget.player?.next()
+                                enabled: MprisController.canGoNext
+                                onClicked: MprisController.next()
                             }
                         }
                     }
@@ -671,7 +692,7 @@ MouseArea {
                                                 implicitSize: 28
                                                 asynchronous: true
                                                 source: {
-                                                    const img = safeGroupDelegate.latestNotif?.image ?? ""
+                                                    const img = root.safeLockNotificationImage(safeGroupDelegate.latestNotif?.image)
                                                     const icon = safeGroupDelegate.latestNotif?.appIcon ?? ""
                                                     if (img && img !== "") return img
                                                     if (icon && icon !== "") return Quickshell.iconPath(icon, "image-missing")

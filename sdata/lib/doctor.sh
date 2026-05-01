@@ -14,6 +14,7 @@ XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
 XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+XDG_BIN_HOME="${XDG_BIN_HOME:-$HOME/.local/bin}"
 
 doctor_pass() {
     tui_success "$1"
@@ -28,6 +29,24 @@ doctor_fail() {
 doctor_fix() {
     tui_warn "Fixed: $1"
     ((doctor_fixed++)) || true
+}
+
+doctor_detect_compositor_service() {
+    if ! command -v systemctl >/dev/null 2>&1; then
+        return 1
+    fi
+
+    if systemctl --user cat niri.service &>/dev/null; then
+        printf 'niri.service'
+        return 0
+    fi
+
+    if systemctl --user cat 'wayland-wm@Hyprland.service' &>/dev/null; then
+        printf 'wayland-wm@Hyprland.service'
+        return 0
+    fi
+
+    return 1
 }
 
 ###############################################################################
@@ -262,6 +281,133 @@ check_script_permissions() {
     else
         doctor_pass "Script permissions OK"
     fi
+}
+
+check_repo_checkout_state() {
+    local installed_strategy
+    installed_strategy="$(get_installed_update_strategy)"
+
+    if [[ "$installed_strategy" == "package-manager" ]]; then
+        doctor_pass "Repo checkout state not required for package-managed installs"
+        return 0
+    fi
+
+    if [[ ! -d "${REPO_ROOT}/.git" ]]; then
+        doctor_fail "Repo checkout is missing git metadata"
+        echo -e "    ${STY_FAINT}Run setup from a real iNiR checkout, not a random copy${STY_RST}"
+        return 1
+    fi
+
+    local branch tracked_branch update_rc=0
+    branch="$(git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")"
+    tracked_branch="$(get_update_tracking_branch 2>/dev/null || echo "main")"
+
+    if [[ "$branch" == "HEAD" ]]; then
+        doctor_fail "Repo checkout is detached HEAD"
+        echo -e "    ${STY_FAINT}setup update cannot pull automatically until you check out a branch${STY_RST}"
+        return 1
+    fi
+
+    if declare -F check_remote_updates >/dev/null 2>&1; then
+        check_remote_updates || update_rc=$?
+        case "$update_rc" in
+            0)
+                doctor_pass "Repo checkout behind origin/${tracked_branch} (update available)"
+                echo -e "    ${STY_FAINT}Run: ./setup update${STY_RST}"
+                ;;
+            1)
+                doctor_pass "Repo checkout tracks origin/${tracked_branch}"
+                ;;
+            2)
+                doctor_pass "Repo remote check skipped"
+                ;;
+            3)
+                doctor_pass "Repo checkout has local commits ahead of origin/${tracked_branch}"
+                ;;
+            4)
+                doctor_fail "Repo checkout diverged from origin/${tracked_branch}"
+                echo -e "    ${STY_FAINT}If that rewrite was intentional, realign manually before updating${STY_RST}"
+                ;;
+        esac
+    else
+        doctor_pass "Repo remote check unavailable in this context"
+    fi
+
+    if [[ "$branch" != "main" && "$branch" != "master" ]]; then
+        tui_warn "Tracking non-release branch: ${branch}"
+    fi
+}
+
+check_launcher_health() {
+    local installed_strategy
+    installed_strategy="$(get_installed_update_strategy)"
+
+    local launcher_cmd expected_launcher repo_launcher runtime_launcher
+    launcher_cmd="$(command -v inir 2>/dev/null || true)"
+    expected_launcher="${XDG_BIN_HOME}/inir"
+    repo_launcher="${REPO_ROOT}/scripts/inir"
+    runtime_launcher="$(doctor_runtime_dir 2>/dev/null)/scripts/inir"
+
+    if [[ "$installed_strategy" == "package-manager" ]]; then
+        if [[ -n "$launcher_cmd" ]]; then
+            doctor_pass "Launcher available"
+        else
+            doctor_fail "inir launcher not found in PATH"
+            echo -e "    ${STY_FAINT}Run the package install flow again, or install the launcher manually${STY_RST}"
+        fi
+        return 0
+    fi
+
+    if [[ ! -f "$repo_launcher" ]]; then
+        if [[ -n "$launcher_cmd" || -x "$runtime_launcher" ]]; then
+            doctor_pass "Launcher available"
+        else
+            doctor_fail "Launcher missing"
+        fi
+        return 0
+    fi
+
+    if [[ ! -x "$expected_launcher" ]]; then
+        if declare -F sync_launcher_from_repo >/dev/null 2>&1; then
+            sync_launcher_from_repo >/dev/null 2>&1 || true
+        fi
+        if [[ -x "$expected_launcher" ]]; then
+            doctor_fix "Installed launcher to ${expected_launcher}"
+        else
+            doctor_fail "Launcher missing: ${expected_launcher}"
+            echo -e "    ${STY_FAINT}Run: ./setup install${STY_RST}"
+            return 1
+        fi
+    fi
+
+    if ! cmp -s "$repo_launcher" "$expected_launcher" 2>/dev/null; then
+        if declare -F sync_launcher_from_repo >/dev/null 2>&1; then
+            sync_launcher_from_repo >/dev/null 2>&1 || true
+        fi
+        if cmp -s "$repo_launcher" "$expected_launcher" 2>/dev/null; then
+            doctor_fix "Refreshed launcher from repo"
+        else
+            doctor_fail "Launcher content differs from repo"
+            echo -e "    ${STY_FAINT}Expected: ${expected_launcher}${STY_RST}"
+            return 1
+        fi
+    fi
+
+    if [[ -z "$launcher_cmd" ]]; then
+        doctor_fail "Launcher not in PATH"
+        echo -e "    ${STY_FAINT}Installed launcher exists at ${expected_launcher}${STY_RST}"
+        return 1
+    fi
+
+    local launcher_real
+    launcher_real="$(readlink -f "$launcher_cmd" 2>/dev/null || printf '%s' "$launcher_cmd")"
+    if ! cmp -s "$repo_launcher" "$launcher_real" 2>/dev/null; then
+        doctor_fail "PATH resolves an outdated launcher: ${launcher_cmd}"
+        echo -e "    ${STY_FAINT}Expected launcher content from ${repo_launcher}${STY_RST}"
+        return 1
+    fi
+
+    doctor_pass "Launcher current"
 }
 
 check_user_config() {
@@ -656,6 +802,82 @@ check_manifest() {
         fi
     else
         doctor_pass "File manifest OK"
+    fi
+}
+
+check_service_unit_health() {
+    if ! command -v systemctl >/dev/null 2>&1; then
+        doctor_pass "User service checks skipped (systemctl missing)"
+        return 0
+    fi
+
+    local installed_strategy service_path expected_target
+    installed_strategy="$(get_installed_update_strategy)"
+    service_path="${XDG_CONFIG_HOME}/systemd/user/inir.service"
+    expected_target="$(doctor_detect_compositor_service 2>/dev/null || true)"
+
+    if [[ ! -f "$service_path" ]]; then
+        if [[ "$installed_strategy" == "package-manager" ]]; then
+            doctor_pass "User service not installed"
+        else
+            doctor_fail "User inir.service missing"
+            echo -e "    ${STY_FAINT}Run: inir service install${STY_RST}"
+        fi
+        return 0
+    fi
+
+    if [[ "$installed_strategy" != "package-manager" ]] && declare -F sync_user_inir_service_from_repo_if_present >/dev/null 2>&1; then
+        if sync_user_inir_service_from_repo_if_present >/dev/null 2>&1; then
+            doctor_fix "Refreshed user inir.service from repo"
+        fi
+    fi
+
+    local kill_mode fragment_path
+    kill_mode="$(systemctl --user show -p KillMode inir.service 2>/dev/null | cut -d= -f2)"
+    fragment_path="$(systemctl --user show -p FragmentPath inir.service 2>/dev/null | cut -d= -f2)"
+
+    if [[ -n "$kill_mode" && "$kill_mode" != "process" ]]; then
+        doctor_fail "inir.service KillMode is '${kill_mode}'"
+        echo -e "    ${STY_FAINT}Run: inir service install${STY_RST}"
+    else
+        doctor_pass "User service file present"
+    fi
+
+    if [[ -n "$fragment_path" && "$fragment_path" != "$service_path" ]]; then
+        tui_warn "systemd is loading inir.service from ${fragment_path}"
+    fi
+
+    local has_expected_link=false
+    local stale_links=()
+    local wants_dir
+    for wants_dir in "${XDG_CONFIG_HOME}/systemd/user"/*.wants; do
+        [[ -d "$wants_dir" ]] || continue
+        [[ -e "$wants_dir/inir.service" || -L "$wants_dir/inir.service" ]] || continue
+        local target_name
+        target_name="$(basename "${wants_dir%.wants}")"
+        if [[ -n "$expected_target" && "$target_name" == "$expected_target" ]]; then
+            has_expected_link=true
+        else
+            stale_links+=("$target_name")
+        fi
+    done
+
+    if [[ -n "$expected_target" && "$has_expected_link" == false ]]; then
+        if [[ "$installed_strategy" != "package-manager" ]] && declare -F ensure_user_inir_service_enabled >/dev/null 2>&1 && ensure_user_inir_service_enabled >/dev/null 2>&1; then
+            doctor_fix "Enabled inir.service for ${expected_target}"
+        else
+            doctor_fail "inir.service not wired to ${expected_target}"
+            echo -e "    ${STY_FAINT}Run: inir service enable${STY_RST}"
+        fi
+    fi
+
+    if [[ ${#stale_links[@]} -gt 0 ]]; then
+        doctor_fail "Stale service links found: ${stale_links[*]}"
+        echo -e "    ${STY_FAINT}Run: inir service disable && inir service enable${STY_RST}"
+    fi
+
+    if [[ -z "$expected_target" ]]; then
+        tui_warn "No supported compositor service detected for enablement wiring"
     fi
 }
 
@@ -1234,7 +1456,8 @@ check_niri_config() {
 ###############################################################################
 
 run_doctor_with_fixes() {
-    local total_steps=19
+    local total_steps=22
+    local doctor_started_at=$SECONDS
     doctor_passed=0
     doctor_failed=0
     doctor_fixed=0
@@ -1263,55 +1486,64 @@ run_doctor_with_fixes() {
     tui_step 2 $total_steps "Checking fonts"
     check_fonts
     
-    tui_step 3 $total_steps "Checking critical files"
+    tui_step 3 $total_steps "Checking repo checkout"
+    check_repo_checkout_state
+
+    tui_step 4 $total_steps "Checking critical files"
     check_critical_files
     
-    tui_step 4 $total_steps "Checking script permissions"
+    tui_step 5 $total_steps "Checking script permissions"
     check_script_permissions
+
+    tui_step 6 $total_steps "Checking launcher"
+    check_launcher_health
     
-    tui_step 5 $total_steps "Checking user config"
+    tui_step 7 $total_steps "Checking user config"
     check_user_config
     
-    tui_step 6 $total_steps "Checking state directories"
+    tui_step 8 $total_steps "Checking state directories"
     check_state_directories
     
-    tui_step 7 $total_steps "Checking version tracking"
+    tui_step 9 $total_steps "Checking version tracking"
     check_version_tracking
     
-    tui_step 8 $total_steps "Checking file manifest"
+    tui_step 10 $total_steps "Checking file manifest"
     check_manifest
+
+    tui_step 11 $total_steps "Checking user service"
+    check_service_unit_health
     
-    tui_step 9 $total_steps "Checking Niri compositor"
+    tui_step 12 $total_steps "Checking Niri compositor"
     check_niri_running
     
-    tui_step 10 $total_steps "Checking Python packages"
+    tui_step 13 $total_steps "Checking Python packages"
     check_python_packages
     
-    tui_step 11 $total_steps "Checking Quickshell/Qt ABI"
+    tui_step 14 $total_steps "Checking Quickshell/Qt ABI"
     check_quickshell_abi
     
-    tui_step 12 $total_steps "Checking Quickshell"
+    tui_step 15 $total_steps "Checking Quickshell"
     check_quickshell_loads
     
-    tui_step 13 $total_steps "Checking theme colors"
+    tui_step 16 $total_steps "Checking theme colors"
     check_matugen_colors
     
-    tui_step 14 $total_steps "Checking Qt theming"
+    tui_step 17 $total_steps "Checking Qt theming"
     check_qt_theming
     
-    tui_step 15 $total_steps "Checking conflicting services"
+    tui_step 18 $total_steps "Checking conflicting services"
     check_conflicting_services
     
-    tui_step 16 $total_steps "Checking conflicting shells"
+    tui_step 19 $total_steps "Checking conflicting shells"
     check_conflicting_shells
     
-    tui_step 17 $total_steps "Checking wallpaper health"
+    tui_step 20 $total_steps "Checking wallpaper health"
     check_wallpaper_health
     
-    tui_step 18 $total_steps "Checking environment variables"
+    tui_step 21 $total_steps "Checking environment variables"
     check_environment_vars
     
-    tui_step 19 $total_steps "Checking Niri config"
+    tui_step 22 $total_steps "Checking Niri config"
     check_niri_config
     
     echo ""
@@ -1321,16 +1553,21 @@ run_doctor_with_fixes() {
     # Summary
     tui_title "Summary"
     echo ""
-    tui_status_line "Passed:" "$doctor_passed" "ok"
-    tui_status_line "Fixed:" "$doctor_fixed" "warn"
-    tui_status_line "Failed:" "$doctor_failed" "error"
+    tui_badge_row \
+        "Passed" "$doctor_passed" "success" \
+        "Fixed" "$doctor_fixed" "warning" \
+        "Failed" "$doctor_failed" "error" \
+        "Time" "$(tui_elapsed "$doctor_started_at")" "muted"
     
     echo ""
     if [[ $doctor_failed -gt 0 ]]; then
         tui_error "Some issues need manual attention."
+        tui_info "Start with: ./setup status"
+        tui_info "Then read logs: inir logs"
         return 1
     elif [[ $doctor_fixed -gt 0 ]]; then
         tui_success "All issues fixed automatically."
+        tui_info "Restart the shell to make sure the fresh state actually sticks: inir restart"
     else
         tui_success "Everything looks good!"
     fi

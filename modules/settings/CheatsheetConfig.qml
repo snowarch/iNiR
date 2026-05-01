@@ -458,7 +458,7 @@ ContentPage {
                 bottom: parent.bottom
                 bottomMargin: kbRow.showDivider ? 1 : 0
             }
-            color: kbRowHover.containsMouse && kbRow.editState === "display"
+            color: kbRowHover.hovered && kbRow.editState === "display"
                 ? Appearance.colors.colLayer1Hover
                 : "transparent"
             radius: Appearance.rounding.small
@@ -471,11 +471,8 @@ ContentPage {
             }
         }
 
-        MouseArea {
+        HoverHandler {
             id: kbRowHover
-            anchors.fill: parent
-            hoverEnabled: true
-            acceptedButtons: Qt.NoButton
         }
 
         ColumnLayout {
@@ -537,7 +534,7 @@ ContentPage {
                 Row {
                     visible: kbRow.canEdit && kbRow.editState === "display"
                     spacing: 2
-                    opacity: kbRowHover.containsMouse ? 1.0 : 0.0
+                    opacity: kbRowHover.hovered ? 1.0 : 0.0
 
                     Behavior on opacity {
                         NumberAnimation {

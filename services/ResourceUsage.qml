@@ -20,11 +20,12 @@ Singleton {
     // This prevents the service from running forever after briefly opening a panel.
     // Persistent consumers (bar, vertical bar) prevent auto-stop entirely.
     readonly property int _autoStopDelayMs: Config.options?.resources?.autoStopDelay ?? 15000
-    property real memoryTotal: 1
+    // 0 + zero-guard avoids fake "100%" before first poll.
+    property real memoryTotal: 0
     property real memoryFree: 0
     property real memoryUsed: memoryTotal - memoryFree
-    property real memoryUsedPercentage: memoryUsed / memoryTotal
-    property real swapTotal: 1
+    property real memoryUsedPercentage: memoryTotal > 0 ? (memoryUsed / memoryTotal) : 0
+    property real swapTotal: 0
     property real swapFree: 0
     property real swapUsed: swapTotal - swapFree
     property real swapUsedPercentage: swapTotal > 0 ? (swapUsed / swapTotal) : 0
@@ -178,6 +179,8 @@ Singleton {
         if (root._persistentConsumers === 0)
             autoStopTimer.restart();
         pollTimer.restart();
+        // Prime values now instead of waiting one updateInterval.
+        root._pollSensors();
     }
 
     // Register a persistent consumer (always-visible panel like bar).
@@ -210,94 +213,96 @@ Singleton {
         }
     }
 
+    function _pollSensors(): void {
+        autoStopTimer.restart();
+
+        // Determine whether GPU polling should be skipped this cycle.
+        // On hybrid (iGPU+dGPU) systems, querying GPU data via nvidia-smi or hwmon
+        // prevents the discrete GPU from entering runtime suspend, wasting ~9-10W at idle.
+        // Reading runtime_status is a pure kernel sysfs read — it does NOT wake the hardware.
+        const gpuMonitorEnabled = Config.options?.resources?.monitorGpu ?? true;
+        let skipGpu = !gpuMonitorEnabled;
+        if (!skipGpu && root._dGpuRuntimeStatusPath !== "") {
+            fileDGpuRuntimeStatus.reload();
+            skipGpu = fileDGpuRuntimeStatus.text().trim() === "suspended";
+        }
+
+        // Reload files
+        fileMeminfo.reload();
+        fileStat.reload();
+        fileCpuTemp.reload();
+        if (!skipGpu) {
+            if (root._gpuUsageSource !== "nvidia-smi")
+                fileGpuTemp.reload();
+            if (root._gpuUsageSource === "sysfs")
+                fileGpuUsage.reload();
+        }
+
+        // Empty text() on first call collapses to 0% via the percentage guards.
+        const textMeminfo = fileMeminfo.text();
+        memoryTotal = Number(textMeminfo.match(/MemTotal: *(\d+)/)?.[1] ?? 0);
+        memoryFree = Number(textMeminfo.match(/MemAvailable: *(\d+)/)?.[1] ?? 0);
+        swapTotal = Number(textMeminfo.match(/SwapTotal: *(\d+)/)?.[1] ?? 0);
+        swapFree = Number(textMeminfo.match(/SwapFree: *(\d+)/)?.[1] ?? 0);
+
+        // Parse CPU usage
+        const textStat = fileStat.text();
+        const cpuLine = textStat.match(/^cpu\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/);
+        if (cpuLine) {
+            const stats = cpuLine.slice(1).map(Number);
+            const total = stats.reduce((a, b) => a + b, 0);
+            // idle (stats[3]) + iowait (stats[4]) = not working
+            const idle = stats[3] + stats[4];
+
+            if (previousCpuStats) {
+                const totalDiff = total - previousCpuStats.total;
+                const idleDiff = idle - previousCpuStats.idle;
+                cpuUsage = totalDiff > 0 ? (1 - idleDiff / totalDiff) : 0;
+            }
+
+            previousCpuStats = {
+                total,
+                idle
+            };
+        }
+
+        // Parse temperatures (millidegrees to degrees)
+        const cpuTempRaw = parseInt(fileCpuTemp.text()) || 0;
+        cpuTemp = Math.round(cpuTempRaw / 1000);
+        // GPU temp: skip when suspended/disabled to avoid hwmon reads waking a suspended dGPU
+        if (!skipGpu && root._gpuUsageSource !== "nvidia-smi") {
+            const gpuTempRaw = parseInt(fileGpuTemp.text()) || 0;
+            gpuTemp = Math.round(gpuTempRaw / 1000);
+        }
+
+        // Parse GPU usage — skip entirely when dGPU is suspended or monitoring is disabled
+        if (skipGpu) {
+            gpuUsage = 0;
+        } else if (root._gpuUsageSource === "sysfs") {
+            const gpuBusyPercent = parseInt(fileGpuUsage.text());
+            if (isNaN(gpuBusyPercent)) {
+                gpuUsage = 0;
+            } else {
+                gpuUsage = root.clampPercentToUnit(gpuBusyPercent / 100);
+            }
+        } else if (root._gpuUsageSource === "nvidia-smi" && !nvidiaGpuProc.running) {
+            nvidiaGpuProc.running = true;
+        } else if (root._gpuUsageSource === "none") {
+            gpuUsage = 0;
+        }
+
+        root.updateHistories();
+
+        // Update disk usage
+        diskProc.running = true;
+    }
+
     Timer {
         id: pollTimer
         interval: Config.options?.resources?.updateInterval ?? 3000
         running: root._runningRequested
         repeat: true
-        onTriggered: {
-            autoStopTimer.restart();
-
-            // Determine whether GPU polling should be skipped this cycle.
-            // On hybrid (iGPU+dGPU) systems, querying GPU data via nvidia-smi or hwmon
-            // prevents the discrete GPU from entering runtime suspend, wasting ~9-10W at idle.
-            // Reading runtime_status is a pure kernel sysfs read — it does NOT wake the hardware.
-            const gpuMonitorEnabled = Config.options?.resources?.monitorGpu ?? true;
-            let skipGpu = !gpuMonitorEnabled;
-            if (!skipGpu && root._dGpuRuntimeStatusPath !== "") {
-                fileDGpuRuntimeStatus.reload();
-                skipGpu = fileDGpuRuntimeStatus.text().trim() === "suspended";
-            }
-
-            // Reload files
-            fileMeminfo.reload();
-            fileStat.reload();
-            fileCpuTemp.reload();
-            if (!skipGpu) {
-                if (root._gpuUsageSource !== "nvidia-smi")
-                    fileGpuTemp.reload();
-                if (root._gpuUsageSource === "sysfs")
-                    fileGpuUsage.reload();
-            }
-
-            // Parse memory and swap usage
-            const textMeminfo = fileMeminfo.text();
-            memoryTotal = Number(textMeminfo.match(/MemTotal: *(\d+)/)?.[1] ?? 1);
-            memoryFree = Number(textMeminfo.match(/MemAvailable: *(\d+)/)?.[1] ?? 0);
-            swapTotal = Number(textMeminfo.match(/SwapTotal: *(\d+)/)?.[1] ?? 1);
-            swapFree = Number(textMeminfo.match(/SwapFree: *(\d+)/)?.[1] ?? 0);
-
-            // Parse CPU usage
-            const textStat = fileStat.text();
-            const cpuLine = textStat.match(/^cpu\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/);
-            if (cpuLine) {
-                const stats = cpuLine.slice(1).map(Number);
-                const total = stats.reduce((a, b) => a + b, 0);
-                // idle (stats[3]) + iowait (stats[4]) = not working
-                const idle = stats[3] + stats[4];
-
-                if (previousCpuStats) {
-                    const totalDiff = total - previousCpuStats.total;
-                    const idleDiff = idle - previousCpuStats.idle;
-                    cpuUsage = totalDiff > 0 ? (1 - idleDiff / totalDiff) : 0;
-                }
-
-                previousCpuStats = {
-                    total,
-                    idle
-                };
-            }
-
-            // Parse temperatures (millidegrees to degrees)
-            const cpuTempRaw = parseInt(fileCpuTemp.text()) || 0;
-            cpuTemp = Math.round(cpuTempRaw / 1000);
-            // GPU temp: skip when suspended/disabled to avoid hwmon reads waking a suspended dGPU
-            if (!skipGpu && root._gpuUsageSource !== "nvidia-smi") {
-                const gpuTempRaw = parseInt(fileGpuTemp.text()) || 0;
-                gpuTemp = Math.round(gpuTempRaw / 1000);
-            }
-
-            // Parse GPU usage — skip entirely when dGPU is suspended or monitoring is disabled
-            if (skipGpu) {
-                gpuUsage = 0;
-            } else if (root._gpuUsageSource === "sysfs") {
-                const gpuBusyPercent = parseInt(fileGpuUsage.text());
-                if (isNaN(gpuBusyPercent)) {
-                    gpuUsage = 0;
-                } else {
-                    gpuUsage = root.clampPercentToUnit(gpuBusyPercent / 100);
-                }
-            } else if (root._gpuUsageSource === "nvidia-smi" && !nvidiaGpuProc.running) {
-                nvidiaGpuProc.running = true;
-            } else if (root._gpuUsageSource === "none") {
-                gpuUsage = 0;
-            }
-
-            root.updateHistories();
-
-            // Update disk usage
-            diskProc.running = true;
-        }
+        onTriggered: root._pollSensors()
     }
 
     FileView {
