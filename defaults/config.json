@@ -202,6 +202,7 @@
     "taskManager": "missioncenter",
     "terminal": "kitty",
     "volumeMixer": "pavucontrol",
+    "zoxideAsCd": false,
     "update": "kitty -e arch-update"
   },
   "audio": {
@@ -743,6 +744,7 @@
       "enableMedia": true,
       "enableSettings": true,
       "enablePackages": true,
+      "enableSetup": true,
       "enableCustom": true
     }
   },

@@ -55,6 +55,7 @@ check_cmd "wl-copy" "wl-clipboard"
 check_cmd "grim" "grim"
 check_cmd "slurp" "slurp"
 check_cmd "cliphist" "cliphist"
+check_cmd "zoxide" "zoxide (smart cd)"
 check_cmd "pipewire" "PipeWire"
 check_cmd "wpctl" "WirePlumber"
 
