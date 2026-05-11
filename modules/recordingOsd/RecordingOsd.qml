@@ -45,6 +45,10 @@ Scope {
                 root.collapsed = false
                 root.isVertical = false
                 root.revealed = true
+                // Start auto-hide timer if enabled
+                if (root.autoHide) {
+                    root.startHideTimer()
+                }
             }
         }
     }
@@ -81,29 +85,7 @@ Scope {
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
             color: "transparent"
 
-            // Hot zone for auto-hide hover detection (only active when hidden)
-            Item {
-                id: autoHideHotZone
-                anchors.top: parent.top
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: parent.width * 0.6
-                height: 36
-                visible: root.autoHide && !root.revealed
-
-                HoverHandler {
-                    onHoveredChanged: {
-                        root.osdTargetHovered = hovered || pill._osdHovered == true
-                        if (hovered) {
-                            root.revealed = true
-                            hideTimer.stop()
-                        } else if (root.autoHide && root.revealed) {
-                            root.startHideTimer()
-                        }
-                    }
-                }
-            }
-
-            mask: Region { item: root.autoHide && !root.revealed ? autoHideHotZone : pill }
+            mask: Region { item: pill }
 
             readonly property real edgeMargin: Appearance.sizes.elevationMargin
 
@@ -163,7 +145,10 @@ Scope {
                 pill.y = targetY
             }
 
-            StyledRectangularShadow { target: pill }
+            StyledRectangularShadow { 
+                target: pill
+                visible: false  // Remove shadow completely
+            }
 
             Item {
                 id: pill
@@ -185,8 +170,8 @@ Scope {
 
                 HoverHandler {
                     onHoveredChanged: {
-                        pill._osdHovered = hovered
-                        osdTargetHovered = hovered || autoHideHotZone.hovered == true
+                        pill._osdHovered = (hovered === true)
+                        root.osdTargetHovered = (hovered === true)
                         if (hovered) {
                             if (root.autoHide && !root.revealed)
                                 root.revealed = true
