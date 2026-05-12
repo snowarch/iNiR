@@ -157,31 +157,15 @@ Scope {
     PanelWindow {
         id: window
 
-        Component.onCompleted: visible = GlobalStates.clipboardOpen
-
-        Connections {
-            target: GlobalStates
-            function onClipboardOpenChanged() {
-                if (GlobalStates.clipboardOpen) {
-                    _closeTimer.stop()
-                    window.visible = true
-                } else {
-                    _closeTimer.restart()
-                }
-            }
-        }
-
-        Timer {
-            id: _closeTimer
-            interval: 180
-            onTriggered: window.visible = false
-        }
-
         exclusionMode: ExclusionMode.Ignore
         color: "transparent"
         WlrLayershell.namespace: "quickshell:clipboardPanel"
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus: GlobalStates.clipboardOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+        // Keep the surface always mapped to avoid Qt6 physicalDpiChanged infinite
+        // recursion (stack overflow) triggered by Hyprland sending a Wayland scale
+        // event on remap. Input is controlled via mask instead of visibility.
+        mask: Region { item: GlobalStates.clipboardOpen ? backdropClickArea : noInputItem }
 
         anchors {
             top: true
@@ -189,6 +173,8 @@ Scope {
             left: true
             right: true
         }
+
+        Item { id: noInputItem; width: 0; height: 0 }
 
         Item {
             id: keyHandler
@@ -268,6 +254,7 @@ Scope {
 
         // Click outside the panel to close
         MouseArea {
+            id: backdropClickArea
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton
             onClicked: mouse => {

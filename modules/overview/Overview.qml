@@ -31,26 +31,6 @@ Scope {
             readonly property bool shouldShow: GlobalStates.overviewOpen && (!activeScreenOnly || monitorIsFocused)
             screen: modelData
 
-            Component.onCompleted: visible = root.shouldShow
-
-            Connections {
-                target: root
-                function onShouldShowChanged() {
-                    if (root.shouldShow) {
-                        _overviewCloseTimer.stop()
-                        root.visible = true
-                    } else {
-                        _overviewCloseTimer.restart()
-                    }
-                }
-            }
-
-            Timer {
-                id: _overviewCloseTimer
-                interval: 250
-                onTriggered: root.visible = false
-            }
-
             exclusionMode: ExclusionMode.Ignore
 
             WlrLayershell.namespace: "quickshell:overview"
@@ -58,6 +38,10 @@ Scope {
             // Keyboard focus only on the monitor that should show
             WlrLayershell.keyboardFocus: root.shouldShow ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
             color: "transparent"
+            // Keep the surface always mapped to avoid Qt6 physicalDpiChanged infinite
+            // recursion (stack overflow) triggered by Hyprland sending a Wayland scale
+            // event on remap. Input is controlled via mask instead of visibility.
+            mask: Region { item: root.shouldShow ? backdropClickArea : noInputItem }
 
             anchors {
                 top: true
@@ -65,6 +49,8 @@ Scope {
                 left: true
                 right: true
             }
+
+            Item { id: noInputItem; width: 0; height: 0 }
 
             // Scrim de fondo: oscurece todo detrás del overview mientras está activo
             Rectangle {

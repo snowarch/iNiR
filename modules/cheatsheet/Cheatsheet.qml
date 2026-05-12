@@ -68,31 +68,15 @@ Scope {
     PanelWindow {
         id: window
 
-        Component.onCompleted: visible = root.cheatsheetOpen
-
-        Connections {
-            target: root
-            function onCheatsheetOpenChanged() {
-                if (root.cheatsheetOpen) {
-                    _closeTimer.stop()
-                    window.visible = true
-                } else {
-                    _closeTimer.restart()
-                }
-            }
-        }
-
-        Timer {
-            id: _closeTimer
-            interval: 250
-            onTriggered: window.visible = false
-        }
-
         exclusionMode: ExclusionMode.Ignore
         color: "transparent"
         WlrLayershell.namespace: "quickshell:cheatsheet"
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus: root.cheatsheetOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+        // Keep the surface always mapped to avoid Qt6 physicalDpiChanged infinite
+        // recursion (stack overflow) triggered by Hyprland sending a Wayland scale
+        // event on remap. Input is controlled via mask instead of visibility.
+        mask: Region { item: root.cheatsheetOpen ? backdropClickArea : noInputItem }
 
         anchors {
             top: true
@@ -100,6 +84,8 @@ Scope {
             left: true
             right: true
         }
+
+        Item { id: noInputItem; width: 0; height: 0 }
 
         // Scrim backdrop (matches Overview pattern)
         Rectangle {
@@ -129,6 +115,7 @@ Scope {
 
         // Click outside to close
         MouseArea {
+            id: backdropClickArea
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton
             onClicked: mouse => {

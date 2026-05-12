@@ -38,7 +38,6 @@ Scope {
         id: sidebarRoot
 
         Component.onCompleted: {
-            visible = GlobalStates.sidebarLeftOpen
             root._sidebarShown = GlobalStates.sidebarLeftOpen
         }
 
@@ -46,25 +45,12 @@ Scope {
             target: GlobalStates
             function onSidebarLeftOpenChanged() {
                 if (GlobalStates.sidebarLeftOpen) {
-                    _closeTimer.stop()
-                    sidebarRoot.visible = true
-                    // Let the surface map for one frame before sliding in
+                    // Let the surface settle for one frame before sliding in
                     Qt.callLater(() => { root._sidebarShown = true })
-                } else if (root.instantOpen || !Appearance.animationsEnabled) {
-                    root._sidebarShown = false
-                    _closeTimer.stop()
-                    sidebarRoot.visible = false
                 } else {
                     root._sidebarShown = false
-                    _closeTimer.restart()
                 }
             }
-        }
-
-        Timer {
-            id: _closeTimer
-            interval: 300
-            onTriggered: sidebarRoot.visible = false
         }
 
         function hide() {
@@ -76,6 +62,10 @@ Scope {
         WlrLayershell.namespace: "quickshell:sidebarLeft"
         WlrLayershell.keyboardFocus: GlobalStates.sidebarLeftOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
         color: "transparent"
+        // Keep the surface always mapped to avoid Qt6 physicalDpiChanged infinite
+        // recursion (stack overflow) triggered by Hyprland sending a Wayland scale
+        // event on remap. Input is controlled via mask instead of visibility.
+        mask: Region { item: GlobalStates.sidebarLeftOpen ? backdropClickArea : noInputItem }
 
         anchors {
             top: true
@@ -84,10 +74,12 @@ Scope {
             right: true
         }
 
+        Item { id: noInputItem; width: 0; height: 0 }
+
         CompositorFocusGrab {
             id: grab
             windows: [ sidebarRoot ]
-            active: CompositorService.isHyprland && sidebarRoot.visible
+            active: CompositorService.isHyprland && GlobalStates.sidebarLeftOpen
             onCleared: () => {
                 if (!active) sidebarRoot.hide()
             }

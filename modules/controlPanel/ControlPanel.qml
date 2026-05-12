@@ -43,26 +43,6 @@ Scope {
     PanelWindow {
         id: panelRoot
 
-        Component.onCompleted: visible = GlobalStates.controlPanelOpen
-
-        Connections {
-            target: GlobalStates
-            function onControlPanelOpenChanged() {
-                if (GlobalStates.controlPanelOpen) {
-                    _closeTimer.stop()
-                    panelRoot.visible = true
-                } else {
-                    _closeTimer.restart()
-                }
-            }
-        }
-
-        Timer {
-            id: _closeTimer
-            interval: 250
-            onTriggered: panelRoot.visible = false
-        }
-
         function hide() {
             GlobalStates.controlPanelOpen = false
         }
@@ -74,6 +54,10 @@ Scope {
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus: GlobalStates.controlPanelOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
         color: "transparent"
+        // Keep the surface always mapped to avoid Qt6 physicalDpiChanged infinite
+        // recursion (stack overflow) triggered by Hyprland sending a Wayland scale
+        // event on remap. Input is controlled via mask instead of visibility.
+        mask: Region { item: GlobalStates.controlPanelOpen ? backdropClickArea : noInputItem }
 
         anchors {
             top: true
@@ -82,10 +66,12 @@ Scope {
             left: true
         }
 
+        Item { id: noInputItem; width: 0; height: 0 }
+
         CompositorFocusGrab {
             id: grab
             windows: [ panelRoot ]
-            active: CompositorService.isHyprland && panelRoot.visible
+            active: CompositorService.isHyprland && GlobalStates.controlPanelOpen
             onCleared: () => {
                 if (!active) panelRoot.hide()
             }
