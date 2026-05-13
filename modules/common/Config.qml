@@ -19,8 +19,11 @@ Singleton {
 
     function flushWrites(): void {
         fileWriteTimer.stop();
+        fileReloadTimer.stop();
+        root._pendingCustomInject = Object.keys(root.customWidgetData).length > 0;
+        root._writeInFlight = true;
         configFileView.writeAdapter();
-        root._injectCustomDataSync();
+        // onSaved handles _injectCustomDataSync for custom data
     }
 
     function _applyNestedKey(nestedKey, value) {
@@ -117,9 +120,12 @@ Singleton {
         } catch (e) {}
     }
 
-    // After writeAdapter() saves, inject customWidgetData into the file.
-    // writeAdapter() doesn't update the text buffer so we read via rawConfigReader.
+    // writeAdapter() is async — onSaved fires when done. Suppress reloads
+    // while a write is in flight so reload() doesn't drop the write op.
+    property bool _writeInFlight: false
     property bool _pendingCustomInject: false
+    property bool _pendingReload: false
+
     function _injectCustomDataSync(): void {
         if (Object.keys(root.customWidgetData).length === 0) return;
         try {
@@ -130,8 +136,9 @@ Singleton {
             if (!obj.background) obj.background = {};
             if (!obj.background.widgets) obj.background.widgets = {};
             obj.background.widgets.custom = root.customWidgetData;
+            root._writeInFlight = true;
             configFileView.setText(JSON.stringify(obj, null, 4));
-        } catch (e) {}
+        } catch (e) { root._writeInFlight = false; }
     }
 
     Timer {
@@ -139,6 +146,10 @@ Singleton {
         interval: root.readWriteDelay
         repeat: false
         onTriggered: {
+            if (root._writeInFlight) {
+                root._pendingReload = true;
+                return;
+            }
             configFileView.reload();
             root._syncVarProperties();
         }
@@ -150,6 +161,8 @@ Singleton {
         repeat: false
         onTriggered: {
             root._pendingCustomInject = Object.keys(root.customWidgetData).length > 0;
+            root._writeInFlight = true;
+            fileReloadTimer.stop();
             configFileView.writeAdapter();
         }
     }
@@ -168,9 +181,16 @@ Singleton {
         onFileChanged: fileReloadTimer.restart()
         onAdapterUpdated: fileWriteTimer.restart()
         onSaved: {
+            root._writeInFlight = false;
             if (root._pendingCustomInject) {
                 root._pendingCustomInject = false;
                 root._injectCustomDataSync();
+                return; // inject starts another write, wait for its onSaved
+            }
+            // Write cycle done — run any deferred reload
+            if (root._pendingReload) {
+                root._pendingReload = false;
+                fileReloadTimer.restart();
             }
         }
         onLoaded: {

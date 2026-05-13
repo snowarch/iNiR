@@ -913,7 +913,7 @@ ContentPage {
                     StyledSlider {
                         from: 0; to: 1; stepSize: 0.05
                         value: Config.options?.background?.widgets?.weather?.conditionOpacity ?? 0.7
-                        onValueChanged: Config.setNestedValue("background.widgets.weather.conditionOpacity", Math.round(value * 100) / 100)
+                        onMoved: Config.setNestedValue("background.widgets.weather.conditionOpacity", Math.round(value * 100) / 100)
                     }
                 }
             }
@@ -1358,7 +1358,7 @@ ContentPage {
                     StyledSlider {
                         from: 0; to: 0.5; stepSize: 0.02
                         value: Config.options?.background?.widgets?.systemMonitor?.trackAlpha ?? 0.08
-                        onValueChanged: Config.setNestedValue("background.widgets.systemMonitor.trackAlpha", Math.round(value * 100) / 100)
+                        onMoved: Config.setNestedValue("background.widgets.systemMonitor.trackAlpha", Math.round(value * 100) / 100)
                     }
                 }
                 ConfigRow {
@@ -1368,7 +1368,7 @@ ContentPage {
                     StyledSlider {
                         from: 0.1; to: 1; stepSize: 0.05
                         value: Config.options?.background?.widgets?.systemMonitor?.fillOpacity ?? 0.7
-                        onValueChanged: Config.setNestedValue("background.widgets.systemMonitor.fillOpacity", Math.round(value * 100) / 100)
+                        onMoved: Config.setNestedValue("background.widgets.systemMonitor.fillOpacity", Math.round(value * 100) / 100)
                     }
                 }
                 ConfigRow {
@@ -1379,7 +1379,7 @@ ContentPage {
                     StyledSlider {
                         from: 0; to: 1; stepSize: 0.05
                         value: Config.options?.background?.widgets?.systemMonitor?.graphFillOpacity ?? 0.3
-                        onValueChanged: Config.setNestedValue("background.widgets.systemMonitor.graphFillOpacity", Math.round(value * 100) / 100)
+                        onMoved: Config.setNestedValue("background.widgets.systemMonitor.graphFillOpacity", Math.round(value * 100) / 100)
                     }
                 }
             }
