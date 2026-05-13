@@ -856,8 +856,15 @@ ApplicationWindow {
             pageIndex: 5, pageName: pages[5].name,
             section: Translation.tr("On-screen display"),
             label: Translation.tr("OSD timeout"),
-            description: Translation.tr("How long the volume/brightness OSD stays visible"),
-            keywords: ["osd", "volume", "brightness", "timeout", "duration"]
+            description: Translation.tr("How long the volume, brightness and media OSD stays visible"),
+            keywords: ["osd", "volume", "brightness", "media", "timeout", "duration"]
+        },
+        {
+            pageIndex: 5, pageName: pages[5].name,
+            section: Translation.tr("On-screen display"),
+            label: Translation.tr("Media OSD"),
+            description: Translation.tr("Show now playing feedback when media shortcuts are pressed"),
+            keywords: ["osd", "media", "music", "player", "shortcuts"]
         },
         {
             pageIndex: 5, pageName: pages[5].name,

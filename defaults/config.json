@@ -637,6 +637,7 @@
     "timeoutNormal": 7000
   },
   "osd": {
+    "mediaEnabled": true,
     "timeout": 1000
   },
   "osk": {

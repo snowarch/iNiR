@@ -59,6 +59,8 @@ Scope {
     }
 
     function triggerMediaOSD() {
+        if (!(Config.options?.osd?.mediaEnabled ?? true))
+            return;
         root.currentIndicator = "media";
         GlobalStates.osdMediaOpen = true;
     }
@@ -115,6 +117,10 @@ Scope {
         }
         function onOsdMediaOpenChanged() {
             if (GlobalStates.osdMediaOpen) {
+                if (!(Config.options?.osd?.mediaEnabled ?? true)) {
+                    GlobalStates.osdMediaOpen = false;
+                    return;
+                }
                 root.currentIndicator = "media";
                 panelLoader.active = true;
             }
@@ -143,11 +149,12 @@ Scope {
             Connections {
                 target: root
                 function onFocusedScreenChanged() {
-                    osdRoot.screen = root.focusedScreen;
+                    panelWindow.screen = root.focusedScreen;
                 }
             }
 
             color: "transparent"
+            screen: root.focusedScreen
             exclusiveZone: 0
             WlrLayershell.namespace: "quickshell:wOnScreenDisplay"
             WlrLayershell.layer: WlrLayer.Overlay

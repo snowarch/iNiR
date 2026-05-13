@@ -346,11 +346,19 @@ WSettingsPage {
     WSettingsCard {
         title: Translation.tr("On-Screen Display")
         icon: "pulse"
+
+        WSettingsSwitch {
+            label: Translation.tr("Media OSD")
+            icon: "music-note-2"
+            description: Translation.tr("Show now playing feedback when media shortcuts are pressed")
+            checked: Config.options?.osd?.mediaEnabled ?? true
+            onCheckedChanged: Config.setNestedValue("osd.mediaEnabled", checked)
+        }
         
         WSettingsSpinBox {
             label: Translation.tr("OSD timeout")
             icon: "arrow-clockwise"
-            description: Translation.tr("How long volume/brightness OSD stays visible")
+            description: Translation.tr("How long volume, brightness and media OSD stays visible")
             suffix: "ms"
             from: 500; to: 5000; stepSize: 250
             value: Config.options?.osd?.timeout ?? 1000

@@ -968,6 +968,7 @@ Singleton {
 
             property JsonObject osd: JsonObject {
                 property int timeout: 1000
+                property bool mediaEnabled: true
             }
 
             property JsonObject osk: JsonObject {

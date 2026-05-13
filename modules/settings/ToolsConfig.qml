@@ -893,6 +893,18 @@ ContentPage {
         title: Translation.tr("On-screen display")
 
         SettingsGroup {
+            ConfigSwitch {
+                buttonIcon: "music_note"
+                text: Translation.tr("Media OSD")
+                checked: Config.options?.osd?.mediaEnabled ?? true
+                onCheckedChanged: {
+                    Config.setNestedValue("osd.mediaEnabled", checked);
+                }
+                StyledToolTip {
+                    text: Translation.tr("Show now playing feedback when media shortcuts are pressed")
+                }
+            }
+
             ConfigSpinBox {
                 icon: "av_timer"
                 text: Translation.tr("Timeout (ms)")
@@ -904,7 +916,7 @@ ContentPage {
                     Config.setNestedValue("osd.timeout", value);
                 }
                 StyledToolTip {
-                    text: Translation.tr("How long the volume/brightness indicator stays visible")
+                    text: Translation.tr("How long the volume, brightness and media indicators stay visible")
                 }
             }
         }
