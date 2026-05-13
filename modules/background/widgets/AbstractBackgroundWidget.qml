@@ -121,6 +121,19 @@ AbstractWidget {
         root.snapToZone(next);
     }
 
+    function _toggleZonePlacement(): void {
+        if (root._isZonePlacement) {
+            const prefix = "background.widgets." + root.configEntryName;
+            let updates = {};
+            updates[prefix + ".placementStrategy"] = "free";
+            updates[prefix + ".x"] = root._snapToPixel(root.x);
+            updates[prefix + ".y"] = root._snapToPixel(root.y);
+            Config.setNestedValues(updates);
+            return;
+        }
+        root.snapToZone(root._nearestZone(root.x, root.y));
+    }
+
     function snapToZone(zone: string): void {
         const pos = root._getZonePosition(zone);
         const finalX = root._snapToPixel(pos.x);
@@ -313,17 +326,22 @@ AbstractWidget {
                 id: snapZoneBtn
                 width: 32; height: 32
                 buttonRadius: Appearance.rounding.full
+                toggled: root._isZonePlacement
                 colBackground: "transparent"
                 colBackgroundHover: ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.08)
+                colBackgroundToggled: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.16)
+                colBackgroundToggledHover: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.24)
                 colRipple: ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.12)
-                downAction: () => { root._cycleSnapZone() }
+                colRippleToggled: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.16)
+                downAction: () => { root._toggleZonePlacement() }
+                altAction: () => { root._cycleSnapZone() }
                 contentItem: MaterialSymbol {
                     anchors.centerIn: parent
-                    text: "grid_view"
+                    text: root._isZonePlacement ? "grid_on" : "grid_view"
                     iconSize: 18
-                    color: Appearance.colors.colOnLayer2
+                    color: root._isZonePlacement ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer2
                 }
-                StyledToolTip { text: Translation.tr("Snap to zone") }
+                StyledToolTip { text: root._isZonePlacement ? Translation.tr("Zone placement active — click for free placement, right-click to cycle") : Translation.tr("Use nearest snap zone") }
             }
 
             RippleButton {

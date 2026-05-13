@@ -235,8 +235,10 @@ ContentPage {
                     Layout.fillWidth: false
                     buttonIcon: "edit"
                     text: Translation.tr("Edit Mode")
+                    autoToggle: false
+
                     checked: GlobalStates.widgetEditMode
-                    onCheckedChanged: GlobalStates.widgetEditMode = checked
+                    onToggledByUser: checked => GlobalStates.widgetEditMode = checked
                     StyledToolTip {
                         text: Translation.tr("Show alignment grid and enable snap-to-grid for widget placement")
                     }
@@ -248,8 +250,10 @@ ContentPage {
                     Layout.fillWidth: false
                     buttonIcon: "grid_3x3"
                     text: Translation.tr("Snap to grid")
+                    autoToggle: false
+
                     checked: Config.options?.background?.widgets?.editGrid?.snap ?? true
-                    onCheckedChanged: Config.setNestedValue("background.widgets.editGrid.snap", checked)
+                    onToggledByUser: checked => Config.setNestedValue("background.widgets.editGrid.snap", checked)
                 }
                 Item { Layout.fillWidth: true }
                 StyledSpinBox {
@@ -282,8 +286,10 @@ ContentPage {
                     Layout.fillWidth: false
                     buttonIcon: "check"
                     text: Translation.tr("Enable")
+                    autoToggle: false
+
                     checked: Config.options?.background?.widgets?.clock?.enable ?? true
-                    onCheckedChanged: Config.setNestedValue("background.widgets.clock.enable", checked)
+                    onToggledByUser: checked => Config.setNestedValue("background.widgets.clock.enable", checked)
                 }
                 Item { Layout.fillWidth: true }
                 WidgetPlacementSelector {
@@ -388,15 +394,19 @@ ContentPage {
                         Layout.fillWidth: false
                         buttonIcon: "timer"
                         text: Translation.tr("Seconds")
+                        autoToggle: false
+
                         checked: Config.options?.background?.widgets?.clock?.showSeconds ?? false
-                        onCheckedChanged: Config.setNestedValue("background.widgets.clock.showSeconds", checked)
+                        onToggledByUser: checked => Config.setNestedValue("background.widgets.clock.showSeconds", checked)
                     }
                     SettingsSwitch {
                         Layout.fillWidth: false
                         buttonIcon: "calendar_today"
                         text: Translation.tr("Date")
+                        autoToggle: false
+
                         checked: Config.options?.background?.widgets?.clock?.showDate ?? true
-                        onCheckedChanged: Config.setNestedValue("background.widgets.clock.showDate", checked)
+                        onToggledByUser: checked => Config.setNestedValue("background.widgets.clock.showDate", checked)
                     }
                 }
                 ConfigRow {
@@ -405,15 +415,19 @@ ContentPage {
                         Layout.fillWidth: false
                         buttonIcon: "shadow"
                         text: Translation.tr("Shadow")
+                        autoToggle: false
+
                         checked: Config.options?.background?.widgets?.clock?.showShadow ?? true
-                        onCheckedChanged: Config.setNestedValue("background.widgets.clock.showShadow", checked)
+                        onToggledByUser: checked => Config.setNestedValue("background.widgets.clock.showShadow", checked)
                     }
                     SettingsSwitch {
                         Layout.fillWidth: false
                         buttonIcon: "animation"
                         text: Translation.tr("Animate")
+                        autoToggle: false
+
                         checked: Config.options?.background?.widgets?.clock?.digital?.animateChange ?? true
-                        onCheckedChanged: Config.setNestedValue("background.widgets.clock.digital.animateChange", checked)
+                        onToggledByUser: checked => Config.setNestedValue("background.widgets.clock.digital.animateChange", checked)
                     }
                 }
 
@@ -476,8 +490,10 @@ ContentPage {
                 SettingsSwitch {
                     buttonIcon: "format_quote"
                     text: Translation.tr("Show quote")
+                    autoToggle: false
+
                     checked: Config.options?.background?.widgets?.clock?.quote?.enable ?? false
-                    onCheckedChanged: Config.setNestedValue("background.widgets.clock.quote.enable", checked)
+                    onToggledByUser: checked => Config.setNestedValue("background.widgets.clock.quote.enable", checked)
                 }
 
                 MaterialTextField {
@@ -549,8 +565,10 @@ ContentPage {
                 SettingsSwitch {
                     buttonIcon: "waves"
                     text: Translation.tr("Sine wave shape")
+                    autoToggle: false
+
                     checked: Config.options?.background?.widgets?.clock?.cookie?.useSineCookie ?? false
-                    onCheckedChanged: Config.setNestedValue("background.widgets.clock.cookie.useSineCookie", checked)
+                    onToggledByUser: checked => Config.setNestedValue("background.widgets.clock.cookie.useSineCookie", checked)
                     StyledToolTip { text: Translation.tr("Use smooth sine-wave edges instead of rounded polygon") }
                 }
 
@@ -568,8 +586,10 @@ ContentPage {
                 SettingsSwitch {
                     buttonIcon: "rotate_right"
                     text: Translation.tr("Constant rotation")
+                    autoToggle: false
+
                     checked: Config.options?.background?.widgets?.clock?.cookie?.constantlyRotate ?? false
-                    onCheckedChanged: Config.setNestedValue("background.widgets.clock.cookie.constantlyRotate", checked)
+                    onToggledByUser: checked => Config.setNestedValue("background.widgets.clock.cookie.constantlyRotate", checked)
                 }
             }
 
@@ -595,15 +615,19 @@ ContentPage {
                         Layout.fillWidth: false
                         buttonIcon: "radio_button_checked"
                         text: Translation.tr("Hour marks")
+                        autoToggle: false
+
                         checked: Config.options?.background?.widgets?.clock?.cookie?.hourMarks ?? false
-                        onCheckedChanged: Config.setNestedValue("background.widgets.clock.cookie.hourMarks", checked)
+                        onToggledByUser: checked => Config.setNestedValue("background.widgets.clock.cookie.hourMarks", checked)
                     }
                     SettingsSwitch {
                         Layout.fillWidth: false
                         buttonIcon: "pin"
                         text: Translation.tr("Time column")
+                        autoToggle: false
+
                         checked: Config.options?.background?.widgets?.clock?.cookie?.timeIndicators ?? false
-                        onCheckedChanged: Config.setNestedValue("background.widgets.clock.cookie.timeIndicators", checked)
+                        onToggledByUser: checked => Config.setNestedValue("background.widgets.clock.cookie.timeIndicators", checked)
                     }
                 }
             }
@@ -688,8 +712,10 @@ ContentPage {
                 SettingsSwitch {
                     buttonIcon: "auto_awesome"
                     text: Translation.tr("Auto-style from wallpaper")
+                    autoToggle: false
+
                     checked: Config.options?.background?.widgets?.clock?.cookie?.aiStyling ?? false
-                    onCheckedChanged: Config.setNestedValue("background.widgets.clock.cookie.aiStyling", checked)
+                    onToggledByUser: checked => Config.setNestedValue("background.widgets.clock.cookie.aiStyling", checked)
                     StyledToolTip { text: Translation.tr("Automatically adjust cookie clock style based on wallpaper category") }
                 }
             }
@@ -765,8 +791,10 @@ ContentPage {
                     Layout.fillWidth: false
                     buttonIcon: "check"
                     text: Translation.tr("Enable")
+                    autoToggle: false
+
                     checked: Config.options?.background?.widgets?.weather?.enable ?? true
-                    onCheckedChanged: Config.setNestedValue("background.widgets.weather.enable", checked)
+                    onToggledByUser: checked => Config.setNestedValue("background.widgets.weather.enable", checked)
                 }
                 Item { Layout.fillWidth: true }
                 WidgetPlacementSelector {
@@ -833,22 +861,28 @@ ContentPage {
                         Layout.fillWidth: false
                         buttonIcon: "thermostat"
                         text: Translation.tr("Temperature")
+                        autoToggle: false
+
                         checked: Config.options?.background?.widgets?.weather?.showTemp ?? true
-                        onCheckedChanged: Config.setNestedValue("background.widgets.weather.showTemp", checked)
+                        onToggledByUser: checked => Config.setNestedValue("background.widgets.weather.showTemp", checked)
                     }
                     SettingsSwitch {
                         Layout.fillWidth: false
                         buttonIcon: "cloud"
                         text: Translation.tr("Icon")
+                        autoToggle: false
+
                         checked: Config.options?.background?.widgets?.weather?.showIcon ?? true
-                        onCheckedChanged: Config.setNestedValue("background.widgets.weather.showIcon", checked)
+                        onToggledByUser: checked => Config.setNestedValue("background.widgets.weather.showIcon", checked)
                     }
                 }
                 SettingsSwitch {
                     buttonIcon: "description"
                     text: Translation.tr("Condition text")
+                    autoToggle: false
+
                     checked: Config.options?.background?.widgets?.weather?.showCondition ?? false
-                    onCheckedChanged: Config.setNestedValue("background.widgets.weather.showCondition", checked)
+                    onToggledByUser: checked => Config.setNestedValue("background.widgets.weather.showCondition", checked)
                 }
             }
 
@@ -963,8 +997,10 @@ ContentPage {
                     Layout.fillWidth: false
                     buttonIcon: "check"
                     text: Translation.tr("Enable")
+                    autoToggle: false
+
                     checked: Config.options?.background?.widgets?.mediaControls?.enable ?? true
-                    onCheckedChanged: Config.setNestedValue("background.widgets.mediaControls.enable", checked)
+                    onToggledByUser: checked => Config.setNestedValue("background.widgets.mediaControls.enable", checked)
                 }
                 Item { Layout.fillWidth: true }
                 WidgetPlacementSelector {
@@ -1033,8 +1069,10 @@ ContentPage {
                     Layout.fillWidth: false
                     buttonIcon: "check"
                     text: Translation.tr("Enable")
+                    autoToggle: false
+
                     checked: Config.options?.background?.widgets?.visualizer?.enable ?? false
-                    onCheckedChanged: Config.setNestedValue("background.widgets.visualizer.enable", checked)
+                    onToggledByUser: checked => Config.setNestedValue("background.widgets.visualizer.enable", checked)
                     StyledToolTip {
                         text: Translation.tr("Audio visualizer widget on the desktop")
                     }
@@ -1221,8 +1259,10 @@ ContentPage {
                     Layout.fillWidth: false
                     buttonIcon: "check"
                     text: Translation.tr("Enable")
+                    autoToggle: false
+
                     checked: Config.options?.background?.widgets?.systemMonitor?.enable ?? false
-                    onCheckedChanged: Config.setNestedValue("background.widgets.systemMonitor.enable", checked)
+                    onToggledByUser: checked => Config.setNestedValue("background.widgets.systemMonitor.enable", checked)
                     StyledToolTip {
                         text: Translation.tr("Show CPU, RAM, and GPU usage on the desktop")
                     }
@@ -1296,30 +1336,38 @@ ContentPage {
                         Layout.fillWidth: false
                         buttonIcon: "memory"
                         text: Translation.tr("CPU")
+                        autoToggle: false
+
                         checked: Config.options?.background?.widgets?.systemMonitor?.showCpu ?? true
-                        onCheckedChanged: Config.setNestedValue("background.widgets.systemMonitor.showCpu", checked)
+                        onToggledByUser: checked => Config.setNestedValue("background.widgets.systemMonitor.showCpu", checked)
                     }
                     SettingsSwitch {
                         Layout.fillWidth: false
                         buttonIcon: "storage"
                         text: Translation.tr("Memory")
+                        autoToggle: false
+
                         checked: Config.options?.background?.widgets?.systemMonitor?.showMemory ?? true
-                        onCheckedChanged: Config.setNestedValue("background.widgets.systemMonitor.showMemory", checked)
+                        onToggledByUser: checked => Config.setNestedValue("background.widgets.systemMonitor.showMemory", checked)
                     }
                     SettingsSwitch {
                         Layout.fillWidth: false
                         buttonIcon: "developer_board"
                         text: Translation.tr("GPU")
+                        autoToggle: false
+
                         checked: Config.options?.background?.widgets?.systemMonitor?.showGpu ?? true
-                        onCheckedChanged: Config.setNestedValue("background.widgets.systemMonitor.showGpu", checked)
+                        onToggledByUser: checked => Config.setNestedValue("background.widgets.systemMonitor.showGpu", checked)
                     }
                 }
 
                 SettingsSwitch {
                     buttonIcon: "label"
                     text: Translation.tr("Show labels and percentages")
+                    autoToggle: false
+
                     checked: Config.options?.background?.widgets?.systemMonitor?.showLabels ?? true
-                    onCheckedChanged: Config.setNestedValue("background.widgets.systemMonitor.showLabels", checked)
+                    onToggledByUser: checked => Config.setNestedValue("background.widgets.systemMonitor.showLabels", checked)
                 }
             }
 
@@ -1446,8 +1494,10 @@ ContentPage {
                     Layout.fillWidth: false
                     buttonIcon: "check"
                     text: Translation.tr("Enable")
+                    autoToggle: false
+
                     checked: Config.options?.background?.widgets?.battery?.enable ?? false
-                    onCheckedChanged: Config.setNestedValue("background.widgets.battery.enable", checked)
+                    onToggledByUser: checked => Config.setNestedValue("background.widgets.battery.enable", checked)
                     StyledToolTip {
                         text: Translation.tr("Show battery status on the desktop (only visible on laptops)")
                     }
@@ -1587,8 +1637,10 @@ ContentPage {
                 SettingsSwitch {
                     buttonIcon: "schedule"
                     text: Translation.tr("Show time estimate")
+                    autoToggle: false
+
                     checked: Config.options?.background?.widgets?.battery?.showTime ?? true
-                    onCheckedChanged: Config.setNestedValue("background.widgets.battery.showTime", checked)
+                    onToggledByUser: checked => Config.setNestedValue("background.widgets.battery.showTime", checked)
                 }
             }
 
@@ -1812,8 +1864,10 @@ ContentPage {
                         buttonIcon: cwDelegate.modelData.icon || "widgets"
                         text: cwDelegate.modelData.name
                         readonly property bool currentEnabled: Config.customWidgetData?.[cwDelegate.modelData.id]?.enable ?? true
+                        autoToggle: false
+
                         checked: currentEnabled
-                        onCheckedChanged: if (checked !== currentEnabled) Config.setNestedValue("background.widgets.custom." + cwDelegate.modelData.id + ".enable", checked)
+                        onToggledByUser: checked => Config.setNestedValue("background.widgets.custom." + cwDelegate.modelData.id + ".enable", checked)
                     }
                     Item { Layout.fillWidth: true }
                     WidgetPlacementSelector {
@@ -1987,11 +2041,22 @@ ContentPage {
                             StyledText { text: modelData.spec.label || modelData.key; color: Appearance.colors.colOnLayer1 }
                             Item { Layout.fillWidth: true }
 
-                            StyledSwitch {
+                            RippleButton {
                                 visible: modelData.spec.type === "bool"
                                 readonly property bool currentChecked: CustomWidgets.getConfigValue(modelData.widgetId, modelData.key, modelData.spec.default ?? false)
-                                checked: currentChecked
-                                onCheckedChanged: if (checked !== currentChecked) CustomWidgets.setConfigValue(modelData.widgetId, modelData.key, checked)
+                                width: 40; height: 28
+                                buttonRadius: Appearance.rounding.small
+                                toggled: currentChecked
+                                colBackground: toggled ? ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.16) : ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.06)
+                                colBackgroundHover: toggled ? ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.24) : ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.12)
+                                colRipple: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.12)
+                                downAction: () => CustomWidgets.setConfigValue(modelData.widgetId, modelData.key, !currentChecked)
+                                contentItem: MaterialSymbol {
+                                    anchors.centerIn: parent
+                                    text: parent.toggled ? "check" : "close"
+                                    iconSize: 16
+                                    color: parent.toggled ? Appearance.colors.colPrimary : ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.55)
+                                }
                             }
                             StyledSpinBox {
                                 visible: modelData.spec.type === "int"
