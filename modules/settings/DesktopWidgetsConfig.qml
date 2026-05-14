@@ -990,6 +990,41 @@ ContentPage {
             }
 
             ContentSubsection {
+                title: Translation.tr("Style")
+
+                ConfigSelectionArray {
+                    Layout.fillWidth: true
+                    currentValue: Config.getNestedValue("background.widgets.weather.style", "pill")
+                    onSelected: newValue => Config.setNestedValue("background.widgets.weather.style", newValue)
+                    options: [
+                        { displayName: Translation.tr("Shape"), icon: "category", value: "pill" },
+                        { displayName: Translation.tr("Card"), icon: "crop_landscape", value: "card" },
+                    ]
+                }
+
+                ConfigSelectionArray {
+                    visible: Config.getNestedValue("background.widgets.weather.style", "pill") === "pill"
+                    Layout.fillWidth: true
+                    currentValue: Config.getNestedValue("background.widgets.weather.shape", "pill")
+                    onSelected: newValue => Config.setNestedValue("background.widgets.weather.shape", newValue)
+                    options: [
+                        { displayName: Translation.tr("Pill"), value: "pill" },
+                        { displayName: Translation.tr("Circle"), value: "circle" },
+                        { displayName: Translation.tr("Oval"), value: "oval" },
+                        { displayName: Translation.tr("Diamond"), value: "diamond" },
+                        { displayName: Translation.tr("Heart"), value: "heart" },
+                        { displayName: Translation.tr("Flower"), value: "flower" },
+                        { displayName: Translation.tr("Cookie"), value: "cookie4" },
+                        { displayName: Translation.tr("Sunny"), value: "sunny" },
+                        { displayName: Translation.tr("Clover"), value: "clover" },
+                        { displayName: Translation.tr("Burst"), value: "softBurst" },
+                        { displayName: Translation.tr("Gem"), value: "gem" },
+                        { displayName: Translation.tr("Puffy"), value: "puffy" },
+                    ]
+                }
+            }
+
+            ContentSubsection {
                 title: Translation.tr("Content")
 
                 ConfigRow {
@@ -1081,6 +1116,7 @@ ContentPage {
             WidgetAppearanceControls {
                 configPath: "background.widgets.weather"
                 configEntry: Config.getNestedValue("background.widgets.weather", ({}))
+                hasCardControls: Config.getNestedValue("background.widgets.weather.style", "pill") === "card"
             }
 
             RippleButton {
@@ -1088,6 +1124,8 @@ ContentPage {
                 text: Translation.tr("Reset to defaults")
                 onClicked: {
                     Config.setNestedValue("background.widgets.weather.preset", "default");
+                    Config.setNestedValue("background.widgets.weather.style", "pill");
+                    Config.setNestedValue("background.widgets.weather.shape", "pill");
                     Config.setNestedValue("background.widgets.weather.placementStrategy", "free");
                     Config.setNestedValue("background.widgets.weather.size", 200);
                     Config.setNestedValue("background.widgets.weather.tempSize", 80);
@@ -1158,6 +1196,40 @@ ContentPage {
                 }
             }
 
+            ContentSubsection {
+                title: Translation.tr("Visualizer")
+
+                WidgetSettingRow {
+                    label: Translation.tr("Type")
+                    icon: "graphic_eq"
+                    trailing: false
+                    ConfigSelectionArray {
+                        currentValue: Config.getNestedValue("background.widgets.mediaControls.visualizerType", "wave")
+                        onSelected: newValue => Config.setNestedValue("background.widgets.mediaControls.visualizerType", newValue)
+                        options: [
+                            { displayName: Translation.tr("Wave"), icon: "waves", value: "wave" },
+                            { displayName: Translation.tr("Bars"), icon: "equalizer", value: "bars" },
+                        ]
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Position")
+                    icon: "swap_vert"
+                    trailing: false
+                    ConfigSelectionArray {
+                        currentValue: Config.getNestedValue("background.widgets.mediaControls.visualizerPosition", "bottom")
+                        onSelected: newValue => Config.setNestedValue("background.widgets.mediaControls.visualizerPosition", newValue)
+                        options: [
+                            { displayName: Translation.tr("Bottom"), icon: "vertical_align_bottom", value: "bottom" },
+                            { displayName: Translation.tr("Top"), icon: "vertical_align_top", value: "top" },
+                            { displayName: Translation.tr("Fill"), icon: "fullscreen", value: "fill" },
+                            { displayName: Translation.tr("Off"), icon: "visibility_off", value: "none" },
+                        ]
+                    }
+                }
+            }
+
             WidgetAppearanceControls {
                 configPath: "background.widgets.mediaControls"
                 configEntry: Config.getNestedValue("background.widgets.mediaControls", ({}))
@@ -1170,6 +1242,8 @@ ContentPage {
                 onClicked: {
                     Config.setNestedValue("background.widgets.mediaControls.placementStrategy", "leastBusy");
                     Config.setNestedValue("background.widgets.mediaControls.playerPreset", "full");
+                    Config.setNestedValue("background.widgets.mediaControls.visualizerType", "wave");
+                    Config.setNestedValue("background.widgets.mediaControls.visualizerPosition", "bottom");
                     Config.setNestedValue("background.widgets.mediaControls.widgetScale", 100);
                     Config.setNestedValue("background.widgets.mediaControls.widgetOpacity", 100);
                     Config.setNestedValue("background.widgets.mediaControls.colorMode", "auto");

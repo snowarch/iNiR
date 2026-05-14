@@ -739,6 +739,8 @@ Singleton {
                         property int tempFontWeight: 500 // Font.Medium
                         property real conditionOpacity: 0.7
                         property string preset: "default"
+                        property string style: "pill" // "pill" (original), "card" (adaptive overlay)
+                        property string shape: "pill" // MaterialShape shape name
                         property int widgetScale: 100
                         property int widgetOpacity: 100
                         property string colorMode: "auto"
@@ -750,6 +752,8 @@ Singleton {
                         property bool locked: false
                         property string placementStrategy: "free" // "free", "leastBusy", "mostBusy"
                         property string playerPreset: "full" // "full", "compact", "minimal", "albumart", "visualizer", "classic"
+                        property string visualizerType: "wave" // "wave", "bars"
+                        property string visualizerPosition: "bottom" // "bottom", "top", "fill", "none"
                         property real x: 240
                         property real y: 240
                         property int widgetScale: 100
