@@ -1,0 +1,123 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+:root {
+    /* Bold Typography Theme Base (MD3 Based) */
+    --md-primary: #6750A4;
+    --md-on-primary: #FFFFFF;
+    --md-primary-container: #EADDFF;
+    --md-on-primary-container: #21005D;
+    --md-surface: #FEF7FF;
+    --md-on-surface: #1D1B20;
+    --md-surface-container: #F3EDF7;
+    --md-outline: #79747E;
+    
+    /* These default to the CSS vars logic in App.tsx */
+    --background: var(--md-surface);
+    --on-background: var(--md-on-surface);
+    --surface: var(--md-surface);
+    --on-surface: var(--md-on-surface);
+    --surface-container: var(--md-surface-container);
+    --primary: var(--md-primary);
+    --on-primary: var(--md-on-primary);
+    --primary-container: var(--md-primary-container);
+    --on-primary-container: var(--md-on-primary-container);
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--on-background);
+  font-family: var(--font-sans);
+  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-x: hidden;
+  /* Fixed dimensions for the extension popup context */
+  min-width: 380px;
+  min-height: 600px;
+}
+
+@media (min-width: 768px) {
+  body {
+    min-width: auto;
+    min-height: auto;
+  }
+}
+
+/* Bold Typography Utility Classes */
+.hero-title {
+  font-size: clamp(3rem, 10vw, 104px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 0.9;
+  text-transform: uppercase;
+}
+
+.md3-card {
+  background-color: var(--surface-container);
+  color: var(--on-surface);
+  border-radius: 28px;
+  padding: 24px;
+  border: 1px solid rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+}
+
+.card-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  margin-bottom: 16px;
+  opacity: 0.6;
+}
+
+.status-badge {
+  background: var(--primary);
+  color: var(--on-primary);
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  display: inline-block;
+  text-transform: uppercase;
+}
+
+.variable-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.md3-button-primary {
+  background-color: var(--primary);
+  color: var(--on-primary);
+  padding: 12px 24px;
+  border-radius: 100px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.md3-button-secondary {
+  background-color: var(--surface-container-high);
+  color: var(--on-surface);
+  padding: 12px 24px;
+  border-radius: 100px;
+  font-weight: 600;
+  font-size: 14px;
+  border: 1px solid var(--outline-variant);
+  cursor: pointer;
+}

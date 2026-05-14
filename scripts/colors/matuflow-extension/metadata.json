@@ -1,0 +1,6 @@
+{
+  "name": "MatuFlow",
+  "description": "A Material Design 3 theme manager and previewer that dynamically syncs with system-generated CSS variables.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
