@@ -3,27 +3,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Palette, 
-  RefreshCw, 
   FileCode, 
   Settings, 
   Layout, 
   Check, 
   Copy, 
   Terminal,
-  ExternalLink,
-  Info,
-  ChevronRight,
-  Sun,
-  Moon
+  Power,
+  Trash2,
+  Code
 } from 'lucide-react';
 
 const DEFAULT_CSS = `/* ==UserStyle==
@@ -99,9 +91,61 @@ const DEFAULT_CSS = `/* ==UserStyle==
 
 export default function App() {
   const [cssCode, setCssCode] = useState(DEFAULT_CSS);
-  const [activeTab, setActiveTab] = useState<'preview' | 'editor' | 'settings'>('preview');
+  const [activeTab, setActiveTab] = useState<'preview' | 'editor' | 'themes' | 'settings'>('preview');
   const [copied, setCopied] = useState(false);
   const [lastSync, setLastSync] = useState(new Date().toLocaleTimeString());
+
+  // Extension Settings State
+  const [globalEnabled, setGlobalEnabled] = useState(true);
+  const [blacklist, setBlacklist] = useState<string[]>([]);
+  const [newBlacklistEntry, setNewBlacklistEntry] = useState('');
+  
+  // Dev Options
+  const [disableSiteTheming, setDisableSiteTheming] = useState(false);
+
+  // Load Initial Settings
+  useEffect(() => {
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.get(['matuflow_enabled', 'matuflow_blacklist', 'disable_site_theming', 'matuflow_theme'], (result) => {
+        if (result.matuflow_enabled !== undefined) setGlobalEnabled(result.matuflow_enabled);
+        if (result.matuflow_blacklist) setBlacklist(result.matuflow_blacklist);
+        if (result.disable_site_theming !== undefined) setDisableSiteTheming(result.disable_site_theming);
+        if (result.matuflow_theme) setCssCode(result.matuflow_theme);
+      });
+    }
+  }, []);
+
+  const updateStorage = (key: string, value: any) => {
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.set({ [key]: value });
+    }
+  };
+
+  const handleToggleGlobal = () => {
+    const newVal = !globalEnabled;
+    setGlobalEnabled(newVal);
+    updateStorage('matuflow_enabled', newVal);
+  };
+
+  const handleAddBlacklist = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newBlacklistEntry.trim()) return;
+    const newList = [...blacklist, newBlacklistEntry.trim()];
+    setBlacklist(newList);
+    updateStorage('matuflow_blacklist', newList);
+    setNewBlacklistEntry('');
+  };
+
+  const handleRemoveBlacklist = (domain: string) => {
+    const newList = blacklist.filter(d => d !== domain);
+    setBlacklist(newList);
+    updateStorage('matuflow_blacklist', newList);
+  };
+
+  const handleToggleSiteTheming = (val: boolean) => {
+    setDisableSiteTheming(val);
+    updateStorage('disable_site_theming', val);
+  };
 
   // Parse CSS variables from root
   const variables = useMemo(() => {
@@ -122,7 +166,6 @@ export default function App() {
         setCssCode(data.css);
         setLastSync(new Date(data.updatedAt).toLocaleTimeString());
         
-        // Push to extension storage if available so other tabs sync immediately
         if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
           chrome.storage.local.set({ 
             'matuflow_theme': data.css,
@@ -135,12 +178,10 @@ export default function App() {
     }
   }, []);
 
-  // Fetch on mount
   useEffect(() => {
     fetchThemeFromServer();
   }, [fetchThemeFromServer]);
 
-  // Inject variables into :root
   useEffect(() => {
     const root = document.documentElement;
     Object.entries(variables).forEach(([name, value]) => {
@@ -160,31 +201,17 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row text-[var(--on-surface)] selection:bg-[var(--primary-container)] selection:text-[var(--on-primary-container)]">
-      {/* Dynamic Background */}
       <div className="fixed inset-0 bg-[var(--background)] transition-colors duration-500 -z-10" />
 
-      {/* Navigation (Adaptive: Rail on MD+, Bottom Nav on Mobile/Popup) */}
       <nav className="w-full md:w-24 h-16 md:h-screen flex-shrink-0 flex flex-row md:flex-col items-center justify-around md:justify-center py-0 md:py-6 border-t md:border-t-0 md:border-r border-[var(--outline-variant)] bg-[var(--surface-container)] fixed bottom-0 md:relative z-40">
         <div className="hidden md:flex w-12 h-12 rounded-2xl bg-[var(--primary)] items-center justify-center mb-10 shadow-lg shadow-[var(--primary)]/20">
           <Palette className="text-[var(--on-primary)] w-6 h-6" />
         </div>
 
         <div className="flex flex-row md:flex-col gap-4 md:gap-4 items-center">
-          <NavRailItem 
-            active={activeTab === 'preview'} 
-            onClick={() => setActiveTab('preview')}
-            icon={<Layout className="w-5 h-5 md:w-6 md:h-6" />}
-          />
-          <NavRailItem 
-            active={activeTab === 'editor'} 
-            onClick={() => setActiveTab('editor')}
-            icon={<FileCode className="w-5 h-5 md:w-6 md:h-6" />}
-          />
-          <NavRailItem 
-            active={activeTab === 'settings'} 
-            onClick={() => setActiveTab('settings')}
-            icon={<Settings className="w-5 h-5 md:w-6 md:h-6" />}
-          />
+          <NavRailItem active={activeTab === 'preview'} onClick={() => setActiveTab('preview')} icon={<Layout className="w-5 h-5 md:w-6 md:h-6" />} />
+          <NavRailItem active={activeTab === 'editor'} onClick={() => setActiveTab('editor')} icon={<FileCode className="w-5 h-5 md:w-6 md:h-6" />} />
+          <NavRailItem active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} icon={<Settings className="w-5 h-5 md:w-6 md:h-6" />} />
         </div>
 
         <div className="hidden md:flex mt-auto mb-4 p-1 rounded-full bg-[var(--primary-container)]">
@@ -192,20 +219,24 @@ export default function App() {
         </div>
       </nav>
 
-      {/* Main Content Area */}
       <main className="flex-grow flex flex-col min-h-0 overflow-hidden pb-16 md:pb-0">
-        {/* Header - Narrower for extension popup */}
         <header className="h-14 md:h-20 flex-shrink-0 flex items-center justify-between px-4 md:px-10 bg-transparent">
           <div className="flex items-center gap-2 md:gap-3">
              <div className="status-badge text-[9px] md:text-sm px-2 py-0.5">MatuFlow</div>
              <div className="w-1.5 h-1.5 rounded-full bg-[var(--primary)] animate-pulse md:hidden" />
           </div>
-          <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex items-center gap-4 md:gap-6">
             <span className="text-[9px] md:text-xs font-mono tabular-nums opacity-60 bg-[var(--surface-container-highest)] px-2 py-1 rounded-md">{lastSync}</span>
+            <button 
+              onClick={handleToggleGlobal}
+              className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors \${globalEnabled ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}
+              title="Toggle Global Injection"
+            >
+              <Power className="w-5 h-5" />
+            </button>
           </div>
         </header>
 
-        {/* Scrollable Body - Responsive margins */}
         <div className="flex-grow overflow-y-auto px-4 md:px-10 pb-10 max-w-7xl w-full mx-auto custom-scrollbar">
           <AnimatePresence mode="wait">
             {activeTab === 'preview' && (
@@ -216,7 +247,6 @@ export default function App() {
                 exit={{ opacity: 0, y: -20 }}
                 className="flex flex-col gap-6 md:gap-12"
               >
-                {/* Hero Section */}
                 <div className="pt-2">
                   <h1 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter leading-none text-[var(--on-surface)]">
                     Theme<br />Ready.
@@ -224,7 +254,6 @@ export default function App() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-                  {/* Configuration Card */}
                   <div className="md3-card p-6">
                     <h2 className="card-label">Engine Status</h2>
                     <div className="space-y-4">
@@ -240,32 +269,25 @@ export default function App() {
                          </div>
                       </div>
 
-                      <button 
-                         onClick={handleSync}
-                         className="w-full md3-button-primary py-3 text-xs"
-                      >
+                      <button onClick={handleSync} className="w-full md3-button-primary py-3 text-xs">
                         Force Sync
                       </button>
                     </div>
                   </div>
 
-                  {/* Variables Preview Card - Condensed for popup */}
                   <div className="md3-card p-6">
                     <h2 className="card-label">Variables ({Object.keys(variables).length})</h2>
                     <div className="space-y-1 overflow-y-auto max-h-[200px] pr-2 custom-scrollbar">
                       {Object.entries(variables).slice(0, 8).map(([name, val]) => (
                         <div key={name} className="flex items-center justify-between py-2 border-b border-black/5 last:border-0 contrast-50">
                            <span className="font-mono text-[9px] text-[var(--primary)] font-bold truncate max-w-[120px]">{name}</span>
-                           <div 
-                             className="w-4 h-4 rounded-full border border-black/10 flex-shrink-0" 
-                             style={{ backgroundColor: val }}
-                           />
+                           <div className="w-4 h-4 rounded-full border border-black/10 flex-shrink-0" style={{ backgroundColor: val as string }} />
                         </div>
                       ))}
                     </div>
                   </div>
 
-                <div className="md3-card md:col-span-2 flex flex-col gap-6 bg-[var(--primary-container)] text-[var(--on-primary-container)] border-none p-5 md:p-8">
+                  <div className="md3-card md:col-span-2 flex flex-col gap-6 bg-[var(--primary-container)] text-[var(--on-primary-container)] border-none p-5 md:p-8">
                      <div className="space-y-3 text-center md:text-left">
                         <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter">Container Check</h3>
                         <p className="text-[10px] md:text-xs opacity-80 leading-relaxed max-w-md mx-auto md:mx-0">
@@ -282,10 +304,6 @@ export default function App() {
                      </div>
                   </div>
                 </div>
-
-                <footer className="pt-4 text-[9px] font-bold uppercase tracking-widest opacity-30 text-center">
-                  Theme Bridge Active • v2.4
-                </footer>
               </motion.div>
             )}
 
@@ -311,15 +329,6 @@ export default function App() {
                     className="flex-grow p-4 md:p-8 font-mono text-[10px] md:text-sm bg-transparent focus:outline-none resize-none leading-relaxed"
                     placeholder="Paste CSS variables here..."
                   />
-                  <div className="p-4 bg-white/50 backdrop-blur border-t border-black/5 flex justify-end gap-3">
-                    <button 
-                       onClick={() => setCssCode(DEFAULT_CSS)}
-                       className="text-[10px] md:text-xs font-bold uppercase px-3 py-2 hover:bg-black/5 rounded-lg transition-colors"
-                    >
-                      Reset
-                    </button>
-                    <button className="md3-button-primary text-[10px] px-4 py-2">Push</button>
-                  </div>
                 </div>
               </motion.div>
             )}
@@ -333,80 +342,53 @@ export default function App() {
                 className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-8"
               >
                 <div className="md3-card col-span-full">
-                   <h2 className="card-label">Global Web Injection</h2>
-                   <div className="bg-[var(--primary-container)] text-[var(--on-primary-container)] p-6 rounded-2xl border-none flex flex-col md:flex-row gap-6 items-center">
-                      <div className="flex-grow">
-                         <h3 className="text-xl font-black uppercase mb-2">Extension Active</h3>
-                         <p className="text-sm opacity-80 mb-4">
-                            You are currently viewing the MatuFlow dashboard directly from your browser extension. 
-                            Injection is active on all open tabs.
-                         </p>
-                         <div className="flex gap-4">
-                            <div className="flex items-center gap-2 text-xs font-bold bg-white/20 px-3 py-2 rounded-lg">
-                               <Check className="w-4 h-4" /> manifest.json ready
-                            </div>
-                            <div className="flex items-center gap-2 text-xs font-bold bg-white/20 px-3 py-2 rounded-lg">
-                               <Check className="w-4 h-4" /> inject.js ready
-                            </div>
-                         </div>
-                      </div>
-                      <div className="flex-shrink-0 w-full md:w-auto">
-                         <ol className="text-xs space-y-2 font-medium opacity-90 list-decimal list-inside">
-                            <li>Download project ZIP</li>
-                            <li>Go to <code>chrome://extensions</code></li>
-                            <li>Enable <b>Developer Mode</b></li>
-                            <li>Click <b>Load Unpacked</b></li>
-                            <li>Select the <code>/extension</code> folder</li>
-                         </ol>
-                      </div>
-                   </div>
-                </div>
+                  <h2 className="card-label">Website Blacklist</h2>
+                  <p className="text-xs opacity-70 mb-4">Domains listed here will not receive MatuFlow CSS variables or baked site themes.</p>
+                  
+                  <form onSubmit={handleAddBlacklist} className="flex gap-2 mb-4">
+                    <input 
+                      type="text" 
+                      placeholder="example.com" 
+                      className="flex-grow p-3 bg-[var(--surface-container-highest)] rounded-xl outline-none font-mono text-sm border border-black/5"
+                      value={newBlacklistEntry}
+                      onChange={(e) => setNewBlacklistEntry(e.target.value)}
+                    />
+                    <button type="submit" className="bg-[var(--primary)] text-[var(--on-primary)] px-4 rounded-xl font-bold">
+                      Add
+                    </button>
+                  </form>
 
-                <div className="md3-card col-span-full">
-                  <h2 className="card-label">Python Bridge Service</h2>
-                  <div className="bg-[var(--surface-container-highest)] p-6 rounded-2xl border border-black/5">
-                    <p className="text-sm opacity-70 mb-4">
-                      Download <strong>bridge.py</strong> and run it locally to sync your system theme. 
-                      It uses the standard library for zero dependencies.
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                       <div className="bg-black/20 p-4 rounded-xl font-mono text-xs overflow-x-auto selection:bg-white/10">
-                          <p className="text-[var(--primary)] mb-2"># Post-theme (Matugen)</p>
-                          <pre className="text-[var(--on-surface-variant)]">
-                             python3 bridge.py --reload --file path/to/css
-                          </pre>
-                       </div>
-                       <div className="bg-black/20 p-4 rounded-xl font-mono text-xs overflow-x-auto selection:bg-white/10">
-                          <p className="text-[var(--primary)] mb-2"># Background Service</p>
-                          <pre className="text-[var(--on-surface-variant)]">
-                             python3 bridge.py --watch
-                          </pre>
-                       </div>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs font-bold text-[var(--primary)]">
-                       <Terminal className="w-4 h-4" />
-                       ROOT API: http://localhost:50131/api/bridge/reload
-                    </div>
+                  <div className="flex flex-col gap-2">
+                    {blacklist.map(domain => (
+                      <div key={domain} className="flex justify-between items-center p-3 bg-[var(--surface-container-highest)] rounded-xl border border-black/5">
+                        <span className="font-mono text-sm">{domain}</span>
+                        <button onClick={() => handleRemoveBlacklist(domain)} className="text-red-500 hover:bg-red-500/10 p-2 rounded-lg transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                    {blacklist.length === 0 && (
+                      <div className="text-center py-4 opacity-50 text-xs">No domains blacklisted.</div>
+                    )}
                   </div>
                 </div>
 
-                <div className="md3-card">
-                  <h2 className="card-label">App Behavior</h2>
-                  <div className="space-y-4">
-                    <ToggleItem label="Force Root Proxy" />
-                    <ToggleItem label="Bypass CSP" active />
-                    <ToggleItem label="Silent Syncing" />
-                  </div>
-                </div>
-
-                <div className="md3-card border-red-500/10 bg-red-500/5">
-                  <h2 className="card-label text-red-500">Danger Zone</h2>
-                  <p className="text-sm font-medium mb-6 opacity-70">
-                    Irreversible actions related to the local filesystem bridge.
+                <div className="md3-card col-span-full border border-yellow-500/20 bg-yellow-500/5">
+                  <h2 className="card-label flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+                    <Code className="w-4 h-4" /> Dev Options
+                  </h2>
+                  <p className="text-xs opacity-70 mb-4">
+                    Options intended for developers creating baked-in themes.
                   </p>
-                  <button className="w-full bg-red-500 text-white font-bold py-3 rounded-2xl hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20">
-                     Kill Theme Bridge [PID: 4812]
-                  </button>
+                  
+                  <ToggleItem 
+                    label="Disable Baked Site Theming (Keep Base Colors)" 
+                    active={disableSiteTheming} 
+                    onChange={handleToggleSiteTheming} 
+                  />
+                  <p className="text-[10px] mt-2 opacity-50 pl-2">
+                    If active, baked-in Stylus themes won't be injected, letting you use a real Stylus instance to develop them locally. The global `--primary` colors will still be injected.
+                  </p>
                 </div>
               </motion.div>
             )}
@@ -414,18 +396,17 @@ export default function App() {
         </div>
       </main>
 
-      {/* Persistent Copy Action - Adjusted for visibility */}
-      <div className="fixed bottom-20 md:bottom-6 right-6 z-50 group">
-        <button 
-          onClick={handleCopy}
-          className="w-10 h-10 md:w-14 md:h-14 rounded-2xl bg-[var(--primary)] text-[var(--on-primary)] shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-transform"
-        >
-          {copied ? <Check className="w-4 h-4 md:w-6 md:h-6" /> : <Copy className="w-4 h-4 md:w-6 md:h-6" />}
-          <div className="absolute right-full mr-4 px-3 py-1 rounded-lg bg-[var(--on-surface)] text-[var(--surface)] text-[9px] font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none uppercase">
-             Copy CSS
-          </div>
-        </button>
-      </div>
+      {/* Persistent Copy Action */}
+      {activeTab === 'preview' && (
+        <div className="fixed bottom-20 md:bottom-6 right-6 z-50 group">
+          <button 
+            onClick={handleCopy}
+            className="w-10 h-10 md:w-14 md:h-14 rounded-2xl bg-[var(--primary)] text-[var(--on-primary)] shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-transform"
+          >
+            {copied ? <Check className="w-4 h-4 md:w-6 md:h-6" /> : <Copy className="w-4 h-4 md:w-6 md:h-6" />}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -435,7 +416,7 @@ function NavRailItem({ active, icon, onClick }: { active: boolean; icon: ReactNo
     <button 
       onClick={onClick}
       className={`w-14 h-14 rounded-3xl flex items-center justify-center transition-all duration-300 relative group
-        ${active ? 'text-[var(--primary)]' : 'hover:bg-[var(--primary)]/10 text-[var(--on-surface)] opacity-40 hover:opacity-100'}
+        \${active ? 'text-[var(--primary)]' : 'hover:bg-[var(--primary)]/10 text-[var(--on-surface)] opacity-40 hover:opacity-100'}
       `}
     >
       {active && (
@@ -446,41 +427,31 @@ function NavRailItem({ active, icon, onClick }: { active: boolean; icon: ReactNo
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         />
       )}
-      <div className={`transition-transform duration-300 ${active ? 'scale-110' : 'group-hover:scale-105'}`}>
+      <div className={`transition-transform duration-300 \${active ? 'scale-110' : 'group-hover:scale-105'}`}>
         {icon}
       </div>
     </button>
   );
 }
 
-function SettingsBlock({ title, value }: { title: string, value: string }) {
-  return (
-    <div className="p-4 rounded-2xl bg-[var(--surface-container-highest)] border border-black/5">
-      <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest mb-1">{title}</p>
-      <p className="text-xl font-black">{value}</p>
-    </div>
-  );
-}
-
-function ToggleItem({ label, active = false }: { label: string, active?: boolean }) {
+function ToggleItem({ label, active = false, onChange }: { label: string, active?: boolean, onChange?: (val: boolean) => void }) {
   return (
     <div className="flex items-center justify-between py-2 border-b border-black/5 last:border-0 hover:bg-black/[0.02] px-2 -mx-2 rounded-lg transition-colors">
       <span className="text-sm font-semibold">{label}</span>
-      <Toggle active={active} />
+      <Toggle active={active} onChange={onChange} />
     </div>
   );
 }
 
-function Toggle({ active = false }: { active?: boolean }) {
-  const [isOn, setIsOn] = useState(active);
+function Toggle({ active = false, onChange }: { active?: boolean, onChange?: (val: boolean) => void }) {
   return (
     <button 
-      onClick={() => setIsOn(!isOn)}
+      onClick={() => onChange && onChange(!active)}
       className={`w-13 h-8 rounded-full p-1 transition-colors duration-300 relative
-        ${isOn ? 'bg-[var(--primary)]' : 'bg-black/10'}
+        \${active ? 'bg-[var(--primary)]' : 'bg-black/10'}
       `}
     >
-      <div className={`w-6 h-6 rounded-full bg-white shadow-sm transition-transform duration-300 ${isOn ? 'translate-x-5' : 'translate-x-0'}`} />
+      <div className={`w-6 h-6 rounded-full bg-white shadow-sm transition-transform duration-300 \${active ? 'translate-x-5' : 'translate-x-0'}`} />
     </button>
   );
 }

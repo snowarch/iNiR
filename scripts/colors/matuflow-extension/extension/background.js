@@ -47,5 +47,17 @@ chrome.tabs.onActivated.addListener(fetchAndStoreTheme);
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (changeInfo.status === 'complete') fetchAndStoreTheme();
 });
-chrome.runtime.onInstalled.addListener(fetchAndStoreTheme);
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.storage.local.get(['matuflow_enabled', 'matuflow_blacklist', 'disable_site_theming'], (result) => {
+    const defaults = {};
+    if (result.matuflow_enabled === undefined) defaults.matuflow_enabled = true;
+    if (result.matuflow_blacklist === undefined) defaults.matuflow_blacklist = [];
+    if (result.disable_site_theming === undefined) defaults.disable_site_theming = false;
+    
+    if (Object.keys(defaults).length > 0) {
+      chrome.storage.local.set(defaults);
+    }
+  });
+  fetchAndStoreTheme();
+});
 chrome.runtime.onStartup.addListener(fetchAndStoreTheme);
