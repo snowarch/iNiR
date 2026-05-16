@@ -59,6 +59,8 @@ check_dependencies() {
     
     # Commands to check (command:friendly_name)
     # These are distro-agnostic - we check for the command, not the package
+    # ALL dependencies are required — optional features still need their tools
+    # installed to avoid user confusion when things silently don't work.
     local cmds=(
         "qs:Quickshell"
         "niri:Niri"
@@ -83,10 +85,7 @@ check_dependencies() {
         "notify-send:libnotify"
         "flock:util-linux"
         "go:go"
-    )
-    
-    # Optional but recommended
-    local optional_cmds=(
+        "wlsunset:wlsunset"
         "easyeffects:EasyEffects"
         "uv:uv"
         "cava:cava"
@@ -110,7 +109,6 @@ check_dependencies() {
         "mpv:mpv"
         "swaylock:swaylock"
         "swayidle:swayidle"
-        "wlsunset:wlsunset"
         "songrec:SongRec"
         "trans:translate-shell"
     )
@@ -140,21 +138,9 @@ check_dependencies() {
         missing_cmds+=("millennium")
     fi
     
-    # Check optional commands (warn but don't fail)
-    local optional_missing=()
-    for item in "${optional_cmds[@]}"; do
-        local cmd="${item%%:*}"
-        local name="${item##*:}"
-        command -v "$cmd" &>/dev/null || optional_missing+=("$name")
-    done
-    
     if [[ ${#missing[@]} -eq 0 ]]; then
         doctor_missing_deps=()
-        if [[ ${#optional_missing[@]} -gt 0 ]]; then
-            doctor_pass "Required commands OK (optional missing: ${optional_missing[*]})"
-        else
-            doctor_pass "All required commands available"
-        fi
+        doctor_pass "All dependencies available"
     else
         # Keep command identifiers here (qs, niri, wl-copy, etc.) because
         # setup/update installers map these keys to distro package names.
@@ -536,11 +522,10 @@ check_fonts() {
         "Rubik:Rubik:important"
         "Space Grotesk:Space Grotesk:important"
         "Readex Pro:Readex Pro:important"
+        "Gabarito:Gabarito:important"
     )
 
     local optional_fonts=(
-        "Material Symbols Outlined:Material Symbols Outlined:optional"
-        "Gabarito:Gabarito:optional"
         "Geist:Geist:optional"
         "Oxanium:Oxanium:optional"
         "Noto Color Emoji:Noto Color Emoji:optional"
@@ -612,8 +597,6 @@ check_fonts() {
             case "$font" in
                 "Material Symbols Rounded")
                     _try_install_font_package "ttf-material-symbols-variable-git" "Material Symbols Rounded" && ((fixed++)) || true ;;
-                "Material Symbols Outlined")
-                    _try_install_font_package "ttf-material-symbols-variable-git" "Material Symbols Outlined" && ((fixed++)) || true ;;
                 "JetBrainsMono Nerd Font")
                     _try_install_font_package "ttf-jetbrains-mono-nerd" "JetBrainsMono Nerd Font" && ((fixed++)) || true ;;
                 "Roboto Flex")
@@ -624,6 +607,8 @@ check_fonts() {
                     _try_install_font_package "ttf-space-grotesk" "Space Grotesk" && ((fixed++)) || true ;;
                 "Readex Pro")
                     _try_install_font_package "ttf-readex-pro" "Readex Pro" && ((fixed++)) || true ;;
+                "Gabarito")
+                    _try_install_font_package "ttf-gabarito" "Gabarito" && ((fixed++)) || true ;;
             esac
         done
 
@@ -1487,15 +1472,43 @@ check_niri_config() {
 # Main
 ###############################################################################
 
+# Run a doctor check as an animated step. Output is buffered while the
+# spinner runs, then printed below the resolved step line.
+_doctor_run_step() {
+    local step="$1" total="$2" desc="$3"; shift 3
+    local tmpfile pre_failed pre_fixed
+    tmpfile=$(mktemp)
+    pre_failed=$doctor_failed
+    pre_fixed=$doctor_fixed
+
+    tui_step_start "$step" "$total" "$desc"
+    "$@" > "$tmpfile" 2>&1
+
+    local new_fails=$((doctor_failed - pre_failed))
+    local new_fixes=$((doctor_fixed - pre_fixed))
+
+    if [[ $new_fails -gt 0 ]]; then
+        tui_step_fail
+    elif [[ $new_fixes -gt 0 ]]; then
+        tui_step_warn "Fixed: $desc"
+    else
+        tui_step_done
+    fi
+
+    # Always show check details
+    [[ -s "$tmpfile" ]] && sed 's/^/  /' "$tmpfile"
+    rm -f "$tmpfile"
+}
+
 run_doctor_with_fixes() {
     local total_steps=22
     local doctor_started_at=$SECONDS
     doctor_passed=0
     doctor_failed=0
     doctor_fixed=0
-    
-    tui_step 1 $total_steps "Checking dependencies"
-    check_dependencies
+
+    # Step 1: Dependencies (special — may trigger interactive install)
+    _doctor_run_step 1 $total_steps "Checking dependencies" check_dependencies
 
     if [[ ${#doctor_missing_deps[@]} -gt 0 ]]; then
         detect_distro
@@ -1505,83 +1518,43 @@ run_doctor_with_fixes() {
                     SKIP_SYSUPDATE=true
                     ONLY_MISSING_DEPS="${doctor_missing_deps[*]}"
                     source ./sdata/subcmd-install/1.deps-router.sh
-                    check_dependencies
+                    # Re-check after install
+                    doctor_passed=0; doctor_failed=0; doctor_fixed=0
+                    _doctor_run_step 1 $total_steps "Re-checking dependencies" check_dependencies
                 fi
                 ;;
             *)
-                echo -e "${STY_YELLOW}Automatic dependency installation not available for ${OS_GROUP_ID}.${STY_RST}"
-                echo -e "${STY_YELLOW}Please install missing dependencies manually.${STY_RST}"
+                echo -e "  ${STY_YELLOW}Automatic install not available for ${OS_GROUP_ID}. Install manually.${STY_RST}"
                 ;;
         esac
     fi
-    
-    tui_step 2 $total_steps "Checking fonts"
-    check_fonts
-    
-    tui_step 3 $total_steps "Checking repo checkout"
-    check_repo_checkout_state
 
-    tui_step 4 $total_steps "Checking critical files"
-    check_critical_files
-    
-    tui_step 5 $total_steps "Checking script permissions"
-    check_script_permissions
+    _doctor_run_step 2  $total_steps "Checking fonts"                check_fonts
+    _doctor_run_step 3  $total_steps "Checking repo checkout"        check_repo_checkout_state
+    _doctor_run_step 4  $total_steps "Checking critical files"       check_critical_files
+    _doctor_run_step 5  $total_steps "Checking script permissions"   check_script_permissions
+    _doctor_run_step 6  $total_steps "Checking launcher"             check_launcher_health
+    _doctor_run_step 7  $total_steps "Checking user config"          check_user_config
+    _doctor_run_step 8  $total_steps "Checking state directories"    check_state_directories
+    _doctor_run_step 9  $total_steps "Checking version tracking"     check_version_tracking
+    _doctor_run_step 10 $total_steps "Checking file manifest"        check_manifest
+    _doctor_run_step 11 $total_steps "Checking user service"         check_service_unit_health
+    _doctor_run_step 12 $total_steps "Checking Niri compositor"      check_niri_running
+    _doctor_run_step 13 $total_steps "Checking Python packages"      check_python_packages
+    _doctor_run_step 14 $total_steps "Checking Quickshell/Qt ABI"    check_quickshell_abi
+    _doctor_run_step 15 $total_steps "Checking Quickshell"           check_quickshell_loads
+    _doctor_run_step 16 $total_steps "Checking theme colors"         check_matugen_colors
+    _doctor_run_step 17 $total_steps "Checking Qt theming"           check_qt_theming
+    _doctor_run_step 18 $total_steps "Checking conflicting services" check_conflicting_services
+    _doctor_run_step 19 $total_steps "Checking conflicting shells"   check_conflicting_shells
+    _doctor_run_step 20 $total_steps "Checking wallpaper health"     check_wallpaper_health
+    _doctor_run_step 21 $total_steps "Checking environment variables" check_environment_vars
+    _doctor_run_step 22 $total_steps "Checking Niri config"          check_niri_config
 
-    tui_step 6 $total_steps "Checking launcher"
-    check_launcher_health
-    
-    tui_step 7 $total_steps "Checking user config"
-    check_user_config
-    
-    tui_step 8 $total_steps "Checking state directories"
-    check_state_directories
-    
-    tui_step 9 $total_steps "Checking version tracking"
-    check_version_tracking
-    
-    tui_step 10 $total_steps "Checking file manifest"
-    check_manifest
-
-    tui_step 11 $total_steps "Checking user service"
-    check_service_unit_health
-    
-    tui_step 12 $total_steps "Checking Niri compositor"
-    check_niri_running
-    
-    tui_step 13 $total_steps "Checking Python packages"
-    check_python_packages
-    
-    tui_step 14 $total_steps "Checking Quickshell/Qt ABI"
-    check_quickshell_abi
-    
-    tui_step 15 $total_steps "Checking Quickshell"
-    check_quickshell_loads
-    
-    tui_step 16 $total_steps "Checking theme colors"
-    check_matugen_colors
-    
-    tui_step 17 $total_steps "Checking Qt theming"
-    check_qt_theming
-    
-    tui_step 18 $total_steps "Checking conflicting services"
-    check_conflicting_services
-    
-    tui_step 19 $total_steps "Checking conflicting shells"
-    check_conflicting_shells
-    
-    tui_step 20 $total_steps "Checking wallpaper health"
-    check_wallpaper_health
-    
-    tui_step 21 $total_steps "Checking environment variables"
-    check_environment_vars
-    
-    tui_step 22 $total_steps "Checking Niri config"
-    check_niri_config
-    
     echo ""
     tui_divider
     echo ""
-    
+
     # Summary
     tui_title "Summary"
     echo ""
@@ -1590,7 +1563,7 @@ run_doctor_with_fixes() {
         "Fixed" "$doctor_fixed" "warning" \
         "Failed" "$doctor_failed" "error" \
         "Time" "$(tui_elapsed "$doctor_started_at")" "muted"
-    
+
     echo ""
     if [[ $doctor_failed -gt 0 ]]; then
         tui_error "Some issues need manual attention."
@@ -1599,7 +1572,7 @@ run_doctor_with_fixes() {
         return 1
     elif [[ $doctor_fixed -gt 0 ]]; then
         tui_success "All issues fixed automatically."
-        tui_info "Restart the shell to make sure the fresh state actually sticks: inir restart"
+        tui_info "Restart the shell to apply: inir restart"
     else
         tui_success "Everything looks good!"
     fi

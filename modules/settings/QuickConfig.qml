@@ -149,8 +149,8 @@ ContentPage {
                         buttonRadius: Appearance.rounding.full
                         materialIcon: "ifl"
                         mainText: randomWallProc.running ? Translation.tr("...") : Translation.tr("Konachan")
-                        colBackground: Qt.rgba(0, 0, 0, 0.5)
-                        colBackgroundHover: Qt.rgba(0, 0, 0, 0.65)
+                        colBackground: Qt.rgba(Appearance.colors.colLayer1.r, Appearance.colors.colLayer1.g, Appearance.colors.colLayer1.b, 0.75)
+                        colBackgroundHover: Qt.rgba(Appearance.colors.colLayer1.r, Appearance.colors.colLayer1.g, Appearance.colors.colLayer1.b, 0.85)
                         mainContentComponent: Component {
                             StyledText {
                                 text: randomWallProc.running ? Translation.tr("...") : Translation.tr("Konachan")
@@ -171,8 +171,8 @@ ContentPage {
                         buttonRadius: Appearance.rounding.full
                         materialIcon: "ifl"
                         mainText: randomWallProc.running ? Translation.tr("...") : Translation.tr("osu!")
-                        colBackground: Qt.rgba(0, 0, 0, 0.5)
-                        colBackgroundHover: Qt.rgba(0, 0, 0, 0.65)
+                        colBackground: Qt.rgba(Appearance.colors.colLayer1.r, Appearance.colors.colLayer1.g, Appearance.colors.colLayer1.b, 0.75)
+                        colBackgroundHover: Qt.rgba(Appearance.colors.colLayer1.r, Appearance.colors.colLayer1.g, Appearance.colors.colLayer1.b, 0.85)
                         mainContentComponent: Component {
                             StyledText {
                                 text: randomWallProc.running ? Translation.tr("...") : Translation.tr("osu!")
@@ -197,8 +197,8 @@ ContentPage {
                     anchors.margins: 10
                     buttonRadius: Appearance.rounding.full
                     materialIcon: "wallpaper"
-                    colBackground: Qt.rgba(0, 0, 0, 0.5)
-                    colBackgroundHover: Qt.rgba(0, 0, 0, 0.65)
+                    colBackground: Qt.rgba(Appearance.colors.colLayer1.r, Appearance.colors.colLayer1.g, Appearance.colors.colLayer1.b, 0.75)
+                    colBackgroundHover: Qt.rgba(Appearance.colors.colLayer1.r, Appearance.colors.colLayer1.g, Appearance.colors.colLayer1.b, 0.85)
                     onClicked: {
                         Quickshell.execDetached(`${Directories.wallpaperSwitchScriptPath}`);
                     }
