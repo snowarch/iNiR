@@ -569,6 +569,18 @@ Singleton {
                         property real backgroundBrightness: 0.50  // 0.0 - 1.0 (0=darkest, 1=lightest)
                     }
                 }
+                property JsonObject cava: JsonObject {
+                    property string colorSource: "theme" // "theme" (palette), "vibrant" (saturated palette), "cover" (album art)
+                    property int gradientCount: 8 // 2-8
+                    property string foreground: "" // empty = gradient, hex = single foreground color
+                    property string background: "" // empty = from palette, hex = override
+                    property int sensitivity: 100 // 1-500
+                    property int bars: 0 // 0 = auto
+                    property int framerate: 60 // 30-165
+                    property int barWidth: 2
+                    property int barSpacing: 1
+                    property bool stereo: true
+                }
                 property JsonObject palette: JsonObject {
                     property string type: "auto" // Allowed: auto, scheme-content, scheme-expressive, scheme-fidelity, scheme-fruit-salad, scheme-monochrome, scheme-neutral, scheme-rainbow, scheme-tonal-spot
                     property string accentColor: "" // Seed color hex for scheme variant (e.g. "#ab1234"), empty = use theme primary

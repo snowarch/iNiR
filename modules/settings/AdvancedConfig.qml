@@ -166,6 +166,7 @@ ContentPage {
                 }
             }
             SettingsSwitch {
+                id: cavaSwitch
                 buttonIcon: "equalizer"
                 text: Translation.tr("Cava")
                 checked: Config.options?.appearance?.wallpaperTheming?.enableCava ?? false
@@ -177,6 +178,116 @@ ContentPage {
                     text: Translation.tr("Apply Material You gradient colors to cava audio visualizer config")
                 }
             }
+
+            ContentSubsection {
+                visible: cavaSwitch.checked
+                title: Translation.tr("Cava options")
+
+                ConfigSelectionArray {
+                    currentValue: Config.options?.appearance?.cava?.colorSource ?? "theme"
+                    onSelected: newValue => {
+                        Config.setNestedValue("appearance.cava.colorSource", newValue);
+                        colorRegenTimer.restart();
+                    }
+                    options: [
+                        { displayName: Translation.tr("Theme palette"), value: "theme" },
+                        { displayName: Translation.tr("Vibrant (saturated)"), value: "vibrant" },
+                        { displayName: Translation.tr("Album cover"), value: "cover" }
+                    ]
+                }
+
+                ConfigSpinBox {
+                    icon: "gradient"
+                    text: Translation.tr("Gradient colors")
+                    value: Config.options?.appearance?.cava?.gradientCount ?? 8
+                    from: 2
+                    to: 8
+                    onValueChanged: {
+                        Config.setNestedValue("appearance.cava.gradientCount", value);
+                        colorRegenTimer.restart();
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Number of gradient stops in the visualizer (2-8)")
+                    }
+                }
+                ConfigSpinBox {
+                    icon: "hearing"
+                    text: Translation.tr("Sensitivity")
+                    value: Config.options?.appearance?.cava?.sensitivity ?? 100
+                    from: 1
+                    to: 500
+                    stepSize: 10
+                    onValueChanged: {
+                        Config.setNestedValue("appearance.cava.sensitivity", value);
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Audio sensitivity (higher = more reactive)")
+                    }
+                }
+                ConfigSpinBox {
+                    icon: "bar_chart"
+                    text: Translation.tr("Bars")
+                    value: Config.options?.appearance?.cava?.bars ?? 0
+                    from: 0
+                    to: 200
+                    stepSize: 8
+                    onValueChanged: {
+                        Config.setNestedValue("appearance.cava.bars", value);
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Number of bars (0 = auto based on terminal width)")
+                    }
+                }
+                ConfigSpinBox {
+                    icon: "speed"
+                    text: Translation.tr("Framerate")
+                    value: Config.options?.appearance?.cava?.framerate ?? 60
+                    from: 30
+                    to: 165
+                    stepSize: 5
+                    onValueChanged: {
+                        Config.setNestedValue("appearance.cava.framerate", value);
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Target refresh rate for the visualizer")
+                    }
+                }
+                ConfigRow {
+                    uniform: true
+                    ConfigSpinBox {
+                        icon: "width"
+                        text: Translation.tr("Bar width")
+                        value: Config.options?.appearance?.cava?.barWidth ?? 2
+                        from: 1
+                        to: 20
+                        onValueChanged: {
+                            Config.setNestedValue("appearance.cava.barWidth", value);
+                        }
+                    }
+                    ConfigSpinBox {
+                        icon: "space_bar"
+                        text: Translation.tr("Bar spacing")
+                        value: Config.options?.appearance?.cava?.barSpacing ?? 1
+                        from: 0
+                        to: 10
+                        onValueChanged: {
+                            Config.setNestedValue("appearance.cava.barSpacing", value);
+                        }
+                    }
+                }
+                SettingsSwitch {
+                    buttonIcon: "headphones"
+                    text: Translation.tr("Stereo")
+                    checked: Config.options?.appearance?.cava?.stereo ?? true
+                    onCheckedChanged: {
+                        Config.setNestedValue("appearance.cava.stereo", checked);
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Split visualizer into left/right channels")
+                    }
+                }
+            }
+
             ConfigRow {
                 uniform: true
                 SettingsSwitch {

@@ -53,6 +53,18 @@
             "dayStart": "06:00",
             "nightStart": "18:00"
         },
+        "cava": {
+            "colorSource": "theme",
+            "gradientCount": 8,
+            "foreground": "",
+            "background": "",
+            "sensitivity": 100,
+            "bars": 0,
+            "framerate": 60,
+            "barWidth": 2,
+            "barSpacing": 1,
+            "stereo": true
+        },
         "palette": {
             "type": "auto",
             "accentColor": ""

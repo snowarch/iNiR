@@ -789,6 +789,7 @@ WSettingsPage {
         }
 
         WSettingsSwitch {
+            id: waffleCavaSwitch
             label: Translation.tr("Cava")
             icon: "music-note-2"
             description: Translation.tr("Apply Material You gradient colors to cava audio visualizer config")
@@ -802,6 +803,114 @@ WSettingsPage {
             description: Translation.tr("Enable transparent UI elements")
             checked: Config.options?.appearance?.transparency?.enable ?? false
             onCheckedChanged: Config.setNestedValue("appearance.transparency.enable", checked)
+        }
+    }
+
+    // Cava visualizer options
+    WSettingsCard {
+        visible: waffleCavaSwitch.checked
+        title: Translation.tr("Cava Options")
+        icon: "music-note-2"
+
+        Timer {
+            id: cavaDebounce
+            interval: 500
+            onTriggered: Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--noswitch"])
+        }
+
+        WSettingsDropdown {
+            label: Translation.tr("Color source")
+            icon: "eyedropper"
+            description: Translation.tr("Where to pull gradient colors from")
+            currentValue: Config.options?.appearance?.cava?.colorSource ?? "theme"
+            options: [
+                { value: "theme", displayName: Translation.tr("Theme palette") },
+                { value: "vibrant", displayName: Translation.tr("Vibrant (saturated)") },
+                { value: "cover", displayName: Translation.tr("Album cover") }
+            ]
+            onSelected: newValue => {
+                Config.setNestedValue("appearance.cava.colorSource", newValue);
+                cavaDebounce.restart();
+            }
+        }
+
+        WSettingsSpinBox {
+            label: Translation.tr("Gradient colors")
+            icon: "color"
+            description: Translation.tr("Number of gradient stops (2-8)")
+            from: 2
+            to: 8
+            value: Config.options?.appearance?.cava?.gradientCount ?? 8
+            onValueChanged: {
+                Config.setNestedValue("appearance.cava.gradientCount", value);
+                cavaDebounce.restart();
+            }
+        }
+
+        WSettingsSlider {
+            label: Translation.tr("Sensitivity")
+            icon: "sound-high"
+            description: Translation.tr("Audio sensitivity (higher = more reactive)")
+            from: 10
+            to: 500
+            stepSize: 10
+            value: Config.options?.appearance?.cava?.sensitivity ?? 100
+            property bool _ready: false
+            Component.onCompleted: _ready = true
+            onMoved: {
+                if (!_ready) return;
+                Config.setNestedValue("appearance.cava.sensitivity", value);
+            }
+        }
+
+        WSettingsSpinBox {
+            label: Translation.tr("Bars")
+            icon: "chart-bar"
+            description: Translation.tr("Number of bars (0 = auto)")
+            from: 0
+            to: 200
+            stepSize: 8
+            value: Config.options?.appearance?.cava?.bars ?? 0
+            onValueChanged: Config.setNestedValue("appearance.cava.bars", value)
+        }
+
+        WSettingsSpinBox {
+            label: Translation.tr("Framerate")
+            icon: "video"
+            description: Translation.tr("Target refresh rate")
+            from: 30
+            to: 165
+            stepSize: 5
+            value: Config.options?.appearance?.cava?.framerate ?? 60
+            onValueChanged: Config.setNestedValue("appearance.cava.framerate", value)
+        }
+
+        WSettingsSpinBox {
+            label: Translation.tr("Bar width")
+            icon: "layout-columns"
+            description: Translation.tr("Width of each bar")
+            from: 1
+            to: 20
+            value: Config.options?.appearance?.cava?.barWidth ?? 2
+            onValueChanged: Config.setNestedValue("appearance.cava.barWidth", value)
+        }
+
+        WSettingsSpinBox {
+            label: Translation.tr("Bar spacing")
+            icon: "separator-horizontal"
+            description: Translation.tr("Gap between bars")
+            from: 0
+            to: 10
+            value: Config.options?.appearance?.cava?.barSpacing ?? 1
+            onValueChanged: Config.setNestedValue("appearance.cava.barSpacing", value)
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("Stereo")
+            icon: "headphones"
+            description: Translation.tr("Split visualizer into left/right channels")
+            checked: Config.options?.appearance?.cava?.stereo ?? true
+            onCheckedChanged: Config.setNestedValue("appearance.cava.stereo", checked)
         }
     }
 
