@@ -348,51 +348,67 @@ Singleton {
 
     Process {
         id: detectTempSensors
-        // Detect CPU and GPU temperature sensors
-        // Extended support for older hardware, laptops, and various platforms
+        // Detect CPU and GPU temperature sensors using priority-based selection.
+        // On Intel, acpitz/pch report near-constant values; coretemp is the real sensor.
         command: ["/usr/bin/bash", "-c", `
-            cpu_found=""
-            gpu_found=""
+            cpu_path=""
+            gpu_path=""
+            cpu_priority=0
 
             for hwmon in /sys/class/hwmon/hwmon*; do
-                name=$(cat $hwmon/name 2>/dev/null)
+                [ -f "$hwmon/name" ] || continue
+                name=$(cat "$hwmon/name" 2>/dev/null)
 
-                # Find best temp input (prefer temp1, but check others)
-                temp_input=""
-                for t in $hwmon/temp*_input; do
-                    [ -f "$t" ] && temp_input="$t" && break
+                temp=""
+                for f in "$hwmon/temp1_input" $hwmon/temp*_input; do
+                    [ -f "$f" ] && temp="$f" && break
                 done
-                [ -z "$temp_input" ] && continue
+                [ -z "$temp" ] && continue
 
-                # CPU sensors - extended list for various hardware
+                # CPU sensors ranked by accuracy
+                priority_level=0
                 case "$name" in
-                    coretemp|k10temp|zenpower|cpu_thermal|fam15h_power|acpitz|thinkpad|dell_smm|hp_wmi|asus_ec|it87|nct6775|w83627ehf|lm75|lm78|lm85|via_cputemp|pch_*)
-                        [ -z "$cpu_found" ] && echo "cpu:$temp_input" && cpu_found=1
-                        ;;
+                    coretemp|k10temp|zenpower|cpu_thermal|fam15h_power|via_cputemp) priority_level=3 ;;
+                    thinkpad|dell_smm|hp_wmi|asus_ec|it87|nct6775|w83627ehf|lm75|lm78|lm85) priority_level=2 ;;
+                    acpitz|pch_*) priority_level=1 ;;
                 esac
 
-                # GPU sensors
+                if [ "$priority_level" -gt "$cpu_priority" ]; then
+                    cpu_priority=$priority_level
+                    cpu_path="$temp"
+                fi
+
                 case "$name" in
                     amdgpu|radeon|nvidia|nouveau|i915|xe|panfrost|lima|v3d|vc4)
-                        [ -z "$gpu_found" ] && echo "gpu:$temp_input" && gpu_found=1
+                        [ -z "$gpu_path" ] && gpu_path="$temp"
                         ;;
                 esac
             done
 
             # Fallback to thermal_zone if hwmon didn't find sensors
-            for tz in /sys/class/thermal/thermal_zone*; do
-                [ -f "$tz/temp" ] || continue
-                type=$(cat $tz/type 2>/dev/null | tr '[:upper:]' '[:lower:]')
+            if [ -z "$cpu_path" ] || [ -z "$gpu_path" ]; then
+                for tz in /sys/class/thermal/thermal_zone*; do
+                    [ -f "$tz/temp" ] || continue
+                    type=$(cat "$tz/type" 2>/dev/null | tr '[:upper:]' '[:lower:]')
 
-                case "$type" in
-                    *cpu*|x86_pkg_temp|acpitz|*soc*|*core*|*package*|*processor*|int3400*|pch*|b0d4*)
-                        [ -z "$cpu_found" ] && echo "cpu:$tz/temp" && cpu_found=1
-                        ;;
-                    *gpu*|*radeon*|*amdgpu*|*nvidia*)
-                        [ -z "$gpu_found" ] && echo "gpu:$tz/temp" && gpu_found=1
-                        ;;
-                esac
-            done
+                    if [ -z "$cpu_path" ]; then
+                        case "$type" in
+                            *cpu*|x86_pkg_temp|acpitz|*soc*|*core*|*package*|*processor*|int3400*|pch*|b0d4*)
+                                cpu_path="$tz/temp" ;;
+                        esac
+                    fi
+
+                    if [ -z "$gpu_path" ]; then
+                        case "$type" in
+                            *gpu*|*radeon*|*amdgpu*|*nvidia*)
+                                gpu_path="$tz/temp" ;;
+                        esac
+                    fi
+                done
+            fi
+
+            [ -n "$cpu_path" ] && echo "cpu:$cpu_path"
+            [ -n "$gpu_path" ] && echo "gpu:$gpu_path"
         `]
         stdout: SplitParser {
             onRead: line => {

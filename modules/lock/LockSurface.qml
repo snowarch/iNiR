@@ -441,26 +441,26 @@ MouseArea {
 
                 // Battery (laptop only)
                 Row {
+                    id: topBatteryRow
                     spacing: 4
                     visible: UPower.displayDevice?.isPresent ?? false
+
+                    readonly property int batteryLevel: Math.round((UPower.displayDevice?.percentage ?? 0) * 100)
+                    readonly property bool isCharging: UPower.displayDevice?.state === UPowerDeviceState.Charging
 
                     MaterialSymbol {
                         anchors.verticalCenter: parent.verticalCenter
                         text: {
-                            const pct = UPower.displayDevice?.percentage ?? 0
-                            const charging = UPower.displayDevice?.state === UPowerDeviceState.Charging
-                            if (charging) return "battery_charging_full"
-                            if (pct <= 10) return "battery_alert"
-                            if (pct <= 30) return "battery_2_bar"
-                            if (pct <= 60) return "battery_4_bar"
-                            if (pct <= 80) return "battery_5_bar"
+                            if (topBatteryRow.isCharging) return "battery_charging_full"
+                            if (topBatteryRow.batteryLevel <= 10) return "battery_alert"
+                            if (topBatteryRow.batteryLevel <= 30) return "battery_2_bar"
+                            if (topBatteryRow.batteryLevel <= 60) return "battery_4_bar"
+                            if (topBatteryRow.batteryLevel <= 80) return "battery_5_bar"
                             return "battery_full"
                         }
                         iconSize: 16
-                        color: {
-                            const pct = UPower.displayDevice?.percentage ?? 0
-                            return pct <= 15 ? Appearance.colors.colError : Appearance.colors.colOnSurface
-                        }
+                        color: (topBatteryRow.batteryLevel <= 15 && !topBatteryRow.isCharging)
+                            ? Appearance.colors.colError : Appearance.colors.colOnSurface
 
                         layer.enabled: Appearance.effectsEnabled
                         layer.effect: DropShadow {
@@ -471,7 +471,7 @@ MouseArea {
 
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: Math.round(UPower.displayDevice?.percentage ?? 0) + "%"
+                        text: topBatteryRow.batteryLevel + "%"
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         font.family: Appearance.font.family.numbers
                         color: Appearance.colors.colOnSurfaceVariant
