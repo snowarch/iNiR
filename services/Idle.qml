@@ -72,7 +72,7 @@ Singleton {
             cmd.push("before-sleep", `'${StringUtils.shellSingleQuoteEscape(root.launcherPath)}' lock activate`)
         }
 
-        console.log("[Idle] Starting swayidle")
+        if (Quickshell.env("QS_DEBUG") === "1") console.log("[Idle] Starting swayidle")
         Quickshell.execDetached(cmd)
     }
 

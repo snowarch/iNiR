@@ -505,9 +505,9 @@ Singleton {
     }
 
     function attemptInvokeAction(id, notifIdentifier) {
-        console.log("[Notifications] Attempting to invoke action with identifier: " + notifIdentifier + " for notification ID: " + id);
+        _log("[Notifications] Attempting to invoke action with identifier: " + notifIdentifier + " for notification ID: " + id);
         const notifServerIndex = notifServer.trackedNotifications.values.findIndex((notif) => notif.id + root.idOffset === id);
-        console.log("Notification server index: " + notifServerIndex);
+        _log("Notification server index: " + notifServerIndex);
         if (notifServerIndex !== -1) {
             const notifServerNotif = notifServer.trackedNotifications.values[notifServerIndex];
             const action = notifServerNotif?.actions?.find((action) => action.identifier === notifIdentifier);
@@ -522,7 +522,7 @@ Singleton {
             }
         }
         else {
-            console.log("Notification not found in server: " + id)
+            _log("Notification not found in server: " + id)
         }
         root.discardNotification(id);
     }
@@ -622,7 +622,7 @@ Singleton {
                 maxId = Math.max(maxId, notif.notificationId)
             })
 
-            console.log("[Notifications] File loaded")
+            _log("[Notifications] File loaded")
             root.idOffset = maxId
             root.initDone()
         }

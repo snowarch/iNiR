@@ -15,7 +15,11 @@ import qs.modules.common
  */
 Singleton {
     id: root
-    
+
+    function _log(...args): void {
+        if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
+    }
+
     // Public API - matches PolkitServiceImpl
     property var agent: impl?.agent ?? null
     property bool active: impl?.active ?? false
@@ -43,10 +47,10 @@ Singleton {
         function finishCreation() {
             if (component.status === Component.Ready) {
                 root.impl = component.createObject(root)
-                console.log("[PolkitService] Polkit module loaded successfully")
+                _log("[PolkitService] Polkit module loaded successfully")
             } else if (component.status === Component.Error) {
-                console.debug("[PolkitService] Polkit module not available - polkit agent disabled")
-                console.debug("[PolkitService] To enable, rebuild quickshell with -DSERVICE_POLKIT=ON")
+                _log("[PolkitService] Polkit module not available - polkit agent disabled")
+                _log("[PolkitService] To enable, rebuild quickshell with -DSERVICE_POLKIT=ON")
             }
         }
 

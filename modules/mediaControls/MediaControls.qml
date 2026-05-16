@@ -84,13 +84,13 @@ Scope {
                     interval: 100
                     repeat: false
                     onTriggered: {
-                        console.log("MediaControls: Forcing focus")
+                        if (Quickshell.env("QS_DEBUG") === "1") console.log("MediaControls: Forcing focus")
                         inputScope.forceActiveFocus()
                     }
                 }
 
                 Keys.onSpacePressed: {
-                    console.log("MediaControls: Space pressed")
+                    if (Quickshell.env("QS_DEBUG") === "1") console.log("MediaControls: Space pressed")
                     if (root.activePlayer?.canTogglePlaying) {
                         root.activePlayer.togglePlaying();
                     }

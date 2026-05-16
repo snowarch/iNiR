@@ -18,6 +18,10 @@ import qs.services.ai
 Singleton {
     id: root
 
+    function _log(...args): void {
+        if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
+    }
+
     property bool _initialized: false
     property var _lastInterfaceMessage: null
 
@@ -550,7 +554,7 @@ Singleton {
                     root.modelList = Object.keys(root.models);
 
                 } catch (e) {
-                    console.log("Could not fetch Ollama models:", e);
+                    _log("Could not fetch Ollama models:", e);
                 }
             }
         }
@@ -567,7 +571,7 @@ Singleton {
                 )
             }
             if (getOllamaModels._stderr && getOllamaModels._stderr.length > 0) {
-                console.log("[Ai] Ollama model loader stderr:", getOllamaModels._stderr.substring(0, 400))
+                _log("[Ai] Ollama model loader stderr:", getOllamaModels._stderr.substring(0, 400))
             }
         }
     }
@@ -603,9 +607,9 @@ Singleton {
                     });
                     
                     root.modelList = Object.keys(root.models);
-                    console.log("[Ai] Loaded", freeModels.length, "free OpenRouter models");
+                    _log("[Ai] Loaded", freeModels.length, "free OpenRouter models");
                 } catch (e) {
-                    console.log("[Ai] Could not fetch OpenRouter models:", e);
+                    _log("[Ai] Could not fetch OpenRouter models:", e);
                 }
             }
         }
@@ -947,7 +951,7 @@ Singleton {
             onRead: data => {
                 if (data.length === 0) return;
                 if (requester.message.thinking) requester.message.thinking = false;
-                console.log("[Ai] Raw response line: ", data.substring(0, 100));
+                _log("[Ai] Raw response line: ", data.substring(0, 100));
 
                 // Handle response line
                 try {

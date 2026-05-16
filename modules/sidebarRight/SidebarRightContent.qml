@@ -25,6 +25,11 @@ import qs.modules.sidebarRight.wifiNetworks
 
 Item {
     id: root
+
+    function _log(...args): void {
+        if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
+    }
+
     property int sidebarWidth: Appearance.sizes.sidebarWidth
     property int sidebarPadding: 10
     property string settingsQmlPath: Quickshell.shellPath("settings.qml")
@@ -470,11 +475,11 @@ Item {
                 buttonIcon: "restart_alt"
                 onClicked: {
                     if (!root.reloadButtonEnabled) {
-                        console.log("[SidebarRight] Reload button still on cooldown, ignoring click");
+                        _log("[SidebarRight] Reload button still on cooldown, ignoring click");
                         return;
                     }
                     
-                    console.log("[SidebarRight] Reload button clicked");
+                    _log("[SidebarRight] Reload button clicked");
                     root.reloadButtonEnabled = false;
                     reloadButtonCooldown.restart();
                     
@@ -496,7 +501,7 @@ Item {
                 interval: 500
                 onTriggered: {
                     root.reloadButtonEnabled = true;
-                    console.log("[SidebarRight] Reload button cooldown finished");
+                    _log("[SidebarRight] Reload button cooldown finished");
                 }
             }
             QuickToggleButton {
@@ -507,21 +512,21 @@ Item {
                 buttonIcon: "settings"
                 onClicked: {
                     if (!root.settingsButtonEnabled) {
-                        console.log("[SidebarRight] Settings button still on cooldown, ignoring click");
+                        _log("[SidebarRight] Settings button still on cooldown, ignoring click");
                         return;
                     }
                     
-                    console.log("[SidebarRight] Settings button clicked");
+                    _log("[SidebarRight] Settings button clicked");
                     root.settingsButtonEnabled = false;
                     settingsButtonCooldown.restart();
                     
                     if (CompositorService.isNiri) {
                         const wins = NiriService.windows || []
-                        console.log("[SidebarRight] Checking for existing settings window among", wins.length, "windows");
+                        _log("[SidebarRight] Checking for existing settings window among", wins.length, "windows");
                         for (let i = 0; i < wins.length; i++) {
                             const w = wins[i]
                             if (w.title === "illogical-impulse Settings" && w.app_id === "org.quickshell") {
-                                console.log("[SidebarRight] Found existing settings window, focusing it");
+                                _log("[SidebarRight] Found existing settings window, focusing it");
                                 GlobalStates.sidebarRightOpen = false;
                                 Qt.callLater(() => {
                                     NiriService.focusWindow(w.id)
@@ -529,10 +534,10 @@ Item {
                                 return
                             }
                         }
-                        console.log("[SidebarRight] No existing settings window found");
+                        _log("[SidebarRight] No existing settings window found");
                     }
                     
-                    console.log("[SidebarRight] Opening new settings window via IPC");
+                    _log("[SidebarRight] Opening new settings window via IPC");
                     GlobalStates.sidebarRightOpen = false;
                     Qt.callLater(() => {
                         Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"]);
@@ -549,7 +554,7 @@ Item {
                 interval: 500
                 onTriggered: {
                     root.settingsButtonEnabled = true;
-                    console.log("[SidebarRight] Settings button cooldown finished");
+                    _log("[SidebarRight] Settings button cooldown finished");
                 }
             }
             QuickToggleButton {

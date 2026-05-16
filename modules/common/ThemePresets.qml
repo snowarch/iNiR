@@ -11,6 +11,10 @@ import qs.services
 Singleton {
     id: root
 
+    function _log(...args): void {
+        if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
+    }
+
     // Available tags for filtering
     readonly property var availableTags: [
         { id: "dark", name: Translation.tr("Dark"), icon: "dark_mode" },
@@ -3163,13 +3167,13 @@ Singleton {
     }
 
     function applyPreset(id, applyExternal = true, skipColorsJson = false) {
-        console.log("[ThemePresets] Applying preset:", id);
+        _log("[ThemePresets] Applying preset:", id);
         const preset = getPreset(id);
         if (!preset.colors) {
-            console.log("[ThemePresets] Preset has no colors (auto theme)");
+            _log("[ThemePresets] Preset has no colors (auto theme)");
             return false;
         }
-        console.log("[ThemePresets] Applying colors to Appearance.m3colors");
+        _log("[ThemePresets] Applying colors to Appearance.m3colors");
         
         var cSource = preset.colors === "custom" ? (Config.options?.appearance?.customTheme ?? {}) : preset.colors;
         
@@ -3617,7 +3621,7 @@ Singleton {
     }
     
     function generateColorsJson(c) {
-        console.log("[ThemePresets] Generating colors.json for preset theme");
+        _log("[ThemePresets] Generating colors.json for preset theme");
         const colorsJson = generateColorsJsonObject(c);
         const appPaletteJson = generateAppPaletteJsonObject(c);
         const terminalJson = buildTerminalJson(c);
@@ -3638,13 +3642,13 @@ Singleton {
         _writeGeneratedFiles(colorsJsonStr, paletteJsonStr, appPaletteJsonStr, terminalJsonStr, themeMetaStr, scssStr, chromiumRgb);
 
         if ((Config.options?.appearance?.wallpaperTheming?.enableVesktop ?? true) !== false) {
-            console.log("[ThemePresets] Triggering Vesktop theme generation wrapper")
+            _log("[ThemePresets] Triggering Vesktop theme generation wrapper")
             Quickshell.execDetached([
                 "/usr/bin/bash",
                 Directories.scriptsPath + "/colors/system24_palette.sh"
             ])
         }
-        console.log("[ThemePresets] colors.json written to:", Directories.generatedMaterialThemePath);
+        _log("[ThemePresets] colors.json written to:", Directories.generatedMaterialThemePath);
     }
 
     // Debounce rapid calls: applyPreset fires 2-3x on startup from

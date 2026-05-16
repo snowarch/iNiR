@@ -16,6 +16,10 @@ import Quickshell.Io
 QtObject {
     id: root
 
+    function _log(...args): void {
+        if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
+    }
+
     property Component wallhavenResponseComponent: BooruResponseData {}
 
     signal responseFinished()
@@ -236,7 +240,7 @@ QtObject {
         root._tagCountCurrentId = id
 
         const url = root.apiSearchEndpoint + "?q=" + encodeURIComponent("id:" + id) + "&page=1&per_page=1&categories=111&purity=100&sorting=date_added&order=desc" + ((apiKey && apiKey.length > 0) ? ("&apikey=" + encodeURIComponent(apiKey)) : "")
-        console.log("[Wallhaven] Fetching tag count for", id)
+        _log("[Wallhaven] Fetching tag count for", id)
         root.tagCountProcess.command = ["/usr/bin/curl", "-s", "--max-time", "15", "-H", "User-Agent: " + defaultUserAgent, url]
         root.tagCountProcess.running = true
     }
@@ -300,7 +304,7 @@ QtObject {
         root._tagSuggestionQuery = q
         root._tagSuggestionPreferQuoted = preferQuoted
         
-        console.log("[Wallhaven] Fetching tag suggestions for", q)
+        _log("[Wallhaven] Fetching tag suggestions for", q)
         root.tagSuggestionProcess.command = ["/usr/bin/curl", "-s", "--max-time", "15", "-H", "User-Agent: " + defaultUserAgent, url]
         root.tagSuggestionProcess.running = true
     }
@@ -310,7 +314,7 @@ QtObject {
         const preferQuoted = root._tagSuggestionPreferQuoted
 
         if (!text || text.length === 0) {
-            console.log("[Wallhaven] Tag suggestion request failed: empty response")
+            _log("[Wallhaven] Tag suggestion request failed: empty response")
             root.tagSuggestion(q, [])
             return
         }
@@ -404,7 +408,7 @@ QtObject {
         root._tagDetailCurrentId = id
 
         const url = _detailUrl(id)
-        console.log("[Wallhaven] Fetching wallpaper tags for", id)
+        _log("[Wallhaven] Fetching wallpaper tags for", id)
         root.tagDetailProcess.command = ["/usr/bin/curl", "-s", "--max-time", "15", "-H", "User-Agent: " + defaultUserAgent, url]
         root.tagDetailProcess.running = true
     }
@@ -519,7 +523,7 @@ QtObject {
         root._nextSearchAllowedMs = root.nowMs + root.minSearchIntervalMs
 
         var url = _buildSearchUrl(tags, nsfw, limit, page)
-        console.log("[Wallhaven] Making request to", url)
+        _log("[Wallhaven] Making request to", url)
 
         var newResponse = wallhavenResponseComponent.createObject(null, {
             "provider": "wallhaven",
@@ -547,7 +551,7 @@ QtObject {
         }
 
         if (!text || text.length === 0) {
-            console.log("[Wallhaven] Request failed: empty response")
+            _log("[Wallhaven] Request failed: empty response")
             newResponse.message = failMessage
             responses = [...responses, newResponse]
             root.responseFinished()

@@ -11,6 +11,11 @@ import QtQuick;
  */
 Singleton {
     id: root
+
+    function _log(...args): void {
+        if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
+    }
+
     property Component booruResponseDataComponent: BooruResponseData {}
 
     signal tagSuggestion(string query, var suggestions)
@@ -390,7 +395,7 @@ Singleton {
 
     function makeRequest(tags, nsfw=false, limit=20, page=1) {
         var url = constructRequestUrl(tags, nsfw, limit, page)
-        console.log("[Booru] Making request to " + url)
+        _log("[Booru] Making request to " + url)
 
         const newResponse = root.booruResponseDataComponent.createObject(null, {
             "provider": currentProvider,
@@ -449,7 +454,7 @@ Singleton {
             root.runningRequests++;
             xhr.send()
         } catch (error) {
-            console.log("Could not set User-Agent:", error)
+            _log("Could not set User-Agent:", error)
         } 
     }
 
@@ -495,7 +500,7 @@ Singleton {
             }
             xhr.send()
         } catch (error) {
-            console.log("Could not set User-Agent:", error)
+            _log("Could not set User-Agent:", error)
         } 
     }
 }

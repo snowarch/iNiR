@@ -15,6 +15,10 @@ import Quickshell.Io
 Scope {
     id: root
 
+    function _log(...args): void {
+        if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
+    }
+
     property int panelWidth: 600
     property int panelMaxHeight: 700
     property string searchText: ""
@@ -132,7 +136,7 @@ Scope {
     }
 
     function copyEntry(entry) {
-        console.log("[ClipboardPanel] copyEntry", String(entry).slice(0, 120))
+        _log("[ClipboardPanel] copyEntry", String(entry).slice(0, 120))
         lastCopiedEntry = entry
         _lastPanelCopyTime = Date.now()
         Cliphist.copy(entry)
@@ -162,7 +166,7 @@ Scope {
     }
 
     function refresh() {
-        console.log("[ClipboardPanel] Refreshing clipboard via Cliphist service...")
+        _log("[ClipboardPanel] Refreshing clipboard via Cliphist service...")
         Cliphist.refresh()
     }
 

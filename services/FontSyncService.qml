@@ -15,6 +15,10 @@ import qs.modules.common
 Singleton {
     id: root
 
+    function _log(...args): void {
+        if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
+    }
+
     // Track the current font from config
     readonly property string mainFont: Config.options?.appearance?.typography?.mainFont ?? "Roboto Flex"
     readonly property real sizeScale: Config.options?.appearance?.typography?.sizeScale ?? 1.0
@@ -56,7 +60,7 @@ Singleton {
     }
 
     function _doSync(): void {
-        console.log("[FontSyncService] Syncing font:", gtkFontString)
+        _log("[FontSyncService] Syncing font:", gtkFontString)
 
         // Sync to GTK
         gsettingsProc.running = false
@@ -72,7 +76,7 @@ Singleton {
 
     // Manual sync function (can be called from settings UI)
     function syncNow(): void {
-        console.log("[FontSyncService] Manual sync triggered")
+        _log("[FontSyncService] Manual sync triggered")
         _doSync()
     }
 
@@ -87,7 +91,7 @@ Singleton {
         ]
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0) {
-                console.log("[FontSyncService] GTK font updated:", root.gtkFontString)
+                _log("[FontSyncService] GTK font updated:", root.gtkFontString)
             } else {
                 console.warn("[FontSyncService] Failed to update GTK font, exit code:", exitCode)
             }
@@ -107,9 +111,9 @@ Singleton {
         ]
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0) {
-                console.log("[FontSyncService] KDE font updated:", root.mainFont)
+                _log("[FontSyncService] KDE font updated:", root.mainFont)
             } else {
-                console.log("[FontSyncService] kwriteconfig6 not available or failed (this is normal on non-KDE systems)")
+                _log("[FontSyncService] kwriteconfig6 not available or failed (this is normal on non-KDE systems)")
             }
         }
     }
@@ -128,7 +132,7 @@ Singleton {
         ]
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0) {
-                console.log("[FontSyncService] KDE fixed font updated")
+                _log("[FontSyncService] KDE fixed font updated")
             }
         }
     }
@@ -138,7 +142,7 @@ Singleton {
         if (syncEnabled) {
             // Small delay to let config fully load
             Qt.callLater(() => {
-                console.log("[FontSyncService] Initialized, current font:", mainFont, "size:", fontSize)
+                _log("[FontSyncService] Initialized, current font:", mainFont, "size:", fontSize)
             })
         }
     }

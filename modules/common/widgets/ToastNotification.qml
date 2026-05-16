@@ -94,7 +94,7 @@ Item {
                 colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Qt.rgba(0, 0, 0, 0.1)
                 colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Qt.rgba(0, 0, 0, 0.15)
                 onClicked: {
-                    console.log("[Toast] Copying to clipboard:", root.message.substring(0, 50));
+                    if (Quickshell.env("QS_DEBUG") === "1") console.log("[Toast] Copying to clipboard:", root.message.substring(0, 50));
                     copyProcess.running = true;
                     root.copied = true;
                     copyResetTimer.restart();
