@@ -1415,4 +1415,30 @@ ContentPage {
         }
     }
 
+    SettingsCardSection {
+        expanded: false
+        icon: "key"
+        title: Translation.tr("KeePass")
+
+        SettingsGroup {
+            StyledText {
+                Layout.fillWidth: true
+                text: Translation.tr("Integrate with KeePassXC-CLI to manage passwords directly from the shell.")
+                color: Appearance.colors.colOnSurfaceVariant
+                font.pixelSize: Appearance.font.pixelSize.small
+                wrapMode: Text.WordWrap
+            }
+
+            MaterialTextArea {
+                Layout.fillWidth: true
+                placeholderText: Translation.tr("Vault directory (where your .kdbx files are)")
+                text: Config.options?.keepass?.vaultDir ?? ""
+                wrapMode: TextEdit.Wrap
+                onTextChanged: Config.setNestedValue("keepass.vaultDir", text)
+                StyledToolTip {
+                    text: Translation.tr("The directory containing your KeePass databases. If empty, the shell will look in common locations.")
+                }
+            }
+        }
+    }
 }
