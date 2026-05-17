@@ -3395,5 +3395,20 @@
   "Separate icon theme for the dock": "Tema de icono separado para el muelle",
   "Size in pixels (typically 24 or 32)": "Tamaño en píxeles (normalmente 24 o 32)",
   "GitHub Repository": "Repositorio GitHub",
-  "Font Families": "Familias de fuentes"
+  "Font Families": "Familias de fuentes",
+  "KeePass": "KeePass",
+  "KeePass - Save": "KeePass - Save",
+  "Vault password": "Vault password",
+  "Stay unlocked:": "Stay unlocked:",
+  "Unlock": "Unlock",
+  "Search entries": "Search entries",
+  "Hide": "Hide",
+  "Copy Password": "Copy Password",
+  "Copy Username": "Copy Username",
+  "Entry name (e.g. Email/GitHub)": "Entry name (e.g. Email/GitHub)",
+  "Username (optional)": "Username (optional)",
+  "URL (optional)": "URL (optional)",
+  "Generate": "Generate",
+  "Len:": "Len:",
+  "keepass_wordlist": "manzana tigre río piedra nube bosque puente vela martillo araña isla castillo espejo trueno jardín lápiz mantequilla café pimienta invierno otoño aguja cohete planeta plata cobre violín cactus linterna nuez sombra mármol zanahoria almohada cañón barril trébol burro caldero lazada salmón túnel ancla lluvia nieve viento sol luna estrella pera naranja fresa libro silla mesa ventana puerta"
 }

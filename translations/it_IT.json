@@ -3395,5 +3395,20 @@
   "Size in pixels (typically 24 or 32)": "Dimensioni in pixel (tipicamente 24 o 32)",
   "GitHub Repository": "Repository GitHub",
   "Crosshair code (in Valorant's format)": "Codice mirino (nel formato Valorant)",
-  "Font Families": "Famiglie di caratteri"
+  "Font Families": "Famiglie di caratteri",
+  "KeePass": "KeePass",
+  "KeePass - Save": "KeePass - Save",
+  "Vault password": "Vault password",
+  "Stay unlocked:": "Stay unlocked:",
+  "Unlock": "Unlock",
+  "Search entries": "Search entries",
+  "Hide": "Hide",
+  "Copy Password": "Copy Password",
+  "Copy Username": "Copy Username",
+  "Entry name (e.g. Email/GitHub)": "Entry name (e.g. Email/GitHub)",
+  "Username (optional)": "Username (optional)",
+  "URL (optional)": "URL (optional)",
+  "Generate": "Generate",
+  "Len:": "Len:",
+  "keepass_wordlist": "gatto cane coniglio pipistrello cigno merlo farfalla serpente lucertola tartaruga volpe pane formaggio burro miele pasta pizza uovo salame mozzarella basilico rosmarino cioccolata biscotto torta gelato caffè birra finestra tenda lampada sedia tavolo cuscino pentola padella mestolo forbici albero fiore foglia ramo bosco collina montagna lago roccia scarpa cappello borsa zaino ombrello maglione giacca chiave telefono treno bicicletta pioggia neve vento sole luna stella mela pera arancia limone fragola"
 }

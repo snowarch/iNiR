@@ -1,0 +1,379 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if ! command -v keepassxc-cli >/dev/null 2>&1; then
+  echo "quickshell-keepass: keepassxc-cli not found — install keepassxc to use this feature" >&2
+  exit 127
+fi
+
+VAULT_PATH="${KP_VAULT_PATH:-$HOME/.local/share/keepassqs/vault.kdbx}"
+NONINTERACTIVE="${KP_NONINTERACTIVE:-0}"
+
+# Secret Service attributes
+SECRET_ATTRS="inir keepass"
+SECRET_LABEL="iNiR KeePass Vault"
+
+die() {
+  echo "quickshell-keepass: $*" >&2
+  exit 1
+}
+
+# --- Cache Management (using secret-tool) ---
+
+write_cache() {
+  local password="$1"
+  if command -v secret-tool >/dev/null 2>&1; then
+    printf '%s' "$password" | secret-tool store --label="$SECRET_LABEL" $SECRET_ATTRS
+  fi
+}
+
+read_cache() {
+  if command -v secret-tool >/dev/null 2>&1; then
+    secret-tool lookup $SECRET_ATTRS 2>/dev/null || true
+  fi
+}
+
+clear_cache() {
+  if command -v secret-tool >/dev/null 2>&1; then
+    secret-tool clear $SECRET_ATTRS 2>/dev/null || true
+  fi
+}
+
+# --- Core Logic ---
+
+read_password() {
+  local password
+  password=$(read_cache)
+  if [[ -n "$password" ]]; then
+    printf '%s' "$password"
+    return 0
+  fi
+
+  if [[ "$NONINTERACTIVE" == "1" || ! -t 0 ]]; then
+    IFS= read -r password || die "locked (no cached password and stdin empty)"
+    [[ -n "$password" ]] || die "locked (empty password)"
+  else
+    read -r -s -p "Vault password: " password
+    echo >&2
+    [[ -n "$password" ]] || die "empty password"
+  fi
+  printf '%s' "$password"
+}
+
+require_vault() {
+  [[ -f "$VAULT_PATH" ]] || die "vault not found: $VAULT_PATH (run: quickshell-keepass init)"
+}
+
+# Wrapper for keepassxc-cli with better error reporting
+kp_exec() {
+  local cmd="$1"
+  shift
+  local password
+  password="$(read_password)"
+
+  local out err exit_code
+  local err_file
+  err_file=$(mktemp)
+
+  # Use printf -- to handle passwords starting with -
+  if printf -- '%s\n' "$password" | keepassxc-cli "$cmd" -q "$VAULT_PATH" "$@" 2>"$err_file"; then
+    # Success: update cache if it wasn't there
+    [[ -z "$(read_cache)" ]] && write_cache "$password"
+    rm -f "$err_file"
+    return 0
+  else
+    exit_code=$?
+    err=$(<"$err_file")
+    rm -f "$err_file"
+
+    if [[ "$err" == *"Invalid password"* || "$err" == *"password is incorrect"* ]]; then
+      clear_cache
+      die "Invalid password"
+    elif [[ "$err" == *"Database is already locked"* ]]; then
+      die "Database is locked by another process"
+    elif [[ -n "$err" ]]; then
+      die "Error ($exit_code): $err"
+    else
+      die "Command failed with code $exit_code"
+    fi
+  fi
+}
+
+# --- Commands ---
+
+cmd_init() {
+  [[ -f "$VAULT_PATH" ]] && die "vault already exists: $VAULT_PATH"
+  mkdir -p "$(dirname "$VAULT_PATH")"
+  local password
+  read -r -s -p "New vault password: " password
+  echo >&2
+  [[ -n "$password" ]] || die "empty password"
+  printf -- '%s\n%s\n' "$password" "$password" | keepassxc-cli db-create -q -p "$VAULT_PATH"
+  write_cache "$password"
+  echo "Created vault: $VAULT_PATH"
+}
+
+cmd_create() {
+  [[ -f "$VAULT_PATH" ]] && die "vault already exists: $VAULT_PATH"
+  mkdir -p "$(dirname "$VAULT_PATH")"
+  local password
+  IFS= read -r password || die "empty password"
+  [[ -n "$password" ]] || die "empty password"
+  printf -- '%s\n%s\n' "$password" "$password" | keepassxc-cli db-create -q -p "$VAULT_PATH"
+  write_cache "$password"
+}
+
+cmd_lock() {
+  clear_cache
+  echo "Locked (cache cleared)."
+}
+
+cmd_unlock() {
+  # Just try to list to verify password and set cache
+  if kp_exec ls -f / >/dev/null; then
+    echo "Unlocked (cache set)."
+  fi
+}
+
+cmd_status() {
+  if [[ -n "$(read_cache)" ]]; then
+    echo "unlocked (cached in keyring)"
+  else
+    echo "locked"
+  fi
+}
+
+cmd_ls() {
+  require_vault
+  kp_exec ls "$@"
+}
+
+cmd_show() {
+  require_vault
+  kp_exec show "$@"
+}
+
+cmd_get() {
+  require_vault
+  [[ $# -ge 2 ]] || die "usage: get <entry> <attribute>"
+  kp_exec show -s -a "$2" "$1"
+}
+
+cmd_clip() {
+  require_vault
+  [[ $# -ge 2 ]] || die "usage: clip <entry> <attribute>"
+  kp_exec clip -a "$2" "$1"
+}
+
+cmd_search() {
+  require_vault
+  [[ $# -ge 1 ]] || die "usage: search <query>"
+  kp_exec search "$@"
+}
+
+cmd_add() {
+  require_vault
+  [[ $# -ge 1 ]] || die "usage: add <entry> [username] [url]"
+  local entry="$1"
+  local username="${2:-}"
+  local url="${3:-}"
+
+  local db_password
+  db_password="$(read_password)"
+
+  local entry_password="${KP_ENTRY_PASSWORD:-}"
+  if [[ -z "$entry_password" ]]; then
+    if [[ "$NONINTERACTIVE" == "1" || ! -t 0 ]]; then
+      IFS= read -r entry_password || die "missing entry password"
+    else
+      read -r -s -p "Entry password: " entry_password
+      echo >&2
+    fi
+  fi
+  [[ -n "$entry_password" ]] || die "empty entry password"
+
+  local group="${entry%/*}"
+  if [[ "$group" != "$entry" && -n "$group" && "$group" != "/" ]]; then
+    printf -- '%s\n' "$db_password" | keepassxc-cli mkdir -q "$VAULT_PATH" "$group" >/dev/null 2>&1 || true
+  fi
+
+  local args=("add" "-q")
+  [[ -n "$username" ]] && args+=("-u" "$username")
+  [[ -n "$url" ]] && args+=("--url" "$url")
+  args+=("--password-prompt" "$VAULT_PATH" "$entry")
+
+  if printf -- '%s\n%s\n' "$db_password" "$entry_password" | keepassxc-cli "${args[@]}"; then
+    [[ -z "$(read_cache)" ]] && write_cache "$db_password"
+  else
+    die "Failed to add entry"
+  fi
+}
+
+# --- Password Generation ---
+
+_KP_WORDS_EN=(
+  apple tiger river stone cloud forest bridge candle socket hammer
+  spider monkey island castle mirror thunder blanket garden pencil anchor
+  butter coffee pepper winter autumn needle rocket planet silver copper
+  violin pickle cactus jungle lantern oyster falcon rocket walnut shadow
+  marble crimson falcon jungle oyster pepper rabbit silver socket spider
+  cable carrot pillow saddle cannon barrel circus clover donkey fossil
+  gravel kettle locket marble napkin parrot quartz ribbon salmon tablet
+  tunnel velvet walrus bamboo canopy debris ferret gravel hollow insect
+  jigsaw kernel lagoon muffin noodle origami paddle quiver riddle spiral
+  tundra uplift vessel wiggle xylem yellow zipper biscuit clutter double
+)
+
+_kp_rand_u16() { od -An -tu2 -N2 /dev/urandom | tr -d ' \n'; }
+_kp_rand_u8() { od -An -tu1 -N1 /dev/urandom | tr -d ' \n'; }
+
+cmd_generate() {
+  local use_upper="${KP_GEN_UPPER:-1}"
+  local use_numbers="${KP_GEN_NUMBERS:-1}"
+  local use_symbols="${KP_GEN_SYMBOLS:-1}"
+  local length="${KP_GEN_LENGTH:-20}"
+
+  if [[ "${KP_GEN_WORDS:-0}" == "1" ]]; then
+    local -a words
+    if [[ -n "${KP_GEN_WORDLIST:-}" ]]; then
+      read -ra words <<< "$KP_GEN_WORDLIST"
+    else
+      words=("${_KP_WORDS_EN[@]}")
+    fi
+
+    # Length preset becomes a word-count proxy: short=2, medium=3, long=4
+    local num_words=3
+    if [[ "$length" -le 8 ]]; then num_words=2
+    elif [[ "$length" -gt 14 ]]; then num_words=4
+    fi
+
+    local -a sel=()
+    local i
+    for ((i=0; i<num_words; i++)); do
+      sel+=("${words[$(( $(_kp_rand_u16) % ${#words[@]} ))]}")
+    done
+
+    if [[ "$use_upper" == "1" ]]; then
+      local -a idx=()
+      for ((i=0; i<num_words; i++)); do idx+=("$i"); done
+      local -a s_idx=($(printf '%s\n' "${idx[@]}" | shuf | tr '\n' ' '))
+      sel[${s_idx[0]}]=$(echo "${sel[${s_idx[0]}]}" | tr '[:lower:]' '[:upper:]')
+      if [[ $num_words -ge 2 ]]; then
+        sel[${s_idx[1]}]=$(echo "${sel[${s_idx[1]}]}" | tr '[:upper:]' '[:lower:]')
+      fi
+      for ((i=2; i<num_words; i++)); do
+        if [[ $(( $(_kp_rand_u8) % 2 )) -eq 0 ]]; then
+          sel[${s_idx[i]}]=$(echo "${sel[${s_idx[i]}]}" | tr '[:lower:]' '[:upper:]')
+        else
+          sel[${s_idx[i]}]=$(echo "${sel[${s_idx[i]}]}" | tr '[:upper:]' '[:lower:]')
+        fi
+      done
+    fi
+
+    local -a seps=()
+    local syms='!@#$%^&*?-'
+    for ((i=0; i<num_words-1; i++)); do
+      local s=""
+      if [[ "$use_numbers" == "1" && "$use_symbols" == "1" ]]; then
+        if [[ $(( $(_kp_rand_u8) % 2 )) -eq 0 ]]; then
+          s="$(( $(_kp_rand_u8) % 10 ))"
+        else
+          s="${syms:$(( $(_kp_rand_u8) % ${#syms} )):1}"
+        fi
+      elif [[ "$use_numbers" == "1" ]]; then
+        s="$(( $(_kp_rand_u8) % 10 ))"
+      elif [[ "$use_symbols" == "1" ]]; then
+        s="${syms:$(( $(_kp_rand_u8) % ${#syms} )):1}"
+      fi
+      seps+=("$s")
+    done
+
+    local output="${sel[0]}"
+    for ((i=1; i<num_words; i++)); do
+      output+="${seps[i-1]}${sel[i]}"
+    done
+    printf '%s\n' "$output"
+    return
+  fi
+
+  local p_low='abcdefghijklmnopqrstuvwxyz'
+  local p_up='ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  local p_num='0123456789'
+  local p_sym='!@#$%^&*()_=+[]{}|;:,.?-'
+
+  local pwd=""
+  local all="$p_low"
+  
+  # Guarantee at least one of each selected type
+  pwd+="${p_low:$(( $(_kp_rand_u8) % ${#p_low} )):1}"
+
+  if [[ "$use_upper" == "1" ]]; then
+    pwd+="${p_up:$(( $(_kp_rand_u8) % ${#p_up} )):1}"
+    all+="$p_up"
+  fi
+  if [[ "$use_numbers" == "1" ]]; then
+    pwd+="${p_num:$(( $(_kp_rand_u8) % ${#p_num} )):1}"
+    all+="$p_num"
+  fi
+  if [[ "$use_symbols" == "1" ]]; then
+    pwd+="${p_sym:$(( $(_kp_rand_u8) % ${#p_sym} )):1}"
+    all+="$p_sym"
+  fi
+
+  # Fill the rest - disable pipefail to avoid 141 (SIGPIPE) from head -c
+  local needed=$(( length - ${#pwd} ))
+  if [[ $needed -gt 0 ]]; then
+    set +o pipefail
+    pwd+=$(LC_ALL=C tr -dc "$all" < /dev/urandom | head -c "$needed")
+    set -o pipefail
+  fi
+
+  # Shuffle to hide the pattern
+  printf '%s' "$pwd" | fold -w1 | shuf | tr -d '\n'
+  printf '\n'
+}
+
+cmd_help() {
+  cat <<EOF
+quickshell-keepass
+
+Usage:
+  quickshell-keepass init
+  quickshell-keepass status
+  quickshell-keepass lock
+  quickshell-keepass unlock
+  quickshell-keepass ls [group]
+  quickshell-keepass search <query>
+  quickshell-keepass show <entry> [attributes...]
+  quickshell-keepass get <entry> <attribute>
+  quickshell-keepass add <entry> [username] [url]
+  quickshell-keepass generate
+
+Env:
+  KP_VAULT_PATH     Vault path (default: $VAULT_PATH)
+  KP_NONINTERACTIVE Set to 1 to read password from stdin
+EOF
+}
+
+main() {
+  local cmd="${1:-help}"
+  shift || true
+  case "$cmd" in
+    init) cmd_init "$@" ;;
+    create) cmd_create ;;
+    status) cmd_status ;;
+    lock) cmd_lock ;;
+    unlock) cmd_unlock ;;
+    ls|list) cmd_ls "$@" ;;
+    search) cmd_search "$@" ;;
+    show) cmd_show "$@" ;;
+    get) cmd_get "$@" ;;
+    clip) cmd_clip "$@" ;;
+    add) cmd_add "$@" ;;
+    generate) cmd_generate ;;
+    help|-h|--help) cmd_help ;;
+    *) die "unknown command: $cmd" ;;
+  esac
+}
+
+main "$@"

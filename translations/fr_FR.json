@@ -3395,5 +3395,20 @@
   "Primary monitor": "Moniteur principal",
   "Toggle WiFi": "Activer/désactiver le Wi-Fi",
   "Only show the backdrop, hide the main wallpaper entirely": "Afficher uniquement la toile de fond, masquer entièrement le fond d'écran principal",
-  "Utility Buttons": "Boutons utilitaires"
+  "Utility Buttons": "Boutons utilitaires",
+  "KeePass": "KeePass",
+  "KeePass - Save": "KeePass - Save",
+  "Vault password": "Vault password",
+  "Stay unlocked:": "Stay unlocked:",
+  "Unlock": "Unlock",
+  "Search entries": "Search entries",
+  "Hide": "Hide",
+  "Copy Password": "Copy Password",
+  "Copy Username": "Copy Username",
+  "Entry name (e.g. Email/GitHub)": "Entry name (e.g. Email/GitHub)",
+  "Username (optional)": "Username (optional)",
+  "URL (optional)": "URL (optional)",
+  "Generate": "Generate",
+  "Len:": "Len:",
+  "keepass_wordlist": "pomme tigre rivière pierre nuage forêt pont bougie marteau araignée île château miroir tonnerre jardin crayon beurre café poivre hiver automne aiguille fusée planète argent cuivre violon cactus lanterne noix ombre marbre carotte oreiller canon tonneau trèfle âne chaudron ruban saumon tunnel ancre pluie neige vent soleil lune étoile poire orange fraise livre chaise table fenêtre porte"
 }

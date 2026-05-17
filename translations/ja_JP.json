@@ -3395,5 +3395,20 @@
   "Size in pixels (typically 24 or 32)": "ピクセル単位のサイズ (通常は 24 または 32)",
   "GitHub Repository": "GitHub リポジトリ",
   "Crosshair code (in Valorant's format)": "クロスヘアコード (Valorant の形式)",
-  "Font Families": "フォントファミリー"
+  "Font Families": "フォントファミリー",
+  "KeePass": "KeePass",
+  "KeePass - Save": "KeePass - Save",
+  "Vault password": "Vault password",
+  "Stay unlocked:": "Stay unlocked:",
+  "Unlock": "Unlock",
+  "Search entries": "Search entries",
+  "Hide": "Hide",
+  "Copy Password": "Copy Password",
+  "Copy Username": "Copy Username",
+  "Entry name (e.g. Email/GitHub)": "Entry name (e.g. Email/GitHub)",
+  "Username (optional)": "Username (optional)",
+  "URL (optional)": "URL (optional)",
+  "Generate": "Generate",
+  "Len:": "Len:",
+  "keepass_wordlist": "りんご とら かわ いし くも もり はし ろうそく かなづち くも しま しろ かがみ かみなり にわ えんぴつ バター コーヒー こしょう ふゆ あき はり ロケット わくせい ぎんいろ どう バイオリン サボテン ランタン くるみ かげ だいりせき にんじん まくら たいほう たる クローバー ろば やかん リボン サーモン トンネル いかり あめ ゆき かぜ たいよう つき ほし なし オレンジ いちご ほん いす つくえ まど ドア"
 }

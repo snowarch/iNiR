@@ -3395,5 +3395,20 @@
   "Virtual keyboard for touch input": "टच इनपुट के लिए वर्चुअल कीबोर्ड",
   "gowall is not installed. Install it from github.com/Achno/gowall to use this feature.": "गोवल स्थापित नहीं है.इस सुविधा का उपयोग करने के लिए इसे github.com/Achno/gowall से इंस्टॉल करें।",
   "Overlay animation duration (ms)": "ओवरले एनीमेशन अवधि (एमएस)",
-  "System tray": "सिस्टम ट्रे"
+  "System tray": "सिस्टम ट्रे",
+  "KeePass": "KeePass",
+  "KeePass - Save": "KeePass - Save",
+  "Vault password": "Vault password",
+  "Stay unlocked:": "Stay unlocked:",
+  "Unlock": "Unlock",
+  "Search entries": "Search entries",
+  "Hide": "Hide",
+  "Copy Password": "Copy Password",
+  "Copy Username": "Copy Username",
+  "Entry name (e.g. Email/GitHub)": "Entry name (e.g. Email/GitHub)",
+  "Username (optional)": "Username (optional)",
+  "URL (optional)": "URL (optional)",
+  "Generate": "Generate",
+  "Len:": "Len:",
+  "keepass_wordlist": "सेब बाघ नदी पत्थर बादल जंगल पुल मोमबत्ती हथौड़ा मकड़ी द्वीप किला दर्पण गड़गड़ाहट बगीचा पेंसिल मक्खन कॉफी मिर्च सर्दी शरद सुई रॉकेट ग्रह चांदी तांबा वायलिन कैक्टस लालटेन अखरोट छाया संगमरमर गाजर तकिया तोप बैरल तिपतिया गधा केतली रिबन सैल्मन सुरंग लंगर बारिश बर्फ हवा सूरज चाँद तारा नाशपाती संतरा स्ट्रॉबेरी किताब कुर्सी मेज खिड़की दरवाजा"
 }
