@@ -156,6 +156,7 @@ optdepends=(
   'songrec: song recognition'
   'translate-shell: translation widget'
   'hyprpicker: color picker'
+  'keepassxc: password manager overlay (keepassxc-cli)'
   'python-evdev: input device access'
   'python-pillow: image processing in scripts'
   'darkly-bin: Material You Qt style'

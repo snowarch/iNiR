@@ -196,6 +196,8 @@ Not installed by default, but useful. The shell handles their absence gracefully
 
 | Package | Purpose | Used by |
 |---------|---------|---------|
+| `keepassxc` | KeePass password manager (`keepassxc-cli`) | KeePass overlay panel |
+| `libsecret` | Secret Service CLI (`secret-tool`) | KeePass password caching |
 | `warp-cli` | Cloudflare WARP VPN toggle | Quick toggles panel |
 | `ollama` | Local LLM for AI chat | Sidebar AI assistant |
 | `cava` | Audio visualizer | Bar widget (optional) |

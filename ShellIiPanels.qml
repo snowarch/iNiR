@@ -22,6 +22,7 @@ import qs.modules.wallpaperSelector
 import qs.modules.ii.overlay
 import qs.modules.shellUpdate
 import "modules/clipboard" as ClipboardModule
+import "modules/keepass" as KeepassModule
 
 import QtQuick
 import Quickshell
@@ -33,6 +34,10 @@ import "."
 
 Item {
     id: panelsRoot
+
+    // Force KeePass singleton to instantiate so its IpcHandler is always active,
+    // even when iiKeepass is absent from enabledPanels (singletons are lazy by default).
+    readonly property bool _keepassReady: KeePass.available
 
     // Immediate panels — visible at first frame or must catch early events
     component PanelLoader: LazyLoader {
@@ -77,6 +82,7 @@ Item {
     DeferredPanelLoader { identifier: "iiClipboard"; component: ClipboardModule.ClipboardPanel {} }
     DeferredPanelLoader { identifier: "iiShellUpdate"; component: ShellUpdateOverlay {} }
     DeferredPanelLoader { identifier: "iiRecordingOsd"; component: RecordingOsd {} }
+    DeferredPanelLoader { identifier: "iiKeepass"; component: KeepassModule.KeepassPanel {} }
 
     LazyLoader {
         active: Config.ready && (Config.options?.background?.effects?.ripple?.enable ?? false)

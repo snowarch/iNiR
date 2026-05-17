@@ -3395,5 +3395,20 @@
   "Size in pixels (typically 24 or 32)": "Розмір у пікселях (зазвичай 24 або 32)",
   "GitHub Repository": "Репозиторій GitHub",
   "Crosshair code (in Valorant's format)": "Код перехрестя (у форматі Valorant)",
-  "Font Families": "Сімейства шрифтів"
+  "Font Families": "Сімейства шрифтів",
+  "KeePass": "KeePass",
+  "KeePass - Save": "KeePass - Save",
+  "Vault password": "Vault password",
+  "Stay unlocked:": "Stay unlocked:",
+  "Unlock": "Unlock",
+  "Search entries": "Search entries",
+  "Hide": "Hide",
+  "Copy Password": "Copy Password",
+  "Copy Username": "Copy Username",
+  "Entry name (e.g. Email/GitHub)": "Entry name (e.g. Email/GitHub)",
+  "Username (optional)": "Username (optional)",
+  "URL (optional)": "URL (optional)",
+  "Generate": "Generate",
+  "Len:": "Len:",
+  "keepass_wordlist": "яблуко тигр річка камінь хмара ліс міст свічка молоток павук острів замок дзеркало грім сад олівець масло кава перець зима осінь голка ракета планета срібло мідь скрипка кактус ліхтар горіх тінь мармур морква подушка гармата бочка конюшина осел казан стрічка лосось тунель якір дощ сніг вітер сонце місяць зоря груша апельсин полуниця книга стілець стіл вікно двері"
 }
