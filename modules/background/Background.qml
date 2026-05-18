@@ -816,8 +816,8 @@ Scope {
                             : bgRoot.fillMode === "center" ? Image.Pad
                             : Image.PreserveAspectCrop
                     sourceSize {
-                        width: Math.round((bgRoot.externalMainWallpaperActive ? bgRoot.screen.width : bgRoot.scaledWallpaperWidth) * (bgRoot.monitor?.scale ?? 1))
-                        height: Math.round((bgRoot.externalMainWallpaperActive ? bgRoot.screen.height : bgRoot.scaledWallpaperHeight) * (bgRoot.monitor?.scale ?? 1))
+                        width: Math.max(1, Math.round(bgRoot.screen.width * (bgRoot.externalMainWallpaperActive ? 1 : bgRoot.effectiveWallpaperScale) * (bgRoot.monitor?.scale ?? 1)))
+                        height: Math.max(1, Math.round(bgRoot.screen.height * (bgRoot.externalMainWallpaperActive ? 1 : bgRoot.effectiveWallpaperScale) * (bgRoot.monitor?.scale ?? 1)))
                     }
 
                     onTransitionStarted: {
