@@ -67,7 +67,7 @@ Item {
 
                     Timer {
                         id: actionTimer
-                        interval: Appearance.animation.elementMoveFast.duration
+                        interval: 200
                         repeat: false
                         onTriggered: {
                             if (todoItem.pendingDelete) {

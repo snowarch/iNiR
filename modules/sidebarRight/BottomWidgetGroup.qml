@@ -154,7 +154,7 @@ Rectangle {
 
     Timer {
         id: collapseCleanFadeTimer
-        interval: Appearance.animation.elementMove.duration / 2
+        interval: 250
         repeat: false
         onTriggered: {
             if(collapsed) collapsedBottomWidgetGroupRow.opacity = 1

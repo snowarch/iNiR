@@ -94,7 +94,7 @@ MouseArea { // Notification group area
 
     Timer {
         id: _expandAnimateEndTimer
-        interval: Appearance.animation.elementMoveFast.duration + 50
+        interval: 250
         onTriggered: root._expandAnimating = false
     }
 

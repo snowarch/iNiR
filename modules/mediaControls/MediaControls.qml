@@ -39,7 +39,7 @@ Scope {
 
         Timer {
             id: closingTimer
-            interval: Appearance.animationsEnabled ? 350 : 0
+            interval: 350
         }
 
         Connections {

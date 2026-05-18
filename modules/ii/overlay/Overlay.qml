@@ -117,7 +117,7 @@ Scope {
 
             Timer {
                 id: delayedGrabTimer
-                interval: Config.options.overlay.animationDurationMs ?? Appearance.animation.elementMoveFast.duration
+                interval: Config.options.overlay.animationDurationMs ?? 200
                 onTriggered: {
                     grab.active = GlobalStates.overlayOpen;
                 }
