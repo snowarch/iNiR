@@ -163,6 +163,28 @@ import sys; sys.stdout.buffer.write(make_png())
     fi
 fi
 
+# Neutralize conflicting InputMethod=qtvirtualkeyboard in other sddm.conf.d files.
+# SDDM merges drop-ins alphabetically — a file sorting after ours can override InputMethod=.
+neutralize_conflicting_input_method() {
+    local conf_dir="/etc/sddm.conf.d"
+    [[ -d "$conf_dir" ]] || return 0
+
+    for f in "${conf_dir}"/*.conf; do
+        [[ -f "$f" ]] || continue
+        [[ "$(basename "$f")" == "$(basename "$SDDM_CONF")" ]] && continue
+        if grep -qiE '^\s*InputMethod\s*=\s*qtvirtualkeyboard' "$f" 2>/dev/null; then
+            log_warn "Removing conflicting InputMethod from $(basename "$f")"
+            elevate sed -i '/^\s*InputMethod\s*=\s*qtvirtualkeyboard/d' "$f"
+        fi
+    done
+
+    # Also check the main sddm.conf
+    if [[ -f /etc/sddm.conf ]] && grep -qiE '^\s*InputMethod\s*=\s*qtvirtualkeyboard' /etc/sddm.conf 2>/dev/null; then
+        log_warn "Removing conflicting InputMethod from /etc/sddm.conf"
+        elevate sed -i '/^\s*InputMethod\s*=\s*qtvirtualkeyboard/d' /etc/sddm.conf
+    fi
+}
+
 # Configure SDDM to use this theme
 # Two concerns: (1) set Current theme, (2) ensure settings (DisplayServer, InputMethod) are correct.
 # On updates where ii-pixel is already active, we still need to patch settings.
@@ -202,6 +224,9 @@ else
         log_info "Installed ${THEME_NAME}, but did not change SDDM Current theme"
     fi
 fi
+
+# Clean up conflicting InputMethod settings from other config files
+neutralize_conflicting_input_method
 
 # Run initial color sync now that files are in place
 log_info "Running initial color sync..."

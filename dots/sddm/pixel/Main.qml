@@ -407,10 +407,11 @@ MouseArea {
                             selectedTextColor: root.colOnPrimary
                             cursorVisible: false
                             cursorDelegate: Item {}
-                            inputMethodHints: Qt.ImhSensitiveData
+                            inputMethodHints: Qt.ImhSensitiveData | Qt.ImhNoAutoUppercase
                             enabled: !root.loginInProgress; focus: true
                             font.pixelSize: 16
                             onTextChanged: root.loginFailed = false
+                            onActiveFocusChanged: if (activeFocus && Qt.inputMethod.visible) Qt.inputMethod.hide()
                             Keys.onReturnPressed: root.attemptLogin()
                             Keys.onEnterPressed:  root.attemptLogin()
                             Keys.onEscapePressed: {
@@ -650,6 +651,13 @@ MouseArea {
             return
         }
         if (!passwordBox.activeFocus) passwordBox.forceActiveFocus()
+    }
+
+    // Suppress Qt's built-in VirtualKeyboard if qtvirtualkeyboard plugin is loaded.
+    // We have our own VirtualKeyboard.qml — Qt's must never appear.
+    Connections {
+        target: Qt.inputMethod
+        function onVisibleChanged() { if (Qt.inputMethod.visible) Qt.inputMethod.hide() }
     }
 
     Component.onCompleted: {
