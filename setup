@@ -614,6 +614,95 @@ tui_menu() {
 ###############################################################################
 # Status Command
 ###############################################################################
+show_status_boot_timing() {
+    local cache_file="${XDG_CACHE_HOME:-$HOME/.cache}/inir/last-boot.json"
+    if [[ ! -s "$cache_file" ]]; then
+        return 0
+    fi
+
+    # Phase timestamps (ms since epoch) — written by shell.qml at deferred phase end.
+    local component_ms config_ms entry_ms deferred_ms
+    component_ms=$(jq -r '.componentCompletedAt // 0' "$cache_file" 2>/dev/null)
+    config_ms=$(jq -r '.configReadyAt // 0' "$cache_file" 2>/dev/null)
+    entry_ms=$(jq -r '.shellEntryAt // 0' "$cache_file" 2>/dev/null)
+    deferred_ms=$(jq -r '.deferredReadyAt // 0' "$cache_file" 2>/dev/null)
+    [[ -z "$component_ms" || "$component_ms" == "0" ]] && return 0
+
+    # Process & service start — these often dominate perceived startup time.
+    local service_start_ms=0 qs_start_ms=0
+    if command -v systemctl >/dev/null 2>&1; then
+        local exec_start
+        exec_start=$(systemctl --user show inir.service -p ExecMainStartTimestamp --value 2>/dev/null)
+        if [[ -n "$exec_start" && "$exec_start" != "n/a" ]]; then
+            # systemctl prints "Tue 2026-05-19 11:38:37 -03"; date -d understands it.
+            service_start_ms=$(date -d "$exec_start" +%s%3N 2>/dev/null || echo 0)
+        fi
+    fi
+    # qs process start time (best-effort: read /proc/<pid>/stat starttime if running)
+    local qs_pid
+    qs_pid=$(pgrep -u "$USER" -fn '/usr/bin/qs.*shell\.qml|/usr/bin/qs -n -p' 2>/dev/null | head -1)
+    [[ -z "$qs_pid" ]] && qs_pid=$(pgrep -u "$USER" -fn 'qs -n' 2>/dev/null | head -1)
+    if [[ -n "$qs_pid" && -r "/proc/$qs_pid/stat" ]]; then
+        # field 22 = starttime in clock ticks since boot
+        local starttime_ticks btime hz
+        starttime_ticks=$(awk '{print $22}' "/proc/$qs_pid/stat")
+        btime=$(awk '/^btime / {print $2}' /proc/stat)
+        hz=$(getconf CLK_TCK)
+        if [[ -n "$starttime_ticks" && -n "$btime" && -n "$hz" && "$hz" -gt 0 ]]; then
+            qs_start_ms=$(( btime * 1000 + (starttime_ticks * 1000 / hz) ))
+        fi
+    fi
+
+    tui_title "Last Boot Timing"
+
+    # Format helper: render a delta in ms or s.
+    _fmt_ms() {
+        local ms=$1
+        if [[ "$ms" -lt 0 ]]; then printf -- '—'; return; fi
+        if [[ "$ms" -ge 1000 ]]; then
+            printf '%d.%02ds' "$((ms / 1000))" "$(((ms % 1000) / 10))"
+        else
+            printf '%dms' "$ms"
+        fi
+    }
+
+    # Build a single timeline anchored at the earliest known timestamp.
+    local origin=$service_start_ms
+    if [[ "$origin" == "0" || "$origin" -gt "$qs_start_ms" && "$qs_start_ms" -gt 0 ]]; then
+        origin=$qs_start_ms
+    fi
+    if [[ "$origin" == "0" || "$origin" -gt "$component_ms" ]]; then
+        origin=$component_ms
+    fi
+
+    tui_table_header "Phase" "Elapsed from start" 22 28
+    if [[ "$service_start_ms" -gt 0 ]]; then
+        tui_table_row "systemd ExecStart" "$(_fmt_ms 0) (T+0)" 22 28
+    fi
+    if [[ "$qs_start_ms" -gt 0 && "$service_start_ms" -gt 0 ]]; then
+        tui_table_row "qs process started" "$(_fmt_ms $((qs_start_ms - origin)))" 22 28
+    fi
+    tui_table_row "QML evaluated" "$(_fmt_ms $((component_ms - origin)))" 22 28
+    [[ "$config_ms" -gt 0 ]] && tui_table_row "Config ready" "$(_fmt_ms $((config_ms - origin)))" 22 28
+    [[ "$entry_ms" -gt 0 ]] && tui_table_row "Bar visible" "$(_fmt_ms $((entry_ms - origin)))" 22 28
+    [[ "$deferred_ms" -gt 0 ]] && tui_table_row "Services warm" "$(_fmt_ms $((deferred_ms - origin)))" 22 28
+    tui_table_footer 22 28
+
+    # Triage hints based on which phase ate the time. Thresholds chosen empirically:
+    # > 5s on cold boot is probably user-data driven (icon cache, network), > 10s is
+    # almost certainly something wrong (Qt ABI mismatch, env race, slow disk).
+    local total_ms=$((deferred_ms > 0 ? deferred_ms - origin : 0))
+    if [[ "$total_ms" -gt 10000 ]]; then
+        echo ""
+        tui_check_warn "Boot took $(_fmt_ms $total_ms) — unusually slow."
+        tui_info "  Common culprits: Qt/Quickshell ABI mismatch, missing WAYLAND_DISPLAY env, slow icon cache, network-bound services on first run."
+        tui_info "  Run 'inir doctor' to auto-detect, or share the table above when filing an issue."
+    elif [[ "$total_ms" -gt 5000 ]]; then
+        echo ""
+        tui_check_skip "Boot took $(_fmt_ms $total_ms) — a bit slow on first run; subsequent boots should be faster."
+    fi
+}
+
 show_status() {
     local installed_ver=$(get_installed_version)
     local installed_commit=$(get_installed_commit)
@@ -764,6 +853,11 @@ show_status() {
     else
         tui_check_warn "Preserved modifications: ${preserved_mods}"
     fi
+
+    # Last boot timing breakdown — helps users self-triage "my shell takes 15s to start".
+    # Pulls T0 from systemd, T1 from `qs list`, T2-T5 from ~/.cache/inir/last-boot.json
+    # (written by shell.qml at end of deferred phase).
+    show_status_boot_timing
     echo ""
 }
 
