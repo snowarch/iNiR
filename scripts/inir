@@ -2312,11 +2312,11 @@ case "$command_name" in
             # ── Session boot fast path ──
             # The service unit pre-seeds QT_SCALE_FACTOR and QT_LOGGING_RULES, so
             # apply_shell_scale / apply_qt_logging_rules are no-ops here.
-            # Skip: ABI check, version sync, instance detection, service-active guard.
             # Systemd manages lifecycle (Restart=on-failure) and I/O priority.
             _skip_running_detect=true
             resolve_config_dir
             apply_hot_reload_policy_for_dir "$config_dir"
+            check_qs_abi
             wait_for_wayland_socket       # block until compositor socket exists
             apply_qt_runtime_env          # WAYLAND_DISPLAY + platformtheme fallback
             ensure_systemd_graphical_env & # export env to systemd for other services
