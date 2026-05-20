@@ -588,7 +588,16 @@ check_qs_abi() {
     elif [[ "${_session_boot:-}" == "true" ]]; then
         echo "" >&2
         echo "Attempting automatic rebuild (service mode)..." >&2
-        if _inir_run_quickshell_rebuild noninteractive; then
+        # AUR helpers (paru/yay) can rebuild without sudo in some configs,
+        # but pacman always needs it. Skip if the command requires sudo and
+        # we're in a non-interactive service context.
+        local _rebuild_cmd
+        _rebuild_cmd="$(_inir_quickshell_rebuild_cmd "$(_inir_quickshell_install_kind)")"
+        if [[ "$_rebuild_cmd" == sudo* ]]; then
+            echo "iNiR: cannot auto-rebuild in service mode (requires sudo)." >&2
+            echo "      Run manually: $_rebuild_cmd" >&2
+            echo "      Or: inir doctor --fix-abi" >&2
+        elif [[ -n "$_rebuild_cmd" ]] && _inir_run_quickshell_rebuild noninteractive; then
             return 0
         fi
     fi
