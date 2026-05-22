@@ -19,6 +19,7 @@ session-*.md
 **/codemap.md
 
 # AI tool directories
+.pi/
 .agents/
 .vera/
 .claude/
@@ -93,6 +94,13 @@ debug_log.txt
 .ii-manifest
 .inir-manifest
 .ii-backup.patch
+
+# ── Reference checkouts / local audits (not for distribution) ─
+.referencia/
+context.md
+progress.md
+research.md
+plan.md
 
 # ── WIP / internal docs (not for distribution) ───────────────
 docs/*_IMPLEMENTATION.md

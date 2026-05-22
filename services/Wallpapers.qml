@@ -245,7 +245,7 @@ Singleton {
 
     property alias directory: folderModel.folder
     readonly property string effectiveDirectory: FileUtils.trimFileProtocol(folderModel.folder.toString())
-    property url defaultFolder: Qt.resolvedUrl(`${Directories.pictures}/Wallpapers`)
+    property url defaultFolder: Qt.resolvedUrl(Directories.wallpapersPath)
     property alias folderModel: folderModel
     property string searchQuery: ""
     readonly property list<string> extensions: ["jpg", "jpeg", "png", "webp", "avif", "bmp", "svg", "gif", "mp4", "webm", "mkv", "avi", "mov"]
@@ -253,11 +253,33 @@ Singleton {
     property int _wallpaperCacheIndex: 0
     readonly property bool thumbnailGenerationRunning: thumbgenProc.running
     property real thumbnailGenerationProgress: 0
+    property var _knownThumbnailOutputs: ({})
 
     signal changed()
     signal folderChanged()
     signal thumbnailGenerated(directory: string)
     signal thumbnailGeneratedFile(filePath: string)
+
+    function hasKnownThumbnail(outputPath: string): bool {
+        const normalizedPath = FileUtils.trimFileProtocol(String(outputPath ?? ""))
+        return normalizedPath.length > 0 && !!root._knownThumbnailOutputs[normalizedPath]
+    }
+
+    function rememberThumbnail(outputPath: string): void {
+        const normalizedPath = FileUtils.trimFileProtocol(String(outputPath ?? ""))
+        if (!normalizedPath || root._knownThumbnailOutputs[normalizedPath]) return
+        const nextKnown = Object.assign({}, root._knownThumbnailOutputs)
+        nextKnown[normalizedPath] = true
+        root._knownThumbnailOutputs = nextKnown
+    }
+
+    function forgetThumbnail(outputPath: string): void {
+        const normalizedPath = FileUtils.trimFileProtocol(String(outputPath ?? ""))
+        if (!normalizedPath || !root._knownThumbnailOutputs[normalizedPath]) return
+        const nextKnown = Object.assign({}, root._knownThumbnailOutputs)
+        delete nextKnown[normalizedPath]
+        root._knownThumbnailOutputs = nextKnown
+    }
 
     function load() {}
     function refresh() {} // Compatibility - FolderListModel auto-refreshes
@@ -508,7 +530,7 @@ Singleton {
             root.changed()
             return
         default:
-            root.select(normalizedPath, darkMode, monitorName)
+            root.apply(normalizedPath, darkMode, monitorName)
             return
         }
     }
@@ -822,6 +844,7 @@ Singleton {
 
         _singleThumbProc._key = item.key
         _singleThumbProc._filePath = item.filePath
+        _singleThumbProc._outputPath = item.outputPath
         _singleThumbProc.command = ["bash", "-c", commandBody]
         _singleThumbProc.running = true
     }
@@ -839,7 +862,7 @@ Singleton {
             if (thumbgenProc.running) return
             thumbgenProc.directory = root._pendingThumbnailDir
             thumbgenProc._size = root._pendingThumbnailSize
-            thumbgenProc.command = [thumbgenScriptPath, "--size", root._pendingThumbnailSize, "--machine_progress", "-d", root._pendingThumbnailDir]
+            thumbgenProc.command = [thumbgenScriptPath, "--size", root._pendingThumbnailSize, "--workers", "4", "--machine_progress", "-d", root._pendingThumbnailDir]
             root.thumbnailGenerationProgress = 0
             thumbgenProc.running = true
         }
@@ -880,7 +903,10 @@ Singleton {
         id: _singleThumbProc
         property string _key: ""
         property string _filePath: ""
+        property string _outputPath: ""
         onExited: (exitCode, exitStatus) => {
+            if (exitCode === 0 || exitCode === 1)
+                root.rememberThumbnail(_singleThumbProc._outputPath)
             if (exitCode === 1)
                 root.thumbnailGeneratedFile(_singleThumbProc._filePath)
             root._finishSingleThumb(_singleThumbProc._key)

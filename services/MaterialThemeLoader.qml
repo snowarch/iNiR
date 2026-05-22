@@ -39,7 +39,7 @@ Singleton {
 
     function reapplyTheme() {
         _log("[MaterialThemeLoader] reapplyTheme called, filePath:", root.filePath)
-        themeFileView.reload()
+        reloadDebounce.restart()
     }
 
     function colorToHex(c: color): string {
@@ -87,9 +87,9 @@ Singleton {
                 // next applyColors call bypasses the isAutoTheme gate.
                 root._forceApply = true
                 root._pendingExternalApply = true
-                // Trigger immediate re-read. onLoadedChanged will call applyColors
-                // with _forceApply=true, applying the variant colors to Appearance.
-                themeFileView.reload()
+                // Route through reloadDebounce so this doesn't race the
+                // onFileChanged that the script's own write is about to fire.
+                reloadDebounce.restart()
             }
             // Safety net: poll for file changes in case the immediate reload misses
             root.scheduleReload()
@@ -232,15 +232,29 @@ Singleton {
         }
     }
 
-    FileView { 
+    // Debounce file-change notifications: theme pipeline writes the JSON
+    // multiple times during boot (regenerateAutoTheme + applyCurrentTheme +
+    // external scripts). Each onFileChanged calling reload() races the
+    // previous reload op and drops it ("got operation finished from dropped
+    // operation" warning). The timer batches rapid changes into one reload.
+    Timer {
+        id: reloadDebounce
+        interval: 50
+        repeat: false
+        onTriggered: {
+            themeFileView.reload()
+            delayedFileRead.start()
+            delayedExternalApply.restart()
+        }
+    }
+
+    FileView {
         id: themeFileView
         path: Qt.resolvedUrl(root.filePath)
         watchChanges: true
         onFileChanged: {
             root._log("[MaterialThemeLoader] onFileChanged fired")
-            this.reload()
-            delayedFileRead.start()
-            delayedExternalApply.restart()
+            reloadDebounce.restart()
         }
         onLoadedChanged: {
             root._log("[MaterialThemeLoader] onLoadedChanged fired, loaded:", themeFileView.loaded)

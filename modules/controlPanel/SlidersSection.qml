@@ -71,7 +71,7 @@ Rectangle {
             active: Config.options?.sidebar?.quickSliders?.showMic ?? false
             sourceComponent: MiniSlider {
                 icon: Audio.micMuted ? "mic_off" : "mic"
-                value: Audio.source?.audio?.volume ?? 0
+                value: Audio.micVolume
                 onMoved: (val) => Audio.setSourceVolume(val)
                 onIconClicked: Audio.toggleMicMute()
             }

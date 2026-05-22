@@ -1359,7 +1359,7 @@ Scope {
                     ConfigSwitch {
                         buttonIcon: "schedule"
                         text: Translation.tr("Desktop clock")
-                        checked: Config.options?.background?.widgets?.clock?.enable ?? true
+                        checked: Config.getNestedValue("background.widgets.clock.enable", true)
                         onCheckedChanged: Config.setNestedValue("background.widgets.clock.enable", checked)
                     }
                     ConfigSwitch {
@@ -1436,7 +1436,7 @@ Scope {
 
                 ConfigSelectionArray {
                     Layout.alignment: Qt.AlignHCenter
-                    currentValue: Config.options?.background?.widgets?.clock?.timeFormat ?? "system"
+                    currentValue: Config.getNestedValue("background.widgets.clock.timeFormat", "system")
                     onSelected: v => Config.setNestedValue("background.widgets.clock.timeFormat", v)
                     options: [
                         { displayName: Translation.tr("System"),  icon: "settings",    value: "system" },
@@ -1452,7 +1452,7 @@ Scope {
                     ConfigSwitch {
                         buttonIcon: "more_time"
                         text: Translation.tr("Show seconds in clock")
-                        checked: Config.options?.background?.widgets?.clock?.showSeconds ?? false
+                        checked: Config.getNestedValue("background.widgets.clock.showSeconds", false)
                         onCheckedChanged: Config.setNestedValue("background.widgets.clock.showSeconds", checked)
                     }
                 }

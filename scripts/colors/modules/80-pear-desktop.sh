@@ -22,7 +22,9 @@ PEAR_CONFIG_DIR="$XDG_CONFIG_HOME/YouTube Music"
 PEAR_CONFIG_FILE="$PEAR_CONFIG_DIR/config.json"
 
 GENERATED_CSS="$STATE_DIR/user/generated/pear-desktop-theme.css"
-COLORS_JSON="$STATE_DIR/user/generated/colors.json"
+COLORS_JSON="$STATE_DIR/user/generated/app-palette.json"
+[[ -f "$COLORS_JSON" ]] || COLORS_JSON="$STATE_DIR/user/generated/palette.json"
+[[ -f "$COLORS_JSON" ]] || COLORS_JSON="$STATE_DIR/user/generated/colors.json"
 CDP_PORT=9223
 
 # --- Package detection ---
@@ -52,7 +54,7 @@ detect_package() {
   return 0
 }
 
-# --- CSS generation from colors.json (catppuccin structure with Material You colors) ---
+# --- CSS generation from generated palette (catppuccin structure with Material You colors) ---
 
 read_hex() {
   local token="$1" fallback="${2:-#000000}"
@@ -74,20 +76,20 @@ generate_css_from_colors_json() {
   local accent on_accent
   local green red
 
-  base=$(read_hex surface "#1e1e2e")
-  mantle=$(read_hex surface_container_low "#181825")
-  crust=$(read_hex surface_dim "#11111b")
-  surface0=$(read_hex surface_container "#313244")
-  surface1=$(read_hex surface_container_high "#45475a")
-  surface2=$(read_hex surface_container_highest "#585b70")
-  text=$(read_hex on_surface "#cdd6f4")
-  subtext0=$(read_hex on_surface_variant "#a6adc8")
-  subtext1=$(read_hex outline "#7f849c")
-  overlay0=$(read_hex outline_variant "#6c7086")
-  overlay1=$(read_hex outline "#7f849c")
-  overlay2=$(read_hex outline "#9399b2")
-  accent=$(read_hex primary "#cba6f7")
-  on_accent=$(read_hex on_primary "#1e1e2e")
+  base=$(read_hex 'app_background // .surface' "#1e1e2e")
+  mantle=$(read_hex 'app_sidebar_bg // .app_surface // .surface_container_low' "#181825")
+  crust=$(read_hex 'app_window_bg // .surface_dim' "#11111b")
+  surface0=$(read_hex 'app_surface_elevated // .surface_container' "#313244")
+  surface1=$(read_hex 'app_surface_popup // .surface_container_high' "#45475a")
+  surface2=$(read_hex 'app_thumbnail_bg // .surface_container_highest' "#585b70")
+  text=$(read_hex 'app_foreground // .on_surface' "#cdd6f4")
+  subtext0=$(read_hex 'app_subtext // .on_surface_variant' "#a6adc8")
+  subtext1=$(read_hex 'app_border // .outline' "#7f849c")
+  overlay0=$(read_hex 'app_border_subtle // .outline_variant' "#6c7086")
+  overlay1=$(read_hex 'app_border // .outline' "#7f849c")
+  overlay2=$(read_hex 'app_border // .outline' "#9399b2")
+  accent=$(read_hex 'app_accent // .primary' "#cba6f7")
+  on_accent=$(read_hex 'app_on_accent // .on_primary' "#1e1e2e")
   green=$(read_hex tertiary "#a6e3a1")
   red=$(read_hex error "#f38ba8")
 
@@ -1043,10 +1045,10 @@ main() {
   fi
   log_module "detected package: $PEAR_BINARY"
 
-  # Generate CSS from colors.json
+  # Generate CSS from generated palette
   local css_file="$GENERATED_CSS"
   if [[ ! -f "$COLORS_JSON" ]]; then
-    log_module "no colors.json — skipping"
+    log_module "no generated palette — skipping"
     exit 0
   fi
   command -v jq &>/dev/null || { log_module "jq not installed — skipping"; exit 0; }

@@ -19,11 +19,9 @@ Singleton {
         if (isRecording) {
             recordingStartTime = Date.now()
             elapsedSeconds = 0
-            elapsedTimer.start()
         } else {
             recordingStartTime = 0
             elapsedSeconds = 0
-            elapsedTimer.stop()
         }
     }
 
@@ -32,24 +30,37 @@ Singleton {
             checkProcess.running = true
     }
 
-    // Poll slightly less frequently - recording status doesn't need sub-second updates
+    // Idle poll: infrequent check for externally-started recordings
     Timer {
-        id: pollTimer
-        interval: 1000
-        running: Config.ready
+        id: idlePollTimer
+        interval: 5000
+        running: Config.ready && !root.isRecording
         repeat: true
         onTriggered: root.refreshStatus()
     }
 
-    // Elapsed time counter — ticks every second while recording
+    // Active poll: 1s tick while recording (elapsed counter + stop detection)
     Timer {
-        id: elapsedTimer
+        id: activePollTimer
         interval: 1000
+        running: root.isRecording
         repeat: true
         onTriggered: {
             if (root.recordingStartTime > 0)
                 root.elapsedSeconds = Math.floor((Date.now() - root.recordingStartTime) / 1000)
+            root.refreshStatus()
         }
+    }
+
+    // Quick recheck after a recording action (start/stop) to catch state change fast
+    function scheduleQuickCheck(): void {
+        quickCheckTimer.restart()
+    }
+    Timer {
+        id: quickCheckTimer
+        interval: 500
+        repeat: false
+        onTriggered: root.refreshStatus()
     }
 
     Component.onCompleted: Qt.callLater(root.refreshStatus)

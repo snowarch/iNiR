@@ -19,6 +19,8 @@ Scope {
         : Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? GlobalStates.primaryScreen
 
     property string currentIndicator: "volume"
+    property bool _syncingOpenStates: false
+    readonly property bool osdActive: GlobalStates.osdVolumeOpen || GlobalStates.osdBrightnessOpen || GlobalStates.osdMediaOpen || GlobalStates.osdKeyboardLayoutOpen
     property var indicators: [
         {
             id: "volume",
@@ -42,18 +44,43 @@ Scope {
         },
     ]
 
-    function triggerOsd() {
+    function setOpenStates(volume, brightness, media, keyboardLayout) {
+        root._syncingOpenStates = true;
+        GlobalStates.osdVolumeOpen = volume;
+        GlobalStates.osdBrightnessOpen = brightness;
+        GlobalStates.osdMediaOpen = media;
+        GlobalStates.osdKeyboardLayoutOpen = keyboardLayout;
+        root._syncingOpenStates = false;
+    }
+
+    function hideOsd() {
+        osdTimeout.stop();
+        root.setOpenStates(false, false, false, false);
+        root.protectionMessage = "";
+    }
+
+    function openIndicator(indicator, autoHide) {
         if (!initialized) return;
-        GlobalStates.osdVolumeOpen = true;
-        osdTimeout.restart();
+        root.currentIndicator = indicator;
+        root.setOpenStates(
+            indicator === "volume" || indicator === "voiceSearch",
+            indicator === "brightness",
+            indicator === "media",
+            indicator === "keyboardLayout"
+        );
+        if (autoHide)
+            osdTimeout.restart();
+    }
+
+    function triggerOsd() {
+        root.openIndicator(root.currentIndicator, true);
     }
 
     function triggerMediaOsd() {
         if (!initialized) return;
+        if (!(Config.options?.osd?.mediaEnabled ?? true)) return;
         if (!MprisController.activePlayer) return;
-        root.currentIndicator = "media";
-        GlobalStates.osdMediaOpen = true;
-        osdTimeout.restart();
+        root.openIndicator("media", true);
     }
 
     Timer {
@@ -71,9 +98,7 @@ Scope {
         repeat: false
         running: false
         onTriggered: {
-            GlobalStates.osdVolumeOpen = false;
-            GlobalStates.osdMediaOpen = false;
-            root.protectionMessage = "";
+            root.hideOsd();
         }
     }
 
@@ -113,15 +138,43 @@ Scope {
         }
     }
 
-    // Media OSD is triggered via IPC only (not on every track change)
-    // See services/MprisController.qml IpcHandler
+    Connections {
+        target: GlobalStates
+        function onOsdVolumeOpenChanged() {
+            if (root._syncingOpenStates || !GlobalStates.osdVolumeOpen)
+                return;
+            root.currentIndicator = "volume";
+            osdTimeout.restart();
+        }
+        function onOsdBrightnessOpenChanged() {
+            if (root._syncingOpenStates || !GlobalStates.osdBrightnessOpen)
+                return;
+            root.currentIndicator = "brightness";
+            osdTimeout.restart();
+        }
+        function onOsdMediaOpenChanged() {
+            if (root._syncingOpenStates || !GlobalStates.osdMediaOpen)
+                return;
+            if (!(Config.options?.osd?.mediaEnabled ?? true)) {
+                GlobalStates.osdMediaOpen = false;
+                return;
+            }
+            root.currentIndicator = "media";
+            osdTimeout.restart();
+        }
+        function onOsdKeyboardLayoutOpenChanged() {
+            if (root._syncingOpenStates || !GlobalStates.osdKeyboardLayoutOpen)
+                return;
+            root.currentIndicator = "keyboardLayout";
+            osdTimeout.restart();
+        }
+    }
 
     Connections {
         target: VoiceSearch
         function onRunningChanged() {
             if (VoiceSearch.running) {
-                root.currentIndicator = "voiceSearch";
-                GlobalStates.osdVolumeOpen = true;
+                root.openIndicator("voiceSearch", false);
                 osdTimeout.stop(); // Don't auto-hide while active
             } else {
                 osdTimeout.restart();
@@ -139,11 +192,12 @@ Scope {
 
     Loader {
         id: osdLoader
-        active: GlobalStates.osdVolumeOpen || GlobalStates.osdMediaOpen
+        active: root.osdActive
 
         sourceComponent: PanelWindow {
             id: osdRoot
             color: "transparent"
+            screen: root.focusedScreen
 
             Connections {
                 target: root
@@ -171,7 +225,7 @@ Scope {
 
             implicitWidth: columnLayout.implicitWidth
             implicitHeight: columnLayout.implicitHeight
-            visible: osdLoader.active
+            visible: root.osdActive
 
             ColumnLayout {
                 id: columnLayout
@@ -179,8 +233,8 @@ Scope {
 
                 // Subtle open animation for the OSD, sliding from the bar edge
                 transformOrigin: root.currentIndicator === "keyboardLayout" || !(Config.options?.bar?.bottom ?? false) ? Item.Top : Item.Bottom
-                scale: GlobalStates.osdVolumeOpen ? 1.0 : 0.96
-                opacity: GlobalStates.osdVolumeOpen ? 1.0 : 0.0
+                scale: root.osdActive ? 1.0 : 0.96
+                opacity: root.osdActive ? 1.0 : 0.0
                 Behavior on scale {
                     animation: NumberAnimation { duration: Appearance.animation.elementMoveEnter.duration; easing.type: Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve }
                 }
@@ -198,7 +252,7 @@ Scope {
                     MouseArea {
                         anchors.fill: parent
                         hoverEnabled: true
-                        onEntered: GlobalStates.osdVolumeOpen = false
+                        onEntered: root.hideOsd()
                     }
 
                     Column {
@@ -267,7 +321,7 @@ Scope {
         }
 
         function hide(): void {
-            GlobalStates.osdVolumeOpen = false;
+            root.hideOsd();
         }
 
         function toggle(): void {

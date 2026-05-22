@@ -32,8 +32,10 @@ RippleButton {
     property int buttonVerticalPadding: 6
     property bool keyboardDown: false
     property bool isSelected: false
+    property bool isSearchMatch: true
     property bool copiedFromPanel: false
 
+    opacity: root.isSearchMatch ? 1.0 : 0.35
     implicitHeight: rowLayout.implicitHeight + root.buttonVerticalPadding * 2
     implicitWidth: rowLayout.implicitWidth + root.buttonHorizontalPadding * 2
     buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall

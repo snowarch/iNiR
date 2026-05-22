@@ -30,6 +30,11 @@ import QtQuick;
  */
 Singleton {
     id: root
+
+    function _log(...args): void {
+        if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
+    }
+
     property string filePath: Directories.todoPath
     property string txtFilePath: Directories.todoTxtPath
     property var list: []
@@ -168,7 +173,7 @@ Singleton {
                 console.log("[Todo] JSON parse error, resetting list:", e)
                 root.list = []
             }
-            console.log("[Todo] JSON loaded,", root.list.length, "tasks")
+            _log("[Todo] JSON loaded,", root.list.length, "tasks")
             // Generate txt mirror from loaded JSON, then unlock after settling
             root._writeTxt()
             startupUnlock.start()
@@ -203,7 +208,7 @@ Singleton {
         }
         onLoadFailed: (error) => {
             if (error == FileViewError.FileNotFound) {
-                console.log("[Todo] txt not found, will be created on next list change")
+                _log("[Todo] txt not found, will be created on next list change")
             }
         }
     }
@@ -216,7 +221,7 @@ Singleton {
         repeat: false
         onTriggered: {
             root._startupLock = false
-            console.log("[Todo] txt sync unlocked")
+            _log("[Todo] txt sync unlocked")
         }
     }
 
@@ -245,7 +250,7 @@ Singleton {
 
                 if (root._listsEqual(root.list, parsed)) return
 
-                console.log("[Todo] txt changed externally:", parsed.length, "tasks")
+                _log("[Todo] txt changed externally:", parsed.length, "tasks")
                 root._suppressTxtWrite = true
                 root.list = parsed
                 todoFileView.setText(JSON.stringify(root.list))

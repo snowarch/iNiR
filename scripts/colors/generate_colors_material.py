@@ -6,6 +6,8 @@ import os
 import re
 import sys
 
+import numpy as np
+
 try:
     import tomllib
 except ModuleNotFoundError:
@@ -118,10 +120,22 @@ parser.add_argument(
     "--palette-output", type=str, default=None, help="file path to write palette.json"
 )
 parser.add_argument(
+    "--app-palette-output",
+    type=str,
+    default=None,
+    help="file path to write app-palette.json",
+)
+parser.add_argument(
     "--terminal-output", type=str, default=None, help="file path to write terminal.json"
 )
 parser.add_argument(
     "--meta-output", type=str, default=None, help="file path to write theme-meta.json"
+)
+parser.add_argument(
+    "--scss-output",
+    type=str,
+    default=None,
+    help="file path to write material_colors.scss",
 )
 parser.add_argument(
     "--render-templates",
@@ -147,6 +161,70 @@ hex_to_argb = lambda hex_code: argb_from_rgb(
 display_color = lambda rgba: "\x1b[38;2;{};{};{}m{}\x1b[0m".format(
     rgba[0], rgba[1], rgba[2], "\x1b[7m   \x1b[7m"
 )
+
+
+def _auto_detect_scheme(pil_image):
+    """Detect optimal material scheme from image statistics.
+    Uses the same decision tree as scheme_for_image.py but operates on an
+    already-loaded PIL image, avoiding a separate Python process + cv2 import."""
+    arr = np.array(pil_image, dtype=np.float64)
+    if arr.ndim != 3 or arr.shape[2] < 3:
+        return "scheme-tonal-spot"
+
+    R, G, B = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
+
+    # Colorfulness (Hasler-Süsstrunk metric)
+    rg = np.absolute(R - G)
+    yb = np.absolute(0.5 * (R + G) - B)
+    colorfulness = float(
+        np.sqrt(np.std(rg) ** 2 + np.std(yb) ** 2)
+        + 0.3 * np.sqrt(np.mean(rg) ** 2 + np.mean(yb) ** 2)
+    )
+
+    # HSV via numpy (H scaled to 0-180 to match cv2 convention)
+    r, g, b = R / 255.0, G / 255.0, B / 255.0
+    maxc = np.maximum(np.maximum(r, g), b)
+    minc = np.minimum(np.minimum(r, g), b)
+    s = np.where(maxc > 0, (maxc - minc) / maxc, 0.0) * 255
+    delta = maxc - minc
+    h = np.zeros_like(r)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        mask = delta > 0
+        idx = (maxc == r) & mask
+        h[idx] = 30.0 * (((g[idx] - b[idx]) / delta[idx]) % 6)
+        idx = (maxc == g) & mask
+        h[idx] = 30.0 * ((b[idx] - r[idx]) / delta[idx] + 2)
+        idx = (maxc == b) & mask
+        h[idx] = 30.0 * ((r[idx] - g[idx]) / delta[idx] + 4)
+
+    saturation = float(np.mean(s))
+    hue_spread = float(np.std(h))
+
+    if saturation < 20:
+        return "scheme-monochrome"
+    if colorfulness < 30:
+        if saturation < 55:
+            return "scheme-neutral"
+        if hue_spread < 22:
+            return "scheme-content"
+        return "scheme-tonal-spot"
+    if colorfulness < 55:
+        if hue_spread < 22 and saturation < 100:
+            return "scheme-content"
+        return "scheme-tonal-spot"
+    if colorfulness < 90:
+        if saturation > 140 and hue_spread < 35:
+            return "scheme-fidelity"
+        if hue_spread < 30:
+            return "scheme-content"
+        return "scheme-tonal-spot"
+    if hue_spread > 55 and saturation > 150:
+        return "scheme-rainbow"
+    if saturation > 160:
+        return "scheme-fidelity"
+    if hue_spread > 45:
+        return "scheme-expressive"
+    return "scheme-tonal-spot"
 
 
 def calculate_optimal_size(width: int, height: int, bitmap_size: int) -> (int, int):
@@ -353,6 +431,108 @@ def ensure_contrast(
     return best
 
 
+def mix_hex(color_a: str, color_b: str, keep_a: float = 0.5) -> str:
+    a = color_a.lstrip("#")
+    b = color_b.lstrip("#")
+    ar, ag, ab = int(a[0:2], 16), int(a[2:4], 16), int(a[4:6], 16)
+    br, bg, bb = int(b[0:2], 16), int(b[2:4], 16), int(b[4:6], 16)
+    return "#{:02X}{:02X}{:02X}".format(
+        round(ar * keep_a + br * (1 - keep_a)),
+        round(ag * keep_a + bg * (1 - keep_a)),
+        round(ab * keep_a + bb * (1 - keep_a)),
+    )
+
+
+def readable_hex(fg_hex: str, bg_hex: str, min_ratio: float = 4.5) -> str:
+    bg_argb = hex_to_argb(bg_hex)
+    is_bg_dark = Hct.from_int(bg_argb).tone < 50
+    return argb_to_hex(ensure_contrast(hex_to_argb(fg_hex), bg_argb, min_ratio, is_bg_dark))
+
+
+def build_app_palette(base_palette: dict[str, str]) -> dict[str, str]:
+    layer0 = base_palette.get("background") or base_palette.get("surface") or "#000000"
+    layer1 = base_palette.get("surface_container_low") or base_palette.get("surface") or layer0
+    layer2 = base_palette.get("surface_container") or layer1
+    layer3 = base_palette.get("surface_container_high") or layer2
+    layer4 = base_palette.get("surface_container_highest") or layer3
+    on_surface = base_palette.get("on_surface") or base_palette.get("on_background") or "#FFFFFF"
+    on_surface_variant = base_palette.get("on_surface_variant") or on_surface
+    primary = base_palette.get("primary") or "#6750A4"
+    primary_container = base_palette.get("primary_container") or primary
+    on_primary = base_palette.get("on_primary") or readable_hex(on_surface, primary, 4.5)
+    outline = base_palette.get("outline") or on_surface_variant
+    outline_variant = base_palette.get("outline_variant") or mix_hex(layer1, outline, 0.72)
+
+    on_layer0 = readable_hex(on_surface, layer0, 4.5)
+    on_layer1 = readable_hex(on_surface_variant, layer1, 4.5)
+    on_layer2 = readable_hex(on_surface, layer2, 4.5)
+    on_layer3 = readable_hex(on_surface, layer3, 4.5)
+    on_layer4 = readable_hex(on_surface, layer4, 4.5)
+    subtext = readable_hex(mix_hex(on_layer1, layer1, 0.75), layer1, 3.0)
+
+    layer1_hover = mix_hex(layer1, on_layer1, 0.92)
+    layer1_active = mix_hex(layer1, on_layer1, 0.85)
+    layer2_hover = mix_hex(layer2, on_layer2, 0.90)
+    layer2_active = mix_hex(layer2, on_layer2, 0.80)
+    layer3_hover = mix_hex(layer3, on_layer3, 0.90)
+    layer3_active = mix_hex(layer3, on_layer3, 0.80)
+    selection = mix_hex(layer3, primary, 0.82)
+    selection_hover = mix_hex(layer3, primary, 0.74)
+    on_selection = readable_hex(on_layer3, selection, 4.5)
+
+    app = dict(base_palette)
+    app.update(
+        {
+            "background": layer0,
+            "on_background": on_layer0,
+            "surface": layer0,
+            "on_surface": on_layer1,
+            "surface_dim": layer0,
+            "surface_bright": layer3,
+            "surface_container_lowest": layer0,
+            "surface_container_low": layer1,
+            "surface_container": layer2,
+            "surface_container_high": layer3,
+            "surface_container_highest": layer4,
+            "outline": outline,
+            "outline_variant": outline_variant,
+            "app_background": layer0,
+            "app_foreground": on_layer0,
+            "app_subtext": subtext,
+            "app_surface": layer1,
+            "app_surface_hover": layer1_hover,
+            "app_surface_active": layer1_active,
+            "app_surface_elevated": layer2,
+            "app_surface_elevated_hover": layer2_hover,
+            "app_surface_elevated_active": layer2_active,
+            "app_surface_popup": layer3,
+            "app_surface_popup_hover": layer3_hover,
+            "app_surface_popup_active": layer3_active,
+            "app_on_surface": on_layer1,
+            "app_on_surface_elevated": on_layer2,
+            "app_on_surface_popup": on_layer3,
+            "app_on_surface_highest": on_layer4,
+            "app_border": outline,
+            "app_border_subtle": outline_variant,
+            "app_accent": primary,
+            "app_on_accent": on_primary,
+            "app_accent_container": primary_container,
+            "app_selection": selection,
+            "app_selection_hover": selection_hover,
+            "app_on_selection": on_selection,
+            "app_window_bg": layer0,
+            "app_view_bg": layer0,
+            "app_headerbar_bg": layer0,
+            "app_sidebar_bg": layer0,
+            "app_card_bg": layer1,
+            "app_popover_bg": layer2,
+            "app_dialog_bg": layer3,
+            "app_thumbnail_bg": layer4,
+        }
+    )
+    return app
+
+
 darkmode = args.mode == "dark"
 transparent = args.transparency == "transparent"
 
@@ -368,6 +548,9 @@ if args.path is not None:
     wsize_new, hsize_new = calculate_optimal_size(wsize, hsize, args.size)
     if wsize_new < wsize or hsize_new < hsize:
         image = image.resize((wsize_new, hsize_new), Image.Resampling.BICUBIC)
+    # Auto-detect scheme from the already-resized image (avoids separate Python process)
+    if args.scheme == "auto":
+        args.scheme = _auto_detect_scheme(image)
     colors = QuantizeCelebi(list(image.getdata()), 128)
     argb = Score.score(colors)[0]
 
@@ -620,13 +803,23 @@ if not term_colors and material_colors:
         "term15": material_colors.get("onSurface", "#EBDBB2"),
     }
 
-if args.debug == False:
-    print(f"$darkmode: {darkmode};")
-    print(f"$transparent: {transparent};")
+def build_scss_output() -> str:
+    lines = [f"$darkmode: {darkmode};", f"$transparent: {transparent};"]
     for color, code in material_colors.items():
-        print(f"${color}: {code};")
+        lines.append(f"${color}: {code};")
     for color, code in term_colors.items():
-        print(f"${color}: {code};")
+        lines.append(f"${color}: {code};")
+    return "\n".join(lines) + "\n"
+
+
+scss_output = build_scss_output()
+
+if args.scss_output:
+    with open(args.scss_output, "w") as f:
+        f.write(scss_output)
+
+if args.debug == False:
+    print(scss_output, end="")
 else:
     if args.path is not None:
         print("\n--------------Image properties-----------------")
@@ -714,6 +907,7 @@ def build_palette_json():
 
 
 palette_json = build_palette_json()
+app_palette_json = build_app_palette(palette_json)
 colors_json = dict(palette_json)
 for tkey, tval in term_colors.items():
     colors_json[tkey] = tval
@@ -749,6 +943,10 @@ if args.palette_output:
     with open(args.palette_output, "w") as f:
         json.dump(palette_json, f, indent=2)
 
+if args.app_palette_output:
+    with open(args.app_palette_output, "w") as f:
+        json.dump(app_palette_json, f, indent=2)
+
 if args.terminal_output:
     with open(args.terminal_output, "w") as f:
         json.dump(term_colors, f, indent=2)
@@ -766,6 +964,21 @@ if args.render_templates:
     legacy_config_path = os.path.join(template_dir, "config.toml")
 
     template_entries = []
+    managed_outputs = set()
+    for managed_path in [
+        args.json_output,
+        args.palette_output,
+        args.app_palette_output,
+        args.terminal_output,
+        args.meta_output,
+        args.scss_output,
+    ]:
+        if not managed_path:
+            continue
+        resolved = os.path.abspath(os.path.expanduser(managed_path))
+        if resolved.endswith(".tmp"):
+            resolved = resolved[:-4]
+        managed_outputs.add(resolved)
 
     if os.path.isfile(manifest_path):
         with open(manifest_path, "r") as f:
@@ -773,11 +986,14 @@ if args.render_templates:
 
         templates_base = os.path.join(template_dir, "templates")
         for entry in manifest.get("templates", []):
+            output_path = os.path.abspath(os.path.expanduser(entry["output"]))
+            if output_path in managed_outputs:
+                continue
             template_entries.append(
                 {
                     "name": entry.get("name", "template"),
                     "template_path": os.path.join(templates_base, entry["input"]),
-                    "output_path": os.path.expanduser(entry["output"]),
+                    "output_path": output_path,
                 }
             )
     elif os.path.isfile(legacy_config_path):
@@ -802,6 +1018,9 @@ if args.render_templates:
                     continue
 
                 resolved_input = os.path.expanduser(input_path)
+                resolved_output = os.path.abspath(os.path.expanduser(output_path))
+                if resolved_output in managed_outputs:
+                    continue
                 if not os.path.isfile(resolved_input) and "/templates/" in input_path:
                     rel_input = input_path.split("/templates/", 1)[1].lstrip("/")
                     candidate = os.path.join(template_dir, "templates", rel_input)
@@ -812,7 +1031,7 @@ if args.render_templates:
                     {
                         "name": name,
                         "template_path": resolved_input,
-                        "output_path": os.path.expanduser(output_path),
+                        "output_path": resolved_output,
                     }
                 )
     else:
@@ -856,6 +1075,27 @@ if args.render_templates:
             palette["onSuccess"] = "#FFFFFF"
             palette["successContainer"] = "#D1E8D5"
             palette["onSuccessContainer"] = "#0C1F13"
+        raw_contract = {
+            "primary": palette.get("primary", ""),
+            "on_primary": palette.get("onPrimary", ""),
+            "primary_container": palette.get("primaryContainer", ""),
+            "on_primary_container": palette.get("onPrimaryContainer", ""),
+            "background": palette.get("background", ""),
+            "on_background": palette.get("onBackground", ""),
+            "surface": palette.get("surface", ""),
+            "on_surface": palette.get("onSurface", ""),
+            "surface_dim": palette.get("surfaceDim", ""),
+            "surface_bright": palette.get("surfaceBright", ""),
+            "surface_container_lowest": palette.get("surfaceContainerLowest", ""),
+            "surface_container_low": palette.get("surfaceContainerLow", ""),
+            "surface_container": palette.get("surfaceContainer", ""),
+            "surface_container_high": palette.get("surfaceContainerHigh", ""),
+            "surface_container_highest": palette.get("surfaceContainerHighest", ""),
+            "on_surface_variant": palette.get("onSurfaceVariant", ""),
+            "outline": palette.get("outline", ""),
+            "outline_variant": palette.get("outlineVariant", ""),
+        }
+        palette.update(build_app_palette(raw_contract))
         return palette
 
     dark_palette = _generate_palette(True)

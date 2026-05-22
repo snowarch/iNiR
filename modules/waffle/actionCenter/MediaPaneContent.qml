@@ -21,15 +21,6 @@ Rectangle {
     readonly property string effectiveTitle: MprisController.isYtMusicActive ? YtMusic.currentTitle : (activePlayer?.trackTitle ?? "")
     readonly property string effectiveArtist: MprisController.isYtMusicActive ? YtMusic.currentArtist : (activePlayer?.trackArtist ?? "")
 
-    MediaArtworkResolver {
-        id: artworkResolver
-        sourceUrl: root.effectiveArtUrl
-        title: root.effectiveTitle
-        artist: root.effectiveArtist
-        album: root.activePlayer?.trackAlbum ?? ""
-        cacheDirectory: Directories.coverArt
-    }
-
     // Volume feedback overlay
     Rectangle {
         id: volumeOverlay
@@ -106,7 +97,7 @@ Rectangle {
             StyledImage {
                 id: artImage
                 anchors.fill: parent
-                source: artworkResolver.displaySource
+                source: MediaArtwork.displaySource
                 fillMode: Image.PreserveAspectCrop
                 cache: false
             }
@@ -115,7 +106,7 @@ Rectangle {
                 anchors.centerIn: parent
                 icon: "music-note-2"
                 implicitSize: 32
-                visible: !artworkResolver.ready || artImage.status !== Image.Ready
+                visible: !MediaArtwork.ready || artImage.status !== Image.Ready
             }
         }
 

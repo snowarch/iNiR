@@ -395,6 +395,16 @@ ContentPage {
                 text: Translation.tr("Taskbar replaces the active window title. Pinned apps and running windows appear in the bar, like a traditional taskbar. Uses the same pinned apps as the dock.")
             }
 
+            // Sub-toggle for the active window indicator: hide the second line (window title)
+            // and only show the app name. Hidden when activeWindow is off or taskbar is on.
+            SettingsSwitch {
+                visible: (Config.options?.bar?.modules?.activeWindow ?? true) && !(Config.options?.bar?.modules?.taskbar ?? false)
+                buttonIcon: "subtitles"
+                text: Translation.tr("Show window title under app name")
+                checked: Config.options?.bar?.activeWindow?.showTitle ?? true
+                onCheckedChanged: Config.setNestedValue("bar.activeWindow.showTitle", checked)
+            }
+
             ConfigRow {
                 uniform: true
                 SettingsSwitch {

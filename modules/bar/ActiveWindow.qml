@@ -95,6 +95,7 @@ Item {
 
         StyledText {
             Layout.fillWidth: true
+            visible: Config.options?.bar?.activeWindow?.showTitle ?? true
             font.pixelSize: Appearance.font.pixelSize.small
             color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0
             elide: Text.ElideRight

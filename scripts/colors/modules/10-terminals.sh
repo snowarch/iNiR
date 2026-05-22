@@ -5,6 +5,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/module-runtime.sh"
 COLOR_MODULE_ID="terminals"
 
 SCSS_FILE="$STATE_DIR/user/generated/material_colors.scss"
+APP_PALETTE_FILE="$STATE_DIR/user/generated/app-palette.json"
 PALETTE_FILE="$STATE_DIR/user/generated/palette.json"
 TERMINAL_FILE="$STATE_DIR/user/generated/terminal.json"
 SEQUENCES_TEMPLATE="$SCRIPT_DIR/terminal/sequences.txt"
@@ -56,14 +57,17 @@ is_terminal_themed() {
 apply_term_sequences() {
   [[ -f "$SEQUENCES_TEMPLATE" ]] || return 0
   mkdir -p "$STATE_DIR/user/generated/terminal"
-  cp "$SEQUENCES_TEMPLATE" "$STATE_DIR/user/generated/terminal/sequences.txt"
+  local sequences_file="$STATE_DIR/user/generated/terminal/sequences.txt"
+  local sequences_tmp
+  sequences_tmp="$(mktemp "$STATE_DIR/user/generated/terminal/sequences.XXXXXX")"
+  cp "$SEQUENCES_TEMPLATE" "$sequences_tmp"
 
   if [[ -f "$TERMINAL_FILE" ]] && command -v jq &>/dev/null; then
     local idx value
     for idx in $(seq 0 15); do
       value=$(jq -r ".term${idx} // empty" "$TERMINAL_FILE" 2>/dev/null || true)
       [[ -n "$value" ]] || continue
-      sed -i "s/\$term${idx} #/${value#\#}/g" "$STATE_DIR/user/generated/terminal/sequences.txt"
+      sed -i "s/\$term${idx} #/${value#\#}/g" "$sequences_tmp"
     done
   else
     local color_names color_values
@@ -71,11 +75,12 @@ apply_term_sequences() {
     mapfile -t color_values < <(cut -d: -f2 "$SCSS_FILE" | cut -d ' ' -f2 | cut -d ';' -f1)
 
     for i in "${!color_names[@]}"; do
-      sed -i "s/${color_names[$i]} #/${color_values[$i]#\#}/g" "$STATE_DIR/user/generated/terminal/sequences.txt"
+      sed -i "s/${color_names[$i]} #/${color_values[$i]#\#}/g" "$sequences_tmp"
     done
   fi
 
-  sed -i 's/\$alpha/100/g' "$STATE_DIR/user/generated/terminal/sequences.txt"
+  sed -i 's/\$alpha/100/g' "$sequences_tmp"
+  mv "$sequences_tmp" "$sequences_file"
 
   local shell_pids
   shell_pids=$(pgrep -x 'fish|bash|zsh|nu|elvish|xonsh' 2>/dev/null || true)
@@ -115,7 +120,7 @@ apply_term_sequences() {
   for pts_num in "${safe_pts[@]}"; do
     local pts_file="/dev/pts/$pts_num"
     if [[ -w "$pts_file" ]]; then
-      { cat "$STATE_DIR/user/generated/terminal/sequences.txt" > "$pts_file"; } & disown || true
+      { cat "$sequences_file" > "$pts_file"; } & disown || true
     fi
   done
 }
@@ -170,9 +175,11 @@ apply_terminal_configs() {
 
   [[ ${#enabled_terminals[@]} -gt 0 ]] || return 0
 
+  local colors_file="$APP_PALETTE_FILE"
+  [[ -f "$colors_file" ]] || colors_file="$PALETTE_FILE"
   local python_cmd
   python_cmd=$(venv_python)
-  "$python_cmd" "$SCRIPT_DIR/generate_terminal_configs.py" --scss "$SCSS_FILE" --colors "$PALETTE_FILE" --terminal-json "$TERMINAL_FILE" --terminals "${enabled_terminals[@]}" >> "$STATE_DIR/user/generated/terminal_colors.log" 2>&1
+  "$python_cmd" "$SCRIPT_DIR/generate_terminal_configs.py" --scss "$SCSS_FILE" --colors "$colors_file" --terminal-json "$TERMINAL_FILE" --terminals "${enabled_terminals[@]}" >> "$STATE_DIR/user/generated/terminal_colors.log" 2>&1
   reload_terminal_colors "${enabled_terminals[@]}" >> "$STATE_DIR/user/generated/terminal_colors.log" 2>&1 &
 }
 

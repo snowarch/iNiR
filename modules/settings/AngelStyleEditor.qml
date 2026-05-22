@@ -153,8 +153,8 @@ ColumnLayout {
     // ─── Preset definitions (JS objects) — professional variations ───
     readonly property var _presets: ({
         "default": {
-            "blur": { "intensity": 0.50, "saturation": 0.15, "overlayOpacity": 0.35, "noiseOpacity": 0.20, "vignetteStrength": 0.15 },
-            "transparency": { "panel": 0.35, "card": 0.50, "popup": 0.35, "tooltip": 0.25 },
+            "blur": { "intensity": 0.35, "saturation": 0.20, "overlayOpacity": 0.45, "noiseOpacity": 0.20, "vignetteStrength": 0.15 },
+            "transparency": { "panel": 0.28, "card": 0.40, "popup": 0.28, "tooltip": 0.25 },
             "escalonado": { "offsetX": 1, "offsetY": 1, "hoverOffsetX": 7, "hoverOffsetY": 7, "opacity": 0.50, "borderOpacity": 0.17, "hoverOpacity": 0.0 },
             "escalonadoShadow": { "offsetX": 3, "offsetY": 2, "hoverOffsetX": 7, "hoverOffsetY": 7, "opacity": 1.0, "borderOpacity": 1.0, "hoverOpacity": 0.60, "glass": true, "glassBlur": 0.70, "glassOverlay": 0.50 },
             "border": { "width": 0.8, "accentBarHeight": 10, "accentBarWidth": 10, "coverage": 0.60, "opacity": 0.52, "hoverOpacity": 0.50, "activeOpacity": 0.50, "insetGlowHeight": 1, "insetGlowOpacity": 0.20 },

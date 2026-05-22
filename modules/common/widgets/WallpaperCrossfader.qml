@@ -622,7 +622,7 @@ Item {
             sourceSize: root._slotSourceSize(0)
             asynchronous: true
             cache: false
-            mipmap: true
+            mipmap: false
             smooth: true
             opacity: root._slotOpacity(0)
             scale: root._slotScale(0)
@@ -667,7 +667,7 @@ Item {
             sourceSize: root._slotSourceSize(1)
             asynchronous: true
             cache: false
-            mipmap: true
+            mipmap: false
             smooth: true
             opacity: root._slotOpacity(1)
             scale: root._slotScale(1)

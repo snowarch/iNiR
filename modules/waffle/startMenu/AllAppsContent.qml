@@ -209,22 +209,31 @@ WPanelPageColumn {
                                     }
                                 }
 
-                                // Grid of apps in this section
-                                Grid {
+                                // Apps in this section — Flow auto-reflows when panel resizes;
+                                // wrapper Item lets us center the row within the parent column.
+                                Item {
                                     width: parent.width
-                                    columns: 6
-                                    rowSpacing: 4
-                                    columnSpacing: 4
+                                    height: appFlow.implicitHeight
 
-                                    Repeater {
-                                        model: sectionDelegate.modelData.apps
+                                    Flow {
+                                        id: appFlow
+                                        readonly property int cellWidth: 88 + spacing
+                                        // Number of columns that fit in the available width
+                                        readonly property int maxCols: Math.max(1, Math.floor((parent.width + spacing) / cellWidth))
+                                        // Trim Flow width to whole cells so the block can center cleanly
+                                        width: Math.min(parent.width, maxCols * cellWidth - spacing)
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        spacing: 4
 
-                                        delegate: WBorderlessButton {
-                                            id: appBtn
-                                            required property var modelData
-                                            required property int index
-                                            implicitWidth: 88
-                                            implicitHeight: 76
+                                        Repeater {
+                                            model: sectionDelegate.modelData.apps
+
+                                            delegate: WBorderlessButton {
+                                                id: appBtn
+                                                required property var modelData
+                                                required property int index
+                                                implicitWidth: 88
+                                                implicitHeight: 76
 
                                             onClicked: {
                                                 appBtn.modelData.execute()
@@ -271,6 +280,7 @@ WPanelPageColumn {
                                                 }
                                             }
                                             WToolTip { text: appBtn.modelData.name || "" }
+                                        }
                                         }
                                     }
                                 }

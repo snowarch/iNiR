@@ -111,7 +111,8 @@ Item {
         Item {
             id: placeholderItem
             // Never show placeholder while cache is valid (during transitions)
-            visible: !root._cacheValid && (root.meaningfulPlayers?.length ?? 0) === 0 && (Mpris.players.values?.length ?? 0) === 0
+            readonly property bool _shouldShow: !root._cacheValid && (root.meaningfulPlayers?.length ?? 0) === 0 && (Mpris.players.values?.length ?? 0) === 0
+            visible: _shouldShow
             Layout.fillWidth: true
             implicitWidth: placeholderBackground.implicitWidth + Appearance.sizes.elevationMargin
             implicitHeight: placeholderBackground.implicitHeight + Appearance.sizes.elevationMargin

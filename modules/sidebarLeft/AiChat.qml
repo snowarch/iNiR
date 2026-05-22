@@ -296,8 +296,8 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
             layer.enabled: true
             layer.effect: OpacityMask {
                 maskSource: Rectangle {
-                    width: swipeView.width
-                    height: swipeView.height
+                    width: root.width
+                    height: root.height
                     radius: Appearance.rounding.small
                 }
             }
@@ -550,7 +550,7 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                     Layout.fillWidth: true
                     padding: 10
                     color: activeFocus ? Appearance.m3colors.m3onSurface : Appearance.m3colors.m3onSurfaceVariant
-                    placeholderText: Translation.tr('Message the model... "%1" for commands').arg(root.commandPrefix)
+                    placeholderText: Ai.getModel() ? Translation.tr("Ask %1 anything...").arg(Ai.getModel().name) : Translation.tr("Select a model to start chatting")
 
                     background: null
 
@@ -780,20 +780,36 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                 ]
 
                 ApiInputBoxIndicator {
-                    // Model indicator
                     icon: "api"
                     readonly property var _model: Ai.getModel()
                     text: _model?.name ?? Translation.tr("No model")
-                    tooltipText: _model
-                        ? Translation.tr("Current model: %1\nSet it with %2model MODEL").arg(_model.name).arg(root.commandPrefix)
-                        : Translation.tr("No model selected\nSet it with %1model MODEL").arg(root.commandPrefix)
+                    tooltipText: _model?.name ?? Translation.tr("No model — click to select")
+                    clickAction: () => {
+                        messageInputField.text = root.commandPrefix + "model "
+                        messageInputField.cursorPosition = messageInputField.text.length
+                        messageInputField.forceActiveFocus()
+                    }
                 }
 
                 ApiInputBoxIndicator {
-                    // Tool indicator
                     icon: "service_toolbox"
                     text: Ai.currentTool.charAt(0).toUpperCase() + Ai.currentTool.slice(1)
-                    tooltipText: Translation.tr("Current tool: %1\nSet it with %2tool TOOL").arg(Ai.currentTool).arg(root.commandPrefix)
+                    tooltipText: Ai.currentTool
+                    clickAction: () => {
+                        messageInputField.text = root.commandPrefix + "tool "
+                        messageInputField.cursorPosition = messageInputField.text.length
+                        messageInputField.forceActiveFocus()
+                    }
+                }
+
+                ApiInputBoxIndicator {
+                    icon: "settings"
+                    text: ""
+                    tooltipText: Translation.tr("AI Settings")
+                    clickAction: () => {
+                        GlobalStates.settingsOverlayRequestedPage = 7
+                        GlobalStates.settingsOverlayOpen = true
+                    }
                 }
 
                 Item {

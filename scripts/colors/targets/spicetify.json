@@ -3,7 +3,7 @@
   "label": "Spicetify",
   "module": "50-spicetify.sh",
   "category": "music",
-  "inputs": ["palette.json"],
+  "inputs": ["app-palette.json", "palette.json"],
   "description": "Apply the current generated palette to Spicetify themes.",
   "configKey": "appearance.wallpaperTheming.enableSpicetify"
 }

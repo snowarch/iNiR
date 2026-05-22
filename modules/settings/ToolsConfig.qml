@@ -105,7 +105,7 @@ ContentPage {
     function audioCodecDisplayName(codec) {
         switch (codec) {
         case "aac": return Translation.tr("AAC")
-        case "libopus": return Translation.tr("Opus")
+        case "libopus": return Translation.tr("Libopus")
         case "opus": return Translation.tr("Opus")
         default: return codec
         }
@@ -178,7 +178,7 @@ ContentPage {
         required property string description
         required property var options
         required property var currentValue
-        property bool enabled: true
+        property bool fieldEnabled: true
         signal selected(var newValue)
 
         Layout.fillWidth: true
@@ -202,7 +202,7 @@ ContentPage {
 
         StyledComboBox {
             Layout.fillWidth: true
-            enabled: field.enabled
+            enabled: field.fieldEnabled
             model: field.options
             textRole: "displayName"
             currentIndex: root.choiceIndex(field.options, field.currentValue)
@@ -306,6 +306,13 @@ ContentPage {
                         Config.setNestedValue("enabledPanels", panels)
                     }
                 }
+            }
+
+            SettingsSwitch {
+                buttonIcon: "mouse"
+                text: Translation.tr("Auto-hide recording OSD")
+                checked: Config.options?.screenRecord?.recordingOsd?.autoHide ?? false
+                onCheckedChanged: Config.setNestedValue("screenRecord.recordingOsd.autoHide", checked)
             }
 
             SettingsSwitch {
@@ -570,6 +577,20 @@ ContentPage {
                     }
                 }
             }
+
+            ContentSubsection {
+                title: Translation.tr("File naming")
+
+                ContentSubsectionLabel {
+                    text: Translation.tr("Recording filename format (date tokens)")
+                }
+                MaterialTextField {
+                    Layout.fillWidth: true
+                    placeholderText: "recording_%Y-%m-%d_%H.%M.%S"
+                    text: Config.options?.screenRecord?.recordingNameFormat ?? "recording_%Y-%m-%d_%H.%M.%S"
+                    onEditingFinished: Config.setNestedValue("screenRecord.recordingNameFormat", text)
+                }
+            }
         }
     }
 
@@ -714,6 +735,20 @@ ContentPage {
                     StyledToolTip {
                         text: Translation.tr("Padding around the selected circle region")
                     }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("File naming")
+
+                ContentSubsectionLabel {
+                    text: Translation.tr("Screenshot filename format (date tokens)")
+                }
+                MaterialTextField {
+                    Layout.fillWidth: true
+                    placeholderText: "ss-%Y%m%d-%H%M%S"
+                    text: Config.options?.regionSelector?.screenshotNameFormat ?? "ss-%Y%m%d-%H%M%S"
+                    onEditingFinished: Config.setNestedValue("regionSelector.screenshotNameFormat", text)
                 }
             }
         }
@@ -886,6 +921,18 @@ ContentPage {
         title: Translation.tr("On-screen display")
 
         SettingsGroup {
+            ConfigSwitch {
+                buttonIcon: "music_note"
+                text: Translation.tr("Media OSD")
+                checked: Config.options?.osd?.mediaEnabled ?? true
+                onCheckedChanged: {
+                    Config.setNestedValue("osd.mediaEnabled", checked);
+                }
+                StyledToolTip {
+                    text: Translation.tr("Show now playing feedback when media shortcuts are pressed")
+                }
+            }
+
             ConfigSpinBox {
                 icon: "av_timer"
                 text: Translation.tr("Timeout (ms)")
@@ -897,7 +944,7 @@ ContentPage {
                     Config.setNestedValue("osd.timeout", value);
                 }
                 StyledToolTip {
-                    text: Translation.tr("How long the volume/brightness indicator stays visible")
+                    text: Translation.tr("How long the volume, brightness and media indicators stay visible")
                 }
             }
         }

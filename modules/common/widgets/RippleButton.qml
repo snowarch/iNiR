@@ -85,7 +85,10 @@ Button {
             if (root.downAction) root.downAction();
             if (!root.rippleEnabled) return;
             const {x,y} = event
-            startRipple(x, y)
+            // Guard against tear-down race: when a parent Loader / popover is destroying
+            // this RippleButton mid-click, the function table can be torn down before
+            // the MouseArea callback finishes. Qt 6.11+ warns; pre-6.11 silently no-op'd.
+            if (typeof root.startRipple === "function") root.startRipple(x, y)
         }
         onPositionChanged: (event) => {
             if (root.moveAction) root.moveAction(event);

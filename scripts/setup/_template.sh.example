@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# scripts/setup/<slug>.sh
+# /setup-<slug> — one-line summary of what this recipe does.
+#
+# @meta name: Setup <Display Name>
+# @meta description: Short description shown under the action in the launcher
+# @meta icon: download
+# @meta keywords: <space> <separated> <extra> <search> <terms>
+#
+# Arch family : describe the AUR/repo path here.
+# Other       : describe the Flatpak/fallback path (or say "unsupported").
+#
+# Copy this file to <slug>.sh, edit the @meta block + body, then `chmod +x`.
+# The launcher discovers it automatically — no QML edits required.
+
+set -Eeuo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck disable=SC1091
+. "$SCRIPT_DIR/_lib.sh"
+
+setup_init "<slug>" "Setup <Display Name>"
+
+if is_arch_like; then
+    TOTAL=2
+
+    setup_progress 1 $TOTAL "Installing <packages>"
+    install_arch <repo-pkg> -- <aur-pkg>
+
+    setup_progress 2 $TOTAL "Post-install configuration"
+    # configure_command_here
+
+    setup_done "<Display Name> ready"
+else
+    TOTAL=1
+    setup_progress 1 $TOTAL "Installing <Display Name> via Flatpak"
+    install_flatpak <com.example.App>
+
+    setup_done "<Display Name> installed via Flatpak"
+fi
+
+setup_finish_pause

@@ -8,9 +8,11 @@ RippleButton {
     id: root
     property string buttonIcon
     property alias iconSize: iconWidget.iconSize
+    property bool autoToggle: true
     // Integración con buscador global de Settings
     property bool enableSettingsSearch: true
     property int settingsSearchOptionId: -1
+    signal toggledByUser(bool checked)
 
     Layout.fillWidth: true
     implicitHeight: contentItem.implicitHeight + 8 * 2
@@ -78,7 +80,12 @@ RippleButton {
         }
     }
 
-    onClicked: checked = !checked
+    onClicked: {
+        const nextChecked = !checked;
+        toggledByUser(nextChecked);
+        if (autoToggle)
+            checked = nextChecked;
+    }
 
     contentItem: RowLayout {
         spacing: 10
@@ -107,4 +114,3 @@ RippleButton {
         }
     }
 }
-

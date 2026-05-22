@@ -127,7 +127,7 @@ Item {
                         valueText: Math.round(ResourceUsage.diskUsedPercentage * 100) + "%"
                         subText: formatBytes(ResourceUsage.diskUsed) + " / " + formatBytes(ResourceUsage.diskTotal)
                         progressValue: ResourceUsage.diskUsedPercentage
-                        progressColor: ResourceUsage.diskUsedPercentage > 0.9 ? Appearance.colors.colError : Appearance.colors.colPrimary
+                        progressColor: ResourceUsage.diskUsedPercentage > 0.9 ? (Appearance.colors?.colError ?? "transparent") : (Appearance.colors?.colPrimary ?? "transparent")
                         showGraph: false
                     }
 
@@ -145,10 +145,10 @@ Item {
                         }
                         progressValue: ResourceUsage.tempPercentage
                         progressColor: ResourceUsage.maxTemp >= ResourceUsage.tempWarningThreshold
-                            ? Appearance.colors.colError
+                            ? (Appearance.colors?.colError ?? "transparent")
                             : ResourceUsage.maxTemp >= 60
-                                ? Appearance.colors.colWarning
-                                : Appearance.colors.colPrimary
+                                ? (Appearance.colors?.colWarning ?? "transparent")
+                                : (Appearance.colors?.colPrimary ?? "transparent")
                         showGraph: false
                     }
 

@@ -172,7 +172,9 @@ DockButton {
     StyledRectangularShadow {
         target: root.pillStyle ? pillBackground : root.background
         visible: !Appearance.angelEverywhere && !root.macosStyle
-        opacity: root.buttonHovered && !root.isSeparator ? 0.6 : 0
+        opacity: root.buttonHovered && !root.isSeparator
+            ? (Appearance.m3colors.darkmode ? 0.18 : 0.35) : 0
+        spread: 0
         Behavior on opacity {
             enabled: Appearance.animationsEnabled
             animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }

@@ -445,7 +445,7 @@ Item { // Wrapper
             layer.effect: OpacityMask {
                 maskSource: Rectangle {
                     width: searchWidgetContent.width
-                    height: searchWidgetContent.width
+                    height: searchWidgetContent.height
                     radius: searchWidgetContent.radius
                 }
             }

@@ -3,7 +3,7 @@
   "label": "SDDM",
   "module": "60-sddm.sh",
   "category": "login",
-  "inputs": ["palette.json"],
+  "inputs": ["app-palette.json", "palette.json"],
   "description": "Sync the current generated palette into the shipped SDDM theme assets.",
   "configKey": "appearance.wallpaperTheming.enableAppsAndShell"
 }

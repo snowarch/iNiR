@@ -6,6 +6,7 @@ import Quickshell
 import Quickshell.Io
 import qs.modules.common
 import qs.modules.common.functions
+import qs.services
 
 Singleton {
     id: root
@@ -45,7 +46,7 @@ Singleton {
         const cmd = ["/usr/bin/swayidle", "-w"]
         const lockBeforeSleep = Config.options?.idle?.lockBeforeSleep !== false
 
-        if (screenOffTimeout > 0) {
+        if (screenOffTimeout > 0 && CompositorService.isNiri) {
             cmd.push("timeout", screenOffTimeout.toString(), "/usr/bin/niri msg action power-off-monitors", "resume", "/usr/bin/niri msg action power-on-monitors")
         }
 
@@ -72,7 +73,7 @@ Singleton {
             cmd.push("before-sleep", `'${StringUtils.shellSingleQuoteEscape(root.launcherPath)}' lock activate`)
         }
 
-        console.log("[Idle] Starting swayidle")
+        if (Quickshell.env("QS_DEBUG") === "1") console.log("[Idle] Starting swayidle")
         Quickshell.execDetached(cmd)
     }
 

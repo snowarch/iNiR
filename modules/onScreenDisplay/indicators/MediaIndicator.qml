@@ -10,18 +10,10 @@ Item {
 
     property var track: MprisController.activeTrack
     property bool isPlaying: MprisController.isPlaying
-    readonly property string effectiveArtUrl: MprisController.isYtMusicActive ? YtMusic.currentThumbnail : (track?.artUrl ?? "")
+    readonly property string effectiveTitle: MprisController.isYtMusicActive ? YtMusic.currentTitle : (track?.title ?? "")
+    readonly property string effectiveArtist: MprisController.isYtMusicActive ? YtMusic.currentArtist : (track?.artist ?? "")
 
-    MediaArtworkResolver {
-        id: artworkResolver
-        sourceUrl: root.effectiveArtUrl
-        title: root.track?.title ?? ""
-        artist: root.track?.artist ?? ""
-        album: root.track?.album ?? ""
-        cacheDirectory: Directories.coverArt
-    }
-
-    implicitWidth: 340 + 2 * Appearance.sizes.elevationMargin
+    implicitWidth: mediaCard.implicitWidth + 2 * Appearance.sizes.elevationMargin
     implicitHeight: mediaCard.implicitHeight + 2 * Appearance.sizes.elevationMargin
     clip: true
 
@@ -29,22 +21,21 @@ Item {
         target: mediaCard
     }
 
-    Rectangle {
+    GlassBackground {
         id: mediaCard
         anchors {
             fill: parent
             margins: Appearance.sizes.elevationMargin
         }
-        radius: Appearance.rounding.normal
-        color: Appearance.angelEverywhere ? Appearance.angel.colGlassPopup
-             : Appearance.inirEverywhere ? Appearance.inir.colLayer1
-             : Appearance.auroraEverywhere ? Appearance.aurora.colPopupSurface
-             : Appearance.colors.colLayer0
-        border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
-            : Appearance.auroraEverywhere || Appearance.inirEverywhere ? 1 : 0
+        radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+        fallbackColor: Appearance.colors.colLayer0
+        inirColor: Appearance.inir.colLayer1
+        auroraTransparency: Appearance.aurora.popupTransparentize
+        border.width: auroraEverywhere || inirEverywhere ? 1 : 0
         border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
-            : Appearance.inirEverywhere ? Appearance.inir.colBorder 
-            : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder : "transparent"
+            : inirEverywhere ? Appearance.inir.colBorder
+            : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder : Appearance.colors.colLayer0Border
+        implicitWidth: contentRow.implicitWidth + 24
         implicitHeight: contentRow.implicitHeight + 24
 
         RowLayout {
@@ -55,27 +46,22 @@ Item {
             }
             spacing: 12
 
-            // Album art
+            // Album art — fills height, stays square (BarMediaPlayerItem pattern)
             Rectangle {
-                Layout.preferredWidth: 56
-                Layout.preferredHeight: 56
+                Layout.fillHeight: true
+                implicitWidth: height
                 radius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
-                color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                     : Appearance.inirEverywhere ? Appearance.inir.colLayer1
-                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface 
-                     : Appearance.colors.colLayer1
-                border.width: Appearance.inirEverywhere ? 1 : 0
-                border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+                color: Appearance.colors.colLayer1
                 clip: true
 
                 Image {
                     id: albumArt
                     anchors.fill: parent
-                    source: artworkResolver.displaySource
+                    source: MediaArtwork.displaySource
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
                     cache: false
-                    visible: artworkResolver.ready && status === Image.Ready
+                    visible: MediaArtwork.ready && status === Image.Ready
 
                     layer.enabled: true
                     layer.effect: GE.OpacityMask {
@@ -87,13 +73,12 @@ Item {
                     }
                 }
 
-                // Fallback icon
                 MaterialSymbol {
                     anchors.centerIn: parent
                     text: "music_note"
                     iconSize: Appearance.font.pixelSize.huge
                     color: Appearance.colors.colSubtext
-                    visible: !artworkResolver.ready || albumArt.status !== Image.Ready
+                    visible: !MediaArtwork.ready || albumArt.status !== Image.Ready
                 }
             }
 
@@ -103,10 +88,9 @@ Item {
                 Layout.fillHeight: true
                 spacing: 4
 
-                // Title
                 StyledText {
                     Layout.fillWidth: true
-                    text: root.track?.title ?? Translation.tr("No media playing")
+                    text: root.effectiveTitle || Translation.tr("No media playing")
                     font.pixelSize: Appearance.font.pixelSize.small
                     font.weight: Font.Medium
                     color: Appearance.colors.colOnLayer0
@@ -114,10 +98,9 @@ Item {
                     maximumLineCount: 1
                 }
 
-                // Artist
                 StyledText {
                     Layout.fillWidth: true
-                    text: root.track?.artist ?? ""
+                    text: root.effectiveArtist
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     color: Appearance.colors.colSubtext
                     elide: Text.ElideRight
@@ -127,7 +110,6 @@ Item {
 
                 Item { Layout.fillHeight: true }
 
-                // Controls
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 4
@@ -138,14 +120,15 @@ Item {
                         buttonRadius: Appearance.rounding.full
                         enabled: MprisController.canGoPrevious
                         colBackground: "transparent"
-                        colBackgroundHover: Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer1Hover
-                        colRipple: Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer1Active
+                        colBackgroundHover: Appearance.colors.colLayer1Hover
+                        colRipple: Appearance.colors.colLayer1Active
                         onClicked: MprisController.previous()
 
                         contentItem: MaterialSymbol {
                             anchors.centerIn: parent
                             text: "skip_previous"
                             iconSize: 18
+                            fill: 1
                             color: parent.enabled ? Appearance.colors.colOnLayer0 : Appearance.colors.colSubtext
                         }
                     }
@@ -155,16 +138,17 @@ Item {
                         implicitHeight: 32
                         buttonRadius: Appearance.rounding.full
                         enabled: MprisController.canTogglePlaying
-                        colBackground: "transparent"
-                        colBackgroundHover: Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer1Hover
-                        colRipple: Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer1Active
+                        colBackground: Appearance.colors.colPrimaryContainer
+                        colBackgroundHover: Appearance.colors.colPrimaryContainerHover
+                        colRipple: Appearance.colors.colPrimaryContainerActive
                         onClicked: MprisController.togglePlaying()
 
                         contentItem: MaterialSymbol {
                             anchors.centerIn: parent
                             text: root.isPlaying ? "pause" : "play_arrow"
                             iconSize: 18
-                            color: parent.enabled ? Appearance.colors.colOnLayer0 : Appearance.colors.colSubtext
+                            fill: 1
+                            color: parent.enabled ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colSubtext
                         }
                     }
 
@@ -174,19 +158,19 @@ Item {
                         buttonRadius: Appearance.rounding.full
                         enabled: MprisController.canGoNext
                         colBackground: "transparent"
-                        colBackgroundHover: Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer1Hover
-                        colRipple: Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer1Active
+                        colBackgroundHover: Appearance.colors.colLayer1Hover
+                        colRipple: Appearance.colors.colLayer1Active
                         onClicked: MprisController.next()
 
                         contentItem: MaterialSymbol {
                             anchors.centerIn: parent
                             text: "skip_next"
                             iconSize: 18
+                            fill: 1
                             color: parent.enabled ? Appearance.colors.colOnLayer0 : Appearance.colors.colSubtext
                         }
                     }
 
-                    Item { Layout.fillWidth: true }
                 }
             }
         }

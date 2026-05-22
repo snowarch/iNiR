@@ -14,6 +14,7 @@ XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 PALETTE_JSON="$XDG_STATE_HOME/quickshell/user/generated/palette.json"
+APP_PALETTE_JSON="$XDG_STATE_HOME/quickshell/user/generated/app-palette.json"
 COLORS_JSON="$XDG_STATE_HOME/quickshell/user/generated/colors.json"
 KDEGLOBALS="$HOME/.config/kdeglobals"
 DARKLY_COLORS="$XDG_DATA_HOME/color-schemes/Darkly.colors"
@@ -37,7 +38,10 @@ if [[ "$enable_apps_shell" == "false" && "$enable_qt_apps" == "false" ]]; then
 fi
 
 # Read colors from the explicit palette contract first, then fall back to colors.json
-COLOR_SOURCE="$PALETTE_JSON"
+COLOR_SOURCE="$APP_PALETTE_JSON"
+if [[ ! -f "$COLOR_SOURCE" ]]; then
+    COLOR_SOURCE="$PALETTE_JSON"
+fi
 if [[ ! -f "$COLOR_SOURCE" ]]; then
     COLOR_SOURCE="$COLORS_JSON"
 fi
@@ -47,20 +51,28 @@ if [[ ! -f "$COLOR_SOURCE" ]] || ! command -v jq &>/dev/null; then
     exit 0
 fi
 
-BG=$(jq -r '.background // empty' "$COLOR_SOURCE" 2>/dev/null || echo "#1e1e2e")
-FG=$(jq -r '.on_background // empty' "$COLOR_SOURCE" 2>/dev/null || echo "#cdd6f4")
-PRIMARY=$(jq -r '.primary // empty' "$COLOR_SOURCE" 2>/dev/null || echo "#cba6f7")
-ON_PRIMARY=$(jq -r '.on_primary // empty' "$COLOR_SOURCE" 2>/dev/null || echo "#1e1e2e")
+BG=$(jq -r '.app_background // .background // empty' "$COLOR_SOURCE" 2>/dev/null || echo "#1e1e2e")
+FG=$(jq -r '.app_foreground // .on_background // empty' "$COLOR_SOURCE" 2>/dev/null || echo "#cdd6f4")
+PRIMARY=$(jq -r '.app_accent // .primary // empty' "$COLOR_SOURCE" 2>/dev/null || echo "#cba6f7")
+ON_PRIMARY=$(jq -r '.app_on_accent // .on_primary // empty' "$COLOR_SOURCE" 2>/dev/null || echo "#1e1e2e")
 PRIMARY_CONTAINER=$(jq -r '.primary_container // empty' "$COLOR_SOURCE" 2>/dev/null)
 ON_PRIMARY_CONTAINER=$(jq -r '.on_primary_container // empty' "$COLOR_SOURCE" 2>/dev/null)
-SURFACE=$(jq -r '.surface // empty' "$COLOR_SOURCE" 2>/dev/null || echo "$BG")
-ON_SURFACE=$(jq -r '.on_surface // empty' "$COLOR_SOURCE" 2>/dev/null || echo "$FG")
-SURFACE_CONTAINER=$(jq -r '.surface_container // empty' "$COLOR_SOURCE" 2>/dev/null)
-SURFACE_CONTAINER_HIGH=$(jq -r '.surface_container_high // empty' "$COLOR_SOURCE" 2>/dev/null)
-SURFACE_CONTAINER_LOW=$(jq -r '.surface_container_low // empty' "$COLOR_SOURCE" 2>/dev/null)
-SURFACE_DIM=$(jq -r '.surface_dim // empty' "$COLOR_SOURCE" 2>/dev/null)
-OUTLINE_VARIANT=$(jq -r '.outline_variant // empty' "$COLOR_SOURCE" 2>/dev/null)
-SURFACE_CONTAINER_HIGHEST=$(jq -r '.surface_container_highest // empty' "$COLOR_SOURCE" 2>/dev/null)
+SURFACE=$(jq -r '.app_view_bg // .surface // empty' "$COLOR_SOURCE" 2>/dev/null || echo "$BG")
+ON_SURFACE=$(jq -r '.app_on_surface // .on_surface // empty' "$COLOR_SOURCE" 2>/dev/null || echo "$FG")
+SURFACE_CONTAINER=$(jq -r '.app_surface_elevated // .surface_container // empty' "$COLOR_SOURCE" 2>/dev/null)
+SURFACE_CONTAINER_HIGH=$(jq -r '.app_surface_popup // .surface_container_high // empty' "$COLOR_SOURCE" 2>/dev/null)
+SURFACE_CONTAINER_LOW=$(jq -r '.app_surface // .surface_container_low // empty' "$COLOR_SOURCE" 2>/dev/null)
+SURFACE_DIM=$(jq -r '.app_window_bg // .surface_dim // empty' "$COLOR_SOURCE" 2>/dev/null)
+OUTLINE_VARIANT=$(jq -r '.app_border_subtle // .outline_variant // empty' "$COLOR_SOURCE" 2>/dev/null)
+SURFACE_CONTAINER_HIGHEST=$(jq -r '.app_thumbnail_bg // .surface_container_highest // empty' "$COLOR_SOURCE" 2>/dev/null)
+APP_HEADERBAR_BG=$(jq -r '.app_headerbar_bg // empty' "$COLOR_SOURCE" 2>/dev/null)
+APP_SIDEBAR_BG=$(jq -r '.app_sidebar_bg // empty' "$COLOR_SOURCE" 2>/dev/null)
+APP_CARD_BG=$(jq -r '.app_card_bg // empty' "$COLOR_SOURCE" 2>/dev/null)
+APP_POPOVER_BG=$(jq -r '.app_popover_bg // empty' "$COLOR_SOURCE" 2>/dev/null)
+APP_DIALOG_BG=$(jq -r '.app_dialog_bg // empty' "$COLOR_SOURCE" 2>/dev/null)
+APP_SELECTION=$(jq -r '.app_selection // empty' "$COLOR_SOURCE" 2>/dev/null)
+APP_SELECTION_HOVER=$(jq -r '.app_selection_hover // empty' "$COLOR_SOURCE" 2>/dev/null)
+APP_ON_SELECTION=$(jq -r '.app_on_selection // empty' "$COLOR_SOURCE" 2>/dev/null)
 
 # Semantic colors from Material tokens
 ERROR_COLOR=$(jq -r '.error // empty' "$COLOR_SOURCE" 2>/dev/null)
@@ -118,6 +130,11 @@ break_symlink() {
 [[ -z "$OUTLINE_VARIANT" ]]          && OUTLINE_VARIANT=$(adjust_color "$BG" 52)
 [[ -z "$PRIMARY_CONTAINER" ]]        && PRIMARY_CONTAINER=$(adjust_color "$PRIMARY" -26)
 [[ -z "$ON_PRIMARY_CONTAINER" ]]     && ON_PRIMARY_CONTAINER="$FG"
+[[ -z "$APP_HEADERBAR_BG" ]]         && APP_HEADERBAR_BG="$BG"
+[[ -z "$APP_SIDEBAR_BG" ]]           && APP_SIDEBAR_BG="$BG"
+[[ -z "$APP_CARD_BG" ]]              && APP_CARD_BG="$SURFACE_CONTAINER_LOW"
+[[ -z "$APP_POPOVER_BG" ]]           && APP_POPOVER_BG="$SURFACE_CONTAINER"
+[[ -z "$APP_DIALOG_BG" ]]            && APP_DIALOG_BG="$SURFACE_CONTAINER_HIGH"
 
 # Derive semantic color fallbacks from Material tokens
 [[ -z "$ERROR_COLOR" ]] && ERROR_COLOR="#ff6b6b"
@@ -416,6 +433,9 @@ ROW_HOVER_BG=$(blend_hex_percent "$SURFACE_CONTAINER" "$PRIMARY" 12)
 ROW_ACTIVE_BG=$(blend_hex_percent "$SURFACE_CONTAINER_HIGH" "$PRIMARY" 18)
 ROW_ACTIVE_HOVER_BG=$(blend_hex_percent "$SURFACE_CONTAINER_HIGH" "$PRIMARY" 26)
 ROW_SELECTED_FG="$FG"
+[[ -n "$APP_SELECTION" ]]       && ROW_ACTIVE_BG="$APP_SELECTION"
+[[ -n "$APP_SELECTION_HOVER" ]] && ROW_ACTIVE_HOVER_BG="$APP_SELECTION_HOVER"
+[[ -n "$APP_ON_SELECTION" ]]    && ROW_SELECTED_FG="$APP_ON_SELECTION"
 
 # Generate Darkly.colors for Qt style override
 generate_darkly_colors() {
@@ -601,25 +621,25 @@ cat > "$GTK3_CSS" << EOF
 @define-color window_bg_color ${BG};
 @define-color window_fg_color ${FG};
 
-@define-color headerbar_bg_color ${BG};
+@define-color headerbar_bg_color ${APP_HEADERBAR_BG};
 @define-color headerbar_fg_color ${FG};
 
-@define-color popover_bg_color ${SURFACE_CONTAINER};
+@define-color popover_bg_color ${APP_POPOVER_BG};
 @define-color popover_fg_color ${ON_SURFACE};
 
 @define-color view_bg_color ${BG};
 @define-color view_fg_color ${FG};
 
-@define-color card_bg_color ${SURFACE_CONTAINER_LOW};
+@define-color card_bg_color ${APP_CARD_BG};
 @define-color card_fg_color ${ON_SURFACE};
 
-@define-color sidebar_bg_color ${BG};
+@define-color sidebar_bg_color ${APP_SIDEBAR_BG};
 @define-color sidebar_fg_color ${FG};
 @define-color sidebar_border_color ${BG};
 @define-color sidebar_backdrop_color ${BG};
 
 headerbar {
-    background-color: ${BG} !important;
+    background-color: ${APP_HEADERBAR_BG} !important;
     box-shadow: none !important;
     border-bottom: none !important;
 }
@@ -632,7 +652,7 @@ headerbar separator {
 .nautilus-window sidebar,
 placessidebar,
 placessidebar list {
-    background-color: ${BG} !important;
+    background-color: ${APP_SIDEBAR_BG} !important;
     color: ${FG} !important;
     border-right: none !important;
 }
@@ -668,14 +688,14 @@ separator.sidebar {
 /* Context menus and popovers */
 popover,
 popover.background {
-    background-color: ${SURFACE_CONTAINER} !important;
+    background-color: ${APP_POPOVER_BG} !important;
     color: ${ON_SURFACE} !important;
 }
 
 menu,
 .context-menu,
 .popup {
-    background-color: ${SURFACE_CONTAINER} !important;
+    background-color: ${APP_POPOVER_BG} !important;
     color: ${ON_SURFACE} !important;
 }
 
@@ -733,22 +753,22 @@ cat > "$GTK4_CSS" << EOF
 @define-color window_bg_color ${BG};
 @define-color window_fg_color ${FG};
 
-@define-color headerbar_bg_color ${BG};
+@define-color headerbar_bg_color ${APP_HEADERBAR_BG};
 @define-color headerbar_fg_color ${FG};
 
-@define-color popover_bg_color ${SURFACE_CONTAINER};
+@define-color popover_bg_color ${APP_POPOVER_BG};
 @define-color popover_fg_color ${ON_SURFACE};
 
-@define-color dialog_bg_color ${SURFACE_CONTAINER_HIGH};
+@define-color dialog_bg_color ${APP_DIALOG_BG};
 @define-color dialog_fg_color ${ON_SURFACE};
 
 @define-color view_bg_color ${BG};
 @define-color view_fg_color ${FG};
 
-@define-color card_bg_color ${SURFACE_CONTAINER_LOW};
+@define-color card_bg_color ${APP_CARD_BG};
 @define-color card_fg_color ${ON_SURFACE};
 
-@define-color sidebar_bg_color ${BG};
+@define-color sidebar_bg_color ${APP_SIDEBAR_BG};
 @define-color sidebar_fg_color ${FG};
 @define-color sidebar_border_color ${BG};
 @define-color sidebar_backdrop_color ${BG};
@@ -761,7 +781,7 @@ cat > "$GTK4_CSS" << EOF
 @define-color scrollbar_outline_color alpha(white, 0.1);
 
 headerbar {
-    background-color: ${BG} !important;
+    background-color: ${APP_HEADERBAR_BG} !important;
     box-shadow: none !important;
     border-bottom: none !important;
 }
@@ -775,7 +795,7 @@ headerbar separator {
 navigation-view > navigation-sidebar,
 placessidebar,
 placessidebar list {
-    background-color: ${BG} !important;
+    background-color: ${APP_SIDEBAR_BG} !important;
     color: ${FG} !important;
     border-right: none !important;
 }
@@ -818,7 +838,7 @@ paned > separator {
 /* Context menus and popovers */
 popover,
 popover > contents {
-    background-color: ${SURFACE_CONTAINER} !important;
+    background-color: ${APP_POPOVER_BG} !important;
     color: ${ON_SURFACE} !important;
 }
 
@@ -847,7 +867,7 @@ popover separator {
 /* Menu styling (GtkPopoverMenu in GTK4) */
 popover.menu > contents,
 popover.menu box.inline-buttons {
-    background-color: ${SURFACE_CONTAINER} !important;
+    background-color: ${APP_POPOVER_BG} !important;
     color: ${ON_SURFACE} !important;
 }
 

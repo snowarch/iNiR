@@ -18,7 +18,7 @@ Item {
     rotation: (360 / 60 * clockSecond) + 90
 
     Behavior on rotation {
-        enabled: Config.options.background.widgets.clock.cookie.constantlyRotate // Animating every second is expensive...
+        enabled: Config.getNestedValue("background.widgets.clock.cookie.constantlyRotate", false) // Animating every second is expensive...
         animation: RotationAnimation {
             direction: RotationAnimation.Clockwise
             duration: 1000 // 1 second

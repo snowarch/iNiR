@@ -68,9 +68,9 @@ MouseArea {
             Math.round((grid.cellWidth - totalImageMargin) * root._dpr),
             Math.round((grid.cellHeight - totalImageMargin) * root._dpr)
         )
-        // Force at least x-large (512px) for crisp grid thumbnails
-        if (thumbnailSizeName === "normal" || thumbnailSizeName === "large")
-            thumbnailSizeName = "x-large"
+        // Ensure at least "large" (256px) — "normal" (128px) is too blurry
+        if (thumbnailSizeName === "normal")
+            thumbnailSizeName = "large"
         root._lastThumbnailSizeName = thumbnailSizeName
         Wallpapers.generateThumbnail(thumbnailSizeName)
     }

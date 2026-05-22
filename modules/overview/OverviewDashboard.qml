@@ -63,60 +63,11 @@ Item {
 
     // ── Cover art download ──
     property string artDownloadLocation: Directories.coverArt
-    readonly property bool downloaded: artworkResolver.ready
-    property string displayedArtFilePath: artworkResolver.displaySource
+    readonly property bool downloaded: MediaArtwork.ready
+    property string displayedArtFilePath: MediaArtwork.displaySource
 
     function checkAndDownloadArt(): void {
-        artworkResolver.refresh()
-    }
-
-    Connections {
-        target: root.player
-
-        function onTrackArtUrlChanged(): void {
-            if (!root.isYtMusic)
-                Qt.callLater(root.checkAndDownloadArt)
-        }
-
-        function onTrackTitleChanged(): void {
-            Qt.callLater(root.checkAndDownloadArt)
-        }
-
-        function onTrackArtistChanged(): void {
-            Qt.callLater(root.checkAndDownloadArt)
-        }
-
-        function onTrackAlbumChanged(): void {
-            Qt.callLater(root.checkAndDownloadArt)
-        }
-    }
-
-    Connections {
-        target: YtMusic
-
-        function onCurrentThumbnailChanged(): void {
-            if (root.isYtMusic)
-                Qt.callLater(root.checkAndDownloadArt)
-        }
-
-        function onCurrentTitleChanged(): void {
-            if (root.isYtMusic)
-                Qt.callLater(root.checkAndDownloadArt)
-        }
-
-        function onCurrentArtistChanged(): void {
-            if (root.isYtMusic)
-                Qt.callLater(root.checkAndDownloadArt)
-        }
-    }
-
-    MediaArtworkResolver {
-        id: artworkResolver
-        sourceUrl: root.effectiveArtUrl
-        title: root.effectiveTitle
-        artist: root.effectiveArtist
-        album: root.player?.trackAlbum ?? ""
-        cacheDirectory: root.artDownloadLocation
+        MediaArtwork.refresh()
     }
 
     // ── Adaptive colors from album art ──
@@ -196,6 +147,7 @@ Item {
     readonly property color mediaHover: angelStyle ? Appearance.angel.colGlassCardHover : inirStyle ? Appearance.inir.colLayer2Hover
         : ColorUtils.transparentize(blendedColors?.colLayer1 ?? Appearance.colors.colLayer1, 0.5)
     readonly property int weatherSystemMinHeight: 190
+    readonly property int weatherCardMinHeight: 132
 
     implicitWidth: dashContainer.implicitWidth + Appearance.sizes.elevationMargin * 2
     implicitHeight: dashContainer.implicitHeight + Appearance.sizes.elevationMargin * 2
@@ -861,7 +813,7 @@ Item {
                 id: weatherCard
                 Layout.fillWidth: true
                 visible: root.cfgWeather && Weather.enabled && (Weather.data?.temp ?? "") !== "" && !(Weather.data?.temp ?? "").startsWith("--")
-                implicitHeight: Math.max(weatherContent.implicitHeight + 20, root.weatherSystemMinHeight)
+                implicitHeight: Math.max(weatherContent.implicitHeight + 24, root.weatherCardMinHeight)
                 radius: root.cardRadius
                 color: root.inirStyle ? root.colCard : "transparent"
                 border.width: root.bw
@@ -885,81 +837,100 @@ Item {
 
                 ColumnLayout {
                     id: weatherContent
-                    anchors { fill: parent; margins: 12 }
-                    spacing: 8
+                    anchors { fill: parent; leftMargin: 14; rightMargin: 14; topMargin: 14; bottomMargin: 12 }
+                    spacing: 12
 
+                    // Hero: compact cluster + flex spacer + trailing refresh (M3 toolbar alignment)
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 10
+                        spacing: 14
 
                         MaterialSymbol {
+                            Layout.alignment: Qt.AlignTop
                             text: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "cloud"
-                            iconSize: 32
+                            iconSize: root.angelStyle ? 40 : 48
+                            fill: root.angelStyle ? 0 : 1
                             color: root.colPrimary
                         }
 
-                        StyledText {
-                            text: Weather.data?.temp ?? "--°"
-                            font {
-                                pixelSize: Appearance.font.pixelSize.huge * 1.2
-                                weight: Font.Medium
-                                family: Appearance.font.family.numbers
-                            }
-                            color: root.colText
-                        }
-
                         ColumnLayout {
-                            Layout.fillWidth: true
-                            spacing: 0
+                            Layout.alignment: Qt.AlignVCenter
+                            spacing: 2
 
                             StyledText {
-                                Layout.fillWidth: true
                                 text: Weather.data?.description ?? Translation.tr("Weather")
-                                font { pixelSize: Appearance.font.pixelSize.small; weight: Font.Medium }
-                                color: root.colText
+                                font {
+                                    pixelSize: Appearance.font.pixelSize.small
+                                    weight: Font.Medium
+                                    family: Appearance.font.family.title
+                                }
+                                color: root.colSubtext
                                 elide: Text.ElideRight
+                                Layout.maximumWidth: Math.max(120, weatherCard.width - 120)
                             }
 
                             StyledText {
-                                Layout.fillWidth: true
+                                text: Weather.data?.temp ?? "--°"
+                                font {
+                                    pixelSize: Appearance.font.pixelSize.huge * 1.35
+                                    weight: Font.Light
+                                    family: Appearance.font.family.numbers
+                                }
+                                color: root.colText
+                                lineHeight: 0.92
+                            }
+
+                            StyledText {
                                 text: Weather.visibleCity
                                 visible: Weather.showVisibleCity
                                 font.pixelSize: Appearance.font.pixelSize.smallest
                                 color: root.colSubtext
                                 elide: Text.ElideRight
+                                Layout.maximumWidth: Math.max(120, weatherCard.width - 120)
                             }
                         }
 
+                        Item { Layout.fillWidth: true }
+
                         RippleButton {
-                            implicitWidth: 28
-                            implicitHeight: 28
+                            Layout.alignment: Qt.AlignTop
+                            implicitWidth: 36
+                            implicitHeight: 36
                             buttonRadius: root.angelStyle ? Appearance.angel.roundingSmall
                                 : root.inirStyle ? Appearance.inir.roundingSmall : Appearance.rounding.full
-                            colBackground: "transparent"
+                            colBackground: root.angelStyle ? ColorUtils.transparentize(root.colPrimary, 0.82)
+                                : root.inirStyle ? Appearance.inir.colLayer2
+                                : ColorUtils.transparentize(Appearance.colors.colPrimaryContainer, 0.35)
                             colBackgroundHover: root.colCardHover
                             onClicked: Weather.forceRefresh()
                             contentItem: MaterialSymbol {
                                 anchors.centerIn: parent
                                 text: "refresh"
-                                iconSize: 16
-                                color: root.colSubtext
+                                iconSize: 20
+                                fill: 0
+                                color: root.colPrimary
                             }
                             StyledToolTip { text: Translation.tr("Refresh") }
                         }
                     }
 
-                    // Weather details row
-                    RowLayout {
+                    Rectangle {
                         Layout.fillWidth: true
-                        spacing: 14
+                        Layout.preferredHeight: 1
+                        color: root.colBorder
+                        opacity: root.angelStyle ? 0.35 : 0.55
+                    }
+
+                    Flow {
+                        id: weatherChipsFlow
+                        Layout.fillWidth: true
+                        spacing: 8
 
                         WeatherChip { icon: "thermostat"; value: Translation.tr("Feels %1").arg(Weather.data?.tempFeelsLike ?? "--"); visible: (Weather.data?.tempFeelsLike ?? "").length > 0 && !(Weather.data?.tempFeelsLike ?? "").startsWith("--") }
                         WeatherChip { icon: "humidity_percentage"; value: Weather.data?.humidity ?? "" }
                         WeatherChip { icon: "air"; value: Weather.data?.wind ?? "" }
                         WeatherChip { icon: "wb_sunny"; value: Weather.data?.sunrise ?? ""; visible: (Weather.data?.sunrise ?? "") !== "--:--" }
                         WeatherChip { icon: "wb_twilight"; value: Weather.data?.sunset ?? ""; visible: (Weather.data?.sunset ?? "") !== "--:--" }
-
-                        Item { Layout.fillWidth: true }
                     }
                 }
             }
@@ -1379,22 +1350,39 @@ Item {
         }
     }
 
-    component WeatherChip: Row {
+    component WeatherChip: Rectangle {
+        id: weatherChipRoot
         property string icon
         property string value
-        spacing: 4
 
-        MaterialSymbol {
-            text: icon
-            iconSize: 13
-            color: root.colSubtext
-            anchors.verticalCenter: parent.verticalCenter
-        }
-        StyledText {
-            text: value
-            font { pixelSize: Appearance.font.pixelSize.smallest; family: Appearance.font.family.numbers }
-            color: root.colSubtext
-            anchors.verticalCenter: parent.verticalCenter
+        implicitHeight: chipRow.implicitHeight + 10
+        implicitWidth: chipRow.implicitWidth + 20
+        radius: Appearance.rounding.full
+        color: root.angelStyle ? ColorUtils.transparentize(root.colPrimary, 0.78)
+            : root.inirStyle ? Appearance.inir.colLayer2
+            : root.auroraStyle ? ColorUtils.transparentize(Appearance.colors.colSecondaryContainer, 0.45)
+            : Appearance.colors.colSecondaryContainer
+        border.width: root.inirStyle ? 1 : 0
+        border.color: root.inirStyle ? Appearance.inir.colBorderSubtle : "transparent"
+
+        Row {
+            id: chipRow
+            anchors.centerIn: parent
+            spacing: 5
+
+            MaterialSymbol {
+                text: weatherChipRoot.icon
+                iconSize: 14
+                fill: root.angelStyle ? 0 : 1
+                color: root.colPrimary
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            StyledText {
+                text: weatherChipRoot.value
+                font { pixelSize: Appearance.font.pixelSize.smallest; weight: Font.Medium; family: Appearance.font.family.numbers }
+                color: root.colText
+                anchors.verticalCenter: parent.verticalCenter
+            }
         }
     }
 }

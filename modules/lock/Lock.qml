@@ -264,6 +264,28 @@ Scope {
         }
     }
 
+    // Heartbeat re-focus while locked. Niri sometimes drops keyboard focus on the
+    // ext-session-lock surface after suspend/resume — the surface stays visible but
+    // input goes nowhere until something forces a re-grab. We just nudge it back.
+    // 2s cadence is cheap and only runs while locked.
+    Timer {
+        id: lockFocusHeartbeat
+        interval: 2000
+        repeat: true
+        running: GlobalStates.screenLocked
+        onTriggered: lockContext.shouldReFocus()
+    }
+
+    // Re-focus immediately when monitor topology changes (a common signal of wake-up).
+    Connections {
+        target: Quickshell
+        function onScreensChanged() {
+            if (GlobalStates.screenLocked) {
+                Qt.callLater(() => lockContext.shouldReFocus())
+            }
+        }
+    }
+
     IpcHandler {
         target: "lock"
 

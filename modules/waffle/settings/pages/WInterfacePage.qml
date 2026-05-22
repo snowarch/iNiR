@@ -346,11 +346,19 @@ WSettingsPage {
     WSettingsCard {
         title: Translation.tr("On-Screen Display")
         icon: "pulse"
+
+        WSettingsSwitch {
+            label: Translation.tr("Media OSD")
+            icon: "music-note-2"
+            description: Translation.tr("Show now playing feedback when media shortcuts are pressed")
+            checked: Config.options?.osd?.mediaEnabled ?? true
+            onCheckedChanged: Config.setNestedValue("osd.mediaEnabled", checked)
+        }
         
         WSettingsSpinBox {
             label: Translation.tr("OSD timeout")
             icon: "arrow-clockwise"
-            description: Translation.tr("How long volume/brightness OSD stays visible")
+            description: Translation.tr("How long volume, brightness and media OSD stays visible")
             suffix: "ms"
             from: 500; to: 5000; stepSize: 250
             value: Config.options?.osd?.timeout ?? 1000
@@ -556,6 +564,15 @@ WSettingsPage {
             placeholderText: Translation.tr("e.g. /home/you/Videos/Recordings")
             text: Config.options?.screenRecord?.savePath ?? ""
             onTextEdited: newText => root.setRecordingConfig("screenRecord.savePath", newText)
+        }
+
+        WSettingsTextField {
+            label: Translation.tr("Filename format")
+            icon: "rename"
+            description: Translation.tr("date(1) tokens for recording filenames (without extension)")
+            placeholderText: "recording_%Y-%m-%d_%H.%M.%S"
+            text: Config.options?.screenRecord?.recordingNameFormat ?? "recording_%Y-%m-%d_%H.%M.%S"
+            onTextEdited: newText => Config.setNestedValue("screenRecord.recordingNameFormat", newText)
         }
 
         WSettingsSwitch {

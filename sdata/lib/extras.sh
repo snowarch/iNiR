@@ -29,7 +29,11 @@ extras_install_sddm_theme() {
 
   tui_info "Setting up ii-pixel-sddm login theme..."
   chmod +x "$sddm_script"
-  INIR_SDDM_AUTO_APPLY="$auto_apply_mode" bash "$sddm_script" || log_warning "ii-pixel-sddm setup had issues (non-fatal)"
+  if ! INIR_SDDM_AUTO_APPLY="$auto_apply_mode" bash "$sddm_script"; then
+    log_warning "ii-pixel-sddm setup failed — SDDM config may need manual update"
+    log_warning "Try: sudo bash ${sddm_script}"
+    return 1
+  fi
 }
 
 # Install iNiR-Walls image assets into user's wallpapers directory.

@@ -48,6 +48,8 @@ binds {
 
     // Lock screen.
     Mod+Alt+L allow-when-locked=true { spawn "inir" "lock" "activate"; }
+    // Re-focus the lock surface (workaround when input feels dead after suspend/resume).
+    Mod+Ctrl+Shift+L allow-when-locked=true { spawn "inir" "lock" "focus"; }
 
     // Region selector: screenshot / OCR / Google Lens search.
     Mod+Shift+S { spawn "inir" "region" "screenshot"; }
@@ -101,8 +103,8 @@ binds {
     // Cycle through preset column widths (1/3 → 1/2 → 2/3, set in layout).
     Mod+R { switch-preset-column-width; }
 
-    // Cycle through preset window heights (within a stacked column).
-    Mod+Shift+R { switch-preset-window-height; }
+    // Screen recording — region select with audio.
+    Mod+Shift+R { spawn "inir" "region" "recordWithSound"; }
 
     // Reset window height to default.
     Mod+Ctrl+R { reset-window-height; }

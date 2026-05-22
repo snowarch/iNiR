@@ -9,7 +9,7 @@ depends=(
   niri
   
   # Wallpaper daemon
-  awww-bin
+  awww
   
   # Basic utilities
   bc

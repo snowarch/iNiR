@@ -33,6 +33,7 @@ Item {
     // Word count helper
     readonly property int wordCount: textArea.text.trim().length > 0
         ? textArea.text.trim().split(/\s+/).length : 0
+    readonly property int tabCount: Notepad.tabs.length
 
     // When this widget gets focus (from BottomWidgetGroup.focusActiveItem),
     // move focus to the internal text area on the next event loop tick.
@@ -45,7 +46,7 @@ Item {
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: root.margin
-        spacing: 8
+        spacing: 6
 
         // Header with title and stats
         RowLayout {
@@ -85,6 +86,106 @@ Item {
                             : Appearance.m3colors.m3onSecondaryContainer
                     }
                 }
+            }
+        }
+
+        // Tab bar
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 4
+            visible: root.tabCount > 1 || root.tabCount === 1 // Always show for discoverability
+
+            Flickable {
+                Layout.fillWidth: true
+                implicitHeight: 28
+                contentWidth: tabRow.implicitWidth
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+
+                Row {
+                    id: tabRow
+                    spacing: 4
+
+                    Repeater {
+                        model: Notepad.tabs
+                        delegate: Rectangle {
+                            id: tabPill
+                            required property var modelData
+                            required property int index
+                            readonly property bool active: index === Notepad.currentTab
+                            width: tabLabel.implicitWidth + (tabCount > 1 ? closeBtn.width + 16 : 16)
+                            height: 26
+                            radius: 13
+                            color: active
+                                ? (Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                                    : Appearance.inirEverywhere ? Appearance.inir.colPrimary
+                                    : Appearance.colors.colPrimary)
+                                : (tabMA.containsMouse
+                                    ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                                        : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
+                                        : Appearance.colors.colLayer1Hover)
+                                    : "transparent")
+                            Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+
+                            Row {
+                                anchors.centerIn: parent
+                                spacing: 4
+
+                                StyledText {
+                                    id: tabLabel
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: modelData.title || `Note ${index + 1}`
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    font.weight: tabPill.active ? Font.Medium : Font.Normal
+                                    color: tabPill.active
+                                        ? (Appearance.angelEverywhere ? Appearance.angel.colOnPrimary
+                                            : Appearance.inirEverywhere ? Appearance.inir.colOnPrimary
+                                            : Appearance.colors.colOnPrimary)
+                                        : root.colTextSecondary
+                                    elide: Text.ElideRight
+                                    maximumLineCount: 1
+                                    width: Math.min(implicitWidth, 80)
+                                }
+
+                                // Close button (only when multiple tabs)
+                                MaterialSymbol {
+                                    id: closeBtn
+                                    visible: tabCount > 1
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: "close"
+                                    iconSize: 12
+                                    color: tabPill.active
+                                        ? (Appearance.angelEverywhere ? Appearance.angel.colOnPrimary
+                                            : Appearance.inirEverywhere ? Appearance.inir.colOnPrimary
+                                            : Appearance.colors.colOnPrimary)
+                                        : root.colTextSecondary
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        anchors.margins: -4
+                                        onClicked: Notepad.removeTab(tabPill.index)
+                                    }
+                                }
+                            }
+
+                            MouseArea {
+                                id: tabMA
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                z: -1
+                                onClicked: Notepad.switchTab(tabPill.index)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Add tab button
+            NotepadToolButton {
+                icon: "add"
+                tooltipText: Translation.tr("New tab")
+                onClicked: Notepad.addTab()
             }
         }
 
@@ -158,12 +259,23 @@ Item {
                     renderType: Text.NativeRendering
                     font.pixelSize: Appearance.inirEverywhere ? Appearance.font.pixelSize.smaller : Appearance.font.pixelSize.small
                     color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0
+                    selectionColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                        : Appearance.inirEverywhere ? Appearance.inir.colPrimary
+                        : Appearance.colors.colSecondaryContainer
+                    selectedTextColor: Appearance.angelEverywhere ? Appearance.angel.colOnPrimary
+                        : Appearance.inirEverywhere ? Appearance.inir.colOnPrimary
+                        : Appearance.colors.colOnSecondaryContainer
                     placeholderText: Translation.tr("Write your notes here...")
                     placeholderTextColor: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.m3colors.m3outline
                     text: Notepad.text
                     selectByMouse: true
+                    persistentSelection: true
                     activeFocusOnTab: true
                     background: null
+
+                    TextInputContextMenu {
+                        target: textArea
+                    }
 
                     Keys.onPressed: (event) => {
                         if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_S) {

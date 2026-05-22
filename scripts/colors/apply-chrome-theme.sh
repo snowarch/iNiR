@@ -145,12 +145,13 @@ resolve_color() {
     fi
   fi
 
-  # 4. explicit palette contract, then colors.json fallback
-  local colors_json="$STATE_DIR/user/generated/palette.json"
+  # 4. explicit app/shell palette contract, then raw palette/colors fallback
+  local colors_json="$STATE_DIR/user/generated/app-palette.json"
+  [[ -f "$colors_json" ]] || colors_json="$STATE_DIR/user/generated/palette.json"
   [[ -f "$colors_json" ]] || colors_json="$STATE_DIR/user/generated/colors.json"
   if [[ -f "$colors_json" ]] && command -v jq &>/dev/null; then
     local c
-    c=$(jq -r '.surface_container_low // .surface // .background // .primary // empty' "$colors_json" 2>/dev/null)
+    c=$(jq -r '.app_headerbar_bg // .app_surface // .surface_container_low // .surface // .background // .primary // empty' "$colors_json" 2>/dev/null)
     if [[ -n "$c" ]]; then
       echo "$c"
       return

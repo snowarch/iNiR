@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Layouts
 import Quickshell
 import qs.services
 import qs.modules.common
@@ -83,14 +84,14 @@ ContentPage {
             }
             SettingsSwitch {
                 buttonIcon: "sports_esports"
-                text: Translation.tr("Steam (Adwaita for Steam)")
-                checked: Config.options?.appearance?.wallpaperTheming?.enableAdwSteam ?? false
+                text: Translation.tr("Steam (Millennium)")
+                checked: Config.options?.appearance?.wallpaperTheming?.enableSteam ?? false
                 onCheckedChanged: {
-                    Config.setNestedValue("appearance.wallpaperTheming.enableAdwSteam", checked);
+                    Config.setNestedValue("appearance.wallpaperTheming.enableSteam", checked);
                     colorRegenTimer.restart();
                 }
                 StyledToolTip {
-                    text: Translation.tr("Apply Material You colors to Steam via Adwaita for Steam (requires AdwSteamGtk)")
+                    text: Translation.tr("Apply Material You colors to Steam via Millennium Material-Theme")
                 }
             }
             SettingsSwitch {
@@ -165,6 +166,134 @@ ContentPage {
                     text: Translation.tr("Generate aether.nvim theme plugin for Neovim/LazyVim from wallpaper colors (writes to ~/.config/nvim/lua/plugins/neovim.lua)")
                 }
             }
+            SettingsSwitch {
+                id: cavaSwitch
+                buttonIcon: "equalizer"
+                text: Translation.tr("Cava")
+                checked: Config.options?.appearance?.wallpaperTheming?.enableCava ?? false
+                onCheckedChanged: {
+                    Config.setNestedValue("appearance.wallpaperTheming.enableCava", checked);
+                    colorRegenTimer.restart();
+                }
+                StyledToolTip {
+                    text: Translation.tr("Apply Material You gradient colors to cava audio visualizer config")
+                }
+            }
+
+            ContentSubsection {
+                visible: cavaSwitch.checked
+                title: Translation.tr("Cava options")
+
+                ConfigSelectionArray {
+                    currentValue: Config.options?.appearance?.cava?.colorSource ?? "theme"
+                    onSelected: newValue => {
+                        Config.setNestedValue("appearance.cava.colorSource", newValue)
+                        colorRegenTimer.restart()
+                    }
+                    options: [
+                        { displayName: Translation.tr("Theme palette"), value: "theme" },
+                        { displayName: Translation.tr("Vibrant (saturated)"), value: "vibrant" },
+                        { displayName: Translation.tr("Album cover"), value: "cover" },
+                    ]
+                }
+
+                ConfigSpinBox {
+                    icon: "gradient"
+                    text: Translation.tr("Gradient colors")
+                    value: Config.options?.appearance?.cava?.gradientCount ?? 8
+                    from: 2
+                    to: 8
+                    onValueChanged: {
+                        Config.setNestedValue("appearance.cava.gradientCount", value)
+                        colorRegenTimer.restart()
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Gradient stops for standalone cava (~/.config/cava/config)")
+                    }
+                }
+
+                ConfigSpinBox {
+                    icon: "hearing"
+                    text: Translation.tr("Sensitivity")
+                    value: Config.options?.appearance?.cava?.sensitivity ?? 100
+                    from: 1
+                    to: 500
+                    stepSize: 10
+                    onValueChanged: Config.setNestedValue("appearance.cava.sensitivity", value)
+                    StyledToolTip {
+                        text: Translation.tr("Audio sensitivity (higher = more reactive)")
+                    }
+                }
+                ConfigSpinBox {
+                    icon: "bar_chart"
+                    text: Translation.tr("Bars")
+                    value: Config.options?.appearance?.cava?.bars ?? 0
+                    from: 0
+                    to: 200
+                    stepSize: 8
+                    onValueChanged: Config.setNestedValue("appearance.cava.bars", value)
+                    StyledToolTip {
+                        text: Translation.tr("Number of frequency data points (0 = auto)")
+                    }
+                }
+                ConfigSpinBox {
+                    icon: "speed"
+                    text: Translation.tr("Framerate")
+                    value: Config.options?.appearance?.cava?.framerate ?? 60
+                    from: 30
+                    to: 165
+                    stepSize: 5
+                    onValueChanged: Config.setNestedValue("appearance.cava.framerate", value)
+                    StyledToolTip {
+                        text: Translation.tr("Target refresh rate for the visualizer")
+                    }
+                }
+                SettingsSwitch {
+                    buttonIcon: "headphones"
+                    text: Translation.tr("Stereo")
+                    checked: Config.options?.appearance?.cava?.stereo ?? true
+                    onCheckedChanged: Config.setNestedValue("appearance.cava.stereo", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Split visualizer into left/right channels")
+                    }
+                }
+                ConfigSpinBox {
+                    icon: "opacity"
+                    text: Translation.tr("Wave opacity")
+                    value: Config.options?.appearance?.cava?.waveOpacity ?? 30
+                    from: 5
+                    to: 100
+                    stepSize: 5
+                    onValueChanged: Config.setNestedValue("appearance.cava.waveOpacity", value)
+                    StyledToolTip {
+                        text: Translation.tr("Fill opacity for wave visualizer (affects all consumers)")
+                    }
+                }
+
+                RippleButton {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 34
+                    buttonRadius: Appearance.rounding.small
+                    colBackground: Appearance.colors.colLayer2
+                    colBackgroundHover: Appearance.colors.colLayer2Hover
+                    onClicked: {
+                        Config.setNestedValue("appearance.cava.colorSource", "theme");
+                        Config.setNestedValue("appearance.cava.gradientCount", 8);
+                        Config.setNestedValue("appearance.cava.sensitivity", 100);
+                        Config.setNestedValue("appearance.cava.bars", 0);
+                        Config.setNestedValue("appearance.cava.framerate", 60);
+                        Config.setNestedValue("appearance.cava.stereo", true);
+                        Config.setNestedValue("appearance.cava.waveOpacity", 30);
+                    }
+                    contentItem: RowLayout {
+                        anchors.centerIn: parent
+                        spacing: 5
+                        MaterialSymbol { text: "restart_alt"; iconSize: 15; color: Appearance.colors.colOnLayer1 }
+                        StyledText { text: Translation.tr("Reset to defaults"); font.pixelSize: Appearance.font.pixelSize.smaller; color: Appearance.colors.colOnLayer1 }
+                    }
+                }
+            }
+
             ConfigRow {
                 uniform: true
                 SettingsSwitch {

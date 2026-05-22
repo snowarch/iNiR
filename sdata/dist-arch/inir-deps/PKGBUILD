@@ -6,7 +6,7 @@
 # Safe to remove with: sudo pacman -R inir-deps
 
 pkgname=inir-deps
-pkgver=2.24.0
+pkgver=2.25.0
 pkgrel=1
 pkgdesc='iNiR desktop shell - dependency tracker (meta-package)'
 url='https://github.com/snowarch/inir'
@@ -159,6 +159,7 @@ optdepends=(
   'python-evdev: input device access'
   'python-pillow: image processing in scripts'
   'darkly-bin: Material You Qt style'
+  'kde-cli-tools: Dolphin Open With dialog (QT_QPA_PLATFORMTHEME=kde)'
   'ttf-material-symbols-variable-git: Material icons (critical for UI)'
   'ttf-jetbrains-mono-nerd: terminal/code font'
   'ttf-roboto-flex: default UI font'
@@ -168,11 +169,12 @@ optdepends=(
   'ttf-rubik-vf: alternate UI font'
   'ttf-oxanium: display font'
   'adw-gtk-theme: GTK theme for Material colors'
+  'millennium-bin: Steam theming via Millennium (requires steam)'
   'capitaine-cursors: cursor theme'
   'whitesur-icon-theme: macOS-style icons'
   'qt6-avif-image-plugin: AVIF wallpaper support'
   'uv: Python package manager for color pipeline'
-  'awww-bin: wallpaper daemon'
+  'awww: wallpaper daemon'
   'tesseract-data-spa: Spanish OCR'
 )
 

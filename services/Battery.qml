@@ -11,6 +11,11 @@ import qs.services
 
 Singleton {
     id: root
+
+    function _log(...args): void {
+        if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
+    }
+
     property bool available: UPower.displayDevice.isLaptopBattery
     property var chargeState: UPower.displayDevice.state
     property bool isCharging: chargeState == UPowerDeviceState.Charging
@@ -92,7 +97,7 @@ Singleton {
                     const parts = result.split("|")
                     root._chargeLimitBackend = parts[0] ?? ""
                     root._chargeLimitSysfsPath = parts[1] ?? ""
-                    console.log("[Battery] Charge limit backend: " + root._chargeLimitBackend + " (" + root._chargeLimitSysfsPath + ")")
+                    _log("[Battery] Charge limit backend: " + root._chargeLimitBackend + " (" + root._chargeLimitSysfsPath + ")")
                     root._readChargeLimit()
                     if (root.chargeLimitEnabled) {
                         chargeLimitApplyDelay.restart()
@@ -232,7 +237,7 @@ Singleton {
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0) {
                 root._readChargeLimit()
-                console.log("[Battery] Charge limit applied")
+                _log("[Battery] Charge limit applied")
             } else {
                 console.warn("[Battery] Failed to set charge limit (exit code " + exitCode + ")")
             }
@@ -244,7 +249,7 @@ Singleton {
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0) {
                 root._readChargeLimit()
-                console.log("[Battery] Charge limit removed")
+                _log("[Battery] Charge limit removed")
             } else {
                 console.warn("[Battery] Failed to reset charge limit (exit code " + exitCode + ")")
             }

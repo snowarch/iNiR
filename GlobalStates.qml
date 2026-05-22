@@ -17,6 +17,8 @@ Singleton {
     property bool barOpen: true
     property bool crosshairOpen: false
     property bool sidebarLeftOpen: false
+    property bool sidebarLeftExpanded: false
+    property bool aiChatDetached: false
     property bool sidebarRightOpen: false
     property bool mediaControlsOpen: false
     property bool osdBrightnessOpen: false
@@ -30,6 +32,7 @@ Singleton {
     property bool altSwitcherOpen: false
     property bool clipboardOpen: false
     property bool settingsOverlayOpen: false
+    property int settingsOverlayRequestedPage: -1 // Set before opening to navigate to a specific page
     property bool regionSelectorOpen: false
     property bool screenLocked: false
     property bool screenLockContainsCharacters: false
@@ -38,6 +41,9 @@ Singleton {
     property bool superDown: false
     property bool superReleaseMightTrigger: true
     property bool wallpaperSelectorOpen: false
+    property bool widgetEditMode: false
+    // Navigate sidebar right to a specific widget by type (e.g. "notepad", "calendar")
+    property string sidebarRightRequestedWidget: ""
     // Dialog requests from other panels (e.g. left sidebar → right sidebar)
     property bool requestWifiDialog: false
     property bool requestBluetoothDialog: false

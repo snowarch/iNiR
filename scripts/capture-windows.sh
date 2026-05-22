@@ -117,24 +117,28 @@ for pid in "${pids[@]}"; do
   wait "$pid" || true
 done
 
-sleep 0.15
+sleep 0.5
 
 max_cleanup=100
-cleanup_count=0
 
-while [[ $cleanup_count -lt $max_cleanup ]]; do
-  entry="$($cliphist_bin list 2>/dev/null | $head_bin -1 || true)"
-  if [[ -z "$entry" ]]; then
-    break
-  fi
+# Two cleanup passes: first catches most entries, second catches late arrivals
+for _pass in 1 2; do
+  cleanup_count=0
+  while [[ $cleanup_count -lt $max_cleanup ]]; do
+    entry="$($cliphist_bin list 2>/dev/null | $head_bin -1 || true)"
+    if [[ -z "$entry" ]]; then
+      break
+    fi
 
-  entry_id="${entry%%$'\t'*}"
-  if [[ "$entry_id" =~ ^[0-9]+$ ]] && [[ "$entry_id" -gt "$before_id" ]]; then
-    printf '%s\n' "$entry" | "$cliphist_bin" delete 2>/dev/null || true
-    cleanup_count=$((cleanup_count + 1))
-  else
-    break
-  fi
+    entry_id="${entry%%$'\t'*}"
+    if [[ "$entry_id" =~ ^[0-9]+$ ]] && [[ "$entry_id" -gt "$before_id" ]]; then
+      printf '%s\n' "$entry" | "$cliphist_bin" delete 2>/dev/null || true
+      cleanup_count=$((cleanup_count + 1))
+    else
+      break
+    fi
+  done
+  [[ $_pass -eq 1 ]] && sleep 0.3
 done
 
 # Restore clipboard AFTER cleanup so screenshot-window side effects never persist.

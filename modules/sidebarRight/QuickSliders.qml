@@ -15,6 +15,8 @@ Rectangle {
     property var screen: root.QsWindow.window?.screen
     // Brightness monitor may be undefined (e.g. Niri without matching monitor); guard it.
     property var brightnessMonitor: screen ? Brightness.getMonitorForScreen(screen) : null
+    property real sliderSpacing: 10
+    property bool compactSurface: false
 
     implicitWidth: contentItem.implicitWidth + root.horizontalPadding * 2
     implicitHeight: contentItem.implicitHeight + root.verticalPadding * 2
@@ -25,7 +27,7 @@ Rectangle {
          : Appearance.inirEverywhere ? Appearance.inir.colLayer1
          : Appearance.auroraEverywhere ? "transparent" 
          : Appearance.colors.colLayer1
-    border.width: Appearance.angelEverywhere ? 0 : (Appearance.inirEverywhere ? 1 : 0)
+    border.width: root.compactSurface ? 0 : (Appearance.angelEverywhere ? 0 : (Appearance.inirEverywhere ? 1 : 0))
     border.color: Appearance.angelEverywhere ? "transparent"
         : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
     property real verticalPadding: 4
@@ -34,6 +36,7 @@ Rectangle {
     AngelPartialBorder {
         targetRadius: root.radius
         coverage: 0.5
+        visible: !root.compactSurface && Appearance.angelEverywhere
     }
 
     RowLayout {
@@ -45,7 +48,7 @@ Rectangle {
             topMargin: root.verticalPadding
             bottomMargin: root.verticalPadding
         }
-        spacing: 10
+        spacing: root.sliderSpacing
 
         Loader {
             Layout.fillWidth: true

@@ -52,6 +52,13 @@ MouseArea {
         return wBg?.wallpaperPath ?? Config.options?.background?.wallpaperPath ?? ""
     }
     readonly property bool enableAnimation: Config.options?.lock?.enableAnimation ?? false
+
+    // Widget visibility
+    readonly property bool showWeather: Config.options?.lock?.widgets?.weather ?? true
+    readonly property bool showMedia: Config.options?.lock?.widgets?.media ?? true
+    readonly property bool showPowerButtons: Config.options?.lock?.widgets?.powerButtons ?? true
+    readonly property bool showHintText: Config.options?.lock?.widgets?.hintText ?? true
+
     readonly property bool wallpaperIsVideo: {
         const lp = _wallpaperPath.toLowerCase();
         return lp.endsWith(".mp4") || lp.endsWith(".webm") || lp.endsWith(".mkv") || lp.endsWith(".avi") || lp.endsWith(".mov");
@@ -202,7 +209,7 @@ MouseArea {
             spacing: 24
 
             Loader {
-                active: (Weather.data?.temp?.length ?? 0) > 0
+                active: root.showWeather && (Weather.data?.temp?.length ?? 0) > 0
                 visible: active
 
                 sourceComponent: Row {
@@ -242,7 +249,8 @@ MouseArea {
             }
 
             Loader {
-                active: root.activePlayer !== null &&
+                active: root.showMedia &&
+                        root.activePlayer !== null &&
                         root.activePlayer.playbackState !== MprisPlaybackState.Stopped &&
                         (root.activePlayer.trackTitle?.length > 0 ?? false)
                 visible: active
@@ -261,15 +269,6 @@ MouseArea {
                     readonly property string effectiveTitle: MprisController.isYtMusicActive ? YtMusic.currentTitle : (player?.trackTitle ?? "")
                     readonly property string effectiveArtist: MprisController.isYtMusicActive ? YtMusic.currentArtist : (player?.trackArtist ?? "")
 
-                    MediaArtworkResolver {
-                        id: artworkResolver
-                        sourceUrl: mediaWidget.effectiveArtUrl
-                        title: mediaWidget.effectiveTitle
-                        artist: mediaWidget.effectiveArtist
-                        album: mediaWidget.player?.trackAlbum ?? ""
-                        cacheDirectory: Directories.coverArt
-                    }
-
                     RowLayout {
                         id: mediaRow
                         anchors.fill: parent
@@ -287,11 +286,11 @@ MouseArea {
                             Image {
                                 id: mediaArtImage
                                 anchors.fill: parent
-                                source: artworkResolver.displaySource
+                                source: MediaArtwork.displaySource
                                 fillMode: Image.PreserveAspectCrop
                                 asynchronous: true
                                 cache: false
-                                visible: artworkResolver.ready && status === Image.Ready
+                                visible: MediaArtwork.ready && status === Image.Ready
                             }
 
                             FluentIcon {
@@ -299,7 +298,7 @@ MouseArea {
                                 icon: "music-note-2"
                                 implicitSize: 24
                                 color: Looks.colors.subfg
-                                visible: !artworkResolver.ready || mediaArtImage.status !== Image.Ready
+                                visible: !MediaArtwork.ready || mediaArtImage.status !== Image.Ready
                             }
                         }
 
@@ -881,6 +880,7 @@ MouseArea {
         // Bottom hint
         Rectangle {
             id: hintContainer
+            visible: root.showHintText && opacity > 0
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 48
             anchors.horizontalCenter: parent.horizontalCenter
@@ -890,7 +890,7 @@ MouseArea {
             color: ColorUtils.transparentize(Looks.colors.bg1Base, 0.25)
             border.color: Looks.colors.bg1Border
             border.width: 1
-            opacity: hintOpacity
+            opacity: root.showHintText ? hintOpacity : 0
 
             property real hintOpacity: 1
 
@@ -1212,6 +1212,7 @@ MouseArea {
 
         // Bottom right: Power options
         RowLayout {
+            visible: root.showPowerButtons
             anchors.bottom: parent.bottom
             anchors.right: parent.right
             anchors.bottomMargin: 24

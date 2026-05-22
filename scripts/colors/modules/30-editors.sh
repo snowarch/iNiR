@@ -5,6 +5,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/module-runtime.sh"
 COLOR_MODULE_ID="editors"
 
 SCSS_FILE="$STATE_DIR/user/generated/material_colors.scss"
+APP_PALETTE_FILE="$STATE_DIR/user/generated/app-palette.json"
 PALETTE_FILE="$STATE_DIR/user/generated/palette.json"
 TERMINAL_FILE="$STATE_DIR/user/generated/terminal.json"
 LEGACY_COLORS_FILE="$STATE_DIR/user/generated/colors.json"
@@ -35,7 +36,8 @@ ensure_opencode_themegen() {
 }
 
 generate_neovim_spec() {
-  bash "$NEOVIM_THEMEGEN" "$PALETTE_FILE" "$TERMINAL_FILE" "$NEOVIM_PLUGIN_DIR"
+  local colors_file="$1"
+  bash "$NEOVIM_THEMEGEN" "$colors_file" "$TERMINAL_FILE" "$NEOVIM_PLUGIN_DIR"
 }
 
 # Remove generated neovim spec when theming is disabled.
@@ -50,7 +52,8 @@ strip_neovim_spec() {
 
 apply_code_editors() {
   [[ -f "$SCSS_FILE" ]] || return 0
-  local colors_file="$PALETTE_FILE"
+  local colors_file="$APP_PALETTE_FILE"
+  [[ -f "$colors_file" ]] || colors_file="$PALETTE_FILE"
   [[ -f "$colors_file" ]] || colors_file="$LEGACY_COLORS_FILE"
   local python_cmd
   python_cmd=$(venv_python)
@@ -60,7 +63,7 @@ apply_code_editors() {
   enable_neovim=$(config_bool '.appearance.wallpaperTheming.enableNeovim' false)
 
   if [[ "$enable_neovim" == 'true' ]] && [[ -d "$NEOVIM_CONFIG_DIR" || -x "$(command -v nvim 2>/dev/null)" ]]; then
-    generate_neovim_spec "$colors_file" "$TERMINAL_FILE"
+    generate_neovim_spec "$colors_file"
   else
     strip_neovim_spec
   fi

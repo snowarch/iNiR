@@ -795,18 +795,24 @@ Singleton {
 			} else {
 				root.togglePlaying();
 			}
-			GlobalStates.osdMediaAction = root.isPlaying ? "pause" : "play";
-			GlobalStates.osdMediaOpen = true;
+			if (Config.options?.osd?.mediaEnabled ?? true) {
+				GlobalStates.osdMediaAction = root.isPlaying ? "pause" : "play";
+				GlobalStates.osdMediaOpen = true;
+			}
 		}
 		function previous(): void {
 			root.previous();
-			GlobalStates.osdMediaAction = "previous";
-			GlobalStates.osdMediaOpen = true;
+			if (Config.options?.osd?.mediaEnabled ?? true) {
+				GlobalStates.osdMediaAction = "previous";
+				GlobalStates.osdMediaOpen = true;
+			}
 		}
 		function next(): void {
 			root.next();
-			GlobalStates.osdMediaAction = "next";
-			GlobalStates.osdMediaOpen = true;
+			if (Config.options?.osd?.mediaEnabled ?? true) {
+				GlobalStates.osdMediaAction = "next";
+				GlobalStates.osdMediaOpen = true;
+			}
 		}
 	}
 }

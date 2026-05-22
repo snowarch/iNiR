@@ -64,7 +64,7 @@ MouseArea {
                 active: root.useThumbnail
                 sourceComponent: ThumbnailImage {
                     id: thumbnailImage
-                    generateThumbnail: false
+                    generateThumbnail: true
                     sourcePath: fileModelData.filePath
                     cache: true
                     asynchronous: true
@@ -72,20 +72,6 @@ MouseArea {
                     clip: true
                     sourceSize.width: 256  // Use standard thumbnail size
                     sourceSize.height: 256
-
-                    Connections {
-                        target: Wallpapers
-                        function onThumbnailGenerated(directory) {
-                            if (FileUtils.parentDirectory(thumbnailImage.sourcePath) !== directory) return;
-                            thumbnailImage.source = "";
-                            thumbnailImage.source = thumbnailImage.thumbnailPath;
-                        }
-                        function onThumbnailGeneratedFile(filePath) {
-                            if (Qt.resolvedUrl(thumbnailImage.sourcePath) !== Qt.resolvedUrl(filePath)) return;
-                            thumbnailImage.source = "";
-                            thumbnailImage.source = thumbnailImage.thumbnailPath;
-                        }
-                    }
 
                     layer.enabled: Appearance.effectsEnabled
                     layer.effect: OpacityMask {

@@ -94,7 +94,7 @@ Button {
 
     StyledToolTip {
         extraVisibleCondition: root.enableTooltip && root.imageData && root._tagText.length > 0
-        alternativeVisibleCondition: root.buttonHovered || root.hovered
+        alternativeVisibleCondition: root.enableTooltip && (root.buttonHovered || root.hovered)
         text: `${StringUtils.wordWrap(root._tagText, root.maxTagStringLineLength)}`
     }
 

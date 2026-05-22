@@ -286,10 +286,10 @@ Item {
                 implicitWidth: workspaceButtonWidth
                 implicitHeight: workspaceButtonWidth
                 radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : (width / 2)
-                property var previousOccupied: (workspaceOccupied[index-1] && !(!activeWindow?.activated && currentWorkspaceNumber === index))
-                property var rightOccupied: (workspaceOccupied[index+1] && !(!activeWindow?.activated && currentWorkspaceNumber === index+2))
-                property var radiusPrev: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : (previousOccupied ? 0 : (width / 2))
-                property var radiusNext: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : (rightOccupied ? 0 : (width / 2))
+                property bool previousOccupied: (workspaceOccupied[index-1] ?? false) && !(!activeWindow?.activated && currentWorkspaceNumber === index)
+                property bool rightOccupied: (workspaceOccupied[index+1] ?? false) && !(!activeWindow?.activated && currentWorkspaceNumber === index+2)
+                property real radiusPrev: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : (previousOccupied ? 0 : (width / 2))
+                property real radiusNext: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : (rightOccupied ? 0 : (width / 2))
 
                 topLeftRadius: radiusPrev
                 bottomLeftRadius: root.vertical ? radiusNext : radiusPrev
@@ -537,8 +537,8 @@ Item {
                 radius: (width / 2)
                 property bool previousExists: index > 0
                 property bool nextExists: index < root.currentWorkspaceWindows.length - 1
-                property var radiusPrev: previousExists ? 0 : (width / 2)
-                property var radiusNext: nextExists ? 0 : (width / 2)
+                property real radiusPrev: previousExists ? 0 : (width / 2)
+                property real radiusNext: nextExists ? 0 : (width / 2)
 
                 topLeftRadius: radiusPrev
                 bottomLeftRadius: root.vertical ? radiusNext : radiusPrev

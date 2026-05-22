@@ -208,10 +208,9 @@ Item {
             spacing: 8
 
             StyledText {
-                // For inir: show weekday and month only (no day number since calendar shows it)
-                text: Appearance.inirEverywhere
-                    ? root.locale.toString(DateTime.clock.date, "dddd, MMMM yyyy")
-                    : root.locale.toString(DateTime.clock.date, "dddd, d MMMM")
+                readonly property string _configFormat: Config.options?.time?.dateFormat ?? ""
+                readonly property string _defaultFormat: Appearance.inirEverywhere ? "dddd, MMMM yyyy" : "dddd, d MMMM"
+                text: root.locale.toString(DateTime.clock.date, _configFormat.length > 0 ? _configFormat : _defaultFormat)
                 font.pixelSize: Appearance.font.pixelSize.normal
                 color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
             }

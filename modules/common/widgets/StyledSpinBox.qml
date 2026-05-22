@@ -39,6 +39,7 @@ SpinBox {
             font.pixelSize: Appearance.font.pixelSize.small
             validator: root.validator
             onTextChanged: {
+                if (!activeFocus) return;
                 root.value = parseFloat(text);
             }
         }

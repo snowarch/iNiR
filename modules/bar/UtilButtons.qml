@@ -117,10 +117,8 @@ Item {
             sourceComponent: CircleUtilButton {
                 Layout.alignment: Qt.AlignVCenter
                 onClicked: {
+                    GlobalStates.sidebarRightRequestedWidget = "notepad"
                     GlobalStates.sidebarRightOpen = true
-                    // Ensure bottom widget group is expanded and focused on Notepad tab (index 2)
-                    Persistent.states.sidebar.bottomGroup.collapsed = false
-                    Persistent.states.sidebar.bottomGroup.tab = 2
                 }
                 MaterialSymbol {
                     horizontalAlignment: Qt.AlignHCenter

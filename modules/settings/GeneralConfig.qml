@@ -1018,6 +1018,38 @@ ContentPage {
                     }
                 }
             }
+
+            ContentSubsection {
+                title: Translation.tr("Widgets")
+
+                SettingsSwitch {
+                    buttonIcon: "thermostat"
+                    text: Translation.tr("Weather")
+                    checked: Config.options?.lock?.widgets?.weather ?? true
+                    onCheckedChanged: Config.setNestedValue("lock.widgets.weather", checked)
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "music_note"
+                    text: Translation.tr("Media player")
+                    checked: Config.options?.lock?.widgets?.media ?? true
+                    onCheckedChanged: Config.setNestedValue("lock.widgets.media", checked)
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "power_settings_new"
+                    text: Translation.tr("Power buttons")
+                    checked: Config.options?.lock?.widgets?.powerButtons ?? true
+                    onCheckedChanged: Config.setNestedValue("lock.widgets.powerButtons", checked)
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "touch_app"
+                    text: Translation.tr("Unlock hint text")
+                    checked: Config.options?.lock?.widgets?.hintText ?? true
+                    onCheckedChanged: Config.setNestedValue("lock.widgets.hintText", checked)
+                }
+            }
             ContentSubsection {
                 title: Translation.tr("Style: Blurred")
 

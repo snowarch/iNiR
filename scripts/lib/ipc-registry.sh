@@ -2,14 +2,15 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: f3dd1f8bcde8479a
-# Targets: 45
+# IPC.md hash: 8ba26a4cf70f8b68
+# Targets: 48
 
 declare -gA IPC_TARGET_DESC=(
   [ai]="AI chat service. Multi-provider (Gemini, OpenAI, Mistral) with tool support."
   [altSwitcher]="Alt+Tab window switcher. Works across workspaces, unlike some other implementations we won't name."
   [appCatalog]="App catalog service. Browse, search, and install curated applications."
   [audio]="Volume and mute control."
+  [background]="Desktop background and widget edit mode controls."
   [bar]="Top bar visibility."
   [brightness]="Display brightness control."
   [cheatsheet]="Keyboard shortcuts reference. For when you forget what you just configured five minutes ago."
@@ -18,6 +19,7 @@ declare -gA IPC_TARGET_DESC=(
   [closeConfirm]="Close window confirmation dialog. Shows a prompt before closing the focused window. Useful if you're the type who accidentally closes things and then regrets it."
   [controlPanel]="Quick settings panel. Toggles, sliders, and system controls without opening full settings."
   [coverflowSelector]="Wallpaper coverflow (3D card) picker."
+  [customWidgets]="Custom widget management. Create, list, reload, and remove user-installed widgets from \`~/.config/inir/widgets/\`."
   [gamemode]="Performance mode for gaming. Auto-detects fullscreen apps and disables animations/effects. Can also be toggled manually for those stubborn games that don't go fullscreen properly."
   [globalActions]="Command palette / action registry. Search and execute shell actions from scripts or keybinds."
   [keyboard]="Keyboard layout switching (Niri only). Cycles through configured keyboard layouts and queries layout info."
@@ -33,6 +35,7 @@ declare -gA IPC_TARGET_DESC=(
   [overview]="Toggle the workspace overview panel. The one with all your windows looking tiny and organized."
   [packageSearch]="Package search service. Searches pacman repos and installed packages."
   [panelFamily]="Switch between panel styles. ii supports two visual styles: Material ii (default) and Waffle (Windows 11-like)."
+  [recordingOsd]="Screen recording floating pill OSD. Shows elapsed time and stop button during active recording."
   [region]="Region selection tools. Screenshots, OCR, recording. Draw a box, get stuff done."
   [search]="Waffle start menu / search."
   [session]="Power menu. Logout, suspend, reboot, shutdown. The \"I'm done for today\" buttons."
@@ -58,6 +61,7 @@ declare -gA IPC_TARGET_FAMILY=(
   [altSwitcher]="shared"
   [appCatalog]="shared"
   [audio]="shared"
+  [background]="waffle"
   [bar]="shared"
   [brightness]="shared"
   [cheatsheet]="shared"
@@ -66,6 +70,7 @@ declare -gA IPC_TARGET_FAMILY=(
   [closeConfirm]="shared"
   [controlPanel]="shared"
   [coverflowSelector]="shared"
+  [customWidgets]="waffle"
   [gamemode]="shared"
   [globalActions]="shared"
   [keyboard]="shared"
@@ -81,6 +86,7 @@ declare -gA IPC_TARGET_FAMILY=(
   [overview]="shared"
   [packageSearch]="shared"
   [panelFamily]="shared"
+  [recordingOsd]="waffle"
   [region]="shared"
   [search]="waffle"
   [session]="shared"
@@ -106,6 +112,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [altSwitcher]="open close toggle next previous"
   [appCatalog]="refresh search install list"
   [audio]="volumeUp volumeDown mute micMute"
+  [background]="toggleEditMode"
   [bar]="toggle close open"
   [brightness]="increment decrement"
   [cheatsheet]="toggle close open"
@@ -114,8 +121,9 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [closeConfirm]="trigger close"
   [controlPanel]="toggle close open"
   [coverflowSelector]="toggle open close"
+  [customWidgets]="reload list create remove"
   [gamemode]="toggle activate deactivate status"
-  [globalActions]="run list search open"
+  [globalActions]="run runWithArgs list search open"
   [keyboard]="switchLayout switchLayoutPrevious getCurrentLayout getLayouts"
   [lock]="activate deactivate status focus"
   [mediaControls]="toggle close open"
@@ -129,6 +137,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [overview]="toggle close open toggleReleaseInterrupt clipboardToggle actionOpen"
   [packageSearch]="search results"
   [panelFamily]="cycle set"
+  [recordingOsd]="toggle show hide"
   [region]="screenshot search googleLens ocr record recordWithSound"
   [search]="toggle close open"
   [session]="toggle close open"
@@ -167,6 +176,7 @@ declare -gA IPC_FUNCTION_DESC=(
   ["audio:volumeDown"]="Decrease volume"
   ["audio:mute"]="Toggle speaker mute"
   ["audio:micMute"]="Toggle microphone mute"
+  ["background:toggleEditMode"]="Toggle widget edit mode (drag, resize, configure desktop widgets)"
   ["bar:toggle"]="Show/hide bar"
   ["bar:close"]="Hide bar"
   ["bar:open"]="Show bar"
@@ -187,11 +197,16 @@ declare -gA IPC_FUNCTION_DESC=(
   ["coverflowSelector:toggle"]="Open/close coverflow selector"
   ["coverflowSelector:open"]="Open coverflow selector"
   ["coverflowSelector:close"]="Close coverflow selector"
+  ["customWidgets:reload"]="Re-scan widgets directory and reload all custom widgets"
+  ["customWidgets:list"]="List all discovered custom widgets (JSON output)"
+  ["customWidgets:create"]="Create a new widget scaffold in the widgets directory"
+  ["customWidgets:remove"]="Remove a custom widget by ID"
   ["gamemode:toggle"]="Toggle gamemode on/off"
   ["gamemode:activate"]="Force enable gamemode"
   ["gamemode:deactivate"]="Force disable gamemode"
   ["gamemode:status"]="Print current gamemode state (e.g. \`active (manual)\`, \`inactive (off)\`)"
-  ["globalActions:run"]="Execute action by ID (e.g. \`toggle-mute\`, \`install-package vim\`)"
+  ["globalActions:run"]="Execute action by ID (e.g. \`run toggle-mute\`)"
+  ["globalActions:runWithArgs"]="Execute action by ID with extra arguments (e.g. \`runWithArgs install-package vim\`)"
   ["globalActions:list"]="List all actions, optionally filtered by category"
   ["globalActions:search"]="Fuzzy search actions by name/description/keywords"
   ["globalActions:open"]="Open the overview in action mode"
@@ -233,6 +248,9 @@ declare -gA IPC_FUNCTION_DESC=(
   ["packageSearch:results"]="Print current search results"
   ["panelFamily:cycle"]="Cycle to next panel family (ii → waffle → ii)"
   ["panelFamily:set"]="Set specific family (\"ii\" or \"waffle\")"
+  ["recordingOsd:toggle"]="Stop the current recording (if active)"
+  ["recordingOsd:show"]="Reveal the recording OSD pill"
+  ["recordingOsd:hide"]="Collapse/hide the recording OSD pill"
   ["region:screenshot"]="Take a region screenshot"
   ["region:search"]="Image search (Google Lens)"
   ["region:googleLens"]="Start a region capture for Google Lens"
@@ -304,7 +322,10 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["ai:runGet"]="<inputText>"
   ["appCatalog:search"]="<query>"
   ["appCatalog:install"]="<id>"
-  ["globalActions:run"]="<actionId> <args>"
+  ["customWidgets:create"]="<name>"
+  ["customWidgets:remove"]="<widgetId>"
+  ["globalActions:run"]="<actionId>"
+  ["globalActions:runWithArgs"]="<actionId> <args>"
   ["globalActions:list"]="<category>"
   ["globalActions:search"]="<query>"
   ["minimize:restore"]="<windowId>"
@@ -316,12 +337,14 @@ declare -gA IPC_FUNCTION_ARGS=(
 declare -gA IPC_TARGET_EXAMPLE=(
   [altSwitcher]='bind "Alt+Tab" { spawn "inir" "altSwitcher" "next"; }
 bind "Alt+Shift+Tab" { spawn "inir" "altSwitcher" "previous"; }'
+  [background]='bind "Super+W" { spawn "inir" "background" "toggleEditMode"; }'
   [cheatsheet]='bind "Super+Slash" { spawn "inir" "cheatsheet" "toggle"; }'
   [clipboard]='bind "Super+V" { spawn "inir" "clipboard" "toggle"; }'
   [closeConfirm]='bind "Mod+Q" repeat=false { spawn "inir" "close-window"; }'
   [gamemode]='bind "Super+F12" { spawn "inir" "gamemode" "toggle"; }'
   [globalActions]='bind "Super+Slash" { spawn "inir" "globalActions" "open"; }
-bind "Super+M" { spawn "inir" "globalActions" "run" "toggle-mute"; }'
+bind "Super+M" { spawn "inir" "globalActions" "run" "toggle-mute"; }
+bind "Super+Shift+M" { spawn "inir" "globalActions" "runWithArgs" "install-package" "vim"; }'
   [keyboard]='bind "Mod+Alt+K" { spawn "inir" "keyboard" "switchLayout"; }'
   [lock]='bind "Super+Alt+L" allow-when-locked=true { spawn "inir" "lock" "activate"; }'
   [mpris]='bind "Ctrl+Mod+Space" { spawn "inir" "mpris" "playPause"; }
@@ -340,10 +363,10 @@ bind "Super+Shift+A" { spawn "inir" "region" "search"; }'
   [ytmusic]='bind "Mod+M+Space" { spawn "inir" "ytmusic" "playPause"; }'
 )
 
-IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector gamemode globalActions keyboard lock mediaControls minimize mpris notifications osd osdVolume osk overlay overview packageSearch panelFamily region search session settings shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperSelector wbar wnotificationCenter wwidgets ytmusic zoom)
+IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets gamemode globalActions keyboard lock mediaControls minimize mpris notifications osd osdVolume osk overlay overview packageSearch panelFamily recordingOsd region search session settings shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperSelector wbar wnotificationCenter wwidgets ytmusic zoom)
 IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector gamemode globalActions keyboard lock mediaControls minimize mpris notifications osdVolume osk overview packageSearch panelFamily region session settings shellUpdate sidebarLeft sidebarRight tiling voiceSearch wallpaperSelector ytmusic zoom)
 IPC_II_TARGETS=(overlay)
-IPC_WAFFLE_TARGETS=(osd search taskview wactionCenter waffleAltSwitcher wbar wnotificationCenter wwidgets)
+IPC_WAFFLE_TARGETS=(background customWidgets osd recordingOsd search taskview wactionCenter waffleAltSwitcher wbar wnotificationCenter wwidgets)
 
 declare -gA IPC_KEBAB_ALIASES=(
   [alt-switcher]=altSwitcher
@@ -352,11 +375,13 @@ declare -gA IPC_KEBAB_ALIASES=(
   [close-confirm]=closeConfirm
   [control-panel]=controlPanel
   [coverflow-selector]=coverflowSelector
+  [custom-widgets]=customWidgets
   [global-actions]=globalActions
   [media-controls]=mediaControls
   [osd-volume]=osdVolume
   [package-search]=packageSearch
   [panel-family]=panelFamily
+  [recording-osd]=recordingOsd
   [shell-update]=shellUpdate
   [sidebar-left]=sidebarLeft
   [sidebar-right]=sidebarRight

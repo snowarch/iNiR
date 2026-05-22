@@ -188,7 +188,7 @@ def scaffold_target(args, colors_dir: Path, targets_dir: Path) -> int:
 
     label = args.label or slug_to_label(target_id)
     description = args.description or f"Apply generated iNiR palette to {label}."
-    inputs = args.inputs or ["palette.json"]
+    inputs = args.inputs or ["app-palette.json", "palette.json"]
 
     manifest = {
         "id": target_id,

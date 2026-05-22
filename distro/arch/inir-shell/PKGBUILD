@@ -1,7 +1,7 @@
 # Maintainer: snowarch
 
 pkgname=inir-shell
-pkgver=2.24.0
+pkgver=2.25.0
 pkgrel=1
 pkgdesc='iNiR shell payload, launcher, and user service'
 arch=(any)
@@ -19,6 +19,7 @@ depends=(
   jq
   kirigami
   libnotify
+  millennium-bin
   networkmanager
   niri
   noto-fonts-emoji
@@ -38,6 +39,7 @@ depends=(
   slurp
   swayidle
   swaylock
+  wlsunset
   syntax-highlighting
   ttf-jetbrains-mono-nerd
   ttf-material-symbols-variable
@@ -52,7 +54,7 @@ depends=(
   xwayland-satellite
 )
 optdepends=(
-  'awww-bin: animated wallpaper support'
+  'awww: animated wallpaper support'
   'blueman: Bluetooth device management'
   'breeze-icons: fallback icon theme'
   'cava: audio visualizer'
@@ -65,6 +67,7 @@ optdepends=(
   'gowall-bin: wallpaper theme conversion and effects editor'
   'gum: setup TUI helpers'
   'hyprpicker: color picker support'
+  'kde-cli-tools: Dolphin Open With dialog (QT_QPA_PLATFORMTHEME=kde)'
   'imagemagick: image conversion helpers'
   'kconfig: KDE configuration integration'
   'kdialog: KDE dialog integration for scripts'
@@ -132,6 +135,8 @@ package() {
   install -Dm644 "$srcroot/assets/systemd/inir.service" "$pkgdir/usr/lib/systemd/user/inir.service"
   install -Dm644 "$srcroot/assets/applications/inir.desktop" "$pkgdir/usr/share/applications/inir.desktop"
   install -Dm644 "$srcroot/assets/icons/desktop-symbolic.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/inir.svg"
+  install -Dm644 "$srcroot/distro/arch/inir-shell/inir-quickshell-rebuild.hook" \
+    "$pkgdir/usr/share/libalpm/hooks/inir-quickshell-rebuild.hook"
   install -Dm644 "$srcroot/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
   install -Dm644 "$srcroot/README.md" "$docroot/README.md"
   install -Dm644 "$srcroot/docs/SETUP.md" "$docroot/SETUP.md"

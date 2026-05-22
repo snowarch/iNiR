@@ -1,0 +1,2 @@
+module qs.modules.background.widgets.calendar
+CalendarUpcomingWidget 1.0 CalendarUpcomingWidget.qml

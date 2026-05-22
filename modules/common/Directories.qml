@@ -37,7 +37,7 @@ Singleton {
     property string scriptPath: Quickshell.shellPath("scripts")
     property string scriptsPath: FileUtils.trimFileProtocol(scriptPath)
     property string stateUserPath: `${Directories.statePath}/user`
-    property string wallpapersPath: `${Directories.picturesPath}/Wallpapers`
+    property string wallpapersPath: Config.options?.wallpapers?.directory || `${Directories.picturesPath}/Wallpapers`
     property string screenshotsPath: `${Directories.picturesPath}/Screenshots`
     property string persistentStatesPath: `${Directories.statePath}/states.json`
     property string eventsPath: `${Directories.stateUserPath}/events.json`
@@ -56,8 +56,8 @@ Singleton {
     property string coverArt: `${Directories.cachePath}/media/coverart`
     property string tempImages: "/tmp/quickshell/media/images"
     property string booruPreviews: `${Directories.cachePath}/media/boorus`
-    property string booruDownloads: Directories.wallpapersPath
-    property string booruDownloadsNsfw: `${Directories.wallpapersPath}/🌶️`
+    property string booruDownloads: Config.options?.sidebar?.booru?.downloadPath?.sfw || Directories.wallpapersPath
+    property string booruDownloadsNsfw: Config.options?.sidebar?.booru?.downloadPath?.nsfw || `${Directories.wallpapersPath}/🌶️`
     property string latexOutput: `${Directories.cachePath}/media/latex`
     property string shellConfig: `${Directories.configPath}/illogical-impulse`
     property string shellConfigName: "config.json"
@@ -73,6 +73,7 @@ Singleton {
     property string calendarSyncCachePath: `${Directories.stateUserPath}/calendar-sync-cache.json`
     property string generatedMaterialThemePath: `${Directories.stateUserPath}/generated/colors.json`
     property string generatedPalettePath: `${Directories.stateUserPath}/generated/palette.json`
+    property string generatedAppPalettePath: `${Directories.stateUserPath}/generated/app-palette.json`
     property string generatedTerminalPalettePath: `${Directories.stateUserPath}/generated/terminal.json`
     property string generatedThemeMetaPath: `${Directories.stateUserPath}/generated/theme-meta.json`
     property string generatedChromiumThemePath: `${Directories.stateUserPath}/generated/chromium.theme`

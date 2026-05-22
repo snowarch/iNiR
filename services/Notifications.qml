@@ -267,31 +267,29 @@ Singleton {
 
     function _timeoutForNotification(notification) {
         const ignoreApp = Config.options?.notifications?.ignoreAppTimeout ?? false;
+        // Max popup lifetime: even "persistent" notifications leave the popup after this.
+        // 0 = no cap (honor app's request to stay forever). Default 30s.
+        const maxLifetime = Config.options?.notifications?.maxPopupLifetime ?? 30000;
 
-        // 1) La app define un timeout explícito (> 0): respetarlo solo si no ignoramos
+        // 1) App defines an explicit timeout (> 0): respect it unless ignoring
         if (!ignoreApp && notification.expireTimeout > 0) {
             return notification.expireTimeout;
         }
 
-        // 2) expireTimeout == 0 => "no expira" según spec freedesktop (solo si no ignoramos)
+        // 2) expireTimeout == 0 => "never expire" per freedesktop spec
         if (!ignoreApp && notification.expireTimeout === 0) {
-            return 0;
+            return maxLifetime;
         }
 
-        // 3) Usar defaults por urgencia
-        let urgencyStr = "normal";
-        if (notification.urgency && notification.urgency.toString) {
-            urgencyStr = notification.urgency.toString();
-        }
-
-        if (urgencyStr === "Low") {
+        // 3) Defaults by urgency (use enum comparison, not fragile toString)
+        if (notification.urgency === NotificationUrgency.Low) {
             return Config.options?.notifications?.timeoutLow ?? 5000;
-        } else if (urgencyStr === "Critical") {
-            // Por defecto críticas quedan pegadas (0 = nunca auto-ocultar)
-            return Config.options?.notifications?.timeoutCritical ?? 0;
+        } else if (notification.urgency === NotificationUrgency.Critical) {
+            const critTimeout = Config.options?.notifications?.timeoutCritical ?? 0;
+            return (critTimeout === 0 && maxLifetime > 0) ? maxLifetime : critTimeout;
         }
 
-        // Normal / desconocida
+        // Normal / unknown
         return Config.options?.notifications?.timeoutNormal ?? 7000;
     }
 
@@ -507,9 +505,9 @@ Singleton {
     }
 
     function attemptInvokeAction(id, notifIdentifier) {
-        console.log("[Notifications] Attempting to invoke action with identifier: " + notifIdentifier + " for notification ID: " + id);
+        _log("[Notifications] Attempting to invoke action with identifier: " + notifIdentifier + " for notification ID: " + id);
         const notifServerIndex = notifServer.trackedNotifications.values.findIndex((notif) => notif.id + root.idOffset === id);
-        console.log("Notification server index: " + notifServerIndex);
+        _log("Notification server index: " + notifServerIndex);
         if (notifServerIndex !== -1) {
             const notifServerNotif = notifServer.trackedNotifications.values[notifServerIndex];
             const action = notifServerNotif?.actions?.find((action) => action.identifier === notifIdentifier);
@@ -524,7 +522,7 @@ Singleton {
             }
         }
         else {
-            console.log("Notification not found in server: " + id)
+            _log("Notification not found in server: " + id)
         }
         root.discardNotification(id);
     }
@@ -624,7 +622,7 @@ Singleton {
                 maxId = Math.max(maxId, notif.notificationId)
             })
 
-            console.log("[Notifications] File loaded")
+            _log("[Notifications] File loaded")
             root.idOffset = maxId
             root.initDone()
         }

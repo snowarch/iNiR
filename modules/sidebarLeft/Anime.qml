@@ -83,6 +83,14 @@ Item {
                 Persistent.states.booru.allowNsfw = true;
             }
         },
+        {
+            name: "toggle-tags",
+            description: Translation.tr("Toggle tags on hover"),
+            execute: () => {
+                Persistent.states.booru.showTagsOnHover = !Persistent.states.booru.showTagsOnHover
+                Booru.addSystemMessage(Persistent.states.booru.showTagsOnHover ? Translation.tr("Tags on hover enabled") : Translation.tr("Tags on hover disabled"))
+            }
+        },
     ]
 
     function handleInput(inputText) {

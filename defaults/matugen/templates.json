@@ -31,9 +31,9 @@
       "output": "~/.local/state/quickshell/user/generated/firefox-materialfox.css"
     },
     {
-      "name": "steam_adwsteam",
-      "input": "steam/adw-colortheme.css",
-      "output": "~/.local/state/quickshell/user/generated/steam-colortheme.css"
+      "name": "steam_millennium_material",
+      "input": "steam/millennium-material.css",
+      "output": "~/.local/state/quickshell/user/generated/steam-millennium-material.css"
     }
   ]
 }

@@ -4,7 +4,7 @@ import qs.modules.common.widgets
 import QtQuick
 import QtQuick.Effects
 
-Canvas { // Visualizer
+Canvas {
     id: root
     property list<var> points
     property list<var> smoothPoints
@@ -15,10 +15,12 @@ Canvas { // Visualizer
                         : Appearance.inirEverywhere ? Appearance.inir.colPrimary
                         : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
                         : Appearance.colors.colPrimary
+    // Fill alpha — reads global config, consumers can override
+    property real fillOpacity: (Config.options?.appearance?.cava?.waveOpacity ?? 30) / 100
 
-    onPointsChanged: () => {
-        root.requestPaint()
-    }
+    onPointsChanged: () => { root.requestPaint() }
+    onFillOpacityChanged: requestPaint()
+    onColorChanged: requestPaint()
 
     anchors.fill: parent
     onPaint: {
@@ -32,8 +34,7 @@ Canvas { // Visualizer
         var n = points.length;
         if (n < 2) return;
 
-        // Smoothing: simple moving average (optional)
-        var smoothWindow = root.smoothing; // adjust for more/less smoothing
+        var smoothWindow = root.smoothing;
         root.smoothPoints = [];
         for (var i = 0; i < n; ++i) {
             var sum = 0, count = 0;
@@ -44,7 +45,7 @@ Canvas { // Visualizer
             }
             root.smoothPoints.push(sum / count);
         }
-        if (!root.live) root.smoothPoints.fill(0); // If not playing, show no points
+        if (!root.live) root.smoothPoints.fill(0);
 
         ctx.beginPath();
         ctx.moveTo(0, h);
@@ -56,17 +57,12 @@ Canvas { // Visualizer
         ctx.lineTo(w, h);
         ctx.closePath();
 
-        ctx.fillStyle = Qt.rgba(
-            root.color.r,
-            root.color.g,
-            root.color.b,
-            0.15
-        );
+        ctx.fillStyle = Qt.rgba(root.color.r, root.color.g, root.color.b, root.fillOpacity);
         ctx.fill();
     }
 
     layer.enabled: Appearance.effectsEnabled
-    layer.effect: MultiEffect { // Blur a bit to obscure away the points
+    layer.effect: MultiEffect {
         source: root
         saturation: 0.2
         blurEnabled: Appearance.effectsEnabled

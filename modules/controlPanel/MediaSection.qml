@@ -32,36 +32,11 @@ Item {
     readonly property bool effectiveIsPlaying: isYtMusicActive ? YtMusic.isPlaying : (player?.isPlaying ?? false)
 
     property string artDownloadLocation: Directories.coverArt
-    readonly property bool downloaded: artworkResolver.ready
-    property string displayedArtFilePath: artworkResolver.displaySource
+    readonly property bool downloaded: MediaArtwork.ready
+    property string displayedArtFilePath: MediaArtwork.displaySource
 
     function checkAndDownloadArt() {
-        artworkResolver.refresh()
-    }
-    
-    Connections {
-        target: root.player
-        function onTrackArtUrlChanged() {
-            if (!root.isYtMusicActive)
-                root.checkAndDownloadArt()
-        }
-    }
-
-    Connections {
-        target: YtMusic
-        function onCurrentThumbnailChanged() {
-            if (root.isYtMusicActive)
-                root.checkAndDownloadArt()
-        }
-    }
-
-    MediaArtworkResolver {
-        id: artworkResolver
-        sourceUrl: root.effectiveArtUrl
-        title: root.effectiveTitle
-        artist: root.effectiveArtist
-        album: root.player?.trackAlbum ?? ""
-        cacheDirectory: root.artDownloadLocation
+        MediaArtwork.refresh()
     }
 
     // Cava audio visualizer

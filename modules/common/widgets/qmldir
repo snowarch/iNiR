@@ -51,6 +51,7 @@ LightDarkPreferenceButton 1.0 LightDarkPreferenceButton.qml
 MaterialCookie 1.0 MaterialCookie.qml
 MaterialLoadingIndicator 1.0 MaterialLoadingIndicator.qml
 MediaArtworkResolver 1.0 MediaArtworkResolver.qml
+singleton MediaArtwork 1.0 MediaArtwork.qml
 MaterialPlaceholderMessage 1.0 MaterialPlaceholderMessage.qml
 MaterialShape 1.0 MaterialShape.qml
 MaterialShapeWrappedMaterialSymbol 1.0 MaterialShapeWrappedMaterialSymbol.qml

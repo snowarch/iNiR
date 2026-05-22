@@ -614,6 +614,211 @@ tui_menu() {
 ###############################################################################
 # Status Command
 ###############################################################################
+show_status_boot_timing() {
+    local cache_file="${XDG_CACHE_HOME:-$HOME/.cache}/inir/last-boot.json"
+    if [[ ! -s "$cache_file" ]]; then
+        return 0
+    fi
+
+    # Phase timestamps (ms since epoch) — written by shell.qml at deferred phase end.
+    local component_ms config_ms entry_ms deferred_ms
+    component_ms=$(jq -r '.componentCompletedAt // 0' "$cache_file" 2>/dev/null)
+    config_ms=$(jq -r '.configReadyAt // 0' "$cache_file" 2>/dev/null)
+    entry_ms=$(jq -r '.shellEntryAt // 0' "$cache_file" 2>/dev/null)
+    deferred_ms=$(jq -r '.deferredReadyAt // 0' "$cache_file" 2>/dev/null)
+    [[ -z "$component_ms" || "$component_ms" == "0" ]] && return 0
+
+    # Process & service start — these often dominate perceived startup time.
+    local service_start_ms=0 qs_start_ms=0
+    if command -v systemctl >/dev/null 2>&1; then
+        local exec_start
+        exec_start=$(systemctl --user show inir.service -p ExecMainStartTimestamp --value 2>/dev/null)
+        if [[ -n "$exec_start" && "$exec_start" != "n/a" ]]; then
+            # systemctl prints "Tue 2026-05-19 11:38:37 -03"; date -d understands it.
+            service_start_ms=$(date -d "$exec_start" +%s%3N 2>/dev/null || echo 0)
+        fi
+    fi
+    # qs process start time (best-effort: read /proc/<pid>/stat starttime if running)
+    local qs_pid
+    qs_pid=$(pgrep -u "$USER" -fn '/usr/bin/qs.*shell\.qml|/usr/bin/qs -n -p' 2>/dev/null | head -1)
+    [[ -z "$qs_pid" ]] && qs_pid=$(pgrep -u "$USER" -fn 'qs -n' 2>/dev/null | head -1)
+    if [[ -n "$qs_pid" && -r "/proc/$qs_pid/stat" ]]; then
+        # field 22 = starttime in clock ticks since boot
+        local starttime_ticks btime hz
+        starttime_ticks=$(awk '{print $22}' "/proc/$qs_pid/stat")
+        btime=$(awk '/^btime / {print $2}' /proc/stat)
+        hz=$(getconf CLK_TCK)
+        if [[ -n "$starttime_ticks" && -n "$btime" && -n "$hz" && "$hz" -gt 0 ]]; then
+            qs_start_ms=$(( btime * 1000 + (starttime_ticks * 1000 / hz) ))
+        fi
+    fi
+
+    tui_title "Last Boot Timing"
+
+    # Format helper: render a delta in ms or s.
+    _fmt_ms() {
+        local ms=$1
+        if [[ "$ms" -lt 0 ]]; then printf -- '—'; return; fi
+        if [[ "$ms" -ge 1000 ]]; then
+            printf '%d.%02ds' "$((ms / 1000))" "$(((ms % 1000) / 10))"
+        else
+            printf '%dms' "$ms"
+        fi
+    }
+
+    # Build a single timeline anchored at the earliest known timestamp.
+    local origin=$service_start_ms
+    if [[ "$origin" == "0" || "$origin" -gt "$qs_start_ms" && "$qs_start_ms" -gt 0 ]]; then
+        origin=$qs_start_ms
+    fi
+    if [[ "$origin" == "0" || "$origin" -gt "$component_ms" ]]; then
+        origin=$component_ms
+    fi
+
+    tui_table_header "Phase" "Elapsed from start" 22 28
+    if [[ "$service_start_ms" -gt 0 ]]; then
+        tui_table_row "systemd ExecStart" "$(_fmt_ms 0) (T+0)" 22 28
+    fi
+    if [[ "$qs_start_ms" -gt 0 && "$service_start_ms" -gt 0 ]]; then
+        tui_table_row "qs process started" "$(_fmt_ms $((qs_start_ms - origin)))" 22 28
+    fi
+    tui_table_row "QML evaluated" "$(_fmt_ms $((component_ms - origin)))" 22 28
+    [[ "$config_ms" -gt 0 ]] && tui_table_row "Config ready" "$(_fmt_ms $((config_ms - origin)))" 22 28
+    [[ "$entry_ms" -gt 0 ]] && tui_table_row "Bar visible" "$(_fmt_ms $((entry_ms - origin)))" 22 28
+    [[ "$deferred_ms" -gt 0 ]] && tui_table_row "Services warm" "$(_fmt_ms $((deferred_ms - origin)))" 22 28
+    tui_table_footer 22 28
+
+    # Triage hints based on which phase ate the time. Thresholds chosen empirically:
+    # > 5s on cold boot is probably user-data driven (icon cache, network), > 10s is
+    # almost certainly something wrong (Qt ABI mismatch, env race, slow disk).
+    local total_ms=$((deferred_ms > 0 ? deferred_ms - origin : 0))
+    if [[ "$total_ms" -gt 10000 ]]; then
+        echo ""
+        tui_check_warn "Boot took $(_fmt_ms $total_ms) — unusually slow."
+        tui_info "  Common culprits: Qt/Quickshell ABI mismatch, missing WAYLAND_DISPLAY env, slow icon cache, network-bound services on first run."
+        tui_info "  Run 'inir doctor' to auto-detect, or share the table above when filing an issue."
+    elif [[ "$total_ms" -gt 5000 ]]; then
+        echo ""
+        tui_check_skip "Boot took $(_fmt_ms $total_ms) — a bit slow on first run; subsequent boots should be faster."
+    fi
+}
+
+show_status_environment() {
+    # Versions and system info — the things we always end up asking users for
+    # in support threads. Print once so they can paste their `inir status` output.
+    tui_title "System & Quickshell"
+    tui_table_header "Property" "Value" 22 42
+
+    # Distro
+    local distro="unknown"
+    if [[ -r /etc/os-release ]]; then
+        # shellcheck disable=SC1091
+        local pretty
+        pretty=$(. /etc/os-release && printf '%s' "${PRETTY_NAME:-${NAME:-unknown}}")
+        [[ -n "$pretty" ]] && distro="$pretty"
+    fi
+    tui_table_row "Distro" "$distro" 22 42
+
+    # Kernel
+    local kernel
+    kernel="$(uname -srm 2>/dev/null || echo unknown)"
+    tui_table_row "Kernel" "$kernel" 22 42
+
+    # Compositor + version
+    local compositor="unknown" comp_ver=""
+    if [[ -n "${NIRI_SOCKET:-}" ]] && command -v niri >/dev/null 2>&1; then
+        compositor="niri"
+        comp_ver="$(niri --version 2>/dev/null | grep -oP '\d+\.\d+(\.\d+)?' | head -1)"
+    elif [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]] && command -v Hyprland >/dev/null 2>&1; then
+        compositor="hyprland"
+        comp_ver="$(Hyprland --version 2>/dev/null | grep -oP 'v\d+\.\d+(\.\d+)?' | head -1 | tr -d 'v')"
+    elif command -v niri >/dev/null 2>&1 && niri msg --json version >/dev/null 2>&1; then
+        compositor="niri (offline)"
+    fi
+    [[ -n "$comp_ver" ]] && compositor="${compositor} ${comp_ver}"
+    tui_table_row "Compositor" "$compositor" 22 42
+
+    # Panel family
+    local panel_family="ii"
+    local user_cfg="$HOME/.config/illogical-impulse/config.json"
+    if [[ -r "$user_cfg" ]] && command -v jq >/dev/null 2>&1; then
+        local pf
+        pf="$(jq -r '.panelFamily // "ii"' "$user_cfg" 2>/dev/null)"
+        [[ -n "$pf" && "$pf" != "null" ]] && panel_family="$pf"
+    fi
+    tui_table_row "Panel Family" "$panel_family" 22 42
+
+    # Quickshell binary + version + revision + distributor
+    local qs_path qs_version_line
+    qs_path="$(command -v qs 2>/dev/null || command -v quickshell 2>/dev/null || true)"
+    if [[ -n "$qs_path" ]]; then
+        qs_version_line="$($qs_path --version 2>&1 | head -1 | tr -d '\r')"
+        # Strip ANSI just in case
+        qs_version_line="$(printf '%s' "$qs_version_line" | sed 's/\x1b\[[0-9;]*m//g')"
+        tui_table_row "Quickshell" "${qs_version_line:-unknown}" 22 42
+    else
+        tui_table_row "Quickshell" "not installed" 22 42
+    fi
+
+    # Quickshell package origin. We want to tell users if their binary came from
+    # a repo (in which case the maintainer rebuilds on Qt updates) or from AUR
+    # (in which case THEY have to rebuild on Qt updates). Force LANG=C so we don't
+    # depend on the user's locale (Spanish pacman prints 'Versión' / 'Nada').
+    if command -v pacman >/dev/null 2>&1; then
+        local qs_pkg
+        for cand in quickshell-git quickshell-bin quickshell; do
+            if pacman -Qi "$cand" &>/dev/null; then
+                local ver origin=""
+                ver="$(LANG=C pacman -Qi "$cand" 2>/dev/null | awk -F': +' '/^Version/ {print $2; exit}')"
+                if pacman -Qmq "$cand" &>/dev/null; then
+                    origin="AUR / locally built"
+                else
+                    local repo
+                    repo="$(LANG=C pacman -Si "$cand" 2>/dev/null | awk -F': +' '/^Repository/ {print $2; exit}')"
+                    if [[ -n "$repo" ]]; then
+                        origin="repo: ${repo}"
+                    else
+                        origin="repo"
+                    fi
+                fi
+                qs_pkg="${cand} ${ver} (${origin})"
+                break
+            fi
+        done
+        [[ -n "$qs_pkg" ]] && tui_table_row "QS Package" "$qs_pkg" 22 42
+    fi
+
+    # Qt build-time vs runtime (the ABI mismatch witness)
+    if [[ -n "$qs_path" ]] && command -v strings >/dev/null 2>&1; then
+        local buildtime_qt runtime_qt
+        buildtime_qt="$(strings "$qs_path" 2>/dev/null | grep -P '^6\.\d+\.\d+$' | head -1)"
+        if [[ -L /usr/lib/libQt6Core.so.6 ]]; then
+            runtime_qt="$(readlink -f /usr/lib/libQt6Core.so.6 2>/dev/null | grep -oP '[0-9]+\.[0-9]+\.[0-9]+$')"
+        fi
+        [[ -z "$runtime_qt" ]] && command -v pkg-config >/dev/null 2>&1 && \
+            runtime_qt="$(pkg-config --modversion Qt6Core 2>/dev/null)"
+        local qt_display="build=${buildtime_qt:-?}  runtime=${runtime_qt:-?}"
+        if [[ -n "$buildtime_qt" && -n "$runtime_qt" && "$buildtime_qt" != "$runtime_qt" ]]; then
+            qt_display="${qt_display}  ⚠ ABI mismatch"
+        fi
+        tui_table_row "Qt" "$qt_display" 22 42
+    fi
+
+    # Active session details
+    local session_type="${XDG_SESSION_TYPE:-?}"
+    local wayland_disp="${WAYLAND_DISPLAY:-(unset)}"
+    tui_table_row "Session" "$session_type ($wayland_disp)" 22 42
+
+    # Config namespace location — reminds users where the user config lives
+    if [[ -f "$user_cfg" ]]; then
+        tui_table_row "User Config" "$user_cfg" 22 42
+    else
+        tui_table_row "User Config" "(missing) ${user_cfg}" 22 42
+    fi
+
+    tui_table_footer 22 42
+}
+
 show_status() {
     local installed_ver=$(get_installed_version)
     local installed_commit=$(get_installed_commit)
@@ -681,6 +886,8 @@ show_status() {
         echo ""
         tui_info "This installation is externally managed. './setup update' will not sync repo files into the runtime."
     fi
+
+    show_status_environment
 
     tui_title "Health Checks"
 
@@ -764,6 +971,11 @@ show_status() {
     else
         tui_check_warn "Preserved modifications: ${preserved_mods}"
     fi
+
+    # Last boot timing breakdown — helps users self-triage "my shell takes 15s to start".
+    # Pulls T0 from systemd, T1 from `qs list`, T2-T5 from ~/.cache/inir/last-boot.json
+    # (written by shell.qml at end of deferred phase).
+    show_status_boot_timing
     echo ""
 }
 
@@ -1813,9 +2025,10 @@ run_update_simulated() {
     tui_check_ok "pipewire             (installed)"
     tui_check_ok "niri                 (installed)"
     tui_check_ok "matugen              (installed)"
+    tui_check_ok "millennium           (installed)"
     tui_check_ok "fish                 (installed)"
     sleep 1
-    tui_success "All 47 runtime dependencies satisfied"
+    tui_success "All 48 runtime dependencies satisfied"
 
     # Step 6 — verbose op: header + simulated python-pkg lines
     _step_phase_header 6 "Python packages"
@@ -1846,15 +2059,20 @@ refresh_sddm_theme_on_update() {
         return 0
     fi
 
+    # Always refresh on update — settings like InputMethod may have changed
+    local auto_apply_mode="yes"
+    if [[ "$ask_mode" == "true" ]]; then
+        # Interactive: let installer ask if switching from another theme
+        auto_apply_mode="ask"
+    fi
+
     echo ""
     tui_info "Refreshing ii-pixel SDDM theme..."
 
-    local auto_apply_mode="ask"
-    if [[ "$ask_mode" != "true" ]]; then
-        auto_apply_mode="no"
+    if ! extras_install_sddm_theme "$auto_apply_mode"; then
+        tui_warn "SDDM theme refresh failed — you may need to run manually:"
+        tui_dim "  sudo bash ${REPO_ROOT}/scripts/sddm/install-pixel-sddm.sh"
     fi
-
-    extras_install_sddm_theme "$auto_apply_mode" || tui_warn "SDDM refresh had issues (non-fatal)"
 }
 
 run_update() {
@@ -2460,8 +2678,7 @@ run_update() {
 run_doctor() {
     echo ""
     tui_hero_card "iNiR Doctor" \
-        "Checks the boring but important stuff: dependencies, runtime payload, launcher, service wiring, theming, and the usual desktop-shell landmines." \
-        "It will apply safe fixes. It will not rewrite your git history like an idiot."
+        "Diagnosing and auto-fixing your shell setup."
     show_setup_context_card "Doctor Context"
     run_doctor_with_fixes
 }

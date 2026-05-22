@@ -5,6 +5,113 @@ All notable changes to iNiR will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.25.1] - 2026-05-20
+
+Quickshell 0.3 + Qt 6.11.1 compatibility release. Fixes the #1 regression (settings not persisting) and several related issues surfaced by the update.
+
+### Fixed
+- **Config writes not persisting across reload** *(#150)*: QS 0.3's JsonAdapter no longer emits `onSaved` when nested JsonObjects are mutated via JS assignment. Now uses `writeAdapter()` as primary (emits proper QObject property signals for 2400+ consumers) with an in-memory JSON mirror as fallback when `onSaved` doesn't fire within 2s. Mirror is initialized from disk on load and updated synchronously on every `setNestedValue`.
+- **Static wallpaper (JPG/PNG) crash** *(#146)*: disabled `mipmap: true` on WallpaperCrossfader Image slots. Qt 6.11's multithreaded mipmap generator has a race condition causing segfaults on large images. Mipmap is unnecessary for screen-sized rendering.
+- **AwwwBackend binary detection failures** *(#148)*: probe now checks `/usr/bin/awww` directly instead of relying on login shell (`bash -lc`). Fixes false "binaries unavailable" on setups where PATH isn't populated in login shells.
+- **ABI check crash-loops the service**: when running as systemd service (`--session`), the ABI mismatch handler now attempts a noninteractive rebuild before exiting. Prevents indefinite crash loops after a Qt patch bump.
+- **Parallax pixelation**: wallpaper `sourceSize` no longer multiplied by parallax scale — was causing CPU upscaling and blurry rendering. GPU handles the zoom cleanly.
+- **Parallax widget positions**: widget canvas now uses `Translate` transform instead of oversized anchors. Widgets stay screen-sized and correctly positioned regardless of parallax state.
+- **Widget border bleeding background**: separated border into its own Rectangle overlay in WidgetSurface. Qt's antialiasing on transparent Rectangles with borders no longer causes visible fills.
+- **Widget blur toggle re-enabling on reload**: fallback value was `true`, causing the toggle to flip back ON every config reload. Now defaults to `false`.
+- **Widget blur activating on upgrade**: `useBlur` schema default changed from `true` to `false` so existing users don't get blur forced on after updating.
+- **Edit mode cursor flicker**: resize handle MouseArea now only tracks hover when the widget itself has focus, preventing cursor shape changes when hovering the bar.
+- **Binding loops**: fixed in AbstractBackgroundWidget (overflow guard) and BarMediaPopup (visible expression).
+- **Notification layout**: fixed `padding` reference ambiguity and `contentColumn` anchors in NotificationItem.
+- **Installer blocked by steam**: `millennium-bin` moved from hard dependency to optional. Installs no longer fail on systems without multilib/steam.
+- **Backdrop mipmap spam**: disabled `mipmap` on wallpaper-sized Backdrop images (blurred anyway, was generating excessive QSGPlainTexture warnings).
+
+### Added
+- **Flatpak app launcher fallback** *(#149)*: `AppLauncher.launch()` now tries `DesktopEntries.heuristicLookup()` for single-word commands. Flatpak apps with `.desktop` files launch correctly even when the binary isn't in PATH.
+- **ShellId pragma for QS 0.3**: pinned `pragma ShellId inir` so symlinked configs don't get different shell IDs after QS stopped canonicalizing paths.
+- **`inir logs --full`**: new flag reads the binary qslog directly, bypassing `QT_LOGGING_RULES` filtering. Essential for debugging since journalctl hides real errors.
+- **Sidebar date format**: GlanceHeader now respects `Config.options.time.dateFormat` when configured, falling back to style-appropriate defaults.
+
+## [2.25.0] - 2026-05-16
+
+2.25 is the desktop widgets release. They finally work — edit mode, custom widgets, resize, persistence, the whole thing. The color pipeline got its biggest architectural change in a while with app-palette, and the shell now actually reads the wallpaper to pick text colors instead of guessing. Also, Steam theming moved to Millennium because Adwaita for Steam is dead.
+
+![Desktop widgets edit mode](docs/assets/desktop-widgets.png)
+
+### Added
+- **Desktop widgets v2**: complete rewrite of the widget system. Edit mode (shown above) with a manager panel, IPC-driven config persistence, resize handles, zone placement, custom widget pipeline with a real SDK (`setSource` for required props, schema key declaration), and popover chips redesigned with `SelectionGroupButton` + `GridLayout`. Fixed approximately 15 critical bugs along the way — VME segfaults, stale-text config overwrites, loader feedback loops, edit controls eating their own clicks, widgets spawning at top-left, zone placement breaking on resize. The kind of PR that needs therapy afterward.
+- **Audio visualizer desktop widget**: waveform/spectrum visualizer as a background desktop widget. Configurable type and position across all presets.
+- **App palette** (`app-palette.json`): semantic intermediate color layer between raw Material You tokens and external apps. Provides contrast-safe tokens (`app_background`, `app_surface`, `app_headerbar_bg`, `app_selection`, `app_border_subtle`, etc.) derived from M3 surface/primary with readable-contrast enforcement (WCAG 4.5:1 minimum). All shell/python theming modules (GTK, Chrome, Spicetify, editors, Zed, Pear Desktop, SDDM, terminals, system24) and matugen templates now prefer app-palette with graceful fallback.
+- **Brightness-aware widget text**: desktop widgets analyze the actual wallpaper region behind them (grayscale average) to pick light/dark text with accent tinting, instead of relying on the global dark/light mode. New `--color-only` mode in the image analysis script does position-aware color without the full region search. Widgets re-analyze on drag end and wallpaper change.
+- **Recording OSD redesign**: redesigned Recorder widget with a real timer, status bar, and game mode section. Auto-hide behavior with `Mod+Shift+R` keybind. Multi-indicator support with `mediaEnabled` toggle. MediaIndicator and MediaOSD layout polished.
+- **Clipboard navigate mode**: keyboard navigation in the clipboard panel. HTML display cleanup, copy operation preserves cursor position. Also added HTML and Unicode sanitization helpers so pasted content doesn't inject garbage.
+- **Sidebar requested-widget navigation**: any component can now request a specific sidebar tab by type (e.g. `"notepad"`) through `GlobalStates.sidebarRightRequestedWidget` without reaching into Persistent state. Both sidebar layouts listen and switch accordingly. Bar notepad button uses this instead of hardcoded tab indices.
+- **Notepad context menu**: right-click context menu in the notepad widget, themed selection colors, and persistent selection so you don't lose your highlight when the sidebar loses focus.
+- **Cava configuration**: Settings UI for cava process parameters (sensitivity, bars, framerate, stereo) with live apply. Both ii and waffle settings families. Cava colors now generated from the theme palette.
+- **Configurable wave visualizer opacity**: global wave opacity in Advanced Settings (cava section) + per-widget override in the desktop visualizer edit popover. Media player wave visualizers inherit the global value automatically.
+- **Settings UI for file paths**: screenshot/recording filename formats, wallpapers directory, and booru download paths now editable from Settings.
+- **Lock screen widget customization**: configurable widgets on the lock screen.
+- **Notepad tabs in sidebar**: right sidebar notepad now supports multiple tabs.
+- **Background widget auto-fade**: desktop widgets fade when compositor windows overlap them, keeping them unobtrusive during work.
+- **Widget edit mode polish**: scrim overlay, repainted grid canvas, zone occupancy indicators with widget icons and direction arrows, placement strategy badges on widget labels. Drag behavior fixed — release guard, zone snap removed (zones cover entire screen so auto-snap was always wrong).
+- **Custom AI provider management** *(#134)*: add, edit, and delete custom AI providers from Settings → Services. Auto-detects API format from endpoint URL. New Anthropic Messages API strategy (SSE streaming, x-api-key auth) and OpenAI Responses API strategy. Extra models moved from hardcoded to `config.json` entries with cross-process sync via `configChanged` signal. Settings UI reworked with `ConfigSelectionArray` format selector, format icons and badge pills on provider list items, and improved empty state. Sidebar AI indicators (model, tool) are now clickable — prefill the corresponding `/command` to trigger autocomplete. Settings gear shortcut and dynamic placeholder text.
+- **Setup recipes framework** *(#138)*: auto-discovered `/setup-*` launcher actions backed by self-contained, idempotent shell scripts in `scripts/setup/`. Metadata scanner (`_scan.sh`) emits JSON for QML — adding a `.sh` file is enough, no QML changes or restart needed. Shared `_lib.sh` helper with distro detection, progress notifications, and package helpers. First recipe: `spotify.sh` (AUR/Flatpak install, Spicetify + Marketplace). Gated behind `enableSetup` config toggle.
+
+### Changed
+- **SDDM pixel theme migrated to Qt6** *(#137)*: `QtGraphicalEffects` → `Qt5Compat.GraphicalEffects`, metadata rewritten from `[Desktop Entry]` to `[SddmGreeterTheme]` format with `QtVersion=6`.
+- **Steam theming moved to Millennium**: Adwaita for Steam is deprecated; theming now goes through Millennium's Material-Theme plugin. Updated translations across all locales.
+- **Aurora configurable glass transparency**: style editor now exposes glass opacity. Fixed live reactivity that was broken because Config.revision wasn't being used as a dependency.
+- **Doctor TUI overhaul**: animated steps with palette-aware badges, dot threshold, tagline centering. All deps now required (wlsunset added). Font list cleanup. Quickconfig buttons theme-adaptive. Compact output.
+- **switchwall performance**: batched 24 individual jq config reads into a single mapfile call (62ms → 3ms). Integrated scheme auto-detection into `generate_colors_material.py` (eliminates separate process spawn, saves ~585ms). Net: ~904ms → ~760ms per wallpaper change.
+- **Wallpaper selector performance**: eliminated per-item `magick identify` spawn (thundering herd — N concurrent magick processes on directory open). Lowered thumbnail size from 512px to 256px (4x less memory). Increased batch workers from 1 to 4. Removed per-item OpacityMask FBO.
+- **applycolor module runner**: replaced unbounded fork-all with a sliding window (nproc/2, capped at 4) using `ionice -c 3` + `nice -n 10`. New manifest-based enablement skips disabled targets entirely instead of spawning them to self-exit.
+- **Dock shadow opacity**: per dark/light mode tuning (0.18/0.35) with spread reset for cleaner appearance.
+- **Quick Settings wallpaper section**: Transparency and Colors-only toggles now side-by-side, reducing vertical footprint so the wallpaper thumbnails are more prominent.
+- **Debug logging gated behind QS_DEBUG**: ~72 informational `console.log` calls across 29 files converted to a `_log()` helper that only prints when `QS_DEBUG=1`. Error and failure logs remain unconditional.
+- **Bar top-left icon defaults to distro logo**: the icon button now shows the detected distro logo instead of a generic symbol.
+- **Aurora and Angel default opacity/blur increased**: raised defaults for a more polished out-of-the-box look.
+- **Control panel weather**: location toggle replaced with a minimal clickable eye icon to match the adjacent refresh button aesthetic.
+
+### Fixed
+- **Dock stale toplevel ghost entries**: NiriService window matching could produce false matches on zero-score entries, and `sortedToplevels` could contain stale compositor entries not present in live ToplevelManager. Both now guarded.
+- **Preset theme colors not propagating to external apps** *(#144)*: `FileView.setText()` dropped async writes when `applyPreset()` fired 2-3x rapidly on startup. Replaced 6 FileView instances with a single debounced bash script that writes all generated files atomically. Also added `kde-cli-tools` as a dependency and doctor check — required for Dolphin's "Open With" dialog when `QT_QPA_PLATFORMTHEME=kde`.
+- **VSCode theme pipeline**: switched to local extension with `_watch:true` for hot reload — no more toggle hack, no `settings.json` injection on every wallpaper change. Cursor / Windsurf / Antigravity / VSCodium now actually load the theme: forks only register extensions listed in their `extensions.json`, not just present on disk. Strip restores the user's previous theme and removes the registry entry. Legacy `inir.inir-theme-1.0.0` directories cleaned up.
+- **Wallhaven panel completely broken**: missing `import Quickshell` in the service. Every code path that called `_log()` aborted with `ReferenceError: Quickshell is not defined` — searches, tag suggestions, tag counts, detail fetches. Same bug found and fixed in `controlPanel/WallpaperSection.qml` (scheme variant chip), then a codebase-wide audit verified no other QML files use the `Quickshell` global without importing the module.
+- **Desktop widgets growing off-screen**: media widget gaining an extra MPRIS player (and any other dynamic-height widget) used to push past the screen edge in `free` placement, forcing the user to reposition by hand. Position is now re-clamped automatically when (pos + size) > screen size, without overwriting the saved config — the widget snaps back to its original spot once the content shrinks again.
+- **App grids not reflowing on resize**: waffle start menu's pinned + all-apps grids had hard-coded `columns: 6` plus fixed-width buttons, so resizing the menu either clipped buttons (too narrow) or left empty space on the right (too wide). Replaced with `Flow` inside a centered wrapper — columns adapt to width, row stays centered.
+- **Overview search row left-clumped when results widen the panel**: `ToolbarTextField` had only an `implicitWidth` so when result cards stretched the container, the input + icons stayed at 360px and everything clumped left. `Layout.fillWidth` lets the input absorb the extra space and keeps the row balanced. Also fixed a copy-paste bug in the result list's `OpacityMask` (`height: x.width` → `.height`) that clipped results vertically.
+- **`got operation finished from dropped FileView operation` boot spam**: three independent races where async FileView ops were being cancelled by overlapping reads/writes. `Persistent.qml`'s `writeAdapter()` raced its own `onFileChanged` reload (now gated by `_writeInFlight` like `Config.qml`, with `saveFailed` handling so a failed write doesn't leave the gate stuck). Multiple panel consumers calling `ResourceUsage.ensureRunning()` in their `Component.onCompleted` each triggered a poll, racing 5 `reload()` ops every call (now primes once). `MaterialThemeLoader`'s `reapplyTheme` / `_applyVariant` / `onFileChanged` all called `themeFileView.reload()` directly during boot when the theme pipeline rewrites the JSON several times (now routed through a single 50ms debounce). Drops down from 5+ warnings to 3 residual benign ones.
+- **Media artwork sync across shell**: shared resolver now correctly drives all surfaces.
+- **Sidebar dynamic padding and angel border**: restored when the border-disable flag was set.
+- **Audio mic mute/volume**: backed with `wpctl` instead of unreliable QML PipeWire bindings for the mic path.
+- **Booru providers**: waifu.im tag search (case sensitivity), t.alcy.cc fixes, `/toggle-tags` behavior, zerochan rating filter.
+- **Recording OSD HoverHandler crash**: undefined `hovered` access.
+- **OSD hotZone behavior**: removed autoHideHotZone, keep mask on pill at all times.
+- **Notification popup card shadows**: removed shadow that was visually incorrect on transparent backgrounds.
+- **Overview dashboard weather layout**: Material 3 chips with Flow layout instead of broken grid.
+- **Screenshot clipboard pollution**: previews no longer pollute the clipboard with intermediate screenshot data.
+- **Opus audio codec options**: clarified labels in Settings UI.
+- **Translation generation hitting ARG_MAX** *(#140)*: `gemini-translate.sh` passed the full `en_US.json` (~228 KB) as a shell argument, exceeding the kernel's 128 KB per-argument limit. Refactored to use jq `--rawfile` and pipe payload to curl via stdin.
+- **Weather location leaked in logs**: city name and coordinates were logged in plaintext when `hideLocation` was off. Now always redacted regardless of the UI toggle — logs are persistent and can be shared accidentally.
+- **Cava settings UI showing non-functional options**: removed colorSource, gradientCount, barWidth, barSpacing, foreground, and background controls from both ii and waffle settings. These had no consumers — CavaProcess only passes sensitivity/bars/framerate/stereo to the cava process; visual parameters are per-widget by design.
+- **Cava config restart race**: `stop()` now waits for process exit before regenerating config and restarting — was the root cause of needing to toggle multiple times for changes to take effect.
+- **Lock screen battery percentage**: now shows correctly. Intel CPU temp sensor priority fixed.
+- **Notification popup lifetime**: fixed urgency comparison and added configurable `maxPopupLifetime`.
+- **Weather widget shape tooltips**: all tooltip variants were triggering at once instead of only the active shape.
+- **ConfigSelectionArray undefined assignment**: `onYChanged` could fire before children were populated, assigning `undefined` to a `bool`.
+- **Spicetify theme not applying on wallpaper change** *(#138)*: `apply-spicetify-theme.sh` now always calls `spicetify apply` when the watch process is not running, fixing stale theme bundles after wallpaper switch.
+- **Spicetify setup recipe failing on existing installs** *(#138)*: stale backup deadlock (version mismatch preventing both restore and backup), wrong `spotify_path` pointing to spotify-launcher expanded dir instead of `/opt/spotify` (AUR). Recipe now auto-detects the correct path and does progressive recovery (backup → restore backup → nuke stale state → retry).
+- **Setup recipes not executable via CLI**: `globalActions run` IPC handler required 2 arguments but CLI passed 1. Split into `run(actionId)` and `runWithArgs(actionId, args)`.
+- **SDDM Qt VirtualKeyboard hijacking input**: Qt6 greeter loads `qtvirtualkeyboard` by default, stealing all keyboard events from the theme's own input handling and "press any key" transition. Set `InputMethod=` (empty) in the SDDM drop-in config to disable it — our custom `VirtualKeyboard.qml` handles on-screen input.
+- **SDDM config not updating on `inir update`**: the installer's `elevate tee` for `/etc/sddm.conf.d/inir-theme.conf` could fail silently during updates, swallowing sudo errors as "non-fatal". Reworked to compare desired vs existing config (skip write if identical), always update settings when ii-pixel is already the active theme, and surface failures with a manual fix command instead of hiding them.
+- **Update indicator popup overflowing the bar panel**: monospace commit hashes and branch names pushed the popup past the panel edge. Capped popup content width at 280px with an `Item` wrapper that reports constrained `implicitWidth` to `StyledPopup`, and added `elide` to branch/progress text fields.
+
+### Issues / PRs
+- Fixed [#140](https://github.com/snowarch/iNiR/issues/140), [#144](https://github.com/snowarch/iNiR/issues/144).
+- Included contributions from [#134](https://github.com/snowarch/iNiR/pull/134), [#137](https://github.com/snowarch/iNiR/pull/137), [#138](https://github.com/snowarch/iNiR/pull/138).
+
+### Contributors
+Thanks to [@EldoDvae](https://github.com/EldoDvae) for the SDDM Qt6 migration ([#137](https://github.com/snowarch/iNiR/pull/137)), [@Aurorainic](https://github.com/Aurorainic) for custom AI provider support ([#134](https://github.com/snowarch/iNiR/pull/134)), and [@yukazakiri](https://github.com/yukazakiri) for the setup recipes framework and Spicetify fix ([#138](https://github.com/snowarch/iNiR/pull/138)).
+
 ## [2.24.0] - 2026-04-30
 
 2.24 is a practical one: screen recording got real controls, keyboard indicators stopped being noisy, media players behave across ii and waffle, and the update flow is finally visible instead of doing spooky background theater.

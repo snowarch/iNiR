@@ -109,6 +109,48 @@ _tui_color_value() {
 _tui_load_palette
 
 ###############################################################################
+# ANSI Escape Helpers — convert palette values to terminal sequences
+###############################################################################
+# Palette values can be 256-color numbers ("212") or hex ("#edbaB8").
+# These produce the raw escape sequence for fg or bg.
+_tui_ansi_fg() {
+    local c="$1"
+    if [[ "$c" == "#"* ]]; then
+        printf '\e[38;2;%d;%d;%dm' "0x${c:1:2}" "0x${c:3:2}" "0x${c:5:2}"
+    elif [[ "$c" =~ ^[0-9]+$ ]]; then
+        printf '\e[38;5;%dm' "$c"
+    fi
+}
+_tui_ansi_bg() {
+    local c="$1"
+    if [[ "$c" == "#"* ]]; then
+        printf '\e[48;2;%d;%d;%dm' "0x${c:1:2}" "0x${c:3:2}" "0x${c:5:2}"
+    elif [[ "$c" =~ ^[0-9]+$ ]]; then
+        printf '\e[48;5;%dm' "$c"
+    fi
+}
+
+# Pre-compute badge escape sequences from the loaded palette.
+# Used by tui_step_start/finalize for pill-style step badges.
+_TUI_BADGE_BG=""
+_TUI_BADGE_FG=""
+_tui_compute_badge_escapes() {
+    _TUI_BADGE_BG=$(_tui_ansi_bg "$TUI_GUM_ACCENT")
+    # Badge text must contrast with accent background → use on_primary
+    local state_home="${XDG_STATE_HOME:-$HOME/.local/state}"
+    local on_primary
+    on_primary=$(_tui_json_value "${state_home}/quickshell/user/generated/colors.json" "on_primary")
+    if [[ -n "$on_primary" ]]; then
+        _TUI_BADGE_FG=$(_tui_ansi_fg "$on_primary")
+    else
+        _TUI_BADGE_FG=$(_tui_ansi_fg "$TUI_GUM_TEXT")
+    fi
+    # Fallback if palette didn't load
+    [[ -z "$_TUI_BADGE_BG" ]] && _TUI_BADGE_BG=$'\e[7;35m'
+}
+_tui_compute_badge_escapes
+
+###############################################################################
 # Core Styling Helpers
 ###############################################################################
 _color() {
@@ -412,9 +454,10 @@ tui_banner() {
             --width 50
     else
         local tagline="iNiR — your niri shell"
-        local banner_width=50
-        local left_pad=$(( (banner_width - ${#tagline}) / 2 ))
-        (( left_pad < 0 )) && left_pad=0
+        # Banner art is 38 chars wide + 3 spaces indent = 41 visible cols
+        local art_width=41
+        local tag_pad=$(( (art_width - ${#tagline}) / 2 ))
+        (( tag_pad < 0 )) && tag_pad=0
 
         echo -e "${STY_PURPLE}${STY_BOLD}"
         cat << 'EOF'
@@ -426,7 +469,7 @@ tui_banner() {
    ╚═╝╚═╝      ╚═╝  ╚═══╝╚═╝╚═╝  ╚═╝╚═╝
 EOF
         echo -e "${STY_RST}"
-        printf "%*s%b%s%b\n" "$left_pad" "" "$STY_FAINT" "$tagline" "$STY_RST"
+        printf "%*s%b%s%b\n" "$tag_pad" "" "$STY_FAINT" "$tagline" "$STY_RST"
     fi
     echo ""
 }
@@ -664,8 +707,10 @@ _TUI_SPINNER_PID=""
 
 # Render the global progress dots row: "● ● ◉ ○ ○ ○"
 # done = solid green, current = filled accent, pending = hollow dim.
+# For large step counts (>12), skip dots to avoid terminal overflow.
 _tui_step_dots() {
     local current="$1" total="$2" out="" i
+    (( total > 12 )) && return
     for ((i=1; i<=total; i++)); do
         if (( i < current )); then
             out+="$(printf '%b●%b' "$STY_GREEN" "$STY_RST")"
@@ -705,6 +750,9 @@ tui_step_start() {
     local dots
     dots="$(_tui_step_dots "$_TUI_STEP_CURRENT" "$_TUI_STEP_TOTAL")"
 
+    # Badge uses palette colors (accent bg + text fg)
+    local badge_bg="$_TUI_BADGE_BG" badge_fg="$_TUI_BADGE_FG"
+
     if [[ -t 1 ]]; then
         # Hide cursor while spinner is animating
         printf '\033[?25l' >/dev/tty 2>/dev/null || true
@@ -716,9 +764,10 @@ tui_step_start() {
             local frames=("⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏")
             local i=0
             while true; do
-                printf '\r\033[K  %b %b[%d/%d]%b %b%s%b %s' \
+                printf '\r\033[K  %b %b%b%b %d/%d %b %b%s%b %s' \
                     "$dots" \
-                    "$STY_FAINT" "$_TUI_STEP_CURRENT" "$_TUI_STEP_TOTAL" "$STY_RST" \
+                    "$STY_BOLD" "$badge_bg" "$badge_fg" \
+                    "$_TUI_STEP_CURRENT" "$_TUI_STEP_TOTAL" "$STY_RST" \
                     "$STY_PURPLE" "${frames[i]}" "$STY_RST" \
                     "$_TUI_STEP_MSG" >/dev/tty 2>/dev/null || exit 0
                 i=$(( (i+1) % 10 ))
@@ -727,9 +776,10 @@ tui_step_start() {
         ) &
         _TUI_SPINNER_PID=$!
     else
-        printf '  %b %b[%d/%d]%b %s\n' \
+        printf '  %b %b%b%b %d/%d %b %s\n' \
             "$dots" \
-            "$STY_FAINT" "$_TUI_STEP_CURRENT" "$_TUI_STEP_TOTAL" "$STY_RST" \
+            "$STY_BOLD" "$badge_bg" "$badge_fg" \
+            "$_TUI_STEP_CURRENT" "$_TUI_STEP_TOTAL" "$STY_RST" \
             "$_TUI_STEP_MSG"
     fi
 }
@@ -747,17 +797,24 @@ _tui_step_finalize() {
     local dots
     dots="$(_tui_step_dots "$_TUI_STEP_CURRENT" "$_TUI_STEP_TOTAL")"
 
+    local badge_bg="$_TUI_BADGE_BG" badge_fg="$_TUI_BADGE_FG"
+
     if [[ -t 1 ]]; then
         # Clear the spinner line on the TTY, then print the resolved line to
         # both TTY and stdout (so log file via tee captures it cleanly).
         printf '\r\033[K' >/dev/tty 2>/dev/null || true
-        printf '  %b %b[%d/%d]%b %b%s%b %s%b\n' \
+        printf '  %b %b%b%b %d/%d %b %b%s%b %s%b\n' \
             "$dots" \
-            "$STY_FAINT" "$_TUI_STEP_CURRENT" "$_TUI_STEP_TOTAL" "$STY_RST" \
+            "$STY_BOLD" "$badge_bg" "$badge_fg" \
+            "$_TUI_STEP_CURRENT" "$_TUI_STEP_TOTAL" "$STY_RST" \
             "$icon_color" "$icon" "$STY_RST" \
             "$final_msg" "$elapsed_str"
     else
-        printf '  %b%s%b %s%b\n' "$icon_color" "$icon" "$STY_RST" "$final_msg" "$elapsed_str"
+        printf '  %b%b%b %d/%d %b %b%s%b %s%b\n' \
+            "$STY_BOLD" "$badge_bg" "$badge_fg" \
+            "$_TUI_STEP_CURRENT" "$_TUI_STEP_TOTAL" "$STY_RST" \
+            "$icon_color" "$icon" "$STY_RST" \
+            "$final_msg" "$elapsed_str"
     fi
 }
 

@@ -8,6 +8,11 @@ import qs.modules.common.widgets
 
 ContentPage {
     id: root
+
+    function _log(...args): void {
+        if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
+    }
+
     settingsPageIndex: 5
     settingsPageName: Translation.tr("Panels")
 
@@ -935,20 +940,20 @@ ContentPage {
                 }
 
                 function setWidget(widgetId, active) {
-                    console.log(`[RightSidebar] setWidget(${widgetId}, ${active})`)
+                    _log(`[RightSidebar] setWidget(${widgetId}, ${active})`)
                     let current = [...(Config.options?.sidebar?.right?.enabledWidgets ?? defaults)]
-                    console.log(`[RightSidebar] Current widgets:`, JSON.stringify(current))
+                    _log(`[RightSidebar] Current widgets:`, JSON.stringify(current))
 
                     if (active && !current.includes(widgetId)) {
                         current.push(widgetId)
-                        console.log(`[RightSidebar] Adding ${widgetId}, new array:`, JSON.stringify(current))
+                        _log(`[RightSidebar] Adding ${widgetId}, new array:`, JSON.stringify(current))
                         Config.setNestedValue("sidebar.right.enabledWidgets", current)
                     } else if (!active && current.includes(widgetId)) {
                         current.splice(current.indexOf(widgetId), 1)
-                        console.log(`[RightSidebar] Removing ${widgetId}, new array:`, JSON.stringify(current))
+                        _log(`[RightSidebar] Removing ${widgetId}, new array:`, JSON.stringify(current))
                         Config.setNestedValue("sidebar.right.enabledWidgets", current)
                     } else {
-                        console.log(`[RightSidebar] No change needed`)
+                        _log(`[RightSidebar] No change needed`)
                     }
                 }
 
@@ -1169,6 +1174,31 @@ ContentPage {
                             }
                         }
                     }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Booru download paths")
+                visible: (Config.options?.policies?.weeb ?? 0) !== 0
+
+                ContentSubsectionLabel {
+                    text: Translation.tr("SFW download folder (empty = wallpapers dir)")
+                }
+                MaterialTextField {
+                    Layout.fillWidth: true
+                    placeholderText: Directories.wallpapersPath
+                    text: Config.options?.sidebar?.booru?.downloadPath?.sfw ?? ""
+                    onEditingFinished: Config.setNestedValue("sidebar.booru.downloadPath.sfw", text)
+                }
+
+                ContentSubsectionLabel {
+                    text: Translation.tr("NSFW download folder (empty = wallpapers/pepper)")
+                }
+                MaterialTextField {
+                    Layout.fillWidth: true
+                    placeholderText: Directories.wallpapersPath + "/pepper"
+                    text: Config.options?.sidebar?.booru?.downloadPath?.nsfw ?? ""
+                    onEditingFinished: Config.setNestedValue("sidebar.booru.downloadPath.nsfw", text)
                 }
             }
 

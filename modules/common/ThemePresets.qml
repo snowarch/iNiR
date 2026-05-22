@@ -5,10 +5,15 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.modules.common
+import qs.modules.common.functions
 import qs.services
 
 Singleton {
     id: root
+
+    function _log(...args): void {
+        if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
+    }
 
     // Available tags for filtering
     readonly property var availableTags: [
@@ -3162,13 +3167,13 @@ Singleton {
     }
 
     function applyPreset(id, applyExternal = true, skipColorsJson = false) {
-        console.log("[ThemePresets] Applying preset:", id);
+        _log("[ThemePresets] Applying preset:", id);
         const preset = getPreset(id);
         if (!preset.colors) {
-            console.log("[ThemePresets] Preset has no colors (auto theme)");
+            _log("[ThemePresets] Preset has no colors (auto theme)");
             return false;
         }
-        console.log("[ThemePresets] Applying colors to Appearance.m3colors");
+        _log("[ThemePresets] Applying colors to Appearance.m3colors");
         
         var cSource = preset.colors === "custom" ? (Config.options?.appearance?.customTheme ?? {}) : preset.colors;
         
@@ -3249,13 +3254,10 @@ Singleton {
         const enableAppsAndShell = Config.options?.appearance?.wallpaperTheming?.enableAppsAndShell ?? true;
         const enableTerminal = Config.options?.appearance?.wallpaperTheming?.enableTerminal ?? true;
         
-        // Manual preset themes must fan out to the SAME pipeline used by
-        // wallpaper auto-generation so terminals/editors/chrome/spicetify/sddm/
-        // steam/pear all stay in sync with shell tokens.
-        // Delay execution: FileView.setText() uses a 50ms debounce timer, so
-        // the generated JSON files are NOT on disk yet when this function runs.
-        // Without the timer, applycolor.sh reads stale files (first click fails,
-        // second click works because the first click's files finally flushed).
+        // Fan out to the same pipeline used by wallpaper auto-generation so
+        // terminals/editors/chrome/spicetify/sddm/steam/pear stay in sync.
+        // Delay: _writeDebounce (60ms) + bash write must finish before
+        // applycolor.sh reads the generated JSON files.
         // restart() coalesces the double-call from setTheme + onCurrentThemeChanged.
         if (enableAppsAndShell || enableTerminal) {
             _delayedExternalApplyTimer.restart();
@@ -3264,7 +3266,7 @@ Singleton {
 
     Timer {
         id: _delayedExternalApplyTimer
-        interval: 120  // > FileView 50ms flush timer, with margin
+        interval: 250  // > _writeDebounce (60ms) + bash write time, with margin
         repeat: false
         running: false
         onTriggered: {
@@ -3520,51 +3522,171 @@ Singleton {
             on_success_container: c.m3onSuccessContainer
         };
     }
+
+    function colorHex(col, fallback = "#000000") {
+        const qcol = Qt.color(col ?? fallback);
+        if (!qcol || qcol.valid === false)
+            return fallback;
+        const r = Math.round(qcol.r * 255);
+        const g = Math.round(qcol.g * 255);
+        const b = Math.round(qcol.b * 255);
+        return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+    }
+
+    function mixHex(a, b, keepA = 0.5) {
+        return colorHex(ColorUtils.mix(Qt.color(a), Qt.color(b), keepA));
+    }
+
+    function readableHex(fg, bg, minRatio = 4.5) {
+        return colorHex(ColorUtils.ensureReadable(Qt.color(fg), Qt.color(bg), minRatio));
+    }
+
+    function generateAppPaletteJsonObject(c) {
+        const base = generateColorsJsonObject(c);
+        const layer0 = base.background || base.surface || "#000000";
+        const layer1 = base.surface_container_low || base.surface || layer0;
+        const layer2 = base.surface_container || layer1;
+        const layer3 = base.surface_container_high || layer2;
+        const layer4 = base.surface_container_highest || layer3;
+        const onSurface = base.on_surface || base.on_background || "#FFFFFF";
+        const onSurfaceVariant = base.on_surface_variant || onSurface;
+        const primary = base.primary || "#6750A4";
+        const primaryContainer = base.primary_container || primary;
+        const onPrimary = base.on_primary || readableHex(onSurface, primary, 4.5);
+        const outline = base.outline || onSurfaceVariant;
+        const outlineVariant = base.outline_variant || mixHex(layer1, outline, 0.72);
+        const onLayer0 = readableHex(onSurface, layer0, 4.5);
+        const onLayer1 = readableHex(onSurfaceVariant, layer1, 4.5);
+        const onLayer2 = readableHex(onSurface, layer2, 4.5);
+        const onLayer3 = readableHex(onSurface, layer3, 4.5);
+        const onLayer4 = readableHex(onSurface, layer4, 4.5);
+        const subtext = readableHex(mixHex(onLayer1, layer1, 0.75), layer1, 3.0);
+        const layer1Hover = mixHex(layer1, onLayer1, 0.92);
+        const layer1Active = mixHex(layer1, onLayer1, 0.85);
+        const layer2Hover = mixHex(layer2, onLayer2, 0.90);
+        const layer2Active = mixHex(layer2, onLayer2, 0.80);
+        const layer3Hover = mixHex(layer3, onLayer3, 0.90);
+        const layer3Active = mixHex(layer3, onLayer3, 0.80);
+        const selection = mixHex(layer3, primary, 0.82);
+        const selectionHover = mixHex(layer3, primary, 0.74);
+        const onSelection = readableHex(onLayer3, selection, 4.5);
+
+        return Object.assign({}, base, {
+            background: layer0,
+            on_background: onLayer0,
+            surface: layer0,
+            on_surface: onLayer1,
+            surface_dim: layer0,
+            surface_bright: layer3,
+            surface_container_lowest: layer0,
+            surface_container_low: layer1,
+            surface_container: layer2,
+            surface_container_high: layer3,
+            surface_container_highest: layer4,
+            outline: outline,
+            outline_variant: outlineVariant,
+            app_background: layer0,
+            app_foreground: onLayer0,
+            app_subtext: subtext,
+            app_surface: layer1,
+            app_surface_hover: layer1Hover,
+            app_surface_active: layer1Active,
+            app_surface_elevated: layer2,
+            app_surface_elevated_hover: layer2Hover,
+            app_surface_elevated_active: layer2Active,
+            app_surface_popup: layer3,
+            app_surface_popup_hover: layer3Hover,
+            app_surface_popup_active: layer3Active,
+            app_on_surface: onLayer1,
+            app_on_surface_elevated: onLayer2,
+            app_on_surface_popup: onLayer3,
+            app_on_surface_highest: onLayer4,
+            app_border: outline,
+            app_border_subtle: outlineVariant,
+            app_accent: primary,
+            app_on_accent: onPrimary,
+            app_accent_container: primaryContainer,
+            app_selection: selection,
+            app_selection_hover: selectionHover,
+            app_on_selection: onSelection,
+            app_window_bg: layer0,
+            app_view_bg: layer0,
+            app_headerbar_bg: layer0,
+            app_sidebar_bg: layer0,
+            app_card_bg: layer1,
+            app_popover_bg: layer2,
+            app_dialog_bg: layer3,
+            app_thumbnail_bg: layer4
+        });
+    }
     
     function generateColorsJson(c) {
-        console.log("[ThemePresets] Generating colors.json for preset theme");
+        _log("[ThemePresets] Generating colors.json for preset theme");
         const colorsJson = generateColorsJsonObject(c);
+        const appPaletteJson = generateAppPaletteJsonObject(c);
         const terminalJson = buildTerminalJson(c);
         Object.assign(colorsJson, terminalJson)
 
-        const outputPath = Directories.generatedMaterialThemePath;
-        const jsonStr = JSON.stringify(colorsJson, null, 2);
+        const colorsJsonStr = JSON.stringify(colorsJson, null, 2);
+        const paletteJsonStr = JSON.stringify(generateColorsJsonObject(c), null, 2);
+        const appPaletteJsonStr = JSON.stringify(appPaletteJson, null, 2);
+        const terminalJsonStr = JSON.stringify(terminalJson, null, 2);
+        const themeMetaStr = JSON.stringify(buildThemeMeta(c), null, 2);
+        const scssStr = generateScssFromColors(c);
+        const chromiumRgb = hexToRgbTriplet(appPaletteJson.app_headerbar_bg || appPaletteJson.app_surface || c.m3surfaceContainerLow || c.m3surface || c.m3background || "");
 
-        colorsJsonFileView.path = Qt.resolvedUrl(outputPath)
-        colorsJsonFileView.setText(jsonStr)
-        writeGeneratedThemeContracts(c)
+        // Write all generated files in one atomic bash process.
+        // FileView.setText() drops async write operations when called rapidly
+        // (applyPreset runs 2-3x on startup), causing preset colors to never
+        // reach disk — external apps then read stale wallpaper colors.
+        _writeGeneratedFiles(colorsJsonStr, paletteJsonStr, appPaletteJsonStr, terminalJsonStr, themeMetaStr, scssStr, chromiumRgb);
+
         if ((Config.options?.appearance?.wallpaperTheming?.enableVesktop ?? true) !== false) {
-            console.log("[ThemePresets] Triggering Vesktop theme generation wrapper")
+            _log("[ThemePresets] Triggering Vesktop theme generation wrapper")
             Quickshell.execDetached([
                 "/usr/bin/bash",
                 Directories.scriptsPath + "/colors/system24_palette.sh"
             ])
         }
-        console.log("[ThemePresets] colors.json written to:", outputPath);
+        _log("[ThemePresets] colors.json written to:", Directories.generatedMaterialThemePath);
     }
 
-    FileView {
-        id: colorsJsonFileView
+    // Debounce rapid calls: applyPreset fires 2-3x on startup from
+    // onCurrentThemeChanged + shell.qml onReadyChanged + live-regen.
+    // Only the last invocation within 60ms actually writes.
+    property var _pendingWriteArgs: null
+    Timer {
+        id: _writeDebounce
+        interval: 60
+        repeat: false
+        onTriggered: {
+            if (!root._pendingWriteArgs) return;
+            const args = root._pendingWriteArgs;
+            root._pendingWriteArgs = null;
+            root._doWriteGeneratedFiles(args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
+        }
     }
 
-    FileView {
-        id: paletteJsonFileView
+    function _writeGeneratedFiles(colorsJson, paletteJson, appPaletteJson, terminalJson, themeMeta, scss, chromiumRgb) {
+        root._pendingWriteArgs = [colorsJson, paletteJson, appPaletteJson, terminalJson, themeMeta, scss, chromiumRgb];
+        _writeDebounce.restart();
     }
 
-    FileView {
-        id: terminalJsonFileView
-    }
-
-    FileView {
-        id: themeMetaFileView
-    }
-
-    FileView {
-        id: scssFileView
-    }
-
-    FileView {
-        id: chromiumThemeFileView
+    function _doWriteGeneratedFiles(colorsJson, paletteJson, appPaletteJson, terminalJson, themeMeta, scss, chromiumRgb) {
+        const genDir = Directories.stateUserPath + "/generated";
+        // Build a single bash script that writes all files atomically.
+        // JSON uses double quotes only, so single-quoting is safe.
+        let script = `set -e; mkdir -p '${genDir}'\n`;
+        script += `printf '%s' '${colorsJson}' > '${Directories.generatedMaterialThemePath}'\n`;
+        script += `printf '%s' '${paletteJson}' > '${Directories.generatedPalettePath}'\n`;
+        script += `printf '%s' '${appPaletteJson}' > '${Directories.generatedAppPalettePath}'\n`;
+        script += `printf '%s' '${terminalJson}' > '${Directories.generatedTerminalPalettePath}'\n`;
+        script += `printf '%s' '${themeMeta}' > '${Directories.generatedThemeMetaPath}'\n`;
+        script += `printf '%s' '${scss}' > '${Directories.generatedMaterialScssPath}'\n`;
+        if (chromiumRgb.length > 0) {
+            script += `printf '%s\\n' '${chromiumRgb}' > '${Directories.generatedChromiumThemePath}'\n`;
+        }
+        Quickshell.execDetached(["/usr/bin/bash", "-c", script]);
     }
 
     function buildTerminalJson(c) {
@@ -3601,26 +3723,6 @@ Singleton {
         const g = parseInt(value.slice(2, 4), 16);
         const b = parseInt(value.slice(4, 6), 16);
         return `${r},${g},${b}`;
-    }
-
-    function writeGeneratedThemeContracts(c) {
-        paletteJsonFileView.path = Qt.resolvedUrl(Directories.generatedPalettePath)
-        paletteJsonFileView.setText(JSON.stringify(generateColorsJsonObject(c), null, 2))
-
-        terminalJsonFileView.path = Qt.resolvedUrl(Directories.generatedTerminalPalettePath)
-        terminalJsonFileView.setText(JSON.stringify(buildTerminalJson(c), null, 2))
-
-        themeMetaFileView.path = Qt.resolvedUrl(Directories.generatedThemeMetaPath)
-        themeMetaFileView.setText(JSON.stringify(buildThemeMeta(c), null, 2))
-
-        scssFileView.path = Qt.resolvedUrl(Directories.generatedMaterialScssPath)
-        scssFileView.setText(generateScssFromColors(c))
-
-        const chromiumThemeRgb = hexToRgbTriplet(c.m3surfaceContainerLow || c.m3surface || c.m3background || "")
-        if (chromiumThemeRgb.length > 0) {
-            chromiumThemeFileView.path = Qt.resolvedUrl(Directories.generatedChromiumThemePath)
-            chromiumThemeFileView.setText(`${chromiumThemeRgb}\n`)
-        }
     }
 
     // ========== Hover Preview System ==========

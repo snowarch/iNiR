@@ -8,6 +8,10 @@ import Quickshell.Io
 Singleton {
     id: root
 
+    function _log(...args): void {
+        if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
+    }
+
     property string filePath: Directories.eventsPath
     property var list: []
     property int nextId: 1
@@ -37,7 +41,7 @@ Singleton {
                 const data = JSON.parse(fileContents)
                 root.list = data.events || []
                 root.nextId = data.nextId || 1
-                console.log("[Events] Loaded", root.list.length, "events")
+                _log("[Events] Loaded", root.list.length, "events")
             } catch (e) {
                 console.warn("[Events] Failed to parse file:", e)
                 root.list = []

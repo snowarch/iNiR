@@ -255,7 +255,7 @@ Rectangle {
                         imageRadius: root.cleanLayout ? Appearance.rounding.small : (imageRow.modelData.images.length == 1 ? 50 : Appearance.rounding.normal)
                         showBackground: !root.cleanLayout
                         // Wallhaven search often lacks per-image tags; BooruImage will fall back to response tags.
-                        enableTooltip: true
+                        enableTooltip: Persistent.states.booru.showTagsOnHover
                         // Download manually to reduce redundant requests or make sure downloading works
                         manualDownload: ["danbooru", "waifu.im", "t.alcy.cc"].includes(root.responseData.provider)
                         previewDownloadPath: root.previewDownloadPath

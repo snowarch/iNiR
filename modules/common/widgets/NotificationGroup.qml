@@ -94,7 +94,7 @@ MouseArea { // Notification group area
 
     Timer {
         id: _expandAnimateEndTimer
-        interval: Appearance.animation.elementMoveFast.duration + 50
+        interval: Appearance.calcEffectiveDuration(Appearance.animation.elementMoveFast.duration + 50)
         onTriggered: root._expandAnimating = false
     }
 
@@ -138,7 +138,7 @@ MouseArea { // Notification group area
 
     StyledRectangularShadow {
         target: background
-        visible: popup && !Appearance.inirEverywhere
+        visible: false
     }
 
     Rectangle { // Background of the notification

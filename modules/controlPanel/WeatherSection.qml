@@ -68,30 +68,28 @@ Rectangle {
                 Layout.fillWidth: true
             }
 
-            RowLayout {
-                spacing: 4
-                Layout.alignment: Qt.AlignVCenter
-
-                MaterialSymbol {
+            RippleButton {
+                implicitWidth: root.compactMode ? 24 : 28
+                implicitHeight: root.compactMode ? 24 : 28
+                buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+                    : root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
+                colBackground: "transparent"
+                colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                    : root.inirEverywhere ? Appearance.inir.colLayer2Hover
+                    : root.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
+                    : Appearance.colors.colLayer2Hover
+                onClicked: Config.setNestedValue("waffles.widgetsPanel.weatherHideLocation", !root.hideLocation)
+                contentItem: MaterialSymbol {
+                    anchors.centerIn: parent
                     text: root.hideLocation ? "visibility_off" : "visibility"
-                    iconSize: 14
+                    iconSize: root.compactMode ? 14 : 16
                     color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
                          : root.inirEverywhere ? Appearance.inir.colTextSecondary
                          : root.auroraEverywhere ? Appearance.m3colors.m3onSurfaceVariant
                          : Appearance.colors.colSubtext
                     opacity: root.hideLocation ? 1 : 0.7
                 }
-
-                StyledSwitch {
-                    id: privacySwitch
-                    checked: root.hideLocation
-                    scale: 0.6
-                    Layout.alignment: Qt.AlignVCenter
-                    onToggled: Config.setNestedValue("waffles.widgetsPanel.weatherHideLocation", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Hide weather location")
-                    }
-                }
+                StyledToolTip { text: root.hideLocation ? Translation.tr("Show location") : Translation.tr("Hide location") }
             }
 
             RippleButton {

@@ -212,7 +212,7 @@ Singleton {
         property color colLayer0Border: ColorUtils.mix(root.m3colors.m3outlineVariant, colLayer0, 0.4)
         // Layer 1
         property color colLayer1Base: m3colors.m3surfaceContainerLow
-        property color colLayer1: auroraEverywhere ? ColorUtils.transparentize(m3colors.m3surfaceContainerLow, 0.4) : ColorUtils.solveOverlayColor(colLayer0Base, colLayer1Base, 1 - root.contentTransparency)
+        property color colLayer1: auroraEverywhere ? ColorUtils.transparentize(m3colors.m3surfaceContainerLow, root.aurora.layerTransparentize) : ColorUtils.solveOverlayColor(colLayer0Base, colLayer1Base, 1 - root.contentTransparency)
         property color colOnLayer1: ColorUtils.ensureReadable(
             _needsHighContrast ? _baseOnSurface : (root._auroraLightMode ? _inkPrimary : _baseOnSurfaceVariant),
             colLayer1Base,
@@ -223,7 +223,7 @@ Singleton {
         property color colLayer1Active: ColorUtils.transparentize(ColorUtils.mix(colLayer1, colOnLayer1, 0.85), root.contentTransparency)
         // Layer 2
         property color colLayer2Base: m3colors.m3surfaceContainer
-        property color colLayer2: auroraEverywhere ? ColorUtils.transparentize(m3colors.m3surfaceContainer, 0.4) : ColorUtils.solveOverlayColor(colLayer1Base, colLayer2Base, 1 - root.contentTransparency)
+        property color colLayer2: auroraEverywhere ? ColorUtils.transparentize(m3colors.m3surfaceContainer, root.aurora.layerTransparentize) : ColorUtils.solveOverlayColor(colLayer1Base, colLayer2Base, 1 - root.contentTransparency)
         property color colLayer2Hover: ColorUtils.solveOverlayColor(colLayer1Base, ColorUtils.mix(colLayer2Base, colOnLayer2, 0.90), 1 - root.contentTransparency)
         property color colLayer2Active: ColorUtils.solveOverlayColor(colLayer1Base, ColorUtils.mix(colLayer2Base, colOnLayer2, 0.80), 1 - root.contentTransparency)
         property color colLayer2Disabled: ColorUtils.solveOverlayColor(colLayer1Base, ColorUtils.mix(colLayer2Base, m3colors.m3background, 0.8), 1 - root.contentTransparency)
@@ -235,7 +235,7 @@ Singleton {
         property color colOnLayer2Disabled: ColorUtils.readableSubtext(colOnLayer2, colLayer2Base, 0.4)
         // Layer 3
         property color colLayer3Base: m3colors.m3surfaceContainerHigh
-        property color colLayer3: auroraEverywhere ? ColorUtils.transparentize(m3colors.m3surfaceContainerHigh, 0.4) : ColorUtils.solveOverlayColor(colLayer2Base, colLayer3Base, 1 - root.contentTransparency)
+        property color colLayer3: auroraEverywhere ? ColorUtils.transparentize(m3colors.m3surfaceContainerHigh, root.aurora.layerTransparentize) : ColorUtils.solveOverlayColor(colLayer2Base, colLayer3Base, 1 - root.contentTransparency)
         property color colLayer3Hover: ColorUtils.solveOverlayColor(colLayer2Base, ColorUtils.mix(colLayer3Base, colOnLayer3, 0.90), 1 - root.contentTransparency)
         property color colLayer3Active: ColorUtils.solveOverlayColor(colLayer2Base, ColorUtils.mix(colLayer3Base, colOnLayer3, 0.80), 1 - root.contentTransparency)
         property color colOnLayer3: ColorUtils.ensureReadable(
@@ -506,14 +506,20 @@ Singleton {
     }
 
     aurora: QtObject {
-        // Aurora glass effect - professional, elegant transparency
-        // Values tuned for visual hierarchy while maintaining readability
-        
-        // Transparency levels (higher = more transparent)
-        readonly property real overlayTransparentize: 0.38      // Main panels: 62% opaque - subtle glass
-        readonly property real subSurfaceTransparentize: 0.52   // Cards/groups: 48% opaque - visible hierarchy
-        readonly property real popupTransparentize: 0.42        // Popups/menus: 58% opaque - prominent
-        readonly property real tooltipTransparentize: 0.35      // Tooltips: 65% opaque - high contrast
+        // Aurora glass effect - configurable transparency
+        // All values read from Config for live reactivity via Aurora Style Editor
+        // Light mode: reduce transparency slightly for better contrast on light wallpapers
+        readonly property real _lightFactor: root._auroraLightMode ? 0.75 : 1.0
+
+        // Transparency levels — read from Config with revision dependency for live reactivity
+        // Config.revision forces re-evaluation when setNestedValue writes (JS bracket notation
+        // on nested JsonObjects doesn't trigger QML property notifications)
+        readonly property var _cfg: { Config.revision; return Config.options?.appearance?.aurora?.transparency ?? null }
+        readonly property real overlayTransparentize: (_cfg?.overlay ?? 0.30) * _lightFactor
+        readonly property real subSurfaceTransparentize: (_cfg?.subSurface ?? 0.42) * _lightFactor
+        readonly property real popupTransparentize: (_cfg?.popup ?? 0.32) * _lightFactor
+        readonly property real tooltipTransparentize: (_cfg?.tooltip ?? 0.28) * _lightFactor
+        readonly property real layerTransparentize: (_cfg?.layer ?? 0.32) * _lightFactor
         
         // === Main Panel Overlay (Layer 0) ===
         readonly property color colOverlay: ColorUtils.transparentize(root.colors.colLayer0Base, overlayTransparentize)
@@ -693,17 +699,19 @@ Singleton {
         // Do NOT use intermediate var references — QML can't detect nested var changes.
 
         // ─── BLUR SYSTEM ───
-        readonly property real blurIntensity: Config.options?.appearance?.angel?.blur?.intensity ?? 0.25
-        readonly property real blurSaturation: Config.options?.appearance?.angel?.blur?.saturation ?? 0.15
-        readonly property real overlayOpacity: Config.options?.appearance?.angel?.blur?.overlayOpacity ?? 0.35
+        readonly property real blurIntensity: Config.options?.appearance?.angel?.blur?.intensity ?? 0.35
+        readonly property real blurSaturation: Config.options?.appearance?.angel?.blur?.saturation ?? 0.20
+        readonly property real overlayOpacity: Config.options?.appearance?.angel?.blur?.overlayOpacity ?? 0.45
         readonly property real noiseOpacity: Config.options?.appearance?.angel?.blur?.noiseOpacity ?? 0.15
         readonly property real vignetteStrength: Config.options?.appearance?.angel?.blur?.vignetteStrength ?? 0.4
 
         // ─── GLASS TRANSPARENCY (higher = more see-through) ───
-        readonly property real panelTransparentize: Config.options?.appearance?.angel?.transparency?.panel ?? 0.35
-        readonly property real cardTransparentize: Config.options?.appearance?.angel?.transparency?.card ?? 0.50
-        readonly property real popupTransparentize: Config.options?.appearance?.angel?.transparency?.popup ?? 0.35
-        readonly property real tooltipTransparentize: Config.options?.appearance?.angel?.transparency?.tooltip ?? 0.25
+        // Light mode: reduce glass transparency for better contrast on light wallpapers
+        readonly property real _lightFactor: root._auroraLightMode ? 0.75 : 1.0
+        readonly property real panelTransparentize: (Config.options?.appearance?.angel?.transparency?.panel ?? 0.28) * _lightFactor
+        readonly property real cardTransparentize: (Config.options?.appearance?.angel?.transparency?.card ?? 0.40) * _lightFactor
+        readonly property real popupTransparentize: (Config.options?.appearance?.angel?.transparency?.popup ?? 0.28) * _lightFactor
+        readonly property real tooltipTransparentize: (Config.options?.appearance?.angel?.transparency?.tooltip ?? 0.25) * _lightFactor
 
         // ─── LAYER SYSTEM (glass variants derived from m3colors) ───
         readonly property color colGlassPanel: ColorUtils.transparentize(
@@ -807,13 +815,13 @@ Singleton {
         readonly property color colGlowStrong: ColorUtils.transparentize(
             root.m3colors.m3primary, Math.min(1, glowStrongOpacity / colorStrength))
 
-        // ─── TEXT COLORS ───
-        readonly property color colText: root.m3colors.m3onSurface
-        readonly property color colTextSecondary: root.m3colors.m3onSurfaceVariant
+        // ─── TEXT COLORS (light mode: use ink colors for warmth/contrast on glass) ───
+        readonly property color colText: root._auroraLightMode ? root.colors._inkPrimary : root.m3colors.m3onSurface
+        readonly property color colTextSecondary: root._auroraLightMode ? root.colors._inkSecondary : root.m3colors.m3onSurfaceVariant
         readonly property color colTextMuted: ColorUtils.transparentize(
-            root.m3colors.m3onSurfaceVariant, 0.3)
+            root._auroraLightMode ? root.colors._inkMuted : root.m3colors.m3onSurfaceVariant, 0.3)
         readonly property color colTextDim: ColorUtils.transparentize(
-            root.m3colors.m3outline, 0.1)
+            root._auroraLightMode ? root.colors._inkMuted : root.m3colors.m3outline, 0.1)
 
         // ─── PRIMARY/ACCENT ───
         readonly property color colPrimary: root.m3colors.m3primary

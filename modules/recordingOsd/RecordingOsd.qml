@@ -15,6 +15,15 @@ Scope {
 
     property bool isVertical: false
     property bool collapsed: false
+    readonly property bool autoHide: Config.options?.screenRecord?.recordingOsd?.autoHide ?? false
+    property bool revealed: true
+    property bool osdTargetHovered: false
+
+    function startHideTimer(): void {
+        if (!autoHide) return
+        if (osdTargetHovered) return
+        hideTimer.restart()
+    }
 
     function formatTime(totalSeconds: int): string {
         const hours = Math.floor(totalSeconds / 3600)
@@ -35,7 +44,22 @@ Scope {
             if (RecorderStatus.isRecording) {
                 root.collapsed = false
                 root.isVertical = false
+                root.revealed = true
+                // Start auto-hide timer if enabled
+                if (root.autoHide) {
+                    root.startHideTimer()
+                }
             }
+        }
+    }
+
+    Timer {
+        id: hideTimer
+        interval: 2000
+        onTriggered: {
+            if (!root.autoHide) return
+            if (root.osdTargetHovered) return
+            root.revealed = false
         }
     }
 
@@ -121,13 +145,21 @@ Scope {
                 pill.y = targetY
             }
 
-            StyledRectangularShadow { target: pill }
+            StyledRectangularShadow { 
+                target: pill
+                visible: false  // Remove shadow completely
+            }
 
             Item {
                 id: pill
                 property bool animatePosition: false
                 property real contentPadding: 6
                 property bool _positioned: false
+                property bool _osdHovered: false
+
+                // When auto-hide is active and not revealed: fade + shrink away
+                opacity: root.autoHide && !root.revealed ? 0 : (initScale < 0.95 ? 0 : 1)
+                scale: root.autoHide && !root.revealed ? 0.5 : initScale
 
                 width: root.isVertical
                     ? verticalContent.implicitWidth + contentPadding * 2
@@ -135,6 +167,20 @@ Scope {
                 height: root.isVertical
                     ? verticalContent.implicitHeight + contentPadding * 2
                     : horizontalContent.implicitHeight + contentPadding * 2
+
+                HoverHandler {
+                    onHoveredChanged: {
+                        pill._osdHovered = (hovered === true)
+                        root.osdTargetHovered = (hovered === true)
+                        if (hovered) {
+                            if (root.autoHide && !root.revealed)
+                                root.revealed = true
+                            hideTimer.stop()
+                        } else if (root.autoHide && root.revealed) {
+                            root.startHideTimer()
+                        }
+                    }
+                }
 
                 // Position once the window has its real size
                 Connections {
@@ -150,8 +196,6 @@ Scope {
                 }
 
                 property real initScale: 0.9
-                scale: initScale
-                opacity: initScale < 0.95 ? 0 : 1
                 transformOrigin: Item.Center
 
                 GlassBackground {
@@ -523,10 +567,13 @@ Scope {
 
         function show(): void {
             root.collapsed = false
+            root.revealed = true
         }
 
         function hide(): void {
             root.collapsed = true
+            if (root.autoHide)
+                root.revealed = false
         }
     }
 }

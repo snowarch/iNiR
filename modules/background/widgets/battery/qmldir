@@ -1,0 +1,2 @@
+module qs.modules.background.widgets.battery
+BatteryWidget 1.0 BatteryWidget.qml

@@ -1,7 +1,7 @@
 # Maintainer: snowarch
 
 pkgname=inir-meta
-pkgver=2.24.0
+pkgver=2.25.0
 pkgrel=1
 pkgdesc='Full iNiR desktop experience meta-package'
 arch=(any)
@@ -11,7 +11,7 @@ source=("LICENSE::https://raw.githubusercontent.com/snowarch/iNiR/main/LICENSE")
 sha256sums=('SKIP')
 depends=(
   adw-gtk-theme
-  awww-bin
+  awww
   blueman
   breeze-icons
   capitaine-cursors
@@ -33,6 +33,7 @@ depends=(
   kvantum
   libdbusmenu-gtk3
   libqalculate
+  millennium-bin
   mpv
   mpv-mpris
   nautilus

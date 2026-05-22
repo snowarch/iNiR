@@ -40,6 +40,12 @@ MouseArea {
     readonly property bool effectsSafe: !CompositorService.isNiri
     readonly property bool enableAnimation: Config.options?.lock?.enableAnimation ?? false
 
+    // Widget visibility
+    readonly property bool showWeather: Config.options?.lock?.widgets?.weather ?? true
+    readonly property bool showMedia: Config.options?.lock?.widgets?.media ?? true
+    readonly property bool showPowerButtons: Config.options?.lock?.widgets?.powerButtons ?? true
+    readonly property bool showHintText: Config.options?.lock?.widgets?.hintText ?? true
+
     function safeLockNotificationImage(source): string {
         const value = String(source ?? "")
         return value.startsWith("image://qsimage/") ? "" : value
@@ -530,7 +536,7 @@ MouseArea {
             
             // Weather widget - Windows 11 style
             Loader {
-                active: Weather.data?.temp && Weather.data.temp.length > 0
+                active: root.showWeather && Weather.data?.temp && Weather.data.temp.length > 0
                 visible: active
                 
                 sourceComponent: Row {
@@ -597,7 +603,8 @@ MouseArea {
             
             // Media player widget - Windows 11 style (only show if music is playing or paused)
             Loader {
-                active: root.activePlayer !== null && 
+                active: root.showMedia &&
+                        root.activePlayer !== null && 
                         root.activePlayer.playbackState !== MprisPlaybackState.Stopped &&
                         (root.activePlayer.trackTitle?.length > 0 ?? false)
                 visible: active
@@ -616,15 +623,6 @@ MouseArea {
                     readonly property string effectiveTitle: MprisController.isYtMusicActive ? YtMusic.currentTitle : (player?.trackTitle ?? "")
                     readonly property string effectiveArtist: MprisController.isYtMusicActive ? YtMusic.currentArtist : (player?.trackArtist ?? "")
 
-                    MediaArtworkResolver {
-                        id: artworkResolver
-                        sourceUrl: mediaWidget.effectiveArtUrl
-                        title: mediaWidget.effectiveTitle
-                        artist: mediaWidget.effectiveArtist
-                        album: mediaWidget.player?.trackAlbum ?? ""
-                        cacheDirectory: Directories.coverArt
-                    }
-                    
                     layer.enabled: root.effectsSafe
                     layer.effect: DropShadow {
                         horizontalOffset: 0
@@ -661,11 +659,11 @@ MouseArea {
                             Image {
                                 id: mediaArtImage
                                 anchors.fill: parent
-                                source: artworkResolver.displaySource
+                                source: MediaArtwork.displaySource
                                 fillMode: Image.PreserveAspectCrop
                                 asynchronous: true
                                 cache: false
-                                visible: artworkResolver.ready && status === Image.Ready
+                                visible: MediaArtwork.ready && status === Image.Ready
                             }
                             
                             FluentIcon {
@@ -673,7 +671,7 @@ MouseArea {
                                 icon: "music-note-2"
                                 implicitSize: 24
                                 color: Looks.colors.subfg
-                                visible: !artworkResolver.ready || mediaArtImage.status !== Image.Ready
+                                visible: !MediaArtwork.ready || mediaArtImage.status !== Image.Ready
                             }
                         }
                         
@@ -1072,6 +1070,7 @@ MouseArea {
         // Bottom hint - Windows 11 style pill
         Rectangle {
             id: hintContainer
+            visible: root.showHintText && opacity > 0
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 48
             anchors.horizontalCenter: parent.horizontalCenter
@@ -1081,7 +1080,7 @@ MouseArea {
             color: ColorUtils.transparentize(Looks.colors.bg1Base, 0.2)
             border.color: Looks.colors.bg1Border
             border.width: 1
-            opacity: hintOpacity
+            opacity: root.showHintText ? hintOpacity : 0
             
             property real hintOpacity: 1
             
@@ -1483,6 +1482,7 @@ MouseArea {
         
         // Bottom right: Power options
         RowLayout {
+            visible: root.showPowerButtons
             anchors.bottom: parent.bottom
             anchors.right: parent.right
             anchors.bottomMargin: 24

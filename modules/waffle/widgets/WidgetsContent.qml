@@ -485,20 +485,11 @@ WBarAttachedPanelContent {
                     readonly property string effectiveTitle: MprisController.isYtMusicActive ? YtMusic.currentTitle : (activePlayer?.trackTitle ?? "")
                     readonly property string effectiveArtist: MprisController.isYtMusicActive ? YtMusic.currentArtist : (activePlayer?.trackArtist ?? "")
 
-                    MediaArtworkResolver {
-                        id: artworkResolver
-                        sourceUrl: mediaContent.effectiveArtUrl
-                        title: mediaContent.effectiveTitle
-                        artist: mediaContent.effectiveArtist
-                        album: mediaContent.activePlayer?.trackAlbum ?? ""
-                        cacheDirectory: Directories.coverArt
-                    }
-
                     // Blurred album art background
                     Image {
                         id: bgArt
                         anchors.fill: parent
-                        source: artworkResolver.displaySource
+                        source: MediaArtwork.displaySource
                         fillMode: Image.PreserveAspectCrop
                         cache: false
                         visible: false
@@ -531,17 +522,17 @@ WBarAttachedPanelContent {
                             Image {
                                 id: mediaArtImage
                                 anchors.fill: parent
-                                source: artworkResolver.displaySource
+                                source: MediaArtwork.displaySource
                                 fillMode: Image.PreserveAspectCrop
                                 asynchronous: true
                                 cache: false
-                                visible: artworkResolver.ready && status === Image.Ready
+                                visible: MediaArtwork.ready && status === Image.Ready
                             }
                             FluentIcon {
                                 anchors.centerIn: parent
                                 icon: "music-note-2"
                                 implicitSize: Looks.dp(40)
-                                visible: !artworkResolver.ready || mediaArtImage.status !== Image.Ready
+                                visible: !MediaArtwork.ready || mediaArtImage.status !== Image.Ready
                             }
                         }
 

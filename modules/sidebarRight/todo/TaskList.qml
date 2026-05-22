@@ -67,7 +67,7 @@ Item {
 
                     Timer {
                         id: actionTimer
-                        interval: Appearance.animation.elementMoveFast.duration
+                        interval: Appearance.calcEffectiveDuration(Appearance.animation.elementMoveFast.duration)
                         repeat: false
                         onTriggered: {
                             if (todoItem.pendingDelete) {

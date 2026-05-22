@@ -1260,7 +1260,7 @@ Singleton {
                 }
             }
 
-            if (!bestMatch)
+            if (!bestMatch || bestScore <= 0)
                 continue
 
             usedToplevels.add(bestMatch)
@@ -1315,6 +1315,12 @@ Singleton {
         return score
     }
 
+    function toplevelSourceKey(toplevel) {
+        const appId = toplevel?.appId ?? ""
+        const title = toplevel?.title ?? ""
+        return `${appId}::${title}`
+    }
+
     function enrichToplevel(toplevel, niriWindow) {
         const workspace = workspaces[niriWindow.workspace_id]
         const isFocused = niriWindow.is_focused ?? (workspace && workspace.active_window_id === niriWindow.id) ?? false
@@ -1326,6 +1332,7 @@ Singleton {
             "activated": isFocused,
             "niriWindowId": windowId,
             "niriWorkspaceId": niriWindow.workspace_id,
+            "_sourceKey": toplevelSourceKey(toplevel),
             "activate": function () {
                 return NiriService.focusWindow(windowId)
             },
@@ -1381,7 +1388,7 @@ Singleton {
                 }
             }
 
-            if (!bestMatch)
+            if (!bestMatch || bestScore <= 0)
                 continue
 
             usedToplevels.add(bestMatch)

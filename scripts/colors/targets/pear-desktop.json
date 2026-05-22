@@ -3,7 +3,7 @@
   "label": "Pear Desktop (YouTube Music)",
   "module": "80-pear-desktop.sh",
   "category": "app",
-  "inputs": ["colors.json"],
+  "inputs": ["app-palette.json", "palette.json", "colors.json"],
   "description": "Apply Material You theming to YouTube Music desktop and keep live CSS reload via CDP.",
   "configKey": "appearance.wallpaperTheming.enablePearDesktop"
 }

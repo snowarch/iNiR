@@ -13,25 +13,109 @@ AbstractBackgroundWidget {
     id: root
 
     configEntryName: "clock"
+    defaultConfig: ({
+        placementStrategy: "leastBusy", style: "cookie",
+        fontFamily: "Space Grotesk", timeFormat: "system",
+        showSeconds: false, showDate: true, dateStyle: "long",
+        timeScale: 100, dateScale: 100, showShadow: true, dim: 55,
+        "digital.animateChange": true, "digital.fontWeight": 600,
+        "digital.spacing": 6, "digital.preset": "default",
+        widgetScale: 100, widgetOpacity: 100, colorMode: "auto",
+        x: 100, y: 100
+    })
 
     implicitHeight: contentColumn.implicitHeight
     implicitWidth: contentColumn.implicitWidth
+    // Digital mode resizes via timeScale, cookie via cookie.size — avoids scaleFactor churn
+    resizableAxes: root.clockStyle === "cookie" ? ({ uniform: "cookie.size" }) : ({ uniform: "timeScale" })
+    resizeMinWidth: 80
+    resizeMinHeight: 40
 
-    property string clockStyle: Config.options?.background?.widgets?.clock?.style ?? "cookie"
+    editPopoverContent: Component {
+        Column {
+            spacing: 6
+            GridLayout {
+                columns: 2
+                columnSpacing: 4
+                rowSpacing: 4
+                Layout.alignment: Qt.AlignHCenter
+                Repeater {
+                    model: [
+                        { label: "Digital", icon: "digital_out_of_home", value: "digital" },
+                        { label: "Cookie", icon: "circle", value: "cookie" }
+                    ]
+                    SelectionGroupButton {
+                        required property var modelData
+                        Layout.fillWidth: true
+                        leftmost: true; rightmost: true
+                        buttonIcon: modelData.icon
+                        buttonText: modelData.label
+                        toggled: root.clockStyle === modelData.value
+                        onClicked: Config.setNestedValue("background.widgets.clock.style", modelData.value)
+                    }
+                }
+            }
+            GridLayout {
+                columns: 3
+                columnSpacing: 4
+                rowSpacing: 4
+                Layout.alignment: Qt.AlignHCenter
+                visible: root.clockStyle === "digital"
+                Repeater {
+                    model: [
+                        { label: "System", icon: "settings", value: "system" },
+                        { label: "24h", icon: "schedule", value: "24h" },
+                        { label: "12h", icon: "nest_clock_farsight_analog", value: "12h" }
+                    ]
+                    SelectionGroupButton {
+                        required property var modelData
+                        Layout.fillWidth: true
+                        leftmost: true; rightmost: true
+                        buttonIcon: modelData.icon
+                        buttonText: modelData.label
+                        toggled: root.timeFormat === modelData.value
+                        onClicked: Config.setNestedValue("background.widgets.clock.timeFormat", modelData.value)
+                    }
+                }
+            }
+        }
+    }
+
+    property string clockStyle: Config.getNestedValue("background.widgets.clock.style", "cookie")
     property bool forceCenter: (GlobalStates.screenLocked && (Config.options?.lock?.centerClock ?? false))
     property bool wallpaperSafetyTriggered: false
-    needsColText: clockStyle === "digital"
+    needsColText: true
     visibleWhenLocked: true
 
     // --- Clock customization config ---
-    property string clockFontFamily: Config.options?.background?.widgets?.clock?.fontFamily ?? "Space Grotesk"
-    property string timeFormat: Config.options?.background?.widgets?.clock?.timeFormat ?? "system"
-    property bool showSeconds: Config.options?.background?.widgets?.clock?.showSeconds ?? false
-    property bool showDate: Config.options?.background?.widgets?.clock?.showDate ?? true
-    property string dateStyle: Config.options?.background?.widgets?.clock?.dateStyle ?? "long"
-    property int timeScale: Config.options?.background?.widgets?.clock?.timeScale ?? 100
-    property int dateScale: Config.options?.background?.widgets?.clock?.dateScale ?? 100
-    property bool showShadow: Config.options?.background?.widgets?.clock?.showShadow ?? true
+    property string clockFontFamily: Config.getNestedValue("background.widgets.clock.fontFamily", "Space Grotesk")
+    property string timeFormat: Config.getNestedValue("background.widgets.clock.timeFormat", "system")
+    property bool showSeconds: Config.getNestedValue("background.widgets.clock.showSeconds", false)
+    property bool showDate: Config.getNestedValue("background.widgets.clock.showDate", true)
+    property string dateStyle: Config.getNestedValue("background.widgets.clock.dateStyle", "long")
+    property int timeScale: Config.getNestedValue("background.widgets.clock.timeScale", 100)
+    property int dateScale: Config.getNestedValue("background.widgets.clock.dateScale", 100)
+    property bool showShadow: Config.getNestedValue("background.widgets.clock.showShadow", true)
+    property int digitalFontWeight: Config.getNestedValue("background.widgets.clock.digital.fontWeight", 600)
+    property int digitalSpacing: Config.getNestedValue("background.widgets.clock.digital.spacing", 6)
+
+    // ── Style-dispatched accent colors ──
+    readonly property color accentPrimary: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+        : Appearance.inirEverywhere ? Appearance.inir.colPrimary
+        : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
+        : Appearance.colors.colPrimary
+    readonly property color accentSecondary: Appearance.angelEverywhere ? Appearance.angel.colSecondary
+        : Appearance.inirEverywhere ? Appearance.inir.colSecondary
+        : Appearance.auroraEverywhere ? Appearance.m3colors.m3secondary
+        : Appearance.colors.colSecondary
+    readonly property color accentTertiary: Appearance.angelEverywhere ? Appearance.angel.colTertiary
+        : Appearance.inirEverywhere ? Appearance.inir.colTertiary
+        : Appearance.auroraEverywhere ? Appearance.m3colors.m3tertiary
+        : Appearance.colors.colTertiary
+    readonly property color accentPrimaryContainer: Appearance.angelEverywhere ? Appearance.angel.colPrimaryContainer
+        : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainer
+        : Appearance.auroraEverywhere ? Appearance.m3colors.m3primaryContainer
+        : Appearance.colors.colPrimaryContainer
 
     // Local clock with seconds precision when needed
     SystemClock {
@@ -89,9 +173,13 @@ AbstractBackgroundWidget {
         return Text.AlignHCenter;
     }
 
+    // ── Style tokens ──
+    readonly property real cardRadius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+        : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+
     // Per-clock dim factor (0..1), independent from wallpaper dim
     property real dimFactor: {
-        const v = Config.options?.background?.widgets?.clock?.dim ?? 0;
+        const v = Config.getNestedValue("background.widgets.clock.dim", 0);
         const n = Number(v);
         return Math.max(0, Math.min(1, Number.isFinite(n) ? n / 100 : 0));
     }
@@ -102,10 +190,27 @@ AbstractBackgroundWidget {
         return ColorUtils.mix(root.colText, dark, dimFactor);
     }
 
+    // Card background (mainly for digital mode)
+    WidgetSurface {
+        anchors.fill: parent
+        anchors.margins: -Math.round(8 * root.scaleFactor)
+        surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.cardRadius
+        surfaceOpacity: root.backgroundOpacity
+        surfaceBorderWidth: root.borderWidth
+        surfaceBorderOpacity: root.borderOpacity
+        surfaceColor: root.colText
+        surfaceUseBlur: root.useBlur
+        screenX: root.x + Math.round(8 * root.scaleFactor)
+        screenY: root.y + Math.round(8 * root.scaleFactor)
+        screenWidth: root.scaledScreenWidth
+        screenHeight: root.scaledScreenHeight
+        visible: (root.backgroundOpacity > 0 || root.borderWidth > 0) && root.clockStyle === "digital"
+    }
+
     Column {
         id: contentColumn
         anchors.centerIn: parent
-        spacing: 6
+        spacing: Math.round(6 * root.scaleFactor)
 
         FadeLoader {
             id: cookieClockLoader
@@ -114,11 +219,18 @@ AbstractBackgroundWidget {
             sourceComponent: Column {
                 CookieClock {
                     anchors.horizontalCenter: parent.horizontalCenter
+                    scaleFactor: root.scaleFactor
+                    colBackground: root.accentPrimaryContainer
+                    colOnBackground: ColorUtils.mix(root.accentSecondary, root.accentPrimaryContainer, 0.15)
+                    colBackgroundInfo: ColorUtils.mix(root.accentPrimary, root.accentPrimaryContainer, 0.55)
+                    colHourHand: root.accentPrimary
+                    colMinuteHand: root.accentTertiary
+                    colSecondHand: root.accentPrimary
                 }
                 FadeLoader {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    shown: (Config.options?.background?.widgets?.clock?.quote?.enable ?? false)
-                        && (Config.options?.background?.widgets?.clock?.quote?.text ?? "") !== ""
+                    shown: (Config.getNestedValue("background.widgets.clock.quote.enable", false))
+                        && (Config.getNestedValue("background.widgets.clock.quote.text", "")) !== ""
                     sourceComponent: CookieQuote {}
                 }
             }
@@ -130,32 +242,32 @@ AbstractBackgroundWidget {
             shown: root.clockStyle === "digital"
             sourceComponent: ColumnLayout {
                 id: clockColumn
-                spacing: 6
+                spacing: Math.round(root.digitalSpacing * root.scaleFactor)
 
                 ClockText {
-                    font.pixelSize: Math.round(90 * Appearance.fontSizeScale * root.timeScale / 100)
+                    font.pixelSize: Math.round(90 * Appearance.fontSizeScale * root.timeScale / 100 * root.scaleFactor)
                     text: root.timeText
                 }
                 ClockText {
                     visible: root.showDate
-                    Layout.topMargin: -5
-                    font.pixelSize: Math.round(20 * root.dateScale / 100)
+                    Layout.topMargin: Math.round(-5 * root.scaleFactor)
+                    font.pixelSize: Math.round(20 * root.dateScale / 100 * root.scaleFactor)
                     text: root.dateText
                 }
                 StyledText {
                     // Somehow gets fucked up if made a ClockText???
-                    visible: (Config.options?.background?.widgets?.clock?.quote?.enable ?? false)
-                        && (Config.options?.background?.widgets?.clock?.quote?.text ?? "").length > 0
+                    visible: (Config.getNestedValue("background.widgets.clock.quote.enable", false))
+                        && (Config.getNestedValue("background.widgets.clock.quote.text", "")).length > 0
                     Layout.fillWidth: true
                     horizontalAlignment: root.textHorizontalAlignment
                     font {
-                        pixelSize: Appearance.font.pixelSize.normal
+                        pixelSize: Math.round(Appearance.font.pixelSize.normal * root.scaleFactor)
                         weight: 350
                     }
                     color: root.clockTextColor
                     style: root.showShadow ? Text.Raised : Text.Normal
                     styleColor: Appearance.colors.colShadow
-                    text: Config.options?.background?.widgets?.clock?.quote?.text ?? ""
+                    text: Config.getNestedValue("background.widgets.clock.quote.text", "")
                 }
             }
         }
@@ -178,7 +290,7 @@ AbstractBackgroundWidget {
                 implicitHeight: statusTextRow.implicitHeight + 5 * 2
                 implicitWidth: statusTextRow.implicitWidth + 5 * 2
                 radius: Appearance.rounding.small
-                color: ColorUtils.transparentize(Appearance.colors.colSecondaryContainer, root.clockStyle === "cookie" ? 0 : 1)
+                color: ColorUtils.transparentize(root.accentPrimaryContainer, root.clockStyle === "cookie" ? 0 : 1)
 
                 Behavior on implicitWidth {
                     animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
@@ -225,12 +337,12 @@ AbstractBackgroundWidget {
         font {
             family: root.clockFontFamily
             pixelSize: 20
-            weight: Font.DemiBold
+            weight: root.digitalFontWeight
         }
         color: root.clockTextColor
         style: root.showShadow ? Text.Raised : Text.Normal
         styleColor: Appearance.colors.colShadow
-        animateChange: Config.options?.background?.widgets?.clock?.digital?.animateChange ?? false
+        animateChange: Config.getNestedValue("background.widgets.clock.digital.animateChange", false)
     }
     component ClockStatusText: Row {
         id: statusTextRow
@@ -238,7 +350,7 @@ AbstractBackgroundWidget {
         property alias statusText: statusTextWidget.text
         property bool shown: true
         property color textColor: {
-            const base = root.clockStyle === "cookie" ? Appearance.colors.colOnSecondaryContainer : root.colText;
+            const base = root.clockStyle === "cookie" ? root.accentPrimary : root.colText;
             const dark = Qt.rgba(0, 0, 0, 1);
             return ColorUtils.mix(base, dark, root.dimFactor);
         }

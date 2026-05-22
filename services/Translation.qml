@@ -152,6 +152,7 @@ Singleton {
         property string languageCode: root.languageCode
         property bool isGenerated: false
         signal contentLoaded(var data)
+        printErrors: false
 
         function reread() { // Proper reload in case the file was incorrect before
             const langs = translationReader.isGenerated ? root.availableGeneratedLanguages : root.availableLanguages;

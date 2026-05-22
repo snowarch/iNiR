@@ -33,40 +33,6 @@ _config_locked_write() {
     ) 200>"$lockfile"
 }
 
-handle_kde_material_you_colors() {
-    # Check if Qt app theming is enabled in config
-    if [ -f "$SHELL_CONFIG_FILE" ]; then
-        enable_qt_apps=$(jq -r '.appearance.wallpaperTheming.enableQtApps' "$SHELL_CONFIG_FILE")
-        if [ "$enable_qt_apps" == "false" ]; then
-            return
-        fi
-    fi
-
-    # Map $type_flag to allowed scheme variants for kde-material-you-colors-wrapper.sh
-    local kde_scheme_variant=""
-    case "$type_flag" in
-        scheme-content|scheme-expressive|scheme-fidelity|scheme-fruit-salad|scheme-monochrome|scheme-neutral|scheme-rainbow|scheme-tonal-spot)
-            kde_scheme_variant="$type_flag"
-            ;;
-        *)
-            kde_scheme_variant="scheme-tonal-spot" # default
-            ;;
-    esac
-
-    # Kill any previous wrapper process to prevent stacking
-    local pidfile="$CACHE_DIR/kde-material-you-colors.pid"
-    if [[ -f "$pidfile" ]]; then
-        local old_pid
-        old_pid=$(<"$pidfile")
-        if [[ -n "$old_pid" ]] && kill -0 "$old_pid" 2>/dev/null; then
-            kill "$old_pid" 2>/dev/null
-        fi
-    fi
-
-    nohup "$XDG_CONFIG_HOME"/matugen/templates/kde/kde-material-you-colors-wrapper.sh --scheme-variant "$kde_scheme_variant" >/dev/null 2>&1 &
-    echo $! > "$pidfile"
-}
-
 pre_process() {
     local mode_flag="$1"
 
@@ -91,10 +57,7 @@ post_process() {
     local screen_width="$1"
     local screen_height="$2"
     local wallpaper_path="$3"
-
-    handle_kde_material_you_colors &
-    "$SCRIPT_DIR/code/material-code-set-color.sh" &
-    # Best-effort live refresh is handled by apply-gtk-theme.sh for GTK/KDE apps.
+    # Editor theming is handled by modules/30-editors.sh via applycolor.sh.
 }
 
 hex_to_rgb_triplet() {
@@ -111,7 +74,7 @@ write_chromium_theme_contract() {
     local rgb_color=""
 
     [[ -f "$source_json" ]] || return 1
-    hex_color=$(jq -r '.surface_container_low // .surface // .background // empty' "$source_json" 2>/dev/null)
+    hex_color=$(jq -r '.app_headerbar_bg // .app_surface // .surface_container_low // .surface // .background // empty' "$source_json" 2>/dev/null)
     [[ "$hex_color" =~ ^#[A-Fa-f0-9]{6}$ ]] || return 1
     rgb_color=$(hex_to_rgb_triplet "$hex_color") || return 1
     printf '%s\n' "$rgb_color" > "$output_path"
@@ -148,14 +111,8 @@ check_and_prompt_upscale() {
     local img="$1"
 
     # Check if upscale notifications are disabled in config
-    local config_file
-    config_file="$(inir_config_file)"
-    if [[ -f "$config_file" ]] && command -v jq &>/dev/null; then
-        local hide_upscale
-        hide_upscale=$(jq -r '.background.hideUpscaleNotification // false' "$config_file" 2>/dev/null)
-        if [[ "$hide_upscale" == "true" ]]; then
-            return
-        fi
+    if [[ "$cfg_hide_upscale" == "true" ]]; then
+        return
     fi
 
     read min_width_desired min_height_desired <<< "$(get_max_monitor_resolution)"
@@ -433,8 +390,7 @@ switch() {
     fi
 
     # Start Gemini auto-categorization if enabled
-    aiStylingEnabled=$(jq -r '.background.clock.cookie.aiStyling' "$SHELL_CONFIG_FILE")
-    if [[ "$aiStylingEnabled" == "true" ]]; then
+    if [[ "$cfg_ai_styling" == "true" ]]; then
         "$SCRIPT_DIR/../ai/gemini-categorize-wallpaper.sh" "$imgpath" > "$STATE_DIR/user/generated/wallpaper/category.txt" &
     fi
 
@@ -522,8 +478,7 @@ switch() {
             # Extract first frame for thumbnail (used for color generation)
             # Use md5sum hash of full path to avoid collisions between videos with same basename
             thumbnail="$THUMBNAIL_DIR/$(echo -n "$imgpath" | md5sum | cut -d' ' -f1).jpg"
-            config_thumbnail="$(jq -r '.background.thumbnailPath // ""' "$SHELL_CONFIG_FILE" 2>/dev/null)"
-            config_thumbnail="${config_thumbnail#file://}"
+            config_thumbnail="${cfg_thumbnail_path#file://}"
 
             if has_valid_file "$config_thumbnail"; then
                 thumbnail="$config_thumbnail"
@@ -589,22 +544,20 @@ switch() {
     # If useBackdropForColors is enabled, override color source to use backdrop wallpaper
     # Respects active panel family: ii reads from background.backdrop, waffle from waffles.background.backdrop
     if [[ "$color_flag" != "1" ]]; then
-        use_backdrop_colors=$(jq -r '.appearance.wallpaperTheming.useBackdropForColors // false' "$SHELL_CONFIG_FILE" 2>/dev/null)
-        if [[ "$use_backdrop_colors" == "true" ]]; then
-            local panel_family=$(jq -r '.panelFamily // "ii"' "$SHELL_CONFIG_FILE" 2>/dev/null)
+        if [[ "$cfg_use_backdrop" == "true" ]]; then
             local backdrop_use_main=""
             local backdrop_path=""
 
-            if [[ "$panel_family" == "waffle" ]]; then
-                backdrop_use_main=$(jq -r '.waffles.background.backdrop.useMainWallpaper // true' "$SHELL_CONFIG_FILE" 2>/dev/null)
-                backdrop_path=$(jq -r '.waffles.background.backdrop.wallpaperPath // ""' "$SHELL_CONFIG_FILE" 2>/dev/null)
+            if [[ "$cfg_panel_family" == "waffle" ]]; then
+                backdrop_use_main="$cfg_waffle_backdrop_use_main"
+                backdrop_path="$cfg_waffle_backdrop_path"
             else
-                backdrop_use_main=$(jq -r '.background.backdrop.useMainWallpaper // true' "$SHELL_CONFIG_FILE" 2>/dev/null)
-                backdrop_path=$(jq -r '.background.backdrop.wallpaperPath // ""' "$SHELL_CONFIG_FILE" 2>/dev/null)
+                backdrop_use_main="$cfg_ii_backdrop_use_main"
+                backdrop_path="$cfg_ii_backdrop_path"
             fi
 
             if [[ "$backdrop_use_main" != "true" && -n "$backdrop_path" && -f "$backdrop_path" ]]; then
-                echo "[switchwall.sh] Using backdrop wallpaper for color generation ($panel_family): $backdrop_path"
+                echo "[switchwall.sh] Using backdrop wallpaper for color generation ($cfg_panel_family): $backdrop_path"
                 # Check if backdrop is a video - use its thumbnail instead
                 if is_video "$backdrop_path"; then
                     local backdrop_thumb="$THUMBNAIL_DIR/$(echo -n "$backdrop_path" | md5sum | cut -d' ' -f1).jpg"
@@ -626,12 +579,8 @@ switch() {
     write_generated_wallpaper_path "$imgpath"
 
     # Check if app and shell theming is enabled in config
-    local enable_apps_shell="true"
-    local enable_terminal="true"
-    if [ -f "$SHELL_CONFIG_FILE" ]; then
-        enable_apps_shell=$(jq -r '.appearance.wallpaperTheming.enableAppsAndShell // true' "$SHELL_CONFIG_FILE")
-        enable_terminal=$(jq -r '.appearance.wallpaperTheming.enableTerminal // true' "$SHELL_CONFIG_FILE")
-    fi
+    local enable_apps_shell="$cfg_enable_apps_shell"
+    local enable_terminal="$cfg_enable_terminal"
 
     # Skip entirely only if BOTH app theming AND terminal theming are disabled
     if [ "$enable_apps_shell" == "false" ] && [ "$enable_terminal" == "false" ]; then
@@ -639,30 +588,15 @@ switch() {
         return
     fi
 
-    # Set terminal generation properties from config
-    if [ -f "$SHELL_CONFIG_FILE" ]; then
-        # Read from terminalColorAdjustments (the unified config)
-        term_saturation=$(jq -r '.appearance.wallpaperTheming.terminalColorAdjustments.saturation // 0.65' "$SHELL_CONFIG_FILE")
-        term_brightness=$(jq -r '.appearance.wallpaperTheming.terminalColorAdjustments.brightness // 0.60' "$SHELL_CONFIG_FILE")
-        term_harmony=$(jq -r '.appearance.wallpaperTheming.terminalColorAdjustments.harmony // .appearance.wallpaperTheming.terminalGenerationProps.harmony // 0.40' "$SHELL_CONFIG_FILE")
-        term_bg_brightness=$(jq -r '.appearance.wallpaperTheming.terminalColorAdjustments.backgroundBrightness // 0.50' "$SHELL_CONFIG_FILE")
-        color_strength=$(jq -r '.appearance.wallpaperTheming.colorStrength // 1.0' "$SHELL_CONFIG_FILE")
-
-        # Legacy props for backwards compatibility
-        harmonize_threshold=$(jq -r '.appearance.wallpaperTheming.terminalGenerationProps.harmonizeThreshold // 100' "$SHELL_CONFIG_FILE")
-        term_fg_boost=$(jq -r '.appearance.wallpaperTheming.terminalGenerationProps.termFgBoost // 0.35' "$SHELL_CONFIG_FILE")
-        soften_colors=$(jq -r '.appearance.softenColors' "$SHELL_CONFIG_FILE")
-        
-        # Pass new parameters to Python script
-        [[ "$term_saturation" != "null" && -n "$term_saturation" ]] && generate_colors_material_args+=(--term_saturation "$term_saturation")
-        [[ "$term_brightness" != "null" && -n "$term_brightness" ]] && generate_colors_material_args+=(--term_brightness "$term_brightness")
-        [[ "$term_harmony" != "null" && -n "$term_harmony" ]] && generate_colors_material_args+=(--harmony "$term_harmony")
-        [[ "$term_bg_brightness" != "null" && -n "$term_bg_brightness" ]] && generate_colors_material_args+=(--term_bg_brightness "$term_bg_brightness")
-        [[ "$color_strength" != "null" && -n "$color_strength" ]] && generate_colors_material_args+=(--color-strength "$color_strength")
-        [[ "$harmonize_threshold" != "null" && -n "$harmonize_threshold" ]] && generate_colors_material_args+=(--harmonize_threshold "$harmonize_threshold")
-        [[ "$term_fg_boost" != "null" && -n "$term_fg_boost" ]] && generate_colors_material_args+=(--term_fg_boost "$term_fg_boost")
-        [[ "$soften_colors" == "true" ]] && generate_colors_material_args+=(--soften)
-    fi
+    # Set terminal generation properties from config (batched reads from cfg_*)
+    [[ "$cfg_term_saturation" != "null" && -n "$cfg_term_saturation" ]] && generate_colors_material_args+=(--term_saturation "$cfg_term_saturation")
+    [[ "$cfg_term_brightness" != "null" && -n "$cfg_term_brightness" ]] && generate_colors_material_args+=(--term_brightness "$cfg_term_brightness")
+    [[ "$cfg_term_harmony" != "null" && -n "$cfg_term_harmony" ]] && generate_colors_material_args+=(--harmony "$cfg_term_harmony")
+    [[ "$cfg_term_bg_brightness" != "null" && -n "$cfg_term_bg_brightness" ]] && generate_colors_material_args+=(--term_bg_brightness "$cfg_term_bg_brightness")
+    [[ "$cfg_color_strength" != "null" && -n "$cfg_color_strength" ]] && generate_colors_material_args+=(--color-strength "$cfg_color_strength")
+    [[ "$cfg_harmonize_threshold" != "null" && -n "$cfg_harmonize_threshold" ]] && generate_colors_material_args+=(--harmonize_threshold "$cfg_harmonize_threshold")
+    [[ "$cfg_term_fg_boost" != "null" && -n "$cfg_term_fg_boost" ]] && generate_colors_material_args+=(--term_fg_boost "$cfg_term_fg_boost")
+    [[ "$cfg_soften_colors" == "true" ]] && generate_colors_material_args+=(--soften)
 
     # Generate colors and render templates in one unified Python pass
     if [[ -n "${INIR_VENV:-}" ]]; then
@@ -681,26 +615,39 @@ switch() {
     _json_out="$STATE_DIR/user/generated/colors.json"
     _palette_tmp="$STATE_DIR/user/generated/palette.json.tmp"
     _palette_out="$STATE_DIR/user/generated/palette.json"
+    _app_palette_tmp="$STATE_DIR/user/generated/app-palette.json.tmp"
+    _app_palette_out="$STATE_DIR/user/generated/app-palette.json"
     _terminal_tmp="$STATE_DIR/user/generated/terminal.json.tmp"
     _terminal_out="$STATE_DIR/user/generated/terminal.json"
     _meta_tmp="$STATE_DIR/user/generated/theme-meta.json.tmp"
     _meta_out="$STATE_DIR/user/generated/theme-meta.json"
     _chromium_tmp="$STATE_DIR/user/generated/chromium.theme.tmp"
     _chromium_out="$STATE_DIR/user/generated/chromium.theme"
+    force_dark_terminal="$cfg_force_dark_terminal"
 
     # 1) Generate authoritative shell/UI colors.json + render app templates.
     if "$_ii_python" "$SCRIPT_DIR/generate_colors_material.py" "${generate_colors_material_args[@]}" \
         --json-output "$_json_tmp" \
         --palette-output "$_palette_tmp" \
+        --app-palette-output "$_app_palette_tmp" \
         --terminal-output "$_terminal_tmp" \
         --meta-output "$_meta_tmp" \
+        --scss-output "$_scss_tmp" \
         --render-templates "$TEMPLATE_DIR" \
         > /dev/null 2>/dev/null && [[ -s "$_json_tmp" ]]; then
         mv "$_json_tmp" "$_json_out"
         [[ -s "$_palette_tmp" ]] && mv "$_palette_tmp" "$_palette_out" || rm -f "$_palette_tmp"
-        [[ -s "$_terminal_tmp" ]] && mv "$_terminal_tmp" "$_terminal_out" || rm -f "$_terminal_tmp"
+        [[ -s "$_app_palette_tmp" ]] && mv "$_app_palette_tmp" "$_app_palette_out" || rm -f "$_app_palette_tmp"
+        if [[ "$force_dark_terminal" == "true" ]]; then
+            rm -f "$_terminal_tmp"
+        else
+            [[ -s "$_terminal_tmp" ]] && mv "$_terminal_tmp" "$_terminal_out" || rm -f "$_terminal_tmp"
+        fi
         [[ -s "$_meta_tmp" ]] && mv "$_meta_tmp" "$_meta_out" || rm -f "$_meta_tmp"
-        if write_chromium_theme_contract "$_palette_out" "$_chromium_tmp" && [[ -s "$_chromium_tmp" ]]; then
+        if [[ "$force_dark_terminal" != "true" ]]; then
+            [[ -s "$_scss_tmp" ]] && mv "$_scss_tmp" "$STATE_DIR/user/generated/material_colors.scss" || rm -f "$_scss_tmp"
+        fi
+        if write_chromium_theme_contract "$_app_palette_out" "$_chromium_tmp" && [[ -s "$_chromium_tmp" ]]; then
             mv "$_chromium_tmp" "$_chromium_out"
         else
             rm -f "$_chromium_tmp"
@@ -709,49 +656,42 @@ switch() {
         echo "[switchwall] Warning: colors.json generation failed, keeping previous JSON" >&2
         rm -f "$_json_tmp"
         rm -f "$_palette_tmp"
+        rm -f "$_app_palette_tmp"
         rm -f "$_terminal_tmp"
         rm -f "$_meta_tmp"
+        rm -f "$_scss_tmp"
         rm -f "$_chromium_tmp"
     fi
 
-    # 2) Generate material_colors.scss for terminals/editors. This path may optionally
-    #    force dark mode without affecting the shell/UI palette above.
-    scss_generate_args=("${generate_colors_material_args[@]}")
-    force_dark_terminal=$(jq -r '.appearance.wallpaperTheming.terminalGenerationProps.forceDarkMode // false' "$SHELL_CONFIG_FILE" 2>/dev/null || echo "false")
     if [[ "$force_dark_terminal" == "true" ]]; then
+        scss_generate_args=("${generate_colors_material_args[@]}")
         for i in "${!scss_generate_args[@]}"; do
             if [[ "${scss_generate_args[$i]}" == "--mode" && $((i + 1)) -lt ${#scss_generate_args[@]} ]]; then
                 scss_generate_args[$((i + 1))]="dark"
                 break
             fi
         done
-    fi
+        _terminal_force_tmp="$STATE_DIR/user/generated/terminal.json.force.tmp"
 
-    _terminal_force_tmp="$STATE_DIR/user/generated/terminal.json.force.tmp"
-
-    scss_cmd=("$_ii_python" "$SCRIPT_DIR/generate_colors_material.py" "${scss_generate_args[@]}")
-    if [[ "$force_dark_terminal" == "true" ]]; then
+        scss_cmd=("$_ii_python" "$SCRIPT_DIR/generate_colors_material.py" "${scss_generate_args[@]}")
         scss_cmd+=(--terminal-output "$_terminal_force_tmp")
-    fi
 
-    if "${scss_cmd[@]}" > "$_scss_tmp" 2>/dev/null && [[ -s "$_scss_tmp" ]]; then
-        mv "$_scss_tmp" "$STATE_DIR/user/generated/material_colors.scss"
-        # Keep terminal outputs aligned with forced-dark generation path when enabled.
-        if [[ "$force_dark_terminal" == "true" && -s "$_terminal_force_tmp" ]]; then
+        if "${scss_cmd[@]}" > "$_scss_tmp" 2>/dev/null && [[ -s "$_scss_tmp" && -s "$_terminal_force_tmp" ]]; then
+            mv "$_scss_tmp" "$STATE_DIR/user/generated/material_colors.scss"
+            # Keep terminal outputs aligned with forced-dark generation path when enabled.
             mv "$_terminal_force_tmp" "$_terminal_out"
         else
+            echo "[switchwall] Warning: material_colors.scss generation failed, keeping previous SCSS" >&2
+            rm -f "$_scss_tmp"
             rm -f "$_terminal_force_tmp"
         fi
     else
-        echo "[switchwall] Warning: material_colors.scss generation failed, keeping previous SCSS" >&2
         rm -f "$_scss_tmp"
-        rm -f "$_terminal_force_tmp"
     fi
 
     # Generate Vesktop theme if enabled (only when app theming is on)
     if [ "$enable_apps_shell" != "false" ]; then
-        enable_vesktop=$(jq -r '.appearance.wallpaperTheming.enableVesktop // true' "$SHELL_CONFIG_FILE" 2>/dev/null || echo "true")
-        if [[ "$enable_vesktop" != "false" ]]; then
+        if [[ "$cfg_enable_vesktop" != "false" ]]; then
             "$SCRIPT_DIR/system24_palette.sh"
         fi
     fi
@@ -781,32 +721,63 @@ main() {
     skip_config_write=""
     skip_accent_write=""
 
-    get_type_from_config() {
-        jq -r '.appearance.palette.type' "$SHELL_CONFIG_FILE" 2>/dev/null || echo "auto"
-    }
-
-    get_accent_color_from_config() {
-        jq -r '.appearance.palette.accentColor' "$SHELL_CONFIG_FILE" 2>/dev/null || echo ""
-    }
+    # Batch-read all config values in one jq call (replaces ~20 individual spawns)
+    if [[ -f "$SHELL_CONFIG_FILE" ]]; then
+        mapfile -t _cfg < <(jq -r '[
+            (.appearance.palette.type | tostring),
+            (.appearance.palette.accentColor | tostring),
+            (.appearance.theme // "auto"),
+            (.background.clock.cookie.aiStyling | tostring),
+            (.background.thumbnailPath // ""),
+            (.appearance.wallpaperTheming.useBackdropForColors // false),
+            (.panelFamily // "ii"),
+            (.waffles.background.backdrop.useMainWallpaper // true),
+            (.waffles.background.backdrop.wallpaperPath // ""),
+            (.background.backdrop.useMainWallpaper // true),
+            (.background.backdrop.wallpaperPath // ""),
+            (.appearance.wallpaperTheming.enableAppsAndShell // true),
+            (.appearance.wallpaperTheming.enableTerminal // true),
+            (.appearance.wallpaperTheming.terminalColorAdjustments.saturation // 0.65),
+            (.appearance.wallpaperTheming.terminalColorAdjustments.brightness // 0.60),
+            (.appearance.wallpaperTheming.terminalColorAdjustments.harmony // .appearance.wallpaperTheming.terminalGenerationProps.harmony // 0.40),
+            (.appearance.wallpaperTheming.terminalColorAdjustments.backgroundBrightness // 0.50),
+            (.appearance.wallpaperTheming.colorStrength // 1.0),
+            (.appearance.wallpaperTheming.terminalGenerationProps.harmonizeThreshold // 100),
+            (.appearance.wallpaperTheming.terminalGenerationProps.termFgBoost // 0.35),
+            (.appearance.softenColors | tostring),
+            (.appearance.wallpaperTheming.terminalGenerationProps.forceDarkMode // false),
+            (.appearance.wallpaperTheming.enableVesktop // true),
+            (.background.hideUpscaleNotification // false)
+        ] | .[]' "$SHELL_CONFIG_FILE" 2>/dev/null)
+    fi
+    cfg_palette_type="${_cfg[0]:-auto}"
+    cfg_accent_color="${_cfg[1]:-}"
+    cfg_theme="${_cfg[2]:-auto}"
+    cfg_ai_styling="${_cfg[3]:-false}"
+    cfg_thumbnail_path="${_cfg[4]:-}"
+    cfg_use_backdrop="${_cfg[5]:-false}"
+    cfg_panel_family="${_cfg[6]:-ii}"
+    cfg_waffle_backdrop_use_main="${_cfg[7]:-true}"
+    cfg_waffle_backdrop_path="${_cfg[8]:-}"
+    cfg_ii_backdrop_use_main="${_cfg[9]:-true}"
+    cfg_ii_backdrop_path="${_cfg[10]:-}"
+    cfg_enable_apps_shell="${_cfg[11]:-true}"
+    cfg_enable_terminal="${_cfg[12]:-true}"
+    cfg_term_saturation="${_cfg[13]:-0.65}"
+    cfg_term_brightness="${_cfg[14]:-0.60}"
+    cfg_term_harmony="${_cfg[15]:-0.40}"
+    cfg_term_bg_brightness="${_cfg[16]:-0.50}"
+    cfg_color_strength="${_cfg[17]:-1.0}"
+    cfg_harmonize_threshold="${_cfg[18]:-100}"
+    cfg_term_fg_boost="${_cfg[19]:-0.35}"
+    cfg_soften_colors="${_cfg[20]:-null}"
+    cfg_force_dark_terminal="${_cfg[21]:-false}"
+    cfg_enable_vesktop="${_cfg[22]:-true}"
+    cfg_hide_upscale="${_cfg[23]:-false}"
 
     set_accent_color() {
         local color="$1"
         _config_locked_write --arg color "$color" '.appearance.palette.accentColor = $color'
-    }
-
-    detect_scheme_type_from_image() {
-        local img="$1"
-        local _det_venv
-        if [[ -n "${INIR_VENV:-}" ]]; then
-            _det_venv="$(eval echo "$INIR_VENV")"
-        elif [[ -n "${ILLOGICAL_IMPULSE_VIRTUAL_ENV:-}" ]]; then
-            _det_venv="$(eval echo "$ILLOGICAL_IMPULSE_VIRTUAL_ENV")"
-        else
-            _det_venv="$HOME/.local/state/quickshell/.venv"
-        fi
-        source "$_det_venv/bin/activate" 2>/dev/null || true
-        "$SCRIPT_DIR"/scheme_for_image.py "$img" 2>/dev/null | tr -d '\n'
-        deactivate 2>/dev/null || true
     }
 
     while [[ $# -gt 0 ]]; do
@@ -873,19 +844,17 @@ main() {
 
     # If type_flag is not set, get it from config
     if [[ -z "$type_flag" ]]; then
-        type_flag="$(get_type_from_config)"
+        type_flag="$cfg_palette_type"
     fi
 
     # If accentColor is set in config, use it for static themes only.
     # For auto themes, colors must come from the wallpaper — a stale accentColor
     # from a previous static-theme variant would override wallpaper extraction.
     if [[ -z "$color_flag" ]]; then
-        current_theme=$(jq -r '.appearance.theme // "auto"' "$SHELL_CONFIG_FILE" 2>/dev/null)
-        if [[ "$current_theme" != "auto" ]]; then
-            config_color="$(get_accent_color_from_config)"
-            if [[ "$config_color" =~ ^#?[A-Fa-f0-9]{6}$ ]]; then
+        if [[ "$cfg_theme" != "auto" ]]; then
+            if [[ "$cfg_accent_color" =~ ^#?[A-Fa-f0-9]{6}$ ]]; then
                 color_flag="1"
-                color="$config_color"
+                color="$cfg_accent_color"
             fi
         fi
     fi
@@ -917,34 +886,9 @@ main() {
         imgpath="$(resolve_effective_theming_wallpaper)"
     fi
 
-    # If type_flag is 'auto', detect scheme type from image (after imgpath is set)
-    if [[ "$type_flag" == "auto" ]]; then
-        auto_detect_path="$imgpath"
-        if [[ -z "$auto_detect_path" && -n "$noswitch_flag" && -z "$color_flag" ]]; then
-            auto_detect_path="$(resolve_effective_theming_wallpaper)"
-        fi
-
-        if [[ -n "$auto_detect_path" && -f "$auto_detect_path" ]]; then
-            detected_type="$(detect_scheme_type_from_image "$auto_detect_path")"
-            # Only use detected_type if it's valid
-            valid_detected=0
-            for t in "${allowed_types[@]}"; do
-                if [[ "$detected_type" == "$t" && "$detected_type" != "auto" ]]; then
-                    valid_detected=1
-                    break
-                fi
-            done
-            if [[ $valid_detected -eq 1 ]]; then
-                type_flag="$detected_type"
-            else
-                echo "[switchwall] Warning: Could not auto-detect a valid scheme, defaulting to 'scheme-tonal-spot'" >&2
-                type_flag="scheme-tonal-spot"
-            fi
-        else
-            echo "[switchwall] Warning: No image to auto-detect scheme from, defaulting to 'scheme-tonal-spot'" >&2
-            type_flag="scheme-tonal-spot"
-        fi
-    fi
+    # type_flag "auto" is passed directly to generate_colors_material.py which
+    # auto-detects the scheme from the already-loaded resized image. This avoids
+    # a separate Python+cv2 process (~600ms on high-res images).
 
     switch "$imgpath" "$mode_flag" "$type_flag" "$color_flag" "$color" "$skip_config_write" "$noswitch_flag"
 }

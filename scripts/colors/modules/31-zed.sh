@@ -5,6 +5,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/module-runtime.sh"
 COLOR_MODULE_ID="zed"
 
 SCSS_FILE="$STATE_DIR/user/generated/material_colors.scss"
+APP_PALETTE_FILE="$STATE_DIR/user/generated/app-palette.json"
 PALETTE_FILE="$STATE_DIR/user/generated/palette.json"
 TERMINAL_FILE="$STATE_DIR/user/generated/terminal.json"
 LEGACY_COLORS_FILE="$STATE_DIR/user/generated/colors.json"
@@ -127,7 +128,8 @@ apply_zed_theme() {
 
   command -v zed &>/dev/null || command -v zeditor &>/dev/null || return 0
 
-  local colors_file="$PALETTE_FILE"
+  local colors_file="$APP_PALETTE_FILE"
+  [[ -f "$colors_file" ]] || colors_file="$PALETTE_FILE"
   [[ -f "$colors_file" ]] || colors_file="$LEGACY_COLORS_FILE"
 
   local input_sig

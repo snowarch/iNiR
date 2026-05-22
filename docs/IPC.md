@@ -669,6 +669,45 @@ Waffle Alt+Tab window switcher. Separate from the ii `altSwitcher` — supports 
 
 ---
 
+### background
+
+Desktop background and widget edit mode controls.
+
+| Function | Description |
+|----------|-------------|
+| `toggleEditMode` | Toggle widget edit mode (drag, resize, configure desktop widgets) |
+
+```kdl
+bind "Super+W" { spawn "inir" "background" "toggleEditMode"; }
+```
+
+---
+
+### customWidgets
+
+Custom widget management. Create, list, reload, and remove user-installed widgets from `~/.config/inir/widgets/`.
+
+| Function | Description |
+|----------|-------------|
+| `reload` | Re-scan widgets directory and reload all custom widgets |
+| `list` | List all discovered custom widgets (JSON output) |
+| `create` | Create a new widget scaffold in the widgets directory |
+| `remove` | Remove a custom widget by ID |
+
+---
+
+### recordingOsd
+
+Screen recording floating pill OSD. Shows elapsed time and stop button during active recording.
+
+| Function | Description |
+|----------|-------------|
+| `toggle` | Stop the current recording (if active) |
+| `show` | Reveal the recording OSD pill |
+| `hide` | Collapse/hide the recording OSD pill |
+
+---
+
 ## Standalone Commands
 
 These are top-level `inir` commands that work directly, without going through IPC.

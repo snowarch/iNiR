@@ -98,11 +98,11 @@ StyledOverlayWidget {
         // Datos de carátula (cover art) y progreso para la pestaña Music
         property var artUrl: activePlayer?.trackArtUrl
         property string artDownloadLocation: Directories.coverArt
-        readonly property bool downloaded: artworkResolver.ready
-        property string displayedArtFilePath: artworkResolver.displaySource
+        readonly property bool downloaded: MediaArtwork.ready
+        property string displayedArtFilePath: MediaArtwork.displaySource
 
         function checkAndDownloadArt() {
-            artworkResolver.refresh()
+            MediaArtwork.refresh()
         }
 
         onVisibleChanged: {
@@ -116,15 +116,6 @@ StyledOverlayWidget {
             interval: Config.options?.resources?.updateInterval ?? 3000
             repeat: true
             onTriggered: activePlayer?.positionChanged()
-        }
-
-        MediaArtworkResolver {
-            id: artworkResolver
-            sourceUrl: musicContent.artUrl ?? ""
-            title: musicContent.activePlayer?.trackTitle ?? ""
-            artist: musicContent.activePlayer?.trackArtist ?? ""
-            album: musicContent.activePlayer?.trackAlbum ?? ""
-            cacheDirectory: musicContent.artDownloadLocation
         }
 
         ColumnLayout {

@@ -4,6 +4,7 @@ import Quickshell.Io
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
+import qs.services
 
 /**
  * Thumbnail image. It currently generates to the right place at the right size, but does not handle metadata/maintenance on modification.
@@ -16,6 +17,9 @@ StyledImage {
     required property string sourcePath
     property string thumbnailSizeName: Images.thumbnailSizeNameForDimensions(sourceSize.width, sourceSize.height)
     property bool isVideo: Images.isValidVideoByName(sourcePath)
+    property bool thumbnailAvailable: false
+    property string resolvedThumbnailSource: ""
+    property string _queuedThumbnailCheck: ""
     property string thumbnailPath: {
         if (sourcePath.length === 0) return ""
 
@@ -32,7 +36,7 @@ StyledImage {
         const md5Hash = Qt.md5("file://" + encodedParts.join("/"))
         return `${Directories.genericCache}/thumbnails/${thumbnailSizeName}/${md5Hash}.png`
     }
-    source: thumbnailPath
+    source: resolvedThumbnailSource
 
     asynchronous: true
     smooth: true
@@ -40,68 +44,120 @@ StyledImage {
 
     opacity: status === Image.Ready ? 1 : 0
     Behavior on opacity {
-        animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        enabled: Appearance.animationsEnabled
+        animation: NumberAnimation {
+            duration: Appearance.calcEffectiveDuration(Appearance.animation.elementMoveFast.duration)
+            easing.type: Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+        }
+    }
+
+    // Queue thumbnail generation through Wallpapers' serial queue instead of
+    // spawning a per-item magick/ffmpeg process.  This avoids a thundering herd
+    // when opening a directory with many uncached thumbnails.
+    function _ensureThumbnail() {
+        if (!root.generateThumbnail) return
+        if (!root.sourcePath || root.sourcePath.length === 0) return
+        // Batch generator already running — it will emit thumbnailGeneratedFile
+        if (Wallpapers.thumbnailGenerationRunning) return
+        Wallpapers.ensureThumbnailForPath(root.sourcePath, root.thumbnailSizeName)
+    }
+
+    function _clearResolvedThumbnail() {
+        root.thumbnailAvailable = false
+        root.resolvedThumbnailSource = ""
+    }
+
+    function _startThumbnailCheck() {
+        if (root._queuedThumbnailCheck.length === 0 || _thumbnailCheckProc.running) return
+        const targetPath = root._queuedThumbnailCheck
+        root._queuedThumbnailCheck = ""
+        _thumbnailCheckProc._targetPath = targetPath
+        _thumbnailCheckProc.command = ["test", "-f", targetPath]
+        _thumbnailCheckProc.running = true
+    }
+
+    function reloadThumbnail() {
+        if (!root.sourcePath || root.sourcePath.length === 0 || !root.thumbnailPath || root.thumbnailPath.length === 0) {
+            root._queuedThumbnailCheck = ""
+            root._clearResolvedThumbnail()
+            return
+        }
+
+        const normalizedThumbnailPath = FileUtils.trimFileProtocol(root.thumbnailPath)
+        if (Wallpapers.hasKnownThumbnail(normalizedThumbnailPath)) {
+            root._queuedThumbnailCheck = ""
+            root.thumbnailAvailable = true
+            root.resolvedThumbnailSource = root.thumbnailPath
+            return
+        }
+
+        root._clearResolvedThumbnail()
+        root._queuedThumbnailCheck = normalizedThumbnailPath
+        root._startThumbnailCheck()
     }
 
     onStatusChanged: {
-        // Graceful error handling: silently fall back for missing/corrupted thumbnails
-        if (status === Image.Error && generateThumbnail) {
-            // Don't spam warnings - just log at debug level
-            // The image will remain invisible until another source is set
+        if (status === Image.Ready) {
+            Wallpapers.rememberThumbnail(root.thumbnailPath)
+        } else if (status === Image.Error && root.resolvedThumbnailSource.length > 0) {
+            Wallpapers.forgetThumbnail(root.thumbnailPath)
+            root.reloadThumbnail()
         }
     }
 
     onSourcePathChanged: {
-        if (!sourcePath || sourcePath.length === 0) {
-            thumbnailGeneration.running = false;
-            root.source = "";
-            return;
-        }
-
-        root.source = root.thumbnailPath
-        if (!root.generateThumbnail) return;
-        thumbnailGeneration.running = false;
-        thumbnailGeneration.running = true;
+        root.reloadThumbnail()
     }
 
     onThumbnailSizeNameChanged: {
-        if (!sourcePath || sourcePath.length === 0) return;
-        root.source = root.thumbnailPath
-        if (!root.generateThumbnail) return;
-        thumbnailGeneration.running = false;
-        thumbnailGeneration.running = true;
+        root.reloadThumbnail()
     }
 
     onSourceSizeChanged: {
-        // Only re-generate if the thumbnail wasn't already loaded successfully.
-        // This prevents layout-driven sourceSize oscillation from spawning
-        // redundant magick processes when the thumbnail is already showing.
-        if (!root.generateThumbnail) return;
-        if (root.status === Image.Ready) return;
-        thumbnailGeneration.running = false;
-        thumbnailGeneration.running = true;
+        if (root.status === Image.Ready) return
+        root.reloadThumbnail()
     }
-    Process {
-        id: thumbnailGeneration
-        command: {
-            const maxSize = Images.thumbnailSizes[root.thumbnailSizeName];
-            const thumbPath = FileUtils.trimFileProtocol(root.thumbnailPath);
-            const thumbDir = FileUtils.parentDirectory(thumbPath);
-            if (root.isVideo) {
-                // Extract first frame from video with ffmpeg
-                return ["bash", "-c",
-                    `mkdir -p '${thumbDir}' && [ -f '${thumbPath}' ] && exit 0 || { ffmpeg -y -i '${root.sourcePath}' -vframes 1 -vf "scale='min(${maxSize},iw)':'min(${maxSize},ih)':force_original_aspect_ratio=decrease" '${thumbPath}' 2>/dev/null && exit 1; }`
-                ]
-            }
-            return ["bash", "-c",
-                `mkdir -p '${thumbDir}' && [ -f '${thumbPath}' ] && exit 0 || { magick '${root.sourcePath}[0]' -resize ${maxSize}x${maxSize} '${thumbPath}' && exit 1; }`
-            ]
+
+    Connections {
+        target: Wallpapers
+        function onThumbnailGenerated(directory) {
+            if (!root.sourcePath || root.sourcePath.length === 0) return
+            if (FileUtils.parentDirectory(root.sourcePath) !== directory) return
+            root.reloadThumbnail()
         }
-        onExited: (exitCode, exitStatus) => {
-            if (exitCode === 1) { // Force reload if thumbnail had to be generated
-                root.source = "";
-                root.source = root.thumbnailPath; // Force reload
+        function onThumbnailGeneratedFile(filePath) {
+            if (!root.sourcePath || root.sourcePath.length === 0) return
+            if (Qt.resolvedUrl(root.sourcePath) !== Qt.resolvedUrl(filePath)) return
+            root.reloadThumbnail()
+        }
+    }
+
+    Process {
+        id: _thumbnailCheckProc
+        property string _targetPath: ""
+        onExited: (exitCode) => {
+            const currentThumbnailPath = FileUtils.trimFileProtocol(root.thumbnailPath)
+            const checkedPath = _thumbnailCheckProc._targetPath
+
+            if (checkedPath === currentThumbnailPath && exitCode === 0) {
+                Wallpapers.rememberThumbnail(currentThumbnailPath)
+                root.thumbnailAvailable = true
+                root.resolvedThumbnailSource = root.thumbnailPath
+            } else if (checkedPath === currentThumbnailPath) {
+                Wallpapers.forgetThumbnail(currentThumbnailPath)
+                root._clearResolvedThumbnail()
+                root._ensureThumbnail()
             }
+
+            if (root._queuedThumbnailCheck.length === 0
+                    && currentThumbnailPath.length > 0
+                    && checkedPath !== currentThumbnailPath
+                    && !Wallpapers.hasKnownThumbnail(currentThumbnailPath)) {
+                root._queuedThumbnailCheck = currentThumbnailPath
+            }
+
+            root._startThumbnailCheck()
         }
     }
 }

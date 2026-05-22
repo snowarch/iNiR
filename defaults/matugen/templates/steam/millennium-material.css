@@ -1,0 +1,60 @@
+:root {
+    --theme-color: "Matugen";
+    --hue-rotate: 220deg;
+
+    --md-sys-color-primary: rgb({{colors.app_accent.default.rgb}});
+    --md-sys-color-on-primary: rgb({{colors.app_on_accent.default.rgb}});
+    --md-sys-color-primary-container: rgb({{colors.app_accent_container.default.rgb}});
+    --md-sys-color-on-primary-container: rgb({{colors.on_primary_container.default.rgb}});
+    --md-sys-color-primary-fixed: rgb({{colors.primary_fixed.default.rgb}});
+    --md-sys-color-primary-fixed-dim: rgb({{colors.primary_fixed_dim.default.rgb}});
+    --md-sys-color-on-primary-fixed: rgb({{colors.on_primary_fixed.default.rgb}});
+    --md-sys-color-on-primary-fixed-variant: rgb({{colors.on_primary_fixed_variant.default.rgb}});
+
+    --md-sys-color-secondary: rgb({{colors.secondary.default.rgb}});
+    --md-sys-color-on-secondary: rgb({{colors.on_secondary.default.rgb}});
+    --md-sys-color-secondary-container: rgb({{colors.secondary_container.default.rgb}});
+    --md-sys-color-on-secondary-container: rgb({{colors.on_secondary_container.default.rgb}});
+    --md-sys-color-secondary-fixed: rgb({{colors.secondary_fixed.default.rgb}});
+    --md-sys-color-secondary-fixed-dim: rgb({{colors.secondary_fixed_dim.default.rgb}});
+    --md-sys-color-on-secondary-fixed: rgb({{colors.on_secondary_fixed.default.rgb}});
+    --md-sys-color-on-secondary-fixed-variant: rgb({{colors.on_secondary_fixed_variant.default.rgb}});
+
+    --md-sys-color-tertiary: rgb({{colors.tertiary.default.rgb}});
+    --md-sys-color-on-tertiary: rgb({{colors.on_tertiary.default.rgb}});
+    --md-sys-color-tertiary-container: rgb({{colors.tertiary_container.default.rgb}});
+    --md-sys-color-on-tertiary-container: rgb({{colors.on_tertiary_container.default.rgb}});
+    --md-sys-color-tertiary-fixed: rgb({{colors.tertiary_fixed.default.rgb}});
+    --md-sys-color-tertiary-fixed-dim: rgb({{colors.tertiary_fixed_dim.default.rgb}});
+    --md-sys-color-on-tertiary-fixed: rgb({{colors.on_tertiary_fixed.default.rgb}});
+    --md-sys-color-on-tertiary-fixed-variant: rgb({{colors.on_tertiary_fixed_variant.default.rgb}});
+
+    --md-sys-color-error: rgb({{colors.error.default.rgb}});
+    --md-sys-color-on-error: rgb({{colors.on_error.default.rgb}});
+    --md-sys-color-error-container: rgb({{colors.error_container.default.rgb}});
+    --md-sys-color-on-error-container: rgb({{colors.on_error_container.default.rgb}});
+
+    --md-sys-color-background: rgb({{colors.app_background.default.rgb}});
+    --md-sys-color-on-background: rgb({{colors.app_foreground.default.rgb}});
+    --md-sys-color-surface: rgb({{colors.app_background.default.rgb}});
+    --md-sys-color-on-surface: rgb({{colors.app_foreground.default.rgb}});
+    --md-sys-color-surface-variant: rgb({{colors.app_surface_elevated.default.rgb}});
+    --md-sys-color-on-surface-variant: rgb({{colors.app_subtext.default.rgb}});
+    --md-sys-color-surface-dim: rgb({{colors.app_background.default.rgb}});
+    --md-sys-color-surface-bright: rgb({{colors.app_surface_popup.default.rgb}});
+    --md-sys-color-surface-container-lowest: rgb({{colors.app_background.default.rgb}});
+    --md-sys-color-surface-container-low: rgb({{colors.app_surface.default.rgb}});
+    --md-sys-color-surface-container: rgb({{colors.app_surface.default.rgb}});
+    --md-sys-color-surface-container-high: rgb({{colors.app_surface_elevated.default.rgb}});
+    --md-sys-color-surface-container-highest: rgb({{colors.app_surface_popup.default.rgb}});
+    --md-sys-color-outline: rgb({{colors.app_border.default.rgb}});
+    --md-sys-color-outline-variant: rgb({{colors.app_border_subtle.default.rgb}});
+
+    --md-sys-color-inverse-surface: rgb({{colors.inverse_surface.default.rgb}});
+    --md-sys-color-inverse-on-surface: rgb({{colors.inverse_on_surface.default.rgb}});
+    --md-sys-color-inverse-primary: rgb({{colors.inverse_primary.default.rgb}});
+    --md-sys-color-shadow: rgb({{colors.shadow.default.rgb}});
+    --md-sys-color-scrim: rgb({{colors.scrim.default.rgb}});
+    --md-sys-color-surface-tint: rgb({{colors.app_accent.default.rgb}});
+    --md-sys-color-source-color: rgb({{colors.source_color.default.rgb}});
+}

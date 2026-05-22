@@ -51,32 +51,11 @@ Singleton {
     }
     readonly property bool showVisibleCity: root.visibleCity.length > 0
 
-    function redactedLogCity(city): string {
-        if (root.hideLocation)
-            return "[hidden]"
-
-        const value = String(city ?? "").trim()
-        return value.length > 0 ? value : "Unknown"
-    }
-
-    function redactedLogLocationName(name): string {
-        if (root.hideLocation)
-            return "[hidden]"
-
-        const value = String(name ?? "").trim()
-        return value.length > 0 ? value : "Unknown"
-    }
-
-    function redactedLogCoordinates(lat, lon): string {
-        if (root.hideLocation)
-            return "[hidden]"
-
-        const latNum = Number(lat)
-        const lonNum = Number(lon)
-        if (!isFinite(latNum) || !isFinite(lonNum))
-            return "Unknown"
-        return latNum.toFixed(5) + "," + lonNum.toFixed(5)
-    }
+    // Always redact location data in logs — logs are persistent and can be
+    // shared accidentally. hideLocation controls UI visibility only.
+    function redactedLogCity(_city): string { return "[redacted]" }
+    function redactedLogLocationName(_name): string { return "[redacted]" }
+    function redactedLogCoordinates(_lat, _lon): string { return "[redacted]" }
 
     function isNightNow(): bool {
         const h = new Date().getHours();

@@ -1,3 +1,4 @@
+import qs
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
@@ -47,6 +48,26 @@ Rectangle {
     Connections {
         target: Config
         function onConfigChanged() { root.configVersion++ }
+    }
+
+    function handleRequestedWidget(): void {
+        const w = GlobalStates.sidebarRightRequestedWidget
+        if (!w) return
+        const idx = root.tabs.findIndex(t => t.type === w)
+        if (idx !== -1) {
+            root.setCollapsed(false)
+            Persistent.states.sidebar.bottomGroup.tab = idx
+        }
+        GlobalStates.sidebarRightRequestedWidget = ""
+    }
+
+    Component.onCompleted: handleRequestedWidget()
+
+    Connections {
+        target: GlobalStates
+        function onSidebarRightRequestedWidgetChanged() {
+            root.handleRequestedWidget()
+        }
     }
 
     // Signal to open events dialog (propagated from EventsWidget)
@@ -133,7 +154,7 @@ Rectangle {
 
     Timer {
         id: collapseCleanFadeTimer
-        interval: Appearance.animation.elementMove.duration / 2
+        interval: Appearance.calcEffectiveDuration(Appearance.animation.elementMove.duration / 2)
         repeat: false
         onTriggered: {
             if(collapsed) collapsedBottomWidgetGroupRow.opacity = 1

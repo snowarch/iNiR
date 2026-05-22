@@ -15,50 +15,111 @@ import Quickshell.Io
 Scope {
     id: root
 
+    function _log(...args): void {
+        if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
+    }
+
     property int panelWidth: 600
     property int panelMaxHeight: 700
     property string searchText: ""
     property int totalCount: 0
+    property int matchCount: 0
     property bool showKeyboardHints: false
     property string lastCopiedEntry: ""
     property bool showClearConfirmation: false
+    property bool navigateMode: false
+    property double _lastPanelCopyTime: 0
 
     function formatCliphistName(entry) {
         let cleaned = StringUtils.cleanCliphistEntry(entry)
         if (Cliphist.entryIsImage(entry)) {
             cleaned = cleaned.replace(/^\s*\[\[.*?\]\]\s*/, "")
         }
+        // Strip HTML tags if content looks like HTML markup
+        if (/^\s*<(!DOCTYPE|html|meta|div|span|p[\s>]|table|body|head)/i.test(cleaned)) {
+            cleaned = StringUtils.stripHtmlTags(cleaned)
+        }
+        cleaned = StringUtils.sanitizeDisplayText(cleaned)
         return cleaned.trim()
     }
 
     function updateFilteredModel() {
-        // Cache entries locally to avoid repeated property lookups
         const entries = Cliphist.entries
         const entryCount = entries.length
-        
+
         filteredClipboardModel.clear()
 
         const trimmedSearch = searchText.trim().toLowerCase()
         const hasSearch = trimmedSearch.length > 0
+        let matches = 0
 
-        // Build filtered list
-        for (let i = 0; i < entryCount; i++) {
-            const entry = entries[i]
-            if (!hasSearch) {
-                filteredClipboardModel.append({ "rawEntry": entry })
-            } else {
+        if (hasSearch && navigateMode) {
+            // Navigate mode: show ALL entries, mark which ones match
+            for (let i = 0; i < entryCount; i++) {
+                const entry = entries[i]
                 const content = formatCliphistName(entry).toLowerCase()
-                if (content.includes(trimmedSearch)) {
-                    filteredClipboardModel.append({ "rawEntry": entry })
+                const hit = content.includes(trimmedSearch)
+                if (hit) matches++
+                filteredClipboardModel.append({ "rawEntry": entry, "isMatch": hit })
+            }
+        } else {
+            // Filter mode: only include matching entries
+            for (let i = 0; i < entryCount; i++) {
+                const entry = entries[i]
+                if (!hasSearch) {
+                    filteredClipboardModel.append({ "rawEntry": entry, "isMatch": true })
+                } else {
+                    const content = formatCliphistName(entry).toLowerCase()
+                    if (content.includes(trimmedSearch)) {
+                        filteredClipboardModel.append({ "rawEntry": entry, "isMatch": true })
+                        matches++
+                    }
                 }
             }
         }
 
-        // Update count once at the end (avoids binding re-evaluations)
         totalCount = filteredClipboardModel.count
+        matchCount = matches
 
-        if (totalCount > 0 && typeof listView !== "undefined" && listView) {
+        if (hasSearch && navigateMode && matches > 0) {
+            // Auto-scroll to first match
+            for (let i = 0; i < filteredClipboardModel.count; i++) {
+                if (filteredClipboardModel.get(i).isMatch) {
+                    listView.currentIndex = i
+                    listView.positionViewAtIndex(i, ListView.Center)
+                    break
+                }
+            }
+        } else if (totalCount > 0 && typeof listView !== "undefined" && listView) {
             listView.currentIndex = 0
+        }
+    }
+
+    function jumpToNextMatch() {
+        const count = filteredClipboardModel.count
+        if (count === 0) return
+        const start = listView.currentIndex
+        for (let i = 1; i <= count; i++) {
+            const idx = (start + i) % count
+            if (filteredClipboardModel.get(idx).isMatch) {
+                listView.currentIndex = idx
+                listView.positionViewAtIndex(idx, ListView.Center)
+                return
+            }
+        }
+    }
+
+    function jumpToPrevMatch() {
+        const count = filteredClipboardModel.count
+        if (count === 0) return
+        const start = listView.currentIndex
+        for (let i = 1; i <= count; i++) {
+            const idx = (start - i + count) % count
+            if (filteredClipboardModel.get(idx).isMatch) {
+                listView.currentIndex = idx
+                listView.positionViewAtIndex(idx, ListView.Center)
+                return
+            }
         }
     }
 
@@ -75,8 +136,9 @@ Scope {
     }
 
     function copyEntry(entry) {
-        console.log("[ClipboardPanel] copyEntry", String(entry).slice(0, 120))
+        _log("[ClipboardPanel] copyEntry", String(entry).slice(0, 120))
         lastCopiedEntry = entry
+        _lastPanelCopyTime = Date.now()
         Cliphist.copy(entry)
         GlobalStates.clipboardOpen = false
     }
@@ -104,7 +166,7 @@ Scope {
     }
 
     function refresh() {
-        console.log("[ClipboardPanel] Refreshing clipboard via Cliphist service...")
+        _log("[ClipboardPanel] Refreshing clipboard via Cliphist service...")
         Cliphist.refresh()
     }
 
@@ -131,10 +193,13 @@ Scope {
         target: GlobalStates
         function onClipboardOpenChanged() {
             if (GlobalStates.clipboardOpen) {
-                root.refresh()
-                root.updateFilteredModel()  // Update immediately with current entries
+                // Skip refresh if we just copied from the panel (keeps original order)
+                if (Date.now() - root._lastPanelCopyTime > 5000)
+                    root.refresh()
                 root.searchText = ""
+                root.navigateMode = false
                 root.showClearConfirmation = false
+                root.updateFilteredModel()
                 Qt.callLater(() => searchField.forceActiveFocus())
             }
         }
@@ -238,6 +303,12 @@ Scope {
                         root.copyEntry(entry)
                         event.accepted = true
                     }
+                } else if (event.key === Qt.Key_Tab && root.navigateMode && root.searchText.length > 0) {
+                    root.jumpToNextMatch()
+                    event.accepted = true
+                } else if (event.key === Qt.Key_Backtab && root.navigateMode && root.searchText.length > 0) {
+                    root.jumpToPrevMatch()
+                    event.accepted = true
                 } else if (event.key === Qt.Key_F10) {
                     // Toggle keyboard hints
                     root.showKeyboardHints = !root.showKeyboardHints
@@ -391,6 +462,28 @@ Scope {
                     }
 
                     IconToolbarButton {
+                        visible: root.searchText.length > 0
+                        implicitWidth: height
+                        onClicked: {
+                            root.navigateMode = !root.navigateMode
+                            root.updateFilteredModel()
+                        }
+                        text: root.navigateMode ? "find_in_page" : "filter_list"
+                        StyledToolTip {
+                            text: root.navigateMode
+                                ? Translation.tr("Navigate mode (Tab/Shift+Tab to jump)")
+                                : Translation.tr("Filter mode")
+                        }
+                    }
+
+                    StyledText {
+                        visible: root.navigateMode && root.searchText.length > 0
+                        text: root.matchCount + " " + Translation.tr("matches")
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+                    }
+
+                    IconToolbarButton {
                         implicitWidth: height
                         onClicked: {
                             root.showKeyboardHints = !root.showKeyboardHints
@@ -485,10 +578,12 @@ Scope {
 
                         delegate: ClipboardItem {
                             required property string rawEntry
+                            required property bool isMatch
                             required property int index
                             anchors.left: parent?.left
                             anchors.right: parent?.right
                             isSelected: ListView.isCurrentItem
+                            isSearchMatch: isMatch
                             copiedFromPanel: rawEntry === lastCopiedEntry
                             entry: {
                                 const raw = rawEntry
@@ -546,8 +641,7 @@ Scope {
                         function activateCurrent() {
                             if (currentIndex < 0 || currentIndex >= count) return
                             const rawEntry = filteredClipboardModel.get(currentIndex).rawEntry
-                            Cliphist.copy(rawEntry)
-                            GlobalStates.clipboardOpen = false
+                            root.copyEntry(rawEntry)
                         }
 
                         StyledText {
@@ -610,6 +704,16 @@ Scope {
                             StyledText {
                                 Layout.fillWidth: true
                                 text: Translation.tr("Ctrl+C: Copy • Del: Delete • Shift+Del: Clear all • Esc: Close")
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                color: Appearance.angelEverywhere ? Appearance.angel.colText
+                                    : Appearance.inirEverywhere ? Appearance.inir.colText 
+                                    : Appearance.auroraEverywhere ? Appearance.m3colors.m3onSurface 
+                                    : Appearance.colors.colOnPrimaryContainer
+                                elide: Text.ElideRight
+                            }
+                            StyledText {
+                                Layout.fillWidth: true
+                                text: Translation.tr("Navigate mode: Tab/Shift+Tab jump between matches")
                                 font.pixelSize: Appearance.font.pixelSize.smaller
                                 color: Appearance.angelEverywhere ? Appearance.angel.colText
                                     : Appearance.inirEverywhere ? Appearance.inir.colText 

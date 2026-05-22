@@ -34,6 +34,12 @@ MouseArea {
     readonly property real blurZoom: Config.options?.lock?.blur?.extraZoom ?? 1.1
     readonly property bool enableAnimation: Config.options?.lock?.enableAnimation ?? false
 
+    // Widget visibility
+    readonly property bool showWeather: Config.options?.lock?.widgets?.weather ?? true
+    readonly property bool showMedia: Config.options?.lock?.widgets?.media ?? true
+    readonly property bool showPowerButtons: Config.options?.lock?.widgets?.powerButtons ?? true
+    readonly property bool showHintText: Config.options?.lock?.widgets?.hintText ?? true
+
     function safeLockNotificationImage(source): string {
         const value = String(source ?? "")
         return value.startsWith("image://qsimage/") ? "" : value
@@ -441,26 +447,26 @@ MouseArea {
 
                 // Battery (laptop only)
                 Row {
+                    id: topBatteryRow
                     spacing: 4
                     visible: UPower.displayDevice?.isPresent ?? false
+
+                    readonly property int batteryLevel: Math.round((UPower.displayDevice?.percentage ?? 0) * 100)
+                    readonly property bool isCharging: UPower.displayDevice?.state === UPowerDeviceState.Charging
 
                     MaterialSymbol {
                         anchors.verticalCenter: parent.verticalCenter
                         text: {
-                            const pct = UPower.displayDevice?.percentage ?? 0
-                            const charging = UPower.displayDevice?.state === UPowerDeviceState.Charging
-                            if (charging) return "battery_charging_full"
-                            if (pct <= 10) return "battery_alert"
-                            if (pct <= 30) return "battery_2_bar"
-                            if (pct <= 60) return "battery_4_bar"
-                            if (pct <= 80) return "battery_5_bar"
+                            if (topBatteryRow.isCharging) return "battery_charging_full"
+                            if (topBatteryRow.batteryLevel <= 10) return "battery_alert"
+                            if (topBatteryRow.batteryLevel <= 30) return "battery_2_bar"
+                            if (topBatteryRow.batteryLevel <= 60) return "battery_4_bar"
+                            if (topBatteryRow.batteryLevel <= 80) return "battery_5_bar"
                             return "battery_full"
                         }
                         iconSize: 16
-                        color: {
-                            const pct = UPower.displayDevice?.percentage ?? 0
-                            return pct <= 15 ? Appearance.colors.colError : Appearance.colors.colOnSurface
-                        }
+                        color: (topBatteryRow.batteryLevel <= 15 && !topBatteryRow.isCharging)
+                            ? Appearance.colors.colError : Appearance.colors.colOnSurface
 
                         layer.enabled: Appearance.effectsEnabled
                         layer.effect: DropShadow {
@@ -471,7 +477,7 @@ MouseArea {
 
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: Math.round(UPower.displayDevice?.percentage ?? 0) + "%"
+                        text: topBatteryRow.batteryLevel + "%"
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         font.family: Appearance.font.family.numbers
                         color: Appearance.colors.colOnSurfaceVariant
@@ -624,7 +630,8 @@ MouseArea {
         // Media player widget (below clock) - only show if music is actually playing or paused
         Loader {
             id: mediaWidgetLoader
-            active: MprisController.activePlayer !== null && 
+            active: root.showMedia &&
+                    MprisController.activePlayer !== null && 
                     MprisController.activePlayer.playbackState !== MprisPlaybackState.Stopped &&
                     (MprisController.activePlayer.trackTitle?.length > 0 ?? false)
             anchors {
@@ -947,7 +954,7 @@ MouseArea {
         
         // Bottom left: Weather widget
         Loader {
-            active: Weather.data?.temp && Weather.data.temp.length > 0
+            active: root.showWeather && Weather.data?.temp && Weather.data.temp.length > 0
             visible: active
             anchors {
                 left: parent.left
@@ -1049,6 +1056,7 @@ MouseArea {
         // Bottom hint text
         Text {
             id: hintText
+            visible: root.showHintText && opacity > 0
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 40
             anchors.horizontalCenter: parent.horizontalCenter
@@ -1056,7 +1064,7 @@ MouseArea {
             font.pixelSize: Appearance.font.pixelSize.normal
             font.family: Appearance.font.family.main
             color: Appearance.colors.colOnSurfaceVariant
-            opacity: hintOpacity
+            opacity: root.showHintText ? hintOpacity : 0
             
             property real hintOpacity: 0.7
             
@@ -1468,6 +1476,7 @@ MouseArea {
         
         // Bottom right: Power options
         Row {
+            visible: root.showPowerButtons
             anchors.bottom: parent.bottom
             anchors.right: parent.right
             anchors.bottomMargin: 24

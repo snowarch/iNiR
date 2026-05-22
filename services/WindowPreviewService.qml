@@ -20,6 +20,10 @@ import qs.modules.common.functions
 Singleton {
     id: root
 
+    function _log(...args): void {
+        if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
+    }
+
     readonly property string previewDir: FileUtils.trimFileProtocol(Directories.genericCache) + "/inir/window-previews"
     
     // Map of windowId -> { path, timestamp }
@@ -70,6 +74,9 @@ Singleton {
                 root._savedClipFile = ""
                 root._savedClipMime = ""
             }
+            // Clipboard restored — now safe to unsuppress and refresh cliphist
+            Cliphist.suppressRefresh = false
+            Cliphist.refresh()
         }
     }
 
@@ -134,7 +141,7 @@ Singleton {
             }
         }
         onExited: {
-            console.log("[WindowPreviewService] Loaded", Object.keys(root.previewCache).length, "cached previews")
+            _log("[WindowPreviewService] Loaded", Object.keys(root.previewCache).length, "cached previews")
             root.cleanupOrphans()
         }
     }
@@ -211,7 +218,7 @@ Singleton {
             return
         }
         
-        console.log("[WindowPreviewService] Capturing", idsToCapture.length, "windows")
+        _log("[WindowPreviewService] Capturing", idsToCapture.length, "windows")
         capturing = true
         initialCapturesDone = true
         Cliphist.suppressRefresh = true
@@ -239,7 +246,7 @@ Singleton {
         const windows = NiriService.windows ?? []
         if (windows.length === 0) return
         
-        console.log("[WindowPreviewService] Force capturing all", windows.length, "windows")
+        _log("[WindowPreviewService] Force capturing all", windows.length, "windows")
         capturing = true
         Cliphist.suppressRefresh = true
         root._saveClipboard()
@@ -257,10 +264,10 @@ Singleton {
         property var idsToCapture: []
 
         stdout: SplitParser {
-            onRead: (line) => console.log("[WindowPreviewService:capture]", line)
+            onRead: (line) => _log("[WindowPreviewService:capture]", line)
         }
         stderr: SplitParser {
-            onRead: (line) => console.log("[WindowPreviewService:capture][err]", line)
+            onRead: (line) => _log("[WindowPreviewService:capture][err]", line)
         }
         
         onExited: (exitCode, exitStatus) => {
@@ -303,11 +310,15 @@ Singleton {
         id: cliphistRestoreTimer
         interval: 1500
         onTriggered: {
-            Cliphist.suppressRefresh = false
-            Cliphist.refresh()
-            // Restore the real Wayland clipboard — the script's own restore may have
-            // been raced by async niri screenshot-window IPC side-effects.
-            root._restoreClipboard()
+            if (root._savedClipFile.length === 0) {
+                // Nothing to restore — just unsuppress and refresh
+                Cliphist.suppressRefresh = false
+                Cliphist.refresh()
+            } else {
+                // Restore clipboard first; unsuppress+refresh happens in
+                // clipboardRestoreProcess.onExited after wl-copy finishes.
+                root._restoreClipboard()
+            }
         }
     }
 

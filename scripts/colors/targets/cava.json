@@ -1,0 +1,9 @@
+{
+  "id": "cava",
+  "label": "Cava",
+  "module": "90-cava.sh",
+  "category": "audio",
+  "inputs": ["palette.json"],
+  "description": "Generate cava audio visualizer gradient colors from the theme palette.",
+  "configKey": "appearance.wallpaperTheming.enableCava"
+}

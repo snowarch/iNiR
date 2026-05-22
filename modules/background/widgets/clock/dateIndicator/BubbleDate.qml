@@ -29,7 +29,7 @@ Item {
         anchors.centerIn: parent
         color: root.isMonth ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnTertiaryContainer
         font {
-            family: Config.options?.background?.widgets?.clock?.fontFamily ?? "Space Grotesk"
+            family: Config.getNestedValue("background.widgets.clock.fontFamily", "Space Grotesk")
             pixelSize: 30
             weight: Font.Black
         }

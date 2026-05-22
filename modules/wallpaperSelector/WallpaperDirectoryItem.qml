@@ -4,7 +4,8 @@ import qs.modules.common.widgets
 import qs.modules.common.functions
 import QtQuick
 import QtQuick.Layouts
-import Qt5Compat.GraphicalEffects
+import Qt5Compat.GraphicalEffects as GE
+
 
 MouseArea {
     id: root
@@ -46,9 +47,20 @@ MouseArea {
                 Layout.fillHeight: true
                 Layout.fillWidth: true
 
+                // Single layer+mask for the entire image area (shadow + thumbnail).
+                // One FBO per card instead of separate layers for shadow and image.
+                layer.enabled: root.useThumbnail && Appearance.effectsEnabled
+                layer.effect: GE.OpacityMask {
+                    maskSource: Rectangle {
+                        width: wallpaperItemImageContainer.width
+                        height: wallpaperItemImageContainer.height
+                        radius: Appearance.rounding.small
+                    }
+                }
+
                 Loader {
                     id: thumbnailShadowLoader
-                    active: thumbnailImageLoader.active && thumbnailImageLoader.item.status === Image.Ready
+                    active: thumbnailImageLoader.active && thumbnailImageLoader.item?.status === Image.Ready
                     anchors.fill: thumbnailImageLoader
                     sourceComponent: StyledRectangularShadow {
                         target: thumbnailImageLoader
@@ -65,54 +77,22 @@ MouseArea {
                         id: thumbnailImage
                         generateThumbnail: true
                         sourcePath: fileModelData.filePath
-                        // Force x-large (512px) minimum for crisp grid thumbnails.
-                        // The default auto-detect can pick "large" (256px) for small cells,
-                        // producing visible blur on 300-400px wide grid items.
+                        // Use auto-detected size — "large" (256px) is enough for
+                        // ~250-300px grid cells. Avoids decoding 512px PNGs per item.
                         thumbnailSizeName: {
                             const auto = Images.thumbnailSizeNameForDimensions(
                                 Math.round(wallpaperItemImageContainer.width * root._dpr),
                                 Math.round(wallpaperItemImageContainer.height * root._dpr)
                             )
-                            return (auto === "normal" || auto === "large") ? "x-large" : auto
+                            return auto === "normal" ? "large" : auto
                         }
 
                         cache: true
                         fillMode: Image.PreserveAspectCrop
                         clip: true
                         smooth: true
-                        sourceSize.width: Math.max(
-                            Math.round(wallpaperItemImageContainer.width * root._dpr),
-                            Images.thumbnailSizes[thumbnailSizeName] ?? 512
-                        )
-                        sourceSize.height: Math.max(
-                            Math.round(wallpaperItemImageContainer.height * root._dpr),
-                            Images.thumbnailSizes[thumbnailSizeName] ?? 512
-                        )
-
-                        Connections {
-                            target: Wallpapers
-                            function onThumbnailGenerated(directory) {
-                                if (thumbnailImage.status !== Image.Error) return;
-                                if (FileUtils.parentDirectory(thumbnailImage.sourcePath) !== directory) return;
-                                thumbnailImage.source = "";
-                                thumbnailImage.source = thumbnailImage.thumbnailPath;
-                            }
-                            function onThumbnailGeneratedFile(filePath) {
-                                if (thumbnailImage.status !== Image.Error) return;
-                                if (Qt.resolvedUrl(thumbnailImage.sourcePath) !== Qt.resolvedUrl(filePath)) return;
-                                thumbnailImage.source = "";
-                                thumbnailImage.source = thumbnailImage.thumbnailPath;
-                            }
-                        }
-
-                        layer.enabled: Appearance.effectsEnabled
-                        layer.effect: OpacityMask {
-                            maskSource: Rectangle {
-                                width: wallpaperItemImageContainer.width
-                                height: wallpaperItemImageContainer.height
-                                radius: Appearance.rounding.small
-                            }
-                        }
+                        sourceSize.width: Math.round(wallpaperItemImageContainer.width * root._dpr)
+                        sourceSize.height: Math.round(wallpaperItemImageContainer.height * root._dpr)
                     }
                 }
 

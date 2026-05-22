@@ -9,7 +9,11 @@ THEME_NAME="ii-pixel"
 THEME_SRC="${REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}/dots/sddm/pixel"
 THEME_DIR="/usr/share/sddm/themes/${THEME_NAME}"
 SYNC_SCRIPT="${REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}/scripts/sddm/sync-pixel-sddm.py"
-SDDM_CONF="/etc/sddm.conf.d/inir-theme.conf"
+# Use a high-priority drop-in name so SDDM's alphabetical merge picks our values
+# LAST and we win against KDE's kde_settings.conf or any other foreign drop-in.
+# Old name (legacy, pre-2.26): /etc/sddm.conf.d/inir-theme.conf — cleaned up below.
+SDDM_CONF="/etc/sddm.conf.d/99-inir-theme.conf"
+SDDM_CONF_LEGACY="/etc/sddm.conf.d/inir-theme.conf"
 AUTO_APPLY_MODE="${INIR_SDDM_AUTO_APPLY:-ask}" # ask|yes|no
 
 log_info() { echo -e "\033[0;36m[sddm] $*\033[0m"; }
@@ -43,9 +47,13 @@ elevate() {
 
 get_current_sddm_theme() {
     local from_dropin=""
-    if [[ -f "$SDDM_CONF" ]]; then
-        from_dropin=$(awk -F= '/^[[:space:]]*Current[[:space:]]*=/{gsub(/[[:space:]]/,"",$2); print $2; exit}' "$SDDM_CONF" 2>/dev/null || true)
-    fi
+    # Check new high-priority drop-in first; fall back to legacy name during migration.
+    for f in "$SDDM_CONF" "$SDDM_CONF_LEGACY"; do
+        if [[ -f "$f" ]]; then
+            from_dropin=$(awk -F= '/^[[:space:]]*Current[[:space:]]*=/{gsub(/[[:space:]]/,"",$2); print $2; exit}' "$f" 2>/dev/null || true)
+            [[ -n "$from_dropin" ]] && break
+        fi
+    done
     if [[ -n "$from_dropin" ]]; then
         echo "$from_dropin"
         return 0
@@ -163,30 +171,51 @@ import sys; sys.stdout.buffer.write(make_png())
     fi
 fi
 
-# Configure SDDM to use this theme (intelligent: optional if user has another theme)
-if should_apply_theme; then
-    log_info "Configuring SDDM to use ${THEME_NAME}..."
-    
-    # Remove any existing Current= line from /etc/sddm.conf to avoid conflicts
-    # The drop-in /etc/sddm.conf.d/ only works if the main file doesn't override it
-    if [[ -f /etc/sddm.conf ]] && grep -q '^\s*Current\s*=' /etc/sddm.conf 2>/dev/null; then
-        log_info "Removing conflicting theme setting from /etc/sddm.conf..."
-        elevate sed -i '/^\s*Current\s*=/d' /etc/sddm.conf
-    fi
-    
-    elevate mkdir -p /etc/sddm.conf.d
-    # Use X11 as display server - Wayland (kwin_wayland) crashes in some environments (VMs, etc.)
-    elevate tee "${SDDM_CONF}" > /dev/null << SDDM_EOF
-[General]
+# Migrate from the old SDDM_CONF filename (inir-theme.conf) to the new
+# alphabetical-last name (99-inir-theme.conf). Done idempotently: if the legacy
+# file exists and we own the new name's location, just remove the legacy one.
+migrate_legacy_sddm_conf() {
+    [[ -f "$SDDM_CONF_LEGACY" ]] || return 0
+    log_info "Removing legacy ${SDDM_CONF_LEGACY} (replaced by $(basename "$SDDM_CONF"))"
+    elevate rm -f "$SDDM_CONF_LEGACY"
+}
+
+# Configure SDDM to use this theme
+# Two concerns: (1) set Current theme, (2) ensure settings (DisplayServer, InputMethod) are correct.
+# On updates where ii-pixel is already active, we still need to patch settings.
+
+desired_conf="[General]
 DisplayServer=x11
+InputMethod=
 
 [Theme]
-Current=${THEME_NAME}
-SDDM_EOF
-    log_ok "SDDM configured (${SDDM_CONF}) with X11 display server"
+Current=${THEME_NAME}"
+
+current_conf=""
+[[ -f "$SDDM_CONF" ]] && current_conf=$(cat "$SDDM_CONF" 2>/dev/null || true)
+
+if [[ "$current_conf" == "$desired_conf" ]]; then
+    log_ok "SDDM configuration already up to date"
 else
-    log_info "Installed ${THEME_NAME}, but did not change SDDM Current theme"
+    if should_apply_theme; then
+        log_info "Updating SDDM configuration (requires sudo)..."
+        elevate mkdir -p /etc/sddm.conf.d
+        echo "$desired_conf" | elevate tee "${SDDM_CONF}" > /dev/null
+        log_ok "SDDM configured (${SDDM_CONF})"
+    elif [[ -f "$SDDM_CONF" ]] && grep -q "Current=${THEME_NAME}" "$SDDM_CONF" 2>/dev/null; then
+        # Theme is already ii-pixel but settings are stale — update without asking
+        log_info "Updating SDDM settings (requires sudo)..."
+        elevate mkdir -p /etc/sddm.conf.d
+        echo "$desired_conf" | elevate tee "${SDDM_CONF}" > /dev/null
+        log_ok "SDDM settings updated (${SDDM_CONF})"
+    else
+        log_info "Installed ${THEME_NAME}, but did not change SDDM Current theme"
+    fi
 fi
+
+# Clean up legacy drop-in name (if user is migrating from pre-2.26 install).
+# Our new 99- prefixed file already wins by alphabetical merge order.
+migrate_legacy_sddm_conf
 
 # Run initial color sync now that files are in place
 log_info "Running initial color sync..."

@@ -638,8 +638,8 @@ uninstall_show_manual_steps() {
     echo -e "  ${STY_YELLOW}•${STY_RST} SDDM theme: /usr/share/sddm/themes/ii-pixel"
     echo -e "    ${STY_FAINT}Used by: SDDM login screen${STY_RST}"
     echo ""
-    echo -e "  ${STY_YELLOW}•${STY_RST} SDDM theme drop-in: /etc/sddm.conf.d/inir-theme.conf"
-    echo -e "    ${STY_FAINT}Used by: sets Current=ii-pixel${STY_RST}"
+    echo -e "  ${STY_YELLOW}•${STY_RST} SDDM theme drop-in: /etc/sddm.conf.d/99-inir-theme.conf"
+    echo -e "    ${STY_FAINT}Used by: sets Current=ii-pixel (legacy path: /etc/sddm.conf.d/inir-theme.conf)${STY_RST}"
     echo ""
 
     if $ask && tui_confirm "Show commands to revert these changes?" "no"; then
@@ -659,7 +659,7 @@ uninstall_show_manual_steps() {
         echo -e "  sudo rm -rf /usr/share/sddm/themes/ii-pixel"
         echo ""
         echo -e "  ${STY_CYAN}# Remove SDDM theme config drop-in${STY_RST}"
-        echo -e "  sudo rm -f /etc/sddm.conf.d/inir-theme.conf"
+        echo -e "  sudo rm -f /etc/sddm.conf.d/99-inir-theme.conf /etc/sddm.conf.d/inir-theme.conf"
         echo ""
     fi
 }

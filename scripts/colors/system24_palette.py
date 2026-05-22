@@ -22,6 +22,13 @@ from typing import Dict, Tuple
 COLOR_SOURCE = Path(
     os.environ.get(
         "QUICKSHELL_PALETTE_JSON",
+        "~/.local/state/quickshell/user/generated/app-palette.json",
+    )
+).expanduser()
+
+RAW_COLOR_SOURCE = Path(
+    os.environ.get(
+        "QUICKSHELL_RAW_PALETTE_JSON",
         "~/.local/state/quickshell/user/generated/palette.json",
     )
 ).expanduser()
@@ -179,10 +186,16 @@ def _ensure_parent(path: Path) -> None:
 
 
 def _load_colors() -> Dict[str, str]:
-    source = COLOR_SOURCE if COLOR_SOURCE.exists() else FALLBACK_COLOR_SOURCE
+    source = (
+        COLOR_SOURCE
+        if COLOR_SOURCE.exists()
+        else RAW_COLOR_SOURCE
+        if RAW_COLOR_SOURCE.exists()
+        else FALLBACK_COLOR_SOURCE
+    )
     if not source.exists():
         raise FileNotFoundError(
-            f"Material colors file not found: {COLOR_SOURCE} or {FALLBACK_COLOR_SOURCE}. "
+            f"Material colors file not found: {COLOR_SOURCE}, {RAW_COLOR_SOURCE}, or {FALLBACK_COLOR_SOURCE}. "
             "Ensure switchwall.sh has been executed successfully."
         )
     with source.open("r", encoding="utf-8") as fh:

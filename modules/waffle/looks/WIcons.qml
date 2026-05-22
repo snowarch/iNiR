@@ -67,8 +67,7 @@ Singleton {
     }
 
     property string micIcon: {
-        const muted = Audio?.source?.audio?.muted ?? false;
-        return muted ? "mic-off" : "mic";
+        return (Audio?.micMuted ?? false) ? "mic-off" : "mic";
     }
 
     property string bluetoothIcon: {

@@ -349,6 +349,16 @@ Item {
                     swipeView.decrementCurrentIndex()
                     event.accepted = true
                 }
+                else if (event.key === Qt.Key_O) {
+                    GlobalStates.sidebarLeftExpanded = !GlobalStates.sidebarLeftExpanded
+                    event.accepted = true
+                }
+                else if (event.key === Qt.Key_P) {
+                    GlobalStates.sidebarLeftOpen = false
+                    GlobalStates.sidebarLeftExpanded = false
+                    GlobalStates.aiChatDetached = true
+                    event.accepted = true
+                }
             }
         }
     }

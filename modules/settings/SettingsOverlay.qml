@@ -101,10 +101,16 @@ Scope {
         { pageIndex: 3, pageName: overlayPages[3].name, section: Translation.tr("Effects"), label: Translation.tr("Dynamic dim"), description: Translation.tr("Extra dim when windows are present on workspace"), keywords: ["dynamic", "dim", "windows", "workspace", "darken"] },
         { pageIndex: 3, pageName: overlayPages[3].name, section: Translation.tr("Backdrop"), label: Translation.tr("Backdrop"), description: Translation.tr("Panel backdrop wallpaper and effects"), keywords: ["backdrop", "panel", "wallpaper", "blur", "vignette", "saturation"] },
         { pageIndex: 3, pageName: overlayPages[3].name, section: Translation.tr("Backdrop"), label: Translation.tr("Backdrop vignette"), description: Translation.tr("Vignette darkening effect on backdrop"), keywords: ["backdrop", "vignette", "darken", "edges", "effect"] },
-        { pageIndex: 3, pageName: overlayPages[3].name, section: Translation.tr("Widget: Clock"), label: Translation.tr("Background clock"), description: Translation.tr("Clock widget on the desktop background"), keywords: ["clock", "widget", "cookie", "digital", "background", "desktop"] },
-        { pageIndex: 3, pageName: overlayPages[3].name, section: Translation.tr("Widget: Clock"), label: Translation.tr("Clock style"), description: Translation.tr("Cookie (analog) or digital clock"), keywords: ["clock", "style", "cookie", "digital", "analog", "hands"] },
-        { pageIndex: 3, pageName: overlayPages[3].name, section: Translation.tr("Widget: Weather"), label: Translation.tr("Background weather widget"), description: Translation.tr("Weather display on the desktop background"), keywords: ["weather", "widget", "background", "temperature"] },
-        { pageIndex: 3, pageName: overlayPages[3].name, section: Translation.tr("Widget: Media"), label: Translation.tr("Background media widget"), description: Translation.tr("Media player controls on the desktop background"), keywords: ["media", "widget", "background", "player", "music", "album"] },
+        // Desktop Widgets (page 14)
+        { pageIndex: 14, pageName: overlayPages[14].name, section: Translation.tr("Edit Mode"), label: Translation.tr("Widget edit mode"), description: Translation.tr("Grid overlay and snap-to-grid for widget placement"), keywords: ["widget", "edit", "grid", "snap", "placement", "drag"] },
+        { pageIndex: 14, pageName: overlayPages[14].name, section: Translation.tr("Clock"), label: Translation.tr("Desktop clock"), description: Translation.tr("Clock widget on the desktop background"), keywords: ["clock", "widget", "cookie", "digital", "background", "desktop"] },
+        { pageIndex: 14, pageName: overlayPages[14].name, section: Translation.tr("Clock"), label: Translation.tr("Clock style"), description: Translation.tr("Cookie (analog) or digital clock"), keywords: ["clock", "style", "cookie", "digital", "analog", "hands"] },
+        { pageIndex: 14, pageName: overlayPages[14].name, section: Translation.tr("Weather"), label: Translation.tr("Desktop weather widget"), description: Translation.tr("Weather display on the desktop background"), keywords: ["weather", "widget", "background", "temperature"] },
+        { pageIndex: 14, pageName: overlayPages[14].name, section: Translation.tr("Media Controls"), label: Translation.tr("Desktop media widget"), description: Translation.tr("Media player controls on the desktop background"), keywords: ["media", "widget", "background", "player", "music", "album"] },
+        { pageIndex: 14, pageName: overlayPages[14].name, section: Translation.tr("Visualizer"), label: Translation.tr("Audio visualizer"), description: Translation.tr("Audio visualizer bars on the desktop"), keywords: ["visualizer", "audio", "bars", "music", "equalizer", "spectrum"] },
+        { pageIndex: 14, pageName: overlayPages[14].name, section: Translation.tr("System Monitor"), label: Translation.tr("System monitor widget"), description: Translation.tr("CPU, RAM, GPU usage on the desktop"), keywords: ["system", "monitor", "cpu", "ram", "gpu", "usage", "performance"] },
+        { pageIndex: 14, pageName: overlayPages[14].name, section: Translation.tr("Battery"), label: Translation.tr("Desktop battery widget"), description: Translation.tr("Battery status on the desktop background"), keywords: ["battery", "widget", "background", "charge", "power"] },
+        { pageIndex: 14, pageName: overlayPages[14].name, section: Translation.tr("Custom Widgets"), label: Translation.tr("Custom widgets"), description: Translation.tr("Create, install, and manage custom QML widgets"), keywords: ["custom", "widget", "create", "qml", "install", "user", "plugin"] },
         // Themes (page 4)
         { pageIndex: 4, pageName: overlayPages[4].name, section: Translation.tr("Global Style"), label: Translation.tr("Global Style"), description: Translation.tr("Material, Cards, Aurora glass effect, Inir TUI style"), keywords: ["global", "style", "aurora", "inir", "material", "cards", "glass", "tui", "transparency", "blur"] },
         { pageIndex: 4, pageName: overlayPages[4].name, section: Translation.tr("Global Style"), label: Translation.tr("Aurora"), description: Translation.tr("Glass effect with wallpaper blur behind panels"), keywords: ["aurora", "glass", "blur", "transparency", "style", "translucent"] },
@@ -146,7 +152,7 @@ Scope {
         { pageIndex: 6, pageName: overlayPages[6].name, section: Translation.tr("Crosshair overlay"), label: Translation.tr("Crosshair overlay"), description: Translation.tr("In-game crosshair overlay"), keywords: ["crosshair", "overlay", "aim", "game", "fps", "valorant"] },
         { pageIndex: 6, pageName: overlayPages[6].name, section: Translation.tr("Discord overlay"), label: Translation.tr("Discord overlay"), description: Translation.tr("Discord activity in sidebar"), keywords: ["discord", "overlay", "activity", "sidebar", "rich", "presence"] },
         { pageIndex: 6, pageName: overlayPages[6].name, section: Translation.tr("Overlay widgets"), label: Translation.tr("Overlay widgets"), description: Translation.tr("Overlay background dim and animations"), keywords: ["overlay", "darken", "scrim", "zoom", "animation", "opacity", "widgets"] },
-        { pageIndex: 6, pageName: overlayPages[6].name, section: Translation.tr("On-screen display"), label: Translation.tr("On-screen display"), description: Translation.tr("Volume and brightness indicator timeout"), keywords: ["osd", "on-screen", "display", "volume", "brightness", "indicator", "timeout"] },
+        { pageIndex: 6, pageName: overlayPages[6].name, section: Translation.tr("On-screen display"), label: Translation.tr("On-screen display"), description: Translation.tr("Volume, brightness and media indicator settings"), keywords: ["osd", "on-screen", "display", "volume", "brightness", "media", "music", "indicator", "timeout"] },
         // Services (page 7)
         { pageIndex: 7, pageName: overlayPages[7].name, section: Translation.tr("AI"), label: Translation.tr("AI"), description: Translation.tr("System prompt for sidebar AI"), keywords: ["ai", "prompt", "system", "sidebar", "chat"] },
         { pageIndex: 7, pageName: overlayPages[7].name, section: Translation.tr("Music Recognition"), label: Translation.tr("Music Recognition"), description: Translation.tr("Song recognition timeout and interval"), keywords: ["music", "recognition", "song", "timeout", "shazam", "songrec"] },
@@ -505,6 +511,10 @@ Scope {
         function onSettingsOverlayOpenChanged() {
             if (GlobalStates.settingsOverlayOpen) {
                 root._everOpened = true
+                if (GlobalStates.settingsOverlayRequestedPage >= 0) {
+                    root.overlayCurrentPage = GlobalStates.settingsOverlayRequestedPage
+                    GlobalStates.settingsOverlayRequestedPage = -1
+                }
             }
         }
     }
@@ -1623,7 +1633,7 @@ Scope {
 
     // Navigation categories for grouping pages in the rail
     property var navCategories: [
-        { label: Translation.tr("Appearance"), pages: [0, 4, 3] },
+        { label: Translation.tr("Appearance"), pages: [0, 4, 3, 14] },
         { label: Translation.tr("Layout"), pages: [2, 5, 6, 10] },
         { label: Translation.tr("System"), pages: [1, 7, 8] },
         { label: Translation.tr("Reference"), pages: [9, 11, 12, 13] }
@@ -1659,7 +1669,7 @@ Scope {
             name: Translation.tr("Background"),
             shortName: "",
             icon: "texture",
-            desc: Translation.tr("Parallax, effects, widgets"),
+            desc: Translation.tr("Parallax, effects, backdrop"),
             essential: false,
             component: Quickshell.shellPath("modules/settings/BackgroundConfig.qml")
         },
@@ -1742,6 +1752,14 @@ Scope {
             desc: Translation.tr("Version & credits"),
             essential: true,
             component: Quickshell.shellPath("modules/settings/About.qml")
+        },
+        {
+            name: Translation.tr("Widgets"),
+            shortName: "",
+            icon: "widgets",
+            desc: Translation.tr("Clock, weather, media, custom"),
+            essential: false,
+            component: Quickshell.shellPath("modules/settings/DesktopWidgetsConfig.qml")
         }
     ]
 

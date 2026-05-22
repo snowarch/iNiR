@@ -353,6 +353,169 @@ require_qs() {
     fi
 }
 
+# --- Quickshell install-kind detection ----------------------------------------
+# Returns "kind:pkgname". Used by check_qs_abi() and `inir doctor --fix-abi`.
+# Each kind needs a different rebuild path — there is no universal command:
+#   arch-aur-foreign      built locally from AUR     -> paru -S --rebuild
+#   arch-repo-binary      precompiled in 3rd-party repo (CachyOS, chaotic-aur)
+#                                                     -> paru -Sa (forces source build)
+#   arch-repo-official    extra/quickshell           -> sudo pacman -Syu (waits for maintainer)
+#   arch-aur-bin          quickshell-bin (precompiled tarball)
+#                                                     -> switch to quickshell-git
+#   fedora-pkg            rpm/COPR install            -> sudo dnf upgrade
+#   nixos                 nixpkgs/flake               -> nixos-rebuild switch --upgrade
+#   debian                apt/dpkg                    -> compile from source
+#   source                /usr/local install          -> compile from source
+#   unknown               nothing matches             -> point at Quickshell docs
+_inir_quickshell_install_kind() {
+    if command -v pacman >/dev/null 2>&1; then
+        if pacman -Qi quickshell-bin &>/dev/null; then
+            printf 'arch-aur-bin:quickshell-bin'; return
+        elif pacman -Qi quickshell-git &>/dev/null; then
+            if pacman -Qm quickshell-git &>/dev/null; then
+                printf 'arch-aur-foreign:quickshell-git'
+            else
+                printf 'arch-repo-binary:quickshell-git'
+            fi
+            return
+        elif pacman -Qi quickshell &>/dev/null; then
+            if pacman -Qm quickshell &>/dev/null; then
+                printf 'arch-aur-foreign:quickshell'
+            else
+                printf 'arch-repo-official:quickshell'
+            fi
+            return
+        fi
+    elif command -v rpm >/dev/null 2>&1; then
+        local q
+        q="$(rpm -qa 2>/dev/null | grep -E '^quickshell(-git)?-[0-9]' | head -1)"
+        if [[ -n "$q" ]]; then
+            printf 'fedora-pkg:%s' "${q%%-[0-9]*}"; return
+        fi
+    elif [[ -d /etc/nixos ]] || [[ -L /run/current-system ]]; then
+        printf 'nixos:quickshell'; return
+    elif command -v dpkg >/dev/null 2>&1 && dpkg -s quickshell &>/dev/null; then
+        printf 'debian:quickshell'; return
+    elif [[ -x /usr/local/bin/quickshell || -x /usr/local/bin/qs ]]; then
+        printf 'source:'; return
+    fi
+    printf 'unknown:'
+}
+
+# Echoes the rebuild command for a kind:pkg pair. Empty if no auto-rebuild path exists.
+_inir_quickshell_rebuild_cmd() {
+    local kind="${1%%:*}" pkg="${1#*:}"
+    local helper=""
+    if [[ "$kind" == arch-* ]]; then
+        for h in paru yay; do
+            if command -v "$h" >/dev/null 2>&1; then helper="$h"; break; fi
+        done
+        [[ -z "$helper" ]] && return  # No AUR helper means no automatic Arch path
+    fi
+    case "$kind" in
+        arch-aur-foreign)   printf '%s -S --rebuild --noconfirm %s' "$helper" "$pkg" ;;
+        arch-repo-binary)   printf '%s -Sa --noconfirm --skipreview %s' "$helper" "$pkg" ;;
+        arch-repo-official) printf 'sudo pacman -Rdd --noconfirm quickshell && %s -S --noconfirm quickshell-git' "$helper" ;;
+        arch-aur-bin)       printf 'sudo pacman -Rdd --noconfirm quickshell-bin && %s -S --noconfirm quickshell-git' "$helper" ;;
+        fedora-pkg)         printf 'sudo dnf upgrade --refresh -y %s' "$pkg" ;;
+        nixos)              printf 'sudo nixos-rebuild switch --upgrade' ;;
+        debian|source|unknown|*) ;;  # No automatic path
+    esac
+}
+
+# Pure ABI detection: returns 0 if compatible, 1 if mismatched. Sets globals
+# _inir_abi_buildtime / _inir_abi_runtime / _inir_abi_msg for callers to use.
+_inir_quickshell_abi_status() {
+    _inir_abi_buildtime=""
+    _inir_abi_runtime=""
+    _inir_abi_msg=""
+    local qs_bin
+    qs_bin="$(command -v qs 2>/dev/null || command -v quickshell 2>/dev/null)"
+    [[ -z "$qs_bin" ]] && return 0  # No qs installed = no mismatch to detect
+
+    local qs_output
+    qs_output="$("$qs_bin" --version 2>&1 || true)"
+    if echo "$qs_output" | grep -qiE "built against Qt|Qt.*mismatch|incompatible Qt"; then
+        _inir_abi_msg="$(echo "$qs_output" | grep -iE "built against Qt|Qt.*mismatch|incompatible Qt" | head -1)"
+        return 1
+    fi
+
+    if command -v strings >/dev/null 2>&1; then
+        _inir_abi_buildtime="$(strings "$qs_bin" 2>/dev/null | grep -P '^6\.\d+\.\d+$' | head -1 || true)"
+        local qt_lib_path=""
+        [[ -e /usr/lib/libQt6Core.so.6 ]] && qt_lib_path="/usr/lib/libQt6Core.so.6"
+        [[ -z "$qt_lib_path" && -e /usr/lib64/libQt6Core.so.6 ]] && qt_lib_path="/usr/lib64/libQt6Core.so.6"
+        if [[ -n "$qt_lib_path" ]]; then
+            _inir_abi_runtime="$(readlink -f "$qt_lib_path" 2>/dev/null | grep -oP '[0-9]+\.[0-9]+\.[0-9]+$' || true)"
+        fi
+        if [[ -z "$_inir_abi_runtime" ]] && command -v pkg-config >/dev/null 2>&1; then
+            _inir_abi_runtime="$(pkg-config --modversion Qt6Core 2>/dev/null || true)"
+        fi
+        if [[ -n "$_inir_abi_buildtime" && -n "$_inir_abi_runtime" && "$_inir_abi_buildtime" != "$_inir_abi_runtime" ]]; then
+            _inir_abi_msg="Quickshell built against Qt $_inir_abi_buildtime but system has Qt $_inir_abi_runtime"
+            return 1
+        fi
+    fi
+    return 0
+}
+
+# Auto-fix the ABI mismatch by rebuilding quickshell. Returns 0 on success.
+# $1 = "interactive" (default; prompts before running) | "noninteractive" (just runs)
+# Side effect: invalidates ~/.cache/inir/abi-check after a successful rebuild so
+# subsequent check_qs_abi calls re-scan the fresh binary.
+_inir_run_quickshell_rebuild() {
+    local mode="${1:-interactive}"
+
+    # Precheck: don't waste 5 minutes rebuilding when nothing is wrong.
+    if _inir_quickshell_abi_status; then
+        echo "iNiR: Quickshell/Qt ABI is already compatible — nothing to do." >&2
+        if [[ -n "$_inir_abi_buildtime" ]]; then
+            echo "      Build-time Qt: $_inir_abi_buildtime  ≡  Runtime Qt: $_inir_abi_runtime" >&2
+        fi
+        return 0
+    fi
+
+    echo "iNiR: Qt/Quickshell ABI mismatch — $_inir_abi_msg" >&2
+
+    local kind_pkg cmd
+    kind_pkg="$(_inir_quickshell_install_kind)"
+    cmd="$(_inir_quickshell_rebuild_cmd "$kind_pkg")"
+    if [[ -z "$cmd" ]]; then
+        echo "iNiR: cannot auto-rebuild Quickshell — install kind '${kind_pkg%%:*}' has no automatic path." >&2
+        echo "      See: https://quickshell.org/docs/master/guide/install-setup" >&2
+        return 1
+    fi
+
+    echo "iNiR: planned fix → ${cmd//--noconfirm/}" >&2
+
+    if [[ "$mode" == "interactive" && -t 0 && -t 1 ]]; then
+        local resp
+        read -r -p "Run this fix now to rebuild quickshell? [Y/n] " resp || true
+        case "${resp:-}" in
+            ""|[Yy]*) ;;
+            *) echo "iNiR: rebuild declined." >&2; return 1 ;;
+        esac
+        # Interactive: strip --noconfirm so the AUR helper shows full progress
+        # and prompts naturally. The user already confirmed they want to proceed.
+        cmd="${cmd//--noconfirm/}"
+    fi
+
+    echo "" >&2
+    echo "iNiR: rebuilding quickshell against the current Qt version..." >&2
+    echo "      This compiles from source and may take 2-5 minutes." >&2
+    echo "" >&2
+    if eval "$cmd"; then
+        rm -f "${XDG_CACHE_HOME:-$HOME/.cache}/inir/abi-check" 2>/dev/null
+        echo "" >&2
+        echo "iNiR: Quickshell rebuilt successfully. Run 'inir restart' to apply." >&2
+        return 0
+    fi
+    echo "" >&2
+    echo "iNiR: rebuild failed. Try manually:" >&2
+    echo "      ${cmd}" >&2
+    return 1
+}
+
 check_qs_abi() {
     # Quickshell uses Qt private APIs — any Qt minor version bump (e.g. 6.10→6.11)
     # breaks ABI and crashes the shell on any UI interaction.
@@ -383,7 +546,9 @@ check_qs_abi() {
             qt_lib_path="/usr/lib64/libQt6Core.so.6"
         fi
         qt_mtime="$(stat -c %Y "$(readlink -f "$qt_lib_path" 2>/dev/null || echo "$qt_lib_path")" 2>/dev/null || echo 0)"
-        abi_cache_key="${qs_mtime}:${qt_mtime}"
+        # v2 prefix invalidates pre-fix caches that passed under major.minor-only comparison
+        # (those would have wrongly cached a pass for e.g. 6.11.0 -> 6.11.1 patch bumps).
+        abi_cache_key="v2:${qs_mtime}:${qt_mtime}"
 
         if [[ -f "$abi_cache_file" ]] && [[ "$(<"$abi_cache_file")" == "$abi_cache_key" ]]; then
             # Cached pass — same binaries as last successful check
@@ -399,13 +564,11 @@ check_qs_abi() {
         if [[ -z "$runtime_qt" ]] && command -v pkg-config >/dev/null 2>&1; then
             runtime_qt="$(pkg-config --modversion Qt6Core 2>/dev/null || true)"
         fi
-        if [[ -n "$buildtime_qt" && -n "$runtime_qt" ]]; then
-            local build_minor="${buildtime_qt%.*}"
-            local runtime_minor="${runtime_qt%.*}"
-            if [[ "$build_minor" != "$runtime_minor" ]]; then
-                mismatch_detected=true
-                mismatch_msg="Quickshell built against Qt $buildtime_qt but system has Qt $runtime_qt"
-            fi
+        # Compare full version (major.minor.patch). Quickshell warns on patch bumps too
+        # (private API changes between 6.11.0 and 6.11.1 are common), so iNiR must match.
+        if [[ -n "$buildtime_qt" && -n "$runtime_qt" && "$buildtime_qt" != "$runtime_qt" ]]; then
+            mismatch_detected=true
+            mismatch_msg="Quickshell built against Qt $buildtime_qt but system has Qt $runtime_qt"
         fi
 
         # Cache successful result so next start skips the expensive strings scan
@@ -425,40 +588,36 @@ check_qs_abi() {
     echo "" >&2
     echo "Quickshell was built against a different Qt version than what is installed." >&2
     echo "The shell will crash on any UI interaction until quickshell is rebuilt." >&2
-    echo "" >&2
-    if command -v pacman >/dev/null 2>&1; then
-        local rebuild_pkg=""
-        if pacman -Qi quickshell-git &>/dev/null 2>&1; then
-            rebuild_pkg="quickshell-git"
-        elif pacman -Qi quickshell-bin &>/dev/null 2>&1; then
-            rebuild_pkg="quickshell-bin"
-        elif pacman -Qi quickshell &>/dev/null 2>&1; then
-            rebuild_pkg="quickshell"
+
+    # Try auto-rebuild: interactive when in a terminal, noninteractive in service mode.
+    if [[ -t 0 && -t 1 ]]; then
+        if _inir_run_quickshell_rebuild interactive; then
+            return 0
         fi
-        if [[ -n "$rebuild_pkg" ]]; then
-            local helper=""
-            for h in yay paru; do
-                if command -v "$h" >/dev/null 2>&1; then
-                    helper="$h"
-                    break
-                fi
-            done
-            if [[ -n "$helper" ]]; then
-                if [[ "$rebuild_pkg" == "quickshell" ]]; then
-                    echo "Fix: sudo pacman -Syu" >&2
-                elif pacman -Qm "$rebuild_pkg" &>/dev/null; then
-                    echo "Fix: $helper -S --rebuild $rebuild_pkg" >&2
-                else
-                    echo "Fix: $helper -Sa $rebuild_pkg" >&2
-                fi
-            else
-                echo "Fix: rebuild $rebuild_pkg from source (install yay or paru first)" >&2
-            fi
-        fi
-    else
-        echo "Fix: rebuild quickshell from source against the current Qt version" >&2
+    elif [[ "${_session_boot:-}" == "true" ]]; then
+        # In service mode, we can't reliably rebuild (no TTY for sudo).
+        # Instead of blocking startup entirely, warn and continue.
+        # The shell may partially work — enough for the user to open a terminal
+        # and run the fix. Blocking with exit 1 leaves them with no shell at all.
+        echo "" >&2
+        echo "WARNING: Continuing despite ABI mismatch. Some features may crash." >&2
+        echo "         Fix: inir doctor --fix-abi" >&2
+        echo "" >&2
+        return 0
     fi
-    echo "Or run: inir doctor  (to auto-detect and fix)" >&2
+
+    # Auto-fix declined, unavailable, or failed — fall through to manual instructions.
+    echo "" >&2
+    local _kind_pkg _fix_cmd
+    _kind_pkg="$(_inir_quickshell_install_kind)"
+    _fix_cmd="$(_inir_quickshell_rebuild_cmd "$_kind_pkg")"
+    if [[ -n "$_fix_cmd" ]]; then
+        echo "Manual fix: ${_fix_cmd//--noconfirm/}" >&2
+    else
+        echo "Manual fix: rebuild quickshell from source against the current Qt version." >&2
+        echo "            See https://quickshell.org/docs/master/guide/install-setup" >&2
+    fi
+    echo "Or run non-interactively: inir doctor --fix-abi --noninteractive" >&2
     echo "" >&2
     exit 1
 }
@@ -1913,6 +2072,13 @@ run_service_command() {
             ;;
         logs)
             require_command journalctl
+            if [[ "${1:-}" == "--full" ]]; then
+                shift
+                local cfg_path
+                cfg_path="$(readlink -f "${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/inir" 2>/dev/null)"
+                [[ -z "$cfg_path" ]] && cfg_path="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/inir"
+                exec qs -p "$cfg_path" log "$@"
+            fi
             exec journalctl --user-unit inir.service "$@"
             ;;
         -h|--help|"")
@@ -2312,11 +2478,11 @@ case "$command_name" in
             # ── Session boot fast path ──
             # The service unit pre-seeds QT_SCALE_FACTOR and QT_LOGGING_RULES, so
             # apply_shell_scale / apply_qt_logging_rules are no-ops here.
-            # Skip: ABI check, version sync, instance detection, service-active guard.
             # Systemd manages lifecycle (Restart=on-failure) and I/O priority.
             _skip_running_detect=true
             resolve_config_dir
             apply_hot_reload_policy_for_dir "$config_dir"
+            check_qs_abi
             wait_for_wayland_socket       # block until compositor socket exists
             apply_qt_runtime_env          # WAYLAND_DISPLAY + platformtheme fallback
             ensure_systemd_graphical_env & # export env to systemd for other services
@@ -2704,7 +2870,39 @@ case "$command_name" in
     cleanup-orphans)
         cleanup_orphans
         ;;
-    doctor|migrate|status|update|reinstall|rollback|my-changes|uninstall|config|info|backup|logs)
+    doctor)
+        # Quick path: `inir doctor --fix-abi` rebuilds quickshell directly without
+        # running the full 22-step pipeline. Useful for pacman hooks and scripts.
+        fix_abi_only=false
+        fix_abi_mode=interactive
+        while [[ $# -gt 0 ]]; do
+            case "$1" in
+                --fix-abi)
+                    fix_abi_only=true
+                    shift
+                    ;;
+                -n|--noninteractive|--non-interactive|-y|--yes)
+                    fix_abi_mode=noninteractive
+                    shift
+                    ;;
+                -c|--config)
+                    parse_config_flag "$@"
+                    shift 2
+                    ;;
+                *)
+                    break
+                    ;;
+            esac
+        done
+        if $fix_abi_only; then
+            require_qs
+            _inir_run_quickshell_rebuild "$fix_abi_mode"
+            exit $?
+        fi
+        setup_dir="$(resolve_setup_dir)"
+        run_setup_command "$setup_dir" "$command_name" "$@"
+        ;;
+    migrate|status|update|reinstall|rollback|my-changes|uninstall|config|info|backup|logs)
         while [[ $# -gt 0 ]]; do
             case "$1" in
                 -c|--config)

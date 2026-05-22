@@ -26,7 +26,7 @@ Scope {
         interval: 50
         onTriggered: root._pluginTransitioning = false
     }
-    readonly property real effectiveSidebarWidth: pluginViewActive
+    readonly property real effectiveSidebarWidth: (pluginViewActive || GlobalStates.sidebarLeftExpanded)
         ? Appearance.sizes.sidebarWidthExtended
         : sidebarWidth
 
@@ -52,10 +52,12 @@ Scope {
                     Qt.callLater(() => { root._sidebarShown = true })
                 } else if (root.instantOpen || !Appearance.animationsEnabled) {
                     root._sidebarShown = false
+                    GlobalStates.sidebarLeftExpanded = false
                     _closeTimer.stop()
                     sidebarRoot.visible = false
                 } else {
                     root._sidebarShown = false
+                    GlobalStates.sidebarLeftExpanded = false
                     _closeTimer.restart()
                 }
             }
@@ -299,6 +301,29 @@ Scope {
         }
     }
 
+    // Detached AI chat window — same process, shares Ai service + theming
+    Loader {
+        active: GlobalStates.aiChatDetached
+        sourceComponent: FloatingWindow {
+            id: aiChatWindow
+            visible: true
+            title: "iNiR AI Chat"
+            implicitWidth: 520
+            implicitHeight: 780
+            minimumSize: Qt.size(380, 400)
+            color: Appearance.colors.colLayer0
+
+            onVisibleChanged: {
+                if (!visible) GlobalStates.aiChatDetached = false
+            }
+
+            AiChat {
+                anchors.fill: parent
+                anchors.margins: 8
+            }
+        }
+    }
+
     IpcHandler {
         target: "sidebarLeft"
 
@@ -312,6 +337,16 @@ Scope {
 
         function open(): void {
             GlobalStates.sidebarLeftOpen = true;
+        }
+
+        function detach(): void {
+            GlobalStates.sidebarLeftOpen = false;
+            GlobalStates.sidebarLeftExpanded = false;
+            GlobalStates.aiChatDetached = true;
+        }
+
+        function attach(): void {
+            GlobalStates.aiChatDetached = false;
         }
     }
 

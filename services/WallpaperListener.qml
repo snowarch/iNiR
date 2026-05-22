@@ -12,6 +12,10 @@ import "root:modules/common/functions/md5.js" as MD5
 Singleton {
     id: root
 
+    function _log(...args): void {
+        if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
+    }
+
     // Reactive properties that trigger refresh
     readonly property bool multiMonitorEnabled: Config.options?.background?.multiMonitor?.enable ?? false
     readonly property var wallpapersByMonitorRef: Config.options?.background?.wallpapersByMonitor ?? []
@@ -148,7 +152,7 @@ Singleton {
         const newStr = JSON.stringify(result)
         if (JSON.stringify(effectivePerMonitor) === newStr) return
         effectivePerMonitor = result
-        console.log("[WallpaperListener] Refreshed effective per-monitor map:", newStr)
+        _log("[WallpaperListener] Refreshed effective per-monitor map:", newStr)
     }
 
     // Get monitor name for a screen (compositor-agnostic)
@@ -166,29 +170,29 @@ Singleton {
     }
 
     Component.onCompleted: {
-        console.log("[WallpaperListener] Service initialized")
+        _log("[WallpaperListener] Service initialized")
         refresh()
     }
 
     onMultiMonitorEnabledChanged: {
-        console.log("[WallpaperListener] Multi-monitor mode changed:", multiMonitorEnabled)
+        _log("[WallpaperListener] Multi-monitor mode changed:", multiMonitorEnabled)
         refresh()
     }
 
     onWallpapersByMonitorRefChanged: {
-        console.log("[WallpaperListener] Wallpapers by monitor config changed")
+        _log("[WallpaperListener] Wallpapers by monitor config changed")
         refresh()
     }
 
     onGlobalWallpaperPathChanged: {
-        console.log("[WallpaperListener] Global wallpaper path changed:", globalWallpaperPath)
+        _log("[WallpaperListener] Global wallpaper path changed:", globalWallpaperPath)
         refresh()
     }
 
     Connections {
         target: Quickshell
         function onScreensChanged() {
-            console.log("[WallpaperListener] Screens changed, refreshing...")
+            _log("[WallpaperListener] Screens changed, refreshing...")
             root.refresh()
         }
     }

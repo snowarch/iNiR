@@ -31,8 +31,12 @@ Singleton {
         !link.source.isStream && !link.source.isSink && link.target.isStream
     ).length > 0
 
-    readonly property bool micMuted: source?.audio?.muted ?? false
-    readonly property real micVolume: source?.audio?.volume ?? 0
+    property bool _micMuted: false
+    property real _micVolume: source?.audio?.volume ?? 0
+    readonly property bool micMuted: _micMuted
+    readonly property real micVolume: _micVolume
+
+    onSourceChanged: _refreshMicState()
 
     function friendlyDeviceName(node) {
         return node ? (node.nickname || node.description || Translation.tr("Unknown")) : Translation.tr("Unknown");
@@ -101,13 +105,45 @@ Singleton {
     }
 
     function setSourceVolume(target: real): void {
-        if (!root.source?.audio) return
-        root.source.audio.volume = Math.max(0, Math.min(root.hardMaxValue, target))
+        const clamped = Math.max(0, Math.min(root.hardMaxValue, target))
+        root._micVolume = clamped
+        if (root.source?.audio)
+            root.source.audio.volume = clamped
+        wpctlSetSourceVolume.exec(["wpctl", "set-volume", "@DEFAULT_AUDIO_SOURCE@", String(clamped)])
     }
 
     function toggleMicMute() {
-        if (!root.source?.audio) return
-        root.source.audio.muted = !root.source.audio.muted
+        const shouldMute = !root._micMuted
+        root._micMuted = shouldMute
+        const muteVal = shouldMute ? "1" : "0"
+        // Mute every source device (hardware + virtual like EasyEffects)
+        // so apps reading directly from hardware are also silenced.
+        for (const dev of root.inputDevices) {
+            const nodeId = Number(dev.id ?? 0)
+            if (Number.isFinite(nodeId) && nodeId > 0)
+                Quickshell.execDetached(["wpctl", "set-mute", String(nodeId), muteVal])
+        }
+        wpctlSetMicMute.exec(["wpctl", "set-mute", "@DEFAULT_AUDIO_SOURCE@", muteVal])
+    }
+
+    function _hardwareSourceId(): int {
+        for (const dev of root.inputDevices) {
+            const props = dev.properties ?? {}
+            const nodeName = String(props["node.name"] ?? dev.name ?? "")
+            const appId = String(props["application.id"] ?? "")
+            const isVirtual = String(props["node.virtual"] ?? "false") === "true"
+            if (nodeName === "easyeffects_source" || appId === "com.github.wwmm.easyeffects" || isVirtual)
+                continue
+            const id = Number(dev.id ?? 0)
+            if (id > 0) return id
+        }
+        return 0
+    }
+
+    function _refreshMicState(): void {
+        const hwId = root._hardwareSourceId()
+        const target = hwId > 0 ? String(hwId) : "@DEFAULT_AUDIO_SOURCE@"
+        _wpctlGetMicState.exec(["wpctl", "get-volume", target])
     }
 
     Process {
@@ -143,6 +179,36 @@ Singleton {
     Process {
         id: wpctlDecrementSinkVolume
         command: ["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", "2%-"]
+    }
+
+    Process {
+        id: wpctlSetMicMute
+        command: ["wpctl", "set-mute", "@DEFAULT_AUDIO_SOURCE@", "1"]
+        onExited: root._refreshMicState()
+    }
+
+    Process {
+        id: wpctlSetSourceVolume
+        command: ["wpctl", "set-volume", "@DEFAULT_AUDIO_SOURCE@", "1.0"]
+        onExited: root._refreshMicState()
+    }
+
+    Process {
+        id: _wpctlGetMicState
+        command: ["wpctl", "get-volume", "@DEFAULT_AUDIO_SOURCE@"]
+        stdout: StdioCollector { id: _micStateCollector }
+        onExited: (exitCode, _exitStatus) => {
+            if (exitCode !== 0) return
+            const out = (_micStateCollector.text?.trim() ?? "")
+            if (!out.length) return
+            root._micMuted = out.toUpperCase().includes("MUTED")
+            const match = out.match(/Volume:\s*([0-9]*\.?[0-9]+)/i)
+            if (match && match[1] !== undefined) {
+                const parsed = Number(match[1])
+                if (Number.isFinite(parsed))
+                    root._micVolume = Math.max(0, Math.min(root.hardMaxValue, parsed))
+            }
+        }
     }
 
     // Set sink volume safely. When protection is enabled, large jumps are rejected as "Illegal increment".
@@ -311,6 +377,8 @@ Singleton {
         command = ["/usr/bin/pw-play", "--volume", volume.toString(), oggPath];
         Quickshell.execDetached(command);
     }
+
+    Component.onCompleted: _refreshMicState()
 
     // IPC handlers for external control (keybinds, etc.)
     IpcHandler {

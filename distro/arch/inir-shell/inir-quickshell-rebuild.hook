@@ -1,0 +1,12 @@
+[Trigger]
+Operation = Upgrade
+Operation = Install
+Type = Package
+Target = qt6-base
+Target = qt6-declarative
+Target = qt6-wayland
+
+[Action]
+Description = Reminding to rebuild Quickshell after Qt update (iNiR)...
+When = PostTransaction
+Exec = /usr/bin/sh -c 'printf "\n\033[1;33m[iNiR]\033[0m Qt was updated. Quickshell needs a rebuild to match the new Qt ABI.\n        Run: \033[1;36minir doctor --fix-abi\033[0m\n        \033[2mor non-interactively: inir doctor --fix-abi --noninteractive\033[0m\n\n"'

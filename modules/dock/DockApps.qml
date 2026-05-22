@@ -329,27 +329,49 @@ Item {
         return true
     }
 
+    function _toplevelLiveKey(toplevel) {
+        if (!toplevel) return ""
+        if (toplevel._sourceKey !== undefined && toplevel._sourceKey !== null)
+            return String(toplevel._sourceKey)
+        return `${toplevel.appId || ""}::${toplevel.title || ""}`
+    }
+
     function _doRebuildDockItems() {
         const pinnedApps = Config.options?.dock?.pinnedApps ?? [];
         const ignoredRegexes = _getIgnoredRegexes();
         const separatePinnedFromRunning = root.separatePinnedFromRunning;
 
         // Get all open windows
-        const allToplevels = CompositorService.sortedToplevels && CompositorService.sortedToplevels.length
-                ? CompositorService.sortedToplevels
-                : ToplevelManager.toplevels.values;
+        const tmToplevels = ToplevelManager.toplevels.values;
+        const sorted = CompositorService.sortedToplevels;
+        const useSorted = sorted && sorted.length > 0;
+        const allToplevels = useSorted ? sorted : tmToplevels;
+
+        const liveToplevelCounts = new Map();
+        if (useSorted) {
+            for (const tl of tmToplevels) {
+                const key = root._toplevelLiveKey(tl);
+                liveToplevelCounts.set(key, (liveToplevelCounts.get(key) ?? 0) + 1);
+            }
+        }
 
         // Build map of running apps (apps with open windows)
         const runningAppsMap = new Map();
         for (const toplevel of allToplevels) {
             if (!toplevel.appId) continue;
             if (toplevel.appId === "" || toplevel.appId === "null") continue;
+            if (useSorted) {
+                const key = root._toplevelLiveKey(toplevel);
+                const count = liveToplevelCounts.get(key) ?? 0;
+                if (count <= 0) continue;
+                liveToplevelCounts.set(key, count - 1);
+            }
+            const lowerAppId = toplevel.appId.toLowerCase();
 
             if (ignoredRegexes.some(re => re.test(toplevel.appId))) {
                 continue;
             }
 
-            const lowerAppId = toplevel.appId.toLowerCase();
             if (!runningAppsMap.has(lowerAppId)) {
                 runningAppsMap.set(lowerAppId, {
                     appId: toplevel.appId,

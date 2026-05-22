@@ -1,0 +1,47 @@
+{
+    "name": "Quick Glance",
+    "icon": "dashboard",
+    "version": "1.0",
+    "author": "inir",
+    "description": "A configurable at-a-glance system strip",
+    "category": "system",
+    "main": "ExampleWidget.qml",
+    "defaultConfig": {
+        "placementStrategy": "free",
+        "widgetScale": 100,
+        "widgetOpacity": 100,
+        "colorMode": "auto",
+        "dim": 0,
+        "x": 300,
+        "y": 300,
+        "surfaceStyle": "pill",
+        "showLabels": false,
+        "padding": 10,
+        "spacing": 10,
+        "fontScale": 100
+    },
+    "configKeys": {
+        "surfaceStyle": {
+            "type": "string",
+            "default": "pill",
+            "label": "Surface style",
+            "options": [
+                { "label": "Pill", "value": "pill" },
+                { "label": "Card", "value": "card" },
+                { "label": "Outline", "value": "outline" },
+                { "label": "Minimal", "value": "minimal" }
+            ]
+        },
+        "showLabels": { "type": "bool", "default": false, "label": "Show labels" },
+        "padding": { "type": "int", "default": 10, "min": 0, "max": 32, "step": 1, "label": "Padding" },
+        "spacing": { "type": "int", "default": 10, "min": 2, "max": 32, "step": 1, "label": "Spacing" },
+        "fontScale": { "type": "int", "default": 100, "min": 70, "max": 160, "step": 5, "label": "Font scale" },
+        "showTime": { "type": "bool", "default": true, "label": "Show time" },
+        "showWeather": { "type": "bool", "default": true, "label": "Show weather" },
+        "showBattery": { "type": "bool", "default": true, "label": "Show battery" },
+        "showNetwork": { "type": "bool", "default": true, "label": "Show network" },
+        "showVolume": { "type": "bool", "default": true, "label": "Show volume" }
+    },
+    "resizableAxes": { "uniform": "widgetScale" },
+    "defaultSize": { "width": 400, "height": 40 }
+}

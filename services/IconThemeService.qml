@@ -9,6 +9,10 @@ import qs.modules.common.functions
 Singleton {
     id: root
 
+    function _log(...args): void {
+        if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
+    }
+
     property var availableThemes: []
     property string currentTheme: ""
     property string dockTheme: ""  // Separate theme for dock icons
@@ -142,7 +146,7 @@ Singleton {
         const savedTheme = Config.ready ? (Config.options?.appearance?.iconTheme ?? "") : ""
         if (savedTheme && String(savedTheme).trim().length > 0) {
             root.currentTheme = String(savedTheme).trim()
-            console.log("[IconThemeService] Restoring saved icon theme:", root.currentTheme)
+            _log("[IconThemeService] Restoring saved icon theme:", root.currentTheme)
             gsettingsSetProc.themeName = root.currentTheme
             gsettingsSetProc.skipRestart = true
             gsettingsSetProc.running = false
@@ -161,7 +165,7 @@ Singleton {
             return;
 
         const themeStr = String(themeName).trim()
-        console.log("[IconThemeService] Setting icon theme:", themeStr)
+        _log("[IconThemeService] Setting icon theme:", themeStr)
 
         // Update UI immediately; actual system change follows via gsettings.
         root.currentTheme = themeStr
@@ -191,7 +195,7 @@ Singleton {
         repeat: false
         onTriggered: {
             root._restartQueued = false
-            console.log("[IconThemeService] Restarting shell now...")
+            _log("[IconThemeService] Restarting shell now...")
             Quickshell.execDetached(["/usr/bin/bash", Quickshell.shellPath("scripts/restart-shell.sh")])
         }
     }
@@ -209,7 +213,7 @@ Singleton {
         property bool skipRestart: false
         command: ["/usr/bin/gsettings", "set", "org.gnome.desktop.interface", "icon-theme", gsettingsSetProc.themeName]
         onExited: (exitCode, exitStatus) => {
-            console.log("[IconThemeService] gsettings set exited:", exitCode, "theme:", gsettingsSetProc.themeName)
+            _log("[IconThemeService] gsettings set exited:", exitCode, "theme:", gsettingsSetProc.themeName)
             // Sync to KDE/Qt apps via kdeglobals
             kdeGlobalsUpdateProc.themeName = gsettingsSetProc.themeName
             kdeGlobalsUpdateProc.skipRestart = gsettingsSetProc.skipRestart
@@ -277,7 +281,7 @@ with open(config_path, "w") as f:
             kwriteconfigProc.themeName
         ]
         onExited: (exitCode, exitStatus) => {
-            console.log("[IconThemeService] kwriteconfig exited:", exitCode, "theme:", kwriteconfigProc.themeName)
+            _log("[IconThemeService] kwriteconfig exited:", exitCode, "theme:", kwriteconfigProc.themeName)
             // Also sync to qt5ct and qt6ct
             qt5ctProc.themeName = kwriteconfigProc.themeName
             qt5ctProc.running = false
@@ -318,7 +322,7 @@ else:
 `
         ]
         onExited: (exitCode, exitStatus) => {
-            console.log("[IconThemeService] qt5ct updated:", exitCode === 0 ? "success" : "failed")
+            _log("[IconThemeService] qt5ct updated:", exitCode === 0 ? "success" : "failed")
         }
     }
 
@@ -352,7 +356,7 @@ else:
 `
         ]
         onExited: (exitCode, exitStatus) => {
-            console.log("[IconThemeService] qt6ct updated:", exitCode === 0 ? "success" : "failed")
+            _log("[IconThemeService] qt6ct updated:", exitCode === 0 ? "success" : "failed")
             // Also sync to GTK settings.ini files
             gtkSettingsProc.themeName = qt6ctProc.themeName
             gtkSettingsProc.running = false
@@ -389,7 +393,7 @@ for subdir in ["gtk-3.0", "gtk-4.0"]:
 `
         ]
         onExited: (exitCode, exitStatus) => {
-            console.log("[IconThemeService] GTK settings.ini updated:", exitCode === 0 ? "success" : "failed")
+            _log("[IconThemeService] GTK settings.ini updated:", exitCode === 0 ? "success" : "failed")
         }
     }
 

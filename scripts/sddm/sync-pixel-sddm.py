@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Sync ii-pixel SDDM theme colors with current Material You palette.
 
-Reads generated colors from iNiR's colors.json and updates
+Reads generated colors from iNiR's generated palette and updates
 the ii-pixel theme.conf with matching colors.
 Reads wallpaper path from iNiR state and updates background image.
 
@@ -55,6 +55,8 @@ STATE_DIR = os.path.join(
     os.environ.get("XDG_STATE_HOME") or os.path.join(_real_home, ".local", "state"),
     "quickshell",
 )
+APP_PALETTE_JSON = os.path.join(STATE_DIR, "user", "generated", "app-palette.json")
+PALETTE_JSON = os.path.join(STATE_DIR, "user", "generated", "palette.json")
 COLORS_JSON = os.path.join(STATE_DIR, "user", "generated", "colors.json")
 
 CONFIG_JSON = os.path.join(
@@ -65,16 +67,24 @@ CONFIG_JSON = os.path.join(
 
 
 def read_colors():
-    """Read Material You colors from iNiR's generated colors.json.
+    """Read Material You colors from iNiR's generated palette.
 
     Handles both output formats:
     - Flat:   { "primary": "#...", "on_primary": "#...", ... }   (current contract)
     - Nested: { "colors": { "dark": { "primary": "#...", ... } } }
     """
-    if not os.path.isfile(COLORS_JSON):
-        print(f"[sddm-pixel] colors.json not found: {COLORS_JSON}")
+    source = next(
+        (
+            path
+            for path in (APP_PALETTE_JSON, PALETTE_JSON, COLORS_JSON)
+            if os.path.isfile(path)
+        ),
+        None,
+    )
+    if source is None:
+        print(f"[sddm-pixel] generated palette not found: {APP_PALETTE_JSON}")
         return None
-    with open(COLORS_JSON) as f:
+    with open(source) as f:
         data = json.load(f)
 
     # Try nested format first, then fall back to flat
@@ -84,17 +94,19 @@ def read_colors():
         if "primary" in data or "on_surface" in data:
             dark = data
         else:
-            print("[sddm-pixel] No dark colors in colors.json")
+            print("[sddm-pixel] No dark colors in generated palette")
             return None
 
     return {
-        "primaryColor": dark.get("primary", "#cba6f7"),
-        "onPrimaryColor": dark.get("on_primary", "#1e1e2e"),
-        "surfaceColor": dark.get("surface", "#1e1e2e"),
-        "surfaceContainerColor": dark.get("surface_container", "#181825"),
-        "onSurfaceColor": dark.get("on_surface", "#cdd6f4"),
-        "onSurfaceVariantColor": dark.get("on_surface_variant", "#9399b2"),
-        "backgroundColor": dark.get("background", "#1e1e2e"),
+        "primaryColor": dark.get("app_accent") or dark.get("primary", "#cba6f7"),
+        "onPrimaryColor": dark.get("app_on_accent") or dark.get("on_primary", "#1e1e2e"),
+        "surfaceColor": dark.get("app_background") or dark.get("surface", "#1e1e2e"),
+        "surfaceContainerColor": dark.get("app_surface")
+        or dark.get("surface_container", "#181825"),
+        "onSurfaceColor": dark.get("app_foreground") or dark.get("on_surface", "#cdd6f4"),
+        "onSurfaceVariantColor": dark.get("app_subtext")
+        or dark.get("on_surface_variant", "#9399b2"),
+        "backgroundColor": dark.get("app_background") or dark.get("background", "#1e1e2e"),
         "errorColor": dark.get("error", "#f38ba8"),
     }
 

@@ -98,6 +98,520 @@ ContentPage {
                 }
             }
         }
+
+        // AI Providers
+        SettingsGroup {
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: 4
+                Layout.rightMargin: 4
+                Layout.bottomMargin: 4
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Translation.tr("AI Providers")
+                    font.pixelSize: Appearance.font.pixelSize.normal
+                    font.weight: Font.Medium
+                    color: Appearance.colors.colOnLayer1
+                }
+
+                RippleButton {
+                    implicitWidth: addProviderBtnRow.implicitWidth + 16
+                    implicitHeight: 32
+                    buttonRadius: Appearance.rounding.small
+                    colBackground: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.88)
+                    colBackgroundHover: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.80)
+                    onClicked: {
+                        providerForm.editingIndex = -1
+                        providerForm.titleText = Translation.tr("Add AI Provider")
+                        providerForm.saveLabelText = Translation.tr("Add")
+                        providerNameInput.text = ""
+                        providerEndpointInput.text = ""
+                        providerForm.selectedFormat = "openai"
+                        providerForm._manualOverride = false
+                        providerModelInput.text = ""
+                        providerApiKeyInput.text = ""
+                        providerForm.expanded = true
+                    }
+
+                    contentItem: RowLayout {
+                        id: addProviderBtnRow
+                        anchors.centerIn: parent
+                        spacing: 4
+
+                        MaterialSymbol {
+                            text: "add"
+                            iconSize: 16
+                            color: Appearance.colors.colPrimary
+                        }
+                        StyledText {
+                            text: Translation.tr("Add Provider")
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            font.weight: Font.Medium
+                            color: Appearance.colors.colPrimary
+                        }
+                    }
+                }
+            }
+
+            Repeater {
+                model: Config.options?.ai?.extraModels ?? []
+
+                delegate: Item {
+                    id: providerItem
+                    required property var modelData
+                    required property int index
+                    Layout.fillWidth: true
+                    implicitHeight: providerRow.implicitHeight + 12
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Appearance.rounding.small
+                        color: providerMA.containsMouse ? Appearance.colors.colLayer1Hover : "transparent"
+                        Behavior on color { ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+
+                        RowLayout {
+                            id: providerRow
+                            anchors.fill: parent
+                            anchors.margins: 8
+                            spacing: 10
+
+                            MaterialSymbol {
+                                readonly property var formatIcons: ({
+                                    "openai": "smart_toy",
+                                    "gemini": "auto_awesome",
+                                    "mistral": "smart_toy",
+                                    "anthropic": "psychology",
+                                    "openai-response": "bolt"
+                                })
+                                text: formatIcons[providerItem.modelData?.api_format] ?? "smart_toy"
+                                iconSize: 20
+                                color: Appearance.m3colors.m3tertiary
+                            }
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 1
+
+                                StyledText {
+                                    Layout.fillWidth: true
+                                    text: providerItem.modelData?.name ?? providerItem.modelData?.model ?? Translation.tr("Unnamed")
+                                    font.pixelSize: Appearance.font.pixelSize.normal
+                                    color: Appearance.colors.colOnLayer1
+                                    elide: Text.ElideRight
+                                }
+
+                                StyledText {
+                                    Layout.fillWidth: true
+                                    text: providerItem.modelData?.model ?? ""
+                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                    color: Appearance.colors.colSubtext
+                                    elide: Text.ElideMiddle
+                                }
+                            }
+
+                            Rectangle {
+                                width: fmtLabel.implicitWidth + 12
+                                height: 22
+                                radius: Appearance.rounding.full
+                                color: ColorUtils.transparentize(Appearance.m3colors.m3tertiary, 0.88)
+
+                                readonly property var formatLabels: ({
+                                    "openai": "OpenAI",
+                                    "gemini": "Gemini",
+                                    "mistral": "Mistral",
+                                    "anthropic": "Anthropic",
+                                    "openai-response": "Responses"
+                                })
+
+                                StyledText {
+                                    id: fmtLabel
+                                    anchors.centerIn: parent
+                                    text: parent.formatLabels[providerItem.modelData?.api_format] ?? providerItem.modelData?.api_format ?? "OpenAI"
+                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                    font.weight: Font.Medium
+                                    color: Appearance.m3colors.m3tertiary
+                                }
+                            }
+
+                            RippleButton {
+                                implicitWidth: 28
+                                implicitHeight: 28
+                                buttonRadius: 14
+                                colBackground: "transparent"
+                                colBackgroundHover: Appearance.colors.colLayer1Hover
+                                onClicked: {
+                                    const m = providerItem.modelData
+                                    providerForm.editingIndex = providerItem.index
+                                    providerForm.titleText = Translation.tr("Edit AI Provider")
+                                    providerForm.saveLabelText = Translation.tr("Save")
+                                    providerNameInput.text = m?.name ?? ""
+                                    providerEndpointInput.text = m?.endpoint ?? ""
+                                    providerForm.selectedFormat = m?.api_format ?? "openai"
+                                    providerForm._manualOverride = true
+                                    providerModelInput.text = m?.model ?? ""
+                                    providerApiKeyInput.text = ""
+                                    providerForm.expanded = true
+                                }
+
+                                contentItem: MaterialSymbol {
+                                    anchors.centerIn: parent
+                                    text: "edit"
+                                    iconSize: 14
+                                    color: Appearance.colors.colSubtext
+                                }
+
+                                StyledToolTip { text: Translation.tr("Edit") }
+                            }
+
+                            RippleButton {
+                                implicitWidth: 28
+                                implicitHeight: 28
+                                buttonRadius: 14
+                                colBackground: "transparent"
+                                colBackgroundHover: Appearance.colors.colLayer1Hover
+                                onClicked: {
+                                    let models = [...(Config.options?.ai?.extraModels ?? [])]
+                                    models.splice(providerItem.index, 1)
+                                    Config.setNestedValue("ai.extraModels", models)
+                                }
+
+                                contentItem: MaterialSymbol {
+                                    anchors.centerIn: parent
+                                    text: "close"
+                                    iconSize: 14
+                                    color: Appearance.colors.colSubtext
+                                }
+
+                                StyledToolTip { text: Translation.tr("Remove") }
+                            }
+                        }
+
+                        MouseArea {
+                            id: providerMA
+                            anchors.fill: parent
+                            z: -1
+                            hoverEnabled: true
+                        }
+                    }
+                }
+            }
+
+            ColumnLayout {
+                visible: (Config.options?.ai?.extraModels ?? []).length === 0
+                Layout.fillWidth: true
+                Layout.topMargin: 8
+                Layout.bottomMargin: 8
+                spacing: 4
+
+                MaterialSymbol {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: "neurology"
+                    iconSize: 28
+                    color: Appearance.colors.colSubtext
+                }
+
+                StyledText {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: Translation.tr("No providers yet")
+                    font.pixelSize: Appearance.font.pixelSize.small
+                    color: Appearance.colors.colSubtext
+                }
+
+                StyledText {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: Translation.tr("Add an AI provider to use the chat sidebar. Local models via Ollama and free OpenRouter models are loaded automatically.")
+                    font.pixelSize: Appearance.font.pixelSize.smallest
+                    color: Appearance.colors.colSubtext
+                    wrapMode: Text.WordWrap
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                    Layout.leftMargin: 12
+                    Layout.rightMargin: 12
+                }
+            }
+
+            Rectangle {
+                id: providerForm
+                Layout.fillWidth: true
+                Layout.topMargin: 4
+
+                property bool expanded: false
+                property int editingIndex: -1
+                property string titleText: Translation.tr("Add AI Provider")
+                property string saveLabelText: Translation.tr("Add")
+                property string selectedFormat: "openai"
+                property bool _manualOverride: false
+
+                implicitHeight: expanded ? aiAddFormCol.implicitHeight + 24 : 0
+                visible: expanded
+                clip: true
+                radius: Appearance.rounding.small
+                color: Appearance.colors.colSurfaceContainerLow
+                border.width: 1
+                border.color: Appearance.colors.colLayer0Border
+
+                Behavior on implicitHeight {
+                    NumberAnimation {
+                        duration: Appearance.animation.elementMoveFast.duration
+                        easing.type: Appearance.animation.elementMoveFast.type
+                        easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                    }
+                }
+
+                ColumnLayout {
+                    id: aiAddFormCol
+                    anchors.fill: parent
+                    anchors.margins: 12
+                    spacing: 12
+
+                    StyledText {
+                        text: providerForm.titleText
+                        font.pixelSize: Appearance.font.pixelSize.normal
+                        font.weight: Font.DemiBold
+                        color: Appearance.colors.colOnLayer1
+                    }
+
+                    ColumnLayout {
+                        spacing: 4
+                        Layout.fillWidth: true
+
+                        StyledText {
+                            text: Translation.tr("Provider name")
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: Appearance.colors.colSubtext
+                        }
+
+                        MaterialTextField {
+                            id: providerNameInput
+                            Layout.fillWidth: true
+                            placeholderText: Translation.tr("e.g. My Claude Proxy")
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: Appearance.m3colors.m3onSurface
+                            placeholderTextColor: Appearance.colors.colSubtext
+                            background: Rectangle {
+                                color: Appearance.colors.colLayer1
+                                radius: Appearance.rounding.small
+                                border.width: providerNameInput.activeFocus ? 2 : 1
+                                border.color: providerNameInput.activeFocus ? Appearance.m3colors.m3primary : Appearance.colors.colLayer0Border
+                            }
+                        }
+                    }
+
+                    ColumnLayout {
+                        spacing: 4
+                        Layout.fillWidth: true
+
+                        StyledText {
+                            text: Translation.tr("API endpoint URL")
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: Appearance.colors.colSubtext
+                        }
+
+                        MaterialTextField {
+                            id: providerEndpointInput
+                            Layout.fillWidth: true
+                            placeholderText: "https://api.openai.com/v1/chat/completions"
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: Appearance.m3colors.m3onSurface
+                            placeholderTextColor: Appearance.colors.colSubtext
+                            background: Rectangle {
+                                color: Appearance.colors.colLayer1
+                                radius: Appearance.rounding.small
+                                border.width: providerEndpointInput.activeFocus ? 2 : 1
+                                border.color: providerEndpointInput.activeFocus ? Appearance.m3colors.m3primary : Appearance.colors.colLayer0Border
+                            }
+
+                            onTextChanged: {
+                                if (providerForm._manualOverride) return
+                                const url = text.toLowerCase()
+                                if (url.includes("generativelanguage.googleapis.com")) {
+                                    providerForm.selectedFormat = "gemini"
+                                } else if (url.includes("api.anthropic.com") || url.includes("/v1/messages")) {
+                                    providerForm.selectedFormat = "anthropic"
+                                } else if (url.includes("api.openai.com") || url.includes("/v1/chat/completions")) {
+                                    providerForm.selectedFormat = "openai"
+                                }
+                            }
+                        }
+                    }
+
+                    ContentSubsection {
+                        title: Translation.tr("API format")
+
+                        ConfigSelectionArray {
+                            enableSettingsSearch: false
+                            options: [
+                                { displayName: "OpenAI", icon: "smart_toy", value: "openai" },
+                                { displayName: "Gemini", icon: "auto_awesome", value: "gemini" },
+                                { displayName: "Anthropic", icon: "psychology", value: "anthropic" },
+                                { displayName: Translation.tr("Responses API"), icon: "bolt", value: "openai-response" }
+                            ]
+                            currentValue: providerForm.selectedFormat
+                            onSelected: (newValue) => {
+                                providerForm.selectedFormat = newValue
+                                providerForm._manualOverride = true
+                            }
+                        }
+
+                        StyledText {
+                            Layout.fillWidth: true
+                            visible: providerForm.selectedFormat === "openai"
+                            text: Translation.tr("Compatible with OpenAI, Mistral, Ollama, OpenRouter, vLLM, and any OpenAI-compatible endpoint.")
+                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            color: Appearance.colors.colSubtext
+                            wrapMode: Text.WordWrap
+                        }
+                    }
+
+                    ColumnLayout {
+                        spacing: 4
+                        Layout.fillWidth: true
+
+                        StyledText {
+                            text: Translation.tr("Model code")
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: Appearance.colors.colSubtext
+                        }
+
+                        MaterialTextField {
+                            id: providerModelInput
+                            Layout.fillWidth: true
+                            placeholderText: "gpt-4.1"
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: Appearance.m3colors.m3onSurface
+                            placeholderTextColor: Appearance.colors.colSubtext
+                            background: Rectangle {
+                                color: Appearance.colors.colLayer1
+                                radius: Appearance.rounding.small
+                                border.width: providerModelInput.activeFocus ? 2 : 1
+                                border.color: providerModelInput.activeFocus ? Appearance.m3colors.m3primary : Appearance.colors.colLayer0Border
+                            }
+                        }
+                    }
+
+                    ColumnLayout {
+                        spacing: 4
+                        Layout.fillWidth: true
+
+                        StyledText {
+                            text: Translation.tr("API key (optional)")
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: Appearance.colors.colSubtext
+                        }
+
+                        MaterialTextField {
+                            id: providerApiKeyInput
+                            Layout.fillWidth: true
+                            placeholderText: "sk-..."
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: Appearance.m3colors.m3onSurface
+                            placeholderTextColor: Appearance.colors.colSubtext
+                            echoMode: TextInput.Password
+                            background: Rectangle {
+                                color: Appearance.colors.colLayer1
+                                radius: Appearance.rounding.small
+                                border.width: providerApiKeyInput.activeFocus ? 2 : 1
+                                border.color: providerApiKeyInput.activeFocus ? Appearance.m3colors.m3primary : Appearance.colors.colLayer0Border
+                            }
+                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+
+                        Item { Layout.fillWidth: true }
+
+                        RippleButton {
+                            implicitWidth: cancelProviderLabel.implicitWidth + 24
+                            implicitHeight: 32
+                            buttonRadius: Appearance.rounding.small
+                            colBackground: "transparent"
+                            colBackgroundHover: Appearance.colors.colLayer1Hover
+                            onClicked: {
+                                providerForm.expanded = false
+                                providerForm.editingIndex = -1
+                                providerNameInput.text = ""
+                                providerEndpointInput.text = ""
+                                providerForm.selectedFormat = "openai"
+                                providerForm._manualOverride = false
+                                providerModelInput.text = ""
+                                providerApiKeyInput.text = ""
+                            }
+
+                            contentItem: StyledText {
+                                id: cancelProviderLabel
+                                anchors.centerIn: parent
+                                text: Translation.tr("Cancel")
+                                font.pixelSize: Appearance.font.pixelSize.small
+                                color: Appearance.colors.colOnLayer1
+                            }
+                        }
+
+                        RippleButton {
+                            implicitWidth: saveProviderLabel.implicitWidth + 24
+                            implicitHeight: 32
+                            buttonRadius: Appearance.rounding.small
+                            colBackground: Appearance.colors.colPrimary
+                            colBackgroundHover: Appearance.colors.colPrimaryHover
+                            enabled: providerEndpointInput.text.trim() !== "" && providerModelInput.text.trim() !== ""
+                            opacity: enabled ? 1 : 0.5
+                            onClicked: {
+                                const modelCode = providerModelInput.text.trim()
+                                const apiKey = providerApiKeyInput.text.trim()
+                                const keyId = modelCode.toLowerCase().replace(/[:\/ ]/g, "-")
+
+                                const entry = {
+                                    name: providerNameInput.text.trim() || modelCode,
+                                    endpoint: providerEndpointInput.text.trim(),
+                                    model: modelCode,
+                                    api_format: providerForm.selectedFormat,
+                                    requires_key: apiKey.length > 0,
+                                    key_id: keyId,
+                                }
+
+                                let models = [...(Config.options?.ai?.extraModels ?? [])]
+                                if (providerForm.editingIndex >= 0) {
+                                    const orig = models[providerForm.editingIndex]
+                                    if (orig) {
+                                        for (let k in orig) {
+                                            if (!(k in entry) && k !== "index") entry[k] = orig[k]
+                                        }
+                                    }
+                                    models[providerForm.editingIndex] = entry
+                                } else {
+                                    models.push(entry)
+                                }
+                                Config.setNestedValue("ai.extraModels", models)
+
+                                if (apiKey.length > 0) {
+                                    KeyringStorage.setNestedField(["apiKeys", keyId], apiKey)
+                                }
+
+                                providerForm.expanded = false
+                                providerForm.editingIndex = -1
+                                providerNameInput.text = ""
+                                providerEndpointInput.text = ""
+                                providerForm.selectedFormat = "openai"
+                                providerForm._manualOverride = false
+                                providerModelInput.text = ""
+                                providerApiKeyInput.text = ""
+                            }
+
+                            contentItem: StyledText {
+                                id: saveProviderLabel
+                                anchors.centerIn: parent
+                                text: providerForm.saveLabelText
+                                font.pixelSize: Appearance.font.pixelSize.small
+                                font.weight: Font.Medium
+                                color: Appearance.colors.colOnPrimary
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     SettingsCardSection {

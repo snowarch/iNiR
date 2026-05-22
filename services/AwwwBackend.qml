@@ -223,7 +223,7 @@ Singleton {
 
         if (!available) {
             _probe()
-            if (!warnedMissing) {
+            if (!warnedMissing && !probing) {
                 console.warn("[AwwwBackend] awww backend selected but binaries are unavailable")
                 warnedMissing = true
             }
@@ -298,7 +298,9 @@ Singleton {
 
     Process {
         id: probeProc
-        command: ["/usr/bin/bash", "-lc", "if command -v awww >/dev/null 2>&1; then echo client; fi; if command -v awww-daemon >/dev/null 2>&1; then echo daemon; fi"]
+        // Check well-known paths first, then fall back to command -v for non-standard installs.
+        // Using explicit paths avoids login-shell PATH issues that cause false negatives.
+        command: ["/usr/bin/bash", "-c", "for p in /usr/bin/awww /usr/local/bin/awww; do [ -x \"$p\" ] && { echo client; break; }; done; command -v awww >/dev/null 2>&1 && echo client; for p in /usr/bin/awww-daemon /usr/local/bin/awww-daemon; do [ -x \"$p\" ] && { echo daemon; break; }; done; command -v awww-daemon >/dev/null 2>&1 && echo daemon"]
         stdout: StdioCollector {
             id: probeStdout
         }

@@ -140,7 +140,7 @@ Scope {
 
     Timer {
         id: skewFocusTimer
-        interval: 30
+        interval: 100
         running: root.skewStyle && GlobalStates.altSwitcherOpen
         repeat: true
         onTriggered: {

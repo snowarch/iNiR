@@ -50,7 +50,7 @@ Scope {
                 // Set target screen when opening
                 const outputName = NiriService.currentOutput
                 root.targetScreen = Quickshell.screens.find(s => s.name === outputName) ?? GlobalStates.primaryScreen ?? null
-                console.log("[Overlay] Opening on output:", outputName, "targetScreen:", root.targetScreen?.name)
+                if (Quickshell.env("QS_DEBUG") === "1") console.log("[Overlay] Opening on output:", outputName, "targetScreen:", root.targetScreen?.name)
                 // Now ready to show on correct screen
                 root._readyToShow = true
             } else {
@@ -117,7 +117,8 @@ Scope {
 
             Timer {
                 id: delayedGrabTimer
-                interval: Config.options.overlay.animationDurationMs ?? Appearance.animation.elementMoveFast.duration
+                interval: Appearance.calcEffectiveDuration(
+                    Config.options.overlay.animationDurationMs ?? Appearance.animation.elementMoveFast.duration)
                 onTriggered: {
                     grab.active = GlobalStates.overlayOpen;
                 }

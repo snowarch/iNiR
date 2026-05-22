@@ -1,9 +1,9 @@
 {
   "id": "steam",
-  "label": "Steam (Adwaita-for-Steam)",
+  "label": "Steam (Millennium)",
   "module": "70-steam.sh",
   "category": "app",
-  "inputs": ["colors.json"],
-  "description": "Apply Material You colors to Steam via Adwaita-for-Steam skin.",
-  "configKey": "appearance.wallpaperTheming.enableAdwSteam"
+  "inputs": ["app-palette.json", "palette.json", "colors.json"],
+  "description": "Apply Material You colors to Steam via Millennium Material-Theme.",
+  "configKey": "appearance.wallpaperTheming.enableSteam"
 }

@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
-# Generate cava config with correct audio monitor source
-# Usage: generate_config.sh [output_file]
+# Generate cava config for internal widget usage (CavaProcess.qml)
+# Usage: generate_config.sh <output_file> [framerate] [sensitivity] [bars] [stereo]
 #
+# All parameters after output_file are optional and fall back to sane defaults.
 # Supports both PipeWire and PulseAudio systems.
-# Uses the default sink monitor (final audio output).
 
 OUTPUT_FILE="${1:-/tmp/cava_config.txt}"
+FRAMERATE="${2:-60}"
+SENSITIVITY="${3:-100}"
+BARS="${4:-50}"
+STEREO="${5:-false}"
+DESKTOP_ENTRY="${6:-}"
 
 # Detect audio backend (pipewire or pulseaudio)
 get_audio_method() {
@@ -24,18 +29,30 @@ get_default_monitor() {
         echo "${default_sink}.monitor"
         return
     fi
-    # Fallback: auto-detect
     echo "auto"
 }
 
 METHOD=$(get_audio_method)
-MONITOR=$(get_default_monitor)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+RESOLVER="$SCRIPT_DIR/resolve_audio_source.py"
+RESOLVED=""
+if [[ -f "$RESOLVER" ]]; then
+  RESOLVED=$(python3 "$RESOLVER" --desktop-entry "$DESKTOP_ENTRY" 2>/dev/null || true)
+fi
+if [[ -n "$RESOLVED" ]]; then
+  MONITOR="$RESOLVED"
+else
+  MONITOR=$(get_default_monitor)
+fi
+CHANNELS="mono"
+[[ "$STEREO" == "true" ]] && CHANNELS="stereo"
 
 cat > "$OUTPUT_FILE" << EOF
 [general]
-framerate = 60
+framerate = ${FRAMERATE}
+sensitivity = ${SENSITIVITY}
 autosens = 1
-bars = 50
+bars = ${BARS}
 
 [input]
 method = ${METHOD}
@@ -45,7 +62,7 @@ source = ${MONITOR}
 method = raw
 raw_target = /dev/stdout
 data_format = ascii
-channels = mono
+channels = ${CHANNELS}
 mono_option = average
 
 [smoothing]

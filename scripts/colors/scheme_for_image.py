@@ -99,6 +99,17 @@ def pick_scheme(colorfulness, saturation, hue_spread):
     return "scheme-tonal-spot"
 
 
+def _downscale(img, max_dim=256):
+    """Resize to at most max_dim on the longest side. Statistical metrics
+    (colorfulness, mean saturation, hue std-dev) are resolution-invariant,
+    so a 256x256 thumbnail produces identical scheme selections."""
+    h, w = img.shape[:2]
+    if max(h, w) <= max_dim:
+        return img
+    scale = max_dim / max(h, w)
+    return cv2.resize(img, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
+
+
 def main():
     colorfulness_mode = False
     args = sys.argv[1:]
@@ -113,6 +124,7 @@ def main():
     if img is None:
         print("scheme-tonal-spot")
         sys.exit(1)
+    img = _downscale(img)
     colorfulness = image_colorfulness(img)
     if colorfulness_mode:
         print(f"{colorfulness}")

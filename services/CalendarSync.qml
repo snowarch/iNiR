@@ -33,8 +33,12 @@ Singleton {
     readonly property string cachePath: Directories.calendarSyncCachePath
 
     Component.onCompleted: {
+        if (!root.enabled) {
+            root.ready = true
+            return
+        }
         loadCache()
-        if (root.enabled && root.sources.length > 0) {
+        if (root.sources.length > 0) {
             Qt.callLater(() => root.fetchAll())
         }
     }
@@ -285,6 +289,7 @@ Singleton {
         id: cacheFileView
         path: root.cachePath
         watchChanges: false
+        printErrors: false
         onLoaded: {
             const content = cacheFileView.text()
             if (!content || content.trim() === "") {

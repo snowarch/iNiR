@@ -245,6 +245,30 @@ Singleton {
     }
 
     /**
+     * Strips HTML tags from a string, returning plain text content.
+     * Also decodes common HTML entities.
+     */
+    function stripHtmlTags(str: string): string {
+        return str.replace(/<[^>]*>/g, "")
+            .replace(/&nbsp;/gi, " ")
+            .replace(/&amp;/gi, "&")
+            .replace(/&lt;/gi, "<")
+            .replace(/&gt;/gi, ">")
+            .replace(/&quot;/gi, '"')
+            .replace(/&#39;/gi, "'")
+    }
+
+    /**
+     * Replaces common invisible Unicode characters for cleaner display.
+     */
+    function sanitizeDisplayText(str: string): string {
+        return str
+            .replace(/[\u200B\u200C\u200D\uFEFF\u00AD]/g, "")
+            .replace(/\u00A0/g, " ")
+            .replace(/[\u2028\u2029]/g, "\n")
+    }
+
+    /**
      * Checks if any substring in the list is contained in the string.
      * @param { string } str
      * @param { string[] } substrings

@@ -10,6 +10,10 @@ import Quickshell.Io
 Singleton {
     id: root
 
+    function _log(...args): void {
+        if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
+    }
+
     property bool hasRun: false
     property bool _systemdUnitsRefreshRequested: false
     readonly property bool globalEnabled: Config.options?.autostart?.enable ?? false
@@ -122,7 +126,7 @@ Singleton {
         onExited: (exitCode, exitStatus) => {
             const units = []
             if (exitCode !== 0) {
-                console.log("[Autostart] systemdListProc exited with", exitCode, exitStatus)
+                _log("[Autostart] systemdListProc exited with", exitCode, exitStatus)
                 root.systemdUnits = units
                 systemdListProc.buffer = []
                 return;
@@ -152,7 +156,7 @@ Singleton {
                     iiManaged: iiManaged
                 })
             }
-            console.log("[Autostart] Loaded", units.length, "user systemd services")
+            _log("[Autostart] Loaded", units.length, "user systemd services")
             root.systemdUnits = units
             systemdListProc.buffer = []
         }
@@ -188,11 +192,11 @@ Singleton {
             if (!name || name.length === 0)
                 return;
             const op = enabled ? "enable" : "disable"
-            console.log("[Autostart] Toggling user service", name, "->", enabled ? "enabled" : "disabled")
+            _log("[Autostart] Toggling user service", name, "->", enabled ? "enabled" : "disabled")
             exec(["/usr/bin/systemctl", "--user", op, "--now", name])
         }
         onExited: (exitCode, exitStatus) => {
-            console.log("[Autostart] systemdToggleProc exited with", exitCode, exitStatus)
+            _log("[Autostart] systemdToggleProc exited with", exitCode, exitStatus)
             refreshSystemdUnits()
         }
     }
@@ -206,12 +210,12 @@ Singleton {
         function activate(unitName) {
             if (!unitName || unitName.length === 0)
                 return;
-            console.log("[Autostart] Activating new user service", unitName)
+            _log("[Autostart] Activating new user service", unitName)
             const escaped = StringUtils.shellSingleQuoteEscape(unitName)
             exec(["/usr/bin/bash", "-lc", "/usr/bin/systemctl --user daemon-reload\n/usr/bin/systemctl --user enable --now '" + escaped + "' 2>/dev/null || true"])
         }
         onExited: (exitCode, exitStatus) => {
-            console.log("[Autostart] systemdCreateProc exited with", exitCode, exitStatus)
+            _log("[Autostart] systemdCreateProc exited with", exitCode, exitStatus)
             refreshSystemdUnits()
         }
     }
@@ -223,7 +227,7 @@ Singleton {
                 return;
             const home = Quickshell.env("HOME")
             const dir = `${home}/.config/systemd/user`
-            console.log("[Autostart] Deleting user service", name)
+            _log("[Autostart] Deleting user service", name)
             const cmd = "/usr/bin/systemctl --user disable --now '" + name
                 + "' 2>/dev/null || true; "
                 // Only remove units that were created by ii Autostart (marker comment)
@@ -234,7 +238,7 @@ Singleton {
             exec(["/usr/bin/bash", "-lc", cmd])
         }
         onExited: (exitCode, exitStatus) => {
-            console.log("[Autostart] systemdDeleteProc exited with", exitCode, exitStatus)
+            _log("[Autostart] systemdDeleteProc exited with", exitCode, exitStatus)
             refreshSystemdUnits()
         }
     }
@@ -274,7 +278,7 @@ Singleton {
             + "\n"
             + "[Install]\n"
             + "WantedBy=" + wantedByTarget + "\n"
-        console.log("[Autostart] Writing user service file", filePath)
+        _log("[Autostart] Writing user service file", filePath)
         // Ensure the user systemd directory exists before writing the file
         Quickshell.execDetached(["/usr/bin/mkdir", "-p", dir])
         userServiceWriter.path = Qt.resolvedUrl(filePath)

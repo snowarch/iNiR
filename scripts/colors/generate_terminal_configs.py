@@ -16,7 +16,6 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from zed.theme_generator import generate_zed_config
 from vscode.theme_generator import (
-    generate_vscode_theme,
     generate_all_vscode_themes,
     VSCODE_FORKS,
 )

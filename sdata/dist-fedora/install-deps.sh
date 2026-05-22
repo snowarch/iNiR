@@ -51,6 +51,10 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [wl-copy]="wl-clipboard"
     [wl-paste]="wl-clipboard"
     [fuzzel]="fuzzel"
+    [gum]="gum"
+    [hyprpicker]="hyprpicker"
+    [xwayland-satellite]="xwayland-satellite"
+    [missioncenter]="io.missioncenter.MissionCenter"
   )
 
   _fed_installflags=""
@@ -174,10 +178,13 @@ FEDORA_CORE_PKGS=(
   xdg-user-dirs
   rsync
   git
+  unzip
   wl-clipboard
   libnotify
   wlsunset
   dunst
+  gum
+  cliphist
   
   # XDG Portals
   xdg-desktop-portal
@@ -200,8 +207,8 @@ FEDORA_CORE_PKGS=(
   # Shell (required for scripts)
   fish
   
-  # System monitor (not available in all Fedora versions)
-  # mission-center
+  # X11 compatibility
+  xwayland-satellite
   
   # Thumbnails
   ffmpegthumbnailer
@@ -272,6 +279,7 @@ FEDORA_TOOLKIT_PKGS=(
   swaylock
   grim
   slurp
+  hyprpicker
   ImageMagick
   libqalculate
   blueman
@@ -413,36 +421,11 @@ install_github_binary() {
   rm -rf "$temp_dir"
 }
 
-# gum - TUI tool (download .rpm from GitHub)
-if ! command -v gum &>/dev/null; then
-  log_info "Installing gum from GitHub..."
-  GUM_RPM_URL=$(curl -s "https://api.github.com/repos/charmbracelet/gum/releases/latest" | \
-    jq -r '.assets[] | select(.name | test("linux.*x86_64.*rpm$")) | .browser_download_url' | head -1)
-  if [[ -n "$GUM_RPM_URL" && "$GUM_RPM_URL" != "null" ]]; then
-    v sudo dnf install -y "$GUM_RPM_URL"
-  fi
-fi
-
-# cliphist - clipboard manager
-install_github_binary "cliphist" "sentriz/cliphist" "linux-amd64$"
-
-# xwayland-satellite - X11 compatibility (try cargo-binstall first)
-if ! command -v xwayland-satellite &>/dev/null; then
-  log_info "Installing xwayland-satellite..."
-  if command -v cargo-binstall &>/dev/null; then
-    cargo-binstall -y xwayland-satellite
-  elif command -v cargo &>/dev/null; then
-    cargo install xwayland-satellite
-  else
-    log_warning "xwayland-satellite requires Rust — install with: cargo install xwayland-satellite"
-  fi
-fi
-
 # awww - wallpaper daemon (Wayland) — compile from source
 if ! command -v awww &>/dev/null; then
   log_info "Installing awww (wallpaper daemon)..."
   if command -v cargo &>/dev/null; then
-    sudo dnf install -y lz4-devel
+    sudo dnf install -y lz4-devel libxkbcommon-devel
     if cargo install --git https://codeberg.org/LGFae/awww.git awww 2>/dev/null; then
       log_success "awww installed via Cargo"
     else
@@ -450,7 +433,7 @@ if ! command -v awww &>/dev/null; then
     fi
   else
     log_warning "awww requires Rust — install Rust first, then: cargo install --git https://codeberg.org/LGFae/awww.git awww"
-    log_info "Installing Rust can be done through this command from the official website: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+    log_info "Install Rust: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
   fi
 fi
 
@@ -753,8 +736,11 @@ log_info "Installed from COPR (no compilation):"
 echo "  - quickshell (errornointernet/quickshell)"
 echo "  - niri (yalter/niri)"
 echo ""
+log_info "Installed from repos:"
+echo "  - gum, cliphist, xwayland-satellite, hyprpicker, swappy"
+echo ""
 log_info "Installed from GitHub releases:"
-echo "  - gum, cliphist, darkly, starship, eza"
+echo "  - darkly, starship, eza"
 echo ""
 log_info "Themes configured:"
 echo "  - GTK: adw-gtk3-dark"
@@ -765,7 +751,7 @@ echo ""
 
 # Verify critical commands
 tui_info "Verifying installation:"
-for cmd in qs niri fish gum cliphist starship eza; do
+for cmd in qs niri fish gum cliphist xwayland-satellite starship eza; do
   if command -v "$cmd" &>/dev/null || command -v ~/.local/bin/$cmd &>/dev/null; then
     log_success "$cmd"
   else

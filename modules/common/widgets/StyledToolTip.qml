@@ -19,6 +19,7 @@ PopupToolTip {
 
     contentItem: StyledToolTipContent {
         id: contentItem
+        anchors.centerIn: parent
         font: root.font
         text: root.text
         shown: false

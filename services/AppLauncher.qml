@@ -210,6 +210,17 @@ Singleton {
         if (command.length === 0)
             return
 
+        // If the command is a single word (no args, no path), try desktop entry
+        // lookup first — handles Flatpak apps that aren't in PATH but have
+        // .desktop files with the correct Exec= line.
+        if (!command.includes(" ") && !command.includes("/")) {
+            const entry = DesktopEntries.heuristicLookup(command)
+            if (entry) {
+                entry.execute()
+                return
+            }
+        }
+
         ShellExec.execCmd(command)
     }
 

@@ -1,8 +1,9 @@
 //@ pragma UseQApplication
+//@ pragma ShellId inir
 // DISABLED: webapps — requires quickshell-webengine rebuild, re-enable when ready
 //-@ pragma EnableQtWebEngineQuick
 //@ pragma Env QS_NO_RELOAD_POPUP=1
-//@ pragma Env QT_LOGGING_RULES=quickshell.dbus.properties=false
+//@ pragma DefaultEnv QT_LOGGING_RULES=quickshell.dbus.properties=false
 //@ pragma Env QT_QUICK_CONTROLS_STYLE=Basic
 //@ pragma Env QT_QUICK_FLICKABLE_WHEEL_DECELERATION=10000
 //@ pragma Env QSG_RENDER_LOOP=threaded
@@ -40,8 +41,21 @@ ShellRoot {
     property var _weatherService
     property var _voiceSearchService
     property var _fontSyncService
+    property var _cavaThemeService
+
+    // Boot phase timing (ms since epoch). Written to ~/.cache/inir/last-boot.json
+    // when the deferred phase finishes. `inir status` reads this back to show users
+    // exactly where their startup time goes — systemd → qs launch → QML completed →
+    // Config ready → shell entry → deferred services. Useful for triaging "15-20s startup"
+    // reports without asking the user to run journalctl.
+    property real _bootCompletedAt: 0
+    property real _bootConfigReadyAt: 0
+    property real _bootShellEntryAt: 0
+    property real _bootDeferredAt: 0
+    readonly property string _bootCachePath: (Quickshell.env("XDG_CACHE_HOME") || (Quickshell.env("HOME") + "/.cache")) + "/inir/last-boot.json"
 
     Component.onCompleted: {
+        root._bootCompletedAt = Date.now();
         Quickshell.watchFiles = !disableHotReload;
         root._log("[Shell] Initializing startup-critical singletons");
         FirstRunExperience.load();
@@ -50,6 +64,7 @@ ShellRoot {
         GlobalStates.shellEntryReady = false;
         GlobalStates.deferredPanelsReady = false;
         if (Config.ready) {
+            root._bootConfigReadyAt = Date.now();
             shellEntryTimer.start();
             deferredInitTimer.start();
         }
@@ -62,7 +77,10 @@ ShellRoot {
         id: shellEntryTimer
         interval: Appearance.animationsEnabled ? 200 : 0
         repeat: false
-        onTriggered: GlobalStates.shellEntryReady = true
+        onTriggered: {
+            if (!root._bootShellEntryAt) root._bootShellEntryAt = Date.now();
+            GlobalStates.shellEntryReady = true;
+        }
     }
 
     // Deferred initialization: load non-critical services and panels after the first frame
@@ -78,15 +96,43 @@ ShellRoot {
             root._weatherService = Weather;
             root._voiceSearchService = VoiceSearch;
             root._fontSyncService = FontSyncService;
+            root._cavaThemeService = CavaTheme;
             Hyprsunset.load();
             GlobalStates.deferredPanelsReady = true;
+            if (!root._bootDeferredAt) {
+                root._bootDeferredAt = Date.now();
+                root._writeBootPhase();
+            }
         }
+    }
+
+    // Persist boot phase timestamps so `inir status` can report startup breakdown
+    // without asking the user to run journalctl. Only written once per boot — hot-reloads
+    // overwrite (which is intentional, latest run is what matters for diagnostics).
+    function _writeBootPhase(): void {
+        if (!root._bootCompletedAt) return;
+        const data = {
+            componentCompletedAt: Math.floor(root._bootCompletedAt),
+            configReadyAt: Math.floor(root._bootConfigReadyAt),
+            shellEntryAt: Math.floor(root._bootShellEntryAt),
+            deferredReadyAt: Math.floor(root._bootDeferredAt),
+            shellPid: 0,
+            writtenAt: Math.floor(Date.now())
+        };
+        bootPhaseWriter.setText(JSON.stringify(data, null, 2));
+    }
+
+    FileView {
+        id: bootPhaseWriter
+        path: root._bootCachePath
+        printErrors: false
     }
 
     Connections {
         target: Config
         function onReadyChanged() {
             if (Config.ready) {
+                if (!root._bootConfigReadyAt) root._bootConfigReadyAt = Date.now();
                 root._log("[Shell] Config ready, applying theme");
                 Qt.callLater(() => ThemeService.applyCurrentTheme());
                 Qt.callLater(() => IconThemeService.ensureInitialized());

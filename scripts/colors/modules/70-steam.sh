@@ -1,35 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Steam theming module: deploys Material You CSS to Adwaita-for-Steam
-# and restarts steamwebhelper for live reload.
-#
-# CSS source priority:
-#   1. Pre-rendered by template engine → ~/.local/state/quickshell/user/generated/steam-colortheme.css
-#   2. Generated on-the-fly from colors.json (fallback for existing installs)
-#
-# Called from: scripts/colors/applycolor.sh (color pipeline)
 
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/module-runtime.sh"
 COLOR_MODULE_ID="steam"
 
-XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
 XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 
-GENERATED_CSS="$STATE_DIR/user/generated/steam-colortheme.css"
-COLORS_JSON="$STATE_DIR/user/generated/colors.json"
-THEME_NAME="inir"
+GENERATED_MILLENNIUM_CSS="$STATE_DIR/user/generated/steam-millennium-material.css"
+MILLENNIUM_TEMPLATE="$SCRIPT_DIR/../../defaults/matugen/templates/steam/millennium-material.css"
+COLORS_JSON="$STATE_DIR/user/generated/app-palette.json"
+[[ -f "$COLORS_JSON" ]] || COLORS_JSON="$STATE_DIR/user/generated/palette.json"
+[[ -f "$COLORS_JSON" ]] || COLORS_JSON="$STATE_DIR/user/generated/colors.json"
+MILLENNIUM_THEME_DIR_NAME="Material-Theme"
+MILLENNIUM_THEME_CONDITION_NAME="Material-Theme"
+MILLENNIUM_CONFIG="$XDG_CONFIG_HOME/millennium/config.json"
+MILLENNIUM_MATERIAL_REPO="https://github.com/kuska1/Material-Theme.git"
 
-# AdwSteamGtk's extracted skin cache
-ADWSTEAM_COLORTHEMES="$XDG_CACHE_HOME/AdwSteamInstaller/extracted/adwaita/colorthemes"
-
-# All possible Steam installation paths (native + flatpak)
 STEAM_DIRS=(
   "$HOME/.steam/steam"
   "$HOME/.local/share/Steam"
   "$HOME/.var/app/com.valvesoftware.Steam/.steam/steam"
 )
-
-# --- CSS fallback generation (when template engine hasn't rendered it) ---
 
 hex_to_rgb() {
   local hex="${1#\#}"
@@ -46,202 +38,264 @@ read_token() {
   fi
 }
 
-generate_css_from_colors_json() {
+generate_millennium_css_from_colors_json() {
   cat <<EOCSS
-/**
- * iNiR Material You for Adwaita-for-Steam
- * Auto-generated from wallpaper colors. Do not edit.
- */
-:root
-{
-	--adw-accent-bg-rgb: $(read_token primary) !important;
-	--adw-accent-fg-rgb: $(read_token on_primary) !important;
-	--adw-accent-rgb: $(read_token primary) !important;
-	--adw-destructive-bg-rgb: $(read_token error) !important;
-	--adw-destructive-fg-rgb: $(read_token on_error) !important;
-	--adw-destructive-rgb: $(read_token error) !important;
-	--adw-success-bg-rgb: $(read_token success) !important;
-	--adw-success-fg-rgb: $(read_token on_success) !important;
-	--adw-success-rgb: $(read_token success) !important;
-	--adw-warning-bg-rgb: $(read_token tertiary) !important;
-	--adw-warning-fg-rgb: $(read_token on_tertiary) !important;
-	--adw-warning-fg-a: 0.8 !important;
-	--adw-warning-rgb: $(read_token tertiary) !important;
-	--adw-error-bg-rgb: $(read_token error) !important;
-	--adw-error-fg-rgb: $(read_token on_error) !important;
-	--adw-error-rgb: $(read_token error) !important;
-	--adw-window-bg-rgb: $(read_token surface_container_low) !important;
-	--adw-window-fg-rgb: $(read_token on_surface) !important;
-	--adw-view-bg-rgb: $(read_token surface) !important;
-	--adw-view-fg-rgb: $(read_token on_surface) !important;
-	--adw-headerbar-bg-rgb: $(read_token surface_container) !important;
-	--adw-headerbar-fg-rgb: $(read_token on_surface) !important;
-	--adw-headerbar-border-rgb: $(read_token outline_variant) !important;
-	--adw-headerbar-backdrop-rgb: $(read_token surface_container_low) !important;
-	--adw-headerbar-shade-rgb: $(read_token shadow) !important;
-	--adw-headerbar-shade-a: 0.36 !important;
-	--adw-headerbar-darker-shade-rgb: $(read_token shadow) !important;
-	--adw-headerbar-darker-shade-a: 0.9 !important;
-	--adw-sidebar-bg-rgb: $(read_token surface_container) !important;
-	--adw-sidebar-fg-rgb: $(read_token on_surface) !important;
-	--adw-sidebar-backdrop-rgb: $(read_token surface_container_low) !important;
-	--adw-sidebar-shade-rgb: $(read_token shadow) !important;
-	--adw-sidebar-shade-a: 0.36 !important;
-	--adw-secondary-sidebar-bg-rgb: $(read_token surface_container_low) !important;
-	--adw-secondary-sidebar-fg-rgb: $(read_token on_surface_variant) !important;
-	--adw-secondary-sidebar-backdrop-rgb: $(read_token surface) !important;
-	--adw-secondary-sidebar-shade-rgb: $(read_token shadow) !important;
-	--adw-secondary-sidebar-shade-a: 0.36 !important;
-	--adw-card-bg-rgb: 255, 255, 255 !important;
-	--adw-card-bg-a: 0.08 !important;
-	--adw-card-fg-rgb: $(read_token on_surface) !important;
-	--adw-card-shade-rgb: $(read_token shadow) !important;
-	--adw-card-shade-a: 0.36 !important;
-	--adw-dialog-bg-rgb: $(read_token surface_container_high) !important;
-	--adw-dialog-fg-rgb: $(read_token on_surface) !important;
-	--adw-popover-bg-rgb: $(read_token surface_container_high) !important;
-	--adw-popover-fg-rgb: $(read_token on_surface) !important;
-	--adw-popover-shade-rgb: $(read_token shadow) !important;
-	--adw-popover-shade-a: 0.25 !important;
-	--adw-thumbnail-bg-rgb: $(read_token surface_container_high) !important;
-	--adw-thumbnail-fg-rgb: $(read_token on_surface) !important;
-	--adw-shade-rgb: $(read_token shadow) !important;
-	--adw-shade-a: 0.36 !important;
-	--adw-user-offline-rgb: $(read_token outline) !important;
-	--adw-user-online-rgb: $(read_token primary) !important;
-	--adw-user-ingame-rgb: $(read_token success) !important;
+:root {
+    --theme-color: "Matugen";
+    --hue-rotate: 220deg;
+
+    --md-sys-color-primary: rgb($(read_token app_accent "$(read_token primary)"));
+    --md-sys-color-on-primary: rgb($(read_token app_on_accent "$(read_token on_primary)"));
+    --md-sys-color-primary-container: rgb($(read_token app_accent_container "$(read_token primary_container)"));
+    --md-sys-color-on-primary-container: rgb($(read_token on_primary_container));
+    --md-sys-color-primary-fixed: rgb($(read_token primary_fixed "$(read_token primary_container)"));
+    --md-sys-color-primary-fixed-dim: rgb($(read_token primary_fixed_dim "$(read_token primary)"));
+    --md-sys-color-on-primary-fixed: rgb($(read_token on_primary_fixed "$(read_token on_primary_container)"));
+    --md-sys-color-on-primary-fixed-variant: rgb($(read_token on_primary_fixed_variant "$(read_token on_primary_container)"));
+    --md-sys-color-secondary: rgb($(read_token secondary));
+    --md-sys-color-on-secondary: rgb($(read_token on_secondary));
+    --md-sys-color-secondary-container: rgb($(read_token secondary_container));
+    --md-sys-color-on-secondary-container: rgb($(read_token on_secondary_container));
+    --md-sys-color-secondary-fixed: rgb($(read_token secondary_fixed "$(read_token secondary_container)"));
+    --md-sys-color-secondary-fixed-dim: rgb($(read_token secondary_fixed_dim "$(read_token secondary)"));
+    --md-sys-color-on-secondary-fixed: rgb($(read_token on_secondary_fixed "$(read_token on_secondary_container)"));
+    --md-sys-color-on-secondary-fixed-variant: rgb($(read_token on_secondary_fixed_variant "$(read_token on_secondary_container)"));
+    --md-sys-color-tertiary: rgb($(read_token tertiary));
+    --md-sys-color-on-tertiary: rgb($(read_token on_tertiary));
+    --md-sys-color-tertiary-container: rgb($(read_token tertiary_container));
+    --md-sys-color-on-tertiary-container: rgb($(read_token on_tertiary_container));
+    --md-sys-color-tertiary-fixed: rgb($(read_token tertiary_fixed "$(read_token tertiary_container)"));
+    --md-sys-color-tertiary-fixed-dim: rgb($(read_token tertiary_fixed_dim "$(read_token tertiary)"));
+    --md-sys-color-on-tertiary-fixed: rgb($(read_token on_tertiary_fixed "$(read_token on_tertiary_container)"));
+    --md-sys-color-on-tertiary-fixed-variant: rgb($(read_token on_tertiary_fixed_variant "$(read_token on_tertiary_container)"));
+    --md-sys-color-error: rgb($(read_token error));
+    --md-sys-color-on-error: rgb($(read_token on_error));
+    --md-sys-color-error-container: rgb($(read_token error_container));
+    --md-sys-color-on-error-container: rgb($(read_token on_error_container));
+    --md-sys-color-background: rgb($(read_token app_background "$(read_token background)"));
+    --md-sys-color-on-background: rgb($(read_token app_foreground "$(read_token on_background)"));
+    --md-sys-color-surface: rgb($(read_token app_background "$(read_token surface)"));
+    --md-sys-color-on-surface: rgb($(read_token app_foreground "$(read_token on_surface)"));
+    --md-sys-color-surface-variant: rgb($(read_token app_surface_elevated "$(read_token surface_variant)"));
+    --md-sys-color-on-surface-variant: rgb($(read_token app_subtext "$(read_token on_surface_variant)"));
+    --md-sys-color-surface-dim: rgb($(read_token app_background "$(read_token surface_dim)"));
+    --md-sys-color-surface-bright: rgb($(read_token app_surface_popup "$(read_token surface_bright)"));
+    --md-sys-color-surface-container-lowest: rgb($(read_token app_background "$(read_token surface_container_lowest)"));
+    --md-sys-color-surface-container-low: rgb($(read_token app_surface "$(read_token surface_container_low)"));
+    --md-sys-color-surface-container: rgb($(read_token app_surface "$(read_token surface_container)"));
+    --md-sys-color-surface-container-high: rgb($(read_token app_surface_elevated "$(read_token surface_container_high)"));
+    --md-sys-color-surface-container-highest: rgb($(read_token app_surface_popup "$(read_token surface_container_highest)"));
+    --md-sys-color-outline: rgb($(read_token app_border "$(read_token outline)"));
+    --md-sys-color-outline-variant: rgb($(read_token app_border_subtle "$(read_token outline_variant)"));
+    --md-sys-color-inverse-surface: rgb($(read_token inverse_surface "$(read_token app_foreground)"));
+    --md-sys-color-inverse-on-surface: rgb($(read_token inverse_on_surface "$(read_token app_background)"));
+    --md-sys-color-inverse-primary: rgb($(read_token inverse_primary "$(read_token app_accent)"));
+    --md-sys-color-shadow: rgb($(read_token shadow));
+    --md-sys-color-scrim: rgb($(read_token scrim "$(read_token shadow)"));
+    --md-sys-color-surface-tint: rgb($(read_token app_accent "$(read_token primary)"));
+    --md-sys-color-source-color: rgb($(read_token source_color "$(read_token app_accent "$(read_token primary)")"));
 }
 EOCSS
 }
 
-# --- Steam skin management ---
-
-resolve_adwsteam_cmd() {
-  if command -v adwaita-steam-gtk &>/dev/null; then
-    printf 'adwaita-steam-gtk'
-    return 0
-  fi
-  if command -v flatpak &>/dev/null &&
-     flatpak list --app 2>/dev/null | grep -q 'io.github.Foldex.AdwSteamGtk'; then
-    printf 'flatpak run io.github.Foldex.AdwSteamGtk'
-    return 0
+millennium_runtime_available() {
+  [[ -d /usr/lib/millennium ]] && return 0
+  if command -v pacman >/dev/null 2>&1; then
+    pacman -Q millennium-bin >/dev/null 2>&1 && return 0
+    pacman -Q millennium >/dev/null 2>&1 && return 0
+    pacman -Q millennium-git >/dev/null 2>&1 && return 0
   fi
   return 1
 }
 
-skin_installed() {
+resolve_steam_root_for_theme() {
   local dir
   for dir in "${STEAM_DIRS[@]}"; do
-    [[ -d "$dir/steamui/adwaita/colorthemes" ]] && return 0
+    if [[ -d "$dir" ]]; then
+      printf '%s\n' "$dir"
+      return 0
+    fi
   done
+  printf '%s\n' "${STEAM_DIRS[0]}"
+}
+
+resolve_millennium_material_theme_dir() {
+  local dir theme_dir resolved
+  local seen=""
+  for dir in "${STEAM_DIRS[@]}"; do
+    [[ -d "$dir" ]] || continue
+    theme_dir="$dir/millennium/themes/$MILLENNIUM_THEME_DIR_NAME"
+    [[ -f "$theme_dir/skin.json" ]] || continue
+    resolved="$(readlink -f "$theme_dir" 2>/dev/null || printf '%s' "$theme_dir")"
+    if [[ ":$seen:" == *":$resolved:"* ]]; then
+      continue
+    fi
+    printf '%s\n' "$resolved"
+    seen="${seen:+$seen:}$resolved"
+  done
+}
+
+install_millennium_material_theme() {
+  local existing theme_root target tmp
+  existing="$(resolve_millennium_material_theme_dir | head -n 1 || true)"
+  [[ -n "$existing" ]] && return 0
+
+  command -v git >/dev/null 2>&1 || { log_module "git not installed — cannot install Millennium Material-Theme"; return 1; }
+  theme_root="$(resolve_steam_root_for_theme)/millennium/themes"
+  target="$theme_root/$MILLENNIUM_THEME_DIR_NAME"
+  mkdir -p "$theme_root"
+
+  if [[ -e "$target" && ! -f "$target/skin.json" ]]; then
+    log_module "Millennium Material-Theme path exists but has no skin.json: $target"
+    return 1
+  fi
+
+  tmp="$theme_root/.${MILLENNIUM_THEME_DIR_NAME}.tmp.$$"
+  rm -rf "$tmp"
+  if git clone --depth=1 "$MILLENNIUM_MATERIAL_REPO" "$tmp" >/dev/null 2>&1; then
+    mv "$tmp" "$target"
+    log_module "installed Millennium Material-Theme"
+    return 0
+  fi
+  rm -rf "$tmp"
+  log_module "failed to install Millennium Material-Theme"
   return 1
 }
 
-bootstrap_skin() {
-  local adwsteam_cmd
-  if ! adwsteam_cmd="$(resolve_adwsteam_cmd)"; then
-    log_module "adwaita-steam-gtk not found — install adwsteamgtk"
-    return 1
-  fi
-  log_module "bootstrapping Adwaita-for-Steam skin (first-time setup)"
-  # shellcheck disable=SC2086
-  $adwsteam_cmd -i 2>/dev/null || {
-    log_module "bootstrap failed — Steam may not be installed"
-    return 1
-  }
+resolve_millennium_material_loopback_skin_dir() {
+  local dir skin_dir resolved
+  local seen=""
+  for dir in "${STEAM_DIRS[@]}"; do
+    [[ -d "$dir" ]] || continue
+    skin_dir="$dir/steamui/skins/$MILLENNIUM_THEME_DIR_NAME"
+    resolved="$(readlink -m "$skin_dir" 2>/dev/null || printf '%s' "$skin_dir")"
+    if [[ ":$seen:" == *":$resolved:"* ]]; then
+      continue
+    fi
+    printf '%s\n' "$resolved"
+    seen="${seen:+$seen:}$resolved"
+  done
 }
 
-deploy_css() {
-  local css_source="$1"
-  local deployed=0
+millennium_material_appearance() {
+  local mode
+  if [[ -f "$STATE_DIR/user/generated/theme-meta.json" ]] && command -v jq >/dev/null 2>&1; then
+    mode="$(jq -r '.mode // "dark"' "$STATE_DIR/user/generated/theme-meta.json" 2>/dev/null || printf dark)"
+  else
+    mode="dark"
+  fi
+  if [[ "$mode" == "light" ]]; then
+    printf Light
+  else
+    printf Dark
+  fi
+}
 
-  # AdwSteamGtk's extracted cache (so future -i runs pick up our colors)
-  if [[ -d "$ADWSTEAM_COLORTHEMES" ]]; then
-    mkdir -p "$ADWSTEAM_COLORTHEMES/$THEME_NAME"
-    cp "$css_source" "$ADWSTEAM_COLORTHEMES/$THEME_NAME/$THEME_NAME.css"
+millennium_material_matugen_selected() {
+  [[ -f "$MILLENNIUM_CONFIG" ]] || return 1
+  command -v jq >/dev/null 2>&1 || return 1
+  [[ "$(jq -r '.themes.activeTheme // empty' "$MILLENNIUM_CONFIG" 2>/dev/null)" == "$MILLENNIUM_THEME_DIR_NAME" ]] || return 1
+  [[ "$(jq -r --arg theme "$MILLENNIUM_THEME_CONDITION_NAME" '.themes.conditions[$theme].Color // empty' "$MILLENNIUM_CONFIG" 2>/dev/null)" == "Matugen" ]]
+}
+
+set_millennium_material_matugen() {
+  local py tmp appearance
+  py="$(venv_python)"
+  tmp="${MILLENNIUM_CONFIG}.tmp"
+  appearance="$(millennium_material_appearance)"
+  mkdir -p "$(dirname "$MILLENNIUM_CONFIG")"
+  "$py" - "$MILLENNIUM_CONFIG" "$tmp" "$MILLENNIUM_THEME_DIR_NAME" "$MILLENNIUM_THEME_CONDITION_NAME" "$appearance" <<'PYCFG'
+import json
+import os
+import sys
+
+path, tmp, active_theme, condition_theme, appearance = sys.argv[1:6]
+try:
+    with open(path) as f:
+        data = json.load(f)
+except Exception:
+    data = {}
+
+general = data.setdefault("general", {})
+general["injectCSS"] = True
+general["injectJavascript"] = True
+
+themes = data.setdefault("themes", {})
+themes["activeTheme"] = active_theme
+themes["allowedStyles"] = True
+themes["allowedScripts"] = True
+conditions = themes.setdefault("conditions", {})
+theme_conditions = conditions.setdefault(condition_theme, {})
+theme_conditions["Color"] = "Matugen"
+theme_conditions["Appearance"] = appearance
+
+os.makedirs(os.path.dirname(path), exist_ok=True)
+with open(tmp, "w") as f:
+    json.dump(data, f, indent=2)
+    f.write("\n")
+os.replace(tmp, path)
+PYCFG
+}
+
+deploy_millennium_material() {
+  local theme_dir loopback_dir css_file deployed=0 loopback_deployed=0 already_matugen=0
+  local -a theme_dirs=()
+
+  install_millennium_material_theme || return 1
+  mapfile -t theme_dirs < <(resolve_millennium_material_theme_dir)
+  [[ "${#theme_dirs[@]}" -gt 0 ]] || return 1
+  millennium_material_matugen_selected && already_matugen=1
+  set_millennium_material_matugen
+
+  css_file="$GENERATED_MILLENNIUM_CSS"
+  if [[ ! -f "$COLORS_JSON" ]]; then
+    log_module "configured Millennium Material-Theme Matugen; no generated palette yet"
+    return 0
+  fi
+  command -v jq &>/dev/null || { log_module "jq not installed — cannot generate Steam Matugen CSS"; return 1; }
+
+  if [[ ! -f "$css_file" ||
+        ( -f "$COLORS_JSON" && "$COLORS_JSON" -nt "$css_file" ) ||
+        ( -f "$MILLENNIUM_TEMPLATE" && "$MILLENNIUM_TEMPLATE" -nt "$css_file" ) ]]; then
+    generate_millennium_css_from_colors_json > "$css_file"
   fi
 
-  # Also write to custom.css (applied on top of any color theme)
-  mkdir -p "$XDG_CONFIG_HOME/AdwSteamGtk"
-  cp "$css_source" "$XDG_CONFIG_HOME/AdwSteamGtk/custom.css"
-
-  # Every Steam installation that has the skin
-  local dir lcss
-  for dir in "${STEAM_DIRS[@]}"; do
-    [[ -d "$dir/steamui/adwaita" ]] || continue
-    mkdir -p "$dir/steamui/adwaita/colorthemes/$THEME_NAME"
-    cp "$css_source" "$dir/steamui/adwaita/colorthemes/$THEME_NAME/$THEME_NAME.css"
-
-    # Also copy to custom/custom.css for immediate CSS override
-    mkdir -p "$dir/steamui/adwaita/custom"
-    cp "$css_source" "$dir/steamui/adwaita/custom/custom.css"
-
-    # Ensure libraryroot.custom.css imports our colortheme
-    lcss="$dir/steamui/libraryroot.custom.css"
-    if [[ -f "$lcss" ]] && ! grep -q "colorthemes/$THEME_NAME/" "$lcss"; then
-      sed -i "s|colorthemes/[^/]*/[^\"]*\.css|colorthemes/$THEME_NAME/$THEME_NAME.css|" "$lcss"
-    fi
-
+  for theme_dir in "${theme_dirs[@]}"; do
+    [[ -n "$theme_dir" ]] || continue
+    mkdir -p "$theme_dir/css/main/colors"
+    cp "$css_file" "$theme_dir/css/main/colors/matugen.css"
     deployed=$((deployed + 1))
   done
 
-  log_module "deployed CSS to $deployed Steam installation(s)"
-}
+  while IFS= read -r loopback_dir; do
+    [[ -n "$loopback_dir" ]] || continue
+    mkdir -p "$loopback_dir/css/main/colors"
+    cp "$css_file" "$loopback_dir/css/main/colors/matugen.css"
+    loopback_deployed=$((loopback_deployed + 1))
+  done < <(resolve_millennium_material_loopback_skin_dir)
 
-reload_steam() {
+  log_module "deployed Millennium Material-Theme Matugen CSS to $deployed theme installation(s) and $loopback_deployed Steam loopback path(s)"
   if ! pgrep -x steamwebhelper &>/dev/null; then
-    log_module "Steam not running — CSS will apply on next launch"
-    return 0
+    log_module "Steam not running — Millennium theme will apply on next launch"
+  elif [[ "$already_matugen" == "1" ]]; then
+    log_module "Matugen CSS deployed — active Millennium Material-Theme sessions refresh automatically"
+  else
+    log_module "configured Millennium Material-Theme Matugen — reload or restart Steam once to activate Matugen live refresh"
   fi
-
-  # Inject CSS via Chrome DevTools Protocol (instant, no flicker).
-  # Steam runs steamwebhelper with --remote-debugging-port=8080 by default.
-  local inject_script="$SCRIPT_DIR/steam-css-inject.py"
-  local py
-  py="$(venv_python)"
-  if [[ -f "$inject_script" ]] && "$py" "$inject_script" "$1" 2>/dev/null; then
-    log_module "injected CSS via CDP (live update)"
-    return 0
-  fi
-
-  # CDP unavailable — CSS is already deployed to disk and will apply on next Steam restart.
-  # Never kill steamwebhelper as fallback: the user perceives it as Steam closing/crashing.
-  log_module "CDP unavailable — CSS deployed to disk, will apply on next Steam restart"
 }
-
-# --- Main ---
 
 main() {
   local enabled
-  enabled=$(config_bool '.appearance.wallpaperTheming.enableAdwSteam' false)
-  [[ "$enabled" == 'true' ]] || exit 0
+  enabled=$(config_bool '.appearance.wallpaperTheming.enableSteam' false)
 
-  if ! resolve_adwsteam_cmd &>/dev/null; then
-    log_module "adwaita-steam-gtk not found — install adwsteamgtk to theme Steam"
+  [[ "$enabled" == 'true' || "${INIR_STEAM_THEME_FORCE:-0}" == "1" ]] || exit 0
+
+  if ! millennium_runtime_available; then
+    log_module "Millennium is required for Steam theming — install millennium-bin"
     exit 0
   fi
 
-  # Resolve CSS source: pre-rendered template or on-the-fly generation
-  local css_file="$GENERATED_CSS"
-  if [[ ! -f "$css_file" ]]; then
-    # Template wasn't rendered (existing install without updated templates.json)
-    if [[ ! -f "$COLORS_JSON" ]]; then
-      log_module "no colors.json — skipping"
-      exit 0
-    fi
-    command -v jq &>/dev/null || { log_module "jq not installed — skipping"; exit 0; }
-    log_module "template CSS not found — generating from colors.json"
-    css_file="$STATE_DIR/user/generated/steam-colortheme.css"
-    generate_css_from_colors_json > "$css_file"
-  fi
-
-  # Bootstrap Adwaita-for-Steam skin on first run
-  if ! skin_installed; then
-    bootstrap_skin || exit 0
-  fi
-
-  deploy_css "$css_file"
-  reload_steam "$css_file"
+  deploy_millennium_material || exit 0
   log_module "done"
 }
 

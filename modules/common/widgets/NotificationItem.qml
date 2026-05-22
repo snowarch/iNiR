@@ -132,7 +132,7 @@ Item { // Notification item area
             : Appearance.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutline, 0.8)
             : Appearance.colors.colLayer0Border
 
-        implicitHeight: expanded ? (contentColumn.implicitHeight + padding * 2) : summaryRow.implicitHeight
+        implicitHeight: expanded ? (contentColumn.implicitHeight + root.padding * 2) : summaryRow.implicitHeight
         Behavior on implicitHeight {
             // Sidebar: subtle fast transition; Popup: instant (window resize handled by parent)
             enabled: !root.popup && Appearance.animationsEnabled
@@ -145,7 +145,9 @@ Item { // Notification item area
 
         ColumnLayout { // Content column
             id: contentColumn
-            anchors.fill: parent
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
             anchors.margins: expanded ? root.padding : 0
             spacing: 3
 

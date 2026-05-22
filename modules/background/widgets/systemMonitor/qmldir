@@ -1,0 +1,2 @@
+module qs.modules.background.widgets.systemMonitor
+SystemMonitorWidget 1.0 SystemMonitorWidget.qml

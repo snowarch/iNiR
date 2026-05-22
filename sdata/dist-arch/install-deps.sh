@@ -47,6 +47,8 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [syntax-highlighting]="syntax-highlighting"
     [kirigami]="kirigami"
     [kdialog]="kdialog"
+    [millennium]="millennium-bin"
+    [missioncenter]="mission-center"
   )
 
   _miss_installflags="--needed"
@@ -321,7 +323,13 @@ v pkg_sudo pacman -S $installflags "${OFFICIAL_PACKAGES[@]}"
 #####################################################################################
 tui_info "Installing AUR packages..."
 
+REQUIRED_AUR_PACKAGES=(
+)
+
 AUR_PACKAGES=(
+  # Steam theming (optional — only needed if user has Steam installed)
+  millennium-bin
+
   # Qt6 extras (not in official repos)
   qt6-avif-image-plugin
 
@@ -402,6 +410,14 @@ fi
 installflags="--needed"
 $ask || installflags="$installflags --noconfirm"
 
+if [[ ${#REQUIRED_AUR_PACKAGES[@]} -gt 0 ]]; then
+  log_info "Installing required AUR packages: ${REQUIRED_AUR_PACKAGES[*]}"
+  if ! v $AUR_HELPER -S $installflags "${REQUIRED_AUR_PACKAGES[@]}"; then
+    log_error "Failed to install required AUR packages: ${REQUIRED_AUR_PACKAGES[*]}"
+    return 1
+  fi
+fi
+
 # Install main AUR packages (these are the only ones that need AUR)
 if [[ ${#AUR_PACKAGES[@]} -gt 0 ]]; then
   log_info "Installing ${#AUR_PACKAGES[@]} AUR packages..."
@@ -455,7 +471,7 @@ tui_info "Registering dependencies with pacman..."
 _meta_dir="./sdata/dist-arch/inir-deps"
 if [[ -f "$_meta_dir/PKGBUILD" ]]; then
   # Update pkgver from VERSION file
-  _inir_ver="$(cat ./VERSION 2>/dev/null || echo '2.24.0')"
+  _inir_ver="$(cat ./VERSION 2>/dev/null || echo '2.25.0')"
   sed -i "s/^pkgver=.*/pkgver=${_inir_ver}/" "$_meta_dir/PKGBUILD"
 
   (

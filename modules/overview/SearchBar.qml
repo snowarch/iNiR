@@ -65,6 +65,11 @@ RowLayout {
         id: searchInput
         Layout.topMargin: 4
         Layout.bottomMargin: 4
+        // Take whatever horizontal space the parent gives us so the search row
+        // stays balanced when result cards widen the SearchWidget container.
+        // implicitWidth provides the minimum: collapsed when empty, expanded
+        // when typing — Layout.fillWidth lets it grow past that as needed.
+        Layout.fillWidth: true
         implicitHeight: Appearance.sizes.baseBarHeight
         focus: GlobalStates.overviewOpen
         font.pixelSize: Appearance.font.pixelSize.small

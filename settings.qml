@@ -108,6 +108,12 @@ ApplicationWindow {
             icon: "info",
             essential: true,
             component: "modules/settings/About.qml"
+        },
+        {
+            name: Translation.tr("Desktop Widgets"),
+            icon: "widgets",
+            essential: false,
+            component: "modules/settings/DesktopWidgetsConfig.qml"
         }
     ]
     property int currentPage: 0
@@ -486,33 +492,62 @@ ApplicationWindow {
             description: Translation.tr("Vignette darkening effect on backdrop"),
             keywords: ["backdrop", "vignette", "darken", "edges", "effect"]
         },
+        // Desktop Widgets (page 14)
         {
-            pageIndex: 3, pageName: pages[3].name,
-            section: Translation.tr("Widget: Clock"),
-            label: Translation.tr("Background clock"),
+            pageIndex: 14, pageName: pages[14].name,
+            section: Translation.tr("Edit Mode"),
+            label: Translation.tr("Widget edit mode"),
+            description: Translation.tr("Grid overlay and snap-to-grid for widget placement"),
+            keywords: ["widget", "edit", "grid", "snap", "placement", "drag"]
+        },
+        {
+            pageIndex: 14, pageName: pages[14].name,
+            section: Translation.tr("Clock"),
+            label: Translation.tr("Desktop clock"),
             description: Translation.tr("Clock widget on the desktop background"),
             keywords: ["clock", "widget", "cookie", "digital", "background", "desktop"]
         },
         {
-            pageIndex: 3, pageName: pages[3].name,
-            section: Translation.tr("Widget: Clock"),
+            pageIndex: 14, pageName: pages[14].name,
+            section: Translation.tr("Clock"),
             label: Translation.tr("Clock style"),
             description: Translation.tr("Cookie (analog) or digital clock"),
             keywords: ["clock", "style", "cookie", "digital", "analog", "hands"]
         },
         {
-            pageIndex: 3, pageName: pages[3].name,
-            section: Translation.tr("Widget: Weather"),
-            label: Translation.tr("Background weather widget"),
+            pageIndex: 14, pageName: pages[14].name,
+            section: Translation.tr("Weather"),
+            label: Translation.tr("Desktop weather widget"),
             description: Translation.tr("Weather display on the desktop background"),
             keywords: ["weather", "widget", "background", "temperature"]
         },
         {
-            pageIndex: 3, pageName: pages[3].name,
-            section: Translation.tr("Widget: Media"),
-            label: Translation.tr("Background media widget"),
+            pageIndex: 14, pageName: pages[14].name,
+            section: Translation.tr("Media Controls"),
+            label: Translation.tr("Desktop media widget"),
             description: Translation.tr("Media player controls on the desktop background"),
             keywords: ["media", "widget", "background", "player", "music", "album"]
+        },
+        {
+            pageIndex: 14, pageName: pages[14].name,
+            section: Translation.tr("Visualizer"),
+            label: Translation.tr("Audio visualizer"),
+            description: Translation.tr("Audio visualizer bars on the desktop"),
+            keywords: ["visualizer", "audio", "bars", "music", "equalizer", "spectrum"]
+        },
+        {
+            pageIndex: 14, pageName: pages[14].name,
+            section: Translation.tr("System Monitor"),
+            label: Translation.tr("System monitor widget"),
+            description: Translation.tr("CPU, RAM, GPU usage on the desktop"),
+            keywords: ["system", "monitor", "cpu", "ram", "gpu", "usage", "performance"]
+        },
+        {
+            pageIndex: 14, pageName: pages[14].name,
+            section: Translation.tr("Battery"),
+            label: Translation.tr("Desktop battery widget"),
+            description: Translation.tr("Battery status on the desktop background"),
+            keywords: ["battery", "widget", "background", "charge", "power"]
         },
 
         // =====================================================================
@@ -856,8 +891,15 @@ ApplicationWindow {
             pageIndex: 5, pageName: pages[5].name,
             section: Translation.tr("On-screen display"),
             label: Translation.tr("OSD timeout"),
-            description: Translation.tr("How long the volume/brightness OSD stays visible"),
-            keywords: ["osd", "volume", "brightness", "timeout", "duration"]
+            description: Translation.tr("How long the volume, brightness and media OSD stays visible"),
+            keywords: ["osd", "volume", "brightness", "media", "timeout", "duration"]
+        },
+        {
+            pageIndex: 5, pageName: pages[5].name,
+            section: Translation.tr("On-screen display"),
+            label: Translation.tr("Media OSD"),
+            description: Translation.tr("Show now playing feedback when media shortcuts are pressed"),
+            keywords: ["osd", "media", "music", "player", "shortcuts"]
         },
         {
             pageIndex: 5, pageName: pages[5].name,

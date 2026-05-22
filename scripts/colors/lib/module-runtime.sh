@@ -99,10 +99,25 @@ resolve_target_module_path() {
   printf '%s\n' "$module_path"
 }
 
+target_manifest_enabled() {
+  local manifest_path="$1"
+  [[ -f "$manifest_path" ]] || return 1
+  command -v jq >/dev/null 2>&1 || return 0
+
+  local config_key value
+  config_key=$(jq -r '.configKey // empty' "$manifest_path" 2>/dev/null || true)
+  [[ -n "$config_key" ]] || return 0
+  [[ -f "$CONFIG_FILE" ]] || return 0
+
+  value=$(jq -r --arg key "$config_key" 'getpath($key | split(".")) as $v | if $v == null then true else $v end' "$CONFIG_FILE" 2>/dev/null || printf 'true')
+  [[ "$value" != "false" ]]
+}
+
 list_declared_theming_modules() {
   local manifest
   while IFS= read -r manifest; do
     [[ -n "$manifest" ]] || continue
+    target_manifest_enabled "$manifest" || continue
     local target_id
     target_id="$(basename "$manifest" .json)"
     resolve_target_module_path "$target_id" || true
