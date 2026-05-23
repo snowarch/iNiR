@@ -33,7 +33,7 @@ EDITORS=(
     "oss-code|OSS Code||code|"
     "zed|Zed||zed-bin|"
     "cursor|Cursor||cursor-bin|"
-    "neovim-lazyvim|Neovim + LazyVim|neovim git||post_install_lazyvim"
+    "neovim-lazyvim|Neovim + LazyVim||neovim git|post_install_lazyvim"
 )
 
 split_words_into_array() {
