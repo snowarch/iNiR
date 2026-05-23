@@ -74,6 +74,13 @@ if is_arch_like; then
     setup_progress 1 $TOTAL "Installing Spotify (AUR) and Spicetify CLI"
     install_arch -- spotify spicetify-cli
 
+    # Verify spicetify is actually available now
+    if ! have_cmd spicetify; then
+        setup_fail "spicetify was installed but is not in PATH. Open a new terminal and rerun /setup-spotify."
+        setup_finish_pause
+        exit 1
+    fi
+
     # Detect the Spotify install directory. Prefer /opt/spotify (AUR package,
     # has .spa files spicetify needs) over the spotify-launcher expanded dir.
     _spotify_dir() {
@@ -90,12 +97,36 @@ if is_arch_like; then
         exit 1
     fi
     echo "  · Spotify at: $spotify_dir"
+
+    # Ensure spicetify config directory exists so subsequent commands don't fail
+    spicetify_cfg_dir="${XDG_CONFIG_HOME:-$HOME/.config}/spicetify"
+    mkdir -p "$spicetify_cfg_dir"
+
     # Ensure spicetify points to the .spa-based install, not a launcher dir
     spicetify config spotify_path "$spotify_dir" >/dev/null 2>&1 || true
-    sudo chmod a+wr "$spotify_dir"
-    sudo chmod a+wr "$spotify_dir/Apps" -R
+
+    # Spicetify needs write access to Spotify's files to inject the CSS/JS.
+    # Try sudo; if it fails (no TTY, no passwordless sudo, etc.) warn and continue
+    # because the user may have already set the permissions manually.
+    if ! sudo chmod -R a+wr "$spotify_dir" 2>/dev/null; then
+        echo "  · warning: could not chmod $spotify_dir (sudo failed or not needed)." >&2
+    fi
+    if [[ -d "$spotify_dir/Apps" ]] && ! sudo chmod -R a+wr "$spotify_dir/Apps" 2>/dev/null; then
+        echo "  · warning: could not chmod $spotify_dir/Apps (sudo failed or not needed)." >&2
+    fi
 
     setup_progress 3 $TOTAL "Applying Spicetify backup"
+
+    # If Spotify is already running from a previous session, spicetify cannot
+    # patch the files. Ask the user to close it first.
+    if pgrep -x spotify >/dev/null 2>&1; then
+        echo "  · Spotify is already running. Please close it before continuing."
+        while pgrep -x spotify >/dev/null 2>&1; do
+            sleep 1
+        done
+        echo "  · Spotify closed."
+    fi
+
     prefs="$(_find_prefs)"
     if [[ -n "$prefs" ]]; then
         echo "  · prefs already exists at $prefs"
@@ -107,14 +138,20 @@ if is_arch_like; then
         # Stale backup — try restore then redo
         if spicetify restore backup apply; then return 0; fi
         # Deadlocked (version mismatch) — nuke backup state and retry
-        local cfg_dir
-        cfg_dir="$(dirname "$(spicetify -c 2>/dev/null)" 2>/dev/null)"
-        if [[ -n "$cfg_dir" ]]; then
+        local cfg_dir=""
+        local spicetify_c
+        spicetify_c="$(spicetify -c 2>/dev/null)" || true
+        if [[ -n "$spicetify_c" ]]; then
+            cfg_dir="$(dirname "$spicetify_c")"
+        fi
+        if [[ -n "$cfg_dir" && -d "$cfg_dir" ]]; then
             echo "  · Clearing stale backup state…"
             rm -rf "${cfg_dir:?}/Backup" 2>/dev/null || true
             # Clear [Backup] section values in config
-            sed -i '/^\[Backup\]/,/^\[/{/^\[Backup\]/!{/^\[/!d}}' \
-                "${cfg_dir}/config-xpui.ini" 2>/dev/null || true
+            if [[ -f "${cfg_dir}/config-xpui.ini" ]]; then
+                sed -i '/^\[Backup\]/,/^\[/{/^\[Backup\]/!{/^\[/!d}}' \
+                    "${cfg_dir}/config-xpui.ini" 2>/dev/null || true
+            fi
         fi
         spicetify backup apply
     }
@@ -136,7 +173,13 @@ if is_arch_like; then
         fi
         echo "  · Found prefs at $prefs"
         spicetify config prefs_path "$prefs" >/dev/null 2>&1 || true
-        _spicetify_apply
+        # Brief pause so Spotify releases file locks before we patch
+        sleep 1
+        if ! _spicetify_apply; then
+            setup_fail "Spicetify backup apply failed even after generating prefs. Check the error above."
+            setup_finish_pause
+            exit 1
+        fi
     fi
 
     setup_progress 4 $TOTAL "Installing Spicetify Marketplace"
