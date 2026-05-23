@@ -43,6 +43,7 @@ trap cleanup EXIT
 
 /usr/bin/mkdir -p "$TMP_PATH"
 /usr/bin/parec --device="$MONITOR_SOURCE" --format=s16le --rate=44100 --channels=2 > "$TMP_RAW" &
+PAREC_PID=$!
 START_TIME=$(/usr/bin/date +%s)
 
 while true; do
@@ -53,11 +54,17 @@ while true; do
     if (( ELAPSED >= TOTAL_DURATION )); then
         exit 0
     fi
+    
+    # stop immediately if parec dont find the correct audio source
+    if ! kill -0 $PAREC_PID 2>/dev/null; then
+        exit 1
+    fi
 
     /usr/bin/ffmpeg -f s16le -ar 44100 -ac 2 -i "$TMP_RAW" -acodec libmp3lame -y -hide_banner -loglevel error "$TMP_MP3" 2>/dev/null
     RESULT=$(/usr/bin/songrec recognize -j "$TMP_MP3" 2>/dev/null || true)
 
-    if echo "$RESULT" | /usr/bin/grep -q '"matches": \[' && [ ${#RESULT} -gt $MIN_VALID_RESULT_LENGTH ]; then
+    # better if shazam api change
+    if echo "$RESULT" | /usr/bin/grep -q '"track"'; then
         echo "$RESULT"
         exit 0
     fi
