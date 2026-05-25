@@ -1,8 +1,9 @@
 [Desktop Entry]
 Type=Application
-Name=iNiR Settings
-Comment=Open iNiR settings
-Exec=inir settings
+Name=iNiR Shell
+Comment=iNiR desktop shell session
+Exec=inir service restart
 Icon=inir
 Terminal=false
-Categories=Settings;DesktopSettings;Utility;
+NoDisplay=true
+Categories=System;

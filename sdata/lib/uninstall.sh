@@ -30,6 +30,7 @@ declare -A INIR_ONLY_PATHS=(
     ["${XDG_CONFIG_HOME}/Vesktop/themes/system24.theme.css"]="iNiR Vesktop theme (alt)"
     ["${XDG_CONFIG_HOME}/Vesktop/themes/ii-colors.css"]="iNiR Vesktop colors (alt)"
     ["${XDG_DATA_HOME}/applications/inir.desktop"]="iNiR desktop entry"
+    ["${XDG_DATA_HOME}/applications/inir-settings.desktop"]="iNiR settings desktop entry"
     ["${XDG_DATA_HOME}/icons/hicolor/scalable/apps/inir.svg"]="iNiR launcher icon"
     ["${HOME}/.local/bin/sync-pixel-sddm.py"]="iNiR SDDM theme sync helper"
 )
