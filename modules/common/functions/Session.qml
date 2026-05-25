@@ -73,6 +73,10 @@ Singleton {
         if (!CompositorService.isHyprland)
             return;
 
+        // Prevent reference errors if HyprlandData is undefined or lacks the window list
+        if (typeof HyprlandData === "undefined" || !HyprlandData || !HyprlandData.windowList)
+            return;
+
         HyprlandData.windowList.map(w => w.pid).forEach(pid => {
             Quickshell.execDetached(["/usr/bin/kill", pid]);
         });
