@@ -17,6 +17,14 @@ GroupButton {
     property bool rightmost: false
     leftRadius: (toggled || leftmost) ? (height / 2) : Appearance.rounding.unsharpenmore
     rightRadius: (toggled || rightmost) ? (height / 2) : Appearance.rounding.unsharpenmore
+    Behavior on leftRadius {
+        enabled: Appearance.animationsEnabled
+        animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
+    }
+    Behavior on rightRadius {
+        enabled: Appearance.animationsEnabled
+        animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
+    }
     colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colSecondaryContainer
     colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover

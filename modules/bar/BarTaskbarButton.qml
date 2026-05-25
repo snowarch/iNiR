@@ -407,10 +407,11 @@ RippleButton {
                                 return index === root.focusedWindowIndex;
                             }
 
-                            radius: Appearance.angelEverywhere ? 0 : Appearance.rounding.full
-                            // Horizontal: wider when focused. Vertical: taller when focused.
-                            implicitWidth: root.vertical ? 2 : (isFocused ? 8 : 3)
-                            implicitHeight: root.vertical ? (isFocused ? 8 : 3) : 2
+                            // Unfocused: 3×3 circle. Focused: pill in bar direction.
+                            // Both dims animate → squish morph same as dock dots.
+                            radius: Appearance.angelEverywhere ? 0 : Math.min(width, height) / 2
+                            implicitWidth: root.vertical ? (isFocused ? 2 : 3) : (isFocused ? 8 : 3)
+                            implicitHeight: root.vertical ? (isFocused ? 8 : 3) : (isFocused ? 2 : 3)
                             color: isFocused
                                 ? (Appearance.angelEverywhere ? Appearance.angel.colPrimary
                                 : Appearance.inirEverywhere ? Appearance.inir.colPrimary

@@ -87,11 +87,13 @@ Item {
                     return index === root.focusedWindowIndex
                 }
 
-                radius: Appearance.angelEverywhere ? 0 : Appearance.rounding.full
+                // Unfocused: circle (dotHeight+2 × dotHeight+2), focused: pill (dotWidth × dotHeight)
+                // Both dimensions animate simultaneously → SecondHand-style squish morph
+                radius: Appearance.angelEverywhere ? 0 : Math.min(width, height) / 2
                 implicitWidth: Appearance.angelEverywhere
                     ? (isFocused ? 14 : 6)
-                    : (isFocused ? root.countDotWidth : root.countDotHeight)
-                implicitHeight: Appearance.angelEverywhere ? 2 : root.countDotHeight
+                    : (isFocused ? root.countDotWidth : root.countDotHeight + 2)
+                implicitHeight: Appearance.angelEverywhere ? 2 : (isFocused ? root.countDotHeight : root.countDotHeight + 2)
                 color: isFocused
                     ? (Appearance.angelEverywhere ? Appearance.angel.colPrimary
                      : Appearance.inirEverywhere  ? Appearance.inir.colPrimary
@@ -103,6 +105,10 @@ Item {
                       : Appearance.colors.colOnLayer0, 0.5)
 
                 Behavior on implicitWidth {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: 120; easing.type: Easing.OutQuad }
+                }
+                Behavior on implicitHeight {
                     enabled: Appearance.animationsEnabled
                     NumberAnimation { duration: 120; easing.type: Easing.OutQuad }
                 }
