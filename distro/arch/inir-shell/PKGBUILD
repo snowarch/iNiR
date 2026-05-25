@@ -19,7 +19,6 @@ depends=(
   jq
   kirigami
   libnotify
-  millennium-bin
   networkmanager
   niri
   noto-fonts-emoji
@@ -95,6 +94,7 @@ optdepends=(
   'wtype: Wayland text injection helper'
   'ydotool: virtual keyboard and clipboard paste helper'
   'yt-dlp: YouTube media backend'
+  'millennium-bin: Steam theming via Millennium (requires steam)'
 )
 conflicts=('inir-shell-git' 'noctalia-qs' 'noctalia-shell' 'cachyos-niri-noctalia')
 source=(

@@ -33,7 +33,6 @@ depends=(
   kvantum
   libdbusmenu-gtk3
   libqalculate
-  millennium-bin
   mpv
   mpv-mpris
   nautilus
@@ -60,6 +59,9 @@ depends=(
   wtype
   ydotool
   yt-dlp
+)
+optdepends=(
+  'millennium-bin: Steam theming via Millennium (requires steam)'
 )
 
 package() {

@@ -28,7 +28,6 @@ pkgbase = inir-meta
 	depends = kvantum
 	depends = libdbusmenu-gtk3
 	depends = libqalculate
-	depends = millennium-bin
 	depends = mpv
 	depends = mpv-mpris
 	depends = nautilus
@@ -55,6 +54,7 @@ pkgbase = inir-meta
 	depends = wtype
 	depends = ydotool
 	depends = yt-dlp
+	optdepends = millennium-bin: Steam theming via Millennium (requires steam)
 	source = LICENSE::https://raw.githubusercontent.com/snowarch/iNiR/main/LICENSE
 	sha256sums = SKIP
 

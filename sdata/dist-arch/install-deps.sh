@@ -327,9 +327,6 @@ REQUIRED_AUR_PACKAGES=(
 )
 
 AUR_PACKAGES=(
-  # Steam theming (optional — only needed if user has Steam installed)
-  millennium-bin
-
   # Qt6 extras (not in official repos)
   qt6-avif-image-plugin
 
@@ -387,6 +384,11 @@ install_font_fallback() {
   fi
   return 1
 }
+
+# Steam theming — only install millennium-bin if steam is already present
+if pacman -Q steam >/dev/null 2>&1 || command -v steam >/dev/null 2>&1; then
+  AUR_PACKAGES+=(millennium-bin)
+fi
 
 # Add other AUR packages based on flags
 if $INSTALL_FONTS; then
