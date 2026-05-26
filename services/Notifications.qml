@@ -27,6 +27,65 @@ Singleton {
     // Guard against re-entrant discardNotification calls (server dismiss → onNotificationChanged → discard again)
     property var _discardingIds: new Set()
 
+    function sanitizeAppIcon(appIcon, appName, summary): string {
+        const icon = String(appIcon ?? "");
+        if (icon === "") return "";
+        
+        let isLocalFile = false;
+        let localPath = "";
+        if (icon.startsWith("/")) {
+            isLocalFile = true;
+            localPath = icon;
+        } else if (icon.startsWith("file://")) {
+            isLocalFile = true;
+            localPath = icon.substring(7);
+        } else if (icon.startsWith("image://icon/")) {
+            const rest = icon.substring(13);
+            if (rest.startsWith("/")) {
+                isLocalFile = true;
+                localPath = rest;
+            }
+        }
+        
+        if (isLocalFile) {
+            if (!TrayService.fileExists(localPath)) {
+                console.log("[Notifications] Icon file does not exist: " + localPath + ". Using fallback.");
+                return "dialog-information";
+            }
+        }
+        return icon;
+    }
+
+    function sanitizeImage(image): string {
+        const img = String(image ?? "");
+        if (img === "") return "";
+        if (img.startsWith("image://qsimage/")) return "";
+        
+        let isLocalFile = false;
+        let localPath = "";
+        if (img.startsWith("/")) {
+            isLocalFile = true;
+            localPath = img;
+        } else if (img.startsWith("file://")) {
+            isLocalFile = true;
+            localPath = img.substring(7);
+        } else if (img.startsWith("image://icon/")) {
+            const rest = img.substring(13);
+            if (rest.startsWith("/")) {
+                isLocalFile = true;
+                localPath = rest;
+            }
+        }
+        
+        if (isLocalFile) {
+            if (!TrayService.fileExists(localPath)) {
+                console.log("[Notifications] Body image file does not exist: " + localPath + ". Discarding image.");
+                return "";
+            }
+        }
+        return img;
+    }
+
     component Notif: QtObject {
         id: wrapper
         required property int notificationId // Could just be `id` but it conflicts with the default prop in QtObject
@@ -37,10 +96,10 @@ Singleton {
         })) ?? []
         property bool popup: false
         property bool isTransient: notification?.hints.transient ?? false
-        property string appIcon: notification?.appIcon ?? ""
+        property string appIcon: notification ? root.sanitizeAppIcon(notification.appIcon, notification.appName, notification.summary) : ""
         property string appName: notification?.appName ?? ""
         property string body: notification?.body ?? ""
-        property string image: notification?.image ?? ""
+        property string image: notification ? root.sanitizeImage(notification.image) : ""
         property string summary: notification?.summary ?? ""
         property double time
         property string urgency: notification?.urgency.toString() ?? "normal"
@@ -607,10 +666,10 @@ Singleton {
                 return notifComponent.createObject(root, {
                     "notificationId": notif.notificationId,
                     "actions": [], // Notification actions are meaningless if they're not tracked by the server or the sender is dead
-                    "appIcon": notif.appIcon,
+                    "appIcon": root.sanitizeAppIcon(notif.appIcon, notif.appName, notif.summary),
                     "appName": notif.appName,
                     "body": notif.body,
-                    "image": notif.image,
+                    "image": root.sanitizeImage(notif.image),
                     "summary": notif.summary,
                     "time": notif.time,
                     "urgency": notif.urgency,

@@ -163,11 +163,64 @@ Singleton {
     property list<var> pinnedItems: invertPins ? itemsNotInUserList : itemsInUserList
     property list<var> unpinnedItems: invertPins ? itemsInUserList : itemsNotInUserList
 
+    function fileExists(path): bool {
+        const strPath = String(path ?? "");
+        if (strPath === "") return false;
+        let localPath = strPath;
+        if (strPath.startsWith("file://")) {
+            localPath = strPath.substring(7);
+        } else if (strPath.startsWith("image://icon/")) {
+            const rest = strPath.substring(13);
+            if (rest.startsWith("/")) {
+                localPath = rest;
+            } else {
+                return true;
+            }
+        }
+        
+        // If it does not start with "/", it's a theme icon name rather than a physical file path
+        if (!localPath.startsWith("/")) {
+            return true;
+        }
+
+        // Perform a synchronous physical file existence check using XMLHttpRequest
+        try {
+            const xhr = new XMLHttpRequest();
+            xhr.open("GET", "file://" + localPath, false);
+            xhr.send();
+            return xhr.status === 200 || xhr.status === 0;
+        } catch (e) {
+            return false;
+        }
+    }
+
     function getSafeIcon(item): string {
         if (!item) return "";
         const app = getProblematicAppInfo(item);
         if (app && app.fixedIcon) return app.fixedIcon;
-        return item.icon ?? "";
+        
+        let icon = item.icon ?? "";
+        if (icon === "") return "";
+        
+        let isLocalFile = false;
+        let localPath = "";
+        if (icon.startsWith("/")) {
+            isLocalFile = true;
+            localPath = icon;
+        } else if (icon.startsWith("file://")) {
+            isLocalFile = true;
+            localPath = icon.substring(7);
+        }
+        
+        if (isLocalFile) {
+            // Check if file exists physically on disk to prevent Qt 6.11.1 pure virtual method crash
+            if (!fileExists(localPath)) {
+                root._log(`[TrayService] Icon file does not exist: ${localPath}. Using fallback.`);
+                return "application-x-executable";
+            }
+        }
+        
+        return icon;
     }
 
     function getTooltipForItem(item) {

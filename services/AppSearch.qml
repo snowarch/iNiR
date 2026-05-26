@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import qs.modules.common
 import qs.modules.common.functions
+import qs.services
 import Quickshell
 
 /**
@@ -501,7 +502,6 @@ Singleton {
             if (iconExists(guess)) return guess;
         }
 
-
         // Give up
         return str;
     }
@@ -512,7 +512,11 @@ Singleton {
         const icon = guessIcon(str);
         // Absolute path - return as file:// URL
         if (icon.startsWith("/")) {
-            return "file://" + icon;
+            if (TrayService.fileExists(icon)) {
+                return "file://" + icon;
+            } else {
+                return Quickshell.iconPath(fallback, "");
+            }
         }
         // Icon name - resolve via theme
         return Quickshell.iconPath(icon, fallback);
@@ -524,36 +528,30 @@ Singleton {
         fallback = fallback ?? "image-missing"
         if (!iconNameOrPath) return Quickshell.iconPath(fallback, "");
         
-        // Handle absolute paths - check for known Electron app patterns
+        // Handle absolute paths - check for known app patterns
         if (iconNameOrPath.startsWith("/") || iconNameOrPath.startsWith("file://")) {
             const path = iconNameOrPath.startsWith("file://") ? iconNameOrPath.substring(7) : iconNameOrPath;
-            
-            // Known Electron app patterns - return proper icon name
-            if (path.includes("/Windsurf/") || path.includes("/windsurf/")) {
-                return Quickshell.iconPath("visual-studio-code", fallback);
+            const lowerPath = path.toLowerCase();
+            const knownApps = [
+                { match: ["/windsurf/"], icon: "visual-studio-code" },
+                { match: ["/code/", "/vscode/"], icon: "visual-studio-code" },
+                { match: ["/cursor/"], icon: "visual-studio-code" },
+                { match: ["/discord/"], icon: "discord" },
+                { match: ["/slack/"], icon: "slack" },
+                { match: ["/obsidian/"], icon: "obsidian" },
+                { match: ["/spotify/"], icon: "spotify" },
+                { match: ["/zed/"], icon: "dev.zed.Zed" },
+                { match: ["com.microsoft.edge", "edge"], icon: "microsoft-edge" }
+            ];
+
+            const matchedApp = knownApps.find(app => 
+                app.match.some(term => lowerPath.includes(term))
+            );
+
+            if (matchedApp) {
+                return Quickshell.iconPath(matchedApp.icon, fallback);
             }
-            if (path.includes("/Code/") || path.includes("/code/") || path.includes("/VSCode/")) {
-                return Quickshell.iconPath("visual-studio-code", fallback);
-            }
-            if (path.includes("/Cursor/") || path.includes("/cursor/")) {
-                return Quickshell.iconPath("visual-studio-code", fallback);
-            }
-            if (path.includes("/Discord/") || path.includes("/discord/")) {
-                return Quickshell.iconPath("discord", fallback);
-            }
-            if (path.includes("/Slack/") || path.includes("/slack/")) {
-                return Quickshell.iconPath("slack", fallback);
-            }
-            if (path.includes("/Obsidian/") || path.includes("/obsidian/")) {
-                return Quickshell.iconPath("obsidian", fallback);
-            }
-            if (path.includes("/Spotify/") || path.includes("/spotify/")) {
-                return Quickshell.iconPath("spotify", fallback);
-            }
-            if (path.includes("/Zed/") || path.includes("/zed/")) {
-                return Quickshell.iconPath("dev.zed.Zed", fallback);
-            }
-            
+
             // Check for volatile paths (Downloads, tmp, etc.)
             if (path.includes("/Descargas/") || path.includes("/Downloads/") || 
                 path.includes("/tmp/") || path.includes("/resources/")) {
@@ -563,8 +561,12 @@ Singleton {
                 return Quickshell.iconPath(baseName, fallback);
             }
             
-            // Return as file:// URL for valid paths
-            return iconNameOrPath.startsWith("file://") ? iconNameOrPath : "file://" + iconNameOrPath;
+            // Return as file:// URL if valid/existing path
+            if (TrayService.fileExists(path)) {
+                return iconNameOrPath.startsWith("file://") ? iconNameOrPath : "file://" + iconNameOrPath;
+            } else {
+                return Quickshell.iconPath(fallback, "");
+            }
         }
         
         // Icon name - resolve via theme

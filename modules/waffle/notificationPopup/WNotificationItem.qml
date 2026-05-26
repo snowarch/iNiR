@@ -20,14 +20,14 @@ Item {
     
     required property var notification
     property bool onlyNotification: false
-
+    
     readonly property string notifImage: notification?.image ?? ""
     readonly property string notifSummary: notification?.summary ?? ""
     readonly property string notifBody: notification?.body ?? ""
     readonly property string notifAppName: notification?.appName ?? ""
     readonly property var notifActions: notification?.actions ?? []
     readonly property int notifId: notification?.notificationId ?? -1
-    readonly property bool hasImage: notifImage !== ""
+    readonly property bool hasImage: notifImage !== "" && TrayService.fileExists(notifImage)
     readonly property bool hasActions: notifActions.length > 0
     readonly property bool isCritical: notification?.urgency === NotificationUrgency.Critical
 
@@ -141,7 +141,7 @@ Item {
                 Image {
                     id: imageContent
                     anchors.fill: parent
-                    source: root.notifImage
+                    source: root.hasImage ? root.notifImage : ""
                     sourceSize.width: parent.width
                     sourceSize.height: 120
                     fillMode: Image.PreserveAspectCrop

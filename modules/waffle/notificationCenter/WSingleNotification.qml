@@ -21,7 +21,7 @@ MouseArea {
     hoverEnabled: true
 
     readonly property bool isCritical: notification?.urgency === NotificationUrgency.Critical
-    readonly property bool hasImage: notification?.image !== ""
+    readonly property bool hasImage: notification?.image !== "" && TrayService.fileExists(notification?.image)
 
     function dismiss() {
         Qt.callLater(() => {
@@ -99,14 +99,14 @@ MouseArea {
                         top: parent.top
                         left: parent.left
                     }
-                    active: root.notification?.image != ""
+                    active: root.hasImage
                     sourceComponent: StyledImage {
                         readonly property int size: 48
                         width: size
                         height: size
                         sourceSize.width: size
                         sourceSize.height: size
-                        source: root.notification?.image ?? ""
+                        source: root.hasImage ? (root.notification?.image ?? "") : ""
                         fillMode: Image.PreserveAspectFit
                     }
                 }

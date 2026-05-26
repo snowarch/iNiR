@@ -1,5 +1,6 @@
 import qs.modules.common
 import qs.modules.common.functions
+import qs.services
 import Qt5Compat.GraphicalEffects
 import QtQuick
 import Quickshell
@@ -55,12 +56,31 @@ MaterialShape { // App icon
             id: appIconImage
             implicitSize: root.appIconSize
             asynchronous: true
-            source: Quickshell.iconPath(root.appIcon, "image-missing")
+            source: {
+                const icon = String(root.appIcon ?? "");
+                if (icon === "") return "image-missing";
+                if (icon.startsWith("/") || icon.startsWith("file://") || icon.startsWith("image://icon/")) {
+                    let path = icon;
+                    if (icon.startsWith("file://")) {
+                        path = icon.substring(7);
+                    } else if (icon.startsWith("image://icon/")) {
+                        const rest = icon.substring(13);
+                        path = rest.startsWith("/") ? rest : "";
+                    }
+                    if (path === "") return "image-missing";
+                    if (TrayService.fileExists(path)) {
+                        return icon;
+                    } else {
+                        return "image-missing";
+                    }
+                }
+                return Quickshell.iconPath(icon, "image-missing");
+            }
         }
     }
     Loader {
         id: notifImageLoader
-        active: root.image != "" && root.image !== undefined
+        active: root.image != "" && root.image !== undefined && TrayService.fileExists(root.image)
         anchors.fill: parent
         sourceComponent: Item {
             id: notifImageContainer
@@ -72,7 +92,7 @@ MaterialShape { // App icon
                 readonly property int size: parent.width
                 visible: status === Image.Ready
 
-                source: notifImageContainer.imageValid ? root.image : ""
+                source: notifImageContainer.imageValid && TrayService.fileExists(root.image) ? root.image : ""
                 fillMode: Image.PreserveAspectCrop
                 cache: false
                 antialiasing: true
@@ -106,7 +126,26 @@ MaterialShape { // App icon
                 sourceComponent: IconImage {
                     implicitSize: root.smallAppIconSize
                     asynchronous: true
-                    source: Quickshell.iconPath(root.appIcon, "image-missing")
+                    source: {
+                        const icon = String(root.appIcon ?? "");
+                        if (icon === "") return "image-missing";
+                        if (icon.startsWith("/") || icon.startsWith("file://") || icon.startsWith("image://icon/")) {
+                            let path = icon;
+                            if (icon.startsWith("file://")) {
+                                path = icon.substring(7);
+                            } else if (icon.startsWith("image://icon/")) {
+                                const rest = icon.substring(13);
+                                path = rest.startsWith("/") ? rest : "";
+                            }
+                            if (path === "") return "image-missing";
+                            if (TrayService.fileExists(path)) {
+                                return icon;
+                            } else {
+                                return "image-missing";
+                            }
+                        }
+                        return Quickshell.iconPath(icon, "image-missing");
+                    }
                 }
             }
         }

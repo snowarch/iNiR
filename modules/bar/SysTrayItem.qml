@@ -100,7 +100,7 @@ MouseArea {
     IconImage {
         id: trayIcon
         visible: !(Config.options?.bar?.tray?.monochromeIcons ?? false)
-        source: root.item?.icon ?? ""
+        source: TrayService.getSafeIcon(root.item)
         anchors.centerIn: parent
         width: parent.width
         height: parent.height
@@ -116,7 +116,7 @@ MouseArea {
                 id: tintedIcon
                 visible: false
                 anchors.fill: parent
-                source: root.item?.icon ?? ""
+                source: TrayService.getSafeIcon(root.item)
             }
             Desaturate {
                 id: desaturatedIcon
