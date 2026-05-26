@@ -40,6 +40,7 @@ singleton KeyringStorage 1.0 KeyringStorage.qml
 singleton LatexRenderer 1.0 LatexRenderer.qml
 singleton LauncherSearch 1.0 LauncherSearch.qml
 singleton MaterialThemeLoader 1.0 MaterialThemeLoader.qml
+singleton MemoryPressureService 1.0 MemoryPressureService.qml
 singleton MinimizedWindows 1.0 MinimizedWindows.qml
 singleton MprisController 1.0 MprisController.qml
 singleton Network 1.0 Network.qml

@@ -61,6 +61,8 @@ ShellRoot {
         root._log("[Shell] Initializing startup-critical singletons");
         FirstRunExperience.load();
         ConflictKiller.load();
+        // Force MemoryPressureService instantiation for IPC (#164)
+        void MemoryPressureService.enabled;
         // Reset shell entry state (hot-reload may preserve singletons)
         GlobalStates.shellEntryReady = false;
         GlobalStates.deferredPanelsReady = false;
