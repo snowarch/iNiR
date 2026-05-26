@@ -1037,6 +1037,7 @@ Scope {
                             color: "transparent"
 
                             Flickable {
+                                id: navFlickable
                                 anchors.fill: parent
                                 anchors.margins: 2
                                 anchors.bottomMargin: overlayWindowToggle.height + 6
@@ -1054,6 +1055,7 @@ Scope {
                                     spacing: 0
 
                                     Repeater {
+                                        id: navRepeater
                                         model: root.visibleNavItems
                                         delegate: Column {
                                             id: navItem
@@ -1136,31 +1138,6 @@ Scope {
                                                 contentItem: Item {
                                                     anchors.fill: parent
 
-                                                    // Active indicator pill (left edge)
-                                                    Rectangle {
-                                                        id: indicatorPill
-                                                        width: 3
-                                                        height: navBtn.toggled ? 18 : 0
-                                                        radius: 2
-                                                        anchors.left: parent.left
-                                                        anchors.verticalCenter: parent.verticalCenter
-                                                        color: Appearance.angelEverywhere
-                                                            ? Appearance.angel.colPrimary
-                                                            : Appearance.inirEverywhere
-                                                                ? Appearance.inir.colAccent
-                                                                : Appearance.colors.colPrimary
-                                                        opacity: navBtn.toggled ? 1 : 0
-
-                                                        Behavior on height {
-                                                            enabled: Appearance.animationsEnabled
-                                                            animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                                                        }
-                                                        Behavior on opacity {
-                                                            enabled: Appearance.animationsEnabled
-                                                            animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                                                        }
-                                                    }
-
                                                     RowLayout {
                                                         anchors.fill: parent
                                                         anchors.leftMargin: 10
@@ -1207,6 +1184,69 @@ Scope {
                                         }
                                     }
                                 }
+                            }
+
+                            // ── Shared active indicator (travels between nav items) ──
+                            Rectangle {
+                                id: sharedNavIndicator
+                                z: 10
+                                width: 3
+                                radius: 2
+                                x: 4
+                                color: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                                     : Appearance.inirEverywhere ? Appearance.inir.colAccent
+                                     : Appearance.colors.colPrimary
+
+                                property real targetY: 0
+                                property bool hasTarget: false
+
+                                function updatePosition() {
+                                    for (var i = 0; i < navRepeater.count; i++) {
+                                        var item = navRepeater.itemAt(i);
+                                        if (item && item.modelData && item.modelData.type === "page" && item.modelData.realIndex === overlayCurrentPage) {
+                                            var btn = item.children[1]; // navBtn is second child
+                                            if (btn && btn.visible) {
+                                                var pos = btn.mapToItem(navColumn, 0, 0);
+                                                targetY = pos.y + (btn.height - 18) / 2;
+                                                hasTarget = true;
+                                                return;
+                                            }
+                                        }
+                                    }
+                                    hasTarget = false;
+                                }
+
+                                y: targetY
+                                height: hasTarget ? 18 : 0
+                                opacity: hasTarget ? 1 : 0
+
+                                Behavior on y {
+                                    enabled: Appearance.animationsEnabled
+                                    animation: NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Easing.BezierSpline; easing.bezierCurve: Appearance.animationCurves.emphasizedDecel }
+                                }
+                                Behavior on height {
+                                    enabled: Appearance.animationsEnabled
+                                    animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                                }
+                                Behavior on opacity {
+                                    enabled: Appearance.animationsEnabled
+                                    animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                                }
+
+                                Connections {
+                                    target: root
+                                    function onOverlayCurrentPageChanged() { sharedNavIndicator.updatePosition(); }
+                                    function onVisibleNavItemsChanged() { Qt.callLater(sharedNavIndicator.updatePosition); }
+                                }
+                                Connections {
+                                    target: navFlickable
+                                    function onContentYChanged() { sharedNavIndicator.updatePosition(); }
+                                }
+                                Connections {
+                                    target: navRepeater
+                                    function onCountChanged() { Qt.callLater(sharedNavIndicator.updatePosition); }
+                                }
+                                Component.onCompleted: Qt.callLater(updatePosition)
                             }
 
                             // Window mode toggle at bottom of nav
@@ -1301,10 +1341,12 @@ Scope {
                                 radius: parent.radius
                             }
 
-                            // Loading indicator
+                            // Loading indicator (with morphing entrance/exit)
                             CircularProgress {
+                                id: pageLoadingIndicator
                                 anchors.centerIn: parent
-                                visible: {
+
+                                readonly property bool isLoading: {
                                     for (var i = 0; i < overlayPagesRepeater.count; i++) {
                                         var loader = overlayPagesRepeater.itemAt(i);
                                         if (loader && loader.index === overlayCurrentPage && loader.status !== Loader.Ready) {
@@ -1312,6 +1354,19 @@ Scope {
                                         }
                                     }
                                     return false;
+                                }
+
+                                opacity: isLoading ? 1 : 0
+                                scale: isLoading ? 1 : 0.7
+                                visible: opacity > 0
+
+                                Behavior on opacity {
+                                    enabled: Appearance.animationsEnabled
+                                    animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                                }
+                                Behavior on scale {
+                                    enabled: Appearance.animationsEnabled
+                                    animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                                 }
                             }
 
@@ -1425,13 +1480,74 @@ Scope {
                 Rectangle {
                     id: overlaySearchResultsOverlay
                     anchors.fill: parent
-                    visible: root.overlaySearchText.length > 0 || overlaySearchResultsCard._cardOpacity > 0
+                    visible: root.overlaySearchText.length > 0 || overlaySearchResultsCard._cardOpacity > 0 || noResultsPill._pillOpacity > 0
                     color: "transparent"
                     z: 100
 
                     MouseArea {
                         anchors.fill: parent
                         onClicked: root.openOverlaySearchResult({})
+                    }
+
+                    // No-results pill (morphs in when search has no matches)
+                    Rectangle {
+                        id: noResultsPill
+                        readonly property bool showPill: root.overlaySearchText.length > 0 && root.overlaySearchResults.length === 0
+                        property real _pillOpacity: showPill ? 1 : 0
+                        property real _pillScale: showPill ? 1 : 0.85
+
+                        visible: _pillOpacity > 0
+                        opacity: _pillOpacity
+                        scale: _pillScale
+                        transformOrigin: Item.Top
+
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.top: parent.top
+                        anchors.topMargin: 56
+                        width: noResultsRow.implicitWidth + 32
+                        height: 44
+                        radius: Math.min(width, height) / 2
+                        color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                             : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+                             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+                             : Appearance.m3colors.m3surfaceContainerHigh
+                        border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
+                                    : Appearance.inirEverywhere ? 1 : 0
+                        border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+                                    : Appearance.inirEverywhere ? Appearance.inir.colBorderMuted
+                                    : "transparent"
+
+                        Behavior on _pillOpacity {
+                            enabled: Appearance.animationsEnabled
+                            animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
+                        Behavior on _pillScale {
+                            enabled: Appearance.animationsEnabled
+                            animation: NumberAnimation { duration: Appearance.animation.elementMoveEnter.duration; easing.type: Easing.BezierSpline; easing.bezierCurve: Appearance.animationCurves.emphasizedDecel }
+                        }
+                        Behavior on width {
+                            enabled: Appearance.animationsEnabled
+                            animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
+                        }
+
+                        Row {
+                            id: noResultsRow
+                            anchors.centerIn: parent
+                            spacing: 8
+
+                            MaterialSymbol {
+                                text: "search_off"
+                                iconSize: 18
+                                color: Appearance.colors.colSubtext
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            StyledText {
+                                text: Translation.tr("No results")
+                                font.pixelSize: Appearance.font.pixelSize.small
+                                color: Appearance.colors.colSubtext
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
                     }
 
                     // Results card
@@ -1641,56 +1757,6 @@ Scope {
                         }
 
                         Item { Layout.fillWidth: true }
-                    }
-
-                    // No results indicator
-                    Rectangle {
-                        id: noResultsPill
-                        readonly property bool _shouldShow: root.overlaySearchText.length > 0 && root.overlaySearchResults.length === 0
-                        property real _pillOpacity: _shouldShow ? 1 : 0
-                        property real _pillScale: _shouldShow ? 1 : 0.85
-                        visible: _pillOpacity > 0 || _shouldShow
-                        opacity: _pillOpacity
-                        scale: _pillScale
-                        transformOrigin: Item.Top
-
-                        Behavior on _pillOpacity {
-                            enabled: Appearance.animationsEnabled
-                            animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                        }
-                        Behavior on _pillScale {
-                            enabled: Appearance.animationsEnabled
-                            animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.BezierSpline; easing.bezierCurve: Appearance.animationCurves.emphasizedDecel }
-                        }
-
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.top: parent.top
-                        anchors.topMargin: 56
-                        width: noResultsRow.implicitWidth + 24
-                        height: 36
-                        radius: Appearance.rounding.full
-                        color: Appearance.angelEverywhere ? Appearance.angel.colGlassPopup
-                             : Appearance.auroraEverywhere ? Appearance.colors.colLayer1Base
-                             : Appearance.inirEverywhere ? Appearance.inir.colLayer2
-                             : Appearance.colors.colLayer1
-                        z: 100
-
-                        RowLayout {
-                            id: noResultsRow
-                            anchors.centerIn: parent
-                            spacing: 8
-
-                            MaterialSymbol {
-                                text: "search_off"
-                                iconSize: 18
-                                color: Appearance.colors.colSubtext
-                            }
-                            StyledText {
-                                text: Translation.tr("No results found")
-                                font.pixelSize: Appearance.font.pixelSize.small
-                                color: Appearance.colors.colSubtext
-                            }
-                        }
                     }
                 }
 
