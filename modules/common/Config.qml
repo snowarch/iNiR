@@ -679,6 +679,17 @@ Singleton {
                 property string iconTheme: "WhiteSur-dark" // System icon theme (tray, GTK/Qt apps)
                 property string dockIconTheme: "" // Dock icon theme (overrides system for dock only)
                 property real shellScale: 1.0 // Legacy compatibility key. Launcher keeps QT_SCALE_FACTOR=1; use appearance.typography.sizeScale.
+                property JsonObject desaturation: JsonObject {
+                    property bool enable: false
+                    property real saturation: -0.7  // -1 to 0 (0 = normal, -1 = full grayscale)
+                    property real brightness: -0.15 // -1 to 1 (0 = normal)
+                    property string scope: "all"    // "all" | "panels" | "custom"
+                    property bool bar: true
+                    property bool dock: true
+                    property bool sidebars: true
+                    property bool overlays: true
+                    property bool popups: true
+                }
             }
 
             property JsonObject performance: JsonObject {

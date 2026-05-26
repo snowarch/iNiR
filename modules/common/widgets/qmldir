@@ -87,6 +87,7 @@ SelectionGroupButton 1.0 SelectionGroupButton.qml
 SettingsCardSection 1.0 SettingsCardSection.qml
 SettingsDivider 1.0 SettingsDivider.qml
 SettingsGroup 1.0 SettingsGroup.qml
+ShellDesaturationEffect 1.0 ShellDesaturationEffect.qml
 singleton SettingsMaterialPreset 1.0 SettingsMaterialPreset.qml
 singleton SettingsSearchRegistry 1.0 SettingsSearchRegistry.qml
 SettingsSwitch 1.0 SettingsSwitch.qml

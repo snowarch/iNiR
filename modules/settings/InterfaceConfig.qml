@@ -18,6 +18,142 @@ ContentPage {
 
     property bool isIiActive: Config.options?.panelFamily !== "waffle"
 
+    // ── Shell Desaturation Effect ───────────────────────────────────────
+    SettingsCardSection {
+        expanded: false
+        icon: "filter_b_and_w"
+        title: Translation.tr("Visual Effects")
+
+        readonly property var _desat: Config.options?.appearance?.desaturation ?? ({})
+        function _setDesat(key: string, val): void {
+            Config.setNestedValue("appearance.desaturation." + key, val)
+        }
+
+        SettingsGroup {
+            SettingsSwitch {
+                buttonIcon: "filter_b_and_w"
+                text: Translation.tr("Desaturation effect")
+                checked: Boolean(Config.options?.appearance?.desaturation?.enable)
+                onCheckedChanged: Config.setNestedValue("appearance.desaturation.enable", checked)
+                StyledToolTip {
+                    text: Translation.tr("Apply a grayscale/dimmed effect to shell components")
+                }
+            }
+
+            SettingsDivider {}
+
+            ConfigRow {
+                enabled: Boolean(Config.options?.appearance?.desaturation?.enable)
+                uniform: true
+                ConfigSpinBox {
+                    icon: "invert_colors"
+                    text: Translation.tr("Saturation %")
+                    value: Math.round((Config.options?.appearance?.desaturation?.saturation ?? -0.7) * -100)
+                    from: 0
+                    to: 100
+                    stepSize: 10
+                    onValueChanged: Config.setNestedValue("appearance.desaturation.saturation", -value / 100)
+                    StyledToolTip {
+                        text: Translation.tr("Amount of color to remove (0 = normal, 100 = grayscale)")
+                    }
+                }
+                ConfigSpinBox {
+                    icon: "brightness_6"
+                    text: Translation.tr("Dim %")
+                    value: Math.round((Config.options?.appearance?.desaturation?.brightness ?? -0.15) * -100)
+                    from: 0
+                    to: 50
+                    stepSize: 5
+                    onValueChanged: Config.setNestedValue("appearance.desaturation.brightness", -value / 100)
+                    StyledToolTip {
+                        text: Translation.tr("Amount of brightness reduction (0 = normal)")
+                    }
+                }
+            }
+
+            SettingsDivider {}
+
+            // Scope selector
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: 8
+                Layout.rightMargin: 8
+                spacing: 8
+
+                StyledText {
+                    text: Translation.tr("Apply to")
+                    font.pixelSize: Appearance.font.pixelSize.small
+                    color: Boolean(Config.options?.appearance?.desaturation?.enable)
+                        ? Appearance.m3colors.m3onSurface
+                        : Appearance.colors.colSubtext
+                }
+
+                ButtonGroup {
+                    enabled: Boolean(Config.options?.appearance?.desaturation?.enable)
+                    uniformCellSizes: true
+                    spacing: 0
+
+                    SelectionGroupButton {
+                        leftmost: true
+                        buttonText: Translation.tr("All")
+                        toggled: (Config.options?.appearance?.desaturation?.scope ?? "all") === "all"
+                        onClicked: Config.setNestedValue("appearance.desaturation.scope", "all")
+                    }
+                    SelectionGroupButton {
+                        buttonText: Translation.tr("Panels only")
+                        toggled: (Config.options?.appearance?.desaturation?.scope ?? "all") === "panels"
+                        onClicked: Config.setNestedValue("appearance.desaturation.scope", "panels")
+                    }
+                    SelectionGroupButton {
+                        rightmost: true
+                        buttonText: Translation.tr("Custom")
+                        toggled: (Config.options?.appearance?.desaturation?.scope ?? "all") === "custom"
+                        onClicked: Config.setNestedValue("appearance.desaturation.scope", "custom")
+                    }
+                }
+            }
+
+            // Custom scope toggles
+            ColumnLayout {
+                visible: (Config.options?.appearance?.desaturation?.scope ?? "all") === "custom"
+                enabled: Boolean(Config.options?.appearance?.desaturation?.enable)
+                Layout.fillWidth: true
+                spacing: 0
+
+                SettingsSwitch {
+                    buttonIcon: "toolbar"
+                    text: Translation.tr("Bar")
+                    checked: Config.options?.appearance?.desaturation?.bar ?? true
+                    onCheckedChanged: Config.setNestedValue("appearance.desaturation.bar", checked)
+                }
+                SettingsSwitch {
+                    buttonIcon: "dock_to_bottom"
+                    text: Translation.tr("Dock")
+                    checked: Config.options?.appearance?.desaturation?.dock ?? true
+                    onCheckedChanged: Config.setNestedValue("appearance.desaturation.dock", checked)
+                }
+                SettingsSwitch {
+                    buttonIcon: "view_sidebar"
+                    text: Translation.tr("Sidebars")
+                    checked: Config.options?.appearance?.desaturation?.sidebars ?? true
+                    onCheckedChanged: Config.setNestedValue("appearance.desaturation.sidebars", checked)
+                }
+                SettingsSwitch {
+                    buttonIcon: "layers"
+                    text: Translation.tr("Overlays")
+                    checked: Config.options?.appearance?.desaturation?.overlays ?? true
+                    onCheckedChanged: Config.setNestedValue("appearance.desaturation.overlays", checked)
+                }
+                SettingsSwitch {
+                    buttonIcon: "picture_in_picture"
+                    text: Translation.tr("Popups")
+                    checked: Config.options?.appearance?.desaturation?.popups ?? true
+                    onCheckedChanged: Config.setNestedValue("appearance.desaturation.popups", checked)
+                }
+            }
+        }
+    }
+
     SettingsCardSection {
         visible: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false)
         expanded: false

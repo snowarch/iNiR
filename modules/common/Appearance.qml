@@ -97,6 +97,35 @@ Singleton {
     // Components should check this to hide backgrounds/shadows during GameMode
     readonly property bool gameModeMinimal: _gameModeMinimalMode
 
+    // ── Shell desaturation effect ──────────────────────────────────────────
+    // User-toggled visual effect that desaturates/dims shell components
+    readonly property var _desatConfig: Config.options?.appearance?.desaturation ?? ({})
+    readonly property bool desaturationEnabled: Boolean(_desatConfig.enable)
+    readonly property real desaturationSaturation: Number(_desatConfig.saturation ?? -0.7)
+    readonly property real desaturationBrightness: Number(_desatConfig.brightness ?? -0.15)
+    readonly property string desaturationScope: String(_desatConfig.scope ?? "all")
+    // Per-component toggles (only checked when scope === "custom")
+    readonly property bool desaturationBar: desaturationScope !== "custom" || Boolean(_desatConfig.bar ?? true)
+    readonly property bool desaturationDock: desaturationScope !== "custom" || Boolean(_desatConfig.dock ?? true)
+    readonly property bool desaturationSidebars: desaturationScope !== "custom" || Boolean(_desatConfig.sidebars ?? true)
+    readonly property bool desaturationOverlays: desaturationScope !== "custom" || Boolean(_desatConfig.overlays ?? true)
+    readonly property bool desaturationPopups: desaturationScope !== "custom" || Boolean(_desatConfig.popups ?? true)
+    // Helper: should a given component apply the effect?
+    function shouldDesaturate(component: string): bool {
+        if (!desaturationEnabled) return false
+        if (desaturationScope === "all") return true
+        if (desaturationScope === "panels") return ["bar", "dock", "sidebars"].includes(component)
+        // scope === "custom"
+        switch (component) {
+            case "bar": return desaturationBar
+            case "dock": return desaturationDock
+            case "sidebars": return desaturationSidebars
+            case "overlays": return desaturationOverlays
+            case "popups": return desaturationPopups
+            default: return true
+        }
+    }
+
     onEffectsEnabledChanged: if (Qt.application.arguments.indexOf("--debug") !== -1) console.log("[Appearance] effectsEnabled:", effectsEnabled, "gameModeActive:", _gameModeActive)
     onAnimationsEnabledChanged: if (Qt.application.arguments.indexOf("--debug") !== -1) console.log("[Appearance] animationsEnabled:", animationsEnabled)
 

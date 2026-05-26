@@ -253,7 +253,18 @@
         },
         "shellScale": 1.0,
         "iconTheme": "WhiteSur-dark",
-        "dockIconTheme": ""
+        "dockIconTheme": "",
+        "desaturation": {
+            "enable": false,
+            "saturation": -0.7,
+            "brightness": -0.15,
+            "scope": "all",
+            "bar": true,
+            "dock": true,
+            "sidebars": true,
+            "overlays": true,
+            "popups": true
+        }
     },
     "apps": {
         "bluetooth": "blueman-manager",
