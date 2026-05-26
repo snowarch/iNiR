@@ -449,6 +449,15 @@ Scope {
             ? WlrKeyboardFocus.OnDemand
             : WlrKeyboardFocus.None
         anchors { top: true; bottom: true; left: true; right: true }
+
+        // Safe fallback background color (prevents red screen on GPU driver shader failures)
+        // Some drivers leak a red buffer when blur shaders fail to compile/load.
+        Rectangle {
+            anchors.fill: parent
+            color: Appearance.colors.colLayer0
+            z: -1
+        }
+
         color: {
             if (!bgRoot.wallpaperSafetyTriggered || bgRoot.wallpaperIsVideo) return "transparent";
             return CF.ColorUtils.mix(Appearance.colors.colLayer0, Appearance.colors.colPrimary, 0.75);

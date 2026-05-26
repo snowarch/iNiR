@@ -37,6 +37,14 @@ Variants {
         color: "transparent"
         visible: !GameMode.shouldHidePanels
 
+        // Safe fallback background color (prevents red screen on GPU driver shader failures)
+        // Some drivers leak a red buffer when blur shaders fail to compile/load.
+        Rectangle {
+            anchors.fill: parent
+            color: Appearance.colors.colLayer0
+            z: -1
+        }
+
         // Material ii backdrop config (independent)
         readonly property var iiBackdrop: Config.options?.background?.backdrop ?? {}
 
