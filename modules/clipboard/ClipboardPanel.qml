@@ -242,6 +242,13 @@ Scope {
             onTriggered: window.visible = false
         }
 
+        property var targetScreen: null
+        Binding on targetScreen {
+            when: !window.visible
+            value: GlobalStates.activeScreen
+        }
+
+        screen: targetScreen
         exclusionMode: ExclusionMode.Ignore
         color: "transparent"
         WlrLayershell.namespace: "quickshell:clipboardPanel"

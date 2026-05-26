@@ -104,6 +104,13 @@ Scope {
                         rightMargin: ((Config.options?.interactions?.deadPixelWorkaround?.enable ?? false) && barRoot.anchors.right) * 1
                         bottomMargin: ((Config.options?.interactions?.deadPixelWorkaround?.enable ?? false) && barRoot.anchors.bottom) * 1
                     }
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    onPressed: event => {
+                        if (event.button === Qt.RightButton) {
+                            barContent.openBarContextMenu(event.x, event.y, hoverRegion)
+                        }
+                        // Left click is safely consumed to prevent C++ level segfault crashes
+                    }
 
                     Item {
                         id: hoverMaskRegion

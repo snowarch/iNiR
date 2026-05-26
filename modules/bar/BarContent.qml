@@ -335,9 +335,9 @@ Item { // Bar content region
         onScrollUp: root.performScrollAction(root.leftAction, true)
         onMovedAway: root.closeOSD(root.leftAction)
         onPressed: event => {
-            if (event.button === Qt.LeftButton)
+            if (event.button === Qt.LeftButton) {
                 GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen;
-            else if (event.button === Qt.RightButton)
+            } else if (event.button === Qt.RightButton)
                 root.openBarContextMenu(event.x, event.y, barLeftSideMouseArea)
         }
 

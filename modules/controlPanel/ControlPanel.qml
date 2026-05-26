@@ -67,9 +67,14 @@ Scope {
             GlobalStates.controlPanelOpen = false
         }
 
+        property var targetScreen: null
+        Binding on targetScreen {
+            when: !panelRoot.visible
+            value: GlobalStates.activeScreen
+        }
+
+        screen: targetScreen
         exclusiveZone: 0
-        implicitWidth: screen?.width ?? 1920
-        implicitHeight: screen?.height ?? 1080
         WlrLayershell.namespace: "quickshell:controlPanel"
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus: GlobalStates.controlPanelOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None

@@ -55,9 +55,16 @@ Scope {
             GlobalStates.sidebarRightOpen = false
         }
 
+        property var targetScreen: null
+        Binding on targetScreen {
+            when: !sidebarRoot.visible
+            value: GlobalStates.activeScreen
+        }
+
+        screen: targetScreen
         exclusiveZone: 0
-        implicitWidth: screen?.width ?? 1920
         WlrLayershell.namespace: "quickshell:sidebarRight"
+        WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus: GlobalStates.sidebarRightOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
         color: "transparent"
 
@@ -71,7 +78,7 @@ Scope {
         CompositorFocusGrab {
             id: grab
             windows: [ sidebarRoot ]
-            active: CompositorService.isHyprland && sidebarRoot.visible
+            active: CompositorService.isHyprland && root._sidebarShown
             onCleared: () => {
                 if (!active) sidebarRoot.hide()
             }
@@ -128,7 +135,7 @@ Scope {
 
         Loader {
             id: sidebarContentLoader
-            active: GlobalStates.sidebarRightOpen || (Config?.options?.sidebar?.keepRightSidebarLoaded ?? true)
+            active: root._sidebarShown
             anchors {
                 top: parent.top
                 right: parent.right

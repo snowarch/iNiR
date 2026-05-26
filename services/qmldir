@@ -28,7 +28,7 @@ singleton FontSyncService 1.0 FontSyncService.qml
 singleton GameMode 1.0 GameMode.qml
 singleton GowallService 1.0 GowallService.qml
 singleton GlobalActions 1.0 GlobalActions.qml
-HyprlandData 1.0 HyprlandData.qml
+singleton HyprlandData 1.0 HyprlandData.qml
 singleton HyprlandKeybinds 1.0 HyprlandKeybinds.qml
 singleton HyprlandXkb 1.0 HyprlandXkb.qml
 singleton Hyprsunset 1.0 Hyprsunset.qml

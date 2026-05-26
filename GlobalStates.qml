@@ -111,6 +111,16 @@ Singleton {
         return Quickshell.screens[0]
     }
 
+    // Active screen: compositor-focused screen, fallback to primaryScreen
+    readonly property var activeScreen: {
+        const name = CompositorService.isNiri ? NiriService.currentOutput : Hyprland.focusedMonitor?.name;
+        if (name && name.length > 0) {
+            const s = Quickshell.screens.find(scr => scr.name === name)
+            if (s) return s
+        }
+        return primaryScreen
+    }
+
     // Close other waffle popups when one opens (unless allowMultiplePanels is enabled)
     property bool _allowMultiple: Config.options?.waffles?.behavior?.allowMultiplePanels ?? false
     onSearchOpenChanged: {

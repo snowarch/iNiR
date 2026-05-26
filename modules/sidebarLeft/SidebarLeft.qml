@@ -73,8 +73,14 @@ Scope {
             GlobalStates.sidebarLeftOpen = false
         }
 
+        property var targetScreen: null
+        Binding on targetScreen {
+            when: !sidebarRoot.visible
+            value: GlobalStates.activeScreen
+        }
+
+        screen: targetScreen
         exclusiveZone: 0
-        implicitWidth: screen?.width ?? 1920
         WlrLayershell.namespace: "quickshell:sidebarLeft"
         WlrLayershell.keyboardFocus: GlobalStates.sidebarLeftOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
         color: "transparent"

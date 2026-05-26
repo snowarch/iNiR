@@ -6,6 +6,7 @@ import qs.modules.common.functions
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Effects
 import Qt5Compat.GraphicalEffects
 import Quickshell
 import Quickshell.Io
@@ -141,9 +142,9 @@ Scope {
                 }
             }
             
-            // Background wallpaper with blur (like lock screen)
+            // Background wallpaper with safe blur pipeline (using MultiEffect instead of FastBlur to prevent crashes on Nvidia drivers)
             Image {
-                id: backgroundWallpaper
+                id: backgroundWallpaperSource
                 anchors.fill: parent
                 source: sessionRoot._wallpaperPath
                 fillMode: Image.PreserveAspectCrop
@@ -153,15 +154,21 @@ Scope {
                 mipmap: true
                 sourceSize.width: Math.round((root.focusedScreen?.width ?? 1920) * sessionRoot._screenScale)
                 sourceSize.height: Math.round((root.focusedScreen?.height ?? 1080) * sessionRoot._screenScale)
+                visible: false
+            }
+
+            MultiEffect {
+                id: backgroundWallpaper
+                anchors.fill: parent
+                source: backgroundWallpaperSource
                 
                 readonly property real blurRadius: 64
                 readonly property real blurZoom: 1.1
                 
-                layer.enabled: true
-                layer.effect: FastBlur {
-                    radius: backgroundWallpaper.blurRadius
-                }
-                
+                blurEnabled: true
+                blur: 0.8
+                blurMax: blurRadius
+
                 transform: Scale {
                     origin.x: backgroundWallpaper.width / 2
                     origin.y: backgroundWallpaper.height / 2
