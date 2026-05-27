@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import qs.services
+import qs.services.deferred
 import qs
 import qs.modules.common
 import qs.modules.common.widgets

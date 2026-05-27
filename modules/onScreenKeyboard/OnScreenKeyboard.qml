@@ -9,6 +9,7 @@ import qs
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.services
+import qs.services.deferred
 
 Scope { // Scope
     id: root

@@ -7,6 +7,7 @@ import Quickshell.Services.UPower
 import Quickshell.Services.Mpris
 import qs
 import qs.services
+import qs.services.deferred
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions

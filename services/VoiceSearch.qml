@@ -6,6 +6,7 @@ import qs.modules.common.functions as CF
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.services.deferred
 
 Singleton {
     id: root

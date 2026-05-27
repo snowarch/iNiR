@@ -3,6 +3,7 @@ pragma Singleton
 import qs.modules.common
 import qs.modules.common.functions
 import qs.services
+import qs.services.deferred
 import QtQuick
 import Quickshell
 import Quickshell.Io

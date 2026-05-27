@@ -4,6 +4,7 @@ import Quickshell.Io
 import qs
 import qs.modules.common
 import qs.services
+import qs.services.deferred
 
 Scope {
     id: root

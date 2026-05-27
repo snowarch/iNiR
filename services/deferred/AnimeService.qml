@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import qs.modules.common
 import "root:"
+import qs.services
 
 /**
  * AnimeService - AniList GraphQL API

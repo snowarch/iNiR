@@ -7,6 +7,7 @@ import qs.modules.common.functions
 import Quickshell;
 import Quickshell.Io;
 import QtQuick;
+import qs.services
 
 /**
  * For storing sensitive data in the keyring.

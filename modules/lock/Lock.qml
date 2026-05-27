@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import qs
 import qs.services
+import qs.services.deferred
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.lock

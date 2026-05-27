@@ -6,6 +6,7 @@ import Quickshell
 import Quickshell.Io
 import qs.modules.common
 import qs.services
+import qs.services.deferred
 
 Singleton {
     id: root

@@ -6,6 +6,7 @@ import QtQuick.Controls
 import QtQuick.Dialogs
 import Quickshell
 import qs.services
+import qs.services.deferred
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.waffle.looks

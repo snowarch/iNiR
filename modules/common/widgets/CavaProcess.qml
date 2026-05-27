@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import qs.services
+import qs.services.deferred
 
 // Thin wrapper for backwards compatibility. All consumers historically
 // instantiated their own CavaProcess { active: ...; points }, which spawned

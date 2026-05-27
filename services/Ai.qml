@@ -8,6 +8,7 @@ import Quickshell.Io
 import Quickshell.Wayland
 import QtQuick
 import qs.services.ai
+import qs.services.deferred
 
 /**
  * Basic service to handle LLM chats. Supports Google's and OpenAI's API formats.

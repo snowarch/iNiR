@@ -2,6 +2,7 @@ import qs
 import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.services
+import qs.services.deferred
 import QtQuick
 import Quickshell
 
