@@ -45,8 +45,9 @@ Singleton {
     // Pause when fullscreen window is present
     readonly property bool pauseOnFullscreen: Config.options?.background?.widgets?.powerSaving?.pauseOnFullscreen ?? true
     
-    // Pause when ANY window is on the current workspace (same as dynamicOpacity trigger)
-    readonly property bool pauseWhenWindowsPresent: Config.options?.background?.widgets?.powerSaving?.pauseWhenWindowsPresent ?? true
+    // Pause when any window is on the current workspace. Default false: stacked with dynamicOpacity
+    // on the same trigger and made widgets feel broken (paused + dimmed) on any window open.
+    readonly property bool pauseWhenWindowsPresent: Config.options?.background?.widgets?.powerSaving?.pauseWhenWindowsPresent ?? false
 
     // ══════════════════════════════════════════════════════════════════════
     // INTERNAL STATE

@@ -385,7 +385,7 @@
                 "enable": true,
                 "pauseOnGameMode": true,
                 "pauseOnFullscreen": true,
-                "pauseWhenWindowsPresent": true,
+                "pauseWhenWindowsPresent": false,
                 "showPausedEffect": true
             },
             "clock": {

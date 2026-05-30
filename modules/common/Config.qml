@@ -789,7 +789,7 @@ Singleton {
                         property bool enable: true
                         property bool pauseOnGameMode: true
                         property bool pauseOnFullscreen: true
-                        property bool pauseWhenWindowsPresent: true
+                        property bool pauseWhenWindowsPresent: false
                         property bool showPausedEffect: true
                     }
                     property list<string> screenList: []
