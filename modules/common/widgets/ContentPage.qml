@@ -5,7 +5,7 @@ import qs.modules.common.widgets
 
 StyledFlickable {
     id: root
-    property real bottomContentPadding: 100
+    property real bottomContentPadding: 48
     // Metadatos opcionales para páginas de Settings
     property int settingsPageIndex: -1
     property string settingsPageName: ""
@@ -31,8 +31,8 @@ StyledFlickable {
             top: parent.top
             left: parent.left
             right: parent.right
-            topMargin: 20
-            bottomMargin: 20
+            topMargin: 16
+            bottomMargin: 16
             leftMargin: root._horizontalMargin
             rightMargin: root._horizontalMargin
         }
