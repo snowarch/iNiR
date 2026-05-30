@@ -214,7 +214,7 @@ spawn-at-startup "bash" "-c" "systemctl --user import-environment XDG_MENU_PREFI
 
 spawn-at-startup "bash" "-c" "wl-paste --watch cliphist store &"
 spawn-at-startup "/usr/lib/mate-polkit/polkit-mate-authentication-agent-1"
-spawn-at-startup "qs" "-c" "ii"
+// iNiR is started by the user systemd service (inir.service), not spawn-at-startup.
 
 // ============================================================================
 // KEYBINDINGS
