@@ -1252,11 +1252,11 @@ Scope {
 
                                         Behavior on y {
                                             enabled: Appearance.animationsEnabled
-                                            SmoothedAnimation { velocity: Appearance.animation.spatialFollowFast.velocity }
+                                            animation: NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Easing.BezierSpline; easing.bezierCurve: Appearance.animationCurves.emphasized }
                                         }
                                         Behavior on height {
                                             enabled: Appearance.animationsEnabled
-                                            SmoothedAnimation { velocity: Appearance.animation.spatialFollowFast.velocity }
+                                            animation: NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Easing.BezierSpline; easing.bezierCurve: Appearance.animationCurves.emphasized }
                                         }
                                         Behavior on opacity {
                                             enabled: Appearance.animationsEnabled
