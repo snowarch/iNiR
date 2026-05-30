@@ -559,7 +559,8 @@ Scope {
             }
 
             Shortcut {
-                sequences: [StandardKey.Find, "Ctrl+F"]
+                sequences: ["Ctrl+F"]
+                context: Qt.WindowShortcut
                 onActivated: if (typeof overlaySearchField !== "undefined" && overlaySearchField) overlaySearchField.forceActiveFocus()
             }
 
@@ -1596,14 +1597,6 @@ Scope {
                         border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
                             : Appearance.inirEverywhere ? Appearance.inir.colBorder
                             : Appearance.m3colors.m3outlineVariant
-
-                        layer.enabled: Appearance.effectsEnabled && !Appearance.auroraEverywhere
-                        layer.effect: GE.DropShadow {
-                            color: Qt.rgba(0, 0, 0, 0.3)
-                            radius: 12
-                            samples: 13
-                            verticalOffset: 4
-                        }
 
                         ListView {
                             id: overlayResultsList
