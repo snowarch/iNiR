@@ -13,7 +13,7 @@ Rectangle {
 
     radius: SettingsMaterialPreset.groupRadius
     color: SettingsMaterialPreset.groupColor
-    border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : 1
+    border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : 0
     border.color: SettingsMaterialPreset.groupBorderColor
 
     ColumnLayout {

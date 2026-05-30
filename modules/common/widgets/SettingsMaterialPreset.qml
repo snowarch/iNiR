@@ -47,9 +47,9 @@ QtObject {
 
     readonly property color groupColor: Appearance.angelEverywhere
         ? ColorUtils.transparentize(Appearance.colors.colLayer2Base, Appearance.angel.popupTransparentize * 0.6)
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer2
-        : Appearance.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colLayer2Base, 0.80)
-        : Appearance.colors.colLayer2
+        : Appearance.inirEverywhere ? ColorUtils.transparentize(Appearance.inir.colLayer2, 0.45)
+        : Appearance.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colLayer2Base, 0.88)
+        : ColorUtils.transparentize(Appearance.colors.colLayer2, 0.4)
     readonly property color groupBorderColor: Appearance.angelEverywhere
         ? Appearance.angel.colBorderSubtle
         : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle

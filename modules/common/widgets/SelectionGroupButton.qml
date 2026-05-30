@@ -9,8 +9,8 @@ import qs.modules.common.widgets
 
 GroupButton {
     id: root
-    horizontalPadding: 12
-    verticalPadding: 8
+    horizontalPadding: 11
+    verticalPadding: 6
     bounce: false
     property string buttonIcon
     property bool leftmost: false
@@ -62,7 +62,7 @@ GroupButton {
                 id: materialSymbol
                 anchors.centerIn: parent
                 text: root.buttonIcon
-                iconSize: Appearance.font.pixelSize.larger
+                iconSize: Appearance.font.pixelSize.normal
                 color: root.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSecondaryContainer
             }
         }
