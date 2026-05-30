@@ -1130,12 +1130,12 @@ Scope {
                                                             ? Appearance.aurora.colElevatedSurface
                                                             : CF.ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 0.5)
                                                 colBackgroundHover: Appearance.angelEverywhere
-                                                    ? Appearance.angel.colGlassCard
+                                                    ? Appearance.angel.colGlassCardHover
                                                     : Appearance.inirEverywhere
                                                         ? Appearance.inir.colLayer1Hover
                                                         : Appearance.auroraEverywhere
-                                                            ? Appearance.aurora.colSubSurface
-                                                            : CF.ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 0.5)
+                                                            ? Appearance.aurora.colSubSurfaceHover
+                                                            : Appearance.colors.colLayer1Hover
 
                                                 onClicked: overlayCurrentPage = pageRealIndex
 
@@ -1213,11 +1213,11 @@ Scope {
                                         property real edgeBottom: targetY + targetH
                                         Behavior on edgeTop {
                                             enabled: Appearance.animationsEnabled
-                                            animation: NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Easing.OutCubic }
+                                            animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
                                         }
                                         Behavior on edgeBottom {
                                             enabled: Appearance.animationsEnabled
-                                            animation: NumberAnimation { duration: Appearance.animation.elementMove.duration * 1.35; easing.type: Easing.OutCubic }
+                                            animation: NumberAnimation { duration: Math.round(Appearance.animation.elementResize.duration * 1.18); easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
                                         }
 
                                         function updatePosition() {
