@@ -1436,6 +1436,7 @@ Scope {
 
                                 Component.onCompleted: {
                                     initialLoadTimer.start()
+                                    overlayPreloadTimer.start()
                                 }
 
                                 Timer {
