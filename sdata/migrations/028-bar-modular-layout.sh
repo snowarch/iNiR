@@ -14,11 +14,9 @@
 
 MIGRATION_ID="028-bar-modular-layout"
 MIGRATION_TITLE="Modular bar layout"
-MIGRATION_DESCRIPTION="Translates the bar to the new 5-zone modular layout (left/centerLeft/center/centerRight/right).
-  Your current bar looks identical; you can now reorder and relocate modules in Settings → Bar.
-  Visibility toggles are preserved. Dead layout keys are cleaned up."
+MIGRATION_DESCRIPTION="Disabled. The bar now falls back to the classic layout at runtime, so no config change is needed; this migration no longer runs."
 MIGRATION_TARGET_FILE="~/.config/inir/config.json"
-MIGRATION_REQUIRED=true
+MIGRATION_REQUIRED=false
 
 _config_path() {
   local xdg_config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
@@ -32,19 +30,11 @@ _config_path() {
 }
 
 migration_check() {
-  local conf
-  conf="$(_config_path)"
-  [[ -f "$conf" ]] || return 1
-  command -v jq >/dev/null 2>&1 || return 1
-
-  # Needs migration if the bar section exists but isn't marked migrated yet.
-  local migrated
-  migrated="$(jq -r 'if .bar == null then "noBar" else (.bar.layout.migrated // false) end' "$conf" 2>/dev/null)"
-  case "$migrated" in
-    noBar) return 1 ;;   # fresh install gets defaults (already migrated) from defaults/config.json
-    true)  return 1 ;;   # already migrated
-    *)     return 0 ;;   # bar exists, not migrated → translate
-  esac
+  # Disabled: the bar reads bar.layout with a built-in classic fallback in
+  # BarContent.qml (_zone(name, fallback)), so no config change is needed for
+  # the modular layout to work. This migration is kept (append-only contract)
+  # but never runs — it is not pending and never auto-applies.
+  return 1
 }
 
 migration_preview() {
@@ -100,9 +90,6 @@ migration_apply() {
         "right": ($right_old | dedup),
         "migrated": true
       }
-    | del(.bar.modulesLayout)
-    | del(.bar.edgeModulesLayout)
-    | del(.bar.modulesPlacement)
   ' "$conf" > "$tmp" && mv "$tmp" "$conf"
   echo "  Bar translated to modular 5-zone layout (visuals preserved)."
 }
