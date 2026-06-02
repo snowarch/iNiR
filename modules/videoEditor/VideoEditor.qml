@@ -38,11 +38,11 @@ PanelWindow {
         loops: MediaPlayer.Infinite
         
         onPositionChanged: {
-            if (position >= root.effectiveEndTime - 50) {
-                position = root.startTime
+            if (player.position >= root.effectiveEndTime - 50) {
+                player.position = root.startTime
             }
-            if (position < root.startTime) {
-                position = root.startTime
+            if (player.position < root.startTime) {
+                player.position = root.startTime
             }
         }
     }
