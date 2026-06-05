@@ -76,6 +76,15 @@ The Aurora and Angel styles use frosted glass effects. The "backdrop" is a separ
 
 Set an interval and iNiR cycles through wallpapers in a directory automatically. Configurable per-directory with optional color regeneration on each change.
 
+Settings -> Appearance -> Background -> Shuffle wallpapers controls:
+
+- enable/disable automatic shuffle
+- interval in minutes
+- optional folder override
+- whether theme colors regenerate after each shuffle
+
+Leave the folder empty to shuffle inside the current wallpaper directory. Turn color regeneration off if you want the wallpaper to change without repainting GTK, terminals, Discord, SDDM, and the rest of the parade.
+
 ## Wallhaven integration
 
 The left sidebar includes a Wallhaven browser. Search wallhaven.cc, preview results, and apply wallpapers directly from the shell. Supports NSFW filtering, resolution filtering, and category selection.

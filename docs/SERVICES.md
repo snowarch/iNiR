@@ -35,6 +35,7 @@
 | **GameMode** | Fullscreen detection with auto/manual activation. Suppresses animations, notifications, blur when gaming. IPC target: `gamemode`. |
 | **Idle** | Idle management via swayidle. Screen-off, lock, and suspend timeouts. |
 | **ResourceUsage** | CPU, RAM, GPU, temperature, disk polling. History arrays for graphs. Auto-stop timer (15s) when no consumers active. |
+| **ScreenTime** | Optional focused-app usage tracking. Local JSON storage, daily totals, hourly buckets, 3/14 day range aggregation. Disabled unless `sidebar.screenTime.enable` is true. |
 | **SystemInfo** | Distro name, username, desktop environment detection. |
 | **Privacy** | Mic and screen sharing detection via PipeWire link analysis. |
 

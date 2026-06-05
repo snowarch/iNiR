@@ -327,6 +327,10 @@ These checks cover:
 
 Some features need config changes (new keybinds, layer rules, etc). After `update`, you're asked if you want to apply pending migrations. Each shows exactly what will change, with automatic backup.
 
+Migration scripts are append-only. Old migration numbers are not renamed or deleted, even when a migration is later disabled.
+
+Current example: `028-bar-modular-layout` exists but never runs. The modular bar can fall back to the classic layout at runtime, so existing users do not need their config rewritten during update. That is intentional, not a missing step.
+
 ## Backups
 
 - Install backups: `~/inir-backup/`

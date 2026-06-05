@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.25.2-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.26.0-blue?style=flat-square" alt="Version"></a>
   <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
@@ -106,9 +106,18 @@ I wanted my desktop to look and work a certain way and nothing else did exactly 
 
 > [!WARNING]
 > Not for low-spec machines.
- Everything is customizable though - disable features, strip panels, flatten the design. Read the docs, tweak `Config.json`/`Settings UI`, you'll figure it out.
+> Everything is customizable though - disable features, strip panels, flatten the design. Read the docs, tweak `config.json` or Settings, you'll figure it out.
 
 ## Features
+
+### New in 2.26
+
+- Modular bar layout with a drag editor in Settings
+- Screen Time widget, local-only and opt-in
+- World Clock sidebar widget with timezone management
+- Smoother media title scrolling in the bar
+- Wallpaper shuffle controls in Settings
+- Better dock/taskbar app icon matching
 
 **Two panel families**, switchable on the fly with `Super+Shift+W`:
 - **Material ii** — floating bar, sidebars, dock, 5 visual styles (material, cards, aurora, inir, angel)

@@ -27,8 +27,8 @@ Users can disable any panel from Settings without touching config files.
 
 | Module | Panel ID | Description |
 |--------|----------|-------------|
-| `sidebarLeft/` | `iiSidebarLeft` | AI chat (Gemini/OpenAI/Ollama), YT Music player, Wallhaven browser, anime tracker, Reddit feed, translator, draggable widgets. ~48 QML files. |
-| `sidebarRight/` | `iiSidebarRight` | Quick toggles, calendar with external sync, notification center, volume mixer, Bluetooth/WiFi management, pomodoro timer, todo, calculator, notepad, system monitor. ~72 QML files. |
+| `sidebarLeft/` | `iiSidebarLeft` | AI chat (Gemini/OpenAI/Ollama), YT Music player, Wallhaven browser, anime tracker, Reddit feed, translator, draggable widgets, World Clock. |
+| `sidebarRight/` | `iiSidebarRight` | Quick toggles, calendar with external sync, notification center, volume mixer, Bluetooth/WiFi management, pomodoro timer, todo, calculator, notepad, system monitor, Screen Time. |
 
 ### Overlays
 
@@ -72,7 +72,7 @@ Users can disable any panel from Settings without touching config files.
 | Module | Panel ID | Description |
 |--------|----------|-------------|
 | `waffle/startMenu/` | `wStartMenu` | Start menu with app grid, search, pinned apps, recommendations. |
-| `waffle/actionCenter/` | `wActionCenter` | Quick settings. WiFi, Bluetooth, volume, brightness, toggles. |
+| `waffle/actionCenter/` | `wActionCenter` | Quick settings. WiFi, Bluetooth, volume, brightness, toggles, Screen Time entry point. |
 | `waffle/notificationCenter/` | `wNotificationCenter` | Notification list with calendar and external event integration. |
 | `waffle/taskview/` | `wTaskView` | Task view (workspace overview with window previews). |
 | `waffle/widgets/` | `wWidgets` | Desktop widgets panel. |
@@ -108,6 +108,35 @@ The foundation everything else builds on.
 | **widgets/** | 130+ reusable widgets registered in `widgets/qmldir`. Layout, input, display, media, and specialized components. |
 | **ThemePresets.qml** | 44 built-in theme presets. |
 | **StylePresets.qml** | Style variant definitions. |
+
+## Current notable modules
+
+### Bar layout editor
+
+The ii bar is driven by `Config.options.bar.layout`, split into five zones:
+
+`left`, `centerLeft`, `center`, `centerRight`, `right`
+
+The Settings page uses `BarModuleOrderEditor.qml` to reorder modules and drag available modules into zones. `workspaces` stays the centered pivot. The old `modulesLayout`, `edgeModulesLayout`, and `modulesPlacement` keys are deprecated compatibility baggage, not the runtime source of truth.
+
+Migration `028-bar-modular-layout` exists but is disabled. The bar has a built-in classic fallback, so existing users do not need config rewrites just to update. Good. We learned.
+
+### Screen Time
+
+`services/ScreenTime.qml` tracks focused app usage when `sidebar.screenTime.enable` is true.
+
+Visible surfaces:
+
+- `modules/sidebarRight/screenTime/ScreenTimeWidget.qml`
+- `modules/waffle/actionCenter/screenTime/ScreenTimePage.qml`
+
+It stores local daily JSON under the iNiR state directory. It has daily totals, app totals, hourly buckets, and per-app hourly drill-down. It is off by default and hidden from sidebar layouts while disabled.
+
+### World Clock
+
+`modules/sidebarLeft/widgets/WorldClockWidget.qml` is a sidebar-left widget configured through `sidebar.widgets.worldClock_settings`.
+
+If no timezones are configured, it suggests useful zones from the user's locale/system timezone. If the user configures timezones, Settings owns the explicit list and order.
 
 ### Shared panels
 

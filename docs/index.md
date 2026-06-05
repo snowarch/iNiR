@@ -10,6 +10,10 @@ Built on [Quickshell](https://quickshell.outfoxxed.me/) (QML shell framework) fo
 
 ## Quick navigation
 
+- **What's new**
+  Current release notes, short version. No archaeology degree required.
+  [Changelog](../CHANGELOG.md)
+
 - **Getting Started**
   Install iNiR, run the setup wizard, get a shell on screen.
   [Installation](INSTALL.md)
@@ -21,6 +25,10 @@ Built on [Quickshell](https://quickshell.outfoxxed.me/) (QML shell framework) fo
 - **Theming**
   Wallpaper-based colors, 44 presets, and the pipeline that themes your entire system.
   [Theming architecture](THEMING_ARCHITECTURE.md)
+
+- **Setup & Updates**
+  Update flow, migrations, rollback, doctor, package-managed installs.
+  [Setup and updates](SETUP.md)
 
 - **IPC Reference**
   All targets and functions you can call from keybinds, scripts, or terminal.
@@ -54,10 +62,12 @@ Two panel families, switchable at runtime with `Super+Shift+W`:
 inir run            # start the shell
 inir restart        # restart running instance
 inir settings       # open settings UI
-inir logs           # view runtime logs
+inir logs --full    # view full Quickshell logs
 inir doctor         # health checks and auto-fix
 inir update         # pull + migrate + restart
 ```
+
+If a page disagrees with the running shell, trust the running shell and open an issue. Docs drift. Code at least has the decency to crash.
 
 ## The stack
 
@@ -76,7 +86,7 @@ Primary compositor: **Niri**. Secondary Hyprland support maintained from the for
 | Path | What's in it |
 |------|-------------|
 | `shell.qml` | Entry point. Singleton init, panel family dispatch. |
-| `services/` | [70+ singletons](SERVICES.md). Audio, network, Niri IPC, theming, everything. |
+| `services/` | [70+ singletons](SERVICES.md). Audio, network, Niri IPC, theming, Screen Time, everything. |
 | `modules/` | [All UI](MODULES.md). 676 QML files across 30+ module directories. |
 | `modules/common/` | Config, Appearance tokens, 130+ shared widgets. |
 | `defaults/config.json` | Default configuration (~60 sections). |

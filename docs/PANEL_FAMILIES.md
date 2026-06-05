@@ -27,7 +27,7 @@ color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
 
 ### Layout
 
-- **Bar**: top of screen (horizontal), or left/right edge (vertical)
+- **Bar**: top of screen (horizontal), or left/right edge (vertical). The horizontal bar is modular: left edge, two center-side zones, centered workspace pivot, right edge.
 - **Sidebars**: left sidebar (AI chat, YT Music, widgets), right sidebar (toggles, calendar, tools)
 - **Dock**: application dock (any of 4 edges)
 - **Overview**: workspace overview with app launcher and search (`Super+Space`)
@@ -61,6 +61,20 @@ ii loads about 25 panels through `ShellIiPanels.qml`. Some notable ones:
 | `iiMediaControls` | MPRIS media player popup |
 | `iiClipboard` | Clipboard history browser |
 
+### Bar zones
+
+The ii horizontal bar uses five zones:
+
+| Zone | Role |
+|------|------|
+| `left` | Left edge controls, usually sidebar button + active window/taskbar |
+| `centerLeft` | Left center pill, usually resources/media |
+| `center` | Pivot, normally workspaces |
+| `centerRight` | Right center pill, usually clock/util/battery |
+| `right` | Right edge controls, usually sidebar button/tray/timer/update/weather |
+
+Change it from Settings -> Bar -> Bar module layout. Do not hand-edit unless you enjoy typo archaeology.
+
 ## Waffle
 
 Windows 11 Fluent Design. Not "ii with a different skin" but a completely separate family with its own design language, interaction patterns, and density.
@@ -70,6 +84,7 @@ Windows 11 Fluent Design. Not "ii with a different skin" but a completely separa
 - **Taskbar**: bottom of screen (Windows 11 style)
 - **Start Menu**: app grid with search, pinned apps, recent files
 - **Action Center**: quick settings (WiFi, Bluetooth, volume, brightness, toggles)
+- **Screen Time**: optional entry in Action Center when usage tracking is enabled
 - **Notification Center**: notification list with calendar
 - **Settings**: standalone window (separate from ii settings)
 
