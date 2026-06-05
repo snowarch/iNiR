@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.services
 import qs.modules.common
 import qs.modules.common.functions
 
@@ -20,71 +21,19 @@ Singleton {
     property bool _initialized: false
     property bool _restartQueued: false
 
-    // Smart icon resolution: handles broken absolute paths from Electron apps
+    // Smart icon resolution: preserve app-provided identity whenever possible.
+    // Only repair the duplicated Electron resources path that is known-broken.
     function smartIconName(icon, appId) {
-        if (!icon) return appId || "application-x-executable";
+        if (!icon) {
+            const guessed = AppSearch.lookupDesktopEntry(appId)?.icon ?? AppSearch.guessIcon(appId);
+            return guessed || appId || "application-x-executable";
+        }
         
-        // Block known bad paths to avoid Qt warnings
-        // Electron apps running from Downloads/tmp often report invalid absolute paths
         if (icon.startsWith("/") || icon.startsWith("file://")) {
             const path = icon.startsWith("file://") ? icon.substring(7) : icon;
 
-            // Check for volatile/non-permanent paths first
-            const volatilePaths = ["/Descargas/", "/Downloads/", "/tmp/", "/var/tmp/", "/home/"];
-            const isVolatile = volatilePaths.some(vp => {
-                if (vp === "/home/") {
-                    // Only consider /home/ volatile if it's inside a download-like folder
-                    // (not permanent locations like .local/share/icons, Steam, etc.)
-                    return path.includes("/Descargas/") || path.includes("/Downloads/") || 
-                           path.includes("/tmp/") || (path.includes("/resources/") && !path.includes("/.local/share/Steam/"));
-                }
-                return path.includes(vp);
-            });
-            
-            // Known Electron app patterns - return proper icon name
-            if (path.includes("/Windsurf/") || path.includes("/windsurf/")) {
-                return "visual-studio-code";
-            }
-            if (path.includes("/Code/") || path.includes("/code/") || path.includes("/VSCode/")) {
-                return "visual-studio-code";
-            }
-            if (path.includes("/Cursor/") || path.includes("/cursor/")) {
-                return "visual-studio-code";
-            }
-            if (path.includes("/Zed/") || path.includes("/zed/")) {
-                return "dev.zed.Zed";
-            }
-            if (path.includes("/Discord/") || path.includes("/discord/")) {
-                return "discord";
-            }
-            if (path.includes("/Slack/") || path.includes("/slack/")) {
-                return "slack";
-            }
-            if (path.includes("/Obsidian/") || path.includes("/obsidian/")) {
-                return "obsidian";
-            }
-            if (path.includes("/Spotify/") || path.includes("/spotify/")) {
-                return "spotify";
-            }
-
-            // Try to fix common broken Electron paths
-            // Example: .../resources/app/resources/linux/code.png -> .../resources/linux/code.png
             if (path.indexOf("/resources/app/resources/") !== -1) {
                 return path.replace("/resources/app/resources/", "/resources/");
-            }
-
-            // For other volatile paths, extract base name
-            if (isVolatile || path.includes("/resources/")) {
-                const fileName = path.split("/").pop();
-                let baseName = fileName;
-                if (baseName.includes(".")) {
-                    baseName = baseName.split(".").slice(0, -1).join(".");
-                }
-                // Try common icon name mappings
-                if (baseName === "code") return "visual-studio-code";
-                if (baseName === "discord") return "discord";
-                if (baseName === "slack") return "slack";
-                return baseName || appId || "application-x-executable";
             }
         }
         

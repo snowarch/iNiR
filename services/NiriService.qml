@@ -1235,10 +1235,20 @@ Singleton {
         return null
     }
 
+    // Map ToplevelManager's wayland-foreign-toplevel handles to Niri's authoritative
+    // window list. Niri's `windows` is the source of truth: if a window isn't in
+    // it, it doesn't exist, even if Wayland still has a stale handle for it (which
+    // happens for apps that don't release the handle cleanly on close — zen,
+    // electron, etc.). Returning the unmatched handles unenriched would surface
+    // those ghosts in the dock/taskbar, which is exactly the persistence bug we
+    // want to avoid.
     function sortToplevels(toplevels) {
-        if (!toplevels || toplevels.length === 0 || !CompositorService.isNiri || windows.length === 0) {
-            return [...toplevels]
-        }
+        if (!toplevels || !CompositorService.isNiri)
+            return toplevels ? [...toplevels] : []
+
+        // Niri authoritative: 0 windows => 0 toplevels, regardless of stale handles.
+        if (windows.length === 0)
+            return []
 
         const usedToplevels = new Set()
         const enrichedToplevels = []
@@ -1267,12 +1277,9 @@ Singleton {
             enrichedToplevels.push(enrichToplevel(bestMatch, niriWindow))
         }
 
-        for (const toplevel of toplevels) {
-            if (!usedToplevels.has(toplevel)) {
-                enrichedToplevels.push(toplevel)
-            }
-        }
-
+        // Intentionally DO NOT append unmatched toplevels: any toplevel without a
+        // Niri window counterpart is a stale Wayland handle (ghost) and including
+        // it would resurrect closed apps in the dock.
         return enrichedToplevels
     }
 

@@ -18,7 +18,12 @@ DockButton {
     property real iconSize: Config.options?.dock?.iconSize ?? 35
     property real countDotWidth: 10
     property real countDotHeight: 4
-    readonly property var toplevels: appToplevel?.toplevels ?? []
+    // Toplevels come from the dock-wide reactive map so window-list
+    // updates (focus reorder, new/closed windows of an existing app)
+    // refresh without forcing a ScriptModel rebuild and spurious
+    // ListView add/remove/move animations. Fallback to modelData for
+    // the brief window before the map is populated.
+    readonly property var toplevels: (appListRoot?.toplevelsByUniqueId?.[appToplevel?.uniqueId] ?? appToplevel?.toplevels ?? [])
     readonly property var activeToplevel: ToplevelManager.activeToplevel
     readonly property string activeWindowKey: {
         const active = activeToplevel
@@ -378,7 +383,8 @@ DockButton {
                         } else {
                             icon = root.desktopEntry?.icon || AppSearch.guessIcon(appId);
                         }
-                        return IconThemeService.smartIconName(icon, appId);
+                        const resolved = IconThemeService.smartIconName(icon, appId);
+                        return resolved;
                     }
                     property bool isAbsolutePath: iconName.startsWith("/") || iconName.startsWith("file://")
                     property var candidates: isAbsolutePath ? [] : IconThemeService.dockIconCandidates(iconName)

@@ -61,6 +61,9 @@ Button {
                     const de = AppSearch.lookupDesktopEntry(appId);
                     const icon = de?.icon || AppSearch.guessIcon(appId);
                     const resolved = IconThemeService.smartIconName(icon, appId);
+                    if (resolved.startsWith("/") || resolved.startsWith("file://")) {
+                        return resolved.startsWith("file://") ? resolved : `file://${resolved}`;
+                    }
                     return Quickshell.iconPath(resolved, "application-x-executable");
                 }
                 implicitSize: 16
