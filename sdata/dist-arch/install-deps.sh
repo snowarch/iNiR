@@ -510,7 +510,7 @@ unset _meta_dir _inir_ver
 # See: https://github.com/snowarch/iNiR/issues/93
 #####################################################################################
 if command -v qs >/dev/null 2>&1; then
-  qs_abi_output="$(qs --version 2>&1 || true)"
+  qs_abi_output="$(timeout 5 env QT_QPA_PLATFORM=offscreen qs --version 2>&1 || true)"
   if echo "$qs_abi_output" | grep -qiE "built against Qt|Qt.*mismatch|incompatible Qt"; then
     log_warning "Qt/Quickshell ABI mismatch detected!"
     log_warning "Quickshell was built against a different Qt version than what is installed."

@@ -924,8 +924,11 @@ _doctor_abi_detect() {
     fi
 
     local qs_stderr qs_combined mismatch_detected mismatch_msg
-    qs_stderr="$(qs --version 2>&1 >/dev/null || true)"
-    qs_combined="$(qs --version 2>&1 || true)"
+    # Use timeout + offscreen platform to prevent hangs when Qt tries to
+    # initialize display plugins (Wayland/X11) during --version. Some systems
+    # block indefinitely waiting for a display server that may not respond.
+    qs_stderr="$(timeout 5 env QT_QPA_PLATFORM=offscreen qs --version 2>&1 >/dev/null || true)"
+    qs_combined="$(timeout 5 env QT_QPA_PLATFORM=offscreen qs --version 2>&1 || true)"
 
     mismatch_detected=false
     mismatch_msg=""
@@ -1629,34 +1632,46 @@ run_doctor_with_fixes() {
                 echo ""
 
                 # Cache sudo credentials so the rebuild doesn't hang on a hidden prompt
+                local _sudo_ok=true
                 if [[ "$_rebuild_cmd" == *"sudo"* ]] || [[ "$_rebuild_cmd" == *"pacman"* ]] || [[ "$_rebuild_cmd" == *"dnf"* ]]; then
-                    echo "Enter sudo password (cached for this session):"
-                    sudo -v || true
+                    echo ""
+                    echo -e "  ${STY_YELLOW}The rebuild requires sudo privileges.${STY_RST}"
+                    echo -e "  ${STY_FAINT}If prompted, enter your sudo password below.${STY_RST}"
+                    echo -e "  ${STY_FAINT}(timeout: 60 seconds)${STY_RST}"
+                    echo ""
+                    if ! timeout 60 sudo -v; then
+                        echo -e "  ${STY_RED}Sudo authentication timed out or failed.${STY_RST}"
+                        echo -e "  ${STY_YELLOW}Skipping automatic rebuild.${STY_RST}"
+                        echo -e "  ${STY_FAINT}You can run manually: ${_rebuild_cmd//--noconfirm/}${STY_RST}"
+                        _sudo_ok=false
+                    fi
                 fi
 
-                local _rebuild_rc=0
-                if command -v timeout >/dev/null 2>&1; then
-                    timeout 15m bash -c "${_rebuild_cmd//--noconfirm/}" || _rebuild_rc=$?
-                else
-                    eval "${_rebuild_cmd//--noconfirm/}" || _rebuild_rc=$?
-                fi
-
-                if [[ $_rebuild_rc -eq 124 ]]; then
-                    echo ""
-                    echo -e "  ${STY_RED}Rebuild timed out after 15 minutes.${STY_RST}"
-                elif [[ $_rebuild_rc -ne 0 ]]; then
-                    echo ""
-                    echo -e "  ${STY_RED}Rebuild failed (exit $_rebuild_rc).${STY_RST}"
-                else
-                    rm -f "${XDG_CACHE_HOME:-$HOME/.cache}/inir/abi-check" 2>/dev/null
-                    if _doctor_abi_detect; then
-                        echo ""
-                        echo -e "  ${STY_GREEN}Quickshell rebuilt successfully. ABI mismatch resolved.${STY_RST}"
-                        doctor_fixed=$((doctor_fixed + 1))
+                if $_sudo_ok; then
+                    local _rebuild_rc=0
+                    if command -v timeout >/dev/null 2>&1; then
+                        timeout 15m bash -c "${_rebuild_cmd//--noconfirm/}" || _rebuild_rc=$?
                     else
+                        eval "${_rebuild_cmd//--noconfirm/}" || _rebuild_rc=$?
+                    fi
+
+                    if [[ $_rebuild_rc -eq 124 ]]; then
                         echo ""
-                        echo -e "  ${STY_YELLOW}Rebuild finished but mismatch persists.${STY_RST}"
-                        echo -e "  ${STY_FAINT}A stale local binary may be shadowing the system package.${STY_RST}"
+                        echo -e "  ${STY_RED}Rebuild timed out after 15 minutes.${STY_RST}"
+                    elif [[ $_rebuild_rc -ne 0 ]]; then
+                        echo ""
+                        echo -e "  ${STY_RED}Rebuild failed (exit $_rebuild_rc).${STY_RST}"
+                    else
+                        rm -f "${XDG_CACHE_HOME:-$HOME/.cache}/inir/abi-check" 2>/dev/null
+                        if _doctor_abi_detect; then
+                            echo ""
+                            echo -e "  ${STY_GREEN}Quickshell rebuilt successfully. ABI mismatch resolved.${STY_RST}"
+                            doctor_fixed=$((doctor_fixed + 1))
+                        else
+                            echo ""
+                            echo -e "  ${STY_YELLOW}Rebuild finished but mismatch persists.${STY_RST}"
+                            echo -e "  ${STY_FAINT}A stale local binary may be shadowing the system package.${STY_RST}"
+                        fi
                     fi
                 fi
             fi
