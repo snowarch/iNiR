@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "MatuFlow Global Injector",
+  "version": "1.0",
+  "description": "Injects Matugen CSS variables into every webpage.",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["storage", "alarms"],
+  "host_permissions": ["*://*/*"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["baked_themes.js", "inject.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "action": {
+    "default_title": "Open MatuFlow Dashboard",
+    "default_popup": "dashboard/index.html"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["dashboard/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

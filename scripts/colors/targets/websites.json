@@ -1,0 +1,11 @@
+{
+  "id": "websites",
+  "label": "Websites",
+  "module": "70-websites.sh",
+  "category": "custom",
+  "inputs": [
+    "palette.json"
+  ],
+  "description": "Apply generated iNiR palette to Websites.",
+  "configKey": "appearance.wallpaperTheming.enableAppsAndShell"
+}
