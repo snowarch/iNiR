@@ -17,7 +17,7 @@ ColumnLayout {
     property bool editing: false
     property bool renderMarkdown: true
     property bool enableMouseSelection: false
-    property var segmentContent: ({})
+    property var segmentContent: ""
     property var messageData: {}
     property bool done: true
     property bool forceDisableChunkSplitting: false

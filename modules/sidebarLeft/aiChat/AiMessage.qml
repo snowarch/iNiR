@@ -211,7 +211,7 @@ Rectangle {
 
         Loader {
             Layout.fillWidth: true
-            active: root.messageData?.localFilePath && root.messageData?.localFilePath.length > 0
+            active: (root.messageData?.localFilePath?.length ?? 0) > 0
             sourceComponent: AttachedFileIndicator {
                 filePath: root.messageData?.localFilePath
                 canRemove: false
@@ -235,7 +235,7 @@ Rectangle {
                 FadeLoader {
                     id: loadingIndicatorLoader
                     anchors.centerIn: parent
-                    shown: (root.messageBlocks.length < 1) && (root.messageData && !root.messageData.done)
+                    shown: (root.messageBlocks.length < 1) && (root.messageData ? !root.messageData.done : false)
                     sourceComponent: MaterialLoadingIndicator {
                         loading: true
                     }
@@ -271,10 +271,10 @@ Rectangle {
                         editing: root.editing
                         renderMarkdown: root.renderMarkdown
                         enableMouseSelection: root.enableMouseSelection
-                        segmentContent: thisBlock.content
+                        segmentContent: thisBlock?.content ?? ""
                         messageData: root.messageData
                         done: root.messageData?.done ?? false
-                        completed: thisBlock.completed ?? false
+                        completed: thisBlock?.completed ?? false
                     } }
                     DelegateChoice { roleValue: "text"; MessageTextBlock {
                         required property int index
@@ -282,10 +282,10 @@ Rectangle {
                         editing: root.editing
                         renderMarkdown: root.renderMarkdown
                         enableMouseSelection: root.enableMouseSelection
-                        segmentContent: thisBlock.content
+                        segmentContent: thisBlock?.content ?? ""
                         messageData: root.messageData
                         done: root.messageData?.done ?? false
-                        forceDisableChunkSplitting: root.messageData?.content.includes("```") ?? true
+                        forceDisableChunkSplitting: (root.messageData?.content?.includes("```")) ?? true
                     } }
                 }
             }

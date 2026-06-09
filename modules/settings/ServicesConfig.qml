@@ -155,6 +155,92 @@ ContentPage {
                 }
             }
 
+            // ── Quick-add provider presets ──────────────────────────────────
+            StyledText {
+                Layout.fillWidth: true
+                Layout.leftMargin: 4
+                text: Translation.tr("Quick add — popular providers (free tiers available)")
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: Appearance.colors.colSubtext
+                wrapMode: Text.WordWrap
+            }
+
+            Flow {
+                Layout.fillWidth: true
+                Layout.leftMargin: 4
+                Layout.rightMargin: 4
+                spacing: 6
+
+                Repeater {
+                    model: AiProviderPresets.presets
+
+                    delegate: RippleButton {
+                        id: presetChip
+                        required property var modelData
+                        readonly property var preset: presetChip.modelData
+                        readonly property bool alreadyAdded:
+                            (Config.options?.ai?.extraModels ?? []).some(m =>
+                                (m?.endpoint ?? "") === preset.endpoint)
+
+                        implicitWidth: presetChipRow.implicitWidth + 20
+                        implicitHeight: 32
+                        buttonRadius: Appearance.rounding.full
+                        colBackground: preset.local
+                            ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.88)
+                            : Appearance.colors.colLayer2
+                        colBackgroundHover: preset.local
+                            ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.80)
+                            : Appearance.colors.colLayer2Hover
+
+                        onClicked: {
+                            // Pre-fill the existing Add Provider form so the user
+                            // only needs to paste a key (or just hit Add for local).
+                            providerForm.editingIndex = -1
+                            providerForm.titleText = Translation.tr("Add %1").arg(preset.name)
+                            providerForm.saveLabelText = Translation.tr("Add")
+                            providerNameInput.text = preset.name
+                            providerEndpointInput.text = preset.endpoint
+                            providerModelInput.text = preset.model
+                            providerForm.selectedFormat = preset.api_format ?? "openai"
+                            providerForm._manualOverride = true
+                            providerApiKeyInput.text = ""
+                            providerForm.expanded = true
+                        }
+
+                        contentItem: RowLayout {
+                            id: presetChipRow
+                            anchors.centerIn: parent
+                            spacing: 6
+                            CustomIcon {
+                                width: Appearance.font.pixelSize.large
+                                height: Appearance.font.pixelSize.large
+                                source: presetChip.preset.icon
+                                colorize: true
+                                color: presetChip.preset.local ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer2
+                            }
+                            StyledText {
+                                text: presetChip.preset.name
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                color: presetChip.preset.local ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer2
+                            }
+                            MaterialSymbol {
+                                visible: presetChip.alreadyAdded
+                                text: "check_circle"
+                                iconSize: Appearance.font.pixelSize.normal
+                                color: Appearance.colors.colPrimary
+                            }
+                        }
+
+                        StyledToolTip {
+                            text: presetChip.preset.description
+                                + (presetChip.preset.requiresKey
+                                    ? "\n\n" + Translation.tr("Get a key: ") + presetChip.preset.keyGetLink
+                                    : "")
+                        }
+                    }
+                }
+            }
+
             Repeater {
                 model: Config.options?.ai?.extraModels ?? []
 
@@ -1350,7 +1436,7 @@ ContentPage {
         SettingsGroup {
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("Set a city name or coordinates for precise location. Leave empty to auto-detect from IP. Data provided by wttr.in.")
+                text: Translation.tr("Set a city name or coordinates for precise location. Leave empty to auto-detect from IP. Weather from wttr.in with Open-Meteo fallback; air quality from Open-Meteo.")
                 color: Appearance.colors.colOnSurfaceVariant
                 font.pixelSize: Appearance.font.pixelSize.small
                 wrapMode: Text.WordWrap

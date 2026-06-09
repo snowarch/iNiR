@@ -89,6 +89,7 @@ Singleton {
             property JsonObject ai: JsonObject {
                 property string model: "gemini-2.5-flash"
                 property real temperature: 0.5
+                property string promptName: ""
             }
 
             property JsonObject cheatsheet: JsonObject {

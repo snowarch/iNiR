@@ -271,7 +271,9 @@ Item {
                 id: idleView
                 spacing: 6
 
-                property int tab: Persistent.states?.timer?.tab ?? 0
+                // Clamp to the valid tab range — a stale/out-of-range persisted
+                // value would otherwise index past `tabs` and throw.
+                property int tab: Math.max(0, Math.min(2, Persistent.states?.timer?.tab ?? 0))
                 property int _prevTab: 0
                 readonly property var tabs: [
                     { icon: "target", label: Translation.tr("Focus") },

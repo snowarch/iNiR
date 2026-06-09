@@ -332,10 +332,18 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                     anchors.centerIn: parent
                     spacing: 10
 
+                    AiModelSelector {}
+                    StatusSeparator {}
                     StatusItem {
                         icon: Ai.currentModelHasApiKey ? "key" : "key_off"
                         statusText: ""
                         description: Ai.currentModelHasApiKey ? Translation.tr("API key is set\nChange with /key YOUR_API_KEY") : Translation.tr("No API key\nSet it with /key YOUR_API_KEY")
+                    }
+                    StatusSeparator {}
+                    StatusItem {
+                        icon: "article"
+                        statusText: Ai.currentPromptName.length > 0 ? Ai.currentPromptName : Translation.tr("default")
+                        description: Translation.tr("Active personality / system prompt\nChange with /prompt NAME")
                     }
                     StatusSeparator {}
                     StatusItem {

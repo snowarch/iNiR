@@ -744,7 +744,18 @@ Singleton {
         root.addMessage(Translation.tr("The current system prompt is\n\n---\n\n%1").arg(Config.options?.ai?.systemPrompt ?? ""), root.interfaceRole);
     }
 
+    // Human-readable name of the loaded prompt (derived from its file name, e.g.
+    // "ii-Default.md" → "ii-Default"). Persisted so it survives restarts.
+    property string currentPromptName: Persistent.states?.ai?.promptName ?? ""
+
+    function _promptNameFromPath(filePath) {
+        const base = (filePath ?? "").split("/").pop();
+        return base.replace(/\.(md|txt)$/i, "");
+    }
+
     function loadPrompt(filePath) {
+        root.currentPromptName = root._promptNameFromPath(filePath);
+        if (Persistent.states?.ai) Persistent.states.ai.promptName = root.currentPromptName;
         promptLoader.path = "" // Unload
         promptLoader.path = filePath; // Load
         promptLoader.reload();
@@ -989,9 +1000,15 @@ Singleton {
             // console.log("Request headers: ", JSON.stringify(requestHeaders));
             // console.log("Header string: ", headerString);
 
-            /* Get authorization header from strategy */
-            const authHeader = requester.currentStrategy.buildAuthorizationHeader(root.apiKeyEnvVarName);
-            
+            /* Get authorization header from strategy. Only send it when the
+               model actually uses a key — otherwise the API_KEY env var is
+               unset and we'd send an empty `Authorization: Bearer `, which
+               local/keyless endpoints (e.g. Ollama) reject with a missing-auth
+               error. */
+            const authHeader = model?.requires_key
+                ? requester.currentStrategy.buildAuthorizationHeader(root.apiKeyEnvVarName)
+                : "";
+
             /* Script shebang */
             const scriptShebang = "#!/usr/bin/env bash\n";
 
