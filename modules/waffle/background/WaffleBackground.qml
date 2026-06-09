@@ -330,6 +330,20 @@ Variants {
                 }
             }
 
+            // Vignette over the workspace wallpaper. This whole window is hidden
+            // in backdrop-only mode (visible: !backdropOnly above), so WaffleBackdrop
+            // owns the vignette there; here it covers normal mode — making the
+            // effect apply over the workspace without hiding the main wallpaper.
+            Rectangle {
+                anchors.fill: parent
+                visible: panelRoot.wBg.backdrop?.vignetteEnabled ?? false
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: "transparent" }
+                    GradientStop { position: panelRoot.wBg.backdrop?.vignetteRadius ?? 0.7; color: "transparent" }
+                    GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, panelRoot.wBg.backdrop?.vignetteIntensity ?? 0.5) }
+                }
+            }
+
             WidgetCanvas {
                 anchors.fill: parent
                 visible: {

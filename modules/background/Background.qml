@@ -1040,6 +1040,71 @@ Scope {
                 }
             }
 
+            // Vignette overlays over the workspace wallpaper. Mirrors the dim
+            // pattern (dimOverlay here ↔ backdropDim in Backdrop.qml): this group
+            // covers normal mode (gated !backdropActive) while Backdrop.qml keeps
+            // drawing the same vignette in backdrop-only mode. Mutually exclusive,
+            // so the effects now apply over the workspace whether or not the main
+            // wallpaper is hidden, with no double-render.
+            Item {
+                id: vignetteOverlay
+                anchors.fill: parent
+                z: 11
+                visible: !bgRoot.backdropActive
+
+                // Bar-level vignette (darkens the edge under the bar)
+                Rectangle {
+                    id: barVignette
+                    readonly property bool isVertical: Config.options?.bar?.vertical ?? false
+                    readonly property bool isBarAtTop: !isVertical && !(Config.options?.bar?.bottom ?? false)
+                    readonly property bool isBarAtLeft: isVertical && !(Config.options?.bar?.bottom ?? false)
+                    readonly property bool barVignetteEnabled: Config.options?.bar?.vignette?.enabled ?? false
+                    readonly property real barVignetteIntensity: Config.options?.bar?.vignette?.intensity ?? 0.6
+                    readonly property real barVignetteRadius: Config.options?.bar?.vignette?.radius ?? 0.5
+
+                    anchors {
+                        left: isVertical ? (isBarAtLeft ? parent.left : undefined) : parent.left
+                        right: isVertical ? (isBarAtLeft ? undefined : parent.right) : parent.right
+                        top: isVertical ? parent.top : (isBarAtTop ? parent.top : undefined)
+                        bottom: isVertical ? parent.bottom : (isBarAtTop ? undefined : parent.bottom)
+                    }
+                    width: isVertical ? Math.max(200, vignetteOverlay.width * barVignetteRadius) : undefined
+                    height: isVertical ? undefined : Math.max(200, vignetteOverlay.height * barVignetteRadius)
+                    visible: barVignetteEnabled
+
+                    gradient: Gradient {
+                        orientation: barVignette.isVertical ? Gradient.Horizontal : Gradient.Vertical
+                        GradientStop {
+                            position: 0.0
+                            color: (barVignette.isBarAtTop || barVignette.isBarAtLeft)
+                                ? Qt.rgba(0, 0, 0, barVignette.barVignetteIntensity)
+                                : "transparent"
+                        }
+                        GradientStop {
+                            position: barVignette.barVignetteRadius
+                            color: "transparent"
+                        }
+                        GradientStop {
+                            position: 1.0
+                            color: (barVignette.isBarAtTop || barVignette.isBarAtLeft)
+                                ? "transparent"
+                                : Qt.rgba(0, 0, 0, barVignette.barVignetteIntensity)
+                        }
+                    }
+                }
+
+                // Background-effects vignette (bottom gradient)
+                Rectangle {
+                    anchors.fill: parent
+                    visible: bgRoot.backgroundOptions.backdrop?.vignetteEnabled ?? false
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: "transparent" }
+                        GradientStop { position: bgRoot.backgroundOptions.backdrop?.vignetteRadius ?? 0.7; color: "transparent" }
+                        GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, bgRoot.backgroundOptions.backdrop?.vignetteIntensity ?? 0.5) }
+                    }
+                }
+            }
+
             // Desktop right-click context menu
             MouseArea {
                 anchors.fill: parent
