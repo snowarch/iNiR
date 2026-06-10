@@ -13,10 +13,18 @@ Scope {
     id: root
 
     property bool initialized: false
-    property var focusedScreen: CompositorService.isNiri 
-        ? (Quickshell.screens.find(s => s.name === NiriService.currentOutput) ?? GlobalStates.primaryScreen)
-        : (Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? GlobalStates.primaryScreen)
-    property var targetScreen: screenFromList(Config.options?.osd?.screenList ?? [], focusedScreen)
+    readonly property var targetScreens: {
+        const list = Config.options?.osd?.screenList ?? []
+        const screens = Quickshell.screens
+        if (!list || list.length === 0)
+            return screens
+        const matched = screens.filter(screen => {
+            const screenName = screen?.name ?? ""
+            return screenName.length > 0 && list.includes(screenName)
+        })
+        // Fallback safety: stale monitor names should never hide the OSD everywhere.
+        return matched.length > 0 ? matched : screens
+    }
     property string currentIndicator: "volume"
     property var indicators: [
         {
@@ -40,14 +48,6 @@ Scope {
             globalStateValue: "osdKeyboardLayoutOpen"
         },
     ]
-
-    function screenFromList(list, preferred) {
-        if (!list || list.length === 0)
-            return preferred ?? GlobalStates.primaryScreen
-        if (preferred && list.includes(preferred.name ?? ""))
-            return preferred
-        return Quickshell.screens.find(s => list.includes(s?.name ?? "")) ?? GlobalStates.primaryScreen ?? preferred
-    }
 
     // Suppress OSD during startup and gamemode niri-reload transitions
     Timer {
@@ -152,18 +152,14 @@ Scope {
                 GlobalStates[i.globalStateValue] = false;
             });
         }
-        sourceComponent: PanelWindow {
-            id: panelWindow
+        sourceComponent: Variants {
+            model: root.targetScreens
+            delegate: PanelWindow {
+                id: panelWindow
+                required property var modelData
+                screen: modelData
 
-            Connections {
-                target: root
-                function onTargetScreenChanged() {
-                    panelWindow.screen = root.targetScreen;
-                }
-            }
-
-            color: "transparent"
-            screen: root.targetScreen
+                color: "transparent"
             exclusiveZone: 0
             WlrLayershell.namespace: "quickshell:wOnScreenDisplay"
             WlrLayershell.layer: WlrLayer.Overlay
@@ -211,6 +207,7 @@ Scope {
                 }
             }
         }
+    }
     }
 
     IpcHandler {

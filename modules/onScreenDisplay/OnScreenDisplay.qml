@@ -14,10 +14,18 @@ Scope {
     id: root
     property string protectionMessage: ""
     property bool initialized: false
-    property var focusedScreen: CompositorService.isNiri
-        ? Quickshell.screens.find(s => s.name === NiriService.currentOutput) ?? GlobalStates.primaryScreen
-        : Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? GlobalStates.primaryScreen
-    property var targetScreen: screenFromList(Config.options?.osd?.screenList ?? [], focusedScreen)
+    readonly property var targetScreens: {
+        const list = Config.options?.osd?.screenList ?? []
+        const screens = Quickshell.screens
+        if (!list || list.length === 0)
+            return screens
+        const matched = screens.filter(screen => {
+            const screenName = screen?.name ?? ""
+            return screenName.length > 0 && list.includes(screenName)
+        })
+        // Fallback safety: stale monitor names should never hide the OSD everywhere.
+        return matched.length > 0 ? matched : screens
+    }
 
     property string currentIndicator: "volume"
     property bool _syncingOpenStates: false
@@ -44,14 +52,6 @@ Scope {
             sourceUrl: "indicators/KeyboardLayoutIndicator.qml"
         },
     ]
-
-    function screenFromList(list, preferred) {
-        if (!list || list.length === 0)
-            return preferred ?? GlobalStates.primaryScreen
-        if (preferred && list.includes(preferred.name ?? ""))
-            return preferred
-        return Quickshell.screens.find(s => list.includes(s?.name ?? "")) ?? GlobalStates.primaryScreen ?? preferred
-    }
 
     function setOpenStates(volume, brightness, media, keyboardLayout) {
         root._syncingOpenStates = true;
@@ -203,19 +203,15 @@ Scope {
         id: osdLoader
         active: root.osdActive
 
-        sourceComponent: PanelWindow {
-            id: osdRoot
-            color: "transparent"
-            screen: root.targetScreen
+        sourceComponent: Variants {
+            model: root.targetScreens
+            delegate: PanelWindow {
+                id: osdRoot
+                required property var modelData
+                screen: modelData
+                color: "transparent"
 
-            Connections {
-                target: root
-                function onTargetScreenChanged() {
-                    osdRoot.screen = root.targetScreen;
-                }
-            }
-
-            WlrLayershell.namespace: "quickshell:onScreenDisplay"
+                WlrLayershell.namespace: "quickshell:onScreenDisplay"
             WlrLayershell.layer: WlrLayer.Overlay
             anchors {
                 top: root.currentIndicator === "keyboardLayout" ? true : !(Config.options?.bar?.bottom ?? false)
@@ -234,7 +230,6 @@ Scope {
 
             implicitWidth: columnLayout.implicitWidth
             implicitHeight: columnLayout.implicitHeight
-            visible: root.osdActive
 
             ColumnLayout {
                 id: columnLayout
@@ -320,6 +315,7 @@ Scope {
                 }
             }
         }
+    }
     }
 
     IpcHandler {
