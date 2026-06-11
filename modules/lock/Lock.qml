@@ -257,10 +257,11 @@ Scope {
         delegate: Scope {
             required property ShellScreen modelData
             property bool shouldPush: GlobalStates.screenLocked && CompositorService.isHyprland
-            property string targetMonitorName: modelData.name
-            property int verticalMovementDistance: modelData.height
-            property int horizontalSqueeze: modelData.width * 0.2
+            property string targetMonitorName: modelData ? modelData.name : ""
+            property int verticalMovementDistance: modelData ? modelData.height : 0
+            property int horizontalSqueeze: modelData ? modelData.width * 0.2 : 0
             onShouldPushChanged: {
+                if (!modelData) return;
                 if (shouldPush) {
                     root.saveWindowPositionAndTile();
                     Quickshell.execDetached(["hyprctl", "keyword", "monitor", `${targetMonitorName}, addreserved, ${verticalMovementDistance}, ${-verticalMovementDistance}, ${horizontalSqueeze}, ${horizontalSqueeze}`])
@@ -298,6 +299,10 @@ Scope {
         target: "lock"
 
         function activate(): void {
+            if (Config.options?.lock?.useHyprlock ?? false) {
+                Quickshell.execDetached(["/usr/bin/bash", "-lc", "/usr/bin/pidof hyprlock || /usr/bin/hyprlock"]);
+                return;
+            }
             if (GlobalStates.screenLocked || root._lockActivating)
                 return;
             lockActivateDelay.restart();
