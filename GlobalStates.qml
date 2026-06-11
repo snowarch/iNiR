@@ -15,6 +15,9 @@ Singleton {
     // Deferred panel loading gate — non-critical panels wait for this before activating
     property bool deferredPanelsReady: false
     // Boot greeting lifecycle — singleton preserves across hot-reload so greeting shows once per session
+    property bool videoEditorPopupOpen: false
+    property bool videoEditorOpen: false
+    property string videoEditorPath: ""
     property bool bootGreetingOpen: false
     property bool bootGreetingDone: false
     property bool barOpen: true

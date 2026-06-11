@@ -3,7 +3,6 @@ import qs.modules.common.widgets
 import QtQuick
 import Qt5Compat.GraphicalEffects
 
-
 Item {
     id: root
 
@@ -30,14 +29,24 @@ Item {
     Rectangle {
         id: quoteBox
 
-        implicitWidth: quoteStyledText.width + 16 // for spacing on both sides
-        implicitHeight: quoteStyledText.height + 8 
+        implicitWidth: quoteRow.implicitWidth + 16
+        implicitHeight: quoteRow.implicitHeight + 8 
         radius: Appearance.rounding.small
         color: Appearance.colors.colSecondaryContainer
 
         Row {
+            id: quoteRow
             anchors.centerIn: parent
-            spacing: 0
+            spacing: 4 
+            
+            MaterialSymbol {
+                id: quoteIcon
+                anchors.top: parent.top
+                iconSize: Appearance.font.pixelSize.huge
+                text: "format_quote"
+                color: Appearance.colors.colOnSecondaryContainer
+            }
+            
             StyledText {
                 id: quoteStyledText
                 horizontalAlignment: Text.AlignLeft

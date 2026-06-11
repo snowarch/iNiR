@@ -519,6 +519,16 @@ PanelWindow {
                     overlayColor: root.overlayColor
                     points: root.points
                 }
+              }
+
+            // The thing to the bottom-right with an icon
+            CursorGuide {
+                z: 9999
+                visible: true
+                x: root.dragging ? root.regionX + root.regionWidth : mouseArea.mouseX
+                y: root.dragging ? root.regionY + root.regionHeight : mouseArea.mouseY
+                action: root.action
+                selectionMode: root.selectionMode
             }
 
             // Window regions

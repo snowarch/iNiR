@@ -1,0 +1,4 @@
+module qs.modules.ii.videoEditor
+VideoEditor 1.0 VideoEditor.qml
+VideoEditorPopup 1.0 VideoEditorPopup.qml
+VideoEditorPopupContent 1.0 VideoEditorPopupContent.qml

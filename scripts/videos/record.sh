@@ -525,10 +525,29 @@ for ((i=0;i<${#ARGS[@]};i++)); do
         FULLSCREEN_FLAG=1
     fi
 done
-
 if pgrep wf-recorder > /dev/null; then
     if is_truthy "$SHOW_NOTIFICATIONS"; then notify-send "Recording Stopped" "Stopped" -a 'Recorder' & fi
-    pkill wf-recorder &
+    
+    pkill wf-recorder
+    
+    # Wait for the process to fully exit memory
+    while pgrep -x wf-recorder > /dev/null; do
+        sleep 0.1
+    done
+    
+    # Allow kernel I/O flush to disk before reading
+    sleep 0.4
+    
+    # Read all matching files to prevent SIGPIPE under set -euo pipefail
+    ALL_VIDEOS=$(ls -1t "$SAVE_PATH" 2>/dev/null | grep -E '\.(mp4|mkv|flv|mov)$' || true)
+    
+    # Extract only the first entry safely
+    LATEST_FILE="${ALL_VIDEOS%%$'\n'*}"
+    
+    if [[ -n "$LATEST_FILE" ]]; then
+        quickshell -c inir ipc call launchVideoEditor handle "$SAVE_PATH/$LATEST_FILE"
+    fi
+    exit 0
 else
     output_base="$(date +"$RECORDING_NAME_FORMAT")"
     output_file="./${output_base}.mp4"
