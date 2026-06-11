@@ -315,7 +315,9 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
             }
             Rectangle {
                 id: statusBg
-                z: 2
+                // Above the empty-state placeholder (z:2) and scroll button (z:3):
+                // the model-selector popup grows from here and must cover them.
+                z: 4
                 anchors {
                     horizontalCenter: parent.horizontalCenter
                     top: parent.top

@@ -95,10 +95,17 @@ Item {
     Rectangle {
         id: popup
         anchors.top: pill.bottom
-        anchors.left: pill.left
         anchors.topMargin: 6
         z: 100
         width: 300
+        // Grow from the pill (x:0 = pill.left) but clamp inside the window so
+        // the list never hangs off the sidebar edge.
+        x: {
+            const win = root.Window.window
+            if (!win || !root.expanded) return 0
+            const absX = root.mapToItem(null, 0, 0).x
+            return Math.max(12 - absX, Math.min(0, win.width - 12 - width - absX))
+        }
         // Height morphs between 0 (closed) and content height (open).
         readonly property real openHeight: Math.min(popupContent.implicitHeight + 16, 420)
         height: root.expanded ? openHeight : 0
