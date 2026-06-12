@@ -954,7 +954,7 @@ Item { // Bar content region
                             if (Network.active) {
                                 lines.push(Network.networkStrength + "%");
                                 if (Network.active.frequency) {
-                                    let ghz = Network.active.frequency > 4000 ? "5 GHz" : "2.4 GHz";
+                                    let ghz = Network.active.frequency > 5900 ? "6 GHz" : (Network.active.frequency > 4000 ? "5 GHz" : "2.4 GHz");
                                     lines.push(ghz + " (" + Network.active.frequency + " MHz)");
                                 }
                                 if (Network.active.rate) {

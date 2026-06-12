@@ -58,7 +58,7 @@ DialogListItem {
                             details.push(Translation.tr("Connected"));
                             details.push(root.wifiNetwork.strength + "%");
                             if (root.wifiNetwork.frequency) {
-                                let ghz = root.wifiNetwork.frequency > 4000 ? "5 GHz" : "2.4 GHz";
+                                let ghz = root.wifiNetwork.frequency > 5900 ? "6 GHz" : (root.wifiNetwork.frequency > 4000 ? "5 GHz" : "2.4 GHz");
                                 details.push(ghz + " (" + root.wifiNetwork.frequency + " MHz)");
                             }
                             if (root.wifiNetwork.rate) {

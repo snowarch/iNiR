@@ -24,7 +24,7 @@ AndroidQuickToggleButton {
                 info += " (" + Network.networkStrength + "%)";
                 if (Network.active.rate) info += " | " + Network.active.rate;
                 if (Network.active.frequency) {
-                    let ghz = Network.active.frequency > 4000 ? "5 GHz" : "2.4 GHz";
+                    let ghz = Network.active.frequency > 5900 ? "6 GHz" : (Network.active.frequency > 4000 ? "5 GHz" : "2.4 GHz");
                     info += " | " + ghz;
                 }
             }
