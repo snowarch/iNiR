@@ -975,6 +975,25 @@ Item { // Bar content region
                         text: BluetoothStatus.activeIcon
                         iconSize: Appearance.font.pixelSize.larger
                         color: rightSidebarButton.colText
+
+                        HoverHandler {
+                            id: btHover
+                        }
+
+                        StyledToolTip {
+                            extraVisibleCondition: btHover.hovered
+                            text: {
+                                if (!BluetoothStatus.enabled) return Translation.tr("Bluetooth is disabled");
+                                if (!BluetoothStatus.connected) return Translation.tr("Bluetooth disconnected");
+                                let device = BluetoothStatus.firstActiveDevice;
+                                if (!device) return Translation.tr("Bluetooth connected");
+                                let devInfo = device.name || Translation.tr("Unknown device");
+                                if (device.batteryAvailable) {
+                                    devInfo += " (" + Math.round(device.battery * 100) + "%)";
+                                }
+                                return devInfo;
+                            }
+                        }
                     }
                 }
             }
