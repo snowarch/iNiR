@@ -35,11 +35,42 @@ DialogListItem {
                 text: strength > 80 ? "signal_wifi_4_bar" : strength > 60 ? "network_wifi_3_bar" : strength > 40 ? "network_wifi_2_bar" : strength > 20 ? "network_wifi_1_bar" : "signal_wifi_0_bar"
                 color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colOnSurfaceVariant
             }
-            StyledText {
+            ColumnLayout {
                 Layout.fillWidth: true
-                color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurfaceVariant
-                elide: Text.ElideRight
-                text: root.wifiNetwork?.ssid ?? Translation.tr("Unknown")
+                spacing: 2
+                StyledText {
+                    Layout.fillWidth: true
+                    color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurfaceVariant
+                    elide: Text.ElideRight
+                    text: root.wifiNetwork?.ssid ?? Translation.tr("Unknown")
+                }
+                Revealer {
+                    vertical: true
+                    reveal: root.wifiNetwork?.active ?? false
+                    Layout.fillWidth: true
+                    StyledText {
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+                        elide: Text.ElideRight
+                        text: {
+                            if (!root.wifiNetwork || !root.wifiNetwork.active) return "";
+                            let details = [];
+                            details.push(Translation.tr("Connected"));
+                            details.push(root.wifiNetwork.strength + "%");
+                            if (root.wifiNetwork.frequency) {
+                                let ghz = root.wifiNetwork.frequency > 5900 ? "6 GHz" : (root.wifiNetwork.frequency > 4000 ? "5 GHz" : "2.4 GHz");
+                                details.push(ghz + " (" + root.wifiNetwork.frequency + " MHz)");
+                            }
+                            if (root.wifiNetwork.rate) {
+                                details.push(root.wifiNetwork.rate);
+                            }
+                            if (root.wifiNetwork.bssid) {
+                                details.push(root.wifiNetwork.bssid);
+                            }
+                            return details.join(" • ");
+                        }
+                    }
+                }
             }
             MaterialSymbol {
                 visible: (root.wifiNetwork?.isSecure || root.wifiNetwork?.active) ?? false
