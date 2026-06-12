@@ -348,7 +348,7 @@ RippleButton {
 
             // Monochrome overlay
             Loader {
-                active: Config.options?.dock?.monochromeIcons ?? false
+                active: (Config.options?.dock?.monochromeIcons ?? false) && taskbarIcon.source.toString().includes(Config.options?.iconTheme ?? "yet-another-monochrome-icon-set")
                 anchors.fill: iconLoader
                 sourceComponent: Item {
                     Desaturate {

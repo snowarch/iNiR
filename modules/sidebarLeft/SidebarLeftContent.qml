@@ -77,7 +77,7 @@ Item {
         if (root.wallhavenEnabled) result.push({ icon: "collections", name: Translation.tr("Wallhaven") })
         if (root.ytMusicEnabled) result.push({ icon: "library_music", name: Translation.tr("YT Music") })
         if (root.toolsEnabled) result.push({ icon: "build", name: Translation.tr("Tools") })
-        if (root.softwareEnabled) result.push({ icon: "store", name: Translation.tr("Software") })
+        if (root.softwareEnabled) result.push({ icon: "apps", name: Translation.tr("Applications") })
         // DISABLED: webapps — requires quickshell-webengine rebuild
         // if (root.pluginsEnabled) result.push({ icon: "extension", name: Translation.tr("Web Apps") })
         return result
@@ -293,7 +293,7 @@ Item {
                                     case "collections": return wallhavenComp
                                     case "library_music": return ytMusicComp
                                     case "build": return toolsComp
-                                    case "store": return softwareComp
+                                    case "apps": return softwareComp
                                     // DISABLED: webapps
                                     // case "extension": return pluginsComp
                                     default: return null

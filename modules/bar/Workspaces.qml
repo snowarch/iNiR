@@ -489,7 +489,7 @@ Item {
                         }
 
                         Loader {
-                            active: wsConfig.monochromeIcons
+                            active: wsConfig.monochromeIcons && mainAppIcon.source.toString().includes(Config.options?.iconTheme ?? "yet-another-monochrome-icon-set")
                             anchors.fill: mainAppIcon
                             sourceComponent: Item {
                                 Desaturate {
@@ -660,7 +660,7 @@ Item {
                         }
 
                         Loader {
-                            active: wsConfig.monochromeIcons
+                            active: wsConfig.monochromeIcons && columnAppIcon.source.toString().includes(Config.options?.iconTheme ?? "yet-another-monochrome-icon-set")
                             anchors.fill: columnAppIcon
                             sourceComponent: Item {
                                 Desaturate {

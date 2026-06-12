@@ -445,7 +445,7 @@ DockButton {
             }
 
             Loader {
-                active: Config.options?.dock?.monochromeIcons ?? false
+                active: (Config.options?.dock?.monochromeIcons ?? false) && iconImageLoader.source.toString().includes(Config.options?.iconTheme ?? "yet-another-monochrome-icon-set")
                 anchors.fill: iconImageLoader
                 sourceComponent: Item {
                     Desaturate {

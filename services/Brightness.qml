@@ -118,12 +118,18 @@ Singleton {
         }
 
         readonly property Process initProc: Process {
-            stdout: SplitParser {
-                onRead: data => {
-                    const [, , , current, max] = data.split(" ");
-                    monitor.rawMaxBrightness = parseInt(max);
-                    monitor.brightness = parseInt(current) / monitor.rawMaxBrightness;
-                    monitor.ready = true;
+            stdout: StdioCollector {
+                onStreamFinished: {
+                    const parts = text.trim().split(" ");
+                    if (parts.length >= 5) {
+                        const maxVal = parseInt(parts[4]);
+                        const curVal = parseInt(parts[3]);
+                        if (!isNaN(maxVal) && !isNaN(curVal) && maxVal > 0) {
+                            monitor.rawMaxBrightness = maxVal;
+                            monitor.brightness = curVal / maxVal;
+                            monitor.ready = true;
+                        }
+                    }
                 }
             }
         }
