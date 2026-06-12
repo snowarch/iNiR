@@ -942,6 +942,11 @@ Item { // Bar content region
 
                     HoverHandler {
                         id: wifiHover
+                        onHoveredChanged: {
+                            if (hovered) {
+                                Network.refreshActiveNetworkDetails();
+                            }
+                        }
                     }
 
                     StyledToolTip {

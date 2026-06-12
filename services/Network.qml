@@ -73,6 +73,12 @@ Singleton {
         if (active) disconnectProc.exec(["nmcli", "connection", "down", active.ssid]);
     }
 
+    function refreshActiveNetworkDetails(): void {
+        if (!getNetworks.running) {
+            getNetworks.running = true;
+        }
+    }
+
     function openPublicWifiPortal() {
         Quickshell.execDetached(["xdg-open", "https://nmcheck.gnome.org/"]) // From some StackExchange thread, seems to work
     }
