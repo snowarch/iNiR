@@ -45,7 +45,7 @@ Item { // Bar content region
         anchorItem: barContextMenuAnchor
         popupAbove: Config.options?.bar?.bottom ?? false
         closeOnFocusLost: true
-        closeOnHoverLost: true
+        closeOnHoverLost: false
 
         model: [
             {
@@ -269,8 +269,8 @@ Item { // Bar content region
             MouseArea {
                 anchors.fill: parent
                 acceptedButtons: Qt.RightButton
-                onPressed: event => {
-                    if (event.button === Qt.RightButton)
+                onReleased: mouse => {
+                    if (mouse.button === Qt.RightButton)
                         GlobalStates.overviewOpen = !GlobalStates.overviewOpen;
                 }
             }
@@ -538,11 +538,11 @@ Item { // Bar content region
         onScrollDown: root.performScrollAction(root.leftAction, false)
         onScrollUp: root.performScrollAction(root.leftAction, true)
         onMovedAway: root.closeOSD(root.leftAction)
-        onPressed: event => {
-            if (event.button === Qt.LeftButton)
+        onReleased: mouse => {
+            if (mouse.button === Qt.LeftButton)
                 GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen;
-            else if (event.button === Qt.RightButton)
-                root.openBarContextMenu(event.x, event.y, barLeftSideMouseArea)
+            else if (mouse.button === Qt.RightButton)
+                root.openBarContextMenu(mouse.x, mouse.y, barLeftSideMouseArea)
         }
 
         // ScrollHint as overlay - at the inner edge of the margin space
@@ -704,8 +704,8 @@ Item { // Bar content region
                 anchors.fill: rightCenterGroupPill
                 acceptedButtons: Qt.LeftButton | Qt.RightButton
                 z: -1
-                onPressed: event => {
-                    if (event.button === Qt.RightButton) {
+                onReleased: mouse => {
+                    if (mouse.button === Qt.RightButton) {
                         GlobalStates.controlPanelOpen = !GlobalStates.controlPanelOpen;
                     } else {
                         GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen;
@@ -764,11 +764,11 @@ Item { // Bar content region
         onScrollDown: root.performScrollAction(root.rightAction, false)
         onScrollUp: root.performScrollAction(root.rightAction, true)
         onMovedAway: root.closeOSD(root.rightAction)
-        onPressed: event => {
-            if (event.button === Qt.LeftButton) {
+        onReleased: mouse => {
+            if (mouse.button === Qt.LeftButton) {
                 GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen;
-            } else if (event.button === Qt.RightButton) {
-                root.openBarContextMenu(event.x, event.y, barRightSideMouseArea)
+            } else if (mouse.button === Qt.RightButton) {
+                root.openBarContextMenu(mouse.x, mouse.y, barRightSideMouseArea)
             }
         }
 
@@ -939,6 +939,49 @@ Item { // Bar content region
                     iconSize: Appearance.font.pixelSize.larger
                     color: rightSidebarButton.colText
                     Layout.rightMargin: BluetoothStatus.available ? indicatorsRowLayout.realSpacing : 0
+
+                    HoverHandler {
+                        id: wifiHover
+                        onHoveredChanged: {
+                            if (hovered) {
+                                Network.refreshActiveNetworkDetails();
+                            }
+                        }
+                    }
+
+                    StyledToolTip {
+                        extraVisibleCondition: wifiHover.hovered
+                        text: {
+                            if (!Network.wifiEnabled) return Translation.tr("Wi-Fi is disabled");
+                            if (Network.ethernet) return Translation.tr("Ethernet connected");
+                            // Show disconnected/connecting/limited states clearly
+                            if (Network.wifiStatus === "disconnected" || (!Network.wifi && !Network.ethernet))
+                                return Translation.tr("Not connected");
+                            if (Network.wifiStatus === "connecting")
+                                return Translation.tr("Connecting…");
+                            if (Network.wifiStatus === "disabled")
+                                return Translation.tr("Wi-Fi is disabled");
+                            if (!Network.networkName) return Translation.tr("Not connected");
+                            let lines = [Translation.tr("Connected to %1").arg(Network.networkName)];
+                            // Show limited connectivity warning inline
+                            if (Network.wifiStatus === "limited")
+                                lines.push(Translation.tr("⚠ Limited connectivity (no internet)"));
+                            if (Network.active) {
+                                lines.push(Network.networkStrength + "%");
+                                if (Network.active.frequency) {
+                                    let ghz = Network.active.frequency > 5900 ? "6 GHz" : (Network.active.frequency > 4000 ? "5 GHz" : "2.4 GHz");
+                                    lines.push(ghz + " (" + Network.active.frequency + " MHz)");
+                                }
+                                if (Network.active.rate) {
+                                    lines.push(Network.active.rate);
+                                }
+                                if (Network.active.bssid) {
+                                    lines.push(Network.active.bssid);
+                                }
+                            }
+                            return lines.join(" | ");
+                        }
+                    }
                 }
                 Revealer {
                     reveal: BluetoothStatus.available
@@ -947,6 +990,25 @@ Item { // Bar content region
                         text: BluetoothStatus.activeIcon
                         iconSize: Appearance.font.pixelSize.larger
                         color: rightSidebarButton.colText
+
+                        HoverHandler {
+                            id: btHover
+                        }
+
+                        StyledToolTip {
+                            extraVisibleCondition: btHover.hovered
+                            text: {
+                                if (!BluetoothStatus.enabled) return Translation.tr("Bluetooth is disabled");
+                                if (!BluetoothStatus.connected) return Translation.tr("Bluetooth disconnected");
+                                let device = BluetoothStatus.firstActiveDevice;
+                                if (!device) return Translation.tr("Bluetooth connected");
+                                let devInfo = device.name || Translation.tr("Unknown device");
+                                if (device.batteryAvailable) {
+                                    devInfo += " (" + Math.round(device.battery * 100) + "%)";
+                                }
+                                return devInfo;
+                            }
+                        }
                     }
                 }
             }

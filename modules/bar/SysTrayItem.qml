@@ -19,9 +19,9 @@ MouseArea {
 
     hoverEnabled: true
     acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
-    implicitWidth: 18
-    implicitHeight: 18
-    onPressed: (event) => {
+    implicitWidth: 24
+    implicitHeight: 24
+    onReleased: (event) => {
         switch (event.button) {
         case Qt.LeftButton: {
             // Smart toggle: click to show, click again to minimize
@@ -102,15 +102,15 @@ MouseArea {
         visible: !(Config.options?.bar?.tray?.monochromeIcons ?? false)
         source: root.item?.icon ?? ""
         anchors.centerIn: parent
-        width: parent.width
-        height: parent.height
+        width: 18
+        height: 18
     }
 
     Loader {
         active: Config.options?.bar?.tray?.monochromeIcons ?? false
         anchors.centerIn: parent
-        width: root.width
-        height: root.height
+        width: 18
+        height: 18
         sourceComponent: Item {
             IconImage {
                 id: tintedIcon

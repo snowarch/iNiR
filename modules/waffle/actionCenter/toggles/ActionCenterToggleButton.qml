@@ -126,4 +126,9 @@ ColumnLayout {
             }
         }
     }
+
+    StyledToolTip {
+        visible: root.tooltipText !== ""
+        text: root.tooltipText
+    }
 }

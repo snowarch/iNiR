@@ -46,7 +46,7 @@ Item { // Bar content region
         anchorItem: barContextMenuAnchor
         popupSide: root.barOnRight ? Edges.Left : Edges.Right
         closeOnFocusLost: true
-        closeOnHoverLost: true
+        closeOnHoverLost: false
 
         model: [
             {
@@ -233,11 +233,11 @@ Item { // Bar content region
         onScrollDown: root.brightnessMonitor.setBrightness(root.brightnessMonitor.brightness - 0.05)
         onScrollUp: root.brightnessMonitor.setBrightness(root.brightnessMonitor.brightness + 0.05)
         onMovedAway: GlobalStates.osdBrightnessOpen = false
-        onPressed: event => {
-            if (event.button === Qt.LeftButton)
+        onReleased: mouse => {
+            if (mouse.button === Qt.LeftButton)
                 GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen;
-            else if (event.button === Qt.RightButton)
-                root.openBarContextMenu(event.x, event.y, barTopSectionMouseArea)
+            else if (mouse.button === Qt.RightButton)
+                root.openBarContextMenu(mouse.x, mouse.y, barTopSectionMouseArea)
         }
 
         ColumnLayout { // Content
@@ -329,8 +329,8 @@ Item { // Bar content region
                     anchors.fill: parent
                     acceptedButtons: Qt.RightButton
 
-                    onPressed: event => {
-                        if (event.button === Qt.RightButton) {
+                    onReleased: mouse => {
+                        if (mouse.button === Qt.RightButton) {
                             GlobalStates.overviewOpen = !GlobalStates.overviewOpen;
                         }
                     }
@@ -415,11 +415,11 @@ Item { // Bar content region
         onScrollDown: Audio.decrementVolume();
         onScrollUp: Audio.incrementVolume();
         onMovedAway: GlobalStates.osdVolumeOpen = false;
-        onPressed: event => {
-            if (event.button === Qt.LeftButton) {
+        onReleased: mouse => {
+            if (mouse.button === Qt.LeftButton) {
                 GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen;
-            } else if (event.button === Qt.RightButton) {
-                root.openBarContextMenu(event.x, event.y, barBottomSectionMouseArea)
+            } else if (mouse.button === Qt.RightButton) {
+                root.openBarContextMenu(mouse.x, mouse.y, barBottomSectionMouseArea)
             }
         }
 
@@ -464,7 +464,7 @@ Item { // Bar content region
                     animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                 }
 
-                onPressed: {
+                onReleased: {
                     GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen;
                 }
 

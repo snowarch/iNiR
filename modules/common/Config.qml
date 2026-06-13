@@ -1259,6 +1259,7 @@ Singleton {
                     property bool showItemId: false
                     property bool invertPinnedItems: true // Makes the below a whitelist for the tray and blacklist for the pinned area
                     property list<string> pinnedItems: []
+                    property list<string> ignoredItems: ["nm-applet", "network-manager-applet", "networkmanager-applet"]
                     property bool filterPassive: true
                 }
                 property JsonObject workspaces: JsonObject {
@@ -1660,6 +1661,7 @@ Singleton {
                 property string engineBaseUrl: "https://www.google.com/search?q="
                 property list<string> excludedSites: ["quora.com", "facebook.com"]
                 property bool sloppy: false // Uses levenshtein distance based scoring instead of fuzzy sort. Very weird.
+                property bool monochromeIcons: true
                 property JsonObject prefix: JsonObject {
                     property bool showDefaultActionsWithoutPrefix: true
                     property string action: "/"
@@ -2052,6 +2054,7 @@ Singleton {
                 property bool showItemId: false
                 property bool invertPinnedItems: true
                 property list<string> pinnedItems: []
+                property list<string> ignoredItems: ["nm-applet", "network-manager-applet", "networkmanager-applet"]
                 property bool filterPassive: true
             }
             property JsonObject updates: JsonObject {

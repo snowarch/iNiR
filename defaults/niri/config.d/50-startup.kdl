@@ -21,7 +21,8 @@ spawn-at-startup "bash" "-c" "wl-paste --type image --watch cliphist store &"
 // Polkit authentication agent — needed for GUI sudo prompts (software install,
 // disk mount, etc.). iNiR's setup auto-detects which agent is installed and
 // patches this line accordingly (KDE, GNOME, MATE, LXQt, or lxpolkit).
-spawn-at-startup "/usr/lib/mate-polkit/polkit-mate-authentication-agent-1"
+// spawn-at-startup "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
+spawn-at-startup "nm-applet"
 
 // ── iNiR shell ──────────────────────────────────────────────────────────────
 // iNiR is managed by the user systemd service (inir.service).
