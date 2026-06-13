@@ -13,6 +13,7 @@ DialogListItem {
 
     active: (wifiNetwork?.askingPassword || wifiNetwork?.active) ?? false
     onClicked: {
+        if (wifiNetwork?.active) return; // already connected — don't re-connect
         Network.connectToWifiNetwork(wifiNetwork);
     }
 
@@ -83,7 +84,7 @@ DialogListItem {
         ColumnLayout { // Password
             id: passwordPrompt
             Layout.topMargin: 8
-            visible: root.wifiNetwork?.askingPassword ?? false
+            visible: (root.wifiNetwork?.askingPassword && !root.wifiNetwork?.active) ?? false
 
             RowLayout {
                 Layout.fillWidth: true
@@ -108,9 +109,14 @@ DialogListItem {
                     property bool showPassword: false
                     Layout.preferredHeight: passwordField.implicitHeight
                     Layout.preferredWidth: passwordField.implicitHeight
-                    buttonRadius: passwordField.background ? passwordField.background.radius : 4
+                    buttonRadius: (passwordField.background && passwordField.background.radius !== undefined) ? passwordField.background.radius : 4
                     colBackground: Appearance.colors.colLayer2
-                    onClicked: showPassword = !showPassword
+                    onClicked: (mouse) => {
+                        showPassword = !showPassword
+                        // Stop the click from bubbling up to the parent
+                        // DialogListItem, which would trigger connectToWifiNetwork()
+                        if (mouse) mouse.accepted = true
+                    }
 
                     contentItem: MaterialSymbol {
                         anchors.centerIn: parent

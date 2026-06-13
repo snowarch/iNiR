@@ -713,6 +713,7 @@
             "invertPinnedItems": true,
             "monochromeIcons": true,
             "pinnedItems": [],
+            "ignoredItems": ["nm-applet", "network-manager-applet", "networkmanager-applet"],
             "showItemId": false
         },
         "utilButtons": {
@@ -1101,14 +1102,6 @@
                 "toggles": [
                     {
                         "size": 1,
-                        "type": "nightLight"
-                    },
-                    {
-                        "size": 1,
-                        "type": "gameMode"
-                    },
-                    {
-                        "size": 1,
                         "type": "screenSnip"
                     },
                     {
@@ -1120,6 +1113,12 @@
             "style": "android"
         },
         "right": {
+            "controlsSectionOrder": [
+                "toggles",
+                "sliders",
+                "media",
+                "quickActions"
+            ],
             "enabledWidgets": [
                 "dashboard",
                 "calendar",
@@ -1442,6 +1441,7 @@
         "showItemId": false,
         "invertPinnedItems": true,
         "pinnedItems": [],
+        "ignoredItems": ["nm-applet", "network-manager-applet", "networkmanager-applet"],
         "filterPassive": true
     },
     "shellUpdates": {

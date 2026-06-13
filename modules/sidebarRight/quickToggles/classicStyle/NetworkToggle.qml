@@ -18,8 +18,17 @@ QuickToggleButton {
         text: {
             if (!Network.wifiEnabled) return Translation.tr("Wi-Fi is disabled");
             if (Network.ethernet) return Translation.tr("Ethernet connected");
-            if (!Network.networkName) return Translation.tr("Not connected");
+            // Show special states clearly
+            if (Network.wifiStatus === "disconnected" || (!Network.wifi && !Network.ethernet))
+                return Translation.tr("Not connected | Right-click to configure");
+            if (Network.wifiStatus === "connecting")
+                return Translation.tr("Connecting… | Right-click to configure");
+            if (Network.wifiStatus === "disabled")
+                return Translation.tr("Wi-Fi is disabled");
+            if (!Network.networkName) return Translation.tr("Not connected | Right-click to configure");
             let info = Network.networkName;
+            if (Network.wifiStatus === "limited")
+                info += " (⚠ no internet)";
             if (Network.active) {
                 info += " (" + Network.networkStrength + "%)";
                 if (Network.active.rate) info += " | " + Network.active.rate;

@@ -78,6 +78,7 @@ Singleton {
         id: monitor
 
         required property ShellScreen screen
+        property string deviceName: ""
         readonly property bool isDdc: {
             const match = root.ddcMonitors.find(m => screen.model?.includes(m.model) && !root.monitors.slice(0, root.monitors.indexOf(this)).some(mon => mon.busNum === m.busNum));
             return !!match;
@@ -113,7 +114,7 @@ Singleton {
 
         function initialize() {
             monitor.ready = false;
-            initProc.command = isDdc ? ["ddcutil", "-b", busNum, "getvcp", "10", "--brief"] : ["sh", "-c", `echo "a b c $(brightnessctl g) $(brightnessctl m)"`];
+            initProc.command = isDdc ? ["ddcutil", "-b", busNum, "getvcp", "10", "--brief"] : ["sh", "-c", `dev=$(ls -1 /sys/class/backlight/ | grep -E 'amdgpu|intel|nouveau' | head -n 1); [ -z "$dev" ] && dev=$(ls -1 /sys/class/backlight/ | head -n 1); echo "a b c $(brightnessctl -d "$dev" g) $(brightnessctl -d "$dev" m) $dev"`];
             initProc.running = true;
         }
 
@@ -122,6 +123,9 @@ Singleton {
                 onStreamFinished: {
                     const parts = text.trim().split(" ");
                     if (parts.length >= 5) {
+                        if (parts.length >= 6) {
+                            monitor.deviceName = parts[5];
+                        }
                         const maxVal = parseInt(parts[4]);
                         const curVal = parseInt(parts[3]);
                         if (!isNaN(maxVal) && !isNaN(curVal) && maxVal > 0) {
@@ -146,7 +150,7 @@ Singleton {
         function syncBrightness() {
             const brightnessValue = Math.max(monitor.multipliedBrightness, 0)
             const rawValueRounded = Math.max(Math.floor(brightnessValue * monitor.rawMaxBrightness), 1);
-            setProc.command = isDdc ? ["ddcutil", "-b", busNum, "setvcp", "10", rawValueRounded] : ["brightnessctl", "--class", "backlight", "s", rawValueRounded, "--quiet"];
+            setProc.command = isDdc ? ["ddcutil", "-b", busNum, "setvcp", "10", rawValueRounded] : (monitor.deviceName ? ["brightnessctl", "-d", monitor.deviceName, "s", rawValueRounded, "--quiet"] : ["brightnessctl", "--class", "backlight", "s", rawValueRounded, "--quiet"]);
             setProc.startDetached();
         }
 

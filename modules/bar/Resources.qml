@@ -5,6 +5,7 @@ import QtQuick.Layouts
 
 MouseArea {
     id: root
+    acceptedButtons: Qt.NoButton
     property bool borderless: Config.options?.bar?.borderless ?? false
     property bool alwaysShowAllResources: false
     implicitWidth: rowLayout.implicitWidth + rowLayout.anchors.leftMargin + rowLayout.anchors.rightMargin

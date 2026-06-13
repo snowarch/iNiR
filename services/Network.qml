@@ -29,7 +29,7 @@ Singleton {
     property int networkStrength
     property string materialSymbol: root.ethernet
         ? "lan"
-        : root.wifiEnabled
+        : root.wifi
             ? (
                 Network.networkStrength > 83 ? "signal_wifi_4_bar" :
                 Network.networkStrength > 67 ? "network_wifi" :
@@ -64,9 +64,12 @@ Singleton {
     function connectToWifiNetwork(accessPoint: WifiAccessPoint): void {
         accessPoint.askingPassword = false;
         root.wifiConnectTarget = accessPoint;
-        // We use this instead of `nmcli connection up SSID` because this also creates a connection profile
-        connectProc.exec(["nmcli", "dev", "wifi", "connect", accessPoint.ssid])
-
+        // Connect to existing profile if it exists, otherwise create a new one
+        connectProc.exec([
+            "sh", "-c",
+            'if nmcli -t -f NAME,TYPE connection show | grep -Fxq "$1:802-11-wireless"; then nmcli connection up "$1"; else nmcli dev wifi connect "$1"; fi',
+            "--", accessPoint.ssid
+        ])
     }
 
     function disconnectWifiNetwork(): void {
@@ -97,6 +100,7 @@ Singleton {
 
     Process {
         id: connectProc
+        property bool secretsRequired: false
         environment: ({
             LANG: "C",
             LC_ALL: "C"
@@ -111,16 +115,17 @@ Singleton {
         stderr: SplitParser {
             onRead: line => {
                 // print("err:", line)
-                if (line.includes("Secrets were required") && root.wifiConnectTarget) {
-                    root.wifiConnectTarget.askingPassword = true
+                if (line.includes("Secrets were required")) {
+                    connectProc.secretsRequired = true
                 }
             }
         }
         onExited: (exitCode, exitStatus) => {
             if (root.wifiConnectTarget) {
-                root.wifiConnectTarget.askingPassword = (exitCode !== 0)
+                root.wifiConnectTarget.askingPassword = connectProc.secretsRequired
             }
             root.wifiConnectTarget = null
+            connectProc.secretsRequired = false
         }
     }
 
@@ -160,6 +165,19 @@ Singleton {
         interval: 200
         repeat: false
         onTriggered: root._doUpdate()
+    }
+
+    // Periodic connectivity re-check (every 30 s).
+    // NM's built-in connectivity check runs on its own interval, but this
+    // ensures the shell icon reflects the latest state even if nmcli monitor
+    // misses a quiet state transition (e.g. AP drops without sending a
+    // deauth frame, or NM connectivity flips between "limited" and "full").
+    Timer {
+        id: _periodicCheck
+        interval: 30000
+        repeat: true
+        running: false
+        onTriggered: root.update()
     }
 
     // Status update (debounced — nmcli monitor can emit rapid bursts)
@@ -244,7 +262,7 @@ Singleton {
                         wifiStatus = "connected"
 
                         if (connectivity === "limited") {
-                            hasWifi = false;
+                            hasWifi = true;
                             wifiStatus = "limited"
                         }
                     }

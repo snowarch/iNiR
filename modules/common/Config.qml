@@ -1259,6 +1259,7 @@ Singleton {
                     property bool showItemId: false
                     property bool invertPinnedItems: true // Makes the below a whitelist for the tray and blacklist for the pinned area
                     property list<string> pinnedItems: []
+                    property list<string> ignoredItems: ["nm-applet", "network-manager-applet", "networkmanager-applet"]
                     property bool filterPassive: true
                 }
                 property JsonObject workspaces: JsonObject {
@@ -2053,6 +2054,7 @@ Singleton {
                 property bool showItemId: false
                 property bool invertPinnedItems: true
                 property list<string> pinnedItems: []
+                property list<string> ignoredItems: ["nm-applet", "network-manager-applet", "networkmanager-applet"]
                 property bool filterPassive: true
             }
             property JsonObject updates: JsonObject {

@@ -1129,7 +1129,7 @@ Scope {
                 anchorItem: desktopMenuAnchor
                 popupAbove: false
                 closeOnFocusLost: false
-                closeOnHoverLost: true
+                closeOnHoverLost: false
                 model: [
                     { text: Translation.tr("Settings"), iconName: "settings", monochromeIcon: true,
                         action: () => { Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"]) } },
