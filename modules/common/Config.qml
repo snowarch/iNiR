@@ -1655,6 +1655,11 @@ Singleton {
                 property int duration: 5
             }
 
+            property JsonObject keepass: JsonObject {
+                property string vaultDir: ""
+                property int cacheTtl: 300 // seconds the vault stays unlocked
+            }
+
             property JsonObject search: JsonObject {
                 property int nonAppResultDelay: 30 // This prevents lagging when typing
                 property string engineBaseUrl: "https://www.google.com/search?q="

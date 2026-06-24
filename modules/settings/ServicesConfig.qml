@@ -2016,4 +2016,43 @@ ContentPage {
         }
     }
 
+    SettingsCardSection {
+        expanded: false
+        icon: "key"
+        title: Translation.tr("KeePass")
+
+        SettingsGroup {
+            StyledText {
+                Layout.fillWidth: true
+                text: Translation.tr("Integrate with KeePassXC-CLI to manage passwords directly from the shell.")
+                color: Appearance.colors.colOnSurfaceVariant
+                font.pixelSize: Appearance.font.pixelSize.small
+                wrapMode: Text.WordWrap
+            }
+
+            MaterialTextArea {
+                Layout.fillWidth: true
+                placeholderText: Translation.tr("Vault directory (where your .kdbx files are)")
+                text: Config.options?.keepass?.vaultDir ?? ""
+                wrapMode: TextEdit.Wrap
+                onTextChanged: Config.setNestedValue("keepass.vaultDir", text)
+                StyledToolTip {
+                    text: Translation.tr("The directory containing your KeePass databases. If empty, the shell will look in common locations.")
+                }
+            }
+
+            ConfigSpinBox {
+                icon: "timer"
+                text: Translation.tr("Stay unlocked") + ` (${Math.floor(value/60)}m ${value%60}s)`
+                value: Config.options?.keepass?.cacheTtl ?? 300
+                from: 60
+                to: 14400
+                stepSize: 60
+                onValueChanged: Config.setNestedValue("keepass.cacheTtl", value)
+                StyledToolTip {
+                    text: Translation.tr("How long the vault stays unlocked after entering the password before it auto-locks and clears the cached password.")
+                }
+            }
+        }
+    }
 }

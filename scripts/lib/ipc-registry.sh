@@ -2,8 +2,8 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: 0fcb5c3ba72f0099
-# Targets: 51
+# IPC.md hash: fef4bfa58f886e6d
+# Targets: 52
 
 declare -gA IPC_TARGET_DESC=(
   [ai]="AI chat service. Multi-provider (Gemini, OpenAI, Mistral) with tool support."
@@ -22,6 +22,7 @@ declare -gA IPC_TARGET_DESC=(
   [customWidgets]="Custom widget management. Create, list, reload, and remove user-installed widgets from \`~/.config/inir/widgets/\`."
   [gamemode]="Performance mode for gaming. Auto-detects fullscreen apps and disables animations/effects. Can also be toggled manually for those stubborn games that don't go fullscreen properly."
   [globalActions]="Command palette / action registry. Search and execute shell actions from scripts or keybinds."
+  [keepass]="KeePass password manager overlay. Search entries, copy passwords/usernames, and add new entries."
   [keyboard]="Keyboard layout switching (Niri only). Cycles through configured keyboard layouts and queries layout info."
   [lock]="Lock screen. For when you need to pretend you're working."
   [mediaControls]="Floating media controls panel."
@@ -76,6 +77,7 @@ declare -gA IPC_TARGET_FAMILY=(
   [customWidgets]="waffle"
   [gamemode]="shared"
   [globalActions]="shared"
+  [keepass]="shared"
   [keyboard]="shared"
   [lock]="shared"
   [mediaControls]="shared"
@@ -130,6 +132,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [customWidgets]="reload list create remove"
   [gamemode]="toggle activate deactivate status"
   [globalActions]="run runWithArgs list search open"
+  [keepass]="toggle add"
   [keyboard]="switchLayout switchLayoutPrevious getCurrentLayout getLayouts"
   [lock]="activate deactivate status focus"
   [mediaControls]="toggle close open"
@@ -219,6 +222,8 @@ declare -gA IPC_FUNCTION_DESC=(
   ["globalActions:list"]="List all actions, optionally filtered by category"
   ["globalActions:search"]="Fuzzy search actions by name/description/keywords"
   ["globalActions:open"]="Open the overview in action mode"
+  ["keepass:toggle"]="Open/close KeePass panel"
+  ["keepass:add"]="Open panel in \"add entry\" mode, pre-filling title from primary selection"
   ["keyboard:switchLayout"]="Switch to next keyboard layout"
   ["keyboard:switchLayoutPrevious"]="Switch to previous keyboard layout"
   ["keyboard:getCurrentLayout"]="Get the current layout name"
@@ -271,7 +276,7 @@ declare -gA IPC_FUNCTION_DESC=(
   ["region:ocr"]="OCR text recognition"
   ["region:record"]="Record region (no audio)"
   ["region:recordWithSound"]="Record region with audio"
-  ["region:menu"]="Open the unified snip menu (pick action/scope inline)"
+  ["region:menu"]=""
   ["search:toggle"]="Open/close start menu"
   ["search:close"]="Close start menu"
   ["search:open"]="Open start menu"
@@ -366,6 +371,8 @@ bind "Alt+Shift+Tab" { spawn "inir" "altSwitcher" "previous"; }'
   [gamemode]='bind "Super+F12" { spawn "inir" "gamemode" "toggle"; }'
   [globalActions]='bind "Super+Slash" { spawn "inir" "globalActions" "open"; }
 bind "Super+M" { spawn "inir" "globalActions" "run" "toggle-mute"; }'
+  [keepass]='bind "Mod+P" { spawn "inir" "keepass" "toggle"; }
+bind "Mod+Ctrl+P" { spawn "inir" "keepass" "add"; }'
   [keyboard]='bind "Mod+Alt+K" { spawn "inir" "keyboard" "switchLayout"; }'
   [lock]='bind "Super+Alt+L" allow-when-locked=true { spawn "inir" "lock" "activate"; }'
   [mpris]='bind "Ctrl+Mod+Space" { spawn "inir" "mpris" "playPause"; }
@@ -376,8 +383,7 @@ bind "Mod+Alt+P" { spawn "inir" "mpris" "previous"; }'
   [panelFamily]='bind "Mod+Shift+W" { spawn "inir" "panelFamily" "cycle"; }'
   [region]='bind "Super+Shift+S" { spawn "inir" "region" "screenshot"; }
 bind "Super+Shift+X" { spawn "inir" "region" "ocr"; }
-bind "Super+Shift+A" { spawn "inir" "region" "search"; }
-bind "Ctrl+Shift+S" { spawn "inir" "region" "menu"; }'
+bind "Super+Shift+A" { spawn "inir" "region" "search"; }'
   [session]='bind "Super+Shift+E" { spawn "inir" "session" "toggle"; }'
   [settings]='bind "Super+Comma" { spawn "inir" "settings"; }'
   [voiceSearch]='bind "Super+Shift+V" { spawn "inir" "voiceSearch" "toggle"; }'
@@ -385,8 +391,8 @@ bind "Ctrl+Shift+S" { spawn "inir" "region" "menu"; }'
   [ytmusic]='bind "Mod+M+Space" { spawn "inir" "ytmusic" "playPause"; }'
 )
 
-IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets gamemode globalActions keyboard lock mediaControls memory minimize mpris notifications osd osdVolume osk overlay overview packageSearch panelFamily recordingOsd region search session settings settingsNav shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperSelector wbar widgetpower wnotificationCenter wwidgets ytmusic zoom)
-IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector gamemode globalActions keyboard lock mediaControls memory minimize mpris notifications osdVolume osk overview packageSearch panelFamily region session settings settingsNav shellUpdate sidebarLeft sidebarRight tiling voiceSearch wallpaperSelector ytmusic zoom)
+IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets gamemode globalActions keepass keyboard lock mediaControls memory minimize mpris notifications osd osdVolume osk overlay overview packageSearch panelFamily recordingOsd region search session settings settingsNav shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperSelector wbar widgetpower wnotificationCenter wwidgets ytmusic zoom)
+IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector gamemode globalActions keepass keyboard lock mediaControls memory minimize mpris notifications osdVolume osk overview packageSearch panelFamily region session settings settingsNav shellUpdate sidebarLeft sidebarRight tiling voiceSearch wallpaperSelector ytmusic zoom)
 IPC_II_TARGETS=(overlay)
 IPC_WAFFLE_TARGETS=(background customWidgets osd recordingOsd search taskview wactionCenter waffleAltSwitcher wbar widgetpower wnotificationCenter wwidgets)
 

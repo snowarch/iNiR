@@ -3761,5 +3761,19 @@
   "↑/↓, J/K: Navigate • Enter: Paste": "↑/↓, J/K: Navigieren • Eingabetaste: Einfügen",
   "☕ Break: %1 minutes": "☕ Pause: %1 Minuten",
   "🌿 Long break: %1 minutes": "🌿 Lange Pause: %1 Minuten",
-  "🔴 Focus: %1 minutes": "🔴 Fokus: %1 Minuten"
+  "🔴 Focus: %1 minutes": "🔴 Fokus: %1 Minuten",
+  "KeePass": "KeePass",
+  "KeePass - Save": "KeePass - Save",
+  "Vault password": "Vault password",
+  "Stay unlocked:": "Stay unlocked:",
+  "Unlock": "Unlock",
+  "Search entries": "Search entries",
+  "Copy Password": "Copy Password",
+  "Copy Username": "Copy Username",
+  "Entry name (e.g. Email/GitHub)": "Entry name (e.g. Email/GitHub)",
+  "Username (optional)": "Username (optional)",
+  "URL (optional)": "URL (optional)",
+  "Generate": "Generate",
+  "Len:": "Len:",
+  "keepass_wordlist": "Apfel Tiger Fluss Stein Wolke Wald Brücke Kerze Hammer Spinne Insel Schloss Spiegel Donner Garten Bleistift Butter Kaffee Pfeffer Winter Herbst Nadel Rakete Planet Silber Kupfer Geige Kaktus Laterne Walnuss Schatten Marmor Karotte Kissen Kanone Fass Klee Esel Kessel Schleife Lachs Tunnel Anker Regen Schnee Wind Sonne Mond Stern Birne Orange Erdbeere Buch Stuhl Tisch Fenster Tür"
 }

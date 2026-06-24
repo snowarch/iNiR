@@ -1700,7 +1700,8 @@
         "iiWallpaperSelector",
         "iiCoverflowSelector",
         "iiClipboard",
-        "iiShellUpdate"
+        "iiShellUpdate",
+        "iiKeepass"
     ],
     "knownPanels": [],
     "powerProfiles": {
@@ -1709,5 +1710,9 @@
     },
     "voiceSearch": {
         "duration": 5
+    },
+    "keepass": {
+        "vaultDir": "",
+        "cacheTtl": 300
     }
 }
