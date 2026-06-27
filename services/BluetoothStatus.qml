@@ -5,12 +5,48 @@ import Quickshell
 import Quickshell.Bluetooth
 import Quickshell.Io
 import QtQuick
+import qs.modules.common
 
 /**
  * Bluetooth status service.
  */
 Singleton {
     id: root
+
+    property bool _restored: false
+
+    function _restoreBluetoothState() {
+        if (Bluetooth.defaultAdapter && !root._restored) {
+            root._restored = true;
+            const persist = Config.options?.bluetooth?.persistState ?? true;
+            const savedState = Config.options?.bluetooth?.lastState;
+            if (persist && savedState !== undefined && savedState !== Bluetooth.defaultAdapter.enabled) {
+                Bluetooth.defaultAdapter.enabled = savedState;
+            }
+        }
+    }
+
+    Component.onCompleted: _restoreBluetoothState()
+
+    Connections {
+        target: Bluetooth
+        function onDefaultAdapterChanged() {
+            root._restoreBluetoothState();
+        }
+    }
+
+    Connections {
+        target: Bluetooth.defaultAdapter ?? null
+        ignoreUnknownSignals: true
+        function onEnabledChanged() {
+            if (Bluetooth.defaultAdapter && root._restored) {
+                const persist = Config.options?.bluetooth?.persistState ?? true;
+                if (persist) {
+                    Config.setNestedValue("bluetooth.lastState", Bluetooth.defaultAdapter.enabled);
+                }
+            }
+        }
+    }
 
     readonly property bool available: Bluetooth.adapters.values.length > 0
     readonly property bool enabled: Bluetooth.defaultAdapter?.enabled ?? false

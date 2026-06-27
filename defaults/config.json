@@ -286,6 +286,10 @@
             "maxAllowedIncrease": 10
         }
     },
+    "bluetooth": {
+        "persistState": true,
+        "lastState": false
+    },
     "compositor": {
         "autoExpandSingleTilingWindow": false
     },
