@@ -3019,6 +3019,119 @@ def _upsert_layer_blur_rules(
     )
 
 
+def _parse_mode_str(mode_str):
+    width, height, rate = None, None, None
+    try:
+        if "@" in mode_str:
+            res_part, rate_part = mode_str.split("@", 1)
+            rate = float(rate_part)
+        else:
+            res_part = mode_str
+        
+        if "x" in res_part:
+            w_part, h_part = res_part.split("x", 1)
+            width = int(w_part)
+            height = int(h_part)
+    except Exception:
+        pass
+    return width, height, rate
+
+
+def get_configured_mode(output_name):
+    outputs_file = resolve_niri_section_file("config.d/15-outputs.kdl")
+    if not outputs_file.exists():
+        return None
+    try:
+        content = outputs_file.read_text()
+        pattern = rf'output\s+"{re.escape(output_name)}"\s*\{{(.*?)(\}})'
+        match = re.search(pattern, content, re.DOTALL)
+        if match:
+            block_content = match.group(1)
+            mode_match = re.search(r'mode\s+"([^"]+)"', block_content)
+            if mode_match:
+                return mode_match.group(1)
+    except Exception:
+        pass
+    return None
+
+
+def cmd_apply_configured_refresh_rates():
+    stdout, rc = run_niri("-j", "outputs")
+    if rc != 0:
+        print(json.dumps({"error": "Failed to query outputs"}))
+        return 1
+
+    try:
+        outputs_data = json.loads(stdout)
+    except Exception as e:
+        print(json.dumps({"error": f"Failed to parse outputs JSON: {e}"}))
+        return 1
+
+    results = []
+    for output_name, output_info in outputs_data.items():
+        configured_mode = get_configured_mode(output_name)
+        if configured_mode:
+            modes = output_info.get("modes", [])
+            curr_idx = output_info.get("current_mode")
+            if curr_idx is not None and 0 <= curr_idx < len(modes):
+                current_mode = modes[curr_idx]
+                conf_width, conf_height, conf_rate = _parse_mode_str(configured_mode)
+                
+                curr_width = current_mode.get("width")
+                curr_height = current_mode.get("height")
+                curr_rate = current_mode.get("refresh_rate") / 1000.0
+                
+                width_match = (conf_width is None or conf_width == curr_width)
+                height_match = (conf_height is None or conf_height == curr_height)
+                rate_match = True
+                if conf_rate is not None:
+                    rate_match = abs(conf_rate - curr_rate) < 0.1
+                
+                if width_match and height_match and rate_match:
+                    results.append({"output": output_name, "status": "already_set", "mode": configured_mode})
+                    continue
+            
+            out, apply_rc = run_niri("output", output_name, "mode", configured_mode)
+            results.append({
+                "output": output_name,
+                "mode": configured_mode,
+                "success": apply_rc == 0,
+                "output_msg": out
+            })
+        else:
+            modes = output_info.get("modes", [])
+            curr_idx = output_info.get("current_mode")
+            if curr_idx is not None and 0 <= curr_idx < len(modes):
+                current_mode = modes[curr_idx]
+                target_width = current_mode.get("width")
+                target_height = current_mode.get("height")
+
+                matching_modes = [m for m in modes if m.get("width") == target_width and m.get("height") == target_height]
+                if matching_modes:
+                    matching_modes.sort(key=lambda m: m.get("refresh_rate", 0))
+                    target_mode = matching_modes[-1]
+                    target_rate = target_mode.get("refresh_rate")
+                    rate_hz = target_rate / 1000.0
+
+                    if current_mode.get("refresh_rate") == target_rate:
+                        results.append({"output": output_name, "status": "already_set", "rate": rate_hz})
+                        continue
+
+                    rate_str = f"{rate_hz:.3f}".rstrip("0").rstrip(".")
+                    mode_str = f"{target_width}x{target_height}@{rate_str}"
+
+                    out, apply_rc = run_niri("output", output_name, "mode", mode_str)
+                    results.append({
+                        "output": output_name,
+                        "mode": mode_str,
+                        "success": apply_rc == 0,
+                        "output_msg": out
+                    })
+
+    print(json.dumps({"results": results}))
+    return 0
+
+
 def cmd_set_blur_rules(args):
     if len(args) < 1:
         print(json.dumps({"error": "Usage: set-blur-rules <json_payload>"}))
@@ -3101,7 +3214,7 @@ def cmd_set_blur_rules(args):
     if settings["refresh_rate_efficiency"]:
         cmd_sync_refresh_rate([str(is_plugged)])
     else:
-        cmd_sync_refresh_rate(["true"])
+        cmd_apply_configured_refresh_rates()
 
     print(json.dumps({"success": True}))
     return 0
@@ -3180,7 +3293,7 @@ def cmd_set_blur_param(key, value):
         if settings["refresh_rate_efficiency"]:
             cmd_sync_refresh_rate([str(is_plugged)])
         else:
-            cmd_sync_refresh_rate(["true"])
+            cmd_apply_configured_refresh_rates()
 
     print(json.dumps({"success": True}))
     return 0
@@ -3198,7 +3311,7 @@ def cmd_sync_power_state(args):
     if settings["refresh_rate_efficiency"]:
         cmd_sync_refresh_rate([str(is_plugged)])
     else:
-        cmd_sync_refresh_rate(["true"])
+        cmd_apply_configured_refresh_rates()
 
     rules_file = resolve_niri_section_file("config.d/30-window-rules.kdl")
     layer_file = resolve_niri_section_file("config.d/80-layer-rules.kdl")
@@ -3320,6 +3433,7 @@ def main():
         "set-blur-rules": lambda: cmd_set_blur_rules(args),
         "sync-refresh-rate": lambda: cmd_sync_refresh_rate(args),
         "sync-power-state": lambda: cmd_sync_power_state(args),
+        "apply-configured-refresh-rates": lambda: cmd_apply_configured_refresh_rates(),
         "get-binds": lambda: cmd_get_binds(),
         "set-bind": lambda: cmd_set_bind(args),
         "remove-bind": lambda: cmd_remove_bind(args),

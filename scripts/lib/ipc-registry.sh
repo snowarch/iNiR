@@ -271,7 +271,7 @@ declare -gA IPC_FUNCTION_DESC=(
   ["region:ocr"]="OCR text recognition"
   ["region:record"]="Record region (no audio)"
   ["region:recordWithSound"]="Record region with audio"
-  ["region:menu"]="Open the unified snip menu (pick action/scope inline)"
+  ["region:menu"]=""
   ["search:toggle"]="Open/close start menu"
   ["search:close"]="Close start menu"
   ["search:open"]="Open start menu"
@@ -376,8 +376,7 @@ bind "Mod+Alt+P" { spawn "inir" "mpris" "previous"; }'
   [panelFamily]='bind "Mod+Shift+W" { spawn "inir" "panelFamily" "cycle"; }'
   [region]='bind "Super+Shift+S" { spawn "inir" "region" "screenshot"; }
 bind "Super+Shift+X" { spawn "inir" "region" "ocr"; }
-bind "Super+Shift+A" { spawn "inir" "region" "search"; }
-bind "Ctrl+Shift+S" { spawn "inir" "region" "menu"; }'
+bind "Super+Shift+A" { spawn "inir" "region" "search"; }'
   [session]='bind "Super+Shift+E" { spawn "inir" "session" "toggle"; }'
   [settings]='bind "Super+Comma" { spawn "inir" "settings"; }'
   [voiceSearch]='bind "Super+Shift+V" { spawn "inir" "voiceSearch" "toggle"; }'
