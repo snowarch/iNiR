@@ -93,8 +93,7 @@ Rectangle {
             ? (-(scrH / 2) + root.height / 2)
             : (-(scrH)     + root.height + Appearance.sizes.hyprlandGapsOut)
 
-        // See #159 — skip QML blur when compositor blur covers this layer
-        layer.enabled: Appearance.effectsEnabled && !root.gameModeMinimal && !Appearance.compositorBlurActive
+        layer.enabled: Appearance.effectsEnabled && !root.gameModeMinimal
         layer.effect: MultiEffect {
             source: macBlurWall
             anchors.fill: source

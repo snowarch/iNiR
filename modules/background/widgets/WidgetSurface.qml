@@ -77,8 +77,8 @@ Rectangle {
         // Don't load/blur when the compositor is already blurring underneath.
         // Each WidgetSurface keeps its own FBO when layer.enabled is true; with
         // many widgets enabled this multiplies fast. See #159.
-        visible: root._glass && !Appearance.compositorBlurActive && status === Image.Ready
-        source: (root._glass && !Appearance.compositorBlurActive) ? root._wallpaperUrl : ""
+        visible: root._glass && status === Image.Ready
+        source: root._glass ? root._wallpaperUrl : ""
         fillMode: Image.PreserveAspectCrop
         cache: true
         asynchronous: true
@@ -86,7 +86,7 @@ Rectangle {
         sourceSize.height: root.screenHeight
 
         // OPTIMIZATION: Release FBO when widget is not visible or power is off
-        layer.enabled: root._glass && !Appearance.compositorBlurActive && root.visible && root.powerActive
+        layer.enabled: root._glass && root.visible && root.powerActive
         layer.effect: MultiEffect {
             source: blurredWallpaper
             anchors.fill: source

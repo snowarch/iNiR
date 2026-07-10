@@ -7,6 +7,7 @@ singleton AppSearch 1.0 AppSearch.qml
 singleton Audio 1.0 Audio.qml
 singleton Autostart 1.0 Autostart.qml
 singleton Battery 1.0 Battery.qml
+singleton BlurService 1.0 BlurService.qml
 singleton BluetoothStatus 1.0 BluetoothStatus.qml
 singleton Booru 1.0 Booru.qml
 BooruResponseData 1.0 BooruResponseData.qml

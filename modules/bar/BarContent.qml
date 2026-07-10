@@ -390,8 +390,6 @@ Item { // Bar content region
         color: {
             if (root.angelEverywhere) {
                 const base = blendedColors?.colLayer0 ?? Appearance.colors.colLayer0
-                if (Appearance.compositorBlurActive)
-                    return ColorUtils.transparentize(base, Appearance.angel.compositorPanelTransparentize)
                 return ColorUtils.applyAlpha(base, 1)
             }
             if (root.inirEverywhere) {
@@ -399,8 +397,6 @@ Item { // Bar content region
             }
             if (auroraEverywhere) {
                 const base = blendedColors?.colLayer0 ?? Appearance.colors.colLayer0
-                if (Appearance.compositorBlurActive)
-                    return ColorUtils.transparentize(base, Appearance.aurora.compositorOverlayTransparentize)
                 return ColorUtils.applyAlpha(base, 1)
             }
             // Material/Cards
@@ -473,17 +469,15 @@ Item { // Bar content region
             y: barBackground.isBottom ? -(root.screen?.height ?? 1080) + barBackground.height + barBackground.barMargin : -barBackground.barMargin
             width: root.screen?.width ?? 1920
             height: root.screen?.height ?? 1080
-            visible: barBackground.auroraEverywhere && !root.inirEverywhere && !barBackground.gameModeMinimal && !Appearance.compositorBlurActive
-            source: Appearance.compositorBlurActive ? "" : root.wallpaperUrl
+            visible: barBackground.auroraEverywhere && !root.inirEverywhere && !barBackground.gameModeMinimal
+            source: root.wallpaperUrl
             fillMode: Image.PreserveAspectCrop
             cache: true
             sourceSize.width: root.screen?.width ?? 1920
             sourceSize.height: root.screen?.height ?? 1080
             asynchronous: true
 
-            // Skip QML blur when the compositor is already blurring this layer
-            // (avoids double-blur and the FBO cost). See #159.
-            layer.enabled: Appearance.effectsEnabled && barBackground.auroraEverywhere && !root.inirEverywhere && !Appearance.compositorBlurActive
+            layer.enabled: Appearance.effectsEnabled && barBackground.auroraEverywhere && !root.inirEverywhere
             layer.effect: MultiEffect {
                 source: blurredWallpaper
                 anchors.fill: source

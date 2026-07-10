@@ -35,6 +35,7 @@ ShellRoot {
     // Force singleton instantiation — startup-critical only
     property var _idleService: Idle
     property var _powerProfilePersistence: PowerProfilePersistence
+    property var _blurService: BlurService
 
     // Deferred singletons — initialized after first frame to reduce boot contention
     // Tier 3: T+500ms (display/interaction services)

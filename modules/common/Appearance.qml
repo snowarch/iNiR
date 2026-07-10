@@ -88,10 +88,7 @@ Singleton {
     // Master switches for effects and animations
     property bool effectsEnabled: !Config.options?.performance?.lowPower && !_gameModeDisablesEffects
     property bool animationsEnabled: !_gameModeDisablesAnimations && !(Config.options?.performance?.reduceAnimations ?? false)
-    // Set to true when the compositor is already blurring the window surface so
-    // panels can skip their own QML MultiEffect blur (avoids double-blur and FBO cost).
-    // Currently always false on Niri (no compositor blur); Hyprland hook TBD (ref #159).
-    readonly property bool compositorBlurActive: false
+
 
     // Minimal mode: panels become transparent, no backgrounds, reduced visual weight
     // Components should check this to hide backgrounds/shadows during GameMode

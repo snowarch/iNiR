@@ -233,8 +233,7 @@ Scope {
                                     sourceSize.height: dockRoot.screen?.height ?? 1080
                                     asynchronous: true
 
-                                    // See #159 — skip QML blur when compositor blur covers this layer
-                                    layer.enabled: Appearance.effectsEnabled && dockVisualBackground.auroraEverywhere && !dockVisualBackground.inirEverywhere && !dockVisualBackground.gameModeMinimal && !Appearance.compositorBlurActive
+                                    layer.enabled: Appearance.effectsEnabled && dockVisualBackground.auroraEverywhere && !dockVisualBackground.inirEverywhere && !dockVisualBackground.gameModeMinimal
                                     layer.effect: MultiEffect {
                                         source: dockBlurredWallpaper
                                         anchors.fill: source

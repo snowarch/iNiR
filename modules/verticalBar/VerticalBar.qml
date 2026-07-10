@@ -268,8 +268,7 @@ Scope {
                                             sourceSize.height: barRoot.screen?.height ?? 1080
                                             asynchronous: true
 
-                                            // See #159 — skip QML blur when compositor blur covers this layer
-                                            layer.enabled: Appearance.effectsEnabled && Appearance.auroraEverywhere && !Appearance.compositorBlurActive
+                                            layer.enabled: Appearance.effectsEnabled && Appearance.auroraEverywhere
                                             layer.effect: MultiEffect {
                                                 source: blurImg
                                                 anchors.fill: source
