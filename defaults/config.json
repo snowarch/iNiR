@@ -713,7 +713,7 @@
             "invertPinnedItems": true,
             "monochromeIcons": true,
             "pinnedItems": [],
-            "ignoredItems": ["nm-applet", "network-manager-applet", "networkmanager-applet"],
+            "ignoredItems": ["nm-applet", "network-manager-applet", "networkmanager-applet", "blueman-applet", "blueman"],
             "showItemId": false
         },
         "utilButtons": {
@@ -1441,7 +1441,7 @@
         "showItemId": false,
         "invertPinnedItems": true,
         "pinnedItems": [],
-        "ignoredItems": ["nm-applet", "network-manager-applet", "networkmanager-applet"],
+        "ignoredItems": ["nm-applet", "network-manager-applet", "networkmanager-applet", "blueman-applet", "blueman"],
         "filterPassive": true
     },
     "shellUpdates": {
