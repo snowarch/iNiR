@@ -9,11 +9,12 @@ import QtQuick.Layouts
 DialogListItem {
     id: root
     required property WifiAccessPoint wifiNetwork
-    enabled: !(Network.wifiConnectTarget === root.wifiNetwork && !wifiNetwork?.active)
+    enabled: true
 
     active: (wifiNetwork?.askingPassword || wifiNetwork?.active) ?? false
     onClicked: {
-        if (wifiNetwork?.active) return; // already connected — don't re-connect
+        if (wifiNetwork?.active) return; // already connected
+        if (Network.wifiConnectTarget === root.wifiNetwork) return; // already connecting
         Network.connectToWifiNetwork(wifiNetwork);
     }
 
@@ -47,14 +48,18 @@ DialogListItem {
                 }
                 Revealer {
                     vertical: true
-                    reveal: root.wifiNetwork?.active ?? false
+                    reveal: (root.wifiNetwork?.active || Network.wifiConnectTarget === root.wifiNetwork) ?? false
                     Layout.fillWidth: true
                     StyledText {
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
                         elide: Text.ElideRight
                         text: {
-                            if (!root.wifiNetwork || !root.wifiNetwork.active) return "";
+                            if (!root.wifiNetwork) return "";
+                            if (Network.wifiConnectTarget === root.wifiNetwork && !root.wifiNetwork.active) {
+                                return Translation.tr("Connecting…");
+                            }
+                            if (!root.wifiNetwork.active) return "";
                             let details = [];
                             details.push(Translation.tr("Connected"));
                             details.push(root.wifiNetwork.strength + "%");
@@ -74,10 +79,20 @@ DialogListItem {
                 }
             }
             MaterialSymbol {
-                visible: (root.wifiNetwork?.isSecure || root.wifiNetwork?.active) ?? false
-                text: root.wifiNetwork?.active ? "check" : Network.wifiConnectTarget === root.wifiNetwork ? "settings_ethernet" : "lock"
+                id: wifiStatusIcon
+                visible: (root.wifiNetwork?.isSecure || root.wifiNetwork?.active || Network.wifiConnectTarget === root.wifiNetwork) ?? false
+                text: root.wifiNetwork?.active ? "check" : Network.wifiConnectTarget === root.wifiNetwork ? "sync" : "lock"
                 iconSize: Appearance.font.pixelSize.larger
                 color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colOnSurfaceVariant
+
+                RotationAnimator {
+                    target: wifiStatusIcon
+                    from: 0
+                    to: 360
+                    duration: 1500
+                    running: Network.wifiConnectTarget === root.wifiNetwork && !root.wifiNetwork?.active
+                    loops: Animation.Infinite
+                }
             }
         }
 

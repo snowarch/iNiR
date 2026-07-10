@@ -1002,9 +1002,9 @@ Item { // Bar content region
                                 if (!BluetoothStatus.connected) return Translation.tr("Bluetooth disconnected");
                                 let device = BluetoothStatus.firstActiveDevice;
                                 if (!device) return Translation.tr("Bluetooth connected");
-                                let devInfo = device.name || Translation.tr("Unknown device");
+                                let devInfo = Translation.tr("Bluetooth Active") + " • " + (device.name || Translation.tr("Unknown device"));
                                 if (device.batteryAvailable) {
-                                    devInfo += " (" + Math.round(device.battery * 100) + "%)";
+                                    devInfo += " 🔋 " + Math.round(device.battery * 100) + "%";
                                 }
                                 return devInfo;
                             }
