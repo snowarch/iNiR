@@ -114,3 +114,22 @@ Constants exposed after sourcing: `DISTRO_ID`, `DISTRO_LIKE`, `SETUP_TAG`,
   the user can recover from manually should print actionable instructions.
 - **One concern per script.** If a recipe grows beyond ~80 lines, factor a
   helper into `_lib.sh` instead of duplicating logic.
+
+## Spotify / Spicetify Notes
+
+`spotify.sh` intentionally repairs a missing `spicetifyWrapper.js` before it
+runs `spicetify backup apply`. Spicetify v2.44+ generates this file during the
+release build from `src/jsHelper/spicetifyWrapper`. Some source-built Linux
+packages have shipped `/opt/spicetify-cli/jsHelper` without running
+`scripts/build-wrapper.mjs`; Spicetify still injects
+`helper/spicetifyWrapper.js` into Spotify's `index.html`, and Spotify opens to
+a blank XPUI surface when that helper is absent.
+
+The recipe only builds the wrapper when `/opt/spicetify-cli/jsHelper/
+spicetifyWrapper.js` is missing. It first reuses cached AUR source from `paru`
+or `yay`; if no cache exists and the installed Spicetify version is a release
+tag, it downloads the matching source tarball from GitHub. Node/npm are only
+installed on-demand for this repair path. After Spicetify applies, the recipe
+also verifies Spotify's patched XPUI helper directory contains the wrapper,
+because a broken package asset directory can otherwise recreate the blank-window
+state on every reapply.

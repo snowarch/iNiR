@@ -69,10 +69,18 @@ setup_fail() {
     setup_notify "$msg" "dialog-error"
 }
 
+setup_err_trap() {
+    local status="$1"
+    local line="$2"
+    setup_fail "$SETUP_TITLE failed at line $line"
+    setup_finish_pause
+    exit "$status"
+}
+
 setup_init() {
     SETUP_TAG="setup-$1"
     SETUP_TITLE="$2"
-    trap 'setup_fail "$SETUP_TITLE failed at line $LINENO"' ERR
+    trap 'setup_err_trap "$?" "$LINENO"' ERR
     setup_notify "Starting…" "download"
     printf '\033[1;35m▶ %s\033[0m  (distro: %s)\n' "$SETUP_TITLE" "$DISTRO_ID"
 }

@@ -494,6 +494,53 @@ sync_live_user_css() {
   cp "$user_css" "$live_user_css"
 }
 
+find_spicetify_wrapper_source() {
+  local candidate base
+
+  # setup/spotify.sh builds this asset for source-built Spicetify packages that
+  # omit it. This theme script does not build dependencies; it only preserves a
+  # working patched Spotify bundle across later theme reapplies.
+  if [[ -s "/opt/spicetify-cli/jsHelper/spicetifyWrapper.js" ]]; then
+    printf '%s\n' "/opt/spicetify-cli/jsHelper/spicetifyWrapper.js"
+    return 0
+  fi
+
+  for base in "$HOME/.cache/paru/clone/spicetify-cli" "$HOME/.cache/yay/spicetify-cli"; do
+    [[ -d "$base" ]] || continue
+    candidate="$(
+      find "$base" -maxdepth 5 -type f -path '*/jsHelper/spicetifyWrapper.js' -print 2>/dev/null \
+        | sort -Vr \
+        | head -n1
+    )"
+    if [[ -s "$candidate" ]]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+}
+
+sync_spicetify_wrapper() {
+  local xpui_dir="$1"
+  local index_html="$xpui_dir/index.html"
+  local live_wrapper="$xpui_dir/helper/spicetifyWrapper.js"
+
+  [[ -f "$index_html" ]] || return 1
+  grep -q "helper/spicetifyWrapper.js" "$index_html" || return 0
+  [[ -s "$live_wrapper" ]] && return 0
+
+  local wrapper_source=""
+  wrapper_source="$(find_spicetify_wrapper_source || true)"
+
+  if [[ -z "$wrapper_source" ]]; then
+    log "spicetifyWrapper.js is missing; run setup-spotify or pnpm build:wrapper in the Spicetify source tree"
+    return 1
+  fi
+
+  mkdir -p "$xpui_dir/helper"
+  cp "$wrapper_source" "$live_wrapper"
+  log "Synced missing spicetifyWrapper.js from $wrapper_source"
+}
+
 # ─── Main logic ────────────────────────────────────────────────────────────────
 
 main() {
@@ -521,6 +568,10 @@ main() {
   local spotify_running=false
   is_process_running "spotify" && spotify_running=true
 
+  if [[ -n "$xpui_dir" ]]; then
+    sync_spicetify_wrapper "$xpui_dir" || true
+  fi
+
   if [[ -n "$xpui_dir" ]] && is_live_install_patched "$xpui_dir"; then
     if sync_live_user_css "$theme_dir/user.css" "$xpui_dir"; then
       log "Synced live Spotify user.css"
@@ -542,6 +593,11 @@ main() {
   if ! apply_spicetify_theme; then
     log "spicetify -n apply failed; theme files written but install was not patched"
     exit 1
+  fi
+
+  xpui_dir="$(get_spotify_xpui_dir "$spicetify_config")"
+  if [[ -n "$xpui_dir" ]]; then
+    sync_spicetify_wrapper "$xpui_dir" || true
   fi
 
   # Some spicetify versions launch Spotify as a side effect despite -n.
