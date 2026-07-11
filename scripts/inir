@@ -3490,17 +3490,31 @@ launch_configured_browser() {
     browser="${browser:-xdg-open}"
 
     if command -v "$browser" >/dev/null 2>&1; then
-        if [[ $# -gt 0 ]]; then
-            exec "$browser" "$@"
+        if command -v systemd-run >/dev/null 2>&1; then
+            if [[ $# -gt 0 ]]; then
+                exec systemd-run --user --scope --quiet --collect --property="Description=iNiR Browser" -- "$browser" "$@"
+            fi
+            exec systemd-run --user --scope --quiet --collect --property="Description=iNiR Browser" -- "$browser"
+        else
+            if [[ $# -gt 0 ]]; then
+                exec "$browser" "$@"
+            fi
+            exec "$browser"
         fi
-        exec "$browser"
     fi
 
     if command -v xdg-open >/dev/null 2>&1; then
-        if [[ $# -gt 0 ]]; then
-            exec xdg-open "$@"
+        if command -v systemd-run >/dev/null 2>&1; then
+            if [[ $# -gt 0 ]]; then
+                exec systemd-run --user --scope --quiet --collect --property="Description=XDG Open" -- xdg-open "$@"
+            fi
+            exec systemd-run --user --scope --quiet --collect --property="Description=XDG Open" -- xdg-open "https://"
+        else
+            if [[ $# -gt 0 ]]; then
+                exec xdg-open "$@"
+            fi
+            exec xdg-open "https://"
         fi
-        exec xdg-open "https://"
     fi
 
     echo "No browser launcher found" >&2
