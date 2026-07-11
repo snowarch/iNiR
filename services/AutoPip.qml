@@ -71,6 +71,28 @@ Singleton {
         return false;
     }
 
+    // Timer to debounce PiP triggers and prevent keypress injection spam during rapid scrolling
+    Timer {
+        id: pipTriggerDebounce
+        interval: 150
+        repeat: false
+        property string targetWinId: ""
+        onTriggered: {
+            if (targetWinId === "") return;
+            const firefoxWin = windows.find(w => String(w.id) === targetWinId);
+            if (firefoxWin) {
+                if (firefoxWin.is_floating) return;
+                const offScreen = isWindowOffScreen(firefoxWin);
+                console.log("[AutoPip Debounced] Check. playing:", wasFirefoxPlayingRecently, "offScreen:", offScreen);
+                if (wasFirefoxPlayingRecently && offScreen) {
+                    console.log("[AutoPip Debounced] Firefox is off-screen. Triggering PiP...");
+                    triggerPipToggle();
+                }
+            }
+            targetWinId = "";
+        }
+    }
+
     Timer {
         id: debugTimer
         interval: 2000
@@ -91,6 +113,11 @@ Singleton {
 
     onActiveWindowChanged: {
         console.log("[AutoPip] Active window changed:", activeWindow ? activeWindow.title : "null", "app_id:", activeWindow ? activeWindow.app_id : "null");
+        
+        // Cancel any pending trigger when focus changes (prevents keypress injection while passing by columns)
+        pipTriggerDebounce.stop();
+        pipTriggerDebounce.targetWinId = "";
+
         if (!activeWindow) return;
 
         // If the newly focused window is Firefox, check if we need to dock it back
@@ -115,26 +142,11 @@ Singleton {
             return;
         }
 
-        // If focus shifted away from Firefox to another window:
-        // We check if Firefox was recently playing media, and if it has gone off-screen.
+        // If focus shifted away from Firefox:
+        // Schedule a debounced check to allow focus to settle (prevents collision during fast scroll)
         if (lastActiveWindowId !== "") {
-            console.log("[AutoPip] Focus shifted away from Firefox. Checking if Firefox should enter PiP...");
-            const firefoxWin = windows.find(w => String(w.id) === lastActiveWindowId);
-            if (firefoxWin) {
-                // If it is floating, it's not off-screen on the ribbon
-                if (firefoxWin.is_floating) {
-                    console.log("[AutoPip] Firefox is floating, skip PiP.");
-                    return;
-                }
-
-                const offScreen = isWindowOffScreen(firefoxWin);
-                console.log("[AutoPip] Firefox playing recently:", wasFirefoxPlayingRecently, "offScreen:", offScreen);
-                if (wasFirefoxPlayingRecently && offScreen) {
-                    // Trigger PiP: send keypress
-                    console.log("[AutoPip] Firefox is off-screen and playing media. Triggering PiP...");
-                    triggerPipToggle();
-                }
-            }
+            pipTriggerDebounce.targetWinId = lastActiveWindowId;
+            pipTriggerDebounce.start();
         }
 
         lastActiveWindowId = "";
@@ -231,6 +243,8 @@ Singleton {
     }
 
     function triggerPipToggle() {
-        Quickshell.execDetached(["wtype", "-M", "ctrl", "-M", "shift", "-k", "bracketright"]);
+        console.log("[AutoPip] triggerPipToggle called (wtype simulation disabled for stability).");
+        // Disabled to prevent sticky modifier keys (Ctrl/Shift) under Wayland Niri transitions
+        // Quickshell.execDetached(["wtype", "-M", "ctrl", "-M", "shift", "-k", "bracketright"]);
     }
 }
