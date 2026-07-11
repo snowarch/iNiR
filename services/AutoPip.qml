@@ -10,7 +10,13 @@ Singleton {
     id: root
 
     // Monitor changes to Niri windows and active window
-    readonly property var activeWindow: NiriService.activeWindow
+    readonly property var activeWindow: {
+        const wins = NiriService.windows || [];
+        for (let i = 0; i < wins.length; i++) {
+            if (wins[i] && wins[i].is_focused) return wins[i];
+        }
+        return null;
+    }
     readonly property var windows: NiriService.windows
 
     // Check if Firefox/Zen is playing media via MprisController
@@ -27,39 +33,106 @@ Singleton {
         return false;
     }
 
-    // Keep track of the active window ID and state
+    // Grace period property to smooth out asynchronous D-Bus/MPRIS status lags
+    property bool wasFirefoxPlayingRecently: false
+
+    Timer {
+        id: playingGraceTimer
+        interval: 1000
+        repeat: false
+        onTriggered: wasFirefoxPlayingRecently = false
+    }
+
+    onIsFirefoxPlayingChanged: {
+        if (isFirefoxPlaying) {
+            playingGraceTimer.stop();
+            wasFirefoxPlayingRecently = true;
+        } else {
+            playingGraceTimer.restart();
+        }
+    }
+
+    // Keep track of the active window ID
     property string lastActiveWindowId: ""
-    property bool isPipActive: false
+
+    // Computed property that dynamically checks if a Firefox PiP window actually exists in Niri
+    readonly property bool isPipActive: {
+        const wins = windows || [];
+        for (let i = 0; i < wins.length; i++) {
+            const w = wins[i];
+            if (!w) continue;
+            const app = (w.app_id ?? "").toLowerCase();
+            const title = (w.title ?? "").toLowerCase();
+            if ((app.includes("firefox") || app.includes("zen")) &&
+                (title === "picture-in-picture" || title === "incrustation" || title === "bild-in-bild" || title.includes("picture-in-picture"))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    Timer {
+        id: debugTimer
+        interval: 2000
+        running: true
+        repeat: true
+        onTriggered: {
+            console.log("[AutoPip Poll] activeWindow:", activeWindow ? activeWindow.title : "null",
+                        "app_id:", activeWindow ? activeWindow.app_id : "null",
+                        "windows count:", windows ? windows.length : 0);
+            if (windows) {
+                for (let i = 0; i < windows.length; i++) {
+                    const w = windows[i];
+                    console.log("  -> Window id:", w.id, "app_id:", w.app_id, "is_focused:", w.is_focused, "title:", w.title);
+                }
+            }
+        }
+    }
 
     onActiveWindowChanged: {
+        console.log("[AutoPip] Active window changed:", activeWindow ? activeWindow.title : "null", "app_id:", activeWindow ? activeWindow.app_id : "null");
         if (!activeWindow) return;
 
         // If the newly focused window is Firefox, check if we need to dock it back
         const appName = (activeWindow.app_id ?? "").toLowerCase();
         const isFirefox = appName.includes("firefox") || appName.includes("zen");
+        console.log("[AutoPip] isFirefox:", isFirefox, "lastActiveWindowId:", lastActiveWindowId, "isPipActive:", isPipActive, "wasFirefoxPlayingRecently:", wasFirefoxPlayingRecently);
 
         if (isFirefox) {
+            // Ignore if the newly focused window is the PiP window itself
+            const title = (activeWindow.title ?? "").toLowerCase();
+            if (title === "picture-in-picture" || title === "incrustation" || title === "bild-in-bild" || title.includes("picture-in-picture")) {
+                console.log("[AutoPip] Focused window is the PiP window itself. Skip docking.");
+                return;
+            }
+
             if (isPipActive) {
                 // Dock back: send keypress to dock video back
+                console.log("[AutoPip] Firefox focused and PiP is active, docking back...");
                 triggerPipToggle();
-                isPipActive = false;
             }
             lastActiveWindowId = String(activeWindow.id);
             return;
         }
 
         // If focus shifted away from Firefox to another window:
-        // We check if Firefox is still playing media, and if it has gone off-screen.
+        // We check if Firefox was recently playing media, and if it has gone off-screen.
         if (lastActiveWindowId !== "") {
+            console.log("[AutoPip] Focus shifted away from Firefox. Checking if Firefox should enter PiP...");
             const firefoxWin = windows.find(w => String(w.id) === lastActiveWindowId);
             if (firefoxWin) {
                 // If it is floating, it's not off-screen on the ribbon
-                if (firefoxWin.is_floating) return;
+                if (firefoxWin.is_floating) {
+                    console.log("[AutoPip] Firefox is floating, skip PiP.");
+                    return;
+                }
 
-                if (isFirefoxPlaying && isWindowOffScreen(firefoxWin)) {
+                const offScreen = isWindowOffScreen(firefoxWin);
+                console.log("[AutoPip] Firefox playing recently:", wasFirefoxPlayingRecently, "offScreen:", offScreen);
+                if (wasFirefoxPlayingRecently && offScreen) {
                     // Trigger PiP: send keypress
+                    console.log("[AutoPip] Firefox is off-screen and playing media. Triggering PiP...");
                     triggerPipToggle();
-                    isPipActive = true;
                 }
             }
         }
@@ -67,16 +140,21 @@ Singleton {
         lastActiveWindowId = "";
     }
 
-    // Function to calculate if a tiled window is completely off-screen on the ribbon
     function isWindowOffScreen(win): bool {
         // Find the active workspace
         const wsId = win.workspace_id;
         const ws = NiriService.workspaces[wsId];
-        if (!ws) return true;
+        if (!ws) {
+            console.log("[AutoPip] Workspace not found for window, wsId:", wsId);
+            return true;
+        }
 
         // 1. Get the screen geometry dynamically
         const outputName = ws.output || NiriService.currentOutput;
-        if (!outputName || !NiriService.outputs[outputName]) return true;
+        if (!outputName || !NiriService.outputs[outputName]) {
+            console.log("[AutoPip] Output not found for name:", outputName);
+            return true;
+        }
         const output = NiriService.outputs[outputName];
         const screenWidth = output.logical?.width || 1920;
 
@@ -88,7 +166,10 @@ Singleton {
             return colA - colB;
         });
 
-        if (wsWindows.length === 0) return true;
+        if (wsWindows.length === 0) {
+            console.log("[AutoPip] No tiled windows found on workspace:", wsId);
+            return true;
+        }
 
         // 3. Compute absolute positions of all columns on the ribbon
         const gaps = 10; // Niri gaps size config
@@ -112,8 +193,12 @@ Singleton {
         }
 
         // 4. Find the focused window on the active workspace
-        const focusedWin = wsWindows.find(w => w.is_focused) || activeWindow;
-        if (!focusedWin) return true;
+        // Use the newly active window directly to avoid race conditions with the windows list updates.
+        const focusedWin = activeWindow;
+        if (!focusedWin) {
+            console.log("[AutoPip] Focused window not found (activeWindow is null)");
+            return true;
+        }
 
         const focusedCol = focusedWin.layout?.pos_in_scrolling_layout?.[0] ?? 0;
         const focusedWidth = colWidths[focusedCol] ?? 945;
@@ -127,12 +212,20 @@ Singleton {
         // Case A: left-aligned focused column
         const vX_A = focusedAbsX;
         const relX_A = winAbsX - vX_A;
-        const visible_A = (relX_A + winWidth > 0) && (relX_A < screenWidth);
+        // Apply 50px tolerance to ignore margins/gaps at screen edges
+        const visible_A = (relX_A + winWidth > 50) && (relX_A < screenWidth - 50);
 
         // Case B: right-aligned focused column
         const vX_B = focusedAbsX + focusedWidth - screenWidth;
         const relX_B = winAbsX - vX_B;
-        const visible_B = (relX_B + winWidth > 0) && (relX_B < screenWidth);
+        const visible_B = (relX_B + winWidth > 50) && (relX_B < screenWidth - 50);
+
+        console.log("[AutoPip] Geometry Details:",
+                    "screenWidth:", screenWidth,
+                    "focusedCol:", focusedCol, "focusedAbsX:", focusedAbsX, "focusedWidth:", focusedWidth,
+                    "winCol:", winCol, "winAbsX:", winAbsX, "winWidth:", winWidth,
+                    "relX_A:", relX_A, "visible_A:", visible_A,
+                    "relX_B:", relX_B, "visible_B:", visible_B);
 
         return !visible_A && !visible_B;
     }
