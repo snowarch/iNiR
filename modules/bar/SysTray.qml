@@ -50,8 +50,24 @@ Item {
         return item && item.id;
     }
     
+    function isIgnored(item) {
+        if (!isValidItem(item)) return true;
+        const id = (item.id || "").toLowerCase();
+        const title = (item.title || "").toLowerCase();
+        const tooltip = (item.tooltipTitle || "").toLowerCase();
+        const ignored = Config.options?.bar?.tray?.ignoredItems 
+            ?? ["nm-applet", "network-manager-applet", "networkmanager-applet"];
+        for (let i = 0; i < ignored.length; i++) {
+            const pattern = ignored[i].toLowerCase();
+            if (id.indexOf(pattern) !== -1 || title.indexOf(pattern) !== -1 || tooltip.indexOf(pattern) !== -1) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
     property list<var> itemsInUserList: SystemTray.items.values.filter(i => {
-        if (!isValidItem(i)) return false;
+        if (!isValidItem(i) || isIgnored(i)) return false;
         const id = (i.id || "").toLowerCase();
         const title = (i.title || "").toLowerCase();
         const isSpotify = id.indexOf("spotify") !== -1 || title.indexOf("spotify") !== -1;
@@ -59,7 +75,7 @@ Item {
                 && (!smartTray || i.status !== Status.Passive || isSpotify);
     })
     property list<var> itemsNotInUserList: SystemTray.items.values.filter(i => {
-        if (!isValidItem(i)) return false;
+        if (!isValidItem(i) || isIgnored(i)) return false;
         const id = (i.id || "").toLowerCase();
         const title = (i.title || "").toLowerCase();
         const isSpotify = id.indexOf("spotify") !== -1 || title.indexOf("spotify") !== -1;

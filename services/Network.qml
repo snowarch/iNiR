@@ -29,7 +29,7 @@ Singleton {
     property int networkStrength
     property string materialSymbol: root.ethernet
         ? "lan"
-        : root.wifiEnabled
+        : root.wifi
             ? (
                 Network.networkStrength > 83 ? "signal_wifi_4_bar" :
                 Network.networkStrength > 67 ? "network_wifi" :
@@ -64,13 +64,22 @@ Singleton {
     function connectToWifiNetwork(accessPoint: WifiAccessPoint): void {
         accessPoint.askingPassword = false;
         root.wifiConnectTarget = accessPoint;
-        // We use this instead of `nmcli connection up SSID` because this also creates a connection profile
-        connectProc.exec(["nmcli", "dev", "wifi", "connect", accessPoint.ssid])
-
+        // Connect to existing profile if it exists, otherwise create a new one
+        connectProc.exec([
+            "sh", "-c",
+            'if nmcli -t -f NAME,TYPE connection show | grep -Fxq "$1:802-11-wireless"; then nmcli connection up "$1"; else nmcli dev wifi connect "$1"; fi',
+            "--", accessPoint.ssid
+        ])
     }
 
     function disconnectWifiNetwork(): void {
         if (active) disconnectProc.exec(["nmcli", "connection", "down", active.ssid]);
+    }
+
+    function refreshActiveNetworkDetails(): void {
+        if (!getNetworks.running) {
+            getNetworks.running = true;
+        }
     }
 
     function openPublicWifiPortal() {
@@ -91,6 +100,7 @@ Singleton {
 
     Process {
         id: connectProc
+        property bool secretsRequired: false
         environment: ({
             LANG: "C",
             LC_ALL: "C"
@@ -98,27 +108,34 @@ Singleton {
         stdout: SplitParser {
             onRead: line => {
                 // print(line)
-                getNetworks.running = true
+                if (!getNetworks.running)
+                    getNetworks.running = true
             }
         }
         stderr: SplitParser {
             onRead: line => {
                 // print("err:", line)
                 if (line.includes("Secrets were required")) {
-                    root.wifiConnectTarget.askingPassword = true
+                    connectProc.secretsRequired = true
                 }
             }
         }
         onExited: (exitCode, exitStatus) => {
-            root.wifiConnectTarget.askingPassword = (exitCode !== 0)
+            if (root.wifiConnectTarget) {
+                root.wifiConnectTarget.askingPassword = connectProc.secretsRequired
+            }
             root.wifiConnectTarget = null
+            connectProc.secretsRequired = false
         }
     }
 
     Process {
         id: disconnectProc
         stdout: SplitParser {
-            onRead: getNetworks.running = true
+            onRead: {
+                if (!getNetworks.running)
+                    getNetworks.running = true;
+            }
         }
     }
 
@@ -136,7 +153,8 @@ Singleton {
         stdout: SplitParser {
             onRead: {
                 wifiScanning = false;
-                getNetworks.running = true;
+                if (!getNetworks.running)
+                    getNetworks.running = true;
             }
         }
     }
@@ -149,6 +167,19 @@ Singleton {
         onTriggered: root._doUpdate()
     }
 
+    // Periodic connectivity re-check (every 30 s).
+    // NM's built-in connectivity check runs on its own interval, but this
+    // ensures the shell icon reflects the latest state even if nmcli monitor
+    // misses a quiet state transition (e.g. AP drops without sending a
+    // deauth frame, or NM connectivity flips between "limited" and "full").
+    Timer {
+        id: _periodicCheck
+        interval: 30000
+        repeat: true
+        running: false
+        onTriggered: root.update()
+    }
+
     // Status update (debounced — nmcli monitor can emit rapid bursts)
     function update() {
         _updateDebounce.restart();
@@ -156,10 +187,14 @@ Singleton {
 
     // Actual update logic
     function _doUpdate() {
-        updateConnectionType.startCheck();
-        wifiStatusProcess.running = true
-        updateNetworkName.running = true;
-        updateNetworkStrength.running = true;
+        if (!updateConnectionType.running)
+            updateConnectionType.startCheck();
+        if (!wifiStatusProcess.running)
+            wifiStatusProcess.running = true;
+        if (!updateNetworkName.running)
+            updateNetworkName.running = true;
+        if (!updateNetworkStrength.running)
+            updateNetworkStrength.running = true;
     }
 
     property bool _destroying: false
@@ -227,7 +262,7 @@ Singleton {
                         wifiStatus = "connected"
 
                         if (connectivity === "limited") {
-                            hasWifi = false;
+                            hasWifi = true;
                             wifiStatus = "limited"
                         }
                     }
@@ -247,11 +282,11 @@ Singleton {
 
     Process {
         id: updateNetworkName
-        command: ["sh", "-c", "nmcli -t -f NAME c show --active | head -1"]
+        command: ["sh", "-c", "nmcli -t -f TYPE,NAME c show --active | awk -F: '$1 == \"802-11-wireless\" || $1 == \"802-3-ethernet\" {print $2; exit}'"]
         running: false
         stdout: SplitParser {
             onRead: data => {
-                root.networkName = data;
+                root.networkName = data.trim();
             }
         }
     }
@@ -259,10 +294,11 @@ Singleton {
     Process {
         id: updateNetworkStrength
         running: false
-        command: ["sh", "-c", "nmcli -f IN-USE,SIGNAL,SSID device wifi | awk '/^\\*/{if (NR!=1) {print $2}}'"]
+        command: ["sh", "-c", "nmcli -t -f ACTIVE,SIGNAL dev wifi | grep '^yes:' | cut -d: -f2"]
         stdout: SplitParser {
             onRead: data => {
-                root.networkStrength = parseInt(data);
+                const val = parseInt(data.trim());
+                root.networkStrength = isNaN(val) ? 0 : val;
             }
         }
     }
@@ -285,7 +321,7 @@ Singleton {
     Process {
         id: getNetworks
         running: false
-        command: ["nmcli", "-g", "ACTIVE,SIGNAL,FREQ,SSID,BSSID,SECURITY", "d", "w"]
+        command: ["nmcli", "-g", "ACTIVE,SIGNAL,FREQ,SSID,BSSID,SECURITY,RATE", "d", "w"]
         environment: ({
             LANG: "C",
             LC_ALL: "C"
@@ -304,7 +340,8 @@ Singleton {
                         frequency: parseInt(net[2]),
                         ssid: net[3],
                         bssid: net[4]?.replace(rep2, ":") ?? "",
-                        security: net[5] || ""
+                        security: net[5] || "",
+                        rate: net[6] || ""
                     };
                 }).filter(n => n.ssid && n.ssid.length > 0);
 

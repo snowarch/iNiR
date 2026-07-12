@@ -7,6 +7,7 @@ import qs.modules.common.widgets
 import qs.modules.common.functions
 import QtQuick
 import QtQuick.Layouts
+import Qt5Compat.GraphicalEffects
 import Quickshell
 import Quickshell.Widgets
 
@@ -167,10 +168,33 @@ RippleButton {
 
         Component {
             id: iconImageComponent
-            IconImage {
-                source: Quickshell.iconPath(root.itemIcon, "image-missing")
-                width: 35
-                height: 35
+            Item {
+                implicitWidth: 35
+                implicitHeight: 35
+                IconImage {
+                    id: baseIcon
+                    source: Quickshell.iconPath(root.itemIcon, "image-missing")
+                    anchors.fill: parent
+                }
+                Loader {
+                    active: (Config.options?.search?.monochromeIcons ?? true) && baseIcon.source.toString().includes(Config.options?.iconTheme ?? "yet-another-monochrome-icon-set")
+                    anchors.fill: parent
+                    sourceComponent: Item {
+                        anchors.fill: parent
+                        Desaturate {
+                            id: desaturatedIcon
+                            visible: false
+                            anchors.fill: parent
+                            source: baseIcon
+                            desaturation: 1.0
+                        }
+                        ColorOverlay {
+                            anchors.fill: desaturatedIcon
+                            source: desaturatedIcon
+                            color: root.isHighlighted ? root.selectedTextColor : root.normalTextColor
+                        }
+                    }
+                }
             }
         }
 

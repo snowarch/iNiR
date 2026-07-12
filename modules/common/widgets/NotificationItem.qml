@@ -71,10 +71,10 @@ Item { // Notification item area
         anchors.leftMargin: root.expanded ? -root.dismissOvershoot : 0
         interactive: expanded
         automaticallyReset: false
-        acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+        acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
 
         onClicked: (mouse) => {
-            if (mouse.button === Qt.MiddleButton) {
+            if (mouse.button === Qt.MiddleButton || mouse.button === Qt.RightButton) {
                 root.destroyWithAnimation();
             }
         }

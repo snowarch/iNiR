@@ -273,22 +273,26 @@ Singleton {
     }
 
     function incrementVolume() {
-        // Fire wpctl relative increment first — works even when sink?.audio is not yet tracked.
-        if (!wpctlIncrementSinkVolume.running)
-            wpctlIncrementSinkVolume.running = true
-        if (!root.sink?.audio) return;
+        // Fire wpctl relative increment only when sink?.audio is not yet tracked.
+        if (!root.sink?.audio) {
+            if (!wpctlIncrementSinkVolume.running)
+                wpctlIncrementSinkVolume.running = true
+            return;
+        }
         const currentVolume = root.sink.audio.volume;
-        const step = currentVolume < 0.1 ? 0.01 : 0.02;
+        const step = 0.02;
         root.sink.audio.volume = Math.min(root.hardMaxValue, currentVolume + step);
     }
 
     function decrementVolume() {
-        // Fire wpctl relative decrement first — works even when sink?.audio is not yet tracked.
-        if (!wpctlDecrementSinkVolume.running)
-            wpctlDecrementSinkVolume.running = true
-        if (!root.sink?.audio) return;
+        // Fire wpctl relative decrement only when sink?.audio is not yet tracked.
+        if (!root.sink?.audio) {
+            if (!wpctlDecrementSinkVolume.running)
+                wpctlDecrementSinkVolume.running = true
+            return;
+        }
         const currentVolume = root.sink.audio.volume;
-        const step = currentVolume <= 0.1 ? 0.01 : 0.02;
+        const step = 0.02;
         root.sink.audio.volume = Math.max(0, currentVolume - step);
     }
 

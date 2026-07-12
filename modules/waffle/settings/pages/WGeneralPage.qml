@@ -32,7 +32,7 @@ WSettingsPage {
             label: Translation.tr("Maximum volume")
             icon: "speaker-1"
             suffix: "%"
-            from: 50; to: 150; stepSize: 5
+            from: 50; to: 200; stepSize: 5
             value: Config.options?.audio?.protection?.maxAllowed ?? 99
             onValueChanged: Config.setNestedValue("audio.protection.maxAllowed", value)
         }

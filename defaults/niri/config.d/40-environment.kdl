@@ -27,8 +27,8 @@ environment {
     // If plasma-integration is not installed, iNiR's setup patches this to "qt6ct".
     QT_QPA_PLATFORMTHEME "kde"
 
-    // Darkly is a modern Qt style that follows kdeglobals color schemes.
-    QT_STYLE_OVERRIDE "Darkly"
+    // Use the native Darkly style selected in qt6ct.conf
+    // QT_STYLE_OVERRIDE "kvantum"
 
     // Python venv used by iNiR scripts (color generation, AI features, translations).
     INIR_VENV "$HOME/.local/state/quickshell/.venv"

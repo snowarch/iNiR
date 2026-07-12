@@ -198,7 +198,9 @@ environment {
     // Qt theming: kde platform reads colors from kdeglobals (requires plasma-integration pkg)
     // The installer falls back to qt6ct only if plasma-integration is not installed
     QT_QPA_PLATFORMTHEME "kde"
-    QT_STYLE_OVERRIDE "Darkly"
+    
+    // Use the native Darkly style selected in qt6ct.conf
+    // QT_STYLE_OVERRIDE "kvantum"
     
     // Quickshell Python virtual environment
     INIR_VENV "$HOME/.local/state/quickshell/.venv"
@@ -213,7 +215,8 @@ environment {
 spawn-at-startup "bash" "-c" "systemctl --user import-environment XDG_MENU_PREFIX && kbuildsycoca6"
 
 spawn-at-startup "bash" "-c" "wl-paste --watch cliphist store &"
-spawn-at-startup "/usr/lib/mate-polkit/polkit-mate-authentication-agent-1"
+// spawn-at-startup "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
+spawn-at-startup "nm-applet"
 // iNiR is started by the user systemd service (inir.service), not spawn-at-startup.
 
 // ============================================================================
@@ -262,7 +265,7 @@ binds {
     // Applications (uses configured terminal from Settings)
     Mod+T { spawn "bash" "-c" "$HOME/.config/quickshell/inir/scripts/launch-terminal.sh"; }
     Mod+Return { spawn "bash" "-c" "$HOME/.config/quickshell/inir/scripts/launch-terminal.sh"; }
-    Super+E { spawn "nautilus"; }
+    Super+E { spawn "dolphin"; }
     Super+W { spawn "bash" "-c" "xdg-open https://"; }
     
     // Window management
