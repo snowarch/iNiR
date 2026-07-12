@@ -32,7 +32,7 @@ Scope {
         readonly property bool cornerOpenEnabled: Config?.options?.sidebar?.cornerOpen?.enable ?? false
         readonly property bool cornerOpenAtBottom: Config?.options?.sidebar?.cornerOpen?.bottom ?? false
         readonly property bool cornerOpenMatchesPosition: cornerOpenAtBottom === cornerWidget.isBottom
-        readonly property bool shouldShowCornerOpen: cornerOpenEnabled && cornerOpenMatchesPosition && !fullscreen && !GameMode.shouldHidePanels
+        readonly property bool shouldShowCornerOpen: cornerOpenEnabled && cornerOpenMatchesPosition && !fullscreen && !GameMode.shouldHidePanels && corner !== RoundCorner.CornerEnum.TopLeft
 
         visible: !GameMode.shouldHidePanels && (showFakeRounding || shouldShowCornerOpen)
 
