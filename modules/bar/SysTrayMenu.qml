@@ -49,6 +49,7 @@ PopupWindow {
     // Fullscreen transparent backdrop for Niri to detect clicks outside
     PanelWindow {
         id: clickOutsideBackdrop
+        screen: root.screen
         visible: root.visible && CompositorService.isNiri
         color: "transparent"
         exclusiveZone: 0

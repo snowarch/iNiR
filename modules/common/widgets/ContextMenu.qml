@@ -286,6 +286,7 @@ Loader {
 
         PanelWindow {
             id: clickOutsideBackdrop
+            screen: popupWindow.screen
             visible: popupWindow.visible && CompositorService.isNiri && root.closeOnFocusLost
             color: "transparent"
             exclusiveZone: 0
