@@ -280,7 +280,7 @@ OverlayBackground {
                 console.log("[Overlay Notes] File not found, creating new file.")
                 // Ensure parent directory exists
                 const parentDir = Directories.notesPath.substring(0, Directories.notesPath.lastIndexOf('/'))
-                Process.exec(["/usr/bin/mkdir", "-p", parentDir])
+                Quickshell.execDetached(["/usr/bin/mkdir", "-p", parentDir])
                 root.content = "";
                 noteFile.setText(root.content);
                 if (pendingReload) {
