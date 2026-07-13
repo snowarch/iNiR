@@ -27,24 +27,31 @@ Singleton {
 
     property string networkName: ""
     property int networkStrength
+    // Gated on being *connected*, not on the radio being powered. wifiStatus is
+    // only ever "connecting"/"disconnected" while the radio is on — i.e. while
+    // wifiEnabled is true — so keying the strength icons off wifiEnabled both
+    // rendered a stale full-strength icon after disconnecting and left the
+    // "not_connected"/"wifi_find" branches permanently unreachable.
     property string materialSymbol: root.ethernet
         ? "lan"
-        : root.wifiEnabled
-            ? (
-                Network.networkStrength > 83 ? "signal_wifi_4_bar" :
-                Network.networkStrength > 67 ? "network_wifi" :
-                Network.networkStrength > 50 ? "network_wifi_3_bar" :
-                Network.networkStrength > 33 ? "network_wifi_2_bar" :
-                Network.networkStrength > 17 ? "network_wifi_1_bar" :
-                "signal_wifi_0_bar"
-            )
-            : (root.wifiStatus === "connecting")
-                ? "signal_wifi_statusbar_not_connected"
-                : (root.wifiStatus === "disconnected")
-                    ? "wifi_find"
-                    : (root.wifiStatus === "disabled")
-                        ? "signal_wifi_off"
-                        : "signal_wifi_bad"
+        : !root.wifiEnabled
+            ? "signal_wifi_off"
+            : (root.wifiStatus === "connected" || root.wifiStatus === "limited")
+                ? (
+                    Network.networkStrength > 83 ? "signal_wifi_4_bar" :
+                    Network.networkStrength > 67 ? "network_wifi" :
+                    Network.networkStrength > 50 ? "network_wifi_3_bar" :
+                    Network.networkStrength > 33 ? "network_wifi_2_bar" :
+                    Network.networkStrength > 17 ? "network_wifi_1_bar" :
+                    "signal_wifi_0_bar"
+                )
+                : (root.wifiStatus === "connecting")
+                    ? "signal_wifi_statusbar_not_connected"
+                    : (root.wifiStatus === "disconnected")
+                        ? "wifi_find"
+                        : (root.wifiStatus === "disabled")
+                            ? "signal_wifi_off"
+                            : "signal_wifi_bad"
 
     // Control
     function enableWifi(enabled = true): void {
@@ -248,6 +255,11 @@ Singleton {
             root.wifiStatus = wifiStatus;
             root.ethernet = hasEthernet;
             root.wifi = hasWifi;
+            // updateNetworkStrength's awk prints nothing when no AP is in use, so
+            // its SplitParser never fires and networkStrength would keep the value
+            // from the last connected AP. Clear it here instead.
+            if (wifiStatus !== "connected" && wifiStatus !== "limited")
+                root.networkStrength = 0;
         }
     }
 
