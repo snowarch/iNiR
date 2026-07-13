@@ -47,7 +47,13 @@ factory = None
 current_size = "large"
 logger.remove()
 logger.add(sys.stdout, level="INFO")
-logger.add("/tmp/thumbgen.log", level="DEBUG", rotation="100 MB")
+
+# Not /tmp/thumbgen.log: that path is predictable in a world-writable directory,
+# so on a shared host another user can pre-create it (or symlink it elsewhere) and
+# logger.add() then raises at import time, killing every thumbnail run.
+_log_dir = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "inir"
+_log_dir.mkdir(parents=True, exist_ok=True)
+logger.add(_log_dir / "thumbgen.log", level="DEBUG", rotation="100 MB")
 
 
 def get_thumbnail_path(fpath: str, size_name: str) -> str:
