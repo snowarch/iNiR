@@ -80,6 +80,9 @@ Singleton {
     function changePassword(network: WifiAccessPoint, password: string, username = ""): void {
         // TODO: enterprise wifi with username
         network.askingPassword = false;
+        // changePasswordProc.onExited re-runs connectProc, whose own onExited has
+        // already nulled the target — restore it so the retry can report back.
+        root.wifiConnectTarget = network;
         changePasswordProc.exec({
             "command": ["nmcli", "connection", "modify", network.ssid, "wifi-sec.psk", password]
         })
@@ -104,12 +107,15 @@ Singleton {
         stderr: SplitParser {
             onRead: line => {
                 // print("err:", line)
-                if (line.includes("Secrets were required")) {
+                if (line.includes("Secrets were required") && root.wifiConnectTarget) {
                     root.wifiConnectTarget.askingPassword = true
                 }
             }
         }
         onExited: (exitCode, exitStatus) => {
+            // Guarded: this handler nulls the target, and changePasswordProc re-runs
+            // connectProc, so a password retry lands here a second time.
+            if (!root.wifiConnectTarget) return;
             root.wifiConnectTarget.askingPassword = (exitCode !== 0)
             root.wifiConnectTarget = null
         }
