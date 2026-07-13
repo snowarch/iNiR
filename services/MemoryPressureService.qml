@@ -33,12 +33,13 @@ Singleton {
 
     function restart(): void {
         _log("user requested restart")
-        Notifications.send(
+        Quickshell.execDetached([
+            "/usr/bin/notify-send",
             "iNiR",
             Translation.tr("Restarting shell..."),
-            "system-reboot-symbolic",
-            2000, false, {}
-        )
+            "-a", "Shell",
+            "--hint=int:transient:1",
+        ])
         // Small delay so notification shows
         Qt.callLater(() => {
             Quickshell.execDetached(["systemctl", "--user", "restart", "inir.service"])
@@ -84,13 +85,14 @@ Singleton {
         
         root.notificationShown = true
         const mbEstimate = Math.round(root.currentDeletedMappings * 0.5)  // ~0.5 MB per mapping
-        
-        Notifications.send(
+
+        Quickshell.execDetached([
+            "/usr/bin/notify-send",
             "iNiR",
             Translation.tr("Memory usage is high (~%1 MB accumulated). A restart would free it. Run: inir memory restart").arg(mbEstimate),
-            "dialog-warning-symbolic",
-            0, false, {}  // persistent until dismissed
-        )
+            "-u", "critical",
+            "-a", "Shell",
+        ])
         _log("notified user, estimated leak:", mbEstimate, "MB")
     }
 
