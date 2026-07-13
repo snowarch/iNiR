@@ -20,9 +20,32 @@ Singleton {
     signal brightnessChanged()
 
     property var ddcMonitors: []
-    readonly property list<BrightnessMonitor> monitors: Quickshell.screens.map(screen => monitorComp.createObject(root, {
-        screen
-    }))
+    property list<BrightnessMonitor> monitors: []
+
+    // Rebuilt explicitly rather than bound to Quickshell.screens: createObject()
+    // parents each monitor to root, so a binding would strand a whole generation
+    // of BrightnessMonitors on every screen change (hotplug, DPMS, mode switch).
+    // Stranded ones are not inert — each still owns a Process and a Timer and
+    // still reacts to ddcMonitors, re-spawning ddcutil on every refresh.
+    function _rebuildMonitors(): void {
+        // Array.from is load-bearing: list<T> is a live view of the property, not
+        // a snapshot, so holding it directly would alias the *new* list after the
+        // assignment below and destroy the monitors we just built.
+        const stale = Array.from(root.monitors);
+        root.monitors = Quickshell.screens.map(screen => monitorComp.createObject(root, {
+            screen
+        }));
+        stale.forEach(m => m.destroy());
+    }
+
+    Component.onCompleted: root._rebuildMonitors()
+
+    Connections {
+        target: Quickshell
+        function onScreensChanged(): void {
+            root._rebuildMonitors();
+        }
+    }
 
     function getMonitorForScreen(screen: ShellScreen): var {
         return monitors.find(m => m.screen === screen);
