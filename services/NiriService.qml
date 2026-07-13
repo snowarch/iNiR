@@ -779,6 +779,21 @@ Singleton {
                     })
     }
 
+    // Workspace ids are globally unique; idx is per-output and repeats across
+    // outputs, so an Index reference always resolves against the *focused*
+    // output. Callers targeting a specific output's workspace must use this.
+    function switchToWorkspaceId(workspaceId) {
+        return send({
+                        "Action": {
+                            "FocusWorkspace": {
+                                "reference": {
+                                    "Id": workspaceId
+                                }
+                            }
+                        }
+                    })
+    }
+
     function switchToWorkspace(workspaceIndex) {
         return send({
                         "Action": {

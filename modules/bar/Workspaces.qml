@@ -44,6 +44,17 @@ Item {
         const ws = workspaceForSlot(slotNumber)
         return ws?.idx ?? slotNumber
     }
+    // This bar renders its own output's workspaces, but a niri Index reference
+    // resolves against the *focused* output and idx repeats across outputs — so
+    // clicking slot 1 here switched the other monitor whenever focus was
+    // elsewhere. Ids are globally unique; fall back to idx only when unavailable.
+    function switchToSlot(slotNumber) {
+        const ws = root.workspaceForSlot(slotNumber)
+        if (ws?.id !== undefined)
+            NiriService.switchToWorkspaceId(ws.id)
+        else
+            NiriService.switchToWorkspace(root.workspaceIndexForSlot(slotNumber))
+    }
 
     // Scroll behavior: "workspace" = switch workspaces, "column" = cycle windows left/right in same workspace
     readonly property string scrollBehavior: wsConfig.scrollBehavior ?? "workspace"
@@ -245,20 +256,25 @@ Item {
                     const wsCount = root.workspacesShown
                     const currentWs = root.currentWorkspaceNumber
                     
+                    // focusWorkspaceUp/Down act on the focused output, so scrolling
+                    // this bar moved the *other* monitor's workspaces whenever focus
+                    // was elsewhere. Step within our own slots and dispatch by id.
+                    const step = direction > 0 ? 1 : -1
+
                     if (root.wrapAround) {
                         if (direction > 0 && currentWs >= wsCount) {
                             // At last, go to first
-                            NiriService.switchToWorkspace(root.workspaceIndexForSlot(1))
+                            root.switchToSlot(1)
                         } else if (direction < 0 && currentWs <= 1) {
                             // At first, go to last
-                            NiriService.switchToWorkspace(root.workspaceIndexForSlot(wsCount))
+                            root.switchToSlot(wsCount)
                         } else {
-                            if (direction > 0) NiriService.focusWorkspaceDown()
-                            else NiriService.focusWorkspaceUp()
+                            root.switchToSlot(currentWs + step)
                         }
                     } else {
-                        if (direction > 0) NiriService.focusWorkspaceDown()
-                        else NiriService.focusWorkspaceUp()
+                        const target = currentWs + step
+                        if (target >= 1 && target <= wsCount)
+                            root.switchToSlot(target)
                     }
                 }
             } else if (CompositorService.isHyprland) {
@@ -370,7 +386,7 @@ Item {
                 implicitWidth: vertical ? Appearance.sizes.verticalBarWidth : Appearance.sizes.verticalBarWidth
                 onPressed: {
                     if (CompositorService.isNiri) {
-                        NiriService.switchToWorkspace(root.workspaceIndexForSlot(workspaceValue))
+                        root.switchToSlot(workspaceValue)
                     } else if (CompositorService.isHyprland) {
                         Hyprland.dispatch(`workspace ${workspaceValue}`)
                     }
