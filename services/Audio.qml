@@ -33,11 +33,25 @@ Singleton {
     ).length > 0
 
     property bool _micMuted: false
-    property real _micVolume: source?.audio?.volume ?? 0
+    // Tracked explicitly rather than bound to source.audio.volume: setSourceVolume()
+    // assigns to this imperatively, which would destroy a declarative binding for
+    // good — after the first mic adjustment the shell would stop seeing volume
+    // changes made anywhere else (pavucontrol, another app).
+    property real _micVolume: 0
     readonly property bool micMuted: _micMuted
     readonly property real micVolume: _micVolume
 
-    onSourceChanged: _refreshMicState()
+    Connections {
+        target: root.source?.audio ?? null
+        function onVolumeChanged(): void {
+            root._micVolume = root.source?.audio?.volume ?? 0
+        }
+    }
+
+    onSourceChanged: {
+        root._micVolume = root.source?.audio?.volume ?? 0
+        _refreshMicState()
+    }
 
     function friendlyDeviceName(node) {
         return node ? (node.nickname || node.description || Translation.tr("Unknown")) : Translation.tr("Unknown");
