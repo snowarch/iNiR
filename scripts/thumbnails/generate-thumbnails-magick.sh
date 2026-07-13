@@ -29,10 +29,16 @@ md5() {
 }
 
 urlencode() {
-    # Percent-encode a string for use in a URI, but do not encode slashes
+    # Percent-encode a string for use in a URI, but do not encode slashes.
+    # LC_ALL=C is load-bearing: it makes ${#str} and ${str:i:1} walk UTF-8
+    # *bytes* rather than code points. The consumers of this hash encode bytes
+    # (thumbgen.py via urllib.parse.quote, ThumbnailImage.qml via
+    # encodeURIComponent), so encoding code points here yields a different md5
+    # and a thumbnail that nothing ever looks up.
     local str="$1"
     local encoded=""
     local c
+    local LC_ALL=C
     for ((i=0; i<${#str}; i++)); do
         c="${str:$i:1}"
         case "$c" in
