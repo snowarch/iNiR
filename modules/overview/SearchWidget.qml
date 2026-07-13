@@ -188,7 +188,6 @@ Item { // Wrapper
         }
 
         // Default search
-        nonAppResultsTimer.restart();
 
         // Use stable keys for non-app results to prevent unnecessary re-renders
         const mathResultObject = {
@@ -305,12 +304,28 @@ Item { // Wrapper
         root.cachedResults = result;
     }
 
+    // The default (non-prefixed) result set is the only one that shows a math row,
+    // so it is the only one worth spawning qalc for.
+    function wantsMathResult(text): bool {
+        return text !== ""
+            && !text.startsWith(root.prefixAction)
+            && !text.startsWith(root.prefixClipboard)
+            && !text.startsWith(root.prefixEmojis);
+    }
+
     Timer {
         id: searchDebounceTimer
         interval: 60
         onTriggered: {
             root.debouncedSearchText = root.searchingText;
             root.updateSearchResults();
+            // Scheduled here rather than from updateSearchResults(): qalc's stdout
+            // handler calls updateSearchResults(), so restarting the timer in there
+            // made every qalc result spawn another qalc. qalc -t prints something
+            // for any input ("firefox" -> "0 B"), so the cycle never terminated —
+            // ~33 qalc spawns/second for as long as the box had text in it.
+            if (root.wantsMathResult(root.debouncedSearchText))
+                nonAppResultsTimer.restart();
         }
     }
 
