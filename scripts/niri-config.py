@@ -66,6 +66,84 @@ def get_repo_default_niri_dir():
     return Path(__file__).resolve().parent / ".." / "defaults" / "niri"
 
 
+def cmd_get_animation_presets():
+    user_dir = get_niri_config_dir() / "animations"
+    repo_dir = get_repo_default_niri_dir() / "animations"
+
+    preset_files = set()
+    if user_dir.is_dir():
+        preset_files.update(f.name for f in user_dir.glob("*.kdl"))
+    if repo_dir.is_dir():
+        preset_files.update(f.name for f in repo_dir.glob("*.kdl"))
+
+    files = sorted(preset_files)
+
+    cur = "default"
+    anim_file = resolve_niri_section_file("config.d/60-animations.kdl")
+    default_file = get_repo_default_niri_dir() / "config.d" / "60-animations.kdl"
+
+    if anim_file.exists():
+        curr_text = _normalized_meaningful_text(anim_file.read_text())
+        default_text = (
+            _normalized_meaningful_text(default_file.read_text())
+            if default_file.exists()
+            else ""
+        )
+
+        if curr_text == default_text:
+            cur = "default"
+        else:
+            cur = "custom"
+            for f_name in files:
+                f_path = (
+                    (user_dir / f_name)
+                    if (user_dir / f_name).exists()
+                    else (repo_dir / f_name)
+                )
+                if f_path.exists() and curr_text == _normalized_meaningful_text(
+                    f_path.read_text()
+                ):
+                    cur = f_name
+                    break
+
+    presets_list = ["default"] + files
+    if cur == "custom" and "custom" not in presets_list:
+        presets_list.append("custom")
+
+    res = {"current": cur, "presets": presets_list}
+
+    print(json.dumps(res))
+    return 0
+
+
+def cmd_set_animation_preset(args):
+    if not args:
+        print(json.dumps({"error": "No preset specified"}))
+        return 1
+
+    preset_name = args[0]
+    if preset_name == "default":
+        source_file = get_repo_default_niri_dir() / "config.d" / "60-animations.kdl"
+    else:
+        filename = preset_name if preset_name.endswith(".kdl") else f"{preset_name}.kdl"
+
+        user_preset = get_niri_config_dir() / "animations" / filename
+        repo_preset = get_repo_default_niri_dir() / "animations" / filename
+
+        source_file = user_preset if user_preset.exists() else repo_preset
+
+    if not source_file.exists():
+        print(json.dumps({"error": f"Preset '{preset_name}' not found!"}))
+        return 1
+
+    content = source_file.read_text()
+
+    target_file = resolve_niri_section_file("config.d/60-animations.kdl")
+    target_file.parent.mkdir(parents=True, exist_ok=True)
+
+    return _write_validated(target_file, content)
+
+
 def _root_includes(relative_path: str) -> bool:
     config_file = get_niri_config_path()
     if not config_file.exists():
@@ -761,7 +839,9 @@ def _strip_kdl_line_comments(content):
                 escaped = True
             elif ch == '"':
                 in_string = not in_string
-            elif ch == "/" and not in_string and i + 1 < len(line) and line[i + 1] == "/":
+            elif (
+                ch == "/" and not in_string and i + 1 < len(line) and line[i + 1] == "/"
+            ):
                 cut = i
                 break
             i += 1
@@ -825,7 +905,7 @@ def _iter_output_blocks(content):
                 depth -= 1
             i += 1
         if depth == 0:
-            yield match.group(1), content[inner_start:i - 1]
+            yield match.group(1), content[inner_start : i - 1]
 
 
 def _parse_hot_corner_block(block):
@@ -855,7 +935,11 @@ def cmd_get_hot_corners():
     flattened = _strip_kdl_line_comments(_flatten_niri_config(get_niri_config_path()))
 
     gestures = _extract_block(flattened, "gestures", top_level=True)
-    global_block = _extract_block(gestures, "hot-corners", top_level=True) if gestures is not None else None
+    global_block = (
+        _extract_block(gestures, "hot-corners", top_level=True)
+        if gestures is not None
+        else None
+    )
     global_corners = _parse_hot_corner_block(global_block)
     if global_corners is None:
         global_corners = ["topLeft"]
@@ -889,13 +973,19 @@ def cmd_get_hot_corners():
             for alias in aliases:
                 if alias in configured_overrides:
                     override = configured_overrides[alias]
-            effective[connector] = list(global_corners if override is None else override)
+            effective[connector] = list(
+                global_corners if override is None else override
+            )
 
-    print(json.dumps({
-        "global": global_corners,
-        "overrides": configured_overrides,
-        "effective": effective,
-    }))
+    print(
+        json.dumps(
+            {
+                "global": global_corners,
+                "overrides": configured_overrides,
+                "effective": effective,
+            }
+        )
+    )
     return 0
 
 
@@ -1550,7 +1640,11 @@ def cmd_sync_backdrop_overview_shadow(args):
             "}\n"
             f"{BACKDROP_SHADOW_OVERRIDE_END}"
         )
-        next_content = f"{next_content}\n\n{managed_block}\n" if next_content else f"{managed_block}\n"
+        next_content = (
+            f"{next_content}\n\n{managed_block}\n"
+            if next_content
+            else f"{managed_block}\n"
+        )
     elif next_content:
         next_content += "\n"
 
@@ -1622,7 +1716,13 @@ def _sync_cursor_env(theme=None, size=None):
         )
     if size is not None:
         subprocess.run(
-            ["gsettings", "set", "org.gnome.desktop.interface", "cursor-size", str(size)],
+            [
+                "gsettings",
+                "set",
+                "org.gnome.desktop.interface",
+                "cursor-size",
+                str(size),
+            ],
             capture_output=True,
         )
 
@@ -1659,7 +1759,9 @@ def _ensure_default_cursor_inherits(theme):
     default_dir = Path.home() / ".local" / "share" / "icons" / "default"
     default_dir.mkdir(parents=True, exist_ok=True)
     index = default_dir / "index.theme"
-    desired = f"[Icon Theme]\nName=Default\nComment=Default cursor theme\nInherits={theme}\n"
+    desired = (
+        f"[Icon Theme]\nName=Default\nComment=Default cursor theme\nInherits={theme}\n"
+    )
     try:
         if index.exists() and index.read_text() == desired:
             return
@@ -2254,9 +2356,7 @@ def _set_xkb_value(content, prop, value):
         if not trailing:
             trailing = "\n" + keyboard_indent
         new_xkb_block = (
-            f'{xkb_indent}xkb {{\n'
-            f'{prop_indent}{prop} "{value}"\n'
-            f"{xkb_indent}}}"
+            f'{xkb_indent}xkb {{\n{prop_indent}{prop} "{value}"\n{xkb_indent}}}'
         )
         new_kb_content = kb_content.rstrip() + "\n" + new_xkb_block + trailing
         return content[:kb_inner_start] + new_kb_content + content[kb_inner_end:]
@@ -2974,12 +3074,16 @@ def main():
         "get-hot-corners": lambda: cmd_get_hot_corners(),
         "get-layout": lambda: cmd_get_layout(),
         "get-animations": lambda: cmd_get_animations(),
+        "get-animation-presets": lambda: cmd_get_animation_presets(),
+        "set-animation-preset": lambda: cmd_set_animation_preset(args),
         "get-window-rules": lambda: cmd_get_window_rules(),
         "list-cursor-themes": lambda: cmd_list_cursor_themes(),
         "sync-cursor": lambda: cmd_sync_cursor(),
         "validate": lambda: cmd_validate(),
         "detect-customizations": lambda: cmd_detect_customizations(),
-        "sync-backdrop-overview-shadow": lambda: cmd_sync_backdrop_overview_shadow(args),
+        "sync-backdrop-overview-shadow": lambda: cmd_sync_backdrop_overview_shadow(
+            args
+        ),
         "set": lambda: cmd_set(args),
         "get-binds": lambda: cmd_get_binds(),
         "set-bind": lambda: cmd_set_bind(args),
