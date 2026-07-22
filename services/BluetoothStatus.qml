@@ -14,19 +14,51 @@ Singleton {
     id: root
 
     property bool _restored: false
+    property string _bootId: ""
 
+    // Only force-apply the saved on/off state once per actual system boot.
+    // Without this, every `inir restart` (or any shell reload) would recreate
+    // this singleton and re-force the last saved state onto the adapter,
+    // overriding whatever the user (or another process) had set in between.
     function _restoreBluetoothState() {
-        if (Bluetooth.defaultAdapter && !root._restored) {
-            root._restored = true;
-            const persist = Config.options?.bluetooth?.persistState ?? true;
-            const savedState = Config.options?.bluetooth?.lastState;
-            if (persist && savedState !== undefined && savedState !== Bluetooth.defaultAdapter.enabled) {
-                Bluetooth.defaultAdapter.enabled = savedState;
-            }
+        if (!Bluetooth.defaultAdapter || root._restored || root._bootId === "") {
+            return;
         }
+        root._restored = true;
+
+        const persist = Config.options?.bluetooth?.persistState ?? true;
+        if (!persist) return;
+
+        const savedBootId = Config.options?.bluetooth?.lastBootId ?? "";
+        if (savedBootId === root._bootId) {
+            return;
+        }
+
+        const savedState = Config.options?.bluetooth?.lastState;
+        if (savedState !== undefined && savedState !== Bluetooth.defaultAdapter.enabled) {
+            Bluetooth.defaultAdapter.enabled = savedState;
+        }
+        Config.setNestedValue("bluetooth.lastBootId", root._bootId);
     }
 
     Component.onCompleted: _restoreBluetoothState()
+
+    FileView {
+        id: bootIdReader
+        path: "/proc/sys/kernel/random/boot_id"
+
+        onLoaded: {
+            root._bootId = bootIdReader.text().trim();
+            root._restoreBluetoothState();
+        }
+
+        onLoadFailed: (error) => {
+            // No reliable boot id available; fall back to old per-launch
+            // behavior rather than never restoring at all.
+            root._bootId = "unknown";
+            root._restoreBluetoothState();
+        }
+    }
 
     Connections {
         target: Bluetooth

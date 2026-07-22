@@ -288,7 +288,8 @@
     },
     "bluetooth": {
         "persistState": true,
-        "lastState": false
+        "lastState": false,
+        "lastBootId": ""
     },
     "compositor": {
         "autoExpandSingleTilingWindow": false

@@ -772,6 +772,7 @@ Singleton {
             property JsonObject bluetooth: JsonObject {
                 property bool persistState: true
                 property bool lastState: false
+                property string lastBootId: ""
             }
 
             property JsonObject compositor: JsonObject {
