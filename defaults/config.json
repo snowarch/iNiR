@@ -1408,7 +1408,10 @@
         "annotation": {
             "useSatty": false,
             "useNativeEditor": true
-        }
+        },
+        "customColors": [],
+        "lastCustomColor": "",
+        "lastStrokeWidth": 4
     },
     "resources": {
         "updateInterval": 3000,
