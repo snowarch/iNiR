@@ -19,6 +19,7 @@ Scope {
     // Dedicated screenshot calls are always a rectangular capture. The unified
     // menu is the only entry point allowed to restore a previous toolbar choice.
     function screenshot(): void { GlobalStates.openRegionScreenshot() }
+    function screenshotEdit(): void { GlobalStates.screenshotEditorOpen = true }
     function search(): void {
         open(RegionSelection.SnipAction.Search,
             (Config.options?.search?.imageSearch?.useCircleSelection ?? false)
@@ -32,6 +33,7 @@ Scope {
     IpcHandler {
         target: "region"
         function screenshot(): void { root.screenshot() }
+        function screenshotEdit(): void { root.screenshotEdit() }
         function search(): void { root.search() }
         function googleLens(): void { root.search() }
         function ocr(): void { root.ocr() }
@@ -52,6 +54,7 @@ Scope {
         active: CompositorService.isHyprland
         sourceComponent: Item {
             GlobalShortcut { name: "regionScreenshot"; description: "Takes a screenshot of the selected region"; onPressed: root.screenshot() }
+            GlobalShortcut { name: "regionScreenshotEdit"; description: "Selects a region and opens it in the annotation editor"; onPressed: root.screenshotEdit() }
             GlobalShortcut { name: "regionSearch"; description: "Searches the selected region"; onPressed: root.search() }
             GlobalShortcut { name: "regionOcr"; description: "Recognizes text in the selected region"; onPressed: root.ocr() }
             GlobalShortcut { name: "regionRecord"; description: "Records the selected region"; onPressed: root.record() }

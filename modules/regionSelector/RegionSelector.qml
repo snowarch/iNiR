@@ -40,6 +40,22 @@ Scope {
         }
     }
 
+    // Unified capture+crop+annotate flow for screenshotEdit. Separate from
+    // RegionSelection so the other actions (copy/search/ocr/record) are untouched.
+    Variants {
+        model: Quickshell.screens
+        delegate: Loader {
+            id: screenshotEditorLoader
+            required property var modelData
+            active: GlobalStates.screenshotEditorOpen
+
+            sourceComponent: ScreenshotEditor {
+                screen: screenshotEditorLoader.modelData
+                onDismiss: GlobalStates.screenshotEditorOpen = false
+            }
+        }
+    }
+
     // Native annotation editor (Edit action). Lives in this Scope so it survives
     // the selection overlay dismissing.
     Loader {
