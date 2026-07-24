@@ -169,7 +169,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [panelFamily]="cycle set"
   [pill]="open close toggle state"
   [recordingOsd]="toggle show hide"
-  [region]="screenshot search googleLens ocr record recordWithSound menu dismiss current"
+  [region]="screenshot screenshotEdit search googleLens ocr record recordWithSound menu dismiss current"
   [search]="toggle close open"
   [session]="toggle close open"
   [settings]="open toggle"
@@ -338,6 +338,7 @@ declare -gA IPC_FUNCTION_DESC=(
   ["recordingOsd:show"]="Reveal the recording OSD pill"
   ["recordingOsd:hide"]="Collapse/hide the recording OSD pill"
   ["region:screenshot"]="Take a rectangular region screenshot"
+  ["region:screenshotEdit"]="Select a region and open it in the annotation editor"
   ["region:search"]="Image search (Google Lens)"
   ["region:googleLens"]="Start a region capture for Google Lens"
   ["region:ocr"]="OCR text recognition"
@@ -515,7 +516,7 @@ bind "Mod+Alt+P" { spawn "inir" "mpris" "previous"; }'
   [overview]='bind "Mod+Space" { spawn "inir" "overview" "toggle"; }'
   [panelFamily]='bind "Mod+Shift+W" { spawn "inir" "panelFamily" "cycle"; }'
   [pill]='bind "Super+V" repeat=false { spawn "inir" "pill" "toggle" "clipboard"; }'
-  [region]='bind "Super+Shift+S" { spawn "inir" "region" "screenshot"; }
+  [region]='bind "Super+Shift+S" { spawn "inir" "region" "screenshotEdit"; }
 bind "Super+Shift+X" { spawn "inir" "region" "ocr"; }
 bind "Super+Shift+A" { spawn "inir" "region" "search"; }
 bind "Ctrl+Shift+S" { spawn "inir" "region" "menu"; }'

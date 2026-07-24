@@ -29,7 +29,7 @@ Change them. Break them. Make them yours. We won't judge.
 
 | Key | Action |
 |-----|--------|
-| `Mod+Shift+S` | Region screenshot |
+| `Mod+Shift+S` | Region screenshot & annotate |
 | `Mod+Shift+X` | Region OCR |
 | `Mod+Shift+A` | Region image search |
 | `Mod+Shift+R` | Region screen recording (with audio) |

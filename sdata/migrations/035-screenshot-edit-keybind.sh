@@ -4,7 +4,7 @@
 # (crop + draw before saving) instead of copying immediately. Niri only, and
 # only when the bind is still the unmodified iNiR default.
 
-MIGRATION_ID="031-screenshot-edit-keybind"
+MIGRATION_ID="035-screenshot-edit-keybind"
 MIGRATION_TITLE="Screenshot & annotate keybind"
 MIGRATION_DESCRIPTION="Rebinds Mod+Shift+S from an instant region screenshot to the
   annotation editor (crop and draw before saving). Skipped if the bind was customized."

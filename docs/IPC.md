@@ -166,6 +166,7 @@ Region selection tools. Screenshots, OCR, recording. Draw a box, get stuff done.
 | Function | Description |
 |----------|-------------|
 | `screenshot` | Take a rectangular region screenshot |
+| `screenshotEdit` | Select a region and open it in the annotation editor |
 | `search` | Image search (Google Lens) |
 | `googleLens` | Start a region capture for Google Lens |
 | `ocr` | OCR text recognition |
@@ -176,7 +177,7 @@ Region selection tools. Screenshots, OCR, recording. Draw a box, get stuff done.
 | `current` | Return the selector state (open/action/mode) as JSON |
 
 ```kdl
-bind "Super+Shift+S" { spawn "inir" "region" "screenshot"; }
+bind "Super+Shift+S" { spawn "inir" "region" "screenshotEdit"; }
 bind "Super+Shift+X" { spawn "inir" "region" "ocr"; }
 bind "Super+Shift+A" { spawn "inir" "region" "search"; }
 bind "Ctrl+Shift+S" { spawn "inir" "region" "menu"; }
