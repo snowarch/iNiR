@@ -355,6 +355,7 @@
       packages = forAllSystems (pkgs: {
         default = mkPackage pkgs;
         inir = self.packages.${pkgs.system}.default;
+        inir-mascot = pkgs.callPackage ./nix/packages/inir-mascot.nix { };
       });
 
       nixosModules.default = mkNixosModule;
