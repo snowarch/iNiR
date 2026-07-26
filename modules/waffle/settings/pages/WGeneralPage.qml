@@ -276,7 +276,8 @@ WSettingsPage {
             { key: "powerPlug", label: Translation.tr("Power plugged in") },
             { key: "powerUnplug", label: Translation.tr("Power unplugged") },
             { key: "pomodoroDone", label: Translation.tr("Pomodoro ends") },
-            { key: "timerDone", label: Translation.tr("Timer ends") }
+            { key: "timerDone", label: Translation.tr("Timer ends") },
+            { key: "alarmDone", label: Translation.tr("Alarm rings") }
         ]
 
         Repeater {
@@ -290,6 +291,58 @@ WSettingsPage {
         }
     }
     
+    WSettingsCard {
+        id: alarmsCard
+        title: Translation.tr("Alarms")
+        icon: "alert-snooze"
+
+        // Defaults only. An alarm carrying its own value keeps it — the
+        // resolution rule lives in AlarmService, not here.
+        //
+        // AlarmService caps the "unlimited" sentinel (-1) at 12 h, so -1 and
+        // 720 already describe the same behaviour. Show a stored -1 as 720.
+        readonly property int graceValue: {
+            const minutes = Config.options?.alarms?.graceMinutes ?? 5;
+            return minutes < 0 ? 720 : Math.min(minutes, 720);
+        }
+
+        WSettingsSpinBox {
+            label: Translation.tr("Snooze length")
+            icon: "alert-snooze"
+            description: Translation.tr("Minutes an alarm waits after you press Snooze")
+            suffix: " min"
+            from: 1; to: 60; stepSize: 1
+            value: Config.options?.alarms?.snoozeMinutes ?? 5
+            onValueChanged: Config.setNestedValue("alarms.snoozeMinutes", value)
+        }
+
+        WSettingsSpinBox {
+            label: Translation.tr("Late ring window")
+            icon: "timer"
+            description: Translation.tr("Minutes an alarm that came due while the shell was off may still ring on return. 0 = never ring late, 720 = the 12 hour maximum")
+            suffix: " min"
+            from: 0; to: 720; stepSize: 15
+            value: alarmsCard.graceValue
+            onValueChanged: {
+                // A stored -1 already means this. Don't rewrite it just because
+                // the page opened.
+                if (value === 720 && (Config.options?.alarms?.graceMinutes ?? 5) < 0)
+                    return;
+                Config.setNestedValue("alarms.graceMinutes", value);
+            }
+        }
+
+        WSettingsSpinBox {
+            label: Translation.tr("Stop ringing after")
+            icon: "alert-off"
+            description: Translation.tr("Minutes an unattended alarm keeps ringing before it stops and counts as missed")
+            suffix: " min"
+            from: 1; to: 60; stepSize: 1
+            value: Config.options?.alarms?.autoStopMinutes ?? 5
+            onValueChanged: Config.setNestedValue("alarms.autoStopMinutes", value)
+        }
+    }
+
     WSettingsCard {
         title: Translation.tr("Idle & Sleep")
         icon: "weather-moon"
