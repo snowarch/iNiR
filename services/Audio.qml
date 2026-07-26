@@ -391,7 +391,8 @@ Singleton {
         powerPlug: "power-plug",
         powerUnplug: "power-unplug",
         pomodoroDone: "alarm-clock-elapsed",
-        timerDone: "alarm-clock-elapsed"
+        timerDone: "alarm-clock-elapsed",
+        alarmDone: "alarm-clock-elapsed"
     })
 
     // Sound names available in the current theme (feeds settings pickers)
@@ -423,7 +424,7 @@ Singleton {
         const volume = Config.options?.sounds?.volume ?? 0.5;
         const base = `/usr/share/sounds/${root.audioTheme}/stereo/${soundName}`;
         const q = s => `'${s.replace(/'/g, `'\\''`)}'`;
-        // pw-play volume range: 0.0 to 1.0. Try .oga then .ogg — firing
+        // pw-play volume range: 0.0 to 1.0. Try.oga then.ogg — firing
         // both blindly double-played on themes shipping both extensions.
         Quickshell.execDetached(["/bin/sh", "-c",
             `pw-play --volume ${volume} ${q(base + ".oga")} 2>/dev/null || pw-play --volume ${volume} ${q(base + ".ogg")}`]);

@@ -1743,7 +1743,8 @@
             "powerPlug": "",
             "powerUnplug": "",
             "pomodoroDone": "",
-            "timerDone": ""
+            "timerDone": "",
+            "alarmDone": ""
         }
     },
     "time": {
@@ -2123,6 +2124,7 @@
     "familyTransitionAnimation": true,
     "panelFamily": "ii",
     "enabledPanels": [
+        "iiAlarmRinging",
         "iiBar",
         "iiBackground",
         "iiBackdrop",
@@ -2182,5 +2184,10 @@
         "groqModel": "whisper-large-v3-turbo",
         "geminiModel": "gemini-2.5-flash",
         "openaiModel": "gpt-4o-mini-transcribe"
+    },
+    "alarms": {
+        "snoozeMinutes": 5,
+        "graceMinutes": 5,
+        "autoStopMinutes": 5
     }
 }

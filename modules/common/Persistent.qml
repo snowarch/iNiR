@@ -220,6 +220,34 @@ Singleton {
                     property int start: 0
                     property int duration: 60
                 }
+                // Alarm runtime state. Absolute wall-clock milliseconds
+                // throughout — nothing here counts down, so a ring, a queue
+                // position and a snooze all survive a shell restart the same
+                // way the start stamps above do. `real`, not `int`: ms since
+                // the epoch overflows a 32-bit int.
+                // The alarm *records* live in Directories.alarmsPath; only
+                // shell state belongs here.
+                property JsonObject alarms: JsonObject {
+                    // End of the last completed poll. A missed occurrence is
+                    // measured against this, not against shell start, so the
+                    // grace window knows how long the shell was actually away.
+                    property real lastPollMs: 0
+                    // Alarm currently ringing; -1 = nothing ringing.
+                    property int ringingId: -1
+                    // The occurrence it is ringing for, so a late ring can show
+                    // that it is late and what its scheduled time was.
+                    property real ringingDueMs: 0
+                    // When this ring started; bounds auto-stop across a restart.
+                    property real ringingSinceMs: 0
+                    // Waiting behind the ringing alarm, ordered by dueMs:
+                    // [{ id: int, dueMs: real }]. Never dropped or merged.
+                    property list<var> queued: []
+                    // Snoozes in flight:
+                    // [{ id: int, dueMs: real, untilMs: real }].
+                    // untilMs is absolute, so a snooze set for 07:05 still
+                    // rings at 07:05 if the shell restarts at 07:02.
+                    property list<var> snoozed: []
+                }
             }
 
             // Settings workspace state is not user configuration. Keeping it

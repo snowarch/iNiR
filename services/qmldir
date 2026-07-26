@@ -1,6 +1,8 @@
 module qs.services
 singleton AwwwBackend 1.0 AwwwBackend.qml
 singleton Ai 1.0 Ai.qml
+singleton AlarmAudio 1.0 AlarmAudio.qml
+singleton AlarmService 1.0 AlarmService.qml
 singleton AppCatalog 1.0 AppCatalog.qml
 singleton AppLauncher 1.0 AppLauncher.qml
 singleton AppSearch 1.0 AppSearch.qml

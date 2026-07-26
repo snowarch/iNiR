@@ -41,6 +41,7 @@ Singleton {
     property string screenshotsPath: `${Directories.picturesPath}/Screenshots`
     property string persistentStatesPath: `${Directories.statePath}/states.json`
     property string eventsPath: `${Directories.stateUserPath}/events.json`
+    property string alarmsPath: `${Directories.stateUserPath}/alarms.json`
     property string screenTimePath: `${Directories.stateUserPath}/screentime`
     property string generatedMaterialScssPath: `${Directories.stateUserPath}/generated/material_colors.scss`
     property string favicons: `${Directories.cachePath}/media/favicons`
