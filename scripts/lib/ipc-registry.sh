@@ -2,11 +2,12 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: 5d9562b880b2ed92
-# Targets: 60
+# IPC.md hash: 4a76f1c6137cf76b
+# Targets: 61
 
 declare -gA IPC_TARGET_DESC=(
   [ai]="Shared multi-provider AI service. It supports Gemini, OpenAI-compatible chat and Responses APIs, Mistral and Anthropic; live provider catalogs are normalized into capability-aware model records. Catalog visibility is separate from execution readiness, so public model lists remain browseable without pretending an API key exists. OpenCode Zen and Go resolve their current model lists and per-model API routes dynamically. Normal shell tools use typed actions and approval cards, while arbitrary commands are isolated in Advanced mode."
+  [alarms]="User alarms. A small scripting surface over the same store the Alarms tab edits — richer options (per-alarm sound, snooze length, repeat sets, dates) live in the editor. Every function returns a one-line result, or a message saying why it refused; \`list\` returns JSON."
   [altSwitcher]="Alt+Tab window switcher. Works across workspaces, unlike some other implementations we won't name."
   [appCatalog]="App catalog service. Browse, search, and install curated applications."
   [audio]="Volume and mute control."
@@ -70,6 +71,7 @@ declare -gA IPC_TARGET_DESC=(
 
 declare -gA IPC_TARGET_FAMILY=(
   [ai]="shared"
+  [alarms]="shared"
   [altSwitcher]="shared"
   [appCatalog]="shared"
   [audio]="shared"
@@ -133,6 +135,7 @@ declare -gA IPC_TARGET_FAMILY=(
 
 declare -gA IPC_TARGET_FUNCTIONS=(
   [ai]="ensureInitialized diagnose refreshCatalog catalog providers run runGet"
+  [alarms]="list add remove arm disarm dismiss snooze"
   [altSwitcher]="open close toggle next previous"
   [appCatalog]="refresh search install list"
   [audio]="volumeUp volumeDown mute playEvent micMute"
@@ -202,6 +205,13 @@ declare -gA IPC_FUNCTION_DESC=(
   ["ai:providers"]="Return provider health, key state and live model counts"
   ["ai:run"]="Send a message or compatibility \`/command\` to AI chat"
   ["ai:runGet"]="Run an AI command and return the last response"
+  ["alarms:list"]="Return every alarm as JSON, with its pipeline state (\`idle\`, \`ringing\`, \`queued\`, \`snoozed\`) and the next ring it will actually get"
+  ["alarms:add"]="Create an armed alarm for the next occurrence of \`HH:MM\` (24-hour, regardless of the shell's display format). Both arguments are required; pass \`\"\"\` to get the default name"
+  ["alarms:remove"]="Delete an alarm, stopping it if it is live"
+  ["alarms:arm"]="Arm an alarm"
+  ["alarms:disarm"]="Disarm an alarm, keeping the record"
+  ["alarms:dismiss"]="Dismiss the ringing alarm"
+  ["alarms:snooze"]="Snooze the ringing alarm by its resolved snooze length"
   ["altSwitcher:open"]="Open switcher"
   ["altSwitcher:close"]="Close switcher"
   ["altSwitcher:toggle"]="Toggle switcher"
@@ -446,6 +456,10 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["ai:catalog"]="<query>"
   ["ai:run"]="<inputText>"
   ["ai:runGet"]="<inputText>"
+  ["alarms:add"]="<time> <name>"
+  ["alarms:remove"]="<id>"
+  ["alarms:arm"]="<id>"
+  ["alarms:disarm"]="<id>"
   ["appCatalog:search"]="<query>"
   ["appCatalog:install"]="<id>"
   ["audio:playEvent"]="<event>"
@@ -491,6 +505,8 @@ declare -gA IPC_FUNCTION_ARGS=(
 )
 
 declare -gA IPC_TARGET_EXAMPLE=(
+  [alarms]='bind "Mod+Escape" { spawn "inir" "alarms" "dismiss"; }
+bind "Mod+Shift+Escape" { spawn "inir" "alarms" "snooze"; }'
   [altSwitcher]='bind "Alt+Tab" { spawn "inir" "altSwitcher" "next"; }
 bind "Alt+Shift+Tab" { spawn "inir" "altSwitcher" "previous"; }'
   [background]='bind "Super+W" { spawn "inir" "background" "toggleEditMode"; }'
@@ -523,8 +539,8 @@ bind "Ctrl+Alt+A" { spawn "inir" "wallpaperSelector" "openLauncher" "animated"; 
   [ytmusic]='bind "Mod+M+Space" { spawn "inir" "ytmusic" "playPause"; }'
 )
 
-IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets dashboard dev gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osd osdVolume osk overlay overview packageSearch panelFamily pill recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
-IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector dashboard dev gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osdVolume osk overlay overview packageSearch panelFamily pill region session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight tiling voiceSearch wallpaperLauncher wallpaperSelector workspaceStrip ytmusic zoom)
+IPC_ALL_TARGETS=(ai alarms altSwitcher appCatalog audio autostart background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets dashboard dev gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osd osdVolume osk overlay overview packageSearch panelFamily pill recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
+IPC_SHARED_TARGETS=(ai alarms altSwitcher appCatalog audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector dashboard dev gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osdVolume osk overlay overview packageSearch panelFamily pill region session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight tiling voiceSearch wallpaperLauncher wallpaperSelector workspaceStrip ytmusic zoom)
 IPC_II_TARGETS=()
 IPC_WAFFLE_TARGETS=(autostart customWidgets osd recordingOsd search taskview wactionCenter waffleAltSwitcher wbar widgetpower wnotificationCenter wwidgets)
 

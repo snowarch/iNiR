@@ -156,6 +156,26 @@ ii is built for **Niri**. Some features were inherited from the original Hyprlan
 
 ---
 
+## Alarms
+
+### Nothing rings while the shell is down
+
+Alarms are part of the shell, not the kernel. A powered-off or suspended machine does not wake up for one, and time spent with the shell stopped is time uncovered. On return, an alarm that came due while you were away rings only if it is still inside the grace window (Settings → General → Alarms); otherwise it is marked missed. Set `alarms.graceMinutes` to `-1` for "unlimited", capped at 12 hours so a day-old alarm cannot ambush you at login.
+
+### No ringing surface in the Waffle family
+
+The alarm editor and its settings exist in both panel families, but the full-screen ringing surface is **ii-only**. If an alarm fires while Waffle is the active family, the sound loops and there is no window offering Snooze or Dismiss. Stop it with `inir alarms dismiss` / `inir alarms snooze` (worth binding a key to), or switch back to ii with `Super+Shift+W`.
+
+### The ringing panel can be locked out of the keyboard
+
+While another surface holds an exclusive keyboard grab — the right sidebar open, for instance — key presses never reach the ringing panel, so Escape does not dismiss it. The panel's buttons still work with the mouse, and the `alarms` IPC target works regardless.
+
+### A muted system stays muted
+
+An alarm cannot shout over a muted sink: muting zeroes the mix its audio feeds into, and no client can opt out of that. When the shell detects it, the ringing panel says so on the panel itself, so a silent alarm is still a visible one. Nothing else about the alarm changes — it still rings, snoozes and dismisses normally.
+
+---
+
 ## Translations
 
 - **Incomplete translations**: Not all strings are translated. English is the fallback.

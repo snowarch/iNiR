@@ -526,6 +526,42 @@ Volume and mute control.
 
 ---
 
+### alarms
+
+User alarms. A small scripting surface over the same store the Alarms tab edits —
+richer options (per-alarm sound, snooze length, repeat sets, dates) live in the
+editor. Every function returns a one-line result, or a message saying why it
+refused; `list` returns JSON.
+
+| Function | Description |
+|----------|-------------|
+| `list` | Return every alarm as JSON, with its pipeline state (`idle`, `ringing`, `queued`, `snoozed`) and the next ring it will actually get |
+| `add <time> <name>` | Create an armed alarm for the next occurrence of `HH:MM` (24-hour, regardless of the shell's display format). Both arguments are required; pass `""` to get the default name |
+| `remove <id>` | Delete an alarm, stopping it if it is live |
+| `arm <id>` | Arm an alarm |
+| `disarm <id>` | Disarm an alarm, keeping the record |
+| `dismiss` | Dismiss the ringing alarm |
+| `snooze` | Snooze the ringing alarm by its resolved snooze length |
+
+```bash
+inir alarms add 07:00 "Wake up"
+inir alarms add 13:00 ""      # default name
+inir alarms list | jq -r '.[] | "\(.id) \(.name) \(.nextRing) \(.state)"'
+inir alarms disarm 3
+```
+
+```kdl
+bind "Mod+Escape" { spawn "inir" "alarms" "dismiss"; }
+bind "Mod+Shift+Escape" { spawn "inir" "alarms" "snooze"; }
+```
+
+`dismiss` and `snooze` take no id: exactly one alarm rings at a time. Both are
+worth binding — the ringing panel does not receive key events while another
+surface holds an exclusive keyboard grab (see
+[Known Limitations](LIMITATIONS.md#alarms)).
+
+---
+
 ### brightness
 
 Display brightness control.
