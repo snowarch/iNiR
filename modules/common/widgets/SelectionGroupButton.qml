@@ -89,82 +89,94 @@ GroupButton {
         }
     }
 
-    contentItem: RowLayout {
-        spacing: (root.showZzzPreview || root.buttonIcon?.length > 0) && root.buttonText?.length > 0 ? 4 : 0
+    // Control stretches contentItem to the button's full (possibly
+    // Layout.fillWidth-expanded) width; without centering here, a RowLayout
+    // that width just hugs the left edge instead of sitting in the middle
+    // of the button — visible on narrow single-letter buttons like the
+    // repeat-day picker.
+    contentItem: Item {
+        implicitWidth: contentRow.implicitWidth
+        implicitHeight: contentRow.implicitHeight
 
-        Behavior on spacing {
-            enabled: Appearance.animationsEnabled
-            animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
-        }
+        RowLayout {
+            id: contentRow
+            anchors.centerIn: parent
+            spacing: (root.showZzzPreview || root.buttonIcon?.length > 0) && root.buttonText?.length > 0 ? 4 : 0
 
-        Item {
-            id: iconReveal
-            Layout.alignment: Qt.AlignVCenter
-            implicitWidth: root.showZzzPreview ? cornerPreview.implicitWidth : (root.buttonIcon?.length > 0 ? materialSymbol.implicitWidth : 0)
-            implicitHeight: root.showZzzPreview ? cornerPreview.implicitHeight : materialSymbol.implicitHeight
-            opacity: root.showZzzPreview || root.buttonIcon?.length > 0 ? 1 : 0
-            visible: opacity > 0
-            clip: true
-
-            Behavior on implicitWidth {
+            Behavior on spacing {
                 enabled: Appearance.animationsEnabled
                 animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
             }
-            Behavior on opacity {
-                enabled: Appearance.animationsEnabled
-                animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-            }
 
-            Loader {
-                id: cornerPreview
-                anchors.centerIn: parent
-                active: root.showZzzPreview
-                sourceComponent: ZzzCornerPreview {
-                    kind: root.buttonPreviewKind
+            Item {
+                id: iconReveal
+                Layout.alignment: Qt.AlignVCenter
+                implicitWidth: root.showZzzPreview ? cornerPreview.implicitWidth : (root.buttonIcon?.length > 0 ? materialSymbol.implicitWidth : 0)
+                implicitHeight: root.showZzzPreview ? cornerPreview.implicitHeight : materialSymbol.implicitHeight
+                opacity: root.showZzzPreview || root.buttonIcon?.length > 0 ? 1 : 0
+                visible: opacity > 0
+                clip: true
+
+                Behavior on implicitWidth {
+                    enabled: Appearance.animationsEnabled
+                    animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
+                }
+                Behavior on opacity {
+                    enabled: Appearance.animationsEnabled
+                    animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
+
+                Loader {
+                    id: cornerPreview
+                    anchors.centerIn: parent
+                    active: root.showZzzPreview
+                    sourceComponent: ZzzCornerPreview {
+                        kind: root.buttonPreviewKind
+                    }
+                }
+
+                MaterialSymbol {
+                    id: materialSymbol
+                    anchors.centerIn: parent
+                    visible: !root.showZzzPreview
+                    text: root.buttonIcon
+                    iconSize: Appearance.font.pixelSize.normal
+                    color: Appearance.zzzEverywhere
+                        ? (root.toggled ? Appearance.zzz.onSticker : Appearance.zzz.ink)
+                        : (root.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSecondaryContainer)
                 }
             }
 
-            MaterialSymbol {
-                id: materialSymbol
-                anchors.centerIn: parent
-                visible: !root.showZzzPreview
-                text: root.buttonIcon
-                iconSize: Appearance.font.pixelSize.normal
-                color: Appearance.zzzEverywhere
-                    ? (root.toggled ? Appearance.zzz.onSticker : Appearance.zzz.ink)
-                    : (root.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSecondaryContainer)
-            }
-        }
+            Item {
+                implicitWidth: root.buttonText?.length > 0 ? textItem.implicitWidth : 0
+                implicitHeight: textMetrics.height // Force height to that of regular text
+                opacity: root.buttonText?.length > 0 ? 1 : 0
+                visible: opacity > 0
+                clip: true
 
-        Item {
-            implicitWidth: root.buttonText?.length > 0 ? textItem.implicitWidth : 0
-            implicitHeight: textMetrics.height // Force height to that of regular text
-            opacity: root.buttonText?.length > 0 ? 1 : 0
-            visible: opacity > 0
-            clip: true
+                Behavior on implicitWidth {
+                    enabled: Appearance.animationsEnabled
+                    animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
+                }
+                Behavior on opacity {
+                    enabled: Appearance.animationsEnabled
+                    animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
 
-            Behavior on implicitWidth {
-                enabled: Appearance.animationsEnabled
-                animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
-            }
-            Behavior on opacity {
-                enabled: Appearance.animationsEnabled
-                animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-            }
+                TextMetrics {
+                    id: textMetrics
+                    font.family: Appearance.font.family.main
+                    text: "Abc"
+                }
 
-            TextMetrics {
-                id: textMetrics
-                font.family: Appearance.font.family.main
-                text: "Abc"
-            }
-
-            StyledText {
-                id: textItem
-                anchors.centerIn: parent
-                color: Appearance.zzzEverywhere
-                    ? (root.toggled ? Appearance.zzz.onSticker : Appearance.zzz.ink)
-                    : (root.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSecondaryContainer)
-                text: root.buttonText
+                StyledText {
+                    id: textItem
+                    anchors.centerIn: parent
+                    color: Appearance.zzzEverywhere
+                        ? (root.toggled ? Appearance.zzz.onSticker : Appearance.zzz.ink)
+                        : (root.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSecondaryContainer)
+                    text: root.buttonText
+                }
             }
         }
     }
