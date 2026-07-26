@@ -7,7 +7,7 @@ import qs.services
 
 /**
  * Compact timer indicator for the ii bar.
- * Shows when pomodoro, countdown, or stopwatch is active.
+ * Shows when pomodoro, countdown, or stopwatch is active, or an alarm is armed.
  */
 MouseArea {
     id: root
@@ -26,7 +26,21 @@ MouseArea {
         || (TimerService?.countdownSecondsLeft ?? 0) < (TimerService?.countdownDuration ?? 0))
     readonly property bool stopwatchActive: stopwatchRunning || (TimerService?.stopwatchTime ?? 0) > 0 || ((TimerService?.stopwatchLaps?.length ?? 0) > 0)
 
-    readonly property bool anyActive: pomodoroActive || countdownActive || stopwatchActive
+    // The next armed alarm as { alarm, at, snoozed }, or null.: the
+    // schedule is AlarmService's and nothing here recomputes it. upcomingRings
+    // rather than upcoming, so a snoozed alarm shows when it will actually go
+    // off instead of the scheduled slot it is standing in front of. Recomputed
+    // only when the records change, a snooze moves, or the shell clock ticks —
+    // the same minute cadence the alarm poll runs at — and the result is a fixed
+    // clock time, so the pill's width cannot oscillate between occurrences.
+    // `loaded` keeps a still-empty list at startup from reading as "no alarms"
+    // .
+    readonly property var nextAlarm: (AlarmService?.loaded ?? false)
+        ? (AlarmService.upcomingRings(DateTime.clock.date.getTime())[0] ?? null)
+        : null
+    readonly property bool alarmActive: root.nextAlarm !== null
+
+    readonly property bool anyActive: pomodoroActive || countdownActive || stopwatchActive || alarmActive
 
     readonly property bool showPinnedIdle: pinnedToBar && !anyActive
 
@@ -34,6 +48,8 @@ MouseArea {
         if (root.pomodoroActive) return root.pomodoroRunning && !(TimerService?.pomodoroPaused ?? false)
         if (root.countdownActive) return root.countdownRunning && !(TimerService?.countdownPaused ?? false)
         if (root.stopwatchActive) return root.stopwatchRunning && !(TimerService?.stopwatchPaused ?? false)
+        // An armed alarm has no paused state; it must not render as one.
+        if (root.alarmActive) return true
         return false
     }
 
@@ -59,6 +75,9 @@ MouseArea {
             const s = secs % 60
             return `${mins.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
         }
+        if (alarmActive) {
+            return Qt.locale().toString(new Date(root.nextAlarm.at), Config.options?.time?.format ?? "hh:mm")
+        }
         return ""
     }
 
@@ -69,6 +88,8 @@ MouseArea {
             return "hourglass_top"
         if (stopwatchActive)
             return "timer"
+        if (alarmActive)
+            return "alarm"
         return "schedule"
     }
 
@@ -98,13 +119,8 @@ MouseArea {
     cursorShape: Qt.PointingHandCursor
 
     function openTimerPanel(): void {
-        GlobalStates.sidebarRightOpen = true
-
-        if (Persistent?.states?.sidebar?.bottomGroup) {
-            Persistent.states.sidebar.bottomGroup.tab = 3
-            Persistent.states.sidebar.bottomGroup.collapsed = false
-        }
-
+        // Choose the inner tab before the panel is shown, so it opens already on
+        // the right one instead of visibly switching afterwards.
         if (Persistent?.states?.timer) {
             if (root.pomodoroActive) {
                 Persistent.states.timer.tab = 0
@@ -112,8 +128,17 @@ MouseArea {
                 Persistent.states.timer.tab = 1
             } else if (root.stopwatchActive) {
                 Persistent.states.timer.tab = 2
+            } else if (root.alarmActive) {
+                Persistent.states.timer.tab = 3
             }
         }
+
+        // Both sidebar layouts — the bottom group and the compact rail — select a
+        // widget by id from this one signal, and each unfolds itself. A hardcoded
+        // tab index only ever matched the bottom group, and drifts with the user's
+        // enabledWidgets order. WeatherBar.qml:42 is the precedent.
+        GlobalStates.sidebarRightRequestedWidget = "timer"
+        GlobalStates.sidebarRightOpen = true
     }
 
     acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
@@ -130,6 +155,9 @@ MouseArea {
                 TimerService.toggleCountdown()
             } else if (root.stopwatchActive) {
                 TimerService.toggleStopwatch()
+            } else if (root.alarmActive) {
+                // Nothing to toggle — an alarm is armed or it is not.
+                root.openTimerPanel()
             }
             return
         }
@@ -251,6 +279,10 @@ MouseArea {
         pomodoroActive: root.pomodoroActive
         countdownActive: root.countdownActive
         stopwatchActive: root.stopwatchActive
+        alarmActive: root.alarmActive
+        alarmName: root.nextAlarm ? AlarmService.displayName(root.nextAlarm.alarm) : ""
+        alarmAt: root.nextAlarm ? root.nextAlarm.at : -1
+        alarmSnoozed: root.nextAlarm ? (root.nextAlarm.snoozed ?? false) : false
         paused: root.paused
         pinnedIdle: root.showPinnedIdle
     }
