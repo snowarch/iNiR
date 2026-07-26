@@ -1,0 +1,2 @@
+module qs.modules.alarm
+AlarmRingingPanel 1.0 AlarmRingingPanel.qml
