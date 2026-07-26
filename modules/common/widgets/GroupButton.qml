@@ -87,6 +87,30 @@ Button {
         animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
     }
 
+    // Qt's Button only activates on Space; every desktop toolkit also activates
+    // on Return, and a focused segment that does nothing when Enter is pressed
+    // reads as broken rather than as a shortcut the user got wrong.
+    Keys.onReturnPressed: root.click()
+    Keys.onEnterPressed: root.click()
+
+    // Keyboard focus has to be visible or a segmented group is a control you
+    // can reach and cannot find. Outside the segment, not a border on it: the
+    // selected segment is already painted in the accent and a ring drawn
+    // inside it would disappear into the fill. visualFocus, not activeFocus —
+    // this appears for Tab and never for a click.
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: -3
+        visible: root.visualFocus && !(Appearance.cookieEverywhere && root.cookieMorphing)
+        color: "transparent"
+        topLeftRadius: root.leftRadius + 3
+        bottomLeftRadius: root.leftRadius + 3
+        topRightRadius: root.rightRadius + 3
+        bottomRightRadius: root.rightRadius + 3
+        border.width: 2
+        border.color: Appearance.colors.colPrimary
+    }
+
     // TapHandler for right-click (altAction) - works better with Button control
     TapHandler {
         acceptedButtons: Qt.RightButton

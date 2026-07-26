@@ -102,6 +102,28 @@ Button {
         easing.bezierCurve: Appearance?.animationCurves.standardDecel
     }
 
+    // Qt's Button only activates on Space; every desktop toolkit also activates
+    // on Return, and a focused Save that does nothing when Enter is pressed
+    // reads as broken rather than as a shortcut the user got wrong.
+    Keys.onReturnPressed: root.click()
+    Keys.onEnterPressed: root.click()
+
+    // Keyboard focus has to be visible or every button in the shell is a
+    // control you can reach and cannot find. Outside the button, not a border
+    // on it: a filled button (Dismiss, Save) is already painted in the accent,
+    // and a ring drawn inside it disappears into the fill. visualFocus, not
+    // activeFocus — this appears for Tab and never for a click. cookieMorphing
+    // surfaces ring their own silhouette in the background and keep that.
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: -3
+        visible: root.visualFocus && !(Appearance.cookieEverywhere && root.cookieMorphing)
+        color: "transparent"
+        radius: root.buttonEffectiveRadius + 3
+        border.width: 2
+        border.color: Appearance.colors.colPrimary
+    }
+
     MouseArea {
         id: buttonMouseArea
         anchors.fill: parent
