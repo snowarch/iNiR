@@ -25,15 +25,29 @@ ColumnLayout {
     property string eventId: ""
     property bool expanded: false
 
-    readonly property string currentValue: Config.options?.sounds?.events?.[root.eventId] ?? ""
+    // Unbound mode: the owner holds the value (a per-alarm override, say) and
+    // this is a plain editor over it. Config is not touched.
+    property bool boundToConfig: true
+    property string value: ""
+    signal valueChosen(string value)
+    // What "" means when unbound — the global it inherits, not a theme default.
+    property string inheritLabel: ""
+
+    readonly property string currentValue: root.boundToConfig
+        ? (Config.options?.sounds?.events?.[root.eventId] ?? "") : root.value
     readonly property string themeDefault: Audio.soundEvents[root.eventId] ?? ""
+    readonly property string emptyLabel: root.inheritLabel !== "" ? root.inheritLabel
+        : Translation.tr("Theme default (%1)").arg(root.themeDefault)
     readonly property bool isFile: currentValue.startsWith("/") || currentValue.startsWith("file://")
     readonly property string displayValue: currentValue === ""
-        ? Translation.tr("Theme default (%1)").arg(themeDefault)
+        ? emptyLabel
         : (isFile ? currentValue.split("/").pop() : currentValue)
 
     function setValue(value) {
-        Config.setNestedValue("sounds.events." + root.eventId, value)
+        if (root.boundToConfig)
+            Config.setNestedValue("sounds.events." + root.eventId, value)
+        else
+            root.valueChosen(value)
     }
 
     spacing: 4
@@ -95,7 +109,8 @@ ColumnLayout {
                 HoverHandler { id: previewHover }
                 TapHandler {
                     id: previewTap
-                    onTapped: Audio.playEvent(root.eventId)
+                    onTapped: root.boundToConfig ? Audio.playEvent(root.eventId)
+                        : Audio.playSystemSound(root.currentValue === "" ? root.themeDefault : root.currentValue)
                 }
             }
 
@@ -148,9 +163,7 @@ ColumnLayout {
 
                     StyledText {
                         Layout.fillWidth: true
-                        text: row.modelData === ""
-                            ? Translation.tr("Theme default (%1)").arg(root.themeDefault)
-                            : row.modelData
+                        text: row.modelData === "" ? root.emptyLabel : row.modelData
                         font.pixelSize: Appearance.font.pixelSize.small
                         color: row.isSelected ? Appearance.colors.colOnPrimaryContainer
                              : Appearance.colors.colOnLayer2
@@ -171,8 +184,9 @@ ColumnLayout {
                         HoverHandler { id: rowPlayHover }
                         TapHandler {
                             id: rowPlayTap
-                            onTapped: Audio.playSystemSound(
-                                row.modelData === "" ? root.themeDefault : row.modelData)
+                            onTapped: (row.modelData === "" && !root.boundToConfig)
+                                ? Audio.playEvent(root.eventId) // "" here means the global, not the theme sound
+                                : Audio.playSystemSound(row.modelData === "" ? root.themeDefault : row.modelData)
                         }
                     }
                 }
