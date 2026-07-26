@@ -200,6 +200,14 @@ Item {
             }
         }
 
+        // Up/Down should act on whichever column the pointer is over, not only
+        // the one last reached by Tab: without this, a mouse user has to Tab
+        // through the row before the arrow keys do anything.
+        HoverHandler {
+            onHoveredChanged: if (this.hovered)
+                column.forceActiveFocus()
+        }
+
         // Tumbler's own view does not take wheel events, so without this the
         // sidebar's flickable would eat them. Stepping the index instead of
         // flicking also guarantees the wrap and the exact landing.
