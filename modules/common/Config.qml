@@ -570,7 +570,7 @@ Singleton {
             id: configOptionsJsonAdapter
 
             // Panel system
-            property list<string> enabledPanels: ["iiBar", "iiBackground", "iiBackdrop", "iiCheatsheet", "iiControlPanel", "iiDock", "iiLock", "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners", "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar", "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate", "iiDashboard", "iiMascotCompanion"]
+            property list<string> enabledPanels: ["iiAlarmRinging", "iiBar", "iiBackground", "iiBackdrop", "iiCheatsheet", "iiControlPanel", "iiDock", "iiLock", "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners", "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar", "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate", "iiDashboard", "iiMascotCompanion"]
             property list<string> knownPanels: [] // Tracks panels the user has seen; used to distinguish "user disabled" from "new in update"
             property string panelFamily: "ii" // "ii" or "waffle"
             property bool familyTransitionAnimation: true // Show animated overlay when switching families
@@ -1143,7 +1143,7 @@ Singleton {
                     }
                     property list<string> screenList: []
                     // Persistent bottom-to-top widget instance keys. Entries are
-                    // output-qualified ("OUTPUT::configEntryName") so each screen
+                    // output-qualified ("OUTPUT:configEntryName") so each screen
                     // keeps its own overlap order after edit mode closes/restarts.
                     property list<string> layerOrder: []
                     property JsonObject clock: JsonObject {
@@ -2625,6 +2625,7 @@ Singleton {
                     property string powerUnplug: ""
                     property string pomodoroDone: ""
                     property string timerDone: ""
+                    property string alarmDone: ""
                 }
             }
 
@@ -2975,6 +2976,31 @@ Singleton {
                     property list<string> fileKeywords: ["anime", "booru", "ecchi", "hentai", "yande.re", "konachan", "breast", "nipples", "pussy", "nsfw", "spoiler", "girl"]
                     property list<string> linkKeywords: ["hentai", "porn", "sukebei", "hitomi.la", "rule34", "gelbooru", "fanbox", "dlsite"]
                 }
+            }
+
+            // Global alarm defaults. Every one of these is a fallback: an alarm
+            // that carries its own value uses that, otherwise this.
+            // Writes go through Config.setNestedValue("alarms.<key>", value).
+            property JsonObject alarms: JsonObject {
+                // Snooze length, measured from the Snooze press, not from the
+                // original occurrence.
+                property int snoozeMinutes: 5
+                // How late an alarm that came due while the shell was down may
+                // still ring on return. 0 = never ring late. -1 = "unlimited",
+                // which is capped at 720 minutes (12 h): a day-old alarm
+                // ambushing someone at login is a bug, not a feature. Has no
+                // effect on an alarm that comes due with the shell running.
+                property int graceMinutes: 5
+                // Ring unattended for this long, then stop and mark the alarm
+                // missed (not dismissed).
+                property int autoStopMinutes: 5
+                // No force-audible key: a muted sink zeroes the mix its streams
+                // are fed into, and no client can opt out of that, so the option
+                // could only ever have promised something it cannot deliver. A
+                // muted machine stays silent and the ringing panel says so.
+                // The default sound is sounds.events.alarmDone. No key here on
+                // purpose — alarms use the same sound-event catalog as every
+                // other shell sound rather than a parallel one.
             }
         }
     }

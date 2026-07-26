@@ -1,3 +1,4 @@
+import qs.modules.alarm
 import qs.modules.background
 import qs.modules.bar
 import qs.modules.bootGreeting
@@ -127,6 +128,10 @@ Item {
     PanelLoader { identifier: "iiOnScreenDisplay"; extraCondition: !panelsRoot.barPill || !(Config.options?.bar?.pill?.osd ?? true); component: OnScreenDisplay {} }
 
     // === Deferred panels (user-triggered or non-critical at boot) ===
+    // The ringing surface deliberately sits outside the notification pipeline:
+    // Notifications.popupInhibited would swallow it with the sidebar open, in
+    // quiet hours or in game mode. See AlarmRingingPanel.qml.
+    DeferredPanelLoader { identifier: "iiAlarmRinging"; component: AlarmRingingPanel {} }
     DeferredPanelLoader { identifier: "iiBootGreeting"; component: BootGreeting {} }
     OnDemandPanelLoader { identifier: "iiCheatsheet"; open: GlobalStates.cheatsheetOpen; component: Cheatsheet {} }
     OnDemandPanelLoader {

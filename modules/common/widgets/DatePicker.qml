@@ -12,7 +12,74 @@ Item {
 
     // API
     property date selectedDate: new Date()
+    // Optional bounds. The defaults allow everything, so existing callers see
+    // no change; a caller that has a range says so and out-of-range days go
+    // dim and unclickable instead of being accepted and refused later.
+    property date minimumDate: new Date(1900, 0, 1)
+    property date maximumDate: new Date(9999, 11, 31)
     signal dateSelected(date date)
+
+    readonly property real minimumMs: new Date(root.minimumDate.getFullYear(), root.minimumDate.getMonth(), root.minimumDate.getDate()).getTime()
+    readonly property real maximumMs: new Date(root.maximumDate.getFullYear(), root.maximumDate.getMonth(), root.maximumDate.getDate()).getTime()
+
+    function inRange(year: int, month: int, day: int): bool {
+        const ms = new Date(year, month - 1, day).getTime();
+        return ms >= root.minimumMs && ms <= root.maximumMs;
+    }
+
+    // Every day the grid can reach with a click has to be reachable without
+    // one. Moving the selection IS the choice here, exactly as a click is —
+    // there is no second "confirm" step to get wrong.
+    function moveSelection(days: int, months: int): void {
+        const d = new Date(root.selectedDate.getFullYear(), root.selectedDate.getMonth(), root.selectedDate.getDate());
+        if (months !== 0) {
+            // Day first: stepping a month from the 31st would otherwise land in
+            // the month after next.
+            d.setDate(1);
+            d.setMonth(d.getMonth() + months);
+            const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+            d.setDate(Math.min(root.selectedDate.getDate(), lastDay));
+        }
+        if (days !== 0)
+            d.setDate(d.getDate() + days);
+        root.selectDate(new Date(Math.min(Math.max(d.getTime(), root.minimumMs), root.maximumMs)));
+    }
+
+    function selectDate(date: date): void {
+        root.selectedDate = date;
+        // The grid is drawn from monthShift, not from the selection, so a
+        // selection that walked off the page has to bring the page with it.
+        const today = new Date();
+        root.monthShift = (date.getFullYear() - today.getFullYear()) * 12 + (date.getMonth() - today.getMonth());
+        root.dateSelected(date);
+    }
+
+    activeFocusOnTab: true
+    Accessible.role: Accessible.Table
+    Accessible.name: Translation.tr("Date")
+    Accessible.description: Translation.tr("Selected %1. Arrow keys move by day and week, Page Up and Page Down by month, Home returns to today.").arg(root.locale.toString(root.selectedDate, "dddd d MMMM yyyy"))
+
+    Keys.onPressed: event => {
+        if (event.key === Qt.Key_Left)
+            root.moveSelection(-1, 0);
+        else if (event.key === Qt.Key_Right)
+            root.moveSelection(1, 0);
+        else if (event.key === Qt.Key_Up)
+            root.moveSelection(-7, 0);
+        else if (event.key === Qt.Key_Down)
+            root.moveSelection(7, 0);
+        else if (event.key === Qt.Key_PageUp)
+            root.moveSelection(0, -1);
+        else if (event.key === Qt.Key_PageDown)
+            root.moveSelection(0, 1);
+        else if (event.key === Qt.Key_Home)
+            root.selectDate(new Date(Math.min(Math.max(new Date().setHours(0, 0, 0, 0), root.minimumMs), root.maximumMs)));
+        else if (event.key === Qt.Key_Space || event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
+            root.dateSelected(root.selectedDate);
+        else
+            return;
+        event.accepted = true;
+    }
 
     // Internal
     property int monthShift: 0
@@ -122,6 +189,18 @@ Item {
 
     implicitWidth: calendarColumn.implicitWidth + 16
     implicitHeight: calendarColumn.implicitHeight + 16
+
+    // Keyboard focus has to be visible or the arrow keys are a secret. The
+    // selected day already reads as chosen; this says which control the keys
+    // are talking to.
+    Rectangle {
+        anchors.fill: parent
+        visible: root.activeFocus
+        color: "transparent"
+        radius: root.radius
+        border.width: 1
+        border.color: root.colPrimary
+    }
 
     ColumnLayout {
         id: calendarColumn
@@ -243,8 +322,10 @@ Item {
                         model: 7
 
                         delegate: Rectangle {
+                            id: dayCell
                             required property int index
                             property var cellData: root.calendarLayout?.[parent.weekRow]?.[index] ?? {}
+                            readonly property bool allowed: root.inRange(cellData.year ?? 0, cellData.month ?? 1, cellData.day ?? 1)
 
                             implicitWidth: 32
                             implicitHeight: 32
@@ -269,11 +350,12 @@ Item {
                                     if (!cellData.isCurrentMonth) return root.colTextSecondary
                                     return root.colText
                                 }
-                                opacity: cellData.isCurrentMonth ? 1 : 0.5
+                                opacity: !dayCell.allowed ? 0.25 : (cellData.isCurrentMonth ? 1 : 0.5)
                             }
 
                             MouseArea {
                                 anchors.fill: parent
+                                enabled: dayCell.allowed
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
 

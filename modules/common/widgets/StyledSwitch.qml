@@ -22,6 +22,20 @@ Switch {
 
     PointingHandInteraction {}
 
+    // Keyboard focus has to be visible or the switch is a control you can
+    // reach and cannot find. Its own border carries the on/off state, so the
+    // ring sits outside the track rather than recolouring it. visualFocus, not
+    // activeFocus: this appears for Tab and never for a click.
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: -4
+        visible: root.visualFocus
+        color: "transparent"
+        radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : (Appearance?.rounding.full ?? 9999)
+        border.width: 2
+        border.color: Appearance.colors.colPrimary
+    }
+
     // Custom track styling
     background: Rectangle {
         width: parent.width

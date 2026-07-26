@@ -335,7 +335,8 @@ ContentPage {
             { key: "powerPlug", label: Translation.tr("Power plugged in") },
             { key: "powerUnplug", label: Translation.tr("Power unplugged") },
             { key: "pomodoroDone", label: Translation.tr("Pomodoro ends") },
-            { key: "timerDone", label: Translation.tr("Timer ends") }
+            { key: "timerDone", label: Translation.tr("Timer ends") },
+            { key: "alarmDone", label: Translation.tr("Alarm rings") }
         ]
 
         SettingsGroup {
@@ -506,6 +507,77 @@ ContentPage {
                     placeholderText: Translation.tr("e.g. dd/MM")
                     text: Config.options?.time?.shortDateFormat ?? "dd/MM"
                     onEditingFinished: Config.setNestedValue("time.shortDateFormat", text)
+                }
+            }
+        }
+    }
+
+    SettingsCardSection {
+        id: alarmsSection
+        expanded: false
+        icon: "alarm"
+        title: Translation.tr("Alarms")
+
+        // Defaults only. An alarm carrying its own value keeps it — the
+        // resolution rule lives in AlarmService, not here.
+        //
+        // AlarmService caps the "unlimited" sentinel (-1) at 12 h, so -1 and
+        // 720 already describe the same behaviour. Show a stored -1 as 720.
+        readonly property int graceValue: {
+            const minutes = Config.options?.alarms?.graceMinutes ?? 5;
+            return minutes < 0 ? 720 : Math.min(minutes, 720);
+        }
+
+        SettingsGroup {
+            ConfigRow {
+                uniform: true
+                ConfigSpinBox {
+                    icon: "snooze"
+                    text: Translation.tr("Snooze length")
+                    description: Translation.tr("Minutes an alarm waits after you press Snooze")
+                    value: Config.options?.alarms?.snoozeMinutes ?? 5
+                    from: 1
+                    to: 60
+                    stepSize: 1
+                    onValueChanged: {
+                        Config.setNestedValue("alarms.snoozeMinutes", value);
+                    }
+                }
+            }
+
+            ConfigRow {
+                uniform: true
+                ConfigSpinBox {
+                    icon: "schedule"
+                    text: Translation.tr("Late ring window")
+                    description: Translation.tr("Minutes an alarm that came due while the shell was off may still ring on return. 0 = never ring late, 720 = the 12 hour maximum")
+                    value: alarmsSection.graceValue
+                    from: 0
+                    to: 720
+                    stepSize: 15
+                    onValueChanged: {
+                        // A stored -1 already means this. Don't rewrite it just
+                        // because the page opened.
+                        if (value === 720 && (Config.options?.alarms?.graceMinutes ?? 5) < 0)
+                            return;
+                        Config.setNestedValue("alarms.graceMinutes", value);
+                    }
+                }
+            }
+
+            ConfigRow {
+                uniform: true
+                ConfigSpinBox {
+                    icon: "alarm_off"
+                    text: Translation.tr("Stop ringing after")
+                    description: Translation.tr("Minutes an unattended alarm keeps ringing before it stops and counts as missed")
+                    value: Config.options?.alarms?.autoStopMinutes ?? 5
+                    from: 1
+                    to: 60
+                    stepSize: 1
+                    onValueChanged: {
+                        Config.setNestedValue("alarms.autoStopMinutes", value);
+                    }
                 }
             }
         }

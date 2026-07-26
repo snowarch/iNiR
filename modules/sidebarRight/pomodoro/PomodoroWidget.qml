@@ -13,7 +13,10 @@ Item {
     property var tabButtonList: [
         {"name": Translation.tr("Pomodoro"), "icon": "search_activity"},
         {"name": Translation.tr("Timer"), "icon": "hourglass_empty"},
-        {"name": Translation.tr("Stopwatch"), "icon": "timer"}
+        {"name": Translation.tr("Stopwatch"), "icon": "timer"},
+        // Appended, never inserted: the tab index is persisted, so inserting
+        // would silently move every existing user to a different tab.
+        {"name": Translation.tr("Alarms"), "icon": "alarm"}
     ]
 
     // Style tokens
@@ -28,25 +31,51 @@ Item {
         : Appearance.auroraEverywhere ? "transparent"
         : Appearance.colors.colOutlineVariant
 
+    // Four tabs no longer fit this bar with labels at sidebar width: the
+    // labels ran into the icons. Measured against the widest label so the tabs
+    // stay uniform — either they all show text or none do.
+    TextMetrics {
+        id: widestTabLabel
+        font.pixelSize: Appearance.font.pixelSize.small
+        font.family: Appearance.font.family.main
+        text: root.tabButtonList.reduce((widest, tab) => tab.name.length > widest.length ? tab.name : widest, "")
+    }
+    readonly property bool tabTextFits: tabBar.width / root.tabButtonList.length
+        >= widestTabLabel.width + Appearance.font.pixelSize.huge + 33
+
+    // currentTab is a pure binding on the persisted value, so every tab change
+    // must write Persistent rather than assign currentTab — assigning would
+    // break the binding, and the bar indicator (which switches tabs by writing
+    // Persistent) would silently stop working from then on.
+    function setTab(index: int): void {
+        if (Persistent?.states?.timer)
+            Persistent.states.timer.tab = Math.max(0, Math.min(index, root.tabButtonList.length - 1))
+    }
+
     Keys.onPressed: (event) => {
         if ((event.key === Qt.Key_PageDown || event.key === Qt.Key_PageUp) && event.modifiers === Qt.NoModifier) {
             if (event.key === Qt.Key_PageDown) {
-                currentTab = Math.min(currentTab + 1, root.tabButtonList.length - 1)
+                root.setTab(root.currentTab + 1)
             } else if (event.key === Qt.Key_PageUp) {
-                currentTab = Math.max(currentTab - 1, 0)
+                root.setTab(root.currentTab - 1)
             }
             event.accepted = true
         } else if (event.key === Qt.Key_Space || event.key === Qt.Key_S) {
+            // Explicit per tab, no trailing else: on the alarms tab these are
+            // letters someone is typing into a name, not stopwatch controls.
             if (currentTab === 0) TimerService.togglePomodoro()
             else if (currentTab === 1) TimerService.toggleCountdown()
-            else TimerService.toggleStopwatch()
+            else if (currentTab === 2) TimerService.toggleStopwatch()
+            else return
             event.accepted = true
         } else if (event.key === Qt.Key_R) {
             if (currentTab === 0) TimerService.resetPomodoro()
             else if (currentTab === 1) TimerService.resetCountdown()
-            else TimerService.stopwatchReset()
+            else if (currentTab === 2) TimerService.stopwatchReset()
+            else return
             event.accepted = true
         } else if (event.key === Qt.Key_L) {
+            if (currentTab === 3) return
             TimerService.stopwatchRecordLap()
             event.accepted = true
         }
@@ -67,12 +96,7 @@ Item {
                 anchors.right: pinButton.left
                 anchors.rightMargin: 6
                 currentIndex: currentTab
-                onCurrentIndexChanged: {
-                    currentTab = currentIndex
-                    if (Persistent?.states?.timer) {
-                        Persistent.states.timer.tab = currentIndex
-                    }
-                }
+                onCurrentIndexChanged: root.setTab(currentIndex)
 
                 background: Item {
                     WheelHandler {
@@ -90,8 +114,14 @@ Item {
                     model: root.tabButtonList
                     delegate: SecondaryTabButton {
                         selected: (index == currentTab)
-                        buttonText: modelData.name
+                        buttonText: root.tabTextFits ? modelData.name : ""
                         buttonIcon: modelData.icon
+
+                        StyledToolTip {
+                            // The only label left once the text is dropped.
+                            extraVisibleCondition: !root.tabTextFits
+                            text: modelData.name
+                        }
                     }
                 }
             }
@@ -166,21 +196,33 @@ Item {
             currentIndex: currentTab
             onCurrentIndexChanged: {
                 tabIndicator.enableIndicatorAnimation = true
-                currentTab = currentIndex
-                if (Persistent?.states?.timer) {
-                    Persistent.states.timer.tab = currentIndex
-                }
+                root.setTab(currentIndex)
             }
 
+            // A SwipeView keeps every page alive and enabled, so Tab walks
+            // into the pages the user cannot see: from the tab bar it landed
+            // on the pomodoro controls, and reaching the alarm rows meant
+            // tabbing blind through three off-screen pages, pressing Space on
+            // an invisible timer button on the way. Disabling the pages that
+            // are not showing takes them out of the tab chain and nothing
+            // else — the timers themselves live in TimerService, not here.
             PomodoroTimer {
+                enabled: SwipeView.isCurrentItem
                 compactMode: root.compactMode
                 centerMode: root.centerMode
             }
             CountdownTimer {
+                enabled: SwipeView.isCurrentItem
                 compactMode: root.compactMode
                 centerMode: root.centerMode
             }
             Stopwatch {
+                enabled: SwipeView.isCurrentItem
+                compactMode: root.compactMode
+                centerMode: root.centerMode
+            }
+            AlarmList {
+                enabled: SwipeView.isCurrentItem
                 compactMode: root.compactMode
                 centerMode: root.centerMode
             }

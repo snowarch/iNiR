@@ -11,6 +11,15 @@ StyledPopup {
     property bool countdownActive: TimerService?.countdownRunning ?? false
     property bool stopwatchActive: TimerService?.stopwatchRunning ?? false
 
+    property bool alarmActive: false
+    // Resolved by the indicator through AlarmService.displayName so an unnamed
+    // alarm still follows the current language.
+    property string alarmName: ""
+    property real alarmAt: -1
+    // A snoozed alarm's time is its snooze target, not its scheduled slot —
+    // label it so the shifted time reads as deliberate rather than wrong.
+    property bool alarmSnoozed: false
+
     property bool paused: false
 
     property bool pinnedIdle: false
@@ -36,6 +45,15 @@ StyledPopup {
             const ms = Math.floor((total % 100) / 10)
             return `${mins.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}.${ms}`
         }
+        if (alarmActive && root.alarmAt >= 0) {
+            const at = new Date(root.alarmAt)
+            const now = DateTime.clock.date
+            const timeFormat = Config.options?.time?.format ?? "hh:mm"
+            // A bare clock time is ambiguous for anything that is not today,
+            // and the whole point of this line is which moment it is.
+            const sameDay = at.getFullYear() === now.getFullYear() && at.getMonth() === now.getMonth() && at.getDate() === now.getDate()
+            return Qt.locale().toString(at, sameDay ? timeFormat : `${Config.options?.time?.dateFormat ?? "ddd, dd/MM"} ${timeFormat}`)
+        }
         return "00:00"
     }
 
@@ -50,6 +68,7 @@ StyledPopup {
         }
         if (countdownActive) return Translation.tr("Countdown")
         if (stopwatchActive) return Translation.tr("Stopwatch")
+        if (alarmActive) return root.alarmName
         return ""
     }
 
@@ -63,6 +82,7 @@ StyledPopup {
         if (pomodoroActive) return (TimerService?.pomodoroBreak ?? false) ? "coffee" : "target"
         if (countdownActive) return "hourglass_top"
         if (stopwatchActive) return "timer"
+        if (alarmActive) return "alarm"
         return "schedule"
     }
 
@@ -118,6 +138,12 @@ StyledPopup {
                 text: Translation.tr("Elapsed:")
                 color: Appearance.colors.colOnSurfaceVariant
                 visible: root.stopwatchActive
+            }
+
+            StyledText {
+                text: root.alarmSnoozed ? Translation.tr("Snoozed until:") : Translation.tr("Rings at:")
+                color: Appearance.colors.colOnSurfaceVariant
+                visible: root.alarmActive && !root.pomodoroActive && !root.countdownActive && !root.stopwatchActive
             }
 
             StyledText {

@@ -1,4 +1,7 @@
 module qs.modules.sidebarRight.pomodoro
+AlarmCard 1.0 AlarmCard.qml
+AlarmEditor 1.0 AlarmEditor.qml
+AlarmList 1.0 AlarmList.qml
 CountdownTimer 1.0 CountdownTimer.qml
 PomodoroTimer 1.0 PomodoroTimer.qml
 PomodoroWidget 1.0 PomodoroWidget.qml

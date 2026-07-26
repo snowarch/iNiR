@@ -65,6 +65,12 @@ ShellRoot {
     property var _calendarSyncService
     property var _todoService
     property var _notepadService
+    // Alarms must be armed whether or not anyone opens the Timer panel.
+    // The service polls on its own; nothing else would ever instantiate it.
+    property var _alarmService
+    // Ditto for the ring's audio: a singleton nothing references is a singleton
+    // that never exists, and a ring nobody hears is not a ring.
+    property var _alarmAudio
 
     // Boot phase timing (ms since epoch). Written to ~/.cache/inir/last-boot.json
     // when the deferred phase finishes. `inir status` reads this back to show users
@@ -178,6 +184,8 @@ ShellRoot {
             root._calendarSyncService = CalendarSync;
             root._todoService = Todo;
             root._notepadService = Notepad;
+            root._alarmService = AlarmService;
+            root._alarmAudio = AlarmAudio;
             root._bootLateFeaturesAt = Date.now();
             root._writeBootPhase();
         }
