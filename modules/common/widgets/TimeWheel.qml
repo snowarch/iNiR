@@ -154,9 +154,25 @@ Item {
         property real wheelAccumulator: 0
         readonly property string currentLabel: String(column.model[column.currentIndex] ?? "")
 
+        // True for the duration of a keyboard-driven step. Qt's Basic style
+        // hardcodes the Tumbler scroll animation at 300ms with no exposed
+        // way to shorten it, so a held Up/Down key visibly lags behind the
+        // repeat rate; this flag (read by the custom contentItem below and
+        // by the selection-tick pulse) shortens both for as long as the key
+        // is being driven, then a timer flips it back for the next
+        // mouse/touch interaction.
+        property bool fastStep: false
+        Timer {
+            id: fastStepReset
+            interval: 260
+            onTriggered: column.fastStep = false
+        }
+
         signal stepped
 
         function step(delta: int): void {
+            column.fastStep = true;
+            fastStepReset.restart();
             column.currentIndex = (column.currentIndex + column.count + delta) % column.count;
         }
 
@@ -223,14 +239,44 @@ Item {
                         target: band
                         property: "scale"
                         to: 1.04
-                        duration: Appearance.animation.elementMoveFast.duration / 3
+                        duration: column.fastStep ? Appearance.animation.elementMoveFast.duration / 4 : Appearance.animation.elementMoveFast.duration / 3
                     }
                     NumberAnimation {
                         target: band
                         property: "scale"
                         to: 1
-                        duration: Appearance.animation.elementMoveFast.duration / 2
+                        duration: column.fastStep ? Appearance.animation.elementMoveFast.duration / 3 : Appearance.animation.elementMoveFast.duration / 2
                     }
+                }
+            }
+        }
+
+        // Qt's Basic style contentItem (TumblerView) hardcodes its scroll
+        // animation at 300ms with no exposed way to shorten it, so a held
+        // Up/Down key visibly lagged behind its own repeat rate. This is
+        // the same PathView Qt's own "Customizing Tumbler" example uses to
+        // replace it — currentIndex is bound one-way here, but Tumbler's
+        // C++ side watches the contentItem's currentIndex notify signal
+        // directly, so drag/flick still writes back into column.currentIndex.
+        contentItem: PathView {
+            id: pathView
+            model: column.model
+            delegate: column.delegate
+            clip: true
+            currentIndex: column.currentIndex
+            pathItemCount: column.visibleItemCount + 1
+            preferredHighlightBegin: 0.5
+            preferredHighlightEnd: 0.5
+            highlightRangeMode: PathView.StrictlyEnforceRange
+            snapMode: PathView.SnapToItem
+            highlightMoveDuration: column.fastStep ? 180 : 300
+
+            path: Path {
+                startX: pathView.width / 2
+                startY: -root.rowHeight / 2
+                PathLine {
+                    x: pathView.width / 2
+                    y: pathView.pathItemCount * root.rowHeight - root.rowHeight / 2
                 }
             }
         }
