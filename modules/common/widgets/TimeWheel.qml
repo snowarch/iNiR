@@ -105,6 +105,41 @@ Item {
     implicitWidth: columns.implicitWidth
     implicitHeight: root.rowHeight * root.visibleRows
 
+    // Up/Down previously only worked once Tab had explicitly reached a
+    // column — a keyboard user had to Tab through the row before the arrow
+    // keys did anything. These are window-level shortcuts (not per-column
+    // Keys handlers) precisely so they fire with no column focused yet;
+    // they grab focus for whichever column is active (or the first one)
+    // and step it in the same keypress.
+    readonly property var wheelColumns: root.use12Hour ? [hourColumn12, minuteColumn] : [hourColumn24, minuteColumn]
+
+    function stepFocusedColumn(delta: int): void {
+        const target = root.wheelColumns.find(c => c.activeFocus) ?? root.wheelColumns[0];
+        target.forceActiveFocus();
+        target.step(delta);
+    }
+
+    Shortcut {
+        sequence: "Up"
+        enabled: root.visible
+        onActivated: root.stepFocusedColumn(-1)
+    }
+    Shortcut {
+        sequence: "Down"
+        enabled: root.visible
+        onActivated: root.stepFocusedColumn(1)
+    }
+    Shortcut {
+        sequence: "PgUp"
+        enabled: root.visible
+        onActivated: root.stepFocusedColumn(-10)
+    }
+    Shortcut {
+        sequence: "PgDown"
+        enabled: root.visible
+        onActivated: root.stepFocusedColumn(10)
+    }
+
     /**
      * One scrolling column. `wrap` is what removes the dead end at 59/23; the
      * delegate's reaction to `Tumbler.displacement` is what makes exactly one
