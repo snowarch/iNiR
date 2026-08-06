@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import qs
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
@@ -1057,7 +1058,7 @@ Item {
                     RotationAnimation on rotation {
                         from: 0; to: 360; duration: 1000
                         loops: Animation.Infinite
-                        running: YtMusic.searching
+                        running: YtMusic.searching && GlobalStates.sidebarLeftOpen
                     }
 
                     // Reset rotation to 0 when search ends so icon doesn't stay tilted
@@ -1360,6 +1361,7 @@ Item {
                         enabled: !YtMusic.syncingLiked
                         onClicked: { YtMusic.fetchLikedSongs(); YtMusic.fetchYtMusicPlaylists() }
                         contentItem: MaterialSymbol {
+                            id: syncIcon
                             anchors.centerIn: parent
                             text: "sync"
                             iconSize: 20
@@ -1367,7 +1369,8 @@ Item {
                             RotationAnimation on rotation {
                                 from: 0; to: 360; duration: 1000
                                 loops: Animation.Infinite
-                                running: YtMusic.syncingLiked
+                                running: YtMusic.syncingLiked && GlobalStates.sidebarLeftOpen
+                                onRunningChanged: if (!running) syncIcon.rotation = 0
                             }
                         }
                         StyledToolTip { text: Translation.tr("Sync library") }

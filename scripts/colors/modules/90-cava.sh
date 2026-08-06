@@ -58,7 +58,7 @@ build_gradient_theme() {
     [[ -n "$c" ]] && colors+=("$c")
     (( ${#colors[@]} >= count )) && break
   done
-  (( ${#colors[@]} >= 2 )) || return 1
+  (( ${#colors[@]} >= 1 )) || return 1
   printf '%s\n' "${colors[@]}"
 }
 
@@ -76,7 +76,7 @@ build_gradient_vibrant() {
     fi
     (( ${#colors[@]} >= count )) && break
   done
-  (( ${#colors[@]} >= 2 )) || return 1
+  (( ${#colors[@]} >= 1 )) || return 1
   printf '%s\n' "${colors[@]}"
 }
 
@@ -123,7 +123,7 @@ build_gradient_cover() {
     c=$(cover_color "$i")
     [[ -n "$c" ]] && colors+=("$c")
   done
-  if (( ${#colors[@]} < 2 )); then
+  if (( ${#colors[@]} < 1 )); then
     log_module "Not enough cover colors (${#colors[@]}), falling back to theme"
     build_gradient_theme "$count"
     return
@@ -171,7 +171,7 @@ generate_managed_block() {
   stereo=$(cava_cfg stereo "true")
 
   # Clamp gradient count
-  (( gradient_count < 2 )) && gradient_count=2
+  (( gradient_count < 1 )) && gradient_count=1
   (( gradient_count > 8 )) && gradient_count=8
 
   if [[ "$color_source" == "cover" ]]; then
@@ -186,7 +186,7 @@ generate_managed_block() {
     *)       while IFS= read -r c; do gradient+=("$c"); done < <(build_gradient_theme "$gradient_count") ;;
   esac
 
-  (( ${#gradient[@]} >= 2 )) || return 1
+  (( ${#gradient[@]} >= 1 )) || return 1
 
   mapfile -t _input_cfg < <(resolve_cava_input_source)
   input_method="${_input_cfg[0]:-pipewire}"
@@ -230,6 +230,8 @@ generate_managed_block() {
 
   if [[ -n "$fg_override" ]]; then
     printf "foreground = '%s'\n" "$fg_override"
+  elif (( ${#gradient[@]} == 1 )); then
+    printf "foreground = '%s'\n" "${gradient[0]}"
   else
     printf 'gradient = 1\n'
     local i=1

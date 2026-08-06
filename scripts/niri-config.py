@@ -100,6 +100,46 @@ def run_niri(*args):
 # ─── Outputs ──────────────────────────────────────────────────────────
 
 
+VRR_WINDOW_RULE = """
+// On-demand VRR: variable refresh rate only turns on for windows matched here.
+// Add your own app-ids to extend it, or remove the block to keep VRR always off.
+window-rule {
+    match app-id="^(gamescope|steam_app_[0-9]+|lutris|heroic|com\\\\.heroicgameslauncher\\\\.hgl|mpv|vlc)$"
+
+    variable-refresh-rate true
+}
+"""
+
+
+def read_vrr_modes():
+    """Map output name -> configured VRR mode ("off" | "on" | "on-demand").
+
+    Niri's IPC only reports whether VRR is currently active, which is always
+    false for on-demand outputs with no matching window on screen. The mode
+    itself only exists in the KDL config, so read it from there.
+    """
+    outputs_file = resolve_niri_section_file("config.d/15-outputs.kdl")
+    if not outputs_file.exists():
+        return {}
+
+    try:
+        content = outputs_file.read_text()
+    except Exception:
+        return {}
+
+    modes = {}
+    for match in re.finditer(r'output\s+"([^"]+)"\s*\{(.*?)\}', content, re.DOTALL):
+        name, block = match.group(1), match.group(2)
+        vrr = re.search(r"^\s*variable-refresh-rate([^\n]*)", block, re.MULTILINE)
+        if not vrr:
+            modes[name] = "off"
+        elif "on-demand=true" in vrr.group(1):
+            modes[name] = "on-demand"
+        else:
+            modes[name] = "on"
+    return modes
+
+
 def cmd_outputs():
     """Get structured output info from Niri."""
     raw, rc = run_niri("-j", "outputs")
@@ -108,6 +148,7 @@ def cmd_outputs():
         return 1
 
     data = json.loads(raw)
+    vrr_modes = read_vrr_modes()
     result = []
 
     for name, out in data.items():
@@ -163,6 +204,9 @@ def cmd_outputs():
                 "position": {"x": logical.get("x", 0), "y": logical.get("y", 0)},
                 "vrr_supported": out.get("vrr_supported", False),
                 "vrr_enabled": out.get("vrr_enabled", False),
+                "vrr_mode": vrr_modes.get(
+                    name, "on" if out.get("vrr_enabled", False) else "off"
+                ),
                 "resolutions": list(res_map.values()),
             }
         )
@@ -194,7 +238,12 @@ def cmd_apply_output(args):
         elif key == "transform":
             out, rc = run_niri("output", output_name, "transform", value)
         elif key == "vrr":
-            out, rc = run_niri("output", output_name, "vrr", value)
+            # niri msg syntax is `vrr [--on-demand] <on|off>`; "on-demand" is a
+            # flag on top of "on", not a value the CLI accepts on its own.
+            if value == "on-demand":
+                out, rc = run_niri("output", output_name, "vrr", "--on-demand", "on")
+            else:
+                out, rc = run_niri("output", output_name, "vrr", value)
         elif key == "position":
             parts = value.split(",")
             if len(parts) == 2:
@@ -245,6 +294,10 @@ def cmd_persist_output(args):
             json.dumps({"error": f"Unknown output key(s): {', '.join(unknown_keys)}"})
         )
         return 1
+
+    # On-demand VRR does nothing unless some window rule opts a window into it.
+    if changes.get("vrr") == "on-demand":
+        _ensure_vrr_window_rule()
 
     outputs_file = resolve_niri_section_file("config.d/15-outputs.kdl")
     outputs_file.parent.mkdir(parents=True, exist_ok=True)
@@ -322,6 +375,30 @@ def cmd_persist_output(args):
             result = new_block + "\n"
 
     return _write_validated(outputs_file, result)
+
+
+def _ensure_vrr_window_rule():
+    """Add the default on-demand VRR window rule if no rule opts into VRR yet.
+
+    Best-effort: a failure here still leaves the output change persistable, and
+    an unmatched VRR window rule is inert on its own.
+    """
+    rules_file = resolve_niri_section_file("config.d/30-window-rules.kdl")
+    existing = rules_file.read_text() if rules_file.exists() else ""
+
+    if re.search(r"^\s*variable-refresh-rate\b", existing, re.MULTILINE):
+        return
+
+    rules_file.parent.mkdir(parents=True, exist_ok=True)
+    backup = existing if rules_file.exists() else None
+    rules_file.write_text(existing.rstrip() + "\n" + VRR_WINDOW_RULE)
+
+    valid, _ = _validate_config()
+    if not valid:
+        if backup is not None:
+            rules_file.write_text(backup)
+        else:
+            rules_file.unlink(missing_ok=True)
 
 
 def _set_in_block(block_content, key, value):
@@ -1365,6 +1442,65 @@ def _sync_cursor_env(theme=None, size=None):
             capture_output=True,
         )
 
+    # Materialize the libXcursor "default" fallback. XWayland apps (Spotify and
+    # other X11/Electron clients) that request the X "core" cursor never read
+    # XCURSOR_THEME — libXcursor resolves them through ~/.icons/default, which by
+    # default inherits Adwaita, so their pointer differs from the Wayland cursor.
+    # Pointing the default theme at ours closes that gap without env vars.
+    # See the Arch Wiki "Cursor themes > The default cursor theme".
+    if theme is not None:
+        _ensure_default_cursor_inherits(theme)
+
+
+def _ensure_default_cursor_inherits(theme):
+    """Write ~/.local/share/icons/default/index.theme -> Inherits=<theme>.
+
+    This is the passive fallback libXcursor uses when a client asks for the
+    core X cursor without honoring XCURSOR_THEME. Never point "default" at
+    itself, which would create an inheritance loop."""
+    if not theme or theme == "default":
+        return
+    default_dir = Path.home() / ".local" / "share" / "icons" / "default"
+    default_dir.mkdir(parents=True, exist_ok=True)
+    index = default_dir / "index.theme"
+    desired = f"[Icon Theme]\nName=Default\nComment=Default cursor theme\nInherits={theme}\n"
+    try:
+        if index.exists() and index.read_text() == desired:
+            return
+        index.write_text(desired)
+    except OSError:
+        pass
+
+
+def cmd_sync_cursor():
+    """Read the cursor theme/size from the KDL and materialize it everywhere.
+
+    Idempotent — safe to call on every install/update so XWayland apps inherit
+    the configured cursor even before the user ever opens Settings > Niri."""
+    input_file = resolve_niri_section_file("config.d/10-input-and-cursor.kdl")
+    theme = None
+    size = None
+    try:
+        content = Path(input_file).read_text()
+        cursor_block = _extract_block(content, "cursor", top_level=True)
+        if cursor_block:
+            m = re.search(r'xcursor-theme\s+"([^"]*)"', cursor_block)
+            if m:
+                theme = m.group(1)
+            m = re.search(r"xcursor-size\s+(\d+)", cursor_block)
+            if m:
+                size = int(m.group(1))
+    except OSError:
+        pass
+
+    if theme is None and size is None:
+        print(json.dumps({"error": "No cursor theme/size found in niri config"}))
+        return 1
+
+    _sync_cursor_env(theme=theme, size=size)
+    print(json.dumps({"synced": True, "theme": theme, "size": size}))
+    return 0
+
 
 def _set_input(config_dir, key, value):
     """Surgical edit in 10-input-and-cursor.kdl."""
@@ -1912,7 +2048,22 @@ def _set_xkb_value(content, prop, value):
     kb_content = content[kb_inner_start:kb_inner_end]
     xkb_bounds = _find_block_bounds(kb_content, "xkb")
     if not xkb_bounds:
-        return content
+        if not value:
+            return content
+        opening_line = content[kb_start:kb_inner_start].splitlines()[-1]
+        keyboard_indent = re.match(r"\s*", opening_line).group(0)
+        xkb_indent = keyboard_indent + "    "
+        prop_indent = xkb_indent + "    "
+        trailing = kb_content[len(kb_content.rstrip()) :]
+        if not trailing:
+            trailing = "\n" + keyboard_indent
+        new_xkb_block = (
+            f'{xkb_indent}xkb {{\n'
+            f'{prop_indent}{prop} "{value}"\n'
+            f"{xkb_indent}}}"
+        )
+        new_kb_content = kb_content.rstrip() + "\n" + new_xkb_block + trailing
+        return content[:kb_inner_start] + new_kb_content + content[kb_inner_end:]
 
     _, xkb_inner_start, xkb_inner_end, _ = xkb_bounds
     xkb_content = kb_content[xkb_inner_start:xkb_inner_end]
@@ -2610,7 +2761,7 @@ def main():
         print(
             json.dumps(
                 {
-                    "error": "No command. Use: outputs, apply-output, persist-output, get-input, get-layout, get-animations, get-window-rules, list-cursor-themes, validate, detect-customizations, set, get-binds, set-bind, remove-bind"
+                    "error": "No command. Use: outputs, apply-output, persist-output, get-input, get-layout, get-animations, get-window-rules, list-cursor-themes, sync-cursor, validate, detect-customizations, set, get-binds, set-bind, remove-bind"
                 }
             )
         )
@@ -2628,6 +2779,7 @@ def main():
         "get-animations": lambda: cmd_get_animations(),
         "get-window-rules": lambda: cmd_get_window_rules(),
         "list-cursor-themes": lambda: cmd_list_cursor_themes(),
+        "sync-cursor": lambda: cmd_sync_cursor(),
         "validate": lambda: cmd_validate(),
         "detect-customizations": lambda: cmd_detect_customizations(),
         "set": lambda: cmd_set(args),

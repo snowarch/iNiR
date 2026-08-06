@@ -99,7 +99,7 @@ TabButton {
         implicitHeight: 37
         implicitWidth: tabContent.implicitWidth + root.horizontalContentPadding * 2
         color: (root.hovered ? root.colBackgroundHover : root.colBackground)
-        layer.enabled: true
+        layer.enabled: ripple.opacity > 0
         layer.effect: OpacityMask {
             maskSource: Rectangle {
                 width: buttonBackground.width

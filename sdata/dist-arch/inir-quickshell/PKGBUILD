@@ -6,7 +6,7 @@ pkgver=1.0
 pkgrel=1
 pkgdesc='iNiR - Quickshell and Qt6 dependency bundle'
 arch=(any)
-license=(MIT)
+license=('GPL-3.0-only')
 depends=(
   # Quickshell - NOW IN OFFICIAL REPOS (extra)! No compilation needed!
   quickshell

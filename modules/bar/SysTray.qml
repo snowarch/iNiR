@@ -1,5 +1,6 @@
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.common.functions
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -131,14 +132,17 @@ Item {
             background.implicitWidth: 24
             background.implicitHeight: 24
             background.anchors.centerIn: this
-            colBackgroundToggled: Appearance.inirEverywhere ? Appearance.inir.colSelection 
-                : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface 
+            colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.sticker
+                : Appearance.inirEverywhere ? Appearance.inir.colSelection
+                : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
                 : Appearance.colors.colSecondaryContainer
-            colBackgroundToggledHover: Appearance.inirEverywhere ? Appearance.inir.colSelectionHover 
-                : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover 
+            colBackgroundToggledHover: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover
+                : Appearance.inirEverywhere ? Appearance.inir.colSelectionHover
+                : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover
                 : Appearance.colors.colSecondaryContainerHover
-            colRippleToggled: Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive 
-                : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive 
+            colRippleToggled: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive
+                : Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive
+                : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
                 : Appearance.colors.colSecondaryContainerActive
 
             contentItem: MaterialSymbol {
@@ -147,8 +151,8 @@ Item {
                 text: "expand_more"
                 horizontalAlignment: Text.AlignHCenter
                 color: root.trayOverflowOpen
-                    ? (Appearance.angelEverywhere ? Appearance.angel.colOnPrimary : Appearance.inirEverywhere ? Appearance.inir.colOnSelection : Appearance.colors.colOnSecondaryContainer)
-                    : (Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer2)
+                    ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.angelEverywhere ? Appearance.angel.colOnPrimary : Appearance.inirEverywhere ? Appearance.inir.colOnSelection : Appearance.colors.colOnSecondaryContainer)
+                    : (Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer2)
                 rotation: (root.trayOverflowOpen ? 180 : 0) - (90 * root.vertical) + (180 * root.invertSide)
                 Behavior on rotation {
                     animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }

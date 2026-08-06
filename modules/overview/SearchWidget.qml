@@ -4,6 +4,7 @@ import qs.services.deferred
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
+import qs.modules.pill
 import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Controls
@@ -17,7 +18,15 @@ Item { // Wrapper
     property string searchingText: ""
     property bool showResults: searchingText != ""
     property bool panelVisible: true
+    property bool applicationDragActive: false
     property real availableHeight: root.QsWindow?.window?.height ?? (root.QsWindow?.window?.screen?.height ?? 1080)
+    readonly property bool zzzEverywhere: Appearance.zzzEverywhere
+    // Island: the search surface wears the Ricelin gradient card; the glass
+    // fill, wallpaper backdrop and per-style borders step aside. zzz keeps its
+    // own plate doctrine.
+    // Explicit island opt-in outranks the zzz chrome (same rule as the islands
+    // bar, dock and sidebars).
+    readonly property bool islandStyle: (Config.options?.search?.style ?? "default") === "island"
     readonly property bool actionMode: searchingText.startsWith(root.prefixAction)
     readonly property string actionQuery: actionMode ? StringUtils.cleanPrefix(searchingText, root.prefixAction) : ""
     implicitWidth: searchWidgetContent.implicitWidth + Appearance.sizes.elevationMargin * 2
@@ -188,7 +197,6 @@ Item { // Wrapper
         }
 
         // Default search
-        nonAppResultsTimer.restart();
 
         // Use stable keys for non-app results to prevent unnecessary re-renders
         const mathResultObject = {
@@ -214,6 +222,7 @@ Item { // Wrapper
 
             appResultObjects.push({
                 key: `app_${entry.name}`,
+                desktopEntryId: String(entry.id ?? "").trim().replace(/\.desktop$/i, ""),
                 name: entry.name,
                 clickActionName: Translation.tr("Launch"),
                 type: Translation.tr("App"),
@@ -305,12 +314,28 @@ Item { // Wrapper
         root.cachedResults = result;
     }
 
+    // The default (non-prefixed) result set is the only one that shows a math row,
+    // so it is the only one worth spawning qalc for.
+    function wantsMathResult(text): bool {
+        return text !== ""
+            && !text.startsWith(root.prefixAction)
+            && !text.startsWith(root.prefixClipboard)
+            && !text.startsWith(root.prefixEmojis);
+    }
+
     Timer {
         id: searchDebounceTimer
         interval: 60
         onTriggered: {
             root.debouncedSearchText = root.searchingText;
             root.updateSearchResults();
+            // Scheduled here rather than from updateSearchResults(): qalc's stdout
+            // handler calls updateSearchResults(), so restarting the timer in there
+            // made every qalc result spawn another qalc. qalc -t prints something
+            // for any input ("firefox" -> "0 B"), so the cycle never terminated —
+            // ~33 qalc spawns/second for as long as the box had text in it.
+            if (root.wantsMathResult(root.debouncedSearchText))
+                nonAppResultsTimer.restart();
         }
     }
 
@@ -416,14 +441,82 @@ Item { // Wrapper
         clip: true
         implicitWidth: columnLayout.implicitWidth
         implicitHeight: columnLayout.implicitHeight
-        radius: searchBar.height / 2 + searchBar.verticalPadding
-        fallbackColor: Appearance.colors.colBackgroundSurfaceContainer
-        inirColor: Appearance.inir.colLayer1
+        radius: root.zzzEverywhere ? Appearance.zzz.panelRadius : searchBar.height / 2 + searchBar.verticalPadding
+        // Collapsed zzz search: let ZzzGraphicPlate own the (chamfered/rounded) fill so
+        // the GlassBackground's rounded rect doesn't escape behind it. Results surface
+        // still needs the paper fill (its backdrop is decoration only).
+        fallbackColor: root.islandStyle ? "transparent"
+            : root.zzzEverywhere ? (root.showResults ? Appearance.zzz.paper : "transparent") : Appearance.colors.colBackgroundSurfaceContainer
+        inirColor: root.islandStyle ? "transparent" : Appearance.inir.colLayer1
         auroraTransparency: Appearance.aurora.popupTransparentize
-        wallpaperBackdropEnabled: root.panelVisible
-        border.width: auroraEverywhere || inirEverywhere ? 1 : 0
-        border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+        wallpaperBackdropEnabled: root.panelVisible && !root.zzzEverywhere && !root.islandStyle
+        // Collapsed ZZZ search keeps its integrated plate border, while the
+        // expanded results surface uses the shared panel backdrop + real border.
+        border.width: root.islandStyle ? 0
+            : root.zzzEverywhere
+            ? (root.showResults ? Appearance.zzz.borderThick : 0)
+            : auroraEverywhere || inirEverywhere ? 1 : 0
+        border.color: root.zzzEverywhere ? Appearance.zzz.hairline
+            : Appearance.angelEverywhere ? Appearance.angel.colCardBorder
             : inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colLayer0Border
+        Behavior on radius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on border.color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+
+        // Ricelin island face — outer shadow already comes from
+        // StyledRectangularShadow; content is masked to this same radius.
+        IslandPanel {
+            anchors.fill: parent
+            visible: root.islandStyle
+            radius: searchWidgetContent.radius
+            shadow: false
+            glassEnabled: true
+            // The overview window is fullscreen, so window coords ARE screen
+            // coords; re-map when the search surface moves or resizes.
+            glassScreenX: {
+                void searchWidgetContent.width;
+                void searchWidgetContent.height;
+                return searchWidgetContent.mapToItem(null, 0, 0).x;
+            }
+            glassScreenY: {
+                void searchWidgetContent.width;
+                void searchWidgetContent.height;
+                return searchWidgetContent.mapToItem(null, 0, 0).y;
+            }
+            glassScreenWidth: root.QsWindow?.window?.screen?.width ?? 1920
+            glassScreenHeight: root.QsWindow?.window?.screen?.height ?? 1080
+        }
+
+        // Collapsed search: a CLEAN plate (just the left category accent bar). The
+        // search field is a small control — no ghost text, tape or frame labels.
+        ZzzGraphicPlate {
+            anchors.fill: parent
+            visible: root.zzzEverywhere && !root.showResults && !root.islandStyle
+            accentColor: Appearance.zzz.accent
+        }
+
+        // Expanded results: a large surface, so a restrained backdrop is welcome —
+        // a faint ghost mark only, no ticks/burst noise.
+        ZzzPanelBackdrop {
+            anchors.fill: parent
+            visible: root.zzzEverywhere && root.showResults && !root.islandStyle
+            label: "RESULTS"
+            index: "RX"
+            ghostText: "RESULT"
+            accentColor: Appearance.zzz.accent
+            showTicks: false
+            showBurst: false
+            showGrid: false
+            horizontalBias: 0.1
+            verticalBias: 0.04
+            ghostWidthFactor: 0.8
+            ghostStrength: 0.7
+        }
 
         Behavior on implicitHeight {
             id: searchHeightBehavior
@@ -457,10 +550,10 @@ Item { // Wrapper
                 id: searchBar
                 property real verticalPadding: 4
                 Layout.fillWidth: true
-                Layout.leftMargin: 10
-                Layout.rightMargin: 4
-                Layout.topMargin: verticalPadding
-                Layout.bottomMargin: verticalPadding
+                Layout.leftMargin: root.zzzEverywhere ? 18 : 10
+                Layout.rightMargin: root.zzzEverywhere ? 14 : 4
+                Layout.topMargin: root.zzzEverywhere ? 10 : verticalPadding
+                Layout.bottomMargin: root.zzzEverywhere ? 10 : verticalPadding
                 searchingText: root.searchingText
                 onSearchingTextChanged: if (searchingText !== root.searchingText) root.searchingText = searchingText
             }
@@ -470,7 +563,8 @@ Item { // Wrapper
                 visible: root.showResults && !root.actionMode
                 Layout.fillWidth: true
                 height: 1
-                color: Appearance.colors.colOutlineVariant
+                color: root.zzzEverywhere ? Appearance.zzz.hairline : Appearance.colors.colOutlineVariant
+                Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
             }
 
             // ── Action Mode View (replaces normal results when in / mode) ──
@@ -490,9 +584,9 @@ Item { // Wrapper
                 Layout.fillWidth: true
                 implicitHeight: Math.min(root.resultsAvailableHeight, appResults.contentHeight + topMargin + bottomMargin)
                 clip: true
-                topMargin: 10
-                bottomMargin: 10
-                spacing: 2
+                topMargin: root.zzzEverywhere ? 12 : 10
+                bottomMargin: root.zzzEverywhere ? 14 : 10
+                spacing: root.zzzEverywhere ? 6 : 2
                 KeyNavigation.up: searchBar
                 highlightMoveDuration: 100
 
@@ -552,6 +646,7 @@ Item { // Wrapper
                     anchors.left: parent?.left
                     anchors.right: parent?.right
                     entry: modelData
+                    onApplicationDragChanged: active => root.applicationDragActive = active
                     upTarget: searchBar.searchInput
                     query: StringUtils.cleanOnePrefix(root.debouncedSearchText, [
                         root.prefixAction,

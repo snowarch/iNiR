@@ -7,32 +7,37 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
 
-Rectangle {
+// Fondo de la sección ahora desde el molde compartido (PanelSurface): en zzz toma
+// la placa con esquina cortada de las cards; en el resto, el color de capa correcto.
+PanelSurface {
     id: root
+    islandSkin: (Config.options?.controlPanel?.style ?? "panel") === "island"
     Layout.fillWidth: true
     implicitHeight: statsRow.implicitHeight + 12
+    elevation: 1
+    radiusOverride: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
 
     readonly property bool compactMode: Config.options?.controlPanel?.compactMode ?? true
-    
+    // zzz: el placa tiene esquinas redondeadas (panelRadius); el contenido debe
+    // quedar dentro de la curva para no chocar contra las esquinas (antes el
+    // rail y los labels llegaban hasta el borde y "chocaban"). Pad horizontal =
+    // panelRadius en zzz, none en el resto.
+    readonly property real _contentHPad: Appearance.zzzEverywhere
+        ? Appearance.zzz.panelRadius : (root.compactMode ? 5 : 6)
+    readonly property real _contentVPad: root.compactMode ? 5 : 6
+
     readonly property bool inirEverywhere: Appearance.inirEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
 
-    radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-        : inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
-    color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-         : inirEverywhere ? Appearance.inir.colLayer1
-         : auroraEverywhere ? Appearance.aurora.colSubSurface
-         : Appearance.colors.colLayer1
-    border.width: Appearance.angelEverywhere ? 0 : (inirEverywhere ? 1 : 0)
-    border.color: Appearance.angelEverywhere ? "transparent"
-        : inirEverywhere ? Appearance.inir.colBorder : "transparent"
-
-    AngelPartialBorder { targetRadius: parent.radius; coverage: 0.45 }
+    AngelPartialBorder { targetRadius: root.radiusOverride; coverage: 0.45; visible: Appearance.angelEverywhere }
 
     RowLayout {
         id: statsRow
         anchors.fill: parent
-        anchors.margins: root.compactMode ? 5 : 6
+        anchors.leftMargin: root._contentHPad
+        anchors.rightMargin: root._contentHPad
+        anchors.topMargin: root._contentVPad
+        anchors.bottomMargin: root._contentVPad
         spacing: root.compactMode ? 6 : 8
 
         // CPU
@@ -57,7 +62,8 @@ Rectangle {
 
         // Battery (if available)
         Loader {
-            Layout.fillWidth: true
+            Layout.fillWidth: Battery.available
+            visible: active
             active: Battery.available
             sourceComponent: StatBar {
                 label: "BAT"
@@ -86,7 +92,7 @@ Rectangle {
                 font.pixelSize: Appearance.font.pixelSize.smallest
                 color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
                      : root.inirEverywhere ? Appearance.inir.colTextSecondary
-                     : root.auroraEverywhere ? Appearance.m3colors.m3onSurfaceVariant
+                     : root.auroraEverywhere ? Appearance.colors.colOnSurfaceVariant
                      : Appearance.colors.colSubtext
             }
             Item { Layout.fillWidth: true }
@@ -96,29 +102,59 @@ Rectangle {
                 font.family: Appearance.font.family.numbers
                 color: Appearance.angelEverywhere ? Appearance.angel.colText
                      : root.inirEverywhere ? Appearance.inir.colText
-                     : root.auroraEverywhere ? Appearance.m3colors.m3onSurface
+                     : root.auroraEverywhere ? Appearance.colors.colOnSurface
                      : Appearance.colors.colOnLayer1
             }
         }
 
-        Rectangle {
+        Item {
             Layout.fillWidth: true
-            height: root.compactMode ? 3 : 4
-            radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : 2
-            color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                 : root.inirEverywhere ? Appearance.inir.colLayer2
-                 : root.auroraEverywhere ? ColorUtils.transparentize(Appearance.aurora.colSubSurface, 0.5)
-                 : Appearance.colors.colLayer2
+            implicitHeight: root.compactMode ? (Appearance.zzzEverywhere ? 8 : 3) : (Appearance.zzzEverywhere ? 10 : 4)
 
+            // Non-zzz: continuous progress bar
             Rectangle {
-                width: parent.width * Math.min(1, Math.max(0, bar.value / 100))
-                height: parent.height
+                anchors.fill: parent
+                visible: !Appearance.zzzEverywhere
                 radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : 2
-                color: bar.barColor
+                color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                     : root.inirEverywhere ? Appearance.inir.colLayer2
+                     : root.auroraEverywhere ? ColorUtils.transparentize(Appearance.aurora.colSubSurface, 0.5)
+                     : Appearance.colors.colLayer2
 
-                Behavior on width {
-                    enabled: Appearance.animationsEnabled
-                    NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+                Rectangle {
+                    width: parent.width * Math.min(1, Math.max(0, bar.value / 100))
+                    height: parent.height
+                    radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : 2
+                    color: bar.barColor
+                    Behavior on width {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+                    }
+                }
+            }
+
+            // ZZZ: segmented poster rail (the stat-bar card's signature)
+            Row {
+                id: segRail
+                anchors.fill: parent
+                visible: Appearance.zzzEverywhere
+                spacing: 2
+                clip: true
+                readonly property int segs: 14
+                readonly property int lit: Math.round(Math.min(1, Math.max(0, bar.value / 100)) * segs)
+                Repeater {
+                    model: segRail.segs
+                    delegate: Rectangle {
+                        required property int index
+                        width: Math.max(1, (segRail.width - (segRail.segs - 1) * segRail.spacing) / segRail.segs)
+                        height: segRail.height
+                        radius: Appearance.zzz.cornerRadius
+                        color: index < segRail.lit ? bar.barColor : Appearance.zzz.metricTrack
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
+                    }
                 }
             }
         }

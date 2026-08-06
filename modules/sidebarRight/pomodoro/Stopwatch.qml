@@ -59,7 +59,7 @@ Item {
                 font.pixelSize: Math.round(40 * Appearance.fontSizeScale)
                 color: Appearance.angelEverywhere ? Appearance.angel.colText
                     : Appearance.inirEverywhere ? Appearance.inir.colText
-                    : Appearance.m3colors.m3onSurface
+                    : Appearance.colors.colOnSurface
                 text: {
                     let totalSeconds = Math.floor(TimerService.stopwatchTime) / 100
                     let minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0')
@@ -199,6 +199,7 @@ Item {
             RippleButton {
                 Layout.preferredHeight: 35
                 Layout.preferredWidth: 90
+                buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
                 font.pixelSize: Appearance.font.pixelSize.larger
 
                 onClicked: {
@@ -206,26 +207,34 @@ Item {
                 }
 
                 colBackground: (TimerService.stopwatchRunning && !TimerService.stopwatchPaused)
-                    ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                    ? (Appearance.zzzEverywhere ? Appearance.zzz.sticker
+                        : Appearance.inirEverywhere ? Appearance.inir.colLayer2
                         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colSecondaryContainer)
                     : Appearance.colors.colPrimary
                 colBackgroundHover: (TimerService.stopwatchRunning && !TimerService.stopwatchPaused)
-                    ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                    ? (Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover
+                        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
                         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover : Appearance.colors.colSecondaryContainerHover)
                     : Appearance.colors.colPrimaryHover
                 colRipple: (TimerService.stopwatchRunning && !TimerService.stopwatchPaused)
-                    ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
+                    ? (Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive
+                        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colSecondaryContainerActive)
                     : Appearance.colors.colPrimaryActive 
 
                 contentItem: StyledText {
                     horizontalAlignment: Text.AlignHCenter
                     color: (TimerService.stopwatchRunning && !TimerService.stopwatchPaused)
-                        ? (Appearance.inirEverywhere ? Appearance.inir.colText
+                        ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker
+                            : Appearance.inirEverywhere ? Appearance.inir.colText
                             : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer2 : Appearance.colors.colOnSecondaryContainer)
                         : Appearance.colors.colOnPrimary
                     text: (TimerService.stopwatchRunning && !TimerService.stopwatchPaused) ? Translation.tr("Pause")
                         : TimerService.stopwatchTime === 0 ? Translation.tr("Start") : Translation.tr("Resume")
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                    }
                 }
             }
 

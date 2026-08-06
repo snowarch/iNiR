@@ -59,12 +59,12 @@ Important practical rule:
 - `palette.json` is the explicit shell palette contract for future target consumers
 - `terminal.json` is the explicit terminal palette contract for future target consumers
 - `theme-meta.json` carries generation metadata such as source, mode, scheme, and generator
-- `generate_colors_material.py` is the single authoritative palette generator — it handles
+- `generate_colors_material.py` is the single authoritative palette generator: it handles
   both Material You color extraction AND template rendering (GTK, fuzzel, KDE, etc.)
 
 Current state:
 
-- `matugen` has been removed as a dependency — all color generation and template rendering
+- `matugen` has been removed as a dependency. All color generation and template rendering
   is handled by Python (`materialyoucolor` library + built-in template engine)
 - templates use `{{colors.token.mode.hex}}` syntax (compatible with former matugen templates)
 - template manifest: `defaults/matugen/templates.json` (declares input/output paths)

@@ -21,7 +21,7 @@ Rectangle {
     implicitHeight: contentRow.implicitHeight + (padding * 2)
     color: Appearance.angelEverywhere ? "transparent"
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
-        : Appearance.m3colors.m3surfaceContainer
+        : Appearance.colors.colSurfaceContainer
     radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
         : Appearance.rounding.large
@@ -48,7 +48,7 @@ Rectangle {
         width: Quickshell.screens[0]?.width ?? 1920
         height: Quickshell.screens[0]?.height ?? 1080
         visible: Appearance.angelEverywhere
-        source: Wallpapers.effectiveWallpaperUrl
+        source: visible ? Wallpapers.effectiveWallpaperUrl : ""
         fillMode: Image.PreserveAspectCrop
         cache: true
         sourceSize.width: Quickshell.screens[0]?.width ?? 1920

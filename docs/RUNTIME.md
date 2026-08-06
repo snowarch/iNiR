@@ -70,7 +70,7 @@ inir service status    # check current state
 
 ## The inir launcher
 
-`scripts/inir` is a 2400+ line bash script that wraps Quickshell. It's not the same as running `qs -c inir` directly:
+`scripts/inir` is a 3600+ line bash script that wraps Quickshell. It's not the same as running `qs -c inir` directly:
 
 | | `inir run` | `qs -c inir` |
 |---|---|---|
@@ -175,3 +175,19 @@ QS_DEBUG=1 qs -c inir
 ```
 
 Check `inir logs` for recent journal output, or `inir doctor` for automated diagnostics.
+
+## Performance diagnostics
+
+`inir doctor --perf` prints a read-only snapshot of the running shell. It reports
+process memory and threads, the observed Qt Quick RHI and render loop, DRM render
+nodes, Qt Multimedia decoder ownership, open video and GIF files, mapped Niri
+layer surfaces, child processes, and the `inir.service` cgroup.
+
+```bash
+inir doctor --perf
+```
+
+Use it before changing graphics environment variables or blaming one feature for
+the complete service cgroup. The snapshot distinguishes Quickshell from helpers
+and applications, and flags duplicate media files opened by more than one
+renderer.

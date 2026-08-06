@@ -48,12 +48,23 @@ Item {
                 Layout.preferredWidth: 30
                 Layout.preferredHeight: 30
 
+                CookieFace {
+                    anchors.fill: parent
+                    visible: Appearance.cookieEverywhere
+                    role: "badge"
+                    selected: KeyboardIndicators.popupActive
+                    color: Appearance.colors.colPrimaryContainer
+                }
+
                 MaterialSymbol {
                     anchors.centerIn: parent
                     text: KeyboardIndicators.popupMaterialIcon
                     iconSize: Appearance.font.pixelSize.hugeass
                     fill: 1
-                    color: KeyboardIndicators.popupActive ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer0
+                    color: Appearance.cookieEverywhere
+                        ? Appearance.colors.colOnPrimaryContainer
+                        : KeyboardIndicators.popupActive
+                            ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer0
                 }
             }
 

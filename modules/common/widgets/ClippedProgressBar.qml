@@ -13,8 +13,12 @@ ProgressBar {
     property bool vertical: false
     property real valueBarWidth: 30
     property real valueBarHeight: 18
-    property color highlightColor: Appearance?.colors.colOnSecondaryContainer ?? "#685496"
-    property color trackColor: ColorUtils.transparentize(highlightColor, 0.5) ?? "#F1D3F9"
+    // ZZZ: use the lime/orange signal fill on a carbon track. The default
+    // (colOnSecondaryContainer) resolves to near-black ink under ZZZ → invisible fill.
+    property color highlightColor: Appearance.zzzEverywhere ? Appearance.zzz.metricFill
+        : (Appearance.colors.colOnSecondaryContainer)
+    property color trackColor: Appearance.zzzEverywhere ? Appearance.zzz.metricTrack
+        : (ColorUtils.transparentize(highlightColor, 0.5))
     property alias radius: contentItem.radius
     property string text
     default property Item textMask: Item {
@@ -46,7 +50,12 @@ ProgressBar {
     contentItem: Rectangle {
         id: contentItem
         anchors.fill: parent
-        radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : Math.min(width, height) / 2
+        radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
+            : Appearance.angelEverywhere ? Appearance.angel.roundingSmall : Math.min(width, height) / 2
+        Behavior on radius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
         color: root.trackColor
         visible: false
 
@@ -80,7 +89,12 @@ ProgressBar {
                 }
             }
 
-            radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : Appearance.rounding.unsharpen
+            radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
+                : Appearance.angelEverywhere ? Appearance.angel.roundingSmall : Appearance.rounding.unsharpen
+            Behavior on radius {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
             color: root.highlightColor
 
             Behavior on width {

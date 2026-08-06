@@ -12,59 +12,10 @@ import Quickshell.Hyprland
 
 Scope {
     id: root
-
-    // Canonical focused screen detection (same pattern as OSD, notifications, brightness)
-    readonly property var focusedScreen: CompositorService.isNiri
-        ? (Quickshell.screens.find(s => s.name === NiriService.currentOutput) ?? GlobalStates.primaryScreen)
-        : (Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? GlobalStates.primaryScreen)
-    readonly property string focusedMonitorName: focusedScreen?.name ?? ""
-    readonly property var defaultScreen: GlobalStates.primaryScreen ?? focusedScreen
-    readonly property string defaultMonitorName: defaultScreen?.name ?? focusedMonitorName
-
-    property bool _pendingCoverflow: false
-
-    // Async focused output detection for Niri.
-    // NiriService.currentOutput becomes stale after PanelWindow steals compositor focus.
-    // Querying niri directly gives the real focused output at invocation time.
-    Process {
-        id: niriOutputDetector
-        property string _buffer: ""
-        stdout: SplitParser {
-            onRead: data => {
-                niriOutputDetector._buffer += data + "\n"
-            }
-        }
-        onExited: (code, status) => {
-            let monName = ""
-            if (code === 0 && niriOutputDetector._buffer) {
-                try {
-                    const obj = JSON.parse(niriOutputDetector._buffer)
-                    monName = obj.name || ""
-                } catch(e) {}
-            }
-            niriOutputDetector._buffer = ""
-            if (!monName) monName = root.focusedMonitorName
-            if (root._pendingCoverflow) {
-                root._pendingCoverflow = false
-                root._toggleCoverflowWithMonitor(monName)
-            } else {
-                root._openWithMonitor(monName)
-            }
-        }
-    }
-
-    function _openWithMonitor(monName) {
-        if (monName) {
-            GlobalStates.wallpaperSelectorTargetMonitor = monName
-            Config.setNestedValue("wallpaperSelector.targetMonitor", monName)
-        }
-        GlobalStates.wallpaperSelectorOpen = true
-    }
-
-    function _toggleCoverflowWithMonitor(monName) {
-        Config.setNestedValue("wallpaperSelector.targetMonitor", monName ? monName : "")
-        GlobalStates.wallpaperSelectorOpen = false
-        GlobalStates.coverflowSelectorOpen = !GlobalStates.coverflowSelectorOpen
+    property bool _presentedOpen: false
+    Component.onCompleted: {
+        if (GlobalStates.wallpaperSelectorOpen)
+            Qt.callLater(() => { root._presentedOpen = GlobalStates.wallpaperSelectorOpen })
     }
 
     Loader {
@@ -76,7 +27,10 @@ Scope {
         Connections {
             target: GlobalStates
             function onWallpaperSelectorOpenChanged() {
-                if (!GlobalStates.wallpaperSelectorOpen) {
+                if (GlobalStates.wallpaperSelectorOpen) {
+                    Qt.callLater(() => { root._presentedOpen = GlobalStates.wallpaperSelectorOpen })
+                } else {
+                    root._presentedOpen = false
                     wallpaperSelectorLoader._wsClosing = true
                     _wsCloseTimer.restart()
                 }
@@ -98,7 +52,7 @@ Scope {
                     const s = Quickshell.screens.find(s => s.name === targetMon)
                     if (s) return s
                 }
-                return root.defaultScreen
+                return GlobalStates.focusedScreen ?? GlobalStates.primaryScreen
             }
             readonly property HyprlandMonitor monitor: CompositorService.isHyprland ? Hyprland.monitorFor(panelWindow.screen) : null
             property bool monitorIsFocused: CompositorService.isHyprland 
@@ -150,19 +104,19 @@ Scope {
                 implicitWidth: Appearance.sizes.wallpaperSelectorWidth
                 // Subtle scale + fade when opening/closing the wallpaper selector
                 transformOrigin: Item.Top
-                scale: GlobalStates.wallpaperSelectorOpen ? 1.0 : 0.93
-                opacity: GlobalStates.wallpaperSelectorOpen ? 1.0 : 0.0
+                scale: root._presentedOpen ? 1.0 : 0.93
+                opacity: root._presentedOpen ? 1.0 : 0.0
                 Behavior on scale {
                     enabled: Appearance.animationsEnabled
                     NumberAnimation {
-                        duration: GlobalStates.wallpaperSelectorOpen ? 250 : 180
+                        duration: root._presentedOpen ? 250 : 180
                         easing.type: Easing.OutCubic
                     }
                 }
                 Behavior on opacity {
                     enabled: Appearance.animationsEnabled
                     NumberAnimation {
-                        duration: GlobalStates.wallpaperSelectorOpen ? 250 : 180
+                        duration: root._presentedOpen ? 250 : 180
                         easing.type: Easing.OutCubic
                     }
                 }
@@ -170,122 +124,4 @@ Scope {
         }
     }
 
-    function toggleWallpaperSelector() {
-        if (Config.options?.wallpaperSelector?.useSystemFileDialog ?? false) {
-            Wallpapers.openFallbackPicker(Appearance.m3colors.darkmode);
-            return;
-        }
-
-        // Route to coverflow if that style is selected
-        const style = Config.options?.wallpaperSelector?.style ?? "grid"
-        if (style === "coverflow") {
-            if (GlobalStates.wallpaperSelectorOpen) {
-                GlobalStates.wallpaperSelectorOpen = false
-            }
-
-            const multiMon = Config.options?.background?.multiMonitor?.enable ?? false
-            const explicitMonitor = Config.options?.wallpaperSelector?.targetMonitor ?? ""
-
-            if (!explicitMonitor && multiMon && !root.defaultMonitorName && CompositorService.isNiri && !niriOutputDetector.running) {
-                root._pendingCoverflow = true
-                niriOutputDetector.exec(["niri", "msg", "-j", "focused-output"])
-                return
-            }
-
-            const monName = explicitMonitor || (multiMon ? root.defaultMonitorName : "")
-            root._toggleCoverflowWithMonitor(monName)
-            return
-        }
-
-        if (GlobalStates.coverflowSelectorOpen) {
-            GlobalStates.coverflowSelectorOpen = false
-        }
-
-        // If already open, just close
-        if (GlobalStates.wallpaperSelectorOpen) {
-            GlobalStates.wallpaperSelectorOpen = false
-            return
-        }
-
-        // Check if settings UI explicitly set a target (e.g. from QuickConfig "Change" button)
-        const explicitMonitor = Config.options?.wallpaperSelector?.targetMonitor ?? ""
-        const explicitTarget = Config.options?.wallpaperSelector?.selectionTarget ?? "main"
-        const hasExplicitTarget = explicitMonitor || (explicitTarget !== "main")
-
-        if (!hasExplicitTarget) {
-            // No explicit target: auto-detect based on family
-            if (Config.options?.panelFamily === "waffle") {
-                const useMain = Config.options?.waffles?.background?.useMainWallpaper ?? true
-                Config.setNestedValue("wallpaperSelector.selectionTarget", useMain ? "main" : "waffle")
-            } else {
-                Config.setNestedValue("wallpaperSelector.selectionTarget", "main")
-            }
-            const multiMon = Config.options?.background?.multiMonitor?.enable ?? false
-            if (multiMon) {
-                // For Niri: query focused output asynchronously (NiriService.currentOutput
-                // can be stale after a previous PanelWindow changed compositor focus)
-                if (CompositorService.isNiri && !root.defaultMonitorName && !niriOutputDetector.running) {
-                    niriOutputDetector.exec(["niri", "msg", "-j", "focused-output"])
-                    return
-                }
-                _openWithMonitor(root.defaultMonitorName)
-                return
-            }
-        } else if (explicitMonitor) {
-            GlobalStates.wallpaperSelectorTargetMonitor = explicitMonitor
-        }
-
-        GlobalStates.wallpaperSelectorOpen = true
-    }
-
-    // Cleanup is handled by GlobalStates.onWallpaperSelectorOpenChanged
-
-    IpcHandler {
-        target: "wallpaperSelector"
-
-        function toggle(): void {
-            root.toggleWallpaperSelector();
-        }
-
-        function open(): void {
-            if (!GlobalStates.wallpaperSelectorOpen)
-                root.toggleWallpaperSelector();
-        }
-
-        function close(): void {
-            GlobalStates.wallpaperSelectorOpen = false;
-        }
-
-        function toggleOnMonitor(monitorName: string): void {
-            if (monitorName && monitorName.length > 0) {
-                GlobalStates.wallpaperSelectorTargetMonitor = monitorName
-                Config.setNestedValue("wallpaperSelector.targetMonitor", monitorName)
-            }
-            root.toggleWallpaperSelector();
-        }
-
-        function random(): void {
-            Wallpapers.randomFromCurrentFolder();
-        }
-    }
-    Loader {
-        active: CompositorService.isHyprland
-        sourceComponent: Item {
-            GlobalShortcut {
-                name: "wallpaperSelectorToggle"
-                description: "Toggle wallpaper selector"
-                onPressed: {
-                    root.toggleWallpaperSelector();
-                }
-            }
-
-            GlobalShortcut {
-                name: "wallpaperSelectorRandom"
-                description: "Select random wallpaper in current folder"
-                onPressed: {
-                    Wallpapers.randomFromCurrentFolder();
-                }
-            }
-        }
-    }
 }

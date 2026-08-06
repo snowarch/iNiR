@@ -48,7 +48,7 @@ Scope { // Scope
         baseHeight: 40
         clickedWidth: baseWidth
         clickedHeight: baseHeight + 10
-        buttonRadius: Appearance.rounding.normal
+        buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.normal
     }
 
     Loader {
@@ -152,8 +152,13 @@ Scope { // Scope
                 x: parent ? (parent.width - width) / 2 : 0
                 y: parent ? parent.height - height - Appearance.sizes.elevationMargin : 0
 
-                color: Appearance.colors.colLayer0
+                color: Appearance.zzzEverywhere ? Appearance.zzz.bg0 : Appearance.colors.colLayer0
                 radius: Appearance.rounding.windowRounding
+                border.width: Appearance.zzzEverywhere ? 1 : 0
+                border.color: Appearance.zzzEverywhere ? Appearance.zzz.borderColor : "transparent"
+                Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                 transformOrigin: Item.Center
                 property real initScale: 0.98
                 scale: initScale
@@ -209,7 +214,7 @@ Scope { // Scope
                                     text: root.pinned ? "lock" : "keep"
                                     horizontalAlignment: Text.AlignHCenter
                                     iconSize: Appearance.font.pixelSize.larger
-                                    color: root.pinned ? Appearance.m3colors.m3onPrimary : Appearance.colors.colOnLayer0
+                                    color: root.pinned ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer0
                                 }
                             }
                             OskControlButton { // Keep on top of other overlays (launcher, sidebars, ...)
@@ -219,7 +224,7 @@ Scope { // Scope
                                     text: "flip_to_front"
                                     horizontalAlignment: Text.AlignHCenter
                                     iconSize: Appearance.font.pixelSize.larger
-                                    color: root.keepOnTop ? Appearance.m3colors.m3onPrimary : Appearance.colors.colOnLayer0
+                                    color: root.keepOnTop ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer0
                                 }
                                 StyledToolTip {
                                     text: Translation.tr("Keep keyboard above launcher and other overlays")
@@ -292,53 +297,6 @@ Scope { // Scope
                 }
             }
 
-        }
-    }
-
-    IpcHandler {
-        target: "osk"
-
-        function toggle(): void {
-            GlobalStates.oskOpen = !GlobalStates.oskOpen;
-        }
-
-        function close(): void {
-            GlobalStates.oskOpen = false
-        }
-
-        function open(): void {
-            GlobalStates.oskOpen = true
-        }
-    }
-    Loader {
-        active: CompositorService.isHyprland
-        sourceComponent: Item {
-            GlobalShortcut {
-                name: "oskToggle"
-                description: "Toggles on screen keyboard on press"
-
-                onPressed: {
-                    GlobalStates.oskOpen = !GlobalStates.oskOpen;
-                }
-            }
-
-            GlobalShortcut {
-                name: "oskOpen"
-                description: "Opens on screen keyboard on press"
-
-                onPressed: {
-                    GlobalStates.oskOpen = true
-                }
-            }
-
-            GlobalShortcut {
-                name: "oskClose"
-                description: "Closes on screen keyboard on press"
-
-                onPressed: {
-                    GlobalStates.oskOpen = false
-                }
-            }
         }
     }
 

@@ -20,19 +20,284 @@ import qs.modules.background.widgets.clock
 import qs.modules.background.widgets.mediaControls
 import qs.modules.background.widgets.weather
 import qs.modules.background.widgets.visualizer
+import qs.modules.background.widgets.imageConverter
 import qs.modules.background.widgets.systemMonitor
 import qs.modules.background.widgets.battery
 import qs.modules.background.widgets.notes
 import qs.modules.background.widgets.calendar
+import qs.modules.background.widgets.uptime
+import qs.modules.background.widgets.worldClock
+import qs.modules.background.widgets.userCard
+import qs.modules.background.widgets.newsTicker
+import qs.modules.background.widgets.mascot
+import qs.modules.background.widgets.japaneseTypography
+import qs.modules.background.desktopItems
 import "root:modules/common/functions/parallax.js" as ParallaxMath
 
 Scope {
+    id: backgroundScope
+
+    // Bounded diagnostics for the desktop clock. They are inert unless the
+    // supervised shell is loaded with INIR_REGION_DEBUG=1.
+    property bool clockDebugRegionActive: false
+    property color clockDebugRegionColor: "transparent"
+    property real clockDebugRegionBrightness: -1
+    property real clockDebugRegionSpread: 0
+    property bool clockDebugQuickControlsOpen: false
+    property bool clockDebugLayoutProbeActive: false
+    property int clockDebugLayoutProbeX: 0
+    property int clockDebugLayoutProbeY: 0
+    property var _clockDebugSnapshot: null
+    property bool _clockDebugEditModeSnapshot: false
+    property bool _clockDebugEditModeSnapshotValid: false
+    property string clockDebugPaletteReport: "{}"
+    property string clockDebugControlsReport: "{}"
+
+    function promoteDesktopWidgetKey(instanceKey: string): var {
+        const key = String(instanceKey ?? "")
+        if (key.length === 0)
+            return Config.getNestedValue("background.widgets.layerOrder", []) ?? []
+        const stored = Config.getNestedValue("background.widgets.layerOrder", []) ?? []
+        const order = []
+        for (let i = 0; i < stored.length; ++i) {
+            const candidate = String(stored[i] ?? "")
+            if (candidate.length > 0 && candidate !== key
+                    && order.indexOf(candidate) === -1)
+                order.push(candidate)
+        }
+        order.push(key)
+        Config.setNestedValue("background.widgets.layerOrder", order)
+        return order
+    }
+
     IpcHandler {
         target: "background"
         function toggleEditMode(): string {
-            GlobalStates.widgetEditMode = !GlobalStates.widgetEditMode;
-            return GlobalStates.widgetEditMode ? "edit mode on" : "edit mode off";
+            GlobalStates.setWidgetEditMode(!GlobalStates.widgetEditMode)
+            return GlobalStates.widgetEditMode ? "edit mode on" : "edit mode off"
         }
+
+        function setEditMode(enabled: bool): string {
+            GlobalStates.setWidgetEditMode(enabled)
+            return GlobalStates.widgetEditMode ? "edit mode on" : "edit mode off"
+        }
+
+        function editState(): string {
+            return JSON.stringify({
+                active: GlobalStates.widgetEditMode,
+                selected: GlobalStates.selectedDesktopWidget,
+                quickControls: GlobalStates.desktopWidgetQuickControls,
+                layerOrder: Config.getNestedValue("background.widgets.layerOrder", []) ?? [],
+                outputOverrides: Config.options?.background?.widgets?.outputOverrides ?? [],
+                outputs: Quickshell.screens.map(screen => ({
+                    name: screen?.name ?? "",
+                    width: screen?.width ?? 0,
+                    height: screen?.height ?? 0,
+                    widgetsAllowed: DesktopWidgetLayout.outputAllowed(screen?.name ?? ""),
+                    insets: ShellLayoutController.desktopInsets(screen?.name ?? ""),
+                    workArea: ShellLayoutController.desktopWorkArea(
+                        screen?.name ?? "", screen?.width ?? 0,
+                        screen?.height ?? 0),
+                    zoneWorkArea: ShellLayoutController.desktopZoneWorkArea(
+                        screen?.name ?? "", screen?.width ?? 0,
+                        screen?.height ?? 0)
+                }))
+            })
+        }
+
+        function desktopItemsState(): string {
+            return DesktopItems.diagnostics()
+        }
+
+        function focusWidget(widgetName: string, openControls: bool): string {
+            const name = String(widgetName ?? "").trim()
+            if (name.length === 0)
+                return "widget name is required"
+
+            const builtinDefaults = ({
+                weather: false, clock: true, customImage: false,
+                imageConverter: false, mediaControls: false,
+                visualizer: false, systemMonitor: false, battery: false,
+                notes: false, calendarUpcoming: false, uptime: false,
+                newsTicker: false, mascot: false, japaneseTypography: false,
+                worldClock: false, userCard: false
+            })
+            let known = builtinDefaults[name] !== undefined
+            let baseEnabled = known
+                ? Boolean(Config.getNestedValue(
+                    "background.widgets." + name + ".enable",
+                    builtinDefaults[name]))
+                : false
+
+            if (name.startsWith("mascotInstances.")) {
+                const instanceId = name.slice("mascotInstances.".length)
+                const instance = Config.getNestedValue(
+                    "background.widgets.mascotInstances." + instanceId, null)
+                known = instance !== null && typeof instance === "object"
+                baseEnabled = known && Boolean(instance.enable)
+            } else if (name.startsWith("custom.")) {
+                const customId = name.slice("custom.".length)
+                known = CustomWidgets.ready
+                    && CustomWidgets.widgets.some(widget => widget.id === customId)
+                baseEnabled = known && Boolean(Config.getNestedValue(
+                    "background.widgets.custom." + customId + ".enable", false))
+            }
+
+            if (!known)
+                return "unknown widget: " + name
+            if (name === "battery" && !Battery.available)
+                return "widget unavailable: " + name
+
+            const screen = GlobalStates.focusedScreen ?? Quickshell.screens[0]
+            if (!screen)
+                return "no output available"
+            if (!DesktopWidgetLayout.enabled(screen.name ?? "", name, baseEnabled))
+                return "widget disabled on output: " + (screen.name ?? "")
+
+            const key = (screen.name ?? "") + "::" + name
+            GlobalStates.setWidgetEditMode(true)
+            if (openControls && name !== "uptime")
+                GlobalStates.requestDesktopWidgetQuickControls(key)
+            else
+                GlobalStates.selectDesktopWidget(key)
+            return openControls && name === "uptime"
+                ? key + " (quick controls unavailable)" : key
+        }
+
+        function promoteWidget(widgetName: string): string {
+            const name = String(widgetName ?? "").trim()
+            if (name.length === 0)
+                return "widget name is required"
+            const screen = GlobalStates.focusedScreen ?? Quickshell.screens[0]
+            if (!screen)
+                return "no output available"
+            const key = (screen.name ?? "") + "::" + name
+            return JSON.stringify({
+                promoted: key,
+                layerOrder: backgroundScope.promoteDesktopWidgetKey(key)
+            })
+        }
+
+        function resetLayerOrder(): string {
+            Config.setNestedValue("background.widgets.layerOrder", [])
+            return "widget layer order reset"
+        }
+
+        function setWidgetEnabled(widgetName: string, enabled: bool): string {
+            const knownWidgets = ["weather", "clock", "customImage", "imageConverter",
+                "mediaControls", "visualizer", "systemMonitor", "battery", "notes",
+                "calendarUpcoming", "uptime", "newsTicker", "mascot", "japaneseTypography",
+                "worldClock", "userCard"];
+            if (!knownWidgets.includes(widgetName))
+                return "unknown widget: " + widgetName;
+            Config.setNestedValue("background.widgets." + widgetName + ".enable", enabled);
+            return widgetName + (enabled ? " enabled" : " disabled");
+        }
+
+        function clockDebugState(): string {
+            return JSON.stringify({
+                enabled: Quickshell.env("INIR_REGION_DEBUG") === "1",
+                config: {
+                    style: Config.getNestedValue("background.widgets.clock.style", "cookie"),
+                    adaptToWallpaper: Config.getNestedValue("background.widgets.clock.digital.adaptToWallpaper", true),
+                    placementStrategy: Config.getNestedValue("background.widgets.clock.placementStrategy", "free"),
+                    x: Config.getNestedValue("background.widgets.clock.x", 0),
+                    y: Config.getNestedValue("background.widgets.clock.y", 0)
+                },
+                injectedRegion: {
+                    active: backgroundScope.clockDebugRegionActive,
+                    color: String(backgroundScope.clockDebugRegionColor),
+                    brightness: backgroundScope.clockDebugRegionBrightness,
+                    spread: backgroundScope.clockDebugRegionSpread
+                },
+                palette: backgroundScope.clockDebugPaletteReport,
+                controls: backgroundScope.clockDebugControlsReport,
+                snapshotActive: backgroundScope._clockDebugSnapshot !== null
+                    || backgroundScope._clockDebugEditModeSnapshotValid
+            });
+        }
+
+        function clockDebugSetMode(style: string, adaptToWallpaper: bool): string {
+            if (Quickshell.env("INIR_REGION_DEBUG") !== "1")
+                return "clock diagnostics disabled; load with INIR_REGION_DEBUG=1";
+            if (style !== "digital" && style !== "cookie")
+                return "invalid clock style: " + style;
+            backgroundScope._captureClockDebugSnapshot();
+            let updates = {};
+            updates["background.widgets.clock.style"] = style;
+            updates["background.widgets.clock.digital.adaptToWallpaper"] = adaptToWallpaper;
+            if (style === "cookie") {
+                updates["background.widgets.clock.cookie.hourMarks"] = true;
+                updates["background.widgets.clock.cookie.timeIndicators"] = true;
+                updates["background.widgets.clock.cookie.dialNumberStyle"] = "full";
+                updates["background.widgets.clock.cookie.minuteHandStyle"] = "medium";
+                updates["background.widgets.clock.cookie.hourHandStyle"] = "fill";
+                updates["background.widgets.clock.cookie.secondHandStyle"] = "classic";
+                updates["background.widgets.clock.cookie.dateStyle"] = "bubble";
+            }
+            Config.setNestedValues(updates);
+            return style + (adaptToWallpaper ? " adaptive" : " static");
+        }
+
+        function clockDebugSetRegion(color: string, brightness: real, spread: real): string {
+            if (Quickshell.env("INIR_REGION_DEBUG") !== "1")
+                return "clock diagnostics disabled; load with INIR_REGION_DEBUG=1";
+            const parsed = Qt.color(color);
+            if (!parsed.valid)
+                return "invalid color: " + color;
+            backgroundScope.clockDebugRegionColor = parsed;
+            backgroundScope.clockDebugRegionBrightness = Math.max(0, Math.min(1, brightness));
+            backgroundScope.clockDebugRegionSpread = Math.max(0, Math.min(1, spread));
+            backgroundScope.clockDebugRegionActive = true;
+            return "region injected";
+        }
+
+        function clockDebugSetLayout(x: int, y: int, quickControlsOpen: bool): string {
+            if (Quickshell.env("INIR_REGION_DEBUG") !== "1")
+                return "clock diagnostics disabled; load with INIR_REGION_DEBUG=1";
+            if (!backgroundScope._clockDebugEditModeSnapshotValid) {
+                backgroundScope._clockDebugEditModeSnapshot = GlobalStates.widgetEditMode;
+                backgroundScope._clockDebugEditModeSnapshotValid = true;
+            }
+            backgroundScope.clockDebugLayoutProbeX = x;
+            backgroundScope.clockDebugLayoutProbeY = y;
+            backgroundScope.clockDebugLayoutProbeActive = true;
+            GlobalStates.setWidgetEditMode(true);
+            backgroundScope.clockDebugQuickControlsOpen = quickControlsOpen;
+            return "layout probe requested";
+        }
+
+        function clockDebugRestore(): string {
+            backgroundScope.clockDebugRegionActive = false;
+            backgroundScope.clockDebugQuickControlsOpen = false;
+            backgroundScope.clockDebugLayoutProbeActive = false;
+            if (backgroundScope._clockDebugSnapshot !== null) {
+                Config.setNestedValues(backgroundScope._clockDebugSnapshot);
+                backgroundScope._clockDebugSnapshot = null;
+            }
+            if (backgroundScope._clockDebugEditModeSnapshotValid) {
+                GlobalStates.setWidgetEditMode(backgroundScope._clockDebugEditModeSnapshot);
+                backgroundScope._clockDebugEditModeSnapshotValid = false;
+            }
+            return "clock diagnostics restored";
+        }
+    }
+
+    function _captureClockDebugSnapshot(): void {
+        if (backgroundScope._clockDebugSnapshot !== null)
+            return;
+        const prefix = "background.widgets.clock";
+        let snapshot = {};
+        snapshot[prefix + ".style"] = Config.getNestedValue(prefix + ".style", "cookie");
+        snapshot[prefix + ".digital.adaptToWallpaper"] = Config.getNestedValue(prefix + ".digital.adaptToWallpaper", true);
+        snapshot[prefix + ".cookie.hourMarks"] = Config.getNestedValue(prefix + ".cookie.hourMarks", false);
+        snapshot[prefix + ".cookie.timeIndicators"] = Config.getNestedValue(prefix + ".cookie.timeIndicators", true);
+        snapshot[prefix + ".cookie.dialNumberStyle"] = Config.getNestedValue(prefix + ".cookie.dialNumberStyle", "none");
+        snapshot[prefix + ".cookie.minuteHandStyle"] = Config.getNestedValue(prefix + ".cookie.minuteHandStyle", "medium");
+        snapshot[prefix + ".cookie.hourHandStyle"] = Config.getNestedValue(prefix + ".cookie.hourHandStyle", "fill");
+        snapshot[prefix + ".cookie.secondHandStyle"] = Config.getNestedValue(prefix + ".cookie.secondHandStyle", "dot");
+        snapshot[prefix + ".cookie.dateStyle"] = Config.getNestedValue(prefix + ".cookie.dateStyle", "bubble");
+        backgroundScope._clockDebugSnapshot = snapshot;
     }
 
     Variants {
@@ -42,6 +307,26 @@ Scope {
         // Shared cache for magick identify results across all monitor instances.
         // Avoids re-running the subprocess for previously-seen wallpapers.
         property var _wallpaperSizeCache: ({})
+        property var _wallpaperSizeCacheKeys: []
+        readonly property int _wallpaperSizeCacheLimit: 64
+
+        function cacheWallpaperSize(path, width, height) {
+            const cache = Object.assign({}, root._wallpaperSizeCache)
+            const keys = root._wallpaperSizeCacheKeys.slice()
+            const existingIndex = keys.indexOf(path)
+            if (existingIndex >= 0)
+                keys.splice(existingIndex, 1)
+
+            cache[path] = { width: width, height: height }
+            keys.push(path)
+            while (keys.length > root._wallpaperSizeCacheLimit) {
+                const oldestPath = keys.shift()
+                delete cache[oldestPath]
+            }
+
+            root._wallpaperSizeCache = cache
+            root._wallpaperSizeCacheKeys = keys
+        }
 
     PanelWindow {
         id: bgRoot
@@ -55,12 +340,14 @@ Scope {
             if (CompositorService.isHyprland) {
                 return activeWorkspaceWithFullscreen != undefined
             }
-            if (CompositorService.isNiri && NiriService.windows) {
-                return NiriService.windows.some(w => w.is_focused && w.is_fullscreen)
+            if (CompositorService.isNiri) {
+                return GameMode.hasFullscreenOnOutput(modelData?.name ?? "")
             }
             return false
         }
-        visible: !GameMode.shouldHidePanels && (GlobalStates.screenLocked || !hasFullscreenWindow || !(Config.options?.background?.hideWhenFullscreen ?? false))
+        visible: GlobalStates.screenLocked
+            || !hasFullscreenWindow
+            || !(Config.options?.background?.hideWhenFullscreen ?? false)
 
         // Workspaces
         property HyprlandMonitor monitor: CompositorService.isHyprland ? Hyprland.monitorFor(modelData) : null
@@ -75,11 +362,125 @@ Scope {
         readonly property var workSafetyEnableOptions: workSafetyOptions.enable ?? {}
         readonly property var workSafetyTriggerOptions: workSafetyOptions.triggerCondition ?? {}
         readonly property var lockBlurOptions: Config.options?.lock?.blur ?? {}
+        readonly property var desktopFreeWorkArea: ShellLayoutController.desktopWorkArea(
+            screen?.name ?? "", screen?.width ?? 0, screen?.height ?? 0)
+        readonly property var desktopItemsWorkArea: ShellLayoutController.desktopZoneWorkArea(
+            screen?.name ?? "", screen?.width ?? 0, screen?.height ?? 0)
         function _widgetConfigValue(widgetKey: string, key: string, fallback: var): var {
-            return Config.getNestedValue("background.widgets." + widgetKey + "." + key, fallback);
+            return DesktopWidgetLayout.value(bgRoot.screenName, widgetKey, key, fallback);
         }
         function _widgetEnabled(widgetKey: string, fallback: bool): bool {
-            return Boolean(bgRoot._widgetConfigValue(widgetKey, "enable", fallback));
+            return DesktopWidgetLayout.enabled(bgRoot.screenName, widgetKey, fallback);
+        }
+
+        property int _imageRouteRevision: 0
+        property var _pendingImageConversion: null
+        property var _conversionPlacement: null
+        property int _imageConversionRouteAttempts: 0
+        readonly property int _imageConversionRouteMaxAttempts: 40
+
+        function _loadedWidget(widgetName: string): var {
+            if (!widgetCanvas || typeof widgetCanvas._loadedDesktopWidgets !== "function")
+                return null
+            return widgetCanvas._loadedDesktopWidgets().find(item =>
+                String(item?.configEntryName ?? "") === widgetName) ?? null
+        }
+
+        function _routeDecorativeImage(paths, x, y): void {
+            const path = String(paths?.[0] ?? "").trim()
+            if (path.length === 0)
+                return
+            const work = bgRoot.desktopFreeWorkArea
+            const size = Math.max(80, Number(Config.getNestedValue(
+                "background.widgets.customImage.size", 220)))
+            const maxX = Math.max(Number(work.left ?? 0), Number(work.right ?? bgRoot.screen.width) - size)
+            const maxY = Math.max(Number(work.top ?? 0), Number(work.bottom ?? bgRoot.screen.height) - size)
+            Config.setNestedValues({
+                "background.widgets.customImage.sourceMode": "file",
+                "background.widgets.customImage.path": path
+            })
+            DesktopWidgetLayout.setValues(bgRoot.screenName, "customImage", {
+                enable: true,
+                placementStrategy: "free",
+                x: Math.max(Number(work.left ?? 0), Math.min(maxX, x - size / 2)),
+                y: Math.max(Number(work.top ?? 0), Math.min(maxY, y - size / 2))
+            })
+            imageChoice.showNotice(paths.length > 1
+                ? Translation.tr("Decorative image uses the first dropped image.")
+                : Translation.tr("Decorative image added."), x, y)
+        }
+
+        function _routeImageConversion(paths, x, y): void {
+            const valid = Array.from(paths ?? []).filter(path => Images.isValidImageByName(String(path)))
+            if (valid.length === 0)
+                return
+            bgRoot._conversionPlacement = { x: x, y: y }
+            bgRoot._pendingImageConversion = valid
+            bgRoot._imageConversionRouteAttempts = 0
+            DesktopWidgetLayout.setEnabled(bgRoot.screenName, "imageConverter", true)
+            imageConversionRouteTimer.restart()
+        }
+
+        function _handleImageChoice(action): void {
+            const paths = imageChoice.imagePaths.slice()
+            const resultPaths = imageChoice.resultPaths.slice()
+            const x = imageChoice.requestedX
+            const y = imageChoice.requestedY
+            imageChoice.open = false
+            if (action === "access")
+                desktopDropCoordinator.createAccesses(paths, x, y)
+            else if (action === "decorative")
+                bgRoot._routeDecorativeImage(paths, x, y)
+            else if (action === "convert")
+                bgRoot._routeImageConversion(paths, x, y)
+            else if (action === "place-results")
+                desktopDropCoordinator.createAccesses(resultPaths, x, y)
+        }
+
+        Timer {
+            id: imageConversionRouteTimer
+            interval: 50
+            repeat: true
+            onTriggered: {
+                bgRoot._imageConversionRouteAttempts++
+                const converter = bgRoot._loadedWidget("imageConverter")
+                if (!converter || typeof converter.enqueueFiles !== "function") {
+                    if (bgRoot._imageConversionRouteAttempts < bgRoot._imageConversionRouteMaxAttempts)
+                        return
+                    const placement = bgRoot._conversionPlacement
+                    bgRoot._pendingImageConversion = null
+                    bgRoot._conversionPlacement = null
+                    bgRoot._imageConversionRouteAttempts = 0
+                    imageConversionRouteTimer.stop()
+                    if (placement)
+                        imageChoice.showNotice(Translation.tr("Could not open the image converter."), placement.x, placement.y)
+                    return
+                }
+                const paths = bgRoot._pendingImageConversion
+                bgRoot._pendingImageConversion = null
+                bgRoot._imageConversionRouteAttempts = 0
+                imageConversionRouteTimer.stop()
+                converter.enqueueFiles(paths)
+            }
+        }
+
+        Connections {
+            target: Config
+            function onRevisionChanged() { bgRoot._imageRouteRevision++ }
+        }
+
+        Connections {
+            target: {
+                void bgRoot._imageRouteRevision
+                return bgRoot._loadedWidget("imageConverter")
+            }
+            function onConversionFinished(paths) {
+                if (!bgRoot._conversionPlacement || !paths || paths.length === 0)
+                    return
+                const placement = bgRoot._conversionPlacement
+                bgRoot._conversionPlacement = null
+                imageChoice.showResults(paths, placement.x, placement.y)
+            }
         }
 
         // True if any widget on this background needs keyboard input (sticky notes
@@ -87,16 +488,29 @@ Scope {
         // surface to focusable=true so TextEdits actually receive key events.
         // Without this the Bottom layer is keyboard-inert and clicks reach the
         // TextEdit but typing does nothing.
+        // Desktop items remain pointer-driven until their focus contract is
+        // owned by the background surface; do not make a stale global selection
+        // turn the Bottom layer keyboard-focusable during reload.
         readonly property bool _needsKeyboardFocus: bgRoot._widgetEnabled("notes", false)
 
         // Zone occupancy: map zone name → array of widget names
         readonly property var _builtinWidgets: [
-            { key: "weather",        defaultOn: true,  icon: "cloud" },
-            { key: "clock",          defaultOn: true,  icon: "schedule" },
-            { key: "mediaControls",  defaultOn: true,  icon: "album" },
-            { key: "visualizer",     defaultOn: false, icon: "graphic_eq" },
-            { key: "systemMonitor",  defaultOn: false, icon: "monitor_heart" },
-            { key: "battery",        defaultOn: false, icon: "battery_full" }
+            { key: "weather",            defaultOn: false, icon: "cloud" },
+            { key: "clock",              defaultOn: true,  icon: "schedule" },
+            { key: "customImage",        defaultOn: false, icon: "add_photo_alternate" },
+            { key: "imageConverter",     defaultOn: false, icon: "transform" },
+            { key: "mediaControls",      defaultOn: false, icon: "album" },
+            { key: "visualizer",         defaultOn: false, icon: "graphic_eq" },
+            { key: "systemMonitor",      defaultOn: false, icon: "monitor_heart" },
+            { key: "battery",            defaultOn: false, icon: "battery_full" },
+            { key: "notes",              defaultOn: false, icon: "sticky_note_2" },
+            { key: "calendarUpcoming",   defaultOn: false, icon: "event" },
+            { key: "uptime",             defaultOn: false, icon: "avg_pace" },
+            { key: "newsTicker",         defaultOn: false, icon: "newspaper" },
+            { key: "mascot",             defaultOn: false, icon: "pets" },
+            { key: "japaneseTypography", defaultOn: false, icon: "translate" },
+            { key: "worldClock",         defaultOn: false, icon: "public" },
+            { key: "userCard",           defaultOn: false, icon: "account_circle" }
         ]
         // Revision counter to force re-evaluation
         property int _zoneRevision: 0
@@ -114,6 +528,17 @@ Scope {
                 const strat = bgRoot._widgetConfigValue(w.key, "placementStrategy", "free");
                 if (zones.indexOf(strat) >= 0)
                     occ[strat].push({ name: w.key, icon: w.icon, locked: Boolean(bgRoot._widgetConfigValue(w.key, "locked", false)) });
+            }
+            // Extra mascot instances
+            {
+                const extraMascots = Config.getNestedValue("background.widgets.mascotInstances", {}) ?? {};
+                for (const id of Object.keys(extraMascots)) {
+                    const prefix = "background.widgets.mascotInstances." + id;
+                    if (!Config.getNestedValue(prefix + ".enable", false)) continue;
+                    const strat = Config.getNestedValue(prefix + ".placementStrategy", "free");
+                    if (zones.indexOf(strat) >= 0)
+                        occ[strat].push({ name: "mascot #" + id, icon: "pets", locked: Boolean(Config.getNestedValue(prefix + ".locked", false)) });
+                }
             }
             // Custom widgets
             if (typeof CustomWidgets !== "undefined" && CustomWidgets.ready) {
@@ -155,11 +580,19 @@ Scope {
 
         // Wallpaper — use per-monitor path when multi-monitor enabled, otherwise direct config
         readonly property string wallpaperPathRaw: {
-            if (_multiMonEnabled && wallpaperData.path) return wallpaperData.path
-            return bgRoot.backgroundOptions.wallpaperPath ?? ""
+            const configuredPath = (_multiMonEnabled && wallpaperData.path)
+                ? wallpaperData.path
+                : (bgRoot.backgroundOptions.wallpaperPath ?? "")
+            // Supplies the preview path only. awww eligibility is untouched, so
+            // whichever engine already owns this wallpaper keeps owning it.
+            return Wallpapers.internalPreviewFor(monitorName, configuredPath)
         }
         readonly property string wallpaperThumbnailPath: bgRoot.backgroundOptions.thumbnailPath ?? bgRoot.wallpaperPathRaw
         readonly property bool enableAnimation: bgRoot.backgroundOptions.enableAnimation ?? true
+        // True while ii is the family actually painting the screen. The family
+        // LazyLoader can retain the inactive tree, so every heavy source in here
+        // has to ask, not assume.
+        readonly property bool _familyOwnsScreen: (Config.options?.panelFamily ?? "ii") !== "waffle"
         property bool wallpaperIsVideo: wallpaperPathRaw.endsWith(".mp4") || wallpaperPathRaw.endsWith(".webm") || wallpaperPathRaw.endsWith(".mkv") || wallpaperPathRaw.endsWith(".avi") || wallpaperPathRaw.endsWith(".mov")
         property bool wallpaperIsGif: wallpaperPathRaw.toLowerCase().endsWith(".gif")
         property string wallpaperPath: bgRoot.wallpaperPathRaw
@@ -358,8 +791,9 @@ Scope {
                 if (CompositorService.isNiri && typeof NiriService !== "undefined" && NiriService.windows && NiriService.workspaces) {
                     const allWs = Object.values(NiriService.workspaces);
                     if (!allWs || allWs.length === 0) return false;
-                    const currentNumber = NiriService.getCurrentWorkspaceNumber();
-                    const currentWs = allWs.find(ws => ws.idx === currentNumber);
+                    const outputName = bgRoot.modelData?.name ?? "";
+                    const currentWs = allWs.find(ws => ws.output === outputName
+                        && ws.is_active);
                     if (!currentWs) return false;
                     return NiriService.windows.some(w => w.workspace_id === currentWs.id);
                 }
@@ -670,9 +1104,7 @@ Scope {
                     bgRoot._manualWallpaperScaleOverride = 0
 
                     // Cache the result so subsequent switches to this wallpaper skip magick identify
-                    const cache = Object.assign({}, root._wallpaperSizeCache)
-                    cache[requestPath] = { width: Math.round(width), height: Math.round(height) }
-                    root._wallpaperSizeCache = cache
+                    root.cacheWallpaperSize(requestPath, Math.round(width), Math.round(height))
 
                     bgRoot.finishWallpaperMetricsRequest()
                 }
@@ -727,6 +1159,17 @@ Scope {
                     && !bgRoot.wallpaperIsVideo
                     && !bgRoot.externalMainWallpaperActive
                 readonly property bool showInternalStaticWallpaper: !bgRoot.externalMainWallpaperActive
+                readonly property bool localBlurNeedsStaticTexture: Appearance.effectsEnabled
+                    && bgRoot.blurProgress > 0
+                    && (bgRoot.effectsOptions.enableBlur ?? false)
+                    && !Config.options?.performance?.lowPower
+                    && (bgRoot.effectsOptions.blurRadius ?? 0) > 0
+                readonly property bool lockBlurNeedsStaticTexture: (bgRoot.lockBlurOptions.enable ?? false)
+                    && (GlobalStates.screenLocked || scaleAnim.running)
+                readonly property bool needsStaticTexture: !bgRoot.backdropActive
+                    && !bgRoot.wallpaperIsGif && !bgRoot.wallpaperIsVideo
+                    && (showInternalStaticWallpaper || localBlurNeedsStaticTexture
+                        || lockBlurNeedsStaticTexture)
                 readonly property real panOffsetX: bgRoot.effectiveHasPan ? (bgRoot.panX * (bgRoot.parallaxTotalX / 2)) : 0
                 readonly property real panOffsetY: bgRoot.effectiveHasPan ? (bgRoot.panY * (bgRoot.parallaxTotalY / 2)) : 0
                 readonly property real targetX: useParallax
@@ -819,8 +1262,16 @@ Scope {
                     anchors.fill: parent
                     visible: !blurLoader.active && !bgRoot.backdropActive && !bgRoot.wallpaperIsGif && !bgRoot.wallpaperIsVideo
                     opacity: (wallpaperContainer.showInternalStaticWallpaper ? 1 : 0) * bgRoot._awwwRevealOpacity
-                    layer.enabled: !wallpaperContainer.showInternalStaticWallpaper
-                    source: (bgRoot.wallpaperSafetyTriggered || bgRoot.wallpaperIsVideo || bgRoot.wallpaperIsGif) ? "" : bgRoot.wallpaperPath
+                    // The backdrop replaces the desktop wallpaper outright: this
+                    // crossfader is hidden, blurAlwaysLoader is off, and the lock
+                    // blur cannot see it either (an invisible child never reaches
+                    // the ShaderEffectSource texture). Nothing consumes it, so drop
+                    // the source instead of holding a decoded fullscreen bitmap —
+                    // an Image with a source decodes whether or not it is visible.
+                    layer.enabled: wallpaperContainer.needsStaticTexture
+                        && !wallpaperContainer.showInternalStaticWallpaper
+                    source: (bgRoot.wallpaperSafetyTriggered || !wallpaperContainer.needsStaticTexture)
+                        ? "" : bgRoot.wallpaperPath
                     // NEVER use crossfader transitions when awww is active — awww handles all transitions.
                     // When parallax is on, the crossfader fades out to reveal awww's native transition.
                     enableTransitions: !AwwwBackend.active
@@ -864,13 +1315,15 @@ Scope {
                         animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                     }
                     cache: false
-                    playing: visible && bgRoot.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive
+                    playing: visible && bgRoot.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive && !Wallpapers.batteryPauseActive
                     asynchronous: true
-                    source: (bgRoot.wallpaperSafetyTriggered || !bgRoot.wallpaperIsGif) ? "" : bgRoot.wallpaperPathRaw
+                    source: (bgRoot.wallpaperSafetyTriggered || !bgRoot.wallpaperIsGif || bgRoot.backdropActive) ? "" : bgRoot.wallpaperPathRaw
                     fillMode: Image.PreserveAspectCrop
                     // No sourceSize for GIFs - let Qt handle native size for performance
 
-                    layer.enabled: Appearance.effectsEnabled && (bgRoot.effectsOptions.enableAnimatedBlur ?? false) && (bgRoot.effectsOptions.blurRadius ?? 0) > 0
+                    layer.enabled: visible && Appearance.effectsEnabled
+                        && (bgRoot.effectsOptions.enableAnimatedBlur ?? false)
+                        && (bgRoot.effectsOptions.blurRadius ?? 0) > 0
                     layer.effect: GaussianBlur {
                         radius: Math.round((bgRoot.effectsOptions.blurRadius ?? 32) * Math.max(0, Math.min(1, (bgRoot.effectsOptions.thumbnailBlurStrength ?? 50) / 100)))
                         // Cap samples — beyond ~33 the visual difference is imperceptible
@@ -880,8 +1333,11 @@ Scope {
                 }
 
                 // Video wallpaper (Qt Multimedia)
-                // Always loaded for videos: plays when animation enabled, frozen (paused) when disabled
-                Video {
+                // Two-slot crossfader: a single Video tears down its pipeline on
+                // every source change, so switching between two videos went black
+                // and popped. This keeps the outgoing clip playing until the new
+                // one has decoded a frame.
+                VideoCrossfader {
                     id: videoWallpaper
                     anchors.fill: parent
                     visible: opacity > 0 && !blurLoader.active && !bgRoot.backdropActive && bgRoot.wallpaperIsVideo
@@ -890,72 +1346,28 @@ Scope {
                         enabled: Appearance.animationsEnabled
                         animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                     }
+                    // The family loader can keep this whole tree alive after a
+                    // switch, and nothing else in these gates knows which family
+                    // owns the screen — so both backgrounds kept a 4K video
+                    // decoding at once and every switch added another. Clearing
+                    // the source releases the decoder outright instead of only
+                    // pausing it; the transition overlay covers the swap.
                     source: {
-                        if (bgRoot.wallpaperSafetyTriggered || !bgRoot.wallpaperIsVideo) return "";
-                        const path = bgRoot.wallpaperPathRaw;
-                        if (!path) return "";
-                        return path.startsWith("file://") ? path : ("file://" + path);
+                        if (bgRoot.wallpaperSafetyTriggered || !bgRoot.wallpaperIsVideo || bgRoot.backdropActive) return "";
+                        if (!bgRoot._familyOwnsScreen) return "";
+                        return bgRoot.wallpaperPathRaw;
                     }
                     fillMode: VideoOutput.PreserveAspectCrop
-                    loops: MediaPlayer.Infinite
-                    muted: true
-                    autoPlay: true
+                    enableTransitions: Config.options?.background?.transition?.enable ?? true
+                    transitionBaseDuration: Config.options?.background?.transition?.duration ?? 800
+                    shouldPlay: bgRoot.enableAnimation && !GlobalStates.screenLocked
+                        && !Appearance._gameModeActive && !Wallpapers.batteryPauseActive
+                        && bgRoot._familyOwnsScreen
+                        && visible
 
-                    readonly property bool shouldPlay: bgRoot.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive && !GlobalStates.overviewOpen
-
-                    function pauseAndShowFirstFrame() {
-                        pause()
-                        seek(0) // Ensure first frame is displayed when paused
-                    }
-
-                    onPlaybackStateChanged: {
-                        if (playbackState === MediaPlayer.PlayingState && !shouldPlay) {
-                            pauseAndShowFirstFrame()
-                        }
-                        if (playbackState === MediaPlayer.StoppedState && visible && shouldPlay) {
-                            play()
-                        }
-                    }
-
-                    onShouldPlayChanged: {
-                        if (visible && bgRoot.wallpaperIsVideo) {
-                            if (shouldPlay) play()
-                            else pauseAndShowFirstFrame()
-                        }
-                    }
-                    
-                    onVisibleChanged: {
-                        if (visible && bgRoot.wallpaperIsVideo) {
-                            if (shouldPlay) play()
-                            else pauseAndShowFirstFrame()
-                        } else {
-                            pause()
-                        }
-                    }
-                    
-                    Connections {
-                        target: GlobalStates
-                        function onScreenLockedChanged() {
-                            if (!videoWallpaper.shouldPlay) {
-                                videoWallpaper.pauseAndShowFirstFrame()
-                            } else if (videoWallpaper.visible && bgRoot.wallpaperIsVideo) {
-                                videoWallpaper.play()
-                            }
-                        }
-                    }
-
-                    Connections {
-                        target: GameMode
-                        function onActiveChanged() {
-                            if (!videoWallpaper.shouldPlay) {
-                                videoWallpaper.pauseAndShowFirstFrame()
-                            } else if (videoWallpaper.visible && bgRoot.wallpaperIsVideo) {
-                                videoWallpaper.play()
-                            }
-                        }
-                    }
-
-                    layer.enabled: Appearance.effectsEnabled && (bgRoot.effectsOptions.enableAnimatedBlur ?? false) && (bgRoot.effectsOptions.blurRadius ?? 0) > 0
+                    layer.enabled: visible && Appearance.effectsEnabled
+                        && (bgRoot.effectsOptions.enableAnimatedBlur ?? false)
+                        && (bgRoot.effectsOptions.blurRadius ?? 0) > 0
                     layer.effect: GaussianBlur {
                         radius: Math.round((bgRoot.effectsOptions.blurRadius ?? 32) * Math.max(0, Math.min(1, (bgRoot.effectsOptions.thumbnailBlurStrength ?? 50) / 100)))
                         // See #159 — cap samples to bound fragment shader cost
@@ -1105,12 +1517,31 @@ Scope {
                 }
             }
 
+            FocusScope {
+                id: desktopFocusSink
+                width: 0
+                height: 0
+                focus: false
+            }
+
             // Desktop right-click context menu
             MouseArea {
                 anchors.fill: parent
                 z: 15  // Below WidgetCanvas (z: 20) so widgets can receive input
-                acceptedButtons: Qt.RightButton
+                // Left button too, so a click on the bare desktop closes an
+                // already-open menu — ContextMenu's own closeOnFocusLost
+                // backdrop (a separate fullscreen layer-surface on Niri) sits
+                // above the popup's own surface and swallows clicks meant for
+                // the menu items, so that path stays off; this MouseArea
+                // already reliably gets right-clicks regardless, so reuse it.
+                acceptedButtons: Qt.RightButton | Qt.LeftButton
                 onClicked: function(mouse) {
+                    if (mouse.button === Qt.LeftButton) {
+                        desktopFocusSink.forceActiveFocus()
+                        GlobalStates.clearDesktopItemSelection()
+                        if (desktopContextMenu.active) desktopContextMenu.close()
+                        return
+                    }
                     desktopMenuAnchor.x = mouse.x
                     desktopMenuAnchor.y = mouse.y
                     desktopContextMenu.active = true
@@ -1128,8 +1559,14 @@ Scope {
                 z: 27
                 anchorItem: desktopMenuAnchor
                 popupAbove: false
+                // Left as false: ContextMenu's own closeOnFocusLost backdrop
+                // (see the desktop MouseArea above) blocks clicks on the menu's
+                // own items on Niri. Left-click-to-close is handled by that
+                // MouseArea directly instead.
                 closeOnFocusLost: false
                 closeOnHoverLost: true
+                closeOnHoverLostAfterEntered: true
+                closeOnHoverLostDelay: 700
                 model: [
                     { text: Translation.tr("Settings"), iconName: "settings", monochromeIcon: true,
                         action: () => { Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"]) } },
@@ -1137,7 +1574,9 @@ Scope {
                     { text: Translation.tr("Change wallpaper"), iconName: "image", monochromeIcon: true,
                         action: () => { GlobalActions.runLauncher(["wallpaperSelector", "toggle"]) } },
                     { text: Translation.tr("Edit widgets"), iconName: "edit", monochromeIcon: true,
-                        action: () => { GlobalStates.widgetEditMode = !GlobalStates.widgetEditMode } },
+                        action: () => { GlobalStates.setWidgetEditMode(!GlobalStates.widgetEditMode) } },
+                    { text: Translation.tr("Edit shell layout"), iconName: "dashboard_customize", monochromeIcon: true,
+                        action: () => { ShellEditSession.toggle() } },
                     { type: "separator" },
                     { text: Translation.tr("Reload shell"), iconName: "refresh", monochromeIcon: true,
                         action: () => { Quickshell.execDetached(["/usr/bin/bash", Quickshell.shellPath("scripts/restart-shell.sh")]) } }
@@ -1147,11 +1586,8 @@ Scope {
             WidgetCanvas {
                 id: widgetCanvas
                 z: 20
-                visible: {
-                    const list = Config.options?.background?.widgets?.screenList ?? [];
-                    if (!list || list.length === 0) return true;
-                    return list.includes(modelData?.name ?? "");
-                }
+                visible: !GlobalStates.shellLayoutEditMode
+                    && DesktopWidgetLayout.outputAllowed(modelData?.name ?? "")
                 enabled: visible && !GlobalStates.screenLocked  // Disable all widget input during lock
                 opacity: {
                     const dynOp = Math.max(0, Math.min(100, Number(Config.options?.background?.widgets?.dynamicOpacity) || 0));
@@ -1193,6 +1629,291 @@ Scope {
                 readonly property bool _parallaxActive: useParallax
                     && !GlobalStates.screenLocked && !bgRoot.wallpaperSafetyTriggered && !bgRoot.backdropActive
 
+                // Managed desktop items are a separate, lightweight canvas model.
+                // The coordinator is deliberately beneath widget receivers so
+                // CustomImage/ImageConverter keep ownership of their drops.
+                DesktopDropCoordinator {
+                    id: desktopDropCoordinator
+                    z: -100
+                    outputName: bgRoot.screen?.name ?? ""
+                    canvasWidth: widgetCanvas.width
+                    canvasHeight: widgetCanvas.height
+                    workArea: bgRoot.desktopItemsWorkArea
+                    gridSize: Number(Config.getNestedValue("background.widgets.editGrid.size", 16))
+                    gridSnap: Boolean(Config.getNestedValue("background.widgets.editGrid.snap", true))
+                    interactive: !GlobalStates.screenLocked && !GlobalStates.shellLayoutEditMode
+                    onImageChoiceRequested: (paths, x, y) => imageChoice.openAt(paths, x, y)
+                }
+
+                Repeater {
+                    id: desktopItemsRepeater
+                    model: widgetCanvas._desktopItemsForOutput(bgRoot.screen?.name ?? "")
+                    delegate: DesktopItemDelegate {
+                        required property var modelData
+                        itemId: String(modelData.id ?? "")
+                        itemData: modelData
+                        outputName: bgRoot.screen?.name ?? ""
+                        canvasWidth: widgetCanvas.width
+                        canvasHeight: widgetCanvas.height
+                        workArea: bgRoot.desktopItemsWorkArea
+                        gridSize: Number(Config.getNestedValue("background.widgets.editGrid.size", 16))
+                        gridSnap: Boolean(Config.getNestedValue("background.widgets.editGrid.snap", true))
+                        dragEnabled: !GlobalStates.screenLocked && !GlobalStates.shellLayoutEditMode
+                    }
+                }
+
+                DesktopImageChoice {
+                    id: imageChoice
+                    anchors.fill: parent
+                    onChosen: action => bgRoot._handleImageChoice(action)
+                }
+
+                function _desktopItemsForOutput(outputName: string): var {
+                    const output = String(outputName ?? "")
+                    const screens = Quickshell.screens.map(screen => String(screen?.name ?? ""))
+                    const focused = String(GlobalStates.focusedScreen?.name ?? screens[0] ?? "")
+                    return DesktopItems.listItems().filter(item =>
+                        String(item.output ?? "") === output
+                        || (!screens.includes(String(item.output ?? "")) && output === focused))
+                }
+
+                // The canvas owns layer discovery. Individual widgets should not
+                // walk the visual tree themselves: loaders, repeater delegates and
+                // custom widgets all live here, and this is the only place with a
+                // complete view of the current output.
+                function _loadedDesktopWidgets(): var {
+                    const widgets = []
+                    for (let i = 0; i < widgetCanvas.children.length; ++i) {
+                        const holder = widgetCanvas.children[i]
+                        const item = holder?.item ?? holder
+                        if (!item || item.editInstanceKey === undefined || !item.visible)
+                            continue
+                        widgets.push(item)
+                    }
+                    return widgets
+                }
+
+                function _rectOverlaps(a, b, gap): bool {
+                    return a.x < b.x + b.width + gap
+                        && a.x + a.width + gap > b.x
+                        && a.y < b.y + b.height + gap
+                        && a.y + a.height + gap > b.y
+                }
+
+                function _positionIsFree(x, y, width, height, placed, gap): bool {
+                    const candidate = { x: x, y: y, width: width, height: height }
+                    for (const rect of placed) {
+                        if (widgetCanvas._rectOverlaps(candidate, rect, gap))
+                            return false
+                    }
+                    return true
+                }
+
+                function _nearestFreePosition(item, desiredX, desiredY, placed, work): var {
+                    const left = Number(work.left ?? 0)
+                    const top = Number(work.top ?? 0)
+                    const right = Number(work.right ?? widgetCanvas.width)
+                    const bottom = Number(work.bottom ?? widgetCanvas.height)
+                    const maxX = Math.max(left, right - item.width)
+                    const maxY = Math.max(top, bottom - item.height)
+                    const startX = Math.max(left, Math.min(maxX, desiredX))
+                    const startY = Math.max(top, Math.min(maxY, desiredY))
+                    const gap = 14
+                    if (widgetCanvas._positionIsFree(
+                            startX, startY, item.width, item.height, placed, gap))
+                        return { x: Math.round(startX), y: Math.round(startY) }
+
+                    const step = 24
+                    let best = null
+                    let bestDistance = Infinity
+                    function consider(x, y): void {
+                        const px = Math.max(left, Math.min(maxX, x))
+                        const py = Math.max(top, Math.min(maxY, y))
+                        if (!widgetCanvas._positionIsFree(
+                                px, py, item.width, item.height, placed, gap))
+                            return
+                        const dx = px - startX
+                        const dy = py - startY
+                        const distance = dx * dx + dy * dy
+                        if (distance < bestDistance) {
+                            bestDistance = distance
+                            best = { x: Math.round(px), y: Math.round(py) }
+                        }
+                    }
+                    for (let y = top; y <= maxY; y += step) {
+                        for (let x = left; x <= maxX; x += step)
+                            consider(x, y)
+                    }
+                    consider(maxX, top)
+                    consider(left, maxY)
+                    consider(maxX, maxY)
+                    return best ?? { x: Math.round(startX), y: Math.round(startY) }
+                }
+
+                function initializeOutputWidgetLayout(): void {
+                    if (!Config.ready || !widgetCanvas.visible)
+                        return
+                    const outputName = String(bgRoot.screen?.name ?? "")
+                    const outputWidth = Math.round(widgetCanvas.width)
+                    const outputHeight = Math.round(widgetCanvas.height)
+                    if (!outputName || outputWidth <= 0 || outputHeight <= 0)
+                        return
+
+                    const widgets = widgetCanvas._loadedDesktopWidgets()
+                        .filter(item => item.width > 0 && item.height > 0)
+                    if (widgets.length === 0) {
+                        if (widgetCanvas._outputLayoutAttempts < 8) {
+                            widgetCanvas._outputLayoutAttempts++
+                            outputLayoutTimer.restart()
+                        }
+                        return
+                    }
+
+                    const geometryChanged = !DesktopWidgetLayout.outputLayoutMatches(
+                        outputName, outputWidth, outputHeight)
+                    let missingGeometry = false
+                    for (const item of widgets) {
+                        const strategy = String(item.placementStrategy ?? "free")
+                        if (strategy === "free"
+                                && (!DesktopWidgetLayout.hasValue(outputName,
+                                        item.configEntryName, "x")
+                                    || !DesktopWidgetLayout.hasValue(outputName,
+                                        item.configEntryName, "y"))) {
+                            missingGeometry = true
+                            break
+                        }
+                    }
+                    if (!geometryChanged && !missingGeometry)
+                        return
+
+                    const work = bgRoot.desktopItemsWorkArea
+                    const ordered = widgets.slice().sort((a, b) => {
+                        const aLocal = DesktopWidgetLayout.hasValue(
+                            outputName, a.configEntryName, "x") ? 1 : 0
+                        const bLocal = DesktopWidgetLayout.hasValue(
+                            outputName, b.configEntryName, "x") ? 1 : 0
+                        if (!geometryChanged && aLocal !== bLocal)
+                            return bLocal - aLocal
+                        if (Boolean(a.locked) !== Boolean(b.locked))
+                            return a.locked ? -1 : 1
+                        return b.width * b.height - a.width * a.height
+                    })
+                    const placed = []
+                    const updates = ({})
+                    const left = Number(work.left ?? 0)
+                    const top = Number(work.top ?? 0)
+                    const right = Number(work.right ?? outputWidth)
+                    const bottom = Number(work.bottom ?? outputHeight)
+
+                    for (const item of ordered) {
+                        const strategy = String(item.placementStrategy ?? "free")
+                        const maxX = Math.max(left, right - item.width)
+                        const maxY = Math.max(top, bottom - item.height)
+                        const desiredX = Math.max(left, Math.min(maxX, Number(item.x) || 0))
+                        const desiredY = Math.max(top, Math.min(maxY, Number(item.y) || 0))
+                        const localX = DesktopWidgetLayout.hasValue(
+                            outputName, item.configEntryName, "x")
+                        const localY = DesktopWidgetLayout.hasValue(
+                            outputName, item.configEntryName, "y")
+                        const needsLocal = strategy === "free"
+                            && (geometryChanged || !localX || !localY)
+                        let position = { x: Math.round(desiredX), y: Math.round(desiredY) }
+                        const collides = !widgetCanvas._positionIsFree(
+                            position.x, position.y, item.width, item.height, placed, 14)
+                        if (collides && !item.locked)
+                            position = widgetCanvas._nearestFreePosition(
+                                item, desiredX, desiredY, placed, work)
+
+                        const moved = Math.round(position.x) !== Math.round(item.x)
+                            || Math.round(position.y) !== Math.round(item.y)
+                        if (needsLocal || moved || (collides && !item.locked)) {
+                            updates[item.configEntryName] = {
+                                x: position.x,
+                                y: position.y,
+                                placementStrategy: "free"
+                            }
+                        }
+                        placed.push({
+                            x: position.x,
+                            y: position.y,
+                            width: item.width,
+                            height: item.height
+                        })
+                    }
+
+                    widgetCanvas._outputLayoutAttempts = 0
+                    DesktopWidgetLayout.initializeOutputLayout(
+                        outputName, outputWidth, outputHeight, updates)
+                }
+
+                property int _outputLayoutAttempts: 0
+
+                Timer {
+                    id: outputLayoutTimer
+                    interval: 1400
+                    repeat: false
+                    onTriggered: widgetCanvas.initializeOutputWidgetLayout()
+                }
+
+                Component.onCompleted: outputLayoutTimer.restart()
+
+                Connections {
+                    target: Config
+                    function onRevisionChanged(): void {
+                        if (!outputLayoutTimer.running)
+                            outputLayoutTimer.restart()
+                    }
+                }
+
+                Connections {
+                    target: bgRoot.screen
+                    function onWidthChanged(): void { outputLayoutTimer.restart() }
+                    function onHeightChanged(): void { outputLayoutTimer.restart() }
+                }
+
+                function overlappingDesktopWidgets(instanceKey: string): var {
+                    const widgets = widgetCanvas._loadedDesktopWidgets()
+                    const current = widgets.find(item => item.editInstanceKey === instanceKey)
+                    if (!current || current.width <= 0 || current.height <= 0)
+                        return []
+                    const matches = widgets.filter(item => item.width > 0 && item.height > 0
+                        && item.x < current.x + current.width
+                        && item.x + item.width > current.x
+                        && item.y < current.y + current.height
+                        && item.y + item.height > current.y)
+                    // Topmost first. The selected widget has a temporary edit z,
+                    // so use the persistent z when deciding which underlying
+                    // widget should be promoted next.
+                    matches.sort((a, b) => {
+                        const order = Number(b.desktopPersistentZ ?? b.widgetIndex ?? 0)
+                            - Number(a.desktopPersistentZ ?? a.widgetIndex ?? 0)
+                        return order !== 0 ? order
+                            : String(a.editInstanceKey).localeCompare(String(b.editInstanceKey))
+                    })
+                    return matches
+                }
+
+                function overlappingDesktopWidgetCount(instanceKey: string): int {
+                    return widgetCanvas.overlappingDesktopWidgets(instanceKey).length
+                }
+
+                function cycleOverlappingDesktopWidget(instanceKey: string): string {
+                    const matches = widgetCanvas.overlappingDesktopWidgets(instanceKey)
+                    if (matches.length < 2)
+                        return instanceKey
+                    const current = matches.findIndex(item => item.editInstanceKey === instanceKey)
+                    if (current < 0)
+                        return instanceKey
+                    const next = matches[(current + 1) % matches.length]
+                    const nextKey = String(next?.editInstanceKey ?? instanceKey)
+                    backgroundScope.promoteDesktopWidgetKey(nextKey)
+                    GlobalStates.selectDesktopWidget(nextKey)
+                    if (Quickshell.env("INIR_REGION_DEBUG") === "1")
+                        console.debug("[WidgetEdit] layer promote", instanceKey, "->", nextKey,
+                            "overlaps=", matches.length)
+                    return nextKey
+                }
+
                 // ── Edit Mode Scrim ──────────────────────────────
                 Rectangle {
                     anchors.fill: parent
@@ -1223,19 +1944,38 @@ Scope {
                     readonly property bool gridVisible: Config.getNestedValue("background.widgets.editGrid.snap", true)
                     readonly property color gridColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
                         : Appearance.inirEverywhere ? Appearance.inir.colAccent
-                        : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
+                        : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
                         : Appearance.colors.colPrimary
                     readonly property color crosshairColor: Appearance.angelEverywhere ? Appearance.angel.colTertiary
                         : Appearance.inirEverywhere ? Appearance.inir.colTertiary
-                        : Appearance.auroraEverywhere ? Appearance.m3colors.m3tertiary
+                        : Appearance.auroraEverywhere ? Appearance.colors.colTertiary
                         : Appearance.colors.colTertiary
-                    readonly property int zoneMargin: 48
+                    readonly property var workArea: ShellLayoutController.desktopWorkArea(
+                        bgRoot.screen?.name ?? "", width, height)
+                    readonly property var zoneWorkArea: ShellLayoutController.desktopZoneWorkArea(
+                        bgRoot.screen?.name ?? "", width, height)
+                    readonly property int zoneMargin: 16
+                    readonly property real safeLeft: workArea.left ?? 0
+                    readonly property real safeTop: workArea.top ?? 0
+                    readonly property real safeRight: workArea.right ?? width
+                    readonly property real safeBottom: workArea.bottom ?? height
+                    readonly property real safeWidth: workArea.width ?? 0
+                    readonly property real safeHeight: workArea.height ?? 0
+                    readonly property real zoneLeft: zoneWorkArea.left ?? safeLeft
+                    readonly property real zoneTop: zoneWorkArea.top ?? safeTop
+                    readonly property real zoneWidth: zoneWorkArea.width ?? safeWidth
+                    readonly property real zoneHeight: zoneWorkArea.height ?? safeHeight
+                    readonly property bool hasSelection: GlobalStates.selectedDesktopWidget
+                        .startsWith((bgRoot.screen?.name ?? "") + "::")
 
                     // Grid dots at intersections
                     readonly property bool gridNonDefault: gridSize !== 32
                     Canvas {
                         id: editGridCanvas
-                        anchors.fill: parent
+                        x: editGridOverlay.safeLeft
+                        y: editGridOverlay.safeTop
+                        width: editGridOverlay.safeWidth
+                        height: editGridOverlay.safeHeight
                         visible: editGridOverlay.gridVisible
                         onPaint: {
                             const ctx = getContext("2d");
@@ -1275,6 +2015,8 @@ Scope {
                             }
                         }
                         onVisibleChanged: if (visible && available) requestPaint()
+                        onWidthChanged: if (available) requestPaint()
+                        onHeightChanged: if (available) requestPaint()
                         Component.onCompleted: requestPaint()
                         Connections {
                             target: editGridOverlay
@@ -1293,21 +2035,34 @@ Scope {
                         }
                     }
 
-                    // Center crosshair lines (dashed segments near center)
                     Rectangle {
-                        x: Math.floor(parent.width / 2)
-                        width: 1; height: parent.height
+                        x: editGridOverlay.safeLeft
+                        y: editGridOverlay.safeTop
+                        width: editGridOverlay.safeWidth
+                        height: editGridOverlay.safeHeight
+                        color: "transparent"
+                        radius: Appearance.rounding.small
+                        border.width: 1
+                        border.color: CF.ColorUtils.applyAlpha(editGridOverlay.gridColor, 0.18)
+                    }
+
+                    // Crosshair follows the usable widget area, not raw screen center.
+                    Rectangle {
+                        x: Math.floor(editGridOverlay.safeLeft + editGridOverlay.safeWidth / 2)
+                        y: editGridOverlay.safeTop
+                        width: 1; height: editGridOverlay.safeHeight
                         color: CF.ColorUtils.applyAlpha(editGridOverlay.crosshairColor, 0.08)
                     }
                     Rectangle {
-                        y: Math.floor(parent.height / 2)
-                        width: parent.width; height: 1
+                        x: editGridOverlay.safeLeft
+                        y: Math.floor(editGridOverlay.safeTop + editGridOverlay.safeHeight / 2)
+                        width: editGridOverlay.safeWidth; height: 1
                         color: CF.ColorUtils.applyAlpha(editGridOverlay.crosshairColor, 0.08)
                     }
                     // Center dot
                     Rectangle {
-                        x: Math.floor(parent.width / 2) - 3
-                        y: Math.floor(parent.height / 2) - 3
+                        x: Math.floor(editGridOverlay.safeLeft + editGridOverlay.safeWidth / 2) - 3
+                        y: Math.floor(editGridOverlay.safeTop + editGridOverlay.safeHeight / 2) - 3
                         width: 6; height: 6; radius: 3
                         color: CF.ColorUtils.applyAlpha(editGridOverlay.crosshairColor, 0.25)
                     }
@@ -1330,8 +2085,8 @@ Scope {
                             required property var modelData
                             readonly property int col: modelData.col
                             readonly property int row: modelData.row
-                            readonly property real zw: (editGridOverlay.width - editGridOverlay.zoneMargin * 2) / 3
-                            readonly property real zh: (editGridOverlay.height - editGridOverlay.zoneMargin * 2) / 3
+                            readonly property real zw: (editGridOverlay.zoneWidth - editGridOverlay.zoneMargin * 2) / 3
+                            readonly property real zh: (editGridOverlay.zoneHeight - editGridOverlay.zoneMargin * 2) / 3
                             readonly property var occupants: bgRoot.zoneOccupants[modelData.zone] ?? []
                             readonly property bool occupied: occupants.length > 0
                             readonly property bool hasLocked: {
@@ -1340,11 +2095,12 @@ Scope {
                                 return false;
                             }
 
-                            x: editGridOverlay.zoneMargin + col * zw + 4
-                            y: editGridOverlay.zoneMargin + row * zh + 4
+                            x: editGridOverlay.zoneLeft + editGridOverlay.zoneMargin + col * zw + 4
+                            y: editGridOverlay.zoneTop + editGridOverlay.zoneMargin + row * zh + 4
                             width: zw - 8
                             height: zh - 8
                             radius: Appearance.rounding.small
+                            opacity: editGridOverlay.hasSelection ? 1 : 0.32
                             color: occupied
                                 ? CF.ColorUtils.applyAlpha(hasLocked ? Appearance.colors.colError : editGridOverlay.gridColor, 0.04)
                                 : "transparent"
@@ -1353,6 +2109,10 @@ Scope {
                                 color: CF.ColorUtils.applyAlpha(
                                     hasLocked ? Appearance.colors.colError : editGridOverlay.gridColor,
                                     occupied ? 0.25 : 0.10)
+                            }
+                            Behavior on opacity {
+                                enabled: Appearance.animationsEnabled
+                                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
                             }
                             Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: 200 } }
                             Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: 200 } }
@@ -1398,6 +2158,14 @@ Scope {
                     }
                 }
 
+                MouseArea {
+                    anchors.fill: parent
+                    z: 0
+                    enabled: GlobalStates.widgetEditMode
+                    acceptedButtons: Qt.LeftButton
+                    onClicked: GlobalStates.clearDesktopWidgetSelection()
+                }
+
                 Item {
                     id: editControlsOverlay
                     anchors.fill: parent
@@ -1411,18 +2179,23 @@ Scope {
                     }
 
                     // ── Floating Edit Controls Bar ────────────────────
-                    Rectangle {
+                    Item {
                         id: editControlsBar
-                        anchors {
-                            horizontalCenter: parent.horizontalCenter
-                            bottom: parent.bottom
-                            bottomMargin: 24
+                        x: Math.round(editGridOverlay.safeLeft
+                            + (editGridOverlay.safeWidth - width) / 2)
+                        y: Math.round(Math.max(editGridOverlay.safeTop,
+                            editGridOverlay.safeBottom - height - 12))
+                        width: Math.min(editGridOverlay.safeWidth,
+                            editBarRow.implicitWidth + 24)
+                        height: 48
+
+                        Toolbar {
+                            anchors.fill: parent
+                            padding: 6
+                            spacing: 4
+                            screenX: editControlsBar.x
+                            screenY: editControlsBar.y
                         }
-                        width: editBarRow.implicitWidth + 24
-                        height: 44
-                        radius: Appearance.rounding.full
-                        color: Appearance.colors.colLayer2
-                        border { width: 1; color: CF.ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.12) }
 
                         // Prevent clicks from falling through
                         MouseArea {
@@ -1506,15 +2279,48 @@ Scope {
                                 color: CF.ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.12)
                             }
 
-                            // Quick widget toggles
-                            Repeater {
+                            MaterialSymbol {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "widgets"
+                                iconSize: 16
+                                color: CF.ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.62)
+                            }
+
+                            Flickable {
+                                id: widgetToggleRail
+                                width: Math.max(72, Math.min(420,
+                                    editGridOverlay.safeWidth - 330,
+                                    widgetToggleRow.implicitWidth))
+                                height: 36
+                                contentWidth: widgetToggleRow.implicitWidth
+                                contentHeight: height
+                                clip: true
+                                interactive: contentWidth > width
+                                boundsBehavior: Flickable.StopAtBounds
+                                flickableDirection: Flickable.HorizontalFlick
+
+                                Row {
+                                    id: widgetToggleRow
+                                    spacing: 2
+
+                                    Repeater {
                                 model: [
-                                    { key: "weather", icon: "cloud", label: "Weather", defaultOn: true },
+                                    { key: "weather", icon: "cloud", label: "Weather", defaultOn: false },
+                                    { key: "customImage", icon: "add_photo_alternate", label: "Custom Image", defaultOn: false },
+                                    { key: "imageConverter", icon: "transform", label: "Image Converter", defaultOn: false },
                                     { key: "clock", icon: "schedule", label: "Clock", defaultOn: true },
-                                    { key: "mediaControls", icon: "album", label: "Media", defaultOn: true },
+                                    { key: "mediaControls", icon: "album", label: "Media", defaultOn: false },
+                                    { key: "japaneseTypography", icon: "translate", label: "Japanese Typography", defaultOn: false },
                                     { key: "visualizer", icon: "graphic_eq", label: "Visualizer", defaultOn: false },
                                     { key: "systemMonitor", icon: "monitor_heart", label: "System Monitor", defaultOn: false },
-                                    { key: "battery", icon: "battery_full", label: "Battery", defaultOn: false }
+                                    { key: "battery", icon: "battery_full", label: "Battery", defaultOn: false },
+                                    { key: "notes", icon: "sticky_note_2", label: "Notes", defaultOn: false },
+                                    { key: "calendarUpcoming", icon: "event", label: "Upcoming Events", defaultOn: false },
+                                    { key: "uptime", icon: "avg_pace", label: "System Uptime", defaultOn: false },
+                                    { key: "mascot", icon: "pets", label: "Mascot", defaultOn: false },
+                                    { key: "newsTicker", icon: "newspaper", label: "News Ticker", defaultOn: false },
+                                    { key: "worldClock", icon: "public", label: "World Clock", defaultOn: false },
+                                    { key: "userCard", icon: "account_circle", label: "User Card", defaultOn: false }
                                 ]
                                 RippleButton {
                                     id: quickWidgetButton
@@ -1528,7 +2334,9 @@ Scope {
                                     colBackgroundToggled: CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.16)
                                     colBackgroundToggledHover: CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.24)
                                     colRipple: CF.ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.12)
-                                    downAction: () => Config.setNestedValue("background.widgets." + quickWidgetButton.modelData.key + ".enable", !quickWidgetButton.widgetEnabled)
+                                    downAction: () => DesktopWidgetLayout.setEnabled(
+                                        bgRoot.screenName, quickWidgetButton.modelData.key,
+                                        !quickWidgetButton.widgetEnabled)
                                     contentItem: MaterialSymbol {
                                         anchors.centerIn: parent
                                         text: quickWidgetButton.modelData.icon
@@ -1545,7 +2353,9 @@ Scope {
                                 RippleButton {
                                     id: customWidgetButton
                                     required property var modelData
-                                    readonly property bool widgetEnabled: Config.getNestedValue("background.widgets.custom." + modelData.id + ".enable", false)
+                                    readonly property bool widgetEnabled: DesktopWidgetLayout.enabled(
+                                        bgRoot.screenName, "custom." + modelData.id,
+                                        Config.getNestedValue("background.widgets.custom." + modelData.id + ".enable", false))
                                     width: 36; height: 36
                                     buttonRadius: Appearance.rounding.full
                                     toggled: widgetEnabled
@@ -1554,7 +2364,9 @@ Scope {
                                     colBackgroundToggled: CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.16)
                                     colBackgroundToggledHover: CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.24)
                                     colRipple: CF.ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.12)
-                                    downAction: () => Config.setNestedValue("background.widgets.custom." + customWidgetButton.modelData.id + ".enable", !customWidgetButton.widgetEnabled)
+                                    downAction: () => DesktopWidgetLayout.setEnabled(
+                                        bgRoot.screenName, "custom." + customWidgetButton.modelData.id,
+                                        !customWidgetButton.widgetEnabled)
                                     contentItem: MaterialSymbol {
                                         anchors.centerIn: parent
                                         text: customWidgetButton.modelData.icon || "widgets"
@@ -1562,6 +2374,8 @@ Scope {
                                         color: customWidgetButton.toggled ? Appearance.colors.colPrimary : CF.ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.5)
                                     }
                                     StyledToolTip { text: customWidgetButton.modelData.name }
+                                }
+                            }
                                 }
                             }
 
@@ -1630,7 +2444,7 @@ Scope {
                                 colBackground: CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.12)
                                 colBackgroundHover: CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.20)
                                 colRipple: CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.24)
-                                downAction: () => { widgetManagerPanel.shown = false; GlobalStates.widgetEditMode = false }
+                                downAction: () => { widgetManagerPanel.shown = false; GlobalStates.setWidgetEditMode(false) }
                                 contentItem: MaterialSymbol {
                                     anchors.centerIn: parent
                                     text: "check"
@@ -1649,21 +2463,61 @@ Scope {
                         active: shown
                         visible: shown
                         z: 150
-                        x: Math.round(parent.width - width - 24)
-                        y: Math.round(parent.height - (editControlsBar.height + 24) - height - 12)
+                        x: Math.max(editGridOverlay.safeLeft,
+                            Math.round(editGridOverlay.safeRight - width))
+                        y: Math.max(editGridOverlay.safeTop,
+                            Math.round(editGridOverlay.safeBottom
+                                - editControlsBar.height - height - 36))
                         sourceComponent: WidgetManagerPanel {
+                            outputName: bgRoot.screen?.name ?? ""
                             canvasWidth: widgetManagerPanel.parent?.width ?? 800
                             canvasHeight: widgetManagerPanel.parent?.height ?? 600
+                            screenWidth: bgRoot.screen.width
+                            screenHeight: bgRoot.screen.height
                         }
                     }
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("weather", true)
+                    shown: bgRoot._widgetEnabled("weather", false)
+                    z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask : null
-                    Item { id: _hitMask; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                    Item { id: _hitMask; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
                     sourceComponent: WeatherWidget {
                         widgetIndex: 0
+                        outputName: bgRoot.screen?.name ?? ""
+                        screenWidth: bgRoot.screen.width
+                        screenHeight: bgRoot.screen.height
+                        scaledScreenWidth: bgRoot.screen.width
+                        scaledScreenHeight: bgRoot.screen.height
+                        wallpaperScale: 1
+                    }
+                }
+
+                FadeLoader {
+                    shown: bgRoot._widgetEnabled("customImage", false)
+                    z: item?.desktopStackZ ?? 0
+                    containmentMask: GlobalStates.widgetEditMode ? _hitMaskCustomImage : null
+                    Item { id: _hitMaskCustomImage; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
+                    sourceComponent: CustomImageWidget {
+                        widgetIndex: 16
+                        outputName: bgRoot.screen?.name ?? ""
+                        screenWidth: bgRoot.screen.width
+                        screenHeight: bgRoot.screen.height
+                        scaledScreenWidth: bgRoot.screen.width
+                        scaledScreenHeight: bgRoot.screen.height
+                        wallpaperScale: 1
+                    }
+                }
+
+                FadeLoader {
+                    shown: bgRoot._widgetEnabled("imageConverter", false)
+                    z: item?.desktopStackZ ?? 0
+                    containmentMask: GlobalStates.widgetEditMode ? _hitMaskImageConverter : null
+                    Item { id: _hitMaskImageConverter; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
+                    sourceComponent: ImageConverterWidget {
+                        widgetIndex: 17
+                        outputName: bgRoot.screen?.name ?? ""
                         screenWidth: bgRoot.screen.width
                         screenHeight: bgRoot.screen.height
                         scaledScreenWidth: bgRoot.screen.width
@@ -1674,25 +2528,39 @@ Scope {
 
                 FadeLoader {
                     shown: bgRoot._widgetEnabled("clock", true)
+                    z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask2 : null
-                    Item { id: _hitMask2; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                    Item { id: _hitMask2; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
                     sourceComponent: ClockWidget {
                         widgetIndex: 1
+                        outputName: bgRoot.screen?.name ?? ""
                         screenWidth: bgRoot.screen.width
                         screenHeight: bgRoot.screen.height
                         scaledScreenWidth: bgRoot.screen.width
                         scaledScreenHeight: bgRoot.screen.height
                         wallpaperScale: 1
                         wallpaperSafetyTriggered: bgRoot.wallpaperSafetyTriggered
+                        debugRegionActive: backgroundScope.clockDebugRegionActive
+                        debugRegionColor: backgroundScope.clockDebugRegionColor
+                        debugRegionBrightness: backgroundScope.clockDebugRegionBrightness
+                        debugRegionSpread: backgroundScope.clockDebugRegionSpread
+                        debugQuickControlsOpen: backgroundScope.clockDebugQuickControlsOpen
+                        debugLayoutProbeActive: backgroundScope.clockDebugLayoutProbeActive
+                        debugLayoutProbeX: backgroundScope.clockDebugLayoutProbeX
+                        debugLayoutProbeY: backgroundScope.clockDebugLayoutProbeY
+                        onDebugPaletteReportChanged: backgroundScope.clockDebugPaletteReport = debugPaletteReport
+                        onEditControlsGeometryReportChanged: backgroundScope.clockDebugControlsReport = editControlsGeometryReport
                     }
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("mediaControls", true)
+                    shown: bgRoot._widgetEnabled("mediaControls", false)
+                    z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask3 : null
-                    Item { id: _hitMask3; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                    Item { id: _hitMask3; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
                     sourceComponent: MediaControlsWidget {
                         widgetIndex: 2
+                        outputName: bgRoot.screen?.name ?? ""
                         screenWidth: bgRoot.screen.width
                         screenHeight: bgRoot.screen.height
                         scaledScreenWidth: bgRoot.screen.width
@@ -1703,10 +2571,12 @@ Scope {
 
                 FadeLoader {
                     shown: bgRoot._widgetEnabled("visualizer", false)
+                    z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask4 : null
-                    Item { id: _hitMask4; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                    Item { id: _hitMask4; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
                     sourceComponent: VisualizerWidget {
                         widgetIndex: 3
+                        outputName: bgRoot.screen?.name ?? ""
                         screenWidth: bgRoot.screen.width
                         screenHeight: bgRoot.screen.height
                         scaledScreenWidth: bgRoot.screen.width
@@ -1717,10 +2587,12 @@ Scope {
 
                 FadeLoader {
                     shown: bgRoot._widgetEnabled("systemMonitor", false)
+                    z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask5 : null
-                    Item { id: _hitMask5; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                    Item { id: _hitMask5; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
                     sourceComponent: SystemMonitorWidget {
                         widgetIndex: 4
+                        outputName: bgRoot.screen?.name ?? ""
                         screenWidth: bgRoot.screen.width
                         screenHeight: bgRoot.screen.height
                         scaledScreenWidth: bgRoot.screen.width
@@ -1731,10 +2603,12 @@ Scope {
 
                 FadeLoader {
                     shown: bgRoot._widgetEnabled("battery", false) && Battery.available
+                    z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask6 : null
-                    Item { id: _hitMask6; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                    Item { id: _hitMask6; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
                     sourceComponent: BatteryWidget {
                         widgetIndex: 5
+                        outputName: bgRoot.screen?.name ?? ""
                         screenWidth: bgRoot.screen.width
                         screenHeight: bgRoot.screen.height
                         scaledScreenWidth: bgRoot.screen.width
@@ -1745,10 +2619,12 @@ Scope {
 
                 FadeLoader {
                     shown: bgRoot._widgetEnabled("notes", false)
+                    z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask7 : null
-                    Item { id: _hitMask7; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                    Item { id: _hitMask7; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
                     sourceComponent: NotesWidget {
                         widgetIndex: 6
+                        outputName: bgRoot.screen?.name ?? ""
                         screenWidth: bgRoot.screen.width
                         screenHeight: bgRoot.screen.height
                         scaledScreenWidth: bgRoot.screen.width
@@ -1759,15 +2635,184 @@ Scope {
 
                 FadeLoader {
                     shown: bgRoot._widgetEnabled("calendarUpcoming", false)
+                    z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask8 : null
-                    Item { id: _hitMask8; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                    Item { id: _hitMask8; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
                     sourceComponent: CalendarUpcomingWidget {
                         widgetIndex: 7
+                        outputName: bgRoot.screen?.name ?? ""
                         screenWidth: bgRoot.screen.width
                         screenHeight: bgRoot.screen.height
                         scaledScreenWidth: bgRoot.screen.width
                         scaledScreenHeight: bgRoot.screen.height
                         wallpaperScale: 1
+                    }
+                }
+
+                FadeLoader {
+                    shown: bgRoot._widgetEnabled("uptime", false)
+                    z: item?.desktopStackZ ?? 0
+                    containmentMask: GlobalStates.widgetEditMode ? _hitMask10 : null
+                    Item { id: _hitMask10; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
+                    sourceComponent: UptimeWidget {
+                        widgetIndex: 9
+                        outputName: bgRoot.screen?.name ?? ""
+                        screenWidth: bgRoot.screen.width
+                        screenHeight: bgRoot.screen.height
+                        scaledScreenWidth: bgRoot.screen.width
+                        scaledScreenHeight: bgRoot.screen.height
+                        wallpaperScale: 1
+                    }
+                }
+
+                FadeLoader {
+                    shown: bgRoot._widgetEnabled("worldClock", false)
+                    z: item?.desktopStackZ ?? 0
+                    containmentMask: GlobalStates.widgetEditMode ? _hitMask15 : null
+                    Item { id: _hitMask15; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
+                    sourceComponent: WorldClockWidget {
+                        widgetIndex: 14
+                        outputName: bgRoot.screen?.name ?? ""
+                        screenWidth: bgRoot.screen.width
+                        screenHeight: bgRoot.screen.height
+                        scaledScreenWidth: bgRoot.screen.width
+                        scaledScreenHeight: bgRoot.screen.height
+                        wallpaperScale: 1
+                    }
+                }
+
+                FadeLoader {
+                    shown: bgRoot._widgetEnabled("userCard", false)
+                    z: item?.desktopStackZ ?? 0
+                    containmentMask: GlobalStates.widgetEditMode ? _hitMask16 : null
+                    Item { id: _hitMask16; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
+                    sourceComponent: UserCardWidget {
+                        widgetIndex: 15
+                        outputName: bgRoot.screen?.name ?? ""
+                        screenWidth: bgRoot.screen.width
+                        screenHeight: bgRoot.screen.height
+                        scaledScreenWidth: bgRoot.screen.width
+                        scaledScreenHeight: bgRoot.screen.height
+                        wallpaperScale: 1
+                    }
+                }
+
+                FadeLoader {
+                    shown: bgRoot._widgetEnabled("newsTicker", false)
+                    z: item?.desktopStackZ ?? 0
+                    containmentMask: GlobalStates.widgetEditMode ? _hitMask12 : null
+                    Item { id: _hitMask12; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
+                    sourceComponent: NewsTickerWidget {
+                        widgetIndex: 11
+                        outputName: bgRoot.screen?.name ?? ""
+                        screenWidth: bgRoot.screen.width
+                        screenHeight: bgRoot.screen.height
+                        scaledScreenWidth: bgRoot.screen.width
+                        scaledScreenHeight: bgRoot.screen.height
+                        wallpaperScale: 1
+                    }
+                }
+
+                FadeLoader {
+                    shown: bgRoot._widgetEnabled("mascot", false)
+                    z: item?.desktopStackZ ?? 0
+                    containmentMask: GlobalStates.widgetEditMode ? _hitMask13 : null
+                    Item { id: _hitMask13; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
+                    sourceComponent: MascotWidget {
+                        widgetIndex: 12
+                        outputName: bgRoot.screen?.name ?? ""
+                        screenWidth: bgRoot.screen.width
+                        screenHeight: bgRoot.screen.height
+                        scaledScreenWidth: bgRoot.screen.width
+                        scaledScreenHeight: bgRoot.screen.height
+                        wallpaperScale: 1
+                    }
+                }
+
+                FadeLoader {
+                    shown: bgRoot._widgetEnabled("japaneseTypography", false)
+                    z: item?.desktopStackZ ?? 0
+                    containmentMask: GlobalStates.widgetEditMode ? _hitMask14 : null
+                    Item { id: _hitMask14; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
+                    sourceComponent: JapaneseTypographyWidget {
+                        widgetIndex: 13
+                        outputName: bgRoot.screen?.name ?? ""
+                        screenWidth: bgRoot.screen.width
+                        screenHeight: bgRoot.screen.height
+                        scaledScreenWidth: bgRoot.screen.width
+                        scaledScreenHeight: bgRoot.screen.height
+                        wallpaperScale: 1
+                    }
+                }
+
+                // Extra mascot instances (Settings › Widgets › Mascot › "+"),
+                // one MascotWidget per id under background.widgets.mascotInstances.
+                Repeater {
+                    model: {
+                        void Config.revision;
+                        const obj = Config.getNestedValue("background.widgets.mascotInstances", {});
+                        return Object.keys(obj ?? {}).sort();
+                    }
+
+                    Loader {
+                        id: mascotInstanceLoader
+                        required property string modelData
+                        required property int index
+                        z: item?.desktopStackZ ?? 0
+                        containmentMask: GlobalStates.widgetEditMode ? _hitMaskInst : null
+                        Item { id: _hitMaskInst; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
+
+                        active: false
+
+                        function _configEnabled(): bool {
+                            return DesktopWidgetLayout.enabled(bgRoot.screenName,
+                                "mascotInstances." + modelData,
+                                Config.getNestedValue("background.widgets.mascotInstances." + modelData + ".enable", false));
+                        }
+                        function _load(): void {
+                            active = true;
+                            setSource(Quickshell.shellPath("modules/background/widgets/mascot/MascotWidget.qml"), {
+                                configEntryName: "mascotInstances." + modelData,
+                                widgetIndex: 20 + index,
+                                outputName: bgRoot.screen?.name ?? "",
+                                screenWidth: bgRoot.screen.width,
+                                screenHeight: bgRoot.screen.height,
+                                scaledScreenWidth: bgRoot.screen.width,
+                                scaledScreenHeight: bgRoot.screen.height,
+                                wallpaperScale: 1
+                            });
+                        }
+                        function _unload(): void {
+                            active = false;
+                            source = "";
+                        }
+                        function _syncLoaded(): void {
+                            if (_configEnabled()) {
+                                if (!item) _load();
+                            } else if (item || active) {
+                                _unload();
+                            }
+                        }
+
+                        Component.onCompleted: Qt.callLater(_syncLoaded)
+
+                        Connections {
+                            target: Config
+                            function onConfigChanged() { Qt.callLater(mascotInstanceLoader._syncLoaded) }
+                        }
+                        Connections {
+                            target: bgRoot.screen
+                            function onWidthChanged() {
+                                if (!mascotInstanceLoader.item) return;
+                                mascotInstanceLoader.item.screenWidth = bgRoot.screen.width;
+                                mascotInstanceLoader.item.scaledScreenWidth = bgRoot.screen.width;
+                            }
+                            function onHeightChanged() {
+                                if (!mascotInstanceLoader.item) return;
+                                mascotInstanceLoader.item.screenHeight = bgRoot.screen.height;
+                                mascotInstanceLoader.item.scaledScreenHeight = bgRoot.screen.height;
+                            }
+                        }
                     }
                 }
 
@@ -1777,21 +2822,25 @@ Scope {
 
                     Loader {
                         id: customWidgetLoader
-                        containmentMask: GlobalStates.widgetEditMode ? _hitMask7 : null
-                        Item { id: _hitMask7; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                        z: item?.desktopStackZ ?? 0
+                        containmentMask: GlobalStates.widgetEditMode ? _customHitMask : null
+                        Item { id: _customHitMask; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
                         required property var modelData
                         required property int index
 
                         active: false
 
                         function _configEnabled(): bool {
-                            return Boolean(Config.getNestedValue("background.widgets.custom." + modelData.id + ".enable", false));
+                            return DesktopWidgetLayout.enabled(bgRoot.screenName,
+                                "custom." + modelData.id,
+                                Config.getNestedValue("background.widgets.custom." + modelData.id + ".enable", false));
                         }
 
                         // setSource passes required properties at construction time
                         function _load(): void {
                             const props = {
-                                widgetIndex: 6 + index,
+                                widgetIndex: 40 + index,
+                                outputName: bgRoot.screen?.name ?? "",
                                 screenWidth: bgRoot.screen.width,
                                 screenHeight: bgRoot.screen.height,
                                 scaledScreenWidth: bgRoot.screen.width,

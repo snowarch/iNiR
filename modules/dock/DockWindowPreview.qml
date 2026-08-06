@@ -42,7 +42,10 @@ Button {
             : (root.hovered 
                 ? ColorUtils.transparentize(Appearance.inirEverywhere ? Appearance.inir?.colLayer2Hover ?? Appearance.colors.colSurfaceContainerHigh : Appearance.colors.colSurfaceContainerHigh, 0.5)
                 : "transparent")
-        
+        // ZZZ console-plate identity: a hairline edge on interaction.
+        border.width: Appearance.zzzEverywhere && (root.hovered || root.down) ? Appearance.zzz.borderThick : 0
+        border.color: Appearance.zzz.hairlineStrong
+
         Behavior on color {
             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
@@ -87,7 +90,9 @@ Button {
                     id: appTitleText
                     anchors.fill: parent
                     anchors.rightMargin: closeButton.visible ? closeButton.width + 4 : 0
-                    text: root.toplevel?.title ?? ""
+                    text: root.toplevel?._sourceToplevel?.title
+                        ?? root.toplevel?.title
+                        ?? ""
                     elide: Text.ElideRight
                     font.pixelSize: Appearance.font.pixelSize.small
                     color: Appearance.inirEverywhere 
@@ -114,7 +119,11 @@ Button {
                 
                 onClicked: {
                     root.windowCloseClicked()
-                    root.toplevel?.close()
+                    if (CompositorService.isNiri && root.toplevel?.niriWindowId) {
+                        NiriService.closeWindow(root.toplevel.niriWindowId)
+                    } else {
+                        root.toplevel?.close()
+                    }
                 }
 
                 contentItem: MaterialSymbol {
@@ -200,6 +209,11 @@ Button {
                 mipmap: true
                 anchors.fill: parent
                 anchors.margins: 2
+                // The preview file is a full-resolution window capture; decoding it
+                // natively for a thumbnail this size costs megabytes per hovered
+                // window. 2x the drawn size keeps it crisp under mipmap.
+                sourceSize.width: Math.max(1, Math.round(windowPreview.width * 2))
+                sourceSize.height: Math.max(1, Math.round(windowPreview.height * 2))
                 opacity: status === Image.Ready ? 1 : 0
 
                 Behavior on opacity {

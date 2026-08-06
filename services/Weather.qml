@@ -23,7 +23,11 @@ Singleton {
     readonly property bool hasManualCoords: configLat !== 0 || configLon !== 0
     readonly property bool hasManualCity: configCity.length > 0
 
-    property var location: ({ valid: false, lat: 0, lon: 0, name: "" })
+    property var location: ({ valid: false, lat: 0, lon: 0, name: "", countryCode: "" })
+
+    // ISO 3166-1 alpha-2, lowercase, "" when the location never resolved.
+    // Lets consumers make region-aware choices without geocoding again.
+    readonly property string countryCode: location?.countryCode ?? ""
 
     property var data: ({
         uv: "0",
@@ -747,7 +751,10 @@ Singleton {
                             displayName = parts.length > 2 ? parts[0] + ", " + parts[parts.length - 1] : parts.join(", ");
                         }
 
-                        root.location = { valid: true, lat: lat, lon: lon, name: displayName };
+                        root.location = {
+                            valid: true, lat: lat, lon: lon, name: displayName,
+                            countryCode: String(addr.country_code ?? "").toLowerCase()
+                        };
                         console.info(
                             "[Weather] Geocoded:",
                             root.redactedLogLocationName(root.configCity),
@@ -794,7 +801,8 @@ Singleton {
                                 valid: true,
                                 lat: root.location.lat,
                                 lon: root.location.lon,
-                                name: name
+                                name: name,
+                                countryCode: String(addr.country_code ?? "").toLowerCase()
                             };
                             // Save the resolved name back to config for display
                             console.info("[Weather] Reverse geocoded:", root.redactedLogLocationName(name));
@@ -853,7 +861,7 @@ Singleton {
     // IP geolocation (ip-api.com - accurate)
     Process {
         id: ipLocator
-        command: ["/usr/bin/curl", "-s", "--max-time", "10", "http://ip-api.com/json/?fields=lat,lon,city,regionName"]
+        command: ["/usr/bin/curl", "-s", "--max-time", "10", "http://ip-api.com/json/?fields=lat,lon,city,regionName,countryCode"]
         stdout: StdioCollector {
             onStreamFinished: {
                 if (text.length === 0) {
@@ -868,7 +876,8 @@ Singleton {
                             valid: true,
                             lat: data.lat,
                             lon: data.lon,
-                            name: data.city + (data.regionName ? `, ${data.regionName}` : "")
+                            name: data.city + (data.regionName ? `, ${data.regionName}` : ""),
+                            countryCode: String(data.countryCode ?? "").toLowerCase()
                         };
                         console.info("[Weather] Location:", root.redactedLogLocationName(root.location.name));
                         root.fetchWeather();

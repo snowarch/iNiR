@@ -82,10 +82,60 @@ ApplicationWindow {
             name: Translation.tr("Monitors"),
             icon: "desktop",
             component: Qt.resolvedUrl("modules/waffle/settings/pages/WMonitorVisibilityPage.qml")
+        },
+        {
+            name: Translation.tr("Autostart"),
+            icon: "power",
+            component: Qt.resolvedUrl("modules/waffle/settings/pages/WAutostartPage.qml")
+        },
+        {
+            name: Translation.tr("Workspace Strip"),
+            icon: "desktop",
+            component: Qt.resolvedUrl("modules/waffle/settings/pages/WWorkspaceStripPage.qml")
+        },
+        {
+            name: Translation.tr("Mascot"),
+            icon: "image",
+            component: Qt.resolvedUrl("modules/waffle/settings/pages/WMascotPage.qml")
+        },
+        {
+            name: Translation.tr("AI"),
+            icon: "wand",
+            component: Qt.resolvedUrl("modules/waffle/settings/pages/WAiPage.qml")
+        },
+        {
+            name: Translation.tr("Effects"),
+            icon: "eye",
+            component: Qt.resolvedUrl("modules/waffle/settings/pages/WEffectsPage.qml")
+        },
+        {
+            name: Translation.tr("Shell Layout"),
+            icon: "desktop",
+            component: Qt.resolvedUrl("modules/waffle/settings/pages/WShellLayoutPage.qml")
         }
     ]
     
     property int currentPage: 0
+    property int _requestedStartPage: -1
+    property bool _navigationInitialized: false
+
+    function _persistCurrentPage(): void {
+        if (root._navigationInitialized && Persistent.ready && Persistent.states?.settings)
+            Persistent.states.settings.wafflePage = Math.max(0, Math.min(root.currentPage, root.pages.length - 1))
+    }
+
+    function initializeNavigation(): void {
+        if (root._navigationInitialized || !Persistent.ready)
+            return
+        const persisted = Persistent.states?.settings?.wafflePage ?? 0
+        const requested = root._requestedStartPage >= 0 ? root._requestedStartPage : persisted
+        root.currentPage = Math.max(0, Math.min(requested, root.pages.length - 1))
+        root._navigationInitialized = true
+        root._persistCurrentPage()
+        root.tryOpenPendingSection()
+    }
+
+    onCurrentPageChanged: root._persistCurrentPage()
     
     visible: true
     onClosing: Qt.quit()
@@ -108,14 +158,19 @@ ApplicationWindow {
     Component.onCompleted: {
         Quickshell.watchFiles = false
         Config.readWriteDelay = 0
-        const startPage = Quickshell.env("QS_SETTINGS_PAGE");
-        if (startPage) root.currentPage = parseInt(startPage);
+        const startPage = parseInt(Quickshell.env("QS_SETTINGS_PAGE"));
+        if (!isNaN(startPage)) root._requestedStartPage = startPage;
 
         const startSection = Quickshell.env("QS_SETTINGS_SECTION");
         if (startSection)
             root.pendingStartSection = startSection;
 
-        root.tryOpenPendingSection()
+        root.initializeNavigation()
+    }
+
+    Connections {
+        target: Persistent
+        function onReadyChanged() { root.initializeNavigation() }
     }
     
     Connections {
@@ -182,7 +237,10 @@ ApplicationWindow {
         
         pages: root.pages
         currentPage: root.currentPage
-        onCurrentPageChanged: root.currentPage = currentPage
+        onCurrentPageChanged: {
+            if (navigationReady && root.currentPage !== currentPage)
+                root.currentPage = currentPage
+        }
         onCloseRequested: root.close()
         Component.onCompleted: root.tryOpenPendingSection()
         

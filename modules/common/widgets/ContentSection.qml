@@ -60,7 +60,16 @@ ColumnLayout {
         }
     }
 
+    ZzzSectionHeader {
+        Layout.fillWidth: true
+        visible: Appearance.zzzEverywhere && root.title.length > 0
+        title: root.title
+        symbol: root.icon
+        accentColor: Appearance.zzz.accent
+    }
+
     RowLayout {
+        visible: !Appearance.zzzEverywhere
         spacing: 6
         OptionalMaterialSymbol {
             icon: root.icon

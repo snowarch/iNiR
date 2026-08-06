@@ -1,6 +1,6 @@
 # Theming Presets
 
-44 built-in color presets that bypass wallpaper-based color generation and apply predefined palettes.
+46 built-in color presets that bypass wallpaper-based color generation and apply predefined palettes.
 
 ## How presets work
 
@@ -24,17 +24,17 @@ The full, current list of presets lives in `modules/common/ThemePresets.qml` and
 grep -oP '^\s*id:\s*"\K[^"]+' modules/common/ThemePresets.qml | grep -vE '^(auto|custom)$'
 ```
 
-At time of writing there are 44 theme presets (plus the special `auto` and `custom` entries), spanning Catppuccin (4 flavors), Gruvbox, Nord, Dracula, Tokyo Night, Kanagawa, Rose Pine, Everforest, Solarized, Monokai, Ayu, the iNiR signature styles (Angel / Angel Light), and many more. Preset IDs are kebab-case (e.g. `rose-pine`, `gruvbox-dark`, `tokyo-night`, `one-dark`) — use the ID, not a display name, when scripting.
+At time of writing there are 46 theme presets (plus the special `auto` and `custom` entries), spanning Catppuccin (4 flavors), Gruvbox, Nord, Dracula, Tokyo Night, Kanagawa, Rose Pine, Everforest, Solarized, Monokai, Ayu, the iNiR signature styles (Angel / Angel Light), and many more. Preset IDs are kebab-case (e.g. `rose-pine`, `gruvbox-dark`, `tokyo-night`, `one-dark`). Use the ID, not a display name, when scripting.
 
 ## Preset features
 
 Some presets include metadata that affects more than just colors (all defined per-preset in `modules/common/ThemePresets.qml`):
 
-- **Rounding scale** (`roundingScale`): multiplier for corner rounding. Varies widely — e.g. Matrix uses a tighter scale, Zen Garden a softer/larger one.
+- **Rounding scale** (`roundingScale`): multiplier for corner rounding. Varies widely (e.g. Matrix uses a tighter scale, Zen Garden a softer/larger one).
 - **Font style** (`fontStyle`): `mono`, `serif`, or `sans` override. Used by many presets (most terminal/retro themes are `mono`, Angel is `serif`, etc.).
 - **Border width** (`borderWidthScale`): a handful of presets tune border thickness (e.g. Matrix thicker, some lighter).
 
-Don't rely on the exact value for a given preset — read the preset's `meta` block in `ThemePresets.qml`.
+Don't rely on the exact value for a given preset. Read the preset's `meta` block in `ThemePresets.qml`.
 
 ## Variant system
 

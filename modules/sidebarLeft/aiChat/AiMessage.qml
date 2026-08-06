@@ -220,6 +220,8 @@ Rectangle {
 
         ColumnLayout { // Message content
             id: messageContentColumnLayout
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
             spacing: 0
 
             Item {

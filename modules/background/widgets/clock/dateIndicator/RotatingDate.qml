@@ -15,7 +15,7 @@ Item {
     
     readonly property int clockSecond: DateTime.clock.seconds
     readonly property string dialStyle: Config.getNestedValue("background.widgets.clock.cookie.dialNumberStyle", "full")
-    readonly property bool timeIndicators: Config.getNestedValue("background.widgets.clock.cookie.timeIndicators", true)
+    readonly property bool timeIndicators: Config.getNestedValue("background.widgets.clock.cookie.timeIndicators", false)
 
     property real radius: style === "border" ? 90 : 0
     Behavior on radius {

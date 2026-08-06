@@ -60,7 +60,7 @@ BarButton {
     readonly property string weatherDescription: Weather.describeWeather(Weather.data?.wCode ?? "113")
 
     BarToolTip {
-        extraVisibleCondition: root.shouldShowTooltip
+        barExtraVisibleCondition: root.shouldShowTooltip
         text: Weather.showVisibleCity ? Weather.visibleCity : root.weatherDescription
     }
 }

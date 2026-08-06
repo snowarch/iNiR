@@ -12,6 +12,10 @@ Item {
     property bool separateLightDark: false
     property bool tryCustomIcon: true
     property bool monochrome: Config.options?.waffles?.bar?.monochromeIcons ?? false
+    // Only the shell-owned light/dark pairs live in the bundled Fluent path.
+    // Application ids belong to the system icon theme; probing a fabricated
+    // `${iconsPath}/app-id.svg` path emits a warning for every normal app.
+    readonly property bool hasBundledOverride: root.tryCustomIcon && root.separateLightDark
     readonly property var currentScreen: root.QsWindow?.window?.screen ?? null
     
     property real implicitSize: Looks.scaledBar(Config.options?.waffles?.bar?.iconSize ?? 26, currentScreen)
@@ -24,7 +28,9 @@ Item {
         animated: true
         roundToIconSize: true
         fallback: root.iconName
-        source: root.tryCustomIcon ? `${Looks.iconsPath}/${root.iconName}${!root.separateLightDark ? "" : Looks.dark ? "-dark" : "-light"}.svg` : fallback
+        source: root.hasBundledOverride
+            ? `${Looks.iconsPath}/${root.iconName}${Looks.dark ? "-dark" : "-light"}.svg`
+            : root.iconName
     }
 
     Loader {

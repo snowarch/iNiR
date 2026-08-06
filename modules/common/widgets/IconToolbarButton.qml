@@ -1,24 +1,34 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
 import qs.modules.common
+import qs.modules.common.functions
 
 ToolbarButton {
     id: iconBtn
     implicitWidth: height
 
-    colBackgroundToggled: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+    colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.sticker
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colSelection 
         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface 
         : Appearance.colors.colSecondaryContainer
-    colBackgroundToggledHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+    colBackgroundToggledHover: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : Appearance.inirEverywhere ? Appearance.inir.colSelectionHover 
         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover 
         : Appearance.colors.colSecondaryContainerHover
-    colRippleToggled: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+    colRippleToggled: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
         : Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive 
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive 
         : Appearance.colors.colSecondaryContainerActive
-    property color colText: toggled ? (Appearance.inirEverywhere ? Appearance.inir.colOnSelection : Appearance.colors.colOnSecondaryContainer) : (Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurfaceVariant)
+    property color colText: toggled
+        ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker
+            : Appearance.inirEverywhere ? Appearance.inir.colOnSelection : Appearance.colors.colOnSecondaryContainer)
+        : (Appearance.zzzEverywhere ? Appearance.zzz.ink
+            : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurfaceVariant)
 
     contentItem: MaterialSymbol {
         anchors.centerIn: parent

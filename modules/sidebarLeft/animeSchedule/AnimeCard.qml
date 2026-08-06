@@ -178,7 +178,7 @@ RippleButton {
                     MaterialSymbol {
                         text: "star"
                         iconSize: Appearance.font.pixelSize.smaller
-                        color: Appearance.m3colors.m3tertiary
+                        color: Appearance.colors.colTertiary
                         fill: 1
                     }
                     StyledText {

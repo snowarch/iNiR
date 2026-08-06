@@ -24,9 +24,14 @@ IconImage {
     Process {
         id: faviconDownloadProcess
         running: false
-        command: ["/usr/bin/bash", "-c", `[ -f ${faviconFilePath} ] || /usr/bin/curl -s '${root.faviconUrl}' -o '${faviconFilePath}' -L -H 'User-Agent: ${downloadUserAgent}'`]
+        // -f + --remove-on-error: Google answers 404 with an HTML body for any
+        // domain it cannot resolve (a localhost player, an intranet host), and
+        // without this the error page is cached as an .ico that the image
+        // loader then fails to decode on every startup, forever, because the
+        // [ -f ] guard never re-fetches it.
+        command: ["/usr/bin/bash", "-c", `[ -f ${faviconFilePath} ] || /usr/bin/curl -sfL --remove-on-error '${root.faviconUrl}' -o '${faviconFilePath}' -H 'User-Agent: ${downloadUserAgent}'`]
         onExited: (exitCode, exitStatus) => {
-            root.urlToLoad = root.faviconFilePath
+            if (exitCode === 0) root.urlToLoad = root.faviconFilePath
         }
     }
 

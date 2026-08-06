@@ -52,6 +52,7 @@ Item {
         }
     }
     
+    readonly property bool zzzEverywhere: Appearance.zzzEverywhere
     readonly property bool inirEverywhere: Appearance.inirEverywhere
     readonly property bool angelEverywhere: Appearance.angelEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
@@ -68,13 +69,13 @@ Item {
     
     readonly property color wallpaperDominantColor: (wallpaperColorQuantizer?.colors?.[0] ?? Appearance.colors.colPrimary)
     readonly property QtObject blendedColors: AdaptedMaterialScheme {
-        color: ColorUtils.mix(root.wallpaperDominantColor, Appearance.colors.colPrimaryContainer, 0.8) || Appearance.m3colors.m3secondaryContainer
+        color: ColorUtils.mix(root.wallpaperDominantColor, Appearance.colors.colPrimaryContainer, 0.8) || Appearance.colors.colSecondaryContainer
     }
 
     // Shadow
     StyledRectangularShadow {
         target: background
-        visible: (Appearance.angelEverywhere || (!root.inirEverywhere && !root.auroraEverywhere)) && !Appearance.gameModeMinimal
+        visible: !root.zzzEverywhere && (Appearance.angelEverywhere || (!root.inirEverywhere && !root.auroraEverywhere)) && !Appearance.gameModeMinimal
     }
 
     Rectangle {
@@ -82,30 +83,63 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        implicitHeight: flickable.contentHeight + 24
-        
-        color: root.inirEverywhere ? Appearance.inir.colLayer0
+        implicitHeight: flickable.contentHeight + (root.compactMode ? 20 : 24)
+
+        color: root.zzzEverywhere ? Appearance.zzz.bg0
+             : root.inirEverywhere ? Appearance.inir.colLayer0
              : root.auroraEverywhere ? ColorUtils.applyAlpha((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
              : Appearance.colors.colLayer0
-        
-        radius: root.angelEverywhere ? Appearance.angel.roundingLarge
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        radius: root.zzzEverywhere ? 0
+            : root.angelEverywhere ? Appearance.angel.roundingLarge
             : root.inirEverywhere ? Appearance.inir.roundingLarge
             : Appearance.rounding.large
-        
-        border.width: root.inirEverywhere ? 1 : (root.auroraEverywhere ? 1 : 1)
-        border.color: root.angelEverywhere ? Appearance.angel.colBorder
-                    : root.inirEverywhere ? Appearance.inir.colBorder 
-                    : root.auroraEverywhere ? Appearance.aurora.colTooltipBorder 
+
+        border.width: root.zzzEverywhere ? 0 : (root.inirEverywhere ? 1 : (root.auroraEverywhere ? 1 : 1))
+        border.color: root.zzzEverywhere ? "transparent"
+                    : root.angelEverywhere ? Appearance.angel.colBorder
+                    : root.inirEverywhere ? Appearance.inir.colBorder
+                    : root.auroraEverywhere ? Appearance.aurora.colTooltipBorder
                     : Appearance.colors.colLayer0Border
+
+        Behavior on radius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on border.width {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on border.color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
         
         clip: true
 
-        layer.enabled: root.useWallpaperBackdrop
+        // ZZZ: mask to chamfered shape so children never escape the cut-corner.
+        layer.enabled: root.useWallpaperBackdrop || (root.zzzEverywhere && !Appearance.gameModeMinimal)
         layer.effect: GE.OpacityMask {
-            maskSource: Rectangle {
+            maskSource: Item {
                 width: background.width
                 height: background.height
-                radius: background.radius
+                visible: false
+                Rectangle {
+                    anchors.fill: parent
+                    visible: !root.zzzEverywhere
+                    radius: background.radius
+                    color: "white"
+                }
+                ZzzPlate {
+                    anchors.fill: parent
+                    visible: root.zzzEverywhere
+                    chamfer: Appearance.zzz.cutCorner
+                    chamferBottomRight: !Appearance.zzz.round
+                    fillColor: "white"
+                }
             }
         }
 
@@ -154,6 +188,20 @@ Item {
             z: 10
         }
 
+        ZzzPanelBackdrop {
+            anchors.fill: parent
+            label: "CONTROL"
+            index: "CP"
+            ghostText: "CTRL"
+            accentColor: Appearance.zzz.accent
+            burstTriad: true
+            showTicks: false
+            horizontalBias: 0.05
+            verticalBias: 0.02
+            ghostWidthFactor: 0.82
+            z: 0
+        }
+
         // Content
         Flickable {
             id: flickable
@@ -165,10 +213,15 @@ Item {
             boundsBehavior: Flickable.StopAtBounds
             flickDeceleration: 3000
 
+            Behavior on contentY {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.scroll.duration; easing.type: Appearance.animation.scroll.type; easing.bezierCurve: Appearance.animation.scroll.bezierCurve }
+            }
+
             ColumnLayout {
                 id: contentLayout
                 width: flickable.width
-                spacing: root.compactMode ? 8 : 10
+                spacing: root.compactMode ? 4 : 6
 
                 // Header with User Profile
                 ProfileHeader {
@@ -236,7 +289,7 @@ Item {
                     sourceComponent: Component { QuickActionsSection {} }
                 }
 
-                Item { Layout.preferredHeight: 8 }
+                Item { Layout.preferredHeight: 2 }
             }
 
             WheelHandler {
@@ -249,5 +302,18 @@ Item {
                 }
             }
         }
+    }
+
+    // ZZZ: hairline stroke following the chamfered outline. Sibling of background,
+    // not child — if it lives inside the layer.enabled Rectangle, the OpacityMask
+    // clips the stroke's outer half and it renders as broken dots.
+    ZzzPlate {
+        anchors.fill: background
+        visible: root.zzzEverywhere
+        fillColor: "transparent"
+        strokeColor: Appearance.zzz.hairline
+        strokeWidth: 1
+        chamfer: Appearance.zzz.cutCorner
+        chamferBottomRight: !Appearance.zzz.round
     }
 }

@@ -47,12 +47,22 @@ Item {
                 Layout.preferredWidth: 30
                 Layout.preferredHeight: 30
 
+                CookieFace {
+                    anchors.fill: parent
+                    visible: Appearance.cookieEverywhere
+                    role: "badge"
+                    selected: VoiceSearch.recording || VoiceSearch.transcribing
+                    color: Appearance.colors.colPrimaryContainer
+                }
+
                 MaterialSymbol {
                     anchors.centerIn: parent
                     text: VoiceSearch.transcribing ? "cloud_upload" : "mic"
                     iconSize: 24
                     fill: 1
-                    color: Appearance.colors.colPrimary
+                    color: Appearance.cookieEverywhere
+                        ? Appearance.colors.colOnPrimaryContainer
+                        : Appearance.colors.colPrimary
 
                     // Pulse animation while recording
                     SequentialAnimation on scale {

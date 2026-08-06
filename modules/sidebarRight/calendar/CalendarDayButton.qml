@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.common.functions
 import qs.services
 import QtQuick
 import QtQuick.Layouts
@@ -22,8 +23,13 @@ RippleButton {
     implicitHeight: 38
 
     toggled: (isToday == 1) && !isHeader
-    buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
+    // ZZZ today = confident accent "sticker" chip so onSticker text stays readable
+    // (RippleButton's default zzz toggled bg is near-black chrome → dark-on-dark).
+    colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colPrimary
+    colBackgroundToggledHover: Appearance.zzzEverywhere ? ColorUtils.mix(Appearance.zzz.sticker, Appearance.zzz.accent, 0.5) : Appearance.colors.colPrimaryHover
 
     contentItem: Item {
         anchors.fill: parent
@@ -34,7 +40,12 @@ RippleButton {
             text: button.day
             horizontalAlignment: Text.AlignHCenter
             font.weight: button.bold ? Font.DemiBold : Font.Normal
-            color: button.isHeader && (button.isToday == 1)
+            color: Appearance.zzzEverywhere
+                ? (button.isHeader && (button.isToday == 1) ? Appearance.zzz.accent
+                    : (button.isToday == 1) ? Appearance.zzz.onSticker
+                    : (button.isToday == 0) ? Appearance.zzz.ink
+                    : Appearance.zzz.inkMuted)
+                : button.isHeader && (button.isToday == 1)
                 ? (Appearance.angelEverywhere ? Appearance.angel.colPrimary
                     : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
                 : (button.isToday == 1)
@@ -74,7 +85,9 @@ RippleButton {
                     if (!colors || colors.length === 0) {
                         // Fallback: single dot in primary color (local events only)
                         if (button.eventCount > 0) {
-                            const primary = button.isToday == 1
+                            const primary = Appearance.zzzEverywhere
+                                ? (button.isToday == 1 ? Appearance.zzz.onSticker : Appearance.zzz.accent)
+                                : button.isToday == 1
                                 ? (Appearance.angelEverywhere ? Appearance.angel.colOnPrimary
                                     : Appearance.inirEverywhere ? Appearance.inir.colOnPrimary : Appearance.colors.colOnPrimary)
                                 : (Appearance.angelEverywhere ? Appearance.angel.colPrimary

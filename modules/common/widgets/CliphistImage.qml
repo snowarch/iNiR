@@ -65,18 +65,24 @@ Rectangle {
 
     Process {
         id: decodeImageProcess
-        command: ["/usr/bin/bash", "-c", `[ -f '${imageDecodeFilePath}' ] || echo '${StringUtils.shellSingleQuoteEscape(root.entry)}' | ${Cliphist.cliphistBinary} decode > '${imageDecodeFilePath}'`]
+        // Multiple clipboard surfaces can render the same entry concurrently.
+        // Decode through a per-process temporary file and publish it atomically;
+        // the shared session cache is cleaned once by Directories on shell start.
+        command: ["/usr/bin/bash", "-c", `
+            if [ -s '${imageDecodeFilePath}' ]; then
+                exit 0
+            fi
+            _tmp='${imageDecodeFilePath}'.$$
+            if echo '${StringUtils.shellSingleQuoteEscape(root.entry)}' | ${Cliphist.cliphistBinary} decode > "$_tmp" && [ -s "$_tmp" ]; then
+                /usr/bin/mv -f "$_tmp" '${imageDecodeFilePath}'
+            else
+                /usr/bin/rm -f "$_tmp"
+                exit 1
+            fi
+        `]
         onExited: (exitCode, exitStatus) => {
-            if (exitCode === 0) {
-                root.source = imageDecodeFilePath;
-            } else {
-                root.source = "";
-            }
+            root.source = exitCode === 0 ? imageDecodeFilePath : ""
         }
-    }
-
-    Component.onDestruction: {
-        Quickshell.execDetached(["/usr/bin/bash", "-c", `[ -f '${imageDecodeFilePath}' ] && /usr/bin/rm -f '${imageDecodeFilePath}'`]);
     }
 
     layer.enabled: true

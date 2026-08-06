@@ -670,6 +670,10 @@ export ILLOGICAL_IMPULSE_VIRTUAL_ENV="\$INIR_VENV"
 if [ -f ~/.local/state/quickshell/user/generated/terminal/sequences.txt ]; then
   cat ~/.local/state/quickshell/user/generated/terminal/sequences.txt
 fi
+# Starship prompt (fish is wired via config.fish; bash needs its own init)
+if command -v starship >/dev/null 2>&1; then
+  eval "\$(starship init bash)"
+fi
 # end iNiR
 BEOF
 log_success "Bash environment configured"
@@ -696,6 +700,10 @@ export ILLOGICAL_IMPULSE_VIRTUAL_ENV="\$INIR_VENV"
 # Apply terminal color sequences (Material You from wallpaper)
 if [ -f ~/.local/state/quickshell/user/generated/terminal/sequences.txt ]; then
   cat ~/.local/state/quickshell/user/generated/terminal/sequences.txt
+fi
+# Starship prompt (fish is wired via config.fish; zsh needs its own init)
+if command -v starship >/dev/null 2>&1; then
+  eval "\$(starship init zsh)"
 fi
 # end iNiR
 ZEOF

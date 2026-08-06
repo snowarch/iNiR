@@ -8,7 +8,7 @@ import QtQuick
 Column {
     id: root
     property list<string> clockNumbers: DateTime.time.split(/[: ]/)
-    property bool isEnabled: Config.getNestedValue("background.widgets.clock.cookie.timeIndicators", true)
+    property bool isEnabled: Config.getNestedValue("background.widgets.clock.cookie.timeIndicators", false)
     property color color: Appearance.colors.colOnSecondaryContainer
 
     property bool hourMarksEnabled: Config.getNestedValue("background.widgets.clock.cookie.hourMarks", false)

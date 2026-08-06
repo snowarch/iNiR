@@ -308,16 +308,24 @@ Item {
                 Connections {
                     target: root
                     function onResponsesChanged() {
-                        if (root.responses.length > wallhavenResponseListView.lastResponseLength) {
-                            // Only auto-scroll if user is not actively scrolling
-                            if (!wallhavenResponseListView.userIsScrolling && wallhavenResponseListView.lastResponseLength > 0) {
-                                wallhavenResponseListView.contentY = wallhavenResponseListView.contentY + root.scrollOnNewResponse
+                        const nextLength = root.responses.length
+                        if (nextLength === 0) {
+                            wallhavenResponseListView.lastResponseLength = 0
+                            return
+                        }
+
+                        // Once the bounded list is full, a new page rotates the
+                        // oldest response without changing the model length.
+                        if (nextLength >= wallhavenResponseListView.lastResponseLength) {
+                            if (!wallhavenResponseListView.userIsScrolling
+                                    && wallhavenResponseListView.lastResponseLength > 0) {
+                                wallhavenResponseListView.contentY += root.scrollOnNewResponse
                             }
-                            wallhavenResponseListView.lastResponseLength = root.responses.length
 
                             // If a next-page click requested an auto-scroll, position the new page section.
                             root._tryScrollToPendingPage()
                         }
+                        wallhavenResponseListView.lastResponseLength = nextLength
                     }
                 }
 
@@ -457,13 +465,16 @@ Item {
                     id: cmdButton
                     colBackground: Appearance.angelEverywhere
                         ? (commandSuggestions.selectedIndex === index ? Appearance.angel.colGlassCardHover : Appearance.angel.colGlassCard)
-                        : Appearance.auroraEverywhere 
+                        : Appearance.auroraEverywhere
                         ? (commandSuggestions.selectedIndex === index ? Appearance.aurora.colSubSurface : "transparent")
+                        : Appearance.zzzEverywhere
+                        ? (commandSuggestions.selectedIndex === index ? Appearance.zzz.sticker : "transparent")
                         : (commandSuggestions.selectedIndex === index ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colSecondaryContainer)
                     bounce: false
                     contentItem: StyledText {
                         font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnSecondaryContainer
+                        color: Appearance.zzzEverywhere && commandSuggestions.selectedIndex === index
+                            ? Appearance.zzz.onSticker : Appearance.colors.colOnSecondaryContainer
                         horizontalAlignment: Text.AlignHCenter
                         text: modelData.name
                     }
@@ -515,8 +526,10 @@ Item {
                     id: tagButton
                     colBackground: Appearance.angelEverywhere
                         ? (tagSuggestions.selectedIndex === index ? Appearance.angel.colGlassCardHover : Appearance.angel.colGlassCard)
-                        : Appearance.auroraEverywhere 
+                        : Appearance.auroraEverywhere
                         ? (tagSuggestions.selectedIndex === index ? Appearance.aurora.colSubSurface : "transparent")
+                        : Appearance.zzzEverywhere
+                        ? (tagSuggestions.selectedIndex === index ? Appearance.zzz.sticker : "transparent")
                         : (tagSuggestions.selectedIndex === index ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colSecondaryContainer)
                     bounce: false
                     contentItem: RowLayout {
@@ -525,7 +538,8 @@ Item {
                         StyledText {
                             Layout.fillWidth: false
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: Appearance.colors.colOnSecondaryContainer
+                            color: Appearance.zzzEverywhere && tagSuggestions.selectedIndex === index
+                                ? Appearance.zzz.onSticker : Appearance.colors.colOnSecondaryContainer
                             horizontalAlignment: Text.AlignRight
                             text: "#" + (modelData.name ?? "")
                         }
@@ -533,7 +547,8 @@ Item {
                             Layout.fillWidth: false
                             visible: modelData.count !== undefined
                             font.pixelSize: Appearance.font.pixelSize.smaller
-                            color: Appearance.colors.colOnSecondaryContainer
+                            color: Appearance.zzzEverywhere && tagSuggestions.selectedIndex === index
+                                ? Appearance.zzz.onSticker : Appearance.colors.colOnSecondaryContainer
                             horizontalAlignment: Text.AlignLeft
                             text: modelData.count ?? ""
                         }
@@ -594,7 +609,11 @@ Item {
             id: tagInputContainer
             property real columnSpacing: 5
             Layout.fillWidth: true
-            radius: Appearance.rounding.normal - root.padding
+            radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.normal - root.padding
+            Behavior on radius {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+            }
             color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                 : Appearance.inirEverywhere ? Appearance.inir.colLayer2 : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colLayer2
             implicitWidth: tagInputField.implicitWidth
@@ -620,7 +639,7 @@ Item {
                     wrapMode: TextArea.Wrap
                     Layout.fillWidth: true
                     padding: 10
-                    color: activeFocus ? Appearance.m3colors.m3onSurface : Appearance.m3colors.m3onSurfaceVariant
+                    color: activeFocus ? Appearance.colors.colOnSurface : Appearance.colors.colOnSurfaceVariant
                     renderType: Text.NativeRendering
                     placeholderText: Translation.tr('Enter tags (use #tag for autocomplete / multi-word), or "%1" for commands').arg(root.commandPrefix)
                     background: null
@@ -720,7 +739,7 @@ Item {
                     Layout.rightMargin: 5
                     implicitWidth: 40
                     implicitHeight: 40
-                    buttonRadius: Appearance.rounding.small
+                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                     enabled: tagInputField.text.length > 0
                     toggled: enabled
 
@@ -738,7 +757,9 @@ Item {
                         anchors.centerIn: parent
                         horizontalAlignment: Text.AlignHCenter
                         iconSize: 22
-                        color: sendButton.enabled ? Appearance.m3colors.m3onPrimary : Appearance.colors.colOnLayer2Disabled
+                        color: sendButton.enabled
+                            ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimary)
+                            : Appearance.colors.colOnLayer2Disabled
                         text: "arrow_upward"
                     }
                 }
@@ -798,7 +819,7 @@ Item {
                             Layout.leftMargin: 10
                             Layout.alignment: Qt.AlignVCenter
                             font.pixelSize: Appearance.font.pixelSize.smaller
-                            color: nsfwSwitch.enabled ? Appearance.colors.colOnLayer1 : Appearance.m3colors.m3outline
+                            color: nsfwSwitch.enabled ? Appearance.colors.colOnLayer1 : Appearance.colors.colOutline
                             text: Translation.tr("Allow NSFW")
                         }
                         StyledSwitch {

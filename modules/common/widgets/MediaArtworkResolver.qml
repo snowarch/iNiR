@@ -26,7 +26,14 @@ QtObject {
     readonly property string localCachedArtFileName: root.isLocalFile && root.localFilePath.length > 0 ? root._cacheFileName(root.metadataKey, root.localFilePath) : ""
     readonly property string localCachedArtFilePath: root.localCachedArtFileName.length > 0 ? `${root.cacheDirectory}/${root.localCachedArtFileName}` : ""
     readonly property bool localFileInCache: root.localFilePath.length > 0 && root.localFilePath.startsWith(`${root.cacheDirectory}/`)
-    readonly property string artFileName: root.isRemote && root.normalizedSourceUrl.length > 0 ? root._cacheFileName(root.metadataKey, root.normalizedSourceUrl) : ""
+    readonly property bool isBase64DataUri: root.isDataUri && root.normalizedSourceUrl.includes(";base64,")
+    readonly property string artFileName: {
+        if (root.isRemote && root.normalizedSourceUrl.length > 0)
+            return root._cacheFileName(root.metadataKey, root.normalizedSourceUrl);
+        if (root.isBase64DataUri)
+            return `${Qt.md5(root.metadataKey)}${root._dataUriExtension(root.normalizedSourceUrl)}`;
+        return "";
+    }
     readonly property string artFilePath: root.artFileName.length > 0 ? `${root.cacheDirectory}/${root.artFileName}` : ""
 
     property int _generation: 0
@@ -66,6 +73,13 @@ QtObject {
 
     function _cacheFileName(key: string, path: string): string {
         return `${Qt.md5(key)}${root._imageExtension(path)}`;
+    }
+
+    function _dataUriExtension(uri: string): string {
+        const match = uri.match(/^data:image\/(jpeg|png|webp|gif|bmp)/);
+        if (!match)
+            return ".jpg";
+        return match[1] === "jpeg" ? ".jpg" : `.${match[1]}`;
     }
 
     function _imageExtension(path: string): string {
@@ -116,6 +130,7 @@ QtObject {
 
         artExistsChecker.running = false;
         artworkDownloader.running = false;
+        dataUriWriter.running = false;
         localFileCacher.running = false;
         localExistsChecker.running = false;
         fileSourceReadyChecker.running = false;
@@ -152,6 +167,13 @@ QtObject {
     }
 
     function refresh(): void {
+        if (!root._completed)
+            return;
+
+        metadataRefreshTimer.restart();
+    }
+
+    function _refreshNow(): void {
         const url = root.normalizedSourceUrl;
         if (!url.length) {
             root._reset(false);
@@ -159,7 +181,15 @@ QtObject {
         }
 
         if (root.isDataUri) {
-            root._setReadySource(url);
+            // Cache base64 payloads to a file so ColorQuantizer (file-only)
+            // can read them; non-base64 data URIs go straight to Image.
+            if (root.isBase64DataUri && root.artFilePath.length > 0) {
+                artExistsChecker.artFilePath = root.artFilePath;
+                artExistsChecker.running = false;
+                artExistsChecker.running = true;
+            } else {
+                root._setReadySource(url);
+            }
             return;
         }
 
@@ -189,7 +219,6 @@ QtObject {
         if (!root._completed)
             return;
 
-        root._reset(root.normalizedSourceUrl.length > 0);
         root.refresh();
     }
 
@@ -197,14 +226,24 @@ QtObject {
         if (!root._completed)
             return;
 
+        metadataRefreshTimer.stop();
         root._reset(false);
-        root.refresh();
+        root._refreshNow();
     }
 
     Component.onCompleted: {
         root._completed = true;
         root._localReloadsLeft = root.localReloadPasses;
-        root.refresh();
+        root._refreshNow();
+    }
+
+    property var metadataRefreshTimer: Timer {
+        interval: 500
+        repeat: false
+        onTriggered: {
+            root._reset(root.normalizedSourceUrl.length > 0);
+            root._refreshNow();
+        }
     }
 
     property var localReloadTimer: Timer {
@@ -214,7 +253,7 @@ QtObject {
             if (!root.normalizedSourceUrl.length || !root.isLocalFile)
                 return;
 
-            root.refresh();
+            root._refreshNow();
         }
     }
 
@@ -271,15 +310,24 @@ QtObject {
     property var retryTimer: Timer {
         interval: 350 * Math.max(1, root._retryCount)
         repeat: false
-        onTriggered: root.refresh()
+        onTriggered: root._refreshNow()
     }
 
     property var localExistsChecker: Process {
         property string filePath: ""
 
-        command: ["/usr/bin/test", "-s", filePath]
+        command: ["/usr/bin/bash", "-c", `
+            path="$1"
+            cached="$2"
+            [ -s "$path" ] || exit 1
+            mime=$(/usr/bin/file -b --mime-type -- "$path" 2>/dev/null) || exit 1
+            case "$mime" in
+                image/*) exit 0 ;;
+                *) [ -n "$cached" ] && /usr/bin/rm -f -- "$cached"; exit 2 ;;
+            esac
+        `, "_", filePath, root.localCachedArtFilePath]
         onExited: (exitCode, exitStatus) => {
-            if (exitCode !== 0 && exitCode !== 1)
+            if (exitCode !== 0 && exitCode !== 1 && exitCode !== 2)
                 return;
 
             if (filePath !== root.localFilePath)
@@ -288,6 +336,13 @@ QtObject {
             if (exitCode === 0) {
                 root._localReloadsLeft = 0;
                 root._publishLocalFile();
+            } else if (exitCode === 2) {
+                root._localReloadsLeft = 0;
+                const displayedPath = root._pathFromFileUrl(root.displaySource);
+                if (displayedPath === root.localFilePath || displayedPath === root.localCachedArtFilePath) {
+                    root.ready = false;
+                    root.displaySource = "";
+                }
             } else if (root._localReloadsLeft > 0) {
                 root._localReloadsLeft -= 1;
                 localReloadTimer.restart();
@@ -306,6 +361,7 @@ QtObject {
             if [ -z "$src" ] || [ -z "$out" ]; then exit 1; fi
             if [ "$src" = "$out" ]; then exit 0; fi
             [ -s "$src" ] || exit 1
+            /usr/bin/file -b --mime-type -- "$src" 2>/dev/null | /usr/bin/grep -q '^image/' || { /usr/bin/rm -f -- "$out"; exit 2; }
             mkdir -p "$dir"
             tmp="$out.tmp.$$"
             /usr/bin/cp -f -- "$src" "$tmp" && \
@@ -318,6 +374,12 @@ QtObject {
 
             if (exitCode === 0) {
                 root._setReadySource(Qt.resolvedUrl(artFilePath));
+            } else if (exitCode === 2) {
+                const displayedPath = root._pathFromFileUrl(root.displaySource);
+                if (displayedPath === artFilePath) {
+                    root.ready = false;
+                    root.displaySource = "";
+                }
             } else if (!root.displaySource.length) {
                 root.ready = false;
             }
@@ -337,11 +399,46 @@ QtObject {
 
             if (exitCode === 0) {
                 root._setReadySource(Qt.resolvedUrl(artFilePath));
+            } else if (root.isBase64DataUri) {
+                dataUriWriter.payload = root.normalizedSourceUrl.split(";base64,")[1] ?? "";
+                dataUriWriter.artFilePath = artFilePath;
+                dataUriWriter.running = false;
+                dataUriWriter.running = true;
             } else {
                 artworkDownloader.targetFile = root.normalizedSourceUrl;
                 artworkDownloader.artFilePath = artFilePath;
                 artworkDownloader.running = false;
                 artworkDownloader.running = true;
+            }
+        }
+    }
+
+    property var dataUriWriter: Process {
+        property string payload: ""
+        property string artFilePath: ""
+
+        command: ["/usr/bin/bash", "-c", `
+            b64="$1"
+            out="$2"
+            dir="$3"
+            if [ -z "$b64" ] || [ -z "$out" ]; then exit 1; fi
+            if [ -s "$out" ]; then exit 0; fi
+            mkdir -p "$dir"
+            tmp="$out.tmp.$$"
+            printf '%s' "$b64" | /usr/bin/base64 -d > "$tmp" 2>/dev/null && \
+            /usr/bin/file -b --mime-type "$tmp" | /usr/bin/grep -q '^image/' && \
+            /usr/bin/mv -f "$tmp" "$out" || { rm -f "$tmp"; exit 1; }
+        `, "_", payload, artFilePath, root.cacheDirectory]
+
+        onExited: (exitCode) => {
+            if (artFilePath !== root.artFilePath)
+                return;
+
+            if (exitCode === 0) {
+                root._setReadySource(Qt.resolvedUrl(artFilePath));
+            } else {
+                // Undecodable payload: let Image try the raw data URI.
+                root._setReadySource(root.normalizedSourceUrl);
             }
         }
     }
@@ -358,8 +455,9 @@ QtObject {
             if [ -s "$out" ]; then exit 0; fi
             mkdir -p "$dir"
             tmp="$out.tmp.$$"
-            /usr/bin/curl -sSL --connect-timeout 4 --max-time 12 "$target" -o "$tmp" && \
-            [ -s "$tmp" ] && /usr/bin/mv -f "$tmp" "$out" || { rm -f "$tmp"; exit 1; }
+            /usr/bin/curl -fsSL --connect-timeout 4 --max-time 12 "$target" -o "$tmp" && \
+            [ -s "$tmp" ] && /usr/bin/file -b --mime-type "$tmp" | /usr/bin/grep -q '^image/' && \
+            /usr/bin/mv -f "$tmp" "$out" || { rm -f "$tmp"; exit 1; }
         `, "_", targetFile, artFilePath, root.cacheDirectory]
 
         onExited: (exitCode) => {

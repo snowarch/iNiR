@@ -7,18 +7,20 @@ import QtQuick.Effects
 Canvas {
     id: root
     property list<var> points
-    property list<var> smoothPoints
     property real maxVisualizerValue: 1000
     property int smoothing: 2
     property bool live: true
-    property color color: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                        : Appearance.inirEverywhere ? Appearance.inir.colPrimary
-                        : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
-                        : Appearance.colors.colPrimary
+    property color color: CavaTheme.primaryColor
     // Fill alpha — reads global config, consumers can override
     property real fillOpacity: (Config.options?.appearance?.cava?.waveOpacity ?? 30) / 100
-
-    onPointsChanged: () => { root.requestPaint() }
+    onPointsChanged: () => {
+        if (root.visible)
+            root.requestPaint()
+    }
+    onVisibleChanged: {
+        if (root.visible)
+            root.requestPaint()
+    }
     onFillOpacityChanged: requestPaint()
     onColorChanged: requestPaint()
 
@@ -34,24 +36,25 @@ Canvas {
         var n = points.length;
         if (n < 2) return;
 
-        var smoothWindow = root.smoothing;
-        root.smoothPoints = [];
+        var smoothWindow = Math.max(0, root.smoothing);
+        var smoothPoints = new Array(n);
+        var count = smoothWindow * 2 + 1;
+        var sum = 0;
+        for (var j = -smoothWindow; j <= smoothWindow; ++j)
+            sum += points[Math.max(0, Math.min(n - 1, j))];
         for (var i = 0; i < n; ++i) {
-            var sum = 0, count = 0;
-            for (var j = -smoothWindow; j <= smoothWindow; ++j) {
-                var idx = Math.max(0, Math.min(n - 1, i + j));
-                sum += points[idx];
-                count++;
-            }
-            root.smoothPoints.push(sum / count);
+            smoothPoints[i] = sum / count;
+            var outgoing = Math.max(0, Math.min(n - 1, i - smoothWindow));
+            var incoming = Math.max(0, Math.min(n - 1, i + smoothWindow + 1));
+            sum += points[incoming] - points[outgoing];
         }
-        if (!root.live) root.smoothPoints.fill(0);
+        if (!root.live) smoothPoints.fill(0);
 
         ctx.beginPath();
         ctx.moveTo(0, h);
         for (var i = 0; i < n; ++i) {
             var x = i * w / (n - 1);
-            var y = h - (root.smoothPoints[i] / maxVal) * h * 0.9;
+            var y = h - (smoothPoints[i] / maxVal) * h * 0.9;
             ctx.lineTo(x, y);
         }
         ctx.lineTo(w, h);
@@ -61,7 +64,7 @@ Canvas {
         ctx.fill();
     }
 
-    layer.enabled: Appearance.effectsEnabled
+    layer.enabled: root.visible && Appearance.effectsEnabled
     layer.effect: MultiEffect {
         source: root
         saturation: 0.2

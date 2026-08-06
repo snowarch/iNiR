@@ -23,6 +23,8 @@ WSettingsRow {
             model: root.options
             textRole: "displayName"
             valueRole: "value"
+            // contentItem owns the only chevron.
+            indicator: null
             currentIndex: {
                 for (let i = 0; i < root.options.length; i++) {
                     if (root.options[i].value === root.currentValue) return i
@@ -37,12 +39,15 @@ WSettingsRow {
             }
             
             background: Rectangle {
-                radius: Looks.radius.medium
-                color: combo.down ? Looks.colors.bg2Active 
-                    : combo.hovered ? Looks.colors.bg2Hover 
-                    : Looks.colors.inputBg
+                radius: Looks.settings.radiusLarge
+                color: combo.down
+                    ? Looks.settings.tilePressed
+                    : combo.hovered
+                        ? Looks.settings.tileHover
+                        : Looks.colors.inputBg
                 border.width: 1
-                border.color: combo.activeFocus ? Looks.colors.accent : Looks.colors.bg2Border
+                border.color: combo.activeFocus
+                    ? Looks.colors.accent : Looks.settings.strokeStrong
             }
             
             contentItem: RowLayout {
@@ -87,14 +92,15 @@ WSettingsRow {
                     Rectangle {
                         id: popupBg
                         anchors.fill: parent
-                        radius: Looks.radius.large
+                        radius: Looks.settings.radiusLarge
                         color: Looks.colors.bgPanelFooter
                         border.width: 1
-                        border.color: Looks.colors.bg2Border
+                        border.color: Looks.settings.strokeStrong
                     }
                     
                     WRectangularShadow {
                         target: popupBg
+                        visible: Looks.effectsEnabled
                     }
                 }
                 
@@ -118,13 +124,16 @@ WSettingsRow {
                 highlighted: combo.highlightedIndex === index
                 
                 background: Rectangle {
-                    radius: Looks.radius.medium
+                    radius: Looks.settings.radiusLarge
                     color: {
-                        if (delegateItem.index === combo.currentIndex) return Looks.colors.accent
-                        if (delegateItem.highlighted) return Looks.colors.bg2Hover
+                        if (delegateItem.index === combo.currentIndex)
+                            return Looks.colors.selection
+                        if (delegateItem.highlighted)
+                            return Looks.settings.tileHover
                         return "transparent"
                     }
-                    opacity: delegateItem.index === combo.currentIndex ? 0.15 : 1.0
+                    border.width: delegateItem.index === combo.currentIndex ? 1 : 0
+                    border.color: Looks.colors.accent
                     
                     Behavior on color {
                         animation: ColorAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
@@ -138,7 +147,8 @@ WSettingsRow {
                         Layout.leftMargin: 8
                         icon: "checkmark"
                         implicitSize: 12
-                        color: delegateItem.index === combo.currentIndex ? Looks.colors.accent : Looks.colors.fg
+                        color: delegateItem.index === combo.currentIndex
+                            ? Looks.colors.accent : Looks.colors.fg
                         visible: delegateItem.index === combo.currentIndex
                     }
                     
@@ -153,6 +163,7 @@ WSettingsRow {
                         text: delegateItem.modelData.displayName
                         font.pixelSize: Looks.font.pixelSize.normal
                         font.weight: delegateItem.index === combo.currentIndex ? Looks.font.weight.strong : Looks.font.weight.regular
+                        color: Looks.colors.fg
                         verticalAlignment: Text.AlignVCenter
                     }
                 }

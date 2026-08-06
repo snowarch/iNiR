@@ -79,7 +79,9 @@ Button {
                 StyledText {
                     anchors.fill: parent
                     anchors.rightMargin: closeButton.visible ? closeButton.width + 4 : 0
-                    text: root.toplevel?.title ?? ""
+                    text: root.toplevel?._sourceToplevel?.title
+                        ?? root.toplevel?.title
+                        ?? ""
                     elide: Text.ElideRight
                     font.pixelSize: Appearance.font.pixelSize.small
                     color: Appearance.inirEverywhere
@@ -188,6 +190,11 @@ Button {
                 mipmap: true
                 anchors.fill: parent
                 anchors.margins: 2
+                // The preview file is a full-resolution window capture; decoding it
+                // natively for a thumbnail this size costs megabytes per hovered
+                // window. 2x the drawn size keeps it crisp under mipmap.
+                sourceSize.width: Math.max(1, Math.round(windowPreview.width * 2))
+                sourceSize.height: Math.max(1, Math.round(windowPreview.height * 2))
                 opacity: status === Image.Ready ? 1 : 0
 
                 Behavior on opacity {

@@ -24,9 +24,20 @@ Rectangle {
          : inirEverywhere ? Appearance.inir.colLayer1
          : auroraEverywhere ? Appearance.aurora.colSubSurface
          : Appearance.colors.colLayer1
-    border.width: Appearance.angelEverywhere ? 0 : (inirEverywhere ? 1 : 0)
+    border.width: Appearance.angelEverywhere ? 0
+                : Appearance.zzzEverywhere ? 1
+                : (inirEverywhere ? 1 : 0)
     border.color: Appearance.angelEverywhere ? "transparent"
+        : Appearance.zzzEverywhere ? Appearance.zzz.hairline
         : inirEverywhere ? Appearance.inir.colBorder : "transparent"
+    Behavior on border.width {
+        enabled: Appearance.animationsEnabled
+        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+    }
+    Behavior on border.color {
+        enabled: Appearance.animationsEnabled
+        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+    }
 
     AngelPartialBorder { targetRadius: parent.radius; coverage: 0.45 }
 
@@ -46,7 +57,7 @@ Rectangle {
                 font.weight: Font.Medium
                 color: Appearance.angelEverywhere ? Appearance.angel.colPrimary
                      : root.inirEverywhere ? Appearance.inir.colPrimary
-                     : root.auroraEverywhere ? Appearance.m3colors.m3primary
+                     : root.auroraEverywhere ? Appearance.colors.colPrimary
                      : Appearance.colors.colPrimary
             }
 
@@ -56,7 +67,7 @@ Rectangle {
                 font.weight: Font.Medium
                 color: Appearance.angelEverywhere ? Appearance.angel.colText
                      : root.inirEverywhere ? Appearance.inir.colText
-                     : root.auroraEverywhere ? Appearance.m3colors.m3onSurface
+                     : root.auroraEverywhere ? Appearance.colors.colOnSurface
                      : Appearance.colors.colOnLayer1
             }
 
@@ -65,7 +76,7 @@ Rectangle {
                 font.pixelSize: Appearance.font.pixelSize.smallest
                 color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
                      : root.inirEverywhere ? Appearance.inir.colTextSecondary
-                     : root.auroraEverywhere ? Appearance.m3colors.m3onSurfaceVariant
+                     : root.auroraEverywhere ? Appearance.colors.colOnSurfaceVariant
                      : Appearance.colors.colSubtext
             }
         }
@@ -77,7 +88,7 @@ Rectangle {
             font.family: Appearance.font.family.numbers
             color: Appearance.angelEverywhere ? Appearance.angel.colText
                  : root.inirEverywhere ? Appearance.inir.colText
-                 : root.auroraEverywhere ? Appearance.m3colors.m3onSurface
+                 : root.auroraEverywhere ? Appearance.colors.colOnSurface
                  : Appearance.colors.colOnLayer1
         }
     }

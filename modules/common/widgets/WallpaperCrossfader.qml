@@ -105,27 +105,6 @@ Item {
         return Math.max(0, Math.min(1, value))
     }
 
-    // Instantly complete the current transition so a new one can begin.
-    // Called when a new wallpaper arrives while a transition is in progress.
-    function _fastForwardTransition(): void {
-        if (!root._transitioning) return
-        transitionAnim.stop()
-        transitionState.progress = 0
-        if (internal.transitionToIndex >= 0)
-            internal.activeIndex = internal.transitionToIndex
-        _transitioning = false
-        internal.displayedSource = internal.activeImage().source
-        internal.loadingSource = ""
-        if (internal.pendingSource === internal.displayedSource)
-            internal.pendingSource = ""
-        internal.transitionFromIndex = -1
-        internal.transitionToIndex = -1
-        root._transitionWidthSnapshot = 0
-        root._transitionHeightSnapshot = 0
-        root._transitionSourceSizeSnapshot = Qt.size(0, 0)
-        transitionFinished()
-    }
-
     function _normalizedTransitionType(rawType: string): string {
         switch (String(rawType ?? "crossfade")) {
         case "none":
@@ -286,10 +265,9 @@ Item {
             }
 
             if (root._transitioning) {
-                // Fast-forward current transition so the new wallpaper
-                // starts loading immediately instead of waiting.
-                root._fastForwardTransition()
-                // pendingSource was already set above; now load it.
+                // Keep the current animation intact and coalesce rapid source
+                // changes into the latest pending wallpaper.
+                return
             }
 
             loadPending()

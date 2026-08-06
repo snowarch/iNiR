@@ -25,15 +25,27 @@ Item {
             verticalCenter: parent.verticalCenter
         }
 
+        MaterialSymbol {
+            visible: Appearance.zzzEverywhere
+            Layout.alignment: Qt.AlignVCenter
+            fill: 1
+            text: root.iconName
+            iconSize: Appearance.font.pixelSize.normal
+            color: root.warning ? Appearance.zzz.signal
+                : root.caution ? Appearance.zzz.tertiary
+                : Appearance.zzz.inkMuted
+        }
+
         ClippedFilledCircularProgress {
             id: resourceCircProg
+            visible: !Appearance.zzzEverywhere
             Layout.alignment: Qt.AlignVCenter
             lineWidth: Appearance.rounding.unsharpen
             value: percentage
             implicitSize: 20
-            colPrimary: root.warning ? (Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError) : 
-                        root.caution ? (Appearance.inirEverywhere ? Appearance.inir.colWarning : Appearance.m3colors.m3tertiary) :
-                        (Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSecondaryContainer)
+            colPrimary: root.warning ? (Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError) :
+                        root.caution ? (Appearance.inirEverywhere ? Appearance.inir.colWarning : Appearance.colors.colTertiary) :
+                        (Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurfaceVariant)
             accountForLightBleeding: !root.warning && !root.caution
             enableAnimation: false
 
@@ -48,7 +60,7 @@ Item {
                     fill: 1
                     text: iconName
                     iconSize: Appearance.font.pixelSize.normal
-                    color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.m3colors.m3onSecondaryContainer
+                    color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurfaceVariant
                 }
             }
         }
@@ -67,8 +79,17 @@ Item {
             StyledText {
                 id: percentageText
                 anchors.centerIn: parent
-                color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+                color: root.warning ? (Appearance.zzzEverywhere ? Appearance.zzz.signal : Appearance.colors.colError)
+                    : Appearance.zzzEverywhere ? (root.caution ? Appearance.zzz.tertiary : Appearance.zzz.ink)
+                    : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
                 font.pixelSize: Appearance.font.pixelSize.small
+                font.family: Appearance.zzzEverywhere ? Appearance.font.family.numbers : Appearance.font.family.main
+                font.weight: Appearance.zzzEverywhere ? Font.Black : Font.Normal
+                font.italic: Appearance.zzzEverywhere
                 text: `${Math.round(percentage * 100).toString()}`
             }
         }

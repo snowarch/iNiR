@@ -23,6 +23,7 @@ Item {
     readonly property int currentDays: rangeOptions[selectedRange].days
     property var _displayData: null
     property var _appList: []
+    property bool _loadingRange: false
 
     // Hour drill-down: -1 = none selected
     property int _selectedHour: -1
@@ -62,17 +63,27 @@ Item {
     Connections {
         target: ScreenTime
         function onDataChanged() { root._refreshData() }
-        function onRangeLoaded(days: int, data: var) { root._refreshData() }
+        function onRangeLoaded(days: int, data: var) {
+            if (days !== root.currentDays)
+                return
+            root._loadingRange = false
+            root._refreshData()
+        }
     }
 
     function _refreshData(): void {
         if (root.currentDays <= 1) {
+            root._loadingRange = false
             root._displayData = ScreenTime.getToday()
         } else {
             const cached = ScreenTime.getCachedDays(root.currentDays)
             if (cached) {
+                root._loadingRange = false
                 root._displayData = cached
             } else {
+                root._loadingRange = true
+                root._displayData = null
+                root._appList = []
                 ScreenTime.requestDays(root.currentDays)
                 return
             }
@@ -262,11 +273,15 @@ Item {
                                                 }
                                             }
 
-                                            MouseArea {
-                                                anchors.fill: parent
-                                                hoverEnabled: true
-                                                cursorShape: waffleBar.value > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor
-                                                onClicked: if (waffleBar.value > 0) root._selectHour(waffleBar.index)
+                                            HoverHandler {
+                                                enabled: waffleBar.value > 0
+                                                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                            }
+
+                                            TapHandler {
+                                                enabled: waffleBar.value > 0
+                                                gesturePolicy: TapHandler.ReleaseWithinBounds
+                                                onTapped: root._selectHour(waffleBar.index)
                                             }
                                         }
                                     }
@@ -311,6 +326,7 @@ Item {
 
                                 WText {
                                     Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
                                     text: root._selectedHour >= 0
                                         ? (root._selectedHour + ":00 – " + (root._selectedHour + 1) + ":00")
                                         : ""
@@ -383,8 +399,10 @@ Item {
 
                                         WText {
                                             Layout.fillWidth: true
+                                            Layout.minimumWidth: 0
                                             text: modelData.name || modelData.id
                                             elide: Text.ElideRight
+                                            wrapMode: Text.NoWrap
                                         }
 
                                         WText {
@@ -463,8 +481,10 @@ Item {
 
                                         WText {
                                             Layout.fillWidth: true
+                                            Layout.minimumWidth: 0
                                             text: modelData.name || modelData.id
                                             elide: Text.ElideRight
+                                            wrapMode: Text.NoWrap
                                         }
 
                                         WText {
@@ -510,9 +530,16 @@ Item {
                             }
 
                             WText {
+                                Layout.fillWidth: true
                                 Layout.alignment: Qt.AlignHCenter
-                                text: Translation.tr("No screen time data yet")
+                                text: !ScreenTime.enabled
+                                    ? Translation.tr("Enable Screen Time in Settings to start tracking")
+                                    : (root._loadingRange || !ScreenTime.ready)
+                                        ? Translation.tr("Loading screen time history…")
+                                        : Translation.tr("No screen time data yet")
                                 color: Looks.colors.subfg
+                                horizontalAlignment: Text.AlignHCenter
+                                wrapMode: Text.WordWrap
                             }
                         }
                     }

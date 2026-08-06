@@ -53,7 +53,7 @@ Type `/setup` in the launcher to see every available installer. Each entry runs 
 |--------|-------------|
 | `/setup-spotify` | Installs Spotify (AUR on Arch, Flatpak elsewhere) and configures Spicetify with the Marketplace plugin |
 
-Recipes live under `scripts/setup/` and are **auto-discovered** — adding one is a pure filesystem operation, no QML edits and no shell reload required. The full maintainer guide is in [`scripts/setup/README.md`](../scripts/setup/README.md). The short version:
+Recipes live under `scripts/setup/` and are **auto-discovered**. Adding one is a pure filesystem operation, no QML edits and no shell reload required. The full maintainer guide is in [`scripts/setup/README.md`](https://github.com/snowarch/inir/blob/main/scripts/setup/README.md). The short version:
 
 1. `cp scripts/setup/_template.sh.example scripts/setup/<slug>.sh` and fill in the `@meta` header + body.
 2. `chmod +x scripts/setup/<slug>.sh`.

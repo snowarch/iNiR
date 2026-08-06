@@ -366,7 +366,7 @@ ColumnLayout {
 
         SliderRow {
             label: Translation.tr("Tooltips")
-            icon: "chat_bubble_outline"
+            icon: "chat_bubble"
             description: Translation.tr("Hover tooltips — lower values improve readability")
             configValue: Appearance.aurora.tooltipTransparentize
             configPath: "appearance.aurora.transparency.tooltip"

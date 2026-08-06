@@ -6,8 +6,9 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
 
-Rectangle {
+PanelSurface {
     id: root
+    islandSkin: (Config.options?.controlPanel?.style ?? "panel") === "island"
     Layout.fillWidth: true
     implicitHeight: (Weather.enabled && Weather.data.temp && !Weather.data.temp.startsWith("--")) ? contentLayout.implicitHeight + 16 : 0
     visible: implicitHeight > 0
@@ -25,17 +26,10 @@ Rectangle {
     readonly property string locationText: Weather.visibleCity
     readonly property string secondaryText: locationText || root.weatherDescription
 
-    radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-        : inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-    color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-         : inirEverywhere ? Appearance.inir.colLayer1
-         : auroraEverywhere ? Appearance.aurora.colSubSurface
-         : Appearance.colors.colLayer1
-    border.width: Appearance.angelEverywhere ? 0 : (inirEverywhere ? 1 : 0)
-    border.color: Appearance.angelEverywhere ? "transparent"
-        : inirEverywhere ? Appearance.inir.colBorder : "transparent"
+    elevation: 1
+    radiusOverride: inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
 
-    AngelPartialBorder { targetRadius: parent.radius; coverage: 0.45 }
+    AngelPartialBorder { targetRadius: root.radiusOverride; coverage: 0.45; visible: Appearance.angelEverywhere }
 
     ColumnLayout {
         id: contentLayout
@@ -52,7 +46,7 @@ Rectangle {
                 iconSize: root.compactMode ? 26 : 32
                 color: Appearance.angelEverywhere ? Appearance.angel.colPrimary
                      : root.inirEverywhere ? Appearance.inir.colPrimary
-                     : root.auroraEverywhere ? Appearance.m3colors.m3primary
+                     : root.auroraEverywhere ? Appearance.colors.colPrimary
                      : Appearance.colors.colPrimary
                 Layout.alignment: Qt.AlignVCenter
             }
@@ -64,7 +58,7 @@ Rectangle {
                 font.family: Appearance.font.family.numbers
                 color: Appearance.angelEverywhere ? Appearance.angel.colText
                      : root.inirEverywhere ? Appearance.inir.colText
-                     : root.auroraEverywhere ? Appearance.m3colors.m3onSurface
+                     : root.auroraEverywhere ? Appearance.colors.colOnSurface
                      : Appearance.colors.colOnLayer1
                 Layout.alignment: Qt.AlignVCenter
             }
@@ -90,7 +84,7 @@ Rectangle {
                     iconSize: root.compactMode ? 14 : 16
                     color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
                          : root.inirEverywhere ? Appearance.inir.colTextSecondary
-                         : root.auroraEverywhere ? Appearance.m3colors.m3onSurfaceVariant
+                         : root.auroraEverywhere ? Appearance.colors.colOnSurfaceVariant
                          : Appearance.colors.colSubtext
                     opacity: root.hideLocation ? 1 : 0.7
                 }
@@ -114,7 +108,7 @@ Rectangle {
                     iconSize: root.compactMode ? 14 : 16
                     color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
                          : root.inirEverywhere ? Appearance.inir.colTextSecondary
-                         : root.auroraEverywhere ? Appearance.m3colors.m3onSurfaceVariant
+                         : root.auroraEverywhere ? Appearance.colors.colOnSurfaceVariant
                          : Appearance.colors.colSubtext
                 }
                 StyledToolTip { text: Translation.tr("Refresh") }
@@ -128,7 +122,7 @@ Rectangle {
             font.pixelSize: root.hideLocation ? Appearance.font.pixelSize.small : Appearance.font.pixelSize.smallest
             color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
                  : root.inirEverywhere ? Appearance.inir.colTextSecondary
-                 : root.auroraEverywhere ? Appearance.m3colors.m3onSurfaceVariant
+                 : root.auroraEverywhere ? Appearance.colors.colOnSurfaceVariant
                  : Appearance.colors.colSubtext
             elide: Text.ElideRight
         }

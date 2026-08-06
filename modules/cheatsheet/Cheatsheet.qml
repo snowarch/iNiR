@@ -1,3 +1,4 @@
+import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
@@ -12,6 +13,7 @@ import Quickshell.Hyprland
 
 Scope {
     id: root
+    property bool _presentedOpen: false
     property var pages: [
         {
             "icon": "keyboard",
@@ -25,50 +27,25 @@ Scope {
         },
     ]
 
-    property bool cheatsheetOpen: false
+    readonly property bool cheatsheetOpen: GlobalStates.cheatsheetOpen
     property int currentPage: Persistent.states?.cheatsheet?.tabIndex ?? 0
     onCurrentPageChanged: {
         if (Persistent.states?.cheatsheet)
             Persistent.states.cheatsheet.tabIndex = currentPage
     }
 
-    function open() { cheatsheetOpen = true; }
-    function close() { cheatsheetOpen = false; }
-    function toggle() { cheatsheetOpen = !cheatsheetOpen; }
-
-    IpcHandler {
-        target: "cheatsheet"
-        function toggle(): void { root.toggle(); }
-        function close(): void { root.close(); }
-        function open(): void { root.open(); }
-    }
-
-    // Hyprland-only shortcuts
-    Loader {
-        active: CompositorService.isHyprland
-        sourceComponent: Item {
-            GlobalShortcut {
-                name: "cheatsheetToggle"
-                description: "Toggles cheatsheet on press"
-                onPressed: root.toggle()
-            }
-            GlobalShortcut {
-                name: "cheatsheetOpen"
-                description: "Opens cheatsheet on press"
-                onPressed: root.open()
-            }
-            GlobalShortcut {
-                name: "cheatsheetClose"
-                description: "Closes cheatsheet on press"
-                onPressed: root.close()
-            }
-        }
-    }
+    function open() { GlobalStates.cheatsheetOpen = true; }
+    function close() { GlobalStates.cheatsheetOpen = false; }
+    function toggle() { GlobalStates.cheatsheetOpen = !GlobalStates.cheatsheetOpen; }
 
     PanelWindow {
         id: window
 
-        Component.onCompleted: visible = root.cheatsheetOpen
+        Component.onCompleted: {
+            visible = root.cheatsheetOpen
+            if (root.cheatsheetOpen)
+                Qt.callLater(() => { root._presentedOpen = root.cheatsheetOpen })
+        }
 
         Connections {
             target: root
@@ -76,7 +53,9 @@ Scope {
                 if (root.cheatsheetOpen) {
                     _closeTimer.stop()
                     window.visible = true
+                    Qt.callLater(() => { root._presentedOpen = root.cheatsheetOpen })
                 } else {
+                    root._presentedOpen = false
                     _closeTimer.restart()
                 }
             }
@@ -105,8 +84,8 @@ Scope {
         Rectangle {
             anchors.fill: parent
             z: -1
-            color: ColorUtils.transparentize(Appearance.m3colors.m3background, 1 - 0.85)
-            opacity: root.cheatsheetOpen ? 1 : 0
+            color: ColorUtils.transparentize(Appearance.colors.colBackground, 1 - 0.85)
+            opacity: root._presentedOpen ? 1 : 0
 
             Behavior on color {
                 enabled: Appearance.animationsEnabled
@@ -116,11 +95,11 @@ Scope {
             Behavior on opacity {
                 enabled: Appearance.animationsEnabled
                 NumberAnimation {
-                    duration: root.cheatsheetOpen
+                    duration: root._presentedOpen
                         ? (Appearance.animation.elementMoveEnter.duration)
                         : (Appearance.animation.elementMoveExit.duration)
                     easing.type: Easing.BezierSpline
-                    easing.bezierCurve: root.cheatsheetOpen
+                    easing.bezierCurve: root._presentedOpen
                         ? Appearance.animationCurves.emphasizedDecel
                         : Appearance.animationCurves.emphasizedAccel
                 }
@@ -146,23 +125,33 @@ Scope {
         StyledRectangularShadow {
             target: cheatsheetBackground
             radius: cheatsheetBackground.radius
+            visible: !Appearance.zzzEverywhere
         }
 
         Rectangle {
             id: cheatsheetBackground
             anchors.centerIn: parent
-            color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+            color: Appearance.zzzEverywhere ? Appearance.zzz.bg0
+                 : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                  : Appearance.inirEverywhere ? Appearance.inir.colLayer0
                  : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                  : Appearance.colors.colLayer0
-            border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
+            border.width: Appearance.zzzEverywhere ? 1
+                        : Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
                         : Appearance.inirEverywhere ? 1 : 1
-            border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+            Behavior on border.width {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
+            border.color: Appearance.zzzEverywhere ? Appearance.zzz.borderColor
+                        : Appearance.angelEverywhere ? Appearance.angel.colCardBorder
                         : Appearance.inirEverywhere ? Appearance.inir.colBorder
                         : Appearance.colors.colLayer0Border
-            radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+            radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+                  : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
                   : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
                   : Appearance.rounding.windowRounding
+            Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
 
             Behavior on color {
                 enabled: Appearance.animationsEnabled
@@ -197,8 +186,8 @@ Scope {
             }
 
             // Scale animation for open/close
-            scale: root.cheatsheetOpen ? 1.0 : 0.95
-            opacity: root.cheatsheetOpen ? 1 : 0
+            scale: root._presentedOpen ? 1.0 : 0.95
+            opacity: root._presentedOpen ? 1 : 0
             
             Behavior on scale {
                 enabled: Appearance.animationsEnabled
@@ -239,6 +228,20 @@ Scope {
                     Behavior on implicitWidth {
                         enabled: Appearance.animationsEnabled
                         animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
+
+                    MascotImage {
+                        anchors.bottom: parent.bottom
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        visible: active && navRail.expanded
+                        width: navRail.expanded ? 130 : 54
+                        height: width
+                        surface: "cheatsheet"
+                        pose: "cheatsheet-sensei"
+                        Behavior on width {
+                            enabled: Appearance.animationsEnabled
+                            animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                     }
 
                     NavigationRail {
@@ -289,8 +292,10 @@ Scope {
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    color: Appearance.m3colors.m3surfaceContainerLow
-                    radius: Appearance.rounding.small
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.bg1 : Appearance.colors.colSurfaceContainerLow
+                    radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                    Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+                    Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
 
                     Item {
                         anchors.fill: parent

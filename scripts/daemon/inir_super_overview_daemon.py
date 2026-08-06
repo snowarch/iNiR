@@ -164,110 +164,121 @@ async def monitor_device(path):
         interaction_since_super_down, \
         last_toggle_time, \
         tap_handled
-    dev = InputDevice(path)
     super_down = False
     chord = False
 
-    async for event in dev.async_read_loop():
-        if event.type != ecodes.EV_KEY:
-            continue
+    try:
+        dev = InputDevice(path)
+        async for event in dev.async_read_loop():
+            if event.type != ecodes.EV_KEY:
+                continue
 
-        key_event = categorize(event)
-        code = key_event.scancode
-        value = key_event.keystate  # 1=down, 2=hold, 0=up
+            key_event = categorize(event)
+            code = key_event.scancode
+            value = key_event.keystate  # 1=down, 2=hold, 0=up
 
-        if code in SUPER_CODES:
-            if value == key_event.key_down:
-                super_down = True
-                chord = False
-                super_down_global = True
-                interaction_since_super_down = False
-                tap_handled = False
-            elif value == key_event.key_up:
-                if (
-                    super_down
-                    and not chord
-                    and not interaction_since_super_down
-                    and not tap_handled
-                ):
-                    # Tap of Super with no other keys or clicks: toggle inir overview
-                    # with a global debounce so multiple devices don't double-trigger.
-                    now = time.monotonic()
-                    if now - last_toggle_time >= DEBOUNCE_SEC:
-                        last_toggle_time = now
-                        tap_handled = True
-                        print(
-                            "[inir-super-daemon] Super tap detected, toggling inir overview",
-                            flush=True,
-                        )
-                        try:
-                            inir_env = get_inir_env()
-                            if not inir_env:
-                                print(
-                                    "[inir-super-daemon] No inir env available, skipping toggle",
-                                    flush=True,
-                                )
-                                super_down = False
-                                super_down_global = False
-                                interaction_since_super_down = False
-                                continue
-
-                            env = os.environ.copy()
-                            env.update(inir_env)
-
-                            # Resolve the inir launcher for the IPC call
-                            inir_bin = os.environ.get(
-                                "INIR_LAUNCHER_PATH",
-                                shutil.which("inir") or "inir",
-                            )
-                            subprocess.Popen(
-                                [inir_bin, "overview", "toggle"],
-                                env=env,
-                                stdout=subprocess.DEVNULL,
-                                stderr=subprocess.DEVNULL,
-                            )
-                        except Exception as e:
+            if code in SUPER_CODES:
+                if value == key_event.key_down:
+                    super_down = True
+                    chord = False
+                    super_down_global = True
+                    interaction_since_super_down = False
+                    tap_handled = False
+                elif value == key_event.key_up:
+                    if (
+                        super_down
+                        and not chord
+                        and not interaction_since_super_down
+                        and not tap_handled
+                    ):
+                        # Tap of Super with no other keys or clicks: toggle inir overview
+                        # with a global debounce so multiple devices don't double-trigger.
+                        now = time.monotonic()
+                        if now - last_toggle_time >= DEBOUNCE_SEC:
+                            last_toggle_time = now
+                            tap_handled = True
                             print(
-                                f"[inir-super-daemon] Error running toggle command: {e}",
+                                "[inir-super-daemon] Super tap detected, toggling inir overview",
                                 flush=True,
                             )
-                super_down = False
-                chord = False
-                super_down_global = False
-                interaction_since_super_down = False
-            continue
+                            try:
+                                inir_env = get_inir_env()
+                                if not inir_env:
+                                    print(
+                                        "[inir-super-daemon] No inir env available, skipping toggle",
+                                        flush=True,
+                                    )
+                                    super_down = False
+                                    super_down_global = False
+                                    interaction_since_super_down = False
+                                    continue
 
-        # Any other key while Super is down marks this as a chord.
-        if super_down and value == key_event.key_down:
-            chord = True
-        if super_down_global and value == key_event.key_down:
-            interaction_since_super_down = True
+                                env = os.environ.copy()
+                                env.update(inir_env)
+
+                                # Resolve the inir launcher for the IPC call
+                                inir_bin = os.environ.get(
+                                    "INIR_LAUNCHER_PATH",
+                                    shutil.which("inir") or "inir",
+                                )
+                                subprocess.Popen(
+                                    [inir_bin, "overview", "toggle"],
+                                    env=env,
+                                    stdout=subprocess.DEVNULL,
+                                    stderr=subprocess.DEVNULL,
+                                )
+                            except Exception as e:
+                                print(
+                                    f"[inir-super-daemon] Error running toggle command: {e}",
+                                    flush=True,
+                                )
+                    super_down = False
+                    chord = False
+                    super_down_global = False
+                    interaction_since_super_down = False
+                continue
+
+            # Any other key while Super is down marks this as a chord.
+            if super_down and value == key_event.key_down:
+                chord = True
+            if super_down_global and value == key_event.key_down:
+                interaction_since_super_down = True
+    except asyncio.CancelledError:
+        return
+    except OSError:
+        # Device vanished (unplug, suspend/resume). Returning lets the supervisor
+        # in main() re-adopt it on the next rescan instead of killing the daemon.
+        return
 
 
 async def monitor_pointer_device(path):
-    dev = InputDevice(path)
+    global interaction_since_super_down
 
-    async for event in dev.async_read_loop():
-        if event.type != ecodes.EV_KEY:
-            continue
+    try:
+        dev = InputDevice(path)
+        async for event in dev.async_read_loop():
+            if event.type != ecodes.EV_KEY:
+                continue
 
-        key_event = categorize(event)
-        code = key_event.scancode
-        value = key_event.keystate
+            key_event = categorize(event)
+            code = key_event.scancode
+            value = key_event.keystate
 
-        if code in POINTER_BUTTON_CODES and value == key_event.key_down:
-            global interaction_since_super_down
-            if super_down_global:
-                interaction_since_super_down = True
+            if code in POINTER_BUTTON_CODES and value == key_event.key_down:
+                if super_down_global:
+                    interaction_since_super_down = True
+    except asyncio.CancelledError:
+        return
+    except OSError:
+        return
 
 
 async def main():
     # Retry keyboard detection until we have at least one device with Super,
     # so the service still works if it starts before the session is fully up.
     keyboard_paths = []
-    pointer_paths = []
     while not keyboard_paths:
-        keyboard_paths, pointer_paths = find_keyboard_devices()
+        keyboard_paths, _ = find_keyboard_devices()
         if keyboard_paths:
             break
         print(
@@ -276,9 +287,21 @@ async def main():
         )
         await asyncio.sleep(5)
 
-    tasks = [asyncio.create_task(monitor_device(p)) for p in keyboard_paths]
-    tasks.extend(asyncio.create_task(monitor_pointer_device(p)) for p in pointer_paths)
-    await asyncio.gather(*tasks)
+    # Supervise: a monitor returns when its device disappears, so rescan on a
+    # tick and (re)adopt anything unmonitored. Without this, unplugging a
+    # keyboard left the daemon alive but deaf, and one plugged in after startup
+    # was never watched at all.
+    tasks = {}
+    while True:
+        keyboard_paths, pointer_paths = find_keyboard_devices()
+        for path, monitor in [
+            *((p, monitor_device) for p in keyboard_paths),
+            *((p, monitor_pointer_device) for p in pointer_paths),
+        ]:
+            task = tasks.get(path)
+            if task is None or task.done():
+                tasks[path] = asyncio.create_task(monitor(path))
+        await asyncio.sleep(5)
 
 
 if __name__ == "__main__":

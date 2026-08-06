@@ -17,6 +17,7 @@ import qs.modules.common.models
 // Supports horizontal (top/bottom bar) and vertical (left/right bar) orientations.
 Item {
     id: root
+    property bool _sortingConsumerAcquired: false
 
     property var parentWindow: null
     property bool vertical: false
@@ -28,7 +29,13 @@ Item {
     // Maximum height for vertical mode (-1 = no limit, 0+ = cap)
     property real maximumHeight: -1
 
-    readonly property real barSize: vertical ? Appearance.sizes.baseVerticalBarWidth : Appearance.sizes.baseBarHeight
+    // Height the host grants us. Islands hand over the capsule's inner height, so
+    // the buttons size to the surface they sit on instead of the whole bar.
+    property real slotSize: -1
+
+    readonly property real barSize: vertical
+        ? Appearance.sizes.baseVerticalBarWidth
+        : (slotSize > 0 ? Math.min(slotSize, Appearance.sizes.baseBarHeight) : Appearance.sizes.baseBarHeight)
     property real iconSize: vertical ? Math.round(barSize * 0.58) : Math.round(barSize * 0.68)
 
     readonly property bool isOverflowing: vertical && maximumHeight > 0 && listView.contentHeight > (maximumHeight - 8)
@@ -153,7 +160,9 @@ Item {
 
     // App id of the currently focused window (lowercased). Used to flag the
     // focused item so it's prioritised for visibility when space runs out.
-    readonly property string focusedAppId: (ToplevelManager.activeToplevel?.appId ?? "").toLowerCase()
+    readonly property string focusedAppId: CompositorService.isNiri
+        ? String(NiriService.activeWindow?.app_id ?? "").toLowerCase()
+        : String(ToplevelManager.activeToplevel?.appId ?? "").toLowerCase()
 
     function _doRebuildDockItems(): void {
         const pinnedApps = Config.options?.dock?.pinnedApps ?? [];
@@ -347,7 +356,15 @@ Item {
         function onPinnedAppsChanged() { root.rebuildDockItems() }
         function onIgnoredAppRegexesChanged() { root.rebuildDockItems() }
     }
-    Component.onCompleted: rebuildDockItems()
+    Component.onCompleted: {
+        CompositorService.acquireSortingConsumer()
+        _sortingConsumerAcquired = true
+        rebuildDockItems()
+    }
+    Component.onDestruction: {
+        if (_sortingConsumerAcquired)
+            CompositorService.releaseSortingConsumer()
+    }
 
     // ─── Hover preview state ────────────────────────────────────────
     property Item lastHoveredButton
@@ -414,6 +431,7 @@ Item {
             taskbarRoot: root
             iconSize: root.iconSize
             vertical: root.vertical
+            barSize: root.barSize
             barPosition: root.barPosition
         }
     }

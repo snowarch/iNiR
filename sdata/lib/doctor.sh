@@ -504,16 +504,16 @@ check_fonts() {
 
     local important_fonts=(
         "Roboto Flex:Roboto Flex:important"
-        "Rubik:Rubik:important"
-        "Space Grotesk:Space Grotesk:important"
-        "Readex Pro:Readex Pro:important"
         "Gabarito:Gabarito:important"
+        "Oxanium:Oxanium:important"
+        "Noto Color Emoji:Noto Color Emoji:important"
     )
 
     local optional_fonts=(
-        "Geist:Geist:optional"
-        "Oxanium:Oxanium:optional"
-        "Noto Color Emoji:Noto Color Emoji:optional"
+        "Rubik:Rubik:optional"
+        "Space Grotesk:Space Grotesk:optional"
+        "Readex Pro:Readex Pro:optional"
+        "Twemoji:Twemoji:optional"
     )
 
     if ! command -v fc-list &>/dev/null; then
@@ -530,6 +530,7 @@ check_fonts() {
     local missing_critical=()
     local missing_important=()
     local missing_optional=()
+    local missing_configured=()
 
     _font_installed() {
         echo "$fc_cache" | grep -qi "$1"
@@ -556,7 +557,24 @@ check_fonts() {
         _font_installed "$pattern" || missing_optional+=("$display")
     done
 
-    local total_missing=$(( ${#missing_critical[@]} + ${#missing_important[@]} ))
+    local config_file="${DOTS_CORE_CONFDIR}/config.json"
+    if [[ -f "$config_file" ]] && command -v jq &>/dev/null; then
+        local configured_font
+        while IFS= read -r configured_font; do
+            [[ -n "$configured_font" ]] || continue
+            case "${configured_font,,}" in
+                sans|sans-serif|serif|monospace|system-ui|auto) continue ;;
+            esac
+            _font_installed "$configured_font" || missing_configured+=("$configured_font")
+        done < <(jq -r '[
+            .appearance.typography.mainFont,
+            .appearance.typography.titleFont,
+            .appearance.typography.monospaceFont,
+            .waffles.theming.font.family
+        ] | .[] | select(type == "string" and length > 0)' "$config_file" 2>/dev/null | sort -u)
+    fi
+
+    local total_missing=$(( ${#missing_critical[@]} + ${#missing_important[@]} + ${#missing_configured[@]} ))
 
     if [[ $total_missing -eq 0 && ${#missing_optional[@]} -eq 0 ]]; then
         doctor_pass "All fonts installed"
@@ -565,7 +583,7 @@ check_fonts() {
 
     if [[ ${#missing_optional[@]} -gt 0 && $total_missing -eq 0 ]]; then
         tui_warn "Optional fonts missing: ${missing_optional[*]}"
-        doctor_pass "Required fonts OK"
+        doctor_pass "Required and configured fonts OK"
         return 0
     fi
 
@@ -587,13 +605,17 @@ check_fonts() {
                 "Roboto Flex")
                     _try_install_font_package "ttf-roboto-flex" "Roboto Flex" && ((fixed++)) || true ;;
                 "Rubik")
-                    _try_install_font_package "ttf-rubik" "Rubik" && ((fixed++)) || true ;;
+                    _try_install_font_package "ttf-rubik-vf" "Rubik" && ((fixed++)) || true ;;
                 "Space Grotesk")
-                    _try_install_font_package "ttf-space-grotesk" "Space Grotesk" && ((fixed++)) || true ;;
+                    _try_install_font_package "otf-space-grotesk" "Space Grotesk" && ((fixed++)) || true ;;
                 "Readex Pro")
                     _try_install_font_package "ttf-readex-pro" "Readex Pro" && ((fixed++)) || true ;;
                 "Gabarito")
-                    _try_install_font_package "ttf-gabarito" "Gabarito" && ((fixed++)) || true ;;
+                    _try_install_font_package "ttf-gabarito-git" "Gabarito" && ((fixed++)) || true ;;
+                "Oxanium")
+                    _try_install_font_package "ttf-oxanium" "Oxanium" && ((fixed++)) || true ;;
+                "Noto Color Emoji")
+                    _try_install_font_package "noto-fonts-emoji" "Noto Color Emoji" && ((fixed++)) || true ;;
             esac
         done
 
@@ -608,6 +630,7 @@ check_fonts() {
     fc_cache="$(fc-list : family 2>/dev/null)"
     local still_critical=()
     local still_important=()
+    local still_configured=()
 
     for entry in "${critical_fonts[@]}"; do
         local pattern="${entry%%:*}"
@@ -623,6 +646,11 @@ check_fonts() {
         _font_installed "$pattern" || still_important+=("$display")
     done
 
+    local configured_font
+    for configured_font in "${missing_configured[@]}"; do
+        _font_installed "$configured_font" || still_configured+=("$configured_font")
+    done
+
     if [[ ${#still_critical[@]} -gt 0 ]]; then
         doctor_fail "CRITICAL fonts missing: ${still_critical[*]}"
         echo -e "    ${STY_FAINT}Shell icons will be broken without these${STY_RST}"
@@ -633,8 +661,13 @@ check_fonts() {
         echo -e "    ${STY_FAINT}Install manually or run: ./setup install${STY_RST}"
     fi
 
-    if [[ ${#still_critical[@]} -eq 0 && ${#still_important[@]} -eq 0 ]]; then
-        doctor_pass "All required fonts OK"
+    if [[ ${#still_configured[@]} -gt 0 ]]; then
+        doctor_fail "Configured fonts unavailable: ${still_configured[*]}"
+        echo -e "    ${STY_FAINT}Choose an installed family or install the selected font${STY_RST}"
+    fi
+
+    if [[ ${#still_critical[@]} -eq 0 && ${#still_important[@]} -eq 0 && ${#still_configured[@]} -eq 0 ]]; then
+        doctor_pass "All required and configured fonts OK"
     fi
 
     if [[ ${#missing_optional[@]} -gt 0 ]]; then
@@ -704,6 +737,10 @@ _try_install_font_package() {
         "Gabarito")
             curl -fsSL -o "$font_dir/Gabarito.ttf" \
                 "https://github.com/google/fonts/raw/main/ofl/gabarito/Gabarito%5Bwght%5D.ttf" 2>/dev/null && return 0
+            ;;
+        "Oxanium")
+            curl -fsSL -o "$font_dir/Oxanium.ttf" \
+                "https://github.com/google/fonts/raw/main/ofl/oxanium/Oxanium%5Bwght%5D.ttf" 2>/dev/null && return 0
             ;;
     esac
 
@@ -1514,8 +1551,10 @@ check_niri_config() {
     
     if command -v niri &>/dev/null; then
         local output
-        output=$(niri validate 2>&1)
-        if echo "$output" | grep -qi "valid"; then
+        # Current niri releases are silent on successful validation. The exit
+        # status is the contract; grepping for the word "valid" turns every
+        # silent success into a false failure.
+        if output=$(niri validate 2>&1); then
             doctor_pass "Niri config valid"
         else
             doctor_fail "Niri config has errors"

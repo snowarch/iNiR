@@ -12,9 +12,9 @@ Change them. Break them. Make them yours. We won't judge.
 |-----|--------|
 | `Mod+Space` | iNiR overview / app launcher |
 | `Mod+Tab` | Niri overview (native compositor) |
-| `Super+G` | Crosshair overlay toggle |
-| `Alt+Tab` | Window switcher (next) |
-| `Alt+Shift+Tab` | Window switcher (previous) |
+| `Super+G` | Floating tools (notes, images, crosshair, resources) |
+| `Alt+Tab` | Niri Recent Windows (next) |
+| `Alt+Shift+Tab` | Niri Recent Windows (previous) |
 | `Mod+V` | Clipboard history |
 | `Mod+/` | Cheatsheet |
 | `Mod+,` | Settings |
@@ -32,6 +32,7 @@ Change them. Break them. Make them yours. We won't judge.
 | `Mod+Shift+S` | Region screenshot |
 | `Mod+Shift+X` | Region OCR |
 | `Mod+Shift+A` | Region image search |
+| `Mod+Shift+R` | Region screen recording (with audio) |
 | `Print` | Full screenshot (Niri native) |
 | `Ctrl+Print` | Screenshot current screen |
 | `Alt+Print` | Screenshot current window |
@@ -79,7 +80,6 @@ Niri arranges windows in an infinite horizontal strip. These binds control colum
 | Key | Action |
 |-----|--------|
 | `Mod+R` | Cycle preset column widths (⅓ → ½ → ⅔) |
-| `Mod+Shift+R` | Cycle preset window heights |
 | `Mod+Ctrl+R` | Reset window height |
 | `Mod+C` | Center focused column |
 | `Mod+Minus` | Shrink column width 10% |
@@ -110,14 +110,14 @@ Niri arranges windows in an infinite horizontal strip. These binds control colum
 
 | Key | Action |
 |-----|--------|
-| `Mod+1-9` | Focus workspace 1–9 |
-| `Mod+Ctrl+1-9` | Move column to workspace 1–9 |
+| `Mod+1-9` | Focus workspace 1-9 |
+| `Mod+Ctrl+1-9` | Move column to workspace 1-9 |
 | `Mod+Page_Down` | Focus workspace down |
 | `Mod+Page_Up` | Focus workspace up |
 | `Mod+Ctrl+Page_Down` | Move column to workspace down |
 | `Mod+Ctrl+Page_Up` | Move column to workspace up |
-| `Mod+WheelDown` | Focus workspace down (mouse) |
-| `Mod+WheelUp` | Focus workspace up (mouse) |
+| `Mod+WheelScrollDown` | Focus workspace down (mouse) |
+| `Mod+WheelScrollUp` | Focus workspace up (mouse) |
 
 ---
 
@@ -156,9 +156,9 @@ All media/volume/brightness keys are routed through iNiR IPC for OSD feedback.
 | `XF86AudioPrev` | Previous track |
 | `XF86MonBrightnessUp` | Brightness up |
 | `XF86MonBrightnessDown` | Brightness down |
-| `Ctrl+Mod+Space` | Play/pause (keyboard) |
-| `Mod+Alt+N` | Next track (keyboard) |
-| `Mod+Alt+P` | Previous track (keyboard) |
+| `Ctrl+Mod+Space` / `Mod+Shift+P` | Play/pause (keyboard) |
+| `Mod+Alt+N` / `Mod+Shift+N` | Next track (keyboard) |
+| `Mod+Alt+P` / `Mod+Shift+B` | Previous track (keyboard) |
 | `Mod+Shift+M` | Toggle mute (keyboard) |
 
 ---
@@ -166,6 +166,11 @@ All media/volume/brightness keys are routed through iNiR IPC for OSD feedback.
 ## Customizing
 
 Keybinds live in `~/.config/niri/config.d/70-binds.kdl`. Add personal overrides in `90-user-extra.kdl` (never touched by updates).
+
+The distributed Alt-Tab uses Niri's native `recent-windows` surface. Its
+preview timing, highlight and size are tuned in `config.d/20-layout-and-overview.kdl`.
+The iNiR switcher remains available from Settings, but is disabled by default
+so two window switchers do not compete for the same keys.
 
 See [IPC.md](IPC.md) for all available iNiR targets you can bind.
 

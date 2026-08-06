@@ -15,7 +15,7 @@ Item {
     anchors.bottomMargin: -24
 
     DropShadow {
-        source: quoteBox 
+        source: quoteBox
         anchors.fill: quoteBox
         visible: Appearance.effectsEnabled
         horizontalOffset: 0
@@ -25,20 +25,20 @@ Item {
         color: Appearance.colors.colShadow
         transparentBorder: true
     }
-    
+
     Rectangle {
         id: quoteBox
 
         implicitWidth: quoteRow.implicitWidth + 16
-        implicitHeight: quoteRow.implicitHeight + 8 
+        implicitHeight: quoteRow.implicitHeight + 8
         radius: Appearance.rounding.small
         color: Appearance.colors.colSecondaryContainer
 
         Row {
             id: quoteRow
             anchors.centerIn: parent
-            spacing: 4 
-            
+            spacing: 4
+
             MaterialSymbol {
                 id: quoteIcon
                 anchors.top: parent.top
@@ -46,7 +46,7 @@ Item {
                 text: "format_quote"
                 color: Appearance.colors.colOnSecondaryContainer
             }
-            
+
             StyledText {
                 id: quoteStyledText
                 horizontalAlignment: Text.AlignLeft

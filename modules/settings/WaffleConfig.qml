@@ -81,9 +81,12 @@ ContentPage {
 
             SettingsSwitch {
                 buttonIcon: "fullscreen_exit"
-                text: Translation.tr("Hide when fullscreen")
+                text: Translation.tr("Hide main wallpaper in fullscreen")
                 checked: Config.options?.waffles?.background?.hideWhenFullscreen ?? true
                 onCheckedChanged: Config.setNestedValue("waffles.background.hideWhenFullscreen", checked)
+                StyledToolTip {
+                    text: Translation.tr("Hide the Waffle main wallpaper during fullscreen. The Task View backdrop remains available.")
+                }
             }
             
             SettingsSwitch {
@@ -368,12 +371,12 @@ ContentPage {
                     MaterialSymbol {
                         text: "restart_alt"
                         iconSize: Appearance.font.pixelSize.normal
-                        color: Appearance.m3colors.m3onSurface
+                        color: Appearance.colors.colOnSurface
                     }
                     StyledText {
                         text: Translation.tr("Reset to defaults")
                         font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.m3colors.m3onSurface
+                        color: Appearance.colors.colOnSurface
                     }
                 }
 

@@ -7,8 +7,8 @@ Item {
     anchors.centerIn: parent
     required property Item realContentItem
     property alias radius: realContent.radius
-    property real verticalPadding: 8
-    property real horizontalPadding: 10
+    property real verticalPadding: Looks.dp(8)
+    property real horizontalPadding: Looks.dp(10)
     implicitWidth: realContent.implicitWidth + (Looks.glassActive ? 6 : 4)
     implicitHeight: realContent.implicitHeight + (Looks.glassActive ? 6 : 4)
 

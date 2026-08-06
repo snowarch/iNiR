@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import qs
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -73,6 +74,7 @@ Item {
                         property int clickIndex: -1
 
                         GroupButton {
+                            id: allCategoryButton
                             toggled: AppCatalog.selectedCategory === "all"
                             bounce: true
                             colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
@@ -86,20 +88,25 @@ Item {
                             colBackgroundToggled: Appearance.angelEverywhere ? Appearance.angel.colGlassElevated
                                 : Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
                                 : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+                                : Appearance.zzzEverywhere ? Appearance.zzz.sticker
                                 : Appearance.colors.colSecondaryContainer
                             colBackgroundToggledHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                                 : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainerHover
                                 : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
+                                : Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover
                                 : Appearance.colors.colSecondaryContainerHover
                             contentItem: RowLayout {
                                 spacing: 4
                                 MaterialSymbol {
                                     text: "apps"
                                     iconSize: Appearance.font.pixelSize.small
-                                    color: root.colText
+                                    color: Appearance.zzzEverywhere && allCategoryButton.toggled
+                                        ? Appearance.zzz.onSticker : root.colText
                                 }
                                 StyledText {
                                     text: Translation.tr("All")
+                                    color: Appearance.zzzEverywhere && allCategoryButton.toggled
+                                        ? Appearance.zzz.onSticker : root.colText
                                 }
                             }
                             onClicked: {
@@ -111,6 +118,7 @@ Item {
                         Repeater {
                             model: AppCatalog.categories
                             delegate: GroupButton {
+                                id: categoryButton
                                 required property string modelData
                                 required property int index
                                 toggled: AppCatalog.selectedCategory === modelData
@@ -126,20 +134,25 @@ Item {
                                 colBackgroundToggled: Appearance.angelEverywhere ? Appearance.angel.colGlassElevated
                                     : Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
                                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+                                    : Appearance.zzzEverywhere ? Appearance.zzz.sticker
                                     : Appearance.colors.colSecondaryContainer
                                 colBackgroundToggledHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                                     : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainerHover
                                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
+                                    : Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover
                                     : Appearance.colors.colSecondaryContainerHover
                                 contentItem: RowLayout {
                                     spacing: 4
-                                    MaterialSymbol {
+                                MaterialSymbol {
                                         text: root._categoryIcon(modelData)
                                         iconSize: Appearance.font.pixelSize.small
-                                        color: root.colText
+                                        color: Appearance.zzzEverywhere && categoryButton.toggled
+                                            ? Appearance.zzz.onSticker : root.colText
                                     }
                                     StyledText {
                                         text: root._categoryLabel(modelData)
+                                        color: Appearance.zzzEverywhere && categoryButton.toggled
+                                            ? Appearance.zzz.onSticker : root.colText
                                     }
                                 }
                                 onClicked: {
@@ -208,17 +221,19 @@ Item {
                     onClicked: AppCatalog.refresh()
 
                     contentItem: MaterialSymbol {
+                        id: catalogRefreshIcon
                         anchors.centerIn: parent
                         text: "refresh"
                         iconSize: 16
                         color: root.colText
 
                         RotationAnimation on rotation {
-                            running: AppCatalog.checkingInstalled
+                            running: AppCatalog.checkingInstalled && GlobalStates.sidebarLeftOpen
                             from: 0
                             to: 360
                             duration: 1000
                             loops: Animation.Infinite
+                            onRunningChanged: if (!running) catalogRefreshIcon.rotation = 0
                         }
                     }
 
@@ -255,7 +270,7 @@ Item {
 
                 MaterialSymbol {
                     Layout.alignment: Qt.AlignHCenter
-                    text: "error_outline"
+                    text: "error"
                     iconSize: 48
                     color: root.colTextSecondary
                 }

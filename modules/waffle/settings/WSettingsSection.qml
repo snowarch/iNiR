@@ -13,8 +13,8 @@ Item {
     property string description: ""
 
     Layout.fillWidth: true
-    Layout.topMargin: 14
-    Layout.bottomMargin: 4
+    Layout.topMargin: Looks.dp(14)
+    Layout.bottomMargin: Looks.dp(4)
     implicitHeight: sectionRow.implicitHeight
 
     RowLayout {
@@ -22,35 +22,36 @@ Item {
         anchors {
             left: parent.left
             right: parent.right
-            leftMargin: 4
+            leftMargin: Looks.settings.panelPadding
         }
-        spacing: 8
+        spacing: Looks.dp(8)
 
         Rectangle {
             visible: root.icon !== ""
-            implicitWidth: 24
-            implicitHeight: 24
-            radius: Looks.radius.small
+            implicitWidth: Looks.dp(24)
+            implicitHeight: Looks.dp(24)
+            radius: Looks.settings.radiusSmall
             color: Qt.alpha(Looks.colors.accent, 0.12)
             Layout.alignment: Qt.AlignTop
 
             FluentIcon {
                 anchors.centerIn: parent
                 icon: root.icon
-                implicitSize: 13
+                implicitSize: Looks.dp(13)
                 color: Looks.colors.accent
             }
         }
 
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 2
+            spacing: Looks.dp(2)
 
             WText {
+                Layout.fillWidth: true
                 text: root.title
                 font.pixelSize: Looks.font.pixelSize.normal
                 font.weight: Looks.font.weight.strong
-                color: Looks.colors.subfg
+                color: Looks.colors.fg
             }
 
             WText {

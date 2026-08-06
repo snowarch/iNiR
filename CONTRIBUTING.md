@@ -1,13 +1,24 @@
 # Contributing to iNiR
 
+## Branch Model
+
+| Branch | Role |
+|--------|------|
+| `main` | Stable. What users install and what `./setup update` ships. |
+| `prerelease` | Development. All changes land here first. |
+
+Every pull request targets `prerelease`. The maintainer tests `prerelease`
+on a real setup before merging it into `main` — nothing reaches users
+without that pass.
+
 ## How to Contribute
 
 1. Fork the repository and clone your fork
-2. Create a branch from `main`: `git checkout -b fix/descriptive-name`
+2. Create a branch from `prerelease`: `git checkout -b fix/descriptive-name origin/prerelease`
 3. Make your changes following the patterns below
 4. Test: `inir restart && inir logs | tail -50`
 5. Commit with a clear message (see conventions below)
-6. Push and open a pull request against `main`
+6. Push and open a pull request against `prerelease`
 
 ## Development Setup
 
@@ -18,18 +29,16 @@ cd inir
 inir run
 ```
 
-After making changes:
+iNiR hot-reloads: saving a file applies it to the running shell
+immediately. When you need a clean slate:
 
 ```bash
-inir restart                    # Restart the running shell
-inir logs | tail -50            # Check for errors
+inir restart                    # Restart the supervised shell service
+inir logs -f                    # Follow live logs while you test
 ```
 
-For direct stdout/stderr debugging:
-
-```bash
-qs kill -c inir && qs -c inir
-```
+Do not run `qs kill -c inir` or a bare `qs -c inir` — the shell runs as a
+supervised systemd service, and raw quickshell commands leave it unmanaged.
 
 ## Commit Conventions
 
@@ -78,7 +87,8 @@ Config.options.bar.autoHide.enable = true              // NOT persisted
 **Adding a new config key** requires updating together:
 1. `modules/common/Config.qml` — schema definition
 2. `defaults/config.json` — default value
-3. Consumer(s) + settings UI if user-facing
+3. Consumer(s)
+4. Settings UI in **both** families (ii and waffle) if user-facing
 
 ### Visual Tokens
 
@@ -99,10 +109,12 @@ radius: 8
 
 ### Style Dispatch
 
-Five styles with priority **angel > inir > aurora > material**:
+Six styles with priority **zzz > angel > inir > aurora > material** (cards
+is derived from material):
 
 ```qml
-color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+color: Appearance.zzzEverywhere ? Appearance.zzz.paper
+     : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
      : Appearance.inirEverywhere ? Appearance.inir.colLayer1
      : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
      : Appearance.colors.colLayer1
@@ -179,7 +191,8 @@ Always update these together:
 When a config or data format changes between versions:
 
 - Add a new script at `sdata/migrations/NNN-descriptive-name.sh`
-- Use the next sequential number (currently 021+)
+- Use the next sequential number (check `sdata/migrations/` for the latest)
+- Migrations are **sourced**, not executed — no top-level `exit` or `set -e`
 - Migrations must be idempotent (safe to run twice)
 - Never rename, reorder, or delete existing migrations
 
@@ -188,6 +201,25 @@ When a config or data format changes between versions:
 - Strings go in `translations/`
 - Use `Translation.tr("key", "default text")` in QML
 - See existing translations for the format
+
+## AI-Assisted Contributions
+
+Using AI tools to write code is fine — shipping their output untested is
+not. Before opening a PR:
+
+- Run your change on a real iNiR setup and exercise the exact flow you
+  touched. "It looks right" is not testing.
+- Describe in the PR what you ran and what you observed.
+- No invented APIs — every Quickshell/iNiR API you call must exist. Check
+  existing code or the [Quickshell docs](https://quickshell.org/docs/).
+- No drive-by reformatting, file restructuring, or boilerplate comments
+  around code you did not change.
+- Keep AI attributions (bot co-author trailers, "generated with" footers)
+  out of commits and code.
+- Disclose AI usage in the PR template's checklist (which tool/model) —
+  it is not held against you; it tells the reviewer where to look.
+
+PRs with no evidence of real testing may be closed without detailed review.
 
 ## Code of Conduct
 

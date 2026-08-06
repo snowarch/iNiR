@@ -13,10 +13,10 @@ Scope {
     id: screenCorners
     readonly property Toplevel activeWindow: ToplevelManager.activeToplevel
     property var actionForCorner: ({
-        [RoundCorner.CornerEnum.TopLeft]: () => GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen,
-        [RoundCorner.CornerEnum.BottomLeft]: () => GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen,
-        [RoundCorner.CornerEnum.TopRight]: () => GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen,
-        [RoundCorner.CornerEnum.BottomRight]: () => GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen
+        [RoundCorner.CornerEnum.TopLeft]: outputName => GlobalStates.toggleSidebarLeft(outputName),
+        [RoundCorner.CornerEnum.BottomLeft]: outputName => GlobalStates.toggleSidebarLeft(outputName),
+        [RoundCorner.CornerEnum.TopRight]: outputName => GlobalStates.toggleSidebarRight(outputName),
+        [RoundCorner.CornerEnum.BottomRight]: outputName => GlobalStates.toggleSidebarRight(outputName)
     })
 
     component CornerPanelWindow: PanelWindow {
@@ -32,9 +32,10 @@ Scope {
         readonly property bool cornerOpenEnabled: Config?.options?.sidebar?.cornerOpen?.enable ?? false
         readonly property bool cornerOpenAtBottom: Config?.options?.sidebar?.cornerOpen?.bottom ?? false
         readonly property bool cornerOpenMatchesPosition: cornerOpenAtBottom === cornerWidget.isBottom
-        readonly property bool shouldShowCornerOpen: cornerOpenEnabled && cornerOpenMatchesPosition && !fullscreen && !GameMode.shouldHidePanels
+        readonly property bool shouldShowCornerOpen: cornerOpenEnabled
+            && cornerOpenMatchesPosition && !fullscreen
 
-        visible: !GameMode.shouldHidePanels && (showFakeRounding || shouldShowCornerOpen)
+        visible: !fullscreen && (showFakeRounding || shouldShowCornerOpen)
 
         exclusionMode: ExclusionMode.Ignore
         mask: Region {
@@ -66,7 +67,12 @@ Scope {
             bottomVisualMargin: ((Config.options?.interactions?.deadPixelWorkaround?.enable ?? false) && cornerPanelWindow.anchors.bottom) * 1
 
             // Size for fake rounding visual (0 if disabled)
-            readonly property int roundingSize: cornerPanelWindow.showFakeRounding ? Appearance.rounding.screenRounding : 0
+            // ZZZ square = sharp console silhouette → no fake screen rounding;
+            // ZZZ round (anime) keeps the soft corner like the other styles.
+            readonly property int roundingSize: cornerPanelWindow.showFakeRounding
+                ? (Appearance.zzzEverywhere ? (Appearance.zzz.round ? Appearance.rounding.screenRounding : 0)
+                                            : Appearance.rounding.screenRounding)
+                : 0
             // Size for corner open interaction area
             readonly property int cornerOpenWidth: Config.options?.sidebar?.cornerOpen?.cornerRegionWidth ?? 20
             readonly property int cornerOpenHeight: Config.options?.sidebar?.cornerOpen?.cornerRegionHeight ?? 20
@@ -97,15 +103,15 @@ Scope {
                         const correctX = (cornerWidget.isRight && mouseArea.mouseX >= mouseArea.width - 2) || (cornerWidget.isLeft && mouseArea.mouseX <= 2);
                         const correctY = (cornerWidget.isTop && mouseArea.mouseY > verticalOffset || cornerWidget.isBottom && mouseArea.mouseY < mouseArea.height - verticalOffset);
                         if (correctX && correctY)
-                            screenCorners.actionForCorner[cornerPanelWindow.corner]();
+                            screenCorners.actionForCorner[cornerPanelWindow.corner](cornerPanelWindow.screen?.name ?? "");
                     }
                     onEntered: {
                         if (Config.options?.sidebar?.cornerOpen?.clickless ?? false)
-                            screenCorners.actionForCorner[cornerPanelWindow.corner]();
+                            screenCorners.actionForCorner[cornerPanelWindow.corner](cornerPanelWindow.screen?.name ?? "");
                     }
                     onPressed: {
                         if (!(Config.options?.sidebar?.cornerOpen?.clickless ?? false)) {
-                            screenCorners.actionForCorner[cornerPanelWindow.corner]();
+                            screenCorners.actionForCorner[cornerPanelWindow.corner](cornerPanelWindow.screen?.name ?? "");
                             if (Config.options?.background?.effects?.ripple?.hotcorners ?? true) {
                                 GlobalStates.requestRipple(0, 0, cornerPanelWindow.screen.name);
                             }
@@ -167,53 +173,11 @@ Scope {
                 if (CompositorService.isHyprland) {
                     return activeWorkspaceWithFullscreen != undefined;
                 }
-                if (CompositorService.isNiri && typeof NiriService !== "undefined" && NiriService.outputs && NiriService.windows && NiriService.workspaces) {
-                    try {
-                        const outputName = modelData?.name || "";
-                        if (!outputName)
-                            return false;
-                        const outputInfo = NiriService.outputs[outputName];
-                        const logical = outputInfo ? outputInfo.logical : null;
-                        if (!logical)
-                            return false;
-                        const lw = logical.width;
-                        const lh = logical.height;
-                        if (!(lw > 0 && lh > 0))
-                            return false;
-
-                        const windows = NiriService.windows;
-                        const wss = NiriService.workspaces;
-                        for (let i = 0; i < windows.length; ++i) {
-                            const w = windows[i];
-                            // Check if window is fullscreen via is_fullscreen property first
-                            if (w.is_fullscreen === true) {
-                                const ws = wss[w.workspace_id];
-                                if (ws && ws.output === outputName && ws.is_active) {
-                                    return true;
-                                }
-                            }
-                            // Fallback: check by size comparison
-                            const ws = wss[w.workspace_id];
-                            if (!ws || ws.output !== outputName || !ws.is_active)
-                                continue;
-                            const layout = w.layout;
-                            const size = layout && layout.tile_size ? layout.tile_size : null;
-                            if (!size || size.length < 2)
-                                continue;
-                            const ww = size[0];
-                            const wh = size[1];
-                            if (!(ww > 0 && wh > 0))
-                                continue;
-                            const areaWindow = ww * wh;
-                            const areaOutput = lw * lh;
-                            // More aggressive threshold for games
-                            if (areaWindow >= areaOutput * 0.90) {
-                                return true;
-                            }
-                        }
-                    } catch (e) {}
-                    return false;
-                }
+                // Corners only stop being painted; they never unmap a surface
+                // or change the exclusive zone, so they can safely follow
+                // automatic fullscreen detection.
+                if (CompositorService.isNiri)
+                    return GameMode.hasFullscreenOnOutput(modelData?.name ?? "")
                 return false;
             }
 

@@ -20,6 +20,8 @@ Singleton {
     property var chargeState: UPower.displayDevice.state
     property bool isCharging: chargeState == UPowerDeviceState.Charging
     property bool isPluggedIn: isCharging || chargeState == UPowerDeviceState.PendingCharge
+    // Discharging-based, not !isPluggedIn: FullyCharged on AC must not count as "on battery"
+    readonly property bool onBattery: available && (chargeState == UPowerDeviceState.Discharging || chargeState == UPowerDeviceState.PendingDischarge)
     property real percentage: UPower.displayDevice?.percentage ?? 1
     readonly property bool allowAutomaticSuspend: Config.options?.battery?.automaticSuspend ?? false
     readonly property bool soundEnabled: Config.options?.sounds?.battery ?? true
@@ -43,6 +45,8 @@ Singleton {
     readonly property int chargeLimitThreshold: Config.options?.battery?.chargeLimit?.threshold ?? 80
     property string _chargeLimitBackend: ""
     property string _chargeLimitSysfsPath: ""
+    property int _rawChargeLimitValue: -1
+    property int _pendingChargeLimitAction: -1 // -1 none, 0 disable, 1 enable
     property int _currentChargeLimit: -1
     property bool _chargeLimitActive: false
     readonly property bool chargeLimitSupported: _chargeLimitBackend.length > 0 && _chargeLimitSysfsPath.length > 0
@@ -99,20 +103,21 @@ Singleton {
                     root._chargeLimitSysfsPath = parts[1] ?? ""
                     _log("[Battery] Charge limit backend: " + root._chargeLimitBackend + " (" + root._chargeLimitSysfsPath + ")")
                     root._readChargeLimit()
-                    if (root.chargeLimitEnabled) {
-                        chargeLimitApplyDelay.restart()
-                    }
                 }
             }
         }
     }
 
-    // Small delay before applying on startup so the shell is settled
+    // Reconcile only after the initial sysfs read. This avoids asking polkit to
+    // write a value the firmware already has.
     Timer {
         id: chargeLimitApplyDelay
-        interval: 2000
+        interval: 250
         repeat: false
-        onTriggered: root._applyChargeLimit()
+        onTriggered: {
+            if (root.chargeLimitEnabled)
+                root._applyChargeLimit()
+        }
     }
 
     function _readChargeLimit(): void {
@@ -148,6 +153,23 @@ Singleton {
         return chargeLimitThreshold
     }
 
+    function _desiredChargeLimitValue(enable: bool): int {
+        switch (_chargeLimitBackend) {
+        case "ideapad":
+        case "samsung":
+            return enable ? 1 : 0
+        case "lg-legacy":
+            return enable ? 80 : 100
+        default:
+            return enable ? _normalizedChargeLimitThreshold() : 100
+        }
+    }
+
+    function _chargeLimitMatches(enable: bool): bool {
+        return _rawChargeLimitValue >= 0
+            && _rawChargeLimitValue === _desiredChargeLimitValue(enable)
+    }
+
     function _buildChargeLimitWriteCommand(enable: bool) {
         switch (_chargeLimitBackend) {
         case "ideapad":
@@ -156,7 +178,7 @@ Singleton {
                 "/usr/bin/pkexec", "/bin/sh", "-c",
                 "printf '%s' \"$1\" > \"$2\"",
                 "battery-charge-limit",
-                enable ? "1" : "0",
+                String(_desiredChargeLimitValue(enable)),
                 _chargeLimitSysfsPath,
             ]
         case "lg-legacy":
@@ -164,7 +186,7 @@ Singleton {
                 "/usr/bin/pkexec", "/bin/sh", "-c",
                 "printf '%s' \"$1\" > \"$2\"",
                 "battery-charge-limit",
-                enable ? "80" : "100",
+                String(_desiredChargeLimitValue(enable)),
                 _chargeLimitSysfsPath,
             ]
         case "huawei":
@@ -173,7 +195,7 @@ Singleton {
                 "printf '%s %s' \"$1\" \"$2\" > \"$3\"",
                 "battery-charge-limit",
                 "0",
-                enable ? String(_normalizedChargeLimitThreshold()) : "100",
+                String(_desiredChargeLimitValue(enable)),
                 _chargeLimitSysfsPath,
             ]
         case "threshold":
@@ -183,7 +205,7 @@ Singleton {
                 "/usr/bin/pkexec", "/bin/sh", "-c",
                 "printf '%s' \"$1\" > \"$2\"",
                 "battery-charge-limit",
-                enable ? String(_normalizedChargeLimitThreshold()) : "100",
+                String(_desiredChargeLimitValue(enable)),
                 _chargeLimitSysfsPath,
             ]
         default:
@@ -201,7 +223,21 @@ Singleton {
                     : parseInt(trimmed)
 
                 if (!isNaN(val)) {
+                    const initialRead = root._rawChargeLimitValue < 0
+                    root._rawChargeLimitValue = val
                     root._updateChargeLimitState(val)
+                    const pendingAction = root._pendingChargeLimitAction
+                    if (pendingAction >= 0) {
+                        root._pendingChargeLimitAction = -1
+                        Qt.callLater(() => {
+                            if (pendingAction === 1)
+                                root._applyChargeLimit()
+                            else
+                                root._resetChargeLimit()
+                        })
+                    } else if (initialRead && root.chargeLimitEnabled) {
+                        chargeLimitApplyDelay.restart()
+                    }
                 }
             }
         }
@@ -217,7 +253,22 @@ Singleton {
     }
 
     function _applyChargeLimit(): void {
-        if (!chargeLimitSupported || chargeLimitWriter.running) return
+        if (!chargeLimitSupported) return
+        if (chargeLimitWriter.running || chargeLimitResetter.running) {
+            _pendingChargeLimitAction = 1
+            return
+        }
+        if (_rawChargeLimitValue < 0) {
+            _pendingChargeLimitAction = 1
+            _readChargeLimit()
+            return
+        }
+        if (_chargeLimitMatches(true)) {
+            _pendingChargeLimitAction = -1
+            _log("[Battery] Charge limit already applied")
+            return
+        }
+        _pendingChargeLimitAction = -1
         const command = _buildChargeLimitWriteCommand(true)
         if (command.length === 0) return
         chargeLimitWriter.command = command
@@ -225,7 +276,22 @@ Singleton {
     }
 
     function _resetChargeLimit(): void {
-        if (!chargeLimitSupported || chargeLimitResetter.running) return
+        if (!chargeLimitSupported) return
+        if (chargeLimitWriter.running || chargeLimitResetter.running) {
+            _pendingChargeLimitAction = 0
+            return
+        }
+        if (_rawChargeLimitValue < 0) {
+            _pendingChargeLimitAction = 0
+            _readChargeLimit()
+            return
+        }
+        if (_chargeLimitMatches(false)) {
+            _pendingChargeLimitAction = -1
+            _log("[Battery] Charge limit already removed")
+            return
+        }
+        _pendingChargeLimitAction = -1
         const command = _buildChargeLimitWriteCommand(false)
         if (command.length === 0) return
         chargeLimitResetter.command = command
@@ -239,6 +305,7 @@ Singleton {
                 root._readChargeLimit()
                 _log("[Battery] Charge limit applied")
             } else {
+                root._pendingChargeLimitAction = -1
                 console.warn("[Battery] Failed to set charge limit (exit code " + exitCode + ")")
             }
         }
@@ -251,6 +318,7 @@ Singleton {
                 root._readChargeLimit()
                 _log("[Battery] Charge limit removed")
             } else {
+                root._pendingChargeLimitAction = -1
                 console.warn("[Battery] Failed to reset charge limit (exit code " + exitCode + ")")
             }
         }
@@ -258,6 +326,7 @@ Singleton {
 
     onChargeLimitEnabledChanged: {
         if (!chargeLimitSupported) return
+        chargeLimitApplyDelay.stop()
         if (chargeLimitEnabled) {
             _applyChargeLimit()
         } else {
@@ -282,7 +351,7 @@ Singleton {
             "--hint=int:transient:1",
         ])
 
-        if (root.soundEnabled) Audio.playSystemSound("dialog-warning");
+        if (root.soundEnabled) Audio.playEvent("batteryLow");
     }
 
     onIsCriticalAndNotChargingChanged: {
@@ -296,7 +365,7 @@ Singleton {
             "--hint=int:transient:1",
         ]);
 
-        if (root.soundEnabled) Audio.playSystemSound("suspend-error");
+        if (root.soundEnabled) Audio.playEvent("batteryCritical");
     }
 
     onIsSuspendingAndNotChargingChanged: {
@@ -315,15 +384,15 @@ Singleton {
             "--hint=int:transient:1",
         ]);
 
-        if (root.soundEnabled) Audio.playSystemSound("complete");
+        if (root.soundEnabled) Audio.playEvent("batteryFull");
     }
 
     onIsPluggedInChanged: {
         if (!root.available || !root.soundEnabled) return;
         if (isPluggedIn) {
-            Audio.playSystemSound("power-plug")
+            Audio.playEvent("powerPlug")
         } else {
-            Audio.playSystemSound("power-unplug")
+            Audio.playEvent("powerUnplug")
         }
     }
 }

@@ -28,9 +28,9 @@ BarButton {
         implicitWidth: column.implicitWidth
         Row {
             id: column
+            // Stretching this Row creates a recursive polish loop.
             anchors {
-                top: parent.top
-                bottom: parent.bottom
+                verticalCenter: parent.verticalCenter
                 horizontalCenter: parent.horizontalCenter
             }
             spacing: 4
@@ -186,10 +186,8 @@ BarButton {
     component IconHoverArea: FocusedScrollMouseArea {
         id: hoverArea
         required property var iconItem
-        anchors {
-            top: parent.top
-            bottom: parent.bottom
-        }
+        // Row owns horizontal positioning.
+        anchors.verticalCenter: parent.verticalCenter
         hoverEnabled: true
         implicitHeight: hoverArea.iconItem.implicitHeight
         implicitWidth: hoverArea.iconItem.implicitWidth
@@ -200,41 +198,41 @@ BarButton {
     }
 
     BarToolTip {
-        extraVisibleCondition: root.shouldShowTooltip && recordingHoverArea.containsMouse
+        barExtraVisibleCondition: root.shouldShowTooltip && recordingHoverArea.containsMouse
         text: Translation.tr("Screen recording: Active")
     }
     BarToolTip {
-        extraVisibleCondition: root.shouldShowTooltip && micHoverArea.containsMouse
+        barExtraVisibleCondition: root.shouldShowTooltip && micHoverArea.containsMouse
         text: Translation.tr("Microphone: %1").arg(Audio.micMuted ? Translation.tr("Muted") : Translation.tr("In use"))
     }
     BarToolTip {
-        extraVisibleCondition: root.shouldShowTooltip && screenShareHoverArea.containsMouse
+        barExtraVisibleCondition: root.shouldShowTooltip && screenShareHoverArea.containsMouse
         text: Translation.tr("Screen sharing: Active")
     }
     BarToolTip {
-        extraVisibleCondition: root.shouldShowTooltip && layoutHoverArea.containsMouse
+        barExtraVisibleCondition: root.shouldShowTooltip && layoutHoverArea.containsMouse
         text: Translation.tr("Keyboard layout: %1").arg(KeyboardIndicators.currentLayoutName || KeyboardIndicators.currentLayoutCodeInline)
     }
     BarToolTip {
-        extraVisibleCondition: root.shouldShowTooltip && capsHoverArea.containsMouse
+        barExtraVisibleCondition: root.shouldShowTooltip && capsHoverArea.containsMouse
         text: Translation.tr("Caps Lock: On")
     }
     BarToolTip {
-        extraVisibleCondition: root.shouldShowTooltip && numHoverArea.containsMouse
+        barExtraVisibleCondition: root.shouldShowTooltip && numHoverArea.containsMouse
         text: Translation.tr("Num Lock: On")
     }
     BarToolTip {
-        extraVisibleCondition: root.shouldShowTooltip && internetHoverArea.containsMouse
+        barExtraVisibleCondition: root.shouldShowTooltip && internetHoverArea.containsMouse
         text: Translation.tr("%1\nInternet access").arg(Network.ethernet ? Translation.tr("Network") : Network.networkName)
     }
     BarToolTip {
-        extraVisibleCondition: root.shouldShowTooltip && volumeHoverArea.containsMouse
+        barExtraVisibleCondition: root.shouldShowTooltip && volumeHoverArea.containsMouse
         text: Translation.tr("Speakers (%1): %2") //
             .arg(Audio.sink?.nickname || Audio.sink?.description || Translation.tr("Unknown")) //
             .arg(Audio.sink?.audio.muted ? Translation.tr("Muted") : `${Math.round(Audio.sink?.audio.volume * 100) || 0}%`) //
     }
     BarToolTip {
-        extraVisibleCondition: root.shouldShowTooltip && batteryHoverArea.containsMouse
+        barExtraVisibleCondition: root.shouldShowTooltip && batteryHoverArea.containsMouse
         text: Translation.tr("Battery: %1%2") //
             .arg(`${Math.round(Battery.percentage * 100) || 0}%`) //
             .arg(Battery.isPluggedIn ? (" " + Translation.tr("(Plugged in)")) : "")

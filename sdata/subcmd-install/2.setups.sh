@@ -231,6 +231,16 @@ function setup_desktop_settings(){
     log_success "Nautilus defaults configured"
   fi
 
+  # Materialize the cursor everywhere XWayland apps look. niri already exports
+  # XCURSOR_* to the clients it spawns, but X11/Electron apps (Spotify, etc.)
+  # that request the core X cursor resolve it through ~/.icons/default, which
+  # otherwise inherits Adwaita and shows a different pointer. sync-cursor reads
+  # the theme from the niri KDL and writes the default-theme inheritance file.
+  if command -v python3 &>/dev/null && [[ -f "${REPO_ROOT}/scripts/niri-config.py" ]]; then
+    python3 "${REPO_ROOT}/scripts/niri-config.py" sync-cursor >/dev/null 2>&1 || true
+    log_success "Cursor theme synced for XWayland apps"
+  fi
+
   # xdg-desktop-portal config for Niri (required for dark mode in GTK4/libadwaita apps)
   mkdir -p "${XDG_CONFIG_HOME}/xdg-desktop-portal"
   if [[ -f "dots/.config/xdg-desktop-portal/niri-portals.conf" ]]; then

@@ -1,4 +1,0 @@
-module qs.modules.sidebarLeft.reddit
-
-RedditView 1.0 RedditView.qml
-RedditCard 1.0 RedditCard.qml

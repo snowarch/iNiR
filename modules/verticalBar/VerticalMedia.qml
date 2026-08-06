@@ -73,7 +73,7 @@ MouseArea {
 
         lineWidth: Appearance.rounding.unsharpen
         value: activePlayer?.position / activePlayer?.length
-        colPrimary: Appearance.colors.colOnSecondaryContainer
+        colPrimary: Appearance.colors.colOnLayer0
         enableAnimation: false
 
         Item {
@@ -86,7 +86,7 @@ MouseArea {
                 fill: 1
                 text: activePlayer?.isPlaying ? "pause" : "music_note"
                 iconSize: Appearance.font.pixelSize.normal
-                color: Appearance.m3colors.m3onSecondaryContainer
+                color: Appearance.colors.colOnLayer0
             }
         }
     }
@@ -102,12 +102,12 @@ MouseArea {
             MaterialSymbol {
                 text: (activePlayer?.volume ?? 0) === 0 ? "volume_off" : "volume_up"
                 iconSize: Appearance.font.pixelSize.small
-                color: Appearance.m3colors.m3onSurface
+                color: Appearance.colors.colOnSurface
             }
             StyledText {
                 text: Math.round((activePlayer?.volume ?? 0) * 100) + "%"
                 font.pixelSize: Appearance.font.pixelSize.smaller
-                color: Appearance.m3colors.m3onSurface
+                color: Appearance.colors.colOnSurface
             }
         }
     }

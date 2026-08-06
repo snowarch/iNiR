@@ -1,6 +1,15 @@
 module qs.modules.settings
+singleton SettingsPageRegistry 1.0 SettingsPageRegistry.qml
 QuickWallpaperItem 1.0 QuickWallpaperItem.qml
 ThemePresetCard 1.0 ThemePresetCard.qml
 ColorPickerRow 1.0 ColorPickerRow.qml
 WaffleConfig 1.0 WaffleConfig.qml
+AutostartConfig 1.0 AutostartConfig.qml
+WorkspaceStripConfig 1.0 WorkspaceStripConfig.qml
+DockConfig 1.0 DockConfig.qml
+M3LayoutSection 1.0 M3LayoutSection.qml
+SidebarsConfig 1.0 SidebarsConfig.qml
 SettingsOverlay 1.0 SettingsOverlay.qml
+SettingsFocus 1.0 SettingsFocus.qml
+SettingsPageHost 1.0 SettingsPageHost.qml
+SettingsNativeDialogGuard 1.0 SettingsNativeDialogGuard.qml

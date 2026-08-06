@@ -19,9 +19,10 @@ OverlayBackground {
     property var parsedCopylistLines: []
     property bool isClickthrough: false
     property real maxCopyButtonSize: 20
+    property bool noteStorageReady: false
 
     Component.onCompleted: {
-        noteFile.reload();
+        ensureNoteFile.running = true;
         updateCopyListEntries();
     }
 
@@ -258,9 +259,30 @@ OverlayBackground {
         onTriggered: updateCopylistPositions()
     }
 
+    Process {
+        id: ensureNoteFile
+        running: false
+        command: [
+            "/usr/bin/bash",
+            "-c",
+            "/usr/bin/mkdir -p -- \"$1\" && { [ -e \"$2\" ] || /usr/bin/touch -- \"$2\"; }",
+            "bash",
+            Directories.notesPath.substring(0, Directories.notesPath.lastIndexOf('/')),
+            Directories.notesPath
+        ]
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0) {
+                console.warn("[Overlay Notes] Failed to prepare note storage:", exitCode, exitStatus)
+                return
+            }
+            root.noteStorageReady = true
+            Qt.callLater(noteFile.reload)
+        }
+    }
+
     FileView {
         id: noteFile
-        path: Qt.resolvedUrl(Directories.notesPath)
+        path: root.noteStorageReady ? Qt.resolvedUrl(Directories.notesPath) : ""
         onLoaded: {
             root.content = noteFile.text();
             if (root.content !== root.content) {
@@ -277,17 +299,8 @@ OverlayBackground {
         }
         onLoadFailed: error => {
             if (error === FileViewError.FileNotFound) {
-                console.log("[Overlay Notes] File not found, creating new file.")
-                // Ensure parent directory exists
-                const parentDir = Directories.notesPath.substring(0, Directories.notesPath.lastIndexOf('/'))
-                Process.exec(["/usr/bin/mkdir", "-p", parentDir])
-                root.content = "";
-                noteFile.setText(root.content);
-                if (pendingReload) {
-                    pendingReload = false;
-                    Qt.callLater(root.focusAtEnd);
-                }
-                Qt.callLater(root.updateCopyListEntries);
+                root.noteStorageReady = false
+                ensureNoteFile.running = true
             } else {
                 console.log("[Overlay Notes] Error loading file: " + error);
             }

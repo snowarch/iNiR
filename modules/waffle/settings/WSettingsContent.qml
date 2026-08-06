@@ -18,18 +18,47 @@ Item {
     
     property var pages: []
     property int currentPage: 0
+    // Parent/child currentPage is bidirectional. Delay child writeback until
+    // construction finishes so a persisted or command-line page is not reset
+    // by this component's initial default value.
+    property bool navigationReady: false
     property string searchText: ""
     property var searchResults: []
-    property bool navExpanded: width > 760
+    property bool navExpanded: width > Looks.dp(760)
+
+    Component.onCompleted: Qt.callLater(() => root.navigationReady = true)
     
     // Complete search index with all individual options + targetLabel for spotlight
     property var searchIndex: [
+        { pageIndex: 17, pageName: "Shell Layout", section: "Live shell layout", label: "Edit live", targetLabel: "Edit live", keywords: ["layout", "move", "position", "taskbar", "output", "edit", "live"] },
+        { pageIndex: 17, pageName: "Shell Layout", section: "Taskbar placement", label: "Current position", targetLabel: "Current position", keywords: ["layout", "taskbar", "top", "bottom", "position", "reset"] },
         // === Quick (0) ===
         { pageIndex: 0, pageName: "Quick", section: "Wallpaper & Colors", label: "Dark mode", targetLabel: "Dark mode", keywords: ["quick", "dark", "light", "mode", "theme", "scheme"] },
         { pageIndex: 0, pageName: "Quick", section: "Wallpaper & Colors", label: "Per-monitor wallpapers", targetLabel: "Per-monitor wallpapers", keywords: ["quick", "wallpaper", "monitor", "display", "multi-monitor", "per-monitor"] },
         { pageIndex: 0, pageName: "Quick", section: "Wallpaper & Colors", label: "Colors only mode", targetLabel: "Colors only mode", keywords: ["quick", "wallpaper", "colors", "theme source", "preview", "palette"] },
         { pageIndex: 0, pageName: "Quick", section: "Wallpaper & Colors", label: "Color scheme", targetLabel: "Color scheme", keywords: ["quick", "colors", "scheme", "palette", "material", "theme"] },
         { pageIndex: 0, pageName: "Quick", section: "Wallpaper & Colors", label: "Color strength", targetLabel: "Color strength", keywords: ["quick", "wallpaper", "color", "strength", "vivid", "accent"] },
+        { pageIndex: 14, pageName: "Mascot", section: "Mascot", label: "Show mascot illustration", targetLabel: "Show mascot illustration", keywords: ["mascot", "cat", "girl", "branding", "illustration", "waifu"] },
+        { pageIndex: 14, pageName: "Mascot", section: "Mascot", label: "Playful companion", targetLabel: "Playful companion", keywords: ["mascot", "companion", "peek", "interactive", "playful", "edge"] },
+        { pageIndex: 14, pageName: "Mascot", section: "Mascot", label: "Companion visit interval", targetLabel: "Companion visit interval", keywords: ["mascot", "companion", "interval", "frequency", "minutes"] },
+        { pageIndex: 14, pageName: "Mascot", section: "Mascot", label: "Visit length", targetLabel: "Visit length", keywords: ["mascot", "companion", "duration", "visible", "seconds", "stay"] },
+        { pageIndex: 14, pageName: "Mascot", section: "Mascot", label: "Slide animation", targetLabel: "Slide animation", keywords: ["mascot", "companion", "animation", "speed", "slide", "appear"] },
+        { pageIndex: 14, pageName: "Mascot", section: "Mascot", label: "Event reactions", targetLabel: "React to music", keywords: ["mascot", "companion", "reactions", "events", "music", "battery", "notifications", "wallpaper", "screenshot", "gaming", "unlock", "react", "snoop"] },
+        { pageIndex: 14, pageName: "Mascot", section: "Mascot", label: "Pose for this event", targetLabel: "Pose for this event", keywords: ["mascot", "pose", "image", "override", "custom", "picker"] },
+        { pageIndex: 14, pageName: "Mascot", section: "Mascot", label: "Only react to real music", targetLabel: "Only react to real music", keywords: ["mascot", "music", "artist", "video", "browser", "detection", "mpris"] },
+        { pageIndex: 14, pageName: "Mascot", section: "Mascot", label: "Chaos mode", targetLabel: "Chaos mode", keywords: ["mascot", "chaos", "romp", "kick", "bonk", "widgets", "rearrange", "tidy", "physics"] },
+        { pageIndex: 14, pageName: "Mascot", section: "Mascot", label: "Peek now", targetLabel: "Peek now", keywords: ["mascot", "test", "preview", "peek", "try"] },
+        { pageIndex: 14, pageName: "Mascot", section: "Mascot surfaces", label: "Mascot surfaces", targetLabel: "Mascot surfaces", keywords: ["mascot", "surfaces", "where", "empty states", "about", "dashboard", "customize"] },
+        { pageIndex: 14, pageName: "Mascot", section: "Mascot surfaces", label: "Dialogs", targetLabel: "Dialogs", keywords: ["mascot", "dialogs", "close", "confirmation", "warning"] },
+        { pageIndex: 14, pageName: "Mascot", section: "Kira collection", label: "Kira collection", targetLabel: "Kira collection", keywords: ["mascot", "kira", "collection", "gallery", "archive", "pose", "full body", "animated", "portrait", "chibi", "editorial"] },
+
+        // === AI (15) ===
+        { pageIndex: 15, pageName: "AI", section: "Providers & models", label: "AI providers", targetLabel: "Add AI provider", keywords: ["ai", "provider", "model", "api", "key", "endpoint", "ollama", "openrouter", "gemini", "groq", "anthropic", "local", "add", "llm"] },
+        { pageIndex: 15, pageName: "AI", section: "Assistant behavior", label: "AI system prompt", targetLabel: "AI system prompt", keywords: ["ai", "prompt", "system", "instructions", "custom", "assistant", "personality"] },
+        { pageIndex: 15, pageName: "AI", section: "Assistant behavior", label: "AI tools", targetLabel: "AI tools", keywords: ["ai", "tool", "functions", "search", "temperature", "creativity"] },
+        { pageIndex: 15, pageName: "AI", section: "Privacy & policy", label: "Allow AI features", targetLabel: "Allow AI features", keywords: ["ai", "privacy", "policy", "local", "allow", "disable"] },
+        { pageIndex: 15, pageName: "AI", section: "Voice input", label: "Voice input", targetLabel: "Voice input", keywords: ["voice", "mic", "microphone", "dictate", "speech", "transcribe", "recording"] },
+
         { pageIndex: 0, pageName: "Quick", section: "Wallpaper & Colors", label: "Transparency", targetLabel: "Transparency", keywords: ["quick", "transparency", "glass", "blur", "appearance"] },
         { pageIndex: 0, pageName: "Quick", section: "Quick actions", label: "Show reload notifications", targetLabel: "Show reload notifications", keywords: ["quick", "reload", "notifications", "toast", "quickshell", "niri"] },
 
@@ -58,9 +87,12 @@ Item {
         { pageIndex: 1, pageName: "General", section: "Keyboard indicators", label: "Num Lock indicator", targetLabel: "Num Lock indicator", keywords: ["keyboard", "num", "numlock", "lock", "indicator", "bar", "taskbar", "show", "hide"] },
         // Window Management
         { pageIndex: 1, pageName: "General", section: "Window Management", label: "Confirm before closing", targetLabel: "Confirm before closing", keywords: ["close", "confirm", "window", "dialog", "super+q"] },
+        { pageIndex: 1, pageName: "General", section: "Window Management", label: "Auto-expand a single tiling window", targetLabel: "Auto-expand a single tiling window", keywords: ["niri", "window", "tiling", "maximize", "expand", "single", "column"] },
         // Sounds
         { pageIndex: 1, pageName: "General", section: "Sounds", label: "Battery sounds", targetLabel: "Battery sounds", keywords: ["sound", "audio", "battery", "beep"] },
+        { pageIndex: 1, pageName: "General", section: "Sounds", label: "Sound volume", targetLabel: "Sound volume", keywords: ["sound", "volume", "audio", "loudness"] },
         { pageIndex: 1, pageName: "General", section: "Sounds", label: "Notification sounds", targetLabel: "Notification sounds", keywords: ["sound", "audio", "notification", "alert"] },
+        { pageIndex: 1, pageName: "General", section: "Event sounds", label: "Event sounds", targetLabel: "Event sounds", keywords: ["sound", "audio", "event", "custom", "theme", "notification", "battery", "timer", "pomodoro"] },
         // Idle & Sleep
         { pageIndex: 1, pageName: "General", section: "Idle & Sleep", label: "Screen off timeout", targetLabel: "Screen off timeout", keywords: ["screen", "off", "timeout", "idle", "dpms", "monitor"] },
         { pageIndex: 1, pageName: "General", section: "Idle & Sleep", label: "Lock timeout", targetLabel: "Lock timeout", keywords: ["lock", "timeout", "idle", "security"] },
@@ -73,6 +105,13 @@ Item {
         { pageIndex: 1, pageName: "General", section: "Game Mode", label: "Disable Niri animations", targetLabel: "Disable Niri animations", keywords: ["game", "gaming", "niri", "compositor", "animations"] },
         { pageIndex: 1, pageName: "General", section: "Game Mode", label: "Disable Discover overlay", targetLabel: "Disable Discover overlay", keywords: ["game", "gaming", "discover", "overlay", "discord", "performance"] },
         { pageIndex: 1, pageName: "General", section: "Game Mode", label: "Minimal mode", targetLabel: "Minimal mode", keywords: ["game", "gaming", "minimal", "lightweight", "performance", "shell"] },
+        { pageIndex: 16, pageName: "Effects", section: "Blur and glass", label: "Default blur backend", targetLabel: "Default blur backend", keywords: ["effects", "blur", "backend", "wallpaper", "compositor", "style", "glass"] },
+        { pageIndex: 16, pageName: "Effects", section: "Blur and glass", label: "Allow compositor blur", targetLabel: "Allow compositor blur", keywords: ["performance", "native", "blur", "niri", "gpu", "compositor", "glass"] },
+        { pageIndex: 16, pageName: "Effects", section: "Per-area overrides", label: "Bars", targetLabel: "Bars", keywords: ["effects", "bar", "area", "blur"] },
+        { pageIndex: 16, pageName: "Effects", section: "Per-area overrides", label: "Dock", targetLabel: "Dock", keywords: ["effects", "dock", "area", "blur"] },
+        { pageIndex: 16, pageName: "Effects", section: "Per-area overrides", label: "Islands and Ricelin", targetLabel: "Islands and Ricelin", keywords: ["effects", "islands", "ricelin", "pill", "blur"] },
+        { pageIndex: 16, pageName: "Effects", section: "Motion and power", label: "Reduce animations", targetLabel: "Reduce animations", keywords: ["motion", "animation", "reduce", "accessibility", "performance"] },
+        { pageIndex: 16, pageName: "Effects", section: "Motion and power", label: "Notify when a restart would free memory", targetLabel: "Notify when a restart would free memory", keywords: ["performance", "memory", "leak", "notification", "warning", "restart", "watchdog"] },
         { pageIndex: 1, pageName: "General", section: "Game Mode", label: "Suppress notifications", targetLabel: "Suppress notifications", keywords: ["game", "gaming", "notifications", "suppress", "hide", "popup", "silent"] },
         { pageIndex: 1, pageName: "General", section: "Game Mode", label: "Hide reload toasts", targetLabel: "Hide reload toasts", keywords: ["game", "gaming", "reload", "toast", "notifications", "suppress"] },
         
@@ -91,7 +130,7 @@ Item {
         { pageIndex: 3, pageName: "Background", section: "Wallpaper", label: "Use Material ii wallpaper", targetLabel: "Use Material ii wallpaper", keywords: ["wallpaper", "background", "material", "share", "image"] },
         { pageIndex: 3, pageName: "Background", section: "Wallpaper", label: "Waffle wallpaper", targetLabel: "Waffle wallpaper", keywords: ["wallpaper", "background", "waffle", "change", "image"] },
         { pageIndex: 3, pageName: "Background", section: "Wallpaper", label: "Per-monitor wallpapers", targetLabel: "Per-monitor wallpapers", keywords: ["wallpaper", "background", "monitor", "display", "multi-monitor", "per-monitor"] },
-        { pageIndex: 3, pageName: "Background", section: "Wallpaper", label: "Hide when fullscreen", targetLabel: "Hide when fullscreen", keywords: ["wallpaper", "background", "fullscreen", "hide"] },
+        { pageIndex: 3, pageName: "Background", section: "Wallpaper", label: "Hide main wallpaper in fullscreen", targetLabel: "Hide main wallpaper in fullscreen", keywords: ["wallpaper", "background", "fullscreen", "hide", "gaming", "performance", "backdrop", "task view"] },
         { pageIndex: 3, pageName: "Background", section: "Wallpaper", label: "Wallpaper scaling", targetLabel: "Wallpaper scaling", keywords: ["wallpaper", "background", "scaling", "fill", "fit", "center"] },
         { pageIndex: 3, pageName: "Background", section: "Wallpaper Effects", label: "Enable blur", targetLabel: "Enable blur", keywords: ["blur", "wallpaper", "background", "effect"] },
         { pageIndex: 3, pageName: "Background", section: "Wallpaper Effects", label: "Blur radius", targetLabel: "Blur radius", keywords: ["blur", "radius", "intensity"] },
@@ -134,6 +173,7 @@ Item {
         { pageIndex: 4, pageName: "Themes", section: "Color Theme", label: "Color Theme", targetLabel: "Color Theme", keywords: ["theme", "color", "preset", "gruvbox", "catppuccin", "nord", "dracula", "monokai", "tokyo"] },
         { pageIndex: 4, pageName: "Themes", section: "Dark Mode", label: "Appearance", targetLabel: "Appearance", keywords: ["dark", "light", "mode", "theme", "appearance"] },
         { pageIndex: 4, pageName: "Themes", section: "Color Scheme", label: "Palette type", targetLabel: "Palette type", keywords: ["palette", "scheme", "material you", "material", "colors", "expressive", "fidelity"] },
+        { pageIndex: 4, pageName: "Themes", section: "Cava Options", label: "Cava palette and response", targetLabel: "Color source", keywords: ["cava", "visualizer", "spectrum", "audio", "palette", "vibrant", "album", "cover", "sensitivity", "bars", "framerate", "stereo", "wave", "opacity", "reset"] },
         { pageIndex: 4, pageName: "Themes", section: "Waffle Typography", label: "Font family", targetLabel: "Font family", keywords: ["font", "family", "typography", "segoe", "inter", "roboto", "noto"] },
         { pageIndex: 4, pageName: "Themes", section: "Waffle Typography", label: "Font scale", targetLabel: "Font scale", keywords: ["font", "size", "scale", "typography", "bigger", "smaller"] },
         
@@ -160,6 +200,8 @@ Item {
         { pageIndex: 6, pageName: "Interface", section: "Notifications", label: "Do Not Disturb", targetLabel: "Do Not Disturb", keywords: ["notification", "dnd", "silent", "mute", "disturb", "quiet"] },
         { pageIndex: 6, pageName: "Interface", section: "On-Screen Display", label: "Media OSD", targetLabel: "Media OSD", keywords: ["osd", "media", "music", "player", "shortcuts"] },
         { pageIndex: 6, pageName: "Interface", section: "On-Screen Display", label: "OSD timeout", targetLabel: "OSD timeout", keywords: ["osd", "volume", "brightness", "media", "timeout", "duration"] },
+        { pageIndex: 6, pageName: "Interface", section: "Floating tools (Super+G)", label: "Floating tools (Super+G)", targetLabel: "Floating tools (Super+G)", keywords: ["super+g", "super g", "overlay", "floating", "tools", "widgets", "desktop", "notes", "image", "crosshair", "mixer", "resources", "fps", "recorder"] },
+        { pageIndex: 6, pageName: "Interface", section: "Screen Recording", label: "Recording audio", targetLabel: "Recording audio", keywords: ["screen", "record", "recording", "video", "capture", "wf-recorder", "audio", "system sound", "desktop audio", "microphone", "mic", "mix", "pipewire"] },
         { pageIndex: 6, pageName: "Interface", section: "Lock Screen", label: "Enable blur", targetLabel: "Enable blur", keywords: ["lock", "screen", "blur", "background"] },
         { pageIndex: 6, pageName: "Interface", section: "Lock Screen", label: "Blur radius", targetLabel: "Blur radius", keywords: ["lock", "screen", "blur", "radius"] },
         { pageIndex: 6, pageName: "Interface", section: "Lock Screen", label: "Center clock", targetLabel: "Center clock", keywords: ["lock", "screen", "clock", "center", "position"] },
@@ -168,6 +210,10 @@ Item {
         
         // === Modules (7) ===
         { pageIndex: 7, pageName: "Modules", section: "Panel Style", label: "Panel family", targetLabel: "Panel family", keywords: ["panel", "family", "style", "material", "waffle", "windows"] },
+        { pageIndex: 7, pageName: "Modules", section: "Sidebars", label: "Arrange sidebar sections", targetLabel: "Sidebars", keywords: ["sidebar", "right", "arrange", "order", "sections", "resize", "notifications", "widgets"] },
+        { pageIndex: 7, pageName: "Modules", section: "Sidebars", label: "Arrange sidebar tabs", targetLabel: "Sidebars", keywords: ["sidebar", "left", "arrange", "order", "tabs", "drag", "ai"] },
+        { pageIndex: 7, pageName: "Modules", section: "Sidebars", label: "Collapse notifications when empty", targetLabel: "Sidebars", keywords: ["sidebar", "right", "notifications", "collapse", "empty", "fit", "height"] },
+        { pageIndex: 7, pageName: "Modules", section: "Sidebars", label: "Fit left sidebar to widgets", targetLabel: "Sidebars", keywords: ["sidebar", "left", "widgets", "fit", "collapse", "height"] },
         { pageIndex: 7, pageName: "Modules", section: "Material Modules in Waffle", label: "Left Sidebar", targetLabel: "Left Sidebar", keywords: ["sidebar", "left", "ai", "chat", "translator"] },
         { pageIndex: 7, pageName: "Modules", section: "Material Modules in Waffle", label: "Right Sidebar", targetLabel: "Right Sidebar", keywords: ["sidebar", "right", "quick", "settings", "calendar"] },
         { pageIndex: 7, pageName: "Modules", section: "Material Modules in Waffle", label: "Dock", targetLabel: "Dock", keywords: ["dock", "macos", "pinned", "apps"] },
@@ -200,10 +246,11 @@ Item {
 
         // === Monitors (11) ===
         { pageIndex: 11, pageName: "Monitors", section: "Shell visibility", label: "Primary monitor", targetLabel: "Primary monitor", keywords: ["monitor", "screen", "display", "primary", "output", "fallback"] },
+        { pageIndex: 11, pageName: "Monitors", section: "Overview placement", label: "Active screen only", targetLabel: "Active screen only", keywords: ["overview", "monitor", "screen", "focused", "active", "output"] },
         { pageIndex: 11, pageName: "Monitors", section: "Waffle shell surfaces", label: "Taskbar", targetLabel: "Taskbar", keywords: ["monitor", "screen", "display", "bar", "taskbar", "visibility"] },
-        { pageIndex: 11, pageName: "Monitors", section: "Shared popups and widgets", label: "Notification popups", targetLabel: "Notification popups", keywords: ["monitor", "screen", "display", "notifications", "popups", "visibility"] },
-        { pageIndex: 11, pageName: "Monitors", section: "Shared popups and widgets", label: "Desktop widgets", targetLabel: "Desktop widgets", keywords: ["monitor", "screen", "display", "desktop", "widgets", "visibility"] },
-        { pageIndex: 11, pageName: "Monitors", section: "Shared popups and widgets", label: "OSD indicators", targetLabel: "OSD indicators", keywords: ["monitor", "screen", "display", "media", "osd", "volume", "brightness", "visibility"] }
+        { pageIndex: 11, pageName: "Monitors", section: "Popups", label: "Notification popups", targetLabel: "Notification popups", keywords: ["monitor", "screen", "display", "notifications", "popups", "visibility"] },
+        { pageIndex: 11, pageName: "Monitors", section: "Desktop widgets", label: "Desktop widgets", targetLabel: "Desktop widgets", keywords: ["monitor", "screen", "display", "desktop", "widgets", "layout", "visibility"] },
+        { pageIndex: 11, pageName: "Monitors", section: "Popups", label: "OSD indicators", targetLabel: "OSD indicators", keywords: ["monitor", "screen", "display", "media", "osd", "volume", "brightness", "visibility"] }
     ]
     
     function highlightTerms(text: string, terms: list<string>): string {
@@ -382,7 +429,7 @@ Item {
         // Navigation sidebar
         Rectangle {
             Layout.fillHeight: true
-            Layout.preferredWidth: root.navExpanded ? 240 : 56
+            Layout.preferredWidth: root.navExpanded ? Looks.dp(240) : Looks.dp(56)
             color: Looks.colors.bg1Base
             
             Behavior on Layout.preferredWidth {
@@ -392,12 +439,12 @@ Item {
             ColumnLayout {
                 anchors {
                     fill: parent
-                    topMargin: 10
-                    bottomMargin: 10
-                    leftMargin: 12
-                    rightMargin: 12
+                    topMargin: Looks.dp(10)
+                    bottomMargin: Looks.dp(10)
+                    leftMargin: Looks.dp(12)
+                    rightMargin: Looks.dp(12)
                 }
-                spacing: 4
+                spacing: Looks.dp(4)
                 
                 // Header with app name (expanded)
                 Revealer {
@@ -407,11 +454,11 @@ Item {
                 RowLayout {
                     anchors.left: parent.left
                     anchors.right: parent.right
-                    Layout.bottomMargin: 6
-                    spacing: 10
+                    Layout.bottomMargin: Looks.dp(6)
+                    spacing: Looks.dp(10)
 
                     WUserAvatar {
-                        sourceSize: Qt.size(32, 32)
+                        sourceSize: Qt.size(Looks.dp(32), Looks.dp(32))
                     }
 
                     ColumnLayout {
@@ -469,7 +516,7 @@ Item {
                     Rectangle {
                         implicitWidth: parent.width
                         implicitHeight: 1
-                        color: Looks.colors.bg2Border
+                        color: Looks.settings.stroke
                         opacity: 0.15
                     }
                 }
@@ -480,11 +527,9 @@ Item {
                     reveal: !root.navExpanded
                     Layout.fillWidth: true
                 Item {
-                    Layout.preferredWidth: 32
-                    Layout.preferredHeight: 32
-                    Layout.alignment: Qt.AlignHCenter
-                    Layout.bottomMargin: 6
-                    
+                    implicitWidth: parent.width
+                    implicitHeight: Looks.dp(38)
+
                     FluentIcon {
                         anchors.centerIn: parent
                         icon: "settings"
@@ -501,12 +546,15 @@ Item {
                     Layout.fillWidth: true
                 Rectangle {
                     id: searchBarContainer
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 34
-                    radius: Looks.radius.medium
-                    color: Looks.colors.inputBg
+                    // Revealer sizes itself from its child's implicit size.
+                    implicitWidth: parent.width
+                    implicitHeight: Looks.dp(36)
+                    radius: Looks.settings.radiusLarge
+                    color: searchInput.activeFocus
+                        ? Looks.settings.tileHover : Looks.settings.tile
                     border.width: searchInput.activeFocus ? 2 : 1
-                    border.color: searchInput.activeFocus ? Looks.colors.accent : Looks.colors.bg2Border
+                    border.color: searchInput.activeFocus
+                        ? Looks.colors.accent : Looks.settings.stroke
                     
                       Behavior on border.color {
                           animation: ColorAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
@@ -543,10 +591,6 @@ Item {
                                 
                                 onTextChanged: {
                                     root.searchText = text;
-                                    if (text.length > 0 && !pageStack.preloadRequested) {
-                                        pageStack.preloadRequested = true
-                                        preloadTimer.start()
-                                    }
                                     root.recomputeSearchResults();
                                 }
                                 
@@ -587,7 +631,8 @@ Item {
                             Rectangle {
                                 anchors.fill: parent
                                 radius: 10  // pill shape
-                                color: clearMouse.containsMouse ? Looks.colors.bg2Hover : "transparent"
+                                color: clearMouse.containsMouse
+                                    ? Looks.settings.tileHover : "transparent"
                                 
                                 FluentIcon {
                                     anchors.centerIn: parent
@@ -619,14 +664,17 @@ Item {
                     Layout.fillWidth: true
                 Rectangle {
                     id: searchResultsDropdown
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: Math.min((searchResultsList.contentHeight || 0) + 8, 300)
-                    radius: Looks.radius.large
-                    color: Looks.colors.bg2Base
+                    // Revealer sizes itself from its child's implicit size.
+                    implicitWidth: parent.width
+                    implicitHeight: Math.min(
+                        (searchResultsList.contentHeight || 0) + Looks.dp(8),
+                        Looks.dp(300))
+                    radius: Looks.settings.radiusLarge
+                    color: Looks.settings.tile
                     border.width: 1
-                    border.color: Looks.colors.bg2Border
+                    border.color: Looks.settings.strokeStrong
                     
-                    layer.enabled: Appearance.effectsEnabled
+                    layer.enabled: Looks.effectsEnabled && searchResultsDropdown.visible
                     layer.effect: DropShadow {
                         color: Looks.colors.shadow
                         radius: 6
@@ -674,7 +722,7 @@ Item {
                             radius: Looks.radius.medium
                             color: {
                                 if (ListView.isCurrentItem) return Looks.colors.accent;
-                                if (resultMouse.containsMouse) return Looks.colors.bg2Hover;
+                                if (resultMouse.containsMouse) return Looks.settings.tileHover;
                                 return "transparent";
                             }
                             
@@ -767,30 +815,44 @@ Item {
                     Layout.fillWidth: true
                 Rectangle {
                     implicitWidth: parent.width
-                    implicitHeight: 36
+                    implicitHeight: noResultsCol.implicitHeight + 16
                     radius: Looks.radius.medium
-                    color: Looks.colors.bg2Base
-                    
-                    RowLayout {
+                    color: Looks.settings.tile
+
+                    ColumnLayout {
+                        id: noResultsCol
                         anchors.centerIn: parent
-                        spacing: 8
-                        
-                        FluentIcon {
-                            icon: "search"
-                            implicitSize: 14
-                            color: Looks.colors.subfg
+                        spacing: 6
+
+                        MascotImage {
+                            Layout.alignment: Qt.AlignHCenter
+                            Layout.preferredWidth: 88
+                            Layout.preferredHeight: 88
+                            pose: "settings-judging"
+                            surface: "emptyStates"
                         }
-                        
-                        WText {
-                            text: Translation.tr("No results")
-                            font.pixelSize: Looks.font.pixelSize.small
-                            color: Looks.colors.subfg
+
+                        RowLayout {
+                            Layout.alignment: Qt.AlignHCenter
+                            spacing: 8
+
+                            FluentIcon {
+                                icon: "search"
+                                implicitSize: 14
+                                color: Looks.colors.subfg
+                            }
+
+                            WText {
+                                text: Translation.tr("No results")
+                                font.pixelSize: Looks.font.pixelSize.small
+                                color: Looks.colors.subfg
+                            }
                         }
                     }
                 }
                 }
 
-                Item { height: 4 }
+                Item { height: Looks.dp(4) }
                 
                 // Navigation items
                 Flickable {
@@ -803,7 +865,7 @@ Item {
                     ColumnLayout {
                         id: navColumn
                         width: parent.width
-                        spacing: 2
+                        spacing: Looks.dp(2)
                         
                         Repeater {
                             model: root.pages
@@ -827,31 +889,31 @@ Item {
                 // Separator above collapse button
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.topMargin: 4
+                    Layout.topMargin: Looks.dp(4)
                     height: 1
-                    color: Looks.colors.bg2Border
+                    color: Looks.settings.stroke
                     opacity: 0.15
                 }
                 
                 // Expand/collapse button
                 WBorderlessButton {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 32
+                    Layout.preferredHeight: Looks.dp(32)
                     
                     contentItem: RowLayout {
-                        spacing: 10
+                        spacing: Looks.dp(10)
                         
                         Item {
-                            implicitWidth: 20
-                            implicitHeight: 20
-                            Layout.leftMargin: root.navExpanded ? 12 : 0
+                            implicitWidth: Looks.dp(20)
+                            implicitHeight: Looks.dp(20)
+                            Layout.leftMargin: root.navExpanded ? Looks.dp(12) : 0
                             Layout.fillWidth: !root.navExpanded
                             Layout.alignment: root.navExpanded ? Qt.AlignVCenter : Qt.AlignCenter
                             
                             FluentIcon {
                                 anchors.centerIn: parent
                                 icon: root.navExpanded ? "panel-left-contract" : "panel-left-expand"
-                                implicitSize: 16
+                                implicitSize: Looks.dp(16)
                                 color: Looks.colors.subfg
                             }
                         }
@@ -874,7 +936,7 @@ Item {
         Rectangle {
             Layout.fillHeight: true
             width: 1
-            color: Looks.colors.bg2Border
+            color: Looks.settings.stroke
             opacity: 0.2
         }
         
@@ -889,53 +951,21 @@ Item {
                 id: pageStack
                 anchors.fill: parent
                 
-                property var visitedPages: ({})
-                property bool allPagesLoaded: false
-                property bool preloadRequested: false
-                
-                Connections {
-                    target: root
-                    function onCurrentPageChanged() {
-                        pageStack.visitedPages[root.currentPage] = true
-                        pageStack.visitedPagesChanged()
-                    }
-                }
+                // Bounded retention: only the current page and its immediate
+                // neighbours stay instantiated. Search never forces pages alive —
+                // static index entries navigate to an unloaded page and the
+                // targetLabel focus retry waits for it to register its controls.
+                property int keepRadius: 1
 
-                Component.onCompleted: {
-                    visitedPages[root.currentPage] = true
-                    visitedPagesChanged()
-                }
-
-                Timer {
-                    id: preloadTimer
-                    interval: 100
-                    repeat: true
-                    property int nextPage: 1
-
-                    onTriggered: {
-                        if (nextPage >= root.pages.length) {
-                            pageStack.allPagesLoaded = true
-                            stop()
-                            return
-                        }
-
-                        if (!pageStack.visitedPages[nextPage]) {
-                            pageStack.visitedPages[nextPage] = true
-                            pageStack.visitedPagesChanged()
-                        }
-                        nextPage++
-                    }
-                }
-                
                  Repeater {
                      id: pageRepeater
                      model: root.pages.length
-                    
+
                      Loader {
                          id: pageLoader
                          required property int index
                          anchors.fill: parent
-                         active: Config.ready && (pageStack.visitedPages[index] === true)
+                         active: Config.ready && Math.abs(index - root.currentPage) <= pageStack.keepRadius
                         asynchronous: index !== root.currentPage
                         source: root.pages[index].component
                         visible: index === root.currentPage && status === Loader.Ready
@@ -969,10 +999,6 @@ Item {
         sequences: [StandardKey.Find]
         onActivated: {
             if (!root.navExpanded) root.navExpanded = true;
-            if (!pageStack.preloadRequested) {
-                pageStack.preloadRequested = true
-                preloadTimer.start()
-            }
             searchInput.forceActiveFocus();
         }
     }

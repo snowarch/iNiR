@@ -8,11 +8,14 @@ ApiStrategy {
     readonly property string fileUriSubstitutionString: "{{ fileUriVarName }}"
     readonly property string fileMimeTypeSubstitutionString: "{{ fileMimeTypeVarName }}"
     property string buffer: ""
-    
+    property bool isThinking: false
+
     function buildEndpoint(model: AiModel): string {
-        const result = model.endpoint + `?key=\$\{${root.apiKeyEnvVarName}\}`
-        // console.log("[AI] Endpoint: " + result);
-        return result;
+        if ((model.auth_scheme ?? "strategy") === "bearer"
+                || (model.auth_scheme ?? "strategy") === "gemini-header")
+            return model.endpoint
+        const separator = model.endpoint.includes("?") ? "&" : "?"
+        return model.endpoint + separator + `key=\$\{${root.apiKeyEnvVarName}\}`
     }
 
     function buildRequestData(model: AiModel, messages, systemPrompt: string, temperature: real, tools: list<var>, filePath: string) {
@@ -20,23 +23,26 @@ ApiStrategy {
             // console.log("[AI] Building request data for message:", JSON.stringify(message, null, 2));
             const geminiApiRoleName = (message.role === "assistant") ? "model" : message.role;
             const usingSearch = tools[0]?.google_search !== undefined
+            // functionResponse first: output messages now also carry a
+            // functionCall stub (the originating call id)
+            if (!usingSearch && (message.functionResponse?.length > 0) && message.functionName.length > 0) {
+                return {
+                    "role": geminiApiRoleName,
+                    "parts": [{
+                        functionResponse: {
+                            "name": message.functionName,
+                            "response": { "content": message.functionResponse }
+                        }
+                    }]
+                }
+            }
             if (!usingSearch && message.functionCall != undefined && message.functionName.length > 0) {
                 return {
                     "role": geminiApiRoleName,
                     "parts": [{
                         functionCall: {
                             "name": message.functionName,
-                        }
-                    }]
-                }
-            }
-            if (!usingSearch && message.functionResponse != undefined && message.functionName.length > 0) {
-                return {
-                    "role": geminiApiRoleName,
-                    "parts": [{ 
-                        functionResponse: {
-                            "name": message.functionName,
-                            "response": { "content": message.functionResponse }
+                            "args": (typeof message.functionCall === "object" ? (message.functionCall.args ?? {}) : {}),
                         }
                     }]
                 }
@@ -64,15 +70,19 @@ ApiStrategy {
                 }
             });
         }
+        const generationConfig = { "temperature": temperature };
+        // Thought summaries only exist on 2.5+ models; older ones reject
+        // the field. QML JS does not support object spread in literals.
+        if (/gemini-(2\.5|3)/.test(model.model))
+            generationConfig.thinkingConfig = { "includeThoughts": true };
+
         let baseData = {
             "contents": contents,
             "tools": tools,
             "system_instruction": {
                 "parts": [{ text: systemPrompt }]
             },
-            "generationConfig": {
-                "temperature": temperature,
-            },
+            "generationConfig": generationConfig,
         };
         // print("Gemini API call payload:", JSON.stringify(baseData, null, 2));
         return model.extraParams ? Object.assign({}, baseData, model.extraParams) : baseData;
@@ -127,21 +137,38 @@ ApiStrategy {
                 finished = true;
             }
             
-            // Function call handling
-            if (dataJson.candidates[0]?.content?.parts[0]?.functionCall) {
-                const functionCall = dataJson.candidates[0]?.content?.parts[0]?.functionCall;
-                message.functionName = functionCall.name;
-                message.functionCall = functionCall.name;
-                const newContent = `\n\n[[ Function: ${functionCall.name}(${JSON.stringify(functionCall.args, null, 2)}) ]]\n`
-                message.rawContent += newContent;
-                message.content += newContent;
-                return { functionCall: { name: functionCall.name, args: functionCall.args }, finished: finished };
+            // Walk every part: text, thought summaries, and function calls
+            // can share a chunk (reading only parts[0] dropped content)
+            const parts = dataJson.candidates[0]?.content?.parts ?? [];
+            let functionCallResult = null;
+            for (const part of parts) {
+                if (part.functionCall) {
+                    const functionCall = part.functionCall;
+                    message.functionName = functionCall.name;
+                    const newContent = `\n\n[[ Function: ${functionCall.name}(${JSON.stringify(functionCall.args, null, 2)}) ]]\n`
+                    message.rawContent += newContent;
+                    message.content += newContent;
+                    functionCallResult = { name: functionCall.name, args: functionCall.args };
+                    continue;
+                }
+                if (part.text === undefined || part.text === null) continue;
+                if (part.thought === true) {
+                    if (!isThinking) {
+                        isThinking = true;
+                        message.rawContent += "\n\n<think>\n\n";
+                        message.content += "\n\n<think>\n\n";
+                    }
+                } else if (isThinking) {
+                    isThinking = false;
+                    message.rawContent += "\n\n</think>\n\n";
+                    message.content += "\n\n</think>\n\n";
+                }
+                message.rawContent += part.text;
+                message.content += part.text;
             }
-
-            // Normal text response
-            const responseContent = dataJson.candidates[0]?.content?.parts[0]?.text
-            message.rawContent += responseContent;
-            message.content += responseContent;
+            if (functionCallResult) {
+                return { functionCall: functionCallResult, finished: finished };
+            }
             
             // Handle annotations and metadata
             const annotationSources = dataJson.candidates[0]?.groundingMetadata?.groundingChunks?.map(chunk => {
@@ -194,6 +221,7 @@ ApiStrategy {
     
     function reset() {
         buffer = "";
+        isThinking = false;
     }
 
     function buildScriptFileSetup(filePath) {

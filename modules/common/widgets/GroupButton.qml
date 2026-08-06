@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
@@ -20,6 +22,10 @@ Button {
     property var altAction // When right clicking
     property var middleClickAction // When middle clicking
     property bool bounce: true
+    // Cookie Shapes: an organic face costs a Canvas, and a segmented group needs
+    // its members to share one continuous silhouette. Standalone semantic
+    // controls opt in; grouped ones stay rectangular on purpose.
+    property bool cookieMorphing: false
     property real baseWidth: contentItem.implicitWidth + horizontalPadding * 2
     property real baseHeight: contentItem.implicitHeight + verticalPadding * 2
     property bool enableImplicitWidthAnimation: true
@@ -37,11 +43,11 @@ Button {
     implicitHeight: (root.down && bounce) ? clickedHeight : baseHeight
 
     property color colBackground: ColorUtils.transparentize(colBackgroundHover, 1) || "transparent"
-    property color colBackgroundHover: Appearance?.colors.colLayer1Hover ?? "#E5DFED"
-    property color colBackgroundActive: Appearance?.colors.colLayer1Active ?? "#D6CEE2"
-    property color colBackgroundToggled: Appearance?.colors.colPrimary ?? "#65558F"
-    property color colBackgroundToggledHover: Appearance?.colors.colPrimaryHover ?? "#77699C"
-    property color colBackgroundToggledActive: Appearance?.colors.colPrimaryActive ?? "#D6CEE2"
+    property color colBackgroundHover: Appearance.colors.colLayer1Hover
+    property color colBackgroundActive: Appearance.colors.colLayer1Active
+    property color colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.sticker : (Appearance.colors.colPrimary)
+    property color colBackgroundToggledHover: Appearance.colors.colPrimaryHover
+    property color colBackgroundToggledActive: Appearance.colors.colPrimaryActive
 
     property real radius: root.down ? root.buttonRadiusPressed : root.buttonRadius
     property real leftRadius: root.down ? root.buttonRadiusPressed : root.buttonRadius
@@ -132,20 +138,45 @@ Button {
 
     background: Rectangle {
         id: buttonBackground
+        readonly property bool cookieFace: Appearance.cookieEverywhere && root.cookieMorphing
         topLeftRadius: root.leftRadius
         topRightRadius: root.rightRadius
         bottomLeftRadius: root.leftRadius
         bottomRightRadius: root.rightRadius
         implicitHeight: 50
 
-        color: root.color
+        color: buttonBackground.cookieFace ? "transparent" : root.color
         Behavior on color {
             enabled: Appearance.animationsEnabled
             animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+
+        // The face carries the toggled state as topology (pill → cookie), so the
+        // colour is all this needs; press/hover stay on colour and the bounce.
+        // Keyboard focus is a ring on that same silhouette.
+        Loader {
+            anchors.fill: parent
+            active: buttonBackground.cookieFace
+            sourceComponent: CookieFace {
+                role: "control"
+                selected: root.toggled
+                color: root.color
+                strokeColor: root.visualFocus ? Appearance.colors.colPrimary : "transparent"
+                strokeWidth: root.visualFocus ? 2 : 0
+            }
         }
     }
 
     contentItem: StyledText {
         text: root.buttonText
+        // ZZZ selected = sticker plate → onSticker ink; idle = panel ink. Keeps
+        // tab/segment labels readable instead of washed default ink on a pop plate.
+        color: Appearance.zzzEverywhere
+            ? (root.toggled ? Appearance.zzz.onSticker : Appearance.zzz.ink)
+            : Appearance.colors.colOnLayer0
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
     }
 }

@@ -43,7 +43,7 @@ ContentPage {
                         anchors.fill: distroIconImage
                         source: distroIconImage
                         colorization: 1
-                        colorizationColor: Appearance.m3colors.m3primary
+                        colorizationColor: Appearance.colors.colPrimary
                         visible: distroIconImage.status === Image.Ready
                     }
 
@@ -52,7 +52,7 @@ ContentPage {
                         visible: distroIconImage.status !== Image.Ready
                         text: "computer"
                         iconSize: 64
-                        color: Appearance.m3colors.m3primary
+                        color: Appearance.colors.colPrimary
                     }
 
                 }
@@ -68,7 +68,7 @@ ContentPage {
                     StyledText {
                         visible: SystemInfo.homeUrl && SystemInfo.homeUrl.length > 0
                         font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.m3colors.m3primary
+                        color: Appearance.colors.colPrimary
                         text: SystemInfo.homeUrl ? `[${SystemInfo.homeUrl}](${SystemInfo.homeUrl})` : ""
                         textFormat: Text.MarkdownText
                         onLinkActivated: (link) => {
@@ -134,7 +134,7 @@ ContentPage {
                     radius: 34
                     color: "transparent"
                     border.width: 2
-                    border.color: Appearance.m3colors.m3primary
+                    border.color: Appearance.colors.colPrimary
 
                     Image {
                         id: projectIcon
@@ -144,7 +144,7 @@ ContentPage {
                         height: 60
                         sourceSize.width: 60
                         sourceSize.height: 60
-                        source: Quickshell.shellPath("assets/icons/sf.svg")
+                        source: Quickshell.shellPath("assets/icons/sf.jpg")
                         fillMode: Image.PreserveAspectFit
                         layer.enabled: Appearance.effectsEnabled
 
@@ -170,10 +170,9 @@ ContentPage {
                         visible: projectIcon.status !== Image.Ready
                         text: "deployed_code"
                         iconSize: 48
-                        color: Appearance.m3colors.m3primary
+                        color: Appearance.colors.colPrimary
                     }
 
-                    // Avatar interaction feedback
                     MouseArea {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
@@ -229,7 +228,7 @@ ContentPage {
                             implicitHeight: branchLabel.implicitHeight + 4
                             radius: Appearance.rounding.small
                             color: ShellUpdates.isNonMainBranch
-                                ? ColorUtils.transparentize(Appearance.m3colors.m3tertiary, 0.8)
+                                ? ColorUtils.transparentize(Appearance.colors.colTertiary, 0.8)
                                 : ColorUtils.transparentize(Appearance.colors.colSubtext, 0.85)
 
                             StyledText {
@@ -241,7 +240,7 @@ ContentPage {
                                     family: Appearance.font.family.monospace
                                 }
                                 color: ShellUpdates.isNonMainBranch
-                                    ? Appearance.m3colors.m3tertiary
+                                    ? Appearance.colors.colTertiary
                                     : Appearance.colors.colSubtext
                             }
                         }
@@ -250,7 +249,7 @@ ContentPage {
                     StyledText {
                         text: "[https://github.com/snowarch/inir](https://github.com/snowarch/inir)"
                         font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.m3colors.m3primary
+                        color: Appearance.colors.colPrimary
                         textFormat: Text.MarkdownText
                         onLinkActivated: (link) => {
                             return Qt.openUrlExternally(link);
@@ -272,7 +271,7 @@ ContentPage {
                 RippleButtonWithIcon {
                     materialIcon: "auto_stories"
                     mainText: Translation.tr("Documentation")
-                    onClicked: Qt.openUrlExternally("https://snowarch.github.io/iNiR/docs/")
+                    onClicked: Qt.openUrlExternally("https://github.com/snowarch/inir/wiki")
                 }
 
                 RippleButtonWithIcon {
@@ -319,7 +318,7 @@ ContentPage {
                         visible: end4Icon.status !== Image.Ready
                         text: "favorite"
                         iconSize: 64
-                        color: Appearance.m3colors.m3primary
+                        color: Appearance.colors.colPrimary
                     }
 
                 }
@@ -335,7 +334,7 @@ ContentPage {
                     StyledText {
                         text: "[https://github.com/end-4/dots-hyprland](https://github.com/end-4/dots-hyprland)"
                         font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.m3colors.m3primary
+                        color: Appearance.colors.colPrimary
                         textFormat: Text.MarkdownText
                         onLinkActivated: (link) => {
                             return Qt.openUrlExternally(link);

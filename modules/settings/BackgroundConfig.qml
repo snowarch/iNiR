@@ -211,6 +211,33 @@ ContentPage {
     SettingsCardSection {
         visible: root.isIiActive
         expanded: false
+        icon: "fullscreen"
+        title: Translation.tr("Fullscreen behavior")
+
+        SettingsGroup {
+            SettingsSwitch {
+                buttonIcon: "visibility_off"
+                text: Translation.tr("Hide main wallpaper in fullscreen")
+                checked: Config.options?.background?.hideWhenFullscreen ?? true
+                onCheckedChanged: Config.setNestedValue("background.hideWhenFullscreen", checked)
+                StyledToolTip {
+                    text: Translation.tr("Hide the main wallpaper on monitors covered by a fullscreen window. The overview backdrop stays available.")
+                }
+            }
+
+            StyledText {
+                Layout.fillWidth: true
+                text: Translation.tr("Reduces background rendering during games and fullscreen video without removing the overview backdrop.")
+                color: Appearance.colors.colSubtext
+                font.pixelSize: Appearance.font.pixelSize.small
+                wrapMode: Text.WordWrap
+            }
+        }
+    }
+
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
         icon: "devices"
         title: Translation.tr("Multi-monitor")
 
@@ -778,7 +805,7 @@ ContentPage {
                                                 anchors.verticalCenter: parent.verticalCenter
                                             }
                                             StyledText {
-                                                text: "Backdrop"
+                                                text: Translation.tr("Backdrop")
                                                 font.pixelSize: Appearance.font.pixelSize.smaller - 1
                                                 color: Appearance.colors.colOnSecondaryContainer
                                                 anchors.verticalCenter: parent.verticalCenter
@@ -828,10 +855,10 @@ ContentPage {
                                 ? (Appearance.inir?.colBorder
                                     ?? Appearance.colors?.colLayer0Border
                                     ?? Appearance.colors?.colLayer0Border
-                                    ?? Appearance.m3colors.m3outlineVariant)
+                                    ?? Appearance.colors.colOutlineVariant)
                                 : (Appearance.colors?.colLayer0Border
                                     ?? Appearance.colors?.colLayer0Border
-                                    ?? Appearance.m3colors.m3outlineVariant)
+                                    ?? Appearance.colors.colOutlineVariant)
                             opacity: 0.5
                         }
 
@@ -865,17 +892,21 @@ ContentPage {
 
                                 RippleButtonWithIcon {
                                     Layout.fillWidth: true
-                                    buttonRadius: Appearance.rounding.small
+                                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                                     materialIcon: "wallpaper"
                                     mainText: Translation.tr("Change wallpaper")
-                                    colBackground: Appearance.colors.colPrimaryContainer
-                                    colBackgroundHover: Appearance.colors.colPrimaryContainerHover
-                                    colRipple: Appearance.colors.colPrimaryContainerActive
+                                    colBackground: Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colPrimaryContainer
+                                    colBackgroundHover: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimaryContainerHover
+                                    colRipple: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colPrimaryContainerActive
                                     mainContentComponent: Component {
                                         StyledText {
                                             text: Translation.tr("Change wallpaper")
                                             font.pixelSize: Appearance.font.pixelSize.small
-                                            color: Appearance.colors.colOnPrimaryContainer
+                                            color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer
+                                            Behavior on color {
+                                                enabled: Appearance.animationsEnabled
+                                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                            }
                                         }
                                     }
                                     onClicked: {
@@ -889,7 +920,7 @@ ContentPage {
                                 }
                                 RippleButtonWithIcon {
                                     Layout.fillWidth: true
-                                    buttonRadius: Appearance.rounding.small
+                                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                                     materialIcon: "shuffle"
                                     mainText: Translation.tr("Random")
                                     onClicked: {
@@ -1366,7 +1397,7 @@ ContentPage {
                             text: "open_with"
                             iconSize: 16
                             color: Appearance.inirEverywhere ? Appearance.inir.colPrimary
-                                 : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
+                                 : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
                                  : Appearance.colors.colPrimary
                         }
 
@@ -1375,7 +1406,7 @@ ContentPage {
                             font.pixelSize: Appearance.font.pixelSize.small
                             font.weight: Font.Medium
                             color: Appearance.inirEverywhere ? Appearance.inir.colText
-                                 : Appearance.auroraEverywhere ? Appearance.m3colors.m3onSurface
+                                 : Appearance.auroraEverywhere ? Appearance.colors.colOnSurface
                                  : Appearance.colors.colOnLayer1
                         }
 
@@ -1417,7 +1448,7 @@ ContentPage {
                                 text: "restart_alt"
                                 iconSize: 14
                                 color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
-                                     : Appearance.auroraEverywhere ? Appearance.m3colors.m3onSurfaceVariant
+                                     : Appearance.auroraEverywhere ? Appearance.colors.colOnSurfaceVariant
                                      : Appearance.colors.colSubtext
                             }
                             StyledToolTip { text: Translation.tr("Reset position and zoom") }
@@ -1434,7 +1465,7 @@ ContentPage {
                         color: Appearance.colors.colLayer0
                         clip: true
                         border.width: panDragArea.drag.active ? 2 : 0
-                        border.color: Appearance.m3colors.m3primary
+                        border.color: Appearance.colors.colPrimary
 
                         Behavior on border.width {
                             enabled: Appearance.animationsEnabled
@@ -1452,11 +1483,25 @@ ContentPage {
                                 }
                                 return Config.options?.background?.wallpaperPath ?? ""
                             }
-                            source: wpPath ? (wpPath.startsWith("file://") ? wpPath : "file://" + wpPath) : ""
+                            readonly property bool isVideo: WallpaperListener.isVideoPath(wpPath)
+                            readonly property string previewPath: isVideo
+                                ? Wallpapers.getVideoFirstFramePath(wpPath) : wpPath
+                            source: previewPath
+                                ? (previewPath.startsWith("file://") ? previewPath : "file://" + previewPath)
+                                : ""
                             sourceSize.width: 1200
                             cache: false
                             fillMode: Image.Stretch
                             visible: status === Image.Ready
+
+                            Component.onCompleted: {
+                                if (isVideo)
+                                    Wallpapers.ensureVideoFirstFrame(wpPath)
+                            }
+                            onWpPathChanged: {
+                                if (isVideo)
+                                    Wallpapers.ensureVideoFirstFrame(wpPath)
+                            }
 
                             readonly property real imgNatW: implicitWidth > 0 ? implicitWidth : 1
                             readonly property real imgNatH: implicitHeight > 0 ? implicitHeight : 1
@@ -1636,6 +1681,19 @@ ContentPage {
 
             SettingsSwitch {
                 visible: Config.options?.background?.enableAnimation ?? true
+                buttonIcon: "battery_saver"
+                text: Translation.tr("Pause animated wallpapers on battery")
+                checked: Config.options?.background?.pauseAnimationOnBattery ?? true
+                onCheckedChanged: {
+                    Config.setNestedValue("background.pauseAnimationOnBattery", checked);
+                }
+                StyledToolTip {
+                    text: Translation.tr("Freeze videos and GIFs while on battery power to save energy")
+                }
+            }
+
+            SettingsSwitch {
+                visible: Config.options?.background?.enableAnimation ?? true
                 buttonIcon: "blur_on"
                 text: Translation.tr("Blur animated wallpapers (videos/GIFs)")
                 checked: Config.options?.background?.effects?.enableAnimatedBlur ?? false
@@ -1651,7 +1709,7 @@ ContentPage {
 
     SettingsCardSection {
         visible: root.isIiActive
-        expanded: true
+        expanded: false
         icon: "wallpaper"
         title: Translation.tr("Wallpaper effects")
 

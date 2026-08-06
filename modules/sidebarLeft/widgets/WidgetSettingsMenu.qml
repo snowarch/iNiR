@@ -12,13 +12,15 @@ Loader {
     id: root
     
     property Item anchorItem: parent
+    property real visualMargin: 8
     
     function toggle() {
         active = !active
     }
     
     function close() {
-        active = false
+        if (item && typeof item.close === "function") item.close()
+        else active = false
     }
 
     active: false
@@ -27,11 +29,23 @@ Loader {
     sourceComponent: PopupWindow {
         id: popupWindow
         visible: true
+        property bool closing: false
         
         anchor.item: root.anchorItem
         anchor.gravity: Edges.Bottom
         anchor.edges: Edges.Top
         anchor.adjustment: PopupAdjustment.SlideY | PopupAdjustment.SlideX
+
+        function close(): void {
+            if (!Appearance.animationsEnabled) {
+                root.active = false
+                return
+            }
+            if (closing) return
+            closing = true
+            background.shown = false
+            closeAnim.start()
+        }
 
         // Close on escape
         Item {
@@ -73,22 +87,43 @@ Loader {
 
         // Animation logic
         property real sourceEdgeMargin: -implicitHeight
-        
+
         SequentialAnimation {
             id: openAnim
-            running: true
             PropertyAnimation {
                 target: popupWindow
                 property: "sourceEdgeMargin"
-                to: 8 // margin
-                duration: Appearance.animation.elementMoveFast.duration
-                easing.type: Appearance.animation.elementMoveFast.type
-                easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                to: root.visualMargin
+                duration: Appearance.animation.elementMoveEnter.duration
+                easing.type: Appearance.animation.elementMoveEnter.type
+                easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
             }
+        }
+
+        SequentialAnimation {
+            id: closeAnim
+            PropertyAnimation {
+                target: popupWindow
+                property: "sourceEdgeMargin"
+                to: -popupWindow.implicitHeight
+                duration: Appearance.animation.elementMoveExit.duration
+                easing.type: Appearance.animation.elementMoveExit.type
+                easing.bezierCurve: Appearance.animation.elementMoveExit.bezierCurve
+            }
+            ScriptAction {
+                script: root.active = false
+            }
+        }
+
+        Component.onCompleted: {
+            background.shown = true
+            Qt.callLater(() => forceScope.forceActiveFocus())
+            openAnim.start()
         }
 
         GlassBackground {
             id: background
+            property bool shown: false
             anchors.top: parent.top
             anchors.topMargin: popupWindow.sourceEdgeMargin
             anchors.right: parent.right // Align right with the button usually
@@ -102,6 +137,42 @@ Loader {
             radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
             border.width: 1
             border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colOutlineVariant
+            opacity: Appearance.motion.popupReveal.enableFade ? (shown ? 1 : 0) : 1
+            scale: shown ? 1
+                : (Appearance.motion.popupReveal.enableScale
+                    ? Appearance.motion.popupReveal.closedScale
+                    : 1)
+            transformOrigin: Item.TopRight
+
+            Behavior on opacity {
+                enabled: Appearance.animationsEnabled
+                animation: NumberAnimation {
+                    duration: popupWindow.closing
+                        ? Appearance.animation.elementMoveExit.duration
+                        : Appearance.animation.elementMoveEnter.duration
+                    easing.type: popupWindow.closing
+                        ? Appearance.animation.elementMoveExit.type
+                        : Appearance.animation.elementMoveEnter.type
+                    easing.bezierCurve: popupWindow.closing
+                        ? Appearance.animation.elementMoveExit.bezierCurve
+                        : Appearance.animation.elementMoveEnter.bezierCurve
+                }
+            }
+
+            Behavior on scale {
+                enabled: Appearance.animationsEnabled
+                animation: NumberAnimation {
+                    duration: popupWindow.closing
+                        ? Appearance.animation.elementMoveExit.duration
+                        : Appearance.animation.elementMoveEnter.duration
+                    easing.type: popupWindow.closing
+                        ? Appearance.animation.elementMoveExit.type
+                        : Appearance.animation.elementMoveEnter.type
+                    easing.bezierCurve: popupWindow.closing
+                        ? Appearance.animation.elementMoveExit.bezierCurve
+                        : Appearance.animation.elementMoveEnter.bezierCurve
+                }
+            }
 
             StyledRectangularShadow {
                 anchors.fill: parent
@@ -201,6 +272,12 @@ Loader {
                     onClicked: Config.setNestedValue("sidebar.widgets.worldClock", checked)
                 }
             }
+        }
+
+        Item {
+            id: forceScope
+            anchors.fill: parent
+            focus: true
         }
     }
 }

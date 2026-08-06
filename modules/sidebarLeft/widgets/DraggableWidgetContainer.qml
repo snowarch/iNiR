@@ -170,6 +170,19 @@ Item {
         }
     }
 
+    // Engineering dot grid while reordering — same edit-space language as the
+    // desktop widget edit mode.
+    DotGridCanvas {
+        anchors.fill: parent
+        gridSize: 24
+        visible: opacity > 0
+        opacity: root.editMode ? 1 : 0
+        Behavior on opacity {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+    }
+
     ColumnLayout {
         id: column
         width: parent.width

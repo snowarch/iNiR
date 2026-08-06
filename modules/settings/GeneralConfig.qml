@@ -170,9 +170,8 @@ ContentPage {
                     buttonIcon: "battery_saver"
                     text: Translation.tr("Charge limit")
                     checked: Config.options?.battery?.chargeLimit?.enable ?? false
-                    onCheckedChanged: {
-                        Config.setNestedValue("battery.chargeLimit.enable", checked);
-                    }
+                    autoToggle: false
+                    onToggledByUser: checked => Config.setNestedValue("battery.chargeLimit.enable", checked)
                     StyledToolTip {
                         text: !Battery.chargeLimitSupported
                             ? Translation.tr("Not supported on this device")
@@ -182,6 +181,7 @@ ContentPage {
                     }
                 }
                 ConfigSpinBox {
+                    property bool _ready: false
                     visible: Battery.chargeLimitAdjustable
                     enabled: (Config.options?.battery?.chargeLimit?.enable ?? false) && Battery.chargeLimitAdjustable
                     icon: "speed"
@@ -190,8 +190,10 @@ ContentPage {
                     from: 20
                     to: 100
                     stepSize: 5
+                    Component.onCompleted: _ready = true
                     onValueChanged: {
-                        Config.setNestedValue("battery.chargeLimit.threshold", value);
+                        if (_ready && value !== (Config.options?.battery?.chargeLimit?.threshold ?? 80))
+                            Config.setNestedValue("battery.chargeLimit.threshold", value);
                     }
                     StyledToolTip {
                         text: Translation.tr("Maximum charge percentage")
@@ -248,7 +250,7 @@ ContentPage {
 
             ContentSubsection {
                 title: Translation.tr("Generate translation with Gemini")
-                tooltip: Translation.tr("You'll need to enter your Gemini API key first.\nType /key on the sidebar for instructions.")
+                tooltip: Translation.tr("Needs a Gemini API key — type /key in the sidebar.")
                 
                 ConfigRow {
                     MaterialTextArea {
@@ -320,9 +322,24 @@ ContentPage {
     }
 
     SettingsCardSection {
+        id: soundsSection
         expanded: false
         icon: "notification_sound"
         title: Translation.tr("Sounds")
+
+        // One row per shell sound event (keys match Audio.soundEvents)
+        readonly property var soundEventRows: [
+            { key: "notification", label: Translation.tr("Notification") },
+            { key: "notificationCritical", label: Translation.tr("Critical notification") },
+            { key: "batteryLow", label: Translation.tr("Battery low") },
+            { key: "batteryCritical", label: Translation.tr("Battery critical") },
+            { key: "batteryFull", label: Translation.tr("Battery full") },
+            { key: "powerPlug", label: Translation.tr("Power plugged in") },
+            { key: "powerUnplug", label: Translation.tr("Power unplugged") },
+            { key: "pomodoroDone", label: Translation.tr("Pomodoro ends") },
+            { key: "timerDone", label: Translation.tr("Timer ends") }
+        ]
+
         SettingsGroup {
             ConfigRow {
                 uniform: true
@@ -369,6 +386,51 @@ ContentPage {
                     StyledToolTip {
                         text: Translation.tr("Play sound for incoming notifications")
                     }
+                }
+            }
+        }
+
+        SettingsGroup {
+            StyledText {
+                text: Translation.tr("Volume")
+                font.pixelSize: Appearance.font.pixelSize.normal
+                color: Appearance.colors.colOnLayer1
+            }
+            StyledSlider {
+                Layout.fillWidth: true
+                from: 0
+                to: 1
+                stepSize: 0.05
+                value: Config.options?.sounds?.volume ?? 0.5
+                configuration: StyledSlider.Configuration.S
+                settingsSearchLabel: Translation.tr("Sound volume")
+                settingsSearchKeywords: ["sound", "volume", "audio", "event"]
+                onPressedChanged: {
+                    if (!pressed) Config.setNestedValue("sounds.volume", value)
+                }
+            }
+        }
+
+        SettingsGroup {
+            StyledText {
+                text: Translation.tr("Event sounds")
+                font.pixelSize: Appearance.font.pixelSize.normal
+                color: Appearance.colors.colOnLayer1
+            }
+            StyledText {
+                Layout.fillWidth: true
+                text: Translation.tr("Pick the sound each event plays: one from your sound theme, or any audio file")
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: Appearance.colors.colSubtext
+                wrapMode: Text.Wrap
+            }
+            Repeater {
+                model: soundsSection.soundEventRows
+                delegate: SoundPicker {
+                    required property var modelData
+                    Layout.fillWidth: true
+                    label: modelData.label
+                    eventId: modelData.key
                 }
             }
         }
@@ -547,6 +609,7 @@ ContentPage {
 
         SettingsGroup {
             SettingsSwitch {
+                visible: CompositorService.isNiri
                 buttonIcon: "help"
                 text: Translation.tr("Confirm before closing windows")
                 checked: Config.options?.closeConfirm?.enabled ?? false
@@ -699,7 +762,7 @@ ContentPage {
                         Config.setNestedValue("lock.security.requirePasswordToPower", checked);
                     }
                     StyledToolTip {
-                        text: Translation.tr("Remember that on most devices one can always hold the power button to force shutdown\nThis only makes it a tiny bit harder for accidents to happen")
+                        text: Translation.tr("Guards against accidents only — holding the power button still forces a shutdown.")
                     }
                 }
 
@@ -711,7 +774,7 @@ ContentPage {
                         Config.setNestedValue("lock.security.unlockKeyring", checked);
                     }
                     StyledToolTip {
-                        text: Translation.tr("This is usually safe and needed for your browser and AI sidebar anyway\nMostly useful for those who use lock on startup instead of a display manager that does it (GDM, SDDM, etc.)")
+                        text: Translation.tr("Safe, and needed by your browser and the AI sidebar. Mostly for lock-on-startup setups.")
                     }
                 }
             }
@@ -764,7 +827,7 @@ ContentPage {
             ContentSubsection {
                 visible: Config.options?.lock?.notifications?.enable ?? false
                 title: Translation.tr("Notification position")
-                tooltip: Translation.tr("Where notifications appear on the lock screen. Auto uses center for Material and right for Waffle.")
+                tooltip: Translation.tr("Auto centres on Material, right-aligns on Waffle.")
 
                 ConfigSelectionArray {
                     currentValue: Config.options?.lock?.notifications?.position ?? "auto"
@@ -891,7 +954,7 @@ ContentPage {
                     checked: Config.options?.lock?.enableAnimation ?? false
                     onCheckedChanged: Config.setNestedValue("lock.enableAnimation", checked)
                     StyledToolTip {
-                        text: Translation.tr("Play video and GIF wallpapers on the lock screen instead of showing a still frame. May increase GPU/battery usage.")
+                        text: Translation.tr("Animated wallpapers on the lock screen. Costs GPU and battery.")
                     }
                 }
             }

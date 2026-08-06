@@ -1,12 +1,20 @@
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.services
+import Quickshell
 import QtQuick
 import QtQuick.Layouts
 
 MouseArea {
     id: root
     property bool borderless: Config.options.bar.borderless
+
+    // Easter egg: long-press the battery and she boops in
+    onPressAndHold: {
+        if (Config.options?.mascot?.enable ?? false)
+            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "mascot", "appearWithLine",
+                "camera-boop", "top", Translation.tr("Boop.")])
+    }
     readonly property var chargeState: Battery.chargeState
     readonly property bool isCharging: Battery.isCharging
     readonly property bool isPluggedIn: Battery.isPluggedIn
@@ -23,8 +31,8 @@ MouseArea {
         anchors.centerIn: parent
         value: percentage
         highlightColor: (isLow && !isCharging)
-            ? (Appearance.angelEverywhere ? Appearance.m3colors.m3error : Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.m3colors.m3error)
-            : (Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSecondaryContainer)
+            ? (Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError)
+            : (Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0)
 
         Item {
             anchors.centerIn: parent

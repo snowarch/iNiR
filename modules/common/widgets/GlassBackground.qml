@@ -1,4 +1,5 @@
 import qs.modules.common
+import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.services
 import QtQuick
@@ -6,11 +7,7 @@ import QtQuick.Effects
 import Qt5Compat.GraphicalEffects as GE
 import Quickshell
 
-// Reusable glass/acrylic background component
-// For correct blur positioning, parent must set screenX/screenY to component's screen position
-//
-// GPU optimization: Uses BlurredWallpaperProvider singleton to share ONE blur FBO
-// instead of each instance creating its own (~16 MiB saved per instance).
+// Hidden instances release their blur FBO; decoded wallpaper pixmaps remain shared.
 Rectangle {
     id: root
     
@@ -28,7 +25,18 @@ Rectangle {
     readonly property bool angelEverywhere: Appearance.angelEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
     readonly property bool inirEverywhere: Appearance.inirEverywhere
-    readonly property bool useWallpaperBackdrop: root.wallpaperBackdropEnabled && root.auroraEverywhere && !root.inirEverywhere
+    // Bypasses the style gate, which is what its callers always documented it as
+    // doing. It used to be AND-ed inside the backend check, so a surface asking
+    // for a backdrop outside aurora — island glass, or a backdrop the user turned
+    // on explicitly — silently got nothing. The effects gate still applies.
+    property bool forceBackdrop: false
+    // Blur radius as a fraction of blurMax. 1 is the house default every existing
+    // caller inherits; lower values are for surfaces that expose it to the user.
+    property real blurStrength: 1
+    readonly property bool useWallpaperBackdrop: root.forceBackdrop
+        ? Appearance.effectsEnabled
+        : (Appearance.blurBackendFor("panels", Appearance.blurTopology.unsupported) === "wallpaper"
+            && root.wallpaperBackdropEnabled)
     
     color: root.useWallpaperBackdrop ? "transparent"
         : root.inirEverywhere ? root.inirColor
@@ -41,7 +49,9 @@ Rectangle {
 
     clip: true
     
-    layer.enabled: root.useWallpaperBackdrop
+    // Hidden persistent surfaces must not retain their mask FBO. The decoded
+    // wallpaper stays in Qt's shared image cache, so remapping remains warm.
+    layer.enabled: root.useWallpaperBackdrop && root.visible
     layer.effect: GE.OpacityMask {
         maskSource: Rectangle {
             width: root.width
@@ -82,7 +92,7 @@ Rectangle {
             blurEnabled: Appearance.effectsEnabled
             blurMax: 64
             blur: Appearance.effectsEnabled
-                ? (root.angelEverywhere ? Appearance.angel.blurIntensity : 1)
+                ? (root.angelEverywhere ? Appearance.angel.blurIntensity : root.blurStrength)
                 : 0
         }
     }

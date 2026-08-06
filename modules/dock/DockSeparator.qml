@@ -8,6 +8,12 @@ Item {
     property bool vertical: false
     property real padding: 5
     property string dockPosition: "bottom"
+    readonly property string surfaceDialect: Appearance.surfaceDialectFor(
+        Config.options?.dock?.style === "island" ? "island" : "")
+    readonly property bool zzzStyle: surfaceDialect === "zzz"
+    readonly property bool angelStyle: surfaceDialect === "angel"
+    readonly property bool inirStyle: surfaceDialect === "inir"
+    readonly property bool auroraStyle: surfaceDialect === "aurora" || angelStyle
     
     readonly property real dockHeight: Config.options?.dock?.height ?? 70
     readonly property real separatorSize: dockHeight - 50
@@ -27,9 +33,11 @@ Item {
         anchors.centerIn: parent
         width: root.vertical ? root.separatorSize : 1
         height: root.vertical ? 1 : root.separatorSize
-        color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
-             : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
-             : Appearance.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.7)
+        color: root.zzzStyle ? Appearance.zzz.hairlineStrong
+             : root.angelStyle ? Appearance.angel.colCardBorder
+             : root.inirStyle ? Appearance.inir.colBorderSubtle
+             : root.auroraStyle ? ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.7)
              : Appearance.colors.colOutlineVariant
+        Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
     }
 }

@@ -20,6 +20,7 @@ Item {
     readonly property int currentDays: [1, 3, 14][selectedRange]
     property var _displayData: null
     property var _appList: []
+    property bool _loadingRange: false
 
     property string _tooltipText: ""
     property bool _tooltipVisible: false
@@ -78,19 +79,29 @@ Item {
     Connections {
         target: ScreenTime
         function onDataChanged() { root._refreshData() }
-        function onRangeLoaded(days: int, data: var) { root._refreshData() }
+        function onRangeLoaded(days: int, data: var) {
+            if (days !== root.currentDays)
+                return
+            root._loadingRange = false
+            root._refreshData()
+        }
     }
 
     function _refreshData(): void {
         if (root.currentDays <= 1) {
+            root._loadingRange = false
             root._displayData = ScreenTime.getToday()
         } else {
             const cached = ScreenTime.getCachedDays(root.currentDays)
             if (cached) {
+                root._loadingRange = false
                 root._displayData = cached
             } else {
+                root._loadingRange = true
+                root._displayData = null
+                root._appList = []
                 ScreenTime.requestDays(root.currentDays)
-                root._displayData = ScreenTime.getToday()
+                return
             }
         }
         root._appList = ScreenTime.getAppList(root.currentDays)
@@ -216,6 +227,8 @@ Item {
                                 Repeater {
                                     model: 24
                                     delegate: Item {
+                                        id: hourSlot
+                                        required property int index
                                         width: (parent.width - 46) / 24
                                         height: parent.height
 
@@ -274,27 +287,32 @@ Item {
                                             }
                                         }
 
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            hoverEnabled: true
-                                            cursorShape: parent.value > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor
-                                            onEntered: {
-                                                if (parent.value > 0) {
-                                                    const mapped = parent.mapToItem(root, parent.width / 2, 0)
-                                                    root._tooltipX = mapped.x
-                                                    root._tooltipY = mapped.y - 4
-                                                    root._tooltipText = index + ":00 – " + (index + 1) + ":00  •  " + ScreenTime.formatDuration(parent.value)
-                                                    root._tooltipVisible = true
-                                                }
-                                            }
-                                            onExited: {
-                                                root._tooltipVisible = false
-                                            }
-                                            onClicked: {
-                                                if (parent.value > 0) {
+                                        HoverHandler {
+                                            id: hourHover
+                                            enabled: hourSlot.value > 0
+                                            cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                            onHoveredChanged: {
+                                                if (!hovered) {
                                                     root._tooltipVisible = false
-                                                    root._selectHour(index)
+                                                    return
                                                 }
+                                                const mapped = hourSlot.mapToItem(root,
+                                                    hourSlot.width / 2, 0)
+                                                root._tooltipX = mapped.x
+                                                root._tooltipY = mapped.y - 4
+                                                root._tooltipText = hourSlot.index + ":00 – "
+                                                    + (hourSlot.index + 1) + ":00  •  "
+                                                    + ScreenTime.formatDuration(hourSlot.value)
+                                                root._tooltipVisible = true
+                                            }
+                                        }
+
+                                        TapHandler {
+                                            enabled: hourSlot.value > 0
+                                            gesturePolicy: TapHandler.ReleaseWithinBounds
+                                            onTapped: {
+                                                root._tooltipVisible = false
+                                                root._selectHour(hourSlot.index)
                                             }
                                         }
                                     }
@@ -340,6 +358,7 @@ Item {
 
                             StyledText {
                                 Layout.fillWidth: true
+                                Layout.minimumWidth: 0
                                 text: root._selectedHour >= 0
                                     ? (root._selectedHour + ":00 – " + (root._selectedHour + 1) + ":00")
                                     : ""
@@ -394,14 +413,17 @@ Item {
 
                                 ColumnLayout {
                                     Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
                                     spacing: 2
 
                                     StyledText {
                                         Layout.fillWidth: true
+                                        Layout.minimumWidth: 0
                                         text: modelData.name || modelData.id
                                         font.pixelSize: Appearance.font.pixelSize.small
                                         color: root.colText
                                         elide: Text.ElideRight
+                                        wrapMode: Text.NoWrap
                                     }
 
                                     Rectangle {
@@ -474,14 +496,17 @@ Item {
 
                                 ColumnLayout {
                                     Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
                                     spacing: 2
 
                                     StyledText {
                                         Layout.fillWidth: true
+                                        Layout.minimumWidth: 0
                                         text: modelData.name || modelData.id
                                         font.pixelSize: Appearance.font.pixelSize.small
                                         color: root.colText
                                         elide: Text.ElideRight
+                                        wrapMode: Text.NoWrap
                                     }
 
                                     Rectangle {
@@ -528,10 +553,17 @@ Item {
                         }
 
                         StyledText {
+                            Layout.fillWidth: true
                             Layout.alignment: Qt.AlignHCenter
-                            text: Translation.tr("Enable Screen Time in Settings to start tracking")
+                            text: !ScreenTime.enabled
+                                ? Translation.tr("Enable Screen Time in Settings to start tracking")
+                                : (root._loadingRange || !ScreenTime.ready)
+                                    ? Translation.tr("Loading screen time history…")
+                                    : Translation.tr("No screen time data yet")
                             font.pixelSize: Appearance.font.pixelSize.small
                             color: root.colTextSecondary
+                            horizontalAlignment: Text.AlignHCenter
+                            wrapMode: Text.WordWrap
                         }
                     }
                 }
@@ -545,9 +577,11 @@ Item {
         z: 9999
         visible: root._tooltipVisible
         opacity: root._tooltipVisible ? 1 : 0
-        x: root._tooltipX - implicitWidth / 2
-        y: root._tooltipY - implicitHeight - 4
-        implicitWidth: tooltipLabel.implicitWidth + 16
+        x: Math.max(8, Math.min(root.width - width - 8,
+            root._tooltipX - width / 2))
+        y: Math.max(8, root._tooltipY - implicitHeight - 4)
+        implicitWidth: Math.min(Math.max(80, root.width - 16),
+            tooltipLabel.implicitWidth + 16)
         implicitHeight: tooltipLabel.implicitHeight + 8
         radius: Appearance.rounding.small
         color: Appearance.colors.colLayer2
@@ -565,10 +599,13 @@ Item {
         StyledText {
             id: tooltipLabel
             anchors.centerIn: parent
+            width: Math.max(0, parent.width - 16)
             text: root._tooltipText
             font.pixelSize: Appearance.font.pixelSize.smaller
             font.family: Appearance.font.family.numbers
             color: Appearance.colors.colOnLayer2
+            elide: Text.ElideRight
+            wrapMode: Text.NoWrap
         }
     }
 }

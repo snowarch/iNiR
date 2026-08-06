@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import qs
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -14,18 +15,27 @@ MouseArea {
     id: root
 
     required property var notification
-    property bool expanded: notification.actions.length > 0
+    property bool expanded: false
     property string groupExpandControlMessage: ""
-    readonly property bool isPopup: notification?.popup ?? false
+    readonly property bool isPopup: root.notification
+        ? (root.notification.popup ?? false)
+        : false
     signal groupExpandToggle
     hoverEnabled: true
 
-    readonly property bool isCritical: notification?.urgency === NotificationUrgency.Critical
-    readonly property bool hasImage: notification?.image !== ""
+    readonly property bool isCritical: root.notification
+        ? root.notification.urgency === NotificationUrgency.Critical
+        : false
+    readonly property bool hasImage: root.notification
+        ? (root.notification.image ?? "") !== ""
+        : false
 
     function dismiss() {
+        const notificationId = root.notification?.notificationId
+        if (notificationId === undefined || notificationId === null)
+            return
         Qt.callLater(() => {
-            Notifications.discardNotification(root.notification?.notificationId);
+            Notifications.discardNotification(notificationId);
         });
         removeAnimation.start();
     }
@@ -37,10 +47,6 @@ MouseArea {
 
     implicitHeight: contentItem.implicitHeight
     implicitWidth: contentItem.implicitWidth
-
-    Behavior on implicitHeight {
-        animation: NumberAnimation { duration: Looks.transition.enabled ? Looks.transition.duration.panel : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.decelerate }
-    }
 
     property real dragDismissThreshold: 100
     drag {
@@ -63,7 +69,7 @@ MouseArea {
         width: parent.width
         color: root.isPopup ? Looks.colors.bg0 : Looks.colors.bgPanelBody
         radius: root.isPopup ? Looks.radius.large : Looks.radius.medium
-        property real padding: 12
+        property real padding: Looks.dp(12)
         implicitHeight: notificationContent.implicitHeight + padding * 2
         implicitWidth: notificationContent.implicitWidth + padding * 2
         border.width: 1
@@ -77,7 +83,7 @@ MouseArea {
             id: notificationContent
             anchors.fill: parent
             anchors.margins: contentItem.padding
-            spacing: 12
+            spacing: Looks.dp(12)
 
             // Header
             SingleNotificationHeader {
@@ -89,7 +95,7 @@ MouseArea {
                 id: actualContent
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                property real spacing: 16
+                property real spacing: Looks.dp(16)
                 implicitHeight: Math.max(contentColumn.implicitHeight, imageLoader.height)
                 implicitWidth: contentColumn.implicitWidth
 
@@ -99,14 +105,14 @@ MouseArea {
                         top: parent.top
                         left: parent.left
                     }
-                    active: root.notification?.image != ""
+                    active: root.hasImage
                     sourceComponent: StyledImage {
-                        readonly property int size: 48
+                        readonly property int size: Looks.dp(48)
                         width: size
                         height: size
                         sourceSize.width: size
                         sourceSize.height: size
-                        source: root.notification?.image ?? ""
+                        source: root.notification ? (root.notification.image ?? "") : ""
                         fillMode: Image.PreserveAspectFit
                     }
                 }
@@ -168,7 +174,10 @@ MouseArea {
 
             Process {
                 id: copyHeaderProcess
-                command: ["wl-copy", root.notification?.body ?? ""]
+                command: [
+                    "wl-copy",
+                    root.notification ? (root.notification.body ?? "") : ""
+                ]
                 onExited: (code, status) => {
                     if (code === 0) {
                         copyHeaderBtn.copied = true
@@ -213,9 +222,12 @@ MouseArea {
     }
 
     component ActionsRow: RowLayout {
-        visible: root.expanded && root.notification.actions.length > 0
+        id: actionRow
+        readonly property var visibleActions: (root.notification?.actions ?? [])
+            .filter(action => String(action?.text ?? "").trim().length > 0)
+        visible: root.expanded && visibleActions.length > 0
         opacity: visible ? 1 : 0
-        spacing: 6
+        spacing: Looks.dp(6)
         
         Behavior on opacity {
             NumberAnimation { duration: Looks.transition.enabled ? Looks.transition.duration.normal : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.decelerate }
@@ -223,23 +235,29 @@ MouseArea {
 
         Repeater {
             id: actionRepeater
-            model: root.notification.actions
+            model: actionRow.visibleActions
             delegate: WBorderedButton {
                 id: actionButton
-                Layout.fillHeight: true
                 required property var modelData
                 required property int index
                 Layout.fillWidth: true
-                verticalPadding: 10
-                horizontalPadding: 12
+                Layout.preferredHeight: Looks.dp(32)
+                verticalPadding: 0
+                horizontalPadding: Looks.dp(12)
                 text: modelData.text
                 implicitHeight: actionButtonText.implicitHeight + verticalPadding * 2
                 // First action is primary
-                colBackground: index === 0 ? Looks.colors.accent : Looks.colors.bg2
-                colBackgroundHover: index === 0 ? Looks.colors.accentHover : Looks.colors.bg2Hover
-                colBackgroundActive: index === 0 ? Looks.colors.accentActive : Looks.colors.bg2Active
+                colBackground: index === 0
+                    ? Looks.colors.accent : Looks.colors.interactiveSurface
+                colBackgroundHover: index === 0
+                    ? Looks.colors.accentHover : Looks.colors.interactiveSurfaceHover
+                colBackgroundActive: index === 0
+                    ? Looks.colors.accentActive : Looks.colors.interactiveSurfaceActive
                 
-                onClicked: Notifications.attemptInvokeAction(root.notification?.notificationId, modelData.identifier)
+                onClicked: {
+                    if (root.notification)
+                        Notifications.attemptInvokeAction(root.notification.notificationId, modelData.identifier)
+                }
                 
                 contentItem: WText {
                     id: actionButtonText
@@ -257,7 +275,7 @@ MouseArea {
     component SummaryText: WText {
         Layout.fillWidth: true
         elide: Text.ElideRight
-        text: root.notification?.summary ?? ""
+        text: root.notification ? (root.notification.summary ?? "") : ""
         font.pixelSize: Looks.font.pixelSize.large
         font.weight: Looks.font.weight.strong
         color: root.isCritical ? Looks.colors.danger : Looks.colors.fg
@@ -271,8 +289,10 @@ MouseArea {
         wrapMode: Text.Wrap
         maximumLineCount: root.expanded ? 100 : 2
         text: {
-            const body = root.notification?.body ?? ""
-            const appName = root.notification?.appName ?? root.notification?.summary ?? ""
+            if (!root.notification)
+                return ""
+            const body = root.notification.body ?? ""
+            const appName = root.notification.appName ?? root.notification.summary ?? ""
             if (root.expanded)
                 return `<style>img{max-width:${summaryText.width}px; align: right}</style>` + `${NotificationUtils.processNotificationBody(body, appName).replace(/\n/g, "<br/>")}`;
             return NotificationUtils.processNotificationBody(body, appName).replace(/\n/g, "<br/>");
@@ -317,7 +337,9 @@ MouseArea {
 
                 WText {
                     color: expandButton.colForeground
-                    text: NotificationUtils.getFriendlyNotifTimeString(root.notification?.time)
+                    text: root.notification
+                        ? (NotificationUtils.getFriendlyNotifTimeString(root.notification.time) ?? "")
+                        : ""
                     font.pixelSize: Looks.font.pixelSize.small
                 }
                 FluentIcon {

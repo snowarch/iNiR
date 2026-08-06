@@ -22,10 +22,9 @@ Item {
             topMargin: itemHeight * root.currentIndex + (root.expanded ? 0 : ((itemHeight - baseHighlightHeight) / 2))
         }
         radius: Appearance.rounding.full
-        color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-             : Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
-             : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface 
-             : Appearance.colors.colSecondaryContainer
+        // Bgless doctrine: no selection pill behind the icon. The active item is
+        // signalled by the icon's accent colour (see NavigationRailButton).
+        color: "transparent"
         implicitHeight: root.expanded ? itemHeight : baseHighlightHeight
         implicitWidth: visible ? (tabBarColumn.children[root.currentIndex]?.visualWidth ?? 56) : 0
 

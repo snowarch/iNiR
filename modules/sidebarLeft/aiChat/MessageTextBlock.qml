@@ -157,7 +157,7 @@ ColumnLayout {
             font.family: Appearance.font.family.reading
             font.hintingPreference: Font.PreferNoHinting // Prevent weird bold text
             font.pixelSize: Appearance.font.pixelSize.small
-            selectedTextColor: Appearance.inirEverywhere ? Appearance.inir.colOnSelection : Appearance.m3colors.m3onSecondaryContainer
+            selectedTextColor: Appearance.inirEverywhere ? Appearance.inir.colOnSelection : Appearance.colors.colOnSecondaryContainer
             selectionColor: Appearance.inirEverywhere ? Appearance.inir.colSelection : Appearance.colors.colSecondaryContainer
             wrapMode: TextEdit.Wrap
             color: root.messageData?.thinking ? (Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext) : (Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1)
@@ -182,12 +182,6 @@ ColumnLayout {
                     (enableMouseSelection || editing) ? Qt.IBeamCursor : Qt.ArrowCursor
             }
 
-            // Rectangle {
-            //     anchors.fill: parent
-            //     color: "#22786378"
-            //     border.width: 1
-            //     border.color: "#7E7E7E"
-            // }
         }
     }
 }

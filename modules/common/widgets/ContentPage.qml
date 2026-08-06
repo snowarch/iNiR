@@ -16,10 +16,12 @@ StyledFlickable {
     contentHeight: contentColumn.implicitHeight + root.bottomContentPadding
     implicitWidth: contentColumn.implicitWidth
 
-    // Responsive horizontal margins: more breathing room on wider containers
+    // Settings content reads best as a centered column: cap the line length
+    // and center it instead of stretching cards across very wide containers.
+    readonly property real maxContentWidth: 880
     readonly property real _horizontalMargin: {
         const w = root.width
-        if (w > 1200) return 48
+        if (w > maxContentWidth + 64) return (w - maxContentWidth) / 2
         if (w > 900) return 32
         if (w > 600) return 24
         return 16

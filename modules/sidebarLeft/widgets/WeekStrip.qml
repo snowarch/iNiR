@@ -18,7 +18,11 @@ Item {
     }
 
     property int weekOffset: 0
-    property var today: new Date()
+    readonly property string _todayKey: Qt.formatDate(DateTime.clock.date, "yyyy-MM-dd")
+    readonly property var today: {
+        root._todayKey;
+        return new Date();
+    }
     property var weekStart: {
         const fdow = locale?.firstDayOfWeek ?? Qt.locale().firstDayOfWeek
         const d = new Date(today)
@@ -50,30 +54,39 @@ Item {
     }
 
     // Cached color properties to avoid repeated ternary evaluation
-    readonly property color colSubtext: Appearance.inirEverywhere ? Appearance.inir?.colTextMuted ?? Appearance.colors?.colSubtext ?? "gray"
+    readonly property color colSubtext: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
+                                      : Appearance.inirEverywhere ? Appearance.inir?.colTextMuted ?? Appearance.colors?.colSubtext ?? "gray"
                                       : Appearance.auroraEverywhere ? Appearance.aurora?.colOnSubSurface ?? Appearance.colors?.colSubtext ?? "gray"
                                       : Appearance.colors?.colSubtext ?? "gray"
-    readonly property color colPrimary: Appearance.inirEverywhere ? Appearance.inir?.colPrimary ?? Appearance.colors?.colPrimary ?? "blue"
+    readonly property color colPrimary: Appearance.zzzEverywhere ? Appearance.zzz.accent
+                                      : Appearance.inirEverywhere ? Appearance.inir?.colPrimary ?? Appearance.colors?.colPrimary ?? "blue"
                                       : Appearance.auroraEverywhere ? Appearance.aurora?.colAccent ?? Appearance.colors?.colPrimary ?? "blue"
                                       : Appearance.colors?.colPrimary ?? "blue"
-    readonly property color colText: Appearance.inirEverywhere ? Appearance.inir?.colText ?? Appearance.colors?.colOnLayer1 ?? "white"
+    readonly property color colText: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                                   : Appearance.inirEverywhere ? Appearance.inir?.colText ?? Appearance.colors?.colOnLayer1 ?? "white"
                                    : Appearance.auroraEverywhere ? Appearance.aurora?.colOnSurface ?? Appearance.colors?.colOnLayer1 ?? "white"
                                    : Appearance.colors?.colOnLayer1 ?? "white"
-    readonly property color colLabel: Appearance.inirEverywhere ? Appearance.inir?.colLabel ?? Appearance.colors?.colPrimary ?? "blue"
+    readonly property color colLabel: Appearance.zzzEverywhere ? Appearance.zzz.accent
+                                    : Appearance.inirEverywhere ? Appearance.inir?.colLabel ?? Appearance.colors?.colPrimary ?? "blue"
                                     : Appearance.colors?.colPrimary ?? "blue"
-    readonly property color colLayer1Hover: Appearance.angelEverywhere ? Appearance.angel?.colGlassCardHover ?? Appearance.colors?.colLayer1Hover ?? "gray"
+    readonly property color colLayer1Hover: Appearance.zzzEverywhere ? Appearance.zzz.chrome
+                                          : Appearance.angelEverywhere ? Appearance.angel?.colGlassCardHover ?? Appearance.colors?.colLayer1Hover ?? "gray"
                                           : Appearance.inirEverywhere ? Appearance.inir?.colLayer1Hover ?? Appearance.colors?.colLayer1Hover ?? "gray"
                                           : Appearance.auroraEverywhere ? Appearance.aurora?.colSubSurface ?? Appearance.colors?.colLayer1Hover ?? "gray"
                                           : Appearance.colors?.colLayer1Hover ?? "gray"
-    readonly property color colLayer1Active: Appearance.angelEverywhere ? Appearance.angel?.colGlassCardActive ?? Appearance.colors?.colLayer1Active ?? "gray"
+    readonly property color colLayer1Active: Appearance.zzzEverywhere ? Appearance.zzz.chromeAlt
+                                           : Appearance.angelEverywhere ? Appearance.angel?.colGlassCardActive ?? Appearance.colors?.colLayer1Active ?? "gray"
                                            : Appearance.inirEverywhere ? Appearance.inir?.colLayer1Active ?? Appearance.colors?.colLayer1Active ?? "gray"
                                            : Appearance.auroraEverywhere ? Appearance.aurora?.colSubSurfaceActive ?? Appearance.colors?.colLayer1Active ?? "gray"
                                            : Appearance.colors?.colLayer1Active ?? "gray"
-    readonly property color colPrimaryContainer: Appearance.inirEverywhere ? Appearance.inir?.colPrimaryContainer ?? Appearance.colors?.colPrimaryContainer ?? "blue"
+    readonly property color colPrimaryContainer: Appearance.zzzEverywhere ? Appearance.zzz.chrome
+                                               : Appearance.inirEverywhere ? Appearance.inir?.colPrimaryContainer ?? Appearance.colors?.colPrimaryContainer ?? "blue"
                                                : Appearance.colors?.colPrimaryContainer ?? "blue"
-    readonly property color colPrimaryActive: Appearance.inirEverywhere ? Appearance.inir?.colPrimaryActive ?? Appearance.colors?.colPrimaryContainerActive ?? "blue"
+    readonly property color colPrimaryActive: Appearance.zzzEverywhere ? Appearance.zzz.chromeAlt
+                                            : Appearance.inirEverywhere ? Appearance.inir?.colPrimaryActive ?? Appearance.colors?.colPrimaryContainerActive ?? "blue"
                                             : Appearance.colors?.colPrimaryContainerActive ?? "blue"
-    readonly property real buttonRadius: Appearance.angelEverywhere ? Appearance.angel?.roundingSmall ?? 2
+    readonly property real buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+                                       : Appearance.angelEverywhere ? Appearance.angel?.roundingSmall ?? 2
                                        : Appearance.inirEverywhere ? Appearance.inir?.roundingSmall ?? Appearance.rounding?.small ?? 8
                                        : Appearance.rounding?.small ?? 8
 

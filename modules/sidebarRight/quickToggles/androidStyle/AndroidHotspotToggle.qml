@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
@@ -114,7 +115,8 @@ AndroidQuickToggleButton {
     Timer {
         interval: 5000
         repeat: true
-        running: true
+        triggeredOnStart: true
+        running: GlobalStates.sidebarRightOpen
         onTriggered: root.refreshStatus()
     }
 

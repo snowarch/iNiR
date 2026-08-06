@@ -10,6 +10,59 @@ import qs.modules.common.widgets
 ContentPage {
     id: root
 
+    readonly property string savedThemesDir: Directories.shellConfig + "/themes"
+    property var savedThemePresets: []
+
+    function refreshSavedThemes(): void {
+        if (!savedThemesProcess.running)
+            savedThemesProcess.running = true
+    }
+
+    function applyThemeChoice(preset): void {
+        if (preset.saved !== true) {
+            themesGroup.activeSavedTheme = ""
+            ThemeService.setTheme(preset.id)
+            return
+        }
+        const current = Config.options?.appearance?.customTheme ?? ({})
+        const updates = ({})
+        for (const key in preset.colors) {
+            if (current.hasOwnProperty(key))
+                updates[`appearance.customTheme.${key}`] = preset.colors[key]
+        }
+        Config.setNestedValues(updates)
+        themesGroup.activeSavedTheme = preset.id
+        ThemePresets.applyPreset("custom")
+        if (ThemeService.currentTheme !== "custom")
+            ThemeService.setTheme("custom")
+    }
+
+    Process {
+        id: savedThemesProcess
+        command: ["/usr/bin/bash", "-lc", `for f in "${root.savedThemesDir}"/*.json; do [ -f "$f" ] || continue; /usr/bin/jq -c --arg name "$(/usr/bin/basename "$f" .json)" '{id:("saved:" + $name),name:$name,description:"Saved custom theme",tags:["saved"],saved:true,colors:.}' "$f"; done`]
+        stdout: SplitParser {
+            onRead: data => {
+                try {
+                    const preset = JSON.parse(data)
+                    root.savedThemePresets = [...root.savedThemePresets, preset]
+                } catch (e) {
+                    console.warn("[ThemesConfig] Skipping invalid saved theme entry:", e)
+                }
+            }
+        }
+        onStarted: root.savedThemePresets = []
+    }
+
+    Timer {
+        interval: 2000
+        repeat: true
+        running: root.visible && customThemeEditorSection.expanded
+        triggeredOnStart: true
+        onTriggered: root.refreshSavedThemes()
+    }
+
+    Component.onCompleted: root.refreshSavedThemes()
+
     function _log(...args): void {
         if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
     }
@@ -32,13 +85,18 @@ ContentPage {
             id: themesGroup
 
             property string searchQuery: ""
-            property int selectedTab: 0  // 0=All, 1=Dark, 2=Light
-            property string selectedTag: ""  // Single active tag filter
+            property int selectedTab: Persistent.states?.settings?.themeTab ?? 0  // 0=All, 1=Dark, 2=Light
+            onSelectedTabChanged: if (Persistent.ready && Persistent.states?.settings)
+                Persistent.states.settings.themeTab = selectedTab
+            property string selectedTag: Persistent.states?.settings?.themeTag ?? ""  // Single active tag filter
+            onSelectedTagChanged: if (Persistent.ready && Persistent.states?.settings)
+                Persistent.states.settings.themeTag = selectedTag
+            property string activeSavedTheme: ""
 
             function isDarkTheme(preset) {
                 if (preset.id === "auto" || preset.id === "custom") return true
                 if (!preset.colors) return true
-                const bg = preset.colors.m3background ?? "#000"
+                const bg = preset.colors.m3background ?? Appearance.colors.colLayer0
                 const r = parseInt(bg.slice(1, 3), 16) / 255
                 const g = parseInt(bg.slice(3, 5), 16) / 255
                 const b = parseInt(bg.slice(5, 7), 16) / 255
@@ -53,8 +111,9 @@ ContentPage {
             readonly property var filteredPresets: {
                 let result = []
                 const favorites = Config.options?.appearance?.favoriteThemes ?? []
-                for (let i = 0; i < ThemePresets.presets.length; i++) {
-                    const preset = ThemePresets.presets[i]
+                const available = ThemePresets.presets.concat(root.savedThemePresets)
+                for (let i = 0; i < available.length; i++) {
+                    const preset = available[i]
                     // Dark/Light filter
                     if (selectedTab === 1 && !isDarkTheme(preset)) continue
                     if (selectedTab === 2 && isDarkTheme(preset)) continue
@@ -80,28 +139,8 @@ ContentPage {
                 })
                 return result
             }
-
-            // Double-click hint
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.bottomMargin: 4
-                spacing: 6
-
-                MaterialSymbol {
-                    text: "touch_app"
-                    iconSize: 16
-                    color: Appearance.m3colors.m3tertiary
-                }
-
-                StyledText {
-                    Layout.fillWidth: true
-                    text: Translation.tr("Double-click a theme to apply it reliably. A single click may not always trigger the full color generation.")
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                    color: Appearance.colors.colSubtext
-                    opacity: 0.8
-                    wrapMode: Text.WordWrap
-                }
-            }
+            readonly property var filteredSavedPresets: filteredPresets.filter(preset => preset.saved === true)
+            readonly property var filteredBuiltInPresets: filteredPresets.filter(preset => preset.saved !== true)
 
             // Compact search + filter row
             RowLayout {
@@ -115,7 +154,7 @@ ContentPage {
                     radius: 16
                     color: Appearance.colors.colLayer1
                     border.width: searchField.activeFocus ? 1.5 : 0
-                    border.color: Appearance.m3colors.m3primary
+                    border.color: Appearance.colors.colPrimary
 
                     RowLayout {
                         anchors.fill: parent
@@ -170,13 +209,13 @@ ContentPage {
                     width: 32
                     height: 32
                     radius: 16
-                    color: Config.options?.appearance?.softenColors ? Appearance.m3colors.m3primary : Appearance.colors.colLayer1
+                    color: Config.options?.appearance?.softenColors ? Appearance.colors.colPrimary : Appearance.colors.colLayer1
 
                     MaterialSymbol {
                         anchors.centerIn: parent
                         text: "opacity"
                         iconSize: 16
-                        color: Config.options?.appearance?.softenColors ? Appearance.m3colors.m3onPrimary : Appearance.colors.colOnLayer1
+                        color: Config.options?.appearance?.softenColors ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer1
                     }
 
                     MouseArea {
@@ -214,7 +253,7 @@ ContentPage {
                             height: 28
                             radius: 14
                             color: themesGroup.selectedTab === index
-                                ? Appearance.m3colors.m3primary
+                                ? Appearance.colors.colPrimary
                                 : tabMouse.containsMouse ? Appearance.colors.colLayer1Hover : Appearance.colors.colLayer1
 
                             MaterialSymbol {
@@ -222,7 +261,7 @@ ContentPage {
                                 text: modelData.icon
                                 iconSize: 14
                                 color: themesGroup.selectedTab === index
-                                    ? Appearance.m3colors.m3onPrimary
+                                    ? Appearance.colors.colOnPrimary
                                     : Appearance.colors.colOnLayer1
                             }
 
@@ -361,7 +400,7 @@ ContentPage {
                     MaterialSymbol {
                         text: "bolt"
                         iconSize: 14
-                        color: Appearance.m3colors.m3primary
+                        color: Appearance.colors.colPrimary
                     }
 
                     StyledText {
@@ -377,7 +416,7 @@ ContentPage {
                         visible: (Config.options?.appearance?.favoriteThemes?.length ?? 0) > 0
                         text: "★ " + (Config.options?.appearance?.favoriteThemes?.length ?? 0)
                         font.pixelSize: Appearance.font.pixelSize.smallest
-                        color: Appearance.m3colors.m3tertiary
+                        color: Appearance.colors.colTertiary
                     }
                 }
 
@@ -473,7 +512,58 @@ ContentPage {
                 }
             }
 
-            // Theme grid - scrollable with 3 columns
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.topMargin: 10
+                spacing: 6
+                visible: themesGroup.filteredSavedPresets.length > 0
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 6
+                    MaterialSymbol {
+                        text: "folder_special"
+                        iconSize: 15
+                        color: Appearance.colors.colPrimary
+                    }
+                    StyledText {
+                        text: Translation.tr("Saved themes")
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        font.weight: Font.Medium
+                        color: Appearance.colors.colOnLayer1
+                    }
+                    StyledText {
+                        text: themesGroup.filteredSavedPresets.length.toString()
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        color: Appearance.colors.colSubtext
+                    }
+                    Item { Layout.fillWidth: true }
+                    StyledText {
+                        text: Translation.tr("Created in Custom Theme Editor")
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        color: Appearance.colors.colSubtext
+                    }
+                }
+
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 4
+
+                    Repeater {
+                        model: themesGroup.filteredSavedPresets
+
+                        ThemePresetCard {
+                            required property var modelData
+                            width: Math.max(140, (parent.width - 8) / 3)
+                            preset: modelData
+                            forceActive: themesGroup.activeSavedTheme === modelData.id
+                            onClicked: root.applyThemeChoice(modelData)
+                        }
+                    }
+                }
+            }
+
+            // Built-in theme grid - scrollable with 3 columns
             Rectangle {
                 Layout.fillWidth: true
                 Layout.topMargin: 10
@@ -507,13 +597,14 @@ ContentPage {
                         rowSpacing: 4
 
                         Repeater {
-                            model: themesGroup.filteredPresets
+                            model: themesGroup.filteredBuiltInPresets
 
                             ThemePresetCard {
                                 required property var modelData
                                 width: (themeGridContent.width - themeGridContent.columnSpacing * 2) / 3
                                 preset: modelData
-                                onClicked: ThemeService.setTheme(modelData.id)
+                                forceActive: modelData.saved === true && themesGroup.activeSavedTheme === modelData.id
+                                onClicked: root.applyThemeChoice(modelData)
                             }
                         }
                     }
@@ -533,12 +624,22 @@ ContentPage {
                     shape: MaterialShape.Shape.Bun
                 }
             }
+
+            ConfigSwitch {
+                buttonIcon: "invert_colors"
+                text: Translation.tr("Invert colors (complementary)")
+                checked: Config.options?.appearance?.colorInvert ?? false
+                onCheckedChanged: Config.setNestedValue("appearance.colorInvert", checked)
+                StyledToolTip {
+                    text: Translation.tr("Rotate every color 180° on the color wheel, producing the complementary palette. Shell-only: terminals, GTK and other external apps keep their original colors.")
+                }
+            }
         }
     }
 
     // Scheme Variant Section
     SettingsCardSection {
-        expanded: true
+        expanded: false
         icon: "tune"
         title: Translation.tr("Scheme Variant")
 
@@ -584,6 +685,147 @@ ContentPage {
                 onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.autoDarkLightMode", checked)
                 StyledToolTip {
                     text: Translation.tr("Pick the light or dark scheme from each wallpaper's brightness so text stays readable. Applies on every wallpaper change, overriding the manual dark-mode toggle.")
+                }
+            }
+        }
+    }
+
+    // Motion Section
+    SettingsCardSection {
+        visible: (Config.options?.panelFamily ?? "ii") !== "waffle"
+        expanded: false
+        icon: "animation"
+        title: Translation.tr("Motion")
+
+        component MotionRow: RowLayout {
+            id: motionRow
+            Layout.fillWidth: true
+            spacing: 8
+
+            required property string label
+            required property string tooltip
+            required property string key
+
+            // Short, human words instead of motion-design jargon — the label is the
+            // explanation, so the dropdown never needs to truncate or carry a tooltip.
+            readonly property var curveOptions: [
+                { displayName: Translation.tr("Default"), value: "default" },
+                { displayName: Translation.tr("Smooth"), value: "standard" },
+                { displayName: Translation.tr("Speed up"), value: "standardAccel" },
+                { displayName: Translation.tr("Ease out"), value: "standardDecel" },
+                { displayName: Translation.tr("Swoop"), value: "emphasized" },
+                { displayName: Translation.tr("Swoop in"), value: "emphasizedAccel" },
+                { displayName: Translation.tr("Swoop out"), value: "emphasizedDecel" },
+                { displayName: Translation.tr("Bouncy"), value: "expressive" },
+                { displayName: Translation.tr("Punchy"), value: "expressiveEffects" },
+                { displayName: Translation.tr("Overshoot"), value: "zzzOvershoot" },
+                { displayName: Translation.tr("Snap"), value: "zzzSnap" },
+                { displayName: Translation.tr("Linear"), value: "linear" }
+            ]
+
+            RowLayout {
+                Layout.preferredWidth: 90
+                spacing: 2
+
+                StyledText {
+                    text: motionRow.label
+                    font.pixelSize: Appearance.font.pixelSize.small
+                    color: Appearance.colors.colOnLayer1
+                }
+
+                MaterialSymbol {
+                    text: "info"
+                    iconSize: Appearance.font.pixelSize.small
+                    color: Appearance.colors.colSubtext
+                    MouseArea {
+                        id: infoArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.WhatsThisCursor
+                        StyledToolTip {
+                            extraVisibleCondition: false
+                            alternativeVisibleCondition: infoArea.containsMouse
+                            text: motionRow.tooltip
+                        }
+                    }
+                }
+            }
+
+            StyledText {
+                text: speedSlider.value.toFixed(2) + "x"
+                font.pixelSize: Appearance.font.pixelSize.small
+                font.family: Appearance.font.family.monospace
+                color: Appearance.colors.colPrimary
+                Layout.preferredWidth: 38
+                horizontalAlignment: Text.AlignRight
+            }
+
+            StyledSlider {
+                id: speedSlider
+                Layout.fillWidth: true
+                from: 0.5
+                to: 2.0
+                stepSize: 0.05
+                value: Config.options?.appearance?.animationSpeed?.[motionRow.key] ?? 1.0
+                configuration: StyledSlider.Configuration.S
+                onMoved: if (!pressed) Config.setNestedValue(`appearance.animationSpeed.${motionRow.key}`, Math.round(value * 100) / 100)
+            }
+
+            StyledComboBox {
+                Layout.preferredWidth: 145
+                model: motionRow.curveOptions
+                textRole: "displayName"
+                currentIndex: {
+                    const current = Config.options?.appearance?.animationCurve?.[motionRow.key] ?? "default"
+                    const idx = motionRow.curveOptions.findIndex(o => o.value === current)
+                    return idx >= 0 ? idx : 0
+                }
+                onActivated: index => Config.setNestedValue(`appearance.animationCurve.${motionRow.key}`, motionRow.curveOptions[index].value)
+            }
+        }
+
+        SettingsGroup {
+            ConfigSelectionArray {
+                currentValue: Config.options?.appearance?.iiMotionProfile ?? "classic"
+                onSelected: newValue => Config.setNestedValue("appearance.iiMotionProfile", newValue)
+                options: [
+                    { displayName: Translation.tr("Classic"), icon: "motion_photos_paused", value: "classic" },
+                    { displayName: Translation.tr("Contextual"), icon: "gesture", value: "contextual" }
+                ]
+            }
+
+            MotionRow { label: Translation.tr("Movement"); tooltip: Translation.tr("Element move & resize — used almost everywhere"); key: "movement" }
+            MotionRow { label: Translation.tr("Enter/exit"); tooltip: Translation.tr("Panels & popups appearing or leaving"); key: "enterExit" }
+            MotionRow { label: Translation.tr("Click"); tooltip: Translation.tr("Click feedback and fast reactive transitions"); key: "clickBounce" }
+            MotionRow { label: Translation.tr("Scroll"); tooltip: Translation.tr("Scrolling lists and flickables"); key: "scroll" }
+
+            RippleButton {
+                Layout.fillWidth: true
+                implicitHeight: 36
+                buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                colBackground: Appearance.colors.colLayer1
+                colBackgroundHover: Appearance.colLayer1Hover
+                colRipple: Appearance.colLayer1Active
+
+                RowLayout {
+                    anchors.centerIn: parent
+                    spacing: 8
+                    MaterialSymbol {
+                        text: "restart_alt"
+                        iconSize: Appearance.font.pixelSize.normal
+                        color: Appearance.colors.colOnSurface
+                    }
+                    StyledText {
+                        text: Translation.tr("Reset to defaults")
+                        font.pixelSize: Appearance.font.pixelSize.small
+                    }
+                }
+
+                onClicked: {
+                    for (const key of ["movement", "enterExit", "clickBounce", "scroll"]) {
+                        Config.setNestedValue(`appearance.animationSpeed.${key}`, 1.0)
+                        Config.setNestedValue(`appearance.animationCurve.${key}`, "default")
+                    }
                 }
             }
         }
@@ -799,7 +1041,7 @@ ContentPage {
                 Layout.fillWidth: true
                 spacing: 8
 
-                MaterialSymbol { text: "nights_stay"; iconSize: 18; color: Appearance.colors.colSubtext }
+                MaterialSymbol { text: "bedtime"; iconSize: 18; color: Appearance.colors.colSubtext }
                 StyledText { text: Translation.tr("Night starts at"); Layout.fillWidth: true }
 
                 StyledSpinBox {
@@ -1250,10 +1492,10 @@ ContentPage {
                 visible: Config.options?.appearance?.wallpaperTheming?.enableTerminal ?? true
                 implicitWidth: applyNowRow.implicitWidth + 20
                 implicitHeight: 36
-                buttonRadius: Appearance.rounding.small
-                colBackground: Appearance.colors.colPrimaryContainer
-                colBackgroundHover: Appearance.colors.colPrimaryContainerHover
-                colRipple: Appearance.colors.colPrimaryContainerActive
+                buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                colBackground: Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colPrimaryContainer
+                colBackgroundHover: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimaryContainerHover
+                colRipple: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colPrimaryContainerActive
 
                 contentItem: RowLayout {
                     id: applyNowRow
@@ -1263,13 +1505,21 @@ ContentPage {
                     MaterialSymbol {
                         text: "sync"
                         iconSize: 16
-                        color: Appearance.colors.colOnPrimaryContainer
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                        }
                     }
 
                     StyledText {
                         text: Translation.tr("Apply to open terminals")
                         font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnPrimaryContainer
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                        }
                     }
                 }
 
@@ -1288,7 +1538,7 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: true
+        expanded: false
         icon: "style"
         title: Translation.tr("Global Style")
 
@@ -1301,81 +1551,6 @@ ContentPage {
                 ? Config.options?.appearance?.globalStyle ?? "material"
                 : derivedStyle
 
-            // Get corner style for current global style
-            function getCornerStyleForGlobalStyle(styleId) {
-                const styles = Config.options?.appearance?.globalStyleCornerStyles
-                if (!styles) return 1
-                switch (styleId) {
-                    case "material": return styles.material ?? 1
-                    case "cards": return styles.cards ?? 3
-                    case "aurora": return styles.aurora ?? 1
-                    case "inir": return styles.inir ?? 1
-                    case "angel": return styles.angel ?? 1
-                    default: return 1
-                }
-            }
-
-            // Save corner style for a global style
-            function setCornerStyleForGlobalStyle(styleId, cornerStyle) {
-                Config.setNestedValue(`appearance.globalStyleCornerStyles.${styleId}`, cornerStyle)
-            }
-
-            function _globalStyleValues(styleId) {
-                const cornerStyle = getCornerStyleForGlobalStyle(styleId)
-
-                if (styleId === "cards") {
-                    return {
-                        "dock.cardStyle": true,
-                        "sidebar.cardStyle": true,
-                        "bar.cornerStyle": cornerStyle,
-                        "appearance.transparency.enable": false,
-                    }
-                }
-
-                if (styleId === "aurora") {
-                    return {
-                        "dock.cardStyle": false,
-                        "sidebar.cardStyle": false,
-                        "bar.cornerStyle": cornerStyle,
-                        "appearance.transparency.enable": true,
-                    }
-                }
-
-                if (styleId === "inir") {
-                    return {
-                        "dock.cardStyle": false,
-                        "sidebar.cardStyle": false,
-                        "bar.cornerStyle": cornerStyle,
-                        "appearance.transparency.enable": false,
-                    }
-                }
-
-                if (styleId === "angel") {
-                    // HUG mode (0) is incompatible with angel — force Float (1) if saved as Hug
-                    return {
-                        "dock.cardStyle": false,
-                        "sidebar.cardStyle": false,
-                        "bar.cornerStyle": cornerStyle === 0 ? 1 : cornerStyle,
-                        "appearance.transparency.enable": true,
-                    }
-                }
-
-                // material
-                return {
-                    "dock.cardStyle": false,
-                    "sidebar.cardStyle": false,
-                    "bar.cornerStyle": cornerStyle,
-                    "appearance.transparency.enable": false,
-                }
-            }
-
-            function _applyGlobalStyle(styleId) {
-                _log("[GlobalStyle] apply", styleId)
-                let values = globalStyleGroup._globalStyleValues(styleId)
-                values["appearance.globalStyle"] = styleId
-                Config.setNestedValues(values)
-            }
-
             ContentSubsection {
                 title: Translation.tr("Style")
 
@@ -1383,24 +1558,23 @@ ContentPage {
                     currentValue: globalStyleGroup.currentStyle
                     onSelected: (newValue) => {
                         _log("[GlobalStyle] selected", newValue)
-                        globalStyleGroup._applyGlobalStyle(newValue)
+                        ThemeService.setGlobalStyle(newValue)
                     }
                     options: [
                         { displayName: Translation.tr("Material"), icon: "tune", value: "material" },
                         { displayName: Translation.tr("Cards"), icon: "branding_watermark", value: "cards" },
                         { displayName: Translation.tr("Aurora"), icon: "blur_on", value: "aurora" },
                         { displayName: Translation.tr("Inir"), icon: "terminal", value: "inir" },
-                        { displayName: Translation.tr("Angel"), icon: "raven", value: "angel" }
+                        { displayName: Translation.tr("Angel"), icon: "raven", value: "angel" },
+                        { displayName: Translation.tr("ZZZ"), icon: "bolt", value: "zzz" },
+                        { displayName: Translation.tr("Cookie Shapes"), icon: "cookie", value: "cookie" }
                     ]
                 }
             }
 
-            StyledText {
-                Layout.fillWidth: true
-                text: Translation.tr("Material keeps the original surfaces. Cards enables rounded card containers everywhere. Aurora enables a wallpaper-tinted glass surface style across panels. Inir uses a TUI-inspired dark theme with accent-colored borders. Angel is the flagship glass style with refined blur, escalonado shadows, and partial accent borders.")
-                color: Appearance.colors.colSubtext
-                font.pixelSize: Appearance.font.pixelSize.smaller
-                wrapMode: Text.WordWrap
+            SettingsNote {
+                icon: "palette"
+                text: Translation.tr("Restyles every surface in the shell. Applies instantly.")
             }
 
         }
@@ -1439,15 +1613,32 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: ThemeService.currentTheme === "custom" && !(Config.options?.settingsUi?.easyMode ?? false)
-        expanded: true
+        id: zzzStyleEditorSection
+        visible: Appearance.zzzEverywhere
+        expanded: false
+        icon: "bolt"
+        title: Translation.tr("ZZZ Style Editor")
+
+        SettingsGroup {
+            Loader {
+                Layout.fillWidth: true
+                active: zzzStyleEditorSection.expanded && Appearance.zzzEverywhere
+                source: "ZzzStyleEditor.qml"
+            }
+        }
+    }
+
+    SettingsCardSection {
+        id: customThemeEditorSection
+        visible: !(Config.options?.settingsUi?.easyMode ?? false)
+        expanded: false
         icon: "edit"
         title: Translation.tr("Custom Theme Editor")
 
         SettingsGroup {
             Loader {
                 Layout.fillWidth: true
-                active: ThemeService.currentTheme === "custom"
+                active: customThemeEditorSection.expanded
                 source: "CustomThemeEditor.qml"
             }
         }
@@ -1502,7 +1693,7 @@ ContentPage {
                                     Layout.alignment: Qt.AlignHCenter
                                     text: modelData.icon
                                     iconSize: Appearance.font.pixelSize.normal
-                                    color: Appearance.m3colors.m3onSurface
+                                    color: Appearance.colors.colOnSurface
                                 }
 
                                 StyledText {
@@ -1673,9 +1864,9 @@ ContentPage {
                     icon: "gradient"
                     text: Translation.tr("Grade")
                     from: -200
-                    to: 200
+                    to: 150
                     stepSize: 25
-                    value: Config.options?.appearance?.typography?.variableAxes?.grad ?? 175
+                    value: Config.options?.appearance?.typography?.variableAxes?.grad ?? 150
                     onValueChanged: {
                         if (Config.options?.appearance?.typography?.variableAxes)
                             Config.setNestedValue("appearance.typography.variableAxes.grad", value)

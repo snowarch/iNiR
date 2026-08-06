@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import qs.services
 import qs.modules.common
+import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.modules.waffle.looks
 
@@ -19,6 +20,8 @@ Button {
     property color colForeground: Looks.colors.fg
     property color colForegroundToggled: Looks.colors.accentFg
     property color colForegroundDisabled: ColorUtils.transparentize(Looks.colors.subfg, 0.4)
+    property bool cookieMorphing: false
+    property bool animateStateChanges: true
     property alias backgroundOpacity: backgroundRect.opacity
     property color color: {
         if (!root.enabled) return colBackground;
@@ -98,16 +101,33 @@ Button {
 
     background: Rectangle {
         id: backgroundRect
-        radius: Looks.radius.medium
-        color: root.color
-        border.width: Looks.glassActive && (root.hovered || root.checked || root.down) ? 1 : 0
-        border.color: Looks.colors.tooltipBorder
+        color: Looks.cookieEverywhere && root.cookieMorphing ? "transparent" : root.color
+        radius: Looks.cookieEverywhere ? height / 2 : Looks.radius.medium
+        border.width: Looks.cookieEverywhere
+            ? (root.visualFocus && !root.cookieMorphing ? 2 : 0)
+            : (Looks.glassActive && (root.hovered || root.checked || root.down) ? 1 : 0)
+        border.color: Looks.cookieEverywhere ? Looks.colors.accent : Looks.colors.tooltipBorder
+
+        Loader {
+            anchors.fill: parent
+            active: Looks.cookieEverywhere && root.cookieMorphing
+            // Ring, not a plate underneath — see RippleButton. And visualFocus,
+            // so a click does not leave the control ringed.
+            sourceComponent: CookieFace {
+                role: "control"
+                selected: root.checked
+                color: root.color
+                strokeColor: root.visualFocus ? Looks.colors.accent : "transparent"
+                strokeWidth: root.visualFocus ? 2 : 0
+            }
+        }
         
         // Windows 11 style press feedback - subtle but noticeable
         scale: root.down ? 0.96 : 1.0
         opacity: root.down ? 0.9 : 1.0
         
         Behavior on color {
+            enabled: root.animateStateChanges
             animation: ColorAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
         }
         Behavior on scale {

@@ -8,7 +8,7 @@ No accounts, no OAuth, no tokens. You paste an ICS URL and events show up.
 
 ## How it works
 
-Every calendar provider exposes a standard ICS/iCal URL for each calendar. iNiR fetches these URLs periodically (default: every 15 minutes), parses the events, and merges them with your local events. External events are read-only — you can see them but not edit or delete them from the shell.
+Every calendar provider exposes a standard ICS/iCal URL for each calendar. iNiR fetches these URLs periodically (default: every 15 minutes), parses the events, and merges them with your local events. External events are read-only: you can see them but not edit or delete them from the shell.
 
 Each calendar source gets its own color dot on the calendar grid, so you can tell at a glance which calendar an event belongs to.
 
@@ -21,7 +21,7 @@ Open **Settings > Services > Calendar Sync** (Material ii) or **Waffle Settings 
 1. Enable **External calendar sync**
 2. Click **Add**
 3. Enter a name, paste the ICS URL, and pick a color
-4. Done — events appear immediately
+4. Done. Events appear immediately
 
 You can add multiple calendars. Each one syncs independently.
 
@@ -101,11 +101,11 @@ External events in the Events tab show:
 
 ## Privacy
 
-The ICS URL is stored in your local `config.json` and nowhere else. Fetches go directly from your machine to the calendar provider — there's no intermediary server.
+The ICS URL is stored in your local `config.json` and nowhere else. Fetches go directly from your machine to the calendar provider. There's no intermediary server.
 
 The "secret" ICS URL from Google Calendar grants read-only access to that calendar. Anyone with the URL can see your events, so treat it like a password. If compromised, regenerate it from Google Calendar settings.
 
-Event data is cached locally at `~/.local/state/user/calendar-sync-cache.json` so events are available on restart without re-fetching.
+Event data is cached locally at `~/.local/state/quickshell/user/calendar-sync-cache.json` so events are available on restart without re-fetching.
 
 ---
 
@@ -113,7 +113,7 @@ Event data is cached locally at `~/.local/state/user/calendar-sync-cache.json` s
 
 **Events not showing up after adding a source:**
 
-Check for errors in the Settings UI — a red error icon appears next to sources that failed to fetch. Common causes:
+Check for errors in the Settings UI. A red error icon appears next to sources that failed to fetch. Common causes:
 - Invalid or expired ICS URL
 - Network connectivity issues
 - URL requires authentication (only public/secret ICS URLs work, not URLs behind login)
@@ -135,6 +135,6 @@ QS_DEBUG=1 qs -c inir    # shows [CalendarSync] log lines
 
 Delete the cache file to force a clean re-fetch:
 ```bash
-rm ~/.local/state/user/calendar-sync-cache.json
+rm ~/.local/state/quickshell/user/calendar-sync-cache.json
 inir restart
 ```

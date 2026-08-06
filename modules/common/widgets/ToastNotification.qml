@@ -53,11 +53,35 @@ Item {
             anchors.leftMargin: 20
             spacing: 10
 
-            // Icon
-            MaterialSymbol {
-                text: root.icon
-                iconSize: 20
-                color: root.isError ? (Appearance.angelEverywhere ? Appearance.m3colors.m3error : Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError) : (Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colOnLayer1)
+            // Focal status badge. The toast body remains a stable content
+            // pebble; Cookie reserves the organic shape for this compact role.
+            Item {
+                implicitWidth: Appearance.cookieEverywhere ? 30 : 20
+                implicitHeight: implicitWidth
+
+                CookieFace {
+                    anchors.fill: parent
+                    visible: Appearance.cookieEverywhere
+                    role: "badge"
+                    color: root.isError
+                        ? Appearance.colors.colErrorContainer
+                        : Appearance.colors.colPrimaryContainer
+                }
+
+                MaterialSymbol {
+                    anchors.centerIn: parent
+                    text: root.icon
+                    iconSize: 20
+                    color: Appearance.cookieEverywhere
+                        ? (root.isError
+                            ? Appearance.colors.colOnErrorContainer
+                            : Appearance.colors.colOnPrimaryContainer)
+                        : root.isError
+                            ? (Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError)
+                            : (Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                                : Appearance.inirEverywhere ? Appearance.inir.colPrimary
+                                : Appearance.colors.colOnLayer1)
+                }
             }
 
             // Content

@@ -9,15 +9,16 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.27.0-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.29.0-blue?style=flat-square" alt="Version"></a>
   <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-green?style=flat-square" alt="License"></a>
 </p>
 
 <p align="center">
-  <a href="docs/INSTALL.md">Install</a> &bull;
-  <a href="docs/KEYBINDS.md">Keybinds</a> &bull;
-  <a href="docs/IPC.md">IPC Reference</a> &bull;
+  <a href="https://github.com/snowarch/inir/wiki/INSTALL">Install</a> &bull;
+  <a href="https://github.com/snowarch/inir/wiki/KEYBINDS">Keybinds</a> &bull;
+  <a href="https://github.com/snowarch/inir/wiki/IPC">IPC Reference</a> &bull;
   <a href="https://discord.gg/pAPTfAhZUJ">Discord</a> &bull;
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>
@@ -83,7 +84,7 @@ I wanted my desktop to look and work a certain way and nothing else did exactly 
 ## Screenshots
 
 <details open>
-<summary><b>Material ii</b> — floating bar, sidebars, Material Design aesthetic</summary>
+<summary><b>Material ii</b>: floating bar, sidebars, Material Design aesthetic</summary>
 
 | | |
 |:---:|:---:|
@@ -94,7 +95,7 @@ I wanted my desktop to look and work a certain way and nothing else did exactly 
 </details>
 
 <details>
-<summary><b>Waffle</b> — bottom taskbar, action center, Windows 11 vibes</summary>
+<summary><b>Waffle</b>: bottom taskbar, action center, Windows 11 vibes</summary>
 
 | | |
 |:---:|:---:|
@@ -106,90 +107,90 @@ I wanted my desktop to look and work a certain way and nothing else did exactly 
 
 > [!WARNING]
 > Not for low-spec machines.
-> Everything is customizable though - disable features, strip panels, flatten the design. Read the docs, tweak `config.json` or Settings, you'll figure it out.
+> You can strip it down a lot though. Turn off effects, drop panels, flatten the design. Settings or `config.json`, whichever you prefer.
 
 ## Features
 
-### New in 2.26
-
-- Modular bar layout with a drag editor in Settings
-- Screen Time widget, local-only and opt-in
-- World Clock sidebar widget with timezone management
-- Smoother media title scrolling in the bar
-- Wallpaper shuffle controls in Settings
-- Better dock/taskbar app icon matching
-
 **Two panel families**, switchable on the fly with `Super+Shift+W`:
-- **Material ii** — floating bar, sidebars, dock, 5 visual styles (material, cards, aurora, inir, angel)
-- **Waffle** — Windows 11-inspired taskbar, start menu, action center, notification center
+- **Material ii**: floating bar, sidebars, dock, and 7 visual styles (Material, Cards, Aurora, iNiR, Angel, ZZZ, Cookie Shapes)
+- **Waffle**: Windows 11-inspired taskbar, start menu, action center, notification center
 
-**Automatic theming** — pick a wallpaper and everything adapts:
+**Automatic theming**. Pick a wallpaper and everything adapts:
 - Shell colors via Material You, propagated to GTK3/4, Qt, terminals, Firefox, Discord, SDDM
-- 10 terminal tools auto-themed (foot, kitty, alacritty, starship, fuzzel, btop, lazygit, yazi)
+- 10 theming targets covering terminals, editors, browsers, Spicetify, Steam, Cava and more
 - Theme presets: Gruvbox, Catppuccin, Rosé Pine, and custom
 
-**Compositor** — built for Niri.
+**Built for Niri.** Hyprland code survives from the fork but is not tested.
+
+**Kira**, the mascot, lives on your desktop if you want her there. Off by default, art pack is a separate download.
 
 <details>
 <summary><b>Full feature list</b></summary>
 
-### Theming & Appearance
+### Theming and appearance
 
-Pick a wallpaper and the entire system follows — shell, GTK/Qt apps, terminals, Firefox, Discord, SDDM login screen. All automatic.
+- **7 visual styles**: Material (solid), Cards, Aurora (glass blur), iNiR (TUI-inspired), Angel (neo-brutalism), ZZZ (poster plates), Cookie Shapes (animated shape morphing)
+- **Dynamic wallpaper colors** via Material You, propagated system-wide
+- **10 terminal and TUI tools auto-themed**: foot, kitty, alacritty, ghostty, wezterm, starship, fuzzel, btop, lazygit, yazi
+- **App theming**: GTK3/4, Qt (via plasma-integration and darkly), Firefox (MaterialFox), Discord/Vesktop (System24), Zed, Spicetify, Steam, SDDM
+- **Theme presets**: Gruvbox, Catppuccin, Rosé Pine, and more, or create your own
+- **Video wallpapers**: mp4/webm/gif with optional blur, or frozen first frame for performance
+- **Desktop widgets**: clock (multiple styles), weather, media controls on the wallpaper layer
 
-- **5 visual styles** — Material (solid), Cards, Aurora (glass blur), iNiR (TUI-inspired), Angel (neo-brutalism)
-- **Dynamic wallpaper colors** via Material You — propagated system-wide
-- **10 terminal tools auto-themed** — foot, kitty, alacritty, starship, fuzzel, pywalfox, btop, lazygit, yazi
-- **App theming** — GTK3/4, Qt (via plasma-integration + darkly), Firefox (MaterialFox), Discord/Vesktop (System24)
-- **Theme presets** — Gruvbox, Catppuccin, Rosé Pine, and more — or create your own
-- **Video wallpapers** — mp4/webm/gif with optional blur, or frozen first frame for performance
-- **SDDM login theme** — Material You colors synced to your wallpaper
-- **Desktop widgets** — clock (multiple styles), weather, media controls on the wallpaper layer
+### Bar
 
-### Sidebars & Widgets (Material ii)
+- **6 bar styles**: classic, islands, scenic, frame, Material 3 capsules, and pill
+- **Pill bar**: a morphing centre island that opens on hover into workspaces, launcher, mixer, media, calendar and a screen recorder
+- **Modular layout** with a drag editor in Settings, so any module can go anywhere
+- **Vertical bar** for the people who want the screen edge back
+
+### Sidebars and widgets (Material ii)
 
 Left sidebar (app drawer):
-- **AI Chat** — Gemini, Mistral, OpenRouter, or local models via Ollama
-- **YT Music** — full player with search, queue, and controls
-- **Wallhaven browser** — search and apply wallpapers directly
-- **Anime tracker** — AniList integration with schedule view
-- **Reddit feed** — browse subreddits inline
-- **Translator** — via Gemini or translate-shell
-- **Draggable widgets** — crypto, media player, quick notes, status rings, weekly calendar
+- **AI Chat**: live model catalogs across Ollama, LM Studio, OpenRouter, Gemini, Groq, Mistral, Cerebras, Anthropic, OpenAI and OpenCode
+- **YT Music**: cookie-less InnerTube player with search, queue, radio and synced lyrics
+- **Wallhaven browser**: search and apply wallpapers directly
+- **Anime tracker**: AniList integration with schedule view
+- **Translator**: via Gemini or translate-shell
+- **Draggable widgets**: crypto, media player, quick notes, status rings, weekly calendar
 
 Right sidebar:
 - **Calendar** with event integration
 - **Notification center**
-- **Quick toggles** — WiFi, Bluetooth, night light, DND, power profiles, WARP VPN, EasyEffects
-- **Volume mixer** — per-app control
-- **Bluetooth & WiFi** device management
+- **Quick toggles**: WiFi, Bluetooth, night light, DND, power profiles, WARP VPN, EasyEffects
+- **Volume mixer** with per-app control
+- **Bluetooth and WiFi** device management
 - **Pomodoro timer**, **todo list**, **calculator**, **notepad**
-- **System monitor** — CPU, RAM, temperature
+- **System monitor**: CPU, RAM, temperature
 
 ### Tools
 
-- **Workspace overview** — adapted for Niri's scrolling model, with app search and calculator
-- **Window switcher** — Alt+Tab across all workspaces
-- **Clipboard manager** — history with search and image preview
-- **Region tools** — screenshots, screen recording, OCR, reverse image search
-- **Cheatsheet** — keybind viewer pulled from your Niri config
-- **Media controls** — full MPRIS player with multiple layout presets
-- **On-screen display** — volume, brightness, and media OSD
-- **Song recognition** — Shazam-style identification via SongRec
-- **Voice search** — record and search via Gemini
+- **Workspace overview**: adapted for Niri's scrolling model, with app search and calculator
+- **Dashboard hub**: configurable three-column overlay with agenda, notifications, todo, notes, media and weather
+- **Workspace edge strip**: hover rail with live workspace previews and drag-to-reorder
+- **Window switcher**: an animated Alt-Tab across all workspaces, opt-in since Niri ships its own now
+- **Clipboard manager**: history with search and image preview
+- **Region tools**: screenshots, screen recording, OCR, reverse image search
+- **Cheatsheet**: keybind viewer pulled from your Niri config
+- **Media controls**: full MPRIS player with multiple layout presets
+- **On-screen display**: volume, brightness, and media OSD
+- **Song recognition**: Shazam-style identification via SongRec
+- **Voice input**: local whisper.cpp when installed, or a connected Groq, Gemini or OpenAI backend
 
 ### System
 
-- **GUI settings** — configure everything without touching files
-- **GameMode** — auto-disables effects for fullscreen apps
-- **Auto-updates** — `inir update` with rollback, migrations, and user change preservation
+- **GUI settings**: configure everything without touching files
+- **GameMode**: auto-disables effects for fullscreen apps
+- **Auto-updates**: `inir update` with rollback, migrations, and user change preservation
 - **Lock screen** and **session screen** (logout/reboot/shutdown/suspend)
-- **Polkit agent**, **on-screen keyboard**, **autostart manager**
-- **9 languages** — auto-detection, with AI-assisted translation generation
-- **Night light** — scheduled or manual
-- **Weather** — Open-Meteo, supports GPS, manual coordinates, or city name
-- **Battery management** — configurable thresholds, auto-suspend on critical
-- **Shell update checker** — notifies when new versions are available
+- **Polkit agent**, **on-screen keyboard**, **autostart manager** backed by niri's own startup file
+- **Kira**: pixel-art cat girl who wanders the screen edges, reacts to what you do, and has a chaos mode. Opt-in, separate ~32 MiB art pack under `./setup` › Extras
+- **15 languages** with auto-detection
+- **Night light**: scheduled or manual
+- **Weather**: Open-Meteo, supports GPS, manual coordinates, or city name
+- **Battery management**: configurable thresholds, auto-suspend on critical
+- **Custom event sounds** with a master volume and per-event audio files
+- **Shell update checker**: notifies when new versions are available
 
 </details>
 
@@ -200,11 +201,11 @@ Right sidebar:
 ```bash
 git clone https://github.com/snowarch/inir.git
 cd inir
-./setup install       # interactive — asks before each step
-./setup install -y    # automatic — no questions asked
+./setup install       # interactive, asks before each step
+./setup install -y    # automatic, no questions asked
 ```
 
-The installer handles dependencies, system config, theming — everything. After install, run `inir run` to start the shell, or log out and back in.
+The installer handles dependencies, system config and theming. After install, run `inir run` to start the shell, or log out and back in.
 
 ```bash
 inir run                        # launch the shell
@@ -214,13 +215,15 @@ inir doctor                     # auto-diagnose and fix
 inir update                     # pull + migrate + restart
 ```
 
-**Supported distros:** Arch (automated installer). Other distros can install manually — see [PACKAGES.md](docs/PACKAGES.md).
+Other ways in, if `./setup install` isn't what you want:
 
-| Method | Command |
-|--------|---------|
-| System install | `sudo make install && inir run` |
-| TUI menu | `./setup` |
-| Rollback | `./setup rollback` |
+```bash
+./setup                 # TUI menu, pick what you want
+sudo make install       # system-wide instead of your home
+./setup rollback        # undo the last update
+```
+
+**Distros:** Arch gets the automated installer. Everything else installs by hand, the [package list](https://github.com/snowarch/inir/wiki/PACKAGES) tells you what you need.
 
 ---
 
@@ -228,35 +231,37 @@ inir update                     # pull + migrate + restart
 
 | Key | Action |
 |-----|--------|
-| `Super+Space` | Overview — search apps, navigate workspaces |
-| `Alt+Tab` | Window switcher |
-| `Super+V` | Clipboard history |
-| `Super+Shift+S` | Screenshot region |
-| `Super+Shift+X` | OCR region |
-| `Super+,` | Settings |
-| `Super+Shift+W` | Switch panel family |
+| <kbd>Super</kbd> + <kbd>Space</kbd> | Overview: search apps, navigate workspaces |
+| <kbd>Super</kbd> + <kbd>V</kbd> | Clipboard history |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd> | Screenshot a region |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>X</kbd> | OCR a region |
+| <kbd>Super</kbd> + <kbd>,</kbd> | Settings |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd> | Switch panel family |
+| <kbd>Super</kbd> + <kbd>/</kbd> | Cheatsheet, in case you forget the rest |
 
-Full list: [docs/KEYBINDS.md](docs/KEYBINDS.md)
+Full list: [Keybinds](https://github.com/snowarch/inir/wiki/KEYBINDS)
 
 ---
 
 ## Wallpapers
 
-15 wallpapers ship bundled. For more, check [iNiR-Walls](https://github.com/snowarch/iNiR-Walls) — a curated collection that works well with the Material You pipeline.
+15 wallpapers ship bundled. For more, check [iNiR-Walls](https://github.com/snowarch/iNiR-Walls), a curated collection that works well with the Material You pipeline.
 
 ---
 
 ## Documentation
 
-| | |
+Everything user-facing lives in the [Wiki](https://github.com/snowarch/inir/wiki).
+
+| Page | What's in it |
 |---|---|
-| [INSTALL.md](docs/INSTALL.md) | Installation guide |
-| [SETUP.md](docs/SETUP.md) | Setup commands — updates, migrations, rollback |
-| [KEYBINDS.md](docs/KEYBINDS.md) | All keyboard shortcuts |
-| [IPC.md](docs/IPC.md) | IPC targets for scripting and keybinds |
-| [PACKAGES.md](docs/PACKAGES.md) | Every dependency and why it's there |
-| [LIMITATIONS.md](docs/LIMITATIONS.md) | Known limitations and workarounds |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Technical architecture overview |
+| [Install](https://github.com/snowarch/inir/wiki/INSTALL) | Getting it running |
+| [Setup](https://github.com/snowarch/inir/wiki/SETUP) | Updates, migrations, rollback |
+| [Keybinds](https://github.com/snowarch/inir/wiki/KEYBINDS) | Every shortcut |
+| [IPC](https://github.com/snowarch/inir/wiki/IPC) | Targets you can bind or script |
+| [Packages](https://github.com/snowarch/inir/wiki/PACKAGES) | Every dependency and why it's there |
+| [Limitations](https://github.com/snowarch/inir/wiki/LIMITATIONS) | What's known broken, and workarounds |
+| [Architecture](ARCHITECTURE.md) | How the code is put together |
 
 ---
 
@@ -270,7 +275,7 @@ inir repair                     # doctor + restart + filtered log check
 ./setup rollback                # undo the last update
 ```
 
-Check [LIMITATIONS.md](docs/LIMITATIONS.md) before opening an issue.
+Check [Limitations](https://github.com/snowarch/inir/wiki/LIMITATIONS) before opening an issue. If you'd rather just ask someone, Discord is faster.
 
 ---
 
@@ -282,14 +287,23 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code patterns, and
 
 ## Credits
 
-- [**end-4**](https://github.com/end-4/dots-hyprland): original illogical-impulse for Hyprland
-- [**Quickshell**](https://quickshell.outfoxxed.me/): the framework powering this shell
-- [**Niri**](https://github.com/YaLTeR/niri): the scrolling tiling Wayland compositor
+- [**end-4**](https://github.com/end-4/dots-hyprland): illogical-impulse, the Hyprland dots iNiR forked from
+- [**Gakuseei**](https://github.com/Gakuseei): [Ricelin](https://github.com/Gakuseei/Ricelin), where the pill bar and the washi and flame look come from
+- [**Quickshell**](https://quickshell.outfoxxed.me/): the framework this runs on
+- [**Niri**](https://github.com/YaLTeR/niri): the compositor it's built for
+
+GPL-3.0, same as end-4's dots. Copyright (C) 2025-2026 snowarch.
+
+---
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/snowarch/inir-mascot/main/inir-mascot-hero-banner.png" alt="iNiR mascot leaning on the iNiR logotype" width="720">
+</p>
 
 ---
 
 <p align="center">
   <a href="https://github.com/snowarch/inir/graphs/contributors">Contributors</a> &bull;
   <a href="CHANGELOG.md">Changelog</a> &bull;
-  <a href="LICENSE">MIT License</a>
+  <a href="LICENSE">GPL-3.0 License</a>
 </p>

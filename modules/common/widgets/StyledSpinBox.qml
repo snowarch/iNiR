@@ -16,6 +16,13 @@ SpinBox {
         : Appearance.rounding.unsharpen
     hoverEnabled: true
     editable: true
+    textFromValue: function(value, locale) {
+        return String(value)
+    }
+    valueFromText: function(text, locale) {
+        const parsed = Number.parseInt(String(text).trim(), 10)
+        return Number.isFinite(parsed) ? parsed : root.value
+    }
 
     opacity: root.enabled ? 1 : 0.4
 
@@ -23,6 +30,8 @@ SpinBox {
         color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
             : Appearance.inirEverywhere ? Appearance.inir.colLayer2 : Appearance.colors.colLayer2
         radius: root.radius
+        Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
     }
 
     contentItem: Item {
@@ -32,16 +41,14 @@ SpinBox {
         StyledTextInput {
             id: labelText
             anchors.centerIn: parent
-            text: root.value // displayText would make the numbers weird like 1,000 instead of 1000
+            text: root.displayText
             color: Appearance.colors.colOnLayer2
             font.family: Appearance.font.family.numbers
             font.variableAxes: Appearance.font.variableAxes.numbers
             font.pixelSize: Appearance.font.pixelSize.small
             validator: root.validator
-            onTextChanged: {
-                if (!activeFocus) return;
-                root.value = parseFloat(text);
-            }
+            inputMethodHints: Qt.ImhFormattedNumbersOnly
+            selectByMouse: true
         }
     }
 

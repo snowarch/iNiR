@@ -118,11 +118,24 @@ WSettingsPage {
         }
 
         WSettingsSwitch {
-            label: Translation.tr("Hide when fullscreen")
+            label: Translation.tr("Hide main wallpaper in fullscreen")
             icon: "eye-off"
-            description: Translation.tr("Hide the Waffle wallpaper layer while a fullscreen window is active")
+            description: Translation.tr("Hide the main wallpaper while a fullscreen window is active. The Task View backdrop stays available.")
             checked: root.wBg.hideWhenFullscreen ?? true
             onCheckedChanged: root.setNestedValueWhenReady("waffles.background.hideWhenFullscreen", checked)
+        }
+
+        WSettingsDropdown {
+            label: Translation.tr("Wallpaper selector")
+            icon: "image"
+            description: Translation.tr("Choose how the wallpaper library opens")
+            currentValue: Config.options?.wallpaperSelector?.style ?? "grid"
+            options: [
+                { value: "grid", displayName: Translation.tr("Grid") },
+                { value: "coverflow", displayName: Translation.tr("Coverflow") },
+                { value: "launcher", displayName: Translation.tr("Launcher") }
+            ]
+            onSelected: value => Config.setNestedValue("wallpaperSelector.style", value)
         }
 
 
@@ -187,7 +200,7 @@ WSettingsPage {
                 spacing: 4
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
-                model: root.heavySectionsReady ? Wallpapers.folderModel : null
+                model: root.heavySectionsReady && Wallpapers.folderModelReady ? Wallpapers.folderModel : null
 
                 delegate: Rectangle {
                     id: mainWpThumb
@@ -552,8 +565,8 @@ WSettingsPage {
         Rectangle {
             id: wMonPreviewCard
             Layout.fillWidth: true
-            Layout.leftMargin: 16
-            Layout.rightMargin: 16
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             Layout.bottomMargin: 4
             implicitHeight: wMonPreviewCol.implicitHeight
             radius: Looks.radius.large
@@ -919,7 +932,7 @@ WSettingsPage {
                                 spacing: 3
                                 clip: true
                                 boundsBehavior: Flickable.StopAtBounds
-                                model: root.heavySectionsReady ? Wallpapers.folderModel : null
+                                model: root.heavySectionsReady && Wallpapers.folderModelReady ? Wallpapers.folderModel : null
 
                                 delegate: Rectangle {
                                     id: bgWpThumb
@@ -1072,6 +1085,15 @@ WSettingsPage {
                     description: Translation.tr("Play videos and GIFs as wallpaper. When disabled, shows a frozen frame")
                     checked: root.wBg.enableAnimation ?? true
                     onCheckedChanged: root.setNestedValueWhenReady("waffles.background.enableAnimation", checked)
+                }
+
+                WSettingsSwitch {
+                    visible: root.wBg.enableAnimation ?? true
+                    label: Translation.tr("Pause animated wallpapers on battery")
+                    icon: "battery-saver"
+                    description: Translation.tr("Freeze videos and GIFs while on battery power to save energy")
+                    checked: Config.options?.background?.pauseAnimationOnBattery ?? true
+                    onCheckedChanged: root.setNestedValueWhenReady("background.pauseAnimationOnBattery", checked)
                 }
 
                 WSettingsSwitch {
@@ -1307,8 +1329,8 @@ WSettingsPage {
                     }
 
                     WSettingsChoiceGroup {
-                        Layout.leftMargin: 16
-                        Layout.rightMargin: 16
+                        Layout.leftMargin: 0
+                        Layout.rightMargin: 0
                         Layout.bottomMargin: 8
                         columns: 3
                         options: [

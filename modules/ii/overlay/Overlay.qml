@@ -39,6 +39,15 @@ Scope {
     // Ready flag to ensure screen is set before window becomes visible
     property bool _readyToShow: false
 
+    Component.onCompleted: {
+        if (GlobalStates.overlayOpen) {
+            root._everOpened = true
+            const outputName = NiriService.currentOutput
+            root.targetScreen = Quickshell.screens.find(s => s.name === outputName) ?? GlobalStates.primaryScreen ?? null
+            root._readyToShow = true
+        }
+    }
+
     Connections {
         target: GlobalStates
         function onOverlayOpenChanged() {
@@ -70,12 +79,17 @@ Scope {
             visible: GlobalStates.overlayOpen || OverlayContext.hasPinnedWidgets
             exclusionMode: ExclusionMode.Ignore
             WlrLayershell.namespace: "quickshell:overlay"
-            WlrLayershell.layer: WlrLayer.Overlay
+            // Native dialogs are ordinary toplevel windows. Yield the layer-shell
+            // overlay while one is visible so the picker is not buried behind it.
+            WlrLayershell.layer: OverlayContext.nativeDialogOpen
+                ? WlrLayer.Bottom : WlrLayer.Overlay
             // Exclusive focus when open; OnDemand for pinned clickable widgets when closed;
             // None otherwise (avoids input capture during GameMode)
-            WlrLayershell.keyboardFocus: GlobalStates.overlayOpen
+            WlrLayershell.keyboardFocus: OverlayContext.nativeDialogOpen
+                ? WlrKeyboardFocus.None
+                : GlobalStates.overlayOpen
                 ? WlrKeyboardFocus.Exclusive
-                : (OverlayContext.clickableWidgets.length > 0 && !GameMode.shouldHidePanels
+                : (OverlayContext.clickableWidgets.length > 0
                     ? WlrKeyboardFocus.OnDemand
                     : WlrKeyboardFocus.None)
             color: "transparent"
@@ -85,11 +99,29 @@ Scope {
             // Critical: this is a full-screen overlay surface — a stale null mask
             // would capture ALL input on the entire screen during gamemode.
             Item { id: emptyMask; width: 0; height: 0 }
-            mask: Region {
-                item: GlobalStates.overlayOpen ? overlayContent : emptyMask
-                regions: GameMode.shouldHidePanels ? [] : OverlayContext.clickableWidgets.map((widget) => regionComponent.createObject(this, {
+
+            // Tracks the region objects the mask below created, so the previous batch can be
+            // destroyed instead of leaked on every pin/clickthrough toggle. Rebuilt imperatively
+            // (not via a `regions:` binding) because reading+writing the same tracking property
+            // inside that binding's own evaluation is a binding loop.
+            property var _activeClickableRegions: []
+            function _rebuildClickableRegions() {
+                for (const region of overlayWindow._activeClickableRegions) region.destroy();
+                overlayWindow._activeClickableRegions = OverlayContext.clickableWidgets.map((widget) => regionComponent.createObject(overlayWindow, {
                     item: widget
                 }));
+                clickableRegionMask.regions = overlayWindow._activeClickableRegions;
+            }
+            Component.onCompleted: overlayWindow._rebuildClickableRegions()
+            Connections {
+                target: OverlayContext
+                function onClickableWidgetsChanged() { overlayWindow._rebuildClickableRegions(); }
+            }
+            mask: Region {
+                id: clickableRegionMask
+                item: GlobalStates.overlayOpen && !OverlayContext.nativeDialogOpen
+                    ? overlayContent : emptyMask
+                regions: []
             }
 
             anchors {
@@ -104,7 +136,8 @@ Scope {
                 windows: [overlayWindow]
                 active: false
                 onCleared: () => {
-                    if (!active) GlobalStates.overlayOpen = false;
+                    if (!active && !OverlayContext.nativeDialogOpen)
+                        GlobalStates.overlayOpen = false;
                 }
             }
 
@@ -115,12 +148,23 @@ Scope {
                 }
             }
 
+            Connections {
+                target: OverlayContext
+                function onNativeDialogOpenChanged() {
+                    if (OverlayContext.nativeDialogOpen)
+                        grab.active = false
+                    else
+                        delayedGrabTimer.restart()
+                }
+            }
+
             Timer {
                 id: delayedGrabTimer
                 interval: Appearance.calcEffectiveDuration(
                     Config.options.overlay.animationDurationMs ?? Appearance.animation.elementMoveFast.duration)
                 onTriggered: {
-                    grab.active = GlobalStates.overlayOpen;
+                    grab.active = GlobalStates.overlayOpen
+                        && !OverlayContext.nativeDialogOpen;
                 }
             }
 
@@ -131,25 +175,4 @@ Scope {
         }
     }
 
-    IpcHandler {
-        target: "overlay"
-
-        function toggle(): void {
-            GlobalStates.overlayOpen = !GlobalStates.overlayOpen;
-        }
-    }
-
-    Loader {
-        active: CompositorService.isHyprland
-        sourceComponent: Item {
-            GlobalShortcut {
-                name: "overlayToggle"
-                description: "Toggles overlay on press"
-
-                onPressed: {
-                    GlobalStates.overlayOpen = !GlobalStates.overlayOpen;
-                }
-            }
-        }
-    }
 }

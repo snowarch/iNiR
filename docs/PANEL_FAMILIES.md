@@ -4,7 +4,7 @@ iNiR has two completely separate UI families that share the same services and co
 
 ## Material ii
 
-The default family. Material Design language with five style variants that form a spectrum from structured to expressive.
+The default family. Material Design language with six style variants that form a spectrum from structured to expressive.
 
 ### Styles
 
@@ -15,11 +15,13 @@ The default family. Material Design language with five style variants that form 
 | **aurora** | Professional glass transparency. Blur-backed surfaces, frosted panels. |
 | **inir** | TUI-inspired elegance. Border and text hierarchy, muted tones, monospace accents. |
 | **angel** | The flagship. Neo-brutalism meets glass. Offset shadows, partial borders, inset glow, warm golden palette. |
+| **zzz** | Zenless Zone Zero poster UI: wallpaper-generated signal colors, black console surfaces, technical grid frames, cut-corner plates, sticker badges, segmented metrics, halftone texture, and Oxanium type. |
 
-Style dispatch priority: **angel > inir > aurora > material**. This means if you're checking which style to apply, check angel first:
+Style dispatch priority: **zzz > angel > inir > aurora > material**. This means if you're checking which style to apply, check zzz first:
 
 ```qml
-color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+color: Appearance.zzzEverywhere ? Appearance.colors.colLayer1
+     : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
      : Appearance.inirEverywhere ? Appearance.inir.colLayer1
      : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
      : Appearance.colors.colLayer1

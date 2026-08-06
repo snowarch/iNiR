@@ -19,8 +19,18 @@ Item {
         anchors.centerIn: parent
         spacing: 10
         
+        MascotImage {
+            id: noResultsMascot
+            Layout.alignment: Qt.AlignHCenter
+            Layout.preferredWidth: 96
+            Layout.preferredHeight: 96
+            surface: "cheatsheet"
+            pose: "fisheye-inspect"
+        }
+
         MaterialSymbol {
             Layout.alignment: Qt.AlignHCenter
+            visible: !noResultsMascot.active
             text: "search_off"
             iconSize: 40
             color: Appearance.colors.colSubtext
@@ -30,7 +40,7 @@ Item {
             Layout.alignment: Qt.AlignHCenter
             text: Translation.tr("No matches found")
             font.pixelSize: Appearance.font.pixelSize.large
-            color: Appearance.m3colors.m3onSurface
+            color: Appearance.colors.colOnSurface
         }
         
         StyledText {
@@ -60,13 +70,13 @@ Item {
                 MaterialSymbol {
                     text: "backspace"
                     iconSize: Appearance.font.pixelSize.small
-                    color: Appearance.m3colors.m3onSurface
+                    color: Appearance.colors.colOnSurface
                 }
                 
                 StyledText {
                     text: Translation.tr("Clear search")
                     font.pixelSize: Appearance.font.pixelSize.smaller
-                    color: Appearance.m3colors.m3onSurface
+                    color: Appearance.colors.colOnSurface
                 }
             }
         }

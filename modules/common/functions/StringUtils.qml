@@ -211,7 +211,11 @@ Singleton {
      * @returns { string }
      */
     function friendlyTimeForSeconds(seconds) {
-        if (isNaN(seconds) || seconds < 0)
+        // MPRIS players with no real duration (live streams/TV) sometimes report
+        // a garbage mpris:length instead of omitting it — treat anything past a
+        // sane real-world media ceiling (24h) as unknown rather than rendering
+        // a multi-day/year timestamp.
+        if (isNaN(seconds) || seconds < 0 || seconds > 86400)
             return "0:00";
         seconds = Math.floor(seconds);
         const h = Math.floor(seconds / 3600);
@@ -256,6 +260,22 @@ Singleton {
             .replace(/&gt;/gi, ">")
             .replace(/&quot;/gi, '"')
             .replace(/&#39;/gi, "'")
+    }
+
+    /**
+     * Turns a cliphist list preview that holds browser markup into readable text.
+     * Returns the input untouched when it is not markup, and "" when the markup
+     * carries no text: cliphist truncates its preview at 100 characters, which
+     * usually cuts the first tag in half, so callers need their own label for the
+     * empty case rather than falling back to raw tags.
+     * @param { string } str
+     * @returns { string }
+     */
+    function cliphistMarkupPreview(str: string): string {
+        if (!/^\s*<(!|\/?[a-zA-Z])/.test(str))
+            return str;
+        const stripped = str.replace(/<!--[\s\S]*?(-->|$)/g, "").replace(/<[^>]*$/, "");
+        return root.stripHtmlTags(stripped).replace(/\s+/g, " ").trim();
     }
 
     /**

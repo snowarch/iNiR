@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import qs.modules.common
+import qs.modules.common.functions
 import qs.modules.common.widgets
 import "root:"
 import "root:services"
@@ -12,8 +13,8 @@ import "root:services"
 Scope {
     id: root
 
-    property bool showPicker: false
-    property bool showOsd: false
+    readonly property bool showPicker: GlobalStates.tilingOverlayPickerOpen
+    readonly property bool showOsd: GlobalStates.tilingOverlayOsdOpen
 
     readonly property string currentLayout: NiriService.currentLayout
     readonly property int windowCount: NiriService.tilingWindowCount
@@ -31,33 +32,8 @@ Scope {
         return 0
     }
 
-    Timer {
-        id: osdTimer
-        interval: 1500
-        onTriggered: root.showOsd = false
-    }
-
-    Timer {
-        id: pickerTimer
-        interval: 2500
-        onTriggered: root.showPicker = false
-    }
-
-    Connections {
-        target: NiriService
-        function onLayoutApplied(layout, count) {
-            root.showOsd = true
-            osdTimer.restart()
-        }
-    }
-
     function applyLayout(id): void {
         NiriService.applyLayout(id)
-        pickerTimer.restart()
-    }
-
-    function cycle(): void {
-        NiriService.cycleLayout()
     }
 
     // Panel
@@ -91,7 +67,7 @@ Scope {
                 }
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: root.showPicker = false
+                    onClicked: GlobalStates.tilingOverlayPickerOpen = false
                 }
             }
 
@@ -103,16 +79,20 @@ Scope {
 
                 width: osdRow.width + 32
                 height: 72
-                radius: Appearance.rounding.large
-                color: Appearance.colors.colLayer0
+                radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius : Appearance.rounding.large
+                color: Appearance.zzzEverywhere ? Appearance.zzz.bg0 : Appearance.colors.colLayer0
                 border.width: 1
-                border.color: Appearance.colors.colLayer0Border
+                border.color: Appearance.zzzEverywhere ? Appearance.zzz.borderColor : Appearance.colors.colLayer0Border
                 visible: root.showOsd
+                Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+                Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
 
                 layer.enabled: visible
                 layer.effect: MultiEffect {
                     shadowEnabled: true
-                    shadowColor: "#40000000"
+                    shadowColor: ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.25)
                     shadowBlur: 0.8
                     shadowVerticalOffset: 8
                 }
@@ -125,15 +105,17 @@ Scope {
                     Rectangle {
                         Layout.preferredWidth: 48
                         Layout.preferredHeight: 48
-                        radius: Appearance.rounding.small
-                        color: Appearance.colors.colPrimaryContainer
+                        radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.bg2 : Appearance.colors.colPrimaryContainer
+                        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+                        Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
 
                         LayoutPreview {
                             anchors.fill: parent
                             anchors.margins: 6
                             layout: root.currentLayout
                             windowCount: root.windowCount
-                            accentColor: Appearance.colors.colOnPrimaryContainer
+                            accentColor: Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.colors.colOnPrimaryContainer
                         }
                     }
 
@@ -143,12 +125,16 @@ Scope {
                             text: root.layouts[root.layoutIndex(root.currentLayout)]?.name ?? "Off"
                             font.pixelSize: Appearance.font.pixelSize.large
                             font.weight: Font.DemiBold
-                            color: Appearance.colors.colOnLayer0
+                            color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer0
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                            }
                         }
                         StyledText {
                             text: root.windowCount + " window" + (root.windowCount !== 1 ? "s" : "")
                             font.pixelSize: Appearance.font.pixelSize.smaller
-                            color: Appearance.colors.colSubtext
+                            color: Appearance.zzzEverywhere ? Appearance.zzz.ghostInk : Appearance.colors.colSubtext
                         }
                     }
                 }
@@ -160,16 +146,20 @@ Scope {
                 anchors.centerIn: parent
                 width: 520
                 height: 360
-                radius: Appearance.rounding.large
-                color: Appearance.colors.colLayer0
+                radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius : Appearance.rounding.large
+                color: Appearance.zzzEverywhere ? Appearance.zzz.bg0 : Appearance.colors.colLayer0
                 border.width: 1
-                border.color: Appearance.colors.colLayer0Border
+                border.color: Appearance.zzzEverywhere ? Appearance.zzz.borderColor : Appearance.colors.colLayer0Border
                 visible: root.showPicker
+                Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+                Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
 
                 layer.enabled: visible
                 layer.effect: MultiEffect {
                     shadowEnabled: true
-                    shadowColor: "#50000000"
+                    shadowColor: ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.31)
                     shadowBlur: 1.0
                     shadowVerticalOffset: 12
                 }
@@ -188,27 +178,34 @@ Scope {
                         MaterialSymbol {
                             text: "grid_view"
                             iconSize: 26
-                            color: Appearance.colors.colPrimary
+                            color: Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.colors.colPrimary
                         }
                         StyledText {
-                            text: "Snap Layouts"
+                            text: Appearance.zzzEverywhere ? "SNAP LAYOUTS" : "Snap Layouts"
                             font.pixelSize: Appearance.font.pixelSize.larger
                             font.weight: Font.DemiBold
-                            color: Appearance.colors.colOnLayer0
+                            font.letterSpacing: Appearance.zzzEverywhere ? 1 : 0
+                            color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer0
                         }
                         Item { Layout.fillWidth: true }
                         Rectangle {
                             height: 24
                             width: statusText.width + 14
-                            radius: Appearance.rounding.small
-                            color: Appearance.colors.colPrimaryContainer
+                            radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                            color: Appearance.zzzEverywhere ? Appearance.zzz.bg2 : Appearance.colors.colPrimaryContainer
+                            Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+                            Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                             StyledText {
                                 id: statusText
                                 anchors.centerIn: parent
                                 text: root.windowCount + " win"
                                 font.pixelSize: Appearance.font.pixelSize.smallest
                                 font.weight: Font.Medium
-                                color: Appearance.colors.colOnPrimaryContainer
+                                color: Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.colors.colOnPrimaryContainer
+                                Behavior on color {
+                                    enabled: Appearance.animationsEnabled
+                                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                                }
                             }
                         }
                     }
@@ -229,17 +226,24 @@ Scope {
 
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
-                                radius: Appearance.rounding.small
+                                radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                                Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
 
                                 readonly property bool isCurrent: modelData.id === root.currentLayout
 
-                                color: isCurrent ? Appearance.colors.colPrimaryContainer
+                                color: Appearance.zzzEverywhere
+                                    ? (isCurrent ? Appearance.zzz.bg3
+                                       : ma.containsMouse ? Appearance.zzz.bg2
+                                       : Appearance.zzz.bg1)
+                                    : (isCurrent ? Appearance.colors.colPrimaryContainer
                                      : ma.containsMouse ? Appearance.colors.colLayer1Hover
-                                     : Appearance.colors.colLayer1
+                                     : Appearance.colors.colLayer1)
 
                                 border.width: isCurrent ? 2 : 1
-                                border.color: isCurrent ? Appearance.colors.colPrimary
-                                            : Appearance.colors.colLayer0Border
+                                border.color: Appearance.zzzEverywhere
+                                    ? (isCurrent ? Appearance.zzz.accent : Appearance.zzz.hairline)
+                                    : (isCurrent ? Appearance.colors.colPrimary
+                                            : Appearance.colors.colLayer0Border)
 
                                 Behavior on color {
                                     enabled: Appearance.animationsEnabled
@@ -259,9 +263,11 @@ Scope {
                                             anchors.fill: parent
                                             layout: modelData.id
                                             windowCount: Math.max(root.windowCount, 3)
-                                            accentColor: isCurrent
+                                            accentColor: Appearance.zzzEverywhere
+                                                ? (isCurrent ? Appearance.zzz.accent : Appearance.zzz.ghostInk)
+                                                : (isCurrent
                                                 ? Appearance.colors.colOnPrimaryContainer
-                                                : Appearance.colors.colOnLayer1Inactive
+                                                : Appearance.colors.colOnLayer1Inactive)
                                         }
                                     }
 
@@ -270,8 +276,10 @@ Scope {
                                         text: modelData.name
                                         font.pixelSize: Appearance.font.pixelSize.smallest
                                         font.weight: isCurrent ? Font.Medium : Font.Normal
-                                        color: isCurrent ? Appearance.colors.colOnPrimaryContainer
-                                             : Appearance.colors.colOnLayer1
+                                        color: Appearance.zzzEverywhere
+                                            ? (isCurrent ? Appearance.zzz.accent : Appearance.zzz.ink)
+                                            : (isCurrent ? Appearance.colors.colOnPrimaryContainer
+                                             : Appearance.colors.colOnLayer1)
                                     }
                                 }
 
@@ -290,11 +298,15 @@ Scope {
                         Layout.alignment: Qt.AlignHCenter
                         text: "Mod+X cycle • Click to apply • Esc close"
                         font.pixelSize: Appearance.font.pixelSize.smallest
-                        color: Appearance.colors.colSubtext
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.ghostInk : Appearance.colors.colSubtext
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                     }
                 }
 
-                Keys.onEscapePressed: root.showPicker = false
+                Keys.onEscapePressed: GlobalStates.tilingOverlayPickerOpen = false
                 Keys.onPressed: (e) => {
                     const idx = root.layoutIndex(root.currentLayout)
                     if (e.key === Qt.Key_Right || e.key === Qt.Key_Tab) {
@@ -318,39 +330,4 @@ Scope {
         }
     }
 
-    IpcHandler {
-        target: "tiling"
-
-        function toggle(): void {
-            root.showPicker = !root.showPicker
-            if (root.showPicker) pickerTimer.stop()
-        }
-
-        function open(): void {
-            root.showPicker = true
-            pickerTimer.stop()
-        }
-
-        function hide(): void {
-            root.showPicker = false
-            root.showOsd = false
-        }
-
-        function cycle(): void {
-            root.cycle()
-            root.showOsd = true
-            root.showPicker = false
-            osdTimer.restart()
-        }
-
-        function showOsd(): void {
-            root.showOsd = true
-            root.showPicker = false
-            osdTimer.restart()
-        }
-
-        function promote(): void {
-            NiriService.promoteToMaster()
-        }
-    }
 }

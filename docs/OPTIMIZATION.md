@@ -226,23 +226,23 @@ Rectangle {
 iNiR's config uses Quickshell's `JsonAdapter` + `FileView`. Every property is declared in `Config.qml` with a typed default. When the user's `config.json` has a value, JsonAdapter reads it; when it doesn't, the schema default applies. The property always exists for declared schema keys.
 
 ```qml
-// Config access — schema properties are guaranteed by JsonAdapter
+// Config access: schema properties are guaranteed by JsonAdapter
 property int value: Config.options.bar.cornerStyle  //  always valid
 
-// ❌ Direct assignment — persists to disk via JsonAdapter, but does NOT emit
+// ❌ Direct assignment: persists to disk via JsonAdapter, but does NOT emit
 //    configChanged(). Listeners (settings pages, bar layout, theme reactivity)
 //    will not update. This is the #1 silent bug source in iNiR.
 // Config.options.bar.bottom = true
 
-// ✅ Always use setNestedValue() — persists to disk AND emits configChanged()
+// ✅ Always use setNestedValue(): persists to disk AND emits configChanged()
 //    so every listener reacts correctly.
 Config.setNestedValue("bar.bottom", true)
 
-// Runtime data — may genuinely be null, USE optional chaining here
+// Runtime data: may genuinely be null, USE optional chaining here
 property string title: NiriService.activeWindow?.title ?? ""
 ```
 
-> **Project rule:** always use `Config.setNestedValue("dot.path", value)` for any config write. Direct property assignment (`Config.options.x = y`) skips the `configChanged()` signal — the value reaches disk but the UI and any reactive listeners never see the change.
+> **Project rule:** always use `Config.setNestedValue("dot.path", value)` for any config write. Direct property assignment (`Config.options.x = y`) skips the `configChanged()` signal. The value reaches disk but the UI and any reactive listeners never see the change.
 
 > **Also:** use `?.` + `??` on config reads in module code. It protects against edge cases like key renames during migrations or malformed user configs. JsonAdapter guarantees schema defaults, but defensive access is the safer habit.
 
@@ -254,7 +254,7 @@ property string title: NiriService.activeWindow?.title ?? ""
 component PanelLoader: LazyLoader {
     required property string identifier
     property bool extraCondition: true
-    active: Config.ready && Config.options.enabledPanels.includes(identifier) && extraCondition
+    active: Config.ready && (Config.options?.enabledPanels ?? []).includes(identifier) && extraCondition
 }
 ```
 
@@ -265,6 +265,33 @@ Already optimized with `asynchronous: true` by default.
 ### Appearance System
 
 Use `Appearance.animationsEnabled` and `Appearance.effectsEnabled` to respect user preferences and GameMode.
+
+### Runtime performance controls
+
+On Niri 26.04 or newer, Settings › Effects can delegate supported translucent surfaces to Niri's `ext-background-effect-v1` implementation and avoid a duplicate QML blur pass. The page is shared by ii and Waffle and provides a default backend plus overrides for bars, docks, panels, islands and desktop widgets. `Auto` preserves each global style's intended material; `Wallpaper`, `Compositor` and `Off` are explicit requests.
+
+Native blur is deliberately shape-aware. Rounded rectangles publish their exact item bounds and radius, while the islands bar publishes a union of its five live cards. Complex connected decorations, pill compositions and non-rounded silhouettes use wallpaper blur when an equivalent compositor region cannot be expressed. Disabling compositor blur keeps the selected global style and resolves through its wallpaper or solid fallback.
+
+Launchers, overview, wallpaper pickers and most other heavy panels are created on demand. Their IPC commands remain registered through lightweight routers. Sidebars are the deliberate exception: their fullscreen roots load in the deferred phase, their content waits for the first valid mapped geometry, and both remain resident afterward so rapid close/reopen can reverse one surface without rebuilding its workspace.
+
+Thumbnail jobs launched by the wallpaper and generated-image pickers run in a transient user scope rather than the `inir.service` cgroup. `inir restart` cancels any unfinished iNiR thumbnail pool, and completed scopes are collected automatically, so their workers and page cache are not reported as shell memory.
+
+### Stateful visual lifetimes
+
+Most heavy visual trees are disposable, but sidebar workspaces are resident by design. They mount at final geometry, animate by transforming or clipping the same tree, release the fullscreen backdrop input as soon as closing begins, and preserve navigation, searches and bottom-widget state. Settings keeps only the current page and its immediate neighbours rendered; ii/Waffle navigation, theme filters and Gowall editor context live in persistent settings state instead of page delegates.
+
+Blur eligibility is topology-based. A surface must declare an exact `rectangle`, `rounded-rectangle` or `islands-union` region before an explicit compositor backend can be used. Unsupported or morphing silhouettes retain their wallpaper material, and `auto` remains fidelity-first. Explicit Island/Ricelin surfaces own their complete material so global ZZZ, Aurora, Angel or iNiR chrome cannot leak into the same surface.
+
+Desktop widgets keep decoded wallpaper images warm, but release their per-widget mask and blur framebuffer objects whenever the widget is hidden or the widget power manager pauses visual work. Clocks, Cava and resource sampling continue to use their own visibility and consumer gates, so returning to the desktop restores the same visuals without keeping invisible render targets active.
+
+The bar spectrum uses one shared Cava process regardless of monitor count. Its
+`Primary only` mode is the performance default: only the configured primary
+output uploads and paints spectrum canvases, while the other bars keep their
+normal layout. `All monitors` is available in Settings › Bar › Audio spectrum
+for users who prefer matching visualizers on every output. M3 visualizer slots
+collapse while the shared service reports no audio signal, so an empty Cava
+frame does not reserve bar space.
+
 
 ## Tools
 

@@ -1,0 +1,2 @@
+module qs.modules.background.widgets.uptime
+UptimeWidget 1.0 UptimeWidget.qml

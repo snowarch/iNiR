@@ -32,6 +32,9 @@ Item {
         if (Cliphist.entryIsImage(entry)) {
             cleaned = cleaned.replace(/^\s*\[\[.*?\]\]\s*/, "")
         }
+        const unwrapped = StringUtils.cliphistMarkupPreview(cleaned)
+        if (unwrapped !== cleaned)
+            cleaned = unwrapped.length > 0 ? unwrapped : Translation.tr("Rich text")
         return cleaned.trim()
     }
 
@@ -39,14 +42,23 @@ Item {
         filteredClipboardModel.clear()
         const trimmedSearch = searchText.trim().toLowerCase()
 
+        // Pinned entries always lead the list.
+        const pins = Cliphist.pinned
+        for (let i = 0; i < pins.length; i++) {
+            if (trimmedSearch.length === 0
+                || Cliphist.pinPreview(pins[i]).toLowerCase().includes(trimmedSearch)) {
+                filteredClipboardModel.append({ "rawEntry": "", "pinText": pins[i], "isPinRow": true })
+            }
+        }
+
         for (let i = 0; i < Cliphist.entries.length; i++) {
             const entry = Cliphist.entries[i]
             if (trimmedSearch.length === 0) {
-                filteredClipboardModel.append({ "rawEntry": entry })
+                filteredClipboardModel.append({ "rawEntry": entry, "pinText": "", "isPinRow": false })
             } else {
                 const content = formatCliphistName(entry).toLowerCase()
                 if (content.includes(trimmedSearch)) {
-                    filteredClipboardModel.append({ "rawEntry": entry })
+                    filteredClipboardModel.append({ "rawEntry": entry, "pinText": "", "isPinRow": false })
                 }
             }
         }
@@ -57,10 +69,31 @@ Item {
         }
     }
 
+    // Assigning currentIndex only moves the view once it has laid out, which it
+    // has not while the model is still being rebuilt. positionViewAtBeginning()
+    // forces that layout, so it is the only thing that reliably puts contentY
+    // back at the top after a rebuild.
+    property bool pendingViewReset: false
+
+    function resetViewPosition(): void {
+        clipboardList.currentIndex = filteredClipboardModel.count > 0 ? 0 : -1
+        clipboardList.positionViewAtBeginning()
+    }
+
     function copyEntry(entry: string) {
         lastCopiedEntry = entry
         Cliphist.copy(entry)
         GlobalStates.waffleClipboardOpen = false
+    }
+
+    function copyPinnedText(text: string) {
+        Quickshell.clipboardText = text
+        GlobalStates.waffleClipboardOpen = false
+    }
+
+    function activateRow(row) {
+        if (row.isPin) root.copyPinnedText(row.pinText)
+        else root.copyEntry(row.rawEntry)
     }
 
     function deleteEntry(entry: string) {
@@ -90,18 +123,35 @@ Item {
     }
 
     Component.onCompleted: {
-        // El servicio Cliphist es compartido, solo actualizar el modelo filtrado
+        // This is the open path. The panel is created by a Loader that activates
+        // on waffleClipboardOpenChanged, so this component does not exist yet
+        // when that signal is delivered and its own handler for it never fires
+        // on open — only on close, right before the Loader tears it down.
+        //
+        // Cliphist is a shared singleton whose entries went stale while the panel
+        // was gone, so refresh here or the list opens showing the order it had
+        // last time, with anything copied since missing entirely.
+        root.pendingViewReset = true
         updateFilteredModel()
+        Cliphist.refresh()
     }
 
     Connections {
         target: Cliphist
         function onEntriesChanged() {
             // Only update model if clipboard panel is open to avoid lag
-            if (GlobalStates.waffleClipboardOpen) {
-                root.updateFilteredModel()
-                Qt.callLater(() => searchInput.forceActiveFocus())
+            if (!GlobalStates.waffleClipboardOpen) return
+            root.updateFilteredModel()
+            Qt.callLater(() => searchInput.forceActiveFocus())
+            // The refresh started on open is asynchronous: these entries land
+            // once the panel is already on screen and rebuild the model under it.
+            if (root.pendingViewReset) {
+                root.pendingViewReset = false
+                Qt.callLater(root.resetViewPosition)
             }
+        }
+        function onPinnedChanged() {
+            if (GlobalStates.waffleClipboardOpen) root.updateFilteredModel()
         }
     }
 
@@ -111,9 +161,13 @@ Item {
             if (GlobalStates.waffleClipboardOpen) {
                 root.searchText = ""
                 root.showClearConfirmation = false
+                root.pendingViewReset = true
                 root.updateFilteredModel()  // Update immediately with current entries
+                root.resetViewPosition()
                 // Refrescar el servicio Cliphist para obtener datos actualizados
                 Cliphist.refresh()
+            } else {
+                root.pendingViewReset = false
             }
         }
     }
@@ -262,7 +316,7 @@ Item {
                             }
                             Keys.onReturnPressed: event => {
                                 if (clipboardList.currentIndex >= 0 && clipboardList.currentIndex < filteredClipboardModel.count) {
-                                    root.copyEntry(filteredClipboardModel.get(clipboardList.currentIndex).rawEntry)
+                                    root.activateRow(filteredClipboardModel.get(clipboardList.currentIndex))
                                 }
                                 event.accepted = true
                             }
@@ -315,16 +369,30 @@ Item {
                     delegate: WaffleClipboardItem {
                         id: itemDelegate
                         required property string rawEntry
+                        required property string pinText
+                        required property bool isPinRow
                         required property int index
 
                         width: clipboardList.width
                         entry: rawEntry
+                        isPin: itemDelegate.isPinRow
+                        pinnedText: itemDelegate.pinText
                         isSelected: clipboardList.currentIndex === index
-                        isCopied: rawEntry === root.lastCopiedEntry
+                        isCopied: !itemDelegate.isPinRow && rawEntry === root.lastCopiedEntry
                         searchQuery: root.searchText
 
-                        onClicked: root.copyEntry(rawEntry)
+                        onClicked: itemDelegate.isPinRow ? root.copyPinnedText(itemDelegate.pinText) : root.copyEntry(rawEntry)
                         onDeleteRequested: root.deleteEntry(rawEntry)
+                        // Toggle, not "pin again": an entry that is already pinned
+                        // must unpin, whether it is the pinned row or the history
+                        // row that backs it.
+                        onPinToggleRequested: {
+                            const pinnedAs = itemDelegate.isPinRow
+                                ? itemDelegate.pinText
+                                : Cliphist.pinnedTextFor(rawEntry)
+                            if (pinnedAs.length > 0) Cliphist.unpin(pinnedAs)
+                            else Cliphist.pinEntry(rawEntry)
+                        }
 
                         onHoveredChanged: {
                             if (hovered) clipboardList.currentIndex = index
@@ -332,13 +400,27 @@ Item {
                     }
 
                     // Empty state
-                    WText {
+                    ColumnLayout {
                         anchors.centerIn: parent
                         visible: clipboardList.count === 0
-                        text: root.searchText.length > 0 
-                            ? Translation.tr("No results found")
-                            : Translation.tr("Clipboard is empty")
-                        color: Looks.colors.subfg
+                        spacing: 8
+
+                        MascotImage {
+                            Layout.alignment: Qt.AlignHCenter
+                            Layout.preferredWidth: 96
+                            Layout.preferredHeight: 96
+                            surface: "clipboard"
+                            fallbackSurface: "emptyStates"
+                            pose: root.searchText.length > 0 ? "fisheye-inspect" : "box-hideout"
+                        }
+
+                        WText {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: root.searchText.length > 0
+                                ? Translation.tr("No results found")
+                                : Translation.tr("Clipboard is empty")
+                            color: Looks.colors.subfg
+                        }
                     }
                 }
             }
@@ -384,7 +466,18 @@ Item {
     Keys.onPressed: event => {
         if (event.key === Qt.Key_Delete) {
             if (clipboardList.currentIndex >= 0 && clipboardList.currentIndex < filteredClipboardModel.count) {
-                root.deleteEntry(filteredClipboardModel.get(clipboardList.currentIndex).rawEntry)
+                const row = filteredClipboardModel.get(clipboardList.currentIndex)
+                if (row.isPinRow) Cliphist.unpin(row.pinText)
+                else root.deleteEntry(row.rawEntry)
+            }
+            event.accepted = true
+        } else if (event.key === Qt.Key_P && (event.modifiers & Qt.ControlModifier)) {
+            if (clipboardList.currentIndex >= 0 && clipboardList.currentIndex < filteredClipboardModel.count) {
+                const row = filteredClipboardModel.get(clipboardList.currentIndex)
+                const pinnedAs = row.isPinRow ? row.pinText : Cliphist.pinnedTextFor(row.rawEntry)
+                // Ctrl+P is a toggle: on an already-pinned entry it used to pin again.
+                if (pinnedAs.length > 0) Cliphist.unpin(pinnedAs)
+                else if (Cliphist.isPinnable(row.rawEntry)) Cliphist.pinEntry(row.rawEntry)
             }
             event.accepted = true
         }

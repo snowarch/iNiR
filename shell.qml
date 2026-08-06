@@ -13,9 +13,11 @@
 //-@ pragma Env QTWEBENGINE_CHROMIUM_FLAGS=--disable-features=ThirdPartyCookieBlocking,StorageAccessAPI
 
 import qs.modules.common
-import qs.modules.altSwitcher
 import qs.modules.closeConfirm
 import qs.modules.settings
+import qs.modules.regionSelector
+import qs.modules.tilingOverlay
+import qs.modules.wallpaperSelector
 
 import QtQuick
 import Quickshell
@@ -35,6 +37,12 @@ ShellRoot {
     // Force singleton instantiation — startup-critical only
     property var _idleService: Idle
     property var _powerProfilePersistence: PowerProfilePersistence
+    property var _devNavigationService: DevNavigation
+    property var _shellEditSessionService: ShellEditSession
+    // Acquire org.kde.StatusNotifierWatcher before graphical-session.target
+    // releases XDG autostart applications. The systemd unit uses Type=dbus.
+    property var _trayService: TrayService
+    property var _globalActionsService
 
     // Deferred singletons — initialized after first frame to reduce boot contention
     // Tier 3: T+500ms (display/interaction services)
@@ -44,6 +52,15 @@ ShellRoot {
     property var _voiceSearchService
     property var _fontSyncService
     property var _cavaThemeService
+    // Screen Time must exist for the whole enabled session, not only after its
+    // sidebar page is first opened. It is explicitly materialized after the
+    // first frame and when the user enables tracking later.
+    property var _screenTimeService
+    function _ensureScreenTimeService(): void {
+        if (GlobalStates.deferredPanelsReady
+                && (Config.options?.sidebar?.screenTime?.enable ?? false))
+            root._screenTimeService = ScreenTime
+    }
     // Tier 4: T+1500ms (background features - updates, sync, content services)
     property var _shellUpdatesService
     property var _autostartService
@@ -71,8 +88,14 @@ ShellRoot {
         root._log("[Boot] Tier 0: startup-critical singletons");
         FirstRunExperience.load();
         ConflictKiller.load();
+        DevNavigation.registerSettingsPages(SettingsPageRegistry.pages);
         // Force MemoryPressureService instantiation for IPC (#164)
         void MemoryPressureService.enabled;
+        // Same reason: GlobalActions owns the `globalActions` IPC target and is
+        // otherwise only constructed when the command palette first opens, so
+        // scripts and keybinds got "Target not found" until then. Tier 0 also
+        // keeps the gap after a config reload as short as every other handler's.
+        root._globalActionsService = GlobalActions;
         
         // Reset shell entry state (hot-reload may preserve singletons)
         GlobalStates.shellEntryReady = false;
@@ -123,6 +146,7 @@ ShellRoot {
             root._cavaThemeService = CavaTheme;
             Hyprsunset.load();
             GlobalStates.deferredPanelsReady = true;
+            root._ensureScreenTimeService();
             // Boot greeting: show once per session (singleton preserves bootGreetingDone across hot-reload)
             if (!GlobalStates.bootGreetingDone && (Config.options?.bootGreeting?.enable ?? true)) {
                 GlobalStates.bootGreetingOpen = true;
@@ -132,6 +156,13 @@ ShellRoot {
             }
             // Kick off Tier 4 loading
             lateFeaturesTimer.start();
+        }
+    }
+
+    Connections {
+        target: Config
+        function onConfigChanged(): void {
+            root._ensureScreenTimeService()
         }
     }
 
@@ -285,6 +316,24 @@ ShellRoot {
             Config.setNestedValue("enabledPanels", panels)
     }
 
+    // IPC target "bar" — registered once here (always loaded) instead of inside
+    // Bar.qml / VerticalBar.qml. Both ii bars are instantiated together, so a
+    // per-bar handler collided and Quickshell dropped one with a warning. All
+    // three bars only toggle GlobalStates.barOpen, so a single shared handler is
+    // family-agnostic and serves the horizontal bar, vertical bar and waffle.
+    IpcHandler {
+        target: "bar"
+        function toggle(): void {
+            GlobalStates.barOpen = !GlobalStates.barOpen
+        }
+        function close(): void {
+            GlobalStates.barOpen = false
+        }
+        function open(): void {
+            GlobalStates.barOpen = true
+        }
+    }
+
     // IPC for settings - overlay mode or separate window based on config
     // Note: waffle family ALWAYS uses its own window (waffleSettings.qml), never the Material overlay
     IpcHandler {
@@ -319,19 +368,163 @@ ShellRoot {
     }
 }
 
-    // Settings overlay panel (loaded only when overlay mode is enabled)
+    // One owner for settingsNav, here rather than inside a chrome. Both overlay
+    // layouts used to declare this target themselves; switching layouts leaves
+    // the outgoing host alive for a moment, so Quickshell saw two registrations
+    // and silently dropped one — the caller then hit whichever survived. Routing
+    // through GlobalStates keeps the target valid no matter which chrome, or
+    // none, is loaded.
+    IpcHandler {
+        target: "settingsNav"
+        function page(index: int): void {
+            GlobalStates.settingsOverlayRequestedPage = index
+            GlobalStates.settingsOverlayOpen = true
+        }
+        function count(): int { return SettingsPageRegistry.pages.length }
+        function current(): int { return GlobalStates.settingsOverlayCurrentPage }
+    }
+
+    // Settings overlay panel (loaded only when overlay mode is enabled).
+    // overlayStyle picks the chrome; two sibling loaders instead of a
+    // conditional `component:` so only the selected one is ever constructed.
+    // Any unrecognised style falls back to the nav rail.
     LazyLoader {
         active: Config.ready && (Config.options?.settingsUi?.overlayMode ?? false)
+            && (Config.options?.settingsUi?.overlayStyle ?? "rail") !== "focus"
         component: SettingsOverlay {}
     }
 
+    LazyLoader {
+        active: Config.ready && (Config.options?.settingsUi?.overlayMode ?? false)
+            && (Config.options?.settingsUi?.overlayStyle ?? "rail") === "focus"
+        component: SettingsFocus {}
+    }
+
     // === Panel Loaders ===
-    // AltSwitcher IPC router (material/waffle)
-    LazyLoader { active: Config.ready; component: AltSwitcher {} }
+    // Keep one permanent IPC router so mode/family changes never overlap two
+    // `altSwitcher` handlers during Loader teardown. The heavy ii visual tree is
+    // present only for visual ii presets; the router handles no-UI cycling and
+    // forwards visual commands to ii internally or to Waffle's family module.
+    readonly property bool iiAltSwitcherNoVisual:
+        (Config.options?.altSwitcher?.noVisualUi ?? false)
+        && (Config.options?.altSwitcher?.preset ?? "default") !== "skew"
+
+    LazyLoader {
+        active: Config.ready
+        source: "modules/altSwitcher/AltSwitcherNoVisual.qml"
+    }
+
+    LazyLoader {
+        active: Config.ready
+            && (Config.options?.panelFamily ?? "ii") !== "waffle"
+            && !root.iiAltSwitcherNoVisual
+        source: "modules/altSwitcher/AltSwitcher.qml"
+    }
 
     // Load ONLY the active family panels to reduce startup time.
     // Using `source:` instead of `component:` to avoid parsing inactive family at compile time.
     // This saves ~135 file parses when using ii family (waffle not parsed) and vice versa.
+    // Family-agnostic IPC routers. Both panel files used to instantiate their
+    // own copy, so during a family switch — when the outgoing loader is still
+    // being torn down — two instances existed and Quickshell dropped one
+    // handler per target (region, tiling, wallpaperSelector, coverflowSelector).
+    // One owner here is valid whichever family is loaded.
+    LazyLoader { active: Config.ready; component: RegionSelectorRouter {} }
+    LazyLoader { active: Config.ready; component: TilingOverlayRouter {} }
+    LazyLoader { active: Config.ready; component: WallpaperSelectorRouter {} }
+
+    // Same reason as the routers: both panel files declared these, so every
+    // family switch registered them twice and Quickshell kept whichever won the
+    // race — sometimes the handler belonging to the family being torn down.
+    // The four below were byte-identical in both files; only overview differs,
+    // so it branches here instead of existing twice.
+    IpcHandler {
+        target: "osk"
+        function toggle(): void { GlobalStates.oskOpen = !GlobalStates.oskOpen }
+        function close(): void { GlobalStates.oskOpen = false }
+        function open(): void { GlobalStates.oskOpen = true }
+    }
+
+    IpcHandler {
+        target: "overlay"
+        function toggle(): void { GlobalStates.overlayOpen = !GlobalStates.overlayOpen }
+    }
+
+    IpcHandler {
+        target: "session"
+        function toggle(): void { GlobalStates.sessionOpen = !GlobalStates.sessionOpen }
+        function close(): void { GlobalStates.sessionOpen = false }
+        function open(): void { GlobalStates.sessionOpen = true }
+    }
+
+    IpcHandler {
+        target: "cheatsheet"
+        function toggle(): void { GlobalStates.cheatsheetOpen = !GlobalStates.cheatsheetOpen }
+        function close(): void { GlobalStates.cheatsheetOpen = false }
+        function open(): void { GlobalStates.cheatsheetOpen = true }
+    }
+
+    IpcHandler {
+        target: "clipboard"
+        function _isWaffle(): bool { return (Config.options?.panelFamily ?? "ii") === "waffle" }
+        function open(): void {
+            if (_isWaffle()) GlobalStates.waffleClipboardOpen = true
+            else GlobalStates.clipboardOpen = true
+        }
+        function close(): void {
+            if (_isWaffle()) GlobalStates.waffleClipboardOpen = false
+            else GlobalStates.clipboardOpen = false
+        }
+        function toggle(): void {
+            if (_isWaffle()) GlobalStates.waffleClipboardOpen = !GlobalStates.waffleClipboardOpen
+            else GlobalStates.clipboardOpen = !GlobalStates.clipboardOpen
+        }
+    }
+
+    IpcHandler {
+        target: "overview"
+        function _isWaffle(): bool { return (Config.options?.panelFamily ?? "ii") === "waffle" }
+        function toggle(): void {
+            if (_isWaffle()) { GlobalStates.searchOpen = !GlobalStates.searchOpen; return }
+            GlobalStates.overviewSearchPrefix = ""
+            GlobalStates.toggleOverview("")
+        }
+        function close(): void {
+            if (_isWaffle()) { GlobalStates.searchOpen = false; return }
+            GlobalStates.overviewOpen = false
+        }
+        function open(): void {
+            if (_isWaffle()) { GlobalStates.searchOpen = true; return }
+            GlobalStates.overviewSearchPrefix = ""
+            GlobalStates.openOverview("")
+        }
+        function toggleReleaseInterrupt(): void { GlobalStates.superReleaseMightTrigger = false }
+        function clipboardToggle(): void {
+            const prefix = Config.options?.search?.prefix?.clipboard ?? ";"
+            if (_isWaffle()) {
+                LauncherSearch.ensurePrefix(prefix)
+                GlobalStates.searchOpen = true
+                return
+            }
+            if (GlobalStates.overviewOpen && GlobalStates.overviewSearchPrefix.length > 0) {
+                GlobalStates.overviewOpen = false
+            } else {
+                GlobalStates.overviewSearchPrefix = prefix
+                GlobalStates.openOverview("")
+            }
+        }
+        function actionOpen(): void {
+            const prefix = Config.options?.search?.prefix?.action ?? "/"
+            if (_isWaffle()) {
+                LauncherSearch.ensurePrefix(prefix)
+                GlobalStates.searchOpen = true
+                return
+            }
+            GlobalStates.overviewSearchPrefix = prefix
+            GlobalStates.openOverview("")
+        }
+    }
+
     LazyLoader {
         active: Config.ready && (Config.options?.panelFamily ?? "ii") !== "waffle"
         source: "ShellIiPanels.qml"
@@ -352,8 +545,9 @@ ShellRoot {
     ToastManager {}
 
     // === Panel Families ===
-    // Note: iiAltSwitcher is always loaded (not in families) as it acts as IPC router
-    // for the unified "altSwitcher" target, redirecting to wAltSwitcher when waffle is active
+    // AltSwitcher controller selection lives above the family loaders. Waffle
+    // receives the lightweight shared router; ii receives either that controller
+    // or the full visual tree according to its no-visual setting.
     property list<string> families: ["ii", "waffle"]
     property var panelFamilies: ({
         "ii": [
@@ -361,14 +555,17 @@ ShellRoot {
             "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard",
             "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners",
             "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar",
-            "iiWallpaperSelector", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate", "iiRecordingOsd"
+            "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate", "iiRecordingOsd", "iiDashboard",
+            "iiMascotCompanion"
         ],
         "waffle": [
             "wBar", "wBackground", "wBackdrop", "wStartMenu", "wActionCenter", "wNotificationCenter", "wNotificationPopup", "wOnScreenDisplay", "wWidgets", "wTaskView", "wLock", "wPolkit", "wSessionScreen",
             // Shared modules that work with waffle
-            // Note: wAltSwitcher is always loaded when waffle is active (not in this list)
+            // WaffleAltSwitcher is family-local and loaded by ShellWafflePanels;
+            // the shared `altSwitcher` target reaches it through the lightweight router.
             "iiBootGreeting", "iiCheatsheet", "iiOnScreenKeyboard", "iiOverlay", "iiOverview",
-            "iiRegionSelector", "iiScreenCorners", "iiWallpaperSelector", "iiCoverflowSelector", "iiClipboard"
+            "iiRegionSelector", "iiScreenCorners", "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard",
+            "iiMascotCompanion"
         ]
     })
 
@@ -426,6 +623,14 @@ ShellRoot {
     }
 
     function startFamilyTransition(targetFamily: string, direction: string) {
+        // A transition that never finished used to wedge every later switch:
+        // the guard stayed true, so this returned silently, and because the
+        // overlay was never armed its own watchdog could not run either. If the
+        // overlay is not actually up, the flag is stale — clear it and proceed.
+        if (_transitionInProgress && !GlobalStates.familyTransitionActive) {
+            console.warn("[FamilyTransition] stale in-progress flag cleared")
+            _transitionInProgress = false
+        }
         if (_transitionInProgress) return
 
         // If animation is disabled, switch instantly
@@ -454,9 +659,11 @@ ShellRoot {
         GlobalStates.familyTransitionActive = false
     }
 
-    // Family transition overlay - lazy loaded to avoid parsing waffle on startup
+    // Family transition overlay stays absent outside a real family switch, so
+    // the inactive family's visual tree and font/token imports are not retained.
     Loader {
         active: Config.ready
+            && (GlobalStates.familyTransitionActive || root._transitionInProgress)
         source: "FamilyTransitionOverlay.qml"
         onLoaded: {
             item.exitComplete.connect(root.applyPendingFamily)
@@ -470,4 +677,3 @@ ShellRoot {
         function set(family: string): void { root.setPanelFamily(family) }
     }
 }
-

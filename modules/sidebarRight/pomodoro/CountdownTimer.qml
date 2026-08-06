@@ -96,7 +96,7 @@ Item {
                             font.family: Appearance.font.family.main
                             color: Appearance.angelEverywhere ? Appearance.angel.colText
                                 : Appearance.inirEverywhere ? Appearance.inir.colText
-                                : Appearance.m3colors.m3onSurface
+                                : Appearance.colors.colOnSurface
                             horizontalAlignment: Text.AlignHCenter
                             validator: IntValidator { bottom: 0; top: 99 }
                             selectByMouse: true
@@ -128,7 +128,7 @@ Item {
                         font.pixelSize: Math.round(38 * Appearance.fontSizeScale)
                         color: Appearance.angelEverywhere ? Appearance.angel.colText
                             : Appearance.inirEverywhere ? Appearance.inir.colText
-                            : Appearance.m3colors.m3onSurface
+                            : Appearance.colors.colOnSurface
                     }
 
                     // Seconds input
@@ -158,7 +158,7 @@ Item {
                             font.family: Appearance.font.family.main
                             color: Appearance.angelEverywhere ? Appearance.angel.colText
                                 : Appearance.inirEverywhere ? Appearance.inir.colText
-                                : Appearance.m3colors.m3onSurface
+                                : Appearance.colors.colOnSurface
                             horizontalAlignment: Text.AlignHCenter
                             validator: IntValidator { bottom: 0; top: 59 }
                             selectByMouse: true
@@ -204,7 +204,7 @@ Item {
                     font.pixelSize: Math.round(40 * Appearance.fontSizeScale)
                     color: Appearance.angelEverywhere ? Appearance.angel.colText
                         : Appearance.inirEverywhere ? Appearance.inir.colText
-                        : Appearance.m3colors.m3onSurface
+                        : Appearance.colors.colOnSurface
                 }
 
                 StyledText {
@@ -273,20 +273,24 @@ Item {
             RippleButton {
                 Layout.preferredHeight: 35
                 Layout.preferredWidth: 90
+                buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
                 onClicked: TimerService.toggleCountdown()
                 enabled: TimerService.countdownDuration > 0
                 colBackground: TimerService.countdownRunning 
-                    ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                    ? (Appearance.zzzEverywhere ? Appearance.zzz.sticker
+                        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                         : Appearance.inirEverywhere ? Appearance.inir.colLayer2
                         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colSecondaryContainer)
                     : Appearance.colors.colPrimary
                 colBackgroundHover: TimerService.countdownRunning 
-                    ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                    ? (Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover
+                        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
                         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover : Appearance.colors.colSecondaryContainerHover)
                     : Appearance.colors.colPrimaryHover
                 colRipple: TimerService.countdownRunning 
-                    ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+                    ? (Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive
+                        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
                         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colSecondaryContainerActive)
                     : Appearance.colors.colPrimaryActive
@@ -294,11 +298,16 @@ Item {
                 contentItem: StyledText {
                     horizontalAlignment: Text.AlignHCenter
                     color: TimerService.countdownRunning 
-                        ? (Appearance.angelEverywhere ? Appearance.angel.colText
+                        ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker
+                            : Appearance.angelEverywhere ? Appearance.angel.colText
                             : Appearance.inirEverywhere ? Appearance.inir.colText
                             : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer2 : Appearance.colors.colOnSecondaryContainer)
                         : Appearance.colors.colOnPrimary
                     text: TimerService.countdownRunning ? Translation.tr("Pause") : TimerService.countdownSecondsLeft === TimerService.countdownDuration ? Translation.tr("Start") : Translation.tr("Resume")
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                    }
                 }
             }
 

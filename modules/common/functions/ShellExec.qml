@@ -44,16 +44,23 @@ Singleton {
         if (argv.length === 0) return
 
         const desc = String(description ?? "").trim()
+        // A transient scope, never a service. Launchers like zeditor and
+        // /usr/bin/code fork the real process and exit immediately; a service
+        // treats that first exit as the unit finishing and kills the rest of
+        // the cgroup, so the app dies the instant it starts. A scope lives as
+        // long as any process in it. systemd-run is exec'd rather than tested
+        // for success, because in scope mode it only returns once the app is
+        // gone and a fallback there would relaunch it.
         const script = `
             systemd_run="$1"
             desc="$2"
             shift 2
-            if [ -x "$systemd_run" ]; then
+            if [ -x "$systemd_run" ] && [ -S "$XDG_RUNTIME_DIR/systemd/private" ]; then
                 if [ -n "$desc" ]; then
-                    "$systemd_run" --user --scope --quiet --collect --property="Description=$desc" -- "$@" && exit 0
-                else
-                    "$systemd_run" --user --scope --quiet --collect -- "$@" && exit 0
+                    exec "$systemd_run" --user --quiet --collect --same-dir --scope \
+                        --description="$desc" -- "$@"
                 fi
+                exec "$systemd_run" --user --quiet --collect --same-dir --scope -- "$@"
             fi
             exec "$@"
         `

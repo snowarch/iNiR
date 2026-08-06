@@ -15,6 +15,7 @@ import Quickshell.Io
 
 Scope {
     id: root
+    property bool _presentedOpen: false
 
     function _log(...args): void {
         if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
@@ -29,17 +30,15 @@ Scope {
     property string lastCopiedEntry: ""
     property bool showClearConfirmation: false
     property bool navigateMode: false
-    property double _lastPanelCopyTime: 0
 
     function formatCliphistName(entry) {
         let cleaned = StringUtils.cleanCliphistEntry(entry)
         if (Cliphist.entryIsImage(entry)) {
             cleaned = cleaned.replace(/^\s*\[\[.*?\]\]\s*/, "")
         }
-        // Strip HTML tags if content looks like HTML markup
-        if (/^\s*<(!DOCTYPE|html|meta|div|span|p[\s>]|table|body|head)/i.test(cleaned)) {
-            cleaned = StringUtils.stripHtmlTags(cleaned)
-        }
+        const unwrapped = StringUtils.cliphistMarkupPreview(cleaned)
+        if (unwrapped !== cleaned)
+            cleaned = unwrapped.length > 0 ? unwrapped : Translation.tr("Rich text")
         cleaned = StringUtils.sanitizeDisplayText(cleaned)
         return cleaned.trim()
     }
@@ -54,6 +53,16 @@ Scope {
         const hasSearch = trimmedSearch.length > 0
         let matches = 0
 
+        // Pinned entries always lead the list, in both filter and navigate mode.
+        const pins = Cliphist.pinned
+        for (let i = 0; i < pins.length; i++) {
+            const preview = Cliphist.pinPreview(pins[i])
+            const hit = !hasSearch || preview.toLowerCase().includes(trimmedSearch)
+            if (hasSearch && hit) matches++
+            if (hit || navigateMode)
+                filteredClipboardModel.append({ "rawEntry": "", "pinText": pins[i], "isPin": true, "isMatch": hit })
+        }
+
         if (hasSearch && navigateMode) {
             // Navigate mode: show ALL entries, mark which ones match
             for (let i = 0; i < entryCount; i++) {
@@ -61,18 +70,18 @@ Scope {
                 const content = formatCliphistName(entry).toLowerCase()
                 const hit = content.includes(trimmedSearch)
                 if (hit) matches++
-                filteredClipboardModel.append({ "rawEntry": entry, "isMatch": hit })
+                filteredClipboardModel.append({ "rawEntry": entry, "pinText": "", "isPin": false, "isMatch": hit })
             }
         } else {
             // Filter mode: only include matching entries
             for (let i = 0; i < entryCount; i++) {
                 const entry = entries[i]
                 if (!hasSearch) {
-                    filteredClipboardModel.append({ "rawEntry": entry, "isMatch": true })
+                    filteredClipboardModel.append({ "rawEntry": entry, "pinText": "", "isPin": false, "isMatch": true })
                 } else {
                     const content = formatCliphistName(entry).toLowerCase()
                     if (content.includes(trimmedSearch)) {
-                        filteredClipboardModel.append({ "rawEntry": entry, "isMatch": true })
+                        filteredClipboardModel.append({ "rawEntry": entry, "pinText": "", "isPin": false, "isMatch": true })
                         matches++
                     }
                 }
@@ -94,6 +103,20 @@ Scope {
         } else if (totalCount > 0 && typeof listView !== "undefined" && listView) {
             listView.currentIndex = 0
         }
+    }
+
+    // The panel window is hidden, not destroyed, on close, so the ListView keeps
+    // the contentY it was left at. Rebuilding the model does not reset it, and
+    // neither does `currentIndex = 0`: on open the model is rebuilt while the
+    // window is still invisible, so the view never lays out and the highlight
+    // never scrolls anything. positionViewAtBeginning() forces the layout, which
+    // is the only thing that actually moves contentY back to the top.
+    property bool pendingViewReset: false
+
+    function resetViewPosition(): void {
+        if (typeof listView === "undefined" || !listView) return
+        listView.currentIndex = filteredClipboardModel.count > 0 ? 0 : -1
+        listView.positionViewAtBeginning()
     }
 
     function jumpToNextMatch() {
@@ -139,8 +162,12 @@ Scope {
     function copyEntry(entry) {
         _log("[ClipboardPanel] copyEntry", String(entry).slice(0, 120))
         lastCopiedEntry = entry
-        _lastPanelCopyTime = Date.now()
         Cliphist.copy(entry)
+        GlobalStates.clipboardOpen = false
+    }
+
+    function copyPinnedText(text) {
+        Quickshell.clipboardText = text
         GlobalStates.clipboardOpen = false
     }
 
@@ -171,16 +198,44 @@ Scope {
         Cliphist.refresh()
     }
 
-    Component.onCompleted: {
+    function prepareOpen(): void {
         refresh()
+        searchText = ""
+        navigateMode = false
+        showClearConfirmation = false
+        pendingViewReset = true
         updateFilteredModel()
+        resetViewPosition()
+        Qt.callLater(() => {
+            searchField.forceActiveFocus()
+            root.resetViewPosition()
+        })
     }
+
+    function presentOpen(): void {
+        prepareOpen()
+        Qt.callLater(() => { root._presentedOpen = GlobalStates.clipboardOpen })
+    }
+
+    Component.onCompleted: if (GlobalStates.clipboardOpen) root.presentOpen()
 
     Connections {
         target: Cliphist
         function onEntriesChanged() {
             // Only update model if clipboard panel is open to avoid lag
+            if (!GlobalStates.clipboardOpen) return
+            root.updateFilteredModel()
+            // The refresh started on open is asynchronous: these entries land
+            // once the panel is already on screen and rebuild the model under
+            // it, undoing the reset done at open time.
+            if (root.pendingViewReset) {
+                root.pendingViewReset = false
+                Qt.callLater(root.resetViewPosition)
+            }
+        }
+        function onPinnedChanged() {
             if (GlobalStates.clipboardOpen) {
+                Qt.callLater(() => { root._presentedOpen = GlobalStates.clipboardOpen })
                 root.updateFilteredModel()
             }
         }
@@ -194,29 +249,17 @@ Scope {
         target: GlobalStates
         function onClipboardOpenChanged() {
             if (GlobalStates.clipboardOpen) {
-                // Skip refresh if we just copied from the panel (keeps original order)
-                if (Date.now() - root._lastPanelCopyTime > 5000)
-                    root.refresh()
-                root.searchText = ""
-                root.navigateMode = false
-                root.showClearConfirmation = false
-                root.updateFilteredModel()
-                Qt.callLater(() => searchField.forceActiveFocus())
+                // Always refresh on open. Skipping it for 5s after a panel copy
+                // was meant to keep the list from reordering under the cursor,
+                // but cliphist has already moved that entry to the top by then:
+                // the panel just showed a stale order, so the entry you copied
+                // last appeared wherever it used to be instead of first — and a
+                // copy made outside the panel in that window did not show up.
+                root.presentOpen()
+            } else {
+                root._presentedOpen = false
+                root.pendingViewReset = false
             }
-        }
-    }
-
-    IpcHandler {
-        target: "clipboard"
-        enabled: Config.options?.panelFamily !== "waffle"
-        function open(): void {
-            root.open()
-        }
-        function close(): void {
-            root.close()
-        }
-        function toggle(): void {
-            root.toggle()
         }
     }
 
@@ -265,12 +308,17 @@ Scope {
                 if (!GlobalStates.clipboardOpen)
                     return
 
-                // Helper to get current entry from filtered model
-                function currentEntry() {
+                // Helper to get current row from filtered model
+                function currentRow() {
                     const idx = listView.currentIndex
                     if (idx < 0 || idx >= filteredClipboardModel.count)
                         return null
-                    return filteredClipboardModel.get(idx).rawEntry
+                    return filteredClipboardModel.get(idx)
+                }
+
+                function currentEntry() {
+                    const row = currentRow()
+                    return (row === null || row.isPin) ? null : row.rawEntry
                 }
 
                 if (event.key === Qt.Key_Escape) {
@@ -291,17 +339,30 @@ Scope {
                     root.clearAll()
                     event.accepted = true
                 } else if (event.key === Qt.Key_Delete && event.modifiers === Qt.NoModifier) {
-                    // Delete current entry
-                    const entry = currentEntry()
-                    if (entry !== null) {
-                        root.deleteEntry(entry)
+                    // Delete current entry, or unpin a pinned one
+                    const row = currentRow()
+                    if (row !== null) {
+                        if (row.isPin) Cliphist.unpin(row.pinText)
+                        else root.deleteEntry(row.rawEntry)
                         event.accepted = true
                     }
                 } else if (event.key === Qt.Key_C && (event.modifiers & Qt.ControlModifier)) {
                     // Copy current entry to clipboard
-                    const entry = currentEntry()
-                    if (entry !== null) {
-                        root.copyEntry(entry)
+                    const row = currentRow()
+                    if (row !== null) {
+                        if (row.isPin) root.copyPinnedText(row.pinText)
+                        else root.copyEntry(row.rawEntry)
+                        event.accepted = true
+                    }
+                } else if (event.key === Qt.Key_P && (event.modifiers & Qt.ControlModifier)) {
+                    // Toggle pin on the current entry
+                    const row = currentRow()
+                    if (row !== null) {
+                        const pinnedAs = row.isPin ? row.pinText : Cliphist.pinnedTextFor(row.rawEntry)
+                        // Ctrl+P is a toggle: on an entry that is already pinned it
+                        // used to pin it again instead of unpinning.
+                        if (pinnedAs.length > 0) Cliphist.unpin(pinnedAs)
+                        else if (Cliphist.isPinnable(row.rawEntry)) Cliphist.pinEntry(row.rawEntry)
                         event.accepted = true
                     }
                 } else if (event.key === Qt.Key_Tab && root.navigateMode && root.searchText.length > 0) {
@@ -323,7 +384,7 @@ Scope {
             anchors.fill: parent
             color: Appearance.colors.colScrim
             visible: Appearance.auroraEverywhere
-            opacity: GlobalStates.clipboardOpen ? 1 : 0
+            opacity: root._presentedOpen ? 1 : 0
             Behavior on opacity {
                 NumberAnimation {
                     duration: Appearance.calcEffectiveDuration(200)
@@ -335,7 +396,9 @@ Scope {
         StyledRectangularShadow {
             target: panelBackground
             radius: panelBackground.radius
-            visible: Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere)
+            opacity: panelBackground.opacity
+            visible: !Appearance.zzzEverywhere
+                && (Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere))
         }
 
         // Click outside the panel to close
@@ -359,7 +422,7 @@ Scope {
             anchors.centerIn: parent
             width: panelWidth
             height: Math.min(contentColumn.implicitHeight, panelMaxHeight)
-            fallbackColor: Appearance.colors.colLayer1
+            fallbackColor: Appearance.zzzEverywhere ? Appearance.zzz.paper : Appearance.colors.colLayer1
             inirColor: Appearance.inir.colLayer1
             auroraTransparency: Appearance.angelEverywhere
                 ? Appearance.angel.panelTransparentize
@@ -368,34 +431,50 @@ Scope {
             screenY: (window.screen?.height ?? 1080) / 2 - height / 2
             screenWidth: window.screen?.width ?? 1920
             screenHeight: window.screen?.height ?? 1080
-            border.width: Appearance.angelEverywhere ? Appearance.angel.panelBorderWidth
+            border.width: Appearance.zzzEverywhere ? 1
+                : Appearance.angelEverywhere ? Appearance.angel.panelBorderWidth
                 : Appearance.auroraEverywhere ? 1 : 1
-            border.color: Appearance.angelEverywhere ? Appearance.angel.colPanelBorder
+            Behavior on border.width {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
+            border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
+                : Appearance.angelEverywhere ? Appearance.angel.colPanelBorder
                 : Appearance.inirEverywhere ? Appearance.inir.colBorder 
                 : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder 
                 : Appearance.colors.colOutlineVariant
-            radius: Appearance.angelEverywhere ? Appearance.angel.roundingLarge
+            Behavior on border.color {
+                enabled: Appearance.animationsEnabled
+                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
+            radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+                : Appearance.angelEverywhere ? Appearance.angel.roundingLarge
                 : Appearance.inirEverywhere ? Appearance.inir.roundingLarge : Appearance.rounding.screenRounding
+            Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+            Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
             
             // Entry animation
-            opacity: GlobalStates.clipboardOpen ? 1 : 0
-            scale: GlobalStates.clipboardOpen ? 1 : 0.95
+            opacity: root._presentedOpen ? 1 : 0
+            scale: root._presentedOpen ? 1 : 0.95
             
             Behavior on opacity {
+                enabled: Appearance.animationsEnabled
                 NumberAnimation {
-                    duration: Appearance.animation.elementMoveFast.duration
-                    easing.type: Appearance.animation.elementMoveFast.type
-                    easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                    duration: Appearance.animation.elementMoveEnter.duration
+                    easing.type: Appearance.animation.elementMoveEnter.type
+                    easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
                 }
             }
             Behavior on scale {
+                enabled: Appearance.animationsEnabled
                 NumberAnimation {
-                    duration: Appearance.animation.elementMoveFast.duration
-                    easing.type: Appearance.animation.elementMoveFast.type
-                    easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                    duration: Appearance.animation.elementMoveEnter.duration
+                    easing.type: Appearance.animation.elementMoveEnter.type
+                    easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
                 }
             }
             Behavior on height {
+                enabled: Appearance.animationsEnabled
                 NumberAnimation {
                     duration: Appearance.animation.elementMoveEnter.duration
                     easing.type: Appearance.animation.elementMoveEnter.type
@@ -403,10 +482,24 @@ Scope {
                 }
             }
 
+            ZzzPanelBackdrop {
+                anchors.fill: parent
+                label: "CLIPBOARD"
+                index: "HIST"
+                accentColor: Appearance.zzz.tertiary
+                ghostText: "CLIP"
+                showTicks: false
+                showBurst: false
+                showGrid: false
+                horizontalBias: 0.1
+                verticalBias: 0.02
+                ghostStrength: 0.7
+            }
+
             ColumnLayout {
                 id: contentColumn
                 anchors.fill: parent
-                anchors.margins: 10
+                anchors.margins: Appearance.zzzEverywhere ? 12 : 10
                 spacing: 10
 
                 // Shell desaturation effect
@@ -422,14 +515,27 @@ Scope {
                     MaterialSymbol {
                         text: "content_paste"
                         iconSize: Appearance.font.pixelSize.huge
-                        color: Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.accent
+                            : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                     }
 
                     StyledText {
                         Layout.alignment: Qt.AlignVCenter
                         text: Translation.tr("Clipboard history") + ` (${root.totalCount})`
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.m3colors.m3onSurface
+                        font.family: Appearance.zzzEverywhere ? Appearance.font.family.title : Appearance.font.family.main
+                        font.pixelSize: Appearance.zzzEverywhere ? Appearance.font.pixelSize.normal : Appearance.font.pixelSize.small
+                        font.weight: Appearance.zzzEverywhere ? Font.Black : Font.Normal
+                        font.italic: Appearance.zzzEverywhere
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                            : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                         elide: Text.ElideRight
                     }
 
@@ -485,7 +591,12 @@ Scope {
                         visible: root.navigateMode && root.searchText.length > 0
                         text: root.matchCount + " " + Translation.tr("matches")
                         font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
+                            : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                     }
 
                     IconToolbarButton {
@@ -583,38 +694,90 @@ Scope {
 
                         delegate: ClipboardItem {
                             required property string rawEntry
+                            required property string pinText
+                            required property bool isPin
                             required property bool isMatch
                             required property int index
                             anchors.left: parent?.left
                             anchors.right: parent?.right
                             isSelected: ListView.isCurrentItem
                             isSearchMatch: isMatch
-                            copiedFromPanel: rawEntry === lastCopiedEntry
+                            copiedFromPanel: !isPin && rawEntry === lastCopiedEntry
                             entry: {
+                                if (isPin) {
+                                    const text = pinText
+                                    return {
+                                        key: text,
+                                        cliphistRawString: "",
+                                        name: Cliphist.pinPreview(text),
+                                        clickActionName: Translation.tr("Copy"),
+                                        type: Translation.tr("Pinned"),
+                                        materialSymbol: "keep",
+                                        execute: () => root.copyPinnedText(text),
+                                        actions: [
+                                            {
+                                                name: "Copy",
+                                                label: Translation.tr("Copy"),
+                                                materialIcon: "content_copy",
+                                                execute: () => root.copyPinnedText(text),
+                                            },
+                                            {
+                                                name: "Unpin",
+                                                label: Translation.tr("Unpin"),
+                                                materialIcon: "keep_off",
+                                                execute: () => Cliphist.unpin(text),
+                                            },
+                                        ],
+                                        compactClipboardPreview: true,
+                                    }
+                                }
                                 const raw = rawEntry
                                 const type = `#${raw.match(/^[\s]*(\S+)/)?.[1] || ""}`
                                 const name = formatCliphistName(raw)
+                                const actions = [
+                                    {
+                                        name: "Copy",
+                                        label: Translation.tr("Copy"),
+                                        materialIcon: "content_copy",
+                                        execute: () => root.copyEntry(raw),
+                                    },
+                                    {
+                                        name: "Delete",
+                                        label: Translation.tr("Delete"),
+                                        materialIcon: "delete",
+                                        execute: () => root.deleteEntry(raw),
+                                    },
+                                ]
+                                // An already-pinned entry offered "Pin" again and gave
+                                // no sign it was pinned. Offer the action that is
+                                // actually available, and badge the row.
+                                const pinnedAs = Cliphist.pinnedTextFor(raw)
+                                if (pinnedAs.length > 0) {
+                                    actions.splice(1, 0, {
+                                        name: "Unpin",
+                                        label: Translation.tr("Unpin"),
+                                        materialIcon: "keep_off",
+                                        execute: () => Cliphist.unpin(pinnedAs),
+                                    })
+                                } else if (Cliphist.isPinnable(raw)) {
+                                    actions.splice(1, 0, {
+                                        name: "Pin",
+                                        label: Translation.tr("Pin"),
+                                        materialIcon: "keep",
+                                        execute: () => Cliphist.pinEntry(raw),
+                                    })
+                                }
                                 return {
                                     key: type,
                                     cliphistRawString: raw,
                                     name: name,
                                     clickActionName: Translation.tr("Copy"),
                                     type: type,
+                                    materialSymbol: pinnedAs.length > 0 ? "keep" : "",
                                     execute: () => {
                                         root.copyEntry(raw)
                                     },
-                                    actions: [
-                                        {
-                                            name: "Copy",
-                                            materialIcon: "content_copy",
-                                            execute: () => root.copyEntry(raw),
-                                        },
-                                        {
-                                            name: "Delete",
-                                            materialIcon: "delete",
-                                            execute: () => root.deleteEntry(raw),
-                                        },
-                                    ],
+                                    actions: actions,
                                     blurImage: false,
                                     blurImageText: Translation.tr("Work safety"),
                                     compactClipboardPreview: true,
@@ -643,16 +806,31 @@ Scope {
 
                         function activateCurrent() {
                             if (currentIndex < 0 || currentIndex >= count) return
-                            const rawEntry = filteredClipboardModel.get(currentIndex).rawEntry
-                            root.copyEntry(rawEntry)
+                            const row = filteredClipboardModel.get(currentIndex)
+                            if (row.isPin) root.copyPinnedText(row.pinText)
+                            else root.copyEntry(row.rawEntry)
                         }
 
-                        StyledText {
+                        ColumnLayout {
                             visible: listView.count === 0
                             anchors.centerIn: parent
-                            text: Translation.tr("No clipboard entries")
-                            color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
-                            font.pixelSize: Appearance.font.pixelSize.small
+                            spacing: 8
+
+                            MascotImage {
+                                Layout.alignment: Qt.AlignHCenter
+                                Layout.preferredWidth: 96
+                                Layout.preferredHeight: 96
+                                surface: "clipboard"
+                                fallbackSurface: "emptyStates"
+                                pose: "box-hideout"
+                            }
+
+                            StyledText {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: Translation.tr("No clipboard entries")
+                                color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+                                font.pixelSize: Appearance.font.pixelSize.small
+                            }
                         }
                     }
                 }
@@ -699,18 +877,18 @@ Scope {
                                 font.pixelSize: Appearance.font.pixelSize.smaller
                                 color: Appearance.angelEverywhere ? Appearance.angel.colText
                                     : Appearance.inirEverywhere ? Appearance.inir.colText 
-                                    : Appearance.auroraEverywhere ? Appearance.m3colors.m3onSurface 
+                                    : Appearance.auroraEverywhere ? Appearance.colors.colOnSurface 
                                     : Appearance.colors.colOnPrimaryContainer
                                 elide: Text.ElideRight
                             }
 
                             StyledText {
                                 Layout.fillWidth: true
-                                text: Translation.tr("Ctrl+C: Copy • Del: Delete • Shift+Del: Clear all • Esc: Close")
+                                text: Translation.tr("Ctrl+C: Copy • Ctrl+P: Pin • Del: Delete • Shift+Del: Clear all • Esc: Close")
                                 font.pixelSize: Appearance.font.pixelSize.smaller
                                 color: Appearance.angelEverywhere ? Appearance.angel.colText
                                     : Appearance.inirEverywhere ? Appearance.inir.colText 
-                                    : Appearance.auroraEverywhere ? Appearance.m3colors.m3onSurface 
+                                    : Appearance.auroraEverywhere ? Appearance.colors.colOnSurface 
                                     : Appearance.colors.colOnPrimaryContainer
                                 elide: Text.ElideRight
                             }
@@ -720,7 +898,7 @@ Scope {
                                 font.pixelSize: Appearance.font.pixelSize.smaller
                                 color: Appearance.angelEverywhere ? Appearance.angel.colText
                                     : Appearance.inirEverywhere ? Appearance.inir.colText 
-                                    : Appearance.auroraEverywhere ? Appearance.m3colors.m3onSurface 
+                                    : Appearance.auroraEverywhere ? Appearance.colors.colOnSurface 
                                     : Appearance.colors.colOnPrimaryContainer
                                 elide: Text.ElideRight
                             }

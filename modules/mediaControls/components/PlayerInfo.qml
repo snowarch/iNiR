@@ -16,10 +16,12 @@ ColumnLayout {
     required property string artist
     
     // Optional properties
-    property color titleColor: Appearance.inirEverywhere 
+    property color titleColor: Appearance.zzzEverywhere ? Appearance.zzz.ink
+        : Appearance.inirEverywhere
         ? Appearance.inir.colText 
         : Appearance.colors.colOnLayer0
-    property color artistColor: Appearance.inirEverywhere 
+    property color artistColor: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
+        : Appearance.inirEverywhere
         ? Appearance.inir.colTextSecondary 
         : Appearance.colors.colSubtext
     property int titleSize: Appearance.font.pixelSize.large
@@ -27,6 +29,7 @@ ColumnLayout {
     property int titleWeight: Font.Medium
     property bool cleanTitle: true
     property bool animateTitle: true
+    property int slideDirection: 1
     
     spacing: 0
     
@@ -35,11 +38,13 @@ ColumnLayout {
         Layout.fillWidth: true
         text: root.cleanTitle ? StringUtils.cleanMusicTitle(root.title) || "—" : (root.title || "—")
         font.pixelSize: root.titleSize
-        font.weight: root.titleWeight
+        font.weight: Appearance.zzzEverywhere ? Font.Black : root.titleWeight
+        font.italic: Appearance.zzzEverywhere
         color: root.titleColor
         elide: Text.ElideRight
         animateChange: root.animateTitle
-        animationDistanceX: 6
+        animationDistanceX: root.slideDirection * 8
+        animationDistanceY: 0
     }
     
     // Artist
@@ -50,5 +55,8 @@ ColumnLayout {
         color: root.artistColor
         elide: Text.ElideRight
         visible: text !== ""
+        animateChange: root.animateTitle
+        animationDistanceX: root.slideDirection * 8
+        animationDistanceY: 0
     }
 }

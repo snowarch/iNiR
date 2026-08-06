@@ -9,6 +9,9 @@ Item {
     property string icon: "api"
     property string text: ""
     property string tooltipText: ""
+    property bool showText: true
+    property bool showDisclosure: true
+    property real maximumTextWidth: 160
     property var clickAction: null
     readonly property bool interactive: !!clickAction
     implicitHeight: rowLayout.implicitHeight + 4 * 2
@@ -17,8 +20,11 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: Appearance.rounding.small
+        // The chat input wrapper this sits on is painted colLayer2 under material
+        // (aurora and angel give it their own surface), so a raw colLayer2 hover
+        // was the same colour as its background and the state never appeared.
         color: indicatorMA.containsMouse && root.interactive
-            ? Appearance.colors.colLayer2 : "transparent"
+            ? Appearance.colors.colLayer2Hover : "transparent"
         Behavior on color {
             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
         }
@@ -32,22 +38,24 @@ Item {
         MaterialSymbol {
             text: root.icon
             iconSize: Appearance.font.pixelSize.normal
-            color: Appearance.m3colors.m3onSurfaceVariant
+            color: Appearance.colors.colOnSurfaceVariant
         }
         StyledText {
             id: providerName
-            visible: root.text.length > 0
+            visible: root.showText && root.text.length > 0
+            Layout.minimumWidth: 0
+            Layout.maximumWidth: root.maximumTextWidth
             font.pixelSize: Appearance.font.pixelSize.smaller
-            color: Appearance.m3colors.m3onSurface
+            color: Appearance.colors.colOnSurface
             elide: Text.ElideRight
             text: root.text
             animateChange: true
         }
         MaterialSymbol {
-            visible: root.interactive
+            visible: root.interactive && root.showDisclosure
             text: "expand_more"
             iconSize: Appearance.font.pixelSize.small
-            color: Appearance.m3colors.m3onSurfaceVariant
+            color: Appearance.colors.colOnSurfaceVariant
         }
     }
 

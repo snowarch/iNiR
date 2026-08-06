@@ -1,0 +1,16 @@
+{
+  "ar_SA": "Modern Standard Arabic. Clear desktop terminology, concise labels, natural RTL punctuation. Preserve product names and commands.",
+  "de_DE": "Natural informal German. Use du consistently. Prefer established Linux and desktop terms. Preserve product names such as Waffle and Material ii.",
+  "es_AR": "Natural Argentine Spanish with consistent voseo. Avoid slang and exaggerated regionalisms. Use established Linux terminology. Keep shell when it names the technical desktop-shell layer, and preserve product terms such as Pill, Waffle and Cookie.",
+  "fr_FR": "Natural concise French. Use vous consistently in instructions. Prefer established desktop terminology and avoid English syntax calques.",
+  "he_HE": "Natural modern Hebrew. Concise RTL UI language. Preserve product names, commands and technical acronyms.",
+  "hi_IN": "Natural standard Hindi suitable for a Linux desktop. Keep common technical product names and commands in Latin script when that is clearer.",
+  "it_IT": "Natural informal Italian. Use tu consistently. Prefer established Linux and desktop terms and concise settings descriptions.",
+  "ja_JP": "Natural compact Japanese UI language. Avoid unnecessary pronouns and literal English word order. Preserve product names and commands in Latin script.",
+  "ko_KR": "Natural concise Korean UI language with consistent polite explanatory style. Preserve product names, commands and technical acronyms.",
+  "pt_BR": "Natural Brazilian Portuguese with consistent você. Prefer established Linux and desktop terms and concise labels.",
+  "ru_RU": "Natural concise Russian UI language. Use established Linux terminology and consistent neutral instructions. Preserve product names and commands.",
+  "uk_UA": "Natural concise Ukrainian UI language. Use established Linux terminology and avoid Russian calques. Preserve product names and commands.",
+  "vi_VN": "Natural concise Vietnamese UI language. Prefer established desktop terminology and preserve product names, commands and technical acronyms.",
+  "zh_CN": "Natural concise Simplified Chinese UI language. Avoid literal English syntax. Preserve product names, commands and technical acronyms when customary."
+}

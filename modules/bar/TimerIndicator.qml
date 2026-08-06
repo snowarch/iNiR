@@ -1,6 +1,7 @@
 import qs
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.services
@@ -73,13 +74,20 @@ MouseArea {
     }
 
     readonly property color accentColor: {
+        if (Appearance.zzzEverywhere) {
+            if (pomodoroActive)
+                return (TimerService?.pomodoroBreak ?? false) ? Appearance.zzz.secondary : Appearance.zzz.accent
+            if (countdownActive)
+                return Appearance.zzz.secondary
+            return Appearance.zzz.ink
+        }
         if (pomodoroActive) {
             return (TimerService?.pomodoroBreak ?? false)
-                ? (Appearance.colors.colTertiary ?? Appearance.m3colors.m3tertiary)
+                ? Appearance.colors.colTertiary
                 : Appearance.colors.colPrimary
         }
         if (countdownActive)
-            return Appearance.m3colors.m3secondary
+            return Appearance.colors.colSecondary
         return Appearance.colors.colOnLayer1
     }
 
@@ -91,7 +99,7 @@ MouseArea {
     cursorShape: Qt.PointingHandCursor
 
     function openTimerPanel(): void {
-        GlobalStates.sidebarRightOpen = true
+        GlobalStates.openSidebarRight(root.QsWindow.window?.screen?.name ?? "")
 
         if (Persistent?.states?.sidebar?.bottomGroup) {
             Persistent.states.sidebar.bottomGroup.tab = 3

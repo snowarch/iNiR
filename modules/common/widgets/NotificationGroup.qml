@@ -69,9 +69,10 @@ MouseArea { // Notification group area
             target: background.anchors
             property: "leftMargin"
             to: (root.width + root.dismissOvershoot) * (destroyAnimation.left ? -1 : 1)
-            duration: root._dismissAnim.duration
-            easing.type: root._dismissAnim.type
-            easing.bezierCurve: root._dismissAnim.bezierCurve
+            // Appearance.animation may be null during startup.
+            duration: root._dismissAnim ? root._dismissAnim.duration : 200
+            easing.type: root._dismissAnim ? root._dismissAnim.type : Easing.OutCubic
+            easing.bezierCurve: root._dismissAnim ? root._dismissAnim.bezierCurve : []
         }
         onFinished: () => {
             root.notifications.forEach((notif) => {
@@ -138,7 +139,19 @@ MouseArea { // Notification group area
 
     StyledRectangularShadow {
         target: background
-        visible: false
+        // Sidebar groups live on their parent surface. Popup notifications are
+        // genuinely elevated and Cookie's short contact shadow makes that
+        // hierarchy explicit without restoring Material's wide ambient haze.
+        visible: root.popup && Appearance.cookieEverywhere && Appearance.effectsEnabled
+    }
+
+    ZzzPlate {
+        anchors.fill: background
+        visible: Appearance.zzzEverywhere
+        fillColor: root.popup ? Appearance.colors.colLayer1 : Appearance.colors.colLayer2
+        strokeColor: Appearance.zzz.hairlineStrong
+        strokeWidth: Appearance.zzz.hairlineThick
+        chamfer: Appearance.zzz.cutCorner
     }
 
     Rectangle { // Background of the notification
@@ -148,19 +161,28 @@ MouseArea { // Notification group area
 
         // For popup: glass blur for aurora/angel, solid for others
         // For sidebar: transparent to show parent's blur
-        color: Appearance.angelEverywhere ? (popup ? "transparent" : Appearance.angel.colGlassCard)
+        color: Appearance.zzzEverywhere ? "transparent"
+            : Appearance.angelEverywhere ? (popup ? "transparent" : Appearance.angel.colGlassCard)
             : Appearance.inirEverywhere ? (popup ? Appearance.inir.colLayer2 : Appearance.inir.colLayer1)
             : Appearance.auroraEverywhere ? "transparent"
             : (popup ? ColorUtils.applyAlpha(Appearance.colors.colLayer2, 1 - Appearance.backgroundTransparency)
                      : Appearance.colors.colLayer2)
 
-        radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+        radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+            : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
             : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-        border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
+        border.width: Appearance.zzzEverywhere ? 0
+            : Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
             : (Appearance.inirEverywhere || (Appearance.auroraEverywhere && popup)) ? 1 : 0
-        border.color: Appearance.angelEverywhere ? Appearance.angel.colBorder
+        border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
+            : Appearance.angelEverywhere ? Appearance.angel.colBorder
             : Appearance.inirEverywhere ? Appearance.inir.colBorder
             : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder : "transparent"
+        // Organic morph on style/shape switch (organic-transitions)
+        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+        Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+        Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+        Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
         anchors.leftMargin: root.xOffset
 
         Behavior on anchors.leftMargin {
@@ -205,7 +227,7 @@ MouseArea { // Notification group area
             id: notifBlurredWallpaper
             anchors.fill: parent
             visible: root.popup && Appearance.auroraEverywhere && !Appearance.inirEverywhere
-            source: Wallpapers.effectiveWallpaperUrl
+            source: visible ? Wallpapers.effectiveWallpaperUrl : ""
             fillMode: Image.PreserveAspectCrop
             cache: true
             sourceSize.width: 480
@@ -294,9 +316,9 @@ MouseArea { // Notification group area
                             font.pixelSize: topRow.showAppName ?
                                 topRow.fontSize :
                                 Appearance.font.pixelSize.small
-                            color: topRow.showAppName ?
-                                Appearance.colors.colSubtext :
-                                Appearance.colors.colOnLayer2
+                            color: Appearance.zzzEverywhere
+                                ? (topRow.showAppName ? Appearance.zzz.inkMuted : Appearance.zzz.ink)
+                                : topRow.showAppName ? Appearance.colors.colSubtext : Appearance.colors.colOnLayer2
                         }
                         StyledText {
                             id: timeText
@@ -304,7 +326,11 @@ MouseArea { // Notification group area
                             horizontalAlignment: Text.AlignLeft
                             text: NotificationUtils.getFriendlyNotifTimeString(notificationGroup?.time)
                             font.pixelSize: topRow.fontSize
-                            color: Appearance.colors.colSubtext
+                            color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.colors.colSubtext
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                            }
                         }
                     }
                     NotificationGroupExpandButton {

@@ -13,8 +13,8 @@ RadioButton {
     padding: 4
     implicitHeight: contentItem.implicitHeight + padding * 2
     property string description
-    property color activeColor: Appearance?.colors.colPrimary ?? "#685496"
-    property color inactiveColor: Appearance?.m3colors.m3onSurfaceVariant ?? "#45464F"
+    property color activeColor: Appearance.colors.colPrimary
+    property color inactiveColor: Appearance.colors.colOnSurfaceVariant
 
     PointingHandInteraction {}
 
@@ -62,7 +62,7 @@ RadioButton {
                 width: root.hovered ? 40 : 20
                 height: root.hovered ? 40 : 20
                 radius: Appearance?.rounding.full
-                color: Appearance?.m3colors.m3onSurface
+                color: Appearance.colors.colOnSurface
                 opacity: root.hovered ? 0.1 : 0
 
                 Behavior on opacity {
@@ -82,7 +82,7 @@ RadioButton {
             Layout.alignment: Qt.AlignVCenter
             Layout.fillWidth: true
             wrapMode: Text.Wrap
-            color: Appearance?.m3colors.m3onSurface
+            color: Appearance.colors.colOnSurface
         }
     }
 }

@@ -67,7 +67,7 @@ bash ~/.config/quickshell/inir/scripts/colors/system24_palette.sh
 
 ### Changing Fonts
 
-Edit the system24 generator source (`scripts/colors/system24_themegen/main.go` or compatibility fallback `scripts/colors/system24_palette.py`) and change the font variables:
+Edit the system24 generator source (`scripts/colors/system24_palette.py`, invoked via `scripts/colors/system24_palette.sh`) and change the font variables:
 
 ```css
 body {

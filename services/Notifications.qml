@@ -137,17 +137,56 @@ Singleton {
     property var _cachedPopupAppNameList: []
     property bool _groupsDirty: true
 
-    property bool popupInhibited: (GlobalStates?.sidebarRightOpen ?? false) || (GlobalStates?.waffleNotificationCenterOpen ?? false) || silent || (GameMode?.active && GameMode?.suppressNotifications)
+    // Quiet hours: suppress popups inside a daily window. Notifications still
+    // arrive and land in the history, they just don't pop up.
+    function _parseHourMinute(value): int {
+        const parts = String(value ?? "").match(/^(\d{1,2}):(\d{2})$/)
+        if (!parts) return -1
+        const hours = parseInt(parts[1], 10)
+        const minutes = parseInt(parts[2], 10)
+        if (hours > 23 || minutes > 59) return -1
+        return hours * 60 + minutes
+    }
+
+    readonly property bool quietHoursActive: {
+        if (!(Config.options?.notifications?.quietHours?.enable ?? false)) return false
+        const start = root._parseHourMinute(Config.options?.notifications?.quietHours?.start ?? "22:00")
+        const end = root._parseHourMinute(Config.options?.notifications?.quietHours?.end ?? "08:00")
+        if (start < 0 || end < 0 || start === end) return false
+        const now = DateTime.clock.date
+        const minutes = now.getHours() * 60 + now.getMinutes()
+        // A window whose end is before its start wraps past midnight.
+        return start < end
+            ? (minutes >= start && minutes < end)
+            : (minutes >= start || minutes < end)
+    }
+
+    // Keep the reasons separate. Manual DND is persisted user intent; quiet
+    // hours and GameMode are derived policy; an open notification surface is
+    // presentation state. Callers can explain the real cause without making a
+    // temporary game suppression look like DND was switched on.
+    readonly property bool manualDndActive: silent
+    readonly property bool gameModeSuppressionActive:
+        (GameMode?.active ?? false) && (GameMode?.suppressNotifications ?? false)
+    readonly property bool notificationSurfaceOpen:
+        (GlobalStates?.sidebarRightOpen ?? false)
+        || (GlobalStates?.waffleNotificationCenterOpen ?? false)
+    readonly property bool notificationPolicyActive:
+        manualDndActive || quietHoursActive || gameModeSuppressionActive
+    readonly property string notificationPolicyReason: manualDndActive ? "dnd"
+        : quietHoursActive ? "quietHours"
+        : gameModeSuppressionActive ? "gameMode"
+        : ""
+    readonly property bool popupInhibited:
+        notificationSurfaceOpen || notificationPolicyActive
     property var latestTimeForApp: ({})
 
-    // When GameMode activates with suppressNotifications, dismiss existing popups
-    Connections {
-        target: GameMode
-        function onActiveChanged() {
-            if (GameMode.active && GameMode.suppressNotifications) {
-                root.timeoutAll()
-            }
-        }
+    // Entering any quiet policy dismisses popups already on screen. The
+    // notifications stay in history; opening the history itself is deliberately
+    // excluded because it is presentation state, not a policy change.
+    onNotificationPolicyActiveChanged: {
+        if (notificationPolicyActive)
+            root.timeoutAll()
     }
     // Debounce timer for group updates - 100ms is sufficient for responsive UI
     Timer {
@@ -226,6 +265,40 @@ Singleton {
 
     function _appNameListForGroups(groups) {
         return Object.keys(groups).sort((a, b) => groups[b].time - groups[a].time)
+    }
+
+    // Notification appName ("Spotify") and compositor appId ("spotify-launcher")
+    // rarely match verbatim; compare on alphanumerics only.
+    function _normalizeAppKey(name): string {
+        return String(name ?? "").toLowerCase().replace(/[^a-z0-9]/g, "")
+    }
+
+    // App names whose group has at least one notification matching the query,
+    // in the same order as appNameList. Empty query returns everything.
+    function appNamesMatching(query): var {
+        const needle = String(query ?? "").trim().toLowerCase()
+        if (needle.length === 0) return root.appNameList
+        const groups = root.groupsByAppName
+        return root.appNameList.filter(appName => {
+            if (appName.toLowerCase().includes(needle)) return true
+            const notifications = groups[appName]?.notifications ?? []
+            return notifications.some(notif =>
+                (notif.summary ?? "").toLowerCase().includes(needle)
+                || (notif.body ?? "").toLowerCase().includes(needle))
+        })
+    }
+
+    // Pending notifications held for an app. Counts the stored history, so it
+    // clears when the user dismisses that app's notifications.
+    function countForApp(identifiers): int {
+        const keys = (identifiers ?? []).map(root._normalizeAppKey).filter(k => k.length > 0)
+        if (keys.length === 0) return 0
+        const groups = root.groupsByAppName
+        for (const appName in groups) {
+            if (keys.indexOf(root._normalizeAppKey(appName)) !== -1)
+                return groups[appName].notifications?.length ?? 0
+        }
+        return 0
     }
 
     // Public API - use cached values
@@ -326,13 +399,10 @@ Singleton {
             });
 			root.list = [...root.list, newNotifObject];
 
-            // Sonido de notificación opcional
+            // Optional notification sound
             if ((Config.options?.sounds?.notifications ?? true) && !root.silent) {
-                var soundName = "message-new-instant";
-                if (notification.urgency === NotificationUrgency.Critical) {
-                    soundName = "dialog-warning";
-                }
-                Audio.playSystemSound(soundName);
+                Audio.playEvent(notification.urgency === NotificationUrgency.Critical
+                    ? "notificationCritical" : "notification");
             }
 
             // Popup
@@ -632,7 +702,7 @@ Singleton {
                 console.log("[Notifications] File not found, creating new file.")
                 // Ensure parent directory exists
                 const parentDir = root.filePath.substring(0, root.filePath.lastIndexOf('/'))
-                Process.exec(["/usr/bin/mkdir", "-p", parentDir])
+                Quickshell.execDetached(["/usr/bin/mkdir", "-p", parentDir])
                 root.list = []
                 notifFileView.setText(stringifyList(root.list));
             } else {

@@ -1,43 +1,59 @@
 import QtQuick
+import Quickshell
 import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.common.functions
 
 RippleButton {
     id: root
+    cookieMorphing: true
 
     property bool showPing: false
 
     property real buttonPadding: 5
     implicitWidth: distroIcon.width + buttonPadding * 2
     implicitHeight: distroIcon.height + buttonPadding * 2
-    buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
-    colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover 
-        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface 
+    // zzz stays transparent here — the ZzzPlate below is the only hover
+    // surface; it renders a real chamfer, while this Control's own
+    // background is a plain rounded Rectangle that would otherwise poke
+    // out past the chamfered cut (matches CircleUtilButton.qml).
+    colBackgroundHover: Appearance.zzzEverywhere ? "transparent"
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
+        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer1Hover
-    colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer1Active 
-        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive 
+    colRipple: Appearance.zzzEverywhere ? Appearance.colors.colLayer1Active
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer1Active
+        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
         : Appearance.colors.colLayer1Active
-    colBackgroundToggled: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainer 
-        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface 
+    colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.sticker
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+        : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainer
+        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
         : Appearance.colors.colSecondaryContainer
-    colBackgroundToggledHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-        : Appearance.inirEverywhere ? Appearance.inir.colSelectionHover 
-        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover 
+    colBackgroundToggledHover: Appearance.zzzEverywhere ? "transparent"
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+        : Appearance.inirEverywhere ? Appearance.inir.colSelectionHover
+        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover
         : Appearance.colors.colSecondaryContainerHover
-    colRippleToggled: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
-        : Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive 
-        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive 
+    colRippleToggled: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+        : Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive
+        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
         : Appearance.colors.colSecondaryContainerActive
-    toggled: GlobalStates.sidebarLeftOpen
+    // Spatial control: addresses whatever sidebar role occupies the left slot.
+    toggled: ShellLayoutController.sidebarOpenAtSlot("left",
+        root.QsWindow.window?.screen?.name ?? "")
 
     onPressed: {
-        GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen;
+        ShellLayoutController.toggleSidebarAtSlot("left",
+            root.QsWindow.window?.screen?.name ?? "");
     }
 
     Connections {
@@ -71,6 +87,18 @@ RippleButton {
         }
     }
 
+    ZzzPlate {
+        anchors.fill: parent
+        visible: Appearance.zzzEverywhere
+        chamfer: (root.buttonHovered || root.toggled) ? Appearance.zzz.cutCorner * 0.7 : Appearance.zzz.cutCorner * 0.35
+        fillColor: root.toggled ? Appearance.zzz.accentSoft
+            : root.buttonHovered ? Appearance.zzz.sticker : "transparent"
+        strokeColor: root.toggled ? "transparent"
+            : root.buttonHovered ? Appearance.zzz.accentSoft : "transparent"
+        strokeWidth: 1
+        z: -1
+    }
+
     CustomIcon {
         id: distroIcon
         anchors.centerIn: parent
@@ -78,7 +106,9 @@ RippleButton {
         height: 19.5
         source: (Config.options?.bar?.topLeftIcon ?? 'distro') == 'distro' ? SystemInfo.distroIcon : `${Config.options?.bar?.topLeftIcon ?? 'distro'}-symbolic`
         colorize: true
-        color: Appearance.colors.colOnLayer0
+        color: Appearance.zzzEverywhere
+            ? (root.toggled ? Appearance.zzz.onAccentSoft : Appearance.zzz.ink)
+            : Appearance.colors.colOnLayer0
 
         Rectangle {
             opacity: root.showPing ? 1 : 0
@@ -92,7 +122,11 @@ RippleButton {
             implicitWidth: 8
             implicitHeight: 8
             radius: Appearance.rounding.full
-            color: Appearance.colors.colTertiary
+            color: Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.colors.colTertiary
+            Behavior on color {
+                enabled: Appearance.animationsEnabled
+                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
 
             Behavior on opacity {
                 enabled: Appearance.animationsEnabled

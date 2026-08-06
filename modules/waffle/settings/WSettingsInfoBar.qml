@@ -16,16 +16,16 @@ Rectangle {
     signal closed()
 
     Layout.fillWidth: true
-    implicitHeight: visible ? barRow.implicitHeight + 16 : 0
+    implicitHeight: visible ? barRow.implicitHeight + Looks.settings.panelPadding : 0
     visible: root.message !== ""
-    radius: Looks.radius.large
+    radius: Looks.settings.radiusLarge
 
     color: {
         switch (root.severity) {
             case WSettingsInfoBar.Severity.Warning: return Qt.rgba(Looks.colors.warning.r, Looks.colors.warning.g, Looks.colors.warning.b, 0.08)
             case WSettingsInfoBar.Severity.Error: return Qt.rgba(Looks.colors.danger.r, Looks.colors.danger.g, Looks.colors.danger.b, 0.08)
             case WSettingsInfoBar.Severity.Success: return Qt.rgba(Looks.colors.accent.r, Looks.colors.accent.g, Looks.colors.accent.b, 0.08)
-            default: return Looks.colors.bg1Base
+            default: return Looks.settings.tile
         }
     }
 
@@ -35,7 +35,7 @@ Rectangle {
             case WSettingsInfoBar.Severity.Warning: return Qt.rgba(Looks.colors.warning.r, Looks.colors.warning.g, Looks.colors.warning.b, 0.2)
             case WSettingsInfoBar.Severity.Error: return Qt.rgba(Looks.colors.danger.r, Looks.colors.danger.g, Looks.colors.danger.b, 0.2)
             case WSettingsInfoBar.Severity.Success: return Qt.rgba(Looks.colors.accent.r, Looks.colors.accent.g, Looks.colors.accent.b, 0.2)
-            default: return Looks.colors.bg1Border
+            default: return Looks.settings.strokeStrong
         }
     }
 
@@ -45,11 +45,11 @@ Rectangle {
             left: parent.left
             top: parent.top
             bottom: parent.bottom
-            topMargin: 6
-            bottomMargin: 6
+            topMargin: Looks.dp(6)
+            bottomMargin: Looks.dp(6)
         }
-        width: 3
-        radius: 1.5
+        width: Looks.dp(3)
+        radius: width / 2
         color: {
             switch (root.severity) {
                 case WSettingsInfoBar.Severity.Warning: return Looks.colors.warning
@@ -66,10 +66,10 @@ Rectangle {
             left: parent.left
             right: parent.right
             verticalCenter: parent.verticalCenter
-            leftMargin: 14
-            rightMargin: 12
+            leftMargin: Looks.dp(12)
+            rightMargin: Looks.dp(12)
         }
-        spacing: 10
+        spacing: Looks.dp(10)
 
         FluentIcon {
             icon: {
@@ -80,7 +80,7 @@ Rectangle {
                     default: return "info"
                 }
             }
-            implicitSize: 16
+            implicitSize: Looks.dp(16)
             color: {
                 switch (root.severity) {
                     case WSettingsInfoBar.Severity.Warning: return Looks.colors.warning
@@ -102,13 +102,13 @@ Rectangle {
 
         WBorderlessButton {
             visible: root.closable
-            implicitWidth: 24
-            implicitHeight: 24
+            implicitWidth: Looks.dp(24)
+            implicitHeight: Looks.dp(24)
 
             contentItem: FluentIcon {
                 anchors.centerIn: parent
                 icon: "dismiss"
-                implicitSize: 12
+                implicitSize: Looks.dp(12)
                 color: Looks.colors.subfg
             }
 

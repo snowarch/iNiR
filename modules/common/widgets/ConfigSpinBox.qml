@@ -7,6 +7,8 @@ RowLayout {
     id: root
     property string text: ""
     property string icon
+    // Optional wrapping subtext under the label
+    property string description: ""
     property alias value: spinBoxWidget.value
     property alias stepSize: spinBoxWidget.stepSize
     property alias from: spinBoxWidget.from
@@ -84,19 +86,37 @@ RowLayout {
     }
 
     RowLayout {
+        Layout.fillWidth: true
         spacing: 10
         OptionalMaterialSymbol {
             icon: root.icon
             opacity: root.enabled ? 1 : 0.4
         }
-        StyledText {
-            id: labelWidget
+        ColumnLayout {
             Layout.fillWidth: true
-            text: root.text
-            color: Appearance.angelEverywhere ? Appearance.angel.colText
-                : Appearance.inirEverywhere ? Appearance.inir.colText
-                : Appearance.colors.colOnSecondaryContainer
-            opacity: root.enabled ? 1 : 0.4
+            spacing: 1
+
+            StyledText {
+                id: labelWidget
+                Layout.fillWidth: true
+                elide: Text.ElideRight
+                maximumLineCount: 1
+                text: root.text
+                color: Appearance.angelEverywhere ? Appearance.angel.colText
+                    : Appearance.inirEverywhere ? Appearance.inir.colText
+                    : Appearance.colors.colOnSurface
+                opacity: root.enabled ? 1 : 0.4
+            }
+
+            StyledText {
+                visible: root.description.length > 0
+                Layout.fillWidth: true
+                text: root.description
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: Appearance.colors.colSubtext
+                opacity: root.enabled ? 0.9 : 0.4
+                wrapMode: Text.WordWrap
+            }
         }
     }
 

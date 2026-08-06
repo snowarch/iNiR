@@ -71,6 +71,28 @@ WindowDialog {
                 rightMargin: 8
             }
         }
+
+        // Empty state: no networks and not scanning
+        ColumnLayout {
+            anchors.centerIn: parent
+            spacing: 6
+            visible: Network.wifiNetworks.length === 0 && !Network.wifiScanning
+
+            MascotImage {
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: 100
+                Layout.preferredHeight: 100
+                pose: "network-offline"
+                surface: "wifi"
+                fallbackSurface: "emptyStates"
+            }
+            StyledText {
+                Layout.alignment: Qt.AlignHCenter
+                text: Translation.tr("No networks found")
+                font.pixelSize: Appearance.font.pixelSize.small
+                color: Appearance.colors.colSubtext
+            }
+        }
     }
     WindowDialogSeparator {}
     WindowDialogButtonRow {

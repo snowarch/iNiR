@@ -25,11 +25,22 @@ Item {
     // Cache to prevent flickering during track transitions
     property var _playerCache: []
     property bool _cacheValid: false
+    readonly property var _visiblePlayers: root._cacheValid ? root._playerCache : (root.meaningfulPlayers ?? [])
+
+    function _samePlayerOrder(a, b): bool {
+        if ((a?.length ?? 0) !== (b?.length ?? 0)) return false
+        for (let i = 0; i < a.length; i++) {
+            if (a[i] !== b[i]) return false
+        }
+        return true
+    }
 
     onMeaningfulPlayersChanged: {
-        const count = root.meaningfulPlayers?.length ?? 0
+        const nextPlayers = root.meaningfulPlayers ?? []
+        const count = nextPlayers.length
         if (count > 0) {
-            root._playerCache = [...root.meaningfulPlayers];
+            if (!root._cacheValid || !root._samePlayerOrder(nextPlayers, root._playerCache))
+                root._playerCache = [...nextPlayers];
             root._cacheValid = true;
             cacheInvalidateTimer.stop();
         } else if (root._cacheValid && root._playerCache.length > 0) {
@@ -40,9 +51,9 @@ Item {
 
     Timer {
         id: cacheInvalidateTimer
-        interval: 800  // Longer debounce for track transitions
+        interval: 2200
         onTriggered: {
-            if ((root.meaningfulPlayers?.length ?? 0) === 0) {
+            if ((root.meaningfulPlayers?.length ?? 0) === 0 && (Mpris.players.values?.length ?? 0) === 0) {
                 root._cacheValid = false;
             }
         }
@@ -58,29 +69,33 @@ Item {
 
         Repeater {
             model: ScriptModel {
-                values: root._cacheValid ? root._playerCache : (root.meaningfulPlayers ?? [])
+                values: root._visiblePlayers
             }
             delegate: Item {
                 required property MprisPlayer modelData
                 required property int index
                 Layout.fillWidth: true
                 implicitWidth: root.widgetWidth
-                implicitHeight: root.widgetHeight + (isActive && (root._cacheValid ? root._playerCache : (root.meaningfulPlayers ?? [])).length > 1 ? 4 : 0)
+                implicitHeight: root.widgetHeight + (isActive && root._visiblePlayers.length > 1 ? 4 : 0)
                 
                 readonly property bool isActive: modelData === MprisController.trackedPlayer
                 
                 Rectangle {
-                    visible: (root._cacheValid ? root._playerCache : (root.meaningfulPlayers ?? [])).length > 1
+                    visible: root._visiblePlayers.length > 1
                     anchors.left: parent.left
                     anchors.top: parent.top
                     anchors.bottom: parent.bottom
-                    anchors.margins: Appearance.sizes.elevationMargin
+                    anchors.leftMargin: 0
+                    anchors.topMargin: Appearance.sizes.elevationMargin
+                    anchors.bottomMargin: Appearance.sizes.elevationMargin
                     width: 3
                     radius: 2
-                    color: isActive 
-                        ? (Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                    color: isActive
+                        ? (Appearance.zzzEverywhere ? Appearance.zzz.accent
+                            : Appearance.angelEverywhere ? Appearance.angel.colPrimary
                             : (Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
-                        : (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                        : (Appearance.zzzEverywhere ? Appearance.zzz.bg3
+                            : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                             : (Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.colLayer2 : Appearance.colors.colLayer2)
                     
                     Behavior on color {
@@ -91,7 +106,8 @@ Item {
                 
                 PlayerControl {
                     anchors.fill: parent
-                    anchors.leftMargin: (root._cacheValid ? root._playerCache : (root.meaningfulPlayers ?? [])).length > 1 ? 6 : 0
+                    anchors.leftMargin: root._visiblePlayers.length > 1
+                        ? Appearance.sizes.elevationMargin : 0
                     player: modelData
                     visualizerPoints: []
                     radius: root.popupRounding
@@ -99,7 +115,7 @@ Item {
                 
                 MouseArea {
                     anchors.fill: parent
-                    visible: !isActive && (root._cacheValid ? root._playerCache : (root.meaningfulPlayers ?? [])).length > 1
+                    visible: !isActive && root._visiblePlayers.length > 1
                     onClicked: MprisController.setActivePlayer(modelData)
                     cursorShape: Qt.PointingHandCursor
                     z: -1
@@ -124,17 +140,30 @@ Item {
             Rectangle {
                 id: placeholderBackground
                 anchors.centerIn: parent
-                color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                color: Appearance.zzzEverywhere ? Appearance.zzz.bg0
+                    : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                     : (Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.colLayer1
                     : (Appearance.auroraEverywhere && Appearance.aurora) ? Appearance.aurora.colPopupSurface
                      : Appearance.colors.colLayer0
-                radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+                radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+                    : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
                     : (Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.roundingNormal : root.popupRounding
-                border.width: Appearance.angelEverywhere ? 0 : ((Appearance.inirEverywhere || Appearance.auroraEverywhere) ? 1 : 0)
-                border.color: Appearance.angelEverywhere ? "transparent"
+                Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+                border.width: Appearance.zzzEverywhere ? 1 : (Appearance.angelEverywhere ? 0 : ((Appearance.inirEverywhere || Appearance.auroraEverywhere) ? 1 : 0))
+                Behavior on border.width {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
+                border.color: Appearance.zzzEverywhere ? Appearance.zzz.borderColor
+                            : Appearance.angelEverywhere ? "transparent"
                             : (Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.colBorder
                             : (Appearance.auroraEverywhere && Appearance.aurora) ? Appearance.aurora.colPopupBorder
                             : "transparent"
+                Behavior on border.color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
                 property real padding: 20
 
                 AngelPartialBorder { targetRadius: placeholderBackground.radius; coverage: 0.5 }
@@ -148,16 +177,26 @@ Item {
                     StyledText {
                         text: Translation.tr("No active player")
                         font.pixelSize: Appearance.font.pixelSize.large
-                        color: Appearance.angelEverywhere ? Appearance.angel.colText
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                            : Appearance.angelEverywhere ? Appearance.angel.colText
                             : (Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.colText
                             : (Appearance.auroraEverywhere && Appearance.aurora) ? Appearance.colors.colOnLayer0
                             : Appearance.colors.colOnLayer0
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                     }
                     StyledText {
-                        color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.ghostInk
+                            : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
                             : (Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.colTextSecondary
                             : (Appearance.auroraEverywhere && Appearance.aurora) ? Appearance.aurora.colTextSecondary
                             : Appearance.colors.colSubtext
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                         text: Translation.tr("Make sure your player has MPRIS support\nor try turning off duplicate player filtering")
                         font.pixelSize: Appearance.font.pixelSize.small
                     }

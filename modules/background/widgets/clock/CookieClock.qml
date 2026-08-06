@@ -15,45 +15,56 @@ import qs.modules.background.widgets.clock.minuteMarks
 Item {
     id: root
 
-    readonly property string clockStyle: Config.getNestedValue("background.widgets.clock.style", "cookie")
+    readonly property string clockStyle: Config.getNestedValue("background.widgets.clock.style", "digital")
     readonly property bool aiStyling: Config.getNestedValue("background.widgets.clock.cookie.aiStyling", false)
     readonly property bool constantlyRotate: Config.getNestedValue("background.widgets.clock.cookie.constantlyRotate", false)
-    readonly property int sides: Config.getNestedValue("background.widgets.clock.cookie.sides", 14)
+    readonly property int sides: Config.getNestedValue("background.widgets.clock.cookie.sides", 15)
     readonly property bool hourMarks: Config.getNestedValue("background.widgets.clock.cookie.hourMarks", false)
-    readonly property bool timeIndicators: Config.getNestedValue("background.widgets.clock.cookie.timeIndicators", true)
-    readonly property string minuteHandStyle: Config.getNestedValue("background.widgets.clock.cookie.minuteHandStyle", "medium")
-    readonly property string hourHandStyle: Config.getNestedValue("background.widgets.clock.cookie.hourHandStyle", "fill")
-    readonly property string secondHandStyle: Config.getNestedValue("background.widgets.clock.cookie.secondHandStyle", "dot")
+    readonly property bool timeIndicators: Config.getNestedValue("background.widgets.clock.cookie.timeIndicators", false)
+    readonly property string dialNumberStyle: Config.getNestedValue("background.widgets.clock.cookie.dialNumberStyle", "full")
+    readonly property string minuteHandStyle: Config.getNestedValue("background.widgets.clock.cookie.minuteHandStyle", "hide")
+    readonly property string hourHandStyle: Config.getNestedValue("background.widgets.clock.cookie.hourHandStyle", "hollow")
+    readonly property string secondHandStyle: Config.getNestedValue("background.widgets.clock.cookie.secondHandStyle", "hide")
     readonly property string dateStyle: Config.getNestedValue("background.widgets.clock.cookie.dateStyle", "bubble")
 
     property real scaleFactor: 1.0
+    property bool powerActive: WidgetPowerManager.widgetsActive
     property real implicitSize: Math.round((Config.getNestedValue("background.widgets.clock.cookie.size", 230)) * scaleFactor)
 
     // ── Style-dispatched colors (overridable from parent) ──
-    readonly property color _primaryColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-        : Appearance.inirEverywhere ? Appearance.inir.colPrimary
-        : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
-        : Appearance.colors.colPrimary
-    readonly property color _secondaryColor: Appearance.angelEverywhere ? Appearance.angel.colSecondary
-        : Appearance.inirEverywhere ? Appearance.inir.colSecondary
-        : Appearance.auroraEverywhere ? Appearance.m3colors.m3secondary
-        : Appearance.colors.colSecondary
-    readonly property color _tertiaryColor: Appearance.angelEverywhere ? Appearance.angel.colTertiary
-        : Appearance.inirEverywhere ? Appearance.inir.colTertiary
-        : Appearance.auroraEverywhere ? Appearance.m3colors.m3tertiary
-        : Appearance.colors.colTertiary
-    readonly property color _primaryContainerColor: Appearance.angelEverywhere ? Appearance.angel.colPrimaryContainer
-        : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainer
-        : Appearance.auroraEverywhere ? Appearance.m3colors.m3primaryContainer
-        : Appearance.colors.colPrimaryContainer
+    readonly property color _primaryColor: Appearance.colors.colPrimary
+    readonly property color _secondaryColor: Appearance.colors.colSecondary
+    readonly property color _tertiaryColor: Appearance.colors.colTertiary
+    readonly property color _primaryContainerColor: Appearance.colors.colPrimaryContainer
+
+    function readableOnFace(candidate: color, face: color): color {
+        if (ColorUtils.contrastRatio(candidate, face) >= 4.5)
+            return candidate;
+        return ColorUtils.contrastColor(face);
+    }
+
+    function supportingOnFace(strongInk: color, face: color): color {
+        for (let weight = 0.72; weight <= 1.001; weight += 0.04) {
+            const candidate = ColorUtils.mix(strongInk, face, weight);
+            if (ColorUtils.contrastRatio(candidate, face) >= 4.5)
+                return candidate;
+        }
+        return strongInk;
+    }
 
     property color colShadow: Appearance.colors.colShadow
     property color colBackground: root._primaryContainerColor
-    property color colOnBackground: ColorUtils.mix(root._secondaryColor, root._primaryContainerColor, 0.15)
-    property color colBackgroundInfo: ColorUtils.mix(root._primaryColor, root._primaryContainerColor, 0.55)
-    property color colHourHand: root._primaryColor
-    property color colMinuteHand: root._tertiaryColor
-    property color colSecondHand: root._primaryColor
+    property color colOnBackground: root.readableOnFace(
+        Appearance.zzzEverywhere ? Appearance.zzz.onAccent
+            : Appearance.colors.colOnPrimaryContainer,
+        root.colBackground)
+    property color colBackgroundInfo: root.supportingOnFace(
+        root.colOnBackground, root.colBackground)
+    property color colHourHand: root.readableOnFace(
+        ColorUtils.adaptAccent(root._primaryColor, root.colBackground), root.colBackground)
+    property color colMinuteHand: root.readableOnFace(
+        ColorUtils.adaptAccent(root._tertiaryColor, root.colBackground), root.colBackground)
+    property color colSecondHand: root.colOnBackground
 
     readonly property list<string> clockNumbers: DateTime.time.split(/[: ]/)
     readonly property int clockHour: parseInt(clockNumbers[0]) % 12
@@ -118,34 +129,42 @@ Item {
     }
 
     property bool useSineCookie: Config.getNestedValue("background.widgets.clock.cookie.useSineCookie", false)
+    readonly property bool _drawFaceDirectly: Appearance.zzzEverywhere || !Appearance.effectsEnabled
+    property real faceRotation: 0
+    RotationAnimation on faceRotation {
+        running: root.constantlyRotate && root.powerActive
+        duration: 30000
+        easing.type: Easing.Linear
+        loops: Animation.Infinite
+        from: 360
+        to: 0
+    }
     StyledDropShadow {
+        id: faceShadow
         target: useSineCookie ? sineCookieLoader : roundedPolygonCookieLoader
-
-        RotationAnimation on rotation {
-            // Pause rotation when power is off to save GPU
-            running: root.constantlyRotate && WidgetPowerManager.widgetsActive
-            duration: 30000
-            easing.type: Easing.Linear
-            loops: Animation.Infinite
-            from: 360
-            to: 0
-        }
+        rotation: root._drawFaceDirectly ? 0 : root.faceRotation
     }
     Loader {
         id: sineCookieLoader
         z: 0
-        visible: false // The DropShadow already draws it
+        // StyledDropShadow is intentionally disabled by ZZZ and by the global
+        // effects switch. In those states the source must draw itself; keeping it
+        // permanently hidden made the entire Cookie face disappear.
+        visible: root._drawFaceDirectly
+        rotation: root._drawFaceDirectly ? root.faceRotation : 0
         active: useSineCookie
         sourceComponent: SineCookie {
             implicitSize: root.implicitSize
             sides: root.sides
             color: root.colBackground
+            powerActive: root.powerActive
         }
     }
     Loader {
         id: roundedPolygonCookieLoader
         z: 0
-        visible: false // The DropShadow already draws it
+        visible: root._drawFaceDirectly
+        rotation: root._drawFaceDirectly ? root.faceRotation : 0
         active: !useSineCookie
         sourceComponent: MaterialCookie {
             implicitSize: root.implicitSize
@@ -153,6 +172,32 @@ Item {
             color: root.colBackground
         }
     }
+
+    readonly property string diagnosticReport: JSON.stringify({
+        renderer: root.useSineCookie ? "sine" : "material",
+        direct: root._drawFaceDirectly,
+        faceLoaded: root.useSineCookie
+            ? sineCookieLoader.item !== null : roundedPolygonCookieLoader.item !== null,
+        faceVisible: root._drawFaceDirectly
+            ? (root.useSineCookie ? sineCookieLoader.visible : roundedPolygonCookieLoader.visible)
+            : faceShadow.visible,
+        parts: {
+            dial: root.dialNumberStyle,
+            hourMarks: root.hourMarks,
+            timeIndicators: root.timeIndicators,
+            minuteHand: root.minuteHandStyle,
+            hourHand: root.hourHandStyle,
+            secondHand: root.secondHandStyle,
+            date: root.dateStyle
+        },
+        contrast: {
+            marks: ColorUtils.contrastRatio(root.colOnBackground, root.colBackground),
+            info: ColorUtils.contrastRatio(root.colBackgroundInfo, root.colBackground),
+            hourHand: ColorUtils.contrastRatio(root.colHourHand, root.colBackground),
+            minuteHand: ColorUtils.contrastRatio(root.colMinuteHand, root.colBackground),
+            secondHand: ColorUtils.contrastRatio(root.colSecondHand, root.colBackground)
+        }
+    })
 
     // Hour/minutes numbers/dots/lines
     MinuteMarks {

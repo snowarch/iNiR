@@ -46,7 +46,7 @@ RippleButton {
                 elide: Text.ElideRight
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 text: (input ? Audio.source?.description : Audio.defaultSink?.description) ?? Translation.tr("Unknown")
-                color: Appearance.m3colors.m3outline
+                color: Appearance.colors.colOutline
                 animateChange: true
             }
         }

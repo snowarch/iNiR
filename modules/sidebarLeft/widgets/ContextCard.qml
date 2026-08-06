@@ -32,7 +32,14 @@ Item {
         id: card
         anchors.centerIn: parent
         width: parent.width
-        implicitHeight: stack.implicitHeight + 16
+        // StackLayout's implicitHeight is the MAX across all views, so weather
+        // mode used to reserve the taller timer view's height as a ghost gap
+        // below the visible content. Size to the current view instead.
+        implicitHeight: (stack.children[stack.currentIndex]?.implicitHeight ?? stack.implicitHeight) + 16
+        Behavior on implicitHeight {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
+        }
         radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
             : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
             : Appearance.rounding.normal
@@ -104,6 +111,7 @@ Item {
                         radius: 8
                         color: Appearance.inirEverywhere ? Appearance.inir.colLayer2
                             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+                            : Appearance.zzzEverywhere ? Appearance.colors.colLayer2
                             : Appearance.colors.colSecondaryContainer
 
                         StyledText {
@@ -177,6 +185,7 @@ Item {
                         : (Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
                     trackColor: Appearance.inirEverywhere ? Appearance.inir.colLayer2
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+                        : Appearance.zzzEverywhere ? Appearance.colors.colLayer2
                         : Appearance.colors.colSecondaryContainer
                 }
             }
@@ -379,6 +388,7 @@ Item {
                                     : Appearance.colors.colPrimary)
                                 : (Appearance.inirEverywhere ? Appearance.inir.colLayer2
                                     : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
+                                    : Appearance.zzzEverywhere ? Appearance.colors.colLayer2
                                     : Appearance.colors.colSecondaryContainer)
                             Behavior on color { enabled: Appearance.animationsEnabled; animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
 

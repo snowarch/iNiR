@@ -19,6 +19,9 @@ Item {
     // ─── Inputs ──────────────────────────────────────────────────────────
     property bool appIsActive:      false
     property bool hasWindows:       false
+    property string surfaceDialect: Appearance.surfaceDialectFor("")
+    readonly property bool angelStyle: surfaceDialect === "angel"
+    readonly property bool inirStyle: surfaceDialect === "inir"
     property bool buttonHovered:    false
     property bool previewVisible:   false  // Keep hover active while preview is shown
     property bool vertical:         false
@@ -136,18 +139,18 @@ Item {
                     return index === root.focusedWindowIndex
                 }
 
-                radius: Appearance.angelEverywhere ? 0 : Math.min(width, height) / 2
-                implicitWidth: Appearance.angelEverywhere
+                radius: root.angelStyle ? 0 : Math.min(width, height) / 2
+                implicitWidth: root.angelStyle
                     ? (isFocused ? 14 : 6)
                     : (isFocused ? 10 : 4)
-                implicitHeight: Appearance.angelEverywhere ? 2 : 4
+                implicitHeight: root.angelStyle ? 2 : 4
                 color: isFocused
-                    ? (Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                     : Appearance.inirEverywhere  ? Appearance.inir.colPrimary
+                    ? (root.angelStyle ? Appearance.angel.colPrimary
+                     : root.inirStyle ? Appearance.inir.colPrimary
                      : Appearance.colors.colPrimary)
                     : ColorUtils.transparentize(
-                        Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
-                      : Appearance.inirEverywhere  ? Appearance.inir.colText
+                        root.angelStyle ? Appearance.angel.colTextSecondary
+                      : root.inirStyle ? Appearance.inir.colText
                       : Appearance.colors.colOnLayer0, 0.5)
 
                 Behavior on implicitWidth {
@@ -165,12 +168,12 @@ Item {
         Rectangle {
             opacity: !root.appIsActive && root.hasWindows && !indicatorRow.showAllDots ? 1 : 0
             visible: opacity > 0
-            width: Appearance.angelEverywhere ? 6 : 5
-            height: Appearance.angelEverywhere ? 2 : 5
-            radius: Appearance.angelEverywhere ? 0 : Math.min(width, height) / 2
+            width: root.angelStyle ? 6 : 5
+            height: root.angelStyle ? 2 : 5
+            radius: root.angelStyle ? 0 : Math.min(width, height) / 2
             color: ColorUtils.transparentize(
-                Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
-              : Appearance.inirEverywhere  ? Appearance.inir.colText
+                root.angelStyle ? Appearance.angel.colTextSecondary
+              : root.inirStyle ? Appearance.inir.colText
               : Appearance.colors.colOnLayer0, 0.5)
 
             Behavior on opacity {

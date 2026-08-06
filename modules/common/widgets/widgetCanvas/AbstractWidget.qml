@@ -12,9 +12,11 @@ Item {
     property alias animateXPos: xBehavior.enabled
     property alias animateYPos: yBehavior.enabled
     property bool draggable: true
+    property real dragThreshold: 6
     readonly property bool containsPress: _dragArea.pressed
     readonly property bool isDragging: _dragArea.drag.active
 
+    signal pressed()
     signal released()
 
     function center() {
@@ -31,7 +33,9 @@ Item {
         // sticky notes / future interactive widgets become un-typeable.
         enabled: root.draggable
         drag.target: root.draggable ? root : undefined
+        drag.threshold: root.dragThreshold
         cursorShape: (root.draggable && pressed) ? Qt.ClosedHandCursor : root.draggable ? Qt.OpenHandCursor : Qt.ArrowCursor
+        onPressed: root.pressed()
         onReleased: root.released()
     }
 

@@ -150,10 +150,10 @@ Item {
             }
         }
 
-        Rectangle {
+        Rectangle { // No full-width grey track — only the colored active indicator reads.
             Layout.fillWidth: true
             height: 1
-            color: root.colBorder
+            color: "transparent"
         }
 
         SwipeView {

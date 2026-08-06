@@ -64,6 +64,53 @@ Scope {
         target: GlobalStates
         function onFamilyTransitionActiveChanged() {
             if (!GlobalStates.familyTransitionActive) return
+            root._beginTransition()
+        }
+    }
+
+    // Applying the family writes panelFamily to config, and Config's own
+    // FileView watch turns that write into a full configuration reload — the
+    // whole root object, this overlay included, is rebuilt mid-transition.
+    // GlobalStates is a singleton and survives that, so the replacement is born
+    // with familyTransitionActive already true and never sees the change signal:
+    // no timer starts, fadeOut never runs, enterComplete never fires, and a
+    // fullscreen WlrKeyboardFocus.Exclusive window stays up forever. That is the
+    // freeze that forces a TTY. Arm on construction too.
+    Component.onCompleted: if (GlobalStates.familyTransitionActive) root._beginTransition()
+
+    // Nothing may hold exclusive keyboard focus on a timer chain alone. If the
+    // choreography has not finished well past its own worst case, tear the
+    // overlay down and hand input back rather than trap the session.
+    Timer {
+        id: watchdog
+        interval: root._entryFade + root._enterDuration + root._holdDuration
+            + root._contentExitDelay + root._exitDuration + 3000
+        onTriggered: {
+            if (!root._active && !GlobalStates.familyTransitionActive) return
+            console.warn("[FamilyTransition] watchdog fired — releasing the overlay")
+            root._forceFinish()
+        }
+    }
+
+    function _forceFinish(): void {
+        enterTimer.stop(); holdTimer.stop(); contentExitTimer.stop()
+        fadeIn.stop(); bgScaleIn.stop(); blurIn.stop()
+        fadeOut.stop(); bgScaleOut.stop()
+        watchdog.stop()
+        // exitComplete may not have run yet; the family still has to be applied.
+        root.exitComplete()
+        root._overlayOpacity = 0
+        root._active = false
+        root.enterComplete()
+    }
+
+    function _beginTransition(): void {
+            watchdog.restart()
+
+            // Side effect kept out of the source binding: make sure the still
+            // for a video/GIF wallpaper exists before the overlay asks for it.
+            const wp = Config.options?.background?.wallpaperPath ?? ""
+            if (wp) Wallpapers.ensureVideoStill(wp)
 
             // Cancel any running exit
             fadeOut.stop()
@@ -97,7 +144,6 @@ Scope {
             bgScaleIn.restart()
             blurIn.restart()
             enterTimer.start()
-        }
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -239,6 +285,19 @@ Scope {
                                 path = Config.options?.background?.wallpaperPath ?? ""
                             }
                             if (!path) return ""
+                            // Image cannot decode a video, so a video wallpaper
+                            // used to log "Formato de imagen no soportado" and
+                            // leave the overlay on its flat plate. Use the still
+                            // the thumbnail service already keeps for exactly
+                            // these files, and ask for it if it is not there yet.
+                            // Pure: generating the thumbnail from in here mutated
+                            // state this same binding reads and Qt flagged a
+                            // binding loop. _beginTransition() requests it.
+                            if (/\.(mp4|webm|mkv|avi|mov)$/i.test(path)) {
+                                const still = Wallpapers.videoStillPath(path)
+                                if (!still) return ""
+                                return still.startsWith("file://") ? still : "file://" + still
+                            }
                             return path.startsWith("file://") ? path : "file://" + path
                         }
                         fillMode: Image.PreserveAspectCrop

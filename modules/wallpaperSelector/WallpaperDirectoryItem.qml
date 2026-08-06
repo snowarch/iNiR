@@ -20,6 +20,8 @@ MouseArea {
     property alias radius: background.radius
     property alias margins: background.anchors.margins
     property alias padding: wallpaperItemColumnLayout.anchors.margins
+    property real thumbnailResolutionScale: 1
+    property bool thumbnailMipmap: false
     margins: Appearance.sizes.wallpaperSelectorItemMargins
     padding: Appearance.sizes.wallpaperSelectorItemPadding
 
@@ -31,7 +33,12 @@ MouseArea {
     Rectangle {
         id: background
         anchors.fill: parent
-        radius: Appearance.rounding.normal
+        radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.normal
+        border.width: Appearance.zzzEverywhere ? 1 : 0
+        border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : "transparent"
+        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+        Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+        Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
         Behavior on color {
             enabled: Appearance.animationsEnabled
             animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -54,7 +61,11 @@ MouseArea {
                     maskSource: Rectangle {
                         width: wallpaperItemImageContainer.width
                         height: wallpaperItemImageContainer.height
-                        radius: Appearance.rounding.small
+                        radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius : Appearance.rounding.small
+                        Behavior on radius {
+                            enabled: Appearance.animationsEnabled
+                            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                     }
                 }
 
@@ -65,7 +76,11 @@ MouseArea {
                     sourceComponent: StyledRectangularShadow {
                         target: thumbnailImageLoader
                         anchors.fill: undefined
-                        radius: Appearance.rounding.small
+                        radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius : Appearance.rounding.small
+                        Behavior on radius {
+                            enabled: Appearance.animationsEnabled
+                            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                     }
                 }
 
@@ -81,8 +96,10 @@ MouseArea {
                         // ~250-300px grid cells. Avoids decoding 512px PNGs per item.
                         thumbnailSizeName: {
                             const auto = Images.thumbnailSizeNameForDimensions(
-                                Math.round(wallpaperItemImageContainer.width * root._dpr),
-                                Math.round(wallpaperItemImageContainer.height * root._dpr)
+                                Math.round(wallpaperItemImageContainer.width * root._dpr
+                                    * root.thumbnailResolutionScale),
+                                Math.round(wallpaperItemImageContainer.height * root._dpr
+                                    * root.thumbnailResolutionScale)
                             )
                             return auto === "normal" ? "large" : auto
                         }
@@ -91,8 +108,11 @@ MouseArea {
                         fillMode: Image.PreserveAspectCrop
                         clip: true
                         smooth: true
-                        sourceSize.width: Math.round(wallpaperItemImageContainer.width * root._dpr)
-                        sourceSize.height: Math.round(wallpaperItemImageContainer.height * root._dpr)
+                        mipmap: root.thumbnailMipmap
+                        sourceSize.width: Math.round(wallpaperItemImageContainer.width * root._dpr
+                            * root.thumbnailResolutionScale)
+                        sourceSize.height: Math.round(wallpaperItemImageContainer.height * root._dpr
+                            * root.thumbnailResolutionScale)
                     }
                 }
 

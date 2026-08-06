@@ -18,6 +18,27 @@ ensure_generated_dirs() {
   mkdir -p "$STATE_DIR/user/generated"
 }
 
+# Cap an append-only pipeline log, keeping the newest lines.
+# Call from an orchestrator before modules are spawned — never from inside a
+# module, where up to four of them append concurrently and the swap would race.
+rotate_log() {
+  local log_path="$1"
+  local max_bytes="${2:-1048576}"
+  local keep_bytes=$((max_bytes / 4))
+  [[ -f "$log_path" ]] || return 0
+
+  local size
+  size="$(stat -c %s "$log_path" 2>/dev/null || printf '0')"
+  [[ "$size" =~ ^[0-9]+$ ]] || return 0
+  (( size > max_bytes )) || return 0
+
+  if tail -c "$keep_bytes" "$log_path" > "$log_path.rotated" 2>/dev/null; then
+    mv -f "$log_path.rotated" "$log_path"
+  else
+    rm -f "$log_path.rotated"
+  fi
+}
+
 log_module() {
   ensure_generated_dirs
   printf '[%s] [%s] %s\n' "$(date '+%H:%M:%S')" "${COLOR_MODULE_ID:-module}" "$*" >> "$MODULE_LOG"

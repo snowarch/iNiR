@@ -1,4 +1,5 @@
 module qs.modules.tilingOverlay
 
 TilingOverlay 1.0 TilingOverlay.qml
+TilingOverlayRouter 1.0 TilingOverlayRouter.qml
 LayoutPreview 1.0 LayoutPreview.qml

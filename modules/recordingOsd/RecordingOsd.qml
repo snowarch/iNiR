@@ -16,6 +16,9 @@ Scope {
     property bool isVertical: false
     property bool collapsed: false
     readonly property bool autoHide: Config.options?.screenRecord?.recordingOsd?.autoHide ?? false
+    readonly property string audioMode: RecorderStatus.effectiveAudioMode
+    readonly property bool usesSystemAudio: audioMode === "system" || audioMode === "both"
+    readonly property bool usesMicrophone: audioMode === "microphone" || audioMode === "both"
     property bool revealed: true
     property bool osdTargetHovered: false
 
@@ -35,7 +38,8 @@ Scope {
     }
 
     function stopRecording(): void {
-        Quickshell.execDetached(["/usr/bin/pkill", "-SIGINT", "wf-recorder"])
+        Quickshell.execDetached([Directories.recordScriptPath, "--stop"])
+        RecorderStatus.scheduleQuickCheck()
     }
 
     Connections {
@@ -205,15 +209,20 @@ Scope {
                     screenX: screenPos.x
                     screenY: screenPos.y
 
-                    fallbackColor: Appearance.colors.colLayer2
+                    fallbackColor: Appearance.zzzEverywhere ? Appearance.zzz.bg1 : Appearance.colors.colLayer2
                     inirColor: Appearance.inir.colLayer1
                     auroraTransparency: Appearance.aurora.popupTransparentize
 
-                    radius: Appearance.rounding.large
-                    border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : 1
-                    border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+                    radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius : Appearance.rounding.large
+                    border.width: Appearance.zzzEverywhere ? 1 : (Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : 1)
+                    border.color: Appearance.zzzEverywhere ? Appearance.zzz.borderColor
+                                : Appearance.angelEverywhere ? Appearance.angel.colCardBorder
                                 : Appearance.inirEverywhere ? Appearance.inir.colBorder
                                 : Appearance.colors.colOutlineVariant
+                    Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+                    Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                    Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                    Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                 }
 
                 Behavior on scale {
@@ -283,18 +292,18 @@ Scope {
                         tooltip: Translation.tr("Stop recording")
                     }
 
-                    OsdSeparator { isVertical: false; visible: !root.collapsed }
+                    OsdSeparator { isVertical: false; visible: !root.collapsed && root.audioMode !== "none" }
 
                     OsdPillButton {
-                        visible: !root.collapsed
+                        visible: !root.collapsed && root.usesSystemAudio
                         iconName: Audio.sink?.audio?.muted ? "volume_off" : "volume_up"
                         dimmed: Audio.sink?.audio?.muted ?? false
                         onClicked: Audio.toggleMute()
                         tooltip: Audio.sink?.audio?.muted
-                            ? Translation.tr("Unmute audio") : Translation.tr("Mute audio")
+                            ? Translation.tr("Unmute system audio") : Translation.tr("Mute system audio")
                     }
                     OsdPillButton {
-                        visible: !root.collapsed
+                        visible: !root.collapsed && root.usesMicrophone
                         iconName: Audio.micMuted ? "mic_off" : "mic"
                         dimmed: Audio.micMuted
                         onClicked: Audio.toggleMicMute()
@@ -329,18 +338,18 @@ Scope {
                         tooltip: Translation.tr("Stop recording")
                     }
 
-                    OsdSeparator { isVertical: true; visible: !root.collapsed }
+                    OsdSeparator { isVertical: true; visible: !root.collapsed && root.audioMode !== "none" }
 
                     OsdPillButton {
-                        visible: !root.collapsed
+                        visible: !root.collapsed && root.usesSystemAudio
                         iconName: Audio.sink?.audio?.muted ? "volume_off" : "volume_up"
                         dimmed: Audio.sink?.audio?.muted ?? false
                         onClicked: Audio.toggleMute()
                         tooltip: Audio.sink?.audio?.muted
-                            ? Translation.tr("Unmute audio") : Translation.tr("Mute audio")
+                            ? Translation.tr("Unmute system audio") : Translation.tr("Mute system audio")
                     }
                     OsdPillButton {
-                        visible: !root.collapsed
+                        visible: !root.collapsed && root.usesMicrophone
                         iconName: Audio.micMuted ? "mic_off" : "mic"
                         dimmed: Audio.micMuted
                         onClicked: Audio.toggleMicMute()
@@ -380,12 +389,15 @@ Scope {
 
         Rectangle {
             anchors.fill: parent
-            radius: Appearance.rounding.full
+            radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
+            Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
             color: dragHandler.active
-                ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+                ? (Appearance.zzzEverywhere ? Appearance.zzz.bg4
+                    : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
                     : Appearance.colors.colLayer2Active ?? Appearance.colors.colLayer1Active)
                 : dragHover.hovered
-                    ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                    ? (Appearance.zzzEverywhere ? Appearance.zzz.bg3
+                        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                         : Appearance.colors.colLayer2Hover ?? Appearance.colors.colLayer1Hover)
                     : "transparent"
 
@@ -430,8 +442,12 @@ Scope {
         Layout.preferredWidth: isVertical ? 22 : 1
         Layout.preferredHeight: isVertical ? 1 : 22
         Layout.alignment: Qt.AlignCenter
-        color: Appearance.colors.colOutlineVariant
-        opacity: 0.3
+        color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : Appearance.colors.colOutlineVariant
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        opacity: Appearance.zzzEverywhere ? 1.0 : 0.3
     }
 
     // Recording dot + timer
@@ -534,11 +550,13 @@ Scope {
         Layout.preferredWidth: 30
         Layout.preferredHeight: 30
         Layout.alignment: Qt.AlignCenter
-        buttonRadius: Appearance.rounding.full
+        buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
         colBackground: "transparent"
-        colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+        colBackgroundHover: Appearance.zzzEverywhere ? Appearance.zzz.bg3
+            : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
             : Appearance.colors.colLayer2Hover ?? Appearance.colors.colLayer1Hover
-        colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+        colRipple: Appearance.zzzEverywhere ? Appearance.zzz.bg4
+            : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
             : Appearance.colors.colLayer2Active ?? Appearance.colors.colLayer1Active
 
         contentItem: MaterialSymbol {

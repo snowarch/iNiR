@@ -18,20 +18,26 @@ ColumnLayout {
 
     // --- State ---
     property string sourcePath: ""
-    property string selectedFormat: "png"
+    property string selectedFormat: Persistent.states?.settings?.gowallFormat ?? "png"
+    onSelectedFormatChanged: if (Persistent.ready && Persistent.states?.settings)
+        Persistent.states.settings.gowallFormat = selectedFormat
 
     // Operation mode: "convert", "effects", "invert", "pixelate"
     property string operationMode: "convert"
 
     // Convert state
-    property string selectedTheme: ""
+    property string selectedTheme: Persistent.states?.settings?.gowallTheme ?? ""
+    onSelectedThemeChanged: if (Persistent.ready && Persistent.states?.settings)
+        Persistent.states.settings.gowallTheme = selectedTheme
     property string convertSource: "builtin"
     property string customThemeName: "custom"
     property var customColors: ["#89B4FA", "#CBA6F7", "#F38BA8", "#A6E3A1", "#F9E2AF", "#11111B"]
     property int editingColorIndex: -1
 
     // Effects state
-    property string selectedEffect: "grayscale"
+    property string selectedEffect: Persistent.states?.settings?.gowallEffect ?? "grayscale"
+    onSelectedEffectChanged: if (Persistent.ready && Persistent.states?.settings)
+        Persistent.states.settings.gowallEffect = selectedEffect
     property real brightnessFactor: 1.1
 
     // Pixelate state
@@ -127,12 +133,12 @@ ColumnLayout {
         MaterialSymbol {
             text: "warning"
             iconSize: Appearance.font.pixelSize.larger
-            color: Appearance.m3colors.m3error
+            color: Appearance.colors.colError
         }
         StyledText {
             Layout.fillWidth: true
             text: Translation.tr("gowall is not installed. Install it from github.com/Achno/gowall to use this feature.")
-            color: Appearance.m3colors.m3error
+            color: Appearance.colors.colError
             font.pixelSize: Appearance.font.pixelSize.small
             wrapMode: Text.WordWrap
         }
@@ -150,7 +156,7 @@ ColumnLayout {
             RippleButton {
                 Layout.fillWidth: true
                 implicitHeight: 36
-                buttonRadius: Appearance.rounding.small
+                buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                 colBackground: SettingsMaterialPreset.groupColor
                 colBackgroundHover: Appearance.colors.colLayer2Hover
                 text: Translation.tr("Use current wallpaper")
@@ -169,7 +175,7 @@ ColumnLayout {
             RippleButton {
                 implicitHeight: 36
                 implicitWidth: browseRow.implicitWidth + 24
-                buttonRadius: Appearance.rounding.small
+                buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                 colBackground: SettingsMaterialPreset.groupColor
                 colBackgroundHover: Appearance.colors.colLayer2Hover
                 onClicked: imageDialog.open()
@@ -198,7 +204,7 @@ ColumnLayout {
             Layout.fillWidth: true
             text: Translation.tr("Animated files are not supported. Choose a static image.")
             font.pixelSize: Appearance.font.pixelSize.smaller
-            color: Appearance.m3colors.m3error
+            color: Appearance.colors.colError
             wrapMode: Text.WordWrap
         }
     }
@@ -214,7 +220,7 @@ ColumnLayout {
             onSelected: newValue => { root.operationMode = newValue }
             options: [
                 { displayName: Translation.tr("Recolor"), icon: "palette", value: "convert" },
-                { displayName: Translation.tr("Effects"), icon: "auto_fix_high", value: "effects" },
+                { displayName: Translation.tr("Effects"), icon: "auto_fix", value: "effects" },
                 { displayName: Translation.tr("Invert"), icon: "invert_colors", value: "invert" },
                 { displayName: Translation.tr("Pixelate"), icon: "grid_on", value: "pixelate" },
                 { displayName: Translation.tr("Upscale"), icon: "zoom_in", value: "upscale" }
@@ -299,26 +305,16 @@ ColumnLayout {
                 Flow {
                     id: themeFlow
                     width: parent.width
-                    spacing: 4
+                    spacing: 6
 
                     Repeater {
                         model: root.filteredThemes
-                        delegate: RippleButton {
+                        delegate: FilterChip {
                             required property var modelData
-                            implicitHeight: 28
-                            implicitWidth: themeLabel.implicitWidth + 20
-                            buttonRadius: 14
-                            toggled: root.selectedTheme === String(modelData)
-                            colBackground: toggled ? Appearance.colors.colPrimaryContainer : "transparent"
-                            colBackgroundHover: toggled ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colLayer1Hover
+                            text: String(modelData)
+                            selected: root.selectedTheme === String(modelData)
+                            surfaceColor: SettingsMaterialPreset.groupColor
                             onClicked: root.selectedTheme = String(modelData)
-                            contentItem: StyledText {
-                                id: themeLabel
-                                anchors.centerIn: parent
-                                text: String(modelData)
-                                font.pixelSize: Appearance.font.pixelSize.smaller
-                                color: parent.toggled ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer1
-                            }
                         }
                     }
                 }
@@ -500,7 +496,7 @@ ColumnLayout {
             MaterialSymbol {
                 text: "warning"
                 iconSize: Appearance.font.pixelSize.normal
-                color: Appearance.m3colors.m3error
+                color: Appearance.colors.colError
             }
             StyledText {
                 Layout.fillWidth: true
@@ -637,19 +633,31 @@ ColumnLayout {
                 Layout.fillWidth: true
                 implicitHeight: 38
                 enabled: !GowallService.busy && GowallService.previewUrl.length > 0
-                buttonRadius: Appearance.rounding.small
-                colBackground: Appearance.colors.colPrimaryContainer
-                colBackgroundHover: Appearance.colors.colPrimaryContainerHover
-                colRipple: Appearance.colors.colPrimaryContainerActive
+                buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                colBackground: Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colPrimaryContainer
+                colBackgroundHover: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimaryContainerHover
+                colRipple: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colPrimaryContainerActive
                 onClicked: GowallService.applyPreview()
                 contentItem: RowLayout {
                     anchors.centerIn: parent
                     spacing: 6
-                    MaterialSymbol { text: "check_circle"; iconSize: 16; color: Appearance.colors.colOnPrimaryContainer }
+                    MaterialSymbol {
+                        text: "check_circle"
+                        iconSize: 16
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                        }
+                    }
                     StyledText {
                         text: Translation.tr("Apply as wallpaper")
                         font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnPrimaryContainer
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                        }
                     }
                 }
             }
@@ -660,7 +668,7 @@ ColumnLayout {
             Layout.fillWidth: true
             text: GowallService.error
             font.pixelSize: Appearance.font.pixelSize.smaller
-            color: Appearance.m3colors.m3error
+            color: Appearance.colors.colError
             wrapMode: Text.WordWrap
         }
     }
@@ -833,5 +841,15 @@ ColumnLayout {
                 root.customColors = next
             }
         }
+    }
+
+    SettingsNativeDialogGuard {
+        dialog: imageDialog
+        dialogKey: "gowall-source-image"
+    }
+
+    SettingsNativeDialogGuard {
+        dialog: colorDialog
+        dialogKey: "gowall-palette-color"
     }
 }

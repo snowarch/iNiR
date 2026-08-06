@@ -36,6 +36,10 @@ Singleton {
         Quickshell.execDetached([Quickshell.shellPath("scripts/inir")].concat(args ?? []))
     }
 
+    function applyGlobalStyle(styleId: string): void {
+        ThemeService.setGlobalStyle(styleId)
+    }
+
     function fuzzyQuery(query: string): list<var> {
         if (!query || query.trim() === "") return allActions
         const q = query.toLowerCase().trim()
@@ -200,6 +204,15 @@ Singleton {
             execute: () => { GlobalStates.settingsOverlayOpen = true }
         },
         {
+            id: "toggle-dashboard",
+            name: Translation.tr("Dashboard"),
+            description: Translation.tr("Open the welcome hub: clock, notifications, media, agenda and more"),
+            icon: "space_dashboard",
+            category: "system",
+            keywords: ["dashboard", "hub", "home", "welcome", "widgets", "overview"],
+            execute: () => { GlobalStates.dashboardOpen = !GlobalStates.dashboardOpen }
+        },
+        {
             id: "open-network-settings",
             name: Translation.tr("Network Settings"),
             description: Translation.tr("Open network connection manager"),
@@ -243,9 +256,7 @@ Singleton {
             icon: "dark_mode",
             category: "appearance",
             keywords: ["dark", "theme", "night", "mode"],
-            execute: () => {
-                Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--mode", "dark", "--noswitch"])
-            }
+            execute: () => MaterialThemeLoader.setDarkMode(true)
         },
         {
             id: "light-mode",
@@ -254,9 +265,7 @@ Singleton {
             icon: "light_mode",
             category: "appearance",
             keywords: ["light", "theme", "day", "mode"],
-            execute: () => {
-                Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--mode", "light", "--noswitch"])
-            }
+            execute: () => MaterialThemeLoader.setDarkMode(false)
         },
         {
             id: "accent-color",
@@ -311,7 +320,7 @@ Singleton {
             icon: "format_paint",
             category: "appearance",
             keywords: ["style", "material", "theme"],
-            execute: () => { Config.setNestedValue("appearance.globalStyle", "material") }
+            execute: () => { root.applyGlobalStyle("material") }
         },
         {
             id: "style-cards",
@@ -320,7 +329,7 @@ Singleton {
             icon: "dashboard",
             category: "appearance",
             keywords: ["style", "cards", "theme"],
-            execute: () => { Config.setNestedValue("appearance.globalStyle", "cards") }
+            execute: () => { root.applyGlobalStyle("cards") }
         },
         {
             id: "style-aurora",
@@ -329,7 +338,7 @@ Singleton {
             icon: "auto_awesome",
             category: "appearance",
             keywords: ["style", "aurora", "theme", "blur"],
-            execute: () => { Config.setNestedValue("appearance.globalStyle", "aurora") }
+            execute: () => { root.applyGlobalStyle("aurora") }
         },
         {
             id: "style-inir",
@@ -338,7 +347,7 @@ Singleton {
             icon: "terminal",
             category: "appearance",
             keywords: ["style", "inir", "theme"],
-            execute: () => { Config.setNestedValue("appearance.globalStyle", "inir") }
+            execute: () => { root.applyGlobalStyle("inir") }
         },
         {
             id: "style-angel",
@@ -347,7 +356,25 @@ Singleton {
             icon: "stars",
             category: "appearance",
             keywords: ["style", "angel", "theme", "glass"],
-            execute: () => { Config.setNestedValue("appearance.globalStyle", "angel") }
+            execute: () => { root.applyGlobalStyle("angel") }
+        },
+        {
+            id: "style-zzz",
+            name: Translation.tr("Style: ZZZ"),
+            description: Translation.tr("Switch to ZZZ style"),
+            icon: "bolt",
+            category: "appearance",
+            keywords: ["style", "zzz", "zenless", "theme", "yellow", "hazard"],
+            execute: () => { root.applyGlobalStyle("zzz") }
+        },
+        {
+            id: "style-cookie",
+            name: Translation.tr("Style: Cookie Shapes"),
+            description: Translation.tr("Switch to Cookie Shapes style"),
+            icon: "cookie",
+            category: "appearance",
+            keywords: ["style", "cookie", "shapes", "theme", "expressive", "morph"],
+            execute: () => { root.applyGlobalStyle("cookie") }
         },
     ]
 
@@ -378,16 +405,17 @@ Singleton {
         {
             id: "screen-record",
             name: Translation.tr("Toggle Screen Recording"),
-            description: Translation.tr("Start or stop screen recording with wf-recorder"),
+            description: Translation.tr("Start or stop fullscreen recording with the configured audio profile"),
             icon: "videocam",
             category: "tools",
-            keywords: ["record", "screen", "video", "capture", "wf-recorder"],
+            keywords: ["record", "screen", "video", "capture", "wf-recorder", "audio", "microphone", "mic"],
             execute: () => {
-                if (RecorderStatus.isRecording) {
-                    Quickshell.execDetached(["/usr/bin/pkill", "-SIGINT", "wf-recorder"])
-                } else {
-                    Quickshell.execDetached(["/usr/bin/bash", Directories.recordScriptPath])
-                }
+                const args = ["/usr/bin/bash", Directories.recordScriptPath]
+                if (RecorderStatus.isRecording)
+                    args.push("--stop")
+                else
+                    args.push("--fullscreen", "--sound")
+                Quickshell.execDetached(args)
                 RecorderStatus.scheduleQuickCheck()
             }
         },
@@ -421,7 +449,7 @@ Singleton {
             execute: () => {
                 const enabledWidgets = Config.options?.sidebar?.right?.enabledWidgets ?? ["calendar", "todo", "notepad", "calculator", "sysmon", "timer"]
                 const notepadIndex = Math.max(0, enabledWidgets.indexOf("notepad"))
-                GlobalStates.sidebarRightOpen = true
+                GlobalStates.openSidebarRight("")
                 if (Persistent?.states?.sidebar?.bottomGroup) {
                     Persistent.states.sidebar.bottomGroup.collapsed = false
                     Persistent.states.sidebar.bottomGroup.tab = notepadIndex

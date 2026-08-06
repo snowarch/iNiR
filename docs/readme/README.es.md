@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.27.0-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.29.0-blue?style=flat-square" alt="Version"></a>
   <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
@@ -111,7 +111,7 @@ Quería que mi escritorio se vea y funcione de cierta forma y nada lo hacía exa
 ## Features
 
 **Dos familias de paneles**, intercambiables al vuelo con `Super+Shift+W`:
-- **Material ii** — barra flotante, sidebars, dock, 5 estilos visuales (material, cards, aurora, inir, angel)
+- **Material ii** — barra flotante, sidebars, dock, 6 estilos visuales (material, cards, aurora, inir, angel, zzz)
 - **Waffle** — barra de tareas estilo Windows 11, menú inicio, centro de acciones, centro de notificaciones
 
 **Tematización automática** — elegís un wallpaper y todo se adapta:
@@ -128,7 +128,7 @@ Quería que mi escritorio se vea y funcione de cierta forma y nada lo hacía exa
 
 Elegís un wallpaper y todo el sistema sigue — shell, apps GTK/Qt, terminales, Firefox, Discord, pantalla de login SDDM. Todo automático.
 
-- **5 estilos visuales** — Material (sólido), Cards, Aurora (blur de vidrio), iNiR (inspirado en TUI), Angel (neo-brutalismo)
+- **6 estilos visuales** — Material (sólido), Cards, Aurora (blur de vidrio), iNiR (inspirado en TUI), Angel (neo-brutalismo), ZZZ
 - **Colores dinámicos del wallpaper** vía Material You — se propagan a todo el sistema
 - **10 herramientas de terminal auto-tematizadas** — foot, kitty, alacritty, starship, fuzzel, pywalfox, btop, lazygit, yazi
 - **Tematización de apps** — GTK3/4, Qt (vía plasma-integration + darkly), Firefox (MaterialFox), Discord/Vesktop (System24)
@@ -144,7 +144,6 @@ Sidebar izquierdo (cajón de apps):
 - **YT Music** — reproductor completo con búsqueda, cola y controles
 - **Browser de Wallhaven** — buscá y aplicá wallpapers directamente
 - **Anime tracker** — integración con AniList y vista de schedule
-- **Feed de Reddit** — navegá subreddits inline
 - **Traductor** — vía Gemini o translate-shell
 - **Widgets arrastrables** — crypto, media player, notas rápidas, status rings, calendario semanal
 
@@ -282,5 +281,5 @@ Ver [CONTRIBUTING.md](../../CONTRIBUTING.md) para setup de desarrollo, patrones 
 <p align="center">
   <a href="https://github.com/snowarch/inir/graphs/contributors">Contribuidores</a> &bull;
   <a href="CHANGELOG.md">Changelog</a> &bull;
-  <a href="LICENSE">Licencia MIT</a>
+  <a href="LICENSE">Licencia GPL-3.0</a>
 </p>

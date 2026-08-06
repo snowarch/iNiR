@@ -8,8 +8,9 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
 
-Rectangle {
+PanelSurface {
     id: root
+    islandSkin: (Config.options?.controlPanel?.style ?? "panel") === "island"
     Layout.fillWidth: true
     implicitHeight: actionsGrid.implicitHeight + 16
     readonly property bool compactMode: Config.options?.controlPanel?.compactMode ?? true
@@ -17,17 +18,10 @@ Rectangle {
     readonly property bool inirEverywhere: Appearance.inirEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
 
-    radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-        : inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-    color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-         : inirEverywhere ? Appearance.inir.colLayer1
-         : auroraEverywhere ? Appearance.aurora.colSubSurface
-         : Appearance.colors.colLayer1
-    border.width: Appearance.angelEverywhere ? 0 : (inirEverywhere ? 1 : 0)
-    border.color: Appearance.angelEverywhere ? "transparent"
-        : inirEverywhere ? Appearance.inir.colBorder : "transparent"
+    elevation: 1
+    radiusOverride: inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
 
-    AngelPartialBorder { targetRadius: parent.radius; coverage: 0.45 }
+    AngelPartialBorder { targetRadius: root.radiusOverride; coverage: 0.45; visible: Appearance.angelEverywhere }
 
     GridLayout {
         id: actionsGrid
@@ -93,7 +87,9 @@ Rectangle {
             icon: "screenshot_monitor"
             onClicked: {
                 GlobalStates.controlPanelOpen = false
-                GlobalStates.regionSelectorOpen = true
+                // Resolve action/mode explicitly — a bare regionSelectorOpen=true
+                // inherits whatever a previous record/lens use left behind.
+                GlobalStates.openRegionScreenshot()
             }
         }
 
@@ -115,9 +111,9 @@ Rectangle {
 
         ActionTile {
             icon: "power_settings_new"
-            iconColor: Appearance.angelEverywhere ? Appearance.m3colors.m3error
+            iconColor: Appearance.angelEverywhere ? Appearance.colors.colError
                      : root.inirEverywhere ? Appearance.inir.colError
-                     : root.auroraEverywhere ? Appearance.m3colors.m3error
+                     : root.auroraEverywhere ? Appearance.colors.colError
                      : Appearance.colors.colError
             onClicked: {
                 GlobalStates.controlPanelOpen = false
@@ -131,20 +127,23 @@ Rectangle {
         property string icon
         property bool active: false
         property color iconColor: active 
-            ? (Appearance.angelEverywhere ? Appearance.angel.colOnPrimary
+            ? (Appearance.cookieEverywhere ? Appearance.colors.colOnPrimaryContainer
+             : Appearance.angelEverywhere ? Appearance.angel.colOnPrimary
              : root.inirEverywhere ? Appearance.inir.colOnPrimary 
-             : root.auroraEverywhere ? Appearance.m3colors.m3onPrimary
+             : root.auroraEverywhere ? Appearance.colors.colOnPrimary
              : Appearance.colors.colOnPrimary)
             : (Appearance.angelEverywhere ? Appearance.angel.colText
              : root.inirEverywhere ? Appearance.inir.colText 
-             : root.auroraEverywhere ? Appearance.m3colors.m3onSurface
+             : root.auroraEverywhere ? Appearance.colors.colOnSurface
              : Appearance.colors.colOnLayer1)
         signal clicked()
 
         Layout.fillWidth: true
         implicitHeight: root.compactMode ? 30 : 36
         radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-            : root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
+            : root.inirEverywhere ? Appearance.inir.roundingSmall
+            : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+            : Appearance.rounding.small
         
         color: tileMouseArea.containsMouse 
             ? (active 
@@ -159,18 +158,42 @@ Rectangle {
             : (active 
                 ? (Appearance.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimary, 0.45)
                  : root.inirEverywhere ? Appearance.inir.colPrimary 
-                 : root.auroraEverywhere ? Appearance.m3colors.m3primary
+                 : root.auroraEverywhere ? Appearance.colors.colPrimary
                  : Appearance.colors.colPrimary)
                 : (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                  : root.inirEverywhere ? Appearance.inir.colLayer2 
                  : root.auroraEverywhere ? Appearance.aurora.colSubSurface
                  : Appearance.colors.colLayer2))
 
-        border.width: Appearance.angelEverywhere ? 0 : (root.inirEverywhere ? 1 : 0)
+        border.width: Appearance.angelEverywhere ? 0 : (root.inirEverywhere ? 1 : Appearance.zzzEverywhere ? 1 : 0)
         border.color: Appearance.angelEverywhere ? "transparent"
-            : root.inirEverywhere ? (active ? Appearance.inir.colPrimary : Appearance.inir.colBorderSubtle) : "transparent"
+            : root.inirEverywhere ? (active ? Appearance.inir.colPrimary : Appearance.inir.colBorderSubtle)
+            : Appearance.zzzEverywhere ? Appearance.zzz.hairline : "transparent"
+
+        Behavior on border.width {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on border.color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
 
         AngelPartialBorder { targetRadius: parent.radius; coverage: 0.4; borderColor: active ? Appearance.angel.colPrimary : Appearance.angel.colBorderSubtle }
+
+        Loader {
+            anchors.centerIn: parent
+            width: root.compactMode ? 24 : 28
+            height: width
+            active: Appearance.cookieEverywhere && tile.visible
+            sourceComponent: CookieFace {
+                role: "badge"
+                selected: tile.active
+                color: tile.active
+                    ? Appearance.colors.colPrimaryContainer
+                    : Appearance.colors.colLayer2
+            }
+        }
 
         Behavior on color {
             enabled: Appearance.animationsEnabled
@@ -178,6 +201,7 @@ Rectangle {
         }
 
         MaterialSymbol {
+            z: 1
             anchors.centerIn: parent
             text: tile.icon
             iconSize: root.compactMode ? 16 : 18

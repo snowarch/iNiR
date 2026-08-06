@@ -13,32 +13,76 @@ AbstractBackgroundWidget {
 
     configEntryName: "weather"
     defaultConfig: ({
-        placementStrategy: "leastBusy", preset: "default", style: "pill", shape: "pill",
+        placementStrategy: "free", preset: "default", style: "pill", shape: "pill",
         size: 200, tempSize: 80, iconSize: 80,
-        showTemp: true, showIcon: true, showCondition: false,
+        showTemp: true, showIcon: true, showCondition: false, showMetrics: true,
+        padding: 20, tempFontWeight: 500, conditionOpacity: 0.7,
         widgetScale: 100, widgetOpacity: 100, colorMode: "auto", dim: 0,
-        x: 100, y: 100
+        showBackground: true, useBlur: false, showBorder: true,
+        backgroundOpacity: 0.16, borderWidth: 1, borderOpacity: 0.2, cornerRadius: -1,
+        x: 100, y: 200
     })
 
-    readonly property string weatherStyle: Config.getNestedValue("background.widgets.weather.style", "pill")
-    readonly property string weatherShape: Config.getNestedValue("background.widgets.weather.shape", "pill")
-    readonly property int shapeSize: Math.round((Config.getNestedValue("background.widgets.weather.size", 200)) * scaleFactor)
-    readonly property int tempFontSize: Math.round((Config.getNestedValue("background.widgets.weather.tempSize", 80)) * scaleFactor)
-    readonly property int weatherIconSize: Math.round((Config.getNestedValue("background.widgets.weather.iconSize", 80)) * scaleFactor)
-    readonly property bool showTemp: Config.getNestedValue("background.widgets.weather.showTemp", true)
-    readonly property bool showIcon: Config.getNestedValue("background.widgets.weather.showIcon", true)
-    readonly property bool showCondition: Config.getNestedValue("background.widgets.weather.showCondition", false)
-    readonly property int weatherPadding: Math.round((Config.getNestedValue("background.widgets.weather.padding", 20)) * scaleFactor)
-    readonly property int tempFontWeight: Config.getNestedValue("background.widgets.weather.tempFontWeight", 500)
-    readonly property real conditionOpacity: Config.getNestedValue("background.widgets.weather.conditionOpacity", 0.7)
+    readonly property string weatherStyle: root._readConfigKey("style") ?? "pill"
+    readonly property string weatherShape: root._readConfigKey("shape") ?? "pill"
+    readonly property real logicalShapeSize: Math.max(1,
+        Number(root._readConfigKey("size") ?? 200))
+    readonly property real contentScale: root.logicalShapeSize / 200
+    readonly property int shapeSize: Math.round(root.logicalShapeSize * root.scaleFactor)
+    readonly property int tempFontSize: Math.max(10, Math.round(
+        Number(root._readConfigKey("tempSize") ?? 80)
+            * root.scaleFactor * root.contentScale))
+    readonly property int weatherIconSize: Math.max(12, Math.round(
+        Number(root._readConfigKey("iconSize") ?? 80)
+            * root.scaleFactor * root.contentScale))
+    readonly property bool showTemp: Boolean(root._readConfigKey("showTemp") ?? true)
+    readonly property bool showIcon: Boolean(root._readConfigKey("showIcon") ?? true)
+    readonly property bool showCondition: Boolean(root._readConfigKey("showCondition") ?? false)
+    readonly property bool showMetrics: Boolean(root._readConfigKey("showMetrics") ?? true)
 
-    implicitHeight: shapeSize
-    implicitWidth: shapeSize
+    readonly property var _metricModel: {
+        const d = Weather.data;
+        if (!d)
+            return [];
+        const items = [];
+        const push = (icon, value) => {
+            if (value !== undefined && value !== null && String(value).length > 0)
+                items.push({ icon: icon, value: String(value) });
+        };
+        push("humidity_percentage", d.humidity);
+        push("air", d.wind);
+        push("visibility", d.visib);
+        push("rainy", d.precip);
+        push("wb_sunny", d.sunrise);
+        push("bedtime", d.sunset);
+        return items;
+    }
+    readonly property int visibleContentCount: Number(showTemp) + Number(showIcon) + Number(showCondition)
+    readonly property int weatherPadding: Math.max(4, Math.round(
+        Number(root._readConfigKey("padding") ?? 20)
+            * root.scaleFactor * root.contentScale))
+    readonly property int contentInset: Math.max(root.weatherPadding,
+        Math.round(root.shapeSize * 0.13))
+    readonly property int conditionFontSize: Math.max(8, Math.round(
+        Appearance.font.pixelSize.small * root.scaleFactor * root.contentScale))
+    readonly property int tempFontWeight: Number(root._readConfigKey("tempFontWeight") ?? 500)
+    readonly property real conditionOpacity: Number(root._readConfigKey("conditionOpacity") ?? 0.7)
+    readonly property string temperatureText: {
+        const raw = String(Weather.data?.temp ?? "--°");
+        if (raw.endsWith("°C") || raw.endsWith("°F")) return raw.slice(0, -1);
+        if (raw.endsWith("°")) return raw;
+        return raw + "°";
+    }
+
+    implicitWidth: root.weatherStyle === "detail" ? Math.round(shapeSize * 2.2) : shapeSize
+    implicitHeight: root.weatherStyle === "detail" ? Math.round(shapeSize * 0.95) : shapeSize
     resizableAxes: ({ uniform: "size" })
-    resizeMinWidth: 80
-    resizeMinHeight: 80
-    needsColText: weatherStyle === "card"
-
+    resizeMinWidth: root.weatherStyle === "detail" ? 280 : 80
+    resizeMinHeight: root.weatherStyle === "detail" ? 150 : 80
+    // Analyze the region in BOTH modes: card needs colText for its overlay, pill needs
+    // it so ensureVisible() and the region-aware halo can make the shape read on any
+    // wallpaper instead of dissolving into a same-tone background.
+    needsColText: true
     // ── Shape name → enum mapping ──
     readonly property var _shapeMap: ({
         "pill": MaterialShape.Shape.Pill, "circle": MaterialShape.Shape.Circle,
@@ -50,46 +94,52 @@ AbstractBackgroundWidget {
     })
     readonly property var pillShapeEnum: _shapeMap[weatherShape] ?? MaterialShape.Shape.Pill
 
-    // ── Style-dispatched accent colors ──
-    readonly property color accentPrimary: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-        : Appearance.inirEverywhere ? Appearance.inir.colPrimary
-        : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
-        : Appearance.colors.colPrimary
-    readonly property color accentPrimaryContainer: Appearance.angelEverywhere ? Appearance.m3colors.m3primaryContainer
-        : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainer
-        : Appearance.auroraEverywhere ? Appearance.m3colors.m3primaryContainer
+    // ── Accent colors ── primary from the shared desktop-widget identity.
+    readonly property color accentPrimary: root.widgetAccent
+    readonly property color accentPrimaryContainer: Appearance.zzzEverywhere ? Appearance.zzz.sticker
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colPrimaryContainer
-    readonly property color accentOnPrimaryContainer: Appearance.angelEverywhere ? Appearance.m3colors.m3onPrimaryContainer
-        : Appearance.inirEverywhere ? Appearance.inir.colOnPrimaryContainer
-        : Appearance.auroraEverywhere ? Appearance.m3colors.m3onPrimaryContainer
+    readonly property color accentOnPrimaryContainer: Appearance.zzzEverywhere ? Appearance.zzz.onSticker
         : Appearance.colors.colOnPrimaryContainer
+    readonly property color shapeFill: root.accentPrimaryContainer
+    readonly property color shapeInk: ColorUtils.ensureReadable(root.accentOnPrimaryContainer, root.shapeFill, 4.5)
+    // Card text follows the real backdrop: widget ink uses the configured
+    // surface when present and wallpaper-region ink when the card is disabled.
+    readonly property color cardInk: root.widgetInk
 
     // ── Style tokens ──
-    readonly property real cardRadius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-        : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+    readonly property real cardRadius: root.widgetCardRadius
 
     // Shape options for popover
     readonly property var _shapeOptions: [
-        { label: "Pill", value: "pill" }, { label: "Circle", value: "circle" },
-        { label: "Oval", value: "oval" }, { label: "Diamond", value: "diamond" },
-        { label: "Heart", value: "heart" }, { label: "Flower", value: "flower" },
-        { label: "Cookie", value: "cookie4" }, { label: "Sunny", value: "sunny" },
-        { label: "Clover", value: "clover" }, { label: "Burst", value: "softBurst" },
-        { label: "Gem", value: "gem" }, { label: "Puffy", value: "puffy" }
+        { label: Translation.tr("Pill"), value: "pill" },
+        { label: Translation.tr("Circle"), value: "circle" },
+        { label: Translation.tr("Oval"), value: "oval" },
+        { label: Translation.tr("Diamond"), value: "diamond" },
+        { label: Translation.tr("Heart"), value: "heart" },
+        { label: Translation.tr("Flower"), value: "flower" },
+        { label: Translation.tr("Cookie"), value: "cookie4" },
+        { label: Translation.tr("Sunny"), value: "sunny" },
+        { label: Translation.tr("Clover"), value: "clover" },
+        { label: Translation.tr("Burst"), value: "softBurst" },
+        { label: Translation.tr("Gem"), value: "gem" },
+        { label: Translation.tr("Puffy"), value: "puffy" }
     ]
 
     editPopoverContent: Component {
-        Column {
+        ColumnLayout {
             spacing: 6
-            // Style mode
             GridLayout {
-                columns: 2
+                columns: 3
                 columnSpacing: 4
                 rowSpacing: 4
                 Repeater {
                     model: [
-                        { label: "Shape", icon: "category", value: "pill" },
-                        { label: "Card", icon: "crop_landscape", value: "card" }
+                        { label: Translation.tr("Shape"), icon: "category", value: "pill" },
+                        { label: Translation.tr("Card"), icon: "crop_landscape", value: "card" },
+                        { label: Translation.tr("Detail"), icon: "dashboard", value: "detail" }
                     ]
                     SelectionGroupButton {
                         required property var modelData
@@ -147,9 +197,9 @@ AbstractBackgroundWidget {
                 rowSpacing: 4
                 Repeater {
                     model: [
-                        { label: "Temp", icon: "thermostat", key: "showTemp", active: root.showTemp },
-                        { label: "Icon", icon: "cloud", key: "showIcon", active: root.showIcon },
-                        { label: "Text", icon: "text_fields", key: "showCondition", active: root.showCondition }
+                        { label: Translation.tr("Temp"), icon: "thermostat", key: "showTemp", active: root.showTemp },
+                        { label: Translation.tr("Icon"), icon: "cloud", key: "showIcon", active: root.showIcon },
+                        { label: Translation.tr("Text"), icon: "text_fields", key: "showCondition", active: root.showCondition }
                     ]
                     SelectionGroupButton {
                         required property var modelData
@@ -158,31 +208,52 @@ AbstractBackgroundWidget {
                         buttonIcon: modelData.icon
                         buttonText: modelData.label
                         toggled: modelData.active
-                        onClicked: Config.setNestedValue("background.widgets.weather." + modelData.key, !modelData.active)
+                        onClicked: {
+                            if (modelData.active && root.visibleContentCount <= 1) return
+                            Config.setNestedValue("background.widgets.weather." + modelData.key, !modelData.active)
+                        }
                     }
                 }
             }
         }
     }
 
-    // Dim factor (0..1)
-    property real dimFactor: {
-        const v = Config.getNestedValue("background.widgets.weather.dim", 0);
-        const n = Number(v);
-        return Math.max(0, Math.min(1, Number.isFinite(n) ? n / 100 : 0));
-    }
-
-    // Derived colors per style mode
+    // Derived colors per style mode. Shared widget dimming is applied once by
+    // AbstractBackgroundWidget, so these roles keep their intended contrast.
     readonly property color weatherIconColor: weatherStyle === "pill"
-        ? root.accentOnPrimaryContainer : ColorUtils.mix(root.colText, Qt.rgba(0, 0, 0, 1), dimFactor)
+        ? root.shapeInk : root.widgetAccentVisible
     readonly property color weatherConditionColor: weatherStyle === "pill"
-        ? ColorUtils.applyAlpha(root.accentOnPrimaryContainer, root.conditionOpacity)
-        : ColorUtils.applyAlpha(ColorUtils.mix(root.colText, Qt.rgba(0, 0, 0, 1), dimFactor), root.conditionOpacity)
+        ? ColorUtils.applyAlpha(root.shapeInk, root.conditionOpacity)
+        : ColorUtils.applyAlpha(root.cardInk, root.conditionOpacity)
 
     // ── Pill/shape mode ──
+    // Soft contact shadow detaches the pill from the wallpaper (shell shadow
+    // vocabulary, same edge as every surface). The fill itself goes through
+    // ensureVisible so the generated colour stays readable on any wallpaper.
     StyledDropShadow {
         target: pillBackground
-        visible: pillBackground.visible
+        visible: pillBackground.visible && !Appearance.zzzEverywhere
+    }
+
+    // zzz: ShapeCanvas (MaterialShape's base) has no stroke/border property, so
+    // the pill previously rendered as a flat colour blob with none of zzz's
+    // hairline-outline language — the one desktop widget with no zzz edge
+    // treatment at all. Fake a hairline stroke with a second, slightly larger
+    // shape behind the fill in the hairline colour.
+    MaterialShape {
+        visible: root.weatherStyle === "pill" && Appearance.zzzEverywhere
+        anchors.centerIn: parent
+        shape: root.pillShapeEnum
+        color: Appearance.zzz.hairlineStrong
+        implicitSize: root.shapeSize + Appearance.zzz.borderThick * 2
+    }
+
+    MaterialShape {
+        visible: root.weatherStyle === "pill" && (Appearance.inirEverywhere || Appearance.angelEverywhere)
+        anchors.centerIn: parent
+        shape: root.pillShapeEnum
+        color: Appearance.inirEverywhere ? Appearance.inir.colBorder : Appearance.angel.colCardBorder
+        implicitSize: root.shapeSize + 2
     }
 
     MaterialShape {
@@ -190,45 +261,190 @@ AbstractBackgroundWidget {
         visible: root.weatherStyle === "pill"
         anchors.fill: parent
         shape: root.pillShapeEnum
-        color: root.accentPrimaryContainer
+        color: root.shapeFill
         implicitSize: root.shapeSize
     }
 
-    // ── Card mode (adaptive overlay, boosted opacity) ──
-    Rectangle {
+    // ── Card mode ──
+    WidgetSurface {
+        regionBrightness: root.regionBrightness
         id: cardBackground
-        visible: root.weatherStyle === "card"
+        visible: (root.weatherStyle === "card" || root.weatherStyle === "detail")
+            && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
         anchors.fill: parent
-        radius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.cardRadius
-        color: {
-            const eff = Math.max(root.backgroundOpacity, 0.14)
-            return ColorUtils.applyAlpha(root.colText, eff)
+        surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.cardRadius
+        surfaceOpacity: root.backgroundOpacity
+        surfaceBorderWidth: root.borderWidth
+        surfaceBorderOpacity: root.borderOpacity
+        surfaceColor: root.cardInk
+        colorMode: root.colorMode
+        surfaceAccent: root.widgetAccent
+        surfaceUseBlur: root.effectiveBlur
+        screenX: root.x
+        screenY: root.y
+        screenWidth: root.scaledScreenWidth
+        screenHeight: root.scaledScreenHeight
+    }
+
+    ColumnLayout {
+        id: detailLayout
+        visible: root.weatherStyle === "detail"
+        anchors.fill: parent
+        anchors.margins: Math.round(16 * root.scaleFactor)
+        clip: true
+        spacing: Math.round(6 * root.scaleFactor)
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Math.round(10 * root.scaleFactor)
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignVCenter
+                spacing: -Math.round(2 * root.scaleFactor)
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: root.temperatureText
+                    elide: Text.ElideRight
+                    color: root.widgetInk
+                    font {
+                        family: Appearance.font.family.expressive
+                        pixelSize: Math.round(38 * root.scaleFactor)
+                        weight: Font.Bold
+                    }
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Weather.data?.description ?? ""
+                    elide: Text.ElideRight
+                    color: ColorUtils.applyAlpha(root.widgetInk, 0.72)
+                    font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    visible: Weather.showVisibleCity
+                        && root.height >= Math.round(150 * root.scaleFactor)
+                    text: Weather.visibleCity
+                    elide: Text.ElideRight
+                    color: ColorUtils.applyAlpha(root.widgetInk, 0.5)
+                    font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
+                }
+            }
+
+            MaterialShapeWrappedMaterialSymbol {
+                Layout.alignment: Qt.AlignTop
+                shape: MaterialShape.Shape.Sunny
+                color: Appearance.colors.colPrimaryContainer
+                colSymbol: Appearance.colors.colOnPrimaryContainer
+                text: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "cloud"
+                fill: 1
+                iconSize: Math.round(24 * root.scaleFactor)
+                padding: Math.round(10 * root.scaleFactor)
+            }
         }
-        border { width: Math.max(root.borderWidth, 1); color: ColorUtils.applyAlpha(root.colText, Math.max(root.borderOpacity, 0.10)) }
+
+        Item { Layout.fillHeight: true }
+
+        Flow {
+            Layout.fillWidth: true
+            visible: root.showMetrics
+                && root.height >= Math.round(132 * root.scaleFactor)
+            spacing: Math.round(6 * root.scaleFactor)
+
+            Repeater {
+                model: root._metricModel
+
+                Rectangle {
+                    id: metricChip
+                    required property var modelData
+                    required property int index
+                    readonly property bool alternate: index % 2 === 0
+                    readonly property color chipColor: metricChip.alternate
+                        ? Appearance.colors.colSecondaryContainer
+                        : Appearance.colors.colTertiaryContainer
+                    readonly property color chipInk: metricChip.alternate
+                        ? Appearance.colors.colOnSecondaryContainer
+                        : Appearance.colors.colOnTertiaryContainer
+
+                    width: chipRow.implicitWidth + Math.round(16 * root.scaleFactor)
+                    height: chipRow.implicitHeight + Math.round(8 * root.scaleFactor)
+                    radius: height / 2
+                    color: metricChip.chipColor
+
+                    Row {
+                        id: chipRow
+                        anchors.centerIn: parent
+                        spacing: Math.round(4 * root.scaleFactor)
+
+                        MaterialSymbol {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: metricChip.modelData.icon
+                            fill: 1
+                            iconSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
+                            color: ColorUtils.applyAlpha(metricChip.chipInk, 0.75)
+                        }
+
+                        StyledText {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: metricChip.modelData.value
+                            color: metricChip.chipInk
+                            font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
+                            font.weight: Font.Medium
+                        }
+                    }
+                }
+            }
+        }
     }
 
     Item {
         anchors.fill: parent
-        opacity: 1.0 - root.dimFactor * 0.6
+        visible: root.weatherStyle !== "detail"
+
+        MaterialSymbol {
+            visible: root.visibleContentCount === 0
+            anchors.centerIn: parent
+            text: "cloud_off"
+            iconSize: Math.round(40 * root.scaleFactor)
+            color: root.weatherStyle === "pill" ? root.shapeInk : root.widgetInkMuted
+        }
 
         StyledText {
+            id: temperatureLabel
             visible: root.showTemp
+            height: Math.max(1, Math.round(root.height * 0.42))
             font {
                 pixelSize: root.tempFontSize
                 family: Appearance.font.family.expressive
                 weight: root.tempFontWeight
             }
-            color: root.accentPrimary
-            text: Weather.data?.temp.substring(0,Weather.data?.temp.length - 1) ?? "--°"
+            fontSizeMode: Text.Fit
+            minimumPixelSize: Math.max(8, Math.round(root.tempFontSize * 0.45))
+            maximumLineCount: 1
+            wrapMode: Text.NoWrap
+            horizontalAlignment: Text.AlignRight
+            verticalAlignment: Text.AlignVCenter
+            clip: true
+            // Matches weatherIconColor so the number and icon read as one coloured
+            // unit in both modes, instead of the icon being tinted and the number
+            // staying flat ink like it did before.
+            color: root.weatherIconColor
+            text: root.temperatureText
             anchors {
+                left: parent.left
                 right: parent.right
                 top: parent.top
-                rightMargin: root.weatherPadding
-                topMargin: Math.round(root.weatherPadding * 1.2)
+                leftMargin: root.contentInset
+                rightMargin: root.contentInset
+                topMargin: root.contentInset
             }
         }
 
         MaterialSymbol {
+            id: weatherIcon
             visible: root.showIcon
             iconSize: root.weatherIconSize
             color: root.weatherIconColor
@@ -236,23 +452,34 @@ AbstractBackgroundWidget {
             anchors {
                 left: parent.left
                 bottom: parent.bottom
-                leftMargin: root.weatherPadding
-                bottomMargin: Math.round(root.weatherPadding * 1.2)
+                leftMargin: root.contentInset
+                bottomMargin: root.contentInset
             }
         }
 
+        // Grouped with the icon's corner (or that same corner alone, icon off) instead
+        // of bottom-center: organic MaterialShape fills (puffy/flower/heart/cookie...)
+        // taper thinnest at the exact edge-midpoints, so bottom-center sat outside the
+        // visible fill on most shapes — same reason it read as "does nothing" with the
+        // icon off. Font matches the temp number's family instead of the generic body one.
         StyledText {
             visible: root.showCondition
             font {
-                pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
-                family: Appearance.font.family.main
+                pixelSize: root.conditionFontSize
+                family: Appearance.font.family.expressive
             }
             color: root.weatherConditionColor
-            text: Weather.data?.weatherDescription ?? ""
+            text: Weather.data?.description ?? ""
+            elide: Text.ElideRight
+            width: Math.max(0, Math.min(implicitWidth,
+                root.width - root.contentInset * 2
+                    - (root.showIcon ? weatherIcon.width + Math.round(root.contentInset * 0.4) : 0)))
             anchors {
-                horizontalCenter: parent.horizontalCenter
-                bottom: parent.bottom
-                bottomMargin: Math.round(root.weatherPadding * 0.4)
+                left: root.showIcon ? weatherIcon.right : parent.left
+                leftMargin: root.showIcon ? Math.round(root.contentInset * 0.4) : root.contentInset
+                verticalCenter: root.showIcon ? weatherIcon.verticalCenter : undefined
+                bottom: root.showIcon ? undefined : parent.bottom
+                bottomMargin: root.showIcon ? 0 : root.contentInset
             }
         }
     }

@@ -29,17 +29,23 @@ fi
 B64DATA="$(base64 $B64FLAGS $RESIZED_IMG_PATH)"
 # echo $B64DATA
 
-# Prepare request data
-payload='{
+# Prepare request data.
+# Built with jq, not string concatenation: PROMPT embeds the wallpaper's file name,
+# and a name containing a quote or backslash (my "best" wall.jpg) produced malformed
+# JSON, a 400 from the API, and a silent "null" written as the category.
+payload=$(jq -n \
+    --arg b64 "$B64DATA" \
+    --arg prompt "$PROMPT" \
+    '{
     "contents": [{
         "parts":[
             {
                 "inline_data": {
                 "mime_type":"image/jpeg",
-                "data": "'"$B64DATA"'"
+                "data": $b64
                 }
             },
-            {"text": "'"$PROMPT"'"}
+            {"text": $prompt}
         ]
     }],
     "generationConfig": {
@@ -50,7 +56,7 @@ payload='{
         },
         "temperature": 0
     }
-}'
+}')
 # echo "$payload" | jq
 
 # Make the request

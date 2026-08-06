@@ -1,7 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Effects
-import Qt5Compat.GraphicalEffects as GE
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
@@ -26,97 +24,29 @@ Rectangle {
         : Appearance.colors.colSubtext
     property int iconSize: 32
     property bool enableBlurTransition: true
+    property int slideDirection: 1
+    property string transitionKey: root.artSource
+    property bool animateChanges: Appearance.animationsEnabled
+
+    signal transitionStarted(string source)
+    signal transitionFinished(string source)
     
     radius: artRadius
     color: "transparent"
     clip: true
     
-    layer.enabled: true
-    layer.effect: GE.OpacityMask {
-        maskSource: Rectangle {
-            width: root.width
-            height: root.height
-            radius: root.radius
-        }
-    }
-    
-    // Cover art image
-    Image {
-        id: coverArt
+    MediaCrossSlideImage {
         anchors.fill: parent
-        fillMode: Image.PreserveAspectCrop
-        asynchronous: true
-        cache: false
-        smooth: true
-        mipmap: true
-        
-        layer.enabled: Appearance.effectsEnabled && root.enableBlurTransition
-        layer.effect: MultiEffect {
-            blurEnabled: true
-            blur: root.transitioning ? 1 : 0
-            blurMax: 32
-            Behavior on blur {
-                enabled: Appearance.animationsEnabled
-                NumberAnimation { duration: 150; easing.type: Easing.InOutQuad }
-            }
-        }
-    }
-    
-    // Transition state
-    property bool transitioning: false
-    property string pendingSource: ""
-    
-    Timer {
-        id: blurInTimer
-        interval: 150
-        onTriggered: {
-            coverArt.source = root.pendingSource
-            blurOutTimer.start()
-        }
-    }
-    
-    Timer {
-        id: blurOutTimer
-        interval: 50
-        onTriggered: root.transitioning = false
-    }
-    
-    // Watch for art source changes
-    onArtSourceChanged: {
-        if (!artSource) {
-            blurInTimer.stop()
-            blurOutTimer.stop()
-            pendingSource = ""
-            transitioning = false
-            coverArt.source = ""
-            return
-        }
-        // First set: don't animate
-        if (!coverArt.source || !coverArt.source.toString()) {
-            coverArt.source = artSource
-            return
-        }
-        // Subsequent changes: blur in -> swap -> blur out
-        if (enableBlurTransition) {
-            pendingSource = artSource
-            transitioning = true
-            blurInTimer.start()
-        } else {
-            coverArt.source = artSource
-        }
-    }
-    
-    // Placeholder when no art
-    Rectangle {
-        anchors.fill: parent
-        color: root.placeholderColor
-        visible: !root.downloaded
-        
-        MaterialSymbol {
-            anchors.centerIn: parent
-            text: "music_note"
-            iconSize: root.iconSize
-            color: root.iconColor
-        }
+        source: root.artSource
+        transitionKey: root.transitionKey
+        downloaded: root.downloaded
+        slideDirection: root.slideDirection
+        placeholderColor: root.placeholderColor
+        iconColor: root.iconColor
+        iconSize: root.iconSize
+        artRadius: root.artRadius
+        animateChanges: root.animateChanges
+        onTransitionStarted: source => root.transitionStarted(source)
+        onTransitionFinished: source => root.transitionFinished(source)
     }
 }

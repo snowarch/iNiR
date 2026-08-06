@@ -71,7 +71,7 @@ RowLayout {
         // implicitWidth provides the minimum: collapsed when empty, expanded
         // when typing — Layout.fillWidth lets it grow past that as needed.
         Layout.fillWidth: true
-        implicitHeight: Appearance.sizes.baseBarHeight
+        implicitHeight: Math.max(Appearance.sizes.baseBarHeight, contentHeight + Math.round(12 * Appearance.fontSizeScale))
         focus: GlobalStates.overviewOpen
         font.pixelSize: Appearance.font.pixelSize.small
         placeholderText: Translation.tr("Search, calculate or run")

@@ -325,13 +325,14 @@ It defines the reactive visual system for:
 - GameMode-aware effect suppression
 - wallpaper-informed visual adaptation
 
-It also centralizes style dispatch for the five supported styles:
+It also centralizes style dispatch for the six supported styles:
 
 - material
 - cards
 - aurora
 - inir
 - angel
+- zzz
 
 Its impact is very broad because modules rely on it for visual consistency rather than defining their own local token systems.
 

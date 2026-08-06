@@ -16,6 +16,14 @@ If you do want to edit it directly, it lives at:
 
 Changes you make in the file are picked up automatically within 50ms. No restart needed.
 
+### Fresh-install profile
+
+A new configuration starts deliberately quiet. Settings opens in Focused mode, the left sidebar contains one curated Widgets tab, and the right sidebar starts with connectivity, sliders, notifications, and four daily tools: Calendar, To Do, Calculator, and System Monitor. Weather, desktop widgets, notification sounds, news feeds, wallpaper search, AI, and anime integrations stay off until you enable them.
+
+Workspace Strip is a preview feature and is not part of either panel family's default module set. It remains available in Settings for explicit opt-in. Existing configurations are not rewritten when these fresh-install defaults change.
+
+The Welcome wizard exposes only choices that materially affect the first session. Advanced styles, additional sidebar tabs, and specialized modules remain available in the full Settings view.
+
 ## For contributors
 
 ### The sync rule
@@ -90,7 +98,7 @@ Config uses Quickshell's `FileView` with `watchChanges: true`. External edits (f
 
 ### The configChanged signal
 
-`setNestedValue` emits `Config.configChanged()` **immediately**, in the same call — before the debounced 50 ms disk write actually happens. So the signal reflects the new in-memory value, not a confirmed write to disk. Components that need to react to config changes (beyond just re-reading a property) can connect to this signal.
+`setNestedValue` emits `Config.configChanged()` **immediately**, in the same call, before the debounced 50 ms disk write actually happens. So the signal reflects the new in-memory value, not a confirmed write to disk. Components that need to react to config changes (beyond just re-reading a property) can connect to this signal.
 
 ## Config sections
 
@@ -127,13 +135,104 @@ Each zone is an array of module ids. Use Settings -> Bar -> Bar module layout un
 
 `bar.height` and `bar.opacity` control the bar size and background fill. They do not resize every widget independently; components still use the normal `Appearance` sizing tokens.
 
+### Live shell layout
+
+Settings -> Shell Layout and `inir shellLayout` use the same controller as the
+live desktop editor. Existing canonical keys remain authoritative:
+
+- ii bar: `bar.vertical` plus `bar.bottom`
+- ii dock: `dock.position`
+- Waffle taskbar: `waffles.bar.bottom`
+
+Semantic ii sidebar roles use:
+
+- `sidebar.shellLayout.feature.slot`
+- `sidebar.shellLayout.feature.sizeMode`
+- `sidebar.shellLayout.feature.customHeight`
+- `sidebar.shellLayout.feature.width`
+- the matching `sidebar.shellLayout.system.*` keys
+
+`feature` is the AI, media, tools and Widgets role historically opened by the
+`sidebarLeft` IPC target. `system` is the quick controls, notifications and
+utility role historically opened by `sidebarRight`. Their IPC meaning does not
+change when the roles swap physical edges.
+
+Desktop widgets keep their original free/zone editor and independent
+`widgetEditMode`. Persistent layer-shell surfaces use the separate Shell Layout
+editor and move between advertised edge slots. Enter it from the desktop
+context menu, Settings -> Shell Layout, or `inir shellLayout open`. Its own
+layer-shell HUD stays above the edited panels and does not reuse the widget
+canvas or toolbar. Drag any highlighted surface toward a screen edge: legal
+edges light up as full strips, a chip follows the pointer with the drop
+result, and releasing on a strip commits the move. Dropping a surface on an
+occupied edge performs an atomic swap: sidebars exchange sides, and the ii
+bar and dock exchange edges the same way. Releasing in the center of the
+screen cancels. The click flow remains for keyboard and scripting: select a
+surface, choose Move, then activate an edge strip, where occupied edges still
+ask for a second confirming activation. Resize handles preview locally with a
+live dimension readout and persist when released; sidebars resize height and
+width, and the dock resizes its thickness through `dock.height`.
+
+Bar corner controls are spatial: the bar's left corner and left area open
+whatever sidebar currently occupies the left edge, and the right-side
+controls open the right-edge panel, even after a swap. Feature-specific
+triggers keep opening their own semantic content.
+
+Escape cancels the current resize, lift, preview or swap confirmation first. A
+second Escape leaves shell edit mode. Done leaves the mode after already
+committed changes; there is no hidden Save step or whole-session rollback.
+
+Bar, dock, taskbar and floating media controls follow each surface's existing
+`screenList` semantics. Every selected output gets its own surface; an empty
+list means all connected outputs. A position change applies to every enabled
+output for that surface. Desktop-widget placement remains owned by its
+separate editor. Each output
+inherits the global widget configuration and stores only its local visibility,
+position, size and lock overrides in `background.widgets.outputOverrides`.
+Dragging, resizing or toggling a widget on one desktop therefore does not move
+or hide its peer on another output. Settings -> Monitors shows connected and
+saved-disconnected outputs, with per-widget reset and whole-output reset.
+
+When a new output appears or its logical resolution changes, iNiR initializes
+missing free-placement coordinates against that output's panel-safe work area
+and separates unlocked collisions. Widget content and visual options remain
+global unless the corresponding control is explicitly output-local. The Shell
+Layout HUD and Settings page still show the broader mutation scope for panel
+surfaces; per-output geometry profiles are not used for bar, dock, taskbar or
+sidebar placement.
+
+Managed desktop references use the same `background.widgets.editGrid` size and
+snap switch as built-in widgets. Drops, drags and monitor moves choose the
+nearest free grid cell inside the panel-safe work area, so references remain
+aligned without overlapping another reference. Locked references keep their
+saved position.
+
+Valid sidebar slots are `left` and `right`. Both roles must occupy different
+slots, so moving one onto the other performs an atomic swap. Valid size modes
+are `full`, `fit` and `custom`. Fit uses the active role content: finite feature
+tabs can contract while unbounded tabs return to full height.
+
+These keys are append-only additions. Existing configs without them retain the
+historical feature-left and system-right layout, so no migration script is
+needed. `collapseWidgetsTab` and `collapseEmptyNotifications` remain legacy
+content-aware compatibility options.
+
+### Right sidebar header
+
+`sidebar.right.headerStyle` selects the system section shown at the top of the right sidebar:
+
+- `profile`: avatar, account identity, uptime, actions and optional banner media
+- `classic`: the compact uptime and action row
+
+For the profile style, `sidebar.right.headerBanner` accepts `wallpaper`, `custom`, `solid` or `none`. `sidebar.right.headerBannerPath` stores the local image, GIF or video path used by `custom`. Wallpaper and animated media playback follow the sidebar's active screen and visibility.
+
 ### Right sidebar widgets
 
 `sidebar.right.enabledWidgets` controls the widgets shown in the right sidebar bottom group and compact sidebar.
 
 Known ids include:
 
-`calendar`, `events`, `todo`, `notepad`, `calculator`, `sysmon`, `timer`, `screentime`
+`calendar`, `events`, `todo`, `notepad`, `calculator`, `sysmon`, `weather`, `timer`, `screentime`
 
 `screentime` is only shown when `sidebar.screenTime.enable` is true. The list can contain it while the service is off; the UI filters it out so disabled tracking does not leave a dead card.
 

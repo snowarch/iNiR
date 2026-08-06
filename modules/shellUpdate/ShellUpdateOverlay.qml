@@ -21,36 +21,47 @@ Scope {
     property bool modsExpanded: false
     property bool suppressOutsideClose: false
 
-    // Style-aware tokens (no hardcoded hex fallbacks)
-    readonly property color accentColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-        : Appearance.inirEverywhere ? (Appearance.inir?.colAccent ?? Appearance.m3colors.m3primary)
-        : Appearance.auroraEverywhere ? (Appearance.aurora?.colAccent ?? Appearance.m3colors.m3primary)
-        : Appearance.m3colors.m3primary
+    readonly property bool _zzz: Appearance.zzzEverywhere
 
-    readonly property color layerColor: Appearance.angelEverywhere ? Appearance.colors.colLayer0Base
+    // Style-aware tokens (no hardcoded hex fallbacks)
+    readonly property color accentColor: root._zzz ? Appearance.zzz.accent
+        : Appearance.angelEverywhere ? Appearance.angel.colPrimary
+        : Appearance.inirEverywhere ? (Appearance.inir?.colAccent ?? Appearance.colors.colPrimary)
+        : Appearance.auroraEverywhere ? (Appearance.aurora?.colAccent ?? Appearance.colors.colPrimary)
+        : Appearance.colors.colPrimary
+
+    readonly property color layerColor: root._zzz ? Appearance.zzz.bg0
+        : Appearance.angelEverywhere ? Appearance.colors.colLayer0Base
         : Appearance.inirEverywhere ? Appearance.inir.colLayer0
         : Appearance.auroraEverywhere ? (Appearance.aurora?.colSurface ?? Appearance.colors.colLayer0)
         : Appearance.colors.colLayer0
 
-    readonly property color surfaceColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+    readonly property color surfaceColor: root._zzz ? Appearance.zzz.bg1
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
-        : Appearance.auroraEverywhere ? (Appearance.aurora?.colSubSurface ?? Appearance.m3colors.m3surfaceContainerLow)
-        : Appearance.m3colors.m3surfaceContainerLow
+        : Appearance.auroraEverywhere ? (Appearance.aurora?.colSubSurface ?? Appearance.colors.colSurfaceContainerLow)
+        : Appearance.colors.colSurfaceContainerLow
 
-    readonly property color textColor: Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnSurface
-    readonly property color subtextColor: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary : Appearance.colors.colSubtext
-    readonly property color borderColor: Appearance.angelEverywhere ? Appearance.angel.colBorder
+    readonly property color textColor: root._zzz ? Appearance.zzz.onBg
+        : Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnSurface
+    readonly property color subtextColor: root._zzz ? Appearance.zzz.ghostInk
+        : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary : Appearance.colors.colSubtext
+    readonly property color borderColor: root._zzz ? Appearance.zzz.borderColor
+        : Appearance.angelEverywhere ? Appearance.angel.colBorder
         : Appearance.inirEverywhere ? Appearance.inir.colBorder
         : Appearance.colors.colLayer0Border
 
     // Adaptive rounding
-    readonly property real cardRadius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+    readonly property real cardRadius: root._zzz ? Appearance.zzz.panelRadius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
         : Appearance.rounding.windowRounding
-    readonly property real sectionRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+    readonly property real sectionRadius: root._zzz ? Appearance.zzz.controlRadius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
         : Appearance.rounding.small
-    readonly property real pillRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+    readonly property real pillRadius: root._zzz ? Appearance.zzz.controlRadius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : 999
 
     // Parse commit log lines: "hash|subject|relative_date|author"
@@ -241,13 +252,22 @@ Scope {
         }
 
         // Main card
+        ZzzPlate {
+            anchors.fill: card
+            visible: root._zzz
+            fillColor: Appearance.colors.colLayer0
+            strokeColor: Appearance.zzz.borderColor
+            strokeWidth: Appearance.zzz.hairlineThick
+            chamfer: Appearance.zzz.cutCorner
+        }
+
         Rectangle {
             id: card
             anchors.centerIn: parent
             width: Math.min(parent.width - 80, 640)
             height: Math.min(parent.height - 80, contentLayout.implicitHeight + 2)
-            color: root.layerColor
-            border.width: 1
+            color: root._zzz ? "transparent" : root.layerColor
+            border.width: root._zzz ? 0 : 1
             border.color: root.borderColor
             radius: root.cardRadius
             clip: true
@@ -306,6 +326,7 @@ Scope {
 
                     // Icon
                     Rectangle {
+                        visible: !updateMascot.active
                         width: 44
                         height: 44
                         radius: root.sectionRadius
@@ -320,6 +341,15 @@ Scope {
                             iconSize: Appearance.font.pixelSize.huge
                             color: root.accentColor
                         }
+                    }
+
+                    MascotImage {
+                        id: updateMascot
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.preferredWidth: 84
+                        Layout.preferredHeight: 84
+                        surface: "updates"
+                        pose: root.hasUpdate ? "update-ready" : "success-celebrate"
                     }
 
                     ColumnLayout {
@@ -391,7 +421,7 @@ Scope {
                                 implicitHeight: commitsBehindText.implicitHeight + 10
                                 radius: root.pillRadius
                                 color: ShellUpdates.commitsBehind > 10
-                                    ? ColorUtils.transparentize(Appearance.m3colors.m3error, 0.85)
+                                    ? ColorUtils.transparentize(Appearance.colors.colError, 0.85)
                                     : ColorUtils.transparentize(root.accentColor, 0.85)
 
                                 StyledText {
@@ -403,7 +433,7 @@ Scope {
                                         weight: Font.Medium
                                     }
                                     color: ShellUpdates.commitsBehind > 10
-                                        ? Appearance.m3colors.m3error
+                                        ? Appearance.colors.colError
                                         : root.accentColor
                                 }
                             }
@@ -416,7 +446,7 @@ Scope {
                                     text: "account_tree"
                                     iconSize: Appearance.font.pixelSize.smallest
                                     color: ShellUpdates.isNonMainBranch
-                                        ? Appearance.m3colors.m3tertiary
+                                        ? Appearance.colors.colTertiary
                                         : root.subtextColor
                                 }
                                 StyledText {
@@ -426,7 +456,7 @@ Scope {
                                         family: Appearance.font.family.monospace
                                     }
                                     color: ShellUpdates.isNonMainBranch
-                                        ? Appearance.m3colors.m3tertiary
+                                        ? Appearance.colors.colTertiary
                                         : root.subtextColor
                                 }
                             }
@@ -482,9 +512,9 @@ Scope {
                     Layout.topMargin: 16
                     implicitHeight: errorCol.implicitHeight + 28
                     radius: root.sectionRadius
-                    color: ColorUtils.transparentize(Appearance.m3colors.m3error, 0.92)
+                    color: ColorUtils.transparentize(Appearance.colors.colError, 0.92)
                     border.width: 1
-                    border.color: ColorUtils.transparentize(Appearance.m3colors.m3error, 0.7)
+                    border.color: ColorUtils.transparentize(Appearance.colors.colError, 0.7)
 
                     ColumnLayout {
                         id: errorCol
@@ -497,10 +527,16 @@ Scope {
                         // Error header
                         RowLayout {
                             spacing: 8
+                            MascotImage {
+                                Layout.preferredWidth: 72
+                                Layout.preferredHeight: 72
+                                pose: "doctor-checkup"
+                                surface: "updates"
+                            }
                             MaterialSymbol {
                                 text: "error"
                                 iconSize: Appearance.font.pixelSize.normal
-                                color: Appearance.m3colors.m3error
+                                color: Appearance.colors.colError
                             }
                             StyledText {
                                 text: ShellUpdates.unavailableTitle
@@ -508,7 +544,7 @@ Scope {
                                     pixelSize: Appearance.font.pixelSize.normal
                                     weight: Font.DemiBold
                                 }
-                                color: Appearance.m3colors.m3error
+                                color: Appearance.colors.colError
                             }
                         }
 
@@ -554,7 +590,7 @@ Scope {
                                      : parent.hovered ? Appearance.colors.colLayer1Hover
                                      : "transparent"
                                 border.width: 1
-                                border.color: Appearance.m3colors.m3error
+                                border.color: Appearance.colors.colError
 
                                 Behavior on color {
                                     enabled: Appearance.animationsEnabled
@@ -569,7 +605,7 @@ Scope {
                                 MaterialSymbol {
                                     text: "bug_report"
                                     iconSize: Appearance.font.pixelSize.small
-                                    color: Appearance.m3colors.m3error
+                                    color: Appearance.colors.colError
                                 }
                                 StyledText {
                                     text: Translation.tr("Run Diagnostics")
@@ -577,7 +613,7 @@ Scope {
                                         pixelSize: Appearance.font.pixelSize.small
                                         weight: Font.Medium
                                     }
-                                    color: Appearance.m3colors.m3error
+                                    color: Appearance.colors.colError
                                 }
                             }
                         }
@@ -748,7 +784,7 @@ Scope {
                                                 family: Appearance.font.family.monospace
                                             }
                                             color: ShellUpdates.isNonMainBranch
-                                                ? Appearance.m3colors.m3tertiary
+                                                ? Appearance.colors.colTertiary
                                                 : root.textColor
                                         }
 
@@ -764,8 +800,8 @@ Scope {
                                         implicitHeight: statusText.implicitHeight + 10
                                         radius: root.pillRadius
                                         color: root.hasUpdate
-                                            ? ColorUtils.transparentize(Appearance.m3colors.m3primary, 0.85)
-                                            : ColorUtils.transparentize(Appearance.m3colors.m3tertiary, 0.85)
+                                            ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.85)
+                                            : ColorUtils.transparentize(Appearance.colors.colTertiary, 0.85)
 
                                         StyledText {
                                             id: statusText
@@ -778,8 +814,8 @@ Scope {
                                                 weight: Font.DemiBold
                                             }
                                             color: root.hasUpdate
-                                                ? Appearance.m3colors.m3primary
-                                                : Appearance.m3colors.m3tertiary
+                                                ? Appearance.colors.colPrimary
+                                                : Appearance.colors.colTertiary
                                         }
                                     }
                                     }
@@ -794,9 +830,9 @@ Scope {
                                 Layout.rightMargin: 24
                                 implicitHeight: modsCol.implicitHeight + 24
                                 radius: root.sectionRadius
-                                color: ColorUtils.transparentize(Appearance.m3colors.m3error, 0.92)
+                                color: ColorUtils.transparentize(Appearance.colors.colError, 0.92)
                                 border.width: 1
-                                border.color: ColorUtils.transparentize(Appearance.m3colors.m3error, 0.7)
+                                border.color: ColorUtils.transparentize(Appearance.colors.colError, 0.7)
 
                                 ColumnLayout {
                                     id: modsCol
@@ -812,7 +848,7 @@ Scope {
                                         MaterialSymbol {
                                             text: "warning"
                                             iconSize: Appearance.font.pixelSize.large
-                                            color: Appearance.m3colors.m3error
+                                            color: Appearance.colors.colError
                                         }
                                         ColumnLayout {
                                             spacing: 2
@@ -823,7 +859,7 @@ Scope {
                                                     pixelSize: Appearance.font.pixelSize.small
                                                     weight: Font.DemiBold
                                                 }
-                                                color: Appearance.m3colors.m3error
+                                                color: Appearance.colors.colError
                                             }
                                             StyledText {
                                                 text: ShellUpdates.localModifications.length + " " + Translation.tr("file(s) differ from the installed version")
@@ -838,7 +874,7 @@ Scope {
                                         Layout.fillWidth: true
                                         implicitHeight: explanationCol.implicitHeight + 16
                                         radius: root.sectionRadius
-                                        color: ColorUtils.transparentize(Appearance.m3colors.m3error, 0.95)
+                                        color: ColorUtils.transparentize(Appearance.colors.colError, 0.95)
 
                                         ColumnLayout {
                                             id: explanationCol
@@ -932,7 +968,7 @@ Scope {
                                                 MaterialSymbol {
                                                     text: "edit_document"
                                                     iconSize: Appearance.font.pixelSize.smallest
-                                                    color: Appearance.m3colors.m3error
+                                                    color: Appearance.colors.colError
                                                     opacity: 0.6
                                                 }
                                                 StyledText {
@@ -1252,9 +1288,9 @@ Scope {
                     Layout.topMargin: 8
                     implicitHeight: updateErrorRow.implicitHeight + 20
                     radius: root.sectionRadius
-                    color: ColorUtils.transparentize(Appearance.m3colors.m3error, 0.92)
+                    color: ColorUtils.transparentize(Appearance.colors.colError, 0.92)
                     border.width: 1
-                    border.color: ColorUtils.transparentize(Appearance.m3colors.m3error, 0.7)
+                    border.color: ColorUtils.transparentize(Appearance.colors.colError, 0.7)
 
                     RowLayout {
                         id: updateErrorRow
@@ -1265,16 +1301,22 @@ Scope {
                         }
                         spacing: 8
 
+                        MascotImage {
+                            Layout.preferredWidth: 72
+                            Layout.preferredHeight: 72
+                            pose: "dead-crash"
+                            surface: "updates"
+                        }
                         MaterialSymbol {
                             text: "error"
                             iconSize: Appearance.font.pixelSize.normal
-                            color: Appearance.m3colors.m3error
+                            color: Appearance.colors.colError
                         }
                         StyledText {
                             Layout.fillWidth: true
                             text: ShellUpdates.lastError
                             font.pixelSize: Appearance.font.pixelSize.smallest
-                            color: Appearance.m3colors.m3error
+                            color: Appearance.colors.colError
                             wrapMode: Text.WordWrap
                         }
                     }
@@ -1314,7 +1356,7 @@ Scope {
                         MaterialSymbol {
                             text: "check_circle"
                             iconSize: Appearance.font.pixelSize.smaller
-                            color: Appearance.m3colors.m3tertiary
+                            color: Appearance.colors.colTertiary
                             opacity: 0.8
                         }
                         StyledText {
@@ -1398,7 +1440,7 @@ Scope {
                                 visible: ShellUpdates.isUpdating
                                 text: "progress_activity"
                                 iconSize: Appearance.font.pixelSize.small
-                                color: Appearance.m3colors.m3onPrimary
+                                color: Appearance.colors.colOnPrimary
 
                                 RotationAnimation on rotation {
                                     running: ShellUpdates.isUpdating
@@ -1413,7 +1455,7 @@ Scope {
                                 visible: !ShellUpdates.isUpdating
                                 text: "upgrade"
                                 iconSize: Appearance.font.pixelSize.small
-                                color: Appearance.m3colors.m3onPrimary
+                                color: Appearance.colors.colOnPrimary
                             }
                             StyledText {
                                 text: ShellUpdates.isUpdating
@@ -1425,7 +1467,7 @@ Scope {
                                     pixelSize: Appearance.font.pixelSize.small
                                     weight: Font.DemiBold
                                 }
-                                color: Appearance.m3colors.m3onPrimary
+                                color: Appearance.colors.colOnPrimary
                             }
                         }
                     }

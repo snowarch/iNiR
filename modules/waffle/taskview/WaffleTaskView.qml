@@ -172,17 +172,4 @@ Scope {
         }
     }
 
-    IpcHandler {
-        target: "taskview"
-        enabled: Config.options?.panelFamily === "waffle"
-        function toggle(): void {
-            if (GlobalStates.waffleTaskViewOpen) {
-                GlobalStates.waffleTaskViewOpen = false
-            } else {
-                root.openTaskView()
-            }
-        }
-        function close(): void { GlobalStates.waffleTaskViewOpen = false }
-        function open(): void { root.openTaskView() }
-    }
 }

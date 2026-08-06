@@ -39,6 +39,15 @@ Toolbar {
         return 0;
     }
 
+    function persistSnipChoice(): void {
+        if (!(Config.options?.regionSelector?.rememberSnipChoice ?? true)) return
+        const isRecord = root.action === RegionSelection.SnipAction.Record
+            || root.action === RegionSelection.SnipAction.RecordWithSound
+        const updates = { "regionSelector.lastMode": root.selectionMode }
+        if (!isRecord) updates["regionSelector.lastAction"] = root.action
+        Config.setNestedValues(updates)
+    }
+
     // Action selector
     ToolbarTabBar {
         id: actionBar
@@ -48,6 +57,7 @@ Toolbar {
             const a = root.actionList[currentIndex]?.action;
             if (a !== undefined && a !== root.action) root.action = a;
         }
+        onUserSelected: root.persistSnipChoice()
     }
 
     // Region shape (applies when drawing a region)
@@ -61,6 +71,7 @@ Toolbar {
         onCurrentIndexChanged: {
             root.selectionMode = currentIndex === 0 ? RegionSelection.SelectionMode.RectCorners : RegionSelection.SelectionMode.Circle;
         }
+        onUserSelected: root.persistSnipChoice()
     }
 
     // Instant tools (no region selection needed)
@@ -70,10 +81,10 @@ Toolbar {
         iconText: "fullscreen"
         onClicked: root.fullscreenRequested()
         StyledToolTip { text: Translation.tr("Capture fullscreen") }
-        colBackground: Appearance.colors.colSecondaryContainer
-        colBackgroundHover: Appearance.colors.colSecondaryContainerHover
-        colRipple: Appearance.colors.colSecondaryContainerActive
-        colOnBackground: Appearance.colors.colOnSecondaryContainer
+        colBackground: Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colSecondaryContainer
+        colBackgroundHover: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.colors.colSecondaryContainerHover
+        colRipple: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colSecondaryContainerActive
+        colOnBackground: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnSecondaryContainer
     }
     FloatingActionButton {
         Layout.alignment: Qt.AlignVCenter
@@ -81,10 +92,10 @@ Toolbar {
         iconText: "colorize"
         onClicked: root.colorPickerRequested()
         StyledToolTip { text: Translation.tr("Color picker") }
-        colBackground: Appearance.colors.colSecondaryContainer
-        colBackgroundHover: Appearance.colors.colSecondaryContainerHover
-        colRipple: Appearance.colors.colSecondaryContainerActive
-        colOnBackground: Appearance.colors.colOnSecondaryContainer
+        colBackground: Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colSecondaryContainer
+        colBackgroundHover: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.colors.colSecondaryContainerHover
+        colRipple: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colSecondaryContainerActive
+        colOnBackground: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnSecondaryContainer
     }
 
     onActionChanged: actionBar.setCurrentIndex(root.indexForAction(root.action))

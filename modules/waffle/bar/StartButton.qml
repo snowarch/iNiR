@@ -14,7 +14,11 @@ AppButton {
     id: root
 
     leftInset: (Config.options?.waffles?.bar?.leftAlignApps ?? false) ? 12 : 0
-    iconName: down ? "start-here-pressed" : "start-here"
+    // Absolute path to the bundled glyph, not the freedesktop name. As a plain
+    // name this resolved against the user's icon theme, and any non-Windows set
+    // answers "start-here" with its own launcher mark — WhiteSur returns the
+    // Apple logo. The Start button is waffle's identity, not a themed app icon.
+    iconName: WIcons.pathForName(down ? "start-here-pressed" : "start-here")
 
     checked: GlobalStates.searchOpen && LauncherSearch.query === ""
     onClicked: {
@@ -24,7 +28,7 @@ AppButton {
     BarToolTip {
         id: tooltip
         text: Translation.tr("Start")
-        extraVisibleCondition: root.shouldShowTooltip
+        barExtraVisibleCondition: root.shouldShowTooltip
     }
 
     altAction: () => {

@@ -26,8 +26,8 @@ Item {
     readonly property color colSubtext: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
         : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
     readonly property color colError: Appearance.angelEverywhere ? Appearance.angel.colError
-        : Appearance.inirEverywhere ? (Appearance.inir?.colError ?? Appearance.m3colors.m3error)
-        : Appearance.m3colors.m3error
+        : Appearance.inirEverywhere ? (Appearance.inir?.colError ?? Appearance.colors.colError)
+        : Appearance.colors.colError
     readonly property color colBadge: Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
         : Appearance.inirEverywhere ? ColorUtils.transparentize(Appearance.inir.colBorder, 0.5)
         : Appearance.auroraEverywhere ? (Appearance.aurora?.colSubSurface ?? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.90))

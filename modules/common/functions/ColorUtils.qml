@@ -298,35 +298,131 @@ Singleton {
      * @returns {color} Adjusted text color with sufficient contrast
      */
     function ensureReadable(textColor, bgColor, minRatio = 4.5) {
+        if (textColor === undefined || textColor === null || String(textColor).length === 0)
+            textColor = Qt.rgba(1, 1, 1, 1);
+        if (bgColor === undefined || bgColor === null || String(bgColor).length === 0)
+            bgColor = Qt.rgba(0, 0, 0, 1);
         var fg = Qt.color(textColor);
         var bg = Qt.color(bgColor);
         var ratio = contrastRatio(fg, bg);
         
         if (ratio >= minRatio) return fg;
-        
-        // Determine if we should lighten or darken based on background
+
+        // Choose the direction that can actually provide the strongest
+        // contrast. A luminance threshold is insufficient here: mid-tone
+        // wallpaper palettes can make white fail while black passes (or the
+        // inverse), which previously returned an unreadable extreme.
+        var white = Qt.rgba(1, 1, 1, fg.a);
+        var black = Qt.rgba(0, 0, 0, fg.a);
+        var whiteRatio = contrastRatio(white, bg);
+        var blackRatio = contrastRatio(black, bg);
+        var targetLightness = whiteRatio >= blackRatio ? 1.0 : 0.0;
+        var target = targetLightness > 0.5 ? white : black;
+
+        if (Math.max(whiteRatio, blackRatio) < minRatio)
+            return target;
+
+        // Binary-search the smallest lightness adjustment that reaches the
+        // requested ratio while preserving the original hue and saturation.
+        var failingLightness = fg.hslLightness;
+        var passingLightness = targetLightness;
+        for (var i = 0; i < 18; i++) {
+            var candidateLightness = (failingLightness + passingLightness) / 2;
+            var candidate = Qt.hsla(fg.hslHue, fg.hslSaturation,
+                candidateLightness, fg.a);
+            if (contrastRatio(candidate, bg) >= minRatio)
+                passingLightness = candidateLightness;
+            else
+                failingLightness = candidateLightness;
+        }
+        return Qt.hsla(fg.hslHue, fg.hslSaturation, passingLightness, fg.a);
+    }
+
+    /**
+     * Region-adaptive ACCENT colour. Unlike ensureReadable (which is for body text and
+     * collapses to white/black), this keeps the accent a COLOUR: it preserves the
+     * wallpaper-generated hue and a minimum saturation, and drives lightness within a
+     * coloured band to whichever value maximises contrast against the region behind it.
+     * This is why a light Material-You accent (tuned for the shell's dark surfaces)
+     * becomes a darker version of the SAME hue over a bright wallpaper region instead of
+     * washing out — exactly how the shell keeps accents legible, applied to the desktop.
+     *
+     * @param {color} accentColor - Wallpaper-generated accent (colPrimary/Secondary/...)
+     * @param {color} bgColor - The wallpaper region colour behind the widget
+     * @param {number} target - Desired contrast ratio (default 4.0; accents, not text)
+     * @param {number} minSat - Saturation floor so the accent never greys out (0.35)
+     * @param {number} bandMin - Lowest lightness allowed (0.20 — still a colour, not black)
+     * @param {number} bandMax - Highest lightness allowed (0.82 — still a colour, not white)
+     * @returns {color} Region-legible accent that keeps the wallpaper hue
+     */
+    function adaptAccent(accentColor, bgColor, target = 4.0, minSat = 0.45, bandMin = 0.18, bandMax = 0.84) {
+        if (accentColor === undefined || accentColor === null || String(accentColor).length === 0)
+            return accentColor;
+        if (bgColor === undefined || bgColor === null || String(bgColor).length === 0)
+            return accentColor;
+        var fg = Qt.color(accentColor);
+        var bg = Qt.color(bgColor);
+        // Clamp, not normalizer: an accent that already reads keeps its exact
+        // palette identity, so themes whose accents oppose their surfaces (the
+        // common dark-theme case) render byte-identical with or without this.
+        if (contrastRatio(fg, bg) >= target)
+            return fg;
+        var hue = fg.hslHue;
+        var sat = Math.max(minSat, fg.hslSaturation);
         var bgLum = relativeLuminance(bg);
-        var shouldLighten = bgLum < 0.5;
-        
-        // Iteratively adjust lightness until we meet contrast requirement
-        var step = shouldLighten ? 0.05 : -0.05;
-        var newLightness = fg.hslLightness;
-        var maxIterations = 20;
-        
-        for (var i = 0; i < maxIterations; i++) {
-            newLightness = clamp01(newLightness + step);
-            var adjusted = Qt.hsla(fg.hslHue, fg.hslSaturation, newLightness, fg.a);
-            if (contrastRatio(adjusted, bg) >= minRatio) {
-                return adjusted;
-            }
-            // If we hit the limit, return the extreme
-            if (newLightness <= 0.05 || newLightness >= 0.95) {
-                return shouldLighten ? Qt.rgba(1, 1, 1, fg.a) : Qt.rgba(0, 0, 0, fg.a);
+        // Same move the shell's ZZZ style makes for its signal accents: take the
+        // wallpaper-generated accent hue and PIN its lightness into a fixed readable
+        // band on the opposite side of the surface — here the surface is the wallpaper
+        // region. Bright region → deep accent; dark region → bright accent. Then walk
+        // toward the band edge only as far as needed to clear `target`, boosting chroma
+        // as it deepens so the colour stays vivid (never a washed-out near-white/!black).
+        var regionLight = bgLum >= 0.18;
+        // Anchor lightness: deep band on bright regions, light band on dark regions.
+        var anchorL = regionLight ? 0.42 : 0.70;
+        var edgeL = regionLight ? bandMin : bandMax;
+        var best = Qt.hsla(hue, sat, anchorL, fg.a);
+        var bestRatio = contrastRatio(best, bg);
+        var steps = 18;
+        for (var i = 0; i <= steps; i++) {
+            var L = anchorL + (edgeL - anchorL) * (i / steps);
+            // Deepening accents gain chroma so they read as a saturated colour, not mud.
+            var satHere = regionLight ? Math.min(1.0, sat + (anchorL - L) * 0.8) : sat;
+            var cand = Qt.hsla(hue, clamp01(satHere), clamp01(L), fg.a);
+            var r = contrastRatio(cand, bg);
+            if (r >= target) return cand;
+            if (r > bestRatio) {
+                best = cand;
+                bestRatio = r;
             }
         }
-        
-        // Fallback: return pure white or black
-        return shouldLighten ? Qt.rgba(1, 1, 1, fg.a) : Qt.rgba(0, 0, 0, fg.a);
+        return best;
+    }
+
+    /**
+     * Raises a neutral on-surface ink's saturation to a fixed floor while keeping its
+     * hue and lightness untouched — the ink already carries the wallpaper's hue (Material
+     * You ties on-surface tones to the seed color) but at near-zero chroma for legibility.
+     * This makes that hue actually visible without touching the lightness that legibility
+     * depends on. Falls back to the ink unchanged for genuinely achromatic wallpapers
+     * (checked via seedColor, typically m3primary) so grayscale wallpapers don't get a
+     * fake hue injected.
+     *
+     * @param {color} ink - Neutral on-surface text color (e.g. colOnLayer0)
+     * @param {color} seedColor - Wallpaper-generated color used only to detect "is this
+     *   wallpaper chromatic at all" (typically m3primary)
+     * @param {number} targetSat - Saturation floor to raise ink to (default 0.5)
+     * @returns {color} ink with boosted saturation, or unchanged if already vivid enough
+     */
+    function boostInkSaturation(ink, seedColor, targetSat = 0.5) {
+        if (ink === undefined || ink === null || String(ink).length === 0)
+            return ink;
+        var seed = Qt.color(seedColor);
+        if (seed.hslSaturation <= 0.02)
+            return ink;
+        var c = Qt.color(ink);
+        if (c.hslSaturation >= targetSat)
+            return c;
+        return Qt.hsla(c.hslHue, targetSat, c.hslLightness, c.a);
     }
 
     /**

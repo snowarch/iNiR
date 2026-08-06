@@ -16,6 +16,40 @@ WSettingsPage {
     pageIcon: "dark-theme"
     pageDescription: Translation.tr("Color themes and typography")
 
+    property bool cavaControlsReady: false
+    Component.onCompleted: Qt.callLater(() => root.cavaControlsReady = true)
+
+    Timer {
+        id: cavaConfigDebounce
+        interval: 500
+        repeat: false
+        onTriggered: Quickshell.execDetached([
+            Directories.wallpaperSwitchScriptPath, "--noswitch"])
+    }
+
+    function setCavaValue(path, value, regenerateStandalone): void {
+        if (!root.cavaControlsReady)
+            return
+        Config.setNestedValue(path, value)
+        if (regenerateStandalone)
+            cavaConfigDebounce.restart()
+    }
+
+    function resetCavaDefaults(): void {
+        if (!root.cavaControlsReady)
+            return
+        Config.setNestedValues({
+            "appearance.cava.colorSource": "theme",
+            "appearance.cava.gradientCount": 8,
+            "appearance.cava.sensitivity": 100,
+            "appearance.cava.bars": 0,
+            "appearance.cava.framerate": 60,
+            "appearance.cava.stereo": true,
+            "appearance.cava.waveOpacity": 30,
+        })
+        cavaConfigDebounce.restart()
+    }
+
     // Active theme preview
     Rectangle {
         Layout.fillWidth: true
@@ -88,8 +122,12 @@ WSettingsPage {
         icon: "dark-theme"
 
         property string searchQuery: ""
-        property int selectedTab: 0  // 0=All, 1=Dark, 2=Light
-        property string selectedTag: ""
+        property int selectedTab: Persistent.states?.settings?.themeTab ?? 0  // 0=All, 1=Dark, 2=Light
+        onSelectedTabChanged: if (Persistent.ready && Persistent.states?.settings)
+            Persistent.states.settings.themeTab = selectedTab
+        property string selectedTag: Persistent.states?.settings?.themeTag ?? ""
+        onSelectedTagChanged: if (Persistent.ready && Persistent.states?.settings)
+            Persistent.states.settings.themeTag = selectedTag
 
         function isDarkTheme(preset) {
             if (preset.id === "auto" || preset.id === "custom")
@@ -135,8 +173,8 @@ WSettingsPage {
         // Search + filter row
         RowLayout {
             Layout.fillWidth: true
-            Layout.leftMargin: 14
-            Layout.rightMargin: 14
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             spacing: 8
 
             // Search field
@@ -258,22 +296,31 @@ WSettingsPage {
         // Tag filters
         Flow {
             Layout.fillWidth: true
-            Layout.leftMargin: 14
-            Layout.rightMargin: 14
-            spacing: 4
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
+            spacing: Looks.dp(6)
 
             Repeater {
                 model: ThemePresets.availableTags.filter(t => t.id !== "dark" && t.id !== "light")
 
                 Rectangle {
+                    id: tagChip
                     required property var modelData
 
                     readonly property bool isActive: colorThemeCard.selectedTag === modelData.id
 
-                    width: tagRowLayout.implicitWidth + 16
-                    height: 24
-                    radius: Looks.radius.medium
-                    color: isActive ? Qt.alpha(Looks.colors.accent, 0.15) : tagFilterMouse.containsMouse ? Looks.colors.bg2Hover : Looks.colors.bg1
+                    width: tagRowLayout.implicitWidth + Looks.dp(24)
+                    height: Looks.dp(28)
+                    radius: height / 2
+                    color: {
+                        if (tagChip.isActive)
+                            return Looks.colors.accent
+                        if (tagFilterMouse.containsMouse)
+                            return Looks.settings.tileHover
+                        return Looks.settings.tile
+                    }
+                    border.width: tagChip.isActive ? 0 : 1
+                    border.color: Looks.settings.stroke
 
                     Behavior on color {
                         animation: ColorAnimation {
@@ -286,12 +333,13 @@ WSettingsPage {
                     RowLayout {
                         id: tagRowLayout
                         anchors.centerIn: parent
-                        spacing: 4
+                        spacing: Looks.dp(4)
 
                         WText {
-                            text: modelData.name
-                            font.pixelSize: Looks.font.pixelSize.tiny
-                            color: parent.parent.isActive ? Looks.colors.accent : Looks.colors.fg
+                            text: tagChip.modelData.name
+                            font.pixelSize: Looks.font.pixelSize.small
+                            font.weight: tagChip.isActive ? Looks.font.weight.strong : Looks.font.weight.regular
+                            color: tagChip.isActive ? Looks.colors.accentFg : Looks.colors.fg
                         }
                     }
 
@@ -308,10 +356,13 @@ WSettingsPage {
             // Clear tag button
             Rectangle {
                 visible: colorThemeCard.selectedTag.length > 0
-                width: 24
-                height: 24
-                radius: Looks.radius.medium
-                color: clearTagMouse.containsMouse ? Looks.colors.bg2Hover : Looks.colors.bg1
+                width: Looks.dp(28)
+                height: Looks.dp(28)
+                radius: height / 2
+                color: clearTagMouse.containsMouse
+                    ? Looks.settings.tileHover : Looks.settings.tile
+                border.width: 1
+                border.color: Looks.settings.stroke
 
                 Behavior on color {
                     animation: ColorAnimation {
@@ -341,8 +392,8 @@ WSettingsPage {
         // Theme grid — 3 columns
         Item {
             Layout.fillWidth: true
-            Layout.leftMargin: 14
-            Layout.rightMargin: 14
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             Layout.bottomMargin: 4
             implicitHeight: Math.min(300, themeGridContent.implicitHeight + 12)
 
@@ -517,48 +568,10 @@ WSettingsPage {
         readonly property string derivedStyle: cardsEverywhere ? "cards" : "material"
         readonly property string currentStyle: (Config.options?.appearance?.globalStyle ?? "").length > 0 ? Config.options?.appearance?.globalStyle ?? "material" : derivedStyle
 
-        function _globalStyleValues(styleId) {
-            if (styleId === "cards") {
-                return {
-                    "dock.cardStyle": true,
-                    "sidebar.cardStyle": true,
-                    "bar.cornerStyle": 3,
-                };
-            }
-
-            const values = {
-                "dock.cardStyle": false,
-                "sidebar.cardStyle": false,
-            };
-
-            if (styleId === "aurora") {
-                if ((Config.options?.bar?.cornerStyle ?? 1) === 3)
-                    values["bar.cornerStyle"] = 1;
-                return values;
-            }
-
-            if (styleId === "angel") {
-                if ((Config.options?.bar?.cornerStyle ?? 1) === 3)
-                    values["bar.cornerStyle"] = 1;
-                return values;
-            }
-
-            // material
-            if ((Config.options?.bar?.cornerStyle ?? 1) === 3)
-                values["bar.cornerStyle"] = 1;
-            return values;
-        }
-
-        function _applyGlobalStyle(styleId) {
-            let values = globalStyleCard._globalStyleValues(styleId);
-            values["appearance.globalStyle"] = styleId;
-            Config.setNestedValues(values);
-        }
-
         WSettingsDropdown {
             label: Translation.tr("Style")
             icon: "eyedropper"
-            description: Translation.tr("Choose between Material, Cards, Aurora, Inir, and Angel global styling")
+            description: Translation.tr("Choose the visual language used across the shell")
             currentValue: globalStyleCard.currentStyle
             options: [
                 {
@@ -580,10 +593,18 @@ WSettingsPage {
                 {
                     value: "angel",
                     displayName: Translation.tr("Angel")
+                },
+                {
+                    value: "zzz",
+                    displayName: Translation.tr("ZZZ")
+                },
+                {
+                    value: "cookie",
+                    displayName: Translation.tr("Cookie Shapes")
                 }
             ]
             onSelected: newValue => {
-                globalStyleCard._applyGlobalStyle(newValue);
+                ThemeService.setGlobalStyle(newValue);
             }
         }
     }
@@ -668,6 +689,14 @@ WSettingsPage {
             // liveRegenSignature and runs regenerateAutoTheme automatically.
             }
         }
+
+        WSettingsSwitch {
+            label: Translation.tr("Invert colors (complementary)")
+            icon: "dark-theme"
+            description: Translation.tr("Rotate every color 180° on the color wheel. Shell-only: external apps keep their original colors.")
+            checked: Config.options?.appearance?.colorInvert ?? false
+            onCheckedChanged: Config.setNestedValue("appearance.colorInvert", checked)
+        }
     }
 
     // Theming options
@@ -724,7 +753,7 @@ WSettingsPage {
 
         WSettingsSwitch {
             label: Translation.tr("Auto light/dark from wallpaper")
-            icon: "contrast"
+            icon: "auto"
             description: Translation.tr("Pick the light or dark scheme from each wallpaper's brightness so text stays readable")
             checked: Config.options?.appearance?.wallpaperTheming?.autoDarkLightMode ?? false
             onCheckedChanged: {
@@ -767,7 +796,7 @@ WSettingsPage {
 
         WSettingsSwitch {
             label: Translation.tr("Zed editor")
-            icon: "code-block"
+            icon: "terminal"
             description: Translation.tr("Generate Zed editor theme from wallpaper colors")
             checked: Config.options?.appearance?.wallpaperTheming?.enableZed ?? true
             onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.enableZed", checked)
@@ -775,7 +804,7 @@ WSettingsPage {
 
         WSettingsSwitch {
             label: Translation.tr("VSCode editors")
-            icon: "code-block"
+            icon: "terminal"
             description: Translation.tr("Generate theme for VSCode and its forks from wallpaper colors")
             checked: Config.options?.appearance?.wallpaperTheming?.enableVSCode ?? true
             onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.enableVSCode", checked)
@@ -783,7 +812,7 @@ WSettingsPage {
 
         WSettingsSwitch {
             label: Translation.tr("Chrome / Chromium")
-            icon: "globe"
+            icon: "globe-search"
             description: Translation.tr("Apply wallpaper-derived colors to Chrome and Chromium browser")
             checked: Config.options?.appearance?.wallpaperTheming?.enableChrome ?? true
             onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.enableChrome", checked)
@@ -791,7 +820,7 @@ WSettingsPage {
 
         WSettingsSwitch {
             label: Translation.tr("OpenCode")
-            icon: "code-block"
+            icon: "terminal"
             description: Translation.tr("Apply wallpaper-derived theme to OpenCode AI editor")
             checked: Config.options?.appearance?.wallpaperTheming?.enableOpenCode ?? false
             onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.enableOpenCode", checked)
@@ -799,7 +828,7 @@ WSettingsPage {
 
         WSettingsSwitch {
             label: Translation.tr("Neovim / LazyVim")
-            icon: "code-block"
+            icon: "terminal"
             description: Translation.tr("Generate aether.nvim theme plugin for Neovim/LazyVim from wallpaper colors (writes to ~/.config/nvim/lua/plugins/neovim.lua)")
             checked: Config.options?.appearance?.wallpaperTheming?.enableNeovim ?? false
             onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.enableNeovim", checked)
@@ -807,11 +836,12 @@ WSettingsPage {
 
         WSettingsSwitch {
             id: waffleCavaSwitch
-            label: Translation.tr("Cava")
+            label: Translation.tr("Theme standalone Cava")
             icon: "music-note-2"
-            description: Translation.tr("Apply Material You gradient colors to cava audio visualizer config")
+            description: Translation.tr("Manage ~/.config/cava/config; internal visualizers always use the options below")
             checked: Config.options?.appearance?.wallpaperTheming?.enableCava ?? false
-            onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.enableCava", checked)
+            onCheckedChanged: root.setCavaValue(
+                "appearance.wallpaperTheming.enableCava", checked, true)
         }
 
         WSettingsSwitch {
@@ -825,43 +855,55 @@ WSettingsPage {
 
     // Cava visualizer options
     WSettingsCard {
-        visible: waffleCavaSwitch.checked
         title: Translation.tr("Cava Options")
         icon: "music-note-2"
 
         WSettingsDropdown {
             label: Translation.tr("Color source")
-            icon: "palette"
-            description: Translation.tr("Gradient colors for standalone cava config")
+            icon: "color"
+            description: Translation.tr("Live palette for internal visualizers and standalone cava")
             options: [
                 { displayName: Translation.tr("Theme palette"), value: "theme" },
                 { displayName: Translation.tr("Vibrant (saturated)"), value: "vibrant" },
                 { displayName: Translation.tr("Album cover"), value: "cover" },
             ]
             currentValue: Config.options?.appearance?.cava?.colorSource ?? "theme"
-            onSelected: value => {
-                Config.setNestedValue("appearance.cava.colorSource", value)
-                Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--noswitch"])
+            onSelected: value => root.setCavaValue(
+                "appearance.cava.colorSource", value, true)
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Looks.dp(4)
+
+            Repeater {
+                model: CavaTheme.visualizerColors
+
+                Rectangle {
+                    required property var modelData
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Looks.dp(8)
+                    radius: Looks.radius.small
+                    color: modelData
+                }
             }
         }
 
         WSettingsSpinBox {
             label: Translation.tr("Gradient colors")
-            icon: "gradient"
-            description: Translation.tr("Number of gradient stops (2-8)")
-            from: 2
+            icon: "paint-bucket"
+            description: Translation.tr("One solid color or up to eight gradient stops")
+            from: 1
             to: 8
             stepSize: 1
             value: Config.options?.appearance?.cava?.gradientCount ?? 8
-            onValueChanged: {
-                Config.setNestedValue("appearance.cava.gradientCount", value)
-                Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--noswitch"])
-            }
+            onValueChanged: root.setCavaValue(
+                "appearance.cava.gradientCount", value, true)
         }
 
         WSettingsSlider {
             label: Translation.tr("Sensitivity")
-            icon: "sound-high"
+            icon: "speaker"
             description: Translation.tr("Audio sensitivity (higher = more reactive)")
             from: 10
             to: 500
@@ -871,19 +913,20 @@ WSettingsPage {
             Component.onCompleted: _ready = true
             onMoved: {
                 if (!_ready) return;
-                Config.setNestedValue("appearance.cava.sensitivity", value);
+                root.setCavaValue("appearance.cava.sensitivity", value, true)
             }
         }
 
         WSettingsSpinBox {
             label: Translation.tr("Bars")
-            icon: "chart-bar"
+            icon: "device-eq"
             description: Translation.tr("Number of frequency data points (0 = auto)")
             from: 0
             to: 200
             stepSize: 8
             value: Config.options?.appearance?.cava?.bars ?? 0
-            onValueChanged: Config.setNestedValue("appearance.cava.bars", value)
+            onValueChanged: root.setCavaValue(
+                "appearance.cava.bars", value, true)
         }
 
         WSettingsSpinBox {
@@ -894,15 +937,29 @@ WSettingsPage {
             to: 165
             stepSize: 5
             value: Config.options?.appearance?.cava?.framerate ?? 60
-            onValueChanged: Config.setNestedValue("appearance.cava.framerate", value)
+            onValueChanged: root.setCavaValue(
+                "appearance.cava.framerate", value, true)
         }
 
         WSettingsSwitch {
-            label: Translation.tr("Stereo")
+            label: Translation.tr("Standalone stereo")
             icon: "headphones"
-            description: Translation.tr("Split visualizer into left/right channels")
+            description: Translation.tr("Only affects terminal Cava. The internal bar spectrum stays mono so it always fills the whole surface.")
             checked: Config.options?.appearance?.cava?.stereo ?? true
-            onCheckedChanged: Config.setNestedValue("appearance.cava.stereo", checked)
+            onCheckedChanged: root.setCavaValue(
+                "appearance.cava.stereo", checked, true)
+        }
+
+        WSettingsSpinBox {
+            label: Translation.tr("Wave opacity")
+            icon: "eye"
+            description: Translation.tr("Fill opacity for shared wave visualizers")
+            from: 5
+            to: 100
+            stepSize: 5
+            value: Config.options?.appearance?.cava?.waveOpacity ?? 30
+            onValueChanged: root.setCavaValue(
+                "appearance.cava.waveOpacity", value, false)
         }
 
         WSettingsButton {
@@ -911,14 +968,7 @@ WSettingsPage {
             description: Translation.tr("Restore all cava settings to defaults")
             buttonText: Translation.tr("Reset")
             buttonIcon: "arrow-reset"
-            onButtonClicked: {
-                Config.setNestedValue("appearance.cava.colorSource", "theme");
-                Config.setNestedValue("appearance.cava.gradientCount", 8);
-                Config.setNestedValue("appearance.cava.sensitivity", 100);
-                Config.setNestedValue("appearance.cava.bars", 0);
-                Config.setNestedValue("appearance.cava.framerate", 60);
-                Config.setNestedValue("appearance.cava.stereo", true);
-            }
+            onButtonClicked: root.resetCavaDefaults()
         }
     }
 
@@ -1041,8 +1091,8 @@ WSettingsPage {
 
         WText {
             Layout.fillWidth: true
-            Layout.leftMargin: 14
-            Layout.rightMargin: 14
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             text: Translation.tr("These settings only affect the Windows 11 (Waffle) style panels.")
             font.pixelSize: Looks.font.pixelSize.small
             color: Looks.colors.subfg

@@ -72,11 +72,7 @@ Scope {
     }
 
     // IPC handler - only active when waffle family is active
-    IpcHandler {
-        target: "clipboard"
-        enabled: Config.options?.panelFamily === "waffle"
-        function toggle(): void { GlobalStates.waffleClipboardOpen = !GlobalStates.waffleClipboardOpen }
-        function close(): void { GlobalStates.waffleClipboardOpen = false }
-        function open(): void { GlobalStates.waffleClipboardOpen = true }
-    }
+    // Shared IPC targets and family-agnostic routers now live in shell.qml,
+    // registered once instead of once per family. See the comment there.
+
 }

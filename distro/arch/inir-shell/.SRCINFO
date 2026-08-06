@@ -1,10 +1,10 @@
 pkgbase = inir-shell
 	pkgdesc = iNiR shell payload, launcher, and user service
-	pkgver = 2.27.0
+	pkgver = 2.29.0
 	pkgrel = 1
 	url = https://github.com/snowarch/iNiR
 	arch = any
-	license = MIT
+	license = GPL-3.0-only
 	depends = bash
 	depends = brightnessctl
 	depends = cliphist
@@ -88,12 +88,13 @@ pkgbase = inir-shell
 	optdepends = wtype: Wayland text injection helper
 	optdepends = ydotool: virtual keyboard and clipboard paste helper
 	optdepends = yt-dlp: YouTube media backend
+	optdepends = python-ytmusicapi: YouTube Music browsing (InnerTube engine)
 	optdepends = millennium-bin: Steam theming via Millennium (requires steam)
 	conflicts = inir-shell-git
 	conflicts = noctalia-qs
 	conflicts = noctalia-shell
 	conflicts = cachyos-niri-noctalia
-	source = inir-2.27.0.tar.gz::https://github.com/snowarch/iNiR/archive/refs/tags/v2.27.0.tar.gz
+	source = inir-2.29.0.tar.gz::https://github.com/snowarch/iNiR/archive/refs/tags/v2.29.0.tar.gz
 	sha256sums = SKIP
 
 pkgname = inir-shell

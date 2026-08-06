@@ -18,6 +18,9 @@ singleton ConflictKiller 1.0 ConflictKiller.qml
 singleton CustomWidgets 1.0 CustomWidgets.qml
 DankSocket 1.0 DankSocket.qml
 singleton DateTime 1.0 DateTime.qml
+singleton DesktopItems 1.0 DesktopItems.qml
+singleton DesktopWidgetLayout 1.0 DesktopWidgetLayout.qml
+singleton DevNavigation 1.0 DevNavigation.qml
 singleton Events 1.0 Events.qml
 singleton FirstRunExperience 1.0 FirstRunExperience.qml
 singleton FontSyncService 1.0 FontSyncService.qml
@@ -28,9 +31,12 @@ singleton Hyprsunset 1.0 Hyprsunset.qml
 singleton IconThemeService 1.0 IconThemeService.qml
 singleton Idle 1.0 Idle.qml
 singleton KeyboardIndicators 1.0 KeyboardIndicators.qml
+singleton LyricsService 1.0 LyricsService.qml
 singleton MaterialThemeLoader 1.0 MaterialThemeLoader.qml
 singleton MemoryPressureService 1.0 MemoryPressureService.qml
 singleton MinimizedWindows 1.0 MinimizedWindows.qml
+singleton MascotChaos 1.0 MascotChaos.qml
+singleton MascotMood 1.0 MascotMood.qml
 singleton MprisController 1.0 MprisController.qml
 singleton Network 1.0 Network.qml
 singleton NiriService 1.0 NiriService.qml
@@ -43,6 +49,8 @@ singleton Privacy 1.0 Privacy.qml
 singleton RecorderStatus 1.0 RecorderStatus.qml
 singleton ResourceUsage 1.0 ResourceUsage.qml
 singleton ScreenTime 1.0 ScreenTime.qml
+singleton ShellEditSession 1.0 ShellEditSession.qml
+singleton ShellLayoutController 1.0 ShellLayoutController.qml
 singleton ShellUpdates 1.0 ShellUpdates.qml
 singleton SystemInfo 1.0 SystemInfo.qml
 singleton TaskbarApps 1.0 TaskbarApps.qml
@@ -59,4 +67,5 @@ singleton Wallpapers 1.0 Wallpapers.qml
 singleton Weather 1.0 Weather.qml
 singleton WidgetPowerManager 1.0 WidgetPowerManager.qml
 singleton WindowPreviewService 1.0 WindowPreviewService.qml
+singleton WorldClock 1.0 WorldClock.qml
 singleton YtMusic 1.0 YtMusic.qml

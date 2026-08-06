@@ -110,7 +110,10 @@
         ++ optionalQt6 pkgs "qtwayland";
 
       qmlDeps = pkgs:
-        optionalKde pkgs "kirigami"
+        # kirigami-wrapped ships no QML files, use the unwrapped version
+        (lib.optional
+          (builtins.hasAttr "kdePackages" pkgs && builtins.hasAttr "kirigami" pkgs.kdePackages)
+          pkgs.kdePackages.kirigami.passthru.unwrapped)
         ++ optionalKde pkgs "syntax-highlighting"
         ++ optionalQt6 pkgs "qt5compat"
         ++ optionalQt6 pkgs "qtdeclarative"
@@ -130,6 +133,16 @@
           src = lib.cleanSource ./.;
 
           nativeBuildInputs = [ pkgs.makeWrapper ];
+
+          # Prevent patchShebangs from attempting to rewrite Python scripts;
+          # non-executable files are skipped during fixupPhase.
+          preFixup = ''
+            find "$out/share/quickshell/inir" -type f -name '*.py' -exec chmod -x {} +
+          '';
+
+          postFixup = ''
+            find "$out/share/quickshell/inir" -type f -name '*.py' -exec chmod +x {} +
+          '';
 
           installPhase =
             let
@@ -151,6 +164,13 @@
                 [ -n "$dir" ] || continue
                 cp -R "$dir" "$runtime/$dir"
               done < sdata/runtime-payload-dirs.txt
+
+              # Copy root-level QML entry points (shell.qml, settings.qml, etc.)
+              # which aren't listed in runtime-root-files.txt.
+              for f in *.qml; do
+                [ -f "$f" ] || continue
+                install -Dm644 "$f" "$runtime/$f"
+              done
 
               chmod +x "$runtime/setup" "$runtime/scripts/inir"
               find "$runtime/scripts" -type f \( -name '*.sh' -o -name '*.fish' -o -name '*.py' \) -exec chmod +x {} \;
@@ -177,7 +197,7 @@
           meta = {
             description = "Complete desktop shell for Niri, built on Quickshell";
             homepage = "https://github.com/snowarch/inir";
-            license = lib.licenses.mit;
+            license = lib.licenses.gpl3Only;
             platforms = lib.platforms.linux;
             mainProgram = "inir";
           };

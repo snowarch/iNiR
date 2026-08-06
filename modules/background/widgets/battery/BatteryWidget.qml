@@ -15,19 +15,27 @@ AbstractBackgroundWidget {
     id: root
 
     configEntryName: "battery"
-    defaultConfig: ({ placementStrategy: "free", preset: "default", displayMode: "ring", showTime: true, ringSize: 72, ringLineWidth: 6, barCount: 20, pillHeight: 12, dim: 0, widgetScale: 100, widgetOpacity: 100, showBackground: true, showBorder: true, colorMode: "auto", x: 50, y: 50 })
+    defaultConfig: ({
+        placementStrategy: "free", preset: "default", displayMode: "ring",
+        showTime: true, ringSize: 72, ringLineWidth: 6,
+        barCount: 20, barSpacing: 2, barRadius: 2, pillHeight: 12,
+        dim: 0, widgetScale: 100, widgetOpacity: 100, colorMode: "auto",
+        showBackground: true, useBlur: false, showBorder: true,
+        backgroundOpacity: 0.16, borderWidth: 1, borderOpacity: 0.2,
+        cornerRadius: -1, x: 50, y: 50
+    })
 
     implicitWidth: Math.round(160 * scaleFactor)
     implicitHeight: Math.round(104 * scaleFactor)
 
     visibleWhenLocked: true
     needsColText: true
-    resizableAxes: ({ uniform: "ringSize" })
+    resizableAxes: ({ uniform: "widgetScale" })
     resizeMinWidth: 40
     resizeMinHeight: 40
 
     editPopoverContent: Component {
-        Column {
+        ColumnLayout {
             spacing: 6
             GridLayout {
                 columns: 3
@@ -45,7 +53,7 @@ AbstractBackgroundWidget {
                         Layout.fillWidth: true
                         leftmost: true; rightmost: true
                         buttonIcon: modelData.icon
-                        buttonText: modelData.label
+                        buttonText: Translation.tr(modelData.label)
                         toggled: root.displayMode === modelData.value
                         onClicked: Config.setNestedValue("background.widgets.battery.displayMode", modelData.value)
                     }
@@ -55,48 +63,43 @@ AbstractBackgroundWidget {
                 Layout.alignment: Qt.AlignHCenter
                 leftmost: true; rightmost: true
                 buttonIcon: "timer"
-                buttonText: "Show time"
+                buttonText: Translation.tr("Show time")
                 toggled: root.showTimeEstimate
                 onClicked: Config.setNestedValue("background.widgets.battery.showTime", !root.showTimeEstimate)
             }
         }
     }
 
-    readonly property bool _active: (Config.getNestedValue("background.widgets.battery.enable", false)) && Battery.available
     readonly property string displayMode: Config.getNestedValue("background.widgets.battery.displayMode", "ring")
     readonly property bool showTimeEstimate: Config.getNestedValue("background.widgets.battery.showTime", true)
-    readonly property int ringSize: Math.round((Config.getNestedValue("background.widgets.battery.ringSize", 72)) * scaleFactor)
+    readonly property int ringSize: Math.round(Number(root._readConfigKey("ringSize") ?? 72) * scaleFactor)
     readonly property int ringLineWidth: Math.round((Config.getNestedValue("background.widgets.battery.ringLineWidth", 6)) * scaleFactor)
     readonly property int barCount: Config.getNestedValue("background.widgets.battery.barCount", 20)
     readonly property int barSpacing: Config.getNestedValue("background.widgets.battery.barSpacing", 2)
     readonly property int barRadius: Config.getNestedValue("background.widgets.battery.barRadius", 2)
     readonly property int pillHeight: Math.round((Config.getNestedValue("background.widgets.battery.pillHeight", 12)) * scaleFactor)
 
-    property real dimFactor: {
-        const v = Config.getNestedValue("background.widgets.battery.dim", 0);
-        const n = Number(v);
-        return Math.max(0, Math.min(1, Number.isFinite(n) ? n / 100 : 0));
-    }
-
     // ── Style tokens ──────────────────────────────────────────
-    readonly property real cardRadius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-        : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+    readonly property real cardRadius: root.widgetCardRadius
 
-    readonly property color accentColor: Battery.isLow
-        ? (Appearance.angelEverywhere ? Appearance.angel.colError
-            : Appearance.inirEverywhere ? Appearance.inir.colError
-            : Appearance.colors.colError)
-        : Battery.isCharging
-            ? (Appearance.angelEverywhere ? Appearance.angel.colTertiary
-                : Appearance.inirEverywhere ? Appearance.inir.colTertiary
-                : Appearance.auroraEverywhere ? Appearance.m3colors.m3tertiary
-                : Appearance.colors.colTertiary)
-            : (Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                : Appearance.inirEverywhere ? Appearance.inir.colPrimary
-                : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
-                : Appearance.colors.colPrimary)
+    // Shared desktop-widget identity (AbstractBackgroundWidget): low = signal,
+    // charging = tertiary accent, normal = primary accent. Same family everywhere.
+    // The fill always renders ON the track (ring arc, bar fill, pill fill), so
+    // clamp against it — a light theme's deep accents vanish when a bright
+    // wallpaper region flips the track to the near-black plate.
+    readonly property color accentColor: ColorUtils.adaptAccent(
+        Battery.isLow ? root.widgetSignal
+        : Battery.isCharging ? root.widgetAccent3
+        : root.widgetAccent,
+        root.trackColor)
 
-    readonly property color trackColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+    // Region-aware shared plate (dark on bright wallpaper regions).
+    readonly property color trackColor: root.regionIsBright && !Appearance.zzzEverywhere
+        && !Appearance.cookieEverywhere && !Appearance.angelEverywhere
+        ? root.widgetPlateColor
+        : Appearance.cookieEverywhere ? Appearance.colors.colLayer3
+        : Appearance.zzzEverywhere ? Appearance.zzz.chrome
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2
         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
         : Appearance.colors.colSecondaryContainer
@@ -114,30 +117,32 @@ AbstractBackgroundWidget {
     }
     readonly property string timeLabel: {
         if (!root.showTimeEstimate || root.timeText === "") return "";
-        return Battery.isCharging ? root.timeText + " left" : root.timeText;
+        return Translation.tr("%1 remaining").arg(root.timeText);
     }
 
     // ── Card background ───────────────────────────────────────
     WidgetSurface {
+        regionBrightness: root.regionBrightness
         anchors.fill: parent
         surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.cardRadius
         surfaceOpacity: root.backgroundOpacity
         surfaceBorderWidth: root.borderWidth
         surfaceBorderOpacity: root.borderOpacity
-        surfaceColor: root.colText
-        surfaceUseBlur: root.useBlur
+        surfaceColor: root.widgetSurfaceInk
+        colorMode: root.colorMode
+        surfaceAccent: root.widgetAccent
+        surfaceUseBlur: root.effectiveBlur
         screenX: root.x
         screenY: root.y
         screenWidth: root.scaledScreenWidth
         screenHeight: root.scaledScreenHeight
-        visible: root.backgroundOpacity > 0 || root.borderWidth > 0
+        visible: root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur
     }
 
     // ── Ring mode ─────────────────────────────────────────────
     Item {
         anchors.fill: parent
         anchors.margins: Appearance.angelEverywhere || Appearance.inirEverywhere ? 4 : 0
-        opacity: 1.0 - root.dimFactor * 0.6
         visible: root.displayMode === "ring"
 
         Column {
@@ -156,7 +161,7 @@ AbstractBackgroundWidget {
                 StyledText {
                     anchors.centerIn: parent
                     text: root.percentText
-                    color: root.colText
+                    color: root.widgetInk
                     font {
                         pixelSize: Math.round(Appearance.font.pixelSize.normal * root.scaleFactor)
                         family: Appearance.font.family.numbers
@@ -169,7 +174,7 @@ AbstractBackgroundWidget {
             StyledText {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: root.timeLabel
-                color: ColorUtils.applyAlpha(root.colText, 0.6)
+                color: root.widgetInkMuted
                 visible: root.timeLabel !== ""
                 font {
                     pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
@@ -183,7 +188,6 @@ AbstractBackgroundWidget {
     Item {
         anchors.fill: parent
         anchors.margins: Appearance.angelEverywhere || Appearance.inirEverywhere ? 4 : 0
-        opacity: 1.0 - root.dimFactor * 0.6
         visible: root.displayMode === "bars"
 
         Row {
@@ -217,11 +221,19 @@ AbstractBackgroundWidget {
 
                         Behavior on color {
                             enabled: Appearance.animationsEnabled
-                            ColorAnimation { duration: 100 }
+                            ColorAnimation {
+                                duration: Appearance.animation.elementMoveFast.duration
+                                easing.type: Appearance.animation.elementMoveFast.type
+                                easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                            }
                         }
                         Behavior on opacity {
                             enabled: Appearance.animationsEnabled
-                            NumberAnimation { duration: 80 }
+                            NumberAnimation {
+                                duration: Appearance.animation.elementMoveFast.duration
+                                easing.type: Appearance.animation.elementMoveFast.type
+                                easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                            }
                         }
                     }
                 }
@@ -237,12 +249,12 @@ AbstractBackgroundWidget {
 
             StyledText {
                 text: root.percentText
-                color: root.colText
+                color: root.widgetInk
                 font { pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor); family: Appearance.font.family.numbers; weight: Font.DemiBold }
             }
             StyledText {
                 text: root.timeLabel
-                color: ColorUtils.applyAlpha(root.colText, 0.6)
+                color: root.widgetInkMuted
                 visible: root.timeLabel !== ""
                 font { pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor); family: Appearance.font.family.main }
                 anchors.baseline: parent.children[0].baseline
@@ -254,7 +266,6 @@ AbstractBackgroundWidget {
     Item {
         anchors.fill: parent
         anchors.margins: Appearance.angelEverywhere || Appearance.inirEverywhere ? 8 : 4
-        opacity: 1.0 - root.dimFactor * 0.6
         visible: root.displayMode === "pill"
 
         // Percentage + time above pill
@@ -267,12 +278,12 @@ AbstractBackgroundWidget {
 
             StyledText {
                 text: root.percentText
-                color: root.colText
+                color: root.widgetInk
                 font { pixelSize: Math.round(Appearance.font.pixelSize.normal * root.scaleFactor); family: Appearance.font.family.numbers; weight: Font.DemiBold }
             }
             StyledText {
                 text: root.timeLabel
-                color: ColorUtils.applyAlpha(root.colText, 0.6)
+                color: root.widgetInkMuted
                 visible: root.timeLabel !== ""
                 font { pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor); family: Appearance.font.family.main }
                 anchors.baseline: parent.children[0].baseline
@@ -298,7 +309,11 @@ AbstractBackgroundWidget {
 
                 Behavior on width {
                     enabled: Appearance.animationsEnabled
-                    NumberAnimation { duration: 300; easing.type: Easing.OutQuad }
+                    NumberAnimation {
+                        duration: Appearance.animation.elementResize.duration
+                        easing.type: Appearance.animation.elementResize.type
+                        easing.bezierCurve: Appearance.animation.elementResize.bezierCurve
+                    }
                 }
             }
         }

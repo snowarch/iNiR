@@ -7,6 +7,34 @@ import qs.services
 Singleton {
     id: root
 
+    // Filled variants are an explicit asset capability.
+    readonly property var filledIcons: [
+        "add", "alert", "alert-off", "alert-snooze", "app-generic", "apps",
+        "arrow-clockwise", "arrow-counterclockwise", "arrow-enter-left",
+        "arrow-left", "arrow-right", "arrow-up-left", "auto", "bluetooth",
+        "bluetooth-connected", "bluetooth-disabled", "calculator", "caret-down",
+        "caret-up", "checkmark", "chevron-down", "chevron-left",
+        "chevron-right", "chevron-up", "cloudflare", "copy", "cut",
+        "dark-theme", "delete", "desktop", "desktop-speaker", "device-eq",
+        "drink-coffee", "ethernet", "eye", "eye-off", "eyedropper",
+        "fingerprint", "fire", "flash-off", "flash-on", "folder", "games",
+        "globe-search", "globe-shield", "headphones", "image", "image-copy",
+        "info", "keyboard", "keyboard-dock", "leaf-two", "library",
+        "lock-closed", "lock-open", "mic", "mic-off", "more-horizontal",
+        "music-note-2", "news", "next", "open", "options", "pause", "people",
+        "people-settings", "people-team", "phone", "play", "power", "previous",
+        "pulse", "record", "screenshot", "search", "server",
+        "settings-cog-multiple", "speaker", "speaker-1", "speaker-2",
+        "speaker-mute", "speaker-none", "star", "stop", "store-microsoft",
+        "subtract", "temperature", "terminal", "wand", "weather-moon",
+        "weather-moon-off", "weather-sunny", "wifi-1", "wifi-2", "wifi-3",
+        "wifi-4", "wifi-lock", "wifi-off", "wifi-tethering", "wifi-warning"
+    ]
+
+    function hasFilledVariant(iconName) {
+        return root.filledIcons.includes(iconName)
+    }
+
     function pathForName(iconName) {
         return Quickshell.shellPath(`assets/icons/fluent/${iconName}.svg`);
     }

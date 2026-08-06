@@ -21,6 +21,7 @@ Item {
     readonly property bool angelStyle: Appearance.angelEverywhere
     readonly property bool inirStyle: Appearance.inirEverywhere
     readonly property bool auroraStyle: Appearance.auroraEverywhere
+    readonly property bool zzzStyle: Appearance.zzzEverywhere
     property bool panelVisible: true
     readonly property bool useWallpaperBackdrop: root.panelVisible && (root.angelStyle || root.auroraStyle) && !root.inirStyle && root.wallpaperUrl.length > 0
 
@@ -44,7 +45,7 @@ Item {
 
     // ── Greeting based on time ──
     readonly property string greeting: {
-        const hour = new Date().getHours()
+        const hour = DateTime.clock.hours
         if (hour < 6) return Translation.tr("Good night")
         if (hour < 12) return Translation.tr("Good morning")
         if (hour < 18) return Translation.tr("Good afternoon")
@@ -145,6 +146,7 @@ Item {
     readonly property color mediaAccent: hasPlayer ? (angelStyle ? Appearance.angel.colPrimary : inirStyle ? Appearance.inir.colPrimary
         : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)) : colPrimary
     readonly property color mediaTrack: angelStyle ? Appearance.angel.colGlassCard : inirStyle ? Appearance.inir.colLayer2
+        : zzzStyle ? Appearance.colors.colLayer2
         : (blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
     readonly property color mediaHover: angelStyle ? Appearance.angel.colGlassCardHover : inirStyle ? Appearance.inir.colLayer2Hover
         : ColorUtils.transparentize(blendedColors?.colLayer1 ?? Appearance.colors.colLayer1, 0.5)
@@ -155,7 +157,6 @@ Item {
     implicitHeight: dashContainer.implicitHeight + Appearance.sizes.elevationMargin * 2
 
     Component.onCompleted: ResourceUsage.ensureRunning()
-    Component.onDestruction: ResourceUsage.stop()
 
     Timer {
         running: root.effectiveIsPlaying
@@ -221,6 +222,15 @@ Item {
     // ═══════════════════════════════════════════════════
     // MAIN CONTAINER — transparent, no floating panel
     // ═══════════════════════════════════════════════════
+    ZzzPlate {
+        anchors.fill: dashContainer
+        visible: Appearance.zzzEverywhere
+        fillColor: Appearance.colors.colLayer0
+        strokeColor: Appearance.zzz.hairlineStrong
+        strokeWidth: Appearance.zzz.hairlineThick
+        chamfer: Appearance.zzz.cutCorner
+    }
+
     GlassBackground {
         id: dashContainer
         anchors.centerIn: parent
@@ -229,18 +239,38 @@ Item {
         implicitHeight: Math.min(mainCol.implicitHeight + 24, root.dashboardSafeHeight)
         height: implicitHeight
         radius: root.containerRadius
-        fallbackColor: Appearance.colors.colBackgroundSurfaceContainer
+        fallbackColor: Appearance.zzzEverywhere ? "transparent" : Appearance.colors.colBackgroundSurfaceContainer
         inirColor: root.inirStyle ? Appearance.inir.colLayer1 : root.colCardBg
         auroraTransparency: Math.max(0.16, Appearance.aurora.popupTransparentize - 0.12)
         wallpaperBackdropEnabled: root.panelVisible
-        border.width: root.angelStyle || root.inirStyle || root.auroraStyle ? 1 : 0
+        border.width: Appearance.zzzEverywhere ? 0
+            : root.angelStyle || root.inirStyle || root.auroraStyle ? 1 : 0
         border.color: root.angelStyle ? Appearance.angel.colCardBorder
             : root.inirStyle ? Appearance.inir.colBorder
             : root.auroraStyle ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.70)
             : root.colBorder
+        Behavior on border.width {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on border.color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
         clip: true
 
         AngelPartialBorder { visible: root.angelStyle; targetRadius: dashContainer.radius; coverage: 0.4 }
+
+        ZzzPanelBackdrop {
+            anchors.fill: parent
+            label: "OVERVIEW"
+            index: "DB"
+            ghostText: "GRID"
+            accentColor: Appearance.zzz.accent
+            showBurst: false
+            showTicks: false
+            z: 0
+        }
 
         Flickable {
             id: dashboardFlick
@@ -360,7 +390,7 @@ Item {
 
                         StyledText {
                             Layout.alignment: Qt.AlignRight
-                            text: Qt.formatDate(new Date(), "dddd, MMMM d")
+                            text: Qt.formatDate(DateTime.clock.date, "dddd, MMMM d")
                             font.pixelSize: Appearance.font.pixelSize.small
                             color: root.colSubtext
                         }
@@ -998,6 +1028,7 @@ Item {
                                     colPrimary: ResourceUsage.cpuUsage > 0.8 ? Appearance.colors.colError : root.colPrimary
                                     colSecondary: root.angelStyle ? Appearance.angel.colGlassCard
                                         : root.inirStyle ? Appearance.inir.colLayer2
+                                        : root.zzzStyle ? Appearance.colors.colLayer2
                                         : Appearance.colors.colSecondaryContainer
                                     enableAnimation: Appearance.animationsEnabled
                                     animationDuration: 600
@@ -1070,6 +1101,7 @@ Item {
                                     colPrimary: ResourceUsage.memoryUsedPercentage > 0.85 ? Appearance.colors.colError : Appearance.colors.colSecondary
                                     colSecondary: root.angelStyle ? Appearance.angel.colGlassCard
                                         : root.inirStyle ? Appearance.inir.colLayer2
+                                        : root.zzzStyle ? Appearance.colors.colLayer2
                                         : Appearance.colors.colSecondaryContainer
                                     enableAnimation: Appearance.animationsEnabled
                                     animationDuration: 600
@@ -1376,6 +1408,7 @@ Item {
         color: root.angelStyle ? ColorUtils.transparentize(root.colPrimary, 0.78)
             : root.inirStyle ? Appearance.inir.colLayer2
             : root.auroraStyle ? ColorUtils.transparentize(Appearance.colors.colSecondaryContainer, 0.45)
+            : root.zzzStyle ? Appearance.colors.colLayer2
             : Appearance.colors.colSecondaryContainer
         border.width: root.inirStyle ? 1 : 0
         border.color: root.inirStyle ? Appearance.inir.colBorderSubtle : "transparent"

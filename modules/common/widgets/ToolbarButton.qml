@@ -4,5 +4,5 @@ import qs.modules.common
 
 RippleButton {
     Layout.fillHeight: true
-    buttonRadius: Appearance.rounding.full
+    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
 }

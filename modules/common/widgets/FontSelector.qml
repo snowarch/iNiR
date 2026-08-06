@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import qs.services
 import qs.modules.common
 
 Item {
@@ -8,6 +9,7 @@ Item {
     property string selectedFont: ""
     property string label: ""
     property string icon: "font_download"
+    signal fontChosen(string fontFamily)
     
     implicitHeight: column.implicitHeight
     implicitWidth: column.implicitWidth
@@ -91,14 +93,14 @@ Item {
             TextField {
                 id: searchField
                 Layout.fillWidth: true
-                placeholderText: "Search fonts..."
+                placeholderText: Translation.tr("Search fonts...")
                 renderType: Text.NativeRendering
                 font.pixelSize: Appearance.font.pixelSize.small
                 background: Rectangle {
                     color: Appearance.colors.colLayer1
                     radius: Appearance.rounding.small
                 }
-                color: Appearance.m3colors.m3onSurface
+                color: Appearance.colors.colOnSurface
                 placeholderTextColor: Appearance.colors.colSubtext
             }
 
@@ -136,13 +138,14 @@ Item {
                         font.family: modelData
                         font.pixelSize: Appearance.font.pixelSize.small
                         elide: Text.ElideRight
-                        color: modelData === root.selectedFont 
-                            ? Appearance.m3colors.m3onPrimaryContainer 
-                            : Appearance.m3colors.m3onSurface
+                        color: modelData === root.selectedFont
+                            ? Appearance.colors.colOnPrimaryContainer
+                            : Appearance.colors.colOnSurface
                     }
 
                     onClicked: {
                         root.selectedFont = modelData
+                        root.fontChosen(modelData)
                         popup.close()
                     }
                 }

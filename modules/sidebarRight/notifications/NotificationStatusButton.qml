@@ -12,22 +12,29 @@ GroupButton {
     baseWidth: content.implicitWidth + 46
     clickedWidth: baseWidth + 6
 
-    buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : baseHeight / 2
-    buttonRadiusPressed: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+    buttonRadiusPressed: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
-    colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer2 
+    colBackground: Appearance.zzzEverywhere ? "transparent"
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2
         : Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colLayer2
-    colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover 
+    colBackgroundHover: Appearance.zzzEverywhere ? Appearance.zzz.chrome
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer2Hover
-    colBackgroundActive: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active 
+    colBackgroundActive: Appearance.zzzEverywhere ? Appearance.zzz.sticker
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer2Active
-    property color colText: Appearance.inirEverywhere 
+    property color colText: Appearance.zzzEverywhere
+        ? (toggled ? Appearance.zzz.onSticker : Appearance.zzz.ink)
+        : Appearance.inirEverywhere
         ? (toggled ? Appearance.inir.colOnPrimaryContainer : Appearance.inir.colText)
-        : (toggled ? Appearance.m3colors.m3onPrimary : Appearance.colors.colOnLayer1)
+        : (toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer1)
 
     contentItem: Item {
         id: content

@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.27.0-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.29.0-blue?style=flat-square" alt="Version"></a>
   <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
@@ -111,7 +111,7 @@ Wayland → GPU
 ## Возможности
 
 **Два семейства панелей**, переключаемые на лету через `Super+Shift+W`:
-- **Material ii** — плавающая панель, сайдбары, док, 5 визуальных стилей (material, cards, aurora, inir, angel)
+- **Material ii** — плавающая панель, сайдбары, док, 6 визуальных стилей (material, cards, aurora, inir, angel, zzz)
 - **Waffle** — панель задач в стиле Windows 11, стартовое меню, центр действий, центр уведомлений
 
 **Автоматическая тематизация** — выбираете обои и всё подстраивается:
@@ -128,7 +128,7 @@ Wayland → GPU
 
 Выбираете обои — и вся система подстраивается: шелл, GTK/Qt приложения, терминалы, Firefox, Discord, экран входа SDDM. Автоматически.
 
-- **5 визуальных стилей** — Material (сплошной), Cards, Aurora (стеклянное размытие), iNiR (в духе TUI), Angel (нео-брутализм)
+- **6 визуальных стилей** — Material (сплошной), Cards, Aurora (стеклянное размытие), iNiR (в духе TUI), Angel (нео-брутализм), ZZZ
 - **Динамические цвета обоев** через Material You — распространяются на всю систему
 - **10 терминальных инструментов с авто-темой** — foot, kitty, alacritty, starship, fuzzel, pywalfox, btop, lazygit, yazi
 - **Тематизация приложений** — GTK3/4, Qt (через plasma-integration + darkly), Firefox (MaterialFox), Discord/Vesktop (System24)
@@ -144,7 +144,6 @@ Wayland → GPU
 - **YT Music** — полноценный плеер с поиском, очередью и управлением
 - **Браузер Wallhaven** — поиск и установка обоев напрямую
 - **Аниме-трекер** — интеграция с AniList и расписание выходов
-- **Лента Reddit** — просмотр сабреддитов прямо в панели
 - **Переводчик** — через Gemini или translate-shell
 - **Перетаскиваемые виджеты** — криптовалюты, медиаплеер, быстрые заметки, статус-кольца, недельный календарь
 
@@ -282,5 +281,5 @@ inir repair                     # doctor + перезапуск + проверк
 <p align="center">
   <a href="https://github.com/snowarch/inir/graphs/contributors">Участники</a> &bull;
   <a href="CHANGELOG.md">Changelog</a> &bull;
-  <a href="LICENSE">Лицензия MIT</a>
+  <a href="LICENSE">Лицензия GPL-3.0</a>
 </p>

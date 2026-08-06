@@ -24,10 +24,8 @@ Scope {
     id: root
 
     // ─── Monitor resolution ───
-    readonly property var focusedScreen: CompositorService.isNiri
-        ? (Quickshell.screens.find(s => s.name === NiriService.currentOutput) ?? GlobalStates.primaryScreen)
-        : (Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? GlobalStates.primaryScreen)
-    readonly property var defaultScreen: GlobalStates.primaryScreen ?? focusedScreen
+    readonly property var focusedScreen: GlobalStates.focusedScreen
+    readonly property var defaultScreen: focusedScreen ?? GlobalStates.primaryScreen
 
     readonly property var targetScreen: {
         const targetMon = Config.options?.wallpaperSelector?.targetMonitor ?? ""
@@ -426,32 +424,4 @@ Scope {
         }
     }
 
-    IpcHandler {
-        target: "coverflowSelector"
-
-        function toggle(): void {
-            GlobalStates.coverflowSelectorOpen = !GlobalStates.coverflowSelectorOpen
-        }
-
-        function open(): void {
-            GlobalStates.coverflowSelectorOpen = true
-        }
-
-        function close(): void {
-            GlobalStates.coverflowSelectorOpen = false
-        }
-    }
-
-    Loader {
-        active: CompositorService.isHyprland
-        sourceComponent: Item {
-            GlobalShortcut {
-                name: "coverflowSelectorToggle"
-                description: "Toggle coverflow wallpaper selector"
-                onPressed: {
-                    GlobalStates.coverflowSelectorOpen = !GlobalStates.coverflowSelectorOpen
-                }
-            }
-        }
-    }
 }

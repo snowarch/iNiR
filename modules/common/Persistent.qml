@@ -222,6 +222,19 @@ Singleton {
                 }
             }
 
+            // Settings workspace state is not user configuration. Keeping it
+            // here lets page delegates unload while navigation and active editor
+            // context survive page switches and standalone-window recreation.
+            property JsonObject settings: JsonObject {
+                property int iiPage: 0
+                property int wafflePage: 0
+                property int themeTab: 0
+                property string themeTag: ""
+                property string gowallFormat: "png"
+                property string gowallTheme: ""
+                property string gowallEffect: "grayscale"
+            }
+
             property JsonObject screenCast: JsonObject {
                 property bool active: false
             }

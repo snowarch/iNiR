@@ -18,12 +18,12 @@ ContentPage {
             "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard", 
             "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners", 
             "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar", 
-            "iiWallpaperSelector", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate"
+            "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate"
         ],
         "waffle": [
             "wBar", "wBackground", "wBackdrop", "wStartMenu", "wActionCenter", "wNotificationCenter", "wNotificationPopup", "wOnScreenDisplay", "wWidgets", "wTaskView", "wLock", "wPolkit", "wSessionScreen",
             "iiCheatsheet", "iiOnScreenKeyboard", "iiOverlay", "iiOverview",
-            "iiRegionSelector", "iiScreenCorners", "iiWallpaperSelector", "iiCoverflowSelector", "iiClipboard"
+            "iiRegionSelector", "iiScreenCorners", "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard"
         ]
     })
 
@@ -91,7 +91,7 @@ ContentPage {
                 RippleButton {
                     Layout.fillWidth: true
                     implicitHeight: 36
-                    buttonRadius: Appearance.rounding.small
+                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                     colBackground: Appearance.colors.colLayer1
                     colBackgroundHover: Appearance.colors.colLayer1Hover
                     colRipple: Appearance.colors.colLayer1Active
@@ -102,7 +102,7 @@ ContentPage {
                         MaterialSymbol {
                             text: "restart_alt"
                             iconSize: Appearance.font.pixelSize.normal
-                            color: Appearance.m3colors.m3onSurface
+                            color: Appearance.colors.colOnSurface
                         }
                         StyledText {
                             text: Translation.tr("Reset to defaults")
@@ -117,7 +117,7 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: true
+        expanded: false
         icon: "style"
         title: Translation.tr("Panel Style")
 
@@ -129,10 +129,16 @@ ContentPage {
                 RippleButton {
                     Layout.fillWidth: true
                     implicitHeight: 64
-                    buttonRadius: Appearance.rounding.small
-                    colBackground: !modulesPage.isWaffle ? Appearance.colors.colPrimaryContainer : Appearance.colors.colLayer1
-                    colBackgroundHover: !modulesPage.isWaffle ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colLayer1Hover
-                    colRipple: !modulesPage.isWaffle ? Appearance.colors.colPrimaryContainerActive : Appearance.colors.colLayer1Active
+                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                    colBackground: !modulesPage.isWaffle
+                        ? (Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colPrimaryContainer)
+                        : Appearance.colors.colLayer1
+                    colBackgroundHover: !modulesPage.isWaffle
+                        ? (Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimaryContainerHover)
+                        : Appearance.colors.colLayer1Hover
+                    colRipple: !modulesPage.isWaffle
+                        ? (Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colPrimaryContainerActive)
+                        : Appearance.colors.colLayer1Active
 
                     ColumnLayout {
                         anchors.centerIn: parent
@@ -141,13 +147,17 @@ ContentPage {
                             Layout.alignment: Qt.AlignHCenter
                             text: "dashboard"
                             iconSize: Appearance.font.pixelSize.larger
-                            color: !modulesPage.isWaffle ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: !modulesPage.isWaffle
+                                ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer)
+                                : Appearance.colors.colOnSurface
                         }
                         StyledText {
                             Layout.alignment: Qt.AlignHCenter
                             text: "Material (ii)"
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: !modulesPage.isWaffle ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: !modulesPage.isWaffle
+                                ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer)
+                                : Appearance.colors.colOnSurface
                         }
                     }
 
@@ -160,7 +170,7 @@ ContentPage {
                 RippleButton {
                     Layout.fillWidth: true
                     implicitHeight: 64
-                    buttonRadius: Appearance.rounding.small
+                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                     colBackground: modulesPage.isWaffle ? Appearance.colors.colPrimaryContainer : Appearance.colors.colLayer1
                     colBackgroundHover: modulesPage.isWaffle ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colLayer1Hover
                     colRipple: modulesPage.isWaffle ? Appearance.colors.colPrimaryContainerActive : Appearance.colors.colLayer1Active
@@ -172,13 +182,13 @@ ContentPage {
                             Layout.alignment: Qt.AlignHCenter
                             text: "window"
                             iconSize: Appearance.font.pixelSize.larger
-                            color: modulesPage.isWaffle ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: modulesPage.isWaffle ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurface
                         }
                         StyledText {
                             Layout.alignment: Qt.AlignHCenter
                             text: "Windows 11 (Waffle)"
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: modulesPage.isWaffle ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: modulesPage.isWaffle ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurface
                         }
                     }
 
@@ -194,7 +204,7 @@ ContentPage {
     // ==================== DEFAULT TERMINAL ====================
     SettingsCardSection {
         id: terminalSection
-        expanded: true
+        expanded: false
         icon: "terminal"
         title: Translation.tr("Default Terminal")
 
@@ -224,11 +234,11 @@ ContentPage {
                 RippleButton {
                     Layout.fillWidth: true
                     implicitHeight: 64
-                    buttonRadius: Appearance.rounding.small
+                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                     readonly property bool isSelected: (Config.options?.apps?.terminal ?? "kitty") === "foot"
-                    colBackground: isSelected ? Appearance.colors.colPrimaryContainer : Appearance.colors.colLayer1
-                    colBackgroundHover: isSelected ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colLayer1Hover
-                    colRipple: isSelected ? Appearance.colors.colPrimaryContainerActive : Appearance.colors.colLayer1Active
+                    colBackground: isSelected ? (Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colPrimaryContainer) : Appearance.colors.colLayer1
+                    colBackgroundHover: isSelected ? (Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimaryContainerHover) : Appearance.colors.colLayer1Hover
+                    colRipple: isSelected ? (Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colPrimaryContainerActive) : Appearance.colors.colLayer1Active
                     ColumnLayout {
                         anchors.centerIn: parent
                         spacing: 4
@@ -236,13 +246,21 @@ ContentPage {
                             Layout.alignment: Qt.AlignHCenter
                             text: "terminal"
                             iconSize: Appearance.font.pixelSize.larger
-                            color: parent.parent.isSelected ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: parent.parent.isSelected ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer) : Appearance.colors.colOnSurface
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                            }
                         }
                         StyledText {
                             Layout.alignment: Qt.AlignHCenter
                             text: "Foot"
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: parent.parent.isSelected ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: parent.parent.isSelected ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer) : Appearance.colors.colOnSurface
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                            }
                         }
                     }
                     onClicked: {
@@ -254,11 +272,11 @@ ContentPage {
                 RippleButton {
                     Layout.fillWidth: true
                     implicitHeight: 64
-                    buttonRadius: Appearance.rounding.small
+                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                     readonly property bool isSelected: (Config.options?.apps?.terminal ?? "kitty") === "kitty"
-                    colBackground: isSelected ? Appearance.colors.colPrimaryContainer : Appearance.colors.colLayer1
-                    colBackgroundHover: isSelected ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colLayer1Hover
-                    colRipple: isSelected ? Appearance.colors.colPrimaryContainerActive : Appearance.colors.colLayer1Active
+                    colBackground: isSelected ? (Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colPrimaryContainer) : Appearance.colors.colLayer1
+                    colBackgroundHover: isSelected ? (Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimaryContainerHover) : Appearance.colors.colLayer1Hover
+                    colRipple: isSelected ? (Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colPrimaryContainerActive) : Appearance.colors.colLayer1Active
                     ColumnLayout {
                         anchors.centerIn: parent
                         spacing: 4
@@ -266,13 +284,21 @@ ContentPage {
                             Layout.alignment: Qt.AlignHCenter
                             text: "terminal"
                             iconSize: Appearance.font.pixelSize.larger
-                            color: parent.parent.isSelected ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: parent.parent.isSelected ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer) : Appearance.colors.colOnSurface
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                            }
                         }
                         StyledText {
                             Layout.alignment: Qt.AlignHCenter
                             text: "Kitty"
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: parent.parent.isSelected ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: parent.parent.isSelected ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer) : Appearance.colors.colOnSurface
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                            }
                         }
                     }
                     onClicked: {
@@ -284,11 +310,11 @@ ContentPage {
                 RippleButton {
                     Layout.fillWidth: true
                     implicitHeight: 64
-                    buttonRadius: Appearance.rounding.small
+                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                     readonly property bool isSelected: (Config.options?.apps?.terminal ?? "kitty") === "ghostty"
-                    colBackground: isSelected ? Appearance.colors.colPrimaryContainer : Appearance.colors.colLayer1
-                    colBackgroundHover: isSelected ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colLayer1Hover
-                    colRipple: isSelected ? Appearance.colors.colPrimaryContainerActive : Appearance.colors.colLayer1Active
+                    colBackground: isSelected ? (Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colPrimaryContainer) : Appearance.colors.colLayer1
+                    colBackgroundHover: isSelected ? (Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimaryContainerHover) : Appearance.colors.colLayer1Hover
+                    colRipple: isSelected ? (Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colPrimaryContainerActive) : Appearance.colors.colLayer1Active
                     ColumnLayout {
                         anchors.centerIn: parent
                         spacing: 4
@@ -296,13 +322,21 @@ ContentPage {
                             Layout.alignment: Qt.AlignHCenter
                             text: "terminal"
                             iconSize: Appearance.font.pixelSize.larger
-                            color: parent.parent.isSelected ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: parent.parent.isSelected ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer) : Appearance.colors.colOnSurface
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                            }
                         }
                         StyledText {
                             Layout.alignment: Qt.AlignHCenter
                             text: "Ghostty"
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: parent.parent.isSelected ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: parent.parent.isSelected ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer) : Appearance.colors.colOnSurface
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                            }
                         }
                     }
                     onClicked: {
@@ -314,11 +348,11 @@ ContentPage {
                 RippleButton {
                     Layout.fillWidth: true
                     implicitHeight: 64
-                    buttonRadius: Appearance.rounding.small
+                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                     readonly property bool isSelected: (Config.options?.apps?.terminal ?? "kitty") === "alacritty"
-                    colBackground: isSelected ? Appearance.colors.colPrimaryContainer : Appearance.colors.colLayer1
-                    colBackgroundHover: isSelected ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colLayer1Hover
-                    colRipple: isSelected ? Appearance.colors.colPrimaryContainerActive : Appearance.colors.colLayer1Active
+                    colBackground: isSelected ? (Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colPrimaryContainer) : Appearance.colors.colLayer1
+                    colBackgroundHover: isSelected ? (Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimaryContainerHover) : Appearance.colors.colLayer1Hover
+                    colRipple: isSelected ? (Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colPrimaryContainerActive) : Appearance.colors.colLayer1Active
                     ColumnLayout {
                         anchors.centerIn: parent
                         spacing: 4
@@ -326,13 +360,21 @@ ContentPage {
                             Layout.alignment: Qt.AlignHCenter
                             text: "terminal"
                             iconSize: Appearance.font.pixelSize.larger
-                            color: parent.parent.isSelected ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: parent.parent.isSelected ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer) : Appearance.colors.colOnSurface
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                            }
                         }
                         StyledText {
                             Layout.alignment: Qt.AlignHCenter
                             text: "Alacritty"
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: parent.parent.isSelected ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: parent.parent.isSelected ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer) : Appearance.colors.colOnSurface
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                            }
                         }
                     }
                     onClicked: {
@@ -344,11 +386,11 @@ ContentPage {
                 RippleButton {
                     Layout.fillWidth: true
                     implicitHeight: 64
-                    buttonRadius: Appearance.rounding.small
+                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                     readonly property bool isSelected: (Config.options?.apps?.terminal ?? "kitty") === "wezterm"
-                    colBackground: isSelected ? Appearance.colors.colPrimaryContainer : Appearance.colors.colLayer1
-                    colBackgroundHover: isSelected ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colLayer1Hover
-                    colRipple: isSelected ? Appearance.colors.colPrimaryContainerActive : Appearance.colors.colLayer1Active
+                    colBackground: isSelected ? (Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colPrimaryContainer) : Appearance.colors.colLayer1
+                    colBackgroundHover: isSelected ? (Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimaryContainerHover) : Appearance.colors.colLayer1Hover
+                    colRipple: isSelected ? (Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colPrimaryContainerActive) : Appearance.colors.colLayer1Active
                     ColumnLayout {
                         anchors.centerIn: parent
                         spacing: 4
@@ -356,13 +398,21 @@ ContentPage {
                             Layout.alignment: Qt.AlignHCenter
                             text: "terminal"
                             iconSize: Appearance.font.pixelSize.larger
-                            color: parent.parent.isSelected ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: parent.parent.isSelected ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer) : Appearance.colors.colOnSurface
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                            }
                         }
                         StyledText {
                             Layout.alignment: Qt.AlignHCenter
                             text: "WezTerm"
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: parent.parent.isSelected ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: parent.parent.isSelected ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer) : Appearance.colors.colOnSurface
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                            }
                         }
                     }
                     onClicked: {
@@ -374,11 +424,11 @@ ContentPage {
                 RippleButton {
                     Layout.fillWidth: true
                     implicitHeight: 64
-                    buttonRadius: Appearance.rounding.small
+                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                     readonly property bool isSelected: (Config.options?.apps?.terminal ?? "kitty") === "konsole"
-                    colBackground: isSelected ? Appearance.colors.colPrimaryContainer : Appearance.colors.colLayer1
-                    colBackgroundHover: isSelected ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colLayer1Hover
-                    colRipple: isSelected ? Appearance.colors.colPrimaryContainerActive : Appearance.colors.colLayer1Active
+                    colBackground: isSelected ? (Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colPrimaryContainer) : Appearance.colors.colLayer1
+                    colBackgroundHover: isSelected ? (Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimaryContainerHover) : Appearance.colors.colLayer1Hover
+                    colRipple: isSelected ? (Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colPrimaryContainerActive) : Appearance.colors.colLayer1Active
                     ColumnLayout {
                         anchors.centerIn: parent
                         spacing: 4
@@ -386,13 +436,21 @@ ContentPage {
                             Layout.alignment: Qt.AlignHCenter
                             text: "terminal"
                             iconSize: Appearance.font.pixelSize.larger
-                            color: parent.parent.isSelected ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: parent.parent.isSelected ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer) : Appearance.colors.colOnSurface
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                            }
                         }
                         StyledText {
                             Layout.alignment: Qt.AlignHCenter
                             text: "Konsole"
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: parent.parent.isSelected ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: parent.parent.isSelected ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer) : Appearance.colors.colOnSurface
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                            }
                         }
                     }
                     onClicked: {
@@ -416,7 +474,7 @@ ContentPage {
     // ==================== MATERIAL II ====================
     SettingsCardSection {
         visible: !modulesPage.isWaffle
-        expanded: true
+        expanded: false
         icon: "dashboard"
         title: Translation.tr("Core")
 
@@ -454,8 +512,16 @@ ContentPage {
             }
 
             SettingsSwitch {
+                buttonIcon: "view_sidebar"
+                text: Translation.tr("Workspace Strip")
+                checked: modulesPage.isPanelEnabled("iiWorkspaceStrip")
+                onCheckedChanged: modulesPage.setPanelEnabled("iiWorkspaceStrip", checked)
+                StyledToolTip { text: Translation.tr("Hover a screen edge for visual workspace navigation") }
+            }
+
+            SettingsSwitch {
                 buttonIcon: "widgets"
-                text: Translation.tr("Overlay")
+                text: Translation.tr("Floating tools (Super+G)")
                 checked: modulesPage.isPanelEnabled("iiOverlay")
                 onCheckedChanged: modulesPage.setPanelEnabled("iiOverlay", checked)
                 StyledToolTip { text: Translation.tr("Floating image and widgets panel (Super+G)") }
@@ -629,7 +695,7 @@ ContentPage {
     // ==================== WAFFLE ====================
     SettingsCardSection {
         visible: modulesPage.isWaffle
-        expanded: true
+        expanded: false
         icon: "window"
         title: Translation.tr("Waffle Core")
 
@@ -733,7 +799,7 @@ ContentPage {
 
             SettingsSwitch {
                 buttonIcon: "widgets"
-                text: Translation.tr("Overlay")
+                text: Translation.tr("Floating tools (Super+G)")
                 checked: modulesPage.isPanelEnabled("iiOverlay")
                 onCheckedChanged: modulesPage.setPanelEnabled("iiOverlay", checked)
                 StyledToolTip { text: Translation.tr("Floating image and widgets panel (Super+G)") }
@@ -877,14 +943,14 @@ ContentPage {
             ContentSubsection {
                 title: Translation.tr("Selector style")
 
-                SettingsSwitch {
-                    buttonIcon: "view_carousel"
-                    text: Translation.tr("Coverflow mode")
-                    checked: (Config.options?.wallpaperSelector?.style ?? "grid") === "coverflow"
-                    onCheckedChanged: Config.setNestedValue("wallpaperSelector.style", checked ? "coverflow" : "grid")
-                    StyledToolTip {
-                        text: Translation.tr("Use a fullscreen coverflow carousel instead of the grid picker.\nNavigate with arrow keys or mouse wheel.")
-                    }
+                ConfigSelectionArray {
+                    currentValue: Config.options?.wallpaperSelector?.style ?? "grid"
+                    options: [
+                        { displayName: Translation.tr("Grid"), icon: "grid_view", value: "grid" },
+                        { displayName: Translation.tr("Coverflow"), icon: "view_carousel", value: "coverflow" },
+                        { displayName: Translation.tr("Launcher"), icon: "wallpaper_slideshow", value: "launcher" }
+                    ]
+                    onSelected: value => Config.setNestedValue("wallpaperSelector.style", value)
                 }
 
                 SettingsSwitch {
@@ -950,8 +1016,45 @@ ContentPage {
             }
 
             ContentSubsection {
+                title: Translation.tr("Overlay layout")
+                visible: Config.options?.settingsUi?.overlayMode ?? false
+
+                ConfigSelectionArray {
+                    currentValue: Config.options?.settingsUi?.overlayStyle ?? "rail"
+                    options: [
+                        { displayName: Translation.tr("Nav rail"), icon: "view_sidebar", value: "rail" },
+                        { displayName: Translation.tr("Focus"), icon: "grid_view", value: "focus" }
+                    ]
+                    onSelected: value => Config.setNestedValue("settingsUi.overlayStyle", value)
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: (Config.options?.settingsUi?.overlayStyle ?? "rail") === "focus"
+                        ? Translation.tr("One page at a time: a grid of every settings page, then the page you pick, full width. Escape steps back.")
+                        : Translation.tr("A persistent category rail beside the page you are editing.")
+                    color: Appearance.colors.colSubtext
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    wrapMode: Text.WordWrap
+                }
+            }
+
+            ContentSubsection {
                 title: Translation.tr("Overlay appearance")
                 visible: Config.options?.settingsUi?.overlayMode ?? false
+
+                ConfigSpinBox {
+                    icon: "blur_on"
+                    text: Translation.tr("Backdrop blur (%)")
+                    value: Config.options?.settingsUi?.overlayAppearance?.backdropBlur ?? 0
+                    from: 0
+                    to: 100
+                    stepSize: 10
+                    onValueChanged: Config.setNestedValue("settingsUi.overlayAppearance.backdropBlur", value)
+                    StyledToolTip {
+                        text: Translation.tr("Blur the wallpaper behind the Settings overlay while it is open, using the same glass the rest of the shell paints. 0 turns it off and costs nothing.")
+                    }
+                }
 
                 ConfigSpinBox {
                     icon: "water"
@@ -966,26 +1069,21 @@ ContentPage {
                     }
                 }
 
+                // Floor is 60, not 20: the panel is a reading surface and the
+                // solid styles carry no backdrop of their own, so anything lower
+                // put the wallpaper straight behind the text. Both settings
+                // hosts clamp on read too, so an older stored value cannot reach
+                // the panel even if this page is never opened.
                 ConfigSpinBox {
                     icon: "opacity"
                     text: Translation.tr("Panel background opacity (%)")
                     value: Math.round((Config.options?.settingsUi?.overlayAppearance?.backgroundOpacity ?? 1.0) * 100)
-                    from: 20
+                    from: 60
                     to: 100
                     stepSize: 5
                     onValueChanged: Config.setNestedValue("settingsUi.overlayAppearance.backgroundOpacity", value / 100)
                     StyledToolTip {
-                        text: Translation.tr("Opacity of the Settings panel background. Lower values let the shell show through.")
-                    }
-                }
-
-                ConfigSwitch {
-                    buttonIcon: "blur_on"
-                    text: Translation.tr("Enhanced blur (aurora/angel only)")
-                    checked: Config.options?.settingsUi?.overlayAppearance?.enableBlur ?? false
-                    onCheckedChanged: Config.setNestedValue("settingsUi.overlayAppearance.enableBlur", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Apply extra glass blur behind the Settings panel. Only visible with aurora or angel global style.")
+                        text: Translation.tr("Opacity of the Settings panel background. Lower values let the shell show through; with a glass style it thins the frosted tint instead.")
                     }
                 }
             }
@@ -993,10 +1091,36 @@ ContentPage {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: modeHintRow.implicitHeight + 16
-                radius: Appearance.rounding.small
-                color: Appearance.colors.colSurfaceContainerLow
-                border.width: 1
-                border.color: Appearance.colors.colLayer0Border
+                radius: Appearance.zzzEverywhere ? Appearance.zzz.cardRadius : Appearance.rounding.small
+                color: Appearance.zzzEverywhere ? "transparent" : Appearance.colors.colSurfaceContainerLow
+                border.width: Appearance.zzzEverywhere ? 0 : 1
+                border.color: Appearance.zzzEverywhere ? "transparent" : Appearance.colors.colLayer0Border
+                Behavior on radius {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                }
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                }
+                Behavior on border.width {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                }
+                Behavior on border.color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                }
+
+                ZzzPlate {
+                    anchors.fill: parent
+                    visible: Appearance.zzzEverywhere
+                    fillColor: Appearance.colors.colLayer1
+                    strokeColor: Appearance.zzz.hairline
+                    radius: Appearance.zzz.cardRadius
+                    chamfer: Appearance.zzz.cutCorner * 0.45
+                    chamferTopRight: !Appearance.zzz.round
+                }
 
                 RowLayout {
                     id: modeHintRow
@@ -1009,7 +1133,7 @@ ContentPage {
                     MaterialSymbol {
                         text: (Config.options?.settingsUi?.overlayMode ?? false) ? "layers" : "open_in_new"
                         iconSize: Appearance.font.pixelSize.huge
-                        color: Appearance.m3colors.m3primary
+                        color: Appearance.colors.colPrimary
                     }
 
                     ColumnLayout {

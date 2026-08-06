@@ -1,0 +1,4 @@
+module qs.modules.background.desktopItems
+DesktopItemDelegate 1.0 DesktopItemDelegate.qml
+DesktopDropCoordinator 1.0 DesktopDropCoordinator.qml
+DesktopImageChoice 1.0 DesktopImageChoice.qml

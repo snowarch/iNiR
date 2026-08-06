@@ -41,9 +41,9 @@ Item {
                 implicitWidth: contrastRow.implicitWidth + 6
                 implicitHeight: 16
                 radius: 8
-                color: root.ratio >= 4.5 ? Appearance.colors.colSuccessContainer ?? "#1a3a1a"
-                     : root.ratio >= 3 ? Appearance.colors.colWarningContainer ?? "#3a3a1a"
-                     : Appearance.colors.colErrorContainer ?? "#3a1a1a"
+                color: root.ratio >= 4.5 ? Appearance.colors.colSuccessContainer
+                     : root.ratio >= 3 ? Appearance.colors.colWarningContainer
+                     : Appearance.colors.colErrorContainer
 
                 RowLayout {
                     id: contrastRow
@@ -53,18 +53,18 @@ Item {
                     MaterialSymbol {
                         text: root.ratio >= 4.5 ? "check" : "warning"
                         iconSize: 10
-                        color: root.ratio >= 4.5 ? Appearance.colors.colOnSuccessContainer ?? "#a8d8a8"
-                             : root.ratio >= 3 ? Appearance.colors.colOnWarningContainer ?? "#d8d8a8"
-                             : Appearance.colors.colOnErrorContainer ?? "#d8a8a8"
+                        color: root.ratio >= 4.5 ? Appearance.colors.colOnSuccessContainer
+                             : root.ratio >= 3 ? Appearance.colors.colOnWarningContainer
+                             : Appearance.colors.colOnErrorContainer
                     }
 
                     StyledText {
                         text: root.ratio.toFixed(1) + ":1"
                         font.pixelSize: 9
                         font.family: Appearance.font.family.monospace
-                        color: root.ratio >= 4.5 ? Appearance.colors.colOnSuccessContainer ?? "#a8d8a8"
-                             : root.ratio >= 3 ? Appearance.colors.colOnWarningContainer ?? "#d8d8a8"
-                             : Appearance.colors.colOnErrorContainer ?? "#d8a8a8"
+                        color: root.ratio >= 4.5 ? Appearance.colors.colOnSuccessContainer
+                             : root.ratio >= 3 ? Appearance.colors.colOnWarningContainer
+                             : Appearance.colors.colOnErrorContainer
                     }
                 }
 
@@ -124,5 +124,10 @@ Item {
             Config.setNestedValue("appearance.customTheme." + root.colorKey, selectedColor.toString())
             root.colorChanged()
         }
+    }
+
+    SettingsNativeDialogGuard {
+        dialog: colorDialog
+        dialogKey: "color-picker-row-" + root.colorKey
     }
 }

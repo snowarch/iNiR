@@ -13,8 +13,25 @@ Rectangle {
 
     radius: SettingsMaterialPreset.groupRadius
     color: SettingsMaterialPreset.groupColor
-    border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : 0
+    border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
+        : Appearance.zzzEverywhere ? 0 : 0
     border.color: SettingsMaterialPreset.groupBorderColor
+
+    Behavior on color {
+        enabled: Appearance.animationsEnabled
+        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+    }
+    Behavior on border.color {
+        enabled: Appearance.animationsEnabled
+        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+    }
+    Behavior on border.width {
+        enabled: Appearance.animationsEnabled
+        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+    }
+
+    // No accent rail here — SettingsGroup lives inside SettingsCardSection
+    // which already has the left accent rail. A second rail here would double.
 
     ColumnLayout {
         id: content

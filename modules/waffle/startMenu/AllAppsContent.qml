@@ -6,6 +6,7 @@ import Quickshell
 import qs
 import qs.services
 import qs.modules.common
+import qs.modules.common.widgets
 import qs.modules.waffle.looks
 
 WPanelPageColumn {
@@ -289,11 +290,25 @@ WPanelPageColumn {
                     }
 
                     // Empty state
-                    WText {
+                    ColumnLayout {
                         anchors.centerIn: parent
                         visible: root.groupedApps.length === 0
-                        text: Translation.tr("No apps found")
-                        color: Looks.colors.fg1
+                        spacing: 8
+
+                        MascotImage {
+                            Layout.alignment: Qt.AlignHCenter
+                            Layout.preferredWidth: 96
+                            Layout.preferredHeight: 96
+                            surface: "startMenu"
+                            fallbackSurface: "emptyStates"
+                            pose: "fisheye-inspect"
+                        }
+
+                        WText {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: Translation.tr("No apps found")
+                            color: Looks.colors.fg1
+                        }
                     }
                 }
 
@@ -325,7 +340,9 @@ WPanelPageColumn {
                                 radius: Looks.radius.small
                                 color: letterMouse.containsMouse ? Looks.colors.bg1Hover : "transparent"
 
-                                Behavior on color { animation: Looks.transition.color }
+                                Behavior on color {
+                                    ColorAnimation { duration: Looks.transition.enabled ? 70 : 0 }
+                                }
                             }
 
                             WText {
@@ -336,8 +353,12 @@ WPanelPageColumn {
                                 color: letterItem.isActive ? Looks.colors.accent : Looks.colors.fg1
                                 opacity: letterItem.isActive ? 1.0 : 0.6
 
-                                Behavior on color { animation: Looks.transition.color }
-                                Behavior on opacity { animation: Looks.transition.color }
+                                Behavior on color {
+                                    ColorAnimation { duration: Looks.transition.enabled ? 70 : 0 }
+                                }
+                                Behavior on opacity {
+                                    NumberAnimation { duration: Looks.transition.enabled ? Looks.transition.duration.normal : 0 }
+                                }
                             }
 
                             MouseArea {

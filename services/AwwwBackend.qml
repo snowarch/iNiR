@@ -57,6 +57,93 @@ Singleton {
         return true
     }
 
+    // ─── Transient preview ───
+    // A picker can ask awww to display an image without writing Config or
+    // starting the colour pipeline. This drives the SAME backend that owns the
+    // wallpaper, so browsing and applying never swap rendering engines.
+    // Cancelling restores the configured state by forcing a resync.
+    property bool previewActive: false
+    property string _previewSignature: ""
+    property string _previewQueuedPath: ""
+    property bool _restoreAfterPreviewExit: false
+
+    function _startPreviewScript(script: string): void {
+        root._previewQueuedPath = ""
+        root.stoppedForNoOutputs = false
+        previewProc.command = ["/usr/bin/bash", "-lc", script]
+        previewProc.running = true
+    }
+
+    function _drainPreviewQueue(): void {
+        if (!root.previewActive || previewProc.running || stopProc.running)
+            return
+        const queued = root._previewQueuedPath
+        if (queued.length > 0)
+            root._startPreviewScript(queued)
+    }
+
+    function previewImage(path: string, monitorName = ""): void {
+        const cleanPath = FileUtils.trimFileProtocol(String(path ?? ""))
+        // awww cannot display videos. Drop a queued static command when the
+        // highlighted item moves to an animated file; the internal renderer owns
+        // that preview and an obsolete awww command would only waste work.
+        if (!supportsMainWallpaper(cleanPath)) {
+            root._previewQueuedPath = ""
+            return
+        }
+
+        const monitor = String(monitorName ?? "")
+        const signature = JSON.stringify({ path: cleanPath, monitor })
+        if (root.previewActive && signature === root._previewSignature)
+            return
+
+        // Preview uses the user's configured transition, exactly like an apply.
+        // Hardcoding one here made every browse step look identical and unlike
+        // the wallpaper change it is previewing.
+        const command = root._imgCommandFor(cleanPath, monitor)
+
+        // A video wallpaper leaves the daemon stopped, so previewing a static
+        // image after one must be able to start it again.
+        const script = root._ensureDaemonScript + "\n" + command
+
+        root.previewActive = true
+        root._previewSignature = signature
+        root._restoreAfterPreviewExit = false
+        if (previewProc.running || stopProc.running) {
+            // Coalesce rapid navigation into the newest requested image. A stop
+            // already in flight must finish first or it can kill the daemon in
+            // the middle of this preview.
+            root._previewQueuedPath = script
+            Qt.callLater(root._drainPreviewQueue)
+            return
+        }
+        root._startPreviewScript(script)
+    }
+
+    // Drop preview state without repainting — the caller is about to apply for
+    // real, and that apply produces its own transition.
+    function clearPreview(): void {
+        root.previewActive = false
+        root._previewSignature = ""
+        root._previewQueuedPath = ""
+        // Process cannot be cancelled safely. If an apply races the in-flight
+        // preview, resync after it exits so the obsolete image cannot win last.
+        root._restoreAfterPreviewExit = previewProc.running
+    }
+
+    function cancelPreview(): void {
+        if (!root.previewActive && !previewProc.running)
+            return
+        root.previewActive = false
+        root._previewSignature = ""
+        root._previewQueuedPath = ""
+        root._restoreAfterPreviewExit = previewProc.running
+        // The configured wallpaper is unchanged, so the sync signature still
+        // matches what awww was last told. Clear it to force a real repaint.
+        root.lastSyncSignature = ""
+        root.forceSync()
+    }
+
     function supportsFillMode(fillModeValue: string): bool {
         return fillModeValue === "fill" || fillModeValue === "fit" || fillModeValue === "center"
     }
@@ -211,6 +298,43 @@ Singleton {
         probeProc.running = true
     }
 
+    // Applying a video wallpaper stops the daemon (awww cannot display video),
+    // so any later awww command must be able to bring it back up first.
+    readonly property string _ensureDaemonScript: `
+                awww_bin=$(command -v awww 2>/dev/null || true)
+                daemon_bin=$(command -v awww-daemon 2>/dev/null || true)
+                if [ -n "$awww_bin" ] && [ -n "$daemon_bin" ] && ! "$awww_bin" query >/dev/null 2>&1; then
+                    if command -v systemd-run >/dev/null 2>&1; then
+                        if ! systemd-run --user --quiet --collect --property=Description="iNiR wallpaper daemon" --setenv="WAYLAND_DISPLAY=$WAYLAND_DISPLAY" --setenv="XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR" -- "$daemon_bin" >/dev/null 2>&1; then
+                            nohup "$daemon_bin" >/dev/null 2>&1 &
+                        fi
+                    else
+                        nohup "$daemon_bin" >/dev/null 2>&1 &
+                    fi
+                    for _ in 1 2 3 4 5 6 7 8 9 10; do "$awww_bin" query >/dev/null 2>&1 && break; sleep 0.1; done
+                fi
+            `
+
+    // Single builder for every `awww img` invocation, so a preview and the real
+    // apply produce byte-identical transition arguments.
+    function _imgCommandFor(path: string, outputs: string): string {
+        const transitionName = _mappedTransitionType()
+        let command = "awww img"
+        if (outputs && outputs.length > 0)
+            command += " --outputs '" + StringUtils.shellSingleQuoteEscape(outputs) + "'"
+        command += " --resize '" + resizeModeForFillMode(fillMode) + "'"
+            + " --transition-type '" + transitionName + "'"
+            + " --transition-fps " + Math.max(1, transitionFps)
+            + " --transition-step " + _mappedTransitionStep()
+        if (transitionName !== "simple" && transitionName !== "none")
+            command += " --transition-duration " + _mappedTransitionDuration()
+        if (transitionName === "fade")
+            command += " --transition-bezier '" + _mappedTransitionBezier() + "'"
+        if (transitionName === "wipe" || transitionName === "wave")
+            command += " --transition-angle " + _mappedTransitionAngle()
+        return command + " '" + StringUtils.shellSingleQuoteEscape(path) + "'"
+    }
+
     function _syncNow(): void {
         if (!enabled) {
             if (stopProc.running)
@@ -256,43 +380,10 @@ Singleton {
         if (applyProc.running && applyProc._pendingSignature === signature)
             return
 
-        const transitionName = _mappedTransitionType()
-        const resizeMode = resizeModeForFillMode(fillMode)
-        const fps = Math.max(1, transitionFps)
-        const step = _mappedTransitionStep()
-        const duration = _mappedTransitionDuration()
-        const bezier = _mappedTransitionBezier()
-        const angle = _mappedTransitionAngle()
-        const lines = [
-            `
-                awww_bin=$(command -v awww 2>/dev/null || true)
-                daemon_bin=$(command -v awww-daemon 2>/dev/null || true)
-                if [ -n "$awww_bin" ] && [ -n "$daemon_bin" ] && ! "$awww_bin" query >/dev/null 2>&1; then
-                    if command -v systemd-run >/dev/null 2>&1; then
-                        if ! systemd-run --user --quiet --collect --property=Description="iNiR wallpaper daemon" --setenv="WAYLAND_DISPLAY=$WAYLAND_DISPLAY" --setenv="XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR" -- "$daemon_bin" >/dev/null 2>&1; then
-                            nohup "$daemon_bin" >/dev/null 2>&1 &
-                        fi
-                    else
-                        nohup "$daemon_bin" >/dev/null 2>&1 &
-                    fi
-                    for _ in 1 2 3 4 5 6 7 8 9 10; do "$awww_bin" query >/dev/null 2>&1 && break; sleep 0.1; done
-                fi
-            `
-        ]
+        const lines = [root._ensureDaemonScript]
 
-        for (const key of keys) {
-            const escapedOutput = StringUtils.shellSingleQuoteEscape(key)
-            const escapedPath = StringUtils.shellSingleQuoteEscape(outputMap[key])
-            let command = "awww img --outputs '" + escapedOutput + "' --resize '" + resizeMode + "' --transition-type '" + transitionName + "' --transition-fps " + fps + " --transition-step " + step
-            if (transitionName !== "simple" && transitionName !== "none")
-                command += " --transition-duration " + duration
-            if (transitionName === "fade")
-                command += " --transition-bezier '" + bezier + "'"
-            if (transitionName === "wipe" || transitionName === "wave")
-                command += " --transition-angle " + angle
-            command += " '" + escapedPath + "'"
-            lines.push(command)
-        }
+        for (const key of keys)
+            lines.push(root._imgCommandFor(outputMap[key], key))
 
         if (applyProc.running) {
             applyProc._queuedSignature = signature
@@ -377,12 +468,27 @@ Singleton {
     }
 
     Process {
+        id: previewProc
+        onExited: {
+            if (root._restoreAfterPreviewExit) {
+                root._restoreAfterPreviewExit = false
+                root.lastSyncSignature = ""
+                root.forceSync()
+                return
+            }
+
+            root._drainPreviewQueue()
+        }
+    }
+
+    Process {
         id: stopProc
         command: ["/usr/bin/bash", "-lc", "command -v awww >/dev/null 2>&1 && awww kill >/dev/null 2>&1 || true"]
         onExited: {
             root.lastSyncSignature = ""
             root.lastError = ""
             root.stoppedForNoOutputs = true
+            root._drainPreviewQueue()
         }
     }
 

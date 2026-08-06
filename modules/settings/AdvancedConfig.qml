@@ -7,8 +7,35 @@ import qs.modules.common.widgets
 import qs.modules.common.functions
 
 ContentPage {
+    id: root
     settingsPageIndex: 8
     settingsPageName: Translation.tr("Advanced")
+
+    property bool cavaControlsReady: false
+    Component.onCompleted: Qt.callLater(() => root.cavaControlsReady = true)
+
+    function setCavaValue(path, value, regenerateStandalone): void {
+        if (!root.cavaControlsReady)
+            return
+        Config.setNestedValue(path, value)
+        if (regenerateStandalone)
+            colorRegenTimer.restart()
+    }
+
+    function resetCavaDefaults(): void {
+        if (!root.cavaControlsReady)
+            return
+        Config.setNestedValues({
+            "appearance.cava.colorSource": "theme",
+            "appearance.cava.gradientCount": 8,
+            "appearance.cava.sensitivity": 100,
+            "appearance.cava.bars": 0,
+            "appearance.cava.framerate": 60,
+            "appearance.cava.stereo": true,
+            "appearance.cava.waveOpacity": 30,
+        })
+        colorRegenTimer.restart()
+    }
 
     Timer {
         id: colorRegenTimer
@@ -169,27 +196,22 @@ ContentPage {
             SettingsSwitch {
                 id: cavaSwitch
                 buttonIcon: "equalizer"
-                text: Translation.tr("Cava")
+                text: Translation.tr("Theme standalone Cava")
                 checked: Config.options?.appearance?.wallpaperTheming?.enableCava ?? false
-                onCheckedChanged: {
-                    Config.setNestedValue("appearance.wallpaperTheming.enableCava", checked);
-                    colorRegenTimer.restart();
-                }
+                onCheckedChanged: root.setCavaValue(
+                    "appearance.wallpaperTheming.enableCava", checked, true)
                 StyledToolTip {
-                    text: Translation.tr("Apply Material You gradient colors to cava audio visualizer config")
+                    text: Translation.tr("Manage the external ~/.config/cava/config block. Internal iNiR visualizers use the options below whether this switch is on or off.")
                 }
             }
 
             ContentSubsection {
-                visible: cavaSwitch.checked
-                title: Translation.tr("Cava options")
+                title: Translation.tr("Cava & spectrum options")
 
                 ConfigSelectionArray {
                     currentValue: Config.options?.appearance?.cava?.colorSource ?? "theme"
-                    onSelected: newValue => {
-                        Config.setNestedValue("appearance.cava.colorSource", newValue)
-                        colorRegenTimer.restart()
-                    }
+                    onSelected: newValue => root.setCavaValue(
+                        "appearance.cava.colorSource", newValue, true)
                     options: [
                         { displayName: Translation.tr("Theme palette"), value: "theme" },
                         { displayName: Translation.tr("Vibrant (saturated)"), value: "vibrant" },
@@ -197,18 +219,48 @@ ContentPage {
                     ]
                 }
 
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 5
+
+                    Repeater {
+                        model: CavaTheme.visualizerColors
+
+                        Rectangle {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 8
+                            radius: height / 2
+                            color: modelData
+                        }
+                    }
+                }
+
+                SettingsNote {
+                    icon: (Config.options?.appearance?.cava?.colorSource ?? "theme") === "cover"
+                        ? "album" : "palette"
+                    text: {
+                        const source = Config.options?.appearance?.cava?.colorSource ?? "theme"
+                        if (source === "vibrant")
+                            return Translation.tr("Internal visualizers use a higher-saturation palette with wider hue separation. Standalone cava is regenerated too.")
+                        if (source === "cover")
+                            return CavaTheme.coverPaletteAvailable
+                                ? Translation.tr("Using colors extracted live from the active album artwork.")
+                                : Translation.tr("Waiting for active album artwork; the theme palette is used as a safe fallback.")
+                        return Translation.tr("Internal visualizers use the current primary, secondary and tertiary theme colors.")
+                    }
+                }
+
                 ConfigSpinBox {
                     icon: "gradient"
                     text: Translation.tr("Gradient colors")
                     value: Config.options?.appearance?.cava?.gradientCount ?? 8
-                    from: 2
+                    from: 1
                     to: 8
-                    onValueChanged: {
-                        Config.setNestedValue("appearance.cava.gradientCount", value)
-                        colorRegenTimer.restart()
-                    }
+                    onValueChanged: root.setCavaValue(
+                        "appearance.cava.gradientCount", value, true)
                     StyledToolTip {
-                        text: Translation.tr("Gradient stops for standalone cava (~/.config/cava/config)")
+                        text: Translation.tr("Use one color for a solid spectrum, or up to eight gradient stops")
                     }
                 }
 
@@ -219,7 +271,8 @@ ContentPage {
                     from: 1
                     to: 500
                     stepSize: 10
-                    onValueChanged: Config.setNestedValue("appearance.cava.sensitivity", value)
+                    onValueChanged: root.setCavaValue(
+                        "appearance.cava.sensitivity", value, true)
                     StyledToolTip {
                         text: Translation.tr("Audio sensitivity (higher = more reactive)")
                     }
@@ -231,7 +284,8 @@ ContentPage {
                     from: 0
                     to: 200
                     stepSize: 8
-                    onValueChanged: Config.setNestedValue("appearance.cava.bars", value)
+                    onValueChanged: root.setCavaValue(
+                        "appearance.cava.bars", value, true)
                     StyledToolTip {
                         text: Translation.tr("Number of frequency data points (0 = auto)")
                     }
@@ -243,18 +297,20 @@ ContentPage {
                     from: 30
                     to: 165
                     stepSize: 5
-                    onValueChanged: Config.setNestedValue("appearance.cava.framerate", value)
+                    onValueChanged: root.setCavaValue(
+                        "appearance.cava.framerate", value, true)
                     StyledToolTip {
                         text: Translation.tr("Target refresh rate for the visualizer")
                     }
                 }
                 SettingsSwitch {
                     buttonIcon: "headphones"
-                    text: Translation.tr("Stereo")
+                    text: Translation.tr("Standalone stereo")
                     checked: Config.options?.appearance?.cava?.stereo ?? true
-                    onCheckedChanged: Config.setNestedValue("appearance.cava.stereo", checked)
+                    onCheckedChanged: root.setCavaValue(
+                        "appearance.cava.stereo", checked, true)
                     StyledToolTip {
-                        text: Translation.tr("Split visualizer into left/right channels")
+                        text: Translation.tr("Only affects terminal Cava. The internal bar spectrum stays mono so it always fills the whole surface.")
                     }
                 }
                 ConfigSpinBox {
@@ -264,9 +320,10 @@ ContentPage {
                     from: 5
                     to: 100
                     stepSize: 5
-                    onValueChanged: Config.setNestedValue("appearance.cava.waveOpacity", value)
+                    onValueChanged: root.setCavaValue(
+                        "appearance.cava.waveOpacity", value, false)
                     StyledToolTip {
-                        text: Translation.tr("Fill opacity for wave visualizer (affects all consumers)")
+                        text: Translation.tr("Default fill opacity for shared wave visualizers. The bar spectrum has its own opacity control.")
                     }
                 }
 
@@ -276,15 +333,7 @@ ContentPage {
                     buttonRadius: Appearance.rounding.small
                     colBackground: Appearance.colors.colLayer2
                     colBackgroundHover: Appearance.colors.colLayer2Hover
-                    onClicked: {
-                        Config.setNestedValue("appearance.cava.colorSource", "theme");
-                        Config.setNestedValue("appearance.cava.gradientCount", 8);
-                        Config.setNestedValue("appearance.cava.sensitivity", 100);
-                        Config.setNestedValue("appearance.cava.bars", 0);
-                        Config.setNestedValue("appearance.cava.framerate", 60);
-                        Config.setNestedValue("appearance.cava.stereo", true);
-                        Config.setNestedValue("appearance.cava.waveOpacity", 30);
-                    }
+                    onClicked: root.resetCavaDefaults()
                     contentItem: RowLayout {
                         anchors.centerIn: parent
                         spacing: 5
@@ -363,7 +412,7 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: true
+        expanded: false
         icon: "memory_alt"
         title: Translation.tr("Resource Monitor")
 

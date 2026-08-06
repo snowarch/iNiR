@@ -14,6 +14,9 @@ Item {
 
     readonly property bool editMode: widgetContainer.editMode
     readonly property bool dragPending: widgetContainer.dragPending
+    // Finite natural height of this tab — lets the sidebar hug its content
+    // when sidebar.collapseWidgetsTab is enabled.
+    readonly property real contentPreferredHeight: mainColumn.implicitHeight
     property bool animateIn: false
 
     // One-shot entrance animation — content stays loaded after first open,

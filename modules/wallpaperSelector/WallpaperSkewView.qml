@@ -70,7 +70,7 @@ Item {
     property int _flippedImageIndex: -1
 
     function _isFavourite(fileName: string): bool {
-        return !!_favouritesDb[fileName]
+        return !!((_favouritesDb ?? {})[fileName])
     }
 
     function _toggleFavourite(fileName: string): void {
@@ -269,8 +269,8 @@ Item {
     on_ContentVisibleChanged: {
         // Defensive re-position: when content becomes visible the ListView layout
         // is guaranteed to be complete, so re-enforce the target position.
-        if (_contentVisible && _initialized && hasImages && skewView && skewView.width > 0)
-            skewView.positionViewAtIndex(currentImageIndex, ListView.Center)
+        if (_contentVisible && _initialized && hasImages)
+            root._positionAtIndex(currentImageIndex)
     }
 
     // ─── Skew / layout parameters (matching skwd geometry) ───
@@ -395,6 +395,12 @@ Item {
         return nameMatchIdx
     }
 
+    function _positionAtIndex(index: int): void {
+        if (!skewView || skewView.width <= 0 || index < 0 || index >= root.imageCount)
+            return
+        skewView.positionViewAtIndex(index, ListView.Center)
+    }
+
     // Rebuild index map + sync to current wallpaper in one shot.
     // Used by filter/sort changes that invalidate the map.
     function _rebuildAndSync(): void {
@@ -421,11 +427,10 @@ Item {
 
         // Position immediately if layout is ready
         if (skewView && skewView.width > 0) {
-            skewView.positionViewAtIndex(target, ListView.Center)
+            root._positionAtIndex(target)
             // Deferred re-position: one extra frame so delegates are created
             Qt.callLater(() => {
-                if (skewView && skewView.width > 0)
-                    skewView.positionViewAtIndex(target, ListView.Center)
+                root._positionAtIndex(target)
             })
         } else {
             // Layout not ready — retry once after a short delay
@@ -440,10 +445,9 @@ Item {
         property int _retries: 0
         onTriggered: {
             if (skewView && skewView.width > 0) {
-                skewView.positionViewAtIndex(root.currentImageIndex, ListView.Center)
+                root._positionAtIndex(root.currentImageIndex)
                 Qt.callLater(() => {
-                    if (skewView && skewView.width > 0)
-                        skewView.positionViewAtIndex(root.currentImageIndex, ListView.Center)
+                    root._positionAtIndex(root.currentImageIndex)
                 })
                 _retries = 0
             } else if (_retries < 10) {
@@ -846,7 +850,9 @@ Item {
 
         boundsBehavior: Flickable.StopAtBounds
         model: root.imageCount
-        currentIndex: root.currentImageIndex
+        currentIndex: root.imageCount > 0
+            ? Math.max(0, Math.min(root.currentImageIndex, root.imageCount - 1))
+            : -1
 
         // Fade-in + scale entrance (skwd: 400ms OutCubic → M3 enter token)
         opacity: root._contentVisible ? 1 : 0
@@ -870,7 +876,7 @@ Item {
         }
 
         onCurrentIndexChanged: {
-            if (currentIndex !== root.currentImageIndex)
+            if (currentIndex >= 0 && currentIndex !== root.currentImageIndex)
                 root.currentImageIndex = currentIndex
         }
 
@@ -1005,7 +1011,7 @@ Item {
                     for (let i = 0; i < layers.length; i++) {
                         const l = layers[i]
                         ctx.globalAlpha = l.alpha
-                        ctx.fillStyle = "#000000"
+                        ctx.fillStyle = Appearance.colors.colScrim
                         ctx.beginPath()
                         ctx.moveTo(ox + sk + l.dx, oy + l.dy)
                         ctx.lineTo(ox + w + l.dx, oy + l.dy)
@@ -1035,7 +1041,10 @@ Item {
                     asynchronous: true
                     retainWhileLoading: true
                     smooth: true
-                    mipmap: delegateItem.isCurrent
+                    property bool _everReady: false
+                    onStatusChanged: if (status === Image.Ready) _everReady = true
+                    onSourceChanged: _everReady = false
+                    mipmap: delegateItem.isCurrent && _everReady
                     sourceSize.width: delegateItem._sourceW
                     sourceSize.height: delegateItem._sourceH
                 }
@@ -1060,7 +1069,10 @@ Item {
                     asynchronous: true
                     cache: true
                     smooth: true
-                    mipmap: delegateItem.isCurrent
+                    property bool _everReady: false
+                    onStatusChanged: if (status === Image.Ready) _everReady = true
+                    onSourceChanged: _everReady = false
+                    mipmap: delegateItem.isCurrent && _everReady
                     sourceSize.width: delegateItem._sourceW
                     sourceSize.height: delegateItem._sourceH
                     source: {
@@ -1267,7 +1279,7 @@ Item {
                         // Surface background
                         Rectangle {
                             anchors.fill: parent
-                            color: Appearance.m3colors.m3surfaceContainer
+                            color: Appearance.colors.colSurfaceContainer
                         }
 
                         // Faded thumbnail behind
@@ -1478,7 +1490,7 @@ Item {
                                     text: deleteBtn.confirmMode
                                         ? Translation.tr("CONFIRM DELETE")
                                         : Translation.tr("DELETE")
-                                    color: backDeleteMouse.containsMouse ? "#ff6b6b"
+                                    color: backDeleteMouse.containsMouse ? Appearance.colors.colError
                                         : Appearance.colors.colTertiary
                                     font.pixelSize: Appearance.font.pixelSize.smaller
                                     font.weight: Font.Medium
@@ -1706,7 +1718,7 @@ Item {
         GlassBackground {
             id: filterBarGlass
             anchors.fill: parent
-            fallbackColor: Appearance.m3colors.m3surfaceContainer
+            fallbackColor: Appearance.colors.colSurfaceContainer
             inirColor: Appearance.inir.colLayer2
             auroraTransparency: Appearance.aurora.overlayTransparentize
             screenX: { const p = filterBar.mapToGlobal(0, 0); return p.x }
@@ -2025,13 +2037,13 @@ Item {
                     color: Appearance.angelEverywhere ? Appearance.angel.colGlassPanel
                         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
                         : Appearance.auroraEverywhere ? Appearance.aurora.colOverlay
-                        : Appearance.m3colors.m3surfaceContainer
+                        : Appearance.colors.colSurfaceContainer
                     border.width: 1
                     border.color: root.borderColor
                     layer.enabled: true
                     layer.effect: MultiEffect {
                         shadowEnabled: true
-                        shadowColor: ColorUtils.applyAlpha("#000000", 0.25)
+                        shadowColor: ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.25)
                         shadowVerticalOffset: 4
                         shadowBlur: 0.4
                     }
@@ -2191,7 +2203,7 @@ Item {
         IconToolbarButton {
             implicitWidth: height
             onClicked: root.favouriteFilterActive = !root.favouriteFilterActive
-            text: root.favouriteFilterActive ? "favorite" : "favorite_border"
+            text: "favorite"
             opacity: root.favouriteFilterActive ? 1.0 : 0.6
             StyledToolTip { text: root.favouriteFilterActive ? Translation.tr("Show all") : Translation.tr("Show favourites only") }
         }

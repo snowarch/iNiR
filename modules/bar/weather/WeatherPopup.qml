@@ -29,7 +29,7 @@ StyledPopup {
                 MaterialSymbol {
                     fill: 0
                     font.weight: Font.Medium
-                    text: "location_on"
+                    text: "place"
                     iconSize: Appearance.font.pixelSize.large
                     color: Appearance.colors.colOnSurfaceVariant
                 }

@@ -2,6 +2,13 @@ name: Bug Report
 description: Report something that is not working correctly
 labels: ["bug"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        If the shell broke right after a system update or crashes at
+        startup, run `inir doctor` first — it detects and can fix the most
+        common cause (a Qt ABI mismatch).
+
   - type: textarea
     id: summary
     attributes:
@@ -43,48 +50,19 @@ body:
     validations:
       required: true
 
-  - type: input
-    id: version
+  - type: textarea
+    id: environment
     attributes:
-      label: Version
-      description: "Output of: cat ~/.config/quickshell/inir/VERSION"
-      placeholder: "2.17.4"
-    validations:
-      required: true
-
-  - type: input
-    id: compositor
-    attributes:
-      label: Compositor
-      description: "Output of: niri msg version (or hyprctl version)"
-      placeholder: "25.11"
-    validations:
-      required: true
-
-  - type: input
-    id: quickshell
-    attributes:
-      label: Quickshell version
-      description: "Output of: qs --version"
-      placeholder: "quickshell 0.2.1, revision abc1234, distributed by: Arch Linux"
-    validations:
-      required: true
-
-  - type: input
-    id: qt
-    attributes:
-      label: Qt version
-      description: "Output of: pacman -Q qt6-base (or equivalent for your distro)"
-      placeholder: "qt6-base 6.11.0-1.1"
-    validations:
-      required: true
-
-  - type: input
-    id: distro
-    attributes:
-      label: Distro
-      description: Distribution name and version
-      placeholder: "Arch Linux"
+      label: Environment
+      description: |
+        Paste the output of these three commands:
+        ```
+        inir version
+        qs --version
+        niri msg version   # or: hyprctl version
+        ```
+        Plus your distro name (e.g. Arch Linux, Fedora 42).
+      render: shell
     validations:
       required: true
 

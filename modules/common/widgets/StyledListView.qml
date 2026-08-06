@@ -60,6 +60,15 @@ ListView {
         }
     }
 
+    Behavior on contentX {
+        NumberAnimation {
+            id: scrollAnimX
+            duration: Appearance.animation.scroll.duration
+            easing.type: Appearance.animation.scroll.type
+            easing.bezierCurve: Appearance.animation.scroll.bezierCurve
+        }
+    }
+
     // Keep target synced when not animating (e.g., drag/flick or programmatic changes)
     onContentYChanged: {
         if (!scrollAnim.running) {

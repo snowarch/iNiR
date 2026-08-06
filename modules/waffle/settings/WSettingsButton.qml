@@ -20,9 +20,12 @@ WSettingsRow {
             text: root.buttonText
             icon.name: root.buttonIcon
             
-            colBackground: root.accent ? Looks.colors.accent : Looks.colors.bg2
-            colBackgroundHover: root.accent ? Looks.colors.accentHover : Looks.colors.bg2Hover
-            colBackgroundActive: root.accent ? Looks.colors.accentActive : Looks.colors.bg2Active
+            colBackground: root.accent
+                ? Looks.colors.accent : Looks.colors.interactiveSurface
+            colBackgroundHover: root.accent
+                ? Looks.colors.accentHover : Looks.colors.interactiveSurfaceHover
+            colBackgroundActive: root.accent
+                ? Looks.colors.accentActive : Looks.colors.interactiveSurfaceActive
             colForeground: root.accent ? Looks.colors.accentFg : Looks.colors.fg
             
             onClicked: root.buttonClicked()

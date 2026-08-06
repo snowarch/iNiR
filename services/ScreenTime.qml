@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Wayland
 import qs.modules.common
 import qs.services
 
@@ -16,50 +17,107 @@ Singleton {
     property var _todayData: null
     property string _currentAppId: ""
     property string _currentAppName: ""
+    property string _sessionAppId: ""
+    property int _currentSessionSeconds: 0
+    property int _sessionRevision: 0
+    property real _idleStartedAt: 0
+    property real _lastReturnAt: 0
+    property int _lastIdleDurationSeconds: 0
     property real _lastTickTime: 0
     property real _lastPersistMs: 0
     readonly property int _persistIntervalMs: 30000
     property string _currentDate: ""
     property bool _dirty: false
-    property bool _startupLock: true
-    property var _rangeCache: ({})
+    property bool _initialized: false
+    property bool _loadingToday: false
+    property var _rangeHistoryData: ({})
+    property var _rangeQueue: []
+    property int _activeRangeDays: 0
+    property int _rangeGeneration: 0
+    readonly property int _idleTimeoutSeconds: {
+        const override = parseInt(Quickshell.env("INIR_SCREENTIME_IDLE_TIMEOUT_SECONDS") || "")
+        return override > 0 ? override : 300
+    }
+    readonly property bool userIdle: idleMonitor.isIdle
 
     readonly property var todayData: _todayData
     readonly property string currentAppId: _currentAppId
     readonly property string currentAppName: _currentAppName
+    readonly property int currentSessionSeconds: _currentSessionSeconds
+    readonly property int sessionRevision: _sessionRevision
+    readonly property real lastReturnAt: _lastReturnAt
+    readonly property int lastIdleDurationSeconds: _lastIdleDurationSeconds
 
     signal dataChanged()
     signal rangeLoaded(int days, var data)
 
-    Component.onCompleted: {
+    Component.onCompleted: root._syncEnabledState()
+    onEnabledChanged: root._syncEnabledState()
+
+    function _syncEnabledState(): void {
         if (!root.enabled) {
+            if (root._dirty) {
+                root._persistToday()
+                root._dirty = false
+                root._lastPersistMs = Date.now()
+            }
+            root._sessionAppId = ""
+            root._currentSessionSeconds = 0
+            root._sessionRevision++
             root.ready = true
             return
         }
-        _currentDate = _dateString(new Date())
-        _loadTodayFromFile()
-    }
 
-    Connections {
-        target: Config
-        function onConfigChanged() {
-            if (root.enabled && !root.ready) {
-                _currentDate = _dateString(new Date())
-                _loadTodayFromFile()
-            }
+        const today = root._dateString(new Date())
+        if (!root._initialized || root._currentDate !== today) {
+            if (root._dirty)
+                root._persistToday()
+            root.ready = false
+            root._currentDate = today
+            root._loadTodayFromFile()
+            return
         }
+        root.ready = true
     }
 
     function _loadTodayFromFile(): void {
-        const path = _todayFilePath()
+        if (root._loadingToday || startupReadProc.running)
+            return
+        root._loadingToday = true
+        const path = root._todayFilePath()
         startupReadProc.command = ["/usr/bin/bash", "-c", `test -f "${path}" && cat "${path}" || echo "__NOFILE__"`]
         startupReadProc.running = true
+    }
+
+    IdleMonitor {
+        id: idleMonitor
+        enabled: root.enabled
+        timeout: root._idleTimeoutSeconds
+        respectInhibitors: false
+        onIsIdleChanged: {
+            const now = Date.now()
+            root._lastTickTime = now
+            root._sessionAppId = ""
+            root._currentSessionSeconds = 0
+            root._sessionRevision++
+            if (idleMonitor.isIdle) {
+                // ext-idle-notify fires after the timeout, so reconstruct the
+                // beginning of the idle period for a useful break duration.
+                root._idleStartedAt = now - root._idleTimeoutSeconds * 1000
+            } else if (root._idleStartedAt > 0) {
+                root._lastIdleDurationSeconds = Math.max(0,
+                    Math.round((now - root._idleStartedAt) / 1000))
+                root._lastReturnAt = now
+                root._idleStartedAt = 0
+            }
+            root.dataChanged()
+        }
     }
 
     Timer {
         id: pollTimer
         interval: (Config.options?.sidebar?.screenTime?.pollIntervalSeconds ?? 5) * 1000
-        running: root.enabled && root.ready
+        running: root.enabled && root.ready && root._initialized
         repeat: true
         triggeredOnStart: true
         onTriggered: root._tick()
@@ -68,7 +126,7 @@ Singleton {
     Timer {
         id: dayRolloverTimer
         interval: 60000
-        running: root.enabled && root.ready
+        running: root.enabled && root.ready && root._initialized
         repeat: true
         onTriggered: {
             const now = root._dateString(new Date())
@@ -78,9 +136,15 @@ Singleton {
                 root._todayData = root._emptyDay(now)
                 root._currentAppId = ""
                 root._currentAppName = ""
+                root._sessionAppId = ""
+                root._currentSessionSeconds = 0
+                root._sessionRevision++
                 root._lastTickTime = Date.now()
                 root._lastPersistMs = Date.now()
-                root._rangeCache = ({})
+                root._rangeGeneration++
+                root._rangeHistoryData = ({})
+                root._rangeQueue = []
+                root._pruneHistory()
                 root.dataChanged()
             }
         }
@@ -94,7 +158,12 @@ Singleton {
         let appName = ""
 
         if (CompositorService.isNiri) {
+            // The initial WindowsChanged snapshot already marks the focused
+            // window, but NiriService.activeWindow is event-driven and can stay
+            // null until the next focus change. Use the reactive list as the
+            // startup fallback without spawning a compositor query per tick.
             const win = NiriService.activeWindow
+                ?? (NiriService.windows ?? []).find(w => w.is_focused)
             if (win) {
                 appId = win.app_id || ""
                 appName = appId ? _humanizeAppId(appId) : ""
@@ -116,6 +185,18 @@ Singleton {
         const intervalStart = root._lastTickTime
         root._lastTickTime = now
 
+        if (root.userIdle) {
+            root._currentAppId = appId
+            root._currentAppName = appName
+            return
+        }
+
+        if (appId !== root._sessionAppId) {
+            root._sessionAppId = appId
+            root._currentSessionSeconds = 0
+            root._sessionRevision++
+        }
+
         if (elapsed <= 0 || elapsed > 60) {
             root._currentAppId = appId
             root._currentAppName = appName
@@ -126,6 +207,7 @@ Singleton {
             root._todayData = _emptyDay(root._currentDate)
 
         if (appId.length > 0) {
+            root._currentSessionSeconds += elapsed
             root._todayData.totalSeconds += elapsed
 
             const key = appId.toLowerCase().replace(/[^a-z0-9-]/g, "")
@@ -154,7 +236,6 @@ Singleton {
         root._currentAppId = appId
         root._currentAppName = appName
         root._todayData = Object.assign({}, root._todayData)
-        root._rangeCache = ({})
         root.dataChanged()
 
         // Flush by elapsed wall-clock since the last persist, not a fragile
@@ -199,28 +280,50 @@ Singleton {
 
     function requestDays(count: int): void {
         if (count <= 1) {
-            root.rangeLoaded(1, getToday())
+            root.rangeLoaded(1, root.getToday())
             return
         }
+        const cached = root.getCachedDays(count)
+        if (cached) {
+            root.rangeLoaded(count, cached)
+            return
+        }
+        if (root._activeRangeDays === count || root._rangeQueue.indexOf(count) !== -1)
+            return
+        root._rangeQueue = root._rangeQueue.concat([count])
+        root._startNextRangeRead()
+    }
+
+    function _startNextRangeRead(): void {
+        if (rangeReadProc.running || root._activeRangeDays > 0 || root._rangeQueue.length === 0)
+            return
+        const queue = root._rangeQueue.slice()
+        const count = queue.shift()
+        root._rangeQueue = queue
+
         let script = ""
         const now = new Date()
         for (let i = 1; i < count; i++) {
             const d = new Date(now)
             d.setDate(d.getDate() - i)
-            const path = `${Directories.screenTimePath}/${_dateString(d)}.json`
+            const path = `${Directories.screenTimePath}/${root._dateString(d)}.json`
             script += `cat "${path}" 2>/dev/null || echo "{}"; echo "---DELIM---";\n`
         }
+        root._activeRangeDays = count
         rangeReadProc._requestedDays = count
+        rangeReadProc._generation = root._rangeGeneration
         rangeReadProc.command = ["/usr/bin/bash", "-c", script]
         rangeReadProc.running = true
     }
 
     function getCachedDays(count: int): var {
-        return root._rangeCache[count] || null
+        const history = root._rangeHistoryData[count]
+        return history === undefined
+            ? null : root._mergeHistoricalData(root.getToday(), history)
     }
 
     function getAppList(days: int): var {
-        const data = days <= 1 ? getToday() : (root._rangeCache[days] || getToday())
+        const data = days <= 1 ? root.getToday() : (root.getCachedDays(days) || root.getToday())
         const apps = data.apps || {}
         const list = []
         const keys = Object.keys(apps)
@@ -262,11 +365,21 @@ Singleton {
     }
 
     function _persistToday(): void {
-        if (!root._todayData) return
-        const url = Qt.resolvedUrl(_todayFilePath())
+        if (!root._todayData || root._currentDate.length === 0) return
+        const url = Qt.resolvedUrl(root._todayFilePath())
         if (todayFileView.path !== url)
             todayFileView.path = url
         todayFileView.setText(JSON.stringify(root._todayData, null, 2))
+    }
+
+    function _pruneHistory(): void {
+        const retention = Math.max(1,
+            Config.options?.sidebar?.screenTime?.retentionDays ?? 30)
+        Quickshell.execDetached([
+            "/usr/bin/find", Directories.screenTimePath,
+            "-maxdepth", "1", "-type", "f", "-name", "*.json",
+            "-mtime", `+${retention}`, "-delete"
+        ])
     }
 
     function _mergeDays(todayData: var, rawText: string): var {
@@ -325,12 +438,44 @@ Singleton {
         return result
     }
 
+    function _mergeHistoricalData(todayData: var, historyData: var): var {
+        const result = root._mergeDays(todayData, "")
+        if (!historyData)
+            return result
+
+        result.totalSeconds += historyData.totalSeconds || 0
+        const historyHourly = historyData.hourly || []
+        for (let h = 0; h < 24; h++)
+            result.hourly[h] = (result.hourly[h] || 0) + (historyHourly[h] || 0)
+
+        const historyApps = historyData.apps || {}
+        const keys = Object.keys(historyApps)
+        for (let i = 0; i < keys.length; i++) {
+            const key = keys[i]
+            const source = historyApps[key]
+            if (!result.apps[key]) {
+                result.apps[key] = {
+                    name: source.name || key,
+                    seconds: 0,
+                    originalId: source.originalId || key,
+                    hourly: new Array(24).fill(0)
+                }
+            }
+            const target = result.apps[key]
+            target.seconds += source.seconds || 0
+            const sourceHourly = source.hourly || []
+            for (let h = 0; h < 24; h++)
+                target.hourly[h] = (target.hourly[h] || 0) + (sourceHourly[h] || 0)
+        }
+        return result
+    }
+
     // Per-app breakdown for a given hour-of-day over the selected range.
     // Returns apps sorted desc by seconds in that hour: [{id,name,seconds,originalId}].
     // Days whose files predate per-app hourly data simply contribute nothing
     // here (the UI shows a "no detail" hint when the hour has time but no rows).
     function getHourBreakdown(hour: int, days: int): var {
-        const data = days <= 1 ? getToday() : (root._rangeCache[days] || getToday())
+        const data = days <= 1 ? root.getToday() : (root.getCachedDays(days) || root.getToday())
         const apps = data.apps || {}
         const keys = Object.keys(apps)
         const list = []
@@ -380,8 +525,10 @@ Singleton {
                 }
                 root._lastTickTime = Date.now()
                 root._lastPersistMs = Date.now()
+                root._initialized = true
+                root._loadingToday = false
                 root.ready = true
-                root._startupLock = false
+                root._pruneHistory()
                 if (root._dirty) {
                     root._persistToday()
                     root._dirty = false
@@ -394,15 +541,29 @@ Singleton {
     Process {
         id: rangeReadProc
         property int _requestedDays: 1
+        property int _generation: 0
+        property bool _completed: false
         command: ["/usr/bin/bash", "-c", ""]
         stdout: StdioCollector {
             onStreamFinished: {
-                const merged = root._mergeDays(root.getToday(), text)
-                const cache = {}
-                cache[rangeReadProc._requestedDays] = merged
-                root._rangeCache = Object.assign({}, root._rangeCache, cache)
-                root.rangeLoaded(rangeReadProc._requestedDays, merged)
+                rangeReadProc._completed = true
+                const days = rangeReadProc._requestedDays
+                if (rangeReadProc._generation === root._rangeGeneration) {
+                    const history = root._mergeDays(root._emptyDay("history"), text)
+                    const cache = {}
+                    cache[days] = history
+                    root._rangeHistoryData = Object.assign({}, root._rangeHistoryData, cache)
+                    root.rangeLoaded(days,
+                        root._mergeHistoricalData(root.getToday(), history))
+                }
+                root._activeRangeDays = 0
             }
+        }
+        onExited: {
+            if (!rangeReadProc._completed)
+                root._activeRangeDays = 0
+            rangeReadProc._completed = false
+            Qt.callLater(root._startNextRangeRead)
         }
     }
 }

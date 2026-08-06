@@ -6,6 +6,7 @@ import Quickshell
 import qs.services
 import qs.services.deferred
 import qs.modules.common
+import qs.modules.common.widgets
 import qs.modules.waffle.looks
 import qs.modules.waffle.settings
 
@@ -201,6 +202,35 @@ WSettingsPage {
             description: Translation.tr("Track time spent in each application. Shows in the Action Center.")
             checked: Config.options?.sidebar?.screenTime?.enable ?? false
             onCheckedChanged: Config.setNestedValue("sidebar.screenTime.enable", checked)
+        }
+    }
+
+    WSettingsCard {
+        title: Translation.tr("Sidebars")
+        icon: "panel-left-expand"
+
+        WSettingsSwitch {
+            label: Translation.tr("Collapse notifications when empty")
+            icon: "panel-left-contract"
+            description: Translation.tr("Shrink the right sidebar when there are no notifications")
+            checked: Config.options?.sidebar?.collapseEmptyNotifications ?? false
+            onCheckedChanged: Config.setNestedValue("sidebar.collapseEmptyNotifications", checked)
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("Fit left sidebar to widgets")
+            icon: "panel-left-expand"
+            description: Translation.tr("Shrink the left sidebar to its content on the Widgets tab instead of full height")
+            checked: Config.options?.sidebar?.collapseWidgetsTab ?? false
+            onCheckedChanged: Config.setNestedValue("sidebar.collapseWidgetsTab", checked)
+        }
+
+        SidebarHeightPreview {
+            Layout.fillWidth: true
+        }
+
+        SidebarLayoutEditor {
+            Layout.fillWidth: true
         }
     }
 

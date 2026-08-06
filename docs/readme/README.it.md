@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.27.0-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.29.0-blue?style=flat-square" alt="Version"></a>
   <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
@@ -111,7 +111,7 @@ Volevo che il mio desktop avesse un certo aspetto e funzionasse in un certo modo
 ## Funzionalità
 
 **Due famiglie di pannelli**, commutabili al volo con `Super+Shift+W`:
-- **Material ii** — barra flottante, barre laterali, dock, 5 stili visivi (material, cards, aurora, inir, angel)
+- **Material ii** — barra flottante, barre laterali, dock, 6 stili visivi (material, cards, aurora, inir, angel, zzz)
 - **Waffle** — barra delle applicazioni stile Windows 11, menu start, centro azioni, centro notifiche
 
 **Tematizzazione automatica** — scegli uno sfondo e tutto si adatta:
@@ -128,7 +128,7 @@ Volevo che il mio desktop avesse un certo aspetto e funzionasse in un certo modo
 
 Scegli uno sfondo e l'intero sistema segue — shell, app GTK/Qt, terminali, Firefox, Discord, schermata di login SDDM. Tutto automatico.
 
-- **5 stili visivi** — Material (pieno), Cards, Aurora (sfocatura vetro), iNiR (ispirato TUI), Angel (neo-brutalismo)
+- **6 stili visivi** — Material (pieno), Cards, Aurora (sfocatura vetro), iNiR (ispirato TUI), Angel (neo-brutalismo), ZZZ
 - **Colori dinamici dallo sfondo** via Material You — propagati a tutto il sistema
 - **10 strumenti terminale auto-tematizzati** — foot, kitty, alacritty, starship, fuzzel, pywalfox, btop, lazygit, yazi
 - **Tematizzazione app** — GTK3/4, Qt (via plasma-integration + darkly), Firefox (MaterialFox), Discord/Vesktop (System24)
@@ -144,7 +144,6 @@ Barra laterale sinistra (cassetto app):
 - **YT Music** — lettore completo con ricerca, coda e controlli
 - **Browser Wallhaven** — cerca e applica sfondi direttamente
 - **Anime tracker** — integrazione AniList con vista del palinsesto
-- **Feed Reddit** — sfoglia subreddit inline
 - **Traduttore** — via Gemini o translate-shell
 - **Widget trascinabili** — crypto, lettore multimediale, note rapide, anelli di stato, calendario settimanale
 
@@ -282,5 +281,5 @@ Vedi [CONTRIBUTING.md](../../CONTRIBUTING.md) per la configurazione dell'ambient
 <p align="center">
   <a href="https://github.com/snowarch/inir/graphs/contributors">Contributori</a> &bull;
   <a href="CHANGELOG.md">Changelog</a> &bull;
-  <a href="LICENSE">Licenza MIT</a>
+  <a href="LICENSE">Licenza GPL-3.0</a>
 </p>

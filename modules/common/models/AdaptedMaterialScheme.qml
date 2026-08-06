@@ -19,9 +19,9 @@ QtObject {
     property color colPrimaryHover: ColorUtils.mix(ColorUtils.adaptToAccent(Appearance.colors.colPrimaryHover, root.color), root.color, 0.3)
     property color colPrimaryActive: ColorUtils.mix(ColorUtils.adaptToAccent(Appearance.colors.colPrimaryActive, root.color), root.color, 0.3)
     property color colSecondary: ColorUtils.mix(ColorUtils.adaptToAccent(Appearance.colors.colSecondary, root.color), root.color, 0.5)
-    property color colSecondaryContainer: ColorUtils.mix(Appearance.m3colors.m3secondaryContainer, root.color, 0.15)
+    property color colSecondaryContainer: ColorUtils.mix(Appearance.colors.colSecondaryContainer, root.color, 0.15)
     property color colSecondaryContainerHover: ColorUtils.mix(Appearance.colors.colSecondaryContainerHover, root.color, 0.3)
     property color colSecondaryContainerActive: ColorUtils.mix(Appearance.colors.colSecondaryContainerActive, root.color, 0.5)
-    property color colOnPrimary: ColorUtils.mix(ColorUtils.adaptToAccent(Appearance.m3colors.m3onPrimary, root.color), root.color, 0.5)
-    property color colOnSecondaryContainer: ColorUtils.mix(Appearance.m3colors.m3onSecondaryContainer, root.color, 0.5)
+    property color colOnPrimary: ColorUtils.mix(ColorUtils.adaptToAccent(Appearance.colors.colOnPrimary, root.color), root.color, 0.5)
+    property color colOnSecondaryContainer: ColorUtils.mix(Appearance.colors.colOnSecondaryContainer, root.color, 0.5)
 }

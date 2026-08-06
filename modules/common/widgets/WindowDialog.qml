@@ -10,9 +10,19 @@ Rectangle {
 
     property bool show: false
     default property alias contentData: contentColumn.data
-    property real backgroundHeight: dialogBackground.implicitHeight
+    // Negative means content-sized. Fixed-height consumers keep assigning an
+    // explicit value; compact dialogs follow their measured content instead of
+    // freezing whatever height happened to exist during Component completion.
+    property real backgroundHeight: -1
     property real backgroundWidth: 350
     property real backgroundAnimationMovementDistance: 60
+    property string zzzLabel: "DIALOG"
+    property string zzzIndex: "UI"
+    property string zzzGhostText: "DIALOG"
+    property color zzzAccentColor: Appearance.zzz.secondary
+    property bool zzzShowBurst: true
+    property bool zzzShowTicks: false
+    property bool zzzDecorationsEnabled: true
     
     signal dismiss()
     Keys.onPressed: (event) => {
@@ -28,10 +38,9 @@ Rectangle {
     }
     visible: dialogBackground.implicitHeight > 0
 
-    onShowChanged: {
-        dialogBackgroundHeightAnimation.easing.bezierCurve = (show ? Appearance.animationCurves.emphasizedDecel : Appearance.animationCurves.emphasizedAccel)
-        dialogBackground.implicitHeight = show ? backgroundHeight : 0
-    }
+    onShowChanged: dialogBackgroundHeightAnimation.easing.bezierCurve = show
+        ? Appearance.animationCurves.emphasizedDecel
+        : Appearance.animationCurves.emphasizedAccel
 
     radius: Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1
 
@@ -45,21 +54,49 @@ Rectangle {
     GlassBackground {
         id: dialogBackground
         anchors.horizontalCenter: parent.horizontalCenter
-        radius: Appearance.angelEverywhere ? Appearance.angel.roundingLarge
+        radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+            : Appearance.angelEverywhere ? Appearance.angel.roundingLarge
             : Appearance.inirEverywhere ? Appearance.inir.roundingLarge
             : Appearance.rounding.large
-        fallbackColor: Appearance.m3colors.m3surfaceContainerHigh
+        Behavior on radius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        fallbackColor: Appearance.zzzEverywhere ? Appearance.zzz.paper : Appearance.colors.colSurfaceContainerHigh
         inirColor: Appearance.inir.colLayer2
         auroraTransparency: Appearance.aurora.popupTransparentize * 0.85
-        border.width: (Appearance.angelEverywhere || Appearance.inirEverywhere || Appearance.auroraEverywhere) ? 1 : 0
-        border.color: Appearance.angelEverywhere ? Appearance.angel.colBorder
+        // ZZZ owns its wallpaper wash through ZzzPanelBackdrop. Letting both
+        // layers blur the same wallpaper softens compact dialog text and chrome.
+        wallpaperBackdropEnabled: !Appearance.zzzEverywhere
+        border.width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick
+            : (Appearance.angelEverywhere || Appearance.inirEverywhere || Appearance.auroraEverywhere) ? 1 : 0
+        Behavior on border.width {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
+            : Appearance.angelEverywhere ? Appearance.angel.colBorder
             : Appearance.inirEverywhere ? Appearance.inir.colBorder 
             : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder : "transparent"
+        Behavior on border.color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
         
-        property real targetY: root.height / 2 - root.backgroundHeight / 2
+        readonly property real measuredContentHeight: contentColumn.implicitHeight
+            + dialogBackground.contentPad * 2
+        readonly property real resolvedHeight: root.backgroundHeight >= 0
+            ? root.backgroundHeight : measuredContentHeight
+        property real targetY: root.height / 2 - resolvedHeight / 2
         y: root.show ? targetY : (targetY - root.backgroundAnimationMovementDistance)
         implicitWidth: root.backgroundWidth
-        implicitHeight: contentColumn.implicitHeight + dialogBackground.radius * 2
+        // Corner radius is visual, not spacing. Zero-radius Angel and ZZZ
+        // presets still need a readable inset around dialog content.
+        readonly property real contentPad: Appearance.zzzEverywhere
+            ? Math.max(radius, Appearance.zzz.markerLength + Appearance.zzz.borderThick * 5)
+            : Appearance.cookieEverywhere ? Appearance.sizes.spacingLarge
+            : Math.max(radius, Appearance.sizes.spacingLarge)
+        implicitHeight: root.show ? resolvedHeight : 0
         Behavior on implicitHeight {
             NumberAnimation {
                 id: dialogBackgroundHeightAnimation
@@ -82,11 +119,29 @@ Rectangle {
             hoverEnabled: true
         }
 
+        Loader {
+            anchors.fill: parent
+            active: root.zzzDecorationsEnabled && Appearance.zzzEverywhere
+            sourceComponent: ZzzPanelBackdrop {
+                label: root.zzzLabel
+                index: root.zzzIndex
+                ghostText: root.zzzGhostText
+                accentColor: root.zzzAccentColor
+                showBurst: false
+                showTicks: false
+                showGrid: false
+                horizontalBias: 0.08
+                verticalBias: 0.06
+                ghostWidthFactor: 0.84
+                ghostStrength: 0.7
+            }
+        }
+
         ColumnLayout {
             id: contentColumn
             anchors {
                 fill: parent
-                margins: dialogBackground.radius
+                margins: dialogBackground.contentPad
             }
             spacing: 16
             opacity: root.show ? 1 : 0

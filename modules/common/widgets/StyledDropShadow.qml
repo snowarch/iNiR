@@ -1,10 +1,12 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import Qt5Compat.GraphicalEffects
 import qs.modules.common
 
 DropShadow {
     required property var target
-    visible: Appearance.effectsEnabled
+    visible: Appearance.effectsEnabled && !Appearance.zzzEverywhere
     source: target
     anchors.fill: source
     radius: Appearance.effectsEnabled ? 8 : 0

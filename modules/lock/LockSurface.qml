@@ -34,6 +34,7 @@ MouseArea {
     readonly property real blurRadius: Config.options?.lock?.blur?.radius ?? 64
     readonly property real blurZoom: Config.options?.lock?.blur?.extraZoom ?? 1.1
     readonly property bool enableAnimation: Config.options?.lock?.enableAnimation ?? false
+    readonly property bool _zzz: Appearance.zzzEverywhere
 
     // Widget visibility
     readonly property bool showWeather: Config.options?.lock?.widgets?.weather ?? true
@@ -128,7 +129,7 @@ MouseArea {
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         cache: false
-        playing: visible && root.enableAnimation
+        playing: visible && root.enableAnimation && !Wallpapers.batteryPauseActive
         onStatusChanged: {
             if (status === Image.Error) console.error("[LockSurface] GIF load error:", source)
         }
@@ -153,7 +154,7 @@ MouseArea {
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         cache: false
-        playing: root.enableAnimation
+        playing: root.enableAnimation && !Wallpapers.batteryPauseActive
         visible: false
         z: -2
         onStatusChanged: {
@@ -179,7 +180,7 @@ MouseArea {
         muted: true
         autoPlay: true
 
-        readonly property bool shouldPlay: root.enableAnimation
+        readonly property bool shouldPlay: root.enableAnimation && !Wallpapers.batteryPauseActive
 
         function pauseAndShowFirstFrame() {
             pause()
@@ -241,7 +242,7 @@ MouseArea {
         muted: true
         autoPlay: true
 
-        readonly property bool shouldPlay: root.enableAnimation
+        readonly property bool shouldPlay: root.enableAnimation && !Wallpapers.batteryPauseActive
 
         function pauseAndShowFirstFrame() {
             pause()
@@ -342,7 +343,7 @@ MouseArea {
     // Wallpaper dim overlay
     Rectangle {
         anchors.fill: parent
-        color: "#000000"
+        color: Appearance.colors.colScrim
         opacity: (Config.options?.lock?.dim?.enable ?? false) ? (Config.options?.lock?.dim?.opacity ?? 0.3) : 0
         z: 0
 
@@ -360,15 +361,19 @@ MouseArea {
         scale: root.showLoginView ? 0.92 : 1
         
         Behavior on opacity {
+            enabled: Appearance.animationsEnabled
             NumberAnimation {
-                duration: 400
-                easing.type: Easing.OutCubic
+                duration: Appearance.animation.elementMoveEnter.duration
+                easing.type: Appearance.animation.elementMoveEnter.type
+                easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
             }
         }
         Behavior on scale {
+            enabled: Appearance.animationsEnabled
             NumberAnimation {
-                duration: 450
-                easing.type: Easing.OutBack
+                duration: Appearance.animation.elementMoveEnter.duration
+                easing.type: Appearance.animation.elementMoveEnter.type
+                easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
             }
         }
         
@@ -402,7 +407,7 @@ MouseArea {
                         iconSize: 16
                         color: Appearance.colors.colOnSurface
 
-                        layer.enabled: Appearance.effectsEnabled
+                        layer.enabled: Appearance.effectsEnabled && !root._zzz
                         layer.effect: DropShadow {
                             horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
                             color: Qt.rgba(0, 0, 0, 0.4)
@@ -417,7 +422,7 @@ MouseArea {
                         font.family: Appearance.font.family.main
                         color: Appearance.colors.colOnSurfaceVariant
 
-                        layer.enabled: Appearance.effectsEnabled
+                        layer.enabled: Appearance.effectsEnabled && !root._zzz
                         layer.effect: DropShadow {
                             horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
                             color: Qt.rgba(0, 0, 0, 0.4)
@@ -435,7 +440,7 @@ MouseArea {
                     iconSize: 16
                     color: Appearance.colors.colOnSurface
 
-                    layer.enabled: Appearance.effectsEnabled
+                    layer.enabled: Appearance.effectsEnabled && !root._zzz
                     layer.effect: DropShadow {
                         horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
                         color: Qt.rgba(0, 0, 0, 0.4)
@@ -456,7 +461,7 @@ MouseArea {
                         iconSize: 16
                         color: Appearance.colors.colOnSurface
 
-                        layer.enabled: Appearance.effectsEnabled
+                        layer.enabled: Appearance.effectsEnabled && !root._zzz
                         layer.effect: DropShadow {
                             horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
                             color: Qt.rgba(0, 0, 0, 0.4)
@@ -470,7 +475,7 @@ MouseArea {
                         font.family: Appearance.font.family.numbers
                         color: Appearance.colors.colOnSurfaceVariant
 
-                        layer.enabled: Appearance.effectsEnabled
+                        layer.enabled: Appearance.effectsEnabled && !root._zzz
                         layer.effect: DropShadow {
                             horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
                             color: Qt.rgba(0, 0, 0, 0.4)
@@ -502,7 +507,7 @@ MouseArea {
                         color: (topBatteryRow.batteryLevel <= 15 && !topBatteryRow.isCharging)
                             ? Appearance.colors.colError : Appearance.colors.colOnSurface
 
-                        layer.enabled: Appearance.effectsEnabled
+                        layer.enabled: Appearance.effectsEnabled && !root._zzz
                         layer.effect: DropShadow {
                             horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
                             color: Qt.rgba(0, 0, 0, 0.4)
@@ -516,7 +521,7 @@ MouseArea {
                         font.family: Appearance.font.family.numbers
                         color: Appearance.colors.colOnSurfaceVariant
 
-                        layer.enabled: Appearance.effectsEnabled
+                        layer.enabled: Appearance.effectsEnabled && !root._zzz
                         layer.effect: DropShadow {
                             horizontalOffset: 0; verticalOffset: 1; radius: 4; samples: 9
                             color: Qt.rgba(0, 0, 0, 0.4)
@@ -578,7 +583,7 @@ MouseArea {
                     font.family: Appearance.font.family.numbers
                     color: Appearance.colors.colOnSurface
 
-                    layer.enabled: Appearance.effectsEnabled
+                    layer.enabled: Appearance.effectsEnabled && !root._zzz
                     layer.effect: DropShadow {
                         horizontalOffset: 0
                         verticalOffset: 3
@@ -598,7 +603,7 @@ MouseArea {
                     font.letterSpacing: 0.5
                     color: Appearance.colors.colOnSurface
 
-                    layer.enabled: Appearance.effectsEnabled
+                    layer.enabled: Appearance.effectsEnabled && !root._zzz
                     layer.effect: DropShadow {
                         horizontalOffset: 0
                         verticalOffset: 1
@@ -648,7 +653,7 @@ MouseArea {
                         font.letterSpacing: 0.5
                         color: Appearance.colors.colOnSurface
 
-                        layer.enabled: Appearance.effectsEnabled
+                        layer.enabled: Appearance.effectsEnabled && !root._zzz
                         layer.effect: DropShadow {
                             horizontalOffset: 0; verticalOffset: 1; radius: 8; samples: 17
                             color: Qt.rgba(0, 0, 0, 0.4)
@@ -759,19 +764,33 @@ MouseArea {
                             width: parent.width
                             spacing: 4
 
-                            // Main card — always visible, clickable to expand
+                            ZzzPlate {
+                                anchors.fill: groupCard
+                                visible: root._zzz
+                                fillColor: groupMouseArea.containsMouse
+                                    ? Appearance.colors.colLayer2Hover
+                                    : Appearance.colors.colLayer1
+                                strokeColor: Appearance.zzz.hairline
+                                strokeWidth: Appearance.zzz.hairlineThick
+                                chamfer: Appearance.zzz.cutCorner
+                            }
+
                             Rectangle {
                                 id: groupCard
                                 width: parent.width
                                 height: groupContent.implicitHeight + 16
-                                radius: Appearance.rounding.normal
-                                color: groupMouseArea.containsMouse
-                                    ? ColorUtils.transparentize(Appearance.colors.colLayer1, 0.04)
-                                    : ColorUtils.transparentize(Appearance.colors.colLayer1, 0.08)
+                                radius: root._zzz ? Appearance.zzz.panelRadius : Appearance.rounding.normal
+                                border.width: 0
+                                border.color: root._zzz ? Appearance.zzz.hairline : "transparent"
+                                color: root._zzz
+                                    ? "transparent"
+                                    : (groupMouseArea.containsMouse
+                                        ? ColorUtils.transparentize(Appearance.colors.colLayer1, 0.04)
+                                        : ColorUtils.transparentize(Appearance.colors.colLayer1, 0.08))
 
                                 Behavior on color { ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
 
-                                layer.enabled: Appearance.effectsEnabled
+                                layer.enabled: Appearance.effectsEnabled && !root._zzz
                                 layer.effect: DropShadow {
                                     horizontalOffset: 0
                                     verticalOffset: 2
@@ -912,8 +931,19 @@ MouseArea {
                                         required property var modelData
                                         width: parent.width
                                         height: expandedContent.implicitHeight + 10
-                                        radius: Appearance.rounding.small
-                                        color: ColorUtils.transparentize(Appearance.colors.colLayer1, 0.12)
+                                        radius: root._zzz ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                                        color: root._zzz
+                                            ? "transparent"
+                                            : ColorUtils.transparentize(Appearance.colors.colLayer1, 0.12)
+
+                                        ZzzPlate {
+                                            anchors.fill: parent
+                                            visible: root._zzz
+                                            fillColor: Appearance.colors.colLayer1
+                                            strokeColor: Appearance.zzz.hairline
+                                            strokeWidth: Appearance.zzz.hairlineThick
+                                            chamfer: Appearance.zzz.cutCorner
+                                        }
 
                                         RowLayout {
                                             id: expandedContent
@@ -978,7 +1008,7 @@ MouseArea {
                     font.family: Appearance.font.family.main
                     color: Appearance.colors.colOnSurfaceVariant
 
-                    layer.enabled: Appearance.effectsEnabled
+                    layer.enabled: Appearance.effectsEnabled && !root._zzz
                     layer.effect: DropShadow {
                         horizontalOffset: 0
                         verticalOffset: 1
@@ -1041,7 +1071,7 @@ MouseArea {
                     fill: 0
                     color: Appearance.colors.colOnSurface
                     
-                    layer.enabled: Appearance.effectsEnabled
+                    layer.enabled: Appearance.effectsEnabled && !root._zzz
                     layer.effect: DropShadow {
                         horizontalOffset: 0
                         verticalOffset: 2
@@ -1062,7 +1092,7 @@ MouseArea {
                         font.family: Appearance.font.family.main
                         color: Appearance.colors.colOnSurface
                         
-                        layer.enabled: Appearance.effectsEnabled
+                        layer.enabled: Appearance.effectsEnabled && !root._zzz
                         layer.effect: DropShadow {
                             horizontalOffset: 0
                             verticalOffset: 1
@@ -1079,7 +1109,7 @@ MouseArea {
                         font.family: Appearance.font.family.main
                         color: Appearance.colors.colOnSurfaceVariant
                         
-                        layer.enabled: Appearance.effectsEnabled
+                        layer.enabled: Appearance.effectsEnabled && !root._zzz
                         layer.effect: DropShadow {
                             horizontalOffset: 0
                             verticalOffset: 1
@@ -1107,7 +1137,7 @@ MouseArea {
             
             property real hintOpacity: 0.7
             
-            layer.enabled: Appearance.effectsEnabled
+            layer.enabled: Appearance.effectsEnabled && !root._zzz
             layer.effect: DropShadow {
                 horizontalOffset: 0
                 verticalOffset: 1
@@ -1185,21 +1215,25 @@ MouseArea {
                 transformOrigin: Item.Center
                 
                 Behavior on scale {
-                    NumberAnimation { duration: 350; easing.type: Easing.OutBack }
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation {
+                        duration: Appearance.animation.elementMoveEnter.duration
+                        easing.type: Appearance.animation.elementMoveEnter.type
+                        easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
+                    }
                 }
                 
-                // Accent ring behind avatar
                 Rectangle {
                     anchors.centerIn: parent
                     width: parent.width + 8
                     height: parent.height + 8
-                    radius: width / 2
+                    radius: root._zzz ? Appearance.zzz.panelRadius : width / 2
                     color: "transparent"
-                    border.color: Appearance.colors.colPrimary
-                    border.width: 3
+                    border.color: root._zzz ? Appearance.zzz.borderColor : Appearance.colors.colPrimary
+                    border.width: root._zzz ? Appearance.zzz.hairlineThick : 3
                     opacity: 0.8
                     
-                    layer.enabled: Appearance.effectsEnabled
+                    layer.enabled: Appearance.effectsEnabled && !root._zzz
                     layer.effect: DropShadow {
                         horizontalOffset: 0
                         verticalOffset: 4
@@ -1209,12 +1243,11 @@ MouseArea {
                     }
                 }
                 
-                // Avatar circle
                 Rectangle {
                     id: avatarCircle
                     anchors.fill: parent
-                    radius: width / 2
-                    color: Appearance.colors.colPrimary
+                    radius: root._zzz ? Appearance.zzz.panelRadius : width / 2
+                    color: root._zzz ? Appearance.zzz.bg2 : Appearance.colors.colPrimary
                     clip: true
                     
                     Image {
@@ -1282,7 +1315,7 @@ MouseArea {
                 opacity: Math.min(1, Math.max(0, loginContent.animProgress * 3 - 0.3))
                 transform: Translate { y: (1 - Math.min(1, Math.max(0, loginContent.animProgress * 3 - 0.3))) * 15 }
                 
-                layer.enabled: Appearance.effectsEnabled
+                layer.enabled: Appearance.effectsEnabled && !root._zzz
                 layer.effect: DropShadow {
                     horizontalOffset: 0
                     verticalOffset: 1
@@ -1292,19 +1325,41 @@ MouseArea {
                 }
             }
 
-            // Password field - Material You style pill
             Rectangle {
                 id: passwordContainer
                 Layout.alignment: Qt.AlignHCenter
                 Layout.topMargin: 12
                 width: 300
                 height: 52
-                radius: height / 2
-                color: ColorUtils.transparentize(Appearance.colors.colLayer1, 0.2)
-                border.color: loginPasswordField.activeFocus 
-                    ? Appearance.colors.colPrimary 
-                    : ColorUtils.transparentize(Appearance.colors.colOnSurface, 0.7)
-                border.width: loginPasswordField.activeFocus ? 2 : 1
+
+                // Inside the container, not a sibling of it. As a sibling this
+                // was a child of the ColumnLayout, so anchoring it to another
+                // layout-managed item was undefined behavior — and it also
+                // claimed a layout cell of its own. It inherits the container's
+                // stagger transform here, which is what it always wanted.
+                ZzzPlate {
+                    anchors.fill: parent
+                    z: -1
+                    visible: root._zzz
+                    fillColor: loginPasswordField.activeFocus
+                        ? Appearance.colors.colLayer1Hover
+                        : Appearance.colors.colLayer1
+                    strokeColor: loginPasswordField.activeFocus
+                        ? Appearance.zzz.accent
+                        : Appearance.zzz.borderColor
+                    strokeWidth: Appearance.zzz.hairlineThick
+                    chamfer: Appearance.zzz.cutCorner
+                }
+                radius: root._zzz ? Appearance.zzz.controlRadius : height / 2
+                color: root._zzz
+                    ? "transparent"
+                    : ColorUtils.transparentize(Appearance.colors.colLayer1, 0.2)
+                border.color: root._zzz
+                    ? (loginPasswordField.activeFocus ? Appearance.zzz.accent : Appearance.zzz.borderColor)
+                    : (loginPasswordField.activeFocus
+                        ? Appearance.colors.colPrimary
+                        : ColorUtils.transparentize(Appearance.colors.colOnSurface, 0.7))
+                border.width: root._zzz ? 0 : (loginPasswordField.activeFocus ? 2 : 1)
                 
                 // Stagger animation (more delayed)
                 opacity: Math.min(1, Math.max(0, loginContent.animProgress * 3 - 0.5))
@@ -1318,7 +1373,7 @@ MouseArea {
                     animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                 }
                 
-                layer.enabled: Appearance.effectsEnabled
+                layer.enabled: Appearance.effectsEnabled && !root._zzz
                 layer.effect: DropShadow {
                     horizontalOffset: 0
                     verticalOffset: 4
@@ -1410,21 +1465,35 @@ MouseArea {
                         }
                     }
                     
-                    // Submit button
                     Rectangle {
                         id: submitButton
                         Layout.preferredWidth: 36
                         Layout.preferredHeight: 36
                         Layout.alignment: Qt.AlignVCenter
-                        radius: width / 2
-                        color: submitMouseArea.pressed 
-                            ? Appearance.colors.colPrimaryActive 
-                            : submitMouseArea.containsMouse 
-                                ? Appearance.colors.colPrimaryHover 
-                                : Appearance.colors.colPrimary
+                        radius: root._zzz ? Appearance.zzz.controlRadius : width / 2
+                        color: root._zzz
+                            ? "transparent"
+                            : (submitMouseArea.pressed
+                                ? Appearance.colors.colPrimaryActive
+                                : submitMouseArea.containsMouse
+                                    ? Appearance.colors.colPrimaryHover
+                                    : Appearance.colors.colPrimary)
                         
                         Behavior on color {
                             animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
+
+                        ZzzPlate {
+                            anchors.fill: parent
+                            visible: root._zzz
+                            fillColor: submitMouseArea.pressed
+                                ? Appearance.colors.colPrimaryActive
+                                : submitMouseArea.containsMouse
+                                    ? Appearance.colors.colPrimaryHover
+                                    : Appearance.zzz.sticker
+                            strokeColor: Appearance.zzz.hairlineStrong
+                            strokeWidth: Appearance.zzz.hairlineThick
+                            chamfer: Appearance.zzz.cutCorner
                         }
                         
                         MaterialSymbol {
@@ -1439,7 +1508,7 @@ MouseArea {
                                 }
                             }
                             iconSize: 20
-                            color: Appearance.colors.colOnPrimary
+                            color: root._zzz ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimary
                         }
                         
                         MouseArea {
@@ -1501,7 +1570,7 @@ MouseArea {
                     font.family: Appearance.font.family.main
                     color: Appearance.colors.colOnSurfaceVariant
                     
-                    layer.enabled: Appearance.effectsEnabled
+                    layer.enabled: Appearance.effectsEnabled && !root._zzz
                     layer.effect: DropShadow {
                         horizontalOffset: 0
                         verticalOffset: 1
@@ -1592,7 +1661,7 @@ MouseArea {
                             ? Appearance.colors.colError 
                             : Appearance.colors.colOnSurfaceVariant
                         
-                        layer.enabled: Appearance.effectsEnabled
+                        layer.enabled: Appearance.effectsEnabled && !root._zzz
                         layer.effect: DropShadow {
                             horizontalOffset: 0
                             verticalOffset: 1
@@ -1611,7 +1680,7 @@ MouseArea {
                             ? Appearance.colors.colError 
                             : Appearance.colors.colOnSurfaceVariant
                         
-                        layer.enabled: Appearance.effectsEnabled
+                        layer.enabled: Appearance.effectsEnabled && !root._zzz
                         layer.effect: DropShadow {
                             horizontalOffset: 0
                             verticalOffset: 1
@@ -1640,7 +1709,7 @@ MouseArea {
                         fill: 1
                         color: Appearance.colors.colOnSurfaceVariant
                         
-                        layer.enabled: Appearance.effectsEnabled
+                        layer.enabled: Appearance.effectsEnabled && !root._zzz
                         layer.effect: DropShadow {
                             horizontalOffset: 0
                             verticalOffset: 1
@@ -1657,7 +1726,7 @@ MouseArea {
                         font.family: Appearance.font.family.main
                         color: Appearance.colors.colOnSurfaceVariant
                         
-                        layer.enabled: Appearance.effectsEnabled
+                        layer.enabled: Appearance.effectsEnabled && !root._zzz
                         layer.effect: DropShadow {
                             horizontalOffset: 0
                             verticalOffset: 1
@@ -1817,9 +1886,12 @@ MouseArea {
     }
     
     Component.onDestruction: {
-        // Log destruction — if this appears without a corresponding unlock, the surface crashed
-        console.warn("[LockSurface] Component destroying — screenLocked:", GlobalStates.screenLocked,
-                     "hasAttemptedUnlock:", root.hasAttemptedUnlock)
+        const message = ["[LockSurface] Component destroying — screenLocked:",
+                         GlobalStates.screenLocked, "hasAttemptedUnlock:", root.hasAttemptedUnlock]
+        if (GlobalStates.screenLocked)
+            console.warn(...message)
+        else
+            console.info(...message)
     }
     
     // Reset state when lock screen is activated
@@ -1868,24 +1940,44 @@ MouseArea {
         required property string icon
         property string tooltip: ""
         property bool toggled: false
-        
+
         signal clicked()
-        
+
         width: 44
         height: 44
-        radius: Appearance.rounding.normal
+        radius: root._zzz ? Appearance.zzz.controlRadius : Appearance.rounding.normal
+        border.width: 0
+        border.color: root._zzz ? Appearance.zzz.hairlineStrong : "transparent"
         color: {
+            if (root._zzz) {
+                return "transparent"
+            }
             if (toggled) return Appearance.colors.colPrimary
             if (lockBtnMouse.pressed) return ColorUtils.transparentize(Appearance.colors.colOnSurface, 0.7)
             if (lockBtnMouse.containsMouse) return ColorUtils.transparentize(Appearance.colors.colOnSurface, 0.85)
             return ColorUtils.transparentize(Appearance.colors.colLayer1, 0.3)
+        }
+
+        ZzzPlate {
+            anchors.fill: parent
+            visible: root._zzz
+            fillColor: lockBtn.toggled
+                ? Appearance.zzz.sticker
+                : lockBtnMouse.pressed
+                    ? Appearance.colors.colLayer2Active
+                    : lockBtnMouse.containsMouse
+                        ? Appearance.colors.colLayer2Hover
+                        : Appearance.colors.colLayer1
+            strokeColor: Appearance.zzz.hairlineStrong
+            strokeWidth: Appearance.zzz.hairlineThick
+            chamfer: Appearance.zzz.cutCorner
         }
         
         Behavior on color {
             animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
         
-        layer.enabled: Appearance.effectsEnabled
+        layer.enabled: Appearance.effectsEnabled && !root._zzz
         layer.effect: DropShadow {
             horizontalOffset: 0
             verticalOffset: 2
@@ -1898,7 +1990,9 @@ MouseArea {
             anchors.centerIn: parent
             text: lockBtn.icon
             iconSize: 22
-            color: lockBtn.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurface
+            color: root._zzz
+                ? (lockBtn.toggled ? Appearance.zzz.onSticker : Appearance.zzz.onColor)
+                : (lockBtn.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurface)
         }
         
         MouseArea {

@@ -7,6 +7,36 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
+/**
+ * Autostart manager for niri.
+ *
+ * Source of truth is the niri startup file
+ *   ~/.config/niri/config.d/50-startup.kdl
+ * which uses `spawn-at-startup` / `spawn-sh-at-startup` directives run by the
+ * compositor at login. iNiR does NOT spawn these itself — niri owns startup.
+ *
+ * To stay safe for every user (the file ships base iNiR lines for polkit,
+ * cliphist, XDG_MENU_PREFIX, etc.), this service only ever touches a
+ * marker-delimited section:
+ *
+ *   // >>> inir-managed-autostart >>>
+ *   ...managed entries...
+ *   // <<< inir-managed-autostart <<<
+ *
+ * Everything outside the markers is read-only as far as this service is
+ * concerned — base iNiR lines and any hand-written user lines are preserved
+ * verbatim across every write. If the markers are absent (first run), they are
+ * appended at the end of the file.
+ *
+ * Entry line grammar (inside the markers):
+ *   spawn-at-startup "gtk-launch" "<desktopId>"        → enabled app
+ *   // spawn-at-startup "gtk-launch" "<desktopId>"     → disabled app
+ *   spawn-sh-at-startup "<shell command>"              → enabled command
+ *   // spawn-sh-at-startup "<shell command>"           → disabled command
+ *
+ * Apps launch via gtk-launch so the .desktop Exec/working dir/etc. are
+ * respected. Commands use spawn-sh-at-startup so pipes, env, &&, etc. work.
+ */
 Singleton {
     id: root
 
@@ -14,310 +44,387 @@ Singleton {
         if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
     }
 
-    property bool hasRun: false
-    property bool _systemdUnitsRefreshRequested: false
-    readonly property bool globalEnabled: Config.options?.autostart?.enable ?? false
+    // ── Paths / environment ──────────────────────────────────────────────
 
-    readonly property var entries: (Config.options?.autostart && Config.options?.autostart?.entries)
-        ? Config.options.autostart.entries
-        : []
+    readonly property bool isNiri: CompositorService.isNiri
 
-    property var systemdUnits: []
-
-    function load() {
-        if (hasRun)
-            return;
-
-        hasRun = true;
-
-        if (Config.ready) {
-            startFromConfig();
+    readonly property string startupFilePath: {
+        try {
+            const home = Directories.homePath ?? ""
+            if (home.length === 0) return ""
+            return `${home}/.config/niri/config.d/50-startup.kdl`
+        } catch (e) {
+            return ""
         }
     }
 
-    function startFromConfig() {
-        if (!globalEnabled)
-            return;
+    readonly property string beginMarker: "// >>> inir-managed-autostart >>>"
+    readonly property string endMarker: "// <<< inir-managed-autostart <<<"
+    readonly property string sectionHeader: "// Managed by iNiR Settings — add or remove entries via Settings › Autostart."
 
-        const cfg = Config.options?.autostart;
-        if (!cfg || !cfg.entries)
-            return;
+    // ── Model ────────────────────────────────────────────────────────────
 
-        for (let i = 0; i < cfg.entries.length; ++i) {
-            const entry = cfg.entries[i];
-            if (!entry || entry.enabled !== true)
-                continue;
-            startEntry(entry);
-        }
-    }
+    // Each entry: { type: "app"|"command", desktopId?: string, command?: string, enabled: bool }
+    property var entries: []
+    // spawn-at-startup / spawn-sh-at-startup lines found OUTSIDE the managed
+    // markers (base iNiR lines + hand-written user lines). Each:
+    //   { tokens: [string], enabled: bool, raw: string }
+    // Read-only — we never rewrite these, only reflect them in the UI so the
+    // user sees what niri is already launching.
+    property var externalLines: []
+    property bool ready: false
+    // "" | "missing" (file absent) | "notniri" (compositor isn't niri) | "read" | "write"
+    property string status: isNiri ? "read" : "notniri"
 
-    function startEntry(entry) {
-        if (!entry)
-            return;
+    // Frozen head/tail captured at parse time so writes never disturb lines
+    // outside the managed section.
+    property string _head: ""
+    property string _tail: ""
+    property bool _hasMarkers: false
 
-        if (entry.type === "desktop" && entry.desktopId) {
-            startDesktop(entry.desktopId);
-        } else if (entry.type === "command" && entry.command) {
-            startCommand(entry.command);
-        }
-    }
+    // ── Lifecycle ────────────────────────────────────────────────────────
 
-    function startDesktop(desktopId) {
-        if (!desktopId)
-            return;
-
-        const id = String(desktopId).trim();
-        if (id.length === 0)
-            return;
-
-        startDesktopProc.desktopId = id
-        startDesktopProc.running = true
-    }
-
-    Process {
-        id: startDesktopProc
-        property string desktopId: ""
-        command: ["/usr/bin/gtk-launch", startDesktopProc.desktopId]
-        onExited: (exitCode, exitStatus) => {
-            if (exitCode !== 0 && startDesktopProc.desktopId.length > 0) {
-                Quickshell.execDetached([startDesktopProc.desktopId])
-            }
-            startDesktopProc.desktopId = ""
-        }
-    }
-
-    function startCommand(command) {
-        if (!command)
-            return;
-
-        const cmd = String(command).trim();
-        if (cmd.length === 0)
-            return;
-
-        Quickshell.execDetached(["/usr/bin/bash", "-lc", cmd]);
-    }
-
-    Process {
-        id: systemdListProc
-        property var buffer: []
-        command: [
-            "/usr/bin/bash", "-lc",
-            "dir=\"$HOME/.config/systemd/user\"; "
-            + "[ -d \"$dir\" ] || exit 0; "
-            + "for f in \"$dir\"/*.service; do "
-            + "[ -e \"$f\" ] || continue; "
-            + "name=$(basename \"$f\"); "
-            + "enabled=$(/usr/bin/systemctl --user is-enabled \"$name\" 2>/dev/null || echo disabled); "
-            + "desc=$(grep -m1 '^Description=' \"$f\" | cut -d= -f2-); "
-            + "wanted=$(grep -m1 '^WantedBy=' \"$f\" | cut -d= -f2-); "
-            + "after=$(grep -m1 '^After=' \"$f\" | cut -d= -f2-); "
-            + "desc=${desc//|/ }; wanted=${wanted//|/ }; kind=session; "
-            + "printf '%s\n' \"$wanted\" \"$after\" | grep -q 'tray-apps.target' && kind=tray; "
-            + "ii_managed=no; "
-            + "grep -q '^# ii-autostart' \"$f\" 2>/dev/null && ii_managed=yes; "
-            + "echo \"$name|$enabled|$kind|$desc|$wanted|$ii_managed\"; "
-            + "done"
-        ]
-        stdout: SplitParser {
-            onRead: (line) => {
-                systemdListProc.buffer.push(line)
-            }
-        }
-        onExited: (exitCode, exitStatus) => {
-            const units = []
-            if (exitCode !== 0) {
-                _log("[Autostart] systemdListProc exited with", exitCode, exitStatus)
-                root.systemdUnits = units
-                systemdListProc.buffer = []
-                return;
-            }
-
-            for (let i = 0; i < systemdListProc.buffer.length; ++i) {
-                const raw = systemdListProc.buffer[i].trim()
-                if (raw.length === 0)
-                    continue;
-                const parts = raw.split("|")
-                if (parts.length < 6)
-                    continue;
-                const name = parts[0]
-                const state = parts[1]
-                const kind = parts[2]
-                const desc = parts.length > 3 ? parts[3] : ""
-                const wanted = parts.length > 4 ? parts[4] : ""
-                const enabled = state.indexOf("enabled") !== -1
-                const isTray = kind === "tray"
-                const iiManaged = parts[5] === "yes"
-                units.push({
-                    name: name,
-                    state: state,
-                    description: desc,
-                    enabled: enabled,
-                    isTray: isTray,
-                    iiManaged: iiManaged
-                })
-            }
-            _log("[Autostart] Loaded", units.length, "user systemd services")
-            root.systemdUnits = units
-            systemdListProc.buffer = []
-        }
-    }
-
-    function refreshSystemdUnits() {
-        systemdListProc.buffer = []
-        systemdListProc.running = true
-    }
-
-    function requestRefreshSystemdUnits(): void {
-        root._systemdUnitsRefreshRequested = true
-        refreshTimer.restart()
-    }
-
-    Timer {
-        id: refreshTimer
-        interval: 1200
-        repeat: false
-        onTriggered: {
-            if (!root._systemdUnitsRefreshRequested)
-                return;
-            if (!(Config.ready ?? false))
-                return;
-            root._systemdUnitsRefreshRequested = false
-            root.refreshSystemdUnits()
-        }
-    }
-
-    Process {
-        id: systemdToggleProc
-        function toggle(name, enabled) {
-            if (!name || name.length === 0)
-                return;
-            const op = enabled ? "enable" : "disable"
-            _log("[Autostart] Toggling user service", name, "->", enabled ? "enabled" : "disabled")
-            exec(["/usr/bin/systemctl", "--user", op, "--now", name])
-        }
-        onExited: (exitCode, exitStatus) => {
-            _log("[Autostart] systemdToggleProc exited with", exitCode, exitStatus)
-            refreshSystemdUnits()
-        }
-    }
-
-    FileView {
-        id: userServiceWriter
-    }
-
-    Process {
-        id: systemdCreateProc
-        function activate(unitName) {
-            if (!unitName || unitName.length === 0)
-                return;
-            _log("[Autostart] Activating new user service", unitName)
-            const escaped = StringUtils.shellSingleQuoteEscape(unitName)
-            exec(["/usr/bin/bash", "-lc", "/usr/bin/systemctl --user daemon-reload\n/usr/bin/systemctl --user enable --now '" + escaped + "' 2>/dev/null || true"])
-        }
-        onExited: (exitCode, exitStatus) => {
-            _log("[Autostart] systemdCreateProc exited with", exitCode, exitStatus)
-            refreshSystemdUnits()
-        }
-    }
-
-    Process {
-        id: systemdDeleteProc
-        function remove(name) {
-            if (!name || name.length === 0)
-                return;
-            const home = Quickshell.env("HOME")
-            const dir = `${home}/.config/systemd/user`
-            _log("[Autostart] Deleting user service", name)
-            const cmd = "/usr/bin/systemctl --user disable --now '" + name
-                + "' 2>/dev/null || true; "
-                // Only remove units that were created by ii Autostart (marker comment)
-                + "if grep -q '^# ii-autostart' '" + dir + "/" + name + "' 2>/dev/null; then "
-                + "/usr/bin/rm -f '" + dir + "/" + name + "' 2>/dev/null || true; "
-                + "fi; "
-                + "/usr/bin/systemctl --user daemon-reload"
-            exec(["/usr/bin/bash", "-lc", cmd])
-        }
-        onExited: (exitCode, exitStatus) => {
-            _log("[Autostart] systemdDeleteProc exited with", exitCode, exitStatus)
-            refreshSystemdUnits()
-        }
-    }
-
-    function setServiceEnabled(name, enabled) {
-        systemdToggleProc.toggle(name, enabled)
-    }
-
-    function createUserService(name, description, command, kind) {
-        if (!name)
-            return;
-        const trimmedName = String(name).trim()
-        if (trimmedName.length === 0)
-            return;
-        const exec = String(command || "").trim()
-        if (exec.length === 0)
-            return;
-        const safeName = trimmedName.replace(/\s+/g, "-")
-        const desc = String(description || safeName)
-        const isTray = kind === "tray"
-        const afterTarget = isTray ? "tray-apps.target" : "graphical-session.target"
-        const wantedByTarget = isTray ? "tray-apps.target" : "graphical-session.target"
-        // Build path using XDG home directory and trim any file:// prefix to get a real filesystem path
-        const homePath = FileUtils.trimFileProtocol(Directories.home)
-        const dir = `${homePath}/.config/systemd/user`
-        const filePath = `${dir}/${safeName}.service`
-        const text = "# ii-autostart\n"
-            + "[Unit]\n"
-            + "Description=" + desc + "\n"
-            + "After=" + afterTarget + "\n"
-            + "\n"
-            + "[Service]\n"
-            + "Type=simple\n"
-            + "ExecStart=" + exec + "\n"
-            + "Restart=on-failure\n"
-            + "RestartSec=3\n"
-            + "\n"
-            + "[Install]\n"
-            + "WantedBy=" + wantedByTarget + "\n"
-        _log("[Autostart] Writing user service file", filePath)
-        // Ensure the user systemd directory exists before writing the file
-        Quickshell.execDetached(["/usr/bin/mkdir", "-p", dir])
-        userServiceWriter.path = Qt.resolvedUrl(filePath)
-        userServiceWriter.setText(text)
-        systemdCreateProc.activate(safeName + ".service")
-    }
-
-    function deleteUserService(name) {
-        if (!name || name.length === 0)
-            return;
-        systemdDeleteProc.remove(name)
-    }
-
-    // Defer autostart execution to avoid process spawn burst during shell startup.
-    // Panels and tray need the first ~2s of CPU/IO headroom.
-    Timer {
-        id: autostartDelayTimer
-        interval: 2000
-        repeat: false
-        onTriggered: root.load()
-    }
-
-    Component.onCompleted: {
-        if (Config.ready) {
-            autostartDelayTimer.start()
-        }
-        // Defer systemd scanning to keep shell startup smooth.
-        root.requestRefreshSystemdUnits()
-    }
+    Component.onCompleted: root.reload()
 
     Connections {
-        target: Config
-        function onReadyChanged() {
-            if (Config.ready && !root.hasRun) {
-                autostartDelayTimer.start()
+        target: CompositorService
+        function onIsNiriChanged() {
+            root.status = root.isNiri ? "read" : "notniri"
+            if (root.isNiri) root.reload()
+        }
+    }
+
+    function reload(): void {
+        if (!isNiri || startupFilePath.length === 0) {
+            root.status = isNiri ? "missing" : "notniri"
+            return
+        }
+        startupFileView.path = Qt.resolvedUrl(startupFilePath)
+        startupFileView.reload()
+    }
+
+    // ── Parse / serialize ────────────────────────────────────────────────
+
+    function _escape(s): string {
+        return String(s ?? "").replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+    }
+
+    function _unescape(s): string {
+        // KDL strings only escape " and \; any other \x passes through as x.
+        return String(s ?? "").replace(/\\(.)/g, (_, c) => c)
+    }
+
+    function _basename(p): string {
+        const s = String(p ?? "")
+        const i = s.lastIndexOf("/")
+        return (i >= 0 ? s.slice(i + 1) : s).toLowerCase()
+    }
+
+    // Extract the quoted tokens of a spawn line. Returns [] if not a spawn line.
+    function _spawnTokens(rawLine): var {
+        let line = String(rawLine ?? "").trim()
+        if (line.length === 0) return null
+        let enabled = true
+        if (line.startsWith("//")) {
+            enabled = false
+            line = line.replace(/^\/\//, "").trim()
+        }
+        const kw = /^(spawn-sh-at-startup|spawn-at-startup)\s+/
+        if (!kw.test(line)) return null
+        const rest = line.replace(kw, "")
+        const tokens = []
+        const re = /"((?:[^"\\]|\\.)*)"/g
+        let m
+        while ((m = re.exec(rest)) !== null) tokens.push(_unescape(m[1]))
+        if (tokens.length === 0) return null
+        return { tokens: tokens, enabled: enabled, raw: String(rawLine ?? "").trim() }
+    }
+
+    // Does an AppSearch entry match a parsed external spawn line?
+    // gtk-launch form: tokens[0]==="gtk-launch", tokens[1] is a desktop id.
+    // Raw form: tokens[0] is an executable — match by id or command basename.
+    function _appMatchesTokens(app, tokens): bool {
+        if (!app || !tokens || tokens.length === 0) return false
+        const id = String(app.id ?? "").toLowerCase()
+        const cmd0 = _basename(Array.isArray(app.command) ? (app.command[0] ?? "") : (app.command ?? ""))
+        const t0 = String(tokens[0] ?? "").toLowerCase()
+        if (t0 === "gtk-launch") {
+            const t1 = String(tokens[1] ?? "").toLowerCase().replace(/\.desktop$/, "")
+            return t1.length > 0 && t1 === id
+        }
+        // Raw executable form.
+        const b0 = _basename(tokens[0])
+        return (id.length > 0 && (id === t0 || id === b0))
+            || (cmd0.length > 0 && (cmd0 === t0 || cmd0 === b0))
+    }
+
+    function _applyParsed(content): void {
+        const lines = (content ?? "").split("\n")
+        let beginIdx = -1
+        let endIdx = -1
+        for (let i = 0; i < lines.length; i++) {
+            const t = lines[i].trim()
+            if (t === beginMarker && beginIdx < 0) beginIdx = i
+            else if (t === endMarker && endIdx < 0) endIdx = i
+        }
+
+        let head, managedText, tail
+        let hasMarkers = false
+        if (beginIdx >= 0 && endIdx > beginIdx) {
+            hasMarkers = true
+            head = lines.slice(0, beginIdx).join("\n")
+            managedText = lines.slice(beginIdx + 1, endIdx).join("\n")
+            tail = lines.slice(endIdx + 1).join("\n")
+        } else {
+            // First run: no markers. Head = whole file, markers appended on write.
+            head = content ?? ""
+            managedText = ""
+            tail = ""
+        }
+
+        // Guarantee a trailing newline on head so the begin marker starts on
+        // its own line.
+        if (head.length > 0 && !head.endsWith("\n")) head += "\n"
+
+        const entries = []
+        const mlines = managedText.split("\n")
+        const appRe = /^spawn-at-startup\s+"gtk-launch"\s+"((?:[^"\\]|\\.)*)"\s*$/
+        const cmdRe = /^spawn-sh-at-startup\s+"((?:[^"\\]|\\.)*)"\s*$/
+        for (let i = 0; i < mlines.length; i++) {
+            let line = mlines[i].trim()
+            if (line.length === 0) continue
+            let enabled = true
+            if (line.startsWith("//")) {
+                enabled = false
+                line = line.replace(/^\/\//, "").trim()
             }
-            if (Config.ready) {
-                root.requestRefreshSystemdUnits()
+            let m = line.match(appRe)
+            if (m) {
+                entries.push({ type: "app", desktopId: _unescape(m[1]), enabled: enabled })
+                continue
             }
+            m = line.match(cmdRe)
+            if (m) {
+                entries.push({ type: "command", command: _unescape(m[1]), enabled: enabled })
+                continue
+            }
+            // Anything else (decorative comments / blanks) is ignored on parse.
+        }
+
+        // Scan lines OUTSIDE the markers for spawn directives the user (or
+        // iNiR defaults) already has — reflected read-only in the UI.
+        const external = []
+        const outside = (head + "\n" + tail).split("\n")
+        for (let i = 0; i < outside.length; i++) {
+            const parsed = _spawnTokens(outside[i])
+            if (parsed) external.push(parsed)
+        }
+
+        root._head = head
+        root._tail = tail
+        root._hasMarkers = hasMarkers
+        root.entries = entries
+        root.externalLines = external
+        root.ready = true
+        root.status = "read"
+        _log("[Autostart] Parsed", entries.length, "managed +", external.length, "external spawn lines")
+    }
+
+    function _serialize(): string {
+        const lines = []
+        lines.push(beginMarker)
+        lines.push(sectionHeader)
+        for (let i = 0; i < root.entries.length; i++) {
+            const e = root.entries[i]
+            const prefix = e.enabled ? "" : "// "
+            if (e.type === "app") {
+                const id = _escape(e.desktopId ?? "")
+                lines.push(`${prefix}spawn-at-startup "gtk-launch" "${id}"`)
+            } else {
+                const cmd = _escape(e.command ?? "")
+                lines.push(`${prefix}spawn-sh-at-startup "${cmd}"`)
+            }
+        }
+        lines.push(endMarker)
+        const section = lines.join("\n")
+
+        let out = root._head
+        if (out.length > 0 && !out.endsWith("\n")) out += "\n"
+        out += section + "\n"
+        // Tail: ensure it starts on its own line and ends with a newline.
+        if (root._tail.length > 0) {
+            if (!root._tail.startsWith("\n")) out += "\n"
+            out += root._tail
+            if (!out.endsWith("\n")) out += "\n"
+        }
+        return out
+    }
+
+    function _write(): void {
+        if (!isNiri || startupFilePath.length === 0) {
+            root.status = isNiri ? "missing" : "notniri"
+            return
+        }
+        const text = _serialize()
+        // Ensure the directory exists (defensive — the file ships with iNiR).
+        Quickshell.execDetached(["/usr/bin/mkdir", "-p",
+            (Directories.homePath ?? "") + "/.config/niri/config.d"])
+        startupFileView.path = Qt.resolvedUrl(startupFilePath)
+        startupFileView.setText(text)
+        _log("[Autostart] Wrote", root.entries.length, "entries to", startupFilePath)
+    }
+
+    // ── Public mutations ─────────────────────────────────────────────────
+
+    function addApp(desktopId): void {
+        const id = String(desktopId ?? "").trim()
+        if (id.length === 0) return
+        // Avoid duplicates by desktopId.
+        const entries = root.entries.slice()
+        for (let i = 0; i < entries.length; i++) {
+            if (entries[i].type === "app" && entries[i].desktopId === id) {
+                if (!entries[i].enabled) entries[i].enabled = true
+                root.entries = entries
+                _write()
+                return
+            }
+        }
+        entries.push({ type: "app", desktopId: id, enabled: true })
+        root.entries = entries
+        _write()
+    }
+
+    function addCommand(command): void {
+        const cmd = String(command ?? "").trim()
+        if (cmd.length === 0) return
+        const entries = root.entries.slice()
+        entries.push({ type: "command", command: cmd, enabled: true })
+        root.entries = entries
+        _write()
+    }
+
+    function removeEntry(index): void {
+        const entries = root.entries.slice()
+        if (index >= 0 && index < entries.length) {
+            entries.splice(index, 1)
+            root.entries = entries
+            _write()
+        }
+    }
+
+    function setEntryEnabled(index, enabled): void {
+        const entries = root.entries.slice()
+        if (index >= 0 && index < entries.length) {
+            entries[index].enabled = enabled === true
+            root.entries = entries
+            _write()
+        }
+    }
+
+    function isAppEnabled(desktopId): bool {
+        const id = String(desktopId ?? "")
+        for (let i = 0; i < root.entries.length; i++) {
+            const e = root.entries[i]
+            if (e.type === "app" && e.desktopId === id) return e.enabled === true
+        }
+        return false
+    }
+
+    // Does any external (outside-markers) spawn line match this app? Read-only.
+    function isAppExternal(app): bool {
+        const lines = root.externalLines ?? []
+        for (let i = 0; i < lines.length; i++) {
+            if (lines[i].enabled && _appMatchesTokens(app, lines[i].tokens))
+                return true
+        }
+        return false
+    }
+
+    // App is launched at login either via a managed entry or an external line.
+    function isAppOn(app): bool {
+        if (!app) return false
+        if (root.isAppEnabled(app.id)) return true
+        return root.isAppExternal(app)
+    }
+
+    // "managed" (we own it) | "external" (user/defaults own it) | "none"
+    function appEntrySource(app): string {
+        if (!app) return "none"
+        const id = String(app.id ?? "")
+        for (let i = 0; i < root.entries.length; i++) {
+            if (root.entries[i].type === "app" && root.entries[i].desktopId === id)
+                return "managed"
+        }
+        if (root.isAppExternal(app)) return "external"
+        return "none"
+    }
+
+    function setAppEnabled(desktopId, enabled): void {
+        const id = String(desktopId ?? "")
+        const entries = root.entries.slice()
+        let idx = -1
+        for (let i = 0; i < entries.length; i++) {
+            if (entries[i].type === "app" && entries[i].desktopId === id) { idx = i; break }
+        }
+        if (enabled && idx === -1) {
+            entries.push({ type: "app", desktopId: id, enabled: true })
+        } else if (idx !== -1) {
+            entries[idx].enabled = enabled === true
+        }
+        root.entries = entries
+        _write()
+    }
+
+    // ── IPC (scripts / keybinds) ────────────────────────────────
+
+    IpcHandler {
+        target: "autostart"
+        function status(): string {
+            return `${root.isNiri ? "niri" : "other"}|${root.startupFilePath}|${root.entries.length}|${root.externalLines.length}|${root.status}`
+        }
+        function addCommand(cmd: string): string {
+            root.addCommand(cmd)
+            return "ok"
+        }
+        function addApp(desktopId: string): string {
+            root.addApp(desktopId)
+            return "ok"
+        }
+        function removeLast(): string {
+            if (root.entries.length > 0) root.removeEntry(root.entries.length - 1)
+            return "ok"
+        }
+        function reload(): string {
+            root.reload()
+            return "ok"
+        }
+    }
+
+    // ── File I/O ─────────────────────────────────────────────────────────
+
+    FileView {
+        id: startupFileView
+        watchChanges: true
+        printErrors: false
+        onFileChanged: {
+            // External edit (user touched the file by hand) — re-read.
+            _log("[Autostart] file changed externally, reloading")
+            startupFileView.reload()
+        }
+        onLoadedChanged: {
+            if (startupFileView.loaded) {
+                root._applyParsed(startupFileView.text())
+            }
+        }
+        onLoadFailed: {
+            root.ready = true
+            root.status = "missing"
+            root.entries = []
+            root.externalLines = []
+            root._head = ""
+            root._tail = ""
+            root._hasMarkers = false
+            _log("[Autostart] load failed — file missing:", root.startupFilePath)
         }
     }
 }

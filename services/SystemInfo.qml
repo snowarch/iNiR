@@ -13,16 +13,22 @@ Singleton {
     property string distroName: "Unknown"
     property string distroId: "unknown"
     property string distroIcon: "linux-symbolic"
-    property string username: "user"
+    // Seed identity from the process environment so consumers do not build
+    // transient paths for the placeholder user while `id -un` is starting.
+    // The asynchronous lookup below remains the authoritative refresh.
+    property string username: Quickshell.env("USER") || "user"
     property string displayName: ""
+    // Static hostname. `/etc/hostname` is the portable source; the env var is a
+    // seed for the frame before the file is read and is absent on most systems.
+    property string hostname: Quickshell.env("HOSTNAME") || ""
     property string homeUrl: ""
     property string documentationUrl: ""
     property string supportUrl: ""
     property string bugReportUrl: ""
     property string privacyPolicyUrl: ""
     property string logo: ""
-    property string desktopEnvironment: ""
-    property string windowingSystem: ""
+    property string desktopEnvironment: String(Quickshell.env("XDG_CURRENT_DESKTOP") ?? "").trim()
+    property string windowingSystem: String(Quickshell.env("WAYLAND_DISPLAY") ?? "").trim().length > 0 ? "Wayland" : "X11"
 
     function refreshIdentity(): void {
         if (getUsername.running || getDisplayName.running)
@@ -37,7 +43,9 @@ Singleton {
         repeat: false
         onTriggered: {
             refreshIdentity()
-            getDesktopEnvironment.running = true
+            fileHostname.reload()
+            const textHostname = fileHostname.text().trim()
+            if (textHostname.length > 0) hostname = textHostname.split("\n")[0].trim()
             fileOsRelease.reload()
             const textOsRelease = fileOsRelease.text()
 
@@ -124,22 +132,13 @@ Singleton {
         }
     }
 
-    Process {
-        id: getDesktopEnvironment
-        running: false
-        command: ["/usr/bin/bash", "-c", "echo $XDG_CURRENT_DESKTOP,$WAYLAND_DISPLAY"]
-        stdout: StdioCollector {
-            id: deCollector
-            onStreamFinished: {
-                const [desktop, wayland] = deCollector.text.split(",")
-                root.desktopEnvironment = desktop.trim()
-                root.windowingSystem = wayland.trim().length > 0 ? "Wayland" : "X11" // Are there others? 🤔
-            }
-        }
-    }
-
     FileView {
         id: fileOsRelease
         path: "/etc/os-release"
+    }
+
+    FileView {
+        id: fileHostname
+        path: "/etc/hostname"
     }
 }

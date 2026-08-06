@@ -20,9 +20,47 @@ Singleton {
     signal brightnessChanged()
 
     property var ddcMonitors: []
-    readonly property list<BrightnessMonitor> monitors: Quickshell.screens.map(screen => monitorComp.createObject(root, {
-        screen
-    }))
+    property list<BrightnessMonitor> monitors: []
+    property string backlightDevice: ""
+    property bool backlightDetectionReady: false
+    property int _bestBacklightMax: 0
+
+    // Rebuilt explicitly rather than bound to Quickshell.screens: createObject()
+    // parents each monitor to root, so a binding would strand a whole generation
+    // of BrightnessMonitors on every screen change (hotplug, DPMS, mode switch).
+    // Stranded ones are not inert — each still owns a Process and a Timer and
+    // still reacts to ddcMonitors, re-spawning ddcutil on every refresh.
+    function _rebuildMonitors(): void {
+        // Array.from is load-bearing: list<T> is a live view of the property, not
+        // a snapshot, so holding it directly would alias the *new* list after the
+        // assignment below and destroy the monitors we just built.
+        const stale = Array.from(root.monitors);
+        root.monitors = Quickshell.screens.map(screen => monitorComp.createObject(root, {
+            screen
+        }));
+        stale.forEach(m => m.destroy());
+    }
+
+    function _detectBacklight(): void {
+        root.backlightDetectionReady = false
+        root.backlightDevice = ""
+        root._bestBacklightMax = 0
+        backlightDetectProc.running = false
+        backlightDetectProc.running = true
+    }
+
+    Component.onCompleted: {
+        root._rebuildMonitors()
+        root._detectBacklight()
+    }
+
+    Connections {
+        target: Quickshell
+        function onScreensChanged(): void {
+            root._rebuildMonitors();
+            root._detectBacklight();
+        }
+    }
 
     function getMonitorForScreen(screen: ShellScreen): var {
         return monitors.find(m => m.screen === screen);
@@ -49,6 +87,38 @@ Singleton {
     onMonitorsChanged: {
         ddcMonitors = [];
         ddcProc.running = true;
+    }
+
+    Process {
+        id: backlightDetectProc
+        command: ["brightnessctl", "-l", "-m", "-c", "backlight"]
+        stdout: SplitParser {
+            splitMarker: "\n"
+            onRead: line => {
+                // brightnessctl machine format:
+                // device,class,current,current-percent,max
+                const parts = line.trim().split(",")
+                if (parts.length < 5 || parts[1] !== "backlight")
+                    return
+                const name = parts[0]
+                const max = Number(parts[parts.length - 1])
+                if (!name || !Number.isFinite(max) || max <= 0)
+                    return
+                // Multi-backlight AMD laptops commonly expose a tiny stub and
+                // the real panel device. The useful panel has the larger range.
+                if (max > root._bestBacklightMax) {
+                    root._bestBacklightMax = max
+                    root.backlightDevice = name
+                }
+            }
+        }
+        onExited: {
+            root.backlightDetectionReady = true
+            root.monitors.forEach(monitor => {
+                if (!monitor.isDdc)
+                    monitor.initialize()
+            })
+        }
     }
 
     Process {
@@ -92,6 +162,7 @@ Singleton {
         property real multipliedBrightness: Math.max(0, Math.min(1, brightness * ((Config.options?.light?.antiFlashbang?.enable ?? false) ? brightnessMultiplier : 1)))
         property bool ready: false
         property bool animateChanges: !monitor.isDdc
+        property bool writePending: false
 
         onBrightnessChanged: {
             if (!monitor.ready) return;
@@ -107,32 +178,62 @@ Singleton {
             }
         }
         onMultipliedBrightnessChanged: {
-            if (monitor.animateChanges) syncBrightness();
-            else setTimer.restart();
+            if (!monitor.ready) return
+            monitor.writePending = true
+            if (!setTimer.running)
+                setTimer.start()
         }
 
         function initialize() {
             monitor.ready = false;
-            initProc.command = isDdc ? ["ddcutil", "-b", busNum, "getvcp", "10", "--brief"] : ["sh", "-c", `echo "a b c $(brightnessctl g) $(brightnessctl m)"`];
+            if (isDdc) {
+                initProc.command = ["ddcutil", "-b", busNum, "getvcp", "10", "--brief"]
+            } else if (!root.backlightDetectionReady) {
+                return
+            } else if (root.backlightDevice.length > 0) {
+                // Pass the device as a positional shell argument instead of
+                // interpolating it into the command string.
+                initProc.command = [
+                    "/bin/sh", "-c",
+                    "printf '%s %s\\n' \"$(brightnessctl -d \"$1\" g)\" \"$(brightnessctl -d \"$1\" m)\"",
+                    "_", root.backlightDevice
+                ]
+            } else {
+                monitor.brightness = NaN
+                monitor.ready = true
+                return
+            }
             initProc.running = true;
         }
 
         readonly property Process initProc: Process {
             stdout: SplitParser {
                 onRead: data => {
-                    const [, , , current, max] = data.split(" ");
-                    monitor.rawMaxBrightness = parseInt(max);
-                    monitor.brightness = parseInt(current) / monitor.rawMaxBrightness;
+                    const parts = data.trim().split(/\s+/)
+                    const current = Number(parts[parts.length - 2])
+                    const max = Number(parts[parts.length - 1])
+                    if (!Number.isFinite(current) || !Number.isFinite(max)
+                            || max <= 0) {
+                        monitor.brightness = NaN
+                        monitor.ready = true
+                        return
+                    }
+                    monitor.rawMaxBrightness = max
+                    monitor.brightness = current / max
                     monitor.ready = true;
                 }
             }
         }
 
-        // We need a delay for DDC monitors because they can be quite slow and might act weird with rapid changes
+        // Coalesce animation frames. DDC needs a longer debounce; backlight
+        // devices are capped near 30 writes/second so high-range AMD devices do
+        // not spawn a process for every QML animation frame. Fixes #188.
         property var setTimer: Timer {
             id: setTimer
-            interval: monitor.isDdc ? 300 : 0
+            interval: monitor.isDdc ? 300 : 32
             onTriggered: {
+                if (!monitor.writePending) return
+                monitor.writePending = false
                 syncBrightness();
             }
         }
@@ -140,7 +241,14 @@ Singleton {
         function syncBrightness() {
             const brightnessValue = Math.max(monitor.multipliedBrightness, 0)
             const rawValueRounded = Math.max(Math.floor(brightnessValue * monitor.rawMaxBrightness), 1);
-            setProc.command = isDdc ? ["ddcutil", "-b", busNum, "setvcp", "10", rawValueRounded] : ["brightnessctl", "--class", "backlight", "s", rawValueRounded, "--quiet"];
+            if (isDdc) {
+                setProc.command = ["ddcutil", "-b", busNum, "setvcp", "10", rawValueRounded]
+            } else if (root.backlightDevice.length > 0) {
+                setProc.command = ["brightnessctl", "-d", root.backlightDevice,
+                    "s", rawValueRounded, "--quiet"]
+            } else {
+                return
+            }
             setProc.startDetached();
         }
 

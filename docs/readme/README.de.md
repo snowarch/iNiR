@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.27.0-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.29.0-blue?style=flat-square" alt="Version"></a>
   <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
@@ -111,7 +111,7 @@ Ich wollte dass mein Desktop auf eine bestimmte Art aussieht und funktioniert, u
 ## Funktionen
 
 **Zwei Panel-Familien**, im laufenden Betrieb umschaltbar mit `Super+Shift+W`:
-- **Material ii** — schwebende Leiste, Seitenleisten, Dock, 5 visuelle Stile (material, cards, aurora, inir, angel)
+- **Material ii** — schwebende Leiste, Seitenleisten, Dock, 6 visuelle Stile (material, cards, aurora, inir, angel, zzz)
 - **Waffle** — Taskleiste im Windows-11-Stil, Startmenü, Aktionscenter, Benachrichtigungscenter
 
 **Automatische Thematisierung** — Hintergrundbild wählen und alles passt sich an:
@@ -128,7 +128,7 @@ Ich wollte dass mein Desktop auf eine bestimmte Art aussieht und funktioniert, u
 
 Hintergrundbild wählen und das gesamte System folgt — Shell, GTK/Qt-Apps, Terminals, Firefox, Discord, SDDM-Anmeldebildschirm. Vollautomatisch.
 
-- **5 visuelle Stile** — Material (einfarbig), Cards, Aurora (Glasunschärfe), iNiR (TUI-inspiriert), Angel (Neo-Brutalismus)
+- **6 visuelle Stile** — Material (einfarbig), Cards, Aurora (Glasunschärfe), iNiR (TUI-inspiriert), Angel (Neo-Brutalismus), ZZZ
 - **Dynamische Hintergrundfarben** über Material You — systemweit propagiert
 - **10 Terminal-Tools automatisch thematisiert** — foot, kitty, alacritty, starship, fuzzel, pywalfox, btop, lazygit, yazi
 - **App-Thematisierung** — GTK3/4, Qt (über plasma-integration + darkly), Firefox (MaterialFox), Discord/Vesktop (System24)
@@ -144,7 +144,6 @@ Linke Seitenleiste (App-Schublade):
 - **YT Music** — vollständiger Player mit Suche, Warteschlange und Steuerung
 - **Wallhaven-Browser** — Hintergrundbilder direkt suchen und anwenden
 - **Anime-Tracker** — AniList-Integration mit Sendeplan
-- **Reddit-Feed** — Subreddits inline durchsuchen
 - **Übersetzer** — über Gemini oder translate-shell
 - **Verschiebbare Widgets** — Krypto, Medienplayer, Schnellnotizen, Statusringe, Wochenkalender
 
@@ -282,5 +281,5 @@ Siehe [CONTRIBUTING.md](../../CONTRIBUTING.md) für Entwicklungseinrichtung, Cod
 <p align="center">
   <a href="https://github.com/snowarch/inir/graphs/contributors">Mitwirkende</a> &bull;
   <a href="CHANGELOG.md">Changelog</a> &bull;
-  <a href="LICENSE">MIT-Lizenz</a>
+  <a href="LICENSE">GPL-3.0-Lizenz</a>
 </p>

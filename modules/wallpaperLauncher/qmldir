@@ -1,0 +1,7 @@
+module qs.modules.wallpaperLauncher
+
+WallpaperLauncher 1.0 WallpaperLauncher.qml
+WallpaperLauncherContent 1.0 WallpaperLauncherContent.qml
+WallpaperLauncherItem 1.0 WallpaperLauncherItem.qml
+WallpaperLauncherList 1.0 WallpaperLauncherList.qml
+WallpaperLibrary 1.0 WallpaperLibrary.qml

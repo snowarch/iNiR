@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import qs
 import qs.services
 import qs.modules.common
@@ -25,7 +26,7 @@ Rectangle {
                 if (CompositorService.isNiri) {
                     NiriService.toggleOverview()
                 } else {
-                    GlobalStates.overviewOpen = true
+                    GlobalStates.openOverview(root.QsWindow.window?.screen?.name ?? "")
                 }
             }
         }
@@ -63,14 +64,14 @@ Rectangle {
                 if (CompositorService.isNiri) {
                     NiriService.toggleOverview()
                 } else {
-                    GlobalStates.overviewOpen = !GlobalStates.overviewOpen
+                    GlobalStates.toggleOverview(root.QsWindow.window?.screen?.name ?? "")
                 }
             }
         }
     }
 
     BarToolTip {
-        extraVisibleCondition: hoverArea.containsMouse
+        barExtraVisibleCondition: hoverArea.containsMouse
         text: Translation.tr("Show desktop")
     }
 }

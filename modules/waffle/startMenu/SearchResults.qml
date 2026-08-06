@@ -101,9 +101,12 @@ RowLayout {
                 
                 if (count >= root.maxResultsPerCategory) continue;
                 
-                // Reuse entry directly, just set category
-                entry.category = categorizedResults.length === 0 ? Translation.tr("Best match") : type;
-                categorizedResults.push(entry);
+                // Never mutate LauncherSearch.results from inside this model binding;
+                // doing so makes the source binding depend on its own output.
+                categorizedResults.push(Object.assign({}, entry, {
+                    category: categorizedResults.length === 0
+                        ? Translation.tr("Best match") : type
+                }));
                 categoryCount.set(type, count + 1);
             }
             return categorizedResults;
@@ -184,7 +187,7 @@ RowLayout {
                     const appId = isAppEntry ? (resultPreview.entry?.id ?? "") : "";
                     const pinned = isAppEntry ? (Config.options.dock?.pinnedApps?.includes(appId) ?? false) : false;
                     var result = [
-                        searchResultComp.createObject(null, {
+                        ({
                             name: resultPreview.entry?.verb ?? Translation.tr("Open"),
                             iconName: isAppEntry ? "open_in_new" : "keyboard_return",
                             iconType: LauncherSearchResult.IconType.Material,
@@ -193,7 +196,7 @@ RowLayout {
                             }
                         }),
                         ...(isAppEntry ? [
-                            searchResultComp.createObject(null, {
+                            ({
                                 name: pinned ? Translation.tr("Unpin from taskbar") : Translation.tr("Pin to taskbar"),
                                 iconName: pinned ? "keep_off" : "keep",
                                 iconType: LauncherSearchResult.IconType.Material,
@@ -235,8 +238,4 @@ RowLayout {
         }
     }
 
-    Component {
-        id: searchResultComp
-        LauncherSearchResult {}
-    }
 }

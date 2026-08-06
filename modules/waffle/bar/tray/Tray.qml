@@ -23,7 +23,7 @@ RowLayout {
     BarIconButton {
         id: overflowButton
 
-        visible: (TrayService.unpinnedItems.length > 0 || root.dragging) && !GameMode.shouldHidePanels
+        visible: (TrayService.unpinnedItems.length > 0 || root.dragging)
         checked: root.overflowOpen
 
         iconName: "chevron-down"
@@ -57,7 +57,7 @@ RowLayout {
         }
 
         BarToolTip {
-            extraVisibleCondition: overflowButton.shouldShowTooltip && !root.overflowOpen
+            barExtraVisibleCondition: overflowButton.shouldShowTooltip && !root.overflowOpen
             text: Translation.tr("Show hidden icons")
         }
 
@@ -122,7 +122,7 @@ RowLayout {
 
             BarToolTip {
                 id: pinTooltip
-                extraVisibleCondition: trayButton.Drag.active && pinDropArea.containsDrag && pinDropArea.willPin
+                barExtraVisibleCondition: trayButton.Drag.active && pinDropArea.containsDrag && pinDropArea.willPin
                 horizontalPadding: 6
                 verticalPadding: 6
                 realContentItem: FluentIcon {

@@ -1,6 +1,7 @@
 module qs.services.ai
 AiMessageData 1.0 AiMessageData.qml
 AiModel 1.0 AiModel.qml
+singleton AiProviderCatalog 1.0 AiProviderCatalog.qml
 AnthropicApiStrategy 1.0 AnthropicApiStrategy.qml
 ApiStrategy 1.0 ApiStrategy.qml
 GeminiApiStrategy 1.0 GeminiApiStrategy.qml

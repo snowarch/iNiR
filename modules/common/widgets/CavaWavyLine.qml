@@ -6,28 +6,28 @@ import QtQuick
 Canvas {
     id: root
     property list<var> points // Input from Cava
-    property color color: Appearance.m3colors.m3primary
+    property color color: CavaTheme.primaryColor
     property real lineWidth: 3
     property real amplitudeScale: 1.0
 
-    // Animation loop to drive the wave phase even if cava points are static (though cava is usually live)
     property real phase: 0
+    property double _lastUpdateMs: 0
     
-    // Smoothed points for nicer curve
-    property var smoothPoints: []
     property int smoothing: 2
 
-    onPointsChanged: root.requestPaint()
-    
-    // Timer for continuous animation if needed (e.g. for phase shift)
-    Timer {
-        interval: 32 // ~30fps
-        running: parent.visible
-        repeat: true
-        onTriggered: {
-            root.phase += 0.1
+    onPointsChanged: {
+        if (!root.visible)
+            return
+        const now = Date.now()
+        if (root._lastUpdateMs > 0)
+            root.phase += (now - root._lastUpdateMs) * 0.003125
+        root._lastUpdateMs = now
+        root.requestPaint()
+    }
+    onVisibleChanged: {
+        root._lastUpdateMs = 0
+        if (root.visible)
             root.requestPaint()
-        }
     }
 
     onPaint: {
@@ -50,18 +50,18 @@ Canvas {
         }
 
         // Smoothing
-        var smoothWindow = root.smoothing; 
-        root.smoothPoints = [];
+        var smoothWindow = Math.max(0, root.smoothing);
+        var smoothPoints = new Array(n);
+        var count = smoothWindow * 2 + 1;
+        var sum = 0;
+        for (var j = -smoothWindow; j <= smoothWindow; ++j)
+            sum += points[Math.max(0, Math.min(n - 1, j))];
         for (var i = 0; i < n; ++i) {
-            var sum = 0, count = 0;
-            for (var j = -smoothWindow; j <= smoothWindow; ++j) {
-                var idx = Math.max(0, Math.min(n - 1, i + j));
-                sum += points[idx];
-                count++;
-            }
-            root.smoothPoints.push(sum / count);
+            smoothPoints[i] = sum / count;
+            var outgoing = Math.max(0, Math.min(n - 1, i - smoothWindow));
+            var incoming = Math.max(0, Math.min(n - 1, i + smoothWindow + 1));
+            sum += points[incoming] - points[outgoing];
         }
-
         ctx.beginPath();
         var centerY = height / 2;
         var maxVal = 1000.0; // Cava max value usually
@@ -77,7 +77,7 @@ Canvas {
             // Use phase to make it wave-like even with static magnitude
             // But cava gives magnitude. Let's just map magnitude to Y offset.
             
-            var magnitude = (root.smoothPoints[i] / maxVal) * (height / 2) * root.amplitudeScale;
+            var magnitude = (smoothPoints[i] / maxVal) * (height / 2) * root.amplitudeScale;
             // Alternating up/down for wave effect? 
             // Cava gives positive magnitudes.
             // Let's multiply by sin(x + phase) to make it look like a wave that is shaped by cava magnitude

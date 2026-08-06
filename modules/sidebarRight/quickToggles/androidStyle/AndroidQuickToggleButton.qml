@@ -84,43 +84,56 @@ GroupButton {
     horizontalPadding: padding
     verticalPadding: padding
 
-    colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer2 
+    // ZZZ: the visible surface is the chamfered ZzzPlate below, so the GroupButton's
+    // own rounded rect is held transparent.
+    colBackground: Appearance.zzzEverywhere ? "transparent"
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2
         : root.colDarkSurface
-    colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover 
+    colBackgroundHover: Appearance.zzzEverywhere ? "transparent"
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
         : root.colDarkSurfaceHover
-    colBackgroundToggled: Appearance.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimary, 0.45)
-        : Appearance.inirEverywhere 
+    colBackgroundToggled: Appearance.zzzEverywhere ? "transparent"
+        : Appearance.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimary, 0.45)
+        : Appearance.inirEverywhere
         ? Appearance.inir.colPrimaryContainer
         : Appearance.colors.colPrimary
-    colBackgroundToggledHover: Appearance.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimaryHover, 0.35)
-        : Appearance.inirEverywhere 
+    colBackgroundToggledHover: Appearance.zzzEverywhere ? "transparent"
+        : Appearance.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimaryHover, 0.35)
+        : Appearance.inirEverywhere
         ? Appearance.inir.colPrimaryContainerHover
         : Appearance.colors.colPrimaryHover
-    colBackgroundToggledActive: Appearance.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimaryActive, 0.30)
-        : Appearance.inirEverywhere 
+    colBackgroundToggledActive: Appearance.zzzEverywhere ? "transparent"
+        : Appearance.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimaryActive, 0.30)
+        : Appearance.inirEverywhere
         ? Appearance.inir.colPrimaryContainerActive
         : Appearance.colors.colPrimaryActive
-    buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-        : Appearance.inirEverywhere 
-        ? Appearance.inir.roundingSmall 
+    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+        : Appearance.inirEverywhere
+        ? Appearance.inir.roundingSmall
         : (toggled ? Appearance.rounding.large : baseHeight / 2)
-    buttonRadiusPressed: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+    buttonRadiusPressed: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.normal
-    property color colText: Appearance.angelEverywhere
+    property color colText: Appearance.zzzEverywhere
+        ? (toggled ? Appearance.zzz.onAccentSoft : Appearance.zzz.inkMuted)
+        : Appearance.angelEverywhere
         ? (toggled ? Appearance.angel.colOnPrimary : Appearance.angel.colText)
         : Appearance.inirEverywhere
         ? (toggled ? Appearance.inir.colOnPrimaryContainer : Appearance.inir.colText)
         : Appearance.auroraEverywhere
-        ? (toggled ? Appearance.m3colors.m3onPrimary : Appearance.m3colors.m3onSurface)
+        ? (toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurface)
         : toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer2
-    property color colIcon: Appearance.angelEverywhere
+    property color colIcon: Appearance.zzzEverywhere
+        ? (toggled ? Appearance.zzz.onAccentSoft : Appearance.zzz.ink)
+        : Appearance.angelEverywhere
         ? (toggled ? Appearance.angel.colOnPrimary : Appearance.angel.colText)
         : Appearance.inirEverywhere
         ? (toggled ? Appearance.inir.colOnPrimaryContainer : Appearance.inir.colText)
         : Appearance.auroraEverywhere
-        ? (toggled ? Appearance.m3colors.m3onPrimary : Appearance.m3colors.m3onSurface)
+        ? (toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurface)
         : toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer2
 
     onClicked: {
@@ -128,6 +141,19 @@ GroupButton {
     }
 
     contentItem: Item {
+        // ZZZ console key: a real chamfered plate (geometry, not a sticker). The
+        // fill carries the active state; a subtle hairline frames it when idle.
+        ZzzPlate {
+            anchors.fill: parent
+            visible: Appearance.zzzEverywhere
+            chamfer: root.buttonHovered ? Appearance.zzz.cutCorner : Appearance.zzz.cutCorner * 0.65
+            fillColor: root.toggled ? Appearance.zzz.accentSoft
+                : root.buttonHovered ? Appearance.zzz.sticker : Appearance.zzz.paperAlt
+            strokeColor: root.toggled ? "transparent"
+                : root.buttonHovered ? Appearance.zzz.accentSoft : Appearance.zzz.hairline
+            strokeWidth: 1
+        }
+
         MaterialSymbol {
             anchors.centerIn: parent
             fill: root.toggled ? 1 : 0

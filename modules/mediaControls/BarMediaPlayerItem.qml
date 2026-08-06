@@ -20,9 +20,9 @@ Item { // Player instance - Old style design
     property int visualizerSmoothing: 2
     property real radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal : Appearance.rounding.normal
 
-    property var artUrl: player?.trackArtUrl
+    property var artUrl: MprisController.effectiveArtUrl(player)
     property string artDownloadLocation: Directories.coverArt
-    property color artDominantColor: ColorUtils.mix((colorQuantizer?.colors[0] ?? Appearance.colors.colPrimary), Appearance.colors.colPrimaryContainer, 0.8) || Appearance.m3colors.m3secondaryContainer
+    property color artDominantColor: ColorUtils.mix((colorQuantizer?.colors[0] ?? Appearance.colors.colPrimary), Appearance.colors.colPrimaryContainer, 0.8) || Appearance.colors.colSecondaryContainer
     readonly property bool downloaded: artworkResolver.ready
 
     property string displayedArtFilePath: artworkResolver.displaySource
@@ -30,17 +30,21 @@ Item { // Player instance - Old style design
     component TrackChangeButton: RippleButton {
         implicitWidth: 24
         implicitHeight: 24
+        buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
 
         property var iconName
-        colBackground: Appearance.angelEverywhere ? "transparent"
+        colBackground: Appearance.zzzEverywhere ? Appearance.colors.colLayer1
+            : Appearance.angelEverywhere ? "transparent"
             : Appearance.inirEverywhere ? "transparent"
             : Appearance.auroraEverywhere ? "transparent"
             : ColorUtils.transparentize(blendedColors.colSecondaryContainer, 1)
-        colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+        colBackgroundHover: Appearance.zzzEverywhere ? Appearance.colors.colLayer1Hover
+            : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
             : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
             : blendedColors.colSecondaryContainerHover
-        colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+        colRipple: Appearance.zzzEverywhere ? Appearance.colors.colLayer1Active
+            : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
             : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
             : blendedColors.colSecondaryContainerActive
@@ -49,7 +53,8 @@ Item { // Player instance - Old style design
             iconSize: Appearance.font.pixelSize.huge
             fill: 1
             horizontalAlignment: Text.AlignHCenter
-            color: Appearance.angelEverywhere ? Appearance.angel.colText
+            color: Appearance.zzzEverywhere ? Appearance.colors.colOnLayer1
+                : Appearance.angelEverywhere ? Appearance.angel.colText
                 : Appearance.inirEverywhere ? Appearance.inir.colText
                 : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer0
                 : blendedColors.colOnSecondaryContainer
@@ -127,7 +132,7 @@ Item { // Player instance - Old style design
             id: auroraWallpaper
             anchors.fill: parent
             visible: Appearance.auroraEverywhere && !Appearance.inirEverywhere
-            source: Wallpapers.effectiveWallpaperUrl
+            source: visible ? Wallpapers.effectiveWallpaperUrl : ""
             fillMode: Image.PreserveAspectCrop
             cache: true
             sourceSize.width: background.width

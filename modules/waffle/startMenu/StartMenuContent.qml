@@ -17,6 +17,22 @@ WBarAttachedPanelContent {
     property string searchText: LauncherSearch.query
     property bool showAllApps: false
 
+    function applyDevDestination(): void {
+        const view = DevNavigation.requestedWaffleStartView
+        showAllApps = view === "all-apps"
+        if (view === "search" && LauncherSearch.query.length === 0)
+            LauncherSearch.query = "a"
+        else if (view !== "search")
+            LauncherSearch.query = ""
+    }
+
+    Component.onCompleted: applyDevDestination()
+
+    Connections {
+        target: DevNavigation
+        function onRequestedWaffleStartViewChanged() { root.applyDevDestination() }
+    }
+
     StartMenuContext { id: context }
 
     Keys.onPressed: event => {
@@ -67,11 +83,15 @@ WBarAttachedPanelContent {
         screenWidth: root._screenW
         screenHeight: root._screenH
         contentItem: WPanelPageColumn {
+            spacing: 0
+
             SearchBar {
                 id: searchBar
                 Layout.fillWidth: true
                 implicitWidth: Looks.dp(600)
-                horizontalPadding: root.searching ? Looks.dp(16) : Looks.dp(24)
+                horizontalPadding: root.searching
+                    ? Looks.dp(16)
+                    : Looks.dp(24)
                 // searching is read-only in SearchBar (bound to text length), so we only listen to changes
                 onSearchingChanged: if (searching !== root.searching) root.searching = searching
                 focus: true

@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.common.functions
 import qs.services
 import QtQuick
 import Quickshell
@@ -14,8 +15,8 @@ Rectangle {
         && clientDimensions.at && clientDimensions.size
         && clientDimensions.at.length >= 2 && clientDimensions.size.length >= 2)
 
-    property color colBackground: Qt.alpha("#88111111", 0.9)
-    property color colForeground: "#ddffffff"
+    property color colBackground: Qt.alpha(Appearance.colors.colScrim, 0.9)
+    property color colForeground: ColorUtils.applyAlpha(Appearance.colors.colOnLayer0, 0.87)
     property bool showLabel: Config.options?.regionSelector?.targetRegions?.showLabel ?? true
     property bool showIcon: false
     property bool targeted: false
@@ -56,7 +57,7 @@ Rectangle {
             radius: Appearance.rounding.verysmall
             color: root.colBackground
             border.width: 1
-            border.color: Appearance.m3colors.m3outlineVariant
+            border.color: Appearance.colors.colOutlineVariant
             implicitWidth: regionInfoRow.implicitWidth + horizontalPadding * 2
             implicitHeight: regionInfoRow.implicitHeight + verticalPadding * 2
 

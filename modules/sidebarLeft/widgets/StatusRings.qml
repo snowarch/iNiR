@@ -24,9 +24,9 @@ Item {
             icon: "memory"
             value: ResourceUsage.cpuUsage
             label: Math.round(ResourceUsage.cpuUsage * 100) + "%"
-            ringColor: ResourceUsage.cpuUsage >= 0.9 ? Appearance.colors.colError :
-                   ResourceUsage.cpuUsage >= 0.7 ? Appearance.colors.colTertiary :
-                   Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.colors.colPrimary
+            ringColor: ResourceUsage.cpuUsage >= 0.9 ? (Appearance.zzzEverywhere ? Appearance.zzz.signal : Appearance.colors.colError) :
+                   ResourceUsage.cpuUsage >= 0.7 ? (Appearance.zzzEverywhere ? Appearance.zzz.tertiary : Appearance.colors.colTertiary) :
+                   Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.colors.colPrimary
             tip: "CPU"
             visible: Config.options?.sidebar?.widgets?.statusRings?.showCpu ?? true
         }
@@ -35,9 +35,9 @@ Item {
             icon: "memory_alt"
             value: ResourceUsage.memoryUsedPercentage
             label: Math.round(ResourceUsage.memoryUsedPercentage * 100) + "%"
-            ringColor: ResourceUsage.memoryUsedPercentage >= 0.9 ? Appearance.colors.colError :
-                   ResourceUsage.memoryUsedPercentage >= 0.7 ? Appearance.colors.colTertiary :
-                   Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.colors.colPrimary
+            ringColor: ResourceUsage.memoryUsedPercentage >= 0.9 ? (Appearance.zzzEverywhere ? Appearance.zzz.signal : Appearance.colors.colError) :
+                   ResourceUsage.memoryUsedPercentage >= 0.7 ? (Appearance.zzzEverywhere ? Appearance.zzz.tertiary : Appearance.colors.colTertiary) :
+                   Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.colors.colPrimary
             tip: "RAM"
             visible: Config.options?.sidebar?.widgets?.statusRings?.showRam ?? true
         }
@@ -46,9 +46,9 @@ Item {
             icon: "hard_drive"
             value: ResourceUsage.diskUsedPercentage
             label: Math.round(ResourceUsage.diskUsedPercentage * 100) + "%"
-            ringColor: ResourceUsage.diskUsedPercentage >= 0.9 ? Appearance.colors.colError :
-                   ResourceUsage.diskUsedPercentage >= 0.8 ? Appearance.colors.colTertiary :
-                   Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.colors.colPrimary
+            ringColor: ResourceUsage.diskUsedPercentage >= 0.9 ? (Appearance.zzzEverywhere ? Appearance.zzz.signal : Appearance.colors.colError) :
+                   ResourceUsage.diskUsedPercentage >= 0.8 ? (Appearance.zzzEverywhere ? Appearance.zzz.tertiary : Appearance.colors.colTertiary) :
+                   Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.colors.colPrimary
             tip: "Disk"
             visible: Config.options?.sidebar?.widgets?.statusRings?.showDisk ?? true
         }
@@ -57,9 +57,9 @@ Item {
             icon: "thermostat"
             value: Math.min(1, ResourceUsage.maxTemp / 100)
             label: ResourceUsage.maxTemp + "°"
-            ringColor: ResourceUsage.maxTemp >= 80 ? Appearance.colors.colError :
-                   ResourceUsage.maxTemp >= 60 ? Appearance.colors.colTertiary :
-                   Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.colors.colPrimary
+            ringColor: ResourceUsage.maxTemp >= 80 ? (Appearance.zzzEverywhere ? Appearance.zzz.signal : Appearance.colors.colError) :
+                   ResourceUsage.maxTemp >= 60 ? (Appearance.zzzEverywhere ? Appearance.zzz.tertiary : Appearance.colors.colTertiary) :
+                   Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.colors.colPrimary
             visible: ResourceUsage.cpuTemp > 0 && (Config.options?.sidebar?.widgets?.statusRings?.showTemp ?? true)
             tip: Translation.tr("Temperature")
         }
@@ -68,10 +68,10 @@ Item {
             icon: Battery.isCharging ? "battery_charging_full" : "battery_full"
             value: Battery.percentage
             label: Math.round(Battery.percentage * 100) + "%"
-            ringColor: Battery.isCritical ? Appearance.colors.colError :
-                   Battery.isCharging ? (Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.colors.colPrimary) :
-                   Battery.percentage < 0.3 ? Appearance.colors.colTertiary :
-                   Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.colors.colPrimary
+            ringColor: Battery.isCritical ? (Appearance.zzzEverywhere ? Appearance.zzz.signal : Appearance.colors.colError) :
+                   Battery.isCharging ? (Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.colors.colPrimary) :
+                   Battery.percentage < 0.3 ? (Appearance.zzzEverywhere ? Appearance.zzz.tertiary : Appearance.colors.colTertiary) :
+                   Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.colors.colPrimary
             visible: Battery.available && (Config.options?.sidebar?.widgets?.statusRings?.showBattery ?? true)
             tip: Battery.isCharging ? Translation.tr("Charging") : Translation.tr("Battery")
         }
@@ -82,7 +82,8 @@ Item {
         property string label
         property string tip
         property real value
-        property color ringColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.colors.colPrimary
+        property color ringColor: Appearance.zzzEverywhere ? Appearance.zzz.accent
+            : Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.colors.colPrimary
 
         Layout.fillWidth: true
         Layout.fillHeight: true
@@ -95,9 +96,10 @@ Item {
             radius: 26
             color: "transparent"
             border.width: 3
-            border.color: Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
+            border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairline
+                        : Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
                         : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
-                        : Appearance.auroraEverywhere ? "transparent" 
+                        : Appearance.auroraEverywhere ? "transparent"
                         : Appearance.colors.colLayer2
 
             Behavior on border.color {
@@ -145,7 +147,11 @@ Item {
                     Layout.alignment: Qt.AlignHCenter
                     text: icon
                     iconSize: 14
-                    color: Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer1
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer1
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
                 }
 
                 StyledText {
@@ -153,8 +159,13 @@ Item {
                     text: label
                     font.pixelSize: Appearance.font.pixelSize.smallest
                     font.family: Appearance.font.family.numbers
-                    font.weight: Font.Medium
-                    color: Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer1
+                    font.weight: Appearance.zzzEverywhere ? Font.Black : Font.Medium
+                    font.italic: Appearance.zzzEverywhere
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer1
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
                 }
             }
 

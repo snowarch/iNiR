@@ -36,12 +36,13 @@ Scope {
         }
         LazyLoader {
             id: barLoader
-            active: GlobalStates.barOpen && !GlobalStates.screenLocked && !GlobalStates.widgetEditMode
+            active: GlobalStates.barOpen && !GlobalStates.screenLocked
+                && !GlobalStates.widgetEditMode
             required property ShellScreen modelData
             component: PanelWindow { // Bar window
                 id: barRoot
                 screen: barLoader.modelData
-                visible: !GameMode.shouldHidePanels
+                visible: true
 
                 property var brightnessMonitor: Brightness.getMonitorForScreen(barLoader.modelData)
                 
@@ -66,18 +67,26 @@ Scope {
                 }
                 property bool superShow: false
                 property bool mustShow: hoverRegion.containsMouse || superShow
+                    || ShellEditSession.active
                 exclusionMode: ExclusionMode.Ignore
-                exclusiveZone: GameMode.shouldHidePanels ? 0 :
+                exclusiveZone:
                     (GlobalStates.coverflowSelectorOpen || (Config?.options.bar.autoHide.enable && (!mustShow || !Config?.options.bar.autoHide.pushWindows))) ? 0 :
                     Appearance.sizes.baseVerticalBarWidth + ((Config.options?.bar?.cornerStyle ?? 0) === 1 ? Appearance.sizes.hyprlandGapsOut : 0)
                 WlrLayershell.namespace: "quickshell:verticalBar"
-                // WlrLayershell.layer: WlrLayer.Overlay // TODO enable this when bar can hide when fullscreen
+                // Default Top layer ON PURPOSE: fullscreen surfaces render
+                // above Top, so videos/games naturally cover the bar. Overlay
+                // would draw the bar over fullscreen content (GameMode only
+                // detects games, not videos).
                 implicitWidth: Appearance.sizes.verticalBarWidth + Appearance.rounding.screenRounding
-                Item { id: emptyMask; width: 0; height: 0 }
                 mask: Region {
-                    item: GameMode.shouldHidePanels ? emptyMask : hoverMaskRegion
+                    item: hoverMaskRegion
                 }
                 color: "transparent"
+
+                BackgroundEffect.blurRegion: Region {
+                    item: barContent.nativeBlurActive ? barContent.backgroundItem : null
+                    radius: barContent.backgroundItem.radius
+                }
 
                 anchors {
                     left: !(Config.options?.bar?.bottom ?? false)
@@ -104,7 +113,7 @@ Scope {
 
                     VerticalBarContent {
                         id: barContent
-                        
+
                         implicitWidth: Appearance.sizes.verticalBarWidth
                         anchors {
                             top: parent.top
@@ -141,6 +150,32 @@ Scope {
                         }
                     }
 
+                    ShellEditSurfaceFrame {
+                        anchors.fill: barContent
+                        surfaceId: "iiBar"
+                        label: Translation.tr("Bar")
+                        active: ShellEditSession.blocksNormalActions(surfaceId)
+                        selected: ShellEditSession.selectedSurfaceId === surfaceId
+                        lifted: ShellEditSession.liftedSurfaceId === surfaceId
+                        slotHint: (Config.options?.bar?.bottom ?? false) ? "right" : "left"
+                        screenWidth: barRoot.screen?.width ?? 0
+                        screenHeight: barRoot.screen?.height ?? 0
+                        onDragStarted: surface => ShellEditSession.beginDrag(surface)
+                        onDragMoved: (surface, screenX, screenY) =>
+                            ShellEditSession.updateDrag(screenX, screenY)
+                        onDragEnded: () => ShellEditSession.endDrag()
+                        onDragCanceled: () => ShellEditSession.cancelDrag()
+                        accentColor: Appearance.colors.colPrimary
+                        surfaceColor: Appearance.colors.colLayer2
+                        textColor: Appearance.colors.colOnLayer2
+                        frameRadius: Appearance.rounding.small
+                        fontFamily: Appearance.font.family.main
+                        fontPixelSize: Appearance.font.pixelSize.smaller
+                        animationDuration: Appearance.animationsEnabled
+                            ? Appearance.animation.elementMoveFast.duration : 0
+                        onActivated: surface => ShellEditSession.selectSurface(surface)
+                    }
+
                     // Round decorators
                     Loader {
                         id: roundDecorators
@@ -151,7 +186,7 @@ Scope {
                             right: undefined
                         }
                         width: Appearance.rounding.screenRounding
-                        active: showBarBackground && (Config.options?.bar?.cornerStyle ?? 0) === 0 // Hug
+                        active: showBarBackground && (Config.options?.bar?.cornerStyle ?? 0) === 0 && !Appearance.zzzEverywhere
 
                         states: State {
                             name: "right"
@@ -269,7 +304,7 @@ Scope {
                                             asynchronous: true
 
                                             // See #159 — skip QML blur when compositor blur covers this layer
-                                            layer.enabled: Appearance.effectsEnabled && Appearance.auroraEverywhere && !Appearance.compositorBlurActive
+                                            layer.enabled: Appearance.effectsEnabled && Appearance.auroraEverywhere && !barContent.nativeBlurActive
                                             layer.effect: MultiEffect {
                                                 source: blurImg
                                                 anchors.fill: source
@@ -324,21 +359,10 @@ Scope {
         }
     }
 
-    IpcHandler {
-        target: "bar"
+    // IPC target "bar" is registered once in shell.qml (always loaded, family-
+    // agnostic). See the note in Bar.qml — both bars coexist under the ii
+    // family, so a handler here would collide with the horizontal bar's.
 
-        function toggle(): void {
-            GlobalStates.barOpen = !GlobalStates.barOpen
-        }
-
-        function close(): void {
-            GlobalStates.barOpen = false
-        }
-
-        function open(): void {
-            GlobalStates.barOpen = true
-        }
-    }
     Loader {
         active: CompositorService.isHyprland
         sourceComponent: Item {

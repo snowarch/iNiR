@@ -12,6 +12,7 @@ PopupWindow {
     required property QsMenuHandle trayItemMenuHandle
     property real popupBackgroundMargin: 0
     property bool anchorHovered: false  // Set by parent to indicate if anchor is hovered
+    property bool closing: false
 
     signal menuClosed
     signal menuOpened(qsWindow: var) // Correct type is QsWindow, but QML does not like that
@@ -35,15 +36,30 @@ PopupWindow {
     }
 
     function open() {
+        root.closing = false;
         root.visible = true;
+        popupBackground.shown = true;
         root.menuOpened(root);
     }
 
-    function close() {
+    function finalizeClose() {
         root.visible = false;
+        popupBackground.shown = false;
+        root.closing = false;
         while (stackView.depth > 1)
             stackView.pop();
         root.menuClosed();
+    }
+
+    function close() {
+        if (root.closing) return;
+        if (!Appearance.animationsEnabled) {
+            finalizeClose();
+            return;
+        }
+        root.closing = true;
+        popupBackground.shown = false;
+        closeAnimTimer.restart();
     }
 
     // Fullscreen transparent backdrop for Niri to detect clicks outside
@@ -73,6 +89,12 @@ PopupWindow {
         onTriggered: root.close()
     }
 
+    Timer {
+        id: closeAnimTimer
+        interval: Math.max(Appearance.animation.elementMoveExit.duration, Appearance.animation.elementResize.duration)
+        onTriggered: root.finalizeClose()
+    }
+
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.BackButton | Qt.RightButton
@@ -89,6 +111,7 @@ PopupWindow {
         Rectangle {
             id: popupBackground
             readonly property real padding: 3
+            property bool shown: false
             anchors {
                 left: (Config.options?.bar?.vertical ?? false)
                     ? ((Config.options?.bar?.bottom ?? false) ? undefined : parent.left)
@@ -103,24 +126,65 @@ PopupWindow {
                 margins: root.padding
             }
 
-            color: Appearance.angelEverywhere ? Appearance.angel.colGlassPopup
-                : Appearance.inirEverywhere ? Appearance.inir.colLayer1 
+            color: Appearance.zzzEverywhere ? Appearance.zzz.bg1
+                : Appearance.angelEverywhere ? Appearance.angel.colGlassPopup
+                : Appearance.inirEverywhere ? Appearance.inir.colLayer1
                 : Appearance.colors.colLayer0
-            radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+            radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
+                : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
                 : Appearance.inirEverywhere ? Appearance.inir.roundingLarge : Appearance.rounding.windowRounding
-            border.width: 1
-            border.color: Appearance.angelEverywhere ? Appearance.angel.colBorder
-                : Appearance.inirEverywhere ? Appearance.inir.colBorder 
+            Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+            Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+            border.width: Appearance.zzzEverywhere ? 0 : 1
+            border.color: Appearance.zzzEverywhere ? "transparent"
+                : Appearance.angelEverywhere ? Appearance.angel.colBorder
+                : Appearance.inirEverywhere ? Appearance.inir.colBorder
                 : Appearance.colors.colLayer0Border
+            Behavior on border.width {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
+            Behavior on border.color {
+                enabled: Appearance.animationsEnabled
+                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
             clip: true
-
-            opacity: 0
-            Component.onCompleted: opacity = 1
+            opacity: Appearance.motion.popupReveal.enableFade ? (shown ? 1 : 0) : 1
+            scale: shown ? 1
+                : (Appearance.motion.popupReveal.enableScale
+                    ? Appearance.motion.popupReveal.closedScale
+                    : 1)
+            transformOrigin: (Config.options?.bar?.bottom ?? false) ? Item.Bottom : Item.Top
             implicitWidth: stackView.implicitWidth + popupBackground.padding * 2
             implicitHeight: stackView.implicitHeight + popupBackground.padding * 2
 
             Behavior on opacity {
-                animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                enabled: Appearance.animationsEnabled
+                animation: NumberAnimation {
+                    duration: root.closing
+                        ? Appearance.animation.elementMoveExit.duration
+                        : Appearance.animation.elementMoveEnter.duration
+                    easing.type: root.closing
+                        ? Appearance.animation.elementMoveExit.type
+                        : Appearance.animation.elementMoveEnter.type
+                    easing.bezierCurve: root.closing
+                        ? Appearance.animation.elementMoveExit.bezierCurve
+                        : Appearance.animation.elementMoveEnter.bezierCurve
+                }
+            }
+            Behavior on scale {
+                enabled: Appearance.animationsEnabled
+                animation: NumberAnimation {
+                    duration: root.closing
+                        ? Appearance.animation.elementMoveExit.duration
+                        : Appearance.animation.elementMoveEnter.duration
+                    easing.type: root.closing
+                        ? Appearance.animation.elementMoveExit.type
+                        : Appearance.animation.elementMoveEnter.type
+                    easing.bezierCurve: root.closing
+                        ? Appearance.animation.elementMoveExit.bezierCurve
+                        : Appearance.animation.elementMoveEnter.bezierCurve
+                }
             }
             Behavior on implicitHeight {
                 animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
@@ -209,9 +273,20 @@ PopupWindow {
                     StyledText {
                         Layout.fillWidth: true
                         text: Translation.tr("Back")
-                    }
-                }
             }
+
+            // ZZZ: chamfered hairline stroke following the cut-corner outline.
+            ZzzPlate {
+                anchors.fill: parent
+                visible: Appearance.zzzEverywhere
+                fillColor: "transparent"
+                strokeColor: Appearance.zzz.hairline
+                strokeWidth: 1
+                chamfer: Appearance.zzz.cutCorner
+                chamferBottomRight: !Appearance.zzz.round
+            }
+        }
+    }
         }
 
         Repeater {

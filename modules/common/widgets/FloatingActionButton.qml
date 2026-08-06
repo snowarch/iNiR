@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
 import qs.modules.common
@@ -20,22 +22,23 @@ RippleButton {
         NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
     }
 
-    buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal : (baseSize / 14 * 4)
-    colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingNormal : (baseSize / 14 * 4)
+    colBackground: Appearance.zzzEverywhere ? Appearance.zzz.sticker
+                 : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                  : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainer
-                 : Appearance.auroraEverywhere ? Appearance.m3colors.m3primaryContainer
                  : Appearance.colors.colPrimaryContainer
-    colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+    colBackgroundHover: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover
+                      : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                       : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainerHover
-                      : Appearance.auroraEverywhere ? Appearance.m3colors.m3primaryContainer
                       : Appearance.colors.colPrimaryContainerHover
-    colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+    colRipple: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive
+             : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
              : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainerActive
-             : Appearance.auroraEverywhere ? Appearance.m3colors.m3primaryContainer
              : Appearance.colors.colPrimaryContainerActive
-    property color colOnBackground: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+    property color colOnBackground: Appearance.zzzEverywhere ? Appearance.zzz.onSticker
+                                  : Appearance.angelEverywhere ? Appearance.angel.colPrimary
                                   : Appearance.inirEverywhere ? Appearance.inir.colOnPrimaryContainer
-                                  : Appearance.auroraEverywhere ? Appearance.m3colors.m3onPrimaryContainer
                                   : Appearance.colors.colOnPrimaryContainer
     contentItem: Row {
         id: contentRowLayout

@@ -13,7 +13,6 @@ Singleton {
     property string firstRunNotifSummary: "Welcome!"
     property string firstRunNotifBody: "Hit Super+/ for a list of keybinds"
     property string defaultWallpaperPath: ""
-    property string welcomeQmlPath: FileUtils.trimFileProtocol(Quickshell.shellPath("welcome.qml"))
     property bool _pendingFirstRun: false
 
     function load() {
@@ -31,8 +30,9 @@ Singleton {
     }
 
     function handleFirstRun(): void {
-        Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, root.defaultWallpaperPath])
-        Quickshell.execDetached(["/usr/bin/qs", "-p", root.welcomeQmlPath])
+        if (root.defaultWallpaperPath.length > 0)
+            Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, root.defaultWallpaperPath])
+        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "welcome"])
     }
 
     Process {
@@ -49,8 +49,9 @@ Singleton {
         property var _candidates: []
         onExited: (exitCode) => {
             if (_candidates.length > 0) {
-                const idx = Math.floor(Math.random() * _candidates.length)
-                root.defaultWallpaperPath = _candidates[idx]
+                const sorted = [..._candidates].sort()
+                root.defaultWallpaperPath = sorted.find(path => path.endsWith("/qs-niri.jpg"))
+                    ?? sorted[0]
             }
             if (root._pendingFirstRun) {
                 root.disableNextTime()

@@ -13,8 +13,8 @@ import qs.services
 
 StyledOverlayWidget {
     id: root
-    minimumWidth: 310
-    minimumHeight: 160
+    minimumWidth: 350
+    minimumHeight: 205
 
     // Dynamic title: "Recorder" normally, "Recorder — 15:23" when recording
     title: RecorderStatus.isRecording
@@ -27,6 +27,30 @@ StyledOverlayWidget {
         if (configPath && configPath.length > 0) return configPath;
         const videosDir = FileUtils.trimFileProtocol(Directories.videos);
         return videosDir || `${FileUtils.trimFileProtocol(Directories.home)}/Videos`;
+    }
+    readonly property string audioMode: RecorderStatus.configuredAudioMode
+    readonly property string statusAudioMode: RecorderStatus.isRecording ? RecorderStatus.effectiveAudioMode : audioMode
+
+    function audioModeLabel(mode: string): string {
+        switch (mode) {
+        case "none": return Translation.tr("No audio")
+        case "microphone": return Translation.tr("Microphone")
+        case "both": return Translation.tr("System + mic")
+        default: return Translation.tr("System audio")
+        }
+    }
+
+    function audioModeIcon(mode: string): string {
+        switch (mode) {
+        case "none": return "volume_off"
+        case "microphone": return "mic"
+        case "both": return "instant_mix"
+        default: return "volume_up"
+        }
+    }
+
+    function setAudioMode(mode: string): void {
+        RecorderStatus.setConfiguredAudioMode(mode)
     }
 
     function formatElapsed(totalSec: int): string {
@@ -133,6 +157,33 @@ StyledOverlayWidget {
                 }
             }
 
+            // ── Audio profile ──
+            Row {
+                Layout.alignment: Qt.AlignHCenter
+                spacing: 6
+
+                RecorderAudioButton {
+                    audioModeValue: "none"
+                    materialSymbol: "volume_off"
+                    labelText: Translation.tr("No audio")
+                }
+                RecorderAudioButton {
+                    audioModeValue: "system"
+                    materialSymbol: "volume_up"
+                    labelText: Translation.tr("System audio")
+                }
+                RecorderAudioButton {
+                    audioModeValue: "microphone"
+                    materialSymbol: "mic"
+                    labelText: Translation.tr("Microphone")
+                }
+                RecorderAudioButton {
+                    audioModeValue: "both"
+                    materialSymbol: "instant_mix"
+                    labelText: Translation.tr("System + microphone")
+                }
+            }
+
             // ── Action buttons row ──
             Row {
                 Layout.alignment: Qt.AlignHCenter
@@ -160,7 +211,7 @@ StyledOverlayWidget {
                 BigRecorderButton {
                     id: recordButton
                     materialSymbol: "screen_record"
-                    name: Translation.tr("Record region")
+                    name: Translation.tr("Record region") + " · " + root.audioModeLabel(root.audioMode)
                     opacity: !RecorderStatus.isRecording ? 1 : 0
                     visible: opacity > 0
                     scale: !RecorderStatus.isRecording ? 1 : 0.8
@@ -175,7 +226,7 @@ StyledOverlayWidget {
                 BigRecorderButton {
                     id: fullscreenRecordButton
                     materialSymbol: "capture"
-                    name: Translation.tr("Record screen")
+                    name: Translation.tr("Record screen") + " · " + root.audioModeLabel(root.audioMode)
                     opacity: !RecorderStatus.isRecording ? 1 : 0
                     visible: opacity > 0
                     scale: !RecorderStatus.isRecording ? 1 : 0.8
@@ -184,6 +235,7 @@ StyledOverlayWidget {
                     onClicked: {
                         GlobalStates.overlayOpen = false;
                         Quickshell.execDetached([Directories.recordScriptPath, "--fullscreen", "--sound"]);
+                        RecorderStatus.scheduleQuickCheck();
                     }
                 }
 
@@ -198,7 +250,8 @@ StyledOverlayWidget {
                     Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                     Behavior on scale { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                     onClicked: {
-                        Quickshell.execDetached([Directories.recordScriptPath]);
+                        Quickshell.execDetached([Directories.recordScriptPath, "--stop"]);
+                        RecorderStatus.scheduleQuickCheck();
                     }
                 }
             }
@@ -260,6 +313,46 @@ StyledOverlayWidget {
     }
 
     // ── Sub-components ──
+
+    component RecorderAudioButton: RippleButton {
+        id: audioButton
+        required property string audioModeValue
+        required property string materialSymbol
+        required property string labelText
+        readonly property bool modeSelected: root.audioMode === audioModeValue
+        implicitWidth: 72
+        implicitHeight: 28
+        buttonRadius: height / 2
+        colBackground: modeSelected ? Appearance.colors.colPrimaryContainer : Appearance.colors.colLayer3
+        colBackgroundHover: modeSelected ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colLayer3Hover
+        colRipple: modeSelected ? Appearance.colors.colPrimaryContainerActive : Appearance.colors.colLayer3Active
+        onClicked: root.setAudioMode(audioModeValue)
+
+        contentItem: Row {
+            anchors.centerIn: parent
+            spacing: 4
+
+            MaterialSymbol {
+                anchors.verticalCenter: parent.verticalCenter
+                text: audioButton.materialSymbol
+                iconSize: 15
+                color: audioButton.modeSelected ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer3
+            }
+            StyledText {
+                anchors.verticalCenter: parent.verticalCenter
+                text: audioButton.audioModeValue === "both" ? Translation.tr("Both")
+                    : audioButton.audioModeValue === "microphone" ? Translation.tr("Mic")
+                    : audioButton.audioModeValue === "system" ? Translation.tr("System")
+                    : Translation.tr("None")
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: audioButton.modeSelected ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer3
+            }
+        }
+
+        StyledToolTip {
+            text: audioButton.labelText
+        }
+    }
 
     component BigRecorderButton: RippleButton {
         id: bigButton
@@ -326,12 +419,47 @@ StyledOverlayWidget {
             anchors.centerIn: parent
             spacing: 2
 
-            // Mic + Volume row
+            // Capture profile + relevant live source state
             RowLayout {
                 spacing: 12
                 Layout.alignment: Qt.AlignHCenter
 
                 Row {
+                    spacing: 4
+                    MaterialSymbol {
+                        text: root.audioModeIcon(root.statusAudioMode)
+                        iconSize: 14
+                        color: root.statusAudioMode === "none" ? Appearance.colors.colSubtext : Appearance.colors.colOnLayer2
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                    StyledText {
+                        text: Translation.tr("Audio") + ": " + root.audioModeLabel(root.statusAudioMode)
+                            + (RecorderStatus.isRecording && RecorderStatus.audioFallback ? " · " + Translation.tr("Fallback") : "")
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        color: root.statusAudioMode === "none" ? Appearance.colors.colSubtext : Appearance.colors.colOnLayer2
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+
+                Row {
+                    visible: root.statusAudioMode === "system" || root.statusAudioMode === "both"
+                    spacing: 4
+                    MaterialSymbol {
+                        text: Audio.sink?.audio?.muted ? "volume_off" : "volume_up"
+                        iconSize: 14
+                        color: Audio.sink?.audio?.muted ? Appearance.colors.colError : Appearance.colors.colOnLayer2
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                    StyledText {
+                        text: Math.round((Audio.sink?.audio?.volume ?? 1) * 100) + "%"
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        color: Audio.sink?.audio?.muted ? Appearance.colors.colError : Appearance.colors.colOnLayer2
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+
+                Row {
+                    visible: root.statusAudioMode === "microphone" || root.statusAudioMode === "both"
                     spacing: 4
                     MaterialSymbol {
                         text: Audio.micMuted ? "mic_off" : "mic"
@@ -340,25 +468,9 @@ StyledOverlayWidget {
                         anchors.verticalCenter: parent.verticalCenter
                     }
                     StyledText {
-                        text: Translation.tr("Mic") + ": " + (Audio.micMuted ? Translation.tr("OFF") : Translation.tr("ON"))
+                        text: Audio.micMuted ? Translation.tr("OFF") : Translation.tr("ON")
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         color: Audio.micMuted ? Appearance.colors.colError : Appearance.colors.colOnLayer2
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
-
-                Row {
-                    spacing: 4
-                    MaterialSymbol {
-                        text: Audio.sink?.audio?.muted ? "volume_off" : "volume_up"
-                        iconSize: 14
-                        color: Appearance.colors.colOnLayer2
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                    StyledText {
-                        text: Translation.tr("Vol") + ": " + Math.round((Audio.sink?.audio?.volume ?? 1) * 100) + "%"
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: Appearance.colors.colOnLayer2
                         anchors.verticalCenter: parent.verticalCenter
                     }
                 }

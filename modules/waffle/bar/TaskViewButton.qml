@@ -21,7 +21,7 @@ AppButton {
     }
 
     BarToolTip {
-        extraVisibleCondition: root.shouldShowTooltip
+        barExtraVisibleCondition: root.shouldShowTooltip
         text: Translation.tr("Task View")
     }
 }

@@ -6,7 +6,7 @@ Item {
     property real iconSize: Appearance?.font.pixelSize.small ?? 16
     property real fill: 0
     property string text: ""
-    property color color: Appearance.m3colors.m3onSurface
+    property color color: Appearance.colors.colOnSurface
     property int horizontalAlignment: Text.AlignHCenter
     property int verticalAlignment: Text.AlignVCenter
     property alias font: iconText.font
@@ -20,6 +20,11 @@ Item {
     readonly property bool useNerd: forceNerd
     readonly property string nerdGlyph: forceNerd ? text : ""
     readonly property bool hasNerdGlyph: useNerd && nerdGlyph !== ""
+
+    // "jp:<char>" renders the raw character in the Japanese UI font instead of
+    // a Material Symbols name — lets registry icons be kanji/katakana.
+    readonly property bool useJp: text.startsWith("jp:")
+    readonly property string jpGlyph: useJp ? text.slice(3) : ""
     
     // Nerd fonts need slightly larger size to match Material Symbols visually
     readonly property real effectiveFontSize: (useNerd && hasNerdGlyph) ? iconSize * 1.1 : iconSize
@@ -41,20 +46,22 @@ Item {
         anchors.centerIn: parent
         width: root.effectiveSize
         height: root.effectiveSize
-        text: (root.useNerd && root.hasNerdGlyph) ? root.nerdGlyph : root.text
+        text: root.useJp ? root.jpGlyph
+            : (root.useNerd && root.hasNerdGlyph) ? root.nerdGlyph : root.text
         color: root.color
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
-        
+
         renderType: Text.NativeRendering
         font {
             hintingPreference: (root.useNerd && root.hasNerdGlyph) ? Font.PreferFullHinting : Font.PreferNoHinting
-            family: (root.useNerd && root.hasNerdGlyph) 
-                ? (Appearance?.font.family.monospace ?? "JetBrainsMono Nerd Font") 
+            family: root.useJp ? "Zen Kaku Gothic New"
+                : (root.useNerd && root.hasNerdGlyph)
+                ? (Appearance?.font.family.monospace ?? "JetBrainsMono Nerd Font")
                 : (Appearance?.font.family.iconMaterial ?? "Material Symbols Rounded")
-            pixelSize: root.effectiveFontSize
-            weight: Font.Normal
-            variableAxes: (root.useNerd && root.hasNerdGlyph) ? ({}) : ({ 
+            pixelSize: root.useJp ? root.iconSize * 0.92 : root.effectiveFontSize
+            weight: root.useJp ? Font.Medium : Font.Normal
+            variableAxes: (root.useJp || (root.useNerd && root.hasNerdGlyph)) ? ({}) : ({
                 "FILL": root.effectiveFill,
                 "opsz": root.effectiveOpsz,
             })

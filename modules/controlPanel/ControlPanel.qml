@@ -10,6 +10,7 @@ import Quickshell.Hyprland
 
 Scope {
     id: root
+    property bool _presentedOpen: false
     readonly property real screenWidth: panelRoot.screen?.width ?? 1920
     readonly property real screenHeight: panelRoot.screen?.height ?? 1080
     readonly property var dockConfig: Config.options?.dock ?? ({})
@@ -43,7 +44,11 @@ Scope {
     PanelWindow {
         id: panelRoot
 
-        Component.onCompleted: visible = GlobalStates.controlPanelOpen
+        Component.onCompleted: {
+            visible = GlobalStates.controlPanelOpen
+            if (GlobalStates.controlPanelOpen)
+                Qt.callLater(() => { root._presentedOpen = GlobalStates.controlPanelOpen })
+        }
 
         Connections {
             target: GlobalStates
@@ -51,7 +56,9 @@ Scope {
                 if (GlobalStates.controlPanelOpen) {
                     _closeTimer.stop()
                     panelRoot.visible = true
+                    Qt.callLater(() => { root._presentedOpen = GlobalStates.controlPanelOpen })
                 } else {
+                    root._presentedOpen = false
                     _closeTimer.restart()
                 }
             }
@@ -127,7 +134,7 @@ Scope {
             states: [
                 State {
                     name: "open"
-                    when: GlobalStates.controlPanelOpen
+                    when: root._presentedOpen
                     PropertyChanges {
                         target: contentLoader
                         opacity: 1
@@ -137,7 +144,7 @@ Scope {
                 },
                 State {
                     name: "closed"
-                    when: !GlobalStates.controlPanelOpen
+                    when: !root._presentedOpen
                     PropertyChanges {
                         target: contentLoader
                         opacity: 0
@@ -262,31 +269,4 @@ Scope {
         }
     }
 
-    IpcHandler {
-        target: "controlPanel"
-
-        function toggle(): void {
-            GlobalStates.controlPanelOpen = !GlobalStates.controlPanelOpen
-        }
-
-        function close(): void {
-            GlobalStates.controlPanelOpen = false
-        }
-
-        function open(): void {
-            GlobalStates.controlPanelOpen = true
-        }
-    }
-
-    Loader {
-        active: CompositorService.isHyprland
-        sourceComponent: GlobalShortcut {
-            name: "controlPanelToggle"
-            description: "Toggles control panel on press"
-
-            onPressed: {
-                GlobalStates.controlPanelOpen = !GlobalStates.controlPanelOpen
-            }
-        }
-    }
 }

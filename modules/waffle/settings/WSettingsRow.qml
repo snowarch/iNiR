@@ -20,13 +20,17 @@ Item {
     // Settings search integration
     property bool enableSettingsSearch: true
     property int settingsSearchOptionId: -1
-    
+
+    readonly property color rowHover: Looks.settings.tileHover
+    readonly property color rowPressed: Looks.settings.tilePressed
+    readonly property color rowTile: Looks.settings.tile
+
     signal clicked()
     
     Layout.fillWidth: true
-    Layout.leftMargin: 14
-    Layout.rightMargin: 14
-    implicitHeight: Math.max(52, contentRow.implicitHeight + 20)
+    Layout.leftMargin: 0
+    Layout.rightMargin: 0
+    implicitHeight: Math.max(Looks.dp(52), contentRow.implicitHeight + Looks.dp(20))
     
     // Highlight animation for search focus
     Behavior on opacity {
@@ -119,12 +123,14 @@ Item {
     Rectangle {
         id: background
         anchors.fill: parent
-        anchors.leftMargin: 2
-        anchors.rightMargin: 2
-        radius: Looks.radius.medium
+        anchors.leftMargin: Looks.dp(2)
+        anchors.rightMargin: Looks.dp(2)
+        radius: Looks.settings.radiusLarge
         color: {
-            if (root.clickable && mouseArea.pressed) return Looks.colors.bg2Active
-            if (mouseArea.containsMouse) return Looks.colors.bg2Hover
+            if (root.clickable && mouseArea.pressed)
+                return root.rowPressed
+            if (mouseArea.containsMouse)
+                return root.rowHover
             return "transparent"
         }
         scale: root.clickable && mouseArea.pressed ? 0.985 : 1.0
@@ -141,7 +147,7 @@ Item {
     Rectangle {
         id: highlightOverlay
         anchors.fill: parent
-        radius: Looks.radius.medium
+        radius: Looks.settings.radiusLarge
         color: Looks.colors.accent
         opacity: 0
     }
@@ -161,39 +167,24 @@ Item {
         onClicked: if (root.clickable) root.clicked()
     }
     
-    // Bottom separator
-    Rectangle {
-        anchors {
-            bottom: parent.bottom
-            left: parent.left
-            right: parent.right
-            leftMargin: root.icon !== "" ? 44 : 16
-            rightMargin: 16
-        }
-        height: 1
-        color: Looks.colors.bg2Border
-        opacity: mouseArea.containsMouse ? 0.03 : 0.08
-        
-        Behavior on opacity {
-            animation: NumberAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
-        }
-    }
-    
     RowLayout {
         id: contentRow
         anchors {
             fill: parent
-            leftMargin: 12
-            rightMargin: 12
+            leftMargin: Looks.dp(12)
+            rightMargin: Looks.dp(12)
         }
-        spacing: 10
+        spacing: Looks.dp(10)
         
         Rectangle {
             visible: root.icon !== ""
-            implicitWidth: 30
-            implicitHeight: 30
-            radius: Looks.radius.small
-            color: mouseArea.containsMouse ? Qt.alpha(Looks.colors.accent, 0.1) : Looks.colors.bg2Base
+            implicitWidth: Looks.dp(30)
+            implicitHeight: Looks.dp(30)
+            radius: Looks.settings.radiusLarge
+            color: mouseArea.containsMouse ? Looks.colors.selection : root.rowTile
+            border.width: 1
+            border.color: mouseArea.containsMouse
+                ? Looks.colors.accent : Looks.settings.stroke
             Layout.alignment: Qt.AlignVCenter
             
             Behavior on color {
@@ -203,7 +194,7 @@ Item {
             FluentIcon {
                 anchors.centerIn: parent
                 icon: root.icon
-                implicitSize: 16
+                implicitSize: Looks.dp(16)
                 color: mouseArea.containsMouse ? Looks.colors.accent : Looks.colors.subfg
                 
                 Behavior on color {
@@ -214,7 +205,7 @@ Item {
         
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 2
+            spacing: Looks.dp(2)
             
             WText {
                 Layout.fillWidth: true
@@ -242,7 +233,7 @@ Item {
         FluentIcon {
             visible: root.showChevron
             icon: "chevron-right"
-            implicitSize: 14
+            implicitSize: Looks.dp(14)
             color: Looks.colors.subfg
             opacity: 0.7
         }

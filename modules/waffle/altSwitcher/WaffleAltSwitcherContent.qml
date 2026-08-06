@@ -512,7 +512,8 @@ Item {
                             WText {
                                 id: focusedLabel
                                 anchors.centerIn: parent
-                                text: "FOCUSED"
+                                text: Translation.tr("Focused")
+                                font.capitalization: Font.AllUppercase
                                 font.pixelSize: 9
                                 font.weight: Font.DemiBold
                                 color: Looks.colors.accentFg
@@ -653,7 +654,8 @@ Item {
                             WText {
                                 id: floatLabel
                                 anchors.centerIn: parent
-                                text: "FLOAT"
+                                text: Translation.tr("Float")
+                                font.capitalization: Font.AllUppercase
                                 font.pixelSize: 9
                                 font.weight: Font.DemiBold
                                 color: Qt.rgba(1, 1, 1, 0.92)
@@ -726,6 +728,7 @@ Item {
                         // Shadow behind card
                         WRectangularShadow {
                             target: cardPane
+                            visible: Looks.effectsEnabled
                         }
 
                         // Main card using WPane
@@ -733,9 +736,11 @@ Item {
                             id: cardPane
                             anchors.fill: parent
                             radius: Looks.radius.large
-                            color: root.selectedIndex === index ? Looks.colors.accent : Looks.colors.bgPanelFooter
-                            border.width: root.selectedIndex === index ? 0 : 1
-                            border.color: Looks.colors.bg2Border
+                            color: root.selectedIndex === index
+                                ? Looks.colors.accent : Looks.colors.bgPanelFooter
+                            border.width: 1
+                            border.color: root.selectedIndex === index
+                                ? Looks.colors.accent : Looks.colors.bg2Border
                             scale: cardMouse.pressed ? 0.95 : (cardMouse.containsMouse ? 1.02 : 1.0)
                             
                             Behavior on scale {
@@ -755,7 +760,7 @@ Item {
                                     Layout.fillWidth: true
                                     Layout.fillHeight: true
                                     radius: Looks.radius.medium
-                                    color: root.selectedIndex === index 
+                                    color: root.selectedIndex === index
                                         ? ColorUtils.transparentize(Looks.colors.accentFg, 0.9)
                                         : Looks.colors.bg1Base
 
@@ -777,7 +782,8 @@ Item {
                                     text: modelData?.appName ?? "Window"
                                     font.pixelSize: Looks.font.pixelSize.normal
                                     font.weight: Looks.font.weight.strong
-                                    color: root.selectedIndex === index ? Looks.colors.accentFg : Looks.colors.fg
+                                    color: root.selectedIndex === index
+                                        ? Looks.colors.accentFg : Looks.colors.fg
                                     elide: Text.ElideMiddle
                                 }
 
@@ -788,7 +794,7 @@ Item {
                                     width: wsCardText.implicitWidth + 12
                                     height: 20
                                     radius: Looks.radius.small
-                                    color: root.selectedIndex === index 
+                                    color: root.selectedIndex === index
                                         ? ColorUtils.transparentize(Looks.colors.accentFg, 0.8)
                                         : Looks.colors.bg2
 
@@ -797,7 +803,8 @@ Item {
                                         anchors.centerIn: parent
                                         text: Translation.tr("WS") + " " + (modelData?.workspaceIdx ?? "")
                                         font.pixelSize: Looks.font.pixelSize.small
-                                        color: root.selectedIndex === index ? Looks.colors.accentFg : Looks.colors.subfg
+                                        color: root.selectedIndex === index
+                                            ? Looks.colors.accentFg : Looks.colors.subfg
                                     }
                                 }
                             }
@@ -843,6 +850,7 @@ Item {
 
                 WRectangularShadow {
                     target: parent
+                    visible: Looks.effectsEnabled
                 }
 
                 RowLayout {

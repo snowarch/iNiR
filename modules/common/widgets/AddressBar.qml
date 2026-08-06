@@ -18,7 +18,15 @@ Rectangle {
     property real padding: 6
     implicitWidth: mainLayout.implicitWidth + padding * 2
     implicitHeight: mainLayout.implicitHeight + padding * 2
-    color: Appearance.colors.colLayer2
+    color: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt : Appearance.colors.colLayer2
+    radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : 0
+    border.width: Appearance.zzzEverywhere ? 1 : 0
+    border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : "transparent"
+    // Organic morph on style/shape switch (organic-transitions)
+    Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+    Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+    Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+    Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
 
     function focusBreadcrumb() {
         root.showBreadcrumb = false;
@@ -50,8 +58,15 @@ Rectangle {
                 id: directoryEntry
                 visible: !root.showBreadcrumb
                 anchors.fill: parent
-                color: Appearance.colors.colLayer1
-                radius: Appearance.rounding.full
+                color: Appearance.zzzEverywhere ? Appearance.zzz.paper : Appearance.colors.colLayer1
+                radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
+                border.width: Appearance.zzzEverywhere ? 1 : 0
+                border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairline : "transparent"
+                // Organic morph on style/shape switch (organic-transitions)
+                Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+                Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                 implicitWidth: addressInput.implicitWidth
                 implicitHeight: addressInput.implicitHeight
 
@@ -105,11 +120,16 @@ Rectangle {
         RippleButton {
             id: dirEditButton
             toggled: !root.showBreadcrumb
+            // ZZZ toggled = accent sticker plate so onSticker icon stays readable
+            colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.sticker : (Appearance.colors.colPrimary)
+            colBackgroundToggledHover: Appearance.zzzEverywhere ? ColorUtils.mix(Appearance.zzz.sticker, Appearance.zzz.accent, 0.5) : (Appearance.colors.colPrimaryHover)
             downAction: () => root.showBreadcrumb = !root.showBreadcrumb
             contentItem: MaterialSymbol {
                 text: "edit"
                 iconSize: Appearance.font.pixelSize.larger
-                color: dirEditButton.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer2
+                color: dirEditButton.toggled
+                    ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimary)
+                    : (Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer2)
             }
 
             StyledToolTip {

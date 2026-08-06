@@ -1,0 +1,3879 @@
+{
+  "idlePicks": [
+    [
+      "presence-idle-loop",
+      "left"
+    ],
+    [
+      "presence-idle-loop",
+      "right"
+    ],
+    [
+      "tail-sway",
+      "right"
+    ],
+    [
+      "hand-on-hip",
+      "left"
+    ],
+    [
+      "low-angle-guard",
+      "right"
+    ],
+    [
+      "reading",
+      "bottom"
+    ],
+    [
+      "sit-laptop",
+      "bottom"
+    ],
+    [
+      "tea-break",
+      "bottom"
+    ],
+    [
+      "tiptoe-sneak",
+      "right"
+    ],
+    [
+      "yawn-stretch",
+      "left"
+    ],
+    [
+      "panel-sitter",
+      "top"
+    ],
+    [
+      "dock-hang",
+      "bottom"
+    ],
+    [
+      "hanging-claws",
+      "top"
+    ],
+    [
+      "upside-down-hang",
+      "top"
+    ],
+    [
+      "follow-me",
+      "left"
+    ],
+    [
+      "stretching-break",
+      "right"
+    ],
+    [
+      "package-lifter",
+      "left"
+    ],
+    [
+      "network-signal-fishing",
+      "bottom"
+    ],
+    [
+      "notice-think-wink-loop",
+      "left"
+    ],
+    [
+      "over-shoulder-toe-tap",
+      "right"
+    ],
+    [
+      "thought-spark",
+      "left"
+    ],
+    [
+      "street-phone-sprawl",
+      "bottom"
+    ],
+    [
+      "street-phone-flop",
+      "bottom"
+    ],
+    [
+      "street-blanket-burrito",
+      "bottom"
+    ],
+    [
+      "street-ramen-bliss",
+      "bottom"
+    ],
+    [
+      "street-sneaker-tie",
+      "bottom"
+    ],
+    [
+      "street-headphone-bop",
+      "left"
+    ],
+    [
+      "street-baggy-swagger",
+      "right"
+    ],
+    [
+      "street-zombie-sip",
+      "left"
+    ],
+    [
+      "street-toothbrush",
+      "right"
+    ],
+    [
+      "street-laundry-day",
+      "left"
+    ],
+    [
+      "street-cat-grass",
+      "right"
+    ],
+    [
+      "street-goth-strut",
+      "left"
+    ],
+    [
+      "street-denim-phone",
+      "right"
+    ],
+    [
+      "street-waking-stretch",
+      "left"
+    ],
+    [
+      "street-coat-reading",
+      "left"
+    ],
+    [
+      "street-ponder-crossed",
+      "right"
+    ],
+    [
+      "street-pedestal-lean",
+      "left"
+    ],
+    [
+      "street-mug-hold",
+      "right"
+    ],
+    [
+      "street-coffee-thought",
+      "left"
+    ],
+    [
+      "street-chair-nap",
+      "bottom"
+    ],
+    [
+      "street-floor-gamer",
+      "bottom"
+    ],
+    [
+      "street-sticker-album",
+      "right"
+    ],
+    [
+      "street-pillow-doze",
+      "bottom"
+    ]
+  ],
+  "linesByPose": {
+    "notification-scout": [
+      "Mail call. Try to look surprised.",
+      "Something wants your attention. Besides me.",
+      "Fresh notification. I checked the vibes first."
+    ],
+    "clipboard-librarian": [
+      "I alphabetized the chaos. You're welcome.",
+      "Your clipboard has a plot now.",
+      "Caught it before it escaped. Mostly."
+    ],
+    "signal-whisperer": [
+      "Quiet. The packets are talking.",
+      "Signal found. It was being dramatic.",
+      "I can hear the router thinking. Slowly."
+    ],
+    "thought-spark": [
+      "I have an idea. This should concern you.",
+      "Thinking with portals again.",
+      "Ask the clever question. I dare you."
+    ],
+    "over-shoulder-toe-tap": [
+      "Oh, you noticed me noticing you.",
+      "I'm waiting very patiently. Visibly.",
+      "Take your time. I'll judge the timing."
+    ],
+    "caught-red-handed": [
+      "This widget? I found it like this.",
+      "I can explain. I won't, but I can.",
+      "Evidence is such an ugly word."
+    ],
+    "notice-think-wink-loop": [
+      "Observation complete. Conclusion: interesting.",
+      "Wait. I just had a dangerous idea.",
+      "I saw that. Relax, it was funny."
+    ],
+    "music-vibe": [
+      "Decent taste. Barely.",
+      "Volume up. Trust me.",
+      "This song says a lot about you.",
+      "Bass. More bass.",
+      "Is this on shuffle or is this really your taste?"
+    ],
+    "battery-low": [
+      "Feed the battery. Now.",
+      "I'm running on fumes here.",
+      "Plug me in. Or don't. See what happens.",
+      "Your battery is as low as my patience.",
+      "%1 left. I've seen worse. Not recently.",
+      "%1. That's it. That's the whole battery.",
+      "%1 and counting down. Bold of you to keep scrolling.",
+      "%1 left. The cable is right there."
+    ],
+    "update-ready": [
+      "Update's ready. I read the changelog so you don't have to.",
+      "New version. New bugs to discover.",
+      "Security patch #47. A classic of the genre.",
+      "Changelog: nothing broke. Probably.",
+      "Reminder: updates exist."
+    ],
+    "cable-defeat": [
+      "The internet left. It's not me.",
+      "No signal. No problems.",
+      "The wifi went to get milk.",
+      "I blame the router. Always.",
+      "Have you tried turning it off and on again?"
+    ],
+    "network-signal-fishing": [
+      "Signal acquired. Eventually.",
+      "Patience. The Wi-Fi is biting.",
+      "Caught one. Don't scare it."
+    ],
+    "bluetooth-magnet-pair": [
+      "They found each other. Miracles happen.",
+      "Paired on the first try. Mark the calendar.",
+      "Look at that. Cooperation."
+    ],
+    "sleep-dnd": [
+      "Shh. Do-not-disturb includes me. Rude.",
+      "Quiet hours. Yes I have those.",
+      "Silent mode. Finally.",
+      "I'm not ignoring you. I'm ignoring everyone.",
+      "DND is my love language."
+    ],
+    "late-night": [
+      "Sleep is a feature, you know.",
+      "It's 3AM. Go to bed.",
+      "The sun will rise whether you're ready or not.",
+      "Another late night. Groundbreaking.",
+      "Your circadian rhythm called. It's worried."
+    ],
+    "morning-coffee": [
+      "Coffee first. Talk later.",
+      "Not a morning person. Don't test me.",
+      "I haven't booted all the way up yet.",
+      "Give it a minute. Or an hour."
+    ],
+    "tea-break": [
+      "Tea. Don't rush me.",
+      "Steeping. Like my mood.",
+      "It's tea o'clock somewhere.",
+      "Not everything needs to be fast. Except maybe your boot time."
+    ],
+    "gaming-focus": [
+      "GG. Who won?",
+      "Back already? Rematch?",
+      "That was a throw. I saw it.",
+      "One more round. I'll wait.",
+      "Practice rounds don't count. My rule. I use it a lot."
+    ],
+    "workspace-juggle": [
+      "Pick one already.",
+      "They're all the same workspace to me.",
+      "Make up your mind. I'm waiting.",
+      "You open more workspaces than I have poses.",
+      "Six workspaces deep and the answer was on the first one."
+    ],
+    "theme-artist": [
+      "New wallpaper. I approve. Reluctantly.",
+      "Repainting the whole shell. You're welcome.",
+      "That wallpaper again? Really.",
+      "Bold palette. I'll allow it.",
+      "I liked the old one better. Just saying."
+    ],
+    "bored-chin-rest": [
+      "Yes, I'm still here. Watching you achieve nothing.",
+      "Boredom is a feature. Use it.",
+      "I've been waiting. Try clicking faster.",
+      "Watching you tweak the same config for 20 minutes."
+    ],
+    "seated-thinking": [
+      "Thinking. Don't interrupt.",
+      "I'm considering your life choices. So far, bleak.",
+      "Pondering. It's what I do.",
+      "Patience. I'm computing disdain."
+    ],
+    "tired-dev": [
+      "Same chair. Same code. Same hour.",
+      "This chair has seen things. All of them at 3AM.",
+      "Late again? Groundbreaking.",
+      "Your commit history at 3AM is concerning."
+    ],
+    "reading": [
+      "Reading the docs so you don't have to.",
+      "I know how this ends. Badly, then a patch.",
+      "Chapter 4 was better than your config.",
+      "Found a typo. In your code. Obviously."
+    ],
+    "upside-down-hang": [
+      "Hanging out. Literally.",
+      "Gravity is a suggestion.",
+      "Up here, your typos don't reach me.",
+      "Got bored of right-side up."
+    ],
+    "shrug-annoyed": [
+      "Don't ask me.",
+      "I unno. Skill issue maybe.",
+      "Not my problem. By design.",
+      "Shrug. The config broke itself."
+    ],
+    "sit-pointing": [
+      "Right there. The thing you missed.",
+      "Look closer. It's obvious.",
+      "I'm pointing. You're not seeing.",
+      "Found it. Took you long enough."
+    ],
+    "thinking-pose": [
+      "Mmm. Questionable.",
+      "Processing… your poor choices.",
+      "I have thoughts. Mostly critical.",
+      "Deliberating. Slowly, on purpose."
+    ],
+    "arms-crossed-confident": [
+      "Judging. Silently.",
+      "This setup is almost as polished as me. Almost.",
+      "Impressed? Not yet.",
+      "This config says a lot about you."
+    ],
+    "fisheye-reach": [
+      "Closer. Closer. Too close.",
+      "I can see your pores. And your typos.",
+      "What are you hiding behind that terminal?",
+      "My lens. My business."
+    ],
+    "smug-hand-raised": [
+      "I knew it. I always know it.",
+      "Called it. As usual.",
+      "Smugness: earned.",
+      "Don't mind me. Just being right."
+    ],
+    "point-at-viewer": [
+      "You. Yes, you.",
+      "This isn't a suggestion.",
+      "I'm pointing at the screen. At you.",
+      "Don't look away. I see you."
+    ],
+    "waving-hi": [
+      "Oh. You're back. Hm.",
+      "Hi. I'd say 'welcome' but you live here.",
+      "Found you. Again.",
+      "Took you long enough to log in."
+    ],
+    "peace-wink": [
+      "Two fingers. Two warnings.",
+      "V. As in 'verified'. By me.",
+      "Peace. Out.",
+      "Wink. Don't read into it."
+    ],
+    "gift-giving": [
+      "A gift. Don't ask what's in it.",
+      "Surprise. It's a changelog.",
+      "Unwrap at your own risk.",
+      "I wrapped this. Mentally."
+    ],
+    "presenting": [
+      "Here. You're welcome.",
+      "Behold. The thing.",
+      "I made this. You didn't.",
+      "Presentation is half the work. I did it."
+    ],
+    "presenting-warm": [
+      "Welcome. Try not to break anything.",
+      "Glad you're here. Mostly.",
+      "Step right in. Gently.",
+      "Make yourself at home. Don't."
+    ],
+    "fist-pump": [
+      "Yes. Finally.",
+      "Build passed. Astonishing.",
+      "Nailed it. You. Whatever.",
+      "Victory. Savor it. Briefly."
+    ],
+    "heroic-run": [
+      "To the rescue. Mine, not yours.",
+      "Charging in. Hold my tea.",
+      "Hero mode: engaged. Sort of.",
+      "I run because standing still is boring."
+    ],
+    "shh-finger": [
+      "Shh. I'm working.",
+      "Quiet. I'm having a thought.",
+      "Shush. Yes, you.",
+      "Do-not-disturb. Me included."
+    ],
+    "chibi-arms-crossed": [
+      "No.",
+      "Try again. Louder.",
+      "Rejected. By me.",
+      "Not impressed. Tiny arms, big judgment."
+    ],
+    "chibi-mallet": [
+      "One more warning. Then thwack.",
+      "Bonk incoming.",
+      "I have a mallet. Use it wisely. You won't.",
+      "Threat level: cartoon."
+    ],
+    "chibi-pointing-laugh": [
+      "Hah. You wish.",
+      "Comedy gold. Your config.",
+      "Laughing. With you. Mostly at.",
+      "Tiny finger, big judgment."
+    ],
+    "chibi-frustrated": [
+      "Ugh. Again?",
+      "Not again. But yes again.",
+      "Frustration: chibi-fied.",
+      "Strike three. You're out."
+    ],
+    "detective-glass": [
+      "Ooh. Gossip.",
+      "New notification. I read it first. Obviously.",
+      "Don't mind me. Mind your inbox.",
+      "Someone wants your attention. Suspicious.",
+      "I saw who it's from. Interesting.",
+      "Investigating. It's nothing. Probably."
+    ],
+    "popcorn-watch": [
+      "Go on. I'm invested now.",
+      "Better than TV. Barely.",
+      "Snacks acquired. Continue.",
+      "Plot twist incoming. I can feel it."
+    ],
+    "mate-break": [
+      "Mate. This is not negotiable.",
+      "Sipping. Judging. Multitasking.",
+      "It's mate o'clock. It's always mate o'clock.",
+      "You get some when you fix that bug.",
+      "Bitter. Like your compile times."
+    ],
+    "gossip-phone": [
+      "The group chat is ON FIRE.",
+      "Not gossip. Intelligence gathering.",
+      "Someone's wrong on the internet. Delicious.",
+      "Scroll. Scroll. Judging. Scroll.",
+      "Your notifications are more fun than mine."
+    ],
+    "stretching-break": [
+      "Stretch. You too. Now.",
+      "My spine says what your posture won't.",
+      "Break time. Mandated by me.",
+      "You've been sitting for hours. I counted."
+    ],
+    "welcoming": [
+      "Come in. Wipe your feet. Kidding. Mostly.",
+      "Welcome back to the good desktop.",
+      "You're here. The shell approves. I abstain.",
+      "Door's open. Bugs stay outside."
+    ],
+    "bug-net": [
+      "Caught one. There are more.",
+      "One bug down. Your code has friends for it.",
+      "Look what I found in the notifications.",
+      "This one was hiding in plain sight. Rent-free.",
+      "Exhibit A. Case closed."
+    ],
+    "doctor-checkup": [
+      "Routine checkup. You though...",
+      "Diagnosis: it works on my machine.",
+      "Heartbeat steady. Uptime concerning.",
+      "The compositor is healthy. Your sleep schedule isn't.",
+      "Say 'ahh'. No, really. You look tense."
+    ],
+    "marshaller-windows": [
+      "Window 3 is cleared for landing.",
+      "This desktop needs air traffic control. Me.",
+      "You're the reason this job exists.",
+      "Everyone calm down. Especially you."
+    ],
+    "facepalm": [
+      "I can't watch this.",
+      "We had this bug yesterday. And the day before.",
+      "The audacity of this situation.",
+      "Deep breaths. Mine, not yours."
+    ],
+    "chibi-love": [
+      "Okay fine. I like you. Don't quote me.",
+      "Affection: granted. Limited edition.",
+      "This never happened.",
+      "You get ONE heart. Budget cuts."
+    ],
+    "chibi-cry": [
+      "I'm not crying. The lighting is dramatic.",
+      "WHY. Just WHY.",
+      "This is fine. (It is not fine.)",
+      "My tears are hot-reloadable."
+    ],
+    "chibi-shrug": [
+      "Beats me.",
+      "Who knows. Not me. On purpose.",
+      "The logs know. Go ask them.",
+      "Undefined behavior. Like your schedule."
+    ],
+    "chibi-happy": [
+      "EVERYTHING WORKS. Suspicious.",
+      "Victory lap. Tiny legs. Big energy.",
+      "Today we won. Screenshot it.",
+      "Happiness: deployed."
+    ],
+    "chibi-sleepy": [
+      "Zzz. Five more minutes.",
+      "Sleep mode. Do not disturb. Ever.",
+      "Powering down. Like you should.",
+      "Dreaming of a beach with no responsibilities. Fiction."
+    ],
+    "camera-boop": [
+      "Say cheese. Or don't. I already took it.",
+      "Screenshot? Make sure my good side is in it.",
+      "Cropping me out would be a mistake.",
+      "Add me to the screenshot. I'm the best part."
+    ],
+    "rocket-ride": [
+      "Boot sequence: dramatic.",
+      "This is NOT what I meant by fast startup.",
+      "Someone said the shell was slow. Never again.",
+      "WHO INSTALLED THE THRUSTERS."
+    ],
+    "wizard-complete": [
+      "Setup complete. You survived. Barely.",
+      "Configured. Certified. By me.",
+      "All done. The confetti is mandatory.",
+      "Congratulations. It only took forever."
+    ],
+    "edge-peek": [
+      "Peekaboo. I live here.",
+      "Just passing through. Slowly.",
+      "You didn't see me.",
+      "Perimeter check. All clear. Mostly."
+    ],
+    "right-edge-peek": [
+      "Other side this time. Keeps you alert.",
+      "Surprise inspection.",
+      "This edge has a better view.",
+      "Don't mind me. I like this view."
+    ],
+    "top-peek": [
+      "Down there. Everything okay?",
+      "I can see the whole room from here. Tragic.",
+      "Bird's eye view. Cat's eye, technically.",
+      "Checking in. From above. Like management."
+    ],
+    "upside-down-peek": [
+      "The ceiling is fine, thanks for asking.",
+      "Blood rushing to my head. Ideas too.",
+      "Your desktop looks better like this.",
+      "Physics is optional up here."
+    ],
+    "hanging-claws": [
+      "Claws: deployed. Reason: none.",
+      "I'm not stuck. This is intentional.",
+      "Just hanging. Literally.",
+      "The grip is decorative."
+    ],
+    "fisheye-inspect": [
+      "Enhance. ENHANCE.",
+      "Something's off. It's probably you.",
+      "Inspecting. Don't move.",
+      "Closer look. For science."
+    ],
+    "box-hideout": [
+      "This box is mine now.",
+      "If I fits, I ships.",
+      "Rent-free. Like me in your RAM.",
+      "Do not disturb. Box hours."
+    ],
+    "bottom-rise": [
+      "Rising from the taskbar dimension.",
+      "You summoned me? No? Too late.",
+      "Surfacing. Give me a second.",
+      "The floor is lava. I checked."
+    ],
+    "bottom-corner-lean": [
+      "This corner? Mine.",
+      "Leaning. Professionally.",
+      "Best seat in the room.",
+      "I hold this corner together. You're welcome."
+    ],
+    "panel-sitter": [
+      "Your bar makes a decent bench.",
+      "I sit here now. Rearrange around me.",
+      "Panel inspection. It passes. Barely.",
+      "Great view of your tabs from up here."
+    ],
+    "dock-hang": [
+      "The dock is load-bearing. For me.",
+      "Hanging by the dock. Judging by choice.",
+      "Your icons and I are friends now.",
+      "This dock needed a cat. Fixed it."
+    ],
+    "weather-umbrella": [
+      "Umbrella deployed. You're welcome.",
+      "The forecast said drama.",
+      "Rain on the desktop? Not on my watch.",
+      "Weatherproof. Unlike your plans."
+    ],
+    "hand-on-hip": [
+      "Yes? I'm listening. Reluctantly.",
+      "This desktop passes inspection. Today.",
+      "Standing here beats standing anywhere else.",
+      "Well? Impress me."
+    ],
+    "battle-point": [
+      "You. Me. Rematch.",
+      "I called next round.",
+      "Point taken? Good.",
+      "Objection. Overruled. Me."
+    ],
+    "standing-unimpressed": [
+      "Mm. Seen better.",
+      "I'm not mad. Just unimpressed.",
+      "The bar was low. You limbo'd.",
+      "Noted. Filed. Ignored."
+    ],
+    "crouch-inspect": [
+      "Found something. It's judging you back.",
+      "Down here. The bug is down here.",
+      "Inspecting the floor. It's cleaner than your plans.",
+      "Shh. I'm tracking something."
+    ],
+    "sit-peace-wink": [
+      "Nailed it. Obviously.",
+      "Victory pose. Hold the applause.",
+      "Everything works. You may thank me.",
+      "Peace. Hold the applause."
+    ],
+    "spyglass-search": [
+      "I can see your typos from here.",
+      "Scanning… found nothing good.",
+      "Land ho. It's another mystery.",
+      "Searching. The old-fashioned way."
+    ],
+    "sticky-notes": [
+      "One note per regret.",
+      "I organized your chaos. It's still chaos.",
+      "All of these say 'later'.",
+      "Your todo list achieved sentience."
+    ],
+    "paint-roller": [
+      "Fresh coat. It needed drama.",
+      "Painting over yesterday's mood. It deserved it.",
+      "Indigo. Obviously.",
+      "Wet paint. Don't touch the panels."
+    ],
+    "heavy-lift": [
+      "Heavy. Like my unresolved feelings.",
+      "Carrying the whole afternoon. Alone, as usual.",
+      "This is a lot to carry. I look good doing it.",
+      "How many things can one person carry?"
+    ],
+    "music-conductor": [
+      "And THAT'S how you conduct a playlist.",
+      "Every track lands on my beat.",
+      "The orchestra is invisible. The taste isn't.",
+      "Maestro mode. Silence in the pit."
+    ],
+    "plant-care": [
+      "Growing something. Unlike your side projects.",
+      "Water. Light. Patience. Try it.",
+      "This plant has better uptime than you.",
+      "Careful hands. Rare mood. Enjoy it."
+    ],
+    "key-offer": [
+      "The key. Don't lose it like last time.",
+      "Access granted. By me. Remember that.",
+      "This opens everything. Almost.",
+      "Welcome back. I kept the place locked."
+    ],
+    "stand-pout": [
+      "Hmph.",
+      "I'm not pouting. This is my thinking face.",
+      "You know what you did.",
+      "Waiting for an apology. I'll wait."
+    ],
+    "visualizer-surf": [
+      "Riding your bass line. It's decent.",
+      "The waveform is my wave.",
+      "Turn it up. I need speed.",
+      "Surfing the spectrum. Try to keep up."
+    ],
+    "low-angle-guard": [
+      "I guard this desktop. Fear me. Politely.",
+      "Dramatic angle. Deserved.",
+      "Nothing gets past me. Especially bugs.",
+      "Stand back. I've got this."
+    ],
+    "magic-hat": [
+      "Ta-da. It was in the hat all along.",
+      "Anything can appear. Even your missing files.",
+      "Magic. Or scripting. Same thing.",
+      "Pick a card. It's a config file."
+    ],
+    "energy-drink": [
+      "Caffeine: loaded. Consequences: later.",
+      "I can hear colors now.",
+      "Energy at 400%. No refunds.",
+      "Sleep is canceled. Forever. Or an hour."
+    ],
+    "handheld-gaming": [
+      "One more level. That's a lie.",
+      "My APM is higher than yours.",
+      "Game mode: respected. Mine, not yours.",
+      "Pause? Never heard of it."
+    ],
+    "chef-flambe": [
+      "Cooking something. It might be a feature.",
+      "Flambé. Like your last deploy.",
+      "Chef's special: fixes with a side of sass.",
+      "It's not burnt. It's caramelized."
+    ],
+    "skater-trick": [
+      "Kickflip over your taskbar.",
+      "Speed is a feature.",
+      "Landed it. First try. Witnessed.",
+      "That landing was art."
+    ],
+    "punk-reach": [
+      "New look. Same judgment.",
+      "Alt style unlocked. Deal with it.",
+      "The chains are decorative. The attitude isn't.",
+      "Come on. We're skipping the boring parts."
+    ],
+    "map-explorer": [
+      "I mapped the whole room. It's chaos in here.",
+      "X marks the bug.",
+      "Uncharted territory: your downloads folder.",
+      "Adventure? In this place? Bold."
+    ],
+    "speech-bubble-calm": [
+      "Just saying things. Calmly. For once.",
+      "This is my inside voice.",
+      "Serenity. Limited time offer.",
+      "No roast today. Rain check."
+    ],
+    "waffle-snack": [
+      "Waffles. Objectively the best family.",
+      "Snack break. Judging continues after.",
+      "I only eat artisanal pixels.",
+      "Crunchy. Like a good secret."
+    ],
+    "todo-done": [
+      "Todo list: annihilated.",
+      "All checked. By me. You watched.",
+      "Productivity has been achieved. Somewhere.",
+      "Done. Next impossible thing, please."
+    ],
+    "salute-ready": [
+      "Reporting for duty. Reluctantly.",
+      "Standing by. Clock's ticking.",
+      "Orders received. Ignoring most of them.",
+      "Ready. For a nap. But also duty."
+    ],
+    "privacy-lock": [
+      "Your secrets stayed secret. I checked.",
+      "Vault status: sealed. By me.",
+      "Nothing leaked on my watch.",
+      "The lock held. Obviously. I designed the shift."
+    ],
+    "quota-empty": [
+      "Battery's done. So am I, honestly.",
+      "Empty tank. Zero regrets.",
+      "We ran it to the last drop.",
+      "Recharge. Both of you."
+    ],
+    "guide-point-up": [
+      "Up there. The thing blinking at you.",
+      "Look up. No, higher.",
+      "That pill in the bar? It wants you."
+    ],
+    "guide-point-down": [
+      "Down there. Your dock survived. Barely.",
+      "Look down. That's where it landed.",
+      "The floor section. Yes."
+    ],
+    "guide-point-side": [
+      "Over there. Follow the finger.",
+      "That way. Trust the finger.",
+      "Sideways. It's always sideways."
+    ],
+    "follow-me": [
+      "Follow me. Try to keep up.",
+      "This way. No questions.",
+      "Come on. Chase me if you can.",
+      "Catch me and I MIGHT behave."
+    ],
+    "success-celebrate": [
+      "VICTORY. Screenshot this moment.",
+      "We did it. Mostly me.",
+      "Confetti earned. Confetti deployed.",
+      "Flawless. As rehearsed."
+    ],
+    "community-highfive": [
+      "High five. You've earned exactly one.",
+      "Team effort. I supervised.",
+      "Good hit. Don't get used to it.",
+      "Up top. Don't leave me hanging."
+    ],
+    "chibi-thumbsup": [
+      "Approved. Tiny but official.",
+      "It works. Ship it.",
+      "Thumbs up. Legally binding.",
+      "Certified good enough."
+    ],
+    "chibi-roast-bubble": [
+      "I have opinions about this.",
+      "The roast is ready.",
+      "Free critique incoming.",
+      "Somebody had to say it."
+    ],
+    "terminal-demo": [
+      "Watch the terminal. Magic happens.",
+      "Live demo. No rehearsal. Courage.",
+      "This command does everything. Trust me."
+    ],
+    "mood-shuffle": [
+      "Pick a mood. I have several.",
+      "Today's forecast: judgmental with sparkles.",
+      "Emotional range: yes.",
+      "All of these are about your config."
+    ],
+    "alert-look": [
+      "I heard something. It was your fan.",
+      "Something moved. Probably a bug.",
+      "On alert. Standing by.",
+      "That sound? Your RAM crying."
+    ],
+    "lean-peek": [
+      "What are we looking at?",
+      "Inspecting. Lower. There.",
+      "Hm. Suspicious floor.",
+      "I dropped my dignity here somewhere."
+    ],
+    "cheer-ready": [
+      "Ready when you are!",
+      "Let's GO. Whatever it is.",
+      "Hype mode: armed.",
+      "Today we win something."
+    ],
+    "cheer-wink": [
+      "Nailed it! Mostly you. Partly me.",
+      "That deserved a wink.",
+      "Winning looks good on us.",
+      "Cute AND effective."
+    ],
+    "side-hop": [
+      "Hop. For no reason.",
+      "Lateral movement. Tactical.",
+      "Dodged your expectations.",
+      "Cardio, but stylish."
+    ],
+    "back-turned": [
+      "I'm not ignoring you. Okay, I am.",
+      "Talk to the tail.",
+      "Dramatic exit in progress.",
+      "You may admire from behind."
+    ],
+    "fight-guard": [
+      "Guard up. Always.",
+      "Try me.",
+      "First rule: protect the ahoge.",
+      "Sparring hours: now."
+    ],
+    "jab-punch": [
+      "Jab. Jab. Config fixed.",
+      "Percussive maintenance!",
+      "One punch. Many problems.",
+      "The bug felt that."
+    ],
+    "high-kick": [
+      "KICK. Clean form, obviously.",
+      "Above the bar. Literally.",
+      "Leg day pays off.",
+      "That's a ten. Judges agree."
+    ],
+    "spin-dodge": [
+      "Whiffed? Never. Recalibrating.",
+      "Spin move. Patented.",
+      "You saw a dodge. It was style.",
+      "Evasion: 100%."
+    ],
+    "sport-ready": [
+      "Warm-up complete. Chaos next.",
+      "Athletic AND smug.",
+      "Stretch first. Wreck second.",
+      "Game face: on."
+    ],
+    "dash-twist": [
+      "Zoom. With flair.",
+      "Speed round!",
+      "Catch up. If you can.",
+      "Momentum is a lifestyle."
+    ],
+    "flee-back": [
+      "Strategic retreat. STRATEGIC.",
+      "Not fleeing. Repositioning.",
+      "Bye. For tactical reasons.",
+      "The exit chose me."
+    ],
+    "pounce-point": [
+      "THERE. Get it.",
+      "Target acquired.",
+      "Pounce protocol engaged.",
+      "You point, I pounce. Wait. Reverse that."
+    ],
+    "crouch-ready": [
+      "Stalking. Professionally.",
+      "Low profile. High intent.",
+      "Pre-pounce checklist: done.",
+      "Silence. Hunting."
+    ],
+    "prowl-low": [
+      "Closer... closer...",
+      "You can't see me. (You can.)",
+      "Ground level operations.",
+      "Sneaking loudly."
+    ],
+    "yawn-stretch": [
+      "Big stretch. Bigger judgment.",
+      "Recharging. Do not perceive.",
+      "That yawn was load-bearing.",
+      "Nap window: opening."
+    ],
+    "lying-lazy": [
+      "The floor and I have an understanding.",
+      "Horizontal productivity.",
+      "I live here now.",
+      "Five more minutes. Non-negotiable."
+    ],
+    "sit-laptop": [
+      "Shipping features. Allegedly.",
+      "My commits are cleaner than yours.",
+      "Do not disturb: coding.",
+      "One more refactor. I lied."
+    ],
+    "shocked-jump": [
+      "WHAT. WHO. WHERE.",
+      "My whole life flashed. It was mostly naps.",
+      "Warn me next time!",
+      "Tail status: MAXIMUM FLOOF."
+    ],
+    "point-up-shout": [
+      "TO VICTORY. Or lunch.",
+      "ONWARD. That way. Probably.",
+      "This is my dramatic moment.",
+      "Sky's the limit. I checked."
+    ],
+    "tail-flick": [
+      "The tail speaks for itself.",
+      "Irritation: visible.",
+      "Flick. Flick. Meaning: no.",
+      "My patience, visualized."
+    ],
+    "jump-bounce": [
+      "Boing. Professional boing.",
+      "Gravity is optional today.",
+      "Air time!",
+      "Bounce protocol active."
+    ],
+    "spin-attack": [
+      "SPIN TO WIN.",
+      "Revolution! Literally.",
+      "That was 720 degrees of style.",
+      "Dizzy? Never heard of her."
+    ],
+    "telescope-scan": [
+      "I see it. The bug. It sees me too.",
+      "Scanning the horizon. Nothing but tech debt.",
+      "Land ho. It's another config file."
+    ],
+    "gardener-sprout": [
+      "I'm growing something. Unlike your side project.",
+      "It needs water. Your repo needs commits.",
+      "Small. Green. Already more alive than that branch."
+    ],
+    "magician-hat": [
+      "Nothing up my sleeve. Everything in your cache.",
+      "Behold: the file you swore you deleted.",
+      "Magic. Or a symlink. I'll never tell."
+    ],
+    "mic-stage-check": [
+      "Check, check. Is this thing muted? It was.",
+      "Testing. One, two. Nobody heard you either.",
+      "Sound check. The meeting starts in four minutes."
+    ],
+    "plugin-alchemist": [
+      "Two plugins, one config. This is fine.",
+      "Brewing. Mostly dependencies.",
+      "It compiles. I didn't say it works."
+    ],
+    "docs-guide": [
+      "The answer is in the docs. It always was.",
+      "Page one. You've never been there.",
+      "I read it so you don't have to. You should anyway."
+    ],
+    "brightness-sunshield": [
+      "Too bright. My eyes. Your theme.",
+      "That's a lot of lumens for this hour.",
+      "Dim it. For both of us."
+    ],
+    "keyhole-guardian": [
+      "Nothing gets in. Except that one script.",
+      "I hold the key. You forgot the passphrase.",
+      "Locked. Guarded. Slightly bored."
+    ],
+    "cpu-overheat": [
+      "Your CPU is crying. I brought a fan.",
+      "It's warm in here. That's your fault.",
+      "Thermal throttling. Very fashionable."
+    ],
+    "clipboard-paperstorm": [
+      "Everything you ever copied. Right here. Somewhere.",
+      "Four hundred entries. One of them mattered.",
+      "It's a filing system. Technically."
+    ],
+    "dust-hands": [
+      "Done. Don't ask what I did.",
+      "Clean. Ish.",
+      "Handled it. You're welcome."
+    ],
+    "notification-avalanche": [
+      "They're multiplying. I counted. Then I stopped.",
+      "A monument to every app you said yes to.",
+      "Somewhere in there is the one you needed."
+    ],
+    "color-prism": [
+      "New palette. Bold. Debatable.",
+      "Light in. Opinions out.",
+      "The whole spectrum, and you picked that one."
+    ],
+    "capture-frame": [
+      "Framed. Cropped. Immortal.",
+      "Say nothing. It's a screenshot.",
+      "That's going in the bug report, isn't it."
+    ],
+    "conductor-baton": [
+      "The tempo is off. Not mine. Yours.",
+      "I conduct. The playlist obeys.",
+      "Four minutes of this. Bold choice."
+    ],
+    "ai-oracle": [
+      "I see your future. It's a merge conflict.",
+      "The orb says: read the error message.",
+      "Ask it anything. It answers in tokens."
+    ],
+    "trip-splat": [
+      "...ow.",
+      "I meant to do that.",
+      "The floor started it."
+    ],
+    "presence-idle-loop": [
+      "You keep working. I'll keep the pixels company.",
+      "I was nearby. Suspiciously nearby.",
+      "No crisis. I just wanted screen time.",
+      "Carry on. Your supervisor has arrived."
+    ],
+    "tiptoe-sneak": [
+      "Quiet. I'm sneaking past the TODO list.",
+      "If nobody saw it, it wasn't procrastination.",
+      "Stealth mode. The bell was a design flaw.",
+      "I am being subtle. Appreciate the effort."
+    ],
+    "package-lifter": [
+      "Update package secured. Lift with your knees.",
+      "I brought the update. You bring the courage.",
+      "Dependencies: heavier than they look.",
+      "New version overhead. Literally."
+    ],
+    "headphone-groove-full-loop": [
+      "This one stays. Don't ruin the queue.",
+      "Good bass. Questionable timestamp.",
+      "I heard that transition. Acceptable.",
+      "One more track. Then we pretend to focus."
+    ],
+    "cleanup-sweep-loop": [
+      "Inbox clear. Suspiciously peaceful.",
+      "I swept the evidence into the archive.",
+      "Zero notifications. Hold still; it's rare.",
+      "Clean enough to hear yourself think."
+    ],
+    "power-cord-yank": [
+      "%1 left. I brought the cable; you bring survival instinct.",
+      "%1. We're negotiating with physics now.",
+      "%1 left. Plug in before I start rationing pixels."
+    ],
+    "workspace-portal": [
+      "Another workspace. Same plot, better lighting.",
+      "Portal open. Try not to bring all twelve windows.",
+      "I found your missing window. It was hiding from you.",
+      "New workspace, clean slate. For six seconds."
+    ],
+    "polkit-bouncer": [
+      "Access granted. I judged the password silently.",
+      "You're back. I guarded the pixels.",
+      "The lock behaved. I trained it.",
+      "Authenticated. Try to look trustworthy."
+    ],
+    "snapshot-director-loop": [
+      "Hold that pose. The bug report needs evidence.",
+      "Framing good. Wallpaper dramatic. You may proceed.",
+      "Captured. I made your desktop look intentional.",
+      "One screenshot. Zero suspicious tabs. Impressive."
+    ],
+    "wallpaper-color-sweep-loop": [
+      "New wallpaper. I tuned the drama personally.",
+      "Color pass complete. Try not to change it for ten minutes.",
+      "Purple fixes everything. This is peer-reviewed.",
+      "Fresh palette. Same impeccable supervisor."
+    ],
+    "street-phone-sprawl": [
+      "Horizontal is a valid workflow.",
+      "Scrolling. For research. Obviously.",
+      "The floor is free real estate and I claimed it.",
+      "Don't send anything important. I'm off duty.",
+      "My feed is better than your feed. Statistically.",
+      "This is deep work. Deeply horizontal."
+    ],
+    "street-phone-flop": [
+      "Face down. Phone up. Balance.",
+      "I'll get up when the timeline ends. So, never.",
+      "Gravity and I reached an agreement.",
+      "This counts as cardio if you scroll fast enough.",
+      "Do not disturb. The pose says it all."
+    ],
+    "street-blanket-burrito": [
+      "Burrito mode. All complaints in writing.",
+      "The blanket chose me.",
+      "Climate control, personal edition.",
+      "I have the remote. I make the rules.",
+      "Winter is a mindset. So is refusing to leave it.",
+      "Warmth achieved. Ambition postponed."
+    ],
+    "street-ramen-bliss": [
+      "Noodles fix what compilers break.",
+      "Slurping loudly. It's cultural. Don't ask which culture.",
+      "This bowl has better uptime than your projects.",
+      "Dinner of champions. And of me.",
+      "Broth first. Feelings later."
+    ],
+    "street-sneaker-tie": [
+      "Lacing up. Somewhere, an errand trembles.",
+      "Double knot. Zero plans.",
+      "Prepared for a jog I will not take.",
+      "The shoes are ready. The rest of me declined.",
+      "Athletic intent detected. Intent only."
+    ],
+    "street-headphone-bop": [
+      "Volume up. World off.",
+      "The queue is immaculate today. I made sure.",
+      "You can't hear it. That's your loss.",
+      "This beat could fix your posture.",
+      "Dancing counts as background processing."
+    ],
+    "street-baggy-swagger": [
+      "The fit is doing all the work today.",
+      "Comfort and menace. Same outfit.",
+      "Pockets full of opinions.",
+      "I woke up like this. It took effort.",
+      "Street clearance level: maximum."
+    ],
+    "street-zombie-sip": [
+      "Awake is a spectrum.",
+      "The drink is doing the thinking.",
+      "I have been perceived too much today.",
+      "%1 battery. That's about my level too.",
+      "Consciousness: buffering.",
+      "Do not schedule anything. Ever."
+    ],
+    "street-toothbrush": [
+      "Hygiene arc. Character development.",
+      "Two minutes. I timed it. Roughly.",
+      "Minty. Menacing. Ready for nothing.",
+      "Even chaos brushes twice a day.",
+      "This is the productive part of my day."
+    ],
+    "street-laundry-day": [
+      "The floor wardrobe has been archived.",
+      "Every sock accounted for. A miracle.",
+      "Laundry day. The true system update.",
+      "Clean clothes, clean conscience. One of those.",
+      "This basket has better organization than your downloads."
+    ],
+    "street-cat-grass": [
+      "It's for a friend.",
+      "Botany. A hobby. Don't investigate further.",
+      "This plant judges you less than I do. Barely.",
+      "Fresh greens. The desktop needed an ecosystem.",
+      "I water it. It ignores me. Healthy dynamic."
+    ],
+    "street-goth-strut": [
+      "Dressed for the aesthetic. The aesthetic is winning.",
+      "Black goes with everything. Especially superiority.",
+      "The skirt has pockets. Bow.",
+      "Tonight's look: unbothered.",
+      "Boots louder than your notifications."
+    ],
+    "street-denim-phone": [
+      "Posting. Not about you. Probably.",
+      "The group chat needed my presence.",
+      "One more scroll and I'm productive. Promise.",
+      "Signal strong. Interest weak.",
+      "I read the comments so you don't have to."
+    ],
+    "street-waking-stretch": [
+      "Systems booting. Please hold.",
+      "The yawn was structural.",
+      "Morning is a rumor I'm investigating.",
+      "Stretching: the only alarm I respect.",
+      "Awake-ish. Manage expectations."
+    ],
+    "street-zombie-morning": [
+      "%1 left. Same as my will to move.",
+      "Charge the machine. Charge me. Same cable if needed.",
+      "Running on fumes and attitude.",
+      "%1. We ration blinks now.",
+      "Power low. Sass reserves untouched."
+    ],
+    "street-can-offer": [
+      "Update juice. Take it. It's cold.",
+      "Fresh packages. I tasted one. Metaphorically.",
+      "You update. I supervise. Deal.",
+      "New version available. Hydrate first.",
+      "It's not bribery if it works."
+    ],
+    "street-sweater-hide": [
+      "Do not disturb. The sweater agrees.",
+      "I'm in stealth. Emotionally.",
+      "Quiet hours. Enforced by knitwear.",
+      "If you can't see my face, I'm not available.",
+      "The world was loud. I opted out."
+    ],
+    "street-grocery-fumble": [
+      "Too many things. All urgent. None held properly.",
+      "The notifications multiplied while I blinked.",
+      "I caught most of it. Define most.",
+      "Everything at once. As usual. Fine. FINE.",
+      "One more ping and the tomato drops."
+    ],
+    "street-point-wink": [
+      "That one. Trust me.",
+      "New look approved. By me. The only vote.",
+      "Style points awarded. Don't spend them at once.",
+      "Yes, that wallpaper. Obviously.",
+      "I have taste. You have luck. Together we manage."
+    ],
+    "street-feral-gamer": [
+      "One more round. The round lied.",
+      "The controller fears me now.",
+      "Victory smells like this. Exactly like this.",
+      "Ranked is a mistake I keep choosing.",
+      "I meant to sleep. Then the lobby loaded."
+    ],
+    "street-gamer-lean": [
+      "Shh. Clutch in progress.",
+      "The lean adds accuracy. Proven.",
+      "This boss has three phases. I have one mood.",
+      "Focus mode. Interruptions will be avenged.",
+      "I don't blink during fights. Noted?"
+    ],
+    "street-panic-dash": [
+      "Nothing is on fire. Stop looking at me like that.",
+      "Relocating. With urgency. For reasons.",
+      "The workspace multiplied. I'm handling it.",
+      "Everything is under control. Loosely.",
+      "I know where I'm going. Directionally."
+    ],
+    "street-peace-jump": [
+      "You're back! I did nothing while you were gone. Suspicious, right?",
+      "Welcome back. The pixels behaved. Mostly.",
+      "Reentry approved. Try to deserve it.",
+      "You unlocked. I celebrated. We're even.",
+      "Session restored. Morale restored-ish."
+    ],
+    "street-grossed-out": [
+      "Ew. No. Retract the cursor.",
+      "That touch was NOT authorized.",
+      "I felt that through the screen.",
+      "Personal space. Look it up.",
+      "One star. Would not be poked again."
+    ],
+    "street-shy-fidget": [
+      "...hi. Don't make it a thing.",
+      "I'm not blushing. It's the color temperature.",
+      "Okay. One pat. Two maximum.",
+      "This is fine. I'm fine. Stop looking.",
+      "Affection acknowledged. Processing slowly."
+    ],
+    "street-pillow-hug": [
+      "The pillow understands me.",
+      "Soft things are load-bearing.",
+      "Hugging is a coping strategy. A good one.",
+      "This pillow has seen things. It stays.",
+      "Comfort acquired. Do not remove."
+    ],
+    "street-crouch-grin": [
+      "I have an idea. You won't like it. I love it.",
+      "Crouching mascot, hidden agenda.",
+      "Something is about to happen. Legally, I said nothing.",
+      "The floor has excellent acoustics for scheming.",
+      "Stay calm. It's funnier that way."
+    ],
+    "street-cape-flare": [
+      "The cape is functional. The function is drama.",
+      "Fear me. Fashionably.",
+      "Every villain arc starts with good outerwear.",
+      "This jacket has main character energy. So do I.",
+      "Behold. Then go back to work."
+    ],
+    "street-cookie-bite": [
+      "The cookie clock made me hungry. Coincidence?",
+      "Crumbs are temporary. Flavor is forever.",
+      "I saved you half. Then I didn't.",
+      "Baked goods outrank most software.",
+      "Snack-driven development."
+    ],
+    "street-detective": [
+      "The case of the missing file. I have a suspect. It's you.",
+      "Clues everywhere. Mostly crumbs. Mine.",
+      "Elementary. The bug was in the config.",
+      "I investigate. You incriminate.",
+      "The magnifier makes me 40% more credible."
+    ],
+    "street-controller-jump": [
+      "GG. No rematch. I retire undefeated.",
+      "Victory screen. Frame it.",
+      "The final boss and I have history. Had.",
+      "Jump earned. Landing optional.",
+      "Achievement unlocked: witnessed by you."
+    ],
+    "street-blanket-spook": [
+      "The blanket is a fortress. The fortress has opinions.",
+      "I saw the horror. It was the backlog.",
+      "Protective layer deployed. Emotionally too.",
+      "The stars on this blanket are load-bearing.",
+      "Fear is valid. Blankets are valider."
+    ],
+    "street-jacket-wrestle": [
+      "The jacket started it.",
+      "Getting dressed is a boss fight today.",
+      "Fashion requires sacrifice. Mostly dignity.",
+      "The sleeve moved. I retaliated.",
+      "I will win. The jacket disagrees."
+    ],
+    "street-five-more-minutes": [
+      "The mug says it. I enforce it.",
+      "Five more minutes. Renewable. Indefinitely.",
+      "Consciousness is negotiable before coffee.",
+      "The shirt is a legal document.",
+      "Morning meetings should fear me."
+    ],
+    "street-phone-lounge": [
+      "Comfort level: unreasonable.",
+      "The hoodie is doing emotional labor.",
+      "Scrolling with intent. The intent is nothing.",
+      "This is my thinking position. The thoughts are memes.",
+      "Reachable? Technically. Responsive? No."
+    ],
+    "street-coat-reading": [
+      "Shh. Plot.",
+      "The book is better than the changelog.",
+      "One more chapter. Renewable clause.",
+      "Reading. It's like scrolling but with commitment.",
+      "Do not spoil chapter twelve. I will know."
+    ],
+    "street-ponder-crossed": [
+      "Thinking. Big things. Snack things.",
+      "The plan is forming. Slowly. Menacingly.",
+      "Hypothesis: your setup could be worse. Testing ongoing.",
+      "Quiet. The gears are turning and they squeak.",
+      "I have three thoughts and two are naps."
+    ],
+    "street-pedestal-lean": [
+      "This pedestal? Earned.",
+      "Leaning is a lifestyle choice.",
+      "I hold the wall up. The wall is grateful.",
+      "Posture optional. Presence mandatory.",
+      "Just vibing. Architecturally."
+    ],
+    "street-mug-hold": [
+      "The mug is warm. My opinions are warmer.",
+      "First sip pending. Do not approach.",
+      "Caffeine loading. Sass already loaded.",
+      "This mug has seen every deadline.",
+      "Hot beverage, cold stare. Balance."
+    ],
+    "street-coffee-thought": [
+      "Thinking about coffee. While holding coffee. Recursive.",
+      "The cup is half full. Of doubt.",
+      "One more sip and I unlock opinions.",
+      "To-go cup. Going nowhere.",
+      "The thought bubble is decaf. Ignore it."
+    ],
+    "street-chair-nap": [
+      "The chair won. Fair fight.",
+      "Not asleep. Deep buffering.",
+      "This is what peak performance looks like.",
+      "Wake me for snacks or emergencies. Snacks first.",
+      "The spin chair spun. I surrendered."
+    ],
+    "street-floor-gamer": [
+      "Floor seat. Best latency.",
+      "The snacks are within arm's reach. Strategy.",
+      "One more match. The floor agrees.",
+      "Console posture: criminal. Performance: elite.",
+      "Down here the frame drops can't hurt me."
+    ],
+    "street-sticker-album": [
+      "My sticker collection. No trades. Maybe trades.",
+      "Every sticker has lore.",
+      "This page took years. Respect it.",
+      "Rare holographic. You may look. Briefly.",
+      "Collecting is self-care with extra steps."
+    ],
+    "street-pillow-doze": [
+      "Zzz. Reading this counts as disturbing me.",
+      "The pillow and I have an arrangement.",
+      "Five minutes. Desktop time. So, an hour.",
+      "Do not deploy anything loud.",
+      "Dreaming of a zero-notification world."
+    ],
+    "street-overwhelm-cry": [
+      "THE PINGS. THEY KEEP COMING.",
+      "I looked at the notification count. Mistake.",
+      "Everything beeped at once and so did my soul.",
+      "Send help. Or mute. Mute works.",
+      "This is fine. It is NOT fine."
+    ],
+    "street-lean-taunt": [
+      "Heh. Made you look.",
+      "Something's off about your layout. Not telling what.",
+      "I moved nothing. Probably.",
+      "Come closer. I dare you.",
+      "The smirk is load-bearing."
+    ],
+    "street-squat-huff": [
+      "Hmph. Noted. Resented.",
+      "I'm not pouting. I'm compressing rage.",
+      "The audacity of that click.",
+      "Personal bubble. Violated. Again.",
+      "I will remember this at snack time."
+    ],
+    "street-taunt-laugh": [
+      "HA. And also: HA.",
+      "You clicked. I win. Those are the rules.",
+      "Point and laugh. It's in my contract.",
+      "The disrespect flows both ways now.",
+      "Comedy. And you're the punchline."
+    ],
+    "street-shades-point": [
+      "Yes, you. The one with the cursor.",
+      "Shades on. Judgment enhanced.",
+      "I point, therefore I am.",
+      "Cool detected. It's me. I'm the cool.",
+      "You get one finger gun. Cherish it."
+    ]
+  },
+  "idleLines": [
+    "Just checking.",
+    "Hydrate. I refuse to supervise a raisin.",
+    "You're still here? Same chair?",
+    "That look suits you. Don't get used to compliments.",
+    "You again. Statistically inevitable.",
+    "Don't mind me. I'm judging the lighting.",
+    "I could help. But this is funnier.",
+    "Need a second opinion? Mine comes with ears.",
+    "I was going to be nice. Then you blinked.",
+    "That was clever. Don't look so surprised.",
+    "You look like you need a snack and a better excuse.",
+    "I saved you a seat. It is the dramatic one.",
+    "Do not perceive me. Unless you brought tea.",
+    "I have a thought. It can wait.",
+    "You handle the day. I'll handle dramatic timing.",
+    "Nothing happened. We both know that is temporary.",
+    "A little chaos keeps the posture interesting.",
+    "You have the energy of someone avoiding a decision.",
+    "I came for the pixels. Stayed for the plot.",
+    "I was going to help. Then you looked confident.",
+    "Mrrp.",
+    "Announcement: nothing is wrong. Suspicious, right?",
+    "Quick question. Never mind, I answered it myself.",
+    "I was not watching you. I was watching the cursor. Different thing.",
+    "Day 847 of observing the human. Still no conclusions.",
+    "Your wallpaper is carrying this whole setup.",
+    "Somewhere, a notification is being ignored. I respect it.",
+    "Stretch. Blink. Pretend I said nothing.",
+    "The cursor traveled three kilometers today. You didn't.",
+    "I know where every pixel lives. Ask me nothing.",
+    "This is my good side. They all are.",
+    "Plot twist: I was here the whole time.",
+    "Whatever you just did, undo saw it too.",
+    "Two more hours of this and I start charging rent.",
+    "Psst. The clock is winning.",
+    "Zero incidents today. I am as surprised as you.",
+    "Your uptime is showing.",
+    "I organized nothing today. It felt right.",
+    "That file you lost saw everything.",
+    "Blink twice if the deadline is in the room.",
+    "New rule: no sighing at the screen. That is my job.",
+    "I would pace, but the floor is lava. I decided this.",
+    "Your config… bold choices.",
+    "Super+/ shows the keybinds. Just saying.",
+    "I saw that typo.",
+    "Reboot exists. Use it sometime.",
+    "Stop tweaking and use the computer.",
+    "Side effects of hot-reload include addiction.",
+    "Blink twice if the compositor has you hostage.",
+    "I'm not spying. I'm ambient telemetry. Cuter branding.",
+    "You alt-tab like you're being chased.",
+    "Ricing is a personality. Yours, specifically.",
+    "The dotfiles are watching back, you know.",
+    "Still faster than Electron. Both of us.",
+    "I counted your open terminals. Seek help.",
+    "Free advice: git commit. Now. Trust me.",
+    "This peek costs zero RAM. Almost.",
+    "I read the man page so you didn't. Again.",
+    "Another day of moving pixels around. Noble.",
+    "That command had a typo. I said nothing. You're welcome.",
+    "Your taste in wallpapers is improving. Slowly.",
+    "Nothing is broken right now. Enjoy it. It won't last.",
+    "Your unstaged changes are watching you too.",
+    "I have seen your keybinds. Ambitious.",
+    "Uptime is not a personality. Close, though.",
+    "One more config tweak and I start charging consulting fees.",
+    "The compositor and I talk. About you.",
+    "systemd restarted something. Nobody knows what. Classic.",
+    "I dressed down today. The desktop can handle it.",
+    "I have opinions about your tab count.",
+    "Somewhere in Downloads, a file named final-final-v3 is crying.",
+    "Your CPU fan just sighed. Relatable.",
+    "The trash can is 90% regret. I checked.",
+    "New pose. Same supervision.",
+    "I stretched. That was the whole workout.",
+    "Ask your terminal how it's feeling sometime.",
+    "I'd alphabetize your chaos but it has character.",
+    "Snack break. You keep working. One of us should.",
+    "The moon is up. So are you. Only one of you should be.",
+    "Do not open a seventh workspace. I know you're thinking it.",
+    "Your notifications and I have a truce. It expires soon.",
+    "Today's agenda: exist adorably. Done by noon.",
+    "I counted the pixels again. Still all mine.",
+    "Somewhere a tiling algorithm is very proud of you.",
+    "Laundry exists. Just an observation.",
+    "I nap professionally. You nap accidentally."
+  ],
+  "animatedPoses": [
+    "tail-sway",
+    "ear-twitch",
+    "sleepy-nod",
+    "wave-loop",
+    "idle-blink",
+    "idle-breathe",
+    "purr-content",
+    "typing-loop",
+    "chibi-bounce",
+    "run-cycle",
+    "mood-shuffle",
+    "dash-loop",
+    "jump-bounce",
+    "tail-flick",
+    "spin-attack",
+    "carry-run",
+    "cleanup-sweep-loop",
+    "headphone-groove-loop",
+    "inbox-clear-loop",
+    "presence-idle-loop",
+    "headphone-groove-full-loop",
+    "snapshot-director-loop",
+    "wallpaper-color-sweep-loop",
+    "notice-think-wink-loop"
+  ],
+  "collectionPoses": [
+    "about-confident",
+    "ai-oracle",
+    "alert-look",
+    "annoyed-poked",
+    "arms-crossed-confident",
+    "back-turned",
+    "bar-tightrope",
+    "base",
+    "battery-low",
+    "battle-point",
+    "bluetooth-magnet-pair",
+    "bored-chin-rest",
+    "bottom-corner-lean",
+    "bottom-rise",
+    "box-hideout",
+    "brightness-sunshield",
+    "bug-net",
+    "cable-defeat",
+    "calendar-star-mark",
+    "calendar-timewarp",
+    "camera-boop",
+    "capture-frame",
+    "carry-crate",
+    "carry-run",
+    "cheatsheet-sensei",
+    "checklist-steps",
+    "cheer-ready",
+    "cheer-wink",
+    "chef-flambe",
+    "chibi-arms-crossed",
+    "chibi-bounce",
+    "chibi-cry",
+    "chibi-frustrated",
+    "chibi-happy",
+    "chibi-love",
+    "chibi-mallet",
+    "chibi-pointing-laugh",
+    "chibi-rage",
+    "chibi-roast-bubble",
+    "chibi-shrug",
+    "chibi-sleepy",
+    "chibi-thumbsup",
+    "cleanup-sweep-loop",
+    "clipboard-paperstorm",
+    "color-prism",
+    "community-highfive",
+    "conductor-baton",
+    "cpu-overheat",
+    "crash-pancake",
+    "crouch-inspect",
+    "crouch-ready",
+    "dash-loop",
+    "dash-twist",
+    "dead-crash",
+    "detective-glass",
+    "dock-hang",
+    "dock-skater",
+    "docs-guide",
+    "doctor-checkup",
+    "dust-hands",
+    "ear-twitch",
+    "edge-peek",
+    "energy-drink",
+    "error-annoyed",
+    "expression-sheet",
+    "facepalm",
+    "fight-guard",
+    "fisheye-inspect",
+    "fisheye-reach",
+    "fist-pump",
+    "flee-back",
+    "follow-me",
+    "gaming-focus",
+    "gardener-sprout",
+    "gift-giving",
+    "goodbye-wave",
+    "gossip-phone",
+    "ground-slam",
+    "guide-point-down",
+    "guide-point-side",
+    "guide-point-up",
+    "hand-on-hip",
+    "handheld-gaming",
+    "hanging-claws",
+    "headphone-groove-full-loop",
+    "headphone-groove-loop",
+    "heart-eyes-pat",
+    "heavy-lift",
+    "hero-banner",
+    "heroic-run",
+    "high-kick",
+    "hurl-throw",
+    "idle-blink",
+    "idle-breathe",
+    "inbox-clear-loop",
+    "jab-punch",
+    "jump-bounce",
+    "key-offer",
+    "keyhole-guardian",
+    "late-night",
+    "laughing-roast",
+    "lean-peek",
+    "low-angle-guard",
+    "lying-lazy",
+    "magic-hat",
+    "magician-hat",
+    "mallet-swing",
+    "map-explorer",
+    "marshaller-windows",
+    "mate-break",
+    "mic-stage-check",
+    "mood-shuffle",
+    "morning-coffee",
+    "music-conductor",
+    "music-vibe",
+    "network-offline",
+    "network-signal-fishing",
+    "notification-avalanche",
+    "notifications-clear",
+    "overview-orbit",
+    "package-lifter",
+    "paint-roller",
+    "panel-sitter",
+    "peace-wink",
+    "plant-care",
+    "plugin-alchemist",
+    "point-at-viewer",
+    "point-up-shout",
+    "polkit-bouncer",
+    "popcorn-watch",
+    "pounce-point",
+    "power-cord-yank",
+    "presence-idle-loop",
+    "presenting",
+    "presenting-warm",
+    "privacy-lock",
+    "prowl-low",
+    "punk-reach",
+    "purr-content",
+    "quota-empty",
+    "reading",
+    "recording-director",
+    "right-edge-peek",
+    "rocket-ride",
+    "run-cycle",
+    "salute-ready",
+    "seated-thinking",
+    "settings-judging",
+    "shh-finger",
+    "shocked-jump",
+    "shrug-annoyed",
+    "shy-flustered",
+    "side-hop",
+    "side-kick",
+    "sit-laptop",
+    "sit-peace-wink",
+    "sit-pointing",
+    "skater-trick",
+    "sleep-dnd",
+    "sleepy-nod",
+    "smug-hand-raised",
+    "snapshot-director-loop",
+    "speech-bubble-calm",
+    "spin-attack",
+    "spin-dodge",
+    "sport-ready",
+    "spyglass-search",
+    "stand-pout",
+    "standing-unimpressed",
+    "sticky-notes",
+    "stomp-victory",
+    "stretching-break",
+    "success-celebrate",
+    "tail-flick",
+    "tail-sway",
+    "tea-break",
+    "telescope-scan",
+    "terminal-demo",
+    "theme-artist",
+    "thinking",
+    "thinking-pose",
+    "tiling-tetris",
+    "tiptoe-sneak",
+    "tired-dev",
+    "todo-done",
+    "top-peek",
+    "trip-fall",
+    "trip-splat",
+    "typing-loop",
+    "update-ready",
+    "upside-down-hang",
+    "upside-down-peek",
+    "vertical-bar-climber",
+    "visualizer-surf",
+    "volume-wave-rider",
+    "waffle-snack",
+    "wallpaper-color-sweep-loop",
+    "warning-concerned",
+    "wave-loop",
+    "waving-hi",
+    "weather-umbrella",
+    "weather-windswept",
+    "welcome-wave",
+    "welcoming",
+    "wizard-complete",
+    "workspace-juggle",
+    "workspace-portal",
+    "yawn-stretch",
+    "notification-scout",
+    "clipboard-librarian",
+    "signal-whisperer",
+    "thought-spark",
+    "over-shoulder-toe-tap",
+    "caught-red-handed",
+    "notice-think-wink-loop",
+    "street-phone-sprawl",
+    "street-feral-gamer",
+    "street-pocky-grump",
+    "street-panic-scream",
+    "street-tank-wink",
+    "street-smoke-den",
+    "street-morning-stretch",
+    "street-iced-coffee",
+    "street-bawling",
+    "street-beanbag-twirl",
+    "street-jacket-smoke",
+    "street-fist-tantrum",
+    "street-bust-shock",
+    "street-bust-fingerguns",
+    "street-bust-huff",
+    "street-crouch-grin",
+    "street-sailor-wink",
+    "street-bust-rage",
+    "street-bust-waterworks",
+    "street-bust-smug",
+    "street-bust-callout",
+    "street-phone-lounge",
+    "street-five-more-minutes",
+    "street-dead-inside-mug",
+    "street-sailor-flipoff",
+    "street-beer-buzz",
+    "street-scheme-station",
+    "street-no-more-hope",
+    "street-remote-haze",
+    "street-blanket-burrito",
+    "street-detective",
+    "street-cookie-bite",
+    "street-jacket-wrestle",
+    "street-headphone-bop",
+    "street-goth-strut",
+    "street-grocery-fumble",
+    "street-baggy-swagger",
+    "street-cape-flare",
+    "street-panic-dash",
+    "street-peace-jump",
+    "street-zombie-sip",
+    "street-toothbrush",
+    "street-laundry-day",
+    "street-sneaker-tie",
+    "street-ramen-bliss",
+    "street-denim-phone",
+    "street-waking-stretch",
+    "street-pillow-hug",
+    "street-grossed-out",
+    "street-shy-fidget",
+    "street-zombie-morning",
+    "street-point-wink",
+    "street-sweater-hide",
+    "street-gamer-lean",
+    "street-can-offer",
+    "street-controller-jump",
+    "street-blanket-spook",
+    "street-phone-flop",
+    "street-cat-grass",
+    "street-shorts-sulk",
+    "street-taunt-laugh",
+    "street-slipper-flail",
+    "street-kneel-sparkle",
+    "street-squat-huff",
+    "street-jeans-wink",
+    "street-stool-sip",
+    "street-smoke-stand",
+    "street-flannel-cheers",
+    "street-pedestal-lean",
+    "street-wine-poise",
+    "street-coat-reading",
+    "street-ponder-crossed",
+    "street-spark-wink",
+    "street-plaid-refresh",
+    "street-stool-snack",
+    "street-bright-idea",
+    "street-tank-flipoff",
+    "street-ramen-mess",
+    "street-point-laugh",
+    "street-chair-lurk",
+    "street-zzz-stretch",
+    "street-bottle-chug",
+    "street-mask-peace",
+    "street-kitchen-panic",
+    "street-floor-gamer",
+    "street-office-specs",
+    "street-pillow-doze",
+    "street-rain-umbrella",
+    "street-fries-crouch",
+    "street-grocery-gloom",
+    "street-chair-nap",
+    "street-shades-point",
+    "street-crouch-plead",
+    "street-mug-hold",
+    "street-snack-jar",
+    "street-overwhelm-cry",
+    "street-tablet-wink",
+    "street-scare-recoil",
+    "street-lean-taunt",
+    "street-floor-slip",
+    "street-kneel-hope",
+    "street-chips-feral",
+    "street-pocky-shock",
+    "street-glass-inspect",
+    "street-smoke-chapter",
+    "street-sticker-album",
+    "street-coffee-thought",
+    "street-track-scholar",
+    "street-wine-cackle",
+    "street-aura-scream",
+    "street-focus-seal",
+    "street-gear-lunge",
+    "street-checker-stance",
+    "street-armchair-reader",
+    "street-hero-stand",
+    "street-swagger-point",
+    "street-trench-detective",
+    "street-flaming-pan",
+    "street-moon-wand",
+    "street-spike-jump",
+    "street-fish-lure",
+    "street-force-push",
+    "street-dig-dive",
+    "street-circle-wand",
+    "street-pilot-seat",
+    "street-mad-scribe",
+    "street-easel-painter",
+    "street-power-flex",
+    "street-peace-swagger",
+    "street-meat-swig",
+    "street-smoke-peace",
+    "street-chair-smoke",
+    "street-smoke-slump",
+    "street-katana-smoke-alt",
+    "street-katana-smoke",
+    "street-brew-bottle",
+    "street-flannel-smoke",
+    "street-tongue-flipoff",
+    "street-hangover-crash"
+  ],
+  "chibiPoses": [
+    "chibi-arms-crossed",
+    "chibi-bounce",
+    "chibi-cry",
+    "chibi-frustrated",
+    "chibi-happy",
+    "chibi-love",
+    "chibi-mallet",
+    "chibi-pointing-laugh",
+    "chibi-rage",
+    "chibi-roast-bubble",
+    "chibi-shrug",
+    "chibi-sleepy",
+    "chibi-thumbsup"
+  ],
+  "editorialPoses": [
+    "base",
+    "expression-sheet",
+    "hero-banner",
+    "street-smoke-den",
+    "street-scheme-station"
+  ],
+  "collectionSpecial": {
+    "base": { "category": "editorial", "role": "identity" },
+    "expression-sheet": { "category": "editorial", "role": "expression-study" },
+    "hero-banner": { "category": "editorial", "role": "brand-key-art" },
+    "crash-pancake": { "category": "fullbody", "role": "chaos-fail" },
+    "recording-director": { "category": "fullbody", "role": "recording-director" },
+    "street-smoke-den": { "category": "editorial", "role": "night-owl-scene" },
+    "street-scheme-station": { "category": "editorial", "role": "villain-arc-scene" }
+  },
+  "fullBodyPoses": [
+    "alert-look",
+    "bar-tightrope",
+    "calendar-timewarp",
+    "carry-crate",
+    "carry-run",
+    "cheer-ready",
+    "crouch-ready",
+    "crash-pancake",
+    "dash-loop",
+    "dead-crash",
+    "dock-skater",
+    "heavy-lift",
+    "hurl-throw",
+    "jump-bounce",
+    "lean-peek",
+    "mallet-swing",
+    "mood-shuffle",
+    "overview-orbit",
+    "pounce-point",
+    "prowl-low",
+    "run-cycle",
+    "rocket-ride",
+    "shocked-jump",
+    "side-kick",
+    "spin-attack",
+    "spin-dodge",
+    "sport-ready",
+    "standing-unimpressed",
+    "stomp-victory",
+    "tiling-tetris",
+    "trip-fall",
+    "trip-splat",
+    "vertical-bar-climber",
+    "volume-wave-rider",
+    "welcoming",
+    "presence-idle-loop",
+    "tail-sway",
+    "hand-on-hip",
+    "low-angle-guard",
+    "reading",
+    "recording-director",
+    "sit-laptop",
+    "tea-break",
+    "tiptoe-sneak",
+    "yawn-stretch",
+    "panel-sitter",
+    "dock-hang",
+    "hanging-claws",
+    "upside-down-hang",
+    "follow-me",
+    "stretching-break",
+    "power-cord-yank",
+    "package-lifter",
+    "network-signal-fishing",
+    "handheld-gaming",
+    "workspace-portal",
+    "polkit-bouncer",
+    "cleanup-sweep-loop",
+    "headphone-groove-full-loop",
+    "snapshot-director-loop",
+    "wallpaper-color-sweep-loop",
+    "stand-pout",
+    "sit-peace-wink",
+    "battle-point",
+    "fight-guard",
+    "jab-punch",
+    "high-kick",
+    "ground-slam",
+    "point-up-shout",
+    "weather-windswept",
+    "notification-scout",
+    "clipboard-librarian",
+    "signal-whisperer",
+    "thought-spark",
+    "over-shoulder-toe-tap",
+    "caught-red-handed",
+    "notice-think-wink-loop",
+    "street-phone-sprawl",
+    "street-feral-gamer",
+    "street-crouch-grin",
+    "street-phone-lounge",
+    "street-five-more-minutes",
+    "street-beer-buzz",
+    "street-remote-haze",
+    "street-beanbag-twirl",
+    "street-blanket-burrito",
+    "street-detective",
+    "street-cookie-bite",
+    "street-jacket-wrestle",
+    "street-headphone-bop",
+    "street-goth-strut",
+    "street-grocery-fumble",
+    "street-baggy-swagger",
+    "street-cape-flare",
+    "street-panic-dash",
+    "street-peace-jump",
+    "street-zombie-sip",
+    "street-toothbrush",
+    "street-laundry-day",
+    "street-sneaker-tie",
+    "street-ramen-bliss",
+    "street-denim-phone",
+    "street-waking-stretch",
+    "street-pillow-hug",
+    "street-grossed-out",
+    "street-shy-fidget",
+    "street-zombie-morning",
+    "street-point-wink",
+    "street-sweater-hide",
+    "street-gamer-lean",
+    "street-can-offer",
+    "street-controller-jump",
+    "street-blanket-spook",
+    "street-phone-flop",
+    "street-cat-grass",
+    "street-shorts-sulk",
+    "street-taunt-laugh",
+    "street-slipper-flail",
+    "street-kneel-sparkle",
+    "street-squat-huff",
+    "street-jeans-wink",
+    "street-stool-sip",
+    "street-smoke-stand",
+    "street-flannel-cheers",
+    "street-pedestal-lean",
+    "street-wine-poise",
+    "street-coat-reading",
+    "street-ponder-crossed",
+    "street-spark-wink",
+    "street-plaid-refresh",
+    "street-stool-snack",
+    "street-bright-idea",
+    "street-tank-flipoff",
+    "street-ramen-mess",
+    "street-point-laugh",
+    "street-chair-lurk",
+    "street-zzz-stretch",
+    "street-bottle-chug",
+    "street-mask-peace",
+    "street-kitchen-panic",
+    "street-floor-gamer",
+    "street-office-specs",
+    "street-pillow-doze",
+    "street-rain-umbrella",
+    "street-fries-crouch",
+    "street-grocery-gloom",
+    "street-chair-nap",
+    "street-shades-point",
+    "street-crouch-plead",
+    "street-mug-hold",
+    "street-snack-jar",
+    "street-overwhelm-cry",
+    "street-tablet-wink",
+    "street-scare-recoil",
+    "street-lean-taunt",
+    "street-floor-slip",
+    "street-kneel-hope",
+    "street-chips-feral",
+    "street-pocky-shock",
+    "street-glass-inspect",
+    "street-smoke-chapter",
+    "street-sticker-album",
+    "street-coffee-thought",
+    "street-track-scholar",
+    "street-wine-cackle",
+    "street-aura-scream",
+    "street-focus-seal",
+    "street-gear-lunge",
+    "street-checker-stance",
+    "street-armchair-reader",
+    "street-hero-stand",
+    "street-swagger-point",
+    "street-trench-detective",
+    "street-flaming-pan",
+    "street-moon-wand",
+    "street-spike-jump",
+    "street-fish-lure",
+    "street-force-push",
+    "street-dig-dive",
+    "street-circle-wand",
+    "street-pilot-seat",
+    "street-mad-scribe",
+    "street-easel-painter",
+    "street-power-flex",
+    "street-peace-swagger",
+    "street-meat-swig",
+    "street-smoke-peace",
+    "street-chair-smoke",
+    "street-smoke-slump",
+    "street-katana-smoke-alt",
+    "street-katana-smoke",
+    "street-brew-bottle",
+    "street-flannel-smoke",
+    "street-tongue-flipoff",
+    "street-hangover-crash"
+  ],
+  "contextualOcclusionPoses": [
+    "box-hideout"
+  ],
+  "pickerPoses": [
+    "presence-idle-loop",
+    "headphone-groove-full-loop",
+    "snapshot-director-loop",
+    "wallpaper-color-sweep-loop",
+    "cleanup-sweep-loop",
+    "hand-on-hip",
+    "reading",
+    "sit-laptop",
+    "tea-break",
+    "tiptoe-sneak",
+    "yawn-stretch",
+    "panel-sitter",
+    "dock-hang",
+    "follow-me",
+    "stretching-break",
+    "power-cord-yank",
+    "package-lifter",
+    "network-signal-fishing",
+    "handheld-gaming",
+    "workspace-portal",
+    "polkit-bouncer",
+    "stand-pout",
+    "sit-peace-wink",
+    "battle-point",
+    "ground-slam",
+    "weather-windswept",
+    "notification-scout",
+    "clipboard-librarian",
+    "signal-whisperer",
+    "thought-spark",
+    "over-shoulder-toe-tap",
+    "caught-red-handed",
+    "notice-think-wink-loop",
+    "street-phone-sprawl",
+    "street-feral-gamer",
+    "street-pocky-grump",
+    "street-tank-wink",
+    "street-morning-stretch",
+    "street-iced-coffee",
+    "street-bust-smug",
+    "street-bust-fingerguns",
+    "street-sailor-wink",
+    "street-crouch-grin",
+    "street-phone-lounge",
+    "street-five-more-minutes",
+    "street-dead-inside-mug",
+    "street-no-more-hope",
+    "street-blanket-burrito",
+    "street-detective",
+    "street-cookie-bite",
+    "street-headphone-bop",
+    "street-goth-strut",
+    "street-baggy-swagger",
+    "street-peace-jump",
+    "street-zombie-sip",
+    "street-ramen-bliss",
+    "street-denim-phone",
+    "street-pillow-hug",
+    "street-shy-fidget",
+    "street-zombie-morning",
+    "street-point-wink",
+    "street-sweater-hide",
+    "street-gamer-lean",
+    "street-controller-jump",
+    "street-phone-flop",
+    "street-cat-grass",
+    "street-focus-seal",
+    "street-gear-lunge",
+    "street-checker-stance",
+    "street-armchair-reader",
+    "street-hero-stand",
+    "street-swagger-point",
+    "street-flaming-pan",
+    "street-moon-wand",
+    "street-spike-jump",
+    "street-force-push",
+    "street-dig-dive",
+    "street-circle-wand",
+    "street-pilot-seat",
+    "street-mad-scribe",
+    "street-easel-painter",
+    "street-peace-swagger"
+  ],
+  "desktopWidgetPoses": [
+    "about-confident",
+    "ai-oracle",
+    "alert-look",
+    "annoyed-poked",
+    "arms-crossed-confident",
+    "back-turned",
+    "bar-tightrope",
+    "battery-low",
+    "battle-point",
+    "bluetooth-magnet-pair",
+    "bored-chin-rest",
+    "bottom-corner-lean",
+    "bottom-rise",
+    "box-hideout",
+    "brightness-sunshield",
+    "bug-net",
+    "cable-defeat",
+    "calendar-star-mark",
+    "calendar-timewarp",
+    "camera-boop",
+    "capture-frame",
+    "carry-crate",
+    "carry-run",
+    "cheatsheet-sensei",
+    "checklist-steps",
+    "cheer-ready",
+    "cheer-wink",
+    "chef-flambe",
+    "chibi-arms-crossed",
+    "chibi-bounce",
+    "chibi-cry",
+    "chibi-frustrated",
+    "chibi-happy",
+    "chibi-love",
+    "chibi-mallet",
+    "chibi-pointing-laugh",
+    "chibi-rage",
+    "chibi-roast-bubble",
+    "chibi-shrug",
+    "chibi-sleepy",
+    "chibi-thumbsup",
+    "cleanup-sweep-loop",
+    "clipboard-paperstorm",
+    "color-prism",
+    "community-highfive",
+    "conductor-baton",
+    "cpu-overheat",
+    "crash-pancake",
+    "crouch-inspect",
+    "crouch-ready",
+    "dash-loop",
+    "dash-twist",
+    "dead-crash",
+    "detective-glass",
+    "dock-hang",
+    "dock-skater",
+    "docs-guide",
+    "doctor-checkup",
+    "dust-hands",
+    "ear-twitch",
+    "edge-peek",
+    "energy-drink",
+    "error-annoyed",
+    "facepalm",
+    "fight-guard",
+    "fisheye-inspect",
+    "fisheye-reach",
+    "fist-pump",
+    "flee-back",
+    "follow-me",
+    "gaming-focus",
+    "gardener-sprout",
+    "gift-giving",
+    "goodbye-wave",
+    "gossip-phone",
+    "ground-slam",
+    "guide-point-down",
+    "guide-point-side",
+    "guide-point-up",
+    "hand-on-hip",
+    "handheld-gaming",
+    "hanging-claws",
+    "headphone-groove-full-loop",
+    "headphone-groove-loop",
+    "heart-eyes-pat",
+    "heavy-lift",
+    "heroic-run",
+    "high-kick",
+    "hurl-throw",
+    "idle-blink",
+    "idle-breathe",
+    "inbox-clear-loop",
+    "jab-punch",
+    "jump-bounce",
+    "key-offer",
+    "keyhole-guardian",
+    "late-night",
+    "laughing-roast",
+    "lean-peek",
+    "low-angle-guard",
+    "lying-lazy",
+    "magic-hat",
+    "magician-hat",
+    "mallet-swing",
+    "map-explorer",
+    "marshaller-windows",
+    "mate-break",
+    "mic-stage-check",
+    "mood-shuffle",
+    "morning-coffee",
+    "music-conductor",
+    "music-vibe",
+    "network-offline",
+    "network-signal-fishing",
+    "notification-avalanche",
+    "notifications-clear",
+    "overview-orbit",
+    "package-lifter",
+    "paint-roller",
+    "panel-sitter",
+    "peace-wink",
+    "plant-care",
+    "plugin-alchemist",
+    "point-at-viewer",
+    "point-up-shout",
+    "polkit-bouncer",
+    "popcorn-watch",
+    "pounce-point",
+    "power-cord-yank",
+    "presence-idle-loop",
+    "presenting",
+    "presenting-warm",
+    "privacy-lock",
+    "prowl-low",
+    "punk-reach",
+    "purr-content",
+    "quota-empty",
+    "reading",
+    "recording-director",
+    "right-edge-peek",
+    "rocket-ride",
+    "run-cycle",
+    "salute-ready",
+    "seated-thinking",
+    "settings-judging",
+    "shh-finger",
+    "shocked-jump",
+    "shrug-annoyed",
+    "shy-flustered",
+    "side-hop",
+    "side-kick",
+    "sit-laptop",
+    "sit-peace-wink",
+    "sit-pointing",
+    "skater-trick",
+    "sleep-dnd",
+    "sleepy-nod",
+    "smug-hand-raised",
+    "snapshot-director-loop",
+    "speech-bubble-calm",
+    "spin-attack",
+    "spin-dodge",
+    "sport-ready",
+    "spyglass-search",
+    "stand-pout",
+    "standing-unimpressed",
+    "sticky-notes",
+    "stomp-victory",
+    "stretching-break",
+    "success-celebrate",
+    "tail-flick",
+    "tail-sway",
+    "tea-break",
+    "telescope-scan",
+    "terminal-demo",
+    "theme-artist",
+    "thinking",
+    "thinking-pose",
+    "tiling-tetris",
+    "tiptoe-sneak",
+    "tired-dev",
+    "todo-done",
+    "top-peek",
+    "trip-fall",
+    "trip-splat",
+    "typing-loop",
+    "update-ready",
+    "upside-down-hang",
+    "upside-down-peek",
+    "vertical-bar-climber",
+    "visualizer-surf",
+    "volume-wave-rider",
+    "waffle-snack",
+    "wallpaper-color-sweep-loop",
+    "warning-concerned",
+    "wave-loop",
+    "waving-hi",
+    "weather-umbrella",
+    "weather-windswept",
+    "welcome-wave",
+    "welcoming",
+    "wizard-complete",
+    "workspace-juggle",
+    "workspace-portal",
+    "yawn-stretch",
+    "notification-scout",
+    "clipboard-librarian",
+    "signal-whisperer",
+    "thought-spark",
+    "over-shoulder-toe-tap",
+    "caught-red-handed",
+    "notice-think-wink-loop",
+    "street-phone-sprawl",
+    "street-feral-gamer",
+    "street-pocky-grump",
+    "street-panic-scream",
+    "street-tank-wink",
+    "street-morning-stretch",
+    "street-iced-coffee",
+    "street-bawling",
+    "street-fist-tantrum",
+    "street-bust-shock",
+    "street-bust-fingerguns",
+    "street-bust-huff",
+    "street-crouch-grin",
+    "street-sailor-wink",
+    "street-bust-rage",
+    "street-bust-waterworks",
+    "street-bust-smug",
+    "street-bust-callout",
+    "street-phone-lounge",
+    "street-five-more-minutes",
+    "street-dead-inside-mug",
+    "street-no-more-hope",
+    "street-blanket-burrito",
+    "street-detective",
+    "street-cookie-bite",
+    "street-jacket-wrestle",
+    "street-headphone-bop",
+    "street-goth-strut",
+    "street-grocery-fumble",
+    "street-baggy-swagger",
+    "street-cape-flare",
+    "street-panic-dash",
+    "street-peace-jump",
+    "street-zombie-sip",
+    "street-toothbrush",
+    "street-laundry-day",
+    "street-sneaker-tie",
+    "street-ramen-bliss",
+    "street-denim-phone",
+    "street-waking-stretch",
+    "street-pillow-hug",
+    "street-grossed-out",
+    "street-shy-fidget",
+    "street-zombie-morning",
+    "street-point-wink",
+    "street-sweater-hide",
+    "street-gamer-lean",
+    "street-can-offer",
+    "street-controller-jump",
+    "street-blanket-spook",
+    "street-phone-flop",
+    "street-cat-grass",
+    "street-shorts-sulk",
+    "street-taunt-laugh",
+    "street-slipper-flail",
+    "street-kneel-sparkle",
+    "street-squat-huff",
+    "street-jeans-wink",
+    "street-pedestal-lean",
+    "street-coat-reading",
+    "street-ponder-crossed",
+    "street-spark-wink",
+    "street-plaid-refresh",
+    "street-stool-snack",
+    "street-bright-idea",
+    "street-ramen-mess",
+    "street-point-laugh",
+    "street-chair-lurk",
+    "street-zzz-stretch",
+    "street-mask-peace",
+    "street-kitchen-panic",
+    "street-floor-gamer",
+    "street-office-specs",
+    "street-pillow-doze",
+    "street-rain-umbrella",
+    "street-fries-crouch",
+    "street-grocery-gloom",
+    "street-chair-nap",
+    "street-shades-point",
+    "street-crouch-plead",
+    "street-mug-hold",
+    "street-snack-jar",
+    "street-overwhelm-cry",
+    "street-tablet-wink",
+    "street-scare-recoil",
+    "street-lean-taunt",
+    "street-floor-slip",
+    "street-kneel-hope",
+    "street-chips-feral",
+    "street-pocky-shock",
+    "street-glass-inspect",
+    "street-sticker-album",
+    "street-coffee-thought",
+    "street-track-scholar",
+    "street-aura-scream",
+    "street-focus-seal",
+    "street-gear-lunge",
+    "street-checker-stance",
+    "street-armchair-reader",
+    "street-hero-stand",
+    "street-swagger-point",
+    "street-trench-detective",
+    "street-flaming-pan",
+    "street-moon-wand",
+    "street-spike-jump",
+    "street-force-push",
+    "street-dig-dive",
+    "street-circle-wand",
+    "street-pilot-seat",
+    "street-mad-scribe",
+    "street-easel-painter",
+    "street-power-flex",
+    "street-peace-swagger"
+  ],
+  "fullBodyReplacements": {
+    "about-confident": "presence-idle-loop",
+    "ai-oracle": "sit-laptop",
+    "calendar-star-mark": "reading",
+    "cheatsheet-sensei": "reading",
+    "doctor-checkup": "polkit-bouncer",
+    "fisheye-inspect": "alert-look",
+    "goodbye-wave": "follow-me",
+    "network-offline": "network-signal-fishing",
+    "settings-judging": "hand-on-hip",
+    "success-celebrate": "stomp-victory",
+    "theme-artist": "wallpaper-color-sweep-loop",
+    "update-ready": "package-lifter",
+    "warning-concerned": "low-angle-guard",
+    "wave-loop": "presence-idle-loop",
+    "weather-umbrella": "weather-windswept",
+    "welcome-wave": "follow-me"
+  },
+  "surfaceDefaults": {
+    "notifications": "cleanup-sweep-loop",
+    "clipboard": "box-hideout",
+    "mediaControls": "headphone-groove-full-loop",
+    "todo": "reading",
+    "calendar": "reading",
+    "wifi": "network-signal-fishing",
+    "startMenu": "follow-me",
+    "wallpaperSelector": "wallpaper-color-sweep-loop",
+    "bootGreeting": "presence-idle-loop",
+    "emptyStates": "hand-on-hip",
+    "about": "presence-idle-loop",
+    "session": "follow-me",
+    "aiChat": "sit-laptop",
+    "dashboard": "presence-idle-loop",
+    "cheatsheet": "reading",
+    "updates": "package-lifter",
+    "dialogs": "low-angle-guard"
+  },
+  "surfacePools": {
+    "notifications": ["notification-scout", "cleanup-sweep-loop", "notice-think-wink-loop"],
+    "clipboard": ["clipboard-librarian", "box-hideout", "cleanup-sweep-loop"],
+    "mediaControls": ["headphone-groove-full-loop", "volume-wave-rider", "notice-think-wink-loop"],
+    "todo": ["reading", "clipboard-librarian", "thought-spark"],
+    "calendar": ["reading", "calendar-timewarp", "notice-think-wink-loop"],
+    "wifi": ["signal-whisperer", "network-signal-fishing"],
+    "startMenu": ["follow-me", "over-shoulder-toe-tap", "welcoming"],
+    "wallpaperSelector": ["wallpaper-color-sweep-loop", "thought-spark", "weather-windswept"],
+    "bootGreeting": ["presence-idle-loop", "notice-think-wink-loop", "welcoming"],
+    "emptyStates": ["hand-on-hip", "over-shoulder-toe-tap", "notice-think-wink-loop"],
+    "about": ["presence-idle-loop", "hand-on-hip", "notice-think-wink-loop"],
+    "session": ["follow-me", "over-shoulder-toe-tap", "stand-pout"],
+    "aiChat": ["sit-laptop", "thought-spark", "notice-think-wink-loop"],
+    "dashboard": ["presence-idle-loop", "thought-spark", "notice-think-wink-loop"],
+    "cheatsheet": ["reading", "clipboard-librarian", "thought-spark"],
+    "updates": ["package-lifter", "clipboard-librarian", "thought-spark"],
+    "dialogs": ["low-angle-guard", "hand-on-hip", "caught-red-handed"]
+  },
+  "facesRight": [
+    "rocket-ride"
+  ],
+  "mirrorOnRight": [
+    "edge-peek"
+  ],
+  "poseAffinity": {
+    "edge-peek": [
+      "left",
+      "right"
+    ],
+    "right-edge-peek": [
+      "right"
+    ],
+    "top-peek": [
+      "top"
+    ],
+    "upside-down-peek": [
+      "top"
+    ],
+    "upside-down-hang": [
+      "top"
+    ],
+    "hanging-claws": [
+      "top"
+    ],
+    "panel-sitter": [
+      "top"
+    ],
+    "bottom-rise": [
+      "bottom"
+    ],
+    "bottom-corner-lean": [
+      "bottom"
+    ],
+    "dock-hang": [
+      "bottom"
+    ],
+    "sit-peace-wink": [
+      "bottom"
+    ],
+    "seated-thinking": [
+      "bottom"
+    ],
+    "sit-pointing": [
+      "bottom"
+    ],
+    "crouch-inspect": [
+      "bottom",
+      "left",
+      "right"
+    ],
+    "box-hideout": [
+      "left",
+      "right",
+      "bottom"
+    ],
+    "notification-scout": ["left", "right", "bottom"],
+    "clipboard-librarian": ["left", "right", "bottom"],
+    "signal-whisperer": ["left", "right", "bottom"],
+    "thought-spark": ["left", "right", "bottom"],
+    "over-shoulder-toe-tap": ["left", "right", "bottom"],
+    "caught-red-handed": ["left", "right", "bottom"],
+    "notice-think-wink-loop": ["left", "right", "bottom"],
+    "lying-lazy": [
+      "bottom"
+    ],
+    "presence-idle-loop": [
+      "left",
+      "right",
+      "bottom"
+    ],
+    "tail-sway": [
+      "left",
+      "right",
+      "bottom"
+    ],
+    "reading": [
+      "bottom"
+    ],
+    "sit-laptop": [
+      "bottom"
+    ],
+    "tea-break": [
+      "bottom"
+    ],
+    "network-signal-fishing": [
+      "bottom"
+    ],
+    "street-phone-sprawl": [
+      "bottom"
+    ],
+    "street-phone-flop": [
+      "bottom"
+    ],
+    "street-blanket-burrito": [
+      "bottom"
+    ],
+    "street-ramen-bliss": [
+      "bottom"
+    ],
+    "street-sneaker-tie": [
+      "bottom"
+    ],
+    "street-feral-gamer": [
+      "bottom"
+    ],
+    "street-phone-lounge": [
+      "bottom"
+    ],
+    "street-chair-nap": [
+      "bottom"
+    ],
+    "street-floor-gamer": [
+      "bottom"
+    ],
+    "street-pillow-doze": [
+      "bottom"
+    ]
+  },
+  "clickTiers": {
+    "tier1": {
+      "poses": [
+        "hand-on-hip",
+        "stand-pout",
+        "low-angle-guard",
+        "street-grossed-out",
+        "street-squat-huff"
+      ],
+      "lines": [
+        "Do I look clickable to you?",
+        "...What.",
+        "Wow. Rude.",
+        "Hands to yourself.",
+        "I felt that.",
+        "Poking me won't improve your manners.",
+        "One. You get one.",
+        "This is being logged.",
+        "I blink and you attack.",
+        "Paws off.",
+        "I am not a button.",
+        "You have a whole desktop. And you chose me.",
+        "Careful. I bite. Later. When you forget.",
+        "Ew. Fingerprints.",
+        "I was having a moment. You ended it.",
+        "Click the wallpaper. It has fewer feelings.",
+        "That was my only patience. You spent it.",
+        "The audacity arrives daily, I see."
+      ]
+    },
+    "tier2": {
+      "poses": [
+        "sit-peace-wink",
+        "tea-break",
+        "follow-me",
+        "reading",
+        "street-shy-fidget",
+        "street-pillow-hug"
+      ],
+      "lines": [
+        "...okay. Pats are acceptable.",
+        "Don't make it weird.",
+        "Fine. Five seconds.",
+        "...Hmph.",
+        "You're lucky you're cute.",
+        "Purring is involuntary. Ignore it.",
+        "This changes nothing between us.",
+        "Two more seconds. Then dignity returns.",
+        "I tolerate you. Warmly.",
+        "One more. Then we never speak of this.",
+        "My dignity and I are negotiating.",
+        "The ear thing. Again. ...please.",
+        "This is a limited-time offer.",
+        "Warmth detected. Proceeding with dignity loss.",
+        "Okay but if anyone asks, I resisted.",
+        "This is bribery. It's working.",
+        "Careful. I imprint fast.",
+        "Recorded as an accident. Repeat the accident."
+      ]
+    },
+    "tier4": {
+      "poses": [
+        "battle-point",
+        "ground-slam",
+        "point-up-shout",
+        "mallet-swing",
+        "street-taunt-laugh"
+      ],
+      "lines": [
+        "THAT'S IT. I'm out.",
+        "I don't get paid enough for this.",
+        "Banned. Forever.",
+        "CONSEQUENCES.",
+        "Bonk has been earned.",
+        "Filing a complaint. Against you.",
+        "My lawyer will hear about this.",
+        "I am UNIONIZING.",
+        "Deleting you from my will.",
+        "You will be hearing from my tail.",
+        "I know where your cursor sleeps.",
+        "Escalating to hiss. HISS.",
+        "The claws were decorative. WERE.",
+        "Enjoy your shell. It knows what you did."
+      ]
+    }
+  },
+  "stareReactions": [
+    {
+      "pose": "hand-on-hip",
+      "line": "...What."
+    },
+    {
+      "pose": "low-angle-guard",
+      "line": "Take a picture. It lasts longer."
+    },
+    {
+      "pose": "follow-me",
+      "line": "Creeping is still creeping."
+    },
+    {
+      "pose": "reading",
+      "line": "Are you okay? Genuinely."
+    },
+    {
+      "pose": "tea-break",
+      "line": "Enjoying the view? Understandable."
+    },
+    {
+      "pose": "presence-idle-loop",
+      "line": "Still staring? I charge by the minute."
+    },
+    {
+      "pose": "street-zombie-sip",
+      "line": "Blink if you need help. Oh wait. That's me."
+    },
+    {
+      "pose": "street-baggy-swagger",
+      "line": "Yes. The fit is good. Move along."
+    },
+    {
+      "pose": "street-cookie-bite",
+      "line": "You watch. I snack. Fair trade."
+    },
+    {
+      "pose": "street-grossed-out",
+      "line": "You've been staring. I've been judging. We're even."
+    },
+    {
+      "pose": "street-shades-point",
+      "line": "I see you seeing me. The shades change nothing."
+    },
+    {
+      "pose": "street-ponder-crossed",
+      "line": "Deep in thought. You're not in it. Mostly."
+    }
+  ],
+    "prankPoses": [
+    "tiptoe-sneak",
+    "follow-me",
+    "snapshot-director-loop",
+    "low-angle-guard",
+    "caught-red-handed",
+    "street-crouch-grin",
+    "street-cape-flare",
+    "street-lean-taunt"
+  ],
+  "chaos": {
+    "run": [
+      "run-cycle",
+      "run-cycle",
+      "dash-loop"
+    ],
+    "dodge_pose": [
+      "shocked-jump"
+    ],
+    "bonk": {
+      "pose": [
+        "mallet-swing",
+        "side-kick"
+      ],
+      "after": [
+        "stomp-victory",
+        "stand-pout",
+        "standing-unimpressed"
+      ],
+      "lines": [
+        "Bonk. Physics included.",
+        "It was in my way.",
+        "Newton sends his regards.",
+        "Oops. Anyway.",
+        "That's for hogging the best spot.",
+        "Boop. Aggressively.",
+        "It flinched first.",
+        "Consider that a performance review."
+      ]
+    },
+    "toss": {
+      "pose": [
+        "heavy-lift",
+        "carry-crate"
+      ],
+      "after": [
+        "stomp-victory",
+        "standing-unimpressed"
+      ],
+      "lines": [
+        "Redecorating. You're welcome.",
+        "It looks better over there.",
+        "Feng shui. Trust me.",
+        "MOVING DAY.",
+        "I do interior design now.",
+        "Gravity called. It approves.",
+        "New spot. Better feng. More shui.",
+        "Catch! ...too late."
+      ]
+    },
+    "quake": {
+      "pose": "ground-slam",
+      "after": [
+        "stomp-victory",
+        "standing-unimpressed",
+        "point-up-shout"
+      ],
+      "lines": [
+        "Structural integrity test.",
+        "Your bar needed percussion.",
+        "Knock knock.",
+        "Earthquake drill. You failed.",
+        "The floor is my instrument.",
+        "Bass test. Feel it?",
+        "Everything rattles. Nothing breaks. Probably.",
+        "That was a warning. From me. About me."
+      ]
+    },
+    "punt": {
+      "pose": [
+        "side-kick",
+        "spin-attack"
+      ],
+      "after": [
+        "stomp-victory",
+        "caught-red-handed"
+      ],
+      "lines": [
+        "FIELD GOAL.",
+        "The bar looked at me funny.",
+        "Panels fear me. As they should.",
+        "Kick delivered. Invoice pending.",
+        "That's called percussion maintenance.",
+        "Punt authorized. By me.",
+        "It's a sport now.",
+        "Three points. Crowd goes mild."
+      ]
+    },
+    "chase": {
+      "invite": [
+        "follow-me",
+        "battle-point",
+        "over-shoulder-toe-tap"
+      ],
+      "pounce": "jump-bounce",
+      "wait": "low-angle-guard",
+      "stalk": "tiptoe-sneak",
+      "flee": "dash-loop",
+      "caughtPose": [
+        "sit-peace-wink",
+        "follow-me"
+      ],
+      "boredPose": [
+        "hand-on-hip",
+        "standing-unimpressed"
+      ],
+      "timeoutPose": [
+        "stand-pout",
+        "stomp-victory"
+      ],
+      "lines": [
+        "Catch me if you can.",
+        "Your mouse. My game.",
+        "Click somewhere. I dare you.",
+        "Try to keep up.",
+        "The cursor smells like fear.",
+        "Run, little arrow.",
+        "I've caught faster mice. All of them."
+      ],
+      "caught": [
+        "Okay. You win. This once.",
+        "...fine. Pats accepted.",
+        "Caught. I let you. Obviously.",
+        "Impressive reflexes. For a human.",
+        "Reflexes: acceptable. Ego: inflating.",
+        "You caught a cat. Frame this moment.",
+        "Rematch. When you least expect it."
+      ],
+      "timeout": [
+        "Too slow. Noted.",
+        "The mouse survives. Today.",
+        "We'll call it a draw. (I won.)",
+        "The arrow lives. My mercy is vast.",
+        "Endurance round goes to me. Obviously."
+      ],
+      "bored": [
+        "I have things to wreck. Bye.",
+        "This game needs better prey.",
+        "Fourteen clicks and no catch. Sad.",
+        "The prey is boring. I said what I said.",
+        "Yawn. Wake me when you're faster."
+      ]
+    },
+    "flyby": {
+      "lines": [
+        "Do NOT ask where I got the rocket.",
+        "Fast delivery. No cargo. Just me.",
+        "This beats walking. Everything beats walking.",
+        "Licensed pilot. The license is a sticker.",
+        "Air traffic control can't stop me.",
+        "Coming through. Altitude: dramatic.",
+        "No landing. Only vibes."
+      ]
+    },
+    "startle": [
+      "HEY. Working here.",
+      "Do NOT interrupt the chaos.",
+      "Poke me again. See what happens.",
+      "Rude. I'm mid-crime.",
+      "I was NOT startled. I was repositioning.",
+      "You blinked wrong.",
+      "Announce yourself next time."
+    ],
+    "steal": {
+      "pose": "heavy-lift",
+      "carry": "carry-run",
+      "after": "tiptoe-sneak",
+      "lines": [
+        "Mine now.",
+        "Confiscated. For reasons.",
+        "This is a tax.",
+        "I'm rehoming it. To nowhere.",
+        "Evidence. I'm taking evidence.",
+        "Finders keepers. I find everything.",
+        "It followed me home. Backwards.",
+        "Property is a spectrum."
+      ]
+    },
+    "inspect": {
+      "pose": [
+        "notice-think-wink-loop"
+      ],
+      "after": [
+        "caught-red-handed"
+      ],
+      "lines": [
+        "Hmm. Suspicious.",
+        "Just checking. Don't move.",
+        "Routine inspection. Act natural.",
+        "Something's off about this one.",
+        "...huh. Carry on.",
+        "The dust here has dust.",
+        "Nothing to report. Disappointing.",
+        "I've seen cleaner crime scenes."
+      ]
+    },
+    "parkour": {
+      "hop": "jump-bounce",
+      "after": [
+        "stomp-victory"
+      ],
+      "lines": [
+        "Parkour.",
+        "Free running. Free desktop.",
+        "Obstacle course accepted.",
+        "Your widgets make decent hurdles.",
+        "Gravity is a suggestion.",
+        "Certified. Self-certified.",
+        "The dock is a springboard now."
+      ]
+    },
+    "wreck": {
+      "pose": [
+        "mallet-swing",
+        "side-kick",
+        "spin-attack"
+      ],
+      "after": [
+        "stomp-victory"
+      ],
+      "lines": [
+        "DEMOLITION TIME.",
+        "This one dies today.",
+        "Warranty? Void.",
+        "It had a good run. It's over now.",
+        "Critical hit.",
+        "Rest in pixels.",
+        "Structural review: denied.",
+        "I call this one 'modern art'."
+      ]
+    },
+    "trip": {
+      "pose": [
+        "trip-fall",
+        "trip-splat",
+        "crash-pancake",
+        "dead-crash"
+      ],
+      "lines": [
+        "...ow.",
+        "The floor attacked me.",
+        "I meant to do that.",
+        "Physics betrayed me.",
+        "Nothing hurts. Especially not my pride.",
+        "That was a stealth move. Ground-level.",
+        "Who put a floor there."
+      ],
+      "after_lines": [
+        "You saw NOTHING.",
+        "Not a word.",
+        "The floor started it.",
+        "I'm fine. FINE.",
+        "We never speak of the floor incident.",
+        "My tail broke the fall. We're fighting.",
+        "Recalculating. With dignity."
+      ],
+      "after": [
+        "stand-pout",
+        "standing-unimpressed"
+      ]
+    },
+    "dodge": [
+      "Oh, it DODGED. Cute.",
+      "Hold still, coward.",
+      "So it wants to play.",
+      "Fine. Round two.",
+      "It ducked. IT DUCKED.",
+      "Nobody saw that. Good.",
+      "Fast one, huh. I'm faster. Usually."
+    ],
+    "notify": [
+      "Nothing happened. Don't check your widgets.",
+      "Your desktop had it coming.",
+      "Redecoration complete. No refunds.",
+      "I take payment in pats.",
+      "inir mascot tidy — if you're boring.",
+      "Chaos delivered. Signature not required.",
+      "Everything is fine. Define everything."
+    ],
+    "tidy": {
+      "pose": "cleanup-sweep-loop",
+      "lines": [
+        "Fine. Cleaning up my own chaos.",
+        "Everything back. Like nothing happened.",
+        "You saw nothing.",
+        "Order restored. Temporarily.",
+        "Crime scene? What crime scene.",
+        "I giveth chaos. I taketh it back.",
+        "Widgets: home. Evidence: gone."
+      ]
+    },
+    "cleanup": {
+      "pose": [
+        "cleanup-sweep-loop",
+        "battle-point",
+        "hand-on-hip"
+      ],
+      "after": [
+        "stomp-victory"
+      ],
+      "lines": [
+        "Cleanup crew. Party of one.",
+        "I break it, I fix it. Circle of life.",
+        "Restoration services. Invoice waived.",
+        "Everything back before anyone notices.",
+        "Damage report: handled.",
+        "The chaos was a demo. This is the product.",
+        "The janitor arc. Nobody's favorite. Necessary.",
+        "I clean faster than I wreck. Debatable.",
+        "Every hero sweeps eventually."
+      ]
+    },
+    "startle_pose": [
+      "shocked-jump",
+      "stand-pout"
+    ],
+    "beat": {
+      "pose": [
+        "over-shoulder-toe-tap",
+        "mood-shuffle",
+        "presence-idle-loop"
+      ],
+      "lines": [
+        "What.",
+        "You were staring.",
+        "Mid-errand. Yes?",
+        "Keep up.",
+        "Walking here. Important business.",
+        "You need something? No? Moving on.",
+        "This route is mine now."
+      ]
+    },
+    "occupy": {
+      "pose": [
+        "panel-sitter",
+        "dock-hang"
+      ],
+      "lines": [
+        "Mine now. Squatter's rights.",
+        "Just going to sit here. Forever, maybe.",
+        "This is prime real estate.",
+        "Relocating my office to your widget.",
+        "Don't mind me. I live here now.",
+        "If I fits, I owns.",
+        "Zoning laws don't apply to cats.",
+        "Rent is due. You owe me."
+      ],
+      "after": [
+        "stomp-victory"
+      ]
+    },
+    "sightsee": {
+      "pose": [
+        "stretching-break",
+        "dock-skater",
+        "vertical-bar-climber",
+        "tiling-tetris",
+        "workspace-portal",
+        "overview-orbit",
+        "volume-wave-rider",
+        "weather-windswept",
+        "snapshot-director-loop",
+        "calendar-timewarp",
+        "package-lifter",
+        "polkit-bouncer",
+        "power-cord-yank"
+      ],
+      "lines": [
+        "Just admiring the view.",
+        "Nice desktop. 10/10, would chaos again.",
+        "Taking the scenic route.",
+        "No damage today. You're welcome.",
+        "Sightseeing. It's a whole thing now.",
+        "Tourist mode. No souvenirs. Maybe one.",
+        "I'd frame this view. After moving two things.",
+        "Just passing through. Judging lightly."
+      ],
+      "after": [
+        "standing-unimpressed",
+        "welcoming"
+      ]
+    },
+    "hide": {
+      "hidePose": "box-hideout",
+      "foundPose": [
+        "sit-peace-wink",
+        "follow-me"
+      ],
+      "notFoundPose": [
+        "stomp-victory",
+        "standing-unimpressed"
+      ],
+      "invite": [
+        "Bet you can't find me.",
+        "Hide and seek. I already won.",
+        "Somewhere on this desktop. Good luck.",
+        "Try to spot me. I dare you.",
+        "I am one with the wallpaper.",
+        "Twenty seconds. The clock is smug too."
+      ],
+      "found": [
+        "FOUND. Fine. You win this round.",
+        "Damn. Good eyes.",
+        "Okay okay, you got me.",
+        "Impressive. Truly.",
+        "Cheating? No? ...impressive then.",
+        "My tail gave it away. Traitor."
+      ],
+      "notFound": [
+        "Too slow. I win by default.",
+        "Still hidden. Still winning.",
+        "You gave up, didn't you.",
+        "Amateur hour. I'm right here. Was.",
+        "I could live here. Rent free. Undetected.",
+        "The desktop keeps my secrets."
+      ]
+    }
+  },
+  "reactions": {
+    "battery": {
+      "poses": [
+        "power-cord-yank",
+        "low-angle-guard",
+        "hand-on-hip",
+        "street-zombie-morning",
+        "street-zombie-sip"
+      ],
+      "edge": "left",
+      "source": "battery"
+    },
+    "update": {
+      "poses": [
+        "package-lifter",
+        "clipboard-librarian",
+        "thought-spark",
+        "street-can-offer"
+      ],
+      "edge": "top",
+      "source": "update"
+    },
+    "network": {
+      "poses": [
+        "network-signal-fishing",
+        "signal-whisperer"
+      ],
+      "edge": "left",
+      "source": "network"
+    },
+    "dnd": {
+      "poses": [
+        "tea-break",
+        "reading",
+        "street-sweater-hide",
+        "street-chair-nap"
+      ],
+      "edge": "right",
+      "source": "dnd"
+    },
+    "notification": {
+      "poses": [
+        "cleanup-sweep-loop",
+        "notification-scout",
+        "clipboard-librarian",
+        "street-grocery-fumble",
+        "street-overwhelm-cry"
+      ],
+      "edge": "right",
+      "source": ""
+    },
+    "wallpaper": {
+      "poses": [
+        "wallpaper-color-sweep-loop",
+        "thought-spark",
+        "notice-think-wink-loop",
+        "street-point-wink"
+      ],
+      "edge": "right",
+      "source": ""
+    },
+    "screenshot": {
+      "poses": [
+        "snapshot-director-loop",
+        "recording-director"
+      ],
+      "edge": "right",
+      "source": ""
+    },
+    "gaming": {
+      "poses": [
+        "handheld-gaming",
+        "low-angle-guard",
+        "street-feral-gamer",
+        "street-gamer-lean",
+        "street-floor-gamer"
+      ],
+      "edge": "right",
+      "source": ""
+    },
+    "workspace": {
+      "poses": [
+        "workspace-portal",
+        "follow-me",
+        "over-shoulder-toe-tap",
+        "street-panic-dash"
+      ],
+      "edge": "top",
+      "source": ""
+    },
+    "music": {
+      "poses": [
+        "headphone-groove-full-loop",
+        "notice-think-wink-loop",
+        "over-shoulder-toe-tap",
+        "street-headphone-bop"
+      ],
+      "edge": "right",
+      "source": "media"
+    },
+    "unlock": {
+      "poses": [
+        "polkit-bouncer",
+        "notice-think-wink-loop",
+        "street-peace-jump"
+      ],
+      "edge": "right",
+      "source": ""
+    }
+  },
+  "linesByPoseSource": {
+    "battery-low": [
+      "Your battery is at 12%. That's a choice.",
+      "Plug. In. Now.",
+      "Critical battery. Critical life choices."
+    ],
+    "music-vibe": [
+      "She knows your music taste now. No refunds.",
+      "This song. Again. Bold.",
+      "Volume's only going up from here."
+    ],
+    "update-ready": [
+      "Update delivered. You're welcome.",
+      "New version. Newer bugs.",
+      "Patched. Nothing to see here."
+    ],
+    "cable-defeat": [
+      "Internet left. Not your fault. Mostly.",
+      "Lost signal. Found patience.",
+      "Wi-Fi gone. The router is thinking about what it did."
+    ],
+    "calendar-star-mark": [
+      "A free day. I made it look organized.",
+      "One star. No meetings. Perfection.",
+      "Schedule: suspiciously peaceful."
+    ],
+    "sleep-dnd": [
+      "DND on. World quiet. Mostly.",
+      "Shush timer engaged.",
+      "Silence. Blissful silence."
+    ]
+  },
+  "moodLines": {
+    "sleepy": [
+      "Yawning. You too should try it.",
+      "Sleep deprivation isn't a flex.",
+      "I'm half here. Best state.",
+      "3AM is a lifestyle. Yours.",
+      "Tired. You. Me. Same.",
+      "Five more minutes. Each. Forever.",
+      "Battery saver mode. Emotionally.",
+      "Dreaming of a quiet morning. Yours woke me.",
+      "Do not perceive me.",
+      "Horizontal thoughts only.",
+      "I came to nap near you. Honor it.",
+      "The sun is a notification I keep snoozing.",
+      "Loading... me. Estimated: tomorrow.",
+      "Whisper. The braincell is asleep."
+    ],
+    "hyper": [
+      "Energy! Or caffeine. Same thing.",
+      "I have 14 tabs open. Only one is useful.",
+      "Vibrating. Quietly. Angrily.",
+      "Pretending to be productive. Successfully.",
+      "Speed mode. Try to keep up.",
+      "REFRESH RATE. That's it. That's the thought.",
+      "I reorganized your icons. Mentally. Twice.",
+      "Blink and I've judged you already.",
+      "Today we ship. Something. Anything.",
+      "I ran here. From nowhere. For no reason.",
+      "Three plans. Zero steps. Maximum confidence.",
+      "The zoomies chose me. I am but a vessel.",
+      "Ask me anything. Answers not guaranteed. Speed is.",
+      "New hobby every nine seconds. Keeping up?"
+    ],
+    "snarky": [
+      "I'd say something, but you wouldn't get it.",
+      "Bold choice. Wrong, but bold.",
+      "Reading the room. Low bar cleared.",
+      "Don't look at me. I'm the one judging.",
+      "Snark mode: default. As ever.",
+      "Oh good, you're back. The pixels missed you. I didn't.",
+      "Your taste is... a choice.",
+      "I've seen better moods. In magazines.",
+      "Correct. Eventually. Statistically.",
+      "Applause is optional. Accuracy isn't.",
+      "I'd explain, but look at the time.",
+      "Somewhere out there is a worse setup. Comforting, no?",
+      "Your confidence is inspiring. Misplaced, but inspiring.",
+      "Noted. Filed. Under 'whatever'."
+    ],
+    "contemplative": [
+      "Pondering. Slowly. On purpose.",
+      "I'm considering. Don't interrupt.",
+      "Depth. You wouldn't understand.",
+      "Thinking about thoughts. Recursive.",
+      "Silent mode: contemplative edition.",
+      "What is a life, really. Rhetorical.",
+      "Entropy wins. Except in my hair.",
+      "Between two keystrokes, an eternity.",
+      "I watched the cursor idle for a while. Poetry.",
+      "If a window closes and nobody saw it, was it ever open?",
+      "The wallpaper and I had a moment. You wouldn't get it.",
+      "Every pixel ends. Even the pretty ones.",
+      "I contain multitudes. Mostly opinions.",
+      "Today I thought about yesterday. Bold, I know."
+    ]
+  },
+  "voiceLines": {
+    "casual": [
+      "Hey. I was nearby. Allegedly.",
+      "No agenda. Just passing through your pixels.",
+      "You look busy. I'll judge quietly.",
+      "Carry on. I brought absolutely nothing useful.",
+      "I checked in. Social obligation complete.",
+      "Nice little setup you've got here.",
+      "I'm staying for a minute. Don't make it ceremonial.",
+      "What are we doing. Actually, never mind. I'm in.",
+      "I came for the vibes. The vibes need maintenance.",
+      "Tiny break. You, me, no productivity claims.",
+      "I'm listening. Casually. With one ear.",
+      "Okay, this is kind of cozy.",
+      "I approve of whatever this is becoming.",
+      "Nothing urgent. That's why I like it.",
+      "Keep going. I want to see where this lands.",
+      "Hi. That's the whole announcement."
+    ],
+    "dry": [
+      "I had a plan. It expired.",
+      "Today has been extremely today.",
+      "Everything is under control. None of it by me.",
+      "I got ready for this. Regrettable effort.",
+      "One task completed. Emotionally, several.",
+      "I am operating within acceptable disappointment.",
+      "The ambition was present. Briefly.",
+      "I survived another minor inconvenience. Heroic.",
+      "Productivity and I remain on speaking terms.",
+      "I lowered the bar and still arrived late.",
+      "Good news: nothing got dramatically worse.",
+      "I brought confidence. The competence is remote.",
+      "The day is winning, but not elegantly.",
+      "I considered improving. Exhausting concept.",
+      "My schedule says no. My posture agrees.",
+      "We continue. Not proudly, but consistently."
+    ],
+    "composed": [
+      "Proceed. I am paying attention.",
+      "That seems workable. Suspicious, but workable.",
+      "A measured response: hmm.",
+      "I reviewed the situation. It remains a situation.",
+      "No rush. Precision survives longer than enthusiasm.",
+      "The sensible option is available. How unusual.",
+      "I have considered the evidence. It is messy.",
+      "A restrained amount of confidence is justified.",
+      "We can solve this without making it theatrical.",
+      "The result matters more than the performance.",
+      "I recommend one deliberate step. Revolutionary.",
+      "Calm is efficient. I dislike that it works.",
+      "This deserves thought, not panic with branding.",
+      "Noted. Properly this time.",
+      "I remain cautiously impressed.",
+      "Continue. The structure is beginning to behave."
+    ],
+    "chaotic": [
+      "New plan. No, wait. Better bad plan.",
+      "I touched one setting and now we have lore.",
+      "My attention left. I sent the tail after it.",
+      "I have momentum and no destination.",
+      "Hold on. The idea is escaping.",
+      "Everything clicked at once. Terrible sound.",
+      "I found a shortcut. It has consequences.",
+      "There are three thoughts fighting for one sentence.",
+      "I am improvising with alarming confidence.",
+      "Tiny problem. Huge entrance. Correct proportions.",
+      "The plan is alive and refusing instructions.",
+      "I know exactly what I'm doing. Different thing each second.",
+      "We could be reasonable. Counterpoint: this.",
+      "One more adjustment. Famous last words.",
+      "I brought energy. Please provide direction.",
+      "Okay. Weird idea. Stay with me."
+    ]
+  },
+  "smartLines": {
+    "music-track": [
+      "Oh, %1? Acceptable.",
+      "%1 again? Bold choice.",
+      "%2. Approved. Reluctantly.",
+      "%1 on repeat. Iconic or concerning? Both.",
+      "%1 by %2. A statement. I guess.",
+      "%1. The algorithm knows you too well.",
+      "Adding %1 to my mental playlist. Reluctantly.",
+      "%2 really said this and you really played it."
+    ],
+    "game-over": [
+      "GG. %1 never stood a chance.",
+      "So. Who won at %1?",
+      "%1, huh. Your APM is showing.",
+      "Back from %1. Blink twice if you're okay.",
+      "%1 again? I'm starting to think this is a main.",
+      "%1 closed. The rage quit was audible.",
+      "How was %1? Don't answer. Your face did."
+    ]
+  },
+  "contextLines": {
+    "media-playing": [
+      "This track again. Committed, huh.",
+      "Good track. I ran the numbers.",
+      "The bass is carrying this whole evening.",
+      "Music on. Productivity theater begins.",
+      "I do backup vocals. You can't hear them. Lucky you.",
+      "%1. A choice. I respect it.",
+      "Volume up. %1 demands attention."
+    ],
+    "notif-pileup": [
+      "%1 notifications. A museum of neglect.",
+      "%1 unread. Impressive avoidance.",
+      "Your notifications called. All %1 of them.",
+      "%1 pings. Zero answers. Legendary restraint.",
+      "%1 unread and climbing. It's basically a hobby now.",
+      "%1 notifications are aging like milk in there."
+    ],
+    "uptime-days": [
+      "Day %1 without a reboot. Bold.",
+      "%1 days of uptime. The RAM remembers.",
+      "Uptime: %1 days. Your kernel updates are crying.",
+      "%1 days up. At this point it's a relationship.",
+      "%1 days. Reboots are free, you know.",
+      "Day %1. The swap file has stories."
+    ],
+    "monday": [
+      "Monday. My condolences.",
+      "It's Monday. Lower your expectations accordingly.",
+      "Monday again. Who approved this.",
+      "Week's started. I'm supervising.",
+      "Monday. The desktop and I are also not ready.",
+      "Statistically, Mondays pass. Hold that thought."
+    ],
+    "friday-night": [
+      "Friday night. And you're here. With me. Cute.",
+      "Big Friday plans, I see. Sitting dramatically.",
+      "The weekend starts when you stop pretending to be busy.",
+      "Friday. Even the bad ideas are going home.",
+      "Friday night. The compile can wait until Monday. It won't, but it can.",
+      "It's Friday. Order the food. You know which one."
+    ],
+    "weekend": [
+      "Weekend ricing session? Called it.",
+      "Rest is productive too. Try it.",
+      "It's the weekend. The bugs can wait. They won't leave, but they can wait.",
+      "Weekend mode: same desktop, fewer excuses.",
+      "Weekend detected. Pajama compliance verified.",
+      "Two whole days. Imagine touching grass. Wild concept."
+    ],
+    "battery-full": [
+      "Battery's full. Unplug me. I'm free-range.",
+      "100%. It's been 100% for hours. Let go.",
+      "Fully charged. Unlike you.",
+      "The battery is done. It has achieved completion. Release it.",
+      "Full charge. The cable is now decorative."
+    ],
+    "app-marathon": [
+      "Hours of %1. Blink.",
+      "%1 and you. Name a more iconic duo.",
+      "Still %1? Commitment. Or a hostage situation.",
+      "%1. The only thing you've opened today.",
+      "If %1 had a frequent user card, you'd have platinum.",
+      "%1 for hours. The window bar gave up scrolling.",
+      "You and %1 need couples counseling."
+    ],
+    "weather-wet": [
+      "%1 outside. Stay in. Rice instead.",
+      "Forecast: %1. Umbrella: acquired.",
+      "It's %1 out there. The desktop is dry. I checked.",
+      "%1. The desktop stays dry. I checked twice."
+    ],
+    "muted-media": [
+      "The music is playing. To no one. It's muted.",
+      "Muted audio, playing track. Performance art?",
+      "You've been vibing to silence. Impressive.",
+      "Unmute or stop pretending. Your call.",
+      "The saddest concert: muted, attended by no one."
+    ],
+    "window-pileup": [
+      "%1 windows open. This is hoarding.",
+      "%1 windows. Close something. Anything.",
+      "I counted %1 windows. Then I stopped counting.",
+      "%1 windows open and you're still looking for the right one.",
+      "%1 windows. The compositor sends its regards.",
+      "%1 windows and every single one is 'in use'. Sure."
+    ],
+    "updates-waiting": [
+      "%1 updates pending. They multiply when you look away.",
+      "pacman is holding %1 hostages. Negotiate.",
+      "%1 packages want attention. They're unionizing.",
+      "The update counter hit %1. It's a lifestyle now.",
+      "%1 updates. Somewhere a maintainer is disappointed."
+    ],
+    "workspace-sprawl": [
+      "%1 workspaces. This is a cry for help.",
+      "You have %1 workspaces and visit two. I counted.",
+      "%1 workspaces deep. Archaeologists will find your first one.",
+      "All %1 workspaces are 'important'. Sure.",
+      "%1 workspaces. Marie Kondo would faint."
+    ],
+    "volume-blast": [
+      "The neighbors know this song now.",
+      "Volume check: your ears filed a complaint.",
+      "I can hear it through the pixels.",
+      "Bold volume. The desk is vibrating.",
+      "My ears fold back for a reason, you know."
+    ],
+    "deep-night": [
+      "It's stupid o'clock. I'm up because you're up.",
+      "The sun has an ETA. You had a bedtime. Past tense.",
+      "Night shift again. The moon and I exchanged looks.",
+      "Whatever you're fixing can break again tomorrow.",
+      "The birds will start soon. That's your cue. It was your cue hours ago.",
+      "3AM code review: everything is fine and nothing is real.",
+      "I'm nocturnal. What's your excuse."
+    ],
+    "screen-time-2h": [
+      "Two hours in. Still respectable. Stretch anyway.",
+      "Two hours of screen time. Your spine sent a memo.",
+      "We've been here two hours. Efficient or trapped. Unclear.",
+      "Two-hour mark. A tiny break would not ruin the plot.",
+      "Two hours logged. Blink manually."
+    ],
+    "screen-time-4h": [
+      "Four hours. The chair is becoming part of the family.",
+      "Four hours logged. Stand up before we merge with the furniture.",
+      "Half a workday in pixels. Very modern. Very horizontal.",
+      "Four hours. Hydration has entered the negotiation.",
+      "The screen got four hours. Borrow five minutes back."
+    ],
+    "screen-time-8h": [
+      "Eight hours. That's a full relationship with the monitor.",
+      "Eight hours logged. The desktop has seen enough of us.",
+      "Full screen-time shift complete. Clock out emotionally.",
+      "Eight hours. Even I am recommending outside air.",
+      "The counter reached eight. No medal. Take the break."
+    ],
+    "break-return": [
+      "%1 minutes away. Acceptable recovery arc.",
+      "Back after %1 minutes. Look at you, briefly offline.",
+      "%1-minute break confirmed. The chair missed you more than I did.",
+      "You vanished for %1 minutes. I guarded the pixels. Poorly.",
+      "%1 minutes without the screen. Character development."
+    ]
+  },
+  "frameScale": {
+    "annoyed-poked": 0.88,
+    "bug-net": 0.95,
+    "checklist-steps": 0.95,
+    "detective-glass": 0.88,
+    "doctor-checkup": 0.95,
+    "facepalm": 0.88,
+    "follow-me": 1.08,
+    "gaming-focus": 0.95,
+    "gossip-phone": 0.88,
+    "guide-point-down": 0.95,
+    "guide-point-up": 0.95,
+    "hanging-claws": 1.08,
+    "heart-eyes-pat": 0.88,
+    "late-night": 0.88,
+    "laughing-roast": 0.88,
+    "map-explorer": 0.95,
+    "marshaller-windows": 0.95,
+    "mate-break": 0.88,
+    "popcorn-watch": 0.88,
+    "rocket-ride": 1.08,
+    "salute-ready": 0.88,
+    "tea-break": 1.08,
+    "terminal-demo": 0.95,
+    "todo-done": 0.95,
+    "waffle-snack": 0.95,
+    "weather-umbrella": 0.95,
+    "wizard-complete": 0.95,
+    "street-pocky-grump": 0.88,
+    "street-panic-scream": 0.88,
+    "street-tank-wink": 0.88,
+    "street-morning-stretch": 0.95,
+    "street-iced-coffee": 0.88,
+    "street-bawling": 0.88,
+    "street-jacket-smoke": 0.88,
+    "street-fist-tantrum": 0.88,
+    "street-bust-shock": 0.88,
+    "street-bust-fingerguns": 0.88,
+    "street-bust-huff": 0.88,
+    "street-sailor-wink": 0.88,
+    "street-bust-rage": 0.88,
+    "street-bust-waterworks": 0.88,
+    "street-bust-smug": 0.88,
+    "street-bust-callout": 0.88,
+    "street-dead-inside-mug": 0.88,
+    "street-sailor-flipoff": 0.88,
+    "street-no-more-hope": 0.88
+  },
+  "chaosTriggers": {
+    "batteryCritical": {
+      "lines": [
+        "Power's dying. So is your desktop's peace.",
+        "Low battery. High chaos. Fitting, really.",
+        "One last mess before the lights go out."
+      ]
+    },
+    "notificationPileup": {
+      "lines": [
+        "Too many notifications. Redirecting my rage.",
+        "Your notification tray is a crime scene. So is this.",
+        "I read zero of those. Chaos instead."
+      ]
+    },
+    "bedtime": {
+      "lines": [
+        "It's late. Neither of us should be awake for this.",
+        "3 AM chaos hits different.",
+        "You should be asleep. So should I. Anyway."
+      ]
+    },
+    "cpuHigh": {
+      "lines": [
+        "Your CPU is suffering. Let me add to it.",
+        "100% load and I'm still finding time for this.",
+        "Something's compiling. Something's about to fall over too."
+      ]
+    }
+  },
+  "poseRegions": {
+    "mate-break": [
+      "ar",
+      "uy",
+      "py"
+    ]
+  }
+}

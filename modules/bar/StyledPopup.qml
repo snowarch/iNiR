@@ -126,8 +126,8 @@ LazyLoader {
             implicitWidth: root.contentItem.implicitWidth + margin * 2
             implicitHeight: root.contentItem.implicitHeight + margin * 2
             color: Appearance.angelEverywhere ? Appearance.angel.colGlassPopup
-                : Appearance.inirEverywhere ? Appearance.inir.colLayer2 
-                : Appearance.m3colors.m3surfaceContainer
+                : Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                : Appearance.colors.colSurfaceContainer
             radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
                 : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.small
             children: [root.contentItem]

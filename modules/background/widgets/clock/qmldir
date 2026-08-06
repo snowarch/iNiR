@@ -1,4 +1,5 @@
 module qs.modules.background.widgets.clock
+AndroidStackedClock 1.0 AndroidStackedClock.qml
 CookieClock 1.0 CookieClock.qml
 CookieQuote 1.0 CookieQuote.qml
 ClockWidget 1.0 ClockWidget.qml

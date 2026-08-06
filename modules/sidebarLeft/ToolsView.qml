@@ -133,6 +133,7 @@ Item {
                     columnSpacing: 4
 
                     ActionTile {
+                        visible: CompositorService.isNiri
                         tileIcon: "screenshot"
                         label: Translation.tr("Screenshot")
                         onClicked: Quickshell.execDetached(["niri", "msg", "action", "screenshot"])
@@ -153,11 +154,13 @@ Item {
                         onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "ocr"])
                     }
                     ActionTile {
+                        visible: CompositorService.isNiri
                         tileIcon: "colorize"
                         label: Translation.tr("Color")
                         onClicked: Quickshell.execDetached(["niri", "msg", "action", "pick-color"])
                     }
                     ActionTile {
+                        visible: CompositorService.isNiri
                         tileIcon: "screenshot_monitor"
                         label: Translation.tr("Window")
                         onClicked: Quickshell.execDetached(["niri", "msg", "action", "screenshot-window"])
@@ -232,6 +235,7 @@ Item {
 
             // === Niri Debug ===
             CollapsibleSection {
+                visible: CompositorService.isNiri
                 title: Translation.tr("Niri Debug")
                 icon: "bug_report"
                 expanded: false

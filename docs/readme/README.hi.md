@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.27.0-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.29.0-blue?style=flat-square" alt="Version"></a>
   <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
@@ -111,7 +111,7 @@ Wayland → GPU
 ## विशेषताएँ
 
 **दो पैनल फ़ैमिली**, `Super+Shift+W` से तुरंत स्विच:
-- **Material ii** — फ़्लोटिंग बार, साइडबार, डॉक, 5 विज़ुअल स्टाइल (material, cards, aurora, inir, angel)
+- **Material ii** — फ़्लोटिंग बार, साइडबार, डॉक, 6 विज़ुअल स्टाइल (material, cards, aurora, inir, angel, zzz)
 - **Waffle** — Windows 11 शैली टास्कबार, स्टार्ट मेन्यू, एक्शन सेंटर, नोटिफ़िकेशन सेंटर
 
 **ऑटोमैटिक थीमिंग** — वॉलपेपर चुनें और सब कुछ अनुकूलित हो जाता है:
@@ -128,7 +128,7 @@ Wayland → GPU
 
 वॉलपेपर चुनें और पूरा सिस्टम अनुसरण करता है — शेल, GTK/Qt ऐप्स, टर्मिनल, Firefox, Discord, SDDM लॉगिन स्क्रीन। सब स्वचालित।
 
-- **5 विज़ुअल स्टाइल** — Material (ठोस), Cards, Aurora (ग्लास ब्लर), iNiR (TUI-प्रेरित), Angel (नव-ब्रूटलिज़्म)
+- **6 विज़ुअल स्टाइल** — Material (ठोस), Cards, Aurora (ग्लास ब्लर), iNiR (TUI-प्रेरित), Angel (नव-ब्रूटलिज़्म), ZZZ
 - **वॉलपेपर से डायनामिक रंग** — Material You के ज़रिए पूरे सिस्टम में प्रसारित
 - **10 टर्मिनल टूल्स ऑटो-थीम** — foot, kitty, alacritty, starship, fuzzel, pywalfox, btop, lazygit, yazi
 - **ऐप थीमिंग** — GTK3/4, Qt (plasma-integration + darkly), Firefox (MaterialFox), Discord/Vesktop (System24)
@@ -144,7 +144,6 @@ Wayland → GPU
 - **YT Music** — खोज, कतार और नियंत्रण के साथ पूर्ण प्लेयर
 - **Wallhaven ब्राउज़र** — सीधे वॉलपेपर खोजें और लागू करें
 - **एनीमे ट्रैकर** — AniList एकीकरण और शेड्यूल दृश्य
-- **Reddit फ़ीड** — इनलाइन सबरेडिट ब्राउज़ करें
 - **अनुवादक** — Gemini या translate-shell के माध्यम से
 - **ड्रैग करने योग्य विजेट** — क्रिप्टो, मीडिया प्लेयर, त्वरित नोट्स, स्टेटस रिंग, साप्ताहिक कैलेंडर
 
@@ -282,5 +281,5 @@ inir repair                     # doctor + रीस्टार्ट + फ़�
 <p align="center">
   <a href="https://github.com/snowarch/inir/graphs/contributors">योगदानकर्ता</a> &bull;
   <a href="CHANGELOG.md">चेंजलॉग</a> &bull;
-  <a href="LICENSE">MIT लाइसेंस</a>
+  <a href="LICENSE">GPL-3.0 लाइसेंस</a>
 </p>

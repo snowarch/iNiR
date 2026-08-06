@@ -149,6 +149,12 @@ parser.add_argument(
     default=1.0,
     help="multiplier for wallpaper-derived accent chroma (1.0 = default)",
 )
+parser.add_argument(
+    "--invert-hue",
+    action="store_true",
+    default=False,
+    help="Rotate seed color hue 180° before scheme generation (complementary palette)",
+)
 args = parser.parse_args()
 
 rgba_to_hex = lambda rgba: "#{:02X}{:02X}{:02X}".format(rgba[0], rgba[1], rgba[2])
@@ -564,6 +570,12 @@ if args.path is not None:
 elif args.color is not None:
     argb = hex_to_argb(args.color)
     hct = Hct.from_int(argb)
+
+# Complementary palette: rotate seed hue 180° before scheme generation.
+# The motor recalculates optimal tones for the complementary hue, producing
+# a natural palette rather than a flat hue-shift of the generated colors.
+if args.invert_hue and hct is not None:
+    hct = Hct.from_hct((hct.hue + 180.0) % 360.0, hct.chroma, hct.tone)
 
 if args.scheme == "scheme-fruit-salad":
     from materialyoucolor.scheme.scheme_fruit_salad import SchemeFruitSalad as Scheme

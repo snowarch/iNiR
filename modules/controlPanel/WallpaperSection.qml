@@ -9,8 +9,9 @@ import qs.modules.common.widgets
 import qs.modules.common.functions
 import Quickshell
 
-Rectangle {
+PanelSurface {
     id: root
+    islandSkin: (Config.options?.controlPanel?.style ?? "panel") === "island"
     Layout.fillWidth: true
     implicitHeight: wallpaperLayout.implicitHeight + 16
     readonly property bool showSchemeChips: Config.options?.controlPanel?.showWallpaperSchemeChips ?? false
@@ -18,16 +19,8 @@ Rectangle {
     readonly property bool inirEverywhere: Appearance.inirEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
 
-    radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-         : inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-    color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-         : inirEverywhere ? Appearance.inir.colLayer1
-         : auroraEverywhere ? Appearance.aurora.colSubSurface
-         : Appearance.colors.colLayer1
-    border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
-               : inirEverywhere ? 1 : 0
-    border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
-               : inirEverywhere ? Appearance.inir.colBorder : "transparent"
+    elevation: 1
+    radiusOverride: inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
 
     ColumnLayout {
         id: wallpaperLayout
@@ -44,7 +37,7 @@ Rectangle {
                 text: "wallpaper"
                 iconSize: 16
                 color: root.inirEverywhere ? Appearance.inir.colPrimary
-                     : root.auroraEverywhere ? Appearance.m3colors.m3primary
+                     : root.auroraEverywhere ? Appearance.colors.colPrimary
                      : Appearance.colors.colPrimary
             }
 
@@ -53,7 +46,7 @@ Rectangle {
                 font.pixelSize: Appearance.font.pixelSize.small
                 font.weight: Font.Medium
                 color: root.inirEverywhere ? Appearance.inir.colText
-                     : root.auroraEverywhere ? Appearance.m3colors.m3onSurface
+                     : root.auroraEverywhere ? Appearance.colors.colOnSurface
                      : Appearance.colors.colOnLayer1
             }
 
@@ -73,7 +66,7 @@ Rectangle {
                     text: "shuffle"
                     iconSize: 14
                     color: root.inirEverywhere ? Appearance.inir.colTextSecondary
-                         : root.auroraEverywhere ? Appearance.m3colors.m3onSurfaceVariant
+                         : root.auroraEverywhere ? Appearance.colors.colOnSurfaceVariant
                          : Appearance.colors.colSubtext
                 }
                 StyledToolTip { text: Translation.tr("Random") }
@@ -93,7 +86,7 @@ Rectangle {
                     text: "folder_open"
                     iconSize: 14
                     color: root.inirEverywhere ? Appearance.inir.colTextSecondary
-                         : root.auroraEverywhere ? Appearance.m3colors.m3onSurfaceVariant
+                         : root.auroraEverywhere ? Appearance.colors.colOnSurfaceVariant
                          : Appearance.colors.colSubtext
                 }
                 StyledToolTip { text: Translation.tr("Browse") }

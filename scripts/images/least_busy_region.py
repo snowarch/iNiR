@@ -265,10 +265,15 @@ def draw_largest_region(image_path, center, size, output_path='output.png', scre
     # print removed for quieter operation
 
 def get_region_brightness(image_path, x, y, w, h, screen_width=None, screen_height=None, screen_mode="fill"):
-    """Get average brightness (0-255) of a specific region in the wallpaper."""
+    """Get average brightness and brightness std-dev (both 0-255) of a region.
+
+    Returns a (mean, std) tuple. The std-dev measures how "busy"/high-contrast
+    the region is, so consumers can target worst-case legibility instead of
+    trusting the mean (which lies on textured wallpapers).
+    """
     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     if img is None:
-        return 128
+        return 128.0, 0.0
     orig_h, orig_w = img.shape[:2]
     if screen_width is not None and screen_height is not None:
         scale_w = screen_width / orig_w
@@ -282,8 +287,8 @@ def get_region_brightness(image_path, x, y, w, h, screen_width=None, screen_heig
     h = max(1, min(h, img.shape[0] - y))
     region = img[y:y+h, x:x+w]
     if region.size == 0:
-        return 128
-    return float(np.mean(region))
+        return 128.0, 0.0
+    return float(np.mean(region)), float(np.std(region))
 
 def get_dominant_color(image_path, x, y, w, h, screen_width=None, screen_height=None, screen_mode="fill"):
     img = cv2.imread(image_path)
@@ -354,7 +359,7 @@ def main():
             args.image_path, args.position_x, args.position_y, args.width, args.height,
             screen_width=args.screen_width, screen_height=args.screen_height, screen_mode=args.screen_mode
         )
-        brightness = get_region_brightness(
+        brightness, brightness_std = get_region_brightness(
             args.image_path, args.position_x, args.position_y, args.width, args.height,
             screen_width=args.screen_width, screen_height=args.screen_height, screen_mode=args.screen_mode
         )
@@ -365,7 +370,8 @@ def main():
             "width": args.width,
             "height": args.height,
             "dominant_color": dominant_color_hex,
-            "brightness": round(brightness, 1)
+            "brightness": round(brightness, 1),
+            "brightness_std": round(brightness_std, 1)
         }))
         return
 
@@ -394,7 +400,7 @@ def main():
                 args.image_path, x1, y1, region_w, region_h,
                 screen_width=args.screen_width, screen_height=args.screen_height, screen_mode=args.screen_mode
             )
-            brightness = get_region_brightness(
+            brightness, brightness_std = get_region_brightness(
                 args.image_path, x1, y1, region_w, region_h,
                 screen_width=args.screen_width, screen_height=args.screen_height, screen_mode=args.screen_mode
             )
@@ -406,7 +412,8 @@ def main():
                 "height": size[1],
                 "variance": var,
                 "dominant_color": dominant_color_hex,
-                "brightness": round(brightness, 1)
+                "brightness": round(brightness, 1),
+                "brightness_std": round(brightness_std, 1)
             }))
         else:
             print(json.dumps({"error": "No region found under the threshold."}))
@@ -434,7 +441,7 @@ def main():
         args.image_path, coords[0], coords[1], args.width, args.height,
         screen_width=args.screen_width, screen_height=args.screen_height, screen_mode=args.screen_mode
     )
-    brightness = get_region_brightness(
+    brightness, brightness_std = get_region_brightness(
         args.image_path, coords[0], coords[1], args.width, args.height,
         screen_width=args.screen_width, screen_height=args.screen_height, screen_mode=args.screen_mode
     )
@@ -446,7 +453,8 @@ def main():
         "height": args.height,
         "variance": variance,
         "dominant_color": dominant_color_hex,
-        "brightness": round(brightness, 1)
+        "brightness": round(brightness, 1),
+        "brightness_std": round(brightness_std, 1)
     }))
 
 if __name__ == "__main__":

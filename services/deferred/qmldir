@@ -7,12 +7,13 @@ singleton Emojis 1.0 Emojis.qml
 singleton GowallService 1.0 GowallService.qml
 singleton HyprlandKeybinds 1.0 HyprlandKeybinds.qml
 singleton HyprlandXkb 1.0 HyprlandXkb.qml
+singleton InnerTube 1.0 InnerTube.qml
 singleton KeyringStorage 1.0 KeyringStorage.qml
 singleton LatexRenderer 1.0 LatexRenderer.qml
 singleton LauncherSearch 1.0 LauncherSearch.qml
+singleton NewsService 1.0 NewsService.qml
 singleton NiriKeybinds 1.0 NiriKeybinds.qml
 singleton PackageSearch 1.0 PackageSearch.qml
-singleton RedditService 1.0 RedditService.qml
 singleton SessionWarnings 1.0 SessionWarnings.qml
 singleton SongRec 1.0 SongRec.qml
 singleton Ydotool 1.0 Ydotool.qml

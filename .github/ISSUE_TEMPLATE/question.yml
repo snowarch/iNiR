@@ -6,11 +6,11 @@ body:
     attributes:
       value: |
         Check the documentation first:
-        - [Installation](https://github.com/snowarch/inir/blob/main/docs/INSTALL.md)
-        - [Setup & Maintenance](https://github.com/snowarch/inir/blob/main/docs/SETUP.md)
-        - [Keybindings](https://github.com/snowarch/inir/blob/main/docs/KEYBINDS.md)
-        - [IPC Reference](https://github.com/snowarch/inir/blob/main/docs/IPC.md)
-        - [Limitations](https://github.com/snowarch/inir/blob/main/docs/LIMITATIONS.md)
+        - [Installation](https://github.com/snowarch/inir/wiki/INSTALL)
+        - [Setup & Maintenance](https://github.com/snowarch/inir/wiki/SETUP)
+        - [Keybindings](https://github.com/snowarch/inir/wiki/KEYBINDS)
+        - [IPC Reference](https://github.com/snowarch/inir/wiki/IPC)
+        - [Limitations](https://github.com/snowarch/inir/wiki/LIMITATIONS)
 
   - type: textarea
     id: question

@@ -18,6 +18,10 @@ MouseArea {
     cursorShape: Qt.PointingHandCursor
     acceptedButtons: Qt.LeftButton | Qt.RightButton
 
+    // Easter egg: 5 rapid taps summon her with the umbrella
+    property int _eggTaps: 0
+    Timer { id: eggTapWindow; interval: 3000; onTriggered: root._eggTaps = 0 }
+
     // Left-click opens the right sidebar's Weather tab; right-click refreshes.
     onClicked: (mouse) => {
         if (mouse.button === Qt.RightButton) {
@@ -29,8 +33,14 @@ MouseArea {
             ])
             return
         }
+        root._eggTaps++
+        eggTapWindow.restart()
+        if (root._eggTaps >= 5 && (Config.options?.mascot?.enable ?? false)) {
+            root._eggTaps = 0
+            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "mascot", "appear", "weather-umbrella", "top"])
+        }
         GlobalStates.sidebarRightRequestedWidget = "weather"
-        GlobalStates.sidebarRightOpen = true
+        GlobalStates.openSidebarRight(root.QsWindow.window?.screen?.name ?? "")
     }
 
     RowLayout {

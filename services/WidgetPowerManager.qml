@@ -25,12 +25,9 @@ Singleton {
     // PUBLIC API - Widgets bind to these
     // ══════════════════════════════════════════════════════════════════════
 
-    // Master switch: false = pause expensive operations (blur layers, 
-    // FrameAnimations, Cava, high-frequency timers)
-    readonly property bool widgetsActive: !_shouldPause
-
-    // True when widgets should reduce activity (lower precision clocks, etc)
-    readonly property bool reducedMode: _shouldPause
+    // Global summary for settings and callers without an output context.
+    readonly property bool widgetsActive: !root.shouldPauseForOutput("")
+    readonly property bool reducedMode: root.shouldPauseForOutput("")
 
     // ══════════════════════════════════════════════════════════════════════
     // CONFIGURATION
@@ -49,67 +46,62 @@ Singleton {
     // on the same trigger and made widgets feel broken (paused + dimmed) on any window open.
     readonly property bool pauseWhenWindowsPresent: Config.options?.background?.widgets?.powerSaving?.pauseWhenWindowsPresent ?? false
 
-    // ══════════════════════════════════════════════════════════════════════
-    // INTERNAL STATE
-    // ══════════════════════════════════════════════════════════════════════
-
-    property bool _shouldPause: false
-
-    // Same logic as Background.qml's hasWindowsOnCurrentWorkspace
-    readonly property bool _hasWindowsOnWorkspace: {
+    function _hasWindowsOnActiveWorkspace(outputName: string): bool {
         try {
-            if (CompositorService.isNiri && NiriService.windows && NiriService.workspaces) {
-                const allWs = Object.values(NiriService.workspaces);
-                if (!allWs || allWs.length === 0) return false;
-                const currentNumber = NiriService.getCurrentWorkspaceNumber();
-                const currentWs = allWs.find(ws => ws.idx === currentNumber);
-                if (!currentWs) return false;
-                return NiriService.windows.some(w => w.workspace_id === currentWs.id && !w.is_minimized);
-            }
+            if (!CompositorService.isNiri || !Array.isArray(NiriService.windows))
+                return false;
+            const allWorkspaces = Object.values(NiriService.workspaces ?? {});
+            const activeWorkspaces = allWorkspaces.filter(workspace =>
+                workspace?.is_active
+                    && (outputName.length === 0 || workspace.output === outputName));
+            if (activeWorkspaces.length === 0)
+                return false;
+            return NiriService.windows.some(window =>
+                !window?.is_minimized
+                    && activeWorkspaces.some(workspace => workspace.id === window.workspace_id));
+        } catch (e) {
             return false;
-        } catch (e) { return false; }
-    }
-
-    // React to NiriService changes (windows/workspaces)
-    Connections {
-        target: NiriService
-        enabled: CompositorService.isNiri
-        function onWindowsChanged(): void { root._updateState() }
-        function onWorkspacesChanged(): void { root._updateState() }
-    }
-
-    function _updateState(): void {
-        if (!root.enabled) {
-            root._shouldPause = false
-            return
         }
-
-        // Don't pause in widget edit mode
-        if (GlobalStates.widgetEditMode) {
-            root._shouldPause = false
-            return
-        }
-
-        const gameModeActive = root.pauseOnGameMode && GameMode.active
-        const fullscreenActive = root.pauseOnFullscreen && GameMode.hasAnyFullscreenWindow
-        const windowsPresent = root.pauseWhenWindowsPresent && root._hasWindowsOnWorkspace
-
-        root._shouldPause = gameModeActive || fullscreenActive || windowsPresent
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // REACTIVE CONNECTIONS
-    // ══════════════════════════════════════════════════════════════════════
-
-    Connections {
-        target: GameMode
-        function onActiveChanged(): void { root._updateState() }
-        function onHasAnyFullscreenWindowChanged(): void { root._updateState() }
+    function _fullscreenForOutput(outputName: string): bool {
+        const scopedOutput = String(outputName ?? "");
+        if (scopedOutput.length === 0 || !CompositorService.isNiri)
+            return GameMode.hasVisibleFullscreenWindow;
+        return GameMode.hasFullscreenOnOutput(scopedOutput);
     }
 
-    Connections {
-        target: GlobalStates
-        function onWidgetEditModeChanged(): void { root._updateState() }
+    function _triggersForOutput(outputName: string): var {
+        const scopedOutput = String(outputName ?? "");
+        return {
+            outputDisabled: scopedOutput.length > 0
+                && !DesktopWidgetLayout.outputAllowed(scopedOutput),
+            gameMode: root.pauseOnGameMode && GameMode.manuallyActivated,
+            fullscreen: root.pauseOnFullscreen && root._fullscreenForOutput(scopedOutput),
+            windowsPresent: root.pauseWhenWindowsPresent
+                && root._hasWindowsOnActiveWorkspace(scopedOutput),
+            editMode: GlobalStates.widgetEditMode
+        };
+    }
+
+    function shouldPauseForOutput(outputName: string): bool {
+        const scopedOutput = String(outputName ?? "");
+        if (scopedOutput.length > 0
+                && !DesktopWidgetLayout.outputAllowed(scopedOutput))
+            return true;
+        if (!root.enabled || GlobalStates.widgetEditMode)
+            return false;
+        const triggers = root._triggersForOutput(outputName);
+        return triggers.outputDisabled || triggers.gameMode
+            || triggers.fullscreen || triggers.windowsPresent;
+    }
+
+    function widgetsActiveForOutput(outputName: string): bool {
+        return !root.shouldPauseForOutput(outputName);
+    }
+
+    function reducedModeForOutput(outputName: string): bool {
+        return root.shouldPauseForOutput(outputName);
     }
 
     // ══════════════════════════════════════════════════════════════════════
@@ -120,18 +112,23 @@ Singleton {
         target: "widgetpower"
 
         function status(): string {
+            const outputs = {};
+            const screens = Quickshell.screens ?? [];
+            for (let i = 0; i < screens.length; i++) {
+                const outputName = String(screens[i]?.name ?? "");
+                if (outputName.length === 0)
+                    continue;
+                outputs[outputName] = {
+                    widgetsActive: root.widgetsActiveForOutput(outputName),
+                    triggers: root._triggersForOutput(outputName)
+                };
+            }
             return JSON.stringify({
                 enabled: root.enabled,
                 widgetsActive: root.widgetsActive,
-                triggers: {
-                    gameMode: root.pauseOnGameMode && GameMode.active,
-                    fullscreen: root.pauseOnFullscreen && GameMode.hasAnyFullscreenWindow,
-                    windowsPresent: root.pauseWhenWindowsPresent && root._hasWindowsOnWorkspace,
-                    editMode: GlobalStates.widgetEditMode
-                }
+                triggers: root._triggersForOutput(""),
+                outputs: outputs
             }, null, 2)
         }
     }
-
-    Component.onCompleted: Qt.callLater(root._updateState)
 }

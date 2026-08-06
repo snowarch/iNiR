@@ -39,17 +39,24 @@ Item {
     }
 
     // ── Theme tokens ──────────────────────────────────────────────────
-    readonly property color colText: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
-    readonly property color colSubtext: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
-    readonly property color colPrimary: Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
-    readonly property color colSurface: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+    readonly property color colText: Appearance.zzzEverywhere ? Appearance.zzz.ink
+        : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+    readonly property color colSubtext: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
+        : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+    readonly property color colPrimary: Appearance.zzzEverywhere ? Appearance.zzz.accent
+        : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
+    readonly property color colSurface: Appearance.zzzEverywhere ? "transparent"
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer2
-    readonly property color colSurfaceHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+    readonly property color colSurfaceHover: Appearance.zzzEverywhere ? Appearance.zzz.chrome
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
         : Appearance.colors.colLayer2Hover
-    readonly property real radiusCard: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-    readonly property real radiusInner: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
+    readonly property real radiusCard: Appearance.zzzEverywhere ? Appearance.zzz.cardRadius
+        : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+    readonly property real radiusInner: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
 
     // ── System timezone detection ─────────────────────────────────────
     Process {
@@ -386,8 +393,9 @@ Item {
                                 Layout.alignment: Qt.AlignRight
                                 text: clockRow.d?.time ?? "--:--"
                                 font.pixelSize: Appearance.font.pixelSize.larger ?? Appearance.font.pixelSize.normal
-                                font.weight: Font.DemiBold
+                                font.weight: Appearance.zzzEverywhere ? Font.Black : Font.DemiBold
                                 font.family: Appearance.font.family.numbers
+                                font.italic: Appearance.zzzEverywhere
                                 color: clockRow.accentLocal ? root.colPrimary : clockRow.rowTextCol
                             }
 

@@ -122,7 +122,7 @@ Singleton {
 
             Quickshell.execDetached(["/usr/bin/notify-send", "Pomodoro", notificationMessage, "-a", "Shell"]);
             if (Config.options?.sounds?.pomodoro ?? false) {
-                Audio.playSystemSound("alarm-clock-elapsed")
+                Audio.playEvent("pomodoroDone")
             }
 
             if (!pomodoroBreak) {
@@ -232,7 +232,7 @@ Singleton {
             Persistent.states.timer.countdown.paused = false;
             Quickshell.execDetached(["/usr/bin/notify-send", "Timer", Translation.tr("Time's up!"), "-a", "Shell", "-i", "alarm-symbolic"]);
             if (Config.options?.sounds?.timer ?? false) {
-                Audio.playSystemSound("alarm-clock-elapsed");
+                Audio.playEvent("timerDone");
             }
         }
     }

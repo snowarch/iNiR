@@ -118,7 +118,7 @@ ColumnLayout {
                         text: Audio.friendlyDeviceName(modelData)
                         font.pixelSize: Appearance.font.pixelSize.normal
                         elide: Text.ElideRight
-                        color: isSelected ? Appearance.colors.colOnPrimaryContainer : Appearance.m3colors.m3onSurface
+                        color: isSelected ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurface
                     }
                 }
 

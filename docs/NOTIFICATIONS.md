@@ -32,15 +32,35 @@ Toggle DND from:
 
 When DND is on, new notifications still arrive and get stored in history. They just don't show popups.
 
+## Quiet hours
+
+A daily window that suppresses popups without you remembering to toggle DND. Enable it in Settings › Interface › Notifications, or in the config:
+
+```json
+"notifications": {
+  "quietHours": {
+    "enable": true,
+    "start": "22:00",
+    "end": "08:00"
+  }
+}
+```
+
+Times are 24-hour `HH:MM`. A window whose `end` is earlier than its `start` wraps past midnight, so the example above runs from 10 PM to 8 AM. An unparseable time disables the window rather than guessing.
+
+Like DND, quiet hours only holds back popups — notifications still reach the history.
+
 ## History
 
 Notifications persist across shell restarts. History is stored at:
 
 ```
-~/.local/state/user/notifications.json
+~/.local/state/quickshell/user/notifications.json
 ```
 
 View history in the right sidebar (ii) or notification center (waffle). Notifications are grouped by app name for easier scanning.
+
+Once more than three notifications are stored, a search field appears above the list. It matches on app name, summary and body, and hides groups with no match.
 
 ### Grouping
 

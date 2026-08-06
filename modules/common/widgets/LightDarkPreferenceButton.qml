@@ -9,8 +9,8 @@ import Quickshell
 RippleButton {
     id: lightDarkButtonRoot
     required property bool dark
-    property color previewBg: dark ? ColorUtils.colorWithHueOf("#3f3838", Appearance.m3colors.m3primary) : 
-        ColorUtils.colorWithHueOf("#F7F9FF", Appearance.m3colors.m3primary)
+    property color previewBg: dark ? ColorUtils.colorWithHueOf("#3f3838", Appearance.colors.colPrimary) : 
+        ColorUtils.colorWithHueOf("#F7F9FF", Appearance.colors.colPrimary)
     property color previewFg: dark ? Qt.lighter(previewBg, 2.2) : ColorUtils.mix(previewBg, "#292929", 0.85)
     padding: 5
     Layout.fillWidth: true
@@ -34,7 +34,7 @@ RippleButton {
                 color: lightDarkButtonRoot.previewBg
                 border {
                     width: 1
-                    color: Appearance.m3colors.m3outlineVariant
+                    color: Appearance.colors.colOutlineVariant
                 }
 
                 // Some skeleton items
@@ -74,14 +74,14 @@ RippleButton {
                         value: 0.7
                         wavy: true
                         animateWave: lightDarkButtonRoot.toggled
-                        highlightColor: lightDarkButtonRoot.toggled ? Appearance.m3colors.m3primary : lightDarkButtonRoot.previewFg
+                        highlightColor: lightDarkButtonRoot.toggled ? Appearance.colors.colPrimary : lightDarkButtonRoot.previewFg
                         trackColor: ColorUtils.mix(lightDarkButtonRoot.previewBg, lightDarkButtonRoot.previewFg, 0.5)
                     }
                     RowLayout {
                         spacing: 2
                         Rectangle {
                             radius: Appearance.rounding.full
-                            color: lightDarkButtonRoot.toggled ? Appearance.m3colors.m3primary : lightDarkButtonRoot.previewFg
+                            color: lightDarkButtonRoot.toggled ? Appearance.colors.colPrimary : lightDarkButtonRoot.previewFg
                             Layout.fillWidth: true
                             implicitHeight: 30
                             MaterialSymbol {
@@ -90,12 +90,12 @@ RippleButton {
                                 horizontalAlignment: Text.AlignHCenter
                                 text: "check"
                                 iconSize: 20
-                                color: lightDarkButtonRoot.toggled ? Appearance.m3colors.m3onPrimary : lightDarkButtonRoot.previewBg
+                                color: lightDarkButtonRoot.toggled ? Appearance.colors.colOnPrimary : lightDarkButtonRoot.previewBg
                             }
                         }
                         Rectangle {
                             radius: Appearance.rounding.unsharpenmore
-                            color: lightDarkButtonRoot.toggled ? Appearance.m3colors.m3secondaryContainer : lightDarkButtonRoot.previewFg
+                            color: lightDarkButtonRoot.toggled ? Appearance.colors.colSecondaryContainer : lightDarkButtonRoot.previewFg
                             Layout.fillWidth: true
                             implicitHeight: 30
                         }
@@ -104,7 +104,7 @@ RippleButton {
                             bottomLeftRadius: Appearance.rounding.unsharpenmore
                             topRightRadius: Appearance.rounding.full
                             bottomRightRadius: Appearance.rounding.full
-                            color: lightDarkButtonRoot.toggled ? Appearance.m3colors.m3secondaryContainer : lightDarkButtonRoot.previewFg
+                            color: lightDarkButtonRoot.toggled ? Appearance.colors.colSecondaryContainer : lightDarkButtonRoot.previewFg
                             Layout.fillWidth: true
                             implicitHeight: 30
                         }
@@ -114,7 +114,7 @@ RippleButton {
             StyledText {
                 Layout.fillWidth: true
                 text: dark ? Translation.tr("Dark") : Translation.tr("Light")
-                color: lightDarkButtonRoot.toggled ? Appearance.m3colors.m3onPrimary : Appearance.colors.colOnLayer2
+                color: lightDarkButtonRoot.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer2
                 horizontalAlignment: Text.AlignHCenter
             }
         }

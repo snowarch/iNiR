@@ -96,6 +96,41 @@ Singleton {
         root._log("[ThemeService] setTheme completed");
     }
 
+    // ── Global style ────────────────────────────────────────────────────
+    // Single owner of "what does selecting style X write to config". This
+    // lived in three places (both settings families and the action registry)
+    // that had already drifted: waffle ignored the per-style corner defaults
+    // entirely, and the action registry had no cookie branch at all, so cookie
+    // silently inherited material's corner style.
+
+    function cornerStyleForGlobalStyle(styleId: string): int {
+        const styles = Config.options?.appearance?.globalStyleCornerStyles
+        switch (styleId) {
+        case "cards": return styles?.cards ?? 3
+        case "aurora": return styles?.aurora ?? 1
+        case "inir": return styles?.inir ?? 1
+        case "angel": return styles?.angel ?? 1
+        case "zzz": return styles?.zzz ?? 0
+        case "cookie": return styles?.cookie ?? 1
+        default: return styles?.material ?? 1
+        }
+    }
+
+    function setGlobalStyle(styleId: string): void {
+        root._log("[ThemeService] setGlobalStyle:", styleId)
+        const cards = styleId === "cards"
+        let cornerStyle = root.cornerStyleForGlobalStyle(styleId)
+        // Hug (0) leaves no float gap for angel's escalonado shadows to land in.
+        if (styleId === "angel" && cornerStyle === 0)
+            cornerStyle = 1
+        Config.setNestedValues({
+            "appearance.globalStyle": styleId,
+            "dock.cardStyle": cards,
+            "sidebar.cardStyle": cards,
+            "bar.cornerStyle": cornerStyle
+        })
+    }
+
     function _triggerVesktopThemeGeneration(): void {
         root._log("[ThemeService] Triggering Vesktop theme generation wrapper")
         Qt.callLater(() => {
@@ -112,14 +147,11 @@ Singleton {
             root._log("[ThemeService] Delegating to MaterialThemeLoader");
             MaterialThemeLoader.reapplyTheme();
 
-            // Apply terminal colors if they exist (from previous generation)
+            // Apply terminal colors if they exist (from previous generation).
+            // MaterialThemeLoader owns the run: spawning applycolor.sh here as
+            // well doubled every user action into two parallel module waves.
             if (applyExternal) {
-                Qt.callLater(() => {
-                    Quickshell.execDetached([
-                        "/usr/bin/bash",
-                        Directories.scriptsPath + "/colors/applycolor.sh"
-                    ]);
-                });
+                MaterialThemeLoader.requestExternalApply();
             }
 
             if (applyExternal && vesktopEnabled) {

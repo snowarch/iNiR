@@ -24,20 +24,22 @@ AbstractBackgroundWidget {
         showLocation: false,
         groupByDay: true,
         widgetScale: 100, widgetOpacity: 100,
-        showBackground: true, showBorder: true,
-        backgroundOpacity: 0.10, borderOpacity: 0.12,
-        colorMode: "auto", dim: 0,
+        showBackground: true, useBlur: false, showBorder: true,
+        backgroundOpacity: 0.10, borderWidth: 1, borderOpacity: 0.12,
+        cornerRadius: -1, colorMode: "auto", dim: 0,
         x: 80, y: 80
     })
 
-    implicitWidth: Math.round((Config.getNestedValue("background.widgets.calendarUpcoming.contentWidth", 280)) * scaleFactor)
-    implicitHeight: Math.round((Config.getNestedValue("background.widgets.calendarUpcoming.contentHeight", 220)) * scaleFactor)
+    implicitWidth: Math.round(Number(root._readConfigKey("contentWidth") ?? 280)
+        * root.scaleFactor)
+    implicitHeight: Math.round(Number(root._readConfigKey("contentHeight") ?? 220)
+        * root.scaleFactor)
 
     visibleWhenLocked: true
     needsColText: true
     resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
     resizeMinWidth: 200
-    resizeMinHeight: 100
+    resizeMinHeight: 120
     resizeMaxWidth: 600
     resizeMaxHeight: 800
 
@@ -47,12 +49,7 @@ AbstractBackgroundWidget {
     readonly property bool showLocation: Config.getNestedValue("background.widgets.calendarUpcoming.showLocation", false)
     readonly property bool groupByDay: Config.getNestedValue("background.widgets.calendarUpcoming.groupByDay", true)
 
-    property real dimFactor: {
-        const v = Number(Config.getNestedValue("background.widgets.calendarUpcoming.dim", 0));
-        return Math.max(0, Math.min(1, Number.isFinite(v) ? v / 100 : 0));
-    }
-
-    readonly property real cardRadius: Appearance.rounding.normal
+    readonly property real cardRadius: root.widgetCardRadius
 
     // ── Refresh trigger when events change ────────────────────
     property int _refreshTrigger: 0
@@ -67,9 +64,12 @@ AbstractBackgroundWidget {
         function onEventsUpdated() { root._refreshTrigger++ }
     }
 
+    readonly property string _todayKey: Qt.formatDate(DateTime.clock.date, "yyyy-MM-dd")
+
     // ── Merged + sorted upcoming events ───────────────────────
     readonly property var upcomingEvents: {
         const _t = root._refreshTrigger
+        const _d = root._todayKey
         return root._buildList()
     }
 
@@ -100,19 +100,26 @@ AbstractBackgroundWidget {
 
         const all = local.concat(externalAll)
         all.sort((a, b) => new Date(a.dateTime || a.startDate) - new Date(b.dateTime || b.startDate))
-        return all.slice(0, root.maxEvents)
+        const limited = all.slice(0, root.maxEvents)
+        let previousDay = ""
+        return limited.map(event => {
+            const dt = new Date(event.dateTime || event.startDate)
+            const dayKey = isNaN(dt.getTime()) ? "" : Qt.formatDate(dt, "yyyy-MM-dd")
+            const showDayHeader = root.groupByDay && dayKey !== "" && dayKey !== previousDay
+            previousDay = dayKey
+            return Object.assign({}, event, { _showDayHeader: showDayHeader })
+        })
     }
 
     // ── Edit popover: max events + toggles ────────────────────
     editPopoverContent: Component {
-        Column {
+        ColumnLayout {
             spacing: 6
 
             // Max events spinner
             Row {
                 spacing: 6
                 Layout.alignment: Qt.AlignHCenter
-                anchors.horizontalCenter: parent.horizontalCenter
                 StyledText {
                     anchors.verticalCenter: parent.verticalCenter
                     text: Translation.tr("Show:")
@@ -134,27 +141,34 @@ AbstractBackgroundWidget {
             // Toggles
             Row {
                 spacing: 4
-                anchors.horizontalCenter: parent.horizontalCenter
+                Layout.alignment: Qt.AlignHCenter
                 SelectionGroupButton {
                     leftmost: true; rightmost: true
                     buttonIcon: "schedule"
-                    buttonText: "Time"
+                    buttonText: Translation.tr("Time")
                     toggled: root.showTime
                     onClicked: Config.setNestedValue("background.widgets.calendarUpcoming.showTime", !root.showTime)
                 }
                 SelectionGroupButton {
                     leftmost: true; rightmost: true
                     buttonIcon: "today"
-                    buttonText: "Date"
+                    buttonText: Translation.tr("Date")
                     toggled: root.showDate
                     onClicked: Config.setNestedValue("background.widgets.calendarUpcoming.showDate", !root.showDate)
                 }
                 SelectionGroupButton {
                     leftmost: true; rightmost: true
                     buttonIcon: "place"
-                    buttonText: "Location"
+                    buttonText: Translation.tr("Location")
                     toggled: root.showLocation
                     onClicked: Config.setNestedValue("background.widgets.calendarUpcoming.showLocation", !root.showLocation)
+                }
+                SelectionGroupButton {
+                    leftmost: true; rightmost: true
+                    buttonIcon: "view_day"
+                    buttonText: Translation.tr("Group")
+                    toggled: root.groupByDay
+                    onClicked: Config.setNestedValue("background.widgets.calendarUpcoming.groupByDay", !root.groupByDay)
                 }
             }
         }
@@ -162,105 +176,162 @@ AbstractBackgroundWidget {
 
     // ── Card background ────────────────────────────────────────
     WidgetSurface {
+        regionBrightness: root.regionBrightness
         anchors.fill: parent
         surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.cardRadius
         surfaceOpacity: root.backgroundOpacity
         surfaceBorderWidth: root.borderWidth
         surfaceBorderOpacity: root.borderOpacity
-        surfaceColor: root.colText
-        surfaceUseBlur: root.useBlur
+        surfaceColor: root.widgetSurfaceInk
+        colorMode: root.colorMode
+        surfaceAccent: root.widgetAccent
+        surfaceUseBlur: root.effectiveBlur
         screenX: root.x
         screenY: root.y
         screenWidth: root.scaledScreenWidth
         screenHeight: root.scaledScreenHeight
-        visible: root.backgroundOpacity > 0 || root.borderWidth > 0
+        visible: root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur
     }
 
     // ── Content ────────────────────────────────────────────────
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: Math.round(12 * root.scaleFactor)
+        clip: true
         spacing: Math.round(4 * root.scaleFactor)
-        opacity: 1.0 - root.dimFactor * 0.5
 
         // Header
         RowLayout {
+            visible: root.upcomingEvents.length > 0
             Layout.fillWidth: true
             spacing: 6
 
             StyledText {
                 text: Translation.tr("Upcoming")
-                color: ColorUtils.applyAlpha(root.colText, 0.7)
+                color: root.widgetInkMuted
                 font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
                 font.weight: Font.Medium
             }
 
             Item { Layout.fillWidth: true }
 
-            StyledText {
-                visible: root.upcomingEvents.length === 0
-                text: Translation.tr("No events")
-                color: ColorUtils.applyAlpha(root.colText, 0.4)
-                font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
-            }
         }
 
         // Events list
         Repeater {
             model: root.upcomingEvents
 
-            delegate: RowLayout {
+            delegate: ColumnLayout {
+                id: eventDelegate
                 required property var modelData
                 required property int index
                 Layout.fillWidth: true
-                spacing: Math.round(8 * root.scaleFactor)
+                spacing: Math.round(3 * root.scaleFactor)
 
-                // Color/source indicator
-                Rectangle {
-                    Layout.alignment: Qt.AlignTop
-                    Layout.topMargin: Math.round(4 * root.scaleFactor)
-                    width: 3
-                    height: Math.round(16 * root.scaleFactor)
-                    radius: 1.5
-                    color: parent.modelData?.color || ColorUtils.applyAlpha(root.colText, 0.5)
+                StyledText {
+                    visible: eventDelegate.modelData?._showDayHeader ?? false
+                    text: root._dayHeading(eventDelegate.modelData)
+                    color: root.widgetAccentVisible
+                    font {
+                        pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
+                        weight: Font.DemiBold
+                    }
                 }
 
-                ColumnLayout {
+                RowLayout {
                     Layout.fillWidth: true
-                    spacing: 1
+                    spacing: Math.round(8 * root.scaleFactor)
 
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: parent.parent.modelData?.title || Translation.tr("Untitled")
-                        color: root.colText
-                        font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
-                        font.weight: Font.Medium
-                        elide: Text.ElideRight
+                    Rectangle {
+                        Layout.alignment: Qt.AlignTop
+                        Layout.topMargin: Math.round(4 * root.scaleFactor)
+                        width: Math.max(3, Math.round(3 * root.scaleFactor))
+                        height: Math.round(16 * root.scaleFactor)
+                        radius: width / 2
+                        color: eventDelegate.modelData?.color || root.widgetAccentVisible
                     }
 
-                    StyledText {
+                    ColumnLayout {
                         Layout.fillWidth: true
-                        visible: text.length > 0
-                        text: root._formatDateTime(parent.parent.modelData)
-                        color: ColorUtils.applyAlpha(root.colText, 0.6)
-                        font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
-                        font.family: Appearance.font.family.numbers
-                        elide: Text.ElideRight
-                    }
+                        spacing: 1
 
-                    StyledText {
-                        Layout.fillWidth: true
-                        visible: root.showLocation && (parent.parent.modelData?.location?.length ?? 0) > 0
-                        text: parent.parent.modelData?.location ?? ""
-                        color: ColorUtils.applyAlpha(root.colText, 0.5)
-                        font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
-                        elide: Text.ElideRight
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: eventDelegate.modelData?.title || Translation.tr("Untitled")
+                            color: root.widgetInk
+                            font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
+                            font.weight: Font.Medium
+                            elide: Text.ElideRight
+                            wrapMode: Text.NoWrap
+                        }
+
+                        StyledText {
+                            Layout.fillWidth: true
+                            visible: text.length > 0
+                            text: root._formatDateTime(eventDelegate.modelData)
+                            color: root.widgetInkMuted
+                            font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
+                            font.family: Appearance.font.family.numbers
+                            elide: Text.ElideRight
+                            wrapMode: Text.NoWrap
+                        }
+
+                        StyledText {
+                            Layout.fillWidth: true
+                            visible: root.showLocation && (eventDelegate.modelData?.location?.length ?? 0) > 0
+                            text: eventDelegate.modelData?.location ?? ""
+                            color: root.widgetInkSubtle
+                            font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
+                            elide: Text.ElideRight
+                            wrapMode: Text.NoWrap
+                        }
                     }
                 }
             }
         }
 
-        Item { Layout.fillHeight: true }
+        Item {
+            visible: root.upcomingEvents.length === 0
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+
+            Column {
+                anchors.centerIn: parent
+                width: Math.min(parent.width,
+                    Math.round(190 * root.scaleFactor))
+                spacing: Math.round(7 * root.scaleFactor)
+
+                MaterialShape {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    implicitSize: Math.round(54 * root.scaleFactor)
+                    shape: MaterialShape.Shape.Ghostish
+                    color: ColorUtils.applyAlpha(root.widgetAccent, 0.16)
+
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: "event_available"
+                        iconSize: Math.round(26 * root.scaleFactor)
+                        color: root.widgetAccentVisible
+                    }
+                }
+
+                StyledText {
+                    width: parent.width
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: Translation.tr("No upcoming events")
+                    color: root.widgetInkMuted
+                    font.pixelSize: Math.round(
+                        Appearance.font.pixelSize.small * root.scaleFactor)
+                    wrapMode: Text.WordWrap
+                }
+            }
+        }
+
+        Item {
+            visible: root.upcomingEvents.length > 0
+            Layout.fillHeight: true
+        }
     }
 
     // Format date/time relative to today/tomorrow
@@ -288,5 +359,19 @@ AbstractBackgroundWidget {
 
         if (dateStr && timeStr) return dateStr + " · " + timeStr
         return dateStr || timeStr
+    }
+
+    function _dayHeading(event): string {
+        if (!event) return ""
+        const dt = new Date(event.dateTime || event.startDate)
+        if (isNaN(dt.getTime())) return ""
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        const eventDay = new Date(dt)
+        eventDay.setHours(0, 0, 0, 0)
+        const days = Math.round((eventDay.getTime() - today.getTime()) / 86400000)
+        if (days === 0) return Translation.tr("Today")
+        if (days === 1) return Translation.tr("Tomorrow")
+        return Qt.formatDate(dt, "dddd, d MMM")
     }
 }

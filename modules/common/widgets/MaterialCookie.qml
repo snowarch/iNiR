@@ -22,6 +22,11 @@ Item {
     ShapeCanvas {
         id: shapeCanvas
         anchors.fill: parent
+        animation: NumberAnimation {
+            duration: Appearance.animationsEnabled ? Appearance.animation.elementResize.duration : 0
+            easing.type: Appearance.animation.elementResize.type
+            easing.bezierCurve: Appearance.animation.elementResize.bezierCurve
+        }
         roundedPolygon: switch(sides) {
             case 0: return MaterialShapes.getCircle();
             case 1: return MaterialShapes.getCircle();
@@ -36,4 +41,3 @@ Item {
         }
     }
 }
-

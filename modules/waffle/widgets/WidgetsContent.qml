@@ -63,7 +63,9 @@ WBarAttachedPanelContent {
             break
         }
         case "screenshot":
-            GlobalStates.regionSelectorOpen = true
+            // Resolve action/mode explicitly — a bare regionSelectorOpen=true
+            // inherits whatever a previous record/lens use left behind.
+            GlobalStates.openRegionScreenshot()
             break
         case "screenRecord":
             GlobalActions.runById("screen-record", "")

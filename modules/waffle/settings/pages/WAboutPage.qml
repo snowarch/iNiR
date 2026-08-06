@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import Quickshell
 import qs.services
 import qs.modules.common
+import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.modules.waffle.looks
 import qs.modules.waffle.settings
@@ -26,17 +27,27 @@ WSettingsPage {
             Layout.bottomMargin: 4
             spacing: 18
             
+            MascotImage {
+                id: aboutMascot
+                Layout.preferredWidth: 116
+                Layout.preferredHeight: 116
+                surface: "about"
+                pose: "about-confident"
+            }
+
             Rectangle {
-                implicitWidth: 72
-                implicitHeight: 72
-                radius: Looks.radius.xLarge
+                Layout.preferredWidth: 72
+                Layout.preferredHeight: 72
+                Layout.alignment: Qt.AlignVCenter
+                visible: !aboutMascot.active
+                radius: Looks.radius.medium
                 color: Looks.colors.accent
-                
+
                 WText {
                     anchors.centerIn: parent
                     text: "iN"
-                    font.pixelSize: 30
-                    font.weight: Font.Bold
+                    font.pixelSize: Looks.font.pixelSize.xlarger
+                    font.weight: Looks.font.weight.stronger
                     color: Looks.colors.accentFg
                 }
             }
@@ -113,7 +124,7 @@ WSettingsPage {
             }
         }
     }
-    
+
     // Links
     WSettingsCard {
         title: Translation.tr("Links")
@@ -129,10 +140,10 @@ WSettingsPage {
 
         WSettingsButton {
             label: Translation.tr("Documentation")
-            description: "snowarch.github.io/iNiR/docs"
+            description: "github.com/snowarch/inir/wiki"
             icon: "library"
             buttonText: Translation.tr("Open")
-            onButtonClicked: Qt.openUrlExternally("https://snowarch.github.io/iNiR/docs/")
+            onButtonClicked: Qt.openUrlExternally("https://github.com/snowarch/inir/wiki")
         }
         
         WSettingsButton {
@@ -159,8 +170,8 @@ WSettingsPage {
         
         ColumnLayout {
             Layout.fillWidth: true
-            Layout.leftMargin: 16
-            Layout.rightMargin: 16
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             Layout.bottomMargin: 6
             spacing: 12
             

@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
+import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
@@ -18,6 +19,135 @@ ContentPage {
     settingsPageName: Translation.tr("Panels")
 
     property bool isIiActive: Config.options?.panelFamily !== "waffle"
+
+    function floatingToolsEnabled(): bool {
+        return (Config.options?.enabledPanels ?? []).includes("iiOverlay")
+    }
+
+    function setFloatingToolsEnabled(enabled: bool): void {
+        const panels = [...(Config.options?.enabledPanels ?? [])]
+        const index = panels.indexOf("iiOverlay")
+        if (enabled && index === -1)
+            panels.push("iiOverlay")
+        else if (!enabled && index !== -1)
+            panels.splice(index, 1)
+        Config.setNestedValue("enabledPanels", panels)
+    }
+
+    function openFloatingTools(): void {
+        GlobalStates.settingsOverlayOpen = false
+        GlobalStates.overlayOpen = true
+    }
+
+    SettingsCardSection {
+        expanded: true
+        icon: "dashboard_customize"
+        title: Translation.tr("Floating tools (Super+G)")
+
+        SettingsGroup {
+            NoticeBox {
+                Layout.fillWidth: true
+                materialIcon: "info"
+                text: Translation.tr("Floating image and widgets panel (Super+G)")
+            }
+
+            SettingsSwitch {
+                buttonIcon: "dashboard_customize"
+                text: Translation.tr("Enable")
+                checked: root.floatingToolsEnabled()
+                onCheckedChanged: root.setFloatingToolsEnabled(checked)
+            }
+
+            RippleButtonWithIcon {
+                Layout.fillWidth: true
+                enabled: root.floatingToolsEnabled()
+                materialIcon: "open_in_new"
+                mainText: Translation.tr("Open")
+                onClicked: root.openFloatingTools()
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Background & dim")
+
+                SettingsSwitch {
+                    buttonIcon: "water"
+                    text: Translation.tr("Darken screen behind overlay")
+                    checked: Config.options?.overlay?.darkenScreen ?? false
+                    onCheckedChanged: Config.setNestedValue("overlay.darkenScreen", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Add a dark scrim behind overlay panels for better visibility")
+                    }
+                }
+
+                ConfigSpinBox {
+                    icon: "opacity"
+                    text: Translation.tr("Overlay scrim dim (%)")
+                    value: Config.options?.overlay?.scrimDim ?? 30
+                    from: 0
+                    to: 100
+                    stepSize: 5
+                    enabled: Config.options?.overlay?.darkenScreen ?? false
+                    onValueChanged: Config.setNestedValue("overlay.scrimDim", value)
+                    StyledToolTip {
+                        text: Translation.tr("How dark the background scrim should be")
+                    }
+                }
+
+                ConfigSpinBox {
+                    icon: "opacity"
+                    text: Translation.tr("Overlay background opacity (%)")
+                    value: Math.round((Config.options?.overlay?.backgroundOpacity ?? 0.9) * 100)
+                    from: 20
+                    to: 100
+                    stepSize: 5
+                    onValueChanged: Config.setNestedValue("overlay.backgroundOpacity", value / 100)
+                    StyledToolTip {
+                        text: Translation.tr("Opacity of the overlay panel background")
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Animations")
+
+                SettingsSwitch {
+                    buttonIcon: "movie"
+                    text: Translation.tr("Enable opening zoom animation")
+                    checked: Config.options?.overlay?.openingZoomAnimation ?? true
+                    onCheckedChanged: Config.setNestedValue("overlay.openingZoomAnimation", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Animate overlay panels with a zoom effect when opening")
+                    }
+                }
+
+                ConfigSpinBox {
+                    icon: "speed"
+                    text: Translation.tr("Overlay animation duration (ms)")
+                    value: Config.options?.overlay?.animationDurationMs ?? 180
+                    from: 0
+                    to: 1000
+                    stepSize: 20
+                    onValueChanged: Config.setNestedValue("overlay.animationDurationMs", value)
+                    StyledToolTip {
+                        text: Translation.tr("Duration of overlay open/close animations")
+                    }
+                }
+
+                ConfigSpinBox {
+                    icon: "speed"
+                    text: Translation.tr("Background dim animation (ms)")
+                    value: Config.options?.overlay?.scrimAnimationDurationMs ?? 140
+                    from: 0
+                    to: 1000
+                    stepSize: 20
+                    onValueChanged: Config.setNestedValue("overlay.scrimAnimationDurationMs", value)
+                    StyledToolTip {
+                        text: Translation.tr("Duration of the background scrim fade animation")
+                    }
+                }
+            }
+        }
+    }
 
     // ── Shell Desaturation Effect ───────────────────────────────────────
     SettingsCardSection {
@@ -85,7 +215,7 @@ ContentPage {
                     text: Translation.tr("Apply to")
                     font.pixelSize: Appearance.font.pixelSize.small
                     color: Boolean(Config.options?.appearance?.desaturation?.enable)
-                        ? Appearance.m3colors.m3onSurface
+                        ? Appearance.colors.colOnSurface
                         : Appearance.colors.colSubtext
                 }
 
@@ -339,300 +469,6 @@ ContentPage {
     SettingsCardSection {
         visible: root.isIiActive
         expanded: false
-        icon: "call_to_action"
-        title: Translation.tr("Dock")
-
-        SettingsGroup {
-            SettingsSwitch {
-                buttonIcon: "check"
-                text: Translation.tr("Enable")
-                checked: Config.options.dock.enable
-                onCheckedChanged: {
-                    Config.setNestedValue("dock.enable", checked);
-                }
-                StyledToolTip {
-                    text: Translation.tr("Show the macOS-style dock at the bottom of the screen")
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Dock style")
-                tooltip: Translation.tr("Panel: classic unified background. Pill: each icon floats in its own capsule. macOS: frosted glass shelf with magnify effect.")
-
-                ConfigSelectionArray {
-                    currentValue: Config.options?.dock?.style ?? "panel"
-                    onSelected: newValue => {
-                        Config.setNestedValue("dock.style", newValue)
-                    }
-                    options: [
-                        { displayName: Translation.tr("Panel"), icon: "dock_to_bottom", value: "panel" },
-                        { displayName: Translation.tr("Pill"),  icon: "interests",       value: "pill"  },
-                        { displayName: Translation.tr("macOS"), icon: "desktop_mac",     value: "macos" }
-                    ]
-                }
-            }
-
-            ConfigRow {
-                uniform: true
-                ContentSubsection {
-                    title: Translation.tr("Dock position")
-
-                    ConfigSelectionArray {
-                        currentValue: Config.options?.dock?.position ?? "bottom"
-                        onSelected: newValue => {
-                            Config.setNestedValue('dock.position', newValue);
-                        }
-                        options: [
-                            { displayName: Translation.tr("Top"), icon: "arrow_upward", value: "top" },
-                            { displayName: Translation.tr("Left"), icon: "arrow_back", value: "left" },
-                            { displayName: Translation.tr("Bottom"), icon: "arrow_downward", value: "bottom" },
-                            { displayName: Translation.tr("Right"), icon: "arrow_forward", value: "right" }
-                        ]
-                    }
-                }
-                ContentSubsection {
-                    title: Translation.tr("Reveal behavior")
-
-                    ConfigSelectionArray {
-                        currentValue: Config.options?.dock?.hoverToReveal ?? true
-                        onSelected: newValue => {
-                            Config.setNestedValue('dock.hoverToReveal', newValue);
-                        }
-                        options: [
-                            { displayName: Translation.tr("Hover"), icon: "highlight_mouse_cursor", value: true },
-                            { displayName: Translation.tr("Empty workspace"), icon: "desktop_windows", value: false }
-                        ]
-                    }
-                    SettingsSwitch {
-                        buttonIcon: "desktop_windows"
-                        text: Translation.tr("Show on desktop")
-                        checked: Config.options?.dock?.showOnDesktop ?? true
-                        onCheckedChanged: Config.setNestedValue('dock.showOnDesktop', checked)
-                        StyledToolTip {
-                            text: Translation.tr("Show dock when no window is focused")
-                        }
-                    }
-                }
-            }
-
-            ConfigRow {
-                uniform: true
-                SettingsSwitch {
-                    buttonIcon: "keep"
-                    text: Translation.tr("Pinned on startup")
-                    checked: Config.options.dock.pinnedOnStartup
-                    onCheckedChanged: {
-                        Config.setNestedValue("dock.pinnedOnStartup", checked);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Keep dock visible when the shell starts")
-                    }
-                }
-                SettingsSwitch {
-                    buttonIcon: "colors"
-                    text: Translation.tr("Tint app icons")
-                    checked: Config.options.dock.monochromeIcons
-                    onCheckedChanged: {
-                        Config.setNestedValue("dock.monochromeIcons", checked);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Apply accent color tint to dock app icons")
-                    }
-                }
-            }
-            SettingsSwitch {
-                buttonIcon: "widgets"
-                text: Translation.tr("Show dock background")
-                checked: Config.options.dock.showBackground
-                onCheckedChanged: Config.setNestedValue("dock.showBackground", checked)
-                StyledToolTip {
-                    text: Translation.tr("Show a background behind the dock")
-                }
-            }
-
-            SettingsSwitch {
-                buttonIcon: "splitscreen"
-                text: Translation.tr("Separate pinned from running")
-                checked: Config.options?.dock?.separatePinnedFromRunning ?? true
-                onCheckedChanged: Config.setNestedValue('dock.separatePinnedFromRunning', checked)
-                StyledToolTip {
-                    text: Translation.tr("Show pinned-only apps on the left, running apps on the right with a separator")
-                }
-            }
-
-            SettingsSwitch {
-                buttonIcon: "drag_indicator"
-                text: Translation.tr("Drag to reorder")
-                checked: Config.options?.dock?.enableDragReorder ?? true
-                onCheckedChanged: Config.setNestedValue('dock.enableDragReorder', checked)
-                StyledToolTip {
-                    text: Translation.tr("Long-press and drag dock icons to reorder pinned apps")
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Appearance")
-
-                SettingsSwitch {
-                    buttonIcon: "branding_watermark"
-                    text: Translation.tr("Use Card style")
-                    checked: Config.options.dock?.cardStyle ?? false
-                    onCheckedChanged: {
-                        Config.setNestedValue("dock.cardStyle", checked);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Use the new Card style (lighter background, specific rounding) generic to settings")
-                    }
-                }
-
-                ConfigSpinBox {
-                    icon: "height"
-                    text: Translation.tr("Dock height (px)")
-                    value: Config.options.dock.height ?? 60
-                    from: 40
-                    to: 100
-                    stepSize: 5
-                    onValueChanged: {
-                        Config.setNestedValue("dock.height", value);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Height of the dock container")
-                    }
-                }
-
-                ConfigSpinBox {
-                    icon: "aspect_ratio"
-                    text: Translation.tr("Icon size (px)")
-                    value: Config.options.dock.iconSize ?? 35
-                    from: 20
-                    to: 60
-                    stepSize: 5
-                    onValueChanged: {
-                        Config.setNestedValue("dock.iconSize", value);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Size of application icons in the dock")
-                    }
-                }
-
-                ConfigSpinBox {
-                    icon: {
-                        const pos = Config.options?.dock?.position ?? "bottom"
-                        switch (pos) {
-                            case "top": return "vertical_align_top"
-                            case "left": return "align_horizontal_left"
-                            case "right": return "align_horizontal_right"
-                            default: return "vertical_align_bottom"
-                        }
-                    }
-                    text: Translation.tr("Hover reveal region size (px)")
-                    value: Config.options.dock.hoverRegionHeight ?? 2
-                    from: 1
-                    to: 20
-                    stepSize: 1
-                    enabled: Config.options.dock.hoverToReveal
-                    onValueChanged: {
-                        Config.setNestedValue("dock.hoverRegionHeight", value);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Size of the invisible area at screen edge that triggers dock reveal")
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Window indicators")
-
-                SettingsSwitch {
-                    buttonIcon: "my_location"
-                    text: Translation.tr("Smart indicator (highlight focused window)")
-                    checked: Config.options.dock.smartIndicator !== false
-                    onCheckedChanged: {
-                        Config.setNestedValue("dock.smartIndicator", checked);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("When multiple windows of the same app are open, highlight which one is focused")
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "more_horiz"
-                    text: Translation.tr("Show dots for inactive apps")
-                    checked: Config.options.dock.showAllWindowDots !== false
-                    onCheckedChanged: {
-                        Config.setNestedValue("dock.showAllWindowDots", checked);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Show a dot per window even for apps that aren't currently focused")
-                    }
-                }
-
-                ConfigSpinBox {
-                    icon: "filter_5"
-                    text: Translation.tr("Maximum indicator dots")
-                    value: Config.options.dock.maxIndicatorDots ?? 5
-                    from: 1
-                    to: 10
-                    stepSize: 1
-                    onValueChanged: {
-                        Config.setNestedValue("dock.maxIndicatorDots", value);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Limit the number of open window dots shown below an app icon")
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Window preview")
-
-                SettingsSwitch {
-                    buttonIcon: "preview"
-                    text: Translation.tr("Show preview on hover")
-                    checked: Config.options.dock.hoverPreview !== false
-                    onCheckedChanged: {
-                        Config.setNestedValue("dock.hoverPreview", checked);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Display a live preview of windows when hovering over dock icons")
-                    }
-                }
-
-                ConfigSpinBox {
-                    icon: "timer"
-                    text: Translation.tr("Hover delay (ms)")
-                    value: Config.options.dock.hoverPreviewDelay ?? 400
-                    from: 0
-                    to: 1000
-                    stepSize: 50
-                    enabled: Config.options.dock.hoverPreview !== false
-                    onValueChanged: {
-                        Config.setNestedValue("dock.hoverPreviewDelay", value);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Time to wait before showing window preview")
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "keep"
-                    text: Translation.tr("Keep preview on click")
-                    enabled: Config.options.dock.hoverPreview !== false
-                    checked: Config.options?.dock?.keepPreviewOnClick ?? false
-                    onCheckedChanged: {
-                        Config.setNestedValue("dock.keepPreviewOnClick", checked)
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Don't close the preview popup when clicking a window thumbnail, so you can navigate between windows")
-                    }
-                }
-            }
-        }
-    }
-
-    SettingsCardSection {
-        visible: root.isIiActive
-        expanded: false
         icon: "notifications"
         title: Translation.tr("Notifications")
 
@@ -662,6 +498,59 @@ ContentPage {
                 StyledToolTip {
                     text: Translation.tr("Slightly enlarge notifications when the mouse hovers over them")
                 }
+            }
+
+            ConfigSwitch {
+                buttonIcon: "bedtime"
+                text: Translation.tr("Quiet hours")
+                checked: Config.options?.notifications?.quietHours?.enable ?? false
+                onCheckedChanged: {
+                    Config.setNestedValue("notifications.quietHours.enable", checked)
+                }
+                StyledToolTip {
+                    text: Translation.tr("Hold back notification popups during a daily window. They still reach the notification history.")
+                }
+            }
+
+            RowLayout {
+                spacing: 8
+                enabled: Config.options?.notifications?.quietHours?.enable ?? false
+                opacity: enabled ? 1 : 0.5
+
+                StyledText {
+                    text: Translation.tr("From")
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                        : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
+                }
+                MaterialTextField {
+                    Layout.preferredWidth: 90
+                    placeholderText: "22:00"
+                    text: Config.options?.notifications?.quietHours?.start ?? "22:00"
+                    // Reject anything that isn't HH:MM instead of persisting junk.
+                    onEditingFinished: {
+                        if (/^([01]?\d|2[0-3]):[0-5]\d$/.test(text))
+                            Config.setNestedValue("notifications.quietHours.start", text)
+                        else
+                            text = Config.options?.notifications?.quietHours?.start ?? "22:00"
+                    }
+                }
+                StyledText {
+                    text: Translation.tr("to")
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                        : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
+                }
+                MaterialTextField {
+                    Layout.preferredWidth: 90
+                    placeholderText: "08:00"
+                    text: Config.options?.notifications?.quietHours?.end ?? "08:00"
+                    onEditingFinished: {
+                        if (/^([01]?\d|2[0-3]):[0-5]\d$/.test(text))
+                            Config.setNestedValue("notifications.quietHours.end", text)
+                        else
+                            text = Config.options?.notifications?.quietHours?.end ?? "08:00"
+                    }
+                }
+                Item { Layout.fillWidth: true }
             }
             ConfigSpinBox {
                 icon: "vertical_align_top"
@@ -793,836 +682,6 @@ ContentPage {
                 onCheckedChanged: Config.setNestedValue("controlPanel.keepLoaded", checked)
                 StyledToolTip {
                     text: Translation.tr("Keep the quick settings panel in memory to reduce opening delay")
-                }
-            }
-        }
-    }
-
-    SettingsCardSection {
-        visible: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false)
-        expanded: false
-        icon: "side_navigation"
-        title: Translation.tr("Sidebars")
-
-        SettingsGroup {
-            ContentSubsection {
-                title: Translation.tr("General")
-                SettingsSwitch {
-                    buttonIcon: "branding_watermark"
-                    text: Translation.tr("Use Card style")
-                    enabled: Appearance.globalStyle === "material" || Appearance.globalStyle === "inir"
-                    checked: Config.options.sidebar?.cardStyle ?? false
-                    onCheckedChanged: {
-                        Config.setNestedValue("sidebar.cardStyle", checked);
-                    }
-                    StyledToolTip {
-                        text: (Appearance.globalStyle === "material" || Appearance.globalStyle === "inir")
-                            ? Translation.tr("Apply rounded card styling to sidebars")
-                            : Translation.tr("Only available with Material or Inir global style")
-                    }
-                }
-
-            SettingsSwitch {
-                buttonIcon: "memory"
-                text: Translation.tr('Keep right sidebar loaded')
-                checked: Config.options.sidebar.keepRightSidebarLoaded
-                onCheckedChanged: {
-                    Config.setNestedValue("sidebar.keepRightSidebarLoaded", checked);
-                }
-                StyledToolTip {
-                    text: Translation.tr("When enabled keeps the content of the right sidebar loaded to reduce the delay when opening,\nat the cost of around 15MB of consistent RAM usage. Delay significance depends on your system's performance.\nUsing a custom kernel like linux-cachyos might help")
-                }
-            }
-
-            SettingsSwitch {
-                buttonIcon: "animation"
-                text: Translation.tr("Instant sidebar opening")
-                checked: Config.options.sidebar?.instantOpen ?? false
-                onCheckedChanged: Config.setNestedValue("sidebar.instantOpen", checked)
-                StyledToolTip {
-                    text: Translation.tr("Disable the sidebar slide animation and open or close it instantly to reduce stutter under load")
-                }
-            }
-
-            ColumnLayout {
-                Layout.fillWidth: true
-                visible: !(Config.options?.sidebar?.instantOpen ?? false)
-                spacing: 4
-
-                RowLayout {
-                    spacing: 8
-                    MaterialSymbol {
-                        text: "swipe_right"
-                        iconSize: Appearance.font.pixelSize.hugeass
-                        color: Appearance.m3colors?.m3OnSurface ?? Appearance.colors.colOnLayer1
-                    }
-                    StyledText {
-                        text: Translation.tr("Sidebar animation")
-                        font.pixelSize: Appearance.font.pixelSize.normal
-                        color: Appearance.m3colors?.m3OnSurface ?? Appearance.colors.colOnLayer1
-                    }
-                }
-
-                StyledComboBox {
-                    Layout.fillWidth: true
-                    readonly property var animOptions: [
-                        { displayName: Translation.tr("Slide"), value: "slide" },
-                        { displayName: Translation.tr("Fade"), value: "fade" },
-                        { displayName: Translation.tr("Pop"), value: "pop" },
-                        { displayName: Translation.tr("Reveal"), value: "reveal" },
-                        { displayName: Translation.tr("Swing"), value: "swing" },
-                        { displayName: Translation.tr("Drop"), value: "drop" },
-                        { displayName: Translation.tr("Elastic"), value: "elastic" }
-                    ]
-                    model: animOptions
-                    textRole: "displayName"
-                    currentIndex: {
-                        const current = Config.options?.sidebar?.animationType ?? "slide"
-                        const idx = animOptions.findIndex(o => o.value === current)
-                        return idx >= 0 ? idx : 0
-                    }
-                    onActivated: index => {
-                        if (index >= 0 && index < animOptions.length)
-                            Config.setNestedValue("sidebar.animationType", animOptions[index].value)
-                    }
-                }
-            }
-
-            SettingsSwitch {
-                buttonIcon: "folder_open"
-                text: Translation.tr("Open folder after wallpaper download")
-                checked: Config.options.sidebar?.openFolderOnDownload ?? false
-                onCheckedChanged: Config.setNestedValue("sidebar.openFolderOnDownload", checked)
-                StyledToolTip {
-                    text: Translation.tr("Open file manager when downloading wallpapers from Wallhaven or Booru")
-                }
-            }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Left Sidebar")
-                tooltip: Translation.tr("Choose which tabs appear in the left sidebar")
-
-                SettingsSwitch {
-                    buttonIcon: "widgets"
-                    text: Translation.tr("Widgets")
-                    checked: Config.options.sidebar?.widgets?.enable ?? true
-                    onCheckedChanged: Config.setNestedValue("sidebar.widgets.enable", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Dashboard with clock, weather, media controls and quick actions")
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "neurology"
-                    text: Translation.tr("AI Chat")
-                    readonly property int currentAiPolicy: Config.options?.policies?.ai ?? 0
-                    checked: currentAiPolicy !== 0
-                    onCheckedChanged: {
-                        // Preserve "Local only" (2) if it was set, otherwise use "Yes" (1)
-                        const newValue = checked ? (currentAiPolicy === 2 ? 2 : 1) : 0
-                        Config.setNestedValue("policies.ai", newValue)
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Chat with AI assistants (OpenAI, Gemini, local models)")
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "translate"
-                    text: Translation.tr("Translator")
-                    checked: Config.options.sidebar?.translator?.enable ?? false
-                    onCheckedChanged: Config.setNestedValue("sidebar.translator.enable", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Translate text between languages")
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "bookmark_heart"
-                    text: Translation.tr("Anime")
-                    readonly property int currentWeebPolicy: Config.options?.policies?.weeb ?? 0
-                    checked: currentWeebPolicy !== 0
-                    onCheckedChanged: {
-                        // Preserve "Closet" (2) if it was set, otherwise use "Yes" (1)
-                        const newValue = checked ? (currentWeebPolicy === 2 ? 2 : 1) : 0
-                        Config.setNestedValue("policies.weeb", newValue)
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Browse anime artwork from booru sites")
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "image"
-                    text: Translation.tr("Wallhaven")
-                    checked: Config.options.sidebar?.wallhaven?.enable ?? true
-                    onCheckedChanged: Config.setNestedValue("sidebar.wallhaven.enable", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Browse and download wallpapers from Wallhaven")
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "calendar_month"
-                    text: Translation.tr("Anime Schedule")
-                    checked: Config.options.sidebar?.animeSchedule?.enable ?? false
-                    onCheckedChanged: Config.setNestedValue("sidebar.animeSchedule.enable", checked)
-                    StyledToolTip {
-                        text: Translation.tr("View anime airing schedule, seasonal and top anime")
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "forum"
-                    text: Translation.tr("Reddit")
-                    checked: Config.options.sidebar?.reddit?.enable ?? false
-                    onCheckedChanged: Config.setNestedValue("sidebar.reddit.enable", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Browse posts from your favorite subreddits")
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "build"
-                    text: Translation.tr("Tools")
-                    checked: Config.options.sidebar?.tools?.enable ?? false
-                    onCheckedChanged: Config.setNestedValue("sidebar.tools.enable", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Niri debug options and quick actions")
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "store"
-                    text: Translation.tr("Software")
-                    checked: Config.options.sidebar?.software?.enable ?? false
-                    onCheckedChanged: Config.setNestedValue("sidebar.software.enable", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Browse and install curated companion apps")
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "library_music"
-                    text: Translation.tr("YT Music")
-                    checked: Config.options.sidebar?.ytmusic?.enable ?? false
-                    onCheckedChanged: Config.setNestedValue("sidebar.ytmusic.enable", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Search and play music from YouTube using yt-dlp")
-                    }
-                }
-
-                // DISABLED: webapps — requires quickshell-webengine rebuild
-                // SettingsSwitch {
-                //     buttonIcon: "extension"
-                //     text: Translation.tr("Web Apps")
-                //     checked: Config.options?.sidebar?.plugins?.enable ?? false
-                //     onCheckedChanged: Config.setNestedValue("sidebar.plugins.enable", checked)
-                //     StyledToolTip {
-                //         text: Translation.tr("Embed web apps like Discord, YouTube Music and more in the sidebar (requires quickshell-webengine)")
-                //     }
-                // }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("YT Music")
-                tooltip: Translation.tr("Control how next-track notifications behave")
-                visible: Config.options.sidebar?.ytmusic?.enable ?? false
-
-                SettingsSwitch {
-                    buttonIcon: "music_note"
-                    text: Translation.tr("Up Next notifications")
-                    checked: Config.options.sidebar?.ytmusic?.upNextNotifications ?? true
-                    onCheckedChanged: Config.setNestedValue("sidebar.ytmusic.upNextNotifications", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Show a desktop notification with the upcoming track when playback auto-advances")
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "sports_esports"
-                    text: Translation.tr("Mute while fullscreen or GameMode")
-                    enabled: Config.options.sidebar?.ytmusic?.upNextNotifications ?? true
-                    checked: Config.options.sidebar?.ytmusic?.suppressUpNextInFullscreen ?? true
-                    onCheckedChanged: Config.setNestedValue("sidebar.ytmusic.suppressUpNextInFullscreen", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Suppress Up Next notifications when a fullscreen app is active or GameMode is enabled")
-                    }
-                }
-
-                ConfigSelectionArray {
-                    options: [
-                        { displayName: Translation.tr("Best"), icon: "high_quality", value: "best" },
-                        { displayName: Translation.tr("Medium (≤128 kbps)"), icon: "graphic_eq", value: "medium" },
-                        { displayName: Translation.tr("Low"), icon: "data_saver_on", value: "low" }
-                    ]
-                    currentValue: Config.options.sidebar?.ytmusic?.audioQuality ?? "best"
-                    onSelected: (newValue) => Config.setNestedValue("sidebar.ytmusic.audioQuality", newValue)
-                    StyledToolTip {
-                        text: Translation.tr("Audio quality for playback — lower quality uses less bandwidth")
-                    }
-                }
-            }
-
-            ContentSubsection {
-                id: rightSidebarWidgets
-                title: Translation.tr("Right Sidebar")
-                tooltip: Translation.tr("Toggle which widgets appear in the right sidebar")
-
-                readonly property var defaults: ["calendar", "todo", "notepad", "calculator", "sysmon", "weather", "timer"]
-
-                function isEnabled(widgetId) {
-                    return (Config.options?.sidebar?.right?.enabledWidgets ?? defaults).includes(widgetId)
-                }
-
-                function setWidget(widgetId, active) {
-                    _log(`[RightSidebar] setWidget(${widgetId}, ${active})`)
-                    let current = [...(Config.options?.sidebar?.right?.enabledWidgets ?? defaults)]
-                    _log(`[RightSidebar] Current widgets:`, JSON.stringify(current))
-
-                    if (active && !current.includes(widgetId)) {
-                        current.push(widgetId)
-                        _log(`[RightSidebar] Adding ${widgetId}, new array:`, JSON.stringify(current))
-                        Config.setNestedValue("sidebar.right.enabledWidgets", current)
-                    } else if (!active && current.includes(widgetId)) {
-                        current.splice(current.indexOf(widgetId), 1)
-                        _log(`[RightSidebar] Removing ${widgetId}, new array:`, JSON.stringify(current))
-                        Config.setNestedValue("sidebar.right.enabledWidgets", current)
-                    } else {
-                        _log(`[RightSidebar] No change needed`)
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "calendar_month"
-                    text: Translation.tr("Calendar")
-                    Component.onCompleted: checked = rightSidebarWidgets.isEnabled("calendar")
-                    onClicked: {
-                        // checked ya fue invertido por ConfigSwitch.onClicked
-                        rightSidebarWidgets.setWidget("calendar", checked)
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "event_upcoming"
-                    text: Translation.tr("Events")
-                    Component.onCompleted: checked = rightSidebarWidgets.isEnabled("events")
-                    onClicked: {
-                        rightSidebarWidgets.setWidget("events", checked)
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "done_outline"
-                    text: Translation.tr("To Do")
-                    Component.onCompleted: checked = rightSidebarWidgets.isEnabled("todo")
-                    onClicked: {
-                        rightSidebarWidgets.setWidget("todo", checked)
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "edit_note"
-                    text: Translation.tr("Notepad")
-                    Component.onCompleted: checked = rightSidebarWidgets.isEnabled("notepad")
-                    onClicked: {
-                        rightSidebarWidgets.setWidget("notepad", checked)
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "calculate"
-                    text: Translation.tr("Calculator")
-                    Component.onCompleted: checked = rightSidebarWidgets.isEnabled("calculator")
-                    onClicked: {
-                        rightSidebarWidgets.setWidget("calculator", checked)
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "monitor_heart"
-                    text: Translation.tr("System Monitor")
-                    Component.onCompleted: checked = rightSidebarWidgets.isEnabled("sysmon")
-                    onClicked: {
-                        rightSidebarWidgets.setWidget("sysmon", checked)
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "partly_cloudy_day"
-                    text: Translation.tr("Weather")
-                    Component.onCompleted: checked = rightSidebarWidgets.isEnabled("weather")
-                    onClicked: {
-                        rightSidebarWidgets.setWidget("weather", checked)
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "schedule"
-                    text: Translation.tr("Timer")
-                    Component.onCompleted: checked = rightSidebarWidgets.isEnabled("timer")
-                    onClicked: {
-                        rightSidebarWidgets.setWidget("timer", checked)
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "av_timer"
-                    text: Translation.tr("Screen Time")
-                    Component.onCompleted: checked = rightSidebarWidgets.isEnabled("screentime")
-                    onClicked: {
-                        rightSidebarWidgets.setWidget("screentime", checked)
-                        if (checked) {
-                            Config.setNestedValue("sidebar.screenTime.enable", true)
-                        }
-                    }
-                }
-            }
-            ContentSubsection {
-                title: Translation.tr("Reddit")
-                visible: Config.options.sidebar?.reddit?.enable ?? false
-
-                ConfigSpinBox {
-                    icon: "format_list_numbered"
-                    text: Translation.tr("Posts per page")
-                    value: Config.options.sidebar?.reddit?.limit ?? 25
-                    from: 10
-                    to: 50
-                    stepSize: 5
-                    onValueChanged: Config.setNestedValue("sidebar.reddit.limit", value)
-                    StyledToolTip {
-                        text: Translation.tr("Number of posts to fetch per request")
-                    }
-                }
-
-                // Subreddits editor
-                ColumnLayout {
-                    id: subredditEditor
-                    Layout.fillWidth: true
-                    spacing: 4
-
-                    property var subreddits: []
-
-                    Component.onCompleted: {
-                        subreddits = Config.options?.sidebar?.reddit?.subreddits ?? ["unixporn", "linux", "archlinux", "kde", "gnome"]
-                    }
-
-                    Connections {
-                        target: Config
-                        function onConfigChanged() {
-                            subredditEditor.subreddits = Config.options?.sidebar?.reddit?.subreddits ?? ["unixporn", "linux", "archlinux", "kde", "gnome"]
-                        }
-                    }
-
-                    Flow {
-                        Layout.fillWidth: true
-                        spacing: 6
-
-                        Repeater {
-                            model: subredditEditor.subreddits
-
-                            InputChip {
-                                required property string modelData
-                                required property int index
-                                text: "r/" + modelData
-                                onRemoved: {
-                                    const newSubs = subredditEditor.subreddits.filter((_, i) => i !== index)
-                                    Config.setNestedValue("sidebar.reddit.subreddits", newSubs)
-                                }
-                            }
-                        }
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 6
-
-                        MaterialTextField {
-                            id: subInput
-                            Layout.fillWidth: true
-                            placeholderText: Translation.tr("Add subreddit...")
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            color: Appearance.m3colors.m3onSurface
-                            placeholderTextColor: Appearance.colors.colSubtext
-                            background: Rectangle {
-                                color: Appearance.colors.colLayer1
-                                radius: Appearance.rounding.small
-                                border.width: subInput.activeFocus ? 2 : 1
-                                border.color: subInput.activeFocus ? Appearance.colors.colPrimary : Appearance.colors.colLayer0Border
-                            }
-                            onAccepted: {
-                                const sub = text.trim().replace(/^r\//, "")
-                                if (sub && !subredditEditor.subreddits.includes(sub)) {
-                                    Config.setNestedValue("sidebar.reddit.subreddits", [...subredditEditor.subreddits, sub])
-                                    text = ""
-                                }
-                            }
-                        }
-
-                        RippleButton {
-                            implicitWidth: 32
-                            implicitHeight: 32
-                            buttonRadius: Appearance.rounding.small
-                            colBackgroundHover: Appearance.colors.colPrimaryContainer
-                            onClicked: subInput.accepted()
-
-                            contentItem: MaterialSymbol {
-                                anchors.centerIn: parent
-                                text: "add"
-                                iconSize: 18
-                                color: Appearance.colors.colPrimary
-                            }
-                        }
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Anime Schedule")
-                visible: Config.options.sidebar?.animeSchedule?.enable ?? false
-
-                SettingsSwitch {
-                    buttonIcon: "visibility_off"
-                    text: Translation.tr("Show NSFW")
-                    checked: Config.options.sidebar?.animeSchedule?.showNsfw ?? false
-                    onCheckedChanged: Config.setNestedValue("sidebar.animeSchedule.showNsfw", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Include adult-rated anime in results")
-                    }
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 10
-
-                    MaterialSymbol {
-                        text: "play_circle"
-                        iconSize: Appearance.font.pixelSize.larger
-                        color: Appearance.colors.colOnLayer1
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 2
-
-                        StyledText {
-                            text: Translation.tr("Watch site")
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            color: Appearance.colors.colOnLayer1
-                        }
-
-                        MaterialTextField {
-                            Layout.fillWidth: true
-                            placeholderText: "https://9animetv.to/search?keyword=%s"
-                            text: Config.options.sidebar?.animeSchedule?.watchSite ?? ""
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                            color: Appearance.m3colors.m3onSurface
-                            placeholderTextColor: Appearance.colors.colSubtext
-                            background: Rectangle {
-                                color: Appearance.colors.colLayer1
-                                radius: Appearance.rounding.small
-                                border.width: parent.activeFocus ? 2 : 1
-                                border.color: parent.activeFocus ? Appearance.colors.colPrimary : Appearance.colors.colLayer0Border
-                            }
-                            onTextEdited: Config.setNestedValue("sidebar.animeSchedule.watchSite", text)
-
-                            StyledToolTip {
-                                text: Translation.tr("Custom streaming site URL. Use %s for search query.")
-                            }
-                        }
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Booru download paths")
-                visible: (Config.options?.policies?.weeb ?? 0) !== 0
-
-                ContentSubsectionLabel {
-                    text: Translation.tr("SFW download folder (empty = wallpapers dir)")
-                }
-                MaterialTextField {
-                    Layout.fillWidth: true
-                    placeholderText: Directories.wallpapersPath
-                    text: Config.options?.sidebar?.booru?.downloadPath?.sfw ?? ""
-                    onEditingFinished: Config.setNestedValue("sidebar.booru.downloadPath.sfw", text)
-                }
-
-                ContentSubsectionLabel {
-                    text: Translation.tr("NSFW download folder (empty = wallpapers/pepper)")
-                }
-                MaterialTextField {
-                    Layout.fillWidth: true
-                    placeholderText: Directories.wallpapersPath + "/pepper"
-                    text: Config.options?.sidebar?.booru?.downloadPath?.nsfw ?? ""
-                    onEditingFinished: Config.setNestedValue("sidebar.booru.downloadPath.nsfw", text)
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Wallhaven")
-                visible: Config.options.sidebar?.wallhaven?.enable ?? true
-
-                ConfigSpinBox {
-                    icon: "format_list_numbered"
-                    text: Translation.tr("Results per page")
-                    value: Config.options.sidebar?.wallhaven?.limit ?? 24
-                    from: 12
-                    to: 72
-                    stepSize: 4
-                    onValueChanged: Config.setNestedValue("sidebar.wallhaven.limit", value)
-                    StyledToolTip {
-                        text: Translation.tr("Number of wallpapers to fetch per request")
-                    }
-                }
-
-                ConfigRow {
-                    Layout.fillWidth: true
-                    spacing: 6
-
-                    MaterialSymbol {
-                        text: "key"
-                        iconSize: Appearance.font.pixelSize.larger
-                        color: Appearance.colors.colOnSecondaryContainer
-                    }
-                    StyledText {
-                        text: Translation.tr("API key")
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnSecondaryContainer
-                    }
-                    MaterialTextField {
-                        id: wallhavenApiInput
-                        Layout.fillWidth: true
-                        placeholderText: Translation.tr("Optional - for NSFW content")
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.m3colors.m3onSurface
-                        placeholderTextColor: Appearance.colors.colSubtext
-                        echoMode: TextInput.Password
-                        text: Config.options.sidebar?.wallhaven?.apiKey ?? ""
-                        background: Rectangle {
-                            color: Appearance.colors.colLayer1
-                            radius: Appearance.rounding.small
-                            border.width: wallhavenApiInput.activeFocus ? 2 : 1
-                            border.color: wallhavenApiInput.activeFocus ? Appearance.colors.colPrimary : Appearance.colors.colLayer0Border
-                        }
-                        onTextChanged: Config.setNestedValue("sidebar.wallhaven.apiKey", text)
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Quick toggles")
-
-                ConfigSelectionArray {
-                    Layout.fillWidth: false
-                    currentValue: Config.options.sidebar.quickToggles.style
-                    onSelected: newValue => {
-                        Config.setNestedValue("sidebar.quickToggles.style", newValue);
-                    }
-                    options: [
-                        { displayName: Translation.tr("Classic"), icon: "password_2", value: "classic" },
-                        { displayName: Translation.tr("Android"), icon: "action_key", value: "android" }
-                    ]
-                }
-
-                ConfigSpinBox {
-                    enabled: Config.options.sidebar.quickToggles.style === "android"
-                    icon: "splitscreen_left"
-                    text: Translation.tr("Columns")
-                    value: Config.options.sidebar.quickToggles.android.columns
-                    from: 1
-                    to: 8
-                    stepSize: 1
-                    onValueChanged: {
-                        Config.setNestedValue("sidebar.quickToggles.android.columns", value);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Number of columns for the Android-style quick settings grid")
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Sliders")
-
-                SettingsSwitch {
-                    buttonIcon: "check"
-                    text: Translation.tr("Enable")
-                    checked: Config.options.sidebar.quickSliders.enable
-                    onCheckedChanged: {
-                        Config.setNestedValue("sidebar.quickSliders.enable", checked);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Show volume/brightness/mic sliders in the sidebar")
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "brightness_6"
-                    text: Translation.tr("Brightness")
-                    enabled: Config.options.sidebar.quickSliders.enable
-                    checked: Config.options.sidebar.quickSliders.showBrightness
-                    onCheckedChanged: {
-                        Config.setNestedValue("sidebar.quickSliders.showBrightness", checked);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Show brightness slider")
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "volume_up"
-                    text: Translation.tr("Volume")
-                    enabled: Config.options.sidebar.quickSliders.enable
-                    checked: Config.options.sidebar.quickSliders.showVolume
-                    onCheckedChanged: {
-                        Config.setNestedValue("sidebar.quickSliders.showVolume", checked);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Show volume slider")
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "mic"
-                    text: Translation.tr("Microphone")
-                    enabled: Config.options.sidebar.quickSliders.enable
-                    checked: Config.options.sidebar.quickSliders.showMic
-                    onCheckedChanged: {
-                        Config.setNestedValue("sidebar.quickSliders.showMic", checked);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Show microphone input level slider")
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Corner open")
-                tooltip: Translation.tr("Allows you to open sidebars by clicking or hovering screen corners regardless of bar position")
-                ConfigRow {
-                    uniform: true
-                    SettingsSwitch {
-                        buttonIcon: "check"
-                        text: Translation.tr("Enable")
-                        checked: Config.options.sidebar.cornerOpen.enable
-                        onCheckedChanged: {
-                            Config.setNestedValue("sidebar.cornerOpen.enable", checked);
-                        }
-                        StyledToolTip {
-                            text: Translation.tr("Allow opening sidebars by interacting with screen corners")
-                        }
-                    }
-                }
-                SettingsSwitch {
-                    buttonIcon: "highlight_mouse_cursor"
-                    text: Translation.tr("Hover to trigger")
-                    checked: Config.options.sidebar.cornerOpen.clickless
-                    onCheckedChanged: {
-                        Config.setNestedValue("sidebar.cornerOpen.clickless", checked);
-                    }
-
-                    StyledToolTip {
-                        text: Translation.tr("When this is off you'll have to click")
-                    }
-                }
-                ConfigRow {
-                    SettingsSwitch {
-                        enabled: !Config.options.sidebar.cornerOpen.clickless
-                        text: Translation.tr("Force hover open at absolute corner")
-                        checked: Config.options.sidebar.cornerOpen.clicklessCornerEnd
-                        onCheckedChanged: {
-                            Config.setNestedValue("sidebar.cornerOpen.clicklessCornerEnd", checked);
-                        }
-
-                        StyledToolTip {
-                            text: Translation.tr("When the previous option is off and this is on,\nyou can still hover the corner's end to open sidebar,\nand the remaining area can be used for volume/brightness scroll")
-                        }
-                    }
-                    ConfigSpinBox {
-                        icon: "arrow_cool_down"
-                        text: Translation.tr("with vertical offset")
-                        value: Config.options.sidebar.cornerOpen.clicklessCornerVerticalOffset
-                        from: 0
-                        to: 20
-                        stepSize: 1
-                        onValueChanged: {
-                            Config.setNestedValue("sidebar.cornerOpen.clicklessCornerVerticalOffset", value);
-                        }
-                        StyledToolTip {
-                            text: Translation.tr("Why this is cool:\nFor non-0 values, it won't trigger when you reach the\nscreen corner along the horizontal edge, but it will when\nyou do along the vertical edge")
-                        }
-                    }
-                }
-
-                ConfigRow {
-                    uniform: true
-                    SettingsSwitch {
-                        buttonIcon: "vertical_align_bottom"
-                        text: Translation.tr("Place at bottom")
-                        checked: Config.options.sidebar.cornerOpen.bottom
-                        onCheckedChanged: {
-                            Config.setNestedValue("sidebar.cornerOpen.bottom", checked);
-                        }
-
-                        StyledToolTip {
-                            text: Translation.tr("Place the corners to trigger at the bottom")
-                        }
-                    }
-                    SettingsSwitch {
-                        buttonIcon: "unfold_more_double"
-                        text: Translation.tr("Value scroll")
-                        checked: Config.options.sidebar.cornerOpen.valueScroll
-                        onCheckedChanged: {
-                            Config.setNestedValue("sidebar.cornerOpen.valueScroll", checked);
-                        }
-
-                        StyledToolTip {
-                            text: Translation.tr("Brightness and volume")
-                        }
-                    }
-                }
-                SettingsSwitch {
-                    buttonIcon: "visibility"
-                    text: Translation.tr("Visualize region")
-                    checked: Config.options.sidebar.cornerOpen.visualize
-                    onCheckedChanged: {
-                        Config.setNestedValue("sidebar.cornerOpen.visualize", checked);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Show a colored overlay indicating the corner trigger areas (debug)")
-                    }
-                }
-                ConfigRow {
-                    ConfigSpinBox {
-                        icon: "arrow_range"
-                        text: Translation.tr("Region width")
-                        value: Config.options.sidebar.cornerOpen.cornerRegionWidth
-                        from: 1
-                        to: 300
-                        stepSize: 1
-                        onValueChanged: {
-                            Config.setNestedValue("sidebar.cornerOpen.cornerRegionWidth", value);
-                        }
-                        StyledToolTip {
-                            text: Translation.tr("Horizontal size of the active corner area")
-                        }
-                    }
-                    ConfigSpinBox {
-                        icon: "height"
-                        text: Translation.tr("Region height")
-                        value: Config.options.sidebar.cornerOpen.cornerRegionHeight
-                        from: 1
-                        to: 300
-                        stepSize: 1
-                        onValueChanged: {
-                            Config.setNestedValue("sidebar.cornerOpen.cornerRegionHeight", value);
-                        }
-                        StyledToolTip {
-                            text: Translation.tr("Vertical size of the active corner area")
-                        }
-                    }
                 }
             }
         }
@@ -1906,6 +965,13 @@ ContentPage {
                     checked: Config.options?.sidebar?.widgets?.wallpaper ?? false
                     onCheckedChanged: Config.setNestedValue("sidebar.widgets.wallpaper", checked)
                 }
+
+                SettingsSwitch {
+                    buttonIcon: "schedule"
+                    text: Translation.tr("World Clock")
+                    checked: Config.options?.sidebar?.widgets?.worldClock ?? true
+                    onCheckedChanged: Config.setNestedValue("sidebar.widgets.worldClock", checked)
+                }
             }
 
             ContentSubsection {
@@ -1985,7 +1051,7 @@ ContentPage {
                         placeholderText: Translation.tr("Type to search coins...")
                         text: ""
                         font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.m3colors.m3onSurface
+                        color: Appearance.colors.colOnSurface
                         placeholderTextColor: Appearance.colors.colSubtext
                         background: Rectangle {
                             color: Appearance.colors.colLayer1
@@ -2034,20 +1100,26 @@ ContentPage {
                                 id: coinDelegate
                                 required property string modelData
                                 required property int index
+                                readonly property bool isCurrent: coinList.currentIndex === index
                                 width: coinList.width
                                 implicitHeight: 32
-                                buttonRadius: Appearance.rounding.small
-                                colBackground: coinList.currentIndex === index ? Appearance.colors.colLayer1Hover : "transparent"
-                                colBackgroundHover: Appearance.colors.colLayer1Hover
+                                buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                                colBackground: isCurrent && Appearance.zzzEverywhere ? Appearance.zzz.sticker : (isCurrent ? Appearance.colors.colLayer1Hover : "transparent")
+                                colBackgroundHover: isCurrent && Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.colors.colLayer1Hover
+                                colRipple: isCurrent && Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colLayer1Active
                                 onClicked: cryptoSection.addCoin(modelData)
 
                                 contentItem: StyledText {
                                     text: coinDelegate.modelData
                                     font.pixelSize: Appearance.font.pixelSize.small
                                     font.family: Appearance.font.family.monospace
-                                    color: Appearance.colors.colOnLayer1
+                                    color: coinDelegate.isCurrent && Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnLayer1
                                     leftPadding: 8
                                     verticalAlignment: Text.AlignVCenter
+                                    Behavior on color {
+                                        enabled: Appearance.animationsEnabled
+                                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                    }
                                 }
                             }
                         }
@@ -2354,7 +1426,7 @@ ContentPage {
                         placeholderText: Translation.tr("Search a city or region…")
                         text: ""
                         font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.m3colors.m3onSurface
+                        color: Appearance.colors.colOnSurface
                         placeholderTextColor: Appearance.colors.colSubtext
                         background: Rectangle {
                             color: Appearance.colors.colLayer1
@@ -2403,11 +1475,13 @@ ContentPage {
                                 id: tzDelegate
                                 required property var modelData
                                 required property int index
+                                readonly property bool isCurrent: tzList.currentIndex === index
                                 width: tzList.width
                                 implicitHeight: 38
-                                buttonRadius: Appearance.rounding.small
-                                colBackground: tzList.currentIndex === index ? Appearance.colors.colLayer1Hover : "transparent"
-                                colBackgroundHover: Appearance.colors.colLayer1Hover
+                                buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                                colBackground: isCurrent && Appearance.zzzEverywhere ? Appearance.zzz.sticker : (isCurrent ? Appearance.colors.colLayer1Hover : "transparent")
+                                colBackgroundHover: isCurrent && Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.colors.colLayer1Hover
+                                colRipple: isCurrent && Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colLayer1Active
                                 onClicked: worldClockSection.addTimezone(tzDelegate.modelData.tz)
 
                                 contentItem: RowLayout {
@@ -2419,7 +1493,11 @@ ContentPage {
                                     MaterialSymbol {
                                         text: worldClockSection.regionIcon(tzDelegate.modelData.tz)
                                         iconSize: 16
-                                        color: Appearance.colors.colSubtext
+                                        color: tzDelegate.isCurrent && Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colSubtext
+                                        Behavior on color {
+                                            enabled: Appearance.animationsEnabled
+                                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                        }
                                     }
                                     ColumnLayout {
                                         Layout.fillWidth: true
@@ -2427,19 +1505,31 @@ ContentPage {
                                         StyledText {
                                             text: worldClockSection.cityLabel(tzDelegate.modelData.tz)
                                             font.pixelSize: Appearance.font.pixelSize.small
-                                            color: Appearance.colors.colOnLayer1
+                                            color: tzDelegate.isCurrent && Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnLayer1
+                                            Behavior on color {
+                                                enabled: Appearance.animationsEnabled
+                                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                            }
                                         }
                                         StyledText {
                                             text: tzDelegate.modelData.tz.split("/").slice(0, -1).join(" / ").replace(/_/g, " ")
                                             font.pixelSize: Appearance.font.pixelSize.smallest
-                                            color: Appearance.colors.colSubtext
+                                            color: tzDelegate.isCurrent && Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colSubtext
+                                            Behavior on color {
+                                                enabled: Appearance.animationsEnabled
+                                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                            }
                                         }
                                     }
                                     StyledText {
                                         text: worldClockSection.offsetLabel(tzDelegate.modelData.off)
                                         font.pixelSize: Appearance.font.pixelSize.smallest
                                         font.family: Appearance.font.family.monospace
-                                        color: Appearance.colors.colSubtext
+                                        color: tzDelegate.isCurrent && Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colSubtext
+                                        Behavior on color {
+                                            enabled: Appearance.animationsEnabled
+                                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                        }
                                     }
                                 }
                             }
@@ -2630,10 +1720,10 @@ ContentPage {
                         RippleButton {
                             Layout.fillWidth: true
                             implicitHeight: 34
-                            buttonRadius: Appearance.rounding.small
-                            colBackground: Appearance.colors.colPrimaryContainer
-                            colBackgroundHover: Appearance.colors.colPrimaryContainerHover
-                            colRipple: Appearance.colors.colPrimary
+                            buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                            colBackground: Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colPrimaryContainer
+                            colBackgroundHover: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimaryContainerHover
+                            colRipple: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colPrimary
                             onClicked: worldClockSection.adoptSuggestions()
 
                             contentItem: RowLayout {
@@ -2642,13 +1732,21 @@ ContentPage {
                                 MaterialSymbol {
                                     text: "playlist_add"
                                     iconSize: 16
-                                    color: Appearance.colors.colOnPrimaryContainer
+                                    color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer
+                                    Behavior on color {
+                                        enabled: Appearance.animationsEnabled
+                                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                    }
                                 }
                                 StyledText {
                                     text: Translation.tr("Add suggested timezones")
                                     font.pixelSize: Appearance.font.pixelSize.small
                                     font.weight: Font.Medium
-                                    color: Appearance.colors.colOnPrimaryContainer
+                                    color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer
+                                    Behavior on color {
+                                        enabled: Appearance.animationsEnabled
+                                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                    }
                                 }
                             }
                         }
@@ -2927,15 +2025,6 @@ ContentPage {
                 }
                 StyledToolTip {
                     text: Translation.tr("Display thumbnail previews of windows in the overview")
-                }
-            }
-            SettingsSwitch {
-                buttonIcon: "screen_share"
-                text: Translation.tr("Active screen only")
-                checked: Config.options?.overview?.activeScreenOnly ?? false
-                onCheckedChanged: Config.setNestedValue("overview.activeScreenOnly", checked)
-                StyledToolTip {
-                    text: Translation.tr("Show overview only on the currently focused screen (multi-monitor)")
                 }
             }
             ConfigSpinBox {

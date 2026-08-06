@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import qs
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
@@ -119,7 +120,7 @@ Item {
         id: rescanTimer
         interval: 30000
         repeat: true
-        running: true
+        running: GlobalStates.sidebarLeftOpen
         onTriggered: root.scanPlugins()
     }
 

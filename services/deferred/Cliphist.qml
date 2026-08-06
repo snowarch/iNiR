@@ -19,6 +19,8 @@ Singleton {
     property bool sloppySearch: Config.options?.search.sloppy ?? false
     property real scoreThreshold: 0.2
     property list<string> entries: []
+    property int _readAttempts: 0
+    property bool _refreshQueued: false
     readonly property var preparedEntries: entries.map(a => ({
         name: Fuzzy.prepare(`${a.replace(/^\s*\S+\s+/, "")}`),
         entry: a
@@ -59,19 +61,29 @@ Singleton {
         return match ? match[1] : ""
     }
 
+    // Entries captured before the watcher started stripping browser markup still
+    // hold it, and they outlive the fix — so clean on the way out as well. The
+    // filter forwards anything that is not a browser text/html payload byte for
+    // byte, which keeps images intact.
+    readonly property string _markupFilter: `'${Directories.scriptsPath}/clipboard-store.py' --filter`
+
     function decodeCommand(entry): string {
         if (root.cliphistBinary.includes("cliphist")) {
             const id = root.entryId(entry)
             if (id.length > 0)
-                return `${root.cliphistBinary} decode ${id}`
-            return `printf '%s\n' '${StringUtils.shellSingleQuoteEscape(entry)}' | ${root.cliphistBinary} decode`
+                return `${root.cliphistBinary} decode ${id} | ${root._markupFilter}`
+            return `printf '%s\n' '${StringUtils.shellSingleQuoteEscape(entry)}' | ${root.cliphistBinary} decode | ${root._markupFilter}`
         }
 
         const entryNumber = String(entry ?? "").split("\t")[0]
-        return `${root.cliphistBinary} decode ${entryNumber}`
+        return `${root.cliphistBinary} decode ${entryNumber} | ${root._markupFilter}`
     }
 
     function refresh() {
+        if (readProc.running) {
+            root._refreshQueued = true
+            return
+        }
         readProc.buffer = []
         readProc.running = true
     }
@@ -141,6 +153,91 @@ Singleton {
         wipeProc.running = true;
     }
 
+    // Pins store the decoded text, not the cliphist id: ids are recycled and
+    // entries fall out of the store once maxEntries rotates past them.
+    readonly property var pinned: Config.options?.clipboard?.pinned ?? []
+    property int maxPinLength: 8000
+
+    function isPinnable(entry): bool {
+        return String(entry ?? "").length > 0 && !root.entryIsImage(entry)
+    }
+
+    function pinPreview(text): string {
+        const firstLine = String(text ?? "").split("\n").find(l => l.trim().length > 0) ?? ""
+        return firstLine.trim()
+    }
+
+    function isPinned(text): bool {
+        return root.pinned.indexOf(text) !== -1
+    }
+
+    // Pins hold decoded text; list entries are "id<TAB>preview". Decoding every
+    // visible row to compare would mean a subprocess per item, so match on the
+    // preview instead.
+    //
+    // cliphist truncates that preview at 100 characters. Below the cut the
+    // preview IS the whole entry, so it has to match exactly: prefix-matching a
+    // short preview would mark every entry that merely starts a longer pin as
+    // pinned. At or above the cut the preview is a prefix of the pinned text.
+    readonly property int previewLimit: 100
+
+    function _previewKey(text): string {
+        return String(text ?? "").replace(/\s+/g, " ").trim()
+    }
+
+    function pinnedTextFor(entry): string {
+        const raw = String(entry ?? "")
+        const tab = raw.indexOf("\t")
+        if (tab < 0) return ""
+        const preview = root._previewKey(raw.slice(tab + 1))
+        if (preview.length === 0) return ""
+        const truncated = preview.length >= root.previewLimit
+        return root.pinned.find(p => {
+            const key = root._previewKey(p)
+            return truncated ? key.startsWith(preview) : key === preview
+        }) ?? ""
+    }
+
+    function unpin(text): void {
+        Config.setNestedValue("clipboard.pinned", root.pinned.filter(p => p !== text))
+    }
+
+    function pinEntry(entry): void {
+        if (!root.isPinnable(entry)) return
+        pinProc.command = ["/usr/bin/bash", "-c", root.decodeCommand(entry)]
+        pinProc.running = true
+    }
+
+    Process {
+        id: pinProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                // Entries stored before the watcher stripped browser markup still
+                // carry it, and a pin keeps the decoded text forever — so clean it
+                // here too, or pinning an old entry pins the markup with it.
+                const decoded = root.stripBrowserMarkup(text).slice(0, root.maxPinLength)
+                if (decoded.length === 0 || root.isPinned(decoded)) return
+                Config.setNestedValue("clipboard.pinned", [decoded, ...root.pinned])
+            }
+        }
+    }
+
+    // Two wrappers mark a text/html payload: Firefox's content-type meta tag and
+    // the CF_HTML fragment markers Chromium and Electron apps emit. They are the
+    // only reliable sign that the content is markup rather than text that happens
+    // to contain tags. Kept in sync with scripts/clipboard-store.py.
+    function isBrowserMarkup(str): bool {
+        return str.startsWith('<meta http-equiv="content-type" content="text/html')
+            || str.indexOf("<!--StartFragment-->") !== -1
+    }
+
+    function stripBrowserMarkup(text): string {
+        const str = String(text ?? "")
+        if (!root.isBrowserMarkup(str))
+            return str
+        return StringUtils.stripHtmlTags(str.replace(/<!--[\s\S]*?-->/g, "")).trim()
+    }
+
     Connections {
         target: Quickshell
         function onClipboardTextChanged() {
@@ -182,6 +279,13 @@ Singleton {
         }
     }
 
+    Timer {
+        id: readRetryTimer
+        interval: 250
+        repeat: false
+        onTriggered: root.refresh()
+    }
+
     Process {
         id: readProc
         property list<string> buffer: []
@@ -198,8 +302,20 @@ Singleton {
             if (exitCode === 0) {
                 // Cap the number of entries we keep to avoid heavy models
                 root.entries = readProc.buffer.slice(0, root.maxEntries)
+                root._readAttempts = 0
+                if (root._refreshQueued) {
+                    root._refreshQueued = false
+                    root.refresh()
+                }
             } else {
-                console.error("[Cliphist] Failed to refresh with code", exitCode, "and status", exitStatus)
+                if (root._readAttempts < 3) {
+                    root._readAttempts++
+                    readRetryTimer.interval = 250 * root._readAttempts
+                    readRetryTimer.restart()
+                } else {
+                    root._readAttempts = 0
+                    console.error("[Cliphist] Failed to refresh with code", exitCode, "and status", exitStatus)
+                }
             }
         }
     }

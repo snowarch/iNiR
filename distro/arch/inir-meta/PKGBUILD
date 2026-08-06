@@ -1,12 +1,12 @@
 # Maintainer: snowarch
 
 pkgname=inir-meta
-pkgver=2.27.0
+pkgver=2.29.0
 pkgrel=1
 pkgdesc='Full iNiR desktop experience meta-package'
 arch=(any)
 url='https://github.com/snowarch/iNiR'
-license=('MIT')
+license=('GPL-3.0-only')
 source=("LICENSE::https://raw.githubusercontent.com/snowarch/iNiR/main/LICENSE")
 sha256sums=('SKIP')
 depends=(
@@ -41,6 +41,7 @@ depends=(
   pavucontrol
   plasma-browser-integration
   plasma-integration
+  python-ytmusicapi
   qt6ct
   socat
   songrec

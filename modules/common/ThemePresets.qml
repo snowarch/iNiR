@@ -332,7 +332,7 @@ Singleton {
             id: "nightowl",
             name: "Night Owl",
             description: "For the night owls",
-            icon: "nights_stay",
+            icon: "bedtime",
             colors: nightOwlColors,
             tags: ["dark", "minimal"],
             meta: {
@@ -3269,12 +3269,11 @@ Singleton {
         interval: 250  // > _writeDebounce (60ms) + bash write time, with margin
         repeat: false
         running: false
-        onTriggered: {
-            Quickshell.execDetached([
-                "/usr/bin/bash",
-                Directories.scriptsPath + "/colors/applycolor.sh"
-            ]);
-        }
+        // MaterialThemeLoader owns the applycolor.sh run: it applies the active
+        // global style's surface ramp to app-palette.json first, and its own
+        // debounce collapses this with the colors.json watcher firing on the
+        // very files _doWriteGeneratedFiles just wrote.
+        onTriggered: MaterialThemeLoader.requestExternalApply()
     }
     
     function generateScssFromColors(c) {

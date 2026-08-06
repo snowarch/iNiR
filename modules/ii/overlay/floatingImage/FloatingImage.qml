@@ -1,10 +1,15 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Layouts
+import QtQuick.Dialogs
 import Qt5Compat.GraphicalEffects
+import qs
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.utils
+import qs.modules.common.widgets
 import qs.modules.ii.overlay
+import qs.services
 
 StyledOverlayWidget {
     id: root
@@ -16,6 +21,14 @@ StyledOverlayWidget {
     property real scaleFactor: Config.options?.overlay?.floatingImage?.scale ?? 0.5
     property int imageWidth: 0
     property int imageHeight: 0
+    property string _requestedPath: ""
+    property bool _componentReady: false
+    property bool _dialogEngaged: false
+    property bool imageFailed: false
+    readonly property bool hasImage: root.imageWidth > 0 && root.imageHeight > 0
+        && animatedImage.status === Image.Ready
+
+    title: Translation.tr("Floating image")
 
     // Override to always save 0 size
     function savePosition(xPos = root.x, yPos = root.y, width = 0, height = 0) {
@@ -25,18 +38,35 @@ StyledOverlayWidget {
         root.persistentStateEntry.height = 0
     }
 
-    onImageSourceChanged: {
-        imageDownloader.running = false;
-        if (!root.imageSource || root.imageSource.trim().length === 0) {
-            root.imageWidth = 0;
-            root.imageHeight = 0;
-            animatedImage.source = "";
-            root.setSize();
-            return;
+    function refreshImage(): void {
+        imageDownloader.running = false
+        animatedImage.source = ""
+        root.imageWidth = 0
+        root.imageHeight = 0
+        root._requestedPath = ""
+        root.imageFailed = false
+
+        const source = root.imageSource.trim()
+        if (!source.length) {
+            root.setSize()
+            return
         }
-        imageDownloader.sourceUrl = root.imageSource;
-        imageDownloader.filePath = Qt.resolvedUrl(Directories.tempImages + "/" + Qt.md5(root.imageSource))
-        imageDownloader.running = true;
+
+        const path = Qt.resolvedUrl(
+            Directories.tempImages + "/" + Qt.md5(source)).toString()
+        root._requestedPath = path
+        imageDownloader.sourceUrl = source
+        imageDownloader.filePath = path
+        imageDownloader.running = true
+    }
+
+    onImageSourceChanged: {
+        if (root._componentReady)
+            root.refreshImage()
+    }
+    Component.onCompleted: {
+        root._componentReady = true
+        root.refreshImage()
     }
     onScaleFactorChanged: {
         setSize();
@@ -52,9 +82,16 @@ StyledOverlayWidget {
         bg.implicitHeight = root.imageHeight * root.scaleFactor;
     }
 
+    function syncImageDialogLayer(): void {
+        const visible = Boolean(imageDialog.visible)
+        if (visible === root._dialogEngaged) return
+        root._dialogEngaged = visible
+        OverlayContext.setNativeDialogVisible("floating-image", visible)
+    }
+
     contentItem: OverlayBackground {
         id: bg
-        color: ColorUtils.transparentize(Appearance.m3colors.m3surfaceContainer, root.actuallyPinned ? 1 : 0)
+        color: ColorUtils.transparentize(Appearance.colors.colSurfaceContainer, root.actuallyPinned ? 1 : 0)
         radius: root.contentRadius
 
         WheelHandler {
@@ -87,7 +124,7 @@ StyledOverlayWidget {
             sourceSize.width: width
             sourceSize.height: height
 
-            playing: visible
+            playing: visible && status === Image.Ready
             asynchronous: true
             source: ""
             onStatusChanged: {
@@ -104,16 +141,125 @@ StyledOverlayWidget {
 
             ImageDownloaderProcess {
                 id: imageDownloader
-                filePath: Qt.resolvedUrl(Directories.tempImages + "/" + Qt.md5(root.imageSource))
-                sourceUrl: root.imageSource
+                running: false
+                filePath: ""
+                sourceUrl: ""
 
                 onDone: (path, width, height) => {
-                    root.imageWidth = Number.isFinite(width) && width > 0 ? width : 0;
-                    root.imageHeight = Number.isFinite(height) && height > 0 ? height : 0;
-                    root.setSize();
-                    animatedImage.source = path;
+                    if (!root.imageSource.trim().length
+                            || path.toString() !== root._requestedPath)
+                        return
+                    root.imageWidth = width
+                    root.imageHeight = height
+                    root.imageFailed = false
+                    root.setSize()
+                    animatedImage.source = path
+                }
+
+                onFailed: (path, reason) => {
+                    if (!root.imageSource.trim().length
+                            || path.toString() !== root._requestedPath)
+                        return
+                    root.imageWidth = 0
+                    root.imageHeight = 0
+                    root.imageFailed = true
+                    root.setSize()
+                    animatedImage.source = ""
+                    console.warn("[FloatingImage] Image download failed:", reason)
                 }
             }
         }
+
+        ColumnLayout {
+            anchors.centerIn: parent
+            width: Math.min(parent.width - 32, 250)
+            spacing: 8
+            visible: !root.hasImage
+
+            MaterialSymbol {
+                Layout.alignment: Qt.AlignHCenter
+                text: root.imageSource.trim().length > 0 && !root.imageFailed
+                    ? "progress_activity"
+                    : root.imageFailed ? "broken_image" : "add_photo_alternate"
+                iconSize: 38
+                color: Appearance.colors.colOnLayer2
+            }
+
+            StyledText {
+                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignHCenter
+                text: root.imageSource.trim().length > 0 && !root.imageFailed
+                    ? Translation.tr("Loading...")
+                    : root.imageFailed
+                        ? Translation.tr("Error")
+                        : Translation.tr("Choose file")
+                color: Appearance.colors.colOnLayer2
+                font.pixelSize: Appearance.font.pixelSize.small
+                wrapMode: Text.WordWrap
+            }
+
+            RippleButtonWithIcon {
+                Layout.alignment: Qt.AlignHCenter
+                visible: root.imageSource.trim().length === 0 || root.imageFailed
+                materialIcon: "folder_open"
+                mainText: Translation.tr("Choose file")
+                colBackground: Appearance.colors.colPrimaryContainer
+                colBackgroundHover: ColorUtils.mix(
+                    Appearance.colors.colPrimaryContainer,
+                    Appearance.colors.colOnPrimaryContainer, 0.90)
+                colRipple: ColorUtils.mix(
+                    Appearance.colors.colPrimaryContainer,
+                    Appearance.colors.colOnPrimaryContainer, 0.78)
+                contentColor: ColorUtils.ensureReadable(
+                    Appearance.colors.colOnPrimaryContainer,
+                    colBackground, 4.5)
+                onClicked: imageDialog.open()
+            }
+        }
+
+        RippleButtonWithIcon {
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.margins: 8
+            visible: GlobalStates.overlayOpen && root.hasImage
+            materialIcon: "image_search"
+            mainText: Translation.tr("Change")
+            colBackground: ColorUtils.applyAlpha(Appearance.colors.colLayer2, 0.94)
+            colBackgroundHover: Appearance.colors.colLayer2Hover
+            colRipple: Appearance.colors.colLayer2Active
+            contentColor: ColorUtils.ensureReadable(
+                Appearance.colors.colOnLayer2, colBackground, 4.5)
+            onClicked: imageDialog.open()
+
+            StyledToolTip {
+                text: Translation.tr("Choose file")
+            }
+        }
+    }
+
+    FileDialog {
+        id: imageDialog
+        title: Translation.tr("Choose source image")
+        fileMode: FileDialog.OpenFile
+        currentFolder: Directories.pictures
+        nameFilters: [
+            Translation.tr("Images and animations") + " (*.png *.jpg *.jpeg *.webp *.tif *.tiff *.gif *.svg)",
+            Translation.tr("All files") + " (*)"
+        ]
+        onAccepted: {
+            const path = FileUtils.trimFileProtocol(String(selectedFile))
+            if (Images.isValidImageByName(path))
+                Config.setNestedValue("overlay.floatingImage.imageSource", path)
+        }
+    }
+
+    Connections {
+        target: imageDialog
+        function onVisibleChanged(): void { root.syncImageDialogLayer() }
+    }
+
+    Component.onDestruction: {
+        if (root._dialogEngaged)
+            OverlayContext.setNativeDialogVisible("floating-image", false)
     }
 }

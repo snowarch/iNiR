@@ -57,7 +57,7 @@ RowLayout {
         StyledText {
             Layout.fillWidth: true
             text: root.text
-            color: Appearance.colors.colOnSecondaryContainer
+            color: Appearance.colors.colOnSurface
             opacity: root.enabled ? 1 : 0.4
             elide: Text.ElideNone
         }

@@ -86,12 +86,24 @@ Item {
         radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
              : root.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
         color: Appearance.angelEverywhere ? "transparent"
-             : root.inirEverywhere ? Appearance.inir.colLayer1 
+             : Appearance.zzzEverywhere ? Appearance.colors.colLayer1
+             : root.inirEverywhere ? Appearance.inir.colLayer1
              : root.auroraEverywhere ? ColorUtils.transparentize(root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0, 0.7)
              : (root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0)
-        border.width: Appearance.angelEverywhere ? 0 : (root.inirEverywhere ? 1 : 0)
+        border.width: Appearance.angelEverywhere ? 0
+                    : Appearance.zzzEverywhere ? 1
+                    : (root.inirEverywhere ? 1 : 0)
         border.color: Appearance.angelEverywhere ? "transparent"
+                    : Appearance.zzzEverywhere ? Appearance.zzz.hairline
                     : root.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+        Behavior on border.width {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on border.color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
         clip: true
 
         AngelPartialBorder { targetRadius: card.radius; coverage: 0.5 }
@@ -259,11 +271,17 @@ Item {
                             wavy: root.player?.isPlaying ?? false
                             animateWave: root.player?.isPlaying ?? false
                             highlightColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                                : root.inirEverywhere ? root.jiraColPrimary : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
+                                : root.inirEverywhere ? root.jiraColPrimary
+                                : Appearance.zzzEverywhere ? Appearance.zzz.accentSoft
+                                : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
                             trackColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                                : root.inirEverywhere ? Appearance.inir.colLayer2 : (root.blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
+                                : root.inirEverywhere ? Appearance.inir.colLayer2
+                                : Appearance.zzzEverywhere ? Appearance.zzz.metricTrack
+                                : (root.blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
                             handleColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                                : root.inirEverywhere ? root.jiraColPrimary : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
+                                : root.inirEverywhere ? root.jiraColPrimary
+                                : Appearance.zzzEverywhere ? "transparent"
+                                : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
                             value: root.player?.length > 0 ? root.player.position / root.player.length : 0
                             onMoved: root.player.position = value * root.player.length
                             scrollable: true
@@ -277,9 +295,13 @@ Item {
                             wavy: root.player?.isPlaying ?? false
                             animateWave: root.player?.isPlaying ?? false
                             highlightColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                                : root.inirEverywhere ? root.jiraColPrimary : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
+                                : root.inirEverywhere ? root.jiraColPrimary
+                                : Appearance.zzzEverywhere ? Appearance.zzz.accentSoft
+                                : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
                             trackColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                                : root.inirEverywhere ? Appearance.inir.colLayer2 : (root.blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
+                                : root.inirEverywhere ? Appearance.inir.colLayer2
+                                : Appearance.zzzEverywhere ? Appearance.zzz.metricTrack
+                                : (root.blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
                             value: root.player?.length > 0 ? root.player.position / root.player.length : 0
                         }
                     }

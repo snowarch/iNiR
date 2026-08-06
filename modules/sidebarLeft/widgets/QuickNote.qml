@@ -79,7 +79,7 @@ Item {
                     contentItem: Item {
                         MaterialSymbol {
                             anchors.centerIn: parent
-                            text: "delete_outline"
+                            text: "delete"
                             iconSize: 14
                             color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
                         }

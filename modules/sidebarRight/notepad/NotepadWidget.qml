@@ -109,7 +109,7 @@ Item {
                         font.family: Appearance.font.family.numbers
                         color: Appearance.angelEverywhere ? Appearance.angel.colText
                             : Appearance.inirEverywhere ? Appearance.inir.colText
-                            : Appearance.m3colors.m3onSecondaryContainer
+                            : Appearance.colors.colOnSecondaryContainer
                     }
                 }
             }
@@ -251,7 +251,7 @@ Item {
             Item { Layout.fillWidth: true }
 
             NotepadToolButton {
-                icon: "delete_outline"
+                icon: "delete"
                 tooltipText: Translation.tr("Clear all")
                 enabled: textArea.text.length > 0
                 destructive: true
@@ -297,7 +297,7 @@ Item {
                         : Appearance.inirEverywhere ? Appearance.inir.colOnPrimary
                         : Appearance.colors.colOnSecondaryContainer
                     placeholderText: Translation.tr("Write your notes here...")
-                    placeholderTextColor: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.m3colors.m3outline
+                    placeholderTextColor: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colOutline
                     Component.onCompleted: text = Notepad.text
                     selectByMouse: true
                     persistentSelection: true

@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import qs
 import QtQuick
 import qs.services
 import qs.modules.common
@@ -140,7 +141,8 @@ QuickToggleModel {
     Timer {
         interval: 5000
         repeat: true
-        running: true
+        triggeredOnStart: true
+        running: GlobalStates.sidebarRightOpen || GlobalStates.waffleActionCenterOpen
         onTriggered: root.refreshStatus()
     }
 

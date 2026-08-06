@@ -100,7 +100,7 @@ Singleton {
         if (q.startsWith(clipboardPrefix)) {
             const searchStr = StringUtils.cleanPrefix(q, clipboardPrefix)
             return Cliphist.fuzzyQuery(searchStr).map(entry => {
-                return resultComp.createObject(null, {
+                return ({
                     rawValue: entry,
                     name: StringUtils.cleanCliphistEntry(entry),
                     verb: Translation.tr("Copy"),
@@ -117,7 +117,7 @@ Singleton {
             const searchStr = StringUtils.cleanPrefix(q, emojisPrefix)
             return Emojis.fuzzyQuery(searchStr).map(entry => {
                 const emoji = entry.match(/^\s*(\S+)/)?.[1] ?? ""
-                return resultComp.createObject(null, {
+                return ({
                     rawValue: entry,
                     name: entry.replace(/^\s*\S+\s+/, ""),
                     iconName: emoji,
@@ -140,7 +140,7 @@ Singleton {
         const startsWithWeb = q.startsWith(webPrefix)
 
         // Math result (priority if starts with number or =)
-        const mathObj = resultComp.createObject(null, {
+        const mathObj = ({
             name: root.mathResult,
             verb: Translation.tr("Copy"),
             type: Translation.tr("Math"),
@@ -155,7 +155,7 @@ Singleton {
         }
 
         // Shell command
-        const cmdObj = resultComp.createObject(null, {
+        const cmdObj = ({
             name: StringUtils.cleanPrefix(q, shellPrefix).replace("file://", ""),
             verb: Translation.tr("Run"),
             type: Translation.tr("Command"),
@@ -174,7 +174,7 @@ Singleton {
         }
 
         // Web search
-        const webObj = resultComp.createObject(null, {
+        const webObj = ({
             name: StringUtils.cleanPrefix(q, webPrefix),
             verb: Translation.tr("Search"),
             type: Translation.tr("Web"),
@@ -211,7 +211,7 @@ Singleton {
             }
             seenAppNames.add(nameKey)
 
-            appResults.push(resultComp.createObject(null, {
+            appResults.push(({
                 type: Translation.tr("App"),
                 id: entry.id ?? entry.name ?? "",
                 name: entry.name,
@@ -230,7 +230,7 @@ Singleton {
         const actionResults = root.allActions.map(action => {
             const actionStr = `${actionPrefix}${action.action}`
             if (actionStr.startsWith(q) || q.startsWith(actionStr)) {
-                return resultComp.createObject(null, {
+                return ({
                     name: q.startsWith(actionStr) ? q : actionStr,
                     verb: Translation.tr("Run"),
                     type: Translation.tr("Action"),
@@ -254,8 +254,4 @@ Singleton {
         return result
     }
 
-    Component {
-        id: resultComp
-        LauncherSearchResult {}
-    }
 }

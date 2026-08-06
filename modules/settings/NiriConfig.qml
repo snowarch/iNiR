@@ -26,6 +26,22 @@ ContentPage {
     readonly property string currentTransform: currentOutput?.transform ?? "Normal"
     readonly property bool vrrSupported: currentOutput?.vrr_supported ?? false
     readonly property bool vrrEnabled: currentOutput?.vrr_enabled ?? false
+    readonly property string vrrMode: currentOutput?.vrr_mode ?? (vrrEnabled ? "on" : "off")
+
+    readonly property var vrrOptions: [
+        {
+            value: "off",
+            displayName: Translation.tr("Off")
+        },
+        {
+            value: "on-demand",
+            displayName: Translation.tr("On demand (recommended)")
+        },
+        {
+            value: "on",
+            displayName: Translation.tr("Always on")
+        }
+    ]
     readonly property string niriConfigPath: validationData?.config_path ?? ""
     readonly property string niriConfigDir: customConfigData?.config_dir ?? ""
     readonly property bool hasAnyProcessError: processErrors.outputs.length > 0 || processErrors.input.length > 0 || processErrors.layout.length > 0 || processErrors.animations.length > 0 || processErrors.windowRules.length > 0 || processErrors.cursorThemes.length > 0 || processErrors.validation.length > 0 || processErrors.customizations.length > 0
@@ -67,10 +83,10 @@ ContentPage {
     ]
 
     readonly property var transformOptions: [
-        { displayName: Translation.tr("Normal"), icon: "screen_rotation", value: "normal" },
-        { displayName: "90°", icon: "screen_rotation", value: "90" },
-        { displayName: "180°", icon: "screen_rotation", value: "180" },
-        { displayName: "270°", icon: "screen_rotation", value: "270" },
+        { displayName: Translation.tr("Normal"), icon: "screen_rotation_alt", value: "normal" },
+        { displayName: "90°", icon: "screen_rotation_alt", value: "90" },
+        { displayName: "180°", icon: "screen_rotation_alt", value: "180" },
+        { displayName: "270°", icon: "screen_rotation_alt", value: "270" },
         { displayName: Translation.tr("Flipped"), icon: "flip", value: "flipped" },
         { displayName: Translation.tr("Flipped 90°"), icon: "flip", value: "flipped-90" },
         { displayName: Translation.tr("Flipped 180°"), icon: "flip", value: "flipped-180" },
@@ -350,7 +366,7 @@ ContentPage {
         if (key === "position")
             return `${output?.position?.x ?? 0},${output?.position?.y ?? 0}`
         if (key === "vrr")
-            return (output?.vrr_enabled ?? false) ? "on" : "off"
+            return output?.vrr_mode ?? ((output?.vrr_enabled ?? false) ? "on" : "off")
         if (key === "scale")
             return String(output?.scale ?? 1.0)
         if (key === "transform")
@@ -576,6 +592,7 @@ ContentPage {
         refreshRateCombo.currentIndex = choiceIndex(refreshRateCombo.model, currentRate)
         scaleCombo.currentIndex = choiceIndex(scaleCombo.model, currentScale)
         rotationCombo.currentIndex = choiceIndex(rotationCombo.model, currentTransform.toLowerCase())
+        vrrCombo.currentIndex = choiceIndex(vrrCombo.model, vrrMode)
     }
 
     // =====================
@@ -826,7 +843,7 @@ ContentPage {
                 } else {
                     root.lastActionError = ""
                 }
-                root._deferredOutputRefresh.restart()
+                _deferredOutputRefresh.restart()
             } else {
                 if (purpose === "preview" || purpose === "preview-revert" || purpose === "preview-revert-after-failure")
                     root.clearPreviewState()
@@ -1533,7 +1550,7 @@ ContentPage {
 
             ContentSubsection {
                 title: Translation.tr("Output position")
-                tooltip: Translation.tr("Logical coordinates in Niri global space. Useful for stacked or side-by-side monitor layouts.")
+                tooltip: Translation.tr("Logical coordinates in Niri's global space.")
                 visible: root.currentOutput !== null
 
                 RowLayout {
@@ -1600,19 +1617,31 @@ ContentPage {
 
             ContentSubsection {
                 title: Translation.tr("Variable refresh rate (VRR)")
-                tooltip: Translation.tr("Adaptive sync / FreeSync / G-Sync. Reduces tearing in games and video.")
+                tooltip: Translation.tr("Adaptive sync / FreeSync / G-Sync.")
                 visible: root.vrrSupported
 
-                SettingsSwitch {
+                StyledComboBox {
+                    id: vrrCombo
                     Layout.fillWidth: true
                     enabled: !root.displayControlsLocked
-                    buttonIcon: "display_settings"
-                    text: Translation.tr("Enable VRR")
-                    checked: root.vrrEnabled
-                    onCheckedChanged: {
+                    model: root.vrrOptions
+                    textRole: "displayName"
+                    onActivated: {
                         if (!root.outputReady) return
-                        root.applyAndPersistOutput("vrr", checked ? "on" : "off")
+                        root.applyAndPersistOutput("vrr", model[currentIndex].value)
                     }
+                }
+
+                SettingsNote {
+                    icon: "monitor"
+                    text: Translation.tr("On demand enables VRR only for games and video.")
+                }
+
+                SettingsNote {
+                    visible: root.vrrMode === "on"
+                    warning: true
+                    icon: "flare"
+                    text: Translation.tr("Some monitors flicker or dim on the desktop with VRR always on.")
                 }
             }
         }
@@ -2800,7 +2829,7 @@ ContentPage {
     // =====================
     SettingsCardSection {
         expanded: false
-        icon: "settings_input_composite"
+        icon: "settings_input_component"
         title: Translation.tr("General Input")
 
         SettingsGroup {
@@ -2863,7 +2892,7 @@ ContentPage {
 
             ContentSubsection {
                 title: Translation.tr("Focus follows mouse threshold")
-                tooltip: Translation.tr("Maximum scroll amount allowed when focusing a window by hover. 0% means only fully visible windows.")
+                tooltip: Translation.tr("0% focuses only fully visible windows.")
                 visible: root.generalInputData?.focus_follows_mouse ?? false
 
                 ConfigSpinBox {
@@ -3080,6 +3109,7 @@ ContentPage {
                     Layout.fillWidth: true
                     spacing: 8
 
+                    required property int index
                     required property var modelData
 
                     readonly property int _rev: AppLauncher._configRevision

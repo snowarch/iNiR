@@ -19,13 +19,16 @@ ColumnLayout {
     property var segmentContent: ({})
     property var segmentLang: "txt"
     property var messageData: {}
-    property bool isCommandRequest: segmentLang === "command"
-    property var displayLang: (isCommandRequest ? "bash" : segmentLang)
+    property bool isCommandRequest: segmentLang === "command" || segmentLang === "approval"
+    property var displayLang: segmentLang === "command" ? "bash"
+        : segmentLang === "approval" ? "json" : segmentLang
 
     property real codeBlockBackgroundRounding: Appearance.rounding.small
     property real codeBlockHeaderPadding: 3
     property real codeBlockComponentSpacing: 2
 
+    Layout.fillWidth: true
+    Layout.minimumWidth: 0
     spacing: codeBlockComponentSpacing
 
     Rectangle { // Code background
@@ -51,7 +54,8 @@ ColumnLayout {
             StyledText {
                 id: codeBlockLanguage
                 Layout.alignment: Qt.AlignLeft
-                Layout.fillWidth: false
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 Layout.topMargin: 7
                 Layout.bottomMargin: 7
                 Layout.leftMargin: 10
@@ -59,6 +63,8 @@ ColumnLayout {
                 font.weight: Font.DemiBold
                 color: Appearance.colors.colOnLayer2
                 text: root.displayLang ? Repository.definitionForName(root.displayLang).name : "plain"
+                elide: Text.ElideRight
+                wrapMode: Text.NoWrap
             }
 
             Item { Layout.fillWidth: true }
@@ -121,6 +127,8 @@ ColumnLayout {
     }
 
     RowLayout { // Line numbers and code
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
         spacing: codeBlockComponentSpacing
 
         Rectangle { // Line numbers
@@ -164,6 +172,7 @@ ColumnLayout {
 
         Rectangle { // Code background
             Layout.fillWidth: true
+            Layout.minimumWidth: 0
             topLeftRadius: Appearance.rounding.unsharpen
             bottomLeftRadius: Appearance.rounding.unsharpen
             topRightRadius: Appearance.rounding.unsharpen
@@ -179,8 +188,8 @@ ColumnLayout {
                 ScrollView {
                     id: codeScrollView
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     // Layout.fillHeight: true
-                    implicitWidth: parent.width
                     implicitHeight: codeTextArea.implicitHeight + 1
                     contentWidth: codeTextArea.width - 1
                     // contentHeight: codeTextArea.contentHeight
@@ -217,7 +226,7 @@ ColumnLayout {
                         font.family: Appearance.font.family.monospace
                         font.hintingPreference: Font.PreferNoHinting // Prevent weird bold text
                         font.pixelSize: Appearance.font.pixelSize.small
-                        selectedTextColor: Appearance.m3colors.m3onSecondaryContainer
+                        selectedTextColor: Appearance.colors.colOnSecondaryContainer
                         selectionColor: Appearance.colors.colSecondaryContainer
                         // wrapMode: TextEdit.Wrap
                         color: messageData.thinking ? Appearance.colors.colSubtext : Appearance.colors.colOnLayer1

@@ -165,18 +165,43 @@ cp_file(){
   realpath -se "$dst" >> "${INSTALLED_LISTFILE}"
 }
 
+# Never distributed. The payload is copied one directory at a time, so every
+# pattern here is matched against a path relative to that directory — an entry
+# like 'assets/images/mascot/*.png' would never fire while copying assets/.
+# Bare names match at any depth; each one below is unique across the payload.
+RUNTIME_EXCLUDES=(
+  # Agent harness
+  --exclude='AGENTS.md' --exclude='CLAUDE.md' --exclude='CODEX.md' --exclude='PI.md'
+  --exclude='codemap.md' --exclude='.mcp.json' --exclude='opencode.json'
+  --exclude='skills-lock.json'
+  --exclude='.agents/' --exclude='.claude/' --exclude='.codex/' --exclude='.factory/'
+  --exclude='.opencode/' --exclude='.codebase-memory/' --exclude='.impeccable/'
+  --exclude='.pi-subagents/'
+  # Maintainer and development tooling. Anchored with a leading slash so these
+  # common names only ever match at the top of a payload directory, never a
+  # future modules/…/tools/ that has every right to ship.
+  --exclude='/agents/' --exclude='/tools/' --exclude='/l10n/'
+  --exclude='/release.sh' --exclude='/wiki-sync.sh' --exclude='/verify-docs.sh'
+  --exclude='/qml-check.fish' --exclude='/test-local-distribution.sh'
+  --exclude='/test-mascot-pack-flow.sh'
+  # Local art work files — the manifest always ships, the art does not
+  --exclude='graphify-out/'
+  --exclude='images/mascot/*.png' --exclude='images/mascot/*.gif'
+  --exclude='images/mascot/frames/' --exclude='images/mascot/PROMPTS.md'
+)
+
 rsync_dir(){
   x mkdir -p "$2"
   local dest="$(realpath -se $2)"
   x mkdir -p "$(dirname ${INSTALLED_LISTFILE})"
-  rsync -a --exclude='AGENTS.md' --out-format='%i %n' "$1"/ "$2"/ | awk -v d="$dest" '$1 ~ /^>/{ sub(/^[^ ]+ /,""); printf d "/" $0 "\n" }' >> "${INSTALLED_LISTFILE}"
+  rsync -a "${RUNTIME_EXCLUDES[@]}" --out-format='%i %n' "$1"/ "$2"/ | awk -v d="$dest" '$1 ~ /^>/{ sub(/^[^ ]+ /,""); printf d "/" $0 "\n" }' >> "${INSTALLED_LISTFILE}"
 }
 
 rsync_dir__sync(){
   x mkdir -p "$2"
   local dest="$(realpath -se $2)"
   x mkdir -p "$(dirname ${INSTALLED_LISTFILE})"
-  rsync -a --delete --exclude='AGENTS.md' --out-format='%i %n' "$1"/ "$2"/ | awk -v d="$dest" '$1 ~ /^>/{ sub(/^[^ ]+ /,""); printf d "/" $0 "\n" }' >> "${INSTALLED_LISTFILE}"
+  rsync -a --delete "${RUNTIME_EXCLUDES[@]}" --out-format='%i %n' "$1"/ "$2"/ | awk -v d="$dest" '$1 ~ /^>/{ sub(/^[^ ]+ /,""); printf d "/" $0 "\n" }' >> "${INSTALLED_LISTFILE}"
 }
 
 function install_file(){

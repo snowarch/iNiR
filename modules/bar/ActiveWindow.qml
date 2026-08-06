@@ -2,7 +2,6 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 import QtQuick
-import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland
@@ -74,6 +73,19 @@ Item {
         return shortenText(fbTitle, 80)
     }
 
+    // Terminal spinners and browser progress titles can change many times per
+    // second. Keep the app identity reactive, but only repaint the title after
+    // a short quiet period so those updates do not continuously dirty the bar.
+    property string stableDisplayTitle: displayTitle
+    Component.onCompleted: stableDisplayTitle = displayTitle
+    onDisplayTitleChanged: titleSettleTimer.restart()
+    Timer {
+        id: titleSettleTimer
+        interval: 180
+        repeat: false
+        onTriggered: root.stableDisplayTitle = root.displayTitle
+    }
+
     // Intentionally NOT binding implicitWidth to colLayout.implicitWidth:
     // the bar wrapper assigns this item its width via Layout.fillWidth, and the
     // texts elide to fit. Binding to content width would let a long title push
@@ -82,34 +94,63 @@ Item {
     clip: true
     // Natural content width, exposed so a content-sized host (e.g. a centre
     // pill, which gives no fill slack) can grant a sensible, clamped width.
-    readonly property real contentImplicitWidth: colLayout.implicitWidth
+    readonly property real contentImplicitWidth: Math.max(
+        appNameText.implicitWidth,
+        titleText.visible ? titleText.implicitWidth : 0
+    )
 
-    ColumnLayout {
-        id: colLayout
+    readonly property bool showTitle: Config.options?.bar?.activeWindow?.showTitle ?? true
 
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.left: parent.left
-        anchors.right: parent.right
-        spacing: -1
+    property color titleColor: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0
+    property color appNameColor: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
 
-        StyledText {
-            Layout.fillWidth: true
-            font.pixelSize: Appearance.font.pixelSize.smaller
-            color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
-            elide: Text.ElideRight
-            text: root.displayAppName
+    // Lock both rows to baselines derived from the configured UI font. Emoji,
+    // Nerd Font symbols and other fallback glyphs may report taller bounds, but
+    // they can no longer move either row or change the gap between them.
+    readonly property real rowOverlap: root.showTitle ? 2 : 0
+    readonly property real textBlockHeight: root.showTitle
+        ? appNameMetrics.height + titleMetrics.height - root.rowOverlap
+        : appNameMetrics.height
+    readonly property real textBlockTop: Math.round((root.height - root.textBlockHeight) / 2)
+    readonly property real appNameBaseline: root.textBlockTop + appNameMetrics.ascent
+    readonly property real titleBaseline: root.appNameBaseline
+        + appNameMetrics.descent
+        - root.rowOverlap
+        + titleMetrics.ascent
 
-        }
+    FontMetrics {
+        id: appNameMetrics
+        font: appNameText.font
+    }
 
-        StyledText {
-            Layout.fillWidth: true
-            visible: Config.options?.bar?.activeWindow?.showTitle ?? true
-            font.pixelSize: Appearance.font.pixelSize.small
-            color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0
-            elide: Text.ElideRight
-            text: root.displayTitle
-        }
+    FontMetrics {
+        id: titleMetrics
+        font: titleText.font
+    }
 
+    StyledText {
+        id: appNameText
+        width: root.width
+        y: root.appNameBaseline - baselineOffset
+        maximumLineCount: 1
+        wrapMode: Text.NoWrap
+        font.pixelSize: Appearance.font.pixelSize.smaller
+        color: root.appNameColor
+        elide: Text.ElideRight
+        text: root.displayAppName
+    }
+
+    StyledText {
+        id: titleText
+        width: root.width
+        y: root.titleBaseline - baselineOffset
+        visible: root.showTitle
+        maximumLineCount: 1
+        wrapMode: Text.NoWrap
+        font.pixelSize: Appearance.font.pixelSize.small
+        color: root.titleColor
+        elide: Text.ElideRight
+        text: root.stableDisplayTitle
     }
 
 }

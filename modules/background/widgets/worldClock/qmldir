@@ -1,0 +1,2 @@
+module qs.modules.background.widgets.worldClock
+WorldClockWidget 1.0 WorldClockWidget.qml

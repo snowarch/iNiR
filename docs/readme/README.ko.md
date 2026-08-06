@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.27.0-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.29.0-blue?style=flat-square" alt="Version"></a>
   <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
@@ -111,7 +111,7 @@ Wayland → GPU
 ## 기능
 
 **두 가지 패널 패밀리**, `Super+Shift+W`로 즉시 전환:
-- **Material ii** — 플로팅 바, 사이드바, 독, 5가지 비주얼 스타일 (material, cards, aurora, inir, angel)
+- **Material ii** — 플로팅 바, 사이드바, 독, 6가지 비주얼 스타일 (material, cards, aurora, inir, angel, zzz)
 - **Waffle** — Windows 11 스타일 작업 표시줄, 시작 메뉴, 알림 센터, 액션 센터
 
 **자동 테마** — 배경화면을 고르면 모든 것이 맞춰짐:
@@ -128,7 +128,7 @@ Wayland → GPU
 
 배경화면을 고르면 전체 시스템이 따라감 — 셸, GTK/Qt 앱, 터미널, Firefox, Discord, SDDM 로그인 화면. 전부 자동.
 
-- **5가지 비주얼 스타일** — Material (솔리드), Cards, Aurora (유리 블러), iNiR (TUI 영감), Angel (네오 브루탈리즘)
+- **6가지 비주얼 스타일** — Material (솔리드), Cards, Aurora (유리 블러), iNiR (TUI 영감), Angel (네오 브루탈리즘), ZZZ
 - **배경화면 동적 색상** — Material You로 시스템 전체에 전파
 - **10개 터미널 도구 자동 테마** — foot, kitty, alacritty, starship, fuzzel, pywalfox, btop, lazygit, yazi
 - **앱 테마 적용** — GTK3/4, Qt (plasma-integration + darkly), Firefox (MaterialFox), Discord/Vesktop (System24)
@@ -144,7 +144,6 @@ Wayland → GPU
 - **YT Music** — 검색, 대기열, 컨트롤이 있는 풀 플레이어
 - **Wallhaven 브라우저** — 배경화면 직접 검색 및 적용
 - **애니메 트래커** — AniList 연동, 방영 일정 보기
-- **Reddit 피드** — 인라인 서브레딧 탐색
 - **번역기** — Gemini 또는 translate-shell
 - **드래그 가능 위젯** — 암호화폐, 미디어 플레이어, 빠른 메모, 상태 링, 주간 캘린더
 
@@ -282,5 +281,5 @@ inir repair                     # doctor + 재시작 + 필터링된 로그 확�
 <p align="center">
   <a href="https://github.com/snowarch/inir/graphs/contributors">기여자</a> &bull;
   <a href="CHANGELOG.md">변경 기록</a> &bull;
-  <a href="LICENSE">MIT 라이선스</a>
+  <a href="LICENSE">GPL-3.0 라이선스</a>
 </p>

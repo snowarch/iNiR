@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.27.0-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/snowarch/inir/releases"><img src="https://img.shields.io/badge/version-2.29.0-blue?style=flat-square" alt="Version"></a>
   <a href="https://github.com/snowarch/inir/stargazers"><img src="https://img.shields.io/github/stars/snowarch/inir?style=flat-square" alt="Stars"></a>
   <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
@@ -144,7 +144,6 @@ Wayland → GPU
 - **YT Music** — 検索、キュー、コントロール付きフルプレーヤー
 - **Wallhaven ブラウザ** — 壁紙を直接検索・適用
 - **アニメトラッカー** — AniList 連携、放送スケジュール表示
-- **Reddit フィード** — インラインで subreddit を閲覧
 - **翻訳** — Gemini または translate-shell 経由
 - **ドラッグ可能ウィジェット** — 暗号通貨、メディアプレーヤー、クイックメモ、ステータスリング、週間カレンダー
 
@@ -282,5 +281,5 @@ issue を開く前に [LIMITATIONS.md](../LIMITATIONS.md) を確認してくだ�
 <p align="center">
   <a href="https://github.com/snowarch/inir/graphs/contributors">コントリビューター</a> &bull;
   <a href="CHANGELOG.md">変更履歴</a> &bull;
-  <a href="LICENSE">MIT ライセンス</a>
+  <a href="LICENSE">GPL-3.0 ライセンス</a>
 </p>

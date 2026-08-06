@@ -7,6 +7,14 @@ source "$SCRIPT_DIR/lib/module-runtime.sh"
 main() {
   ensure_generated_dirs
 
+  # Every pipeline log is append-only with no cap of its own; a long-lived
+  # install accumulates tens of MB under XDG_STATE_HOME. Trim here, before the
+  # modules that write them are spawned.
+  local log_name
+  for log_name in theming_modules terminal_colors code_editor_themes; do
+    rotate_log "$STATE_DIR/user/generated/$log_name.log"
+  done
+
   local manifests=()
   while IFS= read -r manifest_path; do
     [[ -n "$manifest_path" ]] || continue

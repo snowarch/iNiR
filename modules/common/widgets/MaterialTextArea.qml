@@ -10,10 +10,10 @@ import QtQuick.Controls
 TextArea {
     id: root
     Material.theme: Material.System
-    Material.accent: Appearance.m3colors.m3primary
-    Material.primary: Appearance.m3colors.m3primary
-    Material.background: Appearance.m3colors.m3surface
-    Material.foreground: Appearance.m3colors.m3onSurface
+    Material.accent: Appearance.colors.colPrimary
+    Material.primary: Appearance.colors.colPrimary
+    Material.background: Appearance.colors.colLayer1
+    Material.foreground: Appearance.colors.colOnSurface
     Material.containerStyle: Material.Filled
     renderType: Text.NativeRendering
 
@@ -83,13 +83,13 @@ TextArea {
         }
     }
 
-    selectedTextColor: Appearance.m3colors.m3onSecondaryContainer
+    selectedTextColor: Appearance.colors.colOnSecondaryContainer
     selectionColor: Appearance.colors.colSecondaryContainer
-    placeholderTextColor: Appearance.m3colors.m3outline
+    placeholderTextColor: Appearance.colors.colOutline
 
     background: Rectangle {
         implicitHeight: 56
-        color: Appearance.m3colors.m3surface
+        color: Appearance.colors.colLayer1
         topLeftRadius: 4
         topRightRadius: 4
         Rectangle {
@@ -99,8 +99,8 @@ TextArea {
                 bottom: parent.bottom
             }
             height: 1
-            color: root.focus ? Appearance.m3colors.m3primary : 
-                root.hovered ? Appearance.m3colors.m3outline : Appearance.m3colors.m3outlineVariant
+            color: root.focus ? Appearance.colors.colPrimary :
+                root.hovered ? Appearance.colors.colOutline : Appearance.colors.colOutlineVariant
 
             Behavior on color {
                 animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }

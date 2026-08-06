@@ -33,11 +33,25 @@ Singleton {
     ).length > 0
 
     property bool _micMuted: false
-    property real _micVolume: source?.audio?.volume ?? 0
+    // Tracked explicitly rather than bound to source.audio.volume: setSourceVolume()
+    // assigns to this imperatively, which would destroy a declarative binding for
+    // good — after the first mic adjustment the shell would stop seeing volume
+    // changes made anywhere else (pavucontrol, another app).
+    property real _micVolume: 0
     readonly property bool micMuted: _micMuted
     readonly property real micVolume: _micVolume
 
-    onSourceChanged: _refreshMicState()
+    Connections {
+        target: root.source?.audio ?? null
+        function onVolumeChanged(): void {
+            root._micVolume = root.source?.audio?.volume ?? 0
+        }
+    }
+
+    onSourceChanged: {
+        root._micVolume = root.source?.audio?.volume ?? 0
+        _refreshMicState()
+    }
 
     function friendlyDeviceName(node) {
         return node ? (node.nickname || node.description || Translation.tr("Unknown")) : Translation.tr("Unknown");
@@ -366,20 +380,59 @@ Singleton {
         }
     }
 
-    function playSystemSound(soundName) {
-        const volume = Config.options?.sounds?.volume ?? 0.5;
-        const ogaPath = `/usr/share/sounds/${root.audioTheme}/stereo/${soundName}.oga`;
-        const oggPath = `/usr/share/sounds/${root.audioTheme}/stereo/${soundName}.ogg`;
+    // Event catalog: eventId → freedesktop sound name used when the user
+    // hasn't overridden it via sounds.events.<id> in config
+    readonly property var soundEvents: ({
+        notification: "message-new-instant",
+        notificationCritical: "dialog-warning",
+        batteryLow: "dialog-warning",
+        batteryCritical: "suspend-error",
+        batteryFull: "complete",
+        powerPlug: "power-plug",
+        powerUnplug: "power-unplug",
+        pomodoroDone: "alarm-clock-elapsed",
+        timerDone: "alarm-clock-elapsed"
+    })
 
-        // pw-play volume range: 0.0 to 1.0
-        let command = ["/usr/bin/pw-play", "--volume", volume.toString(), ogaPath];
-        Quickshell.execDetached(command);
-
-        command = ["/usr/bin/pw-play", "--volume", volume.toString(), oggPath];
-        Quickshell.execDetached(command);
+    // Sound names available in the current theme (feeds settings pickers)
+    property var themeSounds: []
+    onAudioThemeChanged: themeSoundsProc.running = true
+    Process {
+        id: themeSoundsProc
+        command: ["/bin/sh", "-c", `ls /usr/share/sounds/${root.audioTheme}/stereo/ 2>/dev/null | sed 's/\\.[^.]*$//' | sort -u`]
+        stdout: StdioCollector {
+            onStreamFinished: root.themeSounds = text.trim().length > 0 ? text.trim().split("\n") : []
+        }
     }
 
-    Component.onCompleted: _refreshMicState()
+    // Play a shell event sound honoring the user's per-event override:
+    // "" = theme default; bare name = that sound from the current theme;
+    // absolute path or file:// = play the file directly
+    function playEvent(eventId) {
+        const override = Config.options?.sounds?.events?.[eventId] ?? "";
+        if (override.startsWith("/") || override.startsWith("file://")) {
+            const volume = Config.options?.sounds?.volume ?? 0.5;
+            const path = override.startsWith("file://") ? override.slice(7) : override;
+            Quickshell.execDetached(["/usr/bin/pw-play", "--volume", volume.toString(), path]);
+            return;
+        }
+        playSystemSound(override.length > 0 ? override : (root.soundEvents[eventId] ?? "bell"));
+    }
+
+    function playSystemSound(soundName) {
+        const volume = Config.options?.sounds?.volume ?? 0.5;
+        const base = `/usr/share/sounds/${root.audioTheme}/stereo/${soundName}`;
+        const q = s => `'${s.replace(/'/g, `'\\''`)}'`;
+        // pw-play volume range: 0.0 to 1.0. Try .oga then .ogg — firing
+        // both blindly double-played on themes shipping both extensions.
+        Quickshell.execDetached(["/bin/sh", "-c",
+            `pw-play --volume ${volume} ${q(base + ".oga")} 2>/dev/null || pw-play --volume ${volume} ${q(base + ".ogg")}`]);
+    }
+
+    Component.onCompleted: {
+        _refreshMicState();
+        themeSoundsProc.running = true;
+    }
 
     // IPC handlers for external control (keybinds, etc.)
     IpcHandler {
@@ -395,6 +448,10 @@ Singleton {
 
         function mute(): void {
             root.toggleMute();
+        }
+
+        function playEvent(event: string): void {
+            root.playEvent(event);
         }
 
         function micMute(): void {

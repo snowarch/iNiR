@@ -4,25 +4,37 @@
 .vscode/
 *.swp
 *~
+.backups/
 
 # ── AI tooling (local-only, never distribute) ─────────────────
 # Agent config files
 AGENTS.md
+CODEX.md
+PI.md
 GEMINI.md*
 CLAUDE.md
 agents/
 kilo.json
 mcp.json
-prompts/
+/prompts/
 Session.md*
 session-*.md
 **/codemap.md
 
 # AI tool directories
+.design-system/
+.codex/
 .pi/
+.cortexkit/
+.factory/
 .agents/
 .vera/
 .claude/
+.cline/
+.clinerules/
+.superpowers/
+memory-bank/
+.qmlls.ini
 .cursor/
 .continue/
 .dory/
@@ -46,6 +58,13 @@ opencode.json
 .cursorrules
 .mcp.json
 .memory/
+.codebase-memory/
+
+# Cowork productivity plugin — local task board + memory, never shared
+TASKS.md
+dashboard.html
+memory/
+
 .task/
 .devin/
 .tmp/
@@ -54,20 +73,22 @@ context-architect/
 hooks/
 inir-docs/
 inir-mcp/
+mcp/
 
 # GitHub AI-specific (not shipped)
 .github/agents/
 .github/copilot-instructions.md
 .github/instructions/
 
-# ── Go theme generators (built on demand) ────────────────────
-vscode_themegen
-opencode_themegen
-system24_themegen
-zed_themegen
-!scripts/colors/system24_themegen/
-!scripts/colors/zed_themegen/
-!scripts/colors/zed_themegen/main.go
+# ── Go theme-generator binaries (built on demand) ────────────
+/vscode_themegen
+/opencode_themegen
+/system24_themegen
+/zed_themegen
+/scripts/colors/vscode_themegen/vscode_themegen
+/scripts/colors/opencode_themegen/opencode_themegen
+/scripts/colors/system24_themegen/system24_themegen
+/scripts/colors/zed_themegen/zed_themegen
 
 # ── Python ────────────────────────────────────────────────────
 __pycache__/
@@ -137,9 +158,11 @@ glob
 sys
 *.ps
 
-# ── Wiki / MkDocs (WIP, not shipped yet) ─────────────────────
-mkdocs.yml
+# ── Documentation checkouts and stale builds ───────────────
+# docs/ is the GitHub Wiki source. wiki/ is an optional local checkout used
+# by scripts/wiki-sync.sh; site/ is retained only as an ignored legacy build.
 site/
+wiki/
 
 # ── Stale paths (prevent accidental commits) ─────────────────
 /src/
@@ -147,3 +170,23 @@ modules/ii/overlay/floatingImage/undefined/
 docs-site/
 prompt-framework-opencode.md
 version.json
+
+# Local-only dev tooling & scratch docs — not distributed
+scripts/zzz-audit.sh
+docs/superpowers/
+docs/powerspec/
+.pi-subagents/
+design-system/
+.impeccable/
+assets/graphify-out/
+skills-lock.json
+opencode.jsonc
+
+# Mascot GIF source frames (pipeline intermediates; GIFs ship, frames don't)
+assets/images/mascot/frames/
+# Mascot generation prompt catalog (AI/agent tooling, local-only)
+assets/images/mascot/PROMPTS.md
+# Mascot art: all of it lives in the snowarch/inir-mascot repo and arrives
+# via the optional pack (`setup extras`); this repo ships only the manifest
+assets/images/mascot/inir-mascot-*.png
+assets/images/mascot/inir-mascot-*.gif

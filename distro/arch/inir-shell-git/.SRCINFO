@@ -88,6 +88,7 @@ pkgbase = inir-shell-git
 	optdepends = wtype: Wayland text injection helper
 	optdepends = ydotool: virtual keyboard and clipboard paste helper
 	optdepends = yt-dlp: YouTube media backend
+	optdepends = python-ytmusicapi: YouTube Music browsing (InnerTube engine)
 	provides = inir-shell
 	conflicts = inir-shell
 	conflicts = noctalia-qs

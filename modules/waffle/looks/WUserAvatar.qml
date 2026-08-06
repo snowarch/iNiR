@@ -41,6 +41,16 @@ Item {
         sourceSize.width: root.sourceSize.width * 2
         sourceSize.height: root.sourceSize.height * 2
         visible: false
+
+        // Walk the fallback chain from the signal, not from a bound property:
+        // binding status back into the index that feeds source is a loop.
+        onStatusChanged: {
+            if (avatarImg.status !== Image.Error)
+                return
+            const next = wAvatarResolver.avatarIndex + 1
+            if (next < Directories.userAvatarPaths.length)
+                wAvatarResolver.avatarIndex = next
+        }
     }
 
     QtObject {
@@ -49,14 +59,6 @@ Item {
         readonly property string resolvedSource: Directories.avatarSourceAt(avatarIndex)
         readonly property string primaryWatch: Directories.userAvatarSourcePrimary
         onPrimaryWatchChanged: avatarIndex = 0
-        readonly property int imgStatus: avatarImg.status
-        onImgStatusChanged: {
-            if (imgStatus === Image.Error) {
-                const nextIdx = avatarIndex + 1
-                if (nextIdx < Directories.userAvatarPaths.length)
-                    avatarIndex = nextIdx
-            }
-        }
     }
 
     GE.OpacityMask {

@@ -12,15 +12,25 @@ Menu {
     id: root
 
     property bool downDirection: false
-    property bool hasIcons: false // TODO: implement
+    // True when any item carries an icon. WMenuItem reserves the icon column
+    // on icon-less items so all labels align. Auto-detected on open.
+    property bool hasIcons: false
+    function _updateHasIcons() {
+        for (let i = 0; i < root.count; i++) {
+            const it = root.itemAt(i)
+            if (it?.icon?.name) { root.hasIcons = true; return }
+        }
+        root.hasIcons = false
+    }
+    onOpened: root._updateHasIcons()
 
     property color color: Looks.colors.bg1Base
     property alias backgroundPane: bgPane
 
     implicitWidth: background.implicitWidth + margins * 2
     implicitHeight: background.implicitHeight + margins * 2
-    margins: 10
-    padding: 3
+    margins: Looks.dp(10)
+    padding: Looks.dp(3)
     property real sourceEdgeMargin: -implicitHeight
     clip: true
     

@@ -22,6 +22,8 @@ QML_DIRS = [
     REPO_ROOT / "services",
     REPO_ROOT / "GlobalStates.qml",
     REPO_ROOT / "shell.qml",
+    REPO_ROOT / "ShellIiPanels.qml",
+    REPO_ROOT / "ShellWafflePanels.qml",
 ]
 IPC_MD = REPO_ROOT / "docs" / "IPC.md"
 OUTPUT = REPO_ROOT / "scripts" / "lib" / "ipc-registry.sh"
@@ -29,12 +31,25 @@ OUTPUT = REPO_ROOT / "scripts" / "lib" / "ipc-registry.sh"
 # Targets under this IPC.md heading are waffle-only.
 WAFFLE_SECTION_HEADING = "## Waffle-Specific Targets"
 
+# Headings under this section are top-level `inir` CLI commands, NOT IPC targets,
+# so they must not be parsed as IpcHandler targets (avoids spurious warnings).
+STANDALONE_SECTION_HEADING = "## Standalone Commands"
+
 # Known waffle-only QML paths (for family detection from QML when IPC.md has no entry).
 WAFFLE_PATH_MARKERS = ("modules/waffle/",)
 
 # Known duplicate targets (both families register the same target name).
 # LazyLoader prevents both from loading at runtime.
-KNOWN_DUPLICATES = {"bar", "session", "clipboard"}
+KNOWN_DUPLICATES = {
+    "bar", "session", "clipboard",
+    # Lightweight shell-owned routers are intentionally mirrored so the IPC
+    # contract survives family switches while their visual roots stay unloaded.
+    "cheatsheet", "osk", "overlay", "overview",
+}
+# Targets implemented outside either family subtree and loaded by both shells.
+# Some of their docs predate the family sections and may physically appear below
+# the waffle heading, so source location is the authoritative scope.
+KNOWN_SHARED_TARGETS = {"background"}
 
 
 @dataclass
@@ -103,16 +118,17 @@ def _scan_qml_file(path: Path) -> list[IpcTarget]:
                 m = _RE_FUNCTION.search(line)
                 if m and brace_depth >= 1:
                     fname = m.group(1)
-                    raw_args = m.group(2).strip()
-                    args = []
-                    if raw_args:
-                        for part in raw_args.split(","):
-                            part = part.strip()
-                            # QML style: "name: type" or just "name"
-                            arg_name = part.split(":")[0].strip()
-                            if arg_name:
-                                args.append(arg_name)
-                    functions.append(IpcFunction(name=fname, args=args))
+                    if not fname.startswith("_"):
+                        raw_args = m.group(2).strip()
+                        args = []
+                        if raw_args:
+                            for part in raw_args.split(","):
+                                part = part.strip()
+                                # QML style: "name: type" or just "name"
+                                arg_name = part.split(":")[0].strip()
+                                if arg_name:
+                                    args.append(arg_name)
+                        functions.append(IpcFunction(name=fname, args=args))
 
                 j += 1
 
@@ -190,6 +206,7 @@ def parse_ipc_md() -> dict[str, IpcMdEntry]:
 
     current: IpcMdEntry | None = None
     in_waffle_section = False
+    in_standalone_section = False
     in_table = False
     in_code_fence = False
     code_fence_lang = ""
@@ -203,6 +220,15 @@ def parse_ipc_md() -> dict[str, IpcMdEntry]:
         # Track waffle section
         if stripped == WAFFLE_SECTION_HEADING:
             in_waffle_section = True
+            continue
+
+        # Track standalone-commands section (not IPC targets)
+        if stripped == STANDALONE_SECTION_HEADING:
+            if current and collecting_desc:
+                current.description = " ".join(desc_lines).strip()
+            current = None
+            collecting_desc = False
+            in_standalone_section = True
             continue
 
         # Track code fences
@@ -233,6 +259,12 @@ def parse_ipc_md() -> dict[str, IpcMdEntry]:
             # Save previous description
             if current and collecting_desc:
                 current.description = " ".join(desc_lines).strip()
+
+            # Headings under "Standalone Commands" are CLI commands, not IPC targets.
+            if in_standalone_section:
+                current = None
+                collecting_desc = False
+                continue
 
             target_name = m.group(1)
             current = IpcMdEntry(name=target_name, is_waffle=in_waffle_section)
@@ -323,10 +355,10 @@ def merge(
             target.keybind_example = md.keybind_example
 
             # Family from IPC.md section
-            if md.is_waffle:
-                target.family = "waffle"
-            elif name in KNOWN_DUPLICATES:
+            if name in KNOWN_SHARED_TARGETS or name in KNOWN_DUPLICATES:
                 target.family = "shared"
+            elif md.is_waffle:
+                target.family = "waffle"
             else:
                 target.family = _infer_family_from_path(target.qml_file)
         else:
@@ -487,7 +519,6 @@ def generate_bash(targets: list[IpcTarget], aliases: dict[str, str]) -> str:
     for kebab, camel in sorted(aliases.items()):
         lines.append(f"  [{kebab}]={camel}")
     lines.append(")")
-    lines.append("")
 
     return "\n".join(lines) + "\n"
 

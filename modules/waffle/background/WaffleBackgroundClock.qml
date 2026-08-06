@@ -17,14 +17,18 @@ AbstractWidget {
 
     required property int screenWidth
     required property int screenHeight
+    required property string outputName
     required property int scaledScreenWidth
     required property int scaledScreenHeight
     required property real wallpaperScale
     required property string wallpaperPath
 
     readonly property var clockConfig: Config.options?.waffles?.background?.widgets?.clock ?? {}
-    readonly property bool clockEnabled: clockConfig.enable ?? false
-    readonly property string placementStrategy: clockConfig.placementStrategy ?? "leastBusy"
+    readonly property bool clockEnabled: DesktopWidgetLayout.enabled(
+        root.outputName, "waffle.clock", clockConfig.enable ?? false)
+    readonly property string placementStrategy: String(DesktopWidgetLayout.value(
+        root.outputName, "waffle.clock", "placementStrategy",
+        clockConfig.placementStrategy ?? "leastBusy"))
     readonly property string clockStyle: String(clockConfig.style ?? "hero")
     readonly property string timeFormatMode: String(clockConfig.timeFormat ?? "system")
     readonly property string dateDisplayStyle: String(clockConfig.dateStyle ?? "long")
@@ -55,8 +59,12 @@ AbstractWidget {
     readonly property real dateStyleMultiplier: clockStyle === "minimal" ? 0.82 : clockStyle === "balanced" ? 0.9 : 1.0
     readonly property int contentSpacing: Math.round((clockStyle === "minimal" ? 2 : clockStyle === "balanced" ? 4 : 6) * root.localScale)
     readonly property int dateTopMargin: Math.round((clockStyle === "hero" ? -6 : clockStyle === "balanced" ? -2 : 0) * root.localScale)
-    property real targetX: Math.max(0, Math.min(Number(clockConfig.x ?? 100), scaledScreenWidth - width))
-    property real targetY: Math.max(0, Math.min(Number(clockConfig.y ?? 100), scaledScreenHeight - height))
+    property real targetX: Math.max(0, Math.min(Number(DesktopWidgetLayout.value(
+        root.outputName, "waffle.clock", "x", clockConfig.x ?? 100)),
+        scaledScreenWidth - width))
+    property real targetY: Math.max(0, Math.min(Number(DesktopWidgetLayout.value(
+        root.outputName, "waffle.clock", "y", clockConfig.y ?? 100)),
+        scaledScreenHeight - height))
     readonly property real localScale: Math.max(0.92, Math.min(1.12, Math.min(screenWidth, screenHeight) / 1080))
     readonly property color dominantColor: _dominantColor
     readonly property bool dominantColorIsDark: dominantColor.hslLightness < 0.5
@@ -146,15 +154,22 @@ AbstractWidget {
             return
         root.targetX = root.x
         root.targetY = root.y
-        Config.setNestedValue("waffles.background.widgets.clock.x", Math.round(root.x))
-        Config.setNestedValue("waffles.background.widgets.clock.y", Math.round(root.y))
+        DesktopWidgetLayout.setValues(root.outputName, "waffle.clock", {
+            x: Math.round(root.x),
+            y: Math.round(root.y),
+            placementStrategy: "free"
+        })
     }
 
     function syncFreePositionFromConfig(): void {
         if (!Config.ready || placementStrategy !== "free" || forceCenter)
             return
-        root.targetX = Math.max(0, Math.min(Number(clockConfig.x ?? 100), scaledScreenWidth - width))
-        root.targetY = Math.max(0, Math.min(Number(clockConfig.y ?? 100), scaledScreenHeight - height))
+        root.targetX = Math.max(0, Math.min(Number(DesktopWidgetLayout.value(
+            root.outputName, "waffle.clock", "x", clockConfig.x ?? 100)),
+            scaledScreenWidth - width))
+        root.targetY = Math.max(0, Math.min(Number(DesktopWidgetLayout.value(
+            root.outputName, "waffle.clock", "y", clockConfig.y ?? 100)),
+            scaledScreenHeight - height))
         root.x = root.targetX
         root.y = root.targetY
     }
@@ -181,6 +196,14 @@ AbstractWidget {
     Connections {
         target: Config
         function onReadyChanged() {
+            root.syncFreePositionFromConfig()
+            root.refreshPlacementIfNeeded()
+        }
+    }
+
+    Connections {
+        target: DesktopWidgetLayout
+        function onRecordsChanged(): void {
             root.syncFreePositionFromConfig()
             root.refreshPlacementIfNeeded()
         }

@@ -8,6 +8,7 @@ import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Hyprland
 import qs.services
+import qs.modules.settings
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions as CF
@@ -23,8 +24,31 @@ Scope {
 
     property bool settingsOpen: GlobalStates.settingsOverlayOpen ?? false
 
-    // Keep the overlay tree unloaded while closed; search can request preload on demand.
-    property bool _panelLoaded: settingsOpen
+    // Keep the PanelWindow alive briefly after close so the scrim backdrop
+    // can fade out (the settings card itself shows/hides instantly, matching
+    // the window-mode settings UI). Without this the Loader tears down the
+    // instant settingsOpen flips false and the scrim cut to black.
+    property bool _panelLoaded: settingsOpen || _closeAnimRunning
+    property bool _closeAnimRunning: false
+
+    onSettingsOpenChanged: {
+        if (settingsOpen) {
+            _closeAnimRunning = false
+            closeAnimTimer.stop()
+        } else {
+            _closeAnimRunning = true
+            closeAnimTimer.restart()
+        }
+    }
+
+    // Match the scrim fade-out (elementMoveFast) + a small margin so teardown
+    // lands right after the backdrop finishes fading.
+    Timer {
+        id: closeAnimTimer
+        interval: Appearance.animation.elementMoveFast.duration + 40
+        repeat: false
+        onTriggered: _closeAnimRunning = false
+    }
 
     // ── Search system (full, same as settings.qml) ──
     property string overlaySearchText: ""
@@ -39,171 +63,8 @@ Scope {
         onTriggered: root.recomputeOverlaySearchResults()
     }
 
-    // Full search index matching settings.qml
-    property var overlaySearchIndex: [
-        // Quick (page 0)
-        { pageIndex: 0, pageName: overlayPages[0].name, section: Translation.tr("Wallpaper & Colors"), label: Translation.tr("Wallpaper & Colors"), description: Translation.tr("Wallpaper, palette and transparency settings"), keywords: ["wallpaper", "colors", "palette", "theme", "background"] },
-        { pageIndex: 0, pageName: overlayPages[0].name, section: Translation.tr("Bar & screen"), label: Translation.tr("Bar & screen"), description: Translation.tr("Bar position and screen rounding"), keywords: ["bar", "position", "screen", "round", "corner"] },
-        // General (page 1)
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Audio"), label: Translation.tr("Audio"), description: Translation.tr("Volume protection and limits"), keywords: ["audio", "volume", "earbang", "limit", "sound"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Audio"), label: Translation.tr("Volume protection"), description: Translation.tr("Prevent sudden volume spikes"), keywords: ["volume", "protection", "earbang", "spike", "loud", "limit", "max"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Audio"), label: Translation.tr("Max volume increase"), description: Translation.tr("Maximum volume jump allowed per step"), keywords: ["volume", "increase", "step", "max", "jump"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Battery"), label: Translation.tr("Battery"), description: Translation.tr("Battery warnings and auto suspend thresholds"), keywords: ["battery", "low", "critical", "suspend", "full"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Battery"), label: Translation.tr("Low battery threshold"), description: Translation.tr("Percentage to show low battery warning"), keywords: ["battery", "low", "warning", "threshold", "percentage"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Battery"), label: Translation.tr("Critical battery"), description: Translation.tr("Percentage for critical battery warning"), keywords: ["battery", "critical", "danger", "threshold"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Battery"), label: Translation.tr("Auto suspend"), description: Translation.tr("Automatically suspend on critical battery"), keywords: ["battery", "suspend", "sleep", "auto", "critical"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Battery"), label: Translation.tr("Charge limit"), description: Translation.tr("Limit maximum charge to preserve battery health"), keywords: ["battery", "charge", "limit", "health", "threshold", "conservation", "sysfs"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Language"), label: Translation.tr("Language"), description: Translation.tr("Interface language and AI translations"), keywords: ["language", "locale", "translation", "gemini", "idioma", "español", "english"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Language"), label: Translation.tr("UI Language"), description: Translation.tr("Interface display language"), keywords: ["language", "locale", "ui", "display", "idioma", "english", "spanish", "chinese", "japanese", "russian"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Policies"), label: Translation.tr("AI Policy"), description: Translation.tr("Enable or disable AI features"), keywords: ["ai", "policy", "enable", "disable", "local", "privacy"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Policies"), label: Translation.tr("Weeb Policy"), description: Translation.tr("Anime and manga content visibility"), keywords: ["weeb", "anime", "manga", "nsfw", "content", "policy"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Sounds"), label: Translation.tr("Sounds"), description: Translation.tr("Battery, Pomodoro and notification sounds"), keywords: ["sound", "notification", "pomodoro", "battery", "alert", "audio"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Sounds"), label: Translation.tr("Notification sound"), description: Translation.tr("Play sound when a notification arrives"), keywords: ["sound", "notification", "alert", "ring", "chime"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Time"), label: Translation.tr("Time"), description: Translation.tr("Clock format and seconds"), keywords: ["time", "clock", "24h", "12h", "format"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Time"), label: Translation.tr("Clock format"), description: Translation.tr("Time display format (e.g., hh:mm or h:mm AP)"), keywords: ["time", "clock", "format", "24h", "12h", "am", "pm", "hour", "minute"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Time"), label: Translation.tr("Show seconds"), description: Translation.tr("Update clock every second"), keywords: ["time", "seconds", "precision", "clock", "update"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Time"), label: Translation.tr("Long date format"), description: Translation.tr("Customize the full date format shown by clocks"), keywords: ["date", "format", "long", "weekday", "month", "clock", "bar", "taskbar"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Time"), label: Translation.tr("Short date format"), description: Translation.tr("Customize the compact date format used by shell surfaces"), keywords: ["date", "format", "short", "compact", "clock", "calendar"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Keyboard"), label: Translation.tr("Keyboard popups"), description: Translation.tr("Show popups for Caps Lock, Num Lock, and layout changes"), keywords: ["keyboard", "caps", "num", "layout", "language", "popup", "indicator"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Keyboard"), label: Translation.tr("Layout popup"), description: Translation.tr("Show a popup when the keyboard layout changes"), keywords: ["keyboard", "layout", "language", "popup", "indicator", "show", "hide"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Keyboard"), label: Translation.tr("Caps Lock popup"), description: Translation.tr("Show a popup when Caps Lock changes"), keywords: ["keyboard", "caps", "capslock", "lock", "popup", "indicator", "show", "hide"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Keyboard"), label: Translation.tr("Num Lock popup"), description: Translation.tr("Show a popup when Num Lock changes"), keywords: ["keyboard", "num", "numlock", "lock", "popup", "indicator", "show", "hide"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Keyboard"), label: Translation.tr("Keyboard panel indicators"), description: Translation.tr("Show keyboard status in the bar or taskbar"), keywords: ["keyboard", "caps", "num", "layout", "language", "bar", "taskbar", "indicator"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Keyboard"), label: Translation.tr("Layout indicator"), description: Translation.tr("Show the current keyboard layout in the bar or taskbar"), keywords: ["keyboard", "layout", "language", "indicator", "bar", "taskbar", "show", "hide"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Keyboard"), label: Translation.tr("Caps Lock indicator"), description: Translation.tr("Show Caps Lock in the bar or taskbar"), keywords: ["keyboard", "caps", "capslock", "lock", "indicator", "bar", "taskbar", "show", "hide"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Keyboard"), label: Translation.tr("Num Lock indicator"), description: Translation.tr("Show Num Lock in the bar or taskbar"), keywords: ["keyboard", "num", "numlock", "lock", "indicator", "bar", "taskbar", "show", "hide"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Work Safety"), label: Translation.tr("Work Safety"), description: Translation.tr("Hide sensitive content on public networks"), keywords: ["work", "safety", "nsfw", "public", "network", "hide", "clipboard", "wallpaper"] },
-        { pageIndex: 1, pageName: overlayPages[1].name, section: Translation.tr("Lock screen"), label: Translation.tr("Lock screen"), description: Translation.tr("Lock screen behaviour and style"), keywords: ["lock", "screen", "hyprlock", "blur", "password", "security"] },
-        // Bar (page 2)
-        { pageIndex: 2, pageName: overlayPages[2].name, section: Translation.tr("Positioning"), label: Translation.tr("Bar position"), description: Translation.tr("Bar position, auto hide and style"), keywords: ["bar", "position", "auto", "hide", "corner", "style", "top", "bottom", "float", "vertical"] },
-        { pageIndex: 2, pageName: overlayPages[2].name, section: Translation.tr("Positioning"), label: Translation.tr("Auto hide"), description: Translation.tr("Automatically hide the bar"), keywords: ["bar", "auto", "hide", "show", "hover", "reveal"] },
-        { pageIndex: 2, pageName: overlayPages[2].name, section: Translation.tr("Positioning"), label: Translation.tr("Corner style"), description: Translation.tr("Bar corner style: hug, float, rectangle or card"), keywords: ["bar", "corner", "style", "hug", "float", "rectangle", "card", "rounding"] },
-        { pageIndex: 2, pageName: overlayPages[2].name, section: Translation.tr("Positioning"), label: Translation.tr("Vertical bar"), description: Translation.tr("Use vertical bar layout on the side"), keywords: ["bar", "vertical", "side", "left", "orientation"] },
-        { pageIndex: 2, pageName: overlayPages[2].name, section: Translation.tr("Positioning"), label: Translation.tr("Bar background"), description: Translation.tr("Show or hide bar background"), keywords: ["bar", "background", "transparent", "show", "hide"] },
-        { pageIndex: 2, pageName: overlayPages[2].name, section: Translation.tr("Positioning"), label: Translation.tr("Blur background"), description: Translation.tr("Enable glass blur behind the bar"), keywords: ["bar", "blur", "glass", "background", "transparent"] },
-        { pageIndex: 2, pageName: overlayPages[2].name, section: Translation.tr("Notifications"), label: Translation.tr("Notification indicator"), description: Translation.tr("Notification unread count in the bar"), keywords: ["notifications", "unread", "indicator", "count", "badge", "bar"] },
-        { pageIndex: 2, pageName: overlayPages[2].name, section: Translation.tr("Tray"), label: Translation.tr("System tray"), description: Translation.tr("System tray icons behaviour"), keywords: ["tray", "systray", "icons", "pinned", "monochrome"] },
-        { pageIndex: 2, pageName: overlayPages[2].name, section: Translation.tr("Tray"), label: Translation.tr("Monochrome tray icons"), description: Translation.tr("Tint tray icons to match theme"), keywords: ["tray", "monochrome", "tint", "icons", "theme", "color"] },
-        { pageIndex: 2, pageName: overlayPages[2].name, section: Translation.tr("Utility buttons"), label: Translation.tr("Utility buttons"), description: Translation.tr("Screen snip, color picker and toggles"), keywords: ["screen", "snip", "color", "picker", "mic", "dark", "mode", "performance", "screenshot", "record", "notepad", "keyboard"] },
-        { pageIndex: 2, pageName: overlayPages[2].name, section: Translation.tr("Utility buttons"), label: Translation.tr("Screen record button"), description: Translation.tr("Show screen record button in bar"), keywords: ["screen", "record", "button", "bar", "recording", "video"] },
-        { pageIndex: 2, pageName: overlayPages[2].name, section: Translation.tr("Utility buttons"), label: Translation.tr("Dark mode toggle"), description: Translation.tr("Show dark/light mode toggle in bar"), keywords: ["dark", "mode", "light", "toggle", "bar", "theme"] },
-        { pageIndex: 2, pageName: overlayPages[2].name, section: Translation.tr("Workspaces"), label: Translation.tr("Workspaces"), description: Translation.tr("Workspace indicator count, numbers and icons"), keywords: ["workspace", "numbers", "icons", "delays", "scroll", "indicator"] },
-        { pageIndex: 2, pageName: overlayPages[2].name, section: Translation.tr("Workspaces"), label: Translation.tr("App icons in workspaces"), description: Translation.tr("Show app icons inside workspace indicators"), keywords: ["workspace", "app", "icons", "show", "indicator"] },
-        { pageIndex: 2, pageName: overlayPages[2].name, section: Translation.tr("Workspaces"), label: Translation.tr("Monochrome workspace icons"), description: Translation.tr("Tint workspace app icons to match theme"), keywords: ["workspace", "monochrome", "icons", "tint", "theme"] },
-        { pageIndex: 2, pageName: overlayPages[2].name, section: Translation.tr("Workspaces"), label: Translation.tr("Scroll behavior"), description: Translation.tr("Workspace or column scroll behavior"), keywords: ["workspace", "scroll", "column", "behavior", "mouse", "touchpad"] },
-        { pageIndex: 2, pageName: overlayPages[2].name, section: Translation.tr("Weather"), label: Translation.tr("Bar weather"), description: Translation.tr("Show weather in the bar"), keywords: ["weather", "bar", "temperature", "enable"] },
-        { pageIndex: 2, pageName: overlayPages[2].name, section: Translation.tr("Bar modules"), label: Translation.tr("Bar module layout"), description: Translation.tr("Reorder and toggle bar modules"), keywords: ["bar", "module", "layout", "order", "reorder", "resources", "media", "clock"] },
-        // Background (page 3)
-        { pageIndex: 3, pageName: overlayPages[3].name, section: Translation.tr("Parallax"), label: Translation.tr("Parallax"), description: Translation.tr("Background parallax based on workspace and sidebar"), keywords: ["parallax", "background", "zoom", "workspace", "sidebar"] },
-        { pageIndex: 3, pageName: overlayPages[3].name, section: Translation.tr("Parallax"), label: Translation.tr("Workspace parallax"), description: Translation.tr("Shift background when switching workspaces"), keywords: ["parallax", "workspace", "shift", "scroll", "zoom"] },
-        { pageIndex: 3, pageName: overlayPages[3].name, section: Translation.tr("Effects"), label: Translation.tr("Wallpaper effects"), description: Translation.tr("Wallpaper blur and dim overlay"), keywords: ["blur", "dim", "wallpaper", "effects", "overlay"] },
-        { pageIndex: 3, pageName: overlayPages[3].name, section: Translation.tr("Effects"), label: Translation.tr("Wallpaper blur"), description: Translation.tr("Blur the wallpaper when windows are open"), keywords: ["blur", "wallpaper", "background", "radius", "gaussian"] },
-        { pageIndex: 3, pageName: overlayPages[3].name, section: Translation.tr("Effects"), label: Translation.tr("Wallpaper dim"), description: Translation.tr("Darken wallpaper overlay"), keywords: ["dim", "wallpaper", "darken", "overlay", "opacity"] },
-        { pageIndex: 3, pageName: overlayPages[3].name, section: Translation.tr("Effects"), label: Translation.tr("Dynamic dim"), description: Translation.tr("Extra dim when windows are present on workspace"), keywords: ["dynamic", "dim", "windows", "workspace", "darken"] },
-        { pageIndex: 3, pageName: overlayPages[3].name, section: Translation.tr("Backdrop"), label: Translation.tr("Backdrop"), description: Translation.tr("Panel backdrop wallpaper and effects"), keywords: ["backdrop", "panel", "wallpaper", "blur", "vignette", "saturation"] },
-        { pageIndex: 3, pageName: overlayPages[3].name, section: Translation.tr("Backdrop"), label: Translation.tr("Backdrop vignette"), description: Translation.tr("Vignette darkening effect on backdrop"), keywords: ["backdrop", "vignette", "darken", "edges", "effect"] },
-        // Desktop Widgets (page 14)
-        { pageIndex: 14, pageName: overlayPages[14].name, section: Translation.tr("Edit Mode"), label: Translation.tr("Widget edit mode"), description: Translation.tr("Grid overlay and snap-to-grid for widget placement"), keywords: ["widget", "edit", "grid", "snap", "placement", "drag"] },
-        { pageIndex: 14, pageName: overlayPages[14].name, section: Translation.tr("Clock"), label: Translation.tr("Desktop clock"), description: Translation.tr("Clock widget on the desktop background"), keywords: ["clock", "widget", "cookie", "digital", "background", "desktop"] },
-        { pageIndex: 14, pageName: overlayPages[14].name, section: Translation.tr("Clock"), label: Translation.tr("Clock style"), description: Translation.tr("Cookie (analog) or digital clock"), keywords: ["clock", "style", "cookie", "digital", "analog", "hands"] },
-        { pageIndex: 14, pageName: overlayPages[14].name, section: Translation.tr("Weather"), label: Translation.tr("Desktop weather widget"), description: Translation.tr("Weather display on the desktop background"), keywords: ["weather", "widget", "background", "temperature"] },
-        { pageIndex: 14, pageName: overlayPages[14].name, section: Translation.tr("Media Controls"), label: Translation.tr("Desktop media widget"), description: Translation.tr("Media player controls on the desktop background"), keywords: ["media", "widget", "background", "player", "music", "album"] },
-        { pageIndex: 14, pageName: overlayPages[14].name, section: Translation.tr("Visualizer"), label: Translation.tr("Audio visualizer"), description: Translation.tr("Audio visualizer bars on the desktop"), keywords: ["visualizer", "audio", "bars", "music", "equalizer", "spectrum"] },
-        { pageIndex: 14, pageName: overlayPages[14].name, section: Translation.tr("System Monitor"), label: Translation.tr("System monitor widget"), description: Translation.tr("CPU, RAM, GPU usage on the desktop"), keywords: ["system", "monitor", "cpu", "ram", "gpu", "usage", "performance"] },
-        { pageIndex: 14, pageName: overlayPages[14].name, section: Translation.tr("Battery"), label: Translation.tr("Desktop battery widget"), description: Translation.tr("Battery status on the desktop background"), keywords: ["battery", "widget", "background", "charge", "power"] },
-        { pageIndex: 14, pageName: overlayPages[14].name, section: Translation.tr("Custom Widgets"), label: Translation.tr("Custom widgets"), description: Translation.tr("Create, install, and manage custom QML widgets"), keywords: ["custom", "widget", "create", "qml", "install", "user", "plugin"] },
-        // Monitors (page 15)
-        { pageIndex: 15, pageName: overlayPages[15].name, section: Translation.tr("Shell visibility"), label: Translation.tr("Primary monitor"), description: Translation.tr("Choose the default output for shell popups"), keywords: ["monitor", "display", "primary", "screen", "output"] },
-        { pageIndex: 15, pageName: overlayPages[15].name, section: Translation.tr("Material shell surfaces"), label: Translation.tr("Bar, dock, and media controls"), description: Translation.tr("Choose which monitors show Material shell surfaces"), keywords: ["monitor", "visibility", "bar", "dock", "media", "workspace", "secondary"] },
-        { pageIndex: 15, pageName: overlayPages[15].name, section: Translation.tr("Shared popups and widgets"), label: Translation.tr("Shared popups and widgets"), description: Translation.tr("Choose which monitors show notifications, OSD, and desktop widgets"), keywords: ["monitor", "visibility", "notifications", "osd", "widgets", "secondary", "workspace"] },
-        // Themes (page 4)
-        { pageIndex: 4, pageName: overlayPages[4].name, section: Translation.tr("Global Style"), label: Translation.tr("Global Style"), description: Translation.tr("Material, Cards, Aurora glass effect, Inir TUI style"), keywords: ["global", "style", "aurora", "inir", "material", "cards", "glass", "tui", "transparency", "blur"] },
-        { pageIndex: 4, pageName: overlayPages[4].name, section: Translation.tr("Global Style"), label: Translation.tr("Aurora"), description: Translation.tr("Glass effect with wallpaper blur behind panels"), keywords: ["aurora", "glass", "blur", "transparency", "style", "translucent"] },
-        { pageIndex: 4, pageName: overlayPages[4].name, section: Translation.tr("Global Style"), label: Translation.tr("Inir"), description: Translation.tr("TUI-inspired style with accent borders"), keywords: ["inir", "tui", "terminal", "borders", "style", "minimal"] },
-        { pageIndex: 4, pageName: overlayPages[4].name, section: Translation.tr("Global Style"), label: Translation.tr("Material"), description: Translation.tr("Material Design solid backgrounds"), keywords: ["material", "solid", "style", "default", "google"] },
-        { pageIndex: 4, pageName: overlayPages[4].name, section: Translation.tr("Global Style"), label: Translation.tr("Cards"), description: Translation.tr("Card-style elevated containers"), keywords: ["cards", "card", "style", "elevated", "shadow"] },
-        { pageIndex: 4, pageName: overlayPages[4].name, section: Translation.tr("Theme Presets"), label: Translation.tr("Theme Presets"), description: Translation.tr("Predefined color themes like Gruvbox, Catppuccin, Nord, Dracula"), keywords: ["theme", "preset", "gruvbox", "catppuccin", "nord", "dracula", "material", "colors", "palette", "monokai", "solarized", "tokyo", "night", "everforest", "rose", "pine"] },
-        { pageIndex: 4, pageName: overlayPages[4].name, section: Translation.tr("Auto Theme"), label: Translation.tr("Auto Theme"), description: Translation.tr("Automatic colors from wallpaper"), keywords: ["auto", "wallpaper", "dynamic", "colors", "material you", "generate"] },
-        { pageIndex: 4, pageName: overlayPages[4].name, section: Translation.tr("Custom Theme"), label: Translation.tr("Custom Theme Editor"), description: Translation.tr("Create and edit custom color themes"), keywords: ["custom", "theme", "editor", "color", "create", "edit", "picker"] },
-        { pageIndex: 4, pageName: overlayPages[4].name, section: Translation.tr("Typography"), label: Translation.tr("Font settings"), description: Translation.tr("Main font, title font, monospace font and size"), keywords: ["font", "typography", "size", "family", "main", "title", "monospace", "scale"] },
-        { pageIndex: 4, pageName: overlayPages[4].name, section: Translation.tr("Typography"), label: Translation.tr("Font sync"), description: Translation.tr("Sync fonts with GTK/KDE system apps"), keywords: ["font", "sync", "gtk", "kde", "system", "apps"] },
-        { pageIndex: 4, pageName: overlayPages[4].name, section: Translation.tr("Icons"), label: Translation.tr("Icon theme"), description: Translation.tr("System icon theme for tray and apps"), keywords: ["icon", "theme", "tray", "system", "apps", "gtk"] },
-        { pageIndex: 4, pageName: overlayPages[4].name, section: Translation.tr("Icons"), label: Translation.tr("Dock icon theme"), description: Translation.tr("Separate icon theme for the dock"), keywords: ["dock", "icon", "theme", "separate", "override"] },
-        { pageIndex: 4, pageName: overlayPages[4].name, section: Translation.tr("Terminal Theming"), label: Translation.tr("Terminal theming"), description: Translation.tr("Apply wallpaper colors to terminal emulators"), keywords: ["terminal", "theme", "kitty", "alacritty", "foot", "wezterm", "ghostty", "konsole", "colors"] },
-        { pageIndex: 4, pageName: overlayPages[4].name, section: Translation.tr("Transparency"), label: Translation.tr("Transparency"), description: Translation.tr("Panel and content transparency"), keywords: ["transparency", "opacity", "translucent", "see-through", "glass"] },
-        { pageIndex: 4, pageName: overlayPages[4].name, section: Translation.tr("Screen Rounding"), label: Translation.tr("Fake screen rounding"), description: Translation.tr("Rounded corners for the screen edges"), keywords: ["screen", "rounding", "corners", "fake", "round", "edges"] },
-        { pageIndex: 4, pageName: overlayPages[4].name, section: Translation.tr("Theme Schedule"), label: Translation.tr("Theme schedule"), description: Translation.tr("Automatically switch themes at day/night times"), keywords: ["theme", "schedule", "day", "night", "auto", "switch", "time"] },
-        // Panels (page 5) — dock, sidebars, overview, alt-tab, notifications, widgets
-        { pageIndex: 5, pageName: overlayPages[5].name, section: Translation.tr("Alt+Tab Switcher"), label: Translation.tr("Alt+Tab Switcher"), description: Translation.tr("Window switcher preset and behavior"), keywords: ["alt", "tab", "switcher", "window", "preset", "default", "list", "compact"] },
-        { pageIndex: 5, pageName: overlayPages[5].name, section: Translation.tr("Dock"), label: Translation.tr("Dock"), description: Translation.tr("Dock position and behaviour"), keywords: ["dock", "position", "pinned", "hover", "reveal", "desktop", "show"] },
-        { pageIndex: 5, pageName: overlayPages[5].name, section: Translation.tr("Dock"), label: Translation.tr("Dock enable"), description: Translation.tr("Enable or disable the dock"), keywords: ["dock", "enable", "disable", "show", "hide"] },
-        { pageIndex: 5, pageName: overlayPages[5].name, section: Translation.tr("Dock"), label: Translation.tr("Dock position"), description: Translation.tr("Dock position: top, bottom, left, right"), keywords: ["dock", "position", "top", "bottom", "left", "right"] },
-        { pageIndex: 5, pageName: overlayPages[5].name, section: Translation.tr("Dock"), label: Translation.tr("Pinned apps"), description: Translation.tr("Apps pinned to the dock"), keywords: ["dock", "pinned", "apps", "pin", "favorite"] },
-        { pageIndex: 5, pageName: overlayPages[5].name, section: Translation.tr("Dock"), label: Translation.tr("Show on desktop"), description: Translation.tr("Show dock when no window is focused"), keywords: ["dock", "desktop", "show", "focus", "window", "empty"] },
-        { pageIndex: 5, pageName: overlayPages[5].name, section: Translation.tr("Dock"), label: Translation.tr("Window preview"), description: Translation.tr("Show window preview on hover"), keywords: ["dock", "preview", "hover", "window", "thumbnail"] },
-        { pageIndex: 5, pageName: overlayPages[5].name, section: Translation.tr("Dock"), label: Translation.tr("Dock icon size"), description: Translation.tr("Size of dock icons"), keywords: ["dock", "icon", "size", "height"] },
-        { pageIndex: 5, pageName: overlayPages[5].name, section: Translation.tr("Dock"), label: Translation.tr("Monochrome dock icons"), description: Translation.tr("Tint dock icons to match theme"), keywords: ["dock", "monochrome", "icons", "tint", "theme"] },
-        { pageIndex: 5, pageName: overlayPages[5].name, section: Translation.tr("Notifications"), label: Translation.tr("Notifications"), description: Translation.tr("Notification timeouts and popup position"), keywords: ["notifications", "timeout", "popup", "position"] },
-        { pageIndex: 5, pageName: overlayPages[5].name, section: Translation.tr("Notifications"), label: Translation.tr("Notification timeout"), description: Translation.tr("Duration before notification auto-closes"), keywords: ["notification", "timeout", "duration", "auto", "close", "dismiss"] },
-        { pageIndex: 5, pageName: overlayPages[5].name, section: Translation.tr("Notifications"), label: Translation.tr("Notification position"), description: Translation.tr("Where popup notifications appear on screen"), keywords: ["notification", "position", "popup", "corner", "top", "bottom", "left", "right"] },
-        { pageIndex: 5, pageName: overlayPages[5].name, section: Translation.tr("Notifications"), label: Translation.tr("Do Not Disturb"), description: Translation.tr("Silence all notifications"), keywords: ["notification", "dnd", "silent", "mute", "disturb", "quiet", "do not"] },
-        { pageIndex: 5, pageName: overlayPages[5].name, section: Translation.tr("Sidebars"), label: Translation.tr("Sidebars"), description: Translation.tr("Sidebar toggles, sliders and corner open"), keywords: ["sidebar", "quick", "toggles", "sliders", "corner"] },
-        { pageIndex: 5, pageName: overlayPages[5].name, section: Translation.tr("Sidebars"), label: Translation.tr("Corner open"), description: Translation.tr("Open sidebar by hovering screen corners"), keywords: ["sidebar", "corner", "open", "hover", "edge", "clickless"] },
-        { pageIndex: 5, pageName: overlayPages[5].name, section: Translation.tr("Widgets"), label: Translation.tr("Widgets"), description: Translation.tr("Background widgets configuration and positions"), keywords: ["widgets", "background", "overlay", "media", "clock", "weather"] },
-        { pageIndex: 5, pageName: overlayPages[5].name, section: Translation.tr("Overview"), label: Translation.tr("Overview"), description: Translation.tr("Overview scale, rows and columns"), keywords: ["overview", "grid", "rows", "columns", "scale"] },
-        // Tools (page 6) — recording, crosshair, overlays, region selector, OSD
-        { pageIndex: 6, pageName: overlayPages[6].name, section: Translation.tr("Screen recording"), label: Translation.tr("Screen recording"), description: Translation.tr("Recording presets, codecs and hardware acceleration"), keywords: ["screen", "record", "recording", "video", "codec", "gpu", "vaapi", "ffmpeg", "capture"] },
-        { pageIndex: 6, pageName: overlayPages[6].name, section: Translation.tr("Region selector"), label: Translation.tr("Region selector"), description: Translation.tr("Screen snipping and Google Lens region selection"), keywords: ["region", "selector", "snip", "screenshot", "lens", "circle", "selection", "capture"] },
-        { pageIndex: 6, pageName: overlayPages[6].name, section: Translation.tr("Crosshair overlay"), label: Translation.tr("Crosshair overlay"), description: Translation.tr("In-game crosshair overlay"), keywords: ["crosshair", "overlay", "aim", "game", "fps", "valorant"] },
-        { pageIndex: 6, pageName: overlayPages[6].name, section: Translation.tr("Discord overlay"), label: Translation.tr("Discord overlay"), description: Translation.tr("Discord activity in sidebar"), keywords: ["discord", "overlay", "activity", "sidebar", "rich", "presence"] },
-        { pageIndex: 6, pageName: overlayPages[6].name, section: Translation.tr("Overlay widgets"), label: Translation.tr("Overlay widgets"), description: Translation.tr("Overlay background dim and animations"), keywords: ["overlay", "darken", "scrim", "zoom", "animation", "opacity", "widgets"] },
-        { pageIndex: 6, pageName: overlayPages[6].name, section: Translation.tr("On-screen display"), label: Translation.tr("On-screen display"), description: Translation.tr("Volume, brightness and media indicator settings"), keywords: ["osd", "on-screen", "display", "volume", "brightness", "media", "music", "indicator", "timeout"] },
-        // Services (page 7)
-        { pageIndex: 7, pageName: overlayPages[7].name, section: Translation.tr("AI"), label: Translation.tr("AI"), description: Translation.tr("System prompt for sidebar AI"), keywords: ["ai", "prompt", "system", "sidebar", "chat"] },
-        { pageIndex: 7, pageName: overlayPages[7].name, section: Translation.tr("Music Recognition"), label: Translation.tr("Music Recognition"), description: Translation.tr("Song recognition timeout and interval"), keywords: ["music", "recognition", "song", "timeout", "shazam", "songrec"] },
-        { pageIndex: 7, pageName: overlayPages[7].name, section: Translation.tr("Search"), label: Translation.tr("Search"), description: Translation.tr("Search engine, prefix configuration"), keywords: ["search", "prefix", "engine", "web", "google", "app", "launcher"] },
-        { pageIndex: 7, pageName: overlayPages[7].name, section: Translation.tr("Weather"), label: Translation.tr("Weather"), description: Translation.tr("Weather units, GPS and city"), keywords: ["weather", "gps", "city", "fahrenheit", "celsius", "temperature", "units"] },
-        { pageIndex: 7, pageName: overlayPages[7].name, section: Translation.tr("Idle & Power"), label: Translation.tr("Idle & Power"), description: Translation.tr("Screen off, lock and suspend timeouts"), keywords: ["idle", "power", "screen", "off", "lock", "suspend", "sleep", "timeout"] },
-        { pageIndex: 5, pageName: overlayPages[5].name, section: Translation.tr("Controls Card"), label: Translation.tr("Night light"), description: Translation.tr("Show or hide the night light toggle in the sidebar"), keywords: ["night", "light", "blue", "filter", "sidebar", "toggle", "controls"] },
-        { pageIndex: 0, pageName: overlayPages[0].name, section: Translation.tr("GameMode"), label: Translation.tr("GameMode"), description: Translation.tr("Auto-detect fullscreen games and reduce effects"), keywords: ["game", "mode", "fullscreen", "performance", "fps", "auto", "detect", "animations", "effects", "notifications", "suppress"] },
-        { pageIndex: 7, pageName: overlayPages[7].name, section: Translation.tr("Applications"), label: Translation.tr("Default applications"), description: Translation.tr("Terminal, browser, network and account commands"), keywords: ["apps", "applications", "terminal", "browser", "network", "bluetooth", "account", "default"] },
-        // Advanced (page 8)
-        { pageIndex: 8, pageName: overlayPages[8].name, section: Translation.tr("Color generation"), label: Translation.tr("Color generation"), description: Translation.tr("Wallpaper-based color theming and palette type"), keywords: ["color", "generation", "theming", "wallpaper", "material you", "palette"] },
-        { pageIndex: 8, pageName: overlayPages[8].name, section: Translation.tr("Color generation"), label: Translation.tr("Terminal saturation"), description: Translation.tr("Saturation intensity of terminal colors from wallpaper"), keywords: ["terminal", "color", "saturation", "vivid", "muted", "intensity"] },
-        { pageIndex: 8, pageName: overlayPages[8].name, section: Translation.tr("Color generation"), label: Translation.tr("Terminal brightness"), description: Translation.tr("Brightness/lightness of terminal colors from wallpaper"), keywords: ["terminal", "color", "brightness", "lightness", "dark", "light"] },
-        { pageIndex: 8, pageName: overlayPages[8].name, section: Translation.tr("Color generation"), label: Translation.tr("Terminal harmony"), description: Translation.tr("How much to blend terminal colors with the wallpaper palette"), keywords: ["terminal", "color", "harmony", "blend", "palette", "wallpaper"] },
-        { pageIndex: 8, pageName: overlayPages[8].name, section: Translation.tr("Performance"), label: Translation.tr("Low power mode"), description: Translation.tr("Reduce resource usage for low-end hardware"), keywords: ["performance", "low", "power", "mode", "reduce", "battery", "laptop"] },
-        { pageIndex: 8, pageName: overlayPages[8].name, section: Translation.tr("Interactions"), label: Translation.tr("Scrolling"), description: Translation.tr("Touchpad and mouse scroll speed"), keywords: ["scroll", "touchpad", "mouse", "speed", "fast", "slow", "sensitivity"] },
-        // Shortcuts (page 9)
-        { pageIndex: 9, pageName: overlayPages[9].name, section: Translation.tr("Keyboard Shortcuts"), label: Translation.tr("Keyboard Shortcuts"), description: Translation.tr("Niri and ii keybindings reference"), keywords: ["shortcuts", "keybindings", "hotkeys", "keyboard", "cheatsheet", "terminal", "clipboard", "volume", "brightness", "screenshot", "lock", "workspace", "window", "focus", "move", "fullscreen", "floating", "overview", "settings", "wallpaper", "media", "play", "pause"] },
-        // Modules (page 10)
-        { pageIndex: 10, pageName: overlayPages[10].name, section: Translation.tr("Panel Modules"), label: Translation.tr("Panel Modules"), description: Translation.tr("Enable or disable shell modules"), keywords: ["modules", "panels", "enable", "disable", "bar", "sidebar", "overview"] },
-        { pageIndex: 10, pageName: overlayPages[10].name, section: Translation.tr("Display scaling"), label: Translation.tr("UI scale (%)"), description: Translation.tr("Scale the entire shell UI for HiDPI / 4K monitors"), keywords: ["scale", "dpi", "hidpi", "4k", "zoom", "size", "display", "monitor", "resolution"] },
-        { pageIndex: 10, pageName: overlayPages[10].name, section: Translation.tr("Wallpaper selector"), label: Translation.tr("Wallpaper selector"), description: Translation.tr("Wallpaper picker style and behavior"), keywords: ["wallpaper", "selector", "picker", "coverflow", "grid", "file"] },
-        { pageIndex: 10, pageName: overlayPages[10].name, section: Translation.tr("Settings UI"), label: Translation.tr("Overlay mode"), description: Translation.tr("Open Settings as floating overlay inside shell for live preview"), keywords: ["settings", "overlay", "mode", "live", "preview", "floating", "window", "layer"] },
-        // Waffle Style (page 11)
-        { pageIndex: 11, pageName: overlayPages[11].name, section: Translation.tr("Waffle Taskbar"), label: Translation.tr("Waffle Taskbar"), description: Translation.tr("Windows 11 style taskbar settings"), keywords: ["waffle", "taskbar", "windows", "bottom", "tray"] },
-        { pageIndex: 11, pageName: overlayPages[11].name, section: Translation.tr("Waffle Start Menu"), label: Translation.tr("Waffle Start Menu"), description: Translation.tr("Start menu size and behavior"), keywords: ["waffle", "start", "menu", "apps", "pinned"] },
-        // Compositor (page 12)
-        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Displays"), label: Translation.tr("Display settings"), description: Translation.tr("Monitor resolution, refresh rate, scale and rotation"), keywords: ["display", "monitor", "resolution", "refresh", "scale", "rotation", "transform", "vrr", "output", "hdmi", "dp"] },
-        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Keyboard"), label: Translation.tr("Keyboard"), description: Translation.tr("Keyboard repeat delay and rate"), keywords: ["keyboard", "repeat", "delay", "rate", "input", "typing"] },
-        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Touchpad"), label: Translation.tr("Touchpad"), description: Translation.tr("Tap to click, natural scroll, acceleration"), keywords: ["touchpad", "tap", "scroll", "natural", "accel", "gesture", "input"] },
-        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Mouse"), label: Translation.tr("Mouse"), description: Translation.tr("Mouse acceleration profile and natural scroll"), keywords: ["mouse", "accel", "flat", "adaptive", "natural", "scroll", "input"] },
-        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Trackpoint"), label: Translation.tr("Trackpoint"), description: Translation.tr("Trackpoint acceleration, scroll method and speed"), keywords: ["trackpoint", "thinkpad", "nub", "pointing stick", "accel", "scroll", "input"] },
-        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("General Input"), label: Translation.tr("Focus follows mouse"), description: Translation.tr("Hover-to-focus, pointer warp and workspace navigation input behavior"), keywords: ["focus", "mouse", "hover", "warp", "pointer", "workspace", "input"] },
-        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Cursor"), label: Translation.tr("Cursor theme"), description: Translation.tr("Cursor theme, size and typing visibility"), keywords: ["cursor", "xcursor", "theme", "size", "hide", "typing"] },
-        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Layout"), label: Translation.tr("Window gaps"), description: Translation.tr("Gap size between windows"), keywords: ["gaps", "spacing", "windows", "layout", "tiling"] },
-        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Layout"), label: Translation.tr("Window border"), description: Translation.tr("Border around all windows"), keywords: ["border", "window", "outline", "width", "layout"] },
-        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Layout"), label: Translation.tr("Focus ring"), description: Translation.tr("Highlight ring on focused window"), keywords: ["focus", "ring", "highlight", "active", "window"] },
-        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Layout"), label: Translation.tr("Default column display"), description: Translation.tr("Normal or tabbed layout for new columns"), keywords: ["column", "tabbed", "display", "layout", "tabs"] },
-        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Layout"), label: Translation.tr("Window shadow"), description: Translation.tr("Shadow softness, spread, offset and color"), keywords: ["shadow", "softness", "spread", "offset", "color", "layout"] },
-        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Layout"), label: Translation.tr("Struts"), description: Translation.tr("Shrink the tiling area from each edge"), keywords: ["struts", "edge", "margin", "padding", "layout", "tiling"] },
-        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Window Rules"), label: Translation.tr("Clip windows to rounded geometry"), description: Translation.tr("Round corners and clip windows to their visual geometry"), keywords: ["clip", "corner", "radius", "window rules", "rounded"] },
-        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Animations"), label: Translation.tr("Per-animation toggles"), description: Translation.tr("Enable or disable specific compositor animations"), keywords: ["animation", "spring", "toggle", "workspace", "overview", "recent windows"] },
-        { pageIndex: 12, pageName: overlayPages[12].name, section: Translation.tr("Niri config status"), label: Translation.tr("Managed overrides status"), description: Translation.tr("Actionable managed overrides and extra files in Niri config"), keywords: ["niri", "status", "managed", "override", "extra", "config.d", "kdl"] },
-        // About (page 13)
-        { pageIndex: 13, pageName: overlayPages[13].name, section: Translation.tr("About"), label: Translation.tr("About ii"), description: Translation.tr("Version info, credits and links"), keywords: ["about", "version", "credits", "github", "info"] }
-    ]
+    // Shared static index — single source of truth in SettingsPageRegistry
+    readonly property var overlaySearchIndex: SettingsPageRegistry.staticSearchIndex
 
     function getWaffleSettingsPageIndex() {
         for (var i = 0; i < overlayPages.length; i++) {
@@ -523,14 +384,28 @@ Scope {
         }
     }
 
-    IpcHandler {
-        target: "settingsNav"
-        function page(index: int): void {
-            GlobalStates.settingsOverlayOpen = true
-            root.overlayCurrentPage = index
+    function applyDevDestination(): void {
+        if (!DevNavigation.currentDestination.startsWith("settings/")) return
+        const key = DevNavigation.currentDestination.substring("settings/".length)
+        const index = root.overlayPages.findIndex(page => page.key === key)
+        if (index >= 0) root.overlayCurrentPage = index
+    }
+
+    Connections {
+        target: DevNavigation
+        function onCurrentDestinationChanged(): void { root.applyDevDestination() }
+    }
+
+    // settingsNav is owned by shell.qml — see the comment there.
+    Connections {
+        target: GlobalStates
+        function onSettingsOverlayRequestedPageChanged() {
+            const requested = GlobalStates.settingsOverlayRequestedPage ?? -1
+            if (requested < 0 || !root.settingsOpen)
+                return
+            root.overlayCurrentPage = requested
+            GlobalStates.settingsOverlayRequestedPage = -1
         }
-        function count(): int { return root.overlayPages.length }
-        function current(): int { return root.overlayCurrentPage }
     }
 
     Loader {
@@ -540,12 +415,18 @@ Scope {
         sourceComponent: PanelWindow {
             id: settingsPanel
 
-            visible: GlobalStates.settingsOverlayOpen ?? false
+            // Stay visible during the close-animation window so the exit morph
+            // renders; the Loader tears down after closeAnimTimer fires.
+            visible: root.settingsOpen || root._closeAnimRunning
 
             exclusionMode: ExclusionMode.Ignore
             WlrLayershell.namespace: "quickshell:settingsOverlay"
-            WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: visible && !GlobalStates.regionSelectorOpen
+            // Yield the layer-shell overlay while a native dialog is visible.
+            WlrLayershell.layer: GlobalStates.settingsNativeDialogOpen
+                ? WlrLayer.Bottom : WlrLayer.Overlay
+            WlrLayershell.keyboardFocus: root.settingsOpen
+                && !GlobalStates.regionSelectorOpen
+                && !GlobalStates.settingsNativeDialogOpen
                 ? WlrKeyboardFocus.Exclusive
                 : WlrKeyboardFocus.None
             color: "transparent"
@@ -555,6 +436,38 @@ Scope {
                 bottom: true
                 left: true
                 right: true
+            }
+
+            // Blurred backdrop — see SettingsFocus for the contract. Both overlay
+            // layouts read the same setting, so the option in Settings UI means
+            // the same thing whichever chrome is selected.
+            readonly property int backdropBlur:
+                Config.options?.settingsUi?.overlayAppearance?.backdropBlur ?? 0
+
+            Loader {
+                anchors.fill: parent
+                z: -1
+                active: settingsPanel.backdropBlur > 0 && Appearance.effectsEnabled
+                visible: active && (GlobalStates.settingsOverlayOpen ?? false)
+
+                sourceComponent: GlassBackground {
+                    anchors.fill: parent
+                    radius: 0
+                    forceBackdrop: true
+                    blurStrength: settingsPanel.backdropBlur / 100
+                    screenX: 0
+                    screenY: 0
+                    screenWidth: settingsPanel.width
+                    screenHeight: settingsPanel.height
+                    fallbackColor: "transparent"
+                    auroraTransparency: 0.35
+
+                    opacity: (GlobalStates.settingsOverlayOpen ?? false) ? 1 : 0
+                    Behavior on opacity {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
+                }
             }
 
             // Global Escape key shortcut (works regardless of focus)
@@ -581,7 +494,8 @@ Scope {
                 windows: [settingsPanel]
                 active: false
                 onCleared: () => {
-                    if (!active) GlobalStates.settingsOverlayOpen = false
+                    if (!active && !GlobalStates.settingsNativeDialogOpen)
+                        GlobalStates.settingsOverlayOpen = false
                 }
             }
 
@@ -590,80 +504,118 @@ Scope {
                 function onSettingsOverlayOpenChanged() {
                     grabTimer.restart()
                 }
+                function onSettingsNativeDialogOpenChanged() {
+                    grabTimer.restart()
+                }
             }
 
             Timer {
                 id: grabTimer
                 interval: 100
                 onTriggered: grab.active = (GlobalStates.settingsOverlayOpen ?? false)
+                    && !GlobalStates.settingsNativeDialogOpen
             }
 
             // ── Scrim backdrop ──
             Rectangle {
                 id: scrimBg
                 anchors.fill: parent
-                color: Appearance.m3colors.m3scrim
+                color: Appearance.colors.colScrim
                 opacity: (GlobalStates.settingsOverlayOpen ?? false) ? (Config.options?.settingsUi?.overlayAppearance?.scrimDim ?? 35) / 100 : 0
-                // Must remain interactive even when fully transparent (scrimDim = 0)
-                visible: (GlobalStates.settingsOverlayOpen ?? false)
+                // visible tracks opacity (not settingsOpen) so the close fade-out
+                // actually renders before the Loader tears the panel down.
+                visible: opacity > 0
 
                 Behavior on opacity {
                     enabled: Appearance.animationsEnabled
                     animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                 }
-
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: GlobalStates.settingsOverlayOpen = false
-                }
             }
 
-            // ── Escalonado shadow for angel ──
-            StyledRectangularShadow {
-                target: settingsCard
+            // Click-outside-to-close hit area — a sibling of scrimBg, not a child.
+            // It used to live inside scrimBg, whose `visible: opacity > 0` goes
+            // false whenever scrimDim is set to 0 (fully transparent scrim):
+            // QtQuick excludes invisible items from hit-testing, so a MouseArea
+            // inside an invisible parent silently stops receiving clicks. Scrim
+            // dim and click-outside-to-close are independent concerns and must
+            // not share one visibility flag.
+            MouseArea {
+                anchors.fill: parent
+                visible: GlobalStates.settingsOverlayOpen ?? false
+                enabled: !GlobalStates.settingsNativeDialogOpen
+                onClicked: GlobalStates.settingsOverlayOpen = false
             }
 
-            // ── Floating settings card ──
+            // ── Floating settings card (no separate drop shadow — the card
+            //    sits on the scrim backdrop; the panel border provides depth) ──
+// ── Floating settings card ──
             Rectangle {
                 id: settingsCard
 
                 readonly property real maxCardWidth: Math.min(1100, Math.max(820, settingsPanel.width * 0.7))
                 readonly property real maxCardHeight: Math.min(840, Math.max(600, settingsPanel.height * 0.82))
-                readonly property real panelBgOpacity: Config.options?.settingsUi?.overlayAppearance?.backgroundOpacity ?? 1.0
+                // Clamped, not read raw: the control used to bottom out at 20%,
+                // which left the solid styles showing a sharp wallpaper through
+                // the text and reduced aurora's tint to a raw 64 px blur. The
+                // panel is one surface — the cards on it carry the reading
+                // contrast — so the panel itself has to stay a real backdrop.
+                readonly property real panelBgOpacity: Math.max(0.6,
+                    Config.options?.settingsUi?.overlayAppearance?.backgroundOpacity ?? 1.0)
 
                 anchors.centerIn: parent
                 width: maxCardWidth
                 height: maxCardHeight
-                radius: Appearance.angelEverywhere ? Appearance.angel.roundingLarge
+                radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+                      : Appearance.angelEverywhere ? Appearance.angel.roundingLarge
                       : Appearance.inirEverywhere ? Appearance.inir.roundingLarge
                       : Appearance.rounding.windowRounding
-                // backgroundOpacity only applies to glass styles (aurora/angel) — solid styles stay opaque
+                Behavior on radius {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animationCurves.zzzOvershoot }
+                }
+                // overlayAppearance.backgroundOpacity reaches every style: glass
+                // modulates the blur's transparentize below, solid styles take it
+                // on this fill's alpha. It must never ride on Item opacity —
+                // that is inherited by children and would dim the whole UI
+                // instead of the panel background. At the default 1.0 both paths
+                // are identity, so no style changes appearance.
                 color: Appearance.auroraEverywhere ? "transparent"
-                     : Appearance.inirEverywhere ? Appearance.inir.colLayer0
-                     : Appearance.m3colors.m3background
+                     : CF.ColorUtils.applyAlpha(
+                         Appearance.inirEverywhere ? Appearance.inir.colLayer0
+                       : Appearance.zzzEverywhere ? Appearance.zzz.chrome
+                       : Appearance.colors.colLayer0Base,
+                         settingsCard.panelBgOpacity)
                 clip: true
 
                 border.width: Appearance.angelEverywhere ? Appearance.angel.panelBorderWidth
+                            : Appearance.zzzEverywhere ? Appearance.zzz.borderThick
                             : Appearance.inirEverywhere ? 1 : 0
                 border.color: Appearance.angelEverywhere ? Appearance.angel.colPanelBorder
+                            : Appearance.zzzEverywhere ? Appearance.zzz.hairline
                             : Appearance.inirEverywhere
                                 ? (Appearance.inir?.colBorder ?? Appearance.colors.colLayer0Border)
                                 : "transparent"
+                Behavior on border.width {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
+                Behavior on border.color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
 
-                // Scale + fade animation
+                // Scale + fade. Exit uses elementMoveExit (snappy ~200ms accel) so
+                // the close feels immediate and matches the window-mode settings;
+                // enter reuses the same Behavior (200ms is smooth enough on open).
+                // Instant show/hide — matches the window-mode settings UI.
+                // No scale/opacity fade (the fade felt heavy and the scrim
+                // backdrop already carries the transition).
                 opacity: (GlobalStates.settingsOverlayOpen ?? false) ? 1 : 0
-                scale: (GlobalStates.settingsOverlayOpen ?? false) ? 1.0 : 0.92
-
-                Behavior on opacity {
-                    enabled: Appearance.animationsEnabled
-                    animation: NumberAnimation { duration: Appearance.animation.elementMoveEnter.duration; easing.type: Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve }
-                }
-                Behavior on scale {
-                    enabled: Appearance.animationsEnabled
-                    animation: NumberAnimation { duration: Appearance.animation.elementMoveEnter.duration; easing.type: Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve }
-                }
-
-                // Shadow comes from the StyledRectangularShadow above (cheap native RectangularShadow).
+                visible: opacity > 0
 
                 // Glass background for aurora/angel wallpaper blur
                 GlassBackground {
@@ -674,11 +626,46 @@ Scope {
                     screenY: settingsCard.y
                     screenWidth: settingsPanel.width
                     screenHeight: settingsPanel.height
-                    fallbackColor: "transparent"
-                    auroraTransparency: Appearance.angelEverywhere
-                        ? Appearance.angel.panelTransparentize
-                        : Appearance.aurora.overlayTransparentize
+                    // GameMode disables the wallpaper blur backend. Aurora's
+                    // card itself is transparent, so a transparent fallback
+                    // made the complete settings surface disappear over a
+                    // fullscreen window. Keep glass normally and use the
+                    // regular opaque surface only while effects are suspended.
+                    fallbackColor: Appearance.effectsEnabled
+                        ? "transparent" : Appearance.colors.colLayer0Base
+                    // Modulates the style's tuned baseline rather than replacing
+                    // it: 1.0 keeps glass exactly as the style designed it, lower
+                    // values push toward fully transparent. A plain
+                    // `1 - backgroundOpacity` would make the default MORE opaque
+                    // than the style intends and flatten aurora's glass.
+                    auroraTransparency: {
+                        const base = Appearance.angelEverywhere
+                            ? Appearance.angel.panelTransparentize
+                            : Appearance.aurora.overlayTransparentize
+                        return base + (1 - base) * (1 - settingsCard.panelBgOpacity)
+                    }
                     radius: parent.radius
+                }
+
+                ZzzPanelBackdrop {
+                    anchors.fill: parent
+                    label: Translation.tr("User manual")
+                    index: "UI"
+                    ghostText: "CONFIG"
+                    accentColor: Appearance.zzz.accent
+                    showTicks: false
+                    showBurst: false
+                    // Drop the grid cuadriculado behind the cards: it muddied the
+                    // panel and hurt card/text legibility. The lit-console gradient
+                    // + ghost + frame carry the ZZZ identity, cleaner. Also fewer
+                    // delegates → lighter. Ghost pulled back so it reads as a
+                    // watermark, not noise.
+                    showGrid: false
+                    horizontalBias: 0.12
+                    verticalBias: 0.03
+                    ghostWidthFactor: 0.88
+                    ghostStrength: 0.5
+                    z: 1
                 }
 
                 // Prevent clicks from closing
@@ -694,6 +681,7 @@ Scope {
                         fill: parent
                         margins: 16
                     }
+                    z: 2
                     spacing: 0
 
                     // ── Title bar ──
@@ -803,14 +791,14 @@ Scope {
                                 : (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                                   : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                                   : Appearance.inirEverywhere ? Appearance.inir.colLayer0
-                                  : Appearance.m3colors.m3surfaceContainerLow)
+                                  : Appearance.colors.colSurfaceContainerLow)
                             border.width: overlaySearchField.activeFocus ? 2
                                 : (Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : 1)
                             border.color: overlaySearchField.activeFocus
                                 ? Appearance.colors.colPrimary
                                 : (Appearance.angelEverywhere ? Appearance.angel.colCardBorder
                                   : Appearance.inirEverywhere ? Appearance.inir.colBorderMuted
-                                  : Appearance.m3colors.m3outlineVariant)
+                                  : Appearance.colors.colOutlineVariant)
 
                             Behavior on color {
                                 enabled: Appearance.animationsEnabled
@@ -890,10 +878,6 @@ Scope {
                                         onTextChanged: {
                                             root.overlaySearchText = text;
                                             if (text.length > 0) {
-                                                if (!overlayPagesStack.preloadRequested) {
-                                                    overlayPagesStack.preloadRequested = true
-                                                    overlayPreloadTimer.start()
-                                                }
                                                 searchDebounceTimer.restart();
                                             } else {
                                                 // Clear immediately for clean exit morph (no debounce)
@@ -1095,11 +1079,13 @@ Scope {
                                                     text: navItem.modelData.label || ""
                                                     font {
                                                         family: Appearance.font.family.main
-                                                        pixelSize: Appearance.font.pixelSize.small
+                                                        pixelSize: Appearance.font.pixelSize.smaller
                                                         weight: Font.DemiBold
+                                                        capitalization: Font.AllUppercase
+                                                        letterSpacing: 1.1
                                                     }
                                                     color: navItem.headerAccentColor
-                                                    opacity: 0.95
+                                                    opacity: 0.85
 
                                                     Behavior on color {
                                                         enabled: Appearance.animationsEnabled
@@ -1122,18 +1108,34 @@ Scope {
 
                                                 readonly property int pageRealIndex: navItem.modelData.realIndex !== undefined ? navItem.modelData.realIndex : navItem.index
 
-                                                buttonRadius: Math.min(width, height) / 2
+                                                // Bgless doctrine (matches NavigationRailButton.qml): zzz
+                                                // selection reads through the sticker pill + icon/text
+                                                // colour, not a Material ripple bleeding out from the
+                                                // click point on a transparent nav item.
+                                                rippleEnabled: !Appearance.zzzEverywhere
+
+                                                buttonRadius: Appearance.zzzEverywhere
+                                                    ? Appearance.zzz.controlRadius
+                                                    : Math.min(width, height) / 2
                                                 toggled: overlayCurrentPage === pageRealIndex
                                                 colBackground: "transparent"
                                                 colBackgroundToggled: "transparent"
-                                                colBackgroundToggledHover: Appearance.angelEverywhere
+                                                // zzz: transparent, not paperAlt — this Control's own
+                                                // background renders above sharedNavIndicator (z:1 vs
+                                                // z:-1 below), so any opaque fill here fully hides the
+                                                // sticker pill on hover instead of layering with it.
+                                                colBackgroundToggledHover: Appearance.zzzEverywhere
+                                                    ? "transparent"
+                                                    : Appearance.angelEverywhere
                                                     ? Appearance.angel.colGlassCardHover
                                                     : Appearance.inirEverywhere
                                                         ? Appearance.inir.colLayer1Hover
                                                         : Appearance.auroraEverywhere
                                                             ? Appearance.aurora.colElevatedSurface
                                                             : CF.ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 0.5)
-                                                colBackgroundHover: Appearance.colLayer1Hover
+                                                colBackgroundHover: Appearance.zzzEverywhere
+                                                    ? Appearance.zzz.paperAlt
+                                                    : Appearance.colors.colLayer1Hover
 
                                                 onClicked: overlayCurrentPage = pageRealIndex
 
@@ -1150,7 +1152,9 @@ Scope {
                                                             text: navItem.modelData.icon || ""
                                                             iconSize: 18
                                                             color: navBtn.toggled
-                                                                ? (Appearance.inirEverywhere
+                                                                ? (Appearance.zzzEverywhere
+                                                                    ? Appearance.zzz.ink
+                                                                    : Appearance.inirEverywhere
                                                                     ? Appearance.inir.colAccent
                                                                     : Appearance.colors.colPrimary)
                                                                 : Appearance.colors.colOnSurfaceVariant
@@ -1171,7 +1175,7 @@ Scope {
                                                                 weight: navBtn.toggled ? Font.Medium : Font.Normal
                                                             }
                                                             color: navBtn.toggled
-                                                                ? Appearance.colors.colOnLayer1
+                                                                ? (Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer1)
                                                                 : Appearance.colors.colOnSurfaceVariant
                                                             elide: Text.ElideRight
 
@@ -1188,17 +1192,48 @@ Scope {
 
                                     // Active indicator: pill travelling behind the active item,
                                     // inside navCol so its y matches the items' coordinate space.
-                                    Rectangle {
+                                    ZzzPlate {
                                         id: sharedNavIndicator
                                         z: -1
                                         parent: navCol
                                         x: 0
                                         width: navCol.width
-                                        radius: Appearance.rounding.small
-                                        color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                                        // ZzzPlate picks its renderer by `radius > 0` alone — setting both
+                                        // radius AND chamfer unconditionally left chamfer as dead code
+                                        // (always rendered rounded, never chamfered in square mode).
+                                        // Gate them like everywhere else that switches on Appearance.zzz.round.
+                                        radius: Appearance.zzzEverywhere
+                                            ? (Appearance.zzz.round ? Appearance.zzz.controlRadius : 0)
+                                            : Appearance.rounding.small
+                                        chamfer: Appearance.zzzEverywhere && !Appearance.zzz.round ? Appearance.zzz.cutCorner : 0
+                                        fillColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                                              : Appearance.inirEverywhere ? Appearance.inir.colLayer2
                                              : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
+                                             : Appearance.zzzEverywhere ? Appearance.zzz.sticker
                                              : Appearance.colors.colPrimaryContainer
+                                        // No hairline in zzz: the plate carried a stroke on every
+                                        // edge which, next to the accent bar below, read as two
+                                        // stacked vertical lines. Fill + accent bar only (zzz doctrine:
+                                        // separate by fill, not outline).
+                                        strokeColor: "transparent"
+                                        strokeWidth: 0
+
+                                        // ZZZ: solid vertical accent edge — the sticker fill alone
+                                        // read as a hairline; the active item needs a real marker
+                                        Rectangle {
+                                            visible: Appearance.zzzEverywhere
+                                            anchors.left: parent.left
+                                            anchors.leftMargin: Appearance.zzz.borderThick
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            height: Math.max(0, parent.height * 0.62)
+                                            width: Appearance.zzz.borderThick * 3
+                                            color: Appearance.zzz.accent
+                                        }
+
+                                        Behavior on radius {
+                                            enabled: Appearance.animationsEnabled
+                                            NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animationCurves.zzzOvershoot }
+                                        }
 
                                         property real targetY: 0
                                         property real targetH: 0
@@ -1244,7 +1279,11 @@ Scope {
                                             anchors.leftMargin: 4
                                             width: 3
                                             radius: 1.5
-                                            height: parent.hasTarget ? parent.height * 0.5 : 0
+                                            // ZZZ separates by fill, not outlines (maintainer doctrine) — the
+                                            // sticker plate above already carries the selection signal, so
+                                            // this accent line is redundant clutter there.
+                                            visible: !Appearance.zzzEverywhere
+                                            height: (parent.hasTarget && visible) ? parent.height * 0.5 : 0
                                             color: Appearance.angelEverywhere ? Appearance.angel.colPrimary
                                                  : Appearance.inirEverywhere ? Appearance.inir.colAccent
                                                  : Appearance.colors.colPrimary
@@ -1327,9 +1366,21 @@ Scope {
                                 }
 
                                 StyledToolTip {
+                                    position: "top"
                                     text: Translation.tr("Switch to window mode")
                                 }
                             }
+                        }
+
+                        // ZZZ no longer needs a separate nav/content rule: the content
+                        // plate and active pill provide enough separation without a hard line.
+                        Rectangle {
+                            visible: false
+                            Layout.fillHeight: true
+                            Layout.topMargin: 6
+                            Layout.bottomMargin: 6
+                            Layout.preferredWidth: Math.max(1, Appearance.zzz.borderThick)
+                            color: Appearance.zzz.hairlineStrong
                         }
 
                         // Content area
@@ -1340,12 +1391,18 @@ Scope {
                             radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
                                  : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
                                  : Appearance.rounding.normal
+                            // ZZZ: lift the content field clearly off the chrome panel +
+                            // nav rail so the reading area reads as its own plate (bg2),
+                            // not the same black. Hairline seals the edge.
                             color: Appearance.auroraEverywhere ? "transparent"
+                                 : Appearance.zzzEverywhere ? Appearance.zzz.bg2
                                  : Appearance.inirEverywhere ? Appearance.inir.colLayer1
-                                 : Appearance.m3colors.m3surfaceContainerLow
+                                 : Appearance.colors.colSurfaceContainerLow
                             border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
+                                        : Appearance.zzzEverywhere ? Appearance.zzz.borderThick
                                         : Appearance.inirEverywhere ? 1 : 0
                             border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+                                        : Appearance.zzzEverywhere ? Appearance.zzz.hairline
                                         : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle : "transparent"
                             clip: true
 
@@ -1365,20 +1422,73 @@ Scope {
                                 radius: parent.radius
                             }
 
+                            // ── Page header: icon + name + description ──
+                            Item {
+                                id: overlayPageHeader
+                                anchors { top: parent.top; left: parent.left; right: parent.right }
+                                height: 48
+                                readonly property var meta: root.overlayPages[root.overlayCurrentPage] ?? {}
+
+                                RowLayout {
+                                    id: overlayPageHeaderRow
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 20
+                                    anchors.rightMargin: 20
+                                    spacing: 10
+
+                                    MaterialSymbol {
+                                        text: overlayPageHeader.meta.icon ?? ""
+                                        rotation: overlayPageHeader.meta.iconRotation ?? 0
+                                        iconSize: 20
+                                        color: Appearance.inirEverywhere ? Appearance.inir.colAccent : Appearance.colors.colPrimary
+                                    }
+
+                                    StyledText {
+                                        text: overlayPageHeader.meta.name ?? ""
+                                        font {
+                                            family: Appearance.font.family.title
+                                            pixelSize: Appearance.font.pixelSize.normal
+                                            weight: Font.DemiBold
+                                        }
+                                        color: Appearance.colors.colOnLayer1
+                                    }
+
+                                    StyledText {
+                                        Layout.fillWidth: true
+                                        text: overlayPageHeader.meta.desc ?? ""
+                                        font.pixelSize: Appearance.font.pixelSize.small
+                                        color: Appearance.colors.colSubtext
+                                        elide: Text.ElideRight
+                                        opacity: 0.85
+                                    }
+                                }
+
+                                // Fade-through when the page changes (content swap inside one object)
+                                Connections {
+                                    target: root
+                                    function onOverlayCurrentPageChanged() { if (Appearance.animationsEnabled) overlayPageHeaderSwap.restart() }
+                                }
+                                SequentialAnimation {
+                                    id: overlayPageHeaderSwap
+                                    NumberAnimation { target: overlayPageHeaderRow; property: "opacity"; to: 0; duration: Appearance.animation.elementMoveFast.duration / 2; easing.type: Appearance.animation.elementMoveFast.type }
+                                    NumberAnimation { target: overlayPageHeaderRow; property: "opacity"; to: 1; duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type }
+                                }
+
+                                Rectangle {
+                                    anchors { bottom: parent.bottom; left: parent.left; right: parent.right; leftMargin: 16; rightMargin: 16 }
+                                    height: 1
+                                    color: Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle : Appearance.colors.colOutlineVariant
+                                    opacity: 0
+                                }
+                            }
+
                             // Loading indicator (with morphing entrance/exit)
                             CircularProgress {
                                 id: pageLoadingIndicator
                                 anchors.centerIn: parent
+                                z: 10
 
-                                readonly property bool isLoading: {
-                                    for (var i = 0; i < overlayPagesRepeater.count; i++) {
-                                        var loader = overlayPagesRepeater.itemAt(i);
-                                        if (loader && loader.index === overlayCurrentPage && loader.status !== Loader.Ready) {
-                                            return true;
-                                        }
-                                    }
-                                    return false;
-                                }
+                                readonly property bool isLoading: overlayPagesHost.loading
 
                                 opacity: isLoading ? 1 : 0
                                 scale: isLoading ? 1 : 0.7
@@ -1394,140 +1504,12 @@ Scope {
                                 }
                             }
 
-                            // Page stack
-                            Item {
-                                id: overlayPagesStack
-                                anchors.fill: parent
-
-                                property var visitedPages: ({})
-                                property int preloadIndex: 0
-                                property bool preloadRequested: false
-
-                                Connections {
-                                    target: root
-                                    function onSettingsOpenChanged() {
-                                        if (root.settingsOpen) {
-                                            overlayPagesStack.visitedPages[overlayCurrentPage] = true
-                                            overlayPagesStack.visitedPagesChanged()
-                                            if (root.overlaySearchText.length > 0 && !overlayPagesStack.preloadRequested) {
-                                                overlayPagesStack.preloadRequested = true
-                                                overlayPreloadTimer.start()
-                                            }
-                                        }
-                                    }
-                                }
-
-                                Connections {
-                                    target: root
-                                    function onOverlayCurrentPageChanged() {
-                                        const n = overlayPages.length
-                                        const cur = overlayCurrentPage
-                                        overlayPagesStack.visitedPages[cur] = true
-                                        if (cur + 1 < n) overlayPagesStack.visitedPages[cur + 1] = true
-                                        if (cur - 1 >= 0) overlayPagesStack.visitedPages[cur - 1] = true
-                                        overlayPagesStack.visitedPagesChanged()
-                                    }
-                                }
-
-                                Timer {
-                                    id: initialLoadTimer
-                                    interval: 1
-                                    onTriggered: {
-                                        overlayPagesStack.visitedPages[overlayCurrentPage] = true
-                                        overlayPagesStack.visitedPagesChanged()
-                                        adjacentLoadTimer.start()
-                                    }
-                                }
-
-                                // Preload the immediate neighbours shortly after the current
-                                // page is shown, so the first left/right navigation is instant
-                                // without blocking the initial render.
-                                Timer {
-                                    id: adjacentLoadTimer
-                                    interval: 180
-                                    onTriggered: {
-                                        const cur = overlayCurrentPage
-                                        const n = overlayPages.length
-                                        if (cur + 1 < n) overlayPagesStack.visitedPages[cur + 1] = true
-                                        if (cur - 1 >= 0) overlayPagesStack.visitedPages[cur - 1] = true
-                                        overlayPagesStack.visitedPagesChanged()
-                                    }
-                                }
-
-                                Component.onCompleted: {
-                                    // Only load the current page on open. The full background
-                                    // preload (all 16 heavy pages ~22k lines of QML) used to start
-                                    // here and saturated the render thread, making every page
-                                    // navigation slow. It now starts lazily — only when the user
-                                    // actually types in search (see overlaySearchField.onTextChanged),
-                                    // so opening and browsing Settings stays snappy.
-                                    initialLoadTimer.start()
-                                }
-
-                                Timer {
-                                    id: overlayPreloadTimer
-                                    // Idle, one page per tick so search-index preload never
-                                    // competes with active navigation.
-                                    interval: 220
-                                    repeat: true
-                                    onTriggered: {
-                                        for (var i = 0; i < 1 && overlayPagesStack.preloadIndex < overlayPages.length; i++) {
-                                            if (!overlayPagesStack.visitedPages[overlayPagesStack.preloadIndex]) {
-                                                overlayPagesStack.visitedPages[overlayPagesStack.preloadIndex] = true
-                                                overlayPagesStack.visitedPagesChanged()
-                                            }
-                                            overlayPagesStack.preloadIndex++
-                                        }
-                                        if (overlayPagesStack.preloadIndex >= overlayPages.length) {
-                                            overlayPreloadTimer.stop()
-                                        }
-                                    }
-                                }
-
-                                Repeater {
-                                    id: overlayPagesRepeater
-                                    model: overlayPages.length
-                                    delegate: Loader {
-                                        id: overlayPageLoader
-                                        required property int index
-                                        anchors.fill: parent
-                                        active: Config.ready && (overlayPagesStack.visitedPages[index] === true)
-                                        // Match the windowed settings.qml: load the page the user
-                                        // is navigating to SYNCHRONOUSLY (one brief single-page
-                                        // hitch) and only background-load the others. Forcing async
-                                        // on the current page made the heavy *Config.qml pages
-                                        // (1k-3k lines) sit behind the loading spinner "for an
-                                        // eternity" on every nav click. Visited pages stay loaded,
-                                        // so the sync cost is paid at most once per page per session.
-                                        asynchronous: index !== overlayCurrentPage
-                                        source: overlayPages[index].component
-
-                                        readonly property bool isCurrentPage: index === overlayCurrentPage && status === Loader.Ready
-                                        visible: isCurrentPage || _pageOpacity > 0
-                                        property real _pageOpacity: isCurrentPage ? 1 : 0
-                                        property real _pageScale: isCurrentPage ? 1 : 0.985
-                                        // Direction-aware horizontal slide
-                                        property real _slideX: isCurrentPage ? 0 : (index < overlayCurrentPage ? -30 : 30)
-
-                                        opacity: _pageOpacity
-                                        scale: _pageScale
-                                        transform: Translate { x: overlayPageLoader._slideX }
-                                        transformOrigin: Item.Center
-
-                                        Behavior on _pageOpacity {
-                                            enabled: Appearance.animationsEnabled
-                                            animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                                        }
-                                        Behavior on _pageScale {
-                                            enabled: Appearance.animationsEnabled
-                                            animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.BezierSpline; easing.bezierCurve: Appearance.animationCurves.emphasizedDecel }
-                                        }
-                                        Behavior on _slideX {
-                                            enabled: Appearance.animationsEnabled
-                                            animation: NumberAnimation { duration: Appearance.animation.elementMoveEnter.duration; easing.type: Easing.BezierSpline; easing.bezierCurve: Appearance.animationCurves.emphasizedDecel }
-                                        }
-                                    }
-                                }
+                            SettingsPageHost {
+                                id: overlayPagesHost
+                                anchors { top: overlayPageHeader.bottom; left: parent.left; right: parent.right; bottom: parent.bottom }
+                                pages: root.overlayPages
+                                requestedIndex: root.overlayCurrentPage
+                                loadEnabled: Config.ready
                             }
 
                         }
@@ -1559,7 +1541,11 @@ Scope {
                         scale: _pillScale
                         transformOrigin: Item.Top
 
-                        anchors.horizontalCenter: parent.horizontalCenter
+                        x: {
+                            var dep = overlaySearchContainer.x + overlaySearchContainer.width + settingsCard.width;
+                            var p = overlaySearchContainer.mapToItem(overlaySearchResultsOverlay, 0, 0);
+                            return p.x + (overlaySearchContainer.width - width) / 2;
+                        }
                         anchors.top: parent.top
                         anchors.topMargin: 56
                         width: noResultsRow.implicitWidth + 32
@@ -1568,7 +1554,7 @@ Scope {
                         color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                              : Appearance.inirEverywhere ? Appearance.inir.colLayer1
                              : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                             : Appearance.m3colors.m3surfaceContainerHigh
+                             : Appearance.colors.colSurfaceContainerHigh
                         border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
                                     : Appearance.inirEverywhere ? 1 : 0
                         border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
@@ -1611,6 +1597,7 @@ Scope {
                     // Results card
                     StyledRectangularShadow {
                         target: overlaySearchResultsCard
+                        opacity: overlaySearchResultsCard._cardOpacity
                     }
                     Rectangle {
                         id: overlaySearchResultsCard
@@ -1630,9 +1617,14 @@ Scope {
                             animation: NumberAnimation { duration: Appearance.animation.elementMoveEnter.duration; easing.type: Easing.BezierSpline; easing.bezierCurve: Appearance.animationCurves.emphasizedDecel }
                         }
 
-                        width: Math.min(parent.width - 40, 480)
+                        width: Math.max(overlaySearchContainer.width, Math.min(parent.width - 40, 460))
                         height: Math.min(overlayResultsList.contentHeight + 16, 380)
-                        anchors.horizontalCenter: parent.horizontalCenter
+                        // Centered under the search box, not the whole card
+                        x: {
+                            var dep = overlaySearchContainer.x + overlaySearchContainer.width + settingsCard.width;
+                            var p = overlaySearchContainer.mapToItem(overlaySearchResultsOverlay, 0, 0);
+                            return Math.max(8, Math.min(p.x + (overlaySearchContainer.width - width) / 2, parent.width - width - 8));
+                        }
                         anchors.top: parent.top
                         anchors.topMargin: 56
                         radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
@@ -1646,7 +1638,7 @@ Scope {
                                     : Appearance.inirEverywhere ? 1 : 1
                         border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
                             : Appearance.inirEverywhere ? Appearance.inir.colBorder
-                            : Appearance.m3colors.m3outlineVariant
+                            : Appearance.colors.colOutlineVariant
 
                         ListView {
                             id: overlayResultsList
@@ -1710,13 +1702,7 @@ Scope {
                                         spacing: 6
                                         
                                         MaterialSymbol {
-                                            text: {
-                                                var icons = ["instant_mix", "browse", "toast", "texture", "palette",
-                                                            "bottom_app_bar", "build", "settings", "construction", "keyboard",
-                                                            "extension", "window", "desktop_windows", "info", "widgets",
-                                                            "display_settings"];
-                                                return icons[resultDelegate.modelData.pageIndex] || "settings";
-                                            }
+                                            text: SettingsPageRegistry.iconForPage(resultDelegate.modelData.pageIndex)
                                             iconSize: 12
                                             color: Appearance.colors.colPrimary
                                             anchors.verticalCenter: parent.verticalCenter
@@ -1784,10 +1770,18 @@ Scope {
                                                 elide: Text.ElideRight
                                             }
 
-                                            // Section breadcrumb (page is in header)
+                                            // Section breadcrumb (page is in header); drop a
+                                            // leading "<pageName> ·/›" prefix to avoid "Panels › Panels · Dock"
                                             StyledText {
-                                                visible: resultDelegate.modelData.section && resultDelegate.modelData.section !== resultDelegate.modelData.pageName
-                                                text: resultDelegate.modelData.section || ""
+                                                readonly property string sectionDisplay: {
+                                                    var sect = resultDelegate.modelData.section || "";
+                                                    var page = resultDelegate.modelData.pageName || "";
+                                                    var parts = sect.split(/\s*[·›]\s*/).filter(t => t.length > 0);
+                                                    if (parts.length > 1 && parts[0] === page) parts.shift();
+                                                    return parts.join(" › ");
+                                                }
+                                                visible: sectionDisplay.length > 0 && sectionDisplay !== resultDelegate.modelData.pageName
+                                                text: sectionDisplay
                                                 font.pixelSize: Appearance.font.pixelSize.smaller
                                                 color: Appearance.colors.colSubtext
                                                 opacity: 0.8
@@ -1848,153 +1842,50 @@ Scope {
 
     // ── Page definitions (same as settings.qml) ──
     property int overlayCurrentPage: 0
+    property bool _navigationInitialized: false
     property int _prevPage: 0
     property int _slideDir: 1
 
-    onOverlayCurrentPageChanged: {
-        _slideDir = (overlayCurrentPage > _prevPage) ? 1 : -1;
-        _prevPage = overlayCurrentPage;
+    function _persistOverlayPage(): void {
+        if (root._navigationInitialized && Persistent.ready && Persistent.states?.settings)
+            Persistent.states.settings.iiPage = Math.max(0,
+                Math.min(root.overlayCurrentPage, root.overlayPages.length - 1))
     }
 
-    // Navigation categories for grouping pages in the rail
-    property var navCategories: [
-        { label: Translation.tr("Appearance"), pages: [0, 4, 3, 14] },
-        { label: Translation.tr("Layout"), pages: [2, 5, 6, 10, 15] },
-        { label: Translation.tr("System"), pages: [1, 7, 8] },
-        { label: Translation.tr("Reference"), pages: [9, 11, 12, 13] }
-    ]
+    function initializeNavigation(): void {
+        if (root._navigationInitialized || !Persistent.ready)
+            return
+        const persisted = Persistent.states?.settings?.iiPage ?? 0
+        root.overlayCurrentPage = Math.max(0, Math.min(persisted, root.overlayPages.length - 1))
+        root._prevPage = root.overlayCurrentPage
+        root._navigationInitialized = true
+        root._persistOverlayPage()
+    }
 
-    property var overlayPages: [
-        {
-            name: Translation.tr("Quick"),
-            shortName: "",
-            icon: "instant_mix",
-            desc: Translation.tr("Wallpaper & quick tweaks"),
-            essential: true,
-            component: Quickshell.shellPath("modules/settings/QuickConfig.qml")
-        },
-        {
-            name: Translation.tr("System"),
-            shortName: "",
-            icon: "browse",
-            desc: Translation.tr("Audio, battery, language, lock"),
-            essential: true,
-            component: Quickshell.shellPath("modules/settings/GeneralConfig.qml")
-        },
-        {
-            name: Translation.tr("Bar"),
-            shortName: "",
-            icon: "toast",
-            iconRotation: 180,
-            desc: Translation.tr("Position, tray, modules"),
-            essential: true,
-            component: Quickshell.shellPath("modules/settings/BarConfig.qml")
-        },
-        {
-            name: Translation.tr("Background"),
-            shortName: "",
-            icon: "texture",
-            desc: Translation.tr("Parallax, effects, backdrop"),
-            essential: false,
-            component: Quickshell.shellPath("modules/settings/BackgroundConfig.qml")
-        },
-        {
-            name: Translation.tr("Themes"),
-            shortName: "",
-            icon: "palette",
-            desc: Translation.tr("Colors, fonts, styles"),
-            essential: true,
-            component: Quickshell.shellPath("modules/settings/ThemesConfig.qml")
-        },
-        {
-            name: Translation.tr("Panels"),
-            shortName: "",
-            icon: "bottom_app_bar",
-            desc: Translation.tr("Dock, sidebar, overview"),
-            essential: true,
-            component: Quickshell.shellPath("modules/settings/InterfaceConfig.qml")
-        },
-        {
-            name: Translation.tr("Tools"),
-            shortName: "",
-            icon: "build",
-            desc: Translation.tr("Recording, crosshair, overlays"),
-            essential: false,
-            component: Quickshell.shellPath("modules/settings/ToolsConfig.qml")
-        },
-        {
-            name: Translation.tr("Services"),
-            shortName: "",
-            icon: "settings",
-            desc: Translation.tr("Weather, AI, apps"),
-            essential: false,
-            component: Quickshell.shellPath("modules/settings/ServicesConfig.qml")
-        },
-        {
-            name: Translation.tr("Advanced"),
-            shortName: "",
-            icon: "construction",
-            desc: Translation.tr("Color gen, performance"),
-            essential: false,
-            component: Quickshell.shellPath("modules/settings/AdvancedConfig.qml")
-        },
-        {
-            name: Translation.tr("Shortcuts"),
-            shortName: "",
-            icon: "keyboard",
-            desc: Translation.tr("Keybindings reference"),
-            essential: true,
-            component: Quickshell.shellPath("modules/settings/CheatsheetConfig.qml")
-        },
-        {
-            name: Translation.tr("Modules"),
-            shortName: "",
-            icon: "extension",
-            desc: Translation.tr("Enable/disable panels, scaling"),
-            essential: false,
-            component: Quickshell.shellPath("modules/settings/ModulesConfig.qml")
-        },
-        {
-            name: Translation.tr("Waffle Style"),
-            shortName: "",
-            icon: "window",
-            desc: Translation.tr("Win11-style taskbar"),
-            essential: false,
-            component: Quickshell.shellPath("modules/settings/WaffleConfig.qml")
-        },
-        {
-            name: Translation.tr("Compositor"),
-            shortName: "",
-            icon: "desktop_windows",
-            desc: Translation.tr("Display, input, layout"),
-            essential: false,
-            component: Quickshell.shellPath("modules/settings/NiriConfig.qml")
-        },
-        {
-            name: Translation.tr("About"),
-            shortName: "",
-            icon: "info",
-            desc: Translation.tr("Version & credits"),
-            essential: true,
-            component: Quickshell.shellPath("modules/settings/About.qml")
-        },
-        {
-            name: Translation.tr("Widgets"),
-            shortName: "",
-            icon: "widgets",
-            desc: Translation.tr("Clock, weather, media, custom"),
-            essential: false,
-            component: Quickshell.shellPath("modules/settings/DesktopWidgetsConfig.qml")
-        },
-        {
-            name: Translation.tr("Monitors"),
-            shortName: "",
-            icon: "display_settings",
-            desc: Translation.tr("Per-monitor shell visibility"),
-            essential: true,
-            component: Quickshell.shellPath("modules/settings/MonitorVisibilityConfig.qml")
-        }
-    ]
+    onOverlayCurrentPageChanged: {
+        root._slideDir = root.overlayCurrentPage > root._prevPage ? 1 : -1
+        root._prevPage = root.overlayCurrentPage
+        root._persistOverlayPage()
+        // Published for settingsNav, which shell.qml owns for both chromes.
+        GlobalStates.settingsOverlayCurrentPage = root.overlayCurrentPage
+    }
+
+    Connections {
+        target: Persistent
+        function onReadyChanged() { root.initializeNavigation() }
+    }
+
+    Component.onCompleted: root.initializeNavigation()
+
+    // Categories + pages come from the shared registry; the overlay resolves
+    // component paths against the shell root.
+    readonly property var navCategories: SettingsPageRegistry.categories
+
+    readonly property var overlayPages: SettingsPageRegistry.pages.map(p => {
+        var entry = Object.assign({}, p);
+        entry.component = Quickshell.shellPath(p.component);
+        return entry;
+    })
 
     // Easy mode helpers
     readonly property bool easyMode: Config.options?.settingsUi?.easyMode ?? false

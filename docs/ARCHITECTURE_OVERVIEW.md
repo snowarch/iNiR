@@ -34,7 +34,7 @@ Total cold start to panels visible: under 2 seconds on decent hardware.
 
 The shell has two completely separate visual identities that share the same services layer:
 
-**Material ii** uses Material Design language with 5 style variants (material, cards, aurora, inir, angel). Bar at the top. Sidebars from the edges. Overview launcher.
+**Material ii** uses Material Design language with 6 style variants (material, cards, aurora, inir, angel, zzz). Bar at the top. Sidebars from the edges. Overview launcher.
 
 **Waffle** uses Windows 11 Fluent Design. Taskbar at the bottom. Start menu. Action center. Notification center.
 
@@ -50,7 +50,7 @@ More details: [Panel Families](PANEL_FAMILIES.md)
 - **System integration**: Audio (PipeWire), Network (NetworkManager), Bluetooth (BlueZ), Battery (UPower)
 - **Data management**: Notifications, clipboard history, events, weather, calendar sync
 - **Theming**: MaterialThemeLoader watches `colors.json`, ThemeService orchestrates the pipeline
-- **Content**: AI chat (Gemini/OpenAI/Ollama), YT Music player, anime tracking, Reddit
+- **Content**: AI chat (Gemini/OpenAI/Ollama), YT Music player, anime tracking
 
 Services are registered in `services/qmldir` and available everywhere as singletons.
 
@@ -90,7 +90,7 @@ Every UI component
 External apps (GTK, terminals, Firefox, VS Code, Discord...)
 ```
 
-The pipeline also supports 44 built-in theme presets (Catppuccin, Gruvbox, Nord, etc.) that bypass wallpaper extraction and inject colors directly.
+The pipeline also supports 46 built-in theme presets (Catppuccin, Gruvbox, Nord, etc.) that bypass wallpaper extraction and inject colors directly.
 
 More details: [Theming Architecture](THEMING_ARCHITECTURE.md)
 
@@ -107,9 +107,10 @@ A simplified map of what lives where:
 | `defaults/` | Shipped default config and app configs | Medium |
 | `modules/bar/` | Top bar (ii family) | Normal |
 | `modules/waffle/` | Complete Windows 11 family | Normal |
-| `modules/sidebarLeft/` | AI chat, YT Music, widgets | Normal |
-| `modules/sidebarRight/` | Toggles, calendar, tools | Normal |
-| `translations/` | i18n strings (15+ languages) | Low |
+| `modules/sidebar/` | Physical sidebar hosts and live layout behavior | High |
+| `modules/sidebarLeft/` | Semantic feature content: AI chat, YT Music, widgets | Normal |
+| `modules/sidebarRight/` | Semantic system content: toggles, calendar, tools | Normal |
+| `translations/` | i18n strings (15 languages) | Low |
 
 Full breakdown: [Project Map](PROJECT_MAP.md)
 

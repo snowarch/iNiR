@@ -32,7 +32,7 @@ Variants {
         anchors.right: true
 
         color: "transparent"
-        visible: !GameMode.shouldHidePanels
+        visible: true
 
         // Multi-monitor wallpaper support
         readonly property string _perMonitorMainPath: {
@@ -48,6 +48,13 @@ Variants {
         readonly property var wBackdrop: Config.options?.waffles?.background?.backdrop ?? {}
 
         readonly property int backdropBlurRadius: wBackdrop.blurRadius ?? 32
+        // A blurred fullscreen source carries no useful pixel-level detail. Decode
+        // it at half resolution, matching ii's backdrop ownership, while retaining
+        // native resolution for the sharp (blur 0) mode.
+        readonly property real backdropSourceScale: backdropBlurRadius > 0 ? 0.5 : 1.0
+        readonly property size backdropSourceSize: Qt.size(
+            Math.round((screen?.width ?? 1920) * backdropSourceScale),
+            Math.round((screen?.height ?? 1080) * backdropSourceScale))
         readonly property int thumbnailBlurStrength: Config.options?.waffles?.background?.effects?.thumbnailBlurStrength ?? (Config.options?.background?.effects?.thumbnailBlurStrength ?? 50)
         readonly property bool enableAnimatedBlur: wBackdrop.enableAnimatedBlur ?? false
         readonly property int backdropDim: wBackdrop.dim ?? 35
@@ -94,6 +101,18 @@ Variants {
         }
 
         readonly property string effectiveWallpaperPath: wallpaperPathRaw
+        readonly property string frozenVideoFramePath: {
+            const _dep = Wallpapers.videoFirstFrames
+            if (!wallpaperIsVideo || enableAnimation)
+                return ""
+            const frame = Wallpapers.getVideoFirstFramePath(wallpaperPathRaw)
+            if (!frame) {
+                Wallpapers.ensureVideoFirstFrame(wallpaperPathRaw)
+                return ""
+            }
+            return frame.startsWith("file://") ? frame : ("file://" + frame)
+        }
+        readonly property bool useFrozenVideoFrame: frozenVideoFramePath.length > 0
 
         // Build proper file:// URL
         readonly property string wallpaperUrl: {
@@ -122,7 +141,7 @@ Variants {
                 source: backdropWindow.wallpaperUrl && !backdropWindow.wallpaperIsGif && !backdropWindow.wallpaperIsVideo
                     ? backdropWindow.wallpaperUrl
                     : ""
-                sourceSize: Qt.size(backdropWindow.screen?.width ?? 1920, backdropWindow.screen?.height ?? 1080)
+                sourceSize: backdropWindow.backdropSourceSize
                 visible: !backdropWindow.wallpaperIsGif && !backdropWindow.wallpaperIsVideo
                 // Use waffle transition settings
                 transitionBaseDuration: Config.options?.waffles?.background?.transition?.duration ?? 800
@@ -147,9 +166,11 @@ Variants {
                 cache: false
                 // No sourceSize for GIFs - let Qt handle native size for performance
                 visible: backdropWindow.wallpaperIsGif
-                playing: visible && backdropWindow.enableAnimation
+                playing: visible && backdropWindow.enableAnimation && !Wallpapers.batteryPauseActive
 
-                layer.enabled: Appearance.effectsEnabled && backdropWindow.enableAnimatedBlur && backdropWindow.backdropBlurRadius > 0
+                layer.enabled: visible && Appearance.effectsEnabled
+                    && backdropWindow.enableAnimatedBlur
+                    && backdropWindow.backdropBlurRadius > 0
                 layer.effect: MultiEffect {
                     blurEnabled: true
                     blur: (backdropWindow.backdropBlurRadius * Math.max(0, Math.min(1, backdropWindow.thumbnailBlurStrength / 100))) / 100.0
@@ -159,13 +180,39 @@ Variants {
                 }
             }
 
-            // Video wallpaper
-            // Always loaded for videos: plays when animation enabled, frozen (paused) when disabled
+            // When backdrop animation is disabled, a cached representative frame
+            // is equivalent to a paused video and lets Qt release the decoder.
+            Image {
+                id: frozenVideoWallpaper
+                anchors.fill: parent
+                anchors.margins: -parent.blurOverflow
+                visible: backdropWindow.useFrozenVideoFrame
+                source: visible ? backdropWindow.frozenVideoFramePath : ""
+                fillMode: Image.PreserveAspectCrop
+                asynchronous: true
+                cache: false
+                smooth: true
+                sourceSize: backdropWindow.backdropSourceSize
+
+                layer.enabled: visible && Appearance.effectsEnabled
+                    && backdropWindow.enableAnimatedBlur
+                    && backdropWindow.backdropBlurRadius > 0
+                layer.effect: MultiEffect {
+                    blurEnabled: true
+                    blur: (backdropWindow.backdropBlurRadius * Math.max(0, Math.min(1, backdropWindow.thumbnailBlurStrength / 100))) / 100.0
+                    blurMax: 64
+                    saturation: backdropWindow.backdropSaturation
+                    contrast: backdropWindow.backdropContrast
+                }
+            }
+
+            // Keep a live decoder only while animation is enabled, or briefly
+            // until the first-frame cache becomes available.
             Video {
                 id: videoWallpaper
                 anchors.fill: parent
                 anchors.margins: -parent.blurOverflow
-                visible: backdropWindow.wallpaperIsVideo
+                visible: backdropWindow.wallpaperIsVideo && !backdropWindow.useFrozenVideoFrame
                 source: {
                     if (!backdropWindow.wallpaperIsVideo) return "";
                     const path = backdropWindow.wallpaperPathRaw;
@@ -177,7 +224,7 @@ Variants {
                 muted: true
                 autoPlay: true
 
-                readonly property bool shouldPlay: backdropWindow.enableAnimation
+                readonly property bool shouldPlay: backdropWindow.enableAnimation && !Wallpapers.batteryPauseActive
 
                 function pauseAndShowFirstFrame() {
                     pause()
@@ -209,7 +256,9 @@ Variants {
                     }
                 }
 
-                layer.enabled: Appearance.effectsEnabled && backdropWindow.enableAnimatedBlur && backdropWindow.backdropBlurRadius > 0
+                layer.enabled: visible && Appearance.effectsEnabled
+                    && backdropWindow.enableAnimatedBlur
+                    && backdropWindow.backdropBlurRadius > 0
                 layer.effect: MultiEffect {
                     blurEnabled: true
                     blur: (backdropWindow.backdropBlurRadius * Math.max(0, Math.min(1, backdropWindow.thumbnailBlurStrength / 100))) / 100.0

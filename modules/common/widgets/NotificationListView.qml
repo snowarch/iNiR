@@ -9,6 +9,8 @@ import Quickshell
 StyledListView { // Scrollable window
     id: root
     property bool popup: false
+    // History-only filter; popups are never filtered.
+    property string filterQuery: ""
 
     spacing: 3
 
@@ -55,7 +57,9 @@ StyledListView { // Scrollable window
     }
 
     model: ScriptModel {
-        values: root.popup ? Notifications.popupAppNameList : Notifications.appNameList
+        values: root.popup
+            ? Notifications.popupAppNameList
+            : Notifications.appNamesMatching(root.filterQuery)
     }
     delegate: NotificationGroup {
         required property int index

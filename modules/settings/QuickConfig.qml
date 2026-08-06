@@ -15,7 +15,9 @@ ContentPage {
     settingsPageIndex: 0
     settingsPageName: Translation.tr("Quick")
     readonly property bool isOverlayPage: GlobalStates.settingsOverlayOpen ?? false
-    property bool quickGridLoaded: !isOverlayPage
+    // Deferred in both modes: entering the page must never kick off directory-wide
+    // thumbnail generation. The user asks for the grid explicitly.
+    property bool quickGridLoaded: false
 
     Component.onCompleted: {
         Wallpapers.load()
@@ -149,7 +151,7 @@ ContentPage {
 
                     RippleButtonWithIcon {
                         enabled: !randomWallProc.running
-                        buttonRadius: Appearance.rounding.full
+                        buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
                         materialIcon: "ifl"
                         mainText: randomWallProc.running ? Translation.tr("...") : Translation.tr("Konachan")
                         colBackground: Qt.rgba(Appearance.colors.colLayer1.r, Appearance.colors.colLayer1.g, Appearance.colors.colLayer1.b, 0.75)
@@ -171,7 +173,7 @@ ContentPage {
                     }
                     RippleButtonWithIcon {
                         enabled: !randomWallProc.running
-                        buttonRadius: Appearance.rounding.full
+                        buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
                         materialIcon: "ifl"
                         mainText: randomWallProc.running ? Translation.tr("...") : Translation.tr("osu!")
                         colBackground: Qt.rgba(Appearance.colors.colLayer1.r, Appearance.colors.colLayer1.g, Appearance.colors.colLayer1.b, 0.75)
@@ -198,7 +200,7 @@ ContentPage {
                     anchors.bottom: parent.bottom
                     anchors.right: parent.right
                     anchors.margins: 10
-                    buttonRadius: Appearance.rounding.full
+                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
                     materialIcon: "wallpaper"
                     colBackground: Qt.rgba(Appearance.colors.colLayer1.r, Appearance.colors.colLayer1.g, Appearance.colors.colLayer1.b, 0.75)
                     colBackgroundHover: Qt.rgba(Appearance.colors.colLayer1.r, Appearance.colors.colLayer1.g, Appearance.colors.colLayer1.b, 0.85)
@@ -368,7 +370,7 @@ ContentPage {
                         Item { Layout.fillWidth: true }
 
                         RippleButtonWithIcon {
-                            buttonRadius: Appearance.rounding.full
+                            buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
                             materialIcon: "folder_open"
                             mainText: Translation.tr("Current folder")
                             onClicked: {
@@ -384,7 +386,7 @@ ContentPage {
                             }
                         }
                         RippleButtonWithIcon {
-                            buttonRadius: Appearance.rounding.full
+                            buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
                             materialIcon: "apps"
                             mainText: Translation.tr("Selector")
                             onClicked: {
@@ -477,7 +479,7 @@ ContentPage {
 
                             StyledText {
                                 Layout.fillWidth: true
-                                text: Translation.tr("Quick wallpaper thumbnails are deferred in overlay mode.")
+                                text: Translation.tr("Quick wallpaper thumbnails are loaded on demand.")
                                 wrapMode: Text.WordWrap
                                 color: Appearance.colors.colOnLayer0
                                 font.pixelSize: Appearance.font.pixelSize.normal
@@ -493,7 +495,7 @@ ContentPage {
                             }
 
                             RippleButtonWithIcon {
-                                buttonRadius: Appearance.rounding.full
+                                buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
                                 materialIcon: "image"
                                 mainText: Translation.tr("Load quick grid")
                                 onClicked: root.quickGridLoaded = true
@@ -512,7 +514,7 @@ ContentPage {
                             id: quickGridLoader
                             anchors.fill: parent
                             active: root.quickGridLoaded
-                            asynchronous: root.isOverlayPage
+                            asynchronous: true
 
                             sourceComponent: Rectangle {
                                 id: gridCard
@@ -546,7 +548,7 @@ ContentPage {
                                     id: wallpaperGrid
                                     anchors.fill: parent
                                     anchors.margins: Appearance.sizes.spacingSmall
-                                    model: Wallpapers.folderModel
+                                    model: Wallpapers.folderModelReady ? Wallpapers.folderModel : null
                                     Component.onCompleted: Wallpapers.generateThumbnail("large")
 
                                     add: Transition {
@@ -1386,17 +1388,21 @@ ContentPage {
                                 RippleButtonWithIcon {
                                     Layout.fillWidth: true
                                     Layout.preferredWidth: 3
-                                    buttonRadius: Appearance.rounding.small
+                                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                                     materialIcon: "wallpaper"
                                     mainText: Translation.tr("Change")
-                                    colBackground: Appearance.colors.colPrimaryContainer
-                                    colBackgroundHover: Appearance.colors.colPrimaryContainerHover
-                                    colRipple: Appearance.colors.colPrimaryContainerActive
+                                    colBackground: Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colPrimaryContainer
+                                    colBackgroundHover: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimaryContainerHover
+                                    colRipple: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colPrimaryContainerActive
                                     mainContentComponent: Component {
                                         StyledText {
                                             text: Translation.tr("Change")
                                             font.pixelSize: Appearance.font.pixelSize.small
-                                            color: Appearance.colors.colOnPrimaryContainer
+                                            color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer
+                                            Behavior on color {
+                                                enabled: Appearance.animationsEnabled
+                                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                            }
                                         }
                                     }
                                     onClicked: {
@@ -1411,7 +1417,7 @@ ContentPage {
                                 RippleButtonWithIcon {
                                     Layout.fillWidth: true
                                     Layout.preferredWidth: 2
-                                    buttonRadius: Appearance.rounding.small
+                                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                                     materialIcon: "shuffle"
                                     mainText: Translation.tr("Random")
                                     onClicked: {
@@ -1427,7 +1433,7 @@ ContentPage {
                                 RippleButtonWithIcon {
                                     Layout.fillWidth: true
                                     Layout.preferredWidth: 2
-                                    buttonRadius: Appearance.rounding.small
+                                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                                     materialIcon: "restart_alt"
                                     mainText: Translation.tr("Reset")
                                     onClicked: {
@@ -1452,7 +1458,7 @@ ContentPage {
                                 RippleButtonWithIcon {
                                     Layout.fillWidth: true
                                     Layout.preferredWidth: 1
-                                    buttonRadius: Appearance.rounding.small
+                                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                                     materialIcon: "select_all"
                                     mainText: Translation.tr("Apply to all")
                                     onClicked: {
@@ -1468,7 +1474,7 @@ ContentPage {
                                 RippleButtonWithIcon {
                                     Layout.fillWidth: true
                                     Layout.preferredWidth: 1
-                                    buttonRadius: Appearance.rounding.small
+                                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                                     materialIcon: "blur_on"
                                     mainText: Translation.tr("Change backdrop")
                                     visible: multiMonitorPanel.backdropEnabled
@@ -1579,17 +1585,26 @@ ContentPage {
                             {
                                 displayName: Translation.tr("Hug"),
                                 icon: "line_curve",
+                                previewKind: "hug",
                                 value: 0
                             },
                             {
                                 displayName: Translation.tr("Float"),
                                 icon: "page_header",
+                                previewKind: "float",
                                 value: 1
                             },
                             {
                                 displayName: Translation.tr("Rect"),
                                 icon: "toolbar",
+                                previewKind: "rect",
                                 value: 2
+                            },
+                            {
+                                displayName: Translation.tr("Card"),
+                                icon: "branding_watermark",
+                                previewKind: "card",
+                                value: 3
                             }
                         ]
                     }
@@ -1651,7 +1666,6 @@ ContentPage {
         }
     }
 
-    // Game Mode
     SettingsCardSection {
         expanded: false
         icon: "sports_esports"
@@ -1757,7 +1771,7 @@ ContentPage {
 
                 RippleButtonWithIcon {
                     Layout.fillWidth: true
-                    buttonRadius: Appearance.rounding.small
+                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                     materialIcon: "refresh"
                     mainText: Translation.tr("Reload shell")
                     onClicked: Quickshell.execDetached(["/usr/bin/bash", Quickshell.shellPath("scripts/restart-shell.sh")])
@@ -1765,7 +1779,7 @@ ContentPage {
 
                 RippleButtonWithIcon {
                     Layout.fillWidth: true
-                    buttonRadius: Appearance.rounding.small
+                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                     materialIcon: "terminal"
                     mainText: Translation.tr("Open config")
                     onClicked: Qt.openUrlExternally(`${Directories.config}/illogical-impulse/config.json`)
@@ -1773,7 +1787,7 @@ ContentPage {
 
                 RippleButtonWithIcon {
                     Layout.fillWidth: true
-                    buttonRadius: Appearance.rounding.small
+                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                     materialIcon: "keyboard"
                     mainText: Translation.tr("Shortcuts")
                     onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "cheatsheet", "toggle"])
@@ -1803,6 +1817,7 @@ ContentPage {
             }
 
             SettingsSwitch {
+                visible: CompositorService.isNiri
                 buttonIcon: "help"
                 text: Translation.tr("Confirm before closing windows")
                 checked: Config.options?.closeConfirm?.enabled ?? false

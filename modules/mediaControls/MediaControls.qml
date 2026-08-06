@@ -15,6 +15,20 @@ import Quickshell.Hyprland
 Scope {
     id: root
     property bool visible: false
+    property bool _presentedOpen: false
+    Component.onCompleted: {
+        if (GlobalStates.mediaControlsOpen)
+            Qt.callLater(() => { root._presentedOpen = GlobalStates.mediaControlsOpen })
+    }
+    Connections {
+        target: GlobalStates
+        function onMediaControlsOpenChanged() {
+            if (GlobalStates.mediaControlsOpen)
+                Qt.callLater(() => { root._presentedOpen = GlobalStates.mediaControlsOpen })
+            else
+                root._presentedOpen = false
+        }
+    }
     readonly property MprisPlayer activePlayer: MprisController.activePlayer
     // Use displayPlayers - includes title/position dedup to prevent duplicates (e.g. plasma-browser-integration)
     readonly property var allPlayers: MprisController.displayPlayers
@@ -23,19 +37,28 @@ Scope {
     readonly property real widgetHeight: Appearance.sizes.mediaControlsHeight
     readonly property real dockHeight: Config.options?.dock?.height ?? 60
     readonly property real dockMargin: Appearance.sizes.elevationMargin + Appearance.sizes.hyprlandGapsOut
-    property real popupRounding: Appearance.inirEverywhere ? Appearance.inir.roundingLarge : Appearance.rounding.large
+    property real popupRounding: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+        : Appearance.inirEverywhere ? Appearance.inir.roundingLarge : Appearance.rounding.large
     readonly property bool visualizerActive: mediaControlsLoader.active && MprisController.isPlaying
-    property var focusedScreen: CompositorService.isNiri
+    property var focusedScreen: GlobalStates.focusedScreen ?? (CompositorService.isNiri
         ? Quickshell.screens.find(s => s.name === NiriService.currentOutput) ?? GlobalStates.primaryScreen
-        : Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? GlobalStates.primaryScreen
-    property var targetScreen: screenFromList(Config.options?.media?.screenList ?? [], focusedScreen)
-
-    function screenFromList(list, preferred) {
-        if (!list || list.length === 0)
-            return preferred ?? GlobalStates.primaryScreen
-        if (preferred && list.includes(preferred.name ?? ""))
+        : Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? GlobalStates.primaryScreen)
+    property var targetScreens: screensFromList(
+        Config.options?.media?.screenList ?? [])
+    readonly property string keyboardScreenName: {
+        const preferred = String(root.focusedScreen?.name ?? "")
+        if (root.targetScreens.some(screen => String(screen?.name ?? "") === preferred))
             return preferred
-        return Quickshell.screens.find(s => list.includes(s?.name ?? "")) ?? GlobalStates.primaryScreen ?? preferred
+        return String(root.targetScreens[0]?.name ?? "")
+    }
+
+    function screensFromList(list) {
+        const screens = Quickshell.screens
+        if (!list || list.length === 0)
+            return screens
+        const matched = screens.filter(screen =>
+            list.includes(String(screen?.name ?? "")))
+        return matched.length > 0 ? matched : screens
     }
 
     CavaProcess {
@@ -51,7 +74,7 @@ Scope {
 
         Timer {
             id: closingTimer
-            interval: Appearance.calcEffectiveDuration(350)
+            interval: 350
         }
 
         Connections {
@@ -65,27 +88,33 @@ Scope {
             }
         }
 
-        sourceComponent: PanelWindow {
-            id: mediaControlsRoot
-            visible: true
-            screen: root.targetScreen
+        sourceComponent: Variants {
+            model: root.targetScreens
 
-            exclusionMode: ExclusionMode.Ignore
-            exclusiveZone: 0
-            color: "transparent"
-            WlrLayershell.namespace: "quickshell:mediaControls"
-            WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: GlobalStates.mediaControlsOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+            PanelWindow {
+                id: mediaControlsRoot
+                required property var modelData
+                visible: true
+                screen: modelData
 
-            anchors {
-                top: true
-                bottom: true
-                left: true
-                right: true
-            }
+                exclusionMode: ExclusionMode.Ignore
+                exclusiveZone: 0
+                color: "transparent"
+                WlrLayershell.namespace: "quickshell:mediaControls"
+                WlrLayershell.layer: WlrLayer.Overlay
+                WlrLayershell.keyboardFocus: GlobalStates.mediaControlsOpen
+                    && String(mediaControlsRoot.screen?.name ?? "") === root.keyboardScreenName
+                    ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
-            // Click outside to close - covers entire screen
-            FocusScope {
+                anchors {
+                    top: true
+                    bottom: true
+                    left: true
+                    right: true
+                }
+
+                // Click outside to close - covers entire screen
+                FocusScope {
                 id: inputScope
                 anchors.fill: parent
                 focus: true
@@ -120,173 +149,165 @@ Scope {
 
                 Item {
                     id: cardArea
-                    width: root.widgetWidth
-                height: playerColumnLayout.implicitHeight
-                anchors.horizontalCenter: parent.horizontalCenter
+                    // ZZZ panel backdrop removed from the media popup: the heavy
+                    // poster frame behind a media card read as cluttered. The card
+                    // itself now carries the clean ZZZ plate (see PlayerControl).
+                    readonly property real zzzFrameInset: 0
+                    width: root.widgetWidth + zzzFrameInset * 2
+                    height: playerColumnLayout.implicitHeight + zzzFrameInset * 2
+                    anchors.horizontalCenter: parent.horizontalCenter
 
-                // Use screen height for reliable off-screen position
-                readonly property real screenH: mediaControlsRoot.screen?.height ?? 1080
-                readonly property real targetY: screenH - height - root.dockHeight - root.dockMargin - 5
+                    // Dock mode rises from its final edge instead of travelling
+                    // through the whole output. The bounded offset keeps the
+                    // entrance coherent for every player preset and stack height.
+                    readonly property real screenH: mediaControlsRoot.screen?.height ?? 1080
+                    readonly property real targetY: Math.max(root.dockMargin,
+                        screenH - height - root.dockHeight - root.dockMargin - 5)
+                    readonly property real revealDistance: Math.min(72,
+                        Math.max(36, height * 0.12))
+                    readonly property real hiddenY: targetY + revealDistance
 
-                y: screenH + 50
-                opacity: 0
-                scale: 0.9
-                transformOrigin: Item.Bottom
+                    y: hiddenY
+                    opacity: 0
+                    scale: 0.975
+                    transformOrigin: Item.Bottom
 
-                states: State {
-                    name: "visible"
-                    when: GlobalStates.mediaControlsOpen
-                    PropertyChanges {
-                        target: cardArea
-                        y: cardArea.targetY
-                        opacity: 1
-                        scale: 1
-                    }
-                }
-
-                transitions: [
-                    Transition {
-                        to: "visible"
-                        enabled: Appearance.animationsEnabled
-                        NumberAnimation { properties: "y"; duration: Appearance.animation.elementMoveEnter.duration; easing.type: Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve }
-                        NumberAnimation { properties: "opacity"; duration: Appearance.animation.elementMoveExit.duration; easing.type: Appearance.animation.elementMoveExit.type; easing.bezierCurve: Appearance.animation.elementMoveExit.bezierCurve }
-                        NumberAnimation { properties: "scale"; duration: Appearance.animation.elementResize.duration; easing.type: Easing.OutBack; easing.overshoot: 1.2 }
-                    },
-                    Transition {
-                        from: "visible"
-                        enabled: Appearance.animationsEnabled
-                        NumberAnimation { properties: "y"; duration: Appearance.animation.elementMoveExit.duration; easing.type: Appearance.animation.elementMoveExit.type; easing.bezierCurve: Appearance.animation.elementMoveExit.bezierCurve }
-                        NumberAnimation { properties: "opacity"; duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                        NumberAnimation { properties: "scale"; duration: Appearance.animation.elementMoveExit.duration; easing.type: Easing.InBack; easing.overshoot: 1.0 }
-                    }
-                ]
-
-                ColumnLayout {
-                    id: playerColumnLayout
-                    anchors.fill: parent
-                    spacing: 8
-
-                    Repeater {
-                        model: root.allPlayers
-                        delegate: PlayerControl {
-                            id: playerDelegate
-                            required property MprisPlayer modelData
-                            required property int index
-
-                            player: modelData
-                            visualizerPoints: root.visualizerPoints
-                            implicitWidth: root.widgetWidth
-                            implicitHeight: root.widgetHeight
-                            radius: root.popupRounding
-                            screenX: cardArea.x + (mediaControlsRoot.width - cardArea.width) / 2
-                            screenY: cardArea.y + index * (root.widgetHeight - Appearance.sizes.elevationMargin)
+                    states: State {
+                        name: "visible"
+                        when: root._presentedOpen
+                        PropertyChanges {
+                            target: cardArea
+                            y: cardArea.targetY
+                            opacity: 1
+                            scale: 1
                         }
                     }
 
-                    Item { // No player placeholder
-                        Layout.fillWidth: true
-                        visible: root.allPlayers.length === 0
-                        implicitWidth: placeholderBackground.implicitWidth + Appearance.sizes.elevationMargin
-                        implicitHeight: placeholderBackground.implicitHeight + Appearance.sizes.elevationMargin
+                    transitions: [
+                        Transition {
+                            to: "visible"
+                            enabled: Appearance.animationsEnabled
+                            NumberAnimation { properties: "y"; duration: Appearance.animation.elementMoveEnter.duration; easing.type: Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve }
+                            NumberAnimation { properties: "opacity"; duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                            NumberAnimation { properties: "scale"; duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        },
+                        Transition {
+                            from: "visible"
+                            enabled: Appearance.animationsEnabled
+                            NumberAnimation { properties: "y"; duration: Appearance.animation.elementMoveExit.duration; easing.type: Appearance.animation.elementMoveExit.type; easing.bezierCurve: Appearance.animation.elementMoveExit.bezierCurve }
+                            NumberAnimation { properties: "opacity"; duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                            NumberAnimation { properties: "scale"; duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
+                    ]
 
-                        StyledRectangularShadow {
-                            target: placeholderBackground
-                            visible: Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere)
+                    ColumnLayout {
+                        id: playerColumnLayout
+                        anchors.fill: parent
+                        anchors.margins: cardArea.zzzFrameInset
+                        spacing: 8
+
+                        Repeater {
+                            model: root.allPlayers
+                            delegate: PlayerControl {
+                                id: playerDelegate
+                                required property MprisPlayer modelData
+                                required property int index
+
+                                player: modelData
+                                visualizerPoints: root.visualizerPoints
+                                implicitWidth: root.widgetWidth
+                                implicitHeight: root.widgetHeight
+                                radius: root.popupRounding
+                                screenX: cardArea.x + (mediaControlsRoot.width - cardArea.width) / 2 + cardArea.zzzFrameInset
+                                screenY: cardArea.y + cardArea.zzzFrameInset + index * (root.widgetHeight - Appearance.sizes.elevationMargin)
+                            }
                         }
 
-                        Rectangle {
-                            id: placeholderBackground
-                            anchors.centerIn: parent
-                            color: Appearance.inirEverywhere ? Appearance.inir.colLayer1
-                                 : Appearance.auroraEverywhere ? Appearance.aurora.colPopupSurface
-                                 : Appearance.colors.colLayer0
-                            radius: Appearance.inirEverywhere ? Appearance.inir.roundingLarge : root.popupRounding
-                            border.width: Appearance.inirEverywhere || Appearance.auroraEverywhere ? 1 : 0
-                            border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder
-                                        : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder
-                                        : "transparent"
-                            property real padding: 20
-                            implicitWidth: placeholderLayout.implicitWidth + padding * 2
-                            implicitHeight: placeholderLayout.implicitHeight + padding * 2
+                        Item { // No player placeholder
+                            Layout.fillWidth: true
+                            visible: root.allPlayers.length === 0
+                            implicitWidth: placeholderBackground.implicitWidth + Appearance.sizes.elevationMargin
+                            implicitHeight: placeholderBackground.implicitHeight + Appearance.sizes.elevationMargin
 
-                            ColumnLayout {
-                                id: placeholderLayout
+                            StyledRectangularShadow {
+                                target: placeholderBackground
+                                visible: Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere)
+                            }
+
+                            Rectangle {
+                                id: placeholderBackground
                                 anchors.centerIn: parent
-
-                                StyledText {
-                                    text: Translation.tr("No active player")
-                                    font.pixelSize: Appearance.font.pixelSize.large
-                                    color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0
+                                color: Appearance.zzzEverywhere ? Appearance.zzz.paper
+                                     : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+                                     : Appearance.auroraEverywhere ? Appearance.aurora.colPopupSurface
+                                     : Appearance.colors.colLayer0
+                                Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                                radius: root.popupRounding
+                                border.width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick
+                                    : Appearance.inirEverywhere || Appearance.auroraEverywhere ? 1 : 0
+                                Behavior on border.width {
+                                    enabled: Appearance.animationsEnabled
+                                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                                 }
-                                StyledText {
-                                    color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
-                                    text: Translation.tr("Make sure your player has MPRIS support\\nor try turning off duplicate player filtering")
-                                    font.pixelSize: Appearance.font.pixelSize.small
+                                border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
+                                            : Appearance.inirEverywhere ? Appearance.inir.colBorder
+                                            : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder
+                                            : "transparent"
+                                Behavior on border.color {
+                                    enabled: Appearance.animationsEnabled
+                                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                                }
+                                property real padding: 20
+                                implicitWidth: placeholderLayout.implicitWidth + padding * 2
+                                implicitHeight: placeholderLayout.implicitHeight + padding * 2
+
+                                ZzzGraphicPlate {
+                                    anchors.fill: parent
+                                    accentColor: Appearance.zzz.tertiary
+                                }
+
+                                ColumnLayout {
+                                    id: placeholderLayout
+                                    anchors.centerIn: parent
+
+                                    MascotImage {
+                                        Layout.alignment: Qt.AlignHCenter
+                                        Layout.preferredWidth: 112
+                                        Layout.preferredHeight: 132
+                                        surface: "mediaControls"
+                                        fallbackSurface: "emptyStates"
+                                        pose: "headphone-groove-full-loop"
+                                    }
+
+                                    StyledText {
+                                        text: Translation.tr("No active player")
+                                        font.pixelSize: Appearance.font.pixelSize.large
+                                        font.weight: Appearance.zzzEverywhere ? Font.Black : Font.Normal
+                                        color: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                                            : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0
+                                        Behavior on color {
+                                            enabled: Appearance.animationsEnabled
+                                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                                        }
+                                    }
+                                    StyledText {
+                                        color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
+                                            : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+                                        Behavior on color {
+                                            enabled: Appearance.animationsEnabled
+                                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                                        }
+                                        text: Translation.tr("Make sure your player has MPRIS support\nor try turning off duplicate player filtering")
+                                        font.pixelSize: Appearance.font.pixelSize.small
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
-        }
-    }
-    }
-
-    IpcHandler {
-        target: "mediaControls"
-
-        function toggle(): void {
-            GlobalStates.mediaControlsOpen = !GlobalStates.mediaControlsOpen;
-            if (GlobalStates.mediaControlsOpen)
-                Notifications.timeoutAll();
-        }
-
-        function close(): void {
-            GlobalStates.mediaControlsOpen = false;
-        }
-
-        function open(): void {
-            GlobalStates.mediaControlsOpen = true;
-            Notifications.timeoutAll();
-        }
-    }
-    Loader {
-        active: CompositorService.isHyprland
-        sourceComponent: Item {
-            GlobalShortcut {
-                name: "mediaControlsToggle"
-                description: "Toggles media controls on press"
-
-                onPressed: {
-                    GlobalStates.mediaControlsOpen = !GlobalStates.mediaControlsOpen;
-                }
-            }
-            GlobalShortcut {
-                name: "mediaControlsOpen"
-                description: "Opens media controls on press"
-
-                onPressed: {
-                    GlobalStates.mediaControlsOpen = true;
-                }
-            }
-            GlobalShortcut {
-                name: "mediaControlsClose"
-                description: "Closes media controls on press"
-
-                onPressed: {
-                    GlobalStates.mediaControlsOpen = false;
-                }
-            }
-            GlobalShortcut {
-                name: "mediaControlsPlayPause"
-                description: "Toggles play/pause when media controls are open"
-
-                onPressed: {
-                    if (GlobalStates.mediaControlsOpen && activePlayer?.canTogglePlaying) {
-                        activePlayer.togglePlaying();
-                    }
                 }
             }
         }
     }
+
 }

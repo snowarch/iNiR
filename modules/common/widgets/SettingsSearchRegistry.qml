@@ -10,6 +10,10 @@ Singleton {
     // Lista de entradas de opciones de Settings
     // Cada entrada: { id, control, pageIndex, pageName, section, label, description, keywords }
     property var entries: []
+    property var _entryStore: []
+    property var _entryById: ({})
+    property var _removedEntryIds: ({})
+    property bool _entriesFlushScheduled: false
     property int _nextId: 0
     
     // Lista de CollapsibleSection registradas para manejo de expand/collapse
@@ -86,6 +90,32 @@ Singleton {
         return unique;
     }
 
+    function _scheduleEntriesFlush(): void {
+        if (_entriesFlushScheduled)
+            return;
+        _entriesFlushScheduled = true;
+        Qt.callLater(() => root._flushEntries());
+    }
+
+    function _flushEntries(): void {
+        _entriesFlushScheduled = false;
+
+        var activeEntries = [];
+        var activeById = {};
+        for (var i = 0; i < _entryStore.length; i++) {
+            var entry = _entryStore[i];
+            if (!entry || _removedEntryIds[entry.id] || !entry.control)
+                continue;
+            activeEntries.push(entry);
+            activeById[entry.id] = entry;
+        }
+
+        _entryStore = activeEntries;
+        _entryById = activeById;
+        _removedEntryIds = {};
+        entries = activeEntries.slice();
+    }
+
     function registerOption(meta) {
         if (!meta || !meta.control)
             return -1;
@@ -112,22 +142,40 @@ Singleton {
             keywords: allKeywords
         };
 
-        entries = entries.concat([entry]);
+        _entryStore.push(entry);
+        _entryById[id] = entry;
+        _scheduleEntriesFlush();
         return id;
     }
 
     function unregisterControl(control) {
         if (!control)
             return;
-        var newEntries = [];
-        for (var i = 0; i < entries.length; ++i) {
-            if (entries[i].control !== control)
-                newEntries.push(entries[i]);
+
+        var optionId = control.hasOwnProperty("settingsSearchOptionId")
+            ? control.settingsSearchOptionId : -1;
+        var indexedEntry = optionId >= 0 ? _entryById[optionId] : null;
+        if (indexedEntry && indexedEntry.control === control) {
+            _removedEntryIds[indexedEntry.id] = true;
+            delete _entryById[optionId];
+            _scheduleEntriesFlush();
+            return;
         }
-        entries = newEntries;
+
+        for (var i = 0; i < _entryStore.length; ++i) {
+            var entry = _entryStore[i];
+            if (entry && !_removedEntryIds[entry.id] && entry.control === control) {
+                _removedEntryIds[entry.id] = true;
+                delete _entryById[entry.id];
+            }
+        }
+        _scheduleEntriesFlush();
     }
 
     function clear() {
+        _entryStore = [];
+        _entryById = {};
+        _removedEntryIds = {};
         entries = [];
         _nextId = 0;
     }
@@ -163,8 +211,10 @@ Singleton {
         var terms = q.split(/\s+/).filter(t => t.length > 0);
         var out = [];
 
-        for (var i = 0; i < entries.length; ++i) {
-            var e = entries[i];
+        for (var i = 0; i < _entryStore.length; ++i) {
+            var e = _entryStore[i];
+            if (!e || _removedEntryIds[e.id] || !e.control)
+                continue;
             var label = (e.label || "").toLowerCase();
             var desc = (e.description || "").toLowerCase();
             var page = (e.pageName || "").toLowerCase();
@@ -243,30 +293,43 @@ Singleton {
     }
 
     function focusOption(optionId) {
-        for (var i = 0; i < entries.length; ++i) {
-            var e = entries[i];
-            if (e.id === optionId) {
-                var c = e.control;
-                if (!c)
-                    return;
+        var e = _entryById[optionId];
+        var c = e ? e.control : null;
+        if (!c)
+            return;
 
-                if (typeof c.focusFromSettingsSearch === "function") {
-                    c.focusFromSettingsSearch();
-                } else if (typeof c.forceActiveFocus === "function") {
-                    c.forceActiveFocus();
-                }
-                return;
-            }
+        if (typeof c.focusFromSettingsSearch === "function") {
+            c.focusFromSettingsSearch();
+        } else if (typeof c.forceActiveFocus === "function") {
+            c.forceActiveFocus();
         }
     }
     
-    function getControlById(optionId) {
-        for (var i = 0; i < entries.length; ++i) {
-            var e = entries[i];
-            if (e.id === optionId) {
+    function findSectionControl(pageIndex, title) {
+        var wanted = String(title || "").toLowerCase().trim();
+        if (!wanted.length)
+            return null;
+
+        var loose = null;
+        for (var i = 0; i < _entryStore.length; ++i) {
+            var e = _entryStore[i];
+            if (!e || _removedEntryIds[e.id] || !e.control)
+                continue;
+            if (e.pageIndex !== pageIndex)
+                continue;
+            var label = String(e.label || "").toLowerCase().trim();
+            if (!label.length)
+                continue;
+            if (label === wanted)
                 return e.control;
-            }
+            if (!loose && (label.indexOf(wanted) >= 0 || wanted.indexOf(label) >= 0))
+                loose = e.control;
         }
-        return null;
+        return loose;
+    }
+
+    function getControlById(optionId) {
+        var e = _entryById[optionId];
+        return e ? e.control : null;
     }
 }

@@ -227,7 +227,11 @@ Singleton {
 
     Timer {
         id: xembedProxyDelayedStartTimer
-        interval: 600
+        // Legacy XEmbed tray apps can publish before the proxy owns the tray
+        // selection and do not necessarily register again. Keep this
+        // asynchronous, but start on the next event-loop turn instead of
+        // leaving a 600 ms race window.
+        interval: 0
         repeat: false
         onTriggered: {
             xembedProxyCheckProc.running = false;

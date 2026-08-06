@@ -196,7 +196,7 @@ Item {
                         font.pixelSize: Math.round(40 * Appearance.fontSizeScale)
                         color: Appearance.angelEverywhere ? Appearance.angel.colText
                             : Appearance.inirEverywhere ? Appearance.inir.colText
-                            : Appearance.m3colors.m3onSurface
+                            : Appearance.colors.colOnSurface
                     }
                     StyledText {
                         Layout.alignment: Qt.AlignHCenter
@@ -237,24 +237,33 @@ Item {
                         horizontalAlignment: Text.AlignHCenter
                         text: TimerService.pomodoroRunning ? Translation.tr("Pause") : (TimerService.pomodoroSecondsLeft === TimerService.focusTime) ? Translation.tr("Start") : Translation.tr("Resume")
                         color: TimerService.pomodoroRunning
-                            ? (Appearance.inirEverywhere ? Appearance.inir.colText
+                            ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker
+                                : Appearance.inirEverywhere ? Appearance.inir.colText
                                 : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer2 : Appearance.colors.colOnSecondaryContainer)
                             : Appearance.colors.colOnPrimary
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                        }
                     }
                     implicitHeight: 35
                     implicitWidth: 90
+                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
                     font.pixelSize: Appearance.font.pixelSize.larger
                     onClicked: TimerService.togglePomodoro()
                     colBackground: TimerService.pomodoroRunning
-                        ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                        ? (Appearance.zzzEverywhere ? Appearance.zzz.sticker
+                            : Appearance.inirEverywhere ? Appearance.inir.colLayer2
                             : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colSecondaryContainer)
                         : Appearance.colors.colPrimary
                     colBackgroundHover: TimerService.pomodoroRunning
-                        ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                        ? (Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover
+                            : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
                             : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover : Appearance.colors.colSecondaryContainerHover)
                         : Appearance.colors.colPrimaryHover
                     colRipple: TimerService.pomodoroRunning
-                        ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
+                        ? (Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive
+                            : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
                             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colSecondaryContainerActive)
                         : Appearance.colors.colPrimaryActive
                 }
@@ -431,4 +440,3 @@ Item {
         }
     }
 }
-

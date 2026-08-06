@@ -6,12 +6,6 @@ Pick a wallpaper and the entire desktop follows. Colors propagate to the shell, 
 
 **From the shell**: open the wallpaper selector (`Super+W` or through Settings) and browse your filesystem. Click a wallpaper to apply it. The color pipeline runs automatically.
 
-**From the CLI**:
-
-```bash
-inir wallpapers set /path/to/image.jpg
-```
-
 **From Settings**: Appearance section lets you configure wallpaper behavior, blur, and auto-cycling.
 
 ## What happens when you set a wallpaper
@@ -91,14 +85,19 @@ The left sidebar includes a Wallhaven browser. Search wallhaven.cc, preview resu
 
 ## Theme presets
 
-44 built-in presets bypass the wallpaper color pipeline entirely and inject predefined color palettes. See [Theming Presets](THEMING_PRESETS.md).
+46 built-in presets bypass the wallpaper color pipeline entirely and inject predefined color palettes. See [Theming Presets](THEMING_PRESETS.md).
 
 When a preset is active, changing wallpapers still changes the background image but doesn't regenerate colors. Switch back to "Auto" mode in Settings to restore wallpaper-based theming.
 
 ## CLI reference
 
+There is no `inir wallpapers` command. The real IPC target is
+`wallpaperSelector` (see [docs/IPC.md](IPC.md)):
+
 ```bash
-inir wallpapers set <path>          # Set wallpaper and regenerate colors
-inir wallpapers get                 # Get current wallpaper path
-inir wallpapers random <directory>  # Set a random wallpaper from directory
+inir wallpaperSelector toggle   # Open/close the wallpaper picker grid
+inir wallpaperSelector random   # Pick a random wallpaper from the current folder
 ```
+
+Setting a specific wallpaper by path is done through the picker UI (or the
+Wallhaven browser), not a raw CLI setter.

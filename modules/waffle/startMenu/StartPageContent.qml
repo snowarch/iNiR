@@ -323,7 +323,10 @@ WPanelPageColumn {
                             }
                             WText {
                                 Layout.alignment: Qt.AlignVCenter
-                                text: SystemInfo.hostname ?? "Computer"
+                                // `hostname` is an empty string until /etc/hostname
+                                // resolves, and `??` does not catch "" — this label
+                                // would otherwise render blank on the first frame.
+                                text: SystemInfo.hostname || "Computer"
                                 font.pixelSize: Looks.font.pixelSize.large
                                 font.weight: Looks.font.weight.strong
                             }

@@ -22,14 +22,19 @@ Item {
     readonly property bool angel: Appearance.angelEverywhere
     readonly property bool inir: Appearance.inirEverywhere
     readonly property bool aurora: Appearance.auroraEverywhere
+    readonly property bool zzz: Appearance.zzzEverywhere
     readonly property color colText: angel ? Appearance.angel.colText
-        : inir ? Appearance.inir.colText : Appearance.colors.colOnSurface
+        : inir ? Appearance.inir.colText
+        : zzz ? Appearance.zzz.ink : Appearance.colors.colOnSurface
     readonly property color colSub: angel ? Appearance.angel.colTextSecondary
-        : inir ? Appearance.inir.colTextSecondary : Appearance.colors.colOnSurfaceVariant
+        : inir ? Appearance.inir.colTextSecondary
+        : zzz ? Appearance.zzz.inkMuted : Appearance.colors.colOnSurfaceVariant
     readonly property color colPrimary: angel ? Appearance.angel.colPrimary
-        : inir ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
+        : inir ? Appearance.inir.colPrimary
+        : zzz ? Appearance.zzz.accent : Appearance.colors.colPrimary
     readonly property color colCard: angel ? Appearance.angel.colGlassCard
         : inir ? Appearance.inir.colLayer1
+        : zzz ? "transparent" // zzz: bgless — el fondo verde (tinte del wallpaper) chocaba; las cards viven sobre el placa carbon
         : aurora ? ColorUtils.transparentize(Appearance.colors.colLayer1, 0.4)
         : Appearance.colors.colSurfaceContainerHigh
     readonly property color colTrack: ColorUtils.transparentize(root.colSub, 0.78)

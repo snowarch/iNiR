@@ -1,10 +1,16 @@
 import qs
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Dialogs
+import Qt.labs.folderlistmodel
+import Quickshell
+import Quickshell.Io
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
+import qs.modules.background.widgets.japaneseTypography
+import "root:modules/background/widgets/japaneseTypography/JapaneseTypographyPresets.js" as JapanesePresets
 
 ContentPage {
     id: root
@@ -12,6 +18,203 @@ ContentPage {
     settingsPageName: Translation.tr("Widgets")
 
     property bool isIiActive: Config.options?.panelFamily !== "waffle"
+    property int _customMediaFolderCount: 0
+    property int _customMediaFolderImageCount: 0
+    property int _customMediaFolderGifCount: 0
+    property int _customMediaFolderVideoCount: 0
+
+    readonly property var _customImageShapes: [
+        { value: "Circle", shape: MaterialShape.Shape.Circle },
+        { value: "Square", shape: MaterialShape.Shape.Square },
+        { value: "Slanted", shape: MaterialShape.Shape.Slanted },
+        { value: "Arch", shape: MaterialShape.Shape.Arch },
+        { value: "Fan", shape: MaterialShape.Shape.Fan },
+        { value: "Arrow", shape: MaterialShape.Shape.Arrow },
+        { value: "SemiCircle", shape: MaterialShape.Shape.SemiCircle },
+        { value: "Oval", shape: MaterialShape.Shape.Oval },
+        { value: "Pill", shape: MaterialShape.Shape.Pill },
+        { value: "Triangle", shape: MaterialShape.Shape.Triangle },
+        { value: "Diamond", shape: MaterialShape.Shape.Diamond },
+        { value: "ClamShell", shape: MaterialShape.Shape.ClamShell },
+        { value: "Pentagon", shape: MaterialShape.Shape.Pentagon },
+        { value: "Gem", shape: MaterialShape.Shape.Gem },
+        { value: "Sunny", shape: MaterialShape.Shape.Sunny },
+        { value: "VerySunny", shape: MaterialShape.Shape.VerySunny },
+        { value: "Cookie4Sided", shape: MaterialShape.Shape.Cookie4Sided },
+        { value: "Cookie6Sided", shape: MaterialShape.Shape.Cookie6Sided },
+        { value: "Cookie7Sided", shape: MaterialShape.Shape.Cookie7Sided },
+        { value: "Cookie9Sided", shape: MaterialShape.Shape.Cookie9Sided },
+        { value: "Cookie12Sided", shape: MaterialShape.Shape.Cookie12Sided },
+        { value: "Ghostish", shape: MaterialShape.Shape.Ghostish },
+        { value: "Clover4Leaf", shape: MaterialShape.Shape.Clover4Leaf },
+        { value: "Clover8Leaf", shape: MaterialShape.Shape.Clover8Leaf },
+        { value: "Burst", shape: MaterialShape.Shape.Burst },
+        { value: "SoftBurst", shape: MaterialShape.Shape.SoftBurst },
+        { value: "Boom", shape: MaterialShape.Shape.Boom },
+        { value: "SoftBoom", shape: MaterialShape.Shape.SoftBoom },
+        { value: "Flower", shape: MaterialShape.Shape.Flower },
+        { value: "Puffy", shape: MaterialShape.Shape.Puffy },
+        { value: "PuffyDiamond", shape: MaterialShape.Shape.PuffyDiamond },
+        { value: "PixelCircle", shape: MaterialShape.Shape.PixelCircle },
+        { value: "PixelTriangle", shape: MaterialShape.Shape.PixelTriangle },
+        { value: "Bun", shape: MaterialShape.Shape.Bun },
+        { value: "Heart", shape: MaterialShape.Shape.Heart }
+    ]
+
+    readonly property string _japanesePath: "background.widgets.japaneseTypography"
+    readonly property bool _widgetBlurAvailable: Appearance.effectsEnabled
+        && (Appearance.angelEverywhere
+            || (Appearance.auroraEverywhere && !Appearance.inirEverywhere)
+            || (!Appearance.zzzEverywhere && !Appearance.cookieEverywhere
+                && !Appearance.angelEverywhere && !Appearance.auroraEverywhere
+                && !Appearance.inirEverywhere
+                && (Config.options?.background?.widgets?.style ?? "panel") === "island"
+                && (Config.options?.appearance?.island?.glass ?? true)
+                && (Config.options?.appearance?.island?.opacity ?? 1) < 0.999))
+
+    function _setJapaneseValue(key: string, value: var, group: string): void {
+        Config.setNestedValues(JapanesePresets.setValue(root._japanesePath, key, value, group));
+    }
+
+    function _applyJapaneseCompositionPreset(preset: string): void {
+        Config.setNestedValues(JapanesePresets.composition(root._japanesePath, preset));
+    }
+
+    function _customMediaChoiceActive(choice: string): bool {
+        const base = "background.widgets.customImage"
+        const mode = Config.getNestedValue(base + ".sourceMode", "file")
+        const filter = Config.getNestedValue(base + ".mediaFilter", "all")
+        return mode === "file" ? choice === "file" : choice === filter
+    }
+
+    function _customMediaFolderUrl(path: string): string {
+        const value = String(path ?? "")
+        if (!value) return ""
+        return value.startsWith("file:") ? value : "file://" + value
+    }
+
+    function _refreshCustomMediaFolderInventory(): void {
+        let mediaCount = 0
+        let imageCount = 0
+        let gifCount = 0
+        let videoCount = 0
+        if (customMediaFolderInventory.status === FolderListModel.Ready) {
+            for (let i = 0; i < customMediaFolderInventory.count; ++i) {
+                const path = String(customMediaFolderInventory.get(i, "filePath")
+                    || FileUtils.trimFileProtocol(customMediaFolderInventory.get(i, "fileURL")) || "")
+                if (!Images.isValidMediaByName(path)) continue
+                mediaCount++
+                if (Images.isValidVideoByName(path)) videoCount++
+                else if (path.toLowerCase().endsWith(".gif")) gifCount++
+                else if (Images.isValidImageByName(path)) imageCount++
+            }
+        }
+        root._customMediaFolderCount = mediaCount
+        root._customMediaFolderImageCount = imageCount
+        root._customMediaFolderGifCount = gifCount
+        root._customMediaFolderVideoCount = videoCount
+
+        const base = "background.widgets.customImage"
+        const mode = Config.getNestedValue(base + ".sourceMode", "file")
+        const filter = Config.getNestedValue(base + ".mediaFilter", "all")
+        const selectedCount = filter === "images" ? imageCount
+            : filter === "gifs" ? gifCount
+            : filter === "videos" ? videoCount
+            : mediaCount
+        if (mode === "folder" && mediaCount > 0 && selectedCount === 0
+                && filter !== "all")
+            Qt.callLater(() => Config.setNestedValue(base + ".mediaFilter", "all"))
+    }
+
+    function _activateCustomMediaChoice(choice: string): void {
+        const base = "background.widgets.customImage"
+        const path = Config.getNestedValue(base + ".path", "")
+        const updates = {}
+        if (choice === "file") {
+            if (!Images.isValidMediaByName(path)) return
+            updates[base + ".sourceMode"] = "file"
+        } else {
+            const count = choice === "images" ? root._customMediaFolderImageCount
+                : choice === "gifs" ? root._customMediaFolderGifCount
+                : choice === "videos" ? root._customMediaFolderVideoCount
+                : root._customMediaFolderCount
+            if (count === 0) return
+            updates[base + ".sourceMode"] = "folder"
+            updates[base + ".mediaFilter"] = choice
+        }
+        Config.setNestedValues(updates)
+    }
+
+    FolderListModel {
+        id: customMediaFolderInventory
+        folder: root._customMediaFolderUrl(
+            Config.options?.background?.widgets?.customImage?.folder ?? "")
+        nameFilters: Images.validImageExtensions.concat(Images.validVideoExtensions)
+            .map(ext => "*." + ext)
+        caseSensitive: false
+        showDirs: false
+        showDotAndDotDot: false
+        showHidden: false
+        showOnlyReadable: true
+        sortField: FolderListModel.Name
+        onCountChanged: root._refreshCustomMediaFolderInventory()
+        onStatusChanged: if (status === FolderListModel.Ready)
+            root._refreshCustomMediaFolderInventory()
+        onFolderChanged: Qt.callLater(root._refreshCustomMediaFolderInventory)
+    }
+
+    FileDialog {
+        id: customImageFileDialog
+        title: Translation.tr("Choose media file")
+        fileMode: FileDialog.OpenFile
+        nameFilters: [
+            Translation.tr("Media") + " (*.jpg *.jpeg *.png *.webp *.tif *.tiff *.svg *.gif *.mp4 *.webm *.mkv *.avi *.mov)",
+            Translation.tr("Images") + " (*.jpg *.jpeg *.png *.webp *.tif *.tiff *.svg *.gif)",
+            Translation.tr("Videos") + " (*.mp4 *.webm *.mkv *.avi *.mov)",
+            Translation.tr("All files") + " (*)"
+        ]
+        onAccepted: {
+            const path = FileUtils.trimFileProtocol(String(selectedFile));
+            if (Images.isValidMediaByName(path)) {
+                Config.setNestedValues({
+                    "background.widgets.customImage.path": path,
+                    "background.widgets.customImage.sourceMode": "file"
+                });
+            }
+        }
+    }
+
+    FolderDialog {
+        id: customImageFolderDialog
+        title: Translation.tr("Choose media folder")
+        onAccepted: {
+            const path = FileUtils.trimFileProtocol(String(selectedFolder));
+            if (path.length > 0) {
+                Config.setNestedValues({
+                    "background.widgets.customImage.folder": path,
+                    "background.widgets.customImage.sourceMode": "folder"
+                });
+            }
+        }
+    }
+
+    SettingsNativeDialogGuard {
+        dialog: customImageFileDialog
+        dialogKey: "desktop-widgets-custom-media-file"
+    }
+
+    SettingsNativeDialogGuard {
+        dialog: customImageFolderDialog
+        dialogKey: "desktop-widgets-custom-media-folder"
+    }
+
+    function _applyJapanesePalettePreset(preset: string): void {
+        Config.setNestedValues(JapanesePresets.palette(root._japanesePath, preset));
+    }
+
+    function _applyJapaneseFontPreset(preset: string): void {
+        Config.setNestedValues(JapanesePresets.font(root._japanesePath, preset));
+    }
 
     // Zone names for placement strategy resolution
     readonly property var _zoneNames: ["topLeft", "topCenter", "topRight", "centerLeft", "center", "centerRight", "bottomLeft", "bottomCenter", "bottomRight"]
@@ -45,9 +248,15 @@ ContentPage {
     function _colorModeOptions(): var {
         return [
             { displayName: Translation.tr("Auto"), icon: "auto_awesome", value: "auto" },
-            { displayName: Translation.tr("Light"), icon: "light_mode", value: "light" },
-            { displayName: Translation.tr("Dark"), icon: "dark_mode", value: "dark" },
+            { displayName: Translation.tr("Light ink"), icon: "light_mode", value: "light" },
+            { displayName: Translation.tr("Dark ink"), icon: "dark_mode", value: "dark" },
         ]
+    }
+
+    function _manifestSupportsSurface(configKeys: var): bool {
+        const keys = configKeys ?? {};
+        return ["showBackground", "backgroundOpacity", "useBlur", "showBorder",
+            "borderWidth", "borderOpacity", "cornerRadius"].some(key => keys[key] !== undefined);
     }
 
     function _manifestOptions(options: var): var {
@@ -68,6 +277,21 @@ ContentPage {
         return false;
     }
 
+    function _zoneDisplayName(zone: string): string {
+        const labels = {
+            topLeft: Translation.tr("Top left"),
+            topCenter: Translation.tr("Top center"),
+            topRight: Translation.tr("Top right"),
+            centerLeft: Translation.tr("Center left"),
+            center: Translation.tr("Center"),
+            centerRight: Translation.tr("Center right"),
+            bottomLeft: Translation.tr("Bottom left"),
+            bottomCenter: Translation.tr("Bottom center"),
+            bottomRight: Translation.tr("Bottom right")
+        };
+        return labels[zone] ?? Translation.tr("Zone");
+    }
+
     // ── Reusable zone picker (3x3 grid) ────────────────────────
     component WidgetZonePicker: ColumnLayout {
         id: wzp
@@ -79,39 +303,86 @@ ContentPage {
         readonly property bool isZone: root._zoneNames.indexOf(currentStrategy) >= 0
         visible: isZone
 
-        Grid {
-            Layout.alignment: Qt.AlignHCenter
-            columns: 3
-            spacing: 3
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.topMargin: 4
+            spacing: 8
 
-            Repeater {
-                model: [
-                    { zone: "topLeft", icon: "north_west" },
-                    { zone: "topCenter", icon: "north" },
-                    { zone: "topRight", icon: "north_east" },
-                    { zone: "centerLeft", icon: "west" },
-                    { zone: "center", icon: "filter_center_focus" },
-                    { zone: "centerRight", icon: "east" },
-                    { zone: "bottomLeft", icon: "south_west" },
-                    { zone: "bottomCenter", icon: "south" },
-                    { zone: "bottomRight", icon: "south_east" }
-                ]
-                delegate: RippleButton {
-                    required property var modelData
-                    width: 36; height: 36
-                    buttonRadius: Appearance.rounding.small
-                    toggled: wzp.currentStrategy === modelData.zone
-                    colBackground: "transparent"
-                    colBackgroundHover: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.06)
-                    colBackgroundToggled: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.16)
-                    colBackgroundToggledHover: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.24)
-                    colRipple: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.12)
-                    downAction: () => Config.setNestedValue(wzp.configPath + ".placementStrategy", modelData.zone)
-                    contentItem: MaterialSymbol {
-                        anchors.centerIn: parent
-                        text: modelData.icon
-                        iconSize: 18
-                        color: parent.toggled ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1
+            MaterialSymbol {
+                text: "grid_view"
+                iconSize: Appearance.font.pixelSize.normal
+                color: Appearance.colors.colPrimary
+            }
+            StyledText {
+                Layout.fillWidth: true
+                text: Translation.tr("Selected zone: %1").arg(root._zoneDisplayName(wzp.currentStrategy))
+                color: Appearance.colors.colOnLayer1
+                font.pixelSize: Appearance.font.pixelSize.small
+                font.weight: Font.Medium
+            }
+        }
+
+        StyledText {
+            Layout.fillWidth: true
+            text: Translation.tr("Choose the screen region this widget should occupy. The widget stays attached to that zone when its size or the screen geometry changes.")
+            color: Appearance.colors.colSubtext
+            font.pixelSize: Appearance.font.pixelSize.smaller
+            wrapMode: Text.WordWrap
+        }
+
+        Item {
+            Layout.fillWidth: true
+            Layout.topMargin: 4
+            Layout.bottomMargin: 4
+            implicitHeight: zonePlate.implicitHeight
+
+            Rectangle {
+                id: zonePlate
+                anchors.horizontalCenter: parent.horizontalCenter
+                implicitWidth: zoneGrid.implicitWidth + 16
+                implicitHeight: zoneGrid.implicitHeight + 16
+                radius: Appearance.rounding.small
+                color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.05)
+                border.width: 1
+                border.color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.08)
+
+                Grid {
+                    id: zoneGrid
+                    anchors.centerIn: parent
+                    columns: 3
+                    spacing: 3
+
+                    Repeater {
+                        model: [
+                            { zone: "topLeft", icon: "north_west" },
+                            { zone: "topCenter", icon: "north" },
+                            { zone: "topRight", icon: "north_east" },
+                            { zone: "centerLeft", icon: "west" },
+                            { zone: "center", icon: "filter_center_focus" },
+                            { zone: "centerRight", icon: "east" },
+                            { zone: "bottomLeft", icon: "south_west" },
+                            { zone: "bottomCenter", icon: "south" },
+                            { zone: "bottomRight", icon: "south_east" }
+                        ]
+                        delegate: RippleButton {
+                            required property var modelData
+                            width: 36; height: 36
+                            buttonRadius: Appearance.rounding.small
+                            toggled: wzp.currentStrategy === modelData.zone
+                            colBackground: "transparent"
+                            colBackgroundHover: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.06)
+                            colBackgroundToggled: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.16)
+                            colBackgroundToggledHover: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.24)
+                            colRipple: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.12)
+                            downAction: () => Config.setNestedValue(wzp.configPath + ".placementStrategy", modelData.zone)
+                            contentItem: MaterialSymbol {
+                                anchors.centerIn: parent
+                                text: modelData.icon
+                                iconSize: 18
+                                color: parent.toggled ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1
+                            }
+                            StyledToolTip { text: root._zoneDisplayName(modelData.zone) }
+                        }
                     }
                 }
             }
@@ -124,9 +395,9 @@ ContentPage {
         required property string configPath
         required property var configEntry
         required property string defaultStrategy
-        Layout.fillWidth: false
-        Layout.preferredWidth: Math.min(500, Math.max(420, root.width * 0.5))
-        Layout.minimumWidth: Math.min(420, root.width * 0.5)
+        Layout.fillWidth: true
+        Layout.preferredWidth: 360
+        Layout.minimumWidth: 180
 
         readonly property string currentStrategy: Config.getNestedValue(wps.configPath + ".placementStrategy", configEntry?.placementStrategy ?? defaultStrategy)
 
@@ -143,40 +414,33 @@ ContentPage {
         default property alias controlData: controlRow.data
 
         Layout.fillWidth: true
-        spacing: 12
+        spacing: 10
 
-        RowLayout {
-            Layout.preferredWidth: 180
-            Layout.maximumWidth: 220
+        MaterialSymbol {
+            visible: wsr.icon.length > 0
+            text: wsr.icon
+            iconSize: Appearance.font.pixelSize.normal
+            color: Appearance.colors.colSubtext
             Layout.alignment: Qt.AlignVCenter
-            spacing: 8
+        }
 
-            MaterialSymbol {
-                visible: wsr.icon.length > 0
-                text: wsr.icon
-                iconSize: Appearance.font.pixelSize.normal
-                color: Appearance.colors.colSubtext
-            }
-
-            StyledText {
-                Layout.fillWidth: true
-                text: wsr.label
-                color: Appearance.colors.colOnLayer1
-                font.pixelSize: Appearance.font.pixelSize.small
-                wrapMode: Text.WordWrap
-            }
+        // Label fills the row so a right-aligned control hugs the edge with no
+        // dead gap (mascot-page density). When the control itself should stretch
+        // (trailing:false, e.g. a selection array), the label hugs instead.
+        StyledText {
+            text: wsr.label
+            color: Appearance.colors.colOnLayer1
+            font.pixelSize: Appearance.font.pixelSize.small
+            wrapMode: Text.WordWrap
+            Layout.fillWidth: wsr.trailing
+            Layout.alignment: Qt.AlignVCenter
         }
 
         RowLayout {
             id: controlRow
-            Layout.fillWidth: true
+            Layout.fillWidth: !wsr.trailing
             Layout.alignment: Qt.AlignVCenter
             spacing: 8
-
-            Item {
-                visible: wsr.trailing
-                Layout.fillWidth: wsr.trailing
-            }
         }
     }
 
@@ -202,56 +466,192 @@ ContentPage {
         onClicked: if (wsc.toggleAction) wsc.toggleAction(!wsc.active)
     }
 
-    // ── Reusable slider row with icon + inline value ────────
-    component SliderRow: RowLayout {
+    component WidgetStateControls: ColumnLayout {
+        id: stateControls
+        required property string configPath
+        required property var configEntry
+        required property string defaultStrategy
+        property bool defaultEnabled: false
+        property string widgetTitle: Translation.tr("Widget")
+        property string enableTooltip: ""
+
+        Layout.fillWidth: true
+        spacing: 0
+
+        ContentSubsection {
+            title: stateControls.widgetTitle
+
+            WidgetSettingRow {
+                label: Translation.tr("Enabled")
+                icon: "check"
+                WidgetToggleChip {
+                    configPath: stateControls.configPath + ".enable"
+                    defaultValue: stateControls.defaultEnabled
+                    buttonIcon: "check"
+                    buttonText: Translation.tr("Enable")
+                    StyledToolTip {
+                        visible: stateControls.enableTooltip.length > 0
+                        text: stateControls.enableTooltip
+                    }
+                }
+            }
+        }
+
+        ContentSubsection {
+            title: Translation.tr("Placement")
+
+            WidgetSettingRow {
+                label: Translation.tr("Mode")
+                icon: "open_with"
+                trailing: false
+                WidgetPlacementSelector {
+                    configPath: stateControls.configPath
+                    configEntry: stateControls.configEntry
+                    defaultStrategy: stateControls.defaultStrategy
+                }
+            }
+
+            WidgetZonePicker {
+                configPath: stateControls.configPath
+                configEntry: stateControls.configEntry
+            }
+        }
+    }
+
+    component WidgetResetButton: RippleButton {
+        id: wrb
+        required property string configPath
+        required property var defaults
+        property bool armed: false
+        Layout.fillWidth: false
+        Layout.alignment: Qt.AlignRight
+        implicitHeight: 32
+        implicitWidth: wrbRow.implicitWidth + 24
+        buttonRadius: Appearance.rounding.full
+        toggled: wrb.armed
+        colBackground: "transparent"
+        colBackgroundHover: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.08)
+        colBackgroundToggled: ColorUtils.applyAlpha(Appearance.colors.colError, 0.14)
+        colBackgroundToggledHover: ColorUtils.applyAlpha(Appearance.colors.colError, 0.22)
+        onClicked: {
+            if (!wrb.armed) {
+                wrb.armed = true
+                wrbResetTimer.restart()
+                return
+            }
+            wrb.armed = false
+            wrbResetTimer.stop()
+            const updates = {}
+            for (const key in wrb.defaults) {
+                // A settings reset restores configuration without removing the
+                // widget from the desktop. Enable/disable remains an explicit action.
+                if (key === "enable")
+                    continue
+                updates[wrb.configPath + "." + key] = wrb.defaults[key]
+            }
+            Config.setNestedValues(updates)
+        }
+        Timer {
+            id: wrbResetTimer
+            interval: 3000
+            onTriggered: wrb.armed = false
+        }
+        contentItem: RowLayout {
+            id: wrbRow
+            anchors.centerIn: parent
+            spacing: 6
+            MaterialSymbol {
+                text: wrb.armed ? "warning" : "restart_alt"
+                iconSize: 18
+                color: wrb.armed ? Appearance.colors.colError : Appearance.colors.colSubtext
+            }
+            StyledText {
+                text: wrb.armed ? Translation.tr("Confirm reset") : Translation.tr("Reset to defaults")
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: wrb.armed ? Appearance.colors.colError : Appearance.colors.colSubtext
+            }
+        }
+        StyledToolTip {
+            text: wrb.armed
+                ? Translation.tr("Click again to restore this widget's defaults")
+                : Translation.tr("Restore this widget's default settings")
+        }
+    }
+
+    component PowerSavingSwitchRow: WidgetSettingRow {
+        id: psRow
+        required property string psKey
+        property bool psDefault: true
+        readonly property string _psPath: "background.widgets.powerSaving." + psKey
+        StyledSwitch {
+            checked: Boolean(Config.getNestedValue(psRow._psPath, psRow.psDefault))
+            onCheckedChanged: {
+                if (checked !== Boolean(Config.getNestedValue(psRow._psPath, psRow.psDefault)))
+                    Config.setNestedValue(psRow._psPath, checked)
+            }
+        }
+    }
+
+    // ── Reusable percentage row ──────────────────────────────
+    component SliderRow: WidgetSettingRow {
         id: sliderRow
-        property string icon: ""
-        property string label: ""
         property string configPath: ""
+        property string tooltipText: ""
         property real sliderFrom: 0
         property real sliderTo: 100
         property real sliderStep: 5
         property real sliderValue: 0
-        property bool isNormalized: false // true = value is 0-1 stored, display as 0-100%
+        // Normalized config values are stored as 0..1. Older or malformed
+        // 0..100 values are accepted and clamped instead of displaying 10000%.
+        property bool isNormalized: false
 
-        Layout.fillWidth: true
-        spacing: 8
+        trailing: false
 
-        MaterialSymbol {
-            visible: sliderRow.icon.length > 0
-            text: sliderRow.icon
-            iconSize: Appearance.font.pixelSize.normal
-            color: Appearance.colors.colSubtext
+        function _clamp(value: real): real {
+            return Math.max(sliderRow.sliderFrom, Math.min(sliderRow.sliderTo, value));
         }
-        StyledText {
-            Layout.preferredWidth: 100
-            text: sliderRow.label
-            color: Appearance.colors.colOnLayer1
-            font.pixelSize: Appearance.font.pixelSize.small
+
+        function _displayValue(value: var): real {
+            const numeric = Number(value);
+            if (!Number.isFinite(numeric))
+                return sliderRow.sliderFrom;
+            if (!sliderRow.isNormalized)
+                return sliderRow._clamp(numeric);
+            return sliderRow._clamp(numeric <= 1 ? numeric * 100 : numeric);
         }
-        StyledSlider {
-            id: _slider
+
+        RowLayout {
             Layout.fillWidth: true
-            configuration: StyledSlider.Configuration.S
-            stopIndicatorValues: []
-            from: sliderRow.sliderFrom
-            to: sliderRow.sliderTo
-            stepSize: sliderRow.sliderStep
-            value: sliderRow.isNormalized ? Math.round(sliderRow.sliderValue * 100) : sliderRow.sliderValue
-            onMoved: {
-                if (sliderRow.isNormalized)
-                    Config.setNestedValue(sliderRow.configPath, Math.round(_slider.value) / 100)
-                else
-                    Config.setNestedValue(sliderRow.configPath, Math.round(_slider.value))
+            spacing: 8
+
+            StyledSlider {
+                id: _slider
+                Layout.fillWidth: true
+                configuration: StyledSlider.Configuration.S
+                stopIndicatorValues: []
+                from: sliderRow.sliderFrom
+                to: sliderRow.sliderTo
+                stepSize: sliderRow.sliderStep
+                value: sliderRow._displayValue(sliderRow.sliderValue)
+                onMoved: {
+                    const displayValue = sliderRow._clamp(_slider.value);
+                    Config.setNestedValue(sliderRow.configPath,
+                        sliderRow.isNormalized ? Math.round(displayValue) / 100 : Math.round(displayValue));
+                }
+                StyledToolTip {
+                    visible: sliderRow.tooltipText.length > 0
+                    text: sliderRow.tooltipText
+                }
             }
-        }
-        StyledText {
-            Layout.preferredWidth: 36
-            horizontalAlignment: Text.AlignRight
-            text: Math.round(_slider.value) + "%"
-            color: Appearance.colors.colSubtext
-            font.pixelSize: Appearance.font.pixelSize.smaller
-            font.family: Appearance.font.family.numbers
+
+            StyledText {
+                Layout.preferredWidth: 44
+                horizontalAlignment: Text.AlignRight
+                text: Math.round(sliderRow._clamp(_slider.value)) + "%"
+                color: Appearance.colors.colSubtext
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                font.family: Appearance.font.family.numbers
+            }
         }
     }
 
@@ -261,15 +661,16 @@ ContentPage {
         required property string configPath
         required property var configEntry
         property bool hasDim: true
+        property bool hasColorMode: true
         property bool hasCardControls: false
         property int dimDefault: 0
 
         Layout.fillWidth: true
         spacing: 0
 
-        // ── Position & Lock ──
+        // ── Position & interaction ──
         ContentSubsection {
-            title: Translation.tr("Position")
+            title: Translation.tr("Position and interaction")
 
             WidgetSettingRow {
                 label: Translation.tr("Lock position")
@@ -281,22 +682,27 @@ ContentPage {
                     buttonText: Boolean(Config.getNestedValue(wac.configPath + ".locked", false)) ? Translation.tr("Locked") : Translation.tr("Unlocked")
                 }
             }
+        }
+
+        // ── Appearance ──
+        ContentSubsection {
+            title: Translation.tr("Appearance")
 
             WidgetSettingRow {
+                visible: wac.hasColorMode
                 label: Translation.tr("Color mode")
                 icon: "palette"
                 trailing: false
                 ConfigSelectionArray {
+                    Layout.fillWidth: true
                     currentValue: Config.getNestedValue(wac.configPath + ".colorMode", wac.configEntry?.colorMode ?? "auto")
                     onSelected: newValue => Config.setNestedValue(wac.configPath + ".colorMode", newValue)
                     options: root._colorModeOptions()
+                    StyledToolTip {
+                        text: Translation.tr("Auto follows the wallpaper or surface. Light ink and Dark ink force the text polarity.")
+                    }
                 }
             }
-        }
-
-        // ── Visual ──
-        ContentSubsection {
-            title: Translation.tr("Visual")
 
             WidgetSettingRow {
                 label: Translation.tr("Scale")
@@ -320,19 +726,46 @@ ContentPage {
             SliderRow {
                 visible: wac.hasDim
                 icon: "contrast"
-                label: Translation.tr("Dim")
+                label: Translation.tr("Dimming")
                 configPath: wac.configPath + ".dim"
                 sliderFrom: 0; sliderTo: 100; sliderStep: 5
                 sliderValue: Config.getNestedValue(wac.configPath + ".dim", wac.configEntry?.dim ?? wac.dimDefault)
             }
         }
 
-        // ── Card surface ──
+        // ── Surface ──
         ContentSubsection {
             visible: wac.hasCardControls
-            title: Translation.tr("Card surface")
+            title: Translation.tr("Surface")
+
+            SettingsSwitch {
+                buttonIcon: "format_color_fill"
+                text: Translation.tr("Show background")
+                autoToggle: false
+                checked: Config.getNestedValue(wac.configPath + ".showBackground", wac.configEntry?.showBackground ?? true)
+                onToggledByUser: checked => Config.setNestedValue(wac.configPath + ".showBackground", checked)
+            }
+
+            SettingsSwitch {
+                visible: root._widgetBlurAvailable
+                    && Config.getNestedValue(wac.configPath + ".showBackground", wac.configEntry?.showBackground ?? true)
+                buttonIcon: "blur_on"
+                text: Translation.tr("Blur background")
+                autoToggle: false
+                checked: Config.getNestedValue(wac.configPath + ".useBlur", wac.configEntry?.useBlur ?? false)
+                onToggledByUser: checked => Config.setNestedValue(wac.configPath + ".useBlur", checked)
+            }
+
+            SettingsSwitch {
+                buttonIcon: "border_style"
+                text: Translation.tr("Show border")
+                autoToggle: false
+                checked: Config.getNestedValue(wac.configPath + ".showBorder", wac.configEntry?.showBorder ?? true)
+                onToggledByUser: checked => Config.setNestedValue(wac.configPath + ".showBorder", checked)
+            }
 
             SliderRow {
+                visible: Config.getNestedValue(wac.configPath + ".showBackground", wac.configEntry?.showBackground ?? true)
                 icon: "gradient"
                 label: Translation.tr("Background")
                 configPath: wac.configPath + ".backgroundOpacity"
@@ -342,6 +775,7 @@ ContentPage {
             }
 
             WidgetSettingRow {
+                visible: Config.getNestedValue(wac.configPath + ".showBorder", wac.configEntry?.showBorder ?? true) && !Appearance.zzzEverywhere
                 label: Translation.tr("Border")
                 icon: "border_style"
                 StyledSpinBox {
@@ -353,6 +787,7 @@ ContentPage {
             }
 
             SliderRow {
+                visible: Config.getNestedValue(wac.configPath + ".showBorder", wac.configEntry?.showBorder ?? true)
                 icon: "tonality"
                 label: Translation.tr("Border opacity")
                 configPath: wac.configPath + ".borderOpacity"
@@ -374,6 +809,326 @@ ContentPage {
         }
     }
 
+    component JapaneseCompositionPicker: ColumnLayout {
+        id: compositionPicker
+        Layout.fillWidth: true
+        spacing: 8
+
+        readonly property string currentPreset: Config.getNestedValue(root._japanesePath + ".preset", "exhibition")
+
+        Flow {
+            Layout.fillWidth: true
+            spacing: 8
+
+            Repeater {
+                model: [
+                    { value: "exhibition", label: Translation.tr("Exhibition"), mirror: false, secondary: true, seal: true, footer: true },
+                    { value: "magazine", label: Translation.tr("Magazine"), mirror: true, secondary: true, seal: true, footer: true },
+                    { value: "minimal", label: Translation.tr("Minimal"), mirror: false, secondary: false, seal: false, footer: false },
+                    { value: "traditional", label: Translation.tr("Traditional"), mirror: true, secondary: true, seal: true, footer: false }
+                ]
+
+                delegate: RippleButton {
+                    id: compositionCard
+                    required property var modelData
+                    width: 136
+                    height: 112
+                    buttonRadius: Appearance.rounding.small
+                    toggled: compositionPicker.currentPreset === modelData.value
+                    colBackground: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.035)
+                    colBackgroundHover: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.075)
+                    colBackgroundToggled: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.14)
+                    colBackgroundToggledHover: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.20)
+                    colRipple: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.10)
+                    downAction: () => root._applyJapaneseCompositionPreset(modelData.value)
+
+                    contentItem: ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: 8
+                        spacing: 4
+
+                        Item {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            clip: true
+
+                            VerticalJapaneseText {
+                                x: compositionCard.modelData.mirror ? parent.width - width - 2 : 2
+                                y: 2
+                                width: 48
+                                height: parent.height - 8
+                                text: "夏の記憶"
+                                fontFamily: "serif"
+                                fontPixelSize: compositionCard.modelData.value === "minimal" ? 20 : 16
+                                fontWeight: Font.DemiBold
+                                letterSpacing: 0
+                                columnGap: 3
+                                maxColumns: compositionCard.modelData.value === "minimal" ? 1 : 2
+                                color: compositionCard.toggled ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1
+                            }
+
+                            VerticalJapaneseText {
+                                visible: compositionCard.modelData.secondary
+                                x: compositionCard.modelData.mirror ? 38 : 54
+                                y: 6
+                                width: 30
+                                height: parent.height - 16
+                                text: "潮風と夏"
+                                fontFamily: "serif"
+                                fontPixelSize: 9
+                                letterSpacing: 0
+                                columnGap: 2
+                                maxColumns: 2
+                                color: Appearance.colors.colSubtext
+                            }
+
+                            Rectangle {
+                                visible: compositionCard.modelData.seal
+                                x: compositionCard.modelData.mirror ? 2 : parent.width - width - 2
+                                y: 2
+                                width: 17
+                                height: 34
+                                color: "transparent"
+                                border.width: 1
+                                border.color: Appearance.colors.colTertiary
+                                StyledText {
+                                    anchors.centerIn: parent
+                                    text: "展"
+                                    color: Appearance.colors.colTertiary
+                                    font.pixelSize: 10
+                                    font.weight: Font.DemiBold
+                                }
+                            }
+
+                            Rectangle {
+                                visible: compositionCard.modelData.footer
+                                x: compositionCard.modelData.mirror ? parent.width - width - 2 : 2
+                                anchors.bottom: parent.bottom
+                                width: parent.width * 0.68
+                                height: 1
+                                color: Appearance.colors.colPrimary
+                                opacity: 0.65
+                            }
+                        }
+
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: compositionCard.modelData.label
+                            horizontalAlignment: Text.AlignHCenter
+                            color: compositionCard.toggled ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            font.weight: compositionCard.toggled ? Font.DemiBold : Font.Normal
+                            elide: Text.ElideRight
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    component JapanesePalettePicker: ColumnLayout {
+        id: palettePicker
+        Layout.fillWidth: true
+        spacing: 8
+
+        readonly property string currentPreset: Config.getNestedValue(root._japanesePath + ".palettePreset", "adaptive")
+
+        Flow {
+            Layout.fillWidth: true
+            spacing: 8
+
+            Repeater {
+                model: [
+                    { value: "adaptive", label: Translation.tr("Adaptive"), colors: [] },
+                    { value: "sumi", label: Translation.tr("Sumi ink"), colors: ["#17130F", "#493D31", "#9D382B"] },
+                    { value: "ivory", label: Translation.tr("Ivory"), colors: ["#F3E8D3", "#D8C3A2", "#C76049"] },
+                    { value: "sunset", label: Translation.tr("Sunset"), colors: ["#E6C49A", "#C39D73", "#A94B37"] },
+                    { value: "cinema", label: Translation.tr("Cinema"), colors: ["#F1EEE7", "#AAA299", "#D9684B"] }
+                ]
+
+                delegate: RippleButton {
+                    id: paletteCard
+                    required property var modelData
+                    readonly property var swatches: modelData.value === "adaptive"
+                        ? [Appearance.colors.colOnLayer0, Appearance.colors.colPrimary, Appearance.colors.colTertiary]
+                        : modelData.colors
+                    width: 136
+                    height: 54
+                    buttonRadius: Appearance.rounding.small
+                    toggled: palettePicker.currentPreset === modelData.value
+                    colBackground: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.035)
+                    colBackgroundHover: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.075)
+                    colBackgroundToggled: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.14)
+                    colBackgroundToggledHover: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.20)
+                    colRipple: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.10)
+                    downAction: () => root._applyJapanesePalettePreset(modelData.value)
+
+                    contentItem: RowLayout {
+                        anchors.fill: parent
+                        anchors.margins: 8
+                        spacing: 8
+
+                        Row {
+                            spacing: -4
+                            Repeater {
+                                model: paletteCard.swatches
+                                Rectangle {
+                                    required property var modelData
+                                    required property int index
+                                    width: 18
+                                    height: 18
+                                    radius: 9
+                                    color: modelData
+                                    border.width: 1
+                                    border.color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.22)
+                                    z: 3 - index
+                                }
+                            }
+                        }
+
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: paletteCard.modelData.label
+                            color: paletteCard.toggled ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            font.weight: paletteCard.toggled ? Font.DemiBold : Font.Normal
+                            elide: Text.ElideRight
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    component JapaneseColorPickerRow: Item {
+        id: colorRow
+        required property string label
+        required property string configKey
+        required property string fallbackColor
+
+        Layout.fillWidth: true
+        implicitHeight: 40
+        readonly property color currentColor: {
+            const parsed = Qt.color(String(Config.getNestedValue(root._japanesePath + "." + colorRow.configKey, colorRow.fallbackColor)));
+            return parsed.valid ? parsed : Qt.color(colorRow.fallbackColor);
+        }
+
+        RowLayout {
+            anchors.fill: parent
+            spacing: 10
+
+            StyledText {
+                Layout.fillWidth: true
+                text: colorRow.label
+                color: Appearance.colors.colOnLayer1
+                font.pixelSize: Appearance.font.pixelSize.small
+                elide: Text.ElideRight
+            }
+
+            RippleButton {
+                implicitWidth: 132
+                implicitHeight: 34
+                buttonRadius: Appearance.rounding.full
+                colBackground: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.055)
+                colBackgroundHover: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.10)
+                colRipple: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.10)
+                downAction: () => colorDialog.open()
+
+                contentItem: RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 8
+                    anchors.rightMargin: 8
+                    spacing: 7
+
+                    Rectangle {
+                        width: 18
+                        height: 18
+                        radius: 9
+                        color: colorRow.currentColor
+                        border.width: 1
+                        border.color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.25)
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: colorRow.currentColor.toString().toUpperCase().substring(0, 7)
+                        color: Appearance.colors.colSubtext
+                        font.family: Appearance.font.family.monospace
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        elide: Text.ElideRight
+                    }
+
+                    MaterialSymbol {
+                        text: "edit"
+                        iconSize: 16
+                        color: Appearance.colors.colSubtext
+                    }
+                }
+            }
+        }
+
+        ColorDialog {
+            id: colorDialog
+            selectedColor: colorRow.currentColor
+            onAccepted: root._setJapaneseValue(colorRow.configKey, selectedColor.toString(), "palette")
+        }
+
+        SettingsNativeDialogGuard {
+            dialog: colorDialog
+            dialogKey: "desktop-widgets-japanese-color"
+        }
+    }
+
+    // ── Overview: every widget toggleable at a glance ─────────
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: true
+        icon: "dashboard_customize"
+        title: Translation.tr("Widgets at a glance")
+
+        SettingsGroup {
+            StyledText {
+                Layout.fillWidth: true
+                text: Translation.tr("Toggle any widget here; fine-tune it in its section below")
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: Appearance.colors.colSubtext
+                wrapMode: Text.Wrap
+            }
+
+            Flow {
+                Layout.fillWidth: true
+                spacing: 6
+                Repeater {
+                    model: [
+                        { key: "clock", icon: "schedule", label: Translation.tr("Clock"), def: true },
+                        { key: "weather", icon: "cloud", label: Translation.tr("Weather"), def: false },
+                        { key: "customImage", icon: "add_photo_alternate", label: Translation.tr("Custom image"), def: false },
+                        { key: "imageConverter", icon: "transform", label: Translation.tr("Image converter"), def: false },
+                        { key: "mediaControls", icon: "album", label: Translation.tr("Media"), def: false },
+                        { key: "visualizer", icon: "graphic_eq", label: Translation.tr("Visualizer"), def: false },
+                        { key: "systemMonitor", icon: "monitor_heart", label: Translation.tr("System"), def: false },
+                        { key: "battery", icon: "battery_full", label: Translation.tr("Battery"), def: false },
+                        { key: "notes", icon: "sticky_note_2", label: Translation.tr("Notes"), def: false },
+                        { key: "calendarUpcoming", icon: "event", label: Translation.tr("Events"), def: false },
+                        { key: "uptime", icon: "avg_pace", label: Translation.tr("Uptime"), def: false },
+                        { key: "newsTicker", icon: "newspaper", label: Translation.tr("News"), def: false },
+                        { key: "mascot", icon: "pets", label: Translation.tr("Mascot"), def: false },
+                        { key: "japaneseTypography", icon: "translate", label: Translation.tr("Japanese Typography"), def: false },
+                        { key: "worldClock", icon: "public", label: Translation.tr("World Clock"), def: false },
+                        { key: "userCard", icon: "account_circle", label: Translation.tr("User Card"), def: false }
+                    ]
+                    delegate: WidgetToggleChip {
+                        required property var modelData
+                        configPath: "background.widgets." + modelData.key + ".enable"
+                        defaultValue: modelData.def
+                        buttonIcon: modelData.icon
+                        buttonText: modelData.label
+                    }
+                }
+            }
+        }
+    }
+
     // ── Edit Mode & Grid ─────────────────────────────────────
     SettingsCardSection {
         expanded: true
@@ -389,7 +1144,7 @@ ContentPage {
                     buttonIcon: "edit"
                     buttonText: Translation.tr("Edit mode")
                     active: GlobalStates.widgetEditMode
-                    toggleAction: checked => GlobalStates.widgetEditMode = checked
+                    toggleAction: checked => GlobalStates.setWidgetEditMode(checked)
                     StyledToolTip { text: Translation.tr("Show widget handles and desktop placement controls") }
                 }
             }
@@ -411,17 +1166,13 @@ ContentPage {
                     }
                 }
             }
-            WidgetSettingRow {
+            SliderRow {
                 label: Translation.tr("Fade with windows")
                 icon: "visibility_off"
-                StyledSpinBox {
-                    from: 0; to: 100; stepSize: 10
-                    value: Config.getNestedValue("background.widgets.dynamicOpacity", 0)
-                    onValueModified: Config.setNestedValue("background.widgets.dynamicOpacity", value)
-                    StyledToolTip {
-                        text: Translation.tr("Reduce widget opacity when windows are on the current workspace (0 = off)")
-                    }
-                }
+                configPath: "background.widgets.dynamicOpacity"
+                sliderValue: Config.getNestedValue("background.widgets.dynamicOpacity", 0)
+                sliderStep: 10
+                tooltipText: Translation.tr("Reduce widget opacity when windows are on the current workspace (0 = off)")
             }
         }
     }
@@ -442,60 +1193,30 @@ ContentPage {
         }
 
         SettingsGroup {
-            WidgetSettingRow {
+            PowerSavingSwitchRow {
                 label: Translation.tr("Enable power saving")
                 icon: "power_settings_new"
-                SelectionGroupButton {
-                    leftmost: true; rightmost: true
-                    buttonIcon: "power_settings_new"
-                    buttonText: toggled ? Translation.tr("Enabled") : Translation.tr("Disabled")
-                    toggled: powerSavingSection._ps("enable", true)
-                    onClicked: powerSavingSection._setPs("enable", !toggled)
-                }
+                psKey: "enable"
             }
-            WidgetSettingRow {
+            PowerSavingSwitchRow {
                 label: Translation.tr("Pause on GameMode")
                 icon: "sports_esports"
-                SelectionGroupButton {
-                    leftmost: true; rightmost: true
-                    buttonIcon: "sports_esports"
-                    buttonText: toggled ? Translation.tr("Yes") : Translation.tr("No")
-                    toggled: powerSavingSection._ps("pauseOnGameMode", true)
-                    onClicked: powerSavingSection._setPs("pauseOnGameMode", !toggled)
-                }
+                psKey: "pauseOnGameMode"
             }
-            WidgetSettingRow {
+            PowerSavingSwitchRow {
                 label: Translation.tr("Pause on fullscreen")
                 icon: "fullscreen"
-                SelectionGroupButton {
-                    leftmost: true; rightmost: true
-                    buttonIcon: "fullscreen"
-                    buttonText: toggled ? Translation.tr("Yes") : Translation.tr("No")
-                    toggled: powerSavingSection._ps("pauseOnFullscreen", true)
-                    onClicked: powerSavingSection._setPs("pauseOnFullscreen", !toggled)
-                }
+                psKey: "pauseOnFullscreen"
             }
-            WidgetSettingRow {
+            PowerSavingSwitchRow {
                 label: Translation.tr("Pause when windows present")
                 icon: "web_asset"
-                SelectionGroupButton {
-                    leftmost: true; rightmost: true
-                    buttonIcon: "web_asset"
-                    buttonText: toggled ? Translation.tr("Yes") : Translation.tr("No")
-                    toggled: powerSavingSection._ps("pauseWhenWindowsPresent", true)
-                    onClicked: powerSavingSection._setPs("pauseWhenWindowsPresent", !toggled)
-                }
+                psKey: "pauseWhenWindowsPresent"
             }
-            WidgetSettingRow {
+            PowerSavingSwitchRow {
                 label: Translation.tr("Show paused effect")
                 icon: "filter_b_and_w"
-                SelectionGroupButton {
-                    leftmost: true; rightmost: true
-                    buttonIcon: "filter_b_and_w"
-                    buttonText: toggled ? Translation.tr("Yes") : Translation.tr("No")
-                    toggled: powerSavingSection._ps("showPausedEffect", true)
-                    onClicked: powerSavingSection._setPs("showPausedEffect", !toggled)
-                }
+                psKey: "showPausedEffect"
             }
 
             // Status indicator
@@ -518,7 +1239,7 @@ ContentPage {
                             text: WidgetPowerManager.widgetsActive ? "play_circle" : "pause_circle"
                             iconSize: 16
                             color: WidgetPowerManager.widgetsActive 
-                                ? Appearance.m3colors.m3primary 
+                                ? Appearance.colors.colPrimary 
                                 : Appearance.colors.colSubtext
                         }
                         StyledText {
@@ -528,7 +1249,7 @@ ContentPage {
                                 : Translation.tr("Paused")
                             font.pixelSize: Appearance.font.pixelSize.small
                             color: WidgetPowerManager.widgetsActive 
-                                ? Appearance.m3colors.m3primary 
+                                ? Appearance.colors.colPrimary 
                                 : Appearance.colors.colSubtext
                         }
                     }
@@ -545,50 +1266,43 @@ ContentPage {
         icon: "schedule"
         title: Translation.tr("Clock")
 
-        readonly property string _clockStyle: Config.getNestedValue("background.widgets.clock.style", "cookie")
+        readonly property string _clockStyle: Config.getNestedValue("background.widgets.clock.style", "digital")
 
         SettingsGroup {
-            // Enable + placement
-            WidgetSettingRow {
-                label: Translation.tr("State")
-                icon: "check"
-                trailing: false
-                WidgetToggleChip {
-                    configPath: "background.widgets.clock.enable"
-                    defaultValue: true
-                    buttonIcon: "check"
-                    buttonText: Translation.tr("Enable")
-                }
-                WidgetPlacementSelector {
-                    configPath: "background.widgets.clock"
-                    configEntry: Config.getNestedValue("background.widgets.clock", ({}))
-                    defaultStrategy: "leastBusy"
-                }
-            }
-
-            WidgetZonePicker {
+            WidgetStateControls {
                 configPath: "background.widgets.clock"
                 configEntry: Config.getNestedValue("background.widgets.clock", ({}))
+                defaultStrategy: "leastBusy"
+                defaultEnabled: true
             }
 
-            // Style selector
             ContentSubsection {
-                title: Translation.tr("Clock style")
+                title: Translation.tr("Style")
+
+                WidgetSettingRow {
+                    label: Translation.tr("Clock style")
+                trailing: false
 
                 ConfigSelectionArray {
-                    currentValue: Config.getNestedValue("background.widgets.clock.style", "cookie")
+                    currentValue: Config.getNestedValue("background.widgets.clock.style", "digital")
                     onSelected: newValue => Config.setNestedValue("background.widgets.clock.style", newValue)
                     options: [
                         { displayName: Translation.tr("Digital"), icon: "timer", value: "digital" },
+                        { displayName: Translation.tr("Android stacked"), icon: "android", value: "androidStacked" },
                         { displayName: Translation.tr("Cookie"), icon: "cookie", value: "cookie" },
                     ]
                 }
             }
+            }
 
-            // ── Digital clock settings ──
             ContentSubsection {
-                visible: clockSection._clockStyle === "digital"
+                visible: clockSection._clockStyle === "digital" || clockSection._clockStyle === "androidStacked"
                 title: Translation.tr("Time format")
+
+                WidgetSettingRow {
+                visible: clockSection._clockStyle === "digital" || clockSection._clockStyle === "androidStacked"
+                label: Translation.tr("Time format")
+                trailing: false
 
                 ConfigSelectionArray {
                     Layout.fillWidth: true
@@ -602,9 +1316,10 @@ ContentPage {
                 }
             }
 
-            ContentSubsection {
+            WidgetSettingRow {
                 visible: clockSection._clockStyle === "digital"
-                title: Translation.tr("Date style")
+                label: Translation.tr("Date style")
+                trailing: false
 
                 ConfigSelectionArray {
                     Layout.fillWidth: true
@@ -619,9 +1334,10 @@ ContentPage {
                 }
             }
 
-            ContentSubsection {
+            WidgetSettingRow {
                 visible: clockSection._clockStyle === "digital"
-                title: Translation.tr("Digital preset")
+                label: Translation.tr("Digital preset")
+                trailing: false
 
                 ConfigSelectionArray {
                     Layout.fillWidth: true
@@ -650,12 +1366,15 @@ ContentPage {
                     ]
                 }
             }
+            }
 
             ContentSubsection {
-                visible: clockSection._clockStyle === "digital"
+                visible: clockSection._clockStyle === "digital" || clockSection._clockStyle === "androidStacked"
                 title: Translation.tr("Display options")
 
                 ConfigRow {
+                    visible: Config.getNestedValue(
+                        "background.widgets.weather.style", "pill") !== "detail"
                     Layout.fillWidth: true
                     SettingsSwitch {
                         Layout.fillWidth: false
@@ -697,40 +1416,61 @@ ContentPage {
                         onToggledByUser: checked => Config.setNestedValue("background.widgets.clock.digital.animateChange", checked)
                     }
                 }
+                ConfigRow {
+                    Layout.fillWidth: true
+                    SettingsSwitch {
+                        Layout.fillWidth: false
+                        buttonIcon: "wallpaper"
+                        text: Translation.tr("Adapt colors to wallpaper")
+                        autoToggle: false
 
-                WidgetSettingRow {
-                    label: Translation.tr("Font weight")
-                    StyledSpinBox {
-                        from: 100; to: 900; stepSize: 100
-                        value: Config.getNestedValue("background.widgets.clock.digital.fontWeight", 600)
-                        onValueModified: Config.setNestedValue("background.widgets.clock.digital.fontWeight", value)
+                        checked: Config.getNestedValue("background.widgets.clock.digital.adaptToWallpaper", true)
+                        onToggledByUser: checked => Config.setNestedValue("background.widgets.clock.digital.adaptToWallpaper", checked)
+                        StyledToolTip { text: Translation.tr("Adapt clock colors to the wallpaper behind the text") }
                     }
                 }
 
-                WidgetSettingRow {
-                    label: Translation.tr("Spacing")
-                    StyledSpinBox {
-                        from: 0; to: 20; stepSize: 1
-                        value: Config.getNestedValue("background.widgets.clock.digital.spacing", 6)
-                        onValueModified: Config.setNestedValue("background.widgets.clock.digital.spacing", value)
-                    }
-                }
+                GridLayout {
+                    columns: 2
+                    columnSpacing: 12
+                    Layout.fillWidth: true
 
-                WidgetSettingRow {
-                    label: Translation.tr("Time scale")
-                    StyledSpinBox {
-                        from: 50; to: 200; stepSize: 5
-                        value: Config.getNestedValue("background.widgets.clock.timeScale", 100)
-                        onValueModified: Config.setNestedValue("background.widgets.clock.timeScale", value)
+                    WidgetSettingRow {
+                        visible: clockSection._clockStyle === "digital"
+                        label: Translation.tr("Font weight")
+                        StyledSpinBox {
+                            from: 100; to: 900; stepSize: 100
+                            value: Config.getNestedValue("background.widgets.clock.digital.fontWeight", 600)
+                            onValueModified: Config.setNestedValue("background.widgets.clock.digital.fontWeight", value)
+                        }
                     }
-                }
 
-                WidgetSettingRow {
-                    label: Translation.tr("Date scale")
-                    StyledSpinBox {
-                        from: 50; to: 200; stepSize: 5
-                        value: Config.getNestedValue("background.widgets.clock.dateScale", 100)
-                        onValueModified: Config.setNestedValue("background.widgets.clock.dateScale", value)
+                    WidgetSettingRow {
+                        visible: clockSection._clockStyle === "digital"
+                        label: Translation.tr("Spacing")
+                        StyledSpinBox {
+                            from: 0; to: 20; stepSize: 1
+                            value: Config.getNestedValue("background.widgets.clock.digital.spacing", 6)
+                            onValueModified: Config.setNestedValue("background.widgets.clock.digital.spacing", value)
+                        }
+                    }
+
+                    WidgetSettingRow {
+                        label: Translation.tr("Time scale")
+                        StyledSpinBox {
+                            from: 50; to: 200; stepSize: 5
+                            value: Config.getNestedValue("background.widgets.clock.timeScale", 100)
+                            onValueModified: Config.setNestedValue("background.widgets.clock.timeScale", value)
+                        }
+                    }
+
+                    WidgetSettingRow {
+                        label: Translation.tr("Date scale")
+                        StyledSpinBox {
+                            from: 50; to: 200; stepSize: 5
+                            value: Config.getNestedValue("background.widgets.clock.dateScale", 100)
+                            onValueModified: Config.setNestedValue("background.widgets.clock.dateScale", value)
+                        }
                     }
                 }
 
@@ -750,73 +1490,50 @@ ContentPage {
                 }
             }
 
-            // ── Quote (digital + cookie) ──
-            ContentSubsection {
-                title: Translation.tr("Quote")
-
-                SettingsSwitch {
-                    buttonIcon: "format_quote"
-                    text: Translation.tr("Show quote")
-                    autoToggle: false
-
-                    checked: Config.getNestedValue("background.widgets.clock.quote.enable", false)
-                    onToggledByUser: checked => Config.setNestedValue("background.widgets.clock.quote.enable", checked)
-                }
-
-                MaterialTextField {
-                    visible: Config.getNestedValue("background.widgets.clock.quote.enable", false)
-                    Layout.fillWidth: true
-                    placeholderText: Translation.tr("Enter a quote or message...")
-                    text: Config.getNestedValue("background.widgets.clock.quote.text", "")
-                    onAccepted: Config.setNestedValue("background.widgets.clock.quote.text", text)
-                    onEditingFinished: Config.setNestedValue("background.widgets.clock.quote.text", text)
-                }
-            }
-
             // ── Cookie clock settings ──
             ContentSubsection {
                 visible: clockSection._clockStyle === "cookie"
-                title: Translation.tr("Cookie preset")
-
-                ConfigSelectionArray {
-                    Layout.fillWidth: true
-                    currentValue: Config.getNestedValue("background.widgets.clock.cookie.preset", "default")
-                    onSelected: newValue => {
-                        Config.setNestedValue("background.widgets.clock.cookie.preset", newValue);
-                        if (newValue === "default") {
-                            Config.setNestedValue("background.widgets.clock.cookie.size", 230);
-                            Config.setNestedValue("background.widgets.clock.cookie.sides", 15);
-                            Config.setNestedValue("background.widgets.clock.cookie.dialNumberStyle", "full");
-                            Config.setNestedValue("background.widgets.clock.cookie.hourHandStyle", "hollow");
-                        } else if (newValue === "compact") {
-                            Config.setNestedValue("background.widgets.clock.cookie.size", 160);
-                            Config.setNestedValue("background.widgets.clock.cookie.sides", 12);
-                            Config.setNestedValue("background.widgets.clock.cookie.dialNumberStyle", "dots");
-                            Config.setNestedValue("background.widgets.clock.cookie.hourHandStyle", "fill");
-                        } else if (newValue === "large") {
-                            Config.setNestedValue("background.widgets.clock.cookie.size", 300);
-                            Config.setNestedValue("background.widgets.clock.cookie.sides", 18);
-                            Config.setNestedValue("background.widgets.clock.cookie.dialNumberStyle", "numbers");
-                            Config.setNestedValue("background.widgets.clock.cookie.hourHandStyle", "classic");
-                        } else if (newValue === "minimal") {
-                            Config.setNestedValue("background.widgets.clock.cookie.size", 200);
-                            Config.setNestedValue("background.widgets.clock.cookie.sides", 6);
-                            Config.setNestedValue("background.widgets.clock.cookie.dialNumberStyle", "none");
-                            Config.setNestedValue("background.widgets.clock.cookie.hourHandStyle", "fill");
-                        }
-                    }
-                    options: [
-                        { displayName: Translation.tr("Default"), icon: "cookie", value: "default" },
-                        { displayName: Translation.tr("Compact"), icon: "compress", value: "compact" },
-                        { displayName: Translation.tr("Large"), icon: "open_in_full", value: "large" },
-                        { displayName: Translation.tr("Minimal"), icon: "circle", value: "minimal" },
-                    ]
-                }
-            }
-
-            ContentSubsection {
-                visible: clockSection._clockStyle === "cookie"
                 title: Translation.tr("Cookie clock shape")
+
+                WidgetSettingRow {
+                    label: Translation.tr("Preset")
+                    trailing: false
+
+                    ConfigSelectionArray {
+                        Layout.fillWidth: true
+                        currentValue: Config.getNestedValue("background.widgets.clock.cookie.preset", "default")
+                        onSelected: newValue => {
+                            Config.setNestedValue("background.widgets.clock.cookie.preset", newValue);
+                            if (newValue === "default") {
+                                Config.setNestedValue("background.widgets.clock.cookie.size", 230);
+                                Config.setNestedValue("background.widgets.clock.cookie.sides", 15);
+                                Config.setNestedValue("background.widgets.clock.cookie.dialNumberStyle", "full");
+                                Config.setNestedValue("background.widgets.clock.cookie.hourHandStyle", "hollow");
+                            } else if (newValue === "compact") {
+                                Config.setNestedValue("background.widgets.clock.cookie.size", 160);
+                                Config.setNestedValue("background.widgets.clock.cookie.sides", 12);
+                                Config.setNestedValue("background.widgets.clock.cookie.dialNumberStyle", "dots");
+                                Config.setNestedValue("background.widgets.clock.cookie.hourHandStyle", "fill");
+                            } else if (newValue === "large") {
+                                Config.setNestedValue("background.widgets.clock.cookie.size", 300);
+                                Config.setNestedValue("background.widgets.clock.cookie.sides", 18);
+                                Config.setNestedValue("background.widgets.clock.cookie.dialNumberStyle", "numbers");
+                                Config.setNestedValue("background.widgets.clock.cookie.hourHandStyle", "classic");
+                            } else if (newValue === "minimal") {
+                                Config.setNestedValue("background.widgets.clock.cookie.size", 200);
+                                Config.setNestedValue("background.widgets.clock.cookie.sides", 6);
+                                Config.setNestedValue("background.widgets.clock.cookie.dialNumberStyle", "none");
+                                Config.setNestedValue("background.widgets.clock.cookie.hourHandStyle", "fill");
+                            }
+                        }
+                        options: [
+                            { displayName: Translation.tr("Default"), icon: "cookie", value: "default" },
+                            { displayName: Translation.tr("Compact"), icon: "compress", value: "compact" },
+                            { displayName: Translation.tr("Large"), icon: "open_in_full", value: "large" },
+                            { displayName: Translation.tr("Minimal"), icon: "circle", value: "minimal" },
+                        ]
+                    }
+                }
 
                 WidgetSettingRow {
                     label: Translation.tr("Size")
@@ -858,46 +1575,46 @@ ContentPage {
 
             ContentSubsection {
                 visible: clockSection._clockStyle === "cookie"
-                title: Translation.tr("Dial style")
+                title: Translation.tr("Dial and hands")
 
-                ConfigSelectionArray {
-                    Layout.fillWidth: true
-                    currentValue: Config.getNestedValue("background.widgets.clock.cookie.dialNumberStyle", "full")
-                    onSelected: newValue => Config.setNestedValue("background.widgets.clock.cookie.dialNumberStyle", newValue)
-                    options: [
-                        { displayName: Translation.tr("Lines"), icon: "linear_scale", value: "full" },
-                        { displayName: Translation.tr("Dots"), icon: "more_horiz", value: "dots" },
-                        { displayName: Translation.tr("Numbers"), icon: "123", value: "numbers" },
-                        { displayName: Translation.tr("None"), icon: "block", value: "none" },
-                    ]
-                }
+                WidgetSettingRow {
+                    label: Translation.tr("Dial style")
+                    trailing: false
 
-                ConfigRow {
-                    Layout.fillWidth: true
-                    SettingsSwitch {
-                        Layout.fillWidth: false
-                        buttonIcon: "radio_button_checked"
-                        text: Translation.tr("Hour marks")
-                        autoToggle: false
-
-                        checked: Config.getNestedValue("background.widgets.clock.cookie.hourMarks", false)
-                        onToggledByUser: checked => Config.setNestedValue("background.widgets.clock.cookie.hourMarks", checked)
+                    ConfigSelectionArray {
+                        Layout.fillWidth: true
+                        currentValue: Config.getNestedValue("background.widgets.clock.cookie.dialNumberStyle", "full")
+                        onSelected: newValue => Config.setNestedValue("background.widgets.clock.cookie.dialNumberStyle", newValue)
+                        options: [
+                            { displayName: Translation.tr("Lines"), icon: "linear_scale", value: "full" },
+                            { displayName: Translation.tr("Dots"), icon: "more_horiz", value: "dots" },
+                            { displayName: Translation.tr("Numbers"), icon: "123", value: "numbers" },
+                            { displayName: Translation.tr("None"), icon: "block", value: "none" },
+                        ]
                     }
-                    SettingsSwitch {
-                        Layout.fillWidth: false
-                        buttonIcon: "pin"
-                        text: Translation.tr("Time column")
-                        autoToggle: false
 
-                        checked: Config.getNestedValue("background.widgets.clock.cookie.timeIndicators", false)
-                        onToggledByUser: checked => Config.setNestedValue("background.widgets.clock.cookie.timeIndicators", checked)
+                    ConfigRow {
+                        Layout.fillWidth: true
+                        SettingsSwitch {
+                            Layout.fillWidth: false
+                            buttonIcon: "radio_button_checked"
+                            text: Translation.tr("Hour marks")
+                            autoToggle: false
+
+                            checked: Config.getNestedValue("background.widgets.clock.cookie.hourMarks", false)
+                            onToggledByUser: checked => Config.setNestedValue("background.widgets.clock.cookie.hourMarks", checked)
+                        }
+                        SettingsSwitch {
+                            Layout.fillWidth: false
+                            buttonIcon: "pin"
+                            text: Translation.tr("Time column")
+                            autoToggle: false
+
+                            checked: Config.getNestedValue("background.widgets.clock.cookie.timeIndicators", false)
+                            onToggledByUser: checked => Config.setNestedValue("background.widgets.clock.cookie.timeIndicators", checked)
+                        }
                     }
                 }
-            }
-
-            ContentSubsection {
-                visible: clockSection._clockStyle === "cookie"
-                title: Translation.tr("Hand styles")
 
                 WidgetSettingRow {
                     label: Translation.tr("Hour hand")
@@ -946,22 +1663,22 @@ ContentPage {
                         ]
                     }
                 }
-            }
 
-            ContentSubsection {
-                visible: clockSection._clockStyle === "cookie"
-                title: Translation.tr("Cookie date indicator")
+                WidgetSettingRow {
+                    label: Translation.tr("Date indicator")
+                    trailing: false
 
-                ConfigSelectionArray {
-                    Layout.fillWidth: true
-                    currentValue: Config.getNestedValue("background.widgets.clock.cookie.dateStyle", "bubble")
-                    onSelected: newValue => Config.setNestedValue("background.widgets.clock.cookie.dateStyle", newValue)
-                    options: [
-                        { displayName: Translation.tr("Bubble"), icon: "chat_bubble", value: "bubble" },
-                        { displayName: Translation.tr("Rectangle"), icon: "crop_square", value: "rect" },
-                        { displayName: Translation.tr("Border"), icon: "rotate_right", value: "border" },
-                        { displayName: Translation.tr("Hide"), icon: "visibility_off", value: "hide" },
-                    ]
+                    ConfigSelectionArray {
+                        Layout.fillWidth: true
+                        currentValue: Config.getNestedValue("background.widgets.clock.cookie.dateStyle", "bubble")
+                        onSelected: newValue => Config.setNestedValue("background.widgets.clock.cookie.dateStyle", newValue)
+                        options: [
+                            { displayName: Translation.tr("Bubble"), icon: "chat_bubble", value: "bubble" },
+                            { displayName: Translation.tr("Rectangle"), icon: "crop_square", value: "rect" },
+                            { displayName: Translation.tr("Border"), icon: "rotate_right", value: "border" },
+                            { displayName: Translation.tr("Hide"), icon: "visibility_off", value: "hide" },
+                        ]
+                    }
                 }
             }
 
@@ -980,60 +1697,544 @@ ContentPage {
                 }
             }
 
+            // ── Quote (digital + cookie) ──
+            ContentSubsection {
+                title: Translation.tr("Quote")
+
+                SettingsSwitch {
+                    buttonIcon: "format_quote"
+                    text: Translation.tr("Show quote")
+                    autoToggle: false
+
+                    checked: Config.getNestedValue("background.widgets.clock.quote.enable", false)
+                    onToggledByUser: checked => Config.setNestedValue("background.widgets.clock.quote.enable", checked)
+                }
+
+                MaterialTextField {
+                    visible: Config.getNestedValue("background.widgets.clock.quote.enable", false)
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("Enter a quote or message...")
+                    text: Config.getNestedValue("background.widgets.clock.quote.text", "")
+                    onAccepted: Config.setNestedValue("background.widgets.clock.quote.text", text)
+                    onEditingFinished: Config.setNestedValue("background.widgets.clock.quote.text", text)
+                }
+            }
+
             WidgetAppearanceControls {
                 configPath: "background.widgets.clock"
                 configEntry: Config.getNestedValue("background.widgets.clock", ({}))
-                dimDefault: 55
+                dimDefault: 70
+                hasColorMode: clockSection._clockStyle === "digital" || clockSection._clockStyle === "androidStacked"
+                hasCardControls: clockSection._clockStyle === "digital" || clockSection._clockStyle === "androidStacked"
+            }
+        }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.clock"
+                defaults: ({
+                    "cookie": {
+                                        "aiStyling": false,
+                                        "constantlyRotate": false,
+                                        "dateInClock": true,
+                                        "dateStyle": "bubble",
+                                        "dialNumberStyle": "full",
+                                        "hourHandStyle": "hollow",
+                                        "hourMarks": false,
+                                        "minuteHandStyle": "hide",
+                                        "secondHandStyle": "hide",
+                                        "sides": 15,
+                                        "timeIndicators": false,
+                                        "useSineCookie": false,
+                                        "size": 230,
+                                        "preset": "default"
+                    },
+                    "dateStyle": "long",
+                    "digital": {
+                                        "adaptToWallpaper": true,
+                                        "animateChange": true,
+                                        "fontWeight": 600,
+                                        "spacing": 6,
+                                        "preset": "default"
+                    },
+                    "dim": 70,
+                    "fontFamily": "Space Grotesk",
+                    "placementStrategy": "free",
+                    "quote": {
+                                        "enable": false,
+                                        "text": ""
+                    },
+                    "showDate": true,
+                    "showSeconds": false,
+                    "showShadow": true,
+                    "style": "digital",
+                    "timeFormat": "system",
+                    "timeScale": 100,
+                    "dateScale": 100,
+                    "widgetScale": 100,
+                    "widgetOpacity": 100,
+                    "showBackground": false,
+                    "useBlur": false,
+                    "showBorder": false,
+                    "backgroundOpacity": 0,
+                    "borderWidth": 0,
+                    "borderOpacity": 0.08,
+                    "cornerRadius": -1,
+                    "colorMode": "auto",
+                    "x": 100,
+                    "y": 100,
+                    "locked": false
+})
+            }
+        }
+    }
+
+    // ── Japanese Typography ─────────────────────────────────
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
+        icon: "translate"
+        title: Translation.tr("Japanese Typography")
+
+        SettingsGroup {
+            WidgetStateControls {
+                configPath: "background.widgets.japaneseTypography"
+                configEntry: Config.getNestedValue("background.widgets.japaneseTypography", ({}))
+                defaultStrategy: "free"
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Layout presets")
+                JapaneseCompositionPicker {}
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Editorial content")
+
+                MaterialTextField {
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("Lead title")
+                    text: Config.getNestedValue("background.widgets.japaneseTypography.primaryText", "夏の記憶")
+                    onAccepted: Config.setNestedValue("background.widgets.japaneseTypography.primaryText", text)
+                    onEditingFinished: Config.setNestedValue("background.widgets.japaneseTypography.primaryText", text)
+                }
+
+                MaterialTextField {
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("Secondary vertical copy")
+                    text: Config.getNestedValue("background.widgets.japaneseTypography.secondaryText", "潮風と、あの子と、終わらない夏")
+                    onAccepted: Config.setNestedValue("background.widgets.japaneseTypography.secondaryText", text)
+                    onEditingFinished: Config.setNestedValue("background.widgets.japaneseTypography.secondaryText", text)
+                }
+
+                MaterialTextField {
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("Seal text")
+                    text: Config.getNestedValue("background.widgets.japaneseTypography.sealText", "特別展")
+                    onAccepted: Config.setNestedValue("background.widgets.japaneseTypography.sealText", text)
+                    onEditingFinished: Config.setNestedValue("background.widgets.japaneseTypography.sealText", text)
+                }
+
+                MaterialTextField {
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("Footer label")
+                    text: Config.getNestedValue("background.widgets.japaneseTypography.footerText", "PACIFIC DRIVE-IN")
+                    onAccepted: Config.setNestedValue("background.widgets.japaneseTypography.footerText", text)
+                    onEditingFinished: Config.setNestedValue("background.widgets.japaneseTypography.footerText", text)
+                }
+
+                MaterialTextField {
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("Date or edition line")
+                    text: Config.getNestedValue("background.widgets.japaneseTypography.dateText", "7.12 — 8.31")
+                    onAccepted: Config.setNestedValue("background.widgets.japaneseTypography.dateText", text)
+                    onEditingFinished: Config.setNestedValue("background.widgets.japaneseTypography.dateText", text)
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Visible elements")
+
+                SettingsSwitch {
+                    buttonIcon: "notes"
+                    text: Translation.tr("Show secondary vertical copy")
+                    autoToggle: false
+                    checked: Config.getNestedValue(root._japanesePath + ".showSecondary", true)
+                    onToggledByUser: checked => root._setJapaneseValue("showSecondary", checked, "composition")
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "ink_pen"
+                    text: Translation.tr("Show exhibition seal")
+                    autoToggle: false
+                    checked: Config.getNestedValue(root._japanesePath + ".showSeal", true)
+                    onToggledByUser: checked => root._setJapaneseValue("showSeal", checked, "composition")
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "subtitles"
+                    text: Translation.tr("Show footer and date")
+                    autoToggle: false
+                    checked: Config.getNestedValue(root._japanesePath + ".showFooter", true)
+                    onToggledByUser: checked => root._setJapaneseValue("showFooter", checked, "composition")
+                }
+
+                SettingsSwitch {
+                    enabled: Config.getNestedValue(root._japanesePath + ".showFooter", true)
+                    buttonIcon: "horizontal_rule"
+                    text: Translation.tr("Show editorial rule")
+                    autoToggle: false
+                    checked: Config.getNestedValue(root._japanesePath + ".showRule", true)
+                    onToggledByUser: checked => root._setJapaneseValue("showRule", checked, "composition")
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "swap_horiz"
+                    text: Translation.tr("Mirror composition")
+                    autoToggle: false
+                    checked: Config.getNestedValue(root._japanesePath + ".mirrorLayout", false)
+                    onToggledByUser: checked => root._setJapaneseValue("mirrorLayout", checked, "composition")
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "rotate_90_degrees_cw"
+                    text: Translation.tr("Rotate Latin characters vertically")
+                    autoToggle: false
+                    checked: Config.getNestedValue(root._japanesePath + ".rotateLatin", false)
+                    onToggledByUser: checked => root._setJapaneseValue("rotateLatin", checked, "composition")
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Typography")
+
+                WidgetSettingRow {
+                    label: Translation.tr("Type direction")
+                    icon: "font_download"
+                    trailing: false
+                    ConfigSelectionArray {
+                        currentValue: Config.getNestedValue(root._japanesePath + ".fontPreset", "mincho")
+                        onSelected: newValue => root._applyJapaneseFontPreset(newValue)
+                        options: [
+                            { displayName: Translation.tr("Mincho"), icon: "history_edu", value: "mincho" },
+                            { displayName: Translation.tr("Mixed"), icon: "format_shapes", value: "mixed" },
+                            { displayName: Translation.tr("Gothic"), icon: "text_fields", value: "gothic" }
+                        ]
+                    }
+                }
+
+                FontSelector {
+                    id: japaneseTypographyFontSelector
+                    label: Translation.tr("Lead title font")
+                    icon: "font_download"
+                    selectedFont: Config.getNestedValue(root._japanesePath + ".fontFamily", "serif")
+                    onFontChosen: fontFamily => root._setJapaneseValue("fontFamily", fontFamily, "font")
+                    Connections {
+                        target: Config.options?.background?.widgets?.japaneseTypography ?? null
+                        function onFontFamilyChanged() {
+                            japaneseTypographyFontSelector.selectedFont = Config.getNestedValue(root._japanesePath + ".fontFamily", "serif")
+                        }
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Secondary font")
+                    icon: "text_fields"
+                    trailing: false
+                    ConfigSelectionArray {
+                        currentValue: Config.getNestedValue(root._japanesePath + ".secondaryFontFamily", "")
+                        onSelected: newValue => root._setJapaneseValue("secondaryFontFamily", newValue, "font")
+                        options: [
+                            { displayName: Translation.tr("Same as title"), value: "" },
+                            { displayName: Translation.tr("Serif / Mincho"), value: "serif" },
+                            { displayName: Translation.tr("Sans / Gothic"), value: "sans-serif" },
+                            { displayName: Translation.tr("Monospace"), value: "monospace" }
+                        ]
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Footer font")
+                    icon: "title"
+                    trailing: false
+                    ConfigSelectionArray {
+                        currentValue: Config.getNestedValue(root._japanesePath + ".latinFontFamily", "")
+                        onSelected: newValue => root._setJapaneseValue("latinFontFamily", newValue, "font")
+                        options: [
+                            { displayName: Translation.tr("Interface font"), value: "" },
+                            { displayName: Translation.tr("Serif"), value: "serif" },
+                            { displayName: Translation.tr("Sans"), value: "sans-serif" },
+                            { displayName: Translation.tr("Monospace"), value: "monospace" }
+                        ]
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Lead weight")
+                    icon: "format_bold"
+                    StyledSpinBox {
+                        from: 100; to: 900; stepSize: 100
+                        value: Config.getNestedValue(root._japanesePath + ".primaryWeight", 500)
+                        onValueModified: root._setJapaneseValue("primaryWeight", value, "font")
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Secondary weight")
+                    icon: "format_bold"
+                    StyledSpinBox {
+                        from: 100; to: 900; stepSize: 100
+                        value: Config.getNestedValue(root._japanesePath + ".secondaryWeight", 400)
+                        onValueModified: root._setJapaneseValue("secondaryWeight", value, "font")
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Footer weight")
+                    icon: "format_bold"
+                    StyledSpinBox {
+                        from: 100; to: 900; stepSize: 100
+                        value: Config.getNestedValue(root._japanesePath + ".latinWeight", 600)
+                        onValueModified: root._setJapaneseValue("latinWeight", value, "font")
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Lead size")
+                    icon: "format_size"
+                    StyledSpinBox {
+                        from: 28; to: 140; stepSize: 2
+                        value: Config.getNestedValue(root._japanesePath + ".primarySize", 72)
+                        onValueModified: root._setJapaneseValue("primarySize", value, "composition")
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Secondary size")
+                    icon: "text_fields"
+                    StyledSpinBox {
+                        from: 10; to: 48; stepSize: 1
+                        value: Config.getNestedValue(root._japanesePath + ".secondarySize", 18)
+                        onValueModified: root._setJapaneseValue("secondarySize", value, "composition")
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Footer / date size")
+                    icon: "format_size"
+                    StyledSpinBox {
+                        from: 8; to: 32; stepSize: 1
+                        value: Config.getNestedValue(root._japanesePath + ".footerSize", 14)
+                        onValueModified: root._setJapaneseValue("footerSize", value, "composition")
+                    }
+                    StyledSpinBox {
+                        from: 8; to: 28; stepSize: 1
+                        value: Config.getNestedValue(root._japanesePath + ".dateSize", 12)
+                        onValueModified: root._setJapaneseValue("dateSize", value, "composition")
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Lead / secondary columns")
+                    icon: "view_column"
+                    StyledSpinBox {
+                        from: 1; to: 4; stepSize: 1
+                        value: Config.getNestedValue(root._japanesePath + ".primaryColumns", 2)
+                        onValueModified: root._setJapaneseValue("primaryColumns", value, "composition")
+                    }
+                    StyledSpinBox {
+                        from: 1; to: 5; stepSize: 1
+                        value: Config.getNestedValue(root._japanesePath + ".secondaryColumns", 2)
+                        onValueModified: root._setJapaneseValue("secondaryColumns", value, "composition")
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Column gap")
+                    icon: "space_bar"
+                    StyledSpinBox {
+                        from: 4; to: 48; stepSize: 1
+                        value: Config.getNestedValue(root._japanesePath + ".columnGap", 14)
+                        onValueModified: root._setJapaneseValue("columnGap", value, "composition")
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Lead / secondary spacing")
+                    icon: "format_line_spacing"
+                    StyledSpinBox {
+                        from: 0; to: 20; stepSize: 1
+                        value: Config.getNestedValue(root._japanesePath + ".letterSpacing", 2)
+                        onValueModified: root._setJapaneseValue("letterSpacing", value, "font")
+                    }
+                    StyledSpinBox {
+                        from: 0; to: 20; stepSize: 1
+                        value: Config.getNestedValue(root._japanesePath + ".secondaryLetterSpacing", 1)
+                        onValueModified: root._setJapaneseValue("secondaryLetterSpacing", value, "font")
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Editorial palette")
+
+                JapanesePalettePicker {}
+
+                WidgetSettingRow {
+                    label: Translation.tr("Color source")
+                    icon: "palette"
+                    trailing: false
+                    ConfigSelectionArray {
+                        currentValue: Config.getNestedValue(root._japanesePath + ".paletteMode", "adaptive")
+                        onSelected: newValue => {
+                            if (newValue === "adaptive") root._applyJapanesePalettePreset("adaptive")
+                            else root._setJapaneseValue("paletteMode", "manual", "palette")
+                        }
+                        options: [
+                            { displayName: Translation.tr("Wallpaper adaptive"), icon: "auto_awesome", value: "adaptive" },
+                            { displayName: Translation.tr("Manual roles"), icon: "palette", value: "manual" }
+                        ]
+                    }
+                }
+
+                ColumnLayout {
+                    visible: Config.getNestedValue(root._japanesePath + ".paletteMode", "adaptive") === "manual"
+                    Layout.fillWidth: true
+                    spacing: 2
+
+                    JapaneseColorPickerRow { label: Translation.tr("Lead title"); configKey: "primaryColor"; fallbackColor: "#E7D4B2" }
+                    JapaneseColorPickerRow { label: Translation.tr("Secondary copy"); configKey: "secondaryColor"; fallbackColor: "#CDB48D" }
+                    JapaneseColorPickerRow { label: Translation.tr("Seal"); configKey: "sealColor"; fallbackColor: "#A64B39" }
+                    JapaneseColorPickerRow { label: Translation.tr("Footer and date"); configKey: "detailColor"; fallbackColor: "#D0B996" }
+                    JapaneseColorPickerRow { label: Translation.tr("Editorial rule"); configKey: "ruleColor"; fallbackColor: "#C18A53" }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Lead / secondary opacity")
+                    icon: "opacity"
+                    StyledSpinBox {
+                        from: 10; to: 100; stepSize: 5
+                        value: Config.getNestedValue(root._japanesePath + ".primaryOpacity", 100)
+                        onValueModified: root._setJapaneseValue("primaryOpacity", value, "palette")
+                    }
+                    StyledSpinBox {
+                        from: 10; to: 100; stepSize: 5
+                        value: Config.getNestedValue(root._japanesePath + ".secondaryOpacity", 78)
+                        onValueModified: root._setJapaneseValue("secondaryOpacity", value, "palette")
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Seal / detail opacity")
+                    icon: "opacity"
+                    StyledSpinBox {
+                        from: 10; to: 100; stepSize: 5
+                        value: Config.getNestedValue(root._japanesePath + ".sealOpacity", 100)
+                        onValueModified: root._setJapaneseValue("sealOpacity", value, "palette")
+                    }
+                    StyledSpinBox {
+                        from: 10; to: 100; stepSize: 5
+                        value: Config.getNestedValue(root._japanesePath + ".detailOpacity", 72)
+                        onValueModified: root._setJapaneseValue("detailOpacity", value, "palette")
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Rule opacity")
+                    icon: "horizontal_rule"
+                    StyledSpinBox {
+                        from: 10; to: 100; stepSize: 5
+                        value: Config.getNestedValue(root._japanesePath + ".ruleOpacity", 78)
+                        onValueModified: root._setJapaneseValue("ruleOpacity", value, "palette")
+                    }
+                    StyledSpinBox {
+                        from: 1; to: 6; stepSize: 1
+                        value: Config.getNestedValue(root._japanesePath + ".ruleThickness", 1)
+                        onValueModified: root._setJapaneseValue("ruleThickness", value, "composition")
+                        StyledToolTip { text: Translation.tr("Rule thickness") }
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Seal fill")
+                    icon: "format_color_fill"
+                    StyledSpinBox {
+                        from: 0; to: 100; stepSize: 5
+                        value: Config.getNestedValue(root._japanesePath + ".sealFillOpacity", 0)
+                        onValueModified: root._setJapaneseValue("sealFillOpacity", value, "palette")
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Legibility")
+
+                WidgetSettingRow {
+                    label: Translation.tr("Wallpaper shadow")
+                    icon: "blur_on"
+                    StyledSpinBox {
+                        from: 0; to: 100; stepSize: 5
+                        value: Config.getNestedValue(root._japanesePath + ".shadowStrength", 35)
+                        onValueModified: root._setJapaneseValue("shadowStrength", value, "palette")
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Text outline")
+                    icon: "border_outer"
+                    StyledSpinBox {
+                        from: 0; to: 100; stepSize: 5
+                        value: Config.getNestedValue(root._japanesePath + ".outlineOpacity", 0)
+                        onValueModified: root._setJapaneseValue("outlineOpacity", value, "palette")
+                    }
+                }
+
+                JapaneseColorPickerRow {
+                    visible: Config.getNestedValue(root._japanesePath + ".outlineOpacity", 0) > 0
+                    label: Translation.tr("Outline color")
+                    configKey: "outlineColor"
+                    fallbackColor: "#000000"
+                }
+            }
+
+            WidgetAppearanceControls {
+                configPath: "background.widgets.japaneseTypography"
+                configEntry: Config.getNestedValue("background.widgets.japaneseTypography", ({}))
+                dimDefault: 10
+                hasColorMode: Config.getNestedValue(root._japanesePath + ".paletteMode", "adaptive") === "adaptive"
                 hasCardControls: true
             }
 
-            RippleButton {
-                Layout.fillWidth: true
-                text: Translation.tr("Reset to defaults")
-                onClicked: {
-                    Config.setNestedValue("background.widgets.clock.style", "digital");
-                    Config.setNestedValue("background.widgets.clock.placementStrategy", "free");
-                    Config.setNestedValue("background.widgets.clock.fontFamily", "Space Grotesk");
-                    Config.setNestedValue("background.widgets.clock.timeFormat", "system");
-                    Config.setNestedValue("background.widgets.clock.showSeconds", false);
-                    Config.setNestedValue("background.widgets.clock.showDate", true);
-                    Config.setNestedValue("background.widgets.clock.dateStyle", "long");
-                    Config.setNestedValue("background.widgets.clock.timeScale", 100);
-                    Config.setNestedValue("background.widgets.clock.dateScale", 100);
-                    Config.setNestedValue("background.widgets.clock.showShadow", true);
-                    Config.setNestedValue("background.widgets.clock.dim", 70);
-                    Config.setNestedValue("background.widgets.clock.digital.animateChange", true);
-                    Config.setNestedValue("background.widgets.clock.digital.fontWeight", 600);
-                    Config.setNestedValue("background.widgets.clock.digital.spacing", 6);
-                    Config.setNestedValue("background.widgets.clock.digital.preset", "default");
-                    Config.setNestedValue("background.widgets.clock.quote.enable", false);
-                    Config.setNestedValue("background.widgets.clock.quote.text", "");
-                    Config.setNestedValue("background.widgets.clock.cookie.size", 230);
-                    Config.setNestedValue("background.widgets.clock.cookie.preset", "default");
-                    Config.setNestedValue("background.widgets.clock.cookie.sides", 15);
-                    Config.setNestedValue("background.widgets.clock.cookie.useSineCookie", false);
-                    Config.setNestedValue("background.widgets.clock.cookie.constantlyRotate", false);
-                    Config.setNestedValue("background.widgets.clock.cookie.dialNumberStyle", "full");
-                    Config.setNestedValue("background.widgets.clock.cookie.hourHandStyle", "hollow");
-                    Config.setNestedValue("background.widgets.clock.cookie.minuteHandStyle", "hide");
-                    Config.setNestedValue("background.widgets.clock.cookie.secondHandStyle", "hide");
-                    Config.setNestedValue("background.widgets.clock.cookie.dateStyle", "bubble");
-                    Config.setNestedValue("background.widgets.clock.cookie.hourMarks", false);
-                    Config.setNestedValue("background.widgets.clock.cookie.timeIndicators", false);
-                    Config.setNestedValue("background.widgets.clock.cookie.aiStyling", false);
-                    Config.setNestedValue("background.widgets.clock.widgetScale", 100);
-                    Config.setNestedValue("background.widgets.clock.widgetOpacity", 100);
-                    Config.setNestedValue("background.widgets.clock.showBackground", false);
-                    Config.setNestedValue("background.widgets.clock.showBorder", false);
-                    Config.setNestedValue("background.widgets.clock.backgroundOpacity", 0);
-                    Config.setNestedValue("background.widgets.clock.borderWidth", 0);
-                    Config.setNestedValue("background.widgets.clock.borderOpacity", 0.08);
-                    Config.setNestedValue("background.widgets.clock.cornerRadius", -1);
-                    Config.setNestedValue("background.widgets.clock.colorMode", "auto");
-                    Config.setNestedValue("background.widgets.clock.locked", false);
-                    Config.setNestedValue("background.widgets.clock.x", 100);
-                    Config.setNestedValue("background.widgets.clock.y", 100);
-                }
+            WidgetResetButton {
+                configPath: "background.widgets.japaneseTypography"
+                defaults: ({
+                    enable: false, locked: false, placementStrategy: "free",
+                    preset: "exhibition", primaryText: "夏の記憶",
+                    secondaryText: "潮風と、あの子と、終わらない夏",
+                    sealText: "特別展", footerText: "PACIFIC DRIVE-IN",
+                    dateText: "7.12 — 8.31", showSecondary: true,
+                    showSeal: true, showFooter: true, showRule: true,
+                    fontPreset: "mincho", fontFamily: "serif",
+                    secondaryFontFamily: "", latinFontFamily: "",
+                    primaryWeight: 500, secondaryWeight: 400, latinWeight: 600,
+                    primarySize: 72, secondarySize: 18, footerSize: 14,
+                    dateSize: 12, primaryColumns: 2, secondaryColumns: 2,
+                    columnGap: 14, letterSpacing: 2, secondaryLetterSpacing: 1,
+                    mirrorLayout: false, rotateLatin: false,
+                    paletteMode: "adaptive", palettePreset: "adaptive",
+                    primaryColor: "#E7D4B2", secondaryColor: "#CDB48D",
+                    sealColor: "#A64B39", detailColor: "#D0B996",
+                    ruleColor: "#C18A53", primaryOpacity: 100,
+                    secondaryOpacity: 78, sealOpacity: 100, detailOpacity: 72,
+                    ruleOpacity: 78, sealFillOpacity: 0, ruleThickness: 1,
+                    outlineColor: "#000000", outlineOpacity: 0,
+                    shadowStrength: 35, contentWidth: 330,
+                    contentHeight: 600, dim: 10, widgetScale: 100,
+                    widgetOpacity: 100, showBackground: false, useBlur: false,
+                    showBorder: false, backgroundOpacity: 0, borderWidth: 0,
+                    borderOpacity: 0.12, cornerRadius: -1, colorMode: "auto",
+                    x: 56, y: 120
+                })
             }
         }
     }
@@ -1046,34 +2247,23 @@ ContentPage {
         title: Translation.tr("Weather")
 
         SettingsGroup {
-            WidgetSettingRow {
-                label: Translation.tr("State")
-                icon: "check"
-                trailing: false
-                WidgetToggleChip {
-                    configPath: "background.widgets.weather.enable"
-                    defaultValue: true
-                    buttonIcon: "check"
-                    buttonText: Translation.tr("Enable")
-                }
-                WidgetPlacementSelector {
-                    configPath: "background.widgets.weather"
-                    configEntry: Config.getNestedValue("background.widgets.weather", ({}))
-                    defaultStrategy: "leastBusy"
-                }
-            }
-
-            WidgetZonePicker {
+            WidgetStateControls {
                 configPath: "background.widgets.weather"
                 configEntry: Config.getNestedValue("background.widgets.weather", ({}))
+                defaultStrategy: "free"
+                defaultEnabled: false
             }
 
             ContentSubsection {
-                title: Translation.tr("Preset")
+                title: Translation.tr("Style")
 
-                ConfigSelectionArray {
-                    Layout.fillWidth: true
-                    currentValue: Config.getNestedValue("background.widgets.weather.preset", "default")
+                WidgetSettingRow {
+                    label: Translation.tr("Preset")
+                    trailing: false
+
+                    ConfigSelectionArray {
+                        Layout.fillWidth: true
+                        currentValue: Config.getNestedValue("background.widgets.weather.preset", "default")
                     onSelected: newValue => {
                         Config.setNestedValue("background.widgets.weather.preset", newValue);
                         if (newValue === "default") {
@@ -1111,8 +2301,9 @@ ContentPage {
                 }
             }
 
-            ContentSubsection {
-                title: Translation.tr("Style")
+            WidgetSettingRow {
+                label: Translation.tr("Style")
+                trailing: false
 
                 ConfigSelectionArray {
                     Layout.fillWidth: true
@@ -1121,6 +2312,7 @@ ContentPage {
                     options: [
                         { displayName: Translation.tr("Shape"), icon: "category", value: "pill" },
                         { displayName: Translation.tr("Card"), icon: "crop_landscape", value: "card" },
+                        { displayName: Translation.tr("Detail"), icon: "dashboard", value: "detail" },
                     ]
                 }
 
@@ -1144,6 +2336,7 @@ ContentPage {
                         { displayName: Translation.tr("Puffy"), value: "puffy" },
                     ]
                 }
+            }
             }
 
             ContentSubsection {
@@ -1174,55 +2367,72 @@ ContentPage {
                     buttonIcon: "description"
                     text: Translation.tr("Condition text")
                     autoToggle: false
+                    visible: Config.getNestedValue("background.widgets.weather.style", "pill") !== "detail"
 
                     checked: Config.getNestedValue("background.widgets.weather.showCondition", false)
                     onToggledByUser: checked => Config.setNestedValue("background.widgets.weather.showCondition", checked)
+                }
+                SettingsSwitch {
+                    buttonIcon: "monitoring"
+                    text: Translation.tr("Metric chips")
+                    autoToggle: false
+                    visible: Config.getNestedValue("background.widgets.weather.style", "pill") === "detail"
+
+                    checked: Config.getNestedValue("background.widgets.weather.showMetrics", true)
+                    onToggledByUser: checked => Config.setNestedValue("background.widgets.weather.showMetrics", checked)
                 }
             }
 
             ContentSubsection {
                 title: Translation.tr("Sizing")
 
-                WidgetSettingRow {
-                    label: Translation.tr("Widget size")
-                    StyledSpinBox {
-                        from: 80; to: 400; stepSize: 10
-                        value: Config.getNestedValue("background.widgets.weather.size", 200)
-                        onValueModified: Config.setNestedValue("background.widgets.weather.size", value)
+                GridLayout {
+                    columns: 2
+                    columnSpacing: 12
+                    Layout.fillWidth: true
+
+                    WidgetSettingRow {
+                        label: Translation.tr("Widget size")
+                        StyledSpinBox {
+                            from: 80; to: 400; stepSize: 10
+                            value: Config.getNestedValue("background.widgets.weather.size", 200)
+                            onValueModified: Config.setNestedValue("background.widgets.weather.size", value)
+                        }
+                    }
+                    WidgetSettingRow {
+                        label: Translation.tr("Temp size")
+                        StyledSpinBox {
+                            from: 20; to: 200; stepSize: 5
+                            value: Config.getNestedValue("background.widgets.weather.tempSize", 80)
+                            onValueModified: Config.setNestedValue("background.widgets.weather.tempSize", value)
+                        }
+                    }
+                    WidgetSettingRow {
+                        label: Translation.tr("Icon size")
+                        StyledSpinBox {
+                            from: 20; to: 200; stepSize: 5
+                            value: Config.getNestedValue("background.widgets.weather.iconSize", 80)
+                            onValueModified: Config.setNestedValue("background.widgets.weather.iconSize", value)
+                        }
+                    }
+                    WidgetSettingRow {
+                        label: Translation.tr("Padding")
+                        StyledSpinBox {
+                            from: 0; to: 60; stepSize: 2
+                            value: Config.getNestedValue("background.widgets.weather.padding", 20)
+                            onValueModified: Config.setNestedValue("background.widgets.weather.padding", value)
+                        }
+                    }
+                    WidgetSettingRow {
+                        label: Translation.tr("Temp font weight")
+                        StyledSpinBox {
+                            from: 100; to: 900; stepSize: 100
+                            value: Config.getNestedValue("background.widgets.weather.tempFontWeight", 500)
+                            onValueModified: Config.setNestedValue("background.widgets.weather.tempFontWeight", value)
+                        }
                     }
                 }
-                WidgetSettingRow {
-                    label: Translation.tr("Temp size")
-                    StyledSpinBox {
-                        from: 20; to: 200; stepSize: 5
-                        value: Config.getNestedValue("background.widgets.weather.tempSize", 80)
-                        onValueModified: Config.setNestedValue("background.widgets.weather.tempSize", value)
-                    }
-                }
-                WidgetSettingRow {
-                    label: Translation.tr("Icon size")
-                    StyledSpinBox {
-                        from: 20; to: 200; stepSize: 5
-                        value: Config.getNestedValue("background.widgets.weather.iconSize", 80)
-                        onValueModified: Config.setNestedValue("background.widgets.weather.iconSize", value)
-                    }
-                }
-                WidgetSettingRow {
-                    label: Translation.tr("Padding")
-                    StyledSpinBox {
-                        from: 0; to: 60; stepSize: 2
-                        value: Config.getNestedValue("background.widgets.weather.padding", 20)
-                        onValueModified: Config.setNestedValue("background.widgets.weather.padding", value)
-                    }
-                }
-                WidgetSettingRow {
-                    label: Translation.tr("Temp font weight")
-                    StyledSpinBox {
-                        from: 100; to: 900; stepSize: 100
-                        value: Config.getNestedValue("background.widgets.weather.tempFontWeight", 500)
-                        onValueModified: Config.setNestedValue("background.widgets.weather.tempFontWeight", value)
-                    }
-                }
+
                 WidgetSettingRow {
                     visible: Config.getNestedValue("background.widgets.weather.showCondition", false)
                     label: Translation.tr("Condition opacity")
@@ -1238,34 +2448,464 @@ ContentPage {
             WidgetAppearanceControls {
                 configPath: "background.widgets.weather"
                 configEntry: Config.getNestedValue("background.widgets.weather", ({}))
-                hasCardControls: Config.getNestedValue("background.widgets.weather.style", "pill") === "card"
+                hasColorMode: Config.getNestedValue(
+                    "background.widgets.weather.style", "pill") !== "pill"
+                hasCardControls: Config.getNestedValue(
+                    "background.widgets.weather.style", "pill") !== "pill"
             }
 
-            RippleButton {
-                Layout.fillWidth: true
-                text: Translation.tr("Reset to defaults")
-                onClicked: {
-                    Config.setNestedValue("background.widgets.weather.preset", "default");
-                    Config.setNestedValue("background.widgets.weather.style", "pill");
-                    Config.setNestedValue("background.widgets.weather.shape", "pill");
-                    Config.setNestedValue("background.widgets.weather.placementStrategy", "free");
-                    Config.setNestedValue("background.widgets.weather.size", 200);
-                    Config.setNestedValue("background.widgets.weather.tempSize", 80);
-                    Config.setNestedValue("background.widgets.weather.iconSize", 80);
-                    Config.setNestedValue("background.widgets.weather.showTemp", true);
-                    Config.setNestedValue("background.widgets.weather.showIcon", true);
-                    Config.setNestedValue("background.widgets.weather.showCondition", false);
-                    Config.setNestedValue("background.widgets.weather.padding", 20);
-                    Config.setNestedValue("background.widgets.weather.tempFontWeight", 500);
-                    Config.setNestedValue("background.widgets.weather.conditionOpacity", 0.7);
-                    Config.setNestedValue("background.widgets.weather.widgetScale", 100);
-                    Config.setNestedValue("background.widgets.weather.widgetOpacity", 100);
-                    Config.setNestedValue("background.widgets.weather.colorMode", "auto");
-                    Config.setNestedValue("background.widgets.weather.dim", 0);
-                    Config.setNestedValue("background.widgets.weather.locked", false);
-                    Config.setNestedValue("background.widgets.weather.x", 100);
-                    Config.setNestedValue("background.widgets.weather.y", 200);
+        }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.weather"
+                defaults: ({
+                    "placementStrategy": "free",
+                    "widgetScale": 100,
+                    "widgetOpacity": 100,
+                    "showBackground": true,
+                    "useBlur": false,
+                    "showBorder": true,
+                    "backgroundOpacity": 0.16,
+                    "borderWidth": 1,
+                    "borderOpacity": 0.2,
+                    "cornerRadius": -1,
+                    "colorMode": "auto",
+                    "dim": 0,
+                    "x": 100,
+                    "y": 200,
+                    "preset": "default",
+                    "style": "pill",
+                    "shape": "pill",
+                    "size": 200,
+                    "tempSize": 80,
+                    "iconSize": 80,
+                    "showTemp": true,
+                    "showIcon": true,
+                    "showCondition": false,
+                    "showMetrics": true,
+                    "padding": 20,
+                    "tempFontWeight": 500,
+                    "conditionOpacity": 0.7,
+                    "locked": false
+})
+            }
+        }
+    }
+
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
+        icon: "add_photo_alternate"
+        title: Translation.tr("Custom image")
+
+        SettingsGroup {
+            WidgetStateControls {
+                configPath: "background.widgets.customImage"
+                configEntry: Config.getNestedValue("background.widgets.customImage", ({}))
+                defaultStrategy: "free"
+                defaultEnabled: false
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Source")
+
+                WidgetSettingRow {
+                    label: Translation.tr("Show")
+                    icon: "filter_alt"
+                    trailing: false
+
+                    GridLayout {
+                        id: customMediaQuickChoices
+                        Layout.fillWidth: true
+                        readonly property var choices: [
+                            { label: Translation.tr("File"), icon: "draft", value: "file",
+                                available: Images.isValidMediaByName(Config.options?.background?.widgets?.customImage?.path ?? "") },
+                            { label: Translation.tr("All") + " " + root._customMediaFolderCount,
+                                icon: "perm_media", value: "all", available: root._customMediaFolderCount > 0 },
+                            { label: Translation.tr("Images") + " " + root._customMediaFolderImageCount,
+                                icon: "image", value: "images", available: root._customMediaFolderImageCount > 0 },
+                            { label: "GIF " + root._customMediaFolderGifCount,
+                                icon: "motion_photos_on", value: "gifs", available: root._customMediaFolderGifCount > 0 },
+                            { label: Translation.tr("Videos") + " " + root._customMediaFolderVideoCount,
+                                icon: "movie", value: "videos", available: root._customMediaFolderVideoCount > 0 }
+                        ].filter(choice => choice.available)
+                        columns: Math.max(1, choices.length)
+                        columnSpacing: 4
+                        rowSpacing: 4
+
+                        Repeater {
+                            model: customMediaQuickChoices.choices
+
+                            SelectionGroupButton {
+                                required property var modelData
+                                Layout.fillWidth: true
+                                leftmost: true; rightmost: true
+                                toggled: root._customMediaChoiceActive(modelData.value)
+                                buttonIcon: modelData.icon
+                                buttonText: modelData.label
+                                onClicked: root._activateCustomMediaChoice(modelData.value)
+                            }
+                        }
+                    }
                 }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Source type")
+                    icon: "perm_media"
+                    trailing: false
+
+                    ConfigSelectionArray {
+                        Layout.fillWidth: true
+                        currentValue: Config.getNestedValue("background.widgets.customImage.sourceMode", "file")
+                        onSelected: newValue => {
+                            const path = Config.getNestedValue("background.widgets.customImage.path", "")
+                            const folder = Config.getNestedValue("background.widgets.customImage.folder", "")
+                            if (newValue === "folder" && folder.length === 0) {
+                                customImageFolderDialog.open()
+                                return
+                            }
+                            if (newValue === "file" && path.length === 0) {
+                                customImageFileDialog.open()
+                                return
+                            }
+                            Config.setNestedValue("background.widgets.customImage.sourceMode", newValue)
+                        }
+                        options: [
+                            { displayName: Translation.tr("Single file"), icon: "draft", value: "file" },
+                            { displayName: Translation.tr("Folder gallery"), icon: "folder_open", value: "folder" }
+                        ]
+                    }
+                }
+
+                WidgetSettingRow {
+                    visible: Config.getNestedValue("background.widgets.customImage.sourceMode", "file") === "file"
+                    label: Translation.tr("Media file")
+                    icon: "perm_media"
+                    trailing: false
+
+                    MaterialTextField {
+                        Layout.fillWidth: true
+                        placeholderText: Translation.tr("Image, GIF, or video")
+                        text: Config.getNestedValue("background.widgets.customImage.path", "")
+                        onAccepted: {
+                            const path = text.trim();
+                            if (path.length === 0 || Images.isValidMediaByName(path))
+                                Config.setNestedValue("background.widgets.customImage.path", path);
+                        }
+                        onEditingFinished: {
+                            const path = text.trim();
+                            if (path.length === 0 || Images.isValidMediaByName(path))
+                                Config.setNestedValue("background.widgets.customImage.path", path);
+                        }
+                    }
+
+                    SelectionGroupButton {
+                        Layout.fillWidth: false
+                        leftmost: true; rightmost: true
+                        buttonIcon: "folder_open"
+                        buttonText: Translation.tr("Browse")
+                        onClicked: customImageFileDialog.open()
+                    }
+
+                    SelectionGroupButton {
+                        visible: Config.getNestedValue("background.widgets.customImage.path", "").length > 0
+                        Layout.fillWidth: false
+                        leftmost: true; rightmost: true
+                        buttonIcon: "close"
+                        buttonText: Translation.tr("Clear")
+                        onClicked: {
+                            const folder = Config.getNestedValue("background.widgets.customImage.folder", "")
+                            const updates = ({ "background.widgets.customImage.path": "" })
+                            if (folder.length > 0)
+                                updates["background.widgets.customImage.sourceMode"] = "folder"
+                            Config.setNestedValues(updates)
+                        }
+                    }
+                }
+
+                WidgetSettingRow {
+                    visible: Config.getNestedValue("background.widgets.customImage.sourceMode", "file") === "folder"
+                    label: Translation.tr("Media folder")
+                    icon: "folder_open"
+                    trailing: false
+
+                    MaterialTextField {
+                        Layout.fillWidth: true
+                        placeholderText: Translation.tr("Folder containing images or videos")
+                        text: Config.getNestedValue("background.widgets.customImage.folder", "")
+                        onAccepted: Config.setNestedValue("background.widgets.customImage.folder", text.trim())
+                        onEditingFinished: Config.setNestedValue("background.widgets.customImage.folder", text.trim())
+                    }
+
+                    SelectionGroupButton {
+                        Layout.fillWidth: false
+                        leftmost: true; rightmost: true
+                        buttonIcon: "folder_open"
+                        buttonText: Translation.tr("Browse")
+                        onClicked: customImageFolderDialog.open()
+                    }
+
+                    SelectionGroupButton {
+                        visible: Config.getNestedValue("background.widgets.customImage.folder", "").length > 0
+                        Layout.fillWidth: false
+                        leftmost: true; rightmost: true
+                        buttonIcon: "close"
+                        buttonText: Translation.tr("Clear")
+                        onClicked: {
+                            const path = Config.getNestedValue("background.widgets.customImage.path", "")
+                            const updates = ({ "background.widgets.customImage.folder": "" })
+                            if (path.length > 0)
+                                updates["background.widgets.customImage.sourceMode"] = "file"
+                            Config.setNestedValues(updates)
+                        }
+                    }
+                }
+
+                WidgetSettingRow {
+                    visible: Config.getNestedValue("background.widgets.customImage.sourceMode", "file") === "folder"
+                    label: Translation.tr("Media type")
+                    icon: "filter_alt"
+                    trailing: false
+
+                    ConfigSelectionArray {
+                        Layout.fillWidth: true
+                        currentValue: Config.getNestedValue("background.widgets.customImage.mediaFilter", "all")
+                        onSelected: newValue => Config.setNestedValue("background.widgets.customImage.mediaFilter", newValue)
+                        options: [
+                            { displayName: Translation.tr("All media") + " (" + root._customMediaFolderCount + ")", icon: "perm_media", value: "all", available: true },
+                            { displayName: Translation.tr("Images only") + " (" + root._customMediaFolderImageCount + ")", icon: "image", value: "images", available: root._customMediaFolderImageCount > 0 },
+                            { displayName: "GIF (" + root._customMediaFolderGifCount + ")", icon: "motion_photos_on", value: "gifs", available: root._customMediaFolderGifCount > 0 },
+                            { displayName: Translation.tr("Videos only") + " (" + root._customMediaFolderVideoCount + ")", icon: "movie", value: "videos", available: root._customMediaFolderVideoCount > 0 }
+                        ].filter(option => option.available)
+                    }
+                }
+
+                SettingsNote {
+                    icon: "volume_off"
+                    text: Translation.tr("Videos play silently. Images, animated GIFs, and videos can share the same folder.")
+                }
+            }
+
+            ContentSubsection {
+                visible: Config.getNestedValue("background.widgets.customImage.sourceMode", "file") === "folder"
+                title: Translation.tr("Gallery rotation")
+
+                WidgetSettingRow {
+                    label: Translation.tr("Order")
+                    icon: "swap_vert"
+                    trailing: false
+
+                    ConfigSelectionArray {
+                        Layout.fillWidth: true
+                        currentValue: Config.getNestedValue("background.widgets.customImage.order", "sequential")
+                        onSelected: newValue => Config.setNestedValue("background.widgets.customImage.order", newValue)
+                        options: [
+                            { displayName: Translation.tr("Sequential"), icon: "format_list_numbered", value: "sequential" },
+                            { displayName: Translation.tr("Random"), icon: "shuffle", value: "random" }
+                        ]
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Change every")
+                    icon: "timer"
+                    StyledSpinBox {
+                        from: 3; to: 3600; stepSize: 1
+                        value: Config.getNestedValue("background.widgets.customImage.intervalSeconds", 30)
+                        onValueModified: Config.setNestedValue("background.widgets.customImage.intervalSeconds", value)
+                        StyledToolTip { text: Translation.tr("Seconds between media changes") }
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Quick timing")
+                    icon: "speed"
+                    trailing: false
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 4
+
+                        Repeater {
+                            model: [3, 10, 30, 60]
+                            SelectionGroupButton {
+                                required property int modelData
+                                Layout.fillWidth: true
+                                leftmost: true; rightmost: true
+                                toggled: Config.getNestedValue(
+                                    "background.widgets.customImage.intervalSeconds", 30) === modelData
+                                buttonText: modelData + "s"
+                                onClicked: Config.setNestedValue(
+                                    "background.widgets.customImage.intervalSeconds", modelData)
+                            }
+                        }
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Shape")
+
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 6
+
+                    Repeater {
+                        model: root._customImageShapes
+
+                        Rectangle {
+                            id: shapeCell
+                            required property var modelData
+                            width: 52
+                            height: 52
+                            radius: Appearance.rounding.small
+                            readonly property bool selected: Config.getNestedValue("background.widgets.customImage.shape", "Cookie4Sided") === modelData.value
+                            color: selected
+                                ? ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.14)
+                                : ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, shapeMouse.containsMouse ? 0.07 : 0.03)
+                            border.width: selected ? 1.5 : 0
+                            border.color: Appearance.colors.colPrimary
+
+                            MaterialShape {
+                                anchors.centerIn: parent
+                                implicitSize: 28
+                                shape: shapeCell.modelData.shape
+                                color: shapeCell.selected
+                                    ? Appearance.colors.colPrimary
+                                    : Appearance.colors.colOnLayer1
+                            }
+
+                            MouseArea {
+                                id: shapeMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: Config.setNestedValue("background.widgets.customImage.shape", shapeCell.modelData.value)
+                            }
+                        }
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Layout")
+
+                WidgetSettingRow {
+                    label: Translation.tr("Size")
+                    icon: "photo_size_select_large"
+                    StyledSpinBox {
+                        from: 80; to: 1200; stepSize: 10
+                        value: Config.getNestedValue("background.widgets.customImage.size", 220)
+                        onValueModified: Config.setNestedValue("background.widgets.customImage.size", value)
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Fit")
+                    icon: "fit_screen"
+                    trailing: false
+                    ConfigSelectionArray {
+                        Layout.fillWidth: true
+                        currentValue: Config.getNestedValue("background.widgets.customImage.fitMode", "cover")
+                        onSelected: newValue => Config.setNestedValue("background.widgets.customImage.fitMode", newValue)
+                        options: [
+                            { displayName: Translation.tr("Crop to fill"), icon: "crop_free", value: "cover" },
+                            { displayName: Translation.tr("Show full media"), icon: "fit_screen", value: "contain" }
+                        ]
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Transition")
+                    icon: "animation"
+                    StyledSpinBox {
+                        from: 0; to: 2000; stepSize: 50
+                        value: Config.getNestedValue("background.widgets.customImage.transitionDuration", 450)
+                        onValueModified: Config.setNestedValue("background.widgets.customImage.transitionDuration", value)
+                        StyledToolTip { text: Translation.tr("Crossfade duration in milliseconds; 0 disables it") }
+                    }
+                }
+            }
+
+            WidgetAppearanceControls {
+                configPath: "background.widgets.customImage"
+                configEntry: Config.getNestedValue("background.widgets.customImage", ({}))
+                hasColorMode: false
+                hasCardControls: false
+            }
+        }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.customImage"
+                defaults: ({
+                    enable: false, locked: false, placementStrategy: "free",
+                    sourceMode: "file", path: "", folder: "", mediaFilter: "all",
+                    intervalSeconds: 30, order: "sequential", transitionDuration: 450,
+                    shape: "Cookie4Sided", fitMode: "cover", size: 220,
+                    dim: 0, widgetScale: 100, widgetOpacity: 100, x: 120, y: 320
+                })
+            }
+        }
+    }
+
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
+        icon: "transform"
+        title: Translation.tr("Image converter")
+
+        SettingsGroup {
+            WidgetStateControls {
+                configPath: "background.widgets.imageConverter"
+                configEntry: Config.getNestedValue("background.widgets.imageConverter", ({}))
+                defaultStrategy: "free"
+                defaultEnabled: false
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Conversion")
+
+                ConfigSelectionArray {
+                    currentValue: Config.getNestedValue("background.widgets.imageConverter.selectedFormat", "webp")
+                    onSelected: newValue => Config.setNestedValue("background.widgets.imageConverter.selectedFormat", newValue)
+                    options: [
+                        { displayName: "PNG", icon: "image", value: "png" },
+                        { displayName: "JPG", icon: "photo", value: "jpg" },
+                        { displayName: "WEBP", icon: "motion_photos_on", value: "webp" },
+                        { displayName: "AVIF", icon: "hd", value: "avif" },
+                        { displayName: "BMP", icon: "grid_on", value: "bmp" },
+                        { displayName: "TIFF", icon: "photo_library", value: "tiff" },
+                        { displayName: "PDF", icon: "picture_as_pdf", value: "pdf" }
+                    ]
+                }
+
+                SettingsNote {
+                    icon: "info"
+                    text: Translation.tr("Drop one or more images onto the desktop widget. Converted files are saved next to the originals.")
+                }
+            }
+
+            WidgetAppearanceControls {
+                configPath: "background.widgets.imageConverter"
+                configEntry: Config.getNestedValue("background.widgets.imageConverter", ({}))
+                hasColorMode: true
+                hasCardControls: true
+            }
+        }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.imageConverter"
+                defaults: ({
+                    enable: false, locked: false, placementStrategy: "free",
+                    selectedFormat: "webp", contentWidth: 292, contentHeight: 260,
+                    widgetScale: 100, widgetOpacity: 100, colorMode: "auto", dim: 0,
+                    showBackground: true, useBlur: false, showBorder: true,
+                    backgroundOpacity: 0.22, borderWidth: 1, borderOpacity: 0.22,
+                    cornerRadius: -1, x: 120, y: 360
+                })
             }
         }
     }
@@ -1278,32 +2918,21 @@ ContentPage {
         title: Translation.tr("Media Controls")
 
         SettingsGroup {
-            WidgetSettingRow {
-                label: Translation.tr("State")
-                icon: "check"
-                trailing: false
-                WidgetToggleChip {
-                    configPath: "background.widgets.mediaControls.enable"
-                    defaultValue: true
-                    buttonIcon: "check"
-                    buttonText: Translation.tr("Enable")
-                }
-                WidgetPlacementSelector {
-                    configPath: "background.widgets.mediaControls"
-                    configEntry: Config.getNestedValue("background.widgets.mediaControls", ({}))
-                    defaultStrategy: "leastBusy"
-                }
-            }
-
-            WidgetZonePicker {
+            WidgetStateControls {
                 configPath: "background.widgets.mediaControls"
                 configEntry: Config.getNestedValue("background.widgets.mediaControls", ({}))
+                defaultStrategy: "free"
+                defaultEnabled: false
             }
 
             ContentSubsection {
-                title: Translation.tr("Player style")
+                title: Translation.tr("Player")
 
-                ConfigSelectionArray {
+                WidgetSettingRow {
+                    label: Translation.tr("Player style")
+                    trailing: false
+
+                    ConfigSelectionArray {
                     Layout.fillWidth: true
                     currentValue: Config.getNestedValue("background.widgets.mediaControls.playerPreset", "full")
                     onSelected: newValue => Config.setNestedValue("background.widgets.mediaControls.playerPreset", newValue)
@@ -1314,8 +2943,12 @@ ContentPage {
                         { displayName: Translation.tr("Album Art"), icon: "image", value: "albumart" },
                         { displayName: Translation.tr("Visualizer"), icon: "equalizer", value: "visualizer" },
                         { displayName: Translation.tr("Classic"), icon: "radio", value: "classic" },
+                        { displayName: Translation.tr("Lyrics"), icon: "lyrics", value: "lyrics" },
+                        { displayName: Translation.tr("Lyrics wide"), icon: "subtitles", value: "lyricsSplit" },
+                        { displayName: Translation.tr("Cover"), icon: "art_track", value: "expandingLyrics" },
                     ]
                 }
+            }
             }
 
             ContentSubsection {
@@ -1355,25 +2988,28 @@ ContentPage {
             WidgetAppearanceControls {
                 configPath: "background.widgets.mediaControls"
                 configEntry: Config.getNestedValue("background.widgets.mediaControls", ({}))
-                hasCardControls: true
+                hasCardControls: false
             }
 
-            RippleButton {
-                Layout.fillWidth: true
-                text: Translation.tr("Reset to defaults")
-                onClicked: {
-                    Config.setNestedValue("background.widgets.mediaControls.placementStrategy", "leastBusy");
-                    Config.setNestedValue("background.widgets.mediaControls.playerPreset", "full");
-                    Config.setNestedValue("background.widgets.mediaControls.visualizerType", "wave");
-                    Config.setNestedValue("background.widgets.mediaControls.visualizerPosition", "bottom");
-                    Config.setNestedValue("background.widgets.mediaControls.widgetScale", 100);
-                    Config.setNestedValue("background.widgets.mediaControls.widgetOpacity", 100);
-                    Config.setNestedValue("background.widgets.mediaControls.colorMode", "auto");
-                    Config.setNestedValue("background.widgets.mediaControls.dim", 0);
-                    Config.setNestedValue("background.widgets.mediaControls.locked", false);
-                    Config.setNestedValue("background.widgets.mediaControls.x", 100);
-                    Config.setNestedValue("background.widgets.mediaControls.y", 100);
-                }
+        }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.mediaControls"
+                defaults: ({
+                    "placementStrategy": "free",
+                    "playerPreset": "full",
+                    "visualizerType": "wave",
+                    "visualizerPosition": "bottom",
+                    "lyricsExpanded": false,
+                    "widgetScale": 100,
+                    "widgetOpacity": 100,
+                    "colorMode": "auto",
+                    "dim": 0,
+                    "x": 240,
+                    "y": 240,
+                    "locked": false
+})
             }
         }
     }
@@ -1386,34 +3022,23 @@ ContentPage {
         title: Translation.tr("Visualizer")
 
         SettingsGroup {
-            WidgetSettingRow {
-                label: Translation.tr("State")
-                icon: "check"
-                trailing: false
-                WidgetToggleChip {
-                    configPath: "background.widgets.visualizer.enable"
-                    buttonIcon: "check"
-                    buttonText: Translation.tr("Enable")
-                    StyledToolTip { text: Translation.tr("Audio visualizer widget on the desktop") }
-                }
-                WidgetPlacementSelector {
-                    configPath: "background.widgets.visualizer"
-                    configEntry: Config.getNestedValue("background.widgets.visualizer", ({}))
-                    defaultStrategy: "free"
-                }
-            }
-
-            WidgetZonePicker {
+            WidgetStateControls {
                 configPath: "background.widgets.visualizer"
                 configEntry: Config.getNestedValue("background.widgets.visualizer", ({}))
+                defaultStrategy: "free"
+                enableTooltip: Translation.tr("Audio visualizer widget on the desktop")
             }
 
             ContentSubsection {
-                title: Translation.tr("Preset")
+                title: Translation.tr("Style")
 
-                ConfigSelectionArray {
-                    Layout.fillWidth: true
-                    currentValue: Config.getNestedValue("background.widgets.visualizer.preset", "default")
+                WidgetSettingRow {
+                    label: Translation.tr("Preset")
+                    trailing: false
+
+                    ConfigSelectionArray {
+                        Layout.fillWidth: true
+                        currentValue: Config.getNestedValue("background.widgets.visualizer.preset", "default")
                     onSelected: newValue => {
                         Config.setNestedValue("background.widgets.visualizer.preset", newValue);
                         if (newValue === "default") {
@@ -1454,43 +3079,50 @@ ContentPage {
                     ]
                 }
             }
+            }
 
             ContentSubsection {
                 title: Translation.tr("Bars")
 
-                WidgetSettingRow {
-                    label: Translation.tr("Bar count")
-                    StyledSpinBox {
-                        from: 8; to: 128; stepSize: 4
-                        value: Config.getNestedValue("background.widgets.visualizer.barCount", 48)
-                        onValueModified: Config.setNestedValue("background.widgets.visualizer.barCount", value)
-                    }
-                }
+                GridLayout {
+                    columns: 2
+                    columnSpacing: 12
+                    Layout.fillWidth: true
 
-                WidgetSettingRow {
-                    label: Translation.tr("Bar spacing")
-                    StyledSpinBox {
-                        from: 0; to: 8; stepSize: 1
-                        value: Config.getNestedValue("background.widgets.visualizer.barSpacing", 2)
-                        onValueModified: Config.setNestedValue("background.widgets.visualizer.barSpacing", value)
+                    WidgetSettingRow {
+                        label: Translation.tr("Bar count")
+                        StyledSpinBox {
+                            from: 8; to: 128; stepSize: 4
+                            value: Config.getNestedValue("background.widgets.visualizer.barCount", 48)
+                            onValueModified: Config.setNestedValue("background.widgets.visualizer.barCount", value)
+                        }
                     }
-                }
 
-                WidgetSettingRow {
-                    label: Translation.tr("Bar radius")
-                    StyledSpinBox {
-                        from: 0; to: 16; stepSize: 1
-                        value: Config.getNestedValue("background.widgets.visualizer.barRadius", 2)
-                        onValueModified: Config.setNestedValue("background.widgets.visualizer.barRadius", value)
+                    WidgetSettingRow {
+                        label: Translation.tr("Bar spacing")
+                        StyledSpinBox {
+                            from: 0; to: 8; stepSize: 1
+                            value: Config.getNestedValue("background.widgets.visualizer.barSpacing", 2)
+                            onValueModified: Config.setNestedValue("background.widgets.visualizer.barSpacing", value)
+                        }
                     }
-                }
 
-                WidgetSettingRow {
-                    label: Translation.tr("Min height")
-                    StyledSpinBox {
-                        from: 0; to: 16; stepSize: 1
-                        value: Config.getNestedValue("background.widgets.visualizer.barMinHeight", 1)
-                        onValueModified: Config.setNestedValue("background.widgets.visualizer.barMinHeight", value)
+                    WidgetSettingRow {
+                        label: Translation.tr("Bar radius")
+                        StyledSpinBox {
+                            from: 0; to: 16; stepSize: 1
+                            value: Config.getNestedValue("background.widgets.visualizer.barRadius", 2)
+                            onValueModified: Config.setNestedValue("background.widgets.visualizer.barRadius", value)
+                        }
+                    }
+
+                    WidgetSettingRow {
+                        label: Translation.tr("Min height")
+                        StyledSpinBox {
+                            from: 0; to: 16; stepSize: 1
+                            value: Config.getNestedValue("background.widgets.visualizer.barMinHeight", 1)
+                            onValueModified: Config.setNestedValue("background.widgets.visualizer.barMinHeight", value)
+                        }
                     }
                 }
             }
@@ -1522,32 +3154,37 @@ ContentPage {
                 hasCardControls: true
             }
 
-            RippleButton {
-                Layout.fillWidth: true
-                text: Translation.tr("Reset to defaults")
-                onClicked: {
-                    Config.setNestedValue("background.widgets.visualizer.preset", "default");
-                    Config.setNestedValue("background.widgets.visualizer.placementStrategy", "free");
-                    Config.setNestedValue("background.widgets.visualizer.barCount", 48);
-                    Config.setNestedValue("background.widgets.visualizer.barSpacing", 2);
-                    Config.setNestedValue("background.widgets.visualizer.barRadius", 2);
-                    Config.setNestedValue("background.widgets.visualizer.barMinHeight", 1);
-                    Config.setNestedValue("background.widgets.visualizer.contentWidth", 304);
-                    Config.setNestedValue("background.widgets.visualizer.contentHeight", 104);
-                    Config.setNestedValue("background.widgets.visualizer.dim", 0);
-                    Config.setNestedValue("background.widgets.visualizer.widgetScale", 100);
-                    Config.setNestedValue("background.widgets.visualizer.widgetOpacity", 100);
-                    Config.setNestedValue("background.widgets.visualizer.showBackground", true);
-                    Config.setNestedValue("background.widgets.visualizer.showBorder", true);
-                    Config.setNestedValue("background.widgets.visualizer.backgroundOpacity", 0.06);
-                    Config.setNestedValue("background.widgets.visualizer.borderWidth", 1);
-                    Config.setNestedValue("background.widgets.visualizer.borderOpacity", 0.08);
-                    Config.setNestedValue("background.widgets.visualizer.cornerRadius", -1);
-                    Config.setNestedValue("background.widgets.visualizer.colorMode", "auto");
-                    Config.setNestedValue("background.widgets.visualizer.locked", false);
-                    Config.setNestedValue("background.widgets.visualizer.x", 100);
-                    Config.setNestedValue("background.widgets.visualizer.y", 100);
-                }
+        }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.visualizer"
+                defaults: ({
+                    "placementStrategy": "free",
+                    "preset": "default",
+                    "vizType": "bars",
+                    "waveOpacity": -1,
+                    "barCount": 48,
+                    "barSpacing": 2,
+                    "dim": 0,
+                    "widgetScale": 100,
+                    "widgetOpacity": 100,
+                    "showBackground": true,
+                    "useBlur": false,
+                    "showBorder": true,
+                    "backgroundOpacity": 0.16,
+                    "borderWidth": 1,
+                    "borderOpacity": 0.2,
+                    "cornerRadius": -1,
+                    "colorMode": "auto",
+                    "x": 100,
+                    "y": 100,
+                    "barRadius": 2,
+                    "barMinHeight": 1,
+                    "contentWidth": 304,
+                    "contentHeight": 104,
+                    "locked": false
+})
             }
         }
     }
@@ -1560,34 +3197,23 @@ ContentPage {
         title: Translation.tr("System Monitor")
 
         SettingsGroup {
-            WidgetSettingRow {
-                label: Translation.tr("State")
-                icon: "check"
-                trailing: false
-                WidgetToggleChip {
-                    configPath: "background.widgets.systemMonitor.enable"
-                    buttonIcon: "check"
-                    buttonText: Translation.tr("Enable")
-                    StyledToolTip { text: Translation.tr("Show CPU, RAM, and GPU usage on the desktop") }
-                }
-                WidgetPlacementSelector {
-                    configPath: "background.widgets.systemMonitor"
-                    configEntry: Config.getNestedValue("background.widgets.systemMonitor", ({}))
-                    defaultStrategy: "free"
-                }
-            }
-
-            WidgetZonePicker {
+            WidgetStateControls {
                 configPath: "background.widgets.systemMonitor"
                 configEntry: Config.getNestedValue("background.widgets.systemMonitor", ({}))
+                defaultStrategy: "free"
+                enableTooltip: Translation.tr("Show CPU, RAM, and GPU usage on the desktop")
             }
 
             ContentSubsection {
-                title: Translation.tr("Preset")
+                title: Translation.tr("Layout")
 
-                ConfigSelectionArray {
-                    Layout.fillWidth: true
-                    currentValue: Config.getNestedValue("background.widgets.systemMonitor.preset", "default")
+                WidgetSettingRow {
+                    label: Translation.tr("Preset")
+                    trailing: false
+
+                    ConfigSelectionArray {
+                        Layout.fillWidth: true
+                        currentValue: Config.getNestedValue("background.widgets.systemMonitor.preset", "default")
                     onSelected: newValue => {
                         Config.setNestedValue("background.widgets.systemMonitor.preset", newValue);
                         if (newValue === "default") {
@@ -1613,8 +3239,9 @@ ContentPage {
                 }
             }
 
-            ContentSubsection {
-                title: Translation.tr("Display mode")
+            WidgetSettingRow {
+                label: Translation.tr("Display mode")
+                trailing: false
 
                 ConfigSelectionArray {
                     Layout.fillWidth: true
@@ -1625,8 +3252,10 @@ ContentPage {
                         { displayName: Translation.tr("Graph"), icon: "show_chart", value: "graph" },
                         { displayName: Translation.tr("Rings"), icon: "radio_button_checked", value: "rings" },
                         { displayName: Translation.tr("Text"), icon: "text_fields", value: "text" },
+                        { displayName: Translation.tr("Tiles"), icon: "grid_view", value: "tiles" },
                     ]
                 }
+            }
             }
 
             ContentSubsection {
@@ -1729,36 +3358,43 @@ ContentPage {
                 hasCardControls: true
             }
 
-            RippleButton {
-                Layout.fillWidth: true
-                text: Translation.tr("Reset to defaults")
-                onClicked: {
-                    Config.setNestedValue("background.widgets.systemMonitor.preset", "default");
-                    Config.setNestedValue("background.widgets.systemMonitor.placementStrategy", "free");
-                    Config.setNestedValue("background.widgets.systemMonitor.displayMode", "bars");
-                    Config.setNestedValue("background.widgets.systemMonitor.showCpu", true);
-                    Config.setNestedValue("background.widgets.systemMonitor.showMemory", true);
-                    Config.setNestedValue("background.widgets.systemMonitor.showGpu", true);
-                    Config.setNestedValue("background.widgets.systemMonitor.showLabels", true);
-                    Config.setNestedValue("background.widgets.systemMonitor.contentWidth", 320);
-                    Config.setNestedValue("background.widgets.systemMonitor.contentHeight", 120);
-                    Config.setNestedValue("background.widgets.systemMonitor.trackAlpha", 0.08);
-                    Config.setNestedValue("background.widgets.systemMonitor.fillOpacity", 0.7);
-                    Config.setNestedValue("background.widgets.systemMonitor.graphFillOpacity", 0.3);
-                    Config.setNestedValue("background.widgets.systemMonitor.dim", 0);
-                    Config.setNestedValue("background.widgets.systemMonitor.widgetScale", 100);
-                    Config.setNestedValue("background.widgets.systemMonitor.widgetOpacity", 100);
-                    Config.setNestedValue("background.widgets.systemMonitor.showBackground", true);
-                    Config.setNestedValue("background.widgets.systemMonitor.showBorder", true);
-                    Config.setNestedValue("background.widgets.systemMonitor.backgroundOpacity", 0.06);
-                    Config.setNestedValue("background.widgets.systemMonitor.borderWidth", 1);
-                    Config.setNestedValue("background.widgets.systemMonitor.borderOpacity", 0.08);
-                    Config.setNestedValue("background.widgets.systemMonitor.cornerRadius", -1);
-                    Config.setNestedValue("background.widgets.systemMonitor.colorMode", "auto");
-                    Config.setNestedValue("background.widgets.systemMonitor.locked", false);
-                    Config.setNestedValue("background.widgets.systemMonitor.x", 50);
-                    Config.setNestedValue("background.widgets.systemMonitor.y", 400);
-                }
+        }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.systemMonitor"
+                defaults: ({
+                    "placementStrategy": "free",
+                    "displayMode": "bars",
+                    "barCount": 32,
+                    "barSpacing": 2,
+                    "trackAlpha": 0.08,
+                    "fillOpacity": 0.7,
+                    "graphFillOpacity": 0.3,
+                    "showCpu": true,
+                    "showMemory": true,
+                    "showGpu": true,
+                    "showTemp": false,
+                    "showDisk": false,
+                    "showLabels": true,
+                    "dim": 0,
+                    "widgetScale": 100,
+                    "widgetOpacity": 100,
+                    "showBackground": true,
+                    "useBlur": false,
+                    "showBorder": true,
+                    "backgroundOpacity": 0.16,
+                    "borderWidth": 1,
+                    "borderOpacity": 0.2,
+                    "cornerRadius": -1,
+                    "colorMode": "auto",
+                    "x": 50,
+                    "y": 400,
+                    "preset": "default",
+                    "contentWidth": 320,
+                    "contentHeight": 120,
+                    "locked": false
+})
             }
         }
     }
@@ -1780,34 +3416,23 @@ ContentPage {
                 wrapMode: Text.WordWrap
             }
 
-            WidgetSettingRow {
-                label: Translation.tr("State")
-                icon: "check"
-                trailing: false
-                WidgetToggleChip {
-                    configPath: "background.widgets.battery.enable"
-                    buttonIcon: "check"
-                    buttonText: Translation.tr("Enable")
-                    StyledToolTip { text: Translation.tr("Show battery status on the desktop (only visible on laptops)") }
-                }
-                WidgetPlacementSelector {
-                    configPath: "background.widgets.battery"
-                    configEntry: Config.getNestedValue("background.widgets.battery", ({}))
-                    defaultStrategy: "free"
-                }
-            }
-
-            WidgetZonePicker {
+            WidgetStateControls {
                 configPath: "background.widgets.battery"
                 configEntry: Config.getNestedValue("background.widgets.battery", ({}))
+                defaultStrategy: "free"
+                enableTooltip: Translation.tr("Show battery status on the desktop (only visible on laptops)")
             }
 
             ContentSubsection {
-                title: Translation.tr("Preset")
+                title: Translation.tr("Style and display")
 
-                ConfigSelectionArray {
-                    Layout.fillWidth: true
-                    currentValue: Config.getNestedValue("background.widgets.battery.preset", "default")
+                WidgetSettingRow {
+                    label: Translation.tr("Preset")
+                    trailing: false
+
+                    ConfigSelectionArray {
+                        Layout.fillWidth: true
+                        currentValue: Config.getNestedValue("background.widgets.battery.preset", "default")
                     onSelected: newValue => {
                         Config.setNestedValue("background.widgets.battery.preset", newValue);
                         if (newValue === "default") {
@@ -1837,8 +3462,9 @@ ContentPage {
                 }
             }
 
-            ContentSubsection {
-                title: Translation.tr("Display")
+            WidgetSettingRow {
+                label: Translation.tr("Display")
+                trailing: false
 
                 ConfigSelectionArray {
                     Layout.fillWidth: true
@@ -1851,51 +3477,63 @@ ContentPage {
                     ]
                 }
 
-                WidgetSettingRow {
-                    visible: (Config.getNestedValue("background.widgets.battery.displayMode", "ring")) === "ring"
-                    label: Translation.tr("Ring size")
-                    StyledSpinBox {
-                        from: 40; to: 120; stepSize: 4
-                        value: Config.getNestedValue("background.widgets.battery.ringSize", 72)
-                        onValueModified: Config.setNestedValue("background.widgets.battery.ringSize", value)
+                GridLayout {
+                    columns: 2
+                    columnSpacing: 12
+                    Layout.fillWidth: true
+
+                    WidgetSettingRow {
+                        visible: (Config.getNestedValue("background.widgets.battery.displayMode", "ring")) === "ring"
+                        label: Translation.tr("Ring size")
+                        StyledSpinBox {
+                            from: 40; to: 120; stepSize: 4
+                            value: Config.getNestedValue("background.widgets.battery.ringSize", 72)
+                            onValueModified: Config.setNestedValue("background.widgets.battery.ringSize", value)
+                        }
+                    }
+
+                    WidgetSettingRow {
+                        visible: (Config.getNestedValue("background.widgets.battery.displayMode", "ring")) === "ring"
+                        label: Translation.tr("Line width")
+                        StyledSpinBox {
+                            from: 1; to: 16; stepSize: 1
+                            value: Config.getNestedValue("background.widgets.battery.ringLineWidth", 6)
+                            onValueModified: Config.setNestedValue("background.widgets.battery.ringLineWidth", value)
+                        }
                     }
                 }
 
-                WidgetSettingRow {
-                    visible: (Config.getNestedValue("background.widgets.battery.displayMode", "ring")) === "ring"
-                    label: Translation.tr("Line width")
-                    StyledSpinBox {
-                        from: 1; to: 16; stepSize: 1
-                        value: Config.getNestedValue("background.widgets.battery.ringLineWidth", 6)
-                        onValueModified: Config.setNestedValue("background.widgets.battery.ringLineWidth", value)
-                    }
-                }
+                GridLayout {
+                    columns: 2
+                    columnSpacing: 12
+                    Layout.fillWidth: true
 
-                WidgetSettingRow {
-                    visible: (Config.getNestedValue("background.widgets.battery.displayMode", "ring")) === "bars"
-                    label: Translation.tr("Bar count")
-                    StyledSpinBox {
-                        from: 4; to: 48; stepSize: 2
-                        value: Config.getNestedValue("background.widgets.battery.barCount", 20)
-                        onValueModified: Config.setNestedValue("background.widgets.battery.barCount", value)
+                    WidgetSettingRow {
+                        visible: (Config.getNestedValue("background.widgets.battery.displayMode", "ring")) === "bars"
+                        label: Translation.tr("Bar count")
+                        StyledSpinBox {
+                            from: 4; to: 48; stepSize: 2
+                            value: Config.getNestedValue("background.widgets.battery.barCount", 20)
+                            onValueModified: Config.setNestedValue("background.widgets.battery.barCount", value)
+                        }
                     }
-                }
-                WidgetSettingRow {
-                    visible: (Config.getNestedValue("background.widgets.battery.displayMode", "ring")) === "bars"
-                    label: Translation.tr("Bar spacing")
-                    StyledSpinBox {
-                        from: 0; to: 8; stepSize: 1
-                        value: Config.getNestedValue("background.widgets.battery.barSpacing", 2)
-                        onValueModified: Config.setNestedValue("background.widgets.battery.barSpacing", value)
+                    WidgetSettingRow {
+                        visible: (Config.getNestedValue("background.widgets.battery.displayMode", "ring")) === "bars"
+                        label: Translation.tr("Bar spacing")
+                        StyledSpinBox {
+                            from: 0; to: 8; stepSize: 1
+                            value: Config.getNestedValue("background.widgets.battery.barSpacing", 2)
+                            onValueModified: Config.setNestedValue("background.widgets.battery.barSpacing", value)
+                        }
                     }
-                }
-                WidgetSettingRow {
-                    visible: (Config.getNestedValue("background.widgets.battery.displayMode", "ring")) === "bars"
-                    label: Translation.tr("Bar radius")
-                    StyledSpinBox {
-                        from: 0; to: 12; stepSize: 1
-                        value: Config.getNestedValue("background.widgets.battery.barRadius", 2)
-                        onValueModified: Config.setNestedValue("background.widgets.battery.barRadius", value)
+                    WidgetSettingRow {
+                        visible: (Config.getNestedValue("background.widgets.battery.displayMode", "ring")) === "bars"
+                        label: Translation.tr("Bar radius")
+                        StyledSpinBox {
+                            from: 0; to: 12; stepSize: 1
+                            value: Config.getNestedValue("background.widgets.battery.barRadius", 2)
+                            onValueModified: Config.setNestedValue("background.widgets.battery.barRadius", value)
+                        }
                     }
                 }
 
@@ -1919,40 +3557,635 @@ ContentPage {
                 }
             }
 
+            }
+
             WidgetAppearanceControls {
                 configPath: "background.widgets.battery"
                 configEntry: Config.getNestedValue("background.widgets.battery", ({}))
                 hasCardControls: true
             }
 
-            RippleButton {
-                Layout.fillWidth: true
-                text: Translation.tr("Reset to defaults")
-                onClicked: {
-                    Config.setNestedValue("background.widgets.battery.preset", "default");
-                    Config.setNestedValue("background.widgets.battery.placementStrategy", "free");
-                    Config.setNestedValue("background.widgets.battery.displayMode", "ring");
-                    Config.setNestedValue("background.widgets.battery.showTime", true);
-                    Config.setNestedValue("background.widgets.battery.ringSize", 72);
-                    Config.setNestedValue("background.widgets.battery.ringLineWidth", 6);
-                    Config.setNestedValue("background.widgets.battery.barCount", 20);
-                    Config.setNestedValue("background.widgets.battery.barSpacing", 2);
-                    Config.setNestedValue("background.widgets.battery.barRadius", 2);
-                    Config.setNestedValue("background.widgets.battery.pillHeight", 12);
-                    Config.setNestedValue("background.widgets.battery.dim", 0);
-                    Config.setNestedValue("background.widgets.battery.widgetScale", 100);
-                    Config.setNestedValue("background.widgets.battery.widgetOpacity", 100);
-                    Config.setNestedValue("background.widgets.battery.showBackground", true);
-                    Config.setNestedValue("background.widgets.battery.showBorder", true);
-                    Config.setNestedValue("background.widgets.battery.backgroundOpacity", 0.06);
-                    Config.setNestedValue("background.widgets.battery.borderWidth", 1);
-                    Config.setNestedValue("background.widgets.battery.borderOpacity", 0.08);
-                    Config.setNestedValue("background.widgets.battery.cornerRadius", -1);
-                    Config.setNestedValue("background.widgets.battery.colorMode", "auto");
-                    Config.setNestedValue("background.widgets.battery.locked", false);
-                    Config.setNestedValue("background.widgets.battery.x", 50);
-                    Config.setNestedValue("background.widgets.battery.y", 50);
+        }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.battery"
+                defaults: ({
+                    "placementStrategy": "free",
+                    "displayMode": "ring",
+                    "showTime": true,
+                    "ringSize": 72,
+                    "dim": 0,
+                    "widgetScale": 100,
+                    "widgetOpacity": 100,
+                    "showBackground": true,
+                    "useBlur": false,
+                    "showBorder": true,
+                    "backgroundOpacity": 0.16,
+                    "borderWidth": 1,
+                    "borderOpacity": 0.2,
+                    "cornerRadius": -1,
+                    "colorMode": "auto",
+                    "x": 50,
+                    "y": 50,
+                    "preset": "default",
+                    "ringLineWidth": 6,
+                    "barCount": 20,
+                    "barSpacing": 2,
+                    "barRadius": 2,
+                    "pillHeight": 12,
+                    "locked": false
+})
+            }
+        }
+    }
+
+    // ── Notes ───────────────────────────────────────────────
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
+        icon: "sticky_note_2"
+        title: Translation.tr("Notes")
+
+        SettingsGroup {
+            WidgetStateControls {
+                configPath: "background.widgets.notes"
+                configEntry: Config.getNestedValue("background.widgets.notes", ({}))
+                defaultStrategy: "free"
+            }
+            ContentSubsection {
+                title: Translation.tr("Text")
+                WidgetSettingRow {
+                    label: Translation.tr("Font size")
+                    icon: "format_size"
+                    StyledSpinBox {
+                        from: 10; to: 48; stepSize: 1
+                        value: Config.getNestedValue("background.widgets.notes.fontSize", 14)
+                        onValueModified: Config.setNestedValue("background.widgets.notes.fontSize", value)
+                    }
                 }
+                WidgetSettingRow {
+                    label: Translation.tr("Font")
+                    icon: "font_download"
+                    trailing: false
+                    ConfigSelectionArray {
+                        currentValue: Config.getNestedValue("background.widgets.notes.fontFamily", "sans")
+                        onSelected: newValue => Config.setNestedValue("background.widgets.notes.fontFamily", newValue)
+                        options: [
+                            { displayName: Translation.tr("Sans"), value: "sans" },
+                            { displayName: Translation.tr("Mono"), value: "mono" }
+                        ]
+                    }
+                }
+                WidgetSettingRow {
+                    label: Translation.tr("Alignment")
+                    icon: "format_align_left"
+                    trailing: false
+                    ConfigSelectionArray {
+                        currentValue: Config.getNestedValue("background.widgets.notes.textAlign", "left")
+                        onSelected: newValue => Config.setNestedValue("background.widgets.notes.textAlign", newValue)
+                        options: [
+                            { displayName: Translation.tr("Left"), icon: "format_align_left", value: "left" },
+                            { displayName: Translation.tr("Center"), icon: "format_align_center", value: "center" },
+                            { displayName: Translation.tr("Right"), icon: "format_align_right", value: "right" }
+                        ]
+                    }
+                }
+            }
+            ContentSubsection {
+                title: Translation.tr("Dimensions")
+
+                WidgetSettingRow {
+                    label: Translation.tr("Width")
+                    icon: "swap_horiz"
+                    StyledSpinBox {
+                        from: 160; to: 720; stepSize: 10
+                        value: Config.getNestedValue("background.widgets.notes.contentWidth", 240)
+                        onValueModified: Config.setNestedValue("background.widgets.notes.contentWidth", value)
+                    }
+                }
+                WidgetSettingRow {
+                    label: Translation.tr("Height")
+                    icon: "swap_vert"
+                    StyledSpinBox {
+                        from: 100; to: 720; stepSize: 10
+                        value: Config.getNestedValue("background.widgets.notes.contentHeight", 160)
+                        onValueModified: Config.setNestedValue("background.widgets.notes.contentHeight", value)
+                    }
+                }
+            }
+
+            WidgetAppearanceControls {
+                configPath: "background.widgets.notes"
+                configEntry: Config.getNestedValue("background.widgets.notes", ({}))
+                hasCardControls: true
+            }
+        }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.notes"
+                defaults: ({
+                    placementStrategy: "free", text: "", fontSize: 14, fontFamily: "sans",
+                    textAlign: "left", contentWidth: 240, contentHeight: 160, dim: 0,
+                    widgetScale: 100, widgetOpacity: 100, showBackground: true,
+                    useBlur: false, showBorder: true, backgroundOpacity: 0.10,
+                    borderWidth: 1, borderOpacity: 0.12, cornerRadius: -1,
+                    colorMode: "auto", locked: false, x: 80, y: 80
+                })
+            }
+        }
+    }
+
+    // ── Upcoming Events ─────────────────────────────────────
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
+        icon: "event"
+        title: Translation.tr("Upcoming Events")
+
+        SettingsGroup {
+            WidgetStateControls {
+                configPath: "background.widgets.calendarUpcoming"
+                configEntry: Config.getNestedValue("background.widgets.calendarUpcoming", ({}))
+                defaultStrategy: "free"
+            }
+            ContentSubsection {
+                title: Translation.tr("Content")
+                WidgetSettingRow {
+                    label: Translation.tr("Maximum events")
+                    icon: "format_list_numbered"
+                    StyledSpinBox {
+                        from: 1; to: 12; stepSize: 1
+                        value: Config.getNestedValue("background.widgets.calendarUpcoming.maxEvents", 5)
+                        onValueModified: Config.setNestedValue("background.widgets.calendarUpcoming.maxEvents", value)
+                    }
+                }
+                ConfigRow {
+                    SettingsSwitch {
+                        buttonIcon: "today"
+                        text: Translation.tr("Show date")
+                        autoToggle: false
+                        checked: Config.getNestedValue("background.widgets.calendarUpcoming.showDate", true)
+                        onToggledByUser: checked => Config.setNestedValue("background.widgets.calendarUpcoming.showDate", checked)
+                    }
+                    SettingsSwitch {
+                        buttonIcon: "schedule"
+                        text: Translation.tr("Show time")
+                        autoToggle: false
+                        checked: Config.getNestedValue("background.widgets.calendarUpcoming.showTime", true)
+                        onToggledByUser: checked => Config.setNestedValue("background.widgets.calendarUpcoming.showTime", checked)
+                    }
+                }
+                ConfigRow {
+                    SettingsSwitch {
+                        buttonIcon: "place"
+                        text: Translation.tr("Show location")
+                        autoToggle: false
+                        checked: Config.getNestedValue("background.widgets.calendarUpcoming.showLocation", false)
+                        onToggledByUser: checked => Config.setNestedValue("background.widgets.calendarUpcoming.showLocation", checked)
+                    }
+                    SettingsSwitch {
+                        buttonIcon: "view_day"
+                        text: Translation.tr("Group by day")
+                        autoToggle: false
+                        checked: Config.getNestedValue("background.widgets.calendarUpcoming.groupByDay", true)
+                        onToggledByUser: checked => Config.setNestedValue("background.widgets.calendarUpcoming.groupByDay", checked)
+                    }
+                }
+            }
+            ContentSubsection {
+                title: Translation.tr("Dimensions")
+
+                WidgetSettingRow {
+                    label: Translation.tr("Width")
+                    icon: "swap_horiz"
+                    StyledSpinBox {
+                        from: 200; to: 720; stepSize: 10
+                        value: Config.getNestedValue("background.widgets.calendarUpcoming.contentWidth", 280)
+                        onValueModified: Config.setNestedValue("background.widgets.calendarUpcoming.contentWidth", value)
+                    }
+                }
+                WidgetSettingRow {
+                    label: Translation.tr("Height")
+                    icon: "swap_vert"
+                    StyledSpinBox {
+                        from: 140; to: 720; stepSize: 10
+                        value: Config.getNestedValue("background.widgets.calendarUpcoming.contentHeight", 220)
+                        onValueModified: Config.setNestedValue("background.widgets.calendarUpcoming.contentHeight", value)
+                    }
+                }
+            }
+
+            WidgetAppearanceControls {
+                configPath: "background.widgets.calendarUpcoming"
+                configEntry: Config.getNestedValue("background.widgets.calendarUpcoming", ({}))
+                hasCardControls: true
+            }
+        }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.calendarUpcoming"
+                defaults: ({
+                    placementStrategy: "free", maxEvents: 5, showDate: true, showTime: true,
+                    showLocation: false, groupByDay: true, contentWidth: 280, contentHeight: 220,
+                    dim: 0, widgetScale: 100, widgetOpacity: 100, showBackground: true,
+                    useBlur: false, showBorder: true, backgroundOpacity: 0.10,
+                    borderWidth: 1, borderOpacity: 0.12, cornerRadius: -1,
+                    colorMode: "auto", locked: false, x: 80, y: 80
+                })
+            }
+        }
+    }
+
+    // ── System Uptime ────────────────────────────────────────
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
+        icon: "avg_pace"
+        title: Translation.tr("System uptime")
+
+        SettingsGroup {
+            WidgetStateControls {
+                configPath: "background.widgets.uptime"
+                configEntry: Config.getNestedValue("background.widgets.uptime", ({}))
+                defaultStrategy: "free"
+            }
+            ContentSubsection {
+                title: Translation.tr("Dimensions")
+
+                WidgetSettingRow {
+                    label: Translation.tr("Width")
+                    icon: "swap_horiz"
+                    StyledSpinBox {
+                        from: 180; to: 600; stepSize: 10
+                        value: Config.getNestedValue("background.widgets.uptime.contentWidth", 250)
+                        onValueModified: Config.setNestedValue("background.widgets.uptime.contentWidth", value)
+                    }
+                }
+                WidgetSettingRow {
+                    label: Translation.tr("Height")
+                    icon: "swap_vert"
+                    StyledSpinBox {
+                        from: 72; to: 240; stepSize: 4
+                        value: Config.getNestedValue("background.widgets.uptime.contentHeight", 96)
+                        onValueModified: Config.setNestedValue("background.widgets.uptime.contentHeight", value)
+                    }
+                }
+            }
+
+            WidgetAppearanceControls {
+                configPath: "background.widgets.uptime"
+                configEntry: Config.getNestedValue("background.widgets.uptime", ({}))
+                hasCardControls: true
+            }
+        }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.uptime"
+                defaults: ({
+                    placementStrategy: "free", contentWidth: 250, contentHeight: 96,
+                    dim: 0, widgetScale: 100, widgetOpacity: 100, showBackground: true,
+                    useBlur: false, showBorder: true, backgroundOpacity: 0.16,
+                    borderWidth: 1, borderOpacity: 0.20, cornerRadius: -1,
+                    colorMode: "auto", locked: false, x: 80, y: 80
+                })
+            }
+        }
+    }
+
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
+        icon: "public"
+        title: Translation.tr("World clock")
+
+        SettingsGroup {
+            WidgetStateControls {
+                configPath: "background.widgets.worldClock"
+                configEntry: Config.getNestedValue("background.widgets.worldClock", ({}))
+                defaultStrategy: "free"
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Time zones")
+
+                Repeater {
+                    model: 4
+                    delegate: WidgetSettingRow {
+                        id: tzRow
+                        required property int index
+                        label: Translation.tr("City %1").arg(tzRow.index + 1)
+                        icon: "schedule"
+                        trailing: false
+
+                        StyledComboBox {
+                            Layout.fillWidth: true
+                            model: WorldClock.comboModel
+                            textRole: "label"
+                            currentIndex: Math.max(0, WorldClock.comboModel.findIndex(o => o.tz === WorldClock.timezones[tzRow.index]))
+                            onActivated: idx => WorldClock.setTimezone(tzRow.index, WorldClock.comboModel[idx].tz)
+                        }
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Dimensions")
+
+                WidgetSettingRow {
+                    label: Translation.tr("Width")
+                    icon: "swap_horiz"
+                    StyledSpinBox {
+                        from: 240; to: 700; stepSize: 10
+                        value: Config.getNestedValue("background.widgets.worldClock.contentWidth", 300)
+                        onValueModified: Config.setNestedValue("background.widgets.worldClock.contentWidth", value)
+                    }
+                }
+                WidgetSettingRow {
+                    label: Translation.tr("Height")
+                    icon: "swap_vert"
+                    StyledSpinBox {
+                        from: 170; to: 480; stepSize: 4
+                        value: Config.getNestedValue("background.widgets.worldClock.contentHeight", 210)
+                        onValueModified: Config.setNestedValue("background.widgets.worldClock.contentHeight", value)
+                    }
+                }
+            }
+
+            WidgetAppearanceControls {
+                configPath: "background.widgets.worldClock"
+                configEntry: Config.getNestedValue("background.widgets.worldClock", ({}))
+                hasCardControls: true
+            }
+        }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.worldClock"
+                defaults: ({
+                    placementStrategy: "free", contentWidth: 300, contentHeight: 210,
+                    dim: 0, widgetScale: 100, widgetOpacity: 100, showBackground: true,
+                    useBlur: false, showBorder: true, backgroundOpacity: 0.16,
+                    borderWidth: 1, borderOpacity: 0.20, cornerRadius: -1,
+                    colorMode: "auto", locked: false, x: 80, y: 200,
+                    timezones: ["Australia/Sydney", "Asia/Tokyo", "Europe/London", "America/New_York"]
+                })
+            }
+        }
+    }
+
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
+        icon: "account_circle"
+        title: Translation.tr("User card")
+
+        SettingsGroup {
+            WidgetStateControls {
+                configPath: "background.widgets.userCard"
+                configEntry: Config.getNestedValue("background.widgets.userCard", ({}))
+                defaultStrategy: "free"
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Dimensions")
+
+                WidgetSettingRow {
+                    label: Translation.tr("Width")
+                    icon: "swap_horiz"
+                    StyledSpinBox {
+                        from: 240; to: 600; stepSize: 10
+                        value: Config.getNestedValue("background.widgets.userCard.contentWidth", 280)
+                        onValueModified: Config.setNestedValue("background.widgets.userCard.contentWidth", value)
+                    }
+                }
+                WidgetSettingRow {
+                    label: Translation.tr("Height")
+                    icon: "swap_vert"
+                    StyledSpinBox {
+                        from: 170; to: 320; stepSize: 2
+                        value: Config.getNestedValue("background.widgets.userCard.contentHeight", 176)
+                        onValueModified: Config.setNestedValue("background.widgets.userCard.contentHeight", value)
+                    }
+                }
+            }
+
+            WidgetAppearanceControls {
+                configPath: "background.widgets.userCard"
+                configEntry: Config.getNestedValue("background.widgets.userCard", ({}))
+                hasCardControls: true
+            }
+        }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.userCard"
+                defaults: ({
+                    placementStrategy: "free", contentWidth: 280, contentHeight: 176,
+                    dim: 0, widgetScale: 100, widgetOpacity: 100, showBackground: true,
+                    useBlur: false, showBorder: true, backgroundOpacity: 0.16,
+                    borderWidth: 1, borderOpacity: 0.20, cornerRadius: -1,
+                    colorMode: "auto", locked: false, x: 80, y: 420
+                })
+            }
+        }
+    }
+
+    // ── Mascot ───────────────────────────────────────────────
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
+        icon: "pets"
+        title: Translation.tr("Mascot")
+
+        SettingsGroup {
+            id: mascotWidgetGroup
+
+            // Pose thumbnails come from the shared mascot catalog.
+            readonly property var poseGroups: [
+                { f: "all", label: Translation.tr("All") },
+                { f: "featured", label: Translation.tr("Featured") },
+                { f: "pixel", label: Translation.tr("Pixel") },
+                { f: "street", label: Translation.tr("Street") },
+                { f: "chibi", label: Translation.tr("Chibi") },
+                { f: "loops", label: Translation.tr("Loops") },
+                { f: "manual", label: Translation.tr("Manual") }
+            ]
+            function _optionsFor(poses: var): var {
+                const result = []
+                for (let i = 0; i < poses.length; ++i) {
+                    const pose = poses[i]
+                    result.push({
+                        displayName: MascotCatalog.displayName(pose),
+                        value: pose,
+                        image: MascotCatalog.sourceFor(pose)
+                    })
+                }
+                return result
+            }
+            readonly property var poseOptions: {
+                MascotCatalog.revision
+                return mascotWidgetGroup._optionsFor(
+                    MascotCatalog.desktopWidgetSelectablePoses)
+            }
+            // Same persisted key as the widget popover chips, so both stay in sync
+            readonly property string poseFilter: {
+                Config.revision
+                return Config.getNestedValue("background.widgets.mascot.poseFilter", "all")
+            }
+            readonly property var filteredPoseOptions: {
+                MascotCatalog.revision
+                return mascotWidgetGroup._optionsFor(
+                    MascotCatalog.desktopWidgetPosesForGroup(
+                        mascotWidgetGroup.poseFilter))
+            }
+
+            WidgetStateControls {
+                configPath: "background.widgets.mascot"
+                configEntry: Config.getNestedValue("background.widgets.mascot", ({}))
+                defaultStrategy: "free"
+            }
+            ContentSubsection {
+                title: Translation.tr("Image")
+
+                StyledText {
+                    Layout.fillWidth: true
+                    visible: !(Config.options?.mascot?.enable ?? false)
+                text: Translation.tr("Needs the global mascot switch (Settings › Mascot)")
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: Appearance.colors.colSubtext
+                wrapMode: Text.Wrap
+            }
+            Flow {
+                Layout.fillWidth: true
+                Layout.preferredHeight: childrenRect.height
+                spacing: 2
+                Repeater {
+                    model: mascotWidgetGroup.poseGroups
+                    SelectionGroupButton {
+                        required property var modelData
+                        required property int index
+                        leftmost: index === 0
+                        rightmost: index === mascotWidgetGroup.poseGroups.length - 1
+                        toggled: mascotWidgetGroup.poseFilter === modelData.f
+                        buttonText: modelData.label
+                        onClicked: Config.setNestedValue(
+                            "background.widgets.mascot.poseFilter", modelData.f)
+                    }
+                }
+            }
+            StyledText {
+                Layout.fillWidth: true
+                visible: mascotWidgetGroup.poseFilter === "manual"
+                text: Translation.tr("Manual-only poses never rotate automatically")
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: Appearance.colors.colSubtext
+                wrapMode: Text.Wrap
+            }
+            MascotPoseGallery {
+                Layout.fillWidth: true
+                label: Translation.tr("Pose on the desktop")
+                options: mascotWidgetGroup.filteredPoseOptions
+                currentValue: {
+                    const configured = Config.getNestedValue("background.widgets.mascot.pose", "reading")
+                    return mascotWidgetGroup.poseOptions.some(o => o.value === configured)
+                        ? configured
+                        : (mascotWidgetGroup.poseOptions[0]?.value ?? "presence-idle-loop")
+                }
+                onSelected: value => Config.setNestedValue("background.widgets.mascot.pose", value)
+            }
+            WidgetSettingRow {
+                label: Translation.tr("Custom image")
+                icon: "image"
+                trailing: false
+                MaterialTextField {
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("Path to any image or GIF (empty = pose above)")
+                    text: Config.getNestedValue("background.widgets.mascot.customPath", "")
+                    onEditingFinished: Config.setNestedValue("background.widgets.mascot.customPath", text.trim())
+                }
+            }
+            }
+
+            WidgetAppearanceControls {
+                configPath: "background.widgets.mascot"
+                configEntry: Config.getNestedValue("background.widgets.mascot", ({}))
+                hasColorMode: false
+                hasCardControls: true
+            }
+        }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.mascot"
+                defaults: ({
+                    placementStrategy: "free", contentWidth: 200,
+                    dim: 0, widgetScale: 100, widgetOpacity: 100, showBackground: false,
+                    useBlur: false, showBorder: false, backgroundOpacity: 0.16,
+                    borderWidth: 1, borderOpacity: 0.20, cornerRadius: -1,
+                    colorMode: "auto", pose: "reading", customPath: "",
+                    anchorWidget: "", locked: false, x: 120, y: 320
+                })
+            }
+        }
+    }
+
+    // ── News Ticker ───────────────────────────────────────────
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
+        icon: "newspaper"
+        title: Translation.tr("News Ticker")
+
+        SettingsGroup {
+            WidgetStateControls {
+                configPath: "background.widgets.newsTicker"
+                configEntry: Config.getNestedValue("background.widgets.newsTicker", ({}))
+                defaultStrategy: "free"
+            }
+            ContentSubsection {
+                title: Translation.tr("Dimensions")
+
+                WidgetSettingRow {
+                    label: Translation.tr("Width")
+                    icon: "swap_horiz"
+                StyledSpinBox {
+                    from: 200; to: 600; stepSize: 10
+                    value: Config.getNestedValue("background.widgets.newsTicker.contentWidth", 320)
+                    onValueModified: Config.setNestedValue("background.widgets.newsTicker.contentWidth", value)
+                }
+            }
+            WidgetSettingRow {
+                label: Translation.tr("Height")
+                icon: "swap_vert"
+                StyledSpinBox {
+                    from: 60; to: 300; stepSize: 4
+                    value: Config.getNestedValue("background.widgets.newsTicker.contentHeight", 92)
+                    onValueModified: Config.setNestedValue("background.widgets.newsTicker.contentHeight", value)
+                }
+            }
+            }
+
+            WidgetAppearanceControls {
+                configPath: "background.widgets.newsTicker"
+                configEntry: Config.getNestedValue("background.widgets.newsTicker", ({}))
+                hasCardControls: true
+            }
+        }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.newsTicker"
+                defaults: ({
+                    placementStrategy: "free", contentWidth: 320, contentHeight: 92,
+                    dim: 0, widgetScale: 100, widgetOpacity: 100, showBackground: true,
+                    useBlur: false, showBorder: true, backgroundOpacity: 0.16,
+                    borderWidth: 1, borderOpacity: 0.20, cornerRadius: -1,
+                    colorMode: "auto", locked: false, x: 100, y: 260
+                })
             }
         }
     }
@@ -2115,26 +4348,11 @@ ContentPage {
                 required property var modelData
                 required property int index
 
-                // Header: enable + name + actions
-                WidgetSettingRow {
-                    label: cwDelegate.modelData.name
-                    icon: cwDelegate.modelData.icon || "widgets"
-                    trailing: false
-                    WidgetToggleChip {
-                        configPath: "background.widgets.custom." + cwDelegate.modelData.id + ".enable"
-                        buttonIcon: "check"
-                        buttonText: Translation.tr("Enable")
-                    }
-                    WidgetPlacementSelector {
-                        configPath: "background.widgets.custom." + cwDelegate.modelData.id
-                        configEntry: Config.getNestedValue("background.widgets.custom." + cwDelegate.modelData.id, ({}))
-                        defaultStrategy: "free"
-                    }
-                }
-
-                WidgetZonePicker {
+                WidgetStateControls {
                     configPath: "background.widgets.custom." + cwDelegate.modelData.id
                     configEntry: Config.getNestedValue("background.widgets.custom." + cwDelegate.modelData.id, ({}))
+                    defaultStrategy: "free"
+                    widgetTitle: cwDelegate.modelData.name
                 }
 
                 ContentSubsection {
@@ -2178,7 +4396,7 @@ ContentPage {
                             buttonText: Translation.tr("Edit on desktop")
                             onClicked: {
                                 Config.setNestedValue("background.widgets.custom." + cwDelegate.modelData.id + ".enable", true);
-                                GlobalStates.widgetEditMode = true;
+                                GlobalStates.setWidgetEditMode(true);
                             }
                         }
                     }
@@ -2321,7 +4539,7 @@ ContentPage {
                 WidgetAppearanceControls {
                     configPath: "background.widgets.custom." + cwDelegate.modelData.id
                     configEntry: Config.getNestedValue("background.widgets.custom." + cwDelegate.modelData.id, ({}))
-                    hasCardControls: true
+                    hasCardControls: root._manifestSupportsSurface(cwDelegate.modelData.configKeys)
                 }
             }
         }

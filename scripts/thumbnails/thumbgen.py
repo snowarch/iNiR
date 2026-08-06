@@ -7,6 +7,7 @@
 import os
 import sys
 import hashlib
+import signal
 import subprocess
 import urllib.parse
 from multiprocessing import Pool
@@ -45,9 +46,35 @@ thumbnail_pixel_sizes = {
 
 factory = None
 current_size = "large"
+active_pool = None
 logger.remove()
 logger.add(sys.stdout, level="INFO")
-logger.add("/tmp/thumbgen.log", level="DEBUG", rotation="100 MB")
+
+# Not /tmp/thumbgen.log: that path is predictable in a world-writable directory,
+# so on a shared host another user can pre-create it (or symlink it elsewhere) and
+# logger.add() then raises at import time, killing every thumbnail run.
+_log_dir = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "inir"
+_log_dir.mkdir(parents=True, exist_ok=True)
+logger.add(_log_dir / "thumbgen.log", level="DEBUG", rotation="100 MB")
+
+
+def _worker_init() -> None:
+    """Workers use the default SIGTERM action; only the pool owner coordinates."""
+    signal.signal(signal.SIGTERM, signal.SIG_DFL)
+
+
+def _terminate_pool(_signum, _frame) -> None:
+    """Do not leave multiprocessing workers in inir.service after QML exits."""
+    global active_pool
+    if active_pool is not None:
+        active_pool.terminate()
+        active_pool.join()
+        active_pool = None
+    raise SystemExit(143)
+
+
+signal.signal(signal.SIGTERM, _terminate_pool)
+signal.signal(signal.SIGINT, _terminate_pool)
 
 
 def get_thumbnail_path(fpath: str, size_name: str) -> str:
@@ -127,6 +154,7 @@ def thumbnail_folder(
     recursive: bool,
     machine_progress: bool = False,
 ) -> None:
+    global active_pool
     all_files = get_all_files(dir_path=dir_path, recursive=recursive)
     if only_images:
         all_files = get_all_images(all_files=all_files)
@@ -134,14 +162,22 @@ def thumbnail_folder(
     if machine_progress:
         completed = 0
         total = len(all_files)
-        with Pool(processes=workers) as p:
-            for result in p.imap(make_thumbnail, all_files):
-                completed += 1
-                print(f"PROGRESS {completed}/{total} FILE {all_files[completed - 1]}")
-                sys.stdout.flush()
+        with Pool(processes=workers, initializer=_worker_init) as p:
+            active_pool = p
+            try:
+                for result in p.imap(make_thumbnail, all_files):
+                    completed += 1
+                    print(f"PROGRESS {completed}/{total} FILE {all_files[completed - 1]}")
+                    sys.stdout.flush()
+            finally:
+                active_pool = None
     else:
-        with Pool(processes=workers) as p:
-            list(tqdm(p.imap(make_thumbnail, all_files), total=len(all_files)))
+        with Pool(processes=workers, initializer=_worker_init) as p:
+            active_pool = p
+            try:
+                list(tqdm(p.imap(make_thumbnail, all_files), total=len(all_files)))
+            finally:
+                active_pool = None
 
 
 def get_all_images(*, all_files: List[Path]) -> List[Path]:

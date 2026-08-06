@@ -1,3 +1,4 @@
+import qs
 import QtQuick
 import qs.services
 import qs.modules.common
@@ -146,7 +147,8 @@ QuickToggleModel {
         id: warpPollTimer
         interval: 5000
         repeat: true
-        running: root.available
+        triggeredOnStart: true
+        running: root.available && (GlobalStates.sidebarRightOpen || GlobalStates.waffleActionCenterOpen)
         onTriggered: root.refreshStatus()
     }
 

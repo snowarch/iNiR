@@ -27,24 +27,31 @@ Singleton {
 
     property string networkName: ""
     property int networkStrength
+    // Gated on being *connected*, not on the radio being powered. wifiStatus is
+    // only ever "connecting"/"disconnected" while the radio is on — i.e. while
+    // wifiEnabled is true — so keying the strength icons off wifiEnabled both
+    // rendered a stale full-strength icon after disconnecting and left the
+    // "not_connected"/"wifi_find" branches permanently unreachable.
     property string materialSymbol: root.ethernet
         ? "lan"
-        : root.wifiEnabled
-            ? (
-                Network.networkStrength > 83 ? "signal_wifi_4_bar" :
-                Network.networkStrength > 67 ? "network_wifi" :
-                Network.networkStrength > 50 ? "network_wifi_3_bar" :
-                Network.networkStrength > 33 ? "network_wifi_2_bar" :
-                Network.networkStrength > 17 ? "network_wifi_1_bar" :
-                "signal_wifi_0_bar"
-            )
-            : (root.wifiStatus === "connecting")
-                ? "signal_wifi_statusbar_not_connected"
-                : (root.wifiStatus === "disconnected")
-                    ? "wifi_find"
-                    : (root.wifiStatus === "disabled")
-                        ? "signal_wifi_off"
-                        : "signal_wifi_bad"
+        : !root.wifiEnabled
+            ? "signal_wifi_off"
+            : (root.wifiStatus === "connected" || root.wifiStatus === "limited")
+                ? (
+                    Network.networkStrength > 83 ? "signal_wifi_4_bar" :
+                    Network.networkStrength > 67 ? "network_wifi" :
+                    Network.networkStrength > 50 ? "network_wifi_3_bar" :
+                    Network.networkStrength > 33 ? "network_wifi_2_bar" :
+                    Network.networkStrength > 17 ? "network_wifi_1_bar" :
+                    "signal_wifi_0_bar"
+                )
+                : (root.wifiStatus === "connecting")
+                    ? "signal_wifi_statusbar_not_connected"
+                    : (root.wifiStatus === "disconnected")
+                        ? "wifi_find"
+                        : (root.wifiStatus === "disabled")
+                            ? "signal_wifi_off"
+                            : "signal_wifi_bad"
 
     // Control
     function enableWifi(enabled = true): void {
@@ -80,6 +87,9 @@ Singleton {
     function changePassword(network: WifiAccessPoint, password: string, username = ""): void {
         // TODO: enterprise wifi with username
         network.askingPassword = false;
+        // changePasswordProc.onExited re-runs connectProc, whose own onExited has
+        // already nulled the target — restore it so the retry can report back.
+        root.wifiConnectTarget = network;
         changePasswordProc.exec({
             "command": ["nmcli", "connection", "modify", network.ssid, "wifi-sec.psk", password]
         })
@@ -104,12 +114,15 @@ Singleton {
         stderr: SplitParser {
             onRead: line => {
                 // print("err:", line)
-                if (line.includes("Secrets were required")) {
+                if (line.includes("Secrets were required") && root.wifiConnectTarget) {
                     root.wifiConnectTarget.askingPassword = true
                 }
             }
         }
         onExited: (exitCode, exitStatus) => {
+            // Guarded: this handler nulls the target, and changePasswordProc re-runs
+            // connectProc, so a password retry lands here a second time.
+            if (!root.wifiConnectTarget) return;
             root.wifiConnectTarget.askingPassword = (exitCode !== 0)
             root.wifiConnectTarget = null
         }
@@ -198,6 +211,13 @@ Singleton {
     Process {
         id: updateConnectionType
         property string buffer
+        // LANG=C: nmcli localizes device STATE ("connected" → "conectado" etc.), and the
+        // parser below matches English keywords. Without this, wifi state detection silently
+        // fails on non-English desktops — indicator shows disconnected while actually connected.
+        environment: ({
+            LANG: "C",
+            LC_ALL: "C"
+        })
         command: ["sh", "-c", "nmcli -t -f TYPE,STATE d status && nmcli -t -f CONNECTIVITY g"]
         running: false
         function startCheck() {
@@ -242,6 +262,11 @@ Singleton {
             root.wifiStatus = wifiStatus;
             root.ethernet = hasEthernet;
             root.wifi = hasWifi;
+            // updateNetworkStrength's awk prints nothing when no AP is in use, so
+            // its SplitParser never fires and networkStrength would keep the value
+            // from the last connected AP. Clear it here instead.
+            if (wifiStatus !== "connected" && wifiStatus !== "limited")
+                root.networkStrength = 0;
         }
     }
 

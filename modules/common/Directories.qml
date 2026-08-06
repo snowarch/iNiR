@@ -121,7 +121,6 @@ Singleton {
         Quickshell.execDetached(["mkdir", "-p", `${shellConfig}`])
         Quickshell.execDetached(["mkdir", "-p", `${stateUserPath}`])
         Quickshell.execDetached(["mkdir", "-p", `${favicons}`])
-        Quickshell.execDetached(["rm", "-rf", `${coverArt}`])
         Quickshell.execDetached(["mkdir", "-p", `${coverArt}`])
         Quickshell.execDetached(["rm", "-rf", `${booruPreviews}`])
         Quickshell.execDetached(["mkdir", "-p", `${booruPreviews}`])

@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import qs.services
 import qs.modules.common
 import qs.modules.waffle.looks
 
@@ -31,12 +32,15 @@ WSettingsRow {
             Rectangle {
                 id: fontBtn
                 anchors.fill: parent
-                radius: Looks.radius.medium
-                color: fontBtnArea.pressed ? Looks.colors.bg2Active
-                    : fontBtnArea.containsMouse ? Looks.colors.bg2Hover
-                    : Looks.colors.inputBg
+                radius: Looks.settings.radiusMedium
+                color: fontBtnArea.pressed
+                    ? Looks.settings.tilePressed
+                    : fontBtnArea.containsMouse
+                        ? Looks.settings.tileHover
+                        : Looks.colors.inputBg
                 border.width: 1
-                border.color: fontPopup.visible ? Looks.colors.accent : Looks.colors.bg2Border
+                border.color: fontPopup.visible
+                    ? Looks.colors.accent : Looks.settings.strokeStrong
 
                 RowLayout {
                     anchors.fill: parent
@@ -102,14 +106,15 @@ WSettingsRow {
                     Rectangle {
                         id: popupBg
                         anchors.fill: parent
-                        radius: Looks.radius.large
+                        radius: Looks.settings.radiusLarge
                         color: Looks.colors.bgPanelFooter
                         border.width: 1
-                        border.color: Looks.colors.bg2Border
+                        border.color: Looks.settings.strokeStrong
                     }
 
                     WRectangularShadow {
                         target: popupBg
+                        visible: Looks.effectsEnabled
                     }
                 }
 
@@ -183,13 +188,18 @@ WSettingsRow {
                             required property string modelData
                             required property int index
                             width: fontListView.width
-                            height: 34
-                            radius: Looks.radius.medium
+                            height: Looks.dp(34)
+                            radius: Looks.settings.radiusMedium
                             color: {
-                                if (fontDelegate.modelData === controlRoot.currentFontRef) return Qt.alpha(Looks.colors.accent, 0.15)
-                                if (fontDelegateArea.containsMouse) return Looks.colors.bg2Hover
+                                if (fontDelegate.modelData === controlRoot.currentFontRef)
+                                    return Looks.colors.selection
+                                if (fontDelegateArea.containsMouse)
+                                    return Looks.settings.tileHover
                                 return "transparent"
                             }
+
+                            border.width: fontDelegate.modelData === controlRoot.currentFontRef ? 1 : 0
+                            border.color: Looks.colors.accent
 
                             Behavior on color {
                                 animation: ColorAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }

@@ -15,112 +15,91 @@ AbstractBackgroundWidget {
     id: root
 
     configEntryName: "visualizer"
-    defaultConfig: ({ placementStrategy: "free", vizType: "bars", barCount: 48, barSpacing: 2, barRadius: 2, barMinHeight: 1, contentWidth: 304, contentHeight: 104, dim: 0, widgetScale: 100, widgetOpacity: 100, showBackground: true, showBorder: true, colorMode: "auto", x: 100, y: 100 })
+    defaultConfig: ({
+        placementStrategy: "free", preset: "default", vizType: "bars", waveOpacity: -1,
+        barCount: 48, barSpacing: 2, barRadius: 2, barMinHeight: 1,
+        contentWidth: 304, contentHeight: 104, dim: 0,
+        widgetScale: 100, widgetOpacity: 100, colorMode: "auto",
+        showBackground: true, useBlur: false, showBorder: true,
+        backgroundOpacity: 0.16, borderWidth: 1, borderOpacity: 0.2,
+        cornerRadius: -1, x: 100, y: 100
+    })
 
-    implicitWidth: Math.round((Config.getNestedValue("background.widgets.visualizer.contentWidth", 304)) * scaleFactor)
-    implicitHeight: Math.round((Config.getNestedValue("background.widgets.visualizer.contentHeight", 104)) * scaleFactor)
+    implicitWidth: Math.round(Number(root._readConfigKey("contentWidth") ?? 304) * scaleFactor)
+    implicitHeight: Math.round(Number(root._readConfigKey("contentHeight") ?? 104) * scaleFactor)
 
     visibleWhenLocked: false
     needsColText: true
     resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
+    resizeMinWidth: 120
+    resizeMinHeight: 48
 
     readonly property string vizType: Config.getNestedValue("background.widgets.visualizer.vizType", "bars")
     readonly property int waveOpacity: Config.getNestedValue("background.widgets.visualizer.waveOpacity", -1)
 
     editPopoverContent: Component {
-        Row {
+        ColumnLayout {
             spacing: 8
-            // Mode toggle icon
-            MaterialSymbol {
-                text: Config.getNestedValue("background.widgets.visualizer.vizType", "bars") === "wave" ? "graphic_eq" : "equalizer"
-                iconSize: 16
-                color: Appearance.colors.colPrimary
-                anchors.verticalCenter: parent.verticalCenter
-                MouseArea {
-                    anchors.fill: parent
-                    anchors.margins: -4
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        const current = Config.getNestedValue("background.widgets.visualizer.vizType", "bars");
-                        Config.setNestedValue("background.widgets.visualizer.vizType", current === "bars" ? "wave" : "bars");
+
+            GridLayout {
+                Layout.fillWidth: true
+                columns: 2
+                columnSpacing: 4
+                rowSpacing: 4
+
+                Repeater {
+                    model: [
+                        { label: "Bars", icon: "equalizer", value: "bars" },
+                        { label: "Wave", icon: "graphic_eq", value: "wave" }
+                    ]
+                    SelectionGroupButton {
+                        required property var modelData
+                        Layout.fillWidth: true
+                        leftmost: true; rightmost: true
+                        buttonIcon: modelData.icon
+                        buttonText: Translation.tr(modelData.label)
+                        toggled: root.vizType === modelData.value
+                        onClicked: Config.setNestedValue("background.widgets.visualizer.vizType", modelData.value)
                     }
                 }
             }
-            // Mode label
-            StyledText {
-                text: Config.getNestedValue("background.widgets.visualizer.vizType", "bars") === "wave" ? "Wave" : "Bars"
-                color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.7)
-                font.pixelSize: Appearance.font.pixelSize.smaller
-                font.weight: Font.Medium
-                anchors.verticalCenter: parent.verticalCenter
-                MouseArea {
-                    anchors.fill: parent
-                    anchors.margins: -2
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        const current = Config.getNestedValue("background.widgets.visualizer.vizType", "bars");
-                        Config.setNestedValue("background.widgets.visualizer.vizType", current === "bars" ? "wave" : "bars");
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: root.vizType === "bars" ? Translation.tr("Bar count") : Translation.tr("Wave opacity")
+                    color: Appearance.colors.colOnLayer2
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                }
+
+                StyledSpinBox {
+                    visible: root.vizType === "bars"
+                    from: 8; to: 128; stepSize: 4
+                    value: Config.getNestedValue("background.widgets.visualizer.barCount", 48)
+                    onValueModified: Config.setNestedValue("background.widgets.visualizer.barCount", value)
+                }
+
+                StyledSpinBox {
+                    visible: root.vizType === "wave"
+                    from: 5; to: 100; stepSize: 5
+                    value: {
+                        const v = Config.getNestedValue("background.widgets.visualizer.waveOpacity", -1);
+                        return v >= 0 ? v : (Config.options?.appearance?.cava?.waveOpacity ?? 30);
                     }
+                    onValueModified: Config.setNestedValue("background.widgets.visualizer.waveOpacity", value)
                 }
-            }
-            // Separator
-            Rectangle { width: 1; height: 16; color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.12); anchors.verticalCenter: parent.verticalCenter }
-            // Bar count (bars mode)
-            StyledText {
-                visible: Config.getNestedValue("background.widgets.visualizer.vizType", "bars") === "bars"
-                text: Translation.tr("Count")
-                color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.5)
-                font.pixelSize: Appearance.font.pixelSize.smaller
-                anchors.verticalCenter: parent.verticalCenter
-            }
-            StyledSpinBox {
-                visible: Config.getNestedValue("background.widgets.visualizer.vizType", "bars") === "bars"
-                from: 8; to: 128; stepSize: 4
-                value: Config.getNestedValue("background.widgets.visualizer.barCount", 48)
-                onValueModified: Config.setNestedValue("background.widgets.visualizer.barCount", value)
-            }
-            // Wave opacity (wave mode)
-            StyledText {
-                visible: Config.getNestedValue("background.widgets.visualizer.vizType", "bars") === "wave"
-                text: Translation.tr("Opacity")
-                color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.5)
-                font.pixelSize: Appearance.font.pixelSize.smaller
-                anchors.verticalCenter: parent.verticalCenter
-            }
-            StyledSpinBox {
-                visible: Config.getNestedValue("background.widgets.visualizer.vizType", "bars") === "wave"
-                from: 5; to: 100; stepSize: 5
-                value: {
-                    const v = Config.getNestedValue("background.widgets.visualizer.waveOpacity", -1);
-                    return v >= 0 ? v : (Config.options?.appearance?.cava?.waveOpacity ?? 30);
-                }
-                onValueModified: Config.setNestedValue("background.widgets.visualizer.waveOpacity", value)
             }
         }
     }
 
     readonly property bool _active: (Config.options?.background?.widgets?.visualizer?.enable ?? false)
-        && root.visible && MprisController.isPlaying
+        && root.visible && root.powerActive && MprisController.isPlaying
 
-    // ── Dim factor (0..1) ──────────────────────────────────────
-    property real dimFactor: {
-        const v = Config.getNestedValue("background.widgets.visualizer.dim", 0);
-        const n = Number(v);
-        return Math.max(0, Math.min(1, Number.isFinite(n) ? n / 100 : 0));
-    }
-
-    // ── 5-style tokens ─────────────────────────────────────────
-    readonly property color colCard: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer1
-        : Appearance.auroraEverywhere ? "transparent"
-        : Appearance.colors.colLayer1
-    readonly property color colBorder: Appearance.angelEverywhere ? "transparent"
-        : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
-    readonly property real cardRadius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-        : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-
-    // Dimmed text color for overlay
-    property color dimTextColor: ColorUtils.mix(root.colText, Qt.rgba(0, 0, 0, 1), dimFactor)
+    // ── Style tokens ───────────────────────────────────────────
+    readonly property real cardRadius: root.widgetCardRadius
 
     CavaProcess {
         id: cavaProcess
@@ -129,6 +108,7 @@ AbstractBackgroundWidget {
 
     // ── Card background ────────────────────────────────────────
     WidgetSurface {
+        regionBrightness: root.regionBrightness
         id: cardBg
         anchors.centerIn: parent
         width: parent.width
@@ -137,13 +117,15 @@ AbstractBackgroundWidget {
         surfaceOpacity: root.backgroundOpacity
         surfaceBorderWidth: root.borderWidth
         surfaceBorderOpacity: root.borderOpacity
-        surfaceColor: root.colText
-        surfaceUseBlur: root.useBlur
+        surfaceColor: root.widgetSurfaceInk
+        colorMode: root.colorMode
+        surfaceAccent: root.widgetAccent
+        surfaceUseBlur: root.effectiveBlur
         screenX: root.x
         screenY: root.y
         screenWidth: root.scaledScreenWidth
         screenHeight: root.scaledScreenHeight
-        visible: root.backgroundOpacity > 0 || root.borderWidth > 0
+        visible: root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur
     }
 
     // ── Visualizer rendering ─────────────────────────────────────
@@ -157,19 +139,11 @@ AbstractBackgroundWidget {
         barSpacing: Config.getNestedValue("background.widgets.visualizer.barSpacing", 2)
         barMinHeight: Config.getNestedValue("background.widgets.visualizer.barMinHeight", 1)
         barRadius: Config.getNestedValue("background.widgets.visualizer.barRadius", 2)
-        colorLow: Appearance.angelEverywhere ? Appearance.angel.colSecondaryContainer
-            : Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
-            : Appearance.auroraEverywhere ? Appearance.m3colors.m3secondaryContainer
+        colorLow: Appearance.cookieEverywhere ? Appearance.colors.colLayer3
+            : Appearance.zzzEverywhere ? Appearance.zzz.chrome
             : Appearance.colors.colSecondaryContainer
-        colorMed: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-            : Appearance.inirEverywhere ? Appearance.inir.colPrimary
-            : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
-            : Appearance.colors.colPrimary
-        colorHigh: Appearance.angelEverywhere ? Appearance.angel.colTertiary
-            : Appearance.inirEverywhere ? Appearance.inir.colTertiary
-            : Appearance.auroraEverywhere ? Appearance.m3colors.m3tertiary
-            : Appearance.colors.colTertiary
-        opacity: 1.0 - dimFactor * 0.6
+        colorMed: root.widgetAccentVisible
+        colorHigh: root.widgetAccent3Visible
     }
 
     WaveVisualizer {
@@ -179,10 +153,10 @@ AbstractBackgroundWidget {
         points: cavaProcess.points
         live: root._active
         fillOpacity: (root.waveOpacity >= 0 ? root.waveOpacity : (Config.options?.appearance?.cava?.waveOpacity ?? 30)) / 100
-        color: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-            : Appearance.inirEverywhere ? Appearance.inir.colPrimary
-            : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
-            : Appearance.colors.colPrimary
-        opacity: 1.0 - dimFactor * 0.6
+        color: root.widgetAccentVisible
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
     }
 }

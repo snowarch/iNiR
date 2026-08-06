@@ -213,8 +213,9 @@ Item {
         anchors.centerIn: parent
         width: parent.width
         implicitHeight: col.implicitHeight + 20
-        radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+        radius: Appearance.zzzEverywhere ? Appearance.zzz.cardRadius : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
         color: "transparent"
+        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
 
         ColumnLayout {
             id: col
@@ -229,19 +230,20 @@ Item {
                 MaterialSymbol {
                     text: "currency_bitcoin"
                     iconSize: 16
-                    color: Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
                 }
                 StyledText {
-                    text: "Crypto"
+                    text: Translation.tr("Crypto")
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     font.weight: Font.Medium
-                    color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
                 }
                 Item { Layout.fillWidth: true }
 
                 Rectangle {
                     width: 6; height: 6; radius: 3
-                    color: Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
+                    Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                     scale: root.loading ? 1 : 0
                     visible: scale > 0
                     Behavior on scale {
@@ -250,7 +252,7 @@ Item {
                     }
                     opacity: 0.6
                     SequentialAnimation on opacity {
-                        running: root.loading && Appearance.animationsEnabled
+                        running: root.loading && GlobalStates.sidebarLeftOpen && Appearance.animationsEnabled
                         loops: Animation.Infinite
                         NumberAnimation { to: 0.3; duration: 400 }
                         NumberAnimation { to: 0.8; duration: 400 }
@@ -261,7 +263,7 @@ Item {
                     implicitWidth: 24; implicitHeight: 24
                     buttonRadius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
                     colBackground: "transparent"
-                    colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover : Appearance.colors.colLayer1Hover
+                    colBackgroundHover: Appearance.zzzEverywhere ? Appearance.zzz.chrome : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover : Appearance.colors.colLayer1Hover
                     onClicked: root.fetchPrices()
                     contentItem: MaterialSymbol {
                         text: "refresh"; iconSize: 14
@@ -290,7 +292,11 @@ Item {
                         text: root.getSymbol(row.modelData)
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         font.family: Appearance.font.family.monospace
-                        color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                         Layout.preferredWidth: 36
                     }
 
@@ -298,7 +304,13 @@ Item {
                         text: "$" + root.fmtPrice(row.price)
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         font.family: Appearance.font.family.numbers
-                        color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+                        font.weight: Appearance.zzzEverywhere ? Font.Black : Font.Normal
+                        font.italic: Appearance.zzzEverywhere
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                         Layout.fillWidth: true
                     }
 
@@ -308,8 +320,12 @@ Item {
                         Layout.preferredHeight: 16
                         Layout.alignment: Qt.AlignVCenter
                         values: row.spark
-                        color: row.up ? (Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
-                                      : (Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError)
+                        color: row.up ? (Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
+                                      : (Appearance.zzzEverywhere ? Appearance.zzz.signal : Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError)
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                         fillOpacity: 0.25
                         alignment: Graph.Alignment.Right
                     }
@@ -323,15 +339,23 @@ Item {
                         MaterialSymbol {
                             text: row.up ? "arrow_drop_up" : "arrow_drop_down"
                             iconSize: 14
-                            color: row.up ? (Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
-                                          : (Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError)
+                            color: row.up ? (Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
+                                          : (Appearance.zzzEverywhere ? Appearance.zzz.signal : Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError)
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                            }
                         }
                         StyledText {
                             text: Math.abs(row.chg).toFixed(1) + "%"
                             font.pixelSize: Appearance.font.pixelSize.smallest
                             font.family: Appearance.font.family.numbers
-                            color: row.up ? (Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
-                                          : (Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError)
+                            color: row.up ? (Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
+                                          : (Appearance.zzzEverywhere ? Appearance.zzz.signal : Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError)
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                            }
                         }
                     }
                 }
@@ -341,13 +365,21 @@ Item {
                 visible: root.error && Object.keys(root.cryptoData).length === 0
                 text: Translation.tr("Failed to load")
                 font.pixelSize: Appearance.font.pixelSize.smallest
-                color: Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError
+                color: Appearance.zzzEverywhere ? Appearance.zzz.signal : Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
             }
             StyledText {
                 visible: root.coins.length === 0
                 text: Translation.tr("No coins configured")
                 font.pixelSize: Appearance.font.pixelSize.smallest
-                color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+                color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
             }
         }
     }

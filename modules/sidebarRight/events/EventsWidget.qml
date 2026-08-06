@@ -1,6 +1,8 @@
 pragma ComponentBehavior: Bound
+import qs
 import qs.services
 import qs.modules.common
+import qs.modules.common.functions
 import qs.modules.common.widgets
 import QtQuick
 import QtQuick.Controls
@@ -47,10 +49,13 @@ Item {
         function onEventsUpdated() { root._externalTrigger++ }
     }
     
+    readonly property string _todayKey: Qt.formatDate(DateTime.clock.date, "yyyy-MM-dd")
+
     // Merged events: local + external, sorted by date
     readonly property var mergedEvents: {
         const _t = root._eventsTrigger
         const _t2 = root._externalTrigger
+        const _d = root._todayKey
         return _buildMergedEvents()
     }
 
@@ -187,22 +192,21 @@ Item {
                         spacing: 12
                         width: parent.width - 32
 
-                        Rectangle {
+                        Item {
                             Layout.alignment: Qt.AlignHCenter
                             Layout.preferredWidth: 48
                             Layout.preferredHeight: 48
-                            radius: 24
-                            color: root.colEmptyBg
 
                             MaterialSymbol {
+                                // Bgless empty state: just the colored, breathing glyph — no grey blob.
                                 anchors.centerIn: parent
                                 text: "event_available"
-                                iconSize: 24
+                                iconSize: 32
                                 fill: 0
                                 color: root.colPrimary
 
                                 SequentialAnimation on opacity {
-                                    running: emptyState.visible && Appearance.animationsEnabled
+                                    running: emptyState.visible && GlobalStates.sidebarRightOpen && Appearance.animationsEnabled
                                     loops: Animation.Infinite
                                     NumberAnimation { to: 0.5; duration: 2000; easing.type: Easing.InOutSine }
                                     NumberAnimation { to: 1.0; duration: 2000; easing.type: Easing.InOutSine }

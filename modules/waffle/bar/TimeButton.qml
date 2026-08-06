@@ -47,7 +47,7 @@ BarButton {
                 readonly property bool shouldShow: count > 0 && !Notifications.silent && showCount
                 visible: shouldShow || scale > 0
                 anchors.verticalCenter: parent.verticalCenter
-                width: count > 9 ? Looks.scaledBar(18, root.panelScreen) : (count > 0 ? Looks.scaledBar(16, root.panelScreen) : 0)
+                width: Looks.scaledBar(18, root.panelScreen)
                 height: Looks.scaledBar(16, root.panelScreen)
                 radius: height / 2
                 color: Looks.colors.accent
@@ -67,13 +67,6 @@ BarButton {
                         easing.type: Easing.OutQuad
                     }
                 }
-                Behavior on width {
-                    NumberAnimation {
-                        duration: Looks.transition.enabled ? Looks.transition.duration.fast : 0
-                        easing.type: Easing.OutQuad
-                    }
-                }
-
                 WText {
                     anchors.centerIn: parent
                     text: notifBadge.count > 9 ? "9+" : String(notifBadge.count)
@@ -99,7 +92,7 @@ BarButton {
 
     BarToolTip {
         id: tooltip
-        extraVisibleCondition: root.shouldShowTooltip
+        barExtraVisibleCondition: root.shouldShowTooltip
         text: {
             const dateStr = Qt.locale().toString(DateTime.clock.date, "dddd, MMMM d, yyyy")
             const timeStr = Qt.locale().toString(DateTime.clock.date, "ddd hh:mm AP")

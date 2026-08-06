@@ -14,6 +14,8 @@ BodyRectangle {
 
     readonly property int notificationCount: Notifications.list.length
     readonly property bool hasNotifications: notificationCount > 0
+    property string filterQuery: ""
+    readonly property bool searching: filterQuery.trim().length > 0
 
     ColumnLayout {
         id: contentLayout
@@ -61,6 +63,49 @@ BodyRectangle {
                 iconVisible: false
                 text: Translation.tr("Clear all")
                 onClicked: Notifications.discardAllNotifications()
+            }
+        }
+
+        // Only worth showing once the history is big enough to need it.
+        Rectangle {
+            visible: root.notificationCount > 3
+            Layout.fillWidth: true
+            Layout.leftMargin: 12
+            Layout.rightMargin: 12
+            implicitHeight: visible ? 32 : 0
+            radius: height / 2
+            color: Looks.colors.inputBg
+            border.width: 1
+            border.color: Looks.colors.bg2Border
+
+            onVisibleChanged: if (!visible) root.filterQuery = ""
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 10
+                anchors.rightMargin: 10
+                spacing: 6
+
+                FluentIcon {
+                    icon: "search"
+                    implicitSize: 14
+                    color: Looks.colors.subfg
+                }
+
+                WTextInput {
+                    id: notificationSearchInput
+                    Layout.fillWidth: true
+                    onTextChanged: root.filterQuery = text
+
+                    WText {
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: notificationSearchInput.text.length === 0
+                        text: Translation.tr("Search notifications")
+                        color: Looks.colors.accentUnfocused
+                        font.pixelSize: Looks.font.pixelSize.small
+                    }
+                }
             }
         }
 
@@ -140,7 +185,7 @@ BodyRectangle {
                 NumberAnimation { properties: "x,y"; duration: Looks.transition.enabled ? Looks.transition.duration.medium : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
             }
 
-            model: Notifications.appNameList
+            model: Notifications.appNamesMatching(root.filterQuery)
             delegate: WNotificationGroup {
                 required property int index
                 required property var modelData
@@ -148,20 +193,30 @@ BodyRectangle {
                 notificationGroup: Notifications.groupsByAppName[modelData]
             }
 
-            // Empty state
+            // Empty state — also covers "search matched nothing"
             Item {
-                visible: !root.hasNotifications
+                visible: notificationListView.count === 0
                 anchors.fill: parent
 
                 ColumnLayout {
                     anchors.centerIn: parent
                     spacing: 12
 
+                    MascotImage {
+                        id: emptyMascot
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.preferredWidth: 128
+                        Layout.preferredHeight: 128
+                        surface: "notifications"
+                        fallbackSurface: "emptyStates"
+                        pose: "cleanup-sweep-loop"
+                    }
+
                     FluentIcon {
                         Layout.alignment: Qt.AlignHCenter
+                        visible: !emptyMascot.active
                         icon: "alert"
                         implicitSize: 48
-                        color: Looks.colors.inactiveIcon
                     }
 
                     WText {

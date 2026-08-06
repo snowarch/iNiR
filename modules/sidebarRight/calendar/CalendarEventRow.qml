@@ -35,15 +35,17 @@ Item {
     }
 
     // Style tokens
-    readonly property color colPrimary: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+    readonly property color colPrimary: Appearance.zzzEverywhere ? Appearance.zzz.accent
+        : Appearance.angelEverywhere ? Appearance.angel.colPrimary
         : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
-    readonly property color colText: Appearance.angelEverywhere ? Appearance.angel.colText
+    readonly property color colText: Appearance.zzzEverywhere ? Appearance.zzz.ink
+        : Appearance.angelEverywhere ? Appearance.angel.colText
         : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
     readonly property color colSubtext: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
         : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
     readonly property color colError: Appearance.angelEverywhere ? Appearance.angel.colError
-        : Appearance.inirEverywhere ? (Appearance.inir?.colError ?? Appearance.m3colors.m3error)
-        : Appearance.m3colors.m3error
+        : Appearance.inirEverywhere ? (Appearance.inir?.colError ?? Appearance.colors.colError)
+        : Appearance.colors.colError
     readonly property color colCard: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface

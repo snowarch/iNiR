@@ -9,6 +9,7 @@ import qs.services
 import qs.services.deferred
 import qs.modules.common
 import qs.modules.common.functions
+import qs.modules.settings
 import qs.modules.waffle.looks
 import qs.modules.waffle.settings
 
@@ -21,18 +22,24 @@ WSettingsPage {
 
     // --- State ---
     property string sourcePath: ""
-    property string selectedFormat: "png"
+    property string selectedFormat: Persistent.states?.settings?.gowallFormat ?? "png"
+    onSelectedFormatChanged: if (Persistent.ready && Persistent.states?.settings)
+        Persistent.states.settings.gowallFormat = selectedFormat
     property string operationMode: "convert"
 
     // Convert state
-    property string selectedTheme: ""
+    property string selectedTheme: Persistent.states?.settings?.gowallTheme ?? ""
+    onSelectedThemeChanged: if (Persistent.ready && Persistent.states?.settings)
+        Persistent.states.settings.gowallTheme = selectedTheme
     property string convertSource: "builtin"
     property string customThemeName: "custom"
     property var customColors: ["#89B4FA", "#CBA6F7", "#F38BA8", "#A6E3A1", "#F9E2AF", "#11111B"]
     property int editingColorIndex: -1
 
     // Effects state
-    property string selectedEffect: "grayscale"
+    property string selectedEffect: Persistent.states?.settings?.gowallEffect ?? "grayscale"
+    onSelectedEffectChanged: if (Persistent.ready && Persistent.states?.settings)
+        Persistent.states.settings.gowallEffect = selectedEffect
     property real brightnessFactor: 1.1
 
     // Pixelate state
@@ -132,8 +139,8 @@ WSettingsPage {
         // Source buttons
         Item {
             Layout.fillWidth: true
-            Layout.leftMargin: 14
-            Layout.rightMargin: 14
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             Layout.topMargin: 2
             Layout.bottomMargin: 2
             implicitHeight: sourceButtonRow.implicitHeight
@@ -222,8 +229,8 @@ WSettingsPage {
         WText {
             visible: root.sourcePath.length > 0
             Layout.fillWidth: true
-            Layout.leftMargin: 14
-            Layout.rightMargin: 14
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             text: root.sourcePath.split("/").pop() ?? ""
             font.pixelSize: Looks.font.pixelSize.small
             font.family: Looks.font.family.monospace
@@ -235,8 +242,8 @@ WSettingsPage {
         WText {
             visible: root.sourceIsAnimated
             Layout.fillWidth: true
-            Layout.leftMargin: 14
-            Layout.rightMargin: 14
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             text: Translation.tr("Animated files are not supported. Choose a static image.")
             font.pixelSize: Looks.font.pixelSize.small
             color: Looks.colors.danger
@@ -252,8 +259,8 @@ WSettingsPage {
 
         Item {
             Layout.fillWidth: true
-            Layout.leftMargin: 14
-            Layout.rightMargin: 14
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             Layout.bottomMargin: 6
             implicitHeight: operationRow.implicitHeight
 
@@ -276,12 +283,15 @@ WSettingsPage {
 
                         readonly property bool isSelected: root.operationMode === modelData.value
 
-                        width: opLabel.implicitWidth + 28
-                        height: 30
-                        radius: Looks.radius.medium
+                        width: opLabel.implicitWidth + Looks.dp(32)
+                        height: Looks.dp(32)
+                        radius: height / 2
                         color: isSelected
                             ? Looks.colors.accent
-                            : opMa.containsMouse ? Looks.colors.bg2Hover : Looks.colors.bg1
+                            : opMa.containsMouse
+                                ? Looks.settings.tileHover : Looks.settings.tile
+                        border.width: isSelected ? 0 : 1
+                        border.color: Looks.settings.stroke
 
                         Behavior on color {
                             animation: ColorAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
@@ -292,8 +302,8 @@ WSettingsPage {
                             anchors.centerIn: parent
                             text: modelData.label
                             font.pixelSize: Looks.font.pixelSize.small
-                            font.weight: parent.isSelected ? Looks.font.weight.regular : Looks.font.weight.thin
-                            color: parent.isSelected ? Looks.colors.bg0 : Looks.colors.fg
+                            font.weight: parent.isSelected ? Looks.font.weight.strong : Looks.font.weight.regular
+                            color: parent.isSelected ? Looks.colors.accentFg : Looks.colors.fg
                         }
 
                         MouseArea {
@@ -317,8 +327,8 @@ WSettingsPage {
 
         Item {
             Layout.fillWidth: true
-            Layout.leftMargin: 14
-            Layout.rightMargin: 14
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             Layout.bottomMargin: 4
             implicitHeight: convertSourceRow.implicitHeight
 
@@ -339,12 +349,15 @@ WSettingsPage {
 
                         readonly property bool isSelected: root.convertSource === modelData.value
 
-                        width: csLabel.implicitWidth + 24
-                        height: 28
-                        radius: Looks.radius.medium
+                        width: csLabel.implicitWidth + Looks.dp(32)
+                        height: Looks.dp(32)
+                        radius: height / 2
                         color: isSelected
                             ? Looks.colors.accent
-                            : csMa.containsMouse ? Looks.colors.bg2Hover : Looks.colors.bg1
+                            : csMa.containsMouse
+                                ? Looks.settings.tileHover : Looks.settings.tile
+                        border.width: isSelected ? 0 : 1
+                        border.color: Looks.settings.stroke
 
                         Behavior on color {
                             animation: ColorAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
@@ -355,8 +368,8 @@ WSettingsPage {
                             anchors.centerIn: parent
                             text: modelData.label
                             font.pixelSize: Looks.font.pixelSize.small
-                            font.weight: parent.isSelected ? Looks.font.weight.regular : Looks.font.weight.thin
-                            color: parent.isSelected ? Looks.colors.bg0 : Looks.colors.fg
+                            font.weight: parent.isSelected ? Looks.font.weight.strong : Looks.font.weight.regular
+                            color: parent.isSelected ? Looks.colors.accentFg : Looks.colors.fg
                         }
 
                         MouseArea {
@@ -381,8 +394,8 @@ WSettingsPage {
         // Search field
         Item {
             Layout.fillWidth: true
-            Layout.leftMargin: 14
-            Layout.rightMargin: 14
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             implicitHeight: 32
 
             Rectangle {
@@ -438,8 +451,8 @@ WSettingsPage {
         // Theme chip grid
         Item {
             Layout.fillWidth: true
-            Layout.leftMargin: 14
-            Layout.rightMargin: 14
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             Layout.bottomMargin: 6
             implicitHeight: Math.min(themeFlow.implicitHeight + 12, 150)
 
@@ -468,14 +481,15 @@ WSettingsPage {
 
                                 readonly property bool isActive: root.selectedTheme === String(modelData)
 
-                                width: chipLabel.implicitWidth + 20
-                                height: 28
-                                radius: Looks.radius.medium
+                                width: chipLabel.implicitWidth + Looks.dp(24)
+                                height: Looks.dp(28)
+                                radius: height / 2
                                 color: isActive
-                                    ? Qt.alpha(Looks.colors.accent, 0.15)
-                                    : chipMa.containsMouse ? Looks.colors.bg2Hover : "transparent"
-                                border.width: isActive ? 1 : 0
-                                border.color: Qt.alpha(Looks.colors.accent, 0.4)
+                                    ? Looks.colors.accent
+                                    : chipMa.containsMouse
+                                        ? Looks.settings.tileHover : Looks.settings.tile
+                                border.width: isActive ? 0 : 1
+                                border.color: Looks.settings.stroke
 
                                 Behavior on color {
                                     animation: ColorAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
@@ -486,7 +500,8 @@ WSettingsPage {
                                     anchors.centerIn: parent
                                     text: String(modelData)
                                     font.pixelSize: Looks.font.pixelSize.small
-                                    color: parent.isActive ? Looks.colors.accent : Looks.colors.fg
+                                    font.weight: parent.isActive ? Looks.font.weight.strong : Looks.font.weight.regular
+                                    color: parent.isActive ? Looks.colors.accentFg : Looks.colors.fg
                                 }
 
                                 MouseArea {
@@ -506,7 +521,7 @@ WSettingsPage {
         // Loading state
         WText {
             visible: GowallService.loadingThemes
-            Layout.leftMargin: 14
+            Layout.leftMargin: 0
             text: Translation.tr("Loading themes...")
             font.pixelSize: Looks.font.pixelSize.small
             color: Looks.colors.subfg
@@ -522,8 +537,8 @@ WSettingsPage {
         WText {
             visible: !GowallService.hasCurrentThemePalette
             Layout.fillWidth: true
-            Layout.leftMargin: 14
-            Layout.rightMargin: 14
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             text: Translation.tr("The current iNiR Material You palette is not available yet. Regenerate your wallpaper colors and try again.")
             font.pixelSize: Looks.font.pixelSize.small
             color: Looks.colors.subfg
@@ -533,8 +548,8 @@ WSettingsPage {
         Flow {
             visible: GowallService.hasCurrentThemePalette
             Layout.fillWidth: true
-            Layout.leftMargin: 14
-            Layout.rightMargin: 14
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             Layout.bottomMargin: 6
             spacing: 6
 
@@ -584,8 +599,8 @@ WSettingsPage {
 
         Flow {
             Layout.fillWidth: true
-            Layout.leftMargin: 14
-            Layout.rightMargin: 14
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             Layout.bottomMargin: 6
             spacing: 6
 
@@ -684,8 +699,8 @@ WSettingsPage {
         // Effect type tabs
         Item {
             Layout.fillWidth: true
-            Layout.leftMargin: 14
-            Layout.rightMargin: 14
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             Layout.bottomMargin: 4
             implicitHeight: effectRow.implicitHeight
 
@@ -707,12 +722,15 @@ WSettingsPage {
 
                         readonly property bool isSelected: root.selectedEffect === modelData.value
 
-                        width: effectLabel.implicitWidth + 24
-                        height: 28
-                        radius: Looks.radius.medium
+                        width: effectLabel.implicitWidth + Looks.dp(32)
+                        height: Looks.dp(32)
+                        radius: height / 2
                         color: isSelected
                             ? Looks.colors.accent
-                            : effectMa.containsMouse ? Looks.colors.bg2Hover : Looks.colors.bg1
+                            : effectMa.containsMouse
+                                ? Looks.settings.tileHover : Looks.settings.tile
+                        border.width: isSelected ? 0 : 1
+                        border.color: Looks.settings.stroke
 
                         Behavior on color {
                             animation: ColorAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
@@ -723,8 +741,8 @@ WSettingsPage {
                             anchors.centerIn: parent
                             text: modelData.label
                             font.pixelSize: Looks.font.pixelSize.small
-                            font.weight: parent.isSelected ? Looks.font.weight.regular : Looks.font.weight.thin
-                            color: parent.isSelected ? Looks.colors.bg0 : Looks.colors.fg
+                            font.weight: parent.isSelected ? Looks.font.weight.strong : Looks.font.weight.regular
+                            color: parent.isSelected ? Looks.colors.accentFg : Looks.colors.fg
                         }
 
                         MouseArea {
@@ -902,8 +920,8 @@ WSettingsPage {
 
         Item {
             Layout.fillWidth: true
-            Layout.leftMargin: 14
-            Layout.rightMargin: 14
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             Layout.bottomMargin: 8
             implicitHeight: previewRow.implicitHeight
 
@@ -1007,8 +1025,8 @@ WSettingsPage {
 
         Item {
             Layout.fillWidth: true
-            Layout.leftMargin: 14
-            Layout.rightMargin: 14
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             Layout.bottomMargin: 6
             implicitHeight: extractRow.implicitHeight
 
@@ -1110,5 +1128,15 @@ WSettingsPage {
                 root.customColors = next
             }
         }
+    }
+
+    SettingsNativeDialogGuard {
+        dialog: imageDialog
+        dialogKey: "waffle-gowall-source-image"
+    }
+
+    SettingsNativeDialogGuard {
+        dialog: colorDialog
+        dialogKey: "waffle-gowall-palette-color"
     }
 }

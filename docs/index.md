@@ -1,98 +1,60 @@
 # iNiR
 
-**A complete desktop shell for Niri, built on Quickshell.**
+A complete desktop shell for Niri, built with Quickshell and QML.
 
-Not a theme. Not dotfiles. The entire desktop interface: bar, sidebars, dock, notifications, settings, theming, everything. One process, one runtime, no separate daemon.
+It provides the bar, dock, sidebars, notifications, settings, wallpapers, overview, lock screen, IPC and theming in one shell. Niri is the supported compositor. Hyprland support is secondary.
 
-Built on [Quickshell](https://quickshell.outfoxxed.me/) (QML shell framework) for the [Niri](https://github.com/YaLTeR/niri) Wayland compositor.
+## Start here
 
----
-
-## Quick navigation
-
-- **What's new**
-  Current release notes, short version. No archaeology degree required.
-  [Changelog](../CHANGELOG.md)
-
-- **Getting Started**
-  Install iNiR, run the setup wizard, get a shell on screen.
-  [Installation](INSTALL.md)
-
-- **Panel Families**
-  Material ii (5 styles) and Waffle (Windows 11). How they work, how to switch.
-  [Panel families](PANEL_FAMILIES.md)
-
-- **Theming**
-  Wallpaper-based colors, 44 presets, and the pipeline that themes your entire system.
-  [Theming architecture](THEMING_ARCHITECTURE.md)
-
-- **Setup & Updates**
-  Update flow, migrations, rollback, doctor, package-managed installs.
-  [Setup and updates](SETUP.md)
-
-- **IPC Reference**
-  All targets and functions you can call from keybinds, scripts, or terminal.
-  [IPC targets](IPC.md)
-
-- **Calendar**
-  Sync Google Calendar, Outlook, Nextcloud, or any ICS calendar.
-  [Calendar setup](CALENDAR.md)
-
-- **Architecture**
-  How it all fits together. Entry point, services, config, panel loading.
-  [Architecture overview](ARCHITECTURE_OVERVIEW.md)
-
----
-
-## What it looks like
-
-Two panel families, switchable at runtime with `Super+Shift+W`:
-
-|               | **Material ii**                      | **Waffle**                    |
-| ------------- | ------------------------------------ | ----------------------------- |
-| Design tokens | `Appearance.*`                       | `Looks.*`                     |
-| Bar position  | Top (or vertical)                    | Bottom taskbar                |
-| Launcher      | Overview (`Super+Space`)             | Start Menu                    |
-| Right panel   | Sidebar (toggles, calendar, tools)   | Action Center + Notification Center |
-| Styles        | material, cards, aurora, inir, angel | Fluent                        |
+- [Install](INSTALL)
+- [Setup, updates and rollback](SETUP)
+- [Keybinds](KEYBINDS)
+- [IPC reference](IPC)
+- [Panel families](PANEL_FAMILIES)
+- [Configuration](CONFIG_SYSTEM)
+- [Known limitations](LIMITATIONS)
+- [Managed desktop items](DESKTOP_ITEMS)
 
 ## Common commands
 
 ```bash
-inir run            # start the shell
-inir restart        # restart running instance
-inir settings       # open settings UI
-inir logs --full    # view full Quickshell logs
-inir doctor         # health checks and auto-fix
-inir update         # pull + migrate + restart
+inir run
+inir restart
+inir settings
+inir logs
+inir doctor
+inir update
 ```
 
-If a page disagrees with the running shell, trust the running shell and open an issue. Docs drift. Code at least has the decency to crash.
+## Branches
 
-## The stack
+`main` is the stable branch used by installations and updates.
 
-| Layer | What it does |
-|-------|-------------|
-| **QML runtime** | Quickshell + 760 QML files. Both the UI and system integration in one process. |
-| **Bash control plane** | `scripts/inir` (2400+ lines). Launcher, service lifecycle, IPC routing, diagnostics. |
-| **Python / Go tooling** | Color pipeline, Niri config generation, external app theme generators. |
+`prerelease` is where development happens. It may be ahead by a lot. That is the point.
 
-Primary compositor: **Niri**. Secondary Hyprland support maintained from the fork origin.
+## Runtime shape
 
----
+```text
+Niri
+  -> Quickshell
+  -> shell.qml
+  -> shared config and services
+  -> ii or Waffle
+  -> panels, overlays and widgets
+```
 
-## Key directories
+The shell is configurable through Settings and `config.json`. Persistent writes go through the config service; editing QML is not part of normal use.
 
-| Path | What's in it |
-|------|-------------|
-| `shell.qml` | Entry point. Singleton init, panel family dispatch. |
-| `services/` | [70+ singletons](SERVICES.md). Audio, network, Niri IPC, theming, Screen Time, everything. |
-| `modules/` | [All UI](MODULES.md). 676 QML files across 30+ module directories. |
-| `modules/common/` | Config, Appearance tokens, 130+ shared widgets. |
-| `defaults/config.json` | Default configuration (~60 sections). |
-| `scripts/inir` | CLI launcher and IPC router. |
-| `scripts/colors/` | Wallpaper-to-color pipeline. |
+## Reference
 
----
+| Area | Page |
+|---|---|
+| Installation and packages | [Install](INSTALL), [Packages](PACKAGES) |
+| Runtime and architecture | [Runtime](RUNTIME), [Architecture](ARCHITECTURE_OVERVIEW) |
+| Services and modules | [Services](SERVICES), [Modules](MODULES) |
+| Wallpapers and theming | [Wallpaper](WALLPAPER), [Theming](THEMING_ARCHITECTURE) |
+| Desktop references | [Managed desktop items](DESKTOP_ITEMS) |
+| Compositor support | [Compositors](COMPOSITORS) |
+| Performance | [Optimization](OPTIMIZATION) |
 
-This documentation reflects the `main` branch. For the repo-level overview, see [ARCHITECTURE.md](https://github.com/snowarch/inir/blob/main/ARCHITECTURE.md).
+If the wiki disagrees with the current shell, the shell wins. Then the wiki gets fixed.

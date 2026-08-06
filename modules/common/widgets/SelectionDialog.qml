@@ -57,14 +57,14 @@ Item {
                 Layout.rightMargin: dialogPadding
                 Layout.alignment: Qt.AlignLeft
                 color: Appearance.angelEverywhere ? Appearance.angel.colText
-                     : Appearance.inirEverywhere ? Appearance.inir.colLabel : Appearance.m3colors.m3onSurface
+                     : Appearance.inirEverywhere ? Appearance.inir.colLabel : Appearance.colors.colOnSurface
                 font.pixelSize: Appearance.font.pixelSize.larger
                 text: root.titleText
             }
 
             Rectangle {
                 color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
-                     : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle : Appearance.m3colors.m3outline
+                     : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle : Appearance.colors.colOutline
                 implicitHeight: 1
                 Layout.fillWidth: true
                 Layout.leftMargin: dialogPadding
@@ -106,7 +106,7 @@ Item {
             }
 
             Rectangle {
-                color: Appearance.m3colors.m3outline
+                color: Appearance.colors.colOutline
                 implicitHeight: 1
                 Layout.fillWidth: true
                 Layout.leftMargin: dialogPadding

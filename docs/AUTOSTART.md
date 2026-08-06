@@ -45,7 +45,7 @@ iNiR has its own autostart manager that handles:
 - **Custom commands**: user-defined commands configured through Settings
 - **Systemd units**: user-level systemd services
 
-Manage autostart entries from Settings > System > Autostart (there is no CLI for this — it is managed through the settings UI, backed by `services/Autostart.qml`).
+Manage autostart entries from Settings > System > Autostart (there is no CLI for this, it is managed through the settings UI, backed by `services/Autostart.qml`).
 
 ## Lock screen
 

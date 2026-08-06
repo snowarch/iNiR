@@ -12,6 +12,7 @@ Singleton {
     property QtObject lightColors
     property QtObject colors
     property QtObject radius
+    property QtObject settings
     property QtObject font
     property QtObject transition
     property string iconsPath: `${Directories.assetsPath}/icons/fluent`
@@ -20,10 +21,15 @@ Singleton {
         const style = Config.options?.appearance?.globalStyle ?? "material"
         return style === "aurora" || style === "angel"
     }
+    readonly property bool cookieEverywhere: Appearance.cookieEverywhere
     property bool useMaterial: Config.options?.waffles?.theming?.useMaterialColors ?? false
     // Glass mode: aurora/angel active (not iNiR which has its own aesthetic)
     readonly property bool glassActive: root.auroraEverywhere && !Appearance.inirEverywhere
-    
+
+    readonly property bool effectsEnabled: Appearance.effectsEnabled
+    readonly property bool gameModeActive: Appearance._gameModeActive
+    readonly property bool gameModeMinimal: Appearance.gameModeMinimal
+
     // Font family - reactive property at root level for proper binding updates
     readonly property string fontFamily: {
         const f = Config.options?.waffles?.theming?.font?.family;
@@ -69,18 +75,18 @@ Singleton {
     function scaled(value, screen, minimum, maximum) {
         minimum = minimum ?? 0.92
         maximum = maximum ?? 1.08
-        return Math.round(value * root.screenScale(screen, minimum, maximum) * Appearance.fontSizeScale)
+        return Math.round(value * root.screenScale(screen, minimum, maximum) * root.fontScale)
     }
     function scaledBar(value, screen, minimum, maximum) {
         minimum = minimum ?? 0.9
         maximum = maximum ?? 1.18
-        return Math.round(value * root.barScale(screen, minimum, maximum) * Appearance.fontSizeScale)
+        return Math.round(value * root.barScale(screen, minimum, maximum) * root.fontScale)
     }
-    // Scale a raw pixel value by the global UI display scale factor.
-    // Use for layout dimensions (margins, spacing, sizes) that should
-    // respond to the user's "UI scale" setting. Reactive in bindings.
     function dp(value) {
-        return Math.round(value * Appearance.fontSizeScale)
+        return Math.round(value * root.fontScale)
+    }
+    function effectiveDuration(value) {
+        return Appearance.calcEffectiveDuration(value)
     }
     function applyBackgroundTransparency(col) {
         return ColorUtils.applyAlpha(col, 1 - root.backgroundTransparency)
@@ -322,6 +328,22 @@ Singleton {
         property int medium: root.dp(4)
         property int large: root.dp(8)
         property int xLarge: root.dp(12)
+    }
+
+    settings: QtObject {
+        property int radiusSmall: root.dp(4)
+        property int radiusMedium: root.dp(7)
+        property int radiusLarge: root.dp(9)
+        property int radiusXLarge: root.dp(12)
+        property int panelPadding: root.dp(16)
+        readonly property color ink: root.dark
+            ? ColorUtils.mix("#FFFFFF", colors.fg, 0.55)
+            : ColorUtils.mix("#000000", colors.fg, 0.35)
+        readonly property color stroke: ColorUtils.applyAlpha(ink, root.dark ? 0.15 : 0.11)
+        readonly property color strokeStrong: ColorUtils.applyAlpha(ink, root.dark ? 0.25 : 0.19)
+        readonly property color tile: ColorUtils.applyAlpha(ink, root.dark ? 0.065 : 0.045)
+        readonly property color tileHover: ColorUtils.applyAlpha(ink, root.dark ? 0.125 : 0.075)
+        readonly property color tilePressed: ColorUtils.applyAlpha(ink, root.dark ? 0.19 : 0.115)
     }
 
     font: QtObject {

@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
@@ -14,6 +15,28 @@ Item {
     // Canvas bounds for clamping
     property real canvasWidth: 800
     property real canvasHeight: 600
+    required property string outputName
+
+    // Output geometry for the glass backdrop. This panel floats straight on the
+    // wallpaper, so under aurora and angel its translucent fill needs the blurred
+    // crop behind it — without one the wallpaper reads through sharp.
+    property real screenWidth: 1920
+    property real screenHeight: 1080
+    readonly property bool _widgetBlurAvailable: Appearance.effectsEnabled
+        && (Appearance.angelEverywhere
+            || (Appearance.auroraEverywhere && !Appearance.inirEverywhere)
+            || (!Appearance.zzzEverywhere && !Appearance.cookieEverywhere
+                && !Appearance.angelEverywhere && !Appearance.auroraEverywhere
+                && !Appearance.inirEverywhere
+                && (Config.options?.background?.widgets?.style ?? "panel") === "island"
+                && (Config.options?.appearance?.island?.glass ?? true)
+                && (Config.options?.appearance?.island?.opacity ?? 1) < 0.999))
+
+    function _manifestSupportsSurface(configKeys) {
+        const keys = configKeys ?? {};
+        return ["showBackground", "backgroundOpacity", "useBlur", "showBorder",
+            "borderWidth", "borderOpacity", "cornerRadius"].some(key => keys[key] !== undefined);
+    }
 
     // Size constraints
     readonly property int _minWidth: 320
@@ -35,18 +58,54 @@ Item {
         return false;
     }
 
+    readonly property var _mascotInstanceIds: {
+        Config.revision;
+        const obj = Config.getNestedValue("background.widgets.mascotInstances", {});
+        return Object.keys(obj ?? {}).sort();
+    }
+
     // Block clicks from reaching desktop
     MouseArea { anchors.fill: parent; z: -1; acceptedButtons: Qt.AllButtons; propagateComposedEvents: false }
 
     // ── Shadow + Background card ──
-    StyledRectangularShadow { target: _bgCard }
+    StyledRectangularShadow {
+        target: _bgCard
+        visible: !Appearance.zzzEverywhere && !Appearance.auroraEverywhere
+    }
 
-    Rectangle {
+    PanelSurface {
         id: _bgCard
         anchors.fill: parent
-        radius: Appearance.rounding.normal
-        color: Appearance.colors.colLayer1
-        border { width: 1; color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.08) }
+        elevation: 1
+        wallpaperBackdrop: true
+        // mapToItem is a plain call, not a tracked dependency: the panel is
+        // positioned by its Loader, so the binding has to name what moves it.
+        readonly property point _screenPos: {
+            void root.x; void root.y; void root.width; void root.height;
+            void (root.parent?.x ?? 0); void (root.parent?.y ?? 0);
+            return _bgCard.mapToItem(null, 0, 0)
+        }
+        backdropScreenX: _screenPos.x
+        backdropScreenY: _screenPos.y
+        backdropScreenWidth: root.screenWidth
+        backdropScreenHeight: root.screenHeight
+        radiusOverride: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+            : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+            : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
+            : Appearance.rounding.normal
+        // No frameLabel: the header right below already titles the panel; the
+        // corner tape label overlapped it (registration marks alone suffice).
+        techFrame: Appearance.zzzEverywhere
+    }
+
+    // ZZZ alone owns the technical drafting language. Other global styles
+    // keep this utility panel quiet instead of inheriting a foreign texture.
+    DotGridCanvas {
+        anchors.fill: parent
+        anchors.margins: 10
+        visible: Appearance.zzzEverywhere
+        gridSize: 24
+        dotAlpha: 0.07
     }
 
     // ── Header (drag handle) ──
@@ -211,13 +270,80 @@ Item {
             }
 
             WidgetCard { widgetKey: "clock"; widgetIcon: "schedule"; widgetLabel: Translation.tr("Clock"); defaultEnabled: true }
-            WidgetCard { widgetKey: "weather"; widgetIcon: "cloud"; widgetLabel: Translation.tr("Weather"); defaultEnabled: true }
-            WidgetCard { widgetKey: "mediaControls"; widgetIcon: "album"; widgetLabel: Translation.tr("Media Controls"); defaultEnabled: true }
+            WidgetCard { widgetKey: "weather"; widgetIcon: "cloud"; widgetLabel: Translation.tr("Weather"); defaultEnabled: false }
+            WidgetCard { widgetKey: "customImage"; widgetIcon: "add_photo_alternate"; widgetLabel: Translation.tr("Custom image"); defaultEnabled: false }
+            WidgetCard { widgetKey: "imageConverter"; widgetIcon: "transform"; widgetLabel: Translation.tr("Image converter"); defaultEnabled: false }
+            WidgetCard { widgetKey: "mediaControls"; widgetIcon: "album"; widgetLabel: Translation.tr("Media Controls"); defaultEnabled: false }
             WidgetCard { widgetKey: "visualizer"; widgetIcon: "graphic_eq"; widgetLabel: Translation.tr("Visualizer"); defaultEnabled: false }
             WidgetCard { widgetKey: "systemMonitor"; widgetIcon: "monitor_heart"; widgetLabel: Translation.tr("System Monitor"); defaultEnabled: false }
             WidgetCard { widgetKey: "battery"; widgetIcon: "battery_full"; widgetLabel: Translation.tr("Battery"); defaultEnabled: false }
             WidgetCard { widgetKey: "notes"; widgetIcon: "sticky_note_2"; widgetLabel: Translation.tr("Notes"); defaultEnabled: false }
             WidgetCard { widgetKey: "calendarUpcoming"; widgetIcon: "event"; widgetLabel: Translation.tr("Upcoming Events"); defaultEnabled: false }
+            WidgetCard { widgetKey: "uptime"; widgetIcon: "avg_pace"; widgetLabel: Translation.tr("System uptime"); defaultEnabled: false }
+            WidgetCard { widgetKey: "newsTicker"; widgetIcon: "newspaper"; widgetLabel: Translation.tr("News Ticker"); defaultEnabled: false }
+            WidgetCard { widgetKey: "mascot"; widgetIcon: "pets"; widgetLabel: Translation.tr("Mascot"); defaultEnabled: false }
+            WidgetCard { widgetKey: "japaneseTypography"; widgetIcon: "translate"; widgetLabel: Translation.tr("Japanese Typography"); defaultEnabled: false }
+            WidgetCard { widgetKey: "worldClock"; widgetIcon: "public"; widgetLabel: Translation.tr("World clock"); defaultEnabled: false }
+            WidgetCard { widgetKey: "userCard"; widgetIcon: "account_circle"; widgetLabel: Translation.tr("User card"); defaultEnabled: false }
+
+            // ── Extra mascot instances ── (each is its own WidgetCard, positioned/posed independently)
+            Item { width: 1; height: 8 }
+
+            Item {
+                width: parent.width; height: 28
+                StyledText {
+                    text: Translation.tr("More mascots")
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    font.weight: Font.Medium
+                    color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.45)
+                    anchors.verticalCenter: parent.verticalCenter
+                    leftPadding: 4
+                }
+                RippleButton {
+                    anchors { right: parent.right; verticalCenter: parent.verticalCenter }
+                    width: 28; height: 28; buttonRadius: Appearance.rounding.full
+                    colBackground: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.08)
+                    colBackgroundHover: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.14)
+                    colRipple: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.12)
+                    downAction: () => {
+                        const n = root._mascotInstanceIds.length
+                        // Perch-flavored poses read as "sitting on something" out of
+                        // the box, since a fresh instance usually lands on/near a widget
+                        const perchPoses = ["panel-sitter", "dock-hang", "bottom-corner-lean"]
+                        Config.addMascotInstance({
+                            pose: perchPoses[n % perchPoses.length], placementStrategy: "free",
+                            x: 160 + (n % 4) * 40, y: 360 + (n % 4) * 40,
+                            contentWidth: 200
+                        })
+                    }
+                    contentItem: MaterialSymbol { anchors.centerIn: parent; text: "add"; iconSize: 16; color: Appearance.colors.colPrimary }
+                    StyledToolTip { text: Translation.tr("Add another mascot") }
+                }
+            }
+
+            Repeater {
+                model: root._mascotInstanceIds
+                WidgetCard {
+                    required property string modelData
+                    required property int index
+                    widgetKey: modelData
+                    widgetIcon: "pets"
+                    widgetLabel: Translation.tr("Mascot") + " #" + (index + 1)
+                    defaultEnabled: true
+                    isMascotInstance: true
+                }
+            }
+
+            Item {
+                visible: root._mascotInstanceIds.length === 0
+                width: parent.width; height: 40
+                StyledText {
+                    anchors.centerIn: parent
+                    text: Translation.tr("Add a second, third… mascot, each posed independently")
+                    color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.5)
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                }
+            }
 
             // ── Custom widgets section ──
             Item { width: 1; height: 8 }
@@ -277,6 +403,7 @@ Item {
                     widgetLabel: modelData.name
                     defaultEnabled: false
                     isCustom: true
+                    customConfigKeys: modelData.configKeys ?? ({})
                 }
             }
 
@@ -290,13 +417,13 @@ Item {
                     StyledText {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: Translation.tr("No custom widgets found")
-                        color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.3)
+                        color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.65)
                         font.pixelSize: Appearance.font.pixelSize.small
                     }
                     StyledText {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: "~/.config/inir/widgets/"
-                        color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.2)
+                        color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.48)
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         font.family: Appearance.font.family.monospace
                     }
@@ -313,17 +440,40 @@ Item {
         required property string widgetLabel
         required property bool defaultEnabled
         property bool isCustom: false
+        property var customConfigKeys: ({})
+        // An extra mascot instance (Settings › Widgets › Mascot › "+"); widgetKey
+        // is the instance id, config lives under background.widgets.mascotInstances.<id>
+        property bool isMascotInstance: false
 
-        readonly property string _cfgPrefix: isCustom ? ("background.widgets.custom." + widgetKey) : ("background.widgets." + widgetKey)
-        readonly property bool _enabled: Boolean(Config.getNestedValue(card._cfgPrefix + ".enable", card.defaultEnabled))
-        readonly property bool _locked: Boolean(Config.getNestedValue(card._cfgPrefix + ".locked", false))
-        // Whether this widget uses WidgetSurface for its background. Weather and
-        // mediaControls have custom surfaces (pill, album-art card) so the universal
-        // background/blur/border controls don't apply to them — hide that section to
-        // avoid silent setNestedValue failures (their schemas don't expose those keys).
-        readonly property bool _supportsAppearance: !isCustom && [
-            "clock", "visualizer", "systemMonitor", "battery", "notes", "calendarUpcoming"
-        ].indexOf(widgetKey) !== -1
+        readonly property string _cfgPrefix: isMascotInstance
+            ? ("background.widgets.mascotInstances." + widgetKey)
+            : (isCustom ? ("background.widgets.custom." + widgetKey) : ("background.widgets." + widgetKey))
+        readonly property string _layoutKey: isMascotInstance
+            ? ("mascotInstances." + widgetKey)
+            : (isCustom ? ("custom." + widgetKey) : widgetKey)
+        readonly property bool _enabled: DesktopWidgetLayout.enabled(
+            root.outputName, card._layoutKey,
+            Config.getNestedValue(card._cfgPrefix + ".enable", card.defaultEnabled))
+        readonly property bool _locked: Boolean(DesktopWidgetLayout.value(
+            root.outputName, card._layoutKey, "locked",
+            Config.getNestedValue(card._cfgPrefix + ".locked", false)))
+        readonly property real _scale: Number(DesktopWidgetLayout.value(
+            root.outputName, card._layoutKey, "widgetScale",
+            Config.getNestedValue(card._cfgPrefix + ".widgetScale", 100)))
+        // Surface controls are shown only while the active renderer consumes
+        // WidgetSurface. Cookie Clock, Weather Shape and Media Controls own
+        // different backgrounds, so exposing these controls there is misleading.
+        readonly property bool _supportsAppearance: card.isMascotInstance
+            || (card.isCustom && root._manifestSupportsSurface(card.customConfigKeys))
+            || (!card.isCustom && (
+                (card.widgetKey === "clock"
+                    && Config.getNestedValue(card._cfgPrefix + ".style", "cookie") === "digital")
+                || (card.widgetKey === "weather"
+                    && Config.getNestedValue(card._cfgPrefix + ".style", "pill") === "card")
+                || ["imageConverter", "visualizer", "systemMonitor", "battery", "notes",
+                    "calendarUpcoming", "uptime", "newsTicker", "mascot",
+                    "japaneseTypography", "worldClock", "userCard"].indexOf(card.widgetKey) !== -1
+            ))
         readonly property bool _expanded: card._enabled && _expandToggle
         property bool _expandToggle: false
 
@@ -353,7 +503,14 @@ Item {
                 width: parent.width; height: 44
 
                 Row {
-                    anchors { left: parent.left; leftMargin: 12; verticalCenter: parent.verticalCenter }
+                    id: _identityRow
+                    anchors {
+                        left: parent.left
+                        right: _actionsRow.left
+                        leftMargin: 12
+                        rightMargin: 8
+                        verticalCenter: parent.verticalCenter
+                    }
                     spacing: 10
 
                     Rectangle {
@@ -373,15 +530,21 @@ Item {
                     }
 
                     Column {
+                        id: _labelColumn
+                        width: Math.max(0, _identityRow.width - 40)
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 1
                         StyledText {
+                            width: parent.width
                             text: card.widgetLabel
-                            color: card._enabled ? Appearance.colors.colOnLayer1 : ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.5)
+                            elide: Text.ElideRight
+                            wrapMode: Text.NoWrap
+                            color: card._enabled ? Appearance.colors.colOnLayer1 : ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.68)
                             font.pixelSize: Appearance.font.pixelSize.small
                             font.weight: Font.Medium
                         }
                         Row {
+                            width: parent.width
                             spacing: 4
                             visible: card._enabled
                             MaterialSymbol {
@@ -399,18 +562,35 @@ Item {
                             }
                             StyledText {
                                 visible: !card._locked && card._enabled
-                                text: Math.round(Config.getNestedValue(card._cfgPrefix + ".widgetScale", 100)) + "%" + " · " + Math.round(Config.getNestedValue(card._cfgPrefix + ".widgetOpacity", 100)) + "% op"
-                                color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.35)
+                                width: Math.max(0, parent.width - (card._locked ? 14 : 0))
+                                text: Math.round(card._scale) + "%" + " · " + Math.round(Config.getNestedValue(card._cfgPrefix + ".widgetOpacity", 100)) + "% op"
+                                color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.58)
                                 font.pixelSize: Appearance.font.pixelSize.smaller
                                 font.family: Appearance.font.family.numbers
+                                elide: Text.ElideRight
+                                wrapMode: Text.NoWrap
                             }
                         }
                     }
                 }
 
                 Row {
+                    id: _actionsRow
                     anchors { right: parent.right; rightMargin: 8; verticalCenter: parent.verticalCenter }
                     spacing: 4
+
+                    // Remove button (extra mascot instances only — built-ins toggle off instead)
+                    RippleButton {
+                        visible: card.isMascotInstance
+                        width: 30; height: 30
+                        buttonRadius: Appearance.rounding.full
+                        colBackground: "transparent"
+                        colBackgroundHover: ColorUtils.applyAlpha(Appearance.colors.colError, 0.10)
+                        colRipple: ColorUtils.applyAlpha(Appearance.colors.colError, 0.14)
+                        downAction: () => Config.removeMascotInstance(card.widgetKey)
+                        contentItem: MaterialSymbol { anchors.centerIn: parent; text: "delete"; iconSize: 16; color: ColorUtils.applyAlpha(Appearance.colors.colError, 0.85) }
+                        StyledToolTip { text: Translation.tr("Remove this mascot") }
+                    }
 
                     // Expand button
                     RippleButton {
@@ -436,7 +616,8 @@ Item {
                         checked: card._enabled
                         onCheckedChanged: {
                             if (checked !== card._enabled)
-                                Config.setNestedValue(card._cfgPrefix + ".enable", checked)
+                                DesktopWidgetLayout.setEnabled(
+                                    root.outputName, card._layoutKey, checked)
                         }
                     }
                 }
@@ -479,7 +660,9 @@ Item {
                             activeColor: Appearance.colors.colError
                             onCheckedChanged: {
                                 if (checked !== card._locked)
-                                    Config.setNestedValue(card._cfgPrefix + ".locked", checked)
+                                    DesktopWidgetLayout.setValue(
+                                        root.outputName, card._layoutKey,
+                                        "locked", checked)
                             }
                         }
                     }
@@ -492,6 +675,7 @@ Item {
                         MaterialSymbol { text: "zoom_in"; iconSize: 16; color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.5) }
                         StyledText {
                             text: Translation.tr("Scale")
+                            Layout.preferredWidth: 80
                             color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.7)
                             font.pixelSize: Appearance.font.pixelSize.smaller
                         }
@@ -500,9 +684,11 @@ Item {
                             from: 50; to: 200; stepSize: 10
                             configuration: StyledSlider.Configuration.XS
                             stopIndicatorValues: []
-                            value: Config.getNestedValue(card._cfgPrefix + ".widgetScale", 100)
+                            value: card._scale
                             tooltipContent: Math.round(value) + "%"
-                            onMoved: Config.setNestedValue(card._cfgPrefix + ".widgetScale", Math.round(value))
+                            onMoved: DesktopWidgetLayout.setValue(
+                                root.outputName, card._layoutKey,
+                                "widgetScale", Math.round(value))
                         }
                     }
 
@@ -514,6 +700,7 @@ Item {
                         MaterialSymbol { text: "opacity"; iconSize: 16; color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.5) }
                         StyledText {
                             text: Translation.tr("Opacity")
+                            Layout.preferredWidth: 80
                             color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.7)
                             font.pixelSize: Appearance.font.pixelSize.smaller
                         }
@@ -535,7 +722,8 @@ Item {
 
                         MaterialSymbol { text: "contrast"; iconSize: 16; color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.5) }
                         StyledText {
-                            text: Translation.tr("Dim")
+                            text: Translation.tr("Dimming")
+                            Layout.preferredWidth: 80
                             color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.7)
                             font.pixelSize: Appearance.font.pixelSize.smaller
                         }
@@ -580,7 +768,8 @@ Item {
                     RowLayout {
                         width: parent.width
                         spacing: 8
-                        visible: card._supportsAppearance && (Appearance.auroraEverywhere || Appearance.angelEverywhere) && Appearance.effectsEnabled
+                        visible: card._supportsAppearance && root._widgetBlurAvailable
+                            && Config.getNestedValue(card._cfgPrefix + ".showBackground", true)
                         MaterialSymbol { text: "blur_on"; iconSize: 16; color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.5) }
                         StyledText {
                             Layout.fillWidth: true
@@ -604,7 +793,8 @@ Item {
                         visible: card._supportsAppearance && Config.getNestedValue(card._cfgPrefix + ".showBackground", true)
                         MaterialSymbol { text: "opacity"; iconSize: 16; color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.5) }
                         StyledText {
-                            text: Translation.tr("BG opacity")
+                            text: Translation.tr("Background")
+                            Layout.preferredWidth: 80
                             color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.7)
                             font.pixelSize: Appearance.font.pixelSize.smaller
                         }
@@ -613,7 +803,11 @@ Item {
                             from: 0; to: 100; stepSize: 1
                             configuration: StyledSlider.Configuration.XS
                             stopIndicatorValues: []
-                            value: Math.round((Config.getNestedValue(card._cfgPrefix + ".backgroundOpacity", 0.06)) * 100)
+                            value: {
+                                const raw = Number(Config.getNestedValue(card._cfgPrefix + ".backgroundOpacity", 0.06));
+                                if (!Number.isFinite(raw)) return 6;
+                                return Math.max(0, Math.min(100, Math.round(raw <= 1 ? raw * 100 : raw)));
+                            }
                             tooltipContent: Math.round(value) + "%"
                             onMoved: Config.setNestedValue(card._cfgPrefix + ".backgroundOpacity", Math.round(value) / 100)
                         }

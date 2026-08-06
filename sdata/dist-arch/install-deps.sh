@@ -149,15 +149,23 @@ install_pkgbuild_deps() {
     return 0
   fi
   
-  log_info "Installing: ${depends[*]}"
+  local missing_deps=()
+  mapfile -t missing_deps < <(pacman -T "${depends[@]}" 2>/dev/null || true)
+
+  if [[ ${#missing_deps[@]} -eq 0 ]]; then
+    log_success "Already satisfied: ${depends[*]}"
+    return 0
+  fi
+
+  log_info "Installing missing: ${missing_deps[*]}"
   
   local installflags="--needed"
   $ask || installflags="$installflags --noconfirm"
   
   # Install via pacman first (for official repos)
-  pkg_sudo pacman -S $installflags "${depends[@]}" 2>/dev/null || {
+  pkg_sudo pacman -S $installflags "${missing_deps[@]}" 2>/dev/null || {
     # Some packages may be AUR-only, try with AUR helper
-    $AUR_HELPER -S $installflags "${depends[@]}"
+    $AUR_HELPER -S $installflags "${missing_deps[@]}"
   }
 }
 
@@ -348,6 +356,7 @@ CRITICAL_FONTS=(
   ttf-jetbrains-mono-nerd
   ttf-roboto-flex
   ttf-oxanium
+  ttf-gabarito-git
 )
 
 # Optional fonts (have system fallbacks)
@@ -362,6 +371,7 @@ OPTIONAL_FONTS=(
 # These are used as fallback when AUR packages are unavailable
 declare -A FONT_FALLBACK_URLS=(
   ["otf-space-grotesk"]="https://github.com/floriankarsten/space-grotesk/raw/master/fonts/ttf/SpaceGrotesk%5Bwght%5D.ttf"
+  ["ttf-gabarito-git"]="https://github.com/google/fonts/raw/main/ofl/gabarito/Gabarito%5Bwght%5D.ttf"
   ["ttf-readex-pro"]="https://raw.githubusercontent.com/ThomasJockin/readexpro/master/fonts/variable/Readexpro%5BHEXP%2Cwght%5D.ttf"
   ["ttf-rubik-vf"]="https://github.com/googlefonts/rubik/raw/main/fonts/variable/Rubik%5Bwght%5D.ttf"
   ["ttf-oxanium"]="https://github.com/google/fonts/raw/main/ofl/oxanium/Oxanium%5Bwght%5D.ttf"
@@ -474,7 +484,7 @@ tui_info "Registering dependencies with pacman..."
 _meta_dir="./sdata/dist-arch/inir-deps"
 if [[ -f "$_meta_dir/PKGBUILD" ]]; then
   # Update pkgver from VERSION file
-  _inir_ver="$(cat ./VERSION 2>/dev/null || echo '2.27.0')"
+  _inir_ver="$(cat ./VERSION 2>/dev/null || echo '2.29.0')"
   sed -i "s/^pkgver=.*/pkgver=${_inir_ver}/" "$_meta_dir/PKGBUILD"
 
   (

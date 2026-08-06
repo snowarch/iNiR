@@ -11,10 +11,10 @@ import QtQuick.Controls
 TextField {
     id: root
     Material.theme: Material.System
-    Material.accent: Appearance.m3colors.m3primary
-    Material.primary: Appearance.m3colors.m3primary
-    Material.background: Appearance.m3colors.m3surface
-    Material.foreground: Appearance.m3colors.m3onSurface
+    Material.accent: Appearance.colors.colPrimary
+    Material.primary: Appearance.colors.colPrimary
+    Material.background: Appearance.colors.colLayer1
+    Material.foreground: Appearance.colors.colOnSurface
     Material.containerStyle: Material.Outlined
     renderType: Text.NativeRendering
 
@@ -85,9 +85,9 @@ TextField {
         }
     }
 
-    selectedTextColor: Appearance.m3colors.m3onSecondaryContainer
+    selectedTextColor: Appearance.colors.colOnSecondaryContainer
     selectionColor: Appearance.colors.colSecondaryContainer
-    placeholderTextColor: Appearance.m3colors.m3outline
+    placeholderTextColor: Appearance.colors.colOutline
     clip: true
 
     font {

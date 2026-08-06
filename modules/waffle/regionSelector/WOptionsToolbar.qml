@@ -26,6 +26,17 @@ WPane {
         return mode === rectMode || mode === 0
     }
 
+    // Persist only explicit toolbar choices; Record never becomes the
+    // remembered default (parity with the ii OptionsToolbar).
+    function persistSnipChoice() {
+        if (!(Config.options?.regionSelector?.rememberSnipChoice ?? true)) return;
+        const isRecord = root.action === RegionSelection.SnipAction.Record
+            || root.action === RegionSelection.SnipAction.RecordWithSound;
+        const updates = { "regionSelector.lastMode": root.selectionMode };
+        if (!isRecord) updates["regionSelector.lastAction"] = root.action;
+        Config.setNestedValues(updates);
+    }
+
     // Region actions selectable in-overlay
     readonly property var actionList: [
         { "action": RegionSelection.SnipAction.Copy,            "icon": "screenshot",   "name": Translation.tr("Screenshot") },
@@ -58,7 +69,10 @@ WPane {
                     colBackgroundHover: selected ? Looks.colors.accentHover : Looks.colors.bg1Hover
                     colBackgroundActive: selected ? Looks.colors.accentActive : Looks.colors.bg1Active
 
-                    onClicked: root.action = modelData.action
+                    onClicked: {
+                        root.action = modelData.action
+                        root.persistSnipChoice()
+                    }
 
                     FluentIcon {
                         anchors.centerIn: parent
@@ -90,7 +104,10 @@ WPane {
                 colBackgroundHover: root.isRectMode ? Looks.colors.accentHover : Looks.colors.bg1Hover
                 colBackgroundActive: root.isRectMode ? Looks.colors.accentActive : Looks.colors.bg1Active
 
-                onClicked: root.selectionMode = RegionSelection.SelectionMode.RectCorners
+                onClicked: {
+                    root.selectionMode = RegionSelection.SelectionMode.RectCorners
+                    root.persistSnipChoice()
+                }
 
                 FluentIcon {
                     anchors.centerIn: parent
@@ -115,7 +132,10 @@ WPane {
                 colBackgroundHover: !root.isRectMode ? Looks.colors.accentHover : Looks.colors.bg1Hover
                 colBackgroundActive: !root.isRectMode ? Looks.colors.accentActive : Looks.colors.bg1Active
 
-                onClicked: root.selectionMode = RegionSelection.SelectionMode.Circle
+                onClicked: {
+                    root.selectionMode = RegionSelection.SelectionMode.Circle
+                    root.persistSnipChoice()
+                }
 
                 FluentIcon {
                     anchors.centerIn: parent

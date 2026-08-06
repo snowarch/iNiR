@@ -16,31 +16,38 @@ Item {
     id: root
     property bool panelVisible: true
     property real availableHeight: 600
+    property bool applicationDragActive: false
     readonly property string mode: Config.options?.overview?.allAppsGridMode ?? "minimal"
+    readonly property bool zzzEverywhere: Appearance.zzzEverywhere
 
     signal appLaunched()
 
     implicitWidth: gridBackground.implicitWidth + Appearance.sizes.elevationMargin * 2
     implicitHeight: gridBackground.implicitHeight + Appearance.sizes.elevationMargin * 2
 
-    readonly property int gridWidth: 760
+    readonly property int gridWidth: root.zzzEverywhere ? 840 : 760
     readonly property int tileColumns: 6
-    readonly property color headerAccentColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+    readonly property color headerAccentColor: root.zzzEverywhere ? Appearance.zzz.accent
+        : Appearance.angelEverywhere ? Appearance.angel.colPrimary
         : Appearance.inirEverywhere ? Appearance.inir.colAccent
         : Appearance.colors.colPrimary
-    readonly property color surfaceColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+    readonly property color surfaceColor: root.zzzEverywhere ? Appearance.zzz.paper
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
         : Appearance.colors.colLayer1
-    readonly property color surfaceHoverColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+    readonly property color surfaceHoverColor: root.zzzEverywhere ? Appearance.zzz.paperAlt
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover
         : Appearance.colors.colLayer1Hover
-    readonly property color surfaceActiveColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+    readonly property color surfaceActiveColor: root.zzzEverywhere ? Appearance.zzz.signal
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1Active
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
         : Appearance.colors.colLayer1Active
-    readonly property color surfaceBorderColor: Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
+    readonly property color surfaceBorderColor: root.zzzEverywhere ? Appearance.zzz.hairline
+        : Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
         : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
         : Appearance.auroraEverywhere ? Appearance.aurora.colPopupBorder
         : Appearance.colors.colLayer0Border
@@ -143,20 +150,37 @@ Item {
         }
         implicitWidth: root.gridWidth
         implicitHeight: Math.min(root.availableHeight, 680)
-        radius: Appearance.angelEverywhere ? Appearance.angel.roundingLarge
+        radius: root.zzzEverywhere ? Appearance.zzz.panelRadius
+            : Appearance.angelEverywhere ? Appearance.angel.roundingLarge
             : Appearance.inirEverywhere ? Appearance.inir.roundingLarge
             : Appearance.rounding.large
+        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
         fallbackColor: root.surfaceColor
         inirColor: Appearance.inir.colLayer1
         auroraTransparency: Appearance.aurora.popupTransparentize
-        wallpaperBackdropEnabled: root.panelVisible
-        border.width: Appearance.angelEverywhere ? 0 : 1
+        wallpaperBackdropEnabled: root.panelVisible && !root.zzzEverywhere
+        border.width: root.zzzEverywhere ? Appearance.zzz.borderThick : Appearance.angelEverywhere ? 0 : 1
         border.color: root.surfaceBorderColor
+        Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+
+        ZzzPanelBackdrop {
+            anchors.fill: parent
+            label: "APPLICATIONS"
+            index: "GRID"
+            ghostText: "APPS"
+            accentColor: Appearance.zzz.accent
+            showTicks: false
+            showBurst: false
+            showGrid: false
+            horizontalBias: 0.12
+            verticalBias: 0.02
+            ghostStrength: 0.7
+        }
 
         StyledFlickable {
             id: appsFlickable
             anchors.fill: parent
-            anchors.margins: 18
+            anchors.margins: root.zzzEverywhere ? 24 : 18
             contentHeight: contentColumn.implicitHeight
             clip: true
 
@@ -186,7 +210,7 @@ Item {
                             spacing: 1
 
                             StyledText {
-                                text: Translation.tr("All apps")
+                                text: root.zzzEverywhere ? Translation.tr("All apps").toUpperCase() : Translation.tr("All apps")
                                 font {
                                     family: Appearance.font.family.title
                                     pixelSize: Appearance.font.pixelSize.larger
@@ -201,7 +225,8 @@ Item {
                                     ? Translation.tr("Grouped by category")
                                     : Translation.tr("Alphabetical index")
                                 font.pixelSize: Appearance.font.pixelSize.smaller
-                                color: Appearance.colors.colSubtext
+                                color: root.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.colors.colSubtext
+                                Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                                 opacity: 0.85
                             }
                         }
@@ -209,7 +234,8 @@ Item {
                         StyledText {
                             text: Translation.tr("%1 apps").arg(root.appList.length)
                             font.pixelSize: Appearance.font.pixelSize.smaller
-                            color: Appearance.colors.colSubtext
+                            color: root.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.colors.colSubtext
+                            Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                             opacity: 0.7
                         }
                     }
@@ -282,10 +308,13 @@ Item {
                         required property var modelData
                         width: contentColumn.width
                         implicitHeight: catCardColumn.implicitHeight + 32
-                        radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+                        radius: root.zzzEverywhere ? Appearance.zzz.panelRadius
+                            : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
                             : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
                             : Appearance.rounding.normal
-                        color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+                        color: root.zzzEverywhere ? Appearance.zzz.paperAlt
+                            : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                             : Appearance.inirEverywhere ? Appearance.inir.colLayer2
                             : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
                             : Appearance.colors.colLayer2
@@ -327,13 +356,15 @@ Item {
                                     text: catCard.modelData.name
                                     font.pixelSize: Appearance.font.pixelSize.normal
                                     font.weight: Font.DemiBold
-                                    color: Appearance.colors.colOnLayer1
+                                    color: root.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer1
+                                    Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                                 }
 
                                 StyledText {
                                     text: String(catCard.modelData.apps.length)
                                     font.pixelSize: Appearance.font.pixelSize.smaller
-                                    color: Appearance.colors.colSubtext
+                                    color: root.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.colors.colSubtext
+                                    Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                                     opacity: 0.7
                                 }
                             }
@@ -367,7 +398,8 @@ Item {
         PagePlaceholder {
             anchors.fill: parent
             shown: (root.mode === "folder" ? root.categorizedApps.length : root.groupedApps.length) === 0
-            icon: "apps_off"
+            icon: "apps_outage"
+            mascotPose: "chibi-shrug"
             title: Translation.tr("No apps found")
             description: Translation.tr("No desktop applications are visible on this system.")
             descriptionHorizontalAlignment: Text.AlignHCenter
@@ -378,16 +410,42 @@ Item {
     component AppTile: RippleButton {
         id: appBtn
         property var entry
+        readonly property string desktopEntryId: String(appBtn.entry?.id ?? "")
+            .replace(/\.desktop$/i, "")
+        property bool suppressClick: false
         signal activated()
         implicitWidth: 110
         implicitHeight: 98
-        buttonRadius: Appearance.rounding.normal
-        buttonRadiusPressed: Appearance.rounding.small
+        dragTarget: appBtn.desktopEntryId.length > 0 ? appDragProxy : null
+        pointerDragThreshold: 10
+        buttonRadius: root.zzzEverywhere ? Appearance.zzz.panelRadius : Appearance.rounding.normal
+        buttonRadiusPressed: root.zzzEverywhere ? Appearance.zzz.cornerRadius : Appearance.rounding.small
         colBackgroundHover: root.surfaceHoverColor
         colBackgroundToggled: root.surfaceActiveColor
         colBackgroundToggledHover: root.surfaceActiveColor
         colRipple: root.surfaceActiveColor
-        onClicked: appBtn.activated()
+        releaseAction: () => {
+            if (appBtn.suppressClick)
+                appDragReset.restart()
+        }
+        cancelAction: () => {
+            appBtn.suppressClick = false
+            appDragReset.stop()
+        }
+        onPointerDragActiveChanged: {
+            root.applicationDragActive = appBtn.pointerDragActive
+            if (appBtn.pointerDragActive)
+                appBtn.suppressClick = true
+            else if (appBtn.suppressClick)
+                appDragReset.restart()
+        }
+        onClicked: {
+            if (appBtn.suppressClick) {
+                appBtn.suppressClick = false
+                return
+            }
+            appBtn.activated()
+        }
 
         StyledToolTip {
             text: appBtn.entry?.name || ""
@@ -428,7 +486,7 @@ Item {
                 elide: Text.ElideRight
                 maximumLineCount: 2
                 wrapMode: Text.Wrap
-                color: Appearance.colors.colOnLayer1
+                color: root.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer1
 
                 Behavior on color {
                     enabled: Appearance.animationsEnabled
@@ -436,5 +494,40 @@ Item {
                 }
             }
         }
+
+        Timer {
+            id: appDragReset
+            interval: 0
+            onTriggered: appBtn.suppressClick = false
+        }
+
+        Item {
+            id: appDragProxy
+            width: appBtn.width
+            height: appBtn.height
+            z: -100
+
+            Drag.dragType: Drag.Automatic
+            Drag.supportedActions: Qt.CopyAction
+            Drag.keys: ["application/x-inir-desktop-entry"]
+            Drag.mimeData: ({
+                "application/x-inir-desktop-entry": appBtn.desktopEntryId
+            })
+            Drag.imageSource: Quickshell.iconPath(
+                String(appBtn.entry?.icon ?? ""), "application-x-executable")
+            Drag.imageSourceSize: Qt.size(52, 52)
+            Drag.hotSpot: Qt.point(26, 26)
+            Drag.active: appBtn.pointerDragActive && appBtn.desktopEntryId.length > 0
+            Drag.onDragFinished: dropAction => {
+                appDragProxy.x = 0
+                appDragProxy.y = 0
+                root.applicationDragActive = false
+                if (dropAction === Qt.CopyAction)
+                    GlobalStates.closeOverview()
+                appDragReset.restart()
+            }
+        }
+
+        Component.onDestruction: root.applicationDragActive = false
     }
 }

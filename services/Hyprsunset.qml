@@ -10,14 +10,13 @@ import qs.services
 /**
  * Night light service with automatic mode.
  * Uses hyprsunset on Hyprland, wlsunset on Niri.
- * 
- * Based on end4's original implementation with Niri support added.
  */
 Singleton {
     id: root
     property string from: Config.options?.light?.night?.from ?? "19:00" 
     property string to: Config.options?.light?.night?.to ?? "06:30"
     property bool automatic: Config.options?.light?.night?.automatic && (Config?.ready ?? true)
+    property bool manualEnabled: Config.options?.light?.night?.enabled ?? false
     property int colorTemperature: Config.options?.light?.night?.colorTemperature ?? 5000
     property bool shouldBeOn
     property bool firstEvaluation: true
@@ -82,9 +81,16 @@ Singleton {
 
     onShouldBeOnChanged: ensureState()
     function ensureState() {
-        if (!root.automatic || root.manualActive !== undefined)
+        if (root.manualActive !== undefined)
             return;
-        if (root.shouldBeOn) {
+
+        if (root.automatic) {
+            if (root.shouldBeOn) {
+                root.enable();
+            } else {
+                root.disable();
+            }
+        } else if (root.manualEnabled) {
             root.enable();
         } else {
             root.disable();
@@ -190,6 +196,7 @@ Singleton {
         }
 
         root.manualActive = active !== undefined ? active : !root.manualActive;
+        Config.setNestedValue("light.night.enabled", root.manualActive);
         if (root.manualActive) {
             root.enable();
         } else {

@@ -28,6 +28,66 @@ Singleton {
     readonly property string backendProvider: "awww"
     readonly property bool awwwBackendEnabled: true
 
+    // Single gate for all animated wallpaper surfaces (background, backdrops, lock):
+    // freeze video/GIF playback while discharging to save power.
+    readonly property bool batteryPauseActive: (Config.options?.background?.pauseAnimationOnBattery ?? true) && Battery.onBattery
+
+    // ─── Transient wallpaper preview ───
+    // Single entry point for pickers that show a wallpaper before it is applied.
+    // Nothing here writes Config or starts the colour pipeline.
+    //
+    // Which engine is visible depends on the file and the configuration: awww
+    // paints static images, while the internal Video/AnimatedImage/crossfader
+    // paints videos, GIFs, and everything else whenever awww is disabled,
+    // unavailable, or displaced by dynamic parallax. Rather than guess the
+    // owner, the preview is published to both — the visible one shows it and
+    // the other is a no-op. Crucially this only supplies a path; it never
+    // suppresses externalMainWallpaperEligible, so the engine that renders
+    // while browsing is the same one that renders after applying.
+    property string internalPreviewPath: ""
+    property string internalPreviewMonitor: ""
+    readonly property bool internalPreviewActive: internalPreviewPath.length > 0
+
+    function previewWallpaper(path: string, monitorName = ""): void {
+        const normalizedPath = FileUtils.trimFileProtocol(String(path ?? ""))
+        if (!normalizedPath) {
+            root.cancelWallpaperPreview()
+            return
+        }
+
+        root.internalPreviewMonitor = String(monitorName ?? "")
+        root.internalPreviewPath = normalizedPath
+        // No-op for videos, GIFs, and when awww is not running.
+        AwwwBackend.previewImage(normalizedPath, monitorName)
+    }
+
+    // Restore whatever the config says without repainting through a different
+    // engine. Called from every launcher exit path that is not an apply.
+    function cancelWallpaperPreview(): void {
+        root._clearInternalPreview()
+        AwwwBackend.cancelPreview()
+    }
+
+    // The caller is about to apply for real; that apply repaints on its own.
+    function clearWallpaperPreview(): void {
+        root._clearInternalPreview()
+        AwwwBackend.clearPreview()
+    }
+
+    function _clearInternalPreview(): void {
+        root.internalPreviewPath = ""
+        root.internalPreviewMonitor = ""
+    }
+
+    function internalPreviewFor(monitorName: string, fallbackPath: string): string {
+        if (!root.internalPreviewActive)
+            return fallbackPath
+        if (root.internalPreviewMonitor
+                && root.internalPreviewMonitor !== String(monitorName ?? ""))
+            return fallbackPath
+        return root.internalPreviewPath
+    }
+
     // Wallpaper path resolution for aurora/backdrop
     readonly property bool isWaffleFamily: (Config.options?.panelFamily ?? "ii") === "waffle"
     readonly property bool useBackdropWallpaper: isWaffleFamily
@@ -193,9 +253,15 @@ Singleton {
                 _ffGenProc._videoPath = _ffCheckProc._videoPath
                 _ffGenProc._outputPath = _ffCheckProc._outputPath
                 _ffGenProc.command = ["bash", "-c",
+                    // Wallpaper loops usually fade in from black, so frame 0 gives
+                    // this file a nearly black palette — and this frame is what the
+                    // theming pipeline quantizes. Pick a representative frame.
                     "mkdir -p " + JSON.stringify(root._videoThumbDir) +
                     " && ffmpeg -y -i " + JSON.stringify(_ffCheckProc._videoPath) +
-                    " -vframes 1 -q:v 2 " + JSON.stringify(_ffCheckProc._outputPath)]
+                    " -vf " + JSON.stringify("thumbnail=n=100") +
+                    " -frames:v 1 -update 1 -q:v 2 " + JSON.stringify(_ffCheckProc._outputPath) +
+                    " || ffmpeg -y -i " + JSON.stringify(_ffCheckProc._videoPath) +
+                    " -vframes 1 -update 1 -q:v 2 " + JSON.stringify(_ffCheckProc._outputPath)]
                 _ffGenProc.running = true
             }
         }
@@ -247,6 +313,9 @@ Singleton {
     readonly property string effectiveDirectory: FileUtils.trimFileProtocol(folderModel.folder.toString())
     property url defaultFolder: Qt.resolvedUrl(Directories.wallpapersPath)
     property alias folderModel: folderModel
+    property bool _folderModelTransitioning: false
+    readonly property bool folderModelReady: !root._folderModelTransitioning
+        && folderModel.status === FolderListModel.Ready
     property string searchQuery: ""
     readonly property list<string> extensions: ["jpg", "jpeg", "png", "webp", "avif", "bmp", "svg", "gif", "mp4", "webm", "mkv", "avi", "mov"]
     property list<string> wallpapers: []
@@ -283,6 +352,21 @@ Singleton {
 
     function load() {}
     function refresh() {} // Compatibility - FolderListModel auto-refreshes
+
+    function _beginFolderModelTransition(): void {
+        root._folderModelTransitioning = true
+    }
+
+    function _scheduleFolderModelTransitionEnd(): void {
+        if (folderModel.status === FolderListModel.Ready)
+            folderModelTransitionTimer.restart()
+    }
+
+    function _setFolderModelDirectory(path: url): void {
+        root._beginFolderModelTransition()
+        root.directory = path
+        root._scheduleFolderModelTransitionEnd()
+    }
 
     function rebuildWallpapersCache(): void {
         root.wallpapers = []
@@ -738,7 +822,7 @@ Singleton {
         onExited: (exitCode, exitStatus) => {
             if (!validateDirProc._pendingFileCheck) {
                 if (exitCode === 0) {
-                    root.directory = Qt.resolvedUrl(validateDirProc.nicePath)
+                    root._setFolderModelDirectory(Qt.resolvedUrl(validateDirProc.nicePath))
                     return
                 }
                 validateDirProc._pendingFileCheck = true
@@ -746,22 +830,31 @@ Singleton {
                 return
             }
             if (exitCode === 0) {
-                root.directory = Qt.resolvedUrl(FileUtils.parentDirectory(validateDirProc.nicePath))
+                root._setFolderModelDirectory(Qt.resolvedUrl(FileUtils.parentDirectory(validateDirProc.nicePath)))
+            } else {
+                root._scheduleFolderModelTransitionEnd()
             }
         }
     }
 
     function setDirectory(path) {
+        root._beginFolderModelTransition()
         validateDirProc.setDirectoryIfValid(path)
     }
     function navigateUp() {
+        root._beginFolderModelTransition()
         folderModel.navigateUp()
+        root._scheduleFolderModelTransitionEnd()
     }
     function navigateBack() {
+        root._beginFolderModelTransition()
         folderModel.navigateBack()
+        root._scheduleFolderModelTransitionEnd()
     }
     function navigateForward() {
+        root._beginFolderModelTransition()
         folderModel.navigateForward()
+        root._scheduleFolderModelTransitionEnd()
     }
 
     FolderListModelWithHistory {
@@ -785,7 +878,26 @@ Singleton {
         sortField: FolderListModel.Time
         sortReversed: false
         onCountChanged: root.rebuildWallpapersCache()
-        onFolderChanged: root.folderChanged()
+        onFolderChanged: {
+            root.folderChanged()
+            root._scheduleFolderModelTransitionEnd()
+        }
+        onStatusChanged: {
+            if (folderModel.status === FolderListModel.Loading)
+                root._beginFolderModelTransition()
+            else if (folderModel.status === FolderListModel.Ready)
+                root._scheduleFolderModelTransitionEnd()
+        }
+    }
+
+    Timer {
+        id: folderModelTransitionTimer
+        interval: 0
+        repeat: false
+        onTriggered: {
+            if (folderModel.status === FolderListModel.Ready)
+                root._folderModelTransitioning = false
+        }
     }
 
     Timer {
@@ -805,6 +917,33 @@ Singleton {
         root._pendingThumbnailSize = size
         root._pendingThumbnailDir = FileUtils.trimFileProtocol(root.directory)
         thumbgenDebounce.restart()
+    }
+
+    // A still frame owned by iNiR, not the shared freedesktop thumbnail cache.
+    // Both write to ~/.cache/thumbnails/<size>/<md5>.png, and the desktop's own
+    // video thumbnailer decorates its output with a film-strip border — whoever
+    // wrote first won, so a surface that wants a clean frame could not rely on
+    // that path. The generator here is the same ffmpeg call, private location.
+    function videoStillPath(filePath: string): string {
+        const clean = FileUtils.trimFileProtocol(String(filePath ?? ""))
+        if (!clean) return ""
+        return `${Directories.stateUserPath}/generated/wallpaper/still-${MD5.hash(clean)}.png`
+    }
+
+    function ensureVideoStill(filePath: string): void {
+        const clean = FileUtils.trimFileProtocol(String(filePath ?? ""))
+        if (!clean || !root.isVideoFile(clean)) return
+        const outputPath = root.videoStillPath(clean)
+        if (!outputPath) return
+
+        const key = `still:${clean}`
+        if (root._singleThumbPending[key]) return
+        const pending = Object.assign({}, root._singleThumbPending)
+        pending[key] = true
+        root._singleThumbPending = pending
+        root._singleThumbQueue.push({ key: key, filePath: clean, size: "large", outputPath: outputPath })
+        if (!_singleThumbProc.running)
+            _processNextSingleThumb()
     }
 
     function ensureThumbnailForPath(filePath: string, size = "large") {
@@ -836,7 +975,8 @@ Singleton {
         const commandBody = root.isVideoFile(item.filePath)
             ? "mkdir -p " + JSON.stringify(outputDir)
                 + " && [ -f " + JSON.stringify(item.outputPath) + " ] && exit 0 || { ffmpeg -y -i " + JSON.stringify(item.filePath)
-                + " -vframes 1 -vf " + JSON.stringify(`scale='min(${maxSize},iw)':'min(${maxSize},ih)':force_original_aspect_ratio=decrease`)
+                + " -vf " + JSON.stringify(`thumbnail=n=100,scale='min(${maxSize},iw)':'min(${maxSize},ih)':force_original_aspect_ratio=decrease`)
+                + " -frames:v 1 -update 1 "
                 + " " + JSON.stringify(item.outputPath) + " >/dev/null 2>&1 && exit 1; }"
             : "mkdir -p " + JSON.stringify(outputDir)
                 + " && [ -f " + JSON.stringify(item.outputPath) + " ] && exit 0 || { magick " + JSON.stringify(item.filePath + "[0]")
@@ -974,7 +1114,7 @@ Singleton {
         onExited: (exitCode) => {
             if (exitCode === 0) {
                 // Folder exists, temporarily set it and pick random
-                root.directory = Qt.resolvedUrl(_autoPickProc._targetFolder)
+                root._setFolderModelDirectory(Qt.resolvedUrl(_autoPickProc._targetFolder))
                 // Wait for folder model to update before picking
                 _autoPickFolderDelay.restart()
             }

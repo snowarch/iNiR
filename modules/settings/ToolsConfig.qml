@@ -18,9 +18,20 @@ ContentPage {
     property var detectedAudioSources: []
     property var detectedHardwareDevices: []
     property string detectedDefaultSink: ""
+    property string detectedDefaultSource: ""
+    property bool audioMixAvailable: false
 
+    readonly property string recordingAudioMode: RecorderStatus.configuredAudioMode
     readonly property string detectedDefaultAudioSource: detectedDefaultSink.length > 0 ? `${detectedDefaultSink}.monitor` : ""
-    readonly property bool gpuRecordingAvailable: detectedVideoCodecs.some(codec => String(codec).indexOf("_vaapi") !== -1)
+    readonly property var recordingAudioModeOptions: [
+        { value: "none", displayName: Translation.tr("No audio") },
+        { value: "system", displayName: Translation.tr("System audio") },
+        { value: "microphone", displayName: Translation.tr("Microphone") },
+        { value: "both", displayName: Translation.tr("System + microphone") }
+    ]
+    readonly property bool vaapiRecordingAvailable: detectedVideoCodecs.some(codec => String(codec).indexOf("_vaapi") !== -1)
+    readonly property bool nvencRecordingAvailable: detectedVideoCodecs.some(codec => String(codec).indexOf("_nvenc") !== -1)
+    readonly property bool gpuRecordingAvailable: vaapiRecordingAvailable || nvencRecordingAvailable
     readonly property var recordingQualityPresetOptions: [
         { value: "compact", displayName: Translation.tr("Compact") },
         { value: "balanced", displayName: Translation.tr("Balanced") },
@@ -96,6 +107,9 @@ ContentPage {
         case "hevc_vaapi": return Translation.tr("H.265 / HEVC (GPU / VAAPI)")
         case "vp9_vaapi": return Translation.tr("VP9 (GPU / VAAPI)")
         case "av1_vaapi": return Translation.tr("AV1 (GPU / VAAPI)")
+        case "h264_nvenc": return Translation.tr("H.264 (GPU / NVENC)")
+        case "hevc_nvenc": return Translation.tr("H.265 / HEVC (GPU / NVENC)")
+        case "av1_nvenc": return Translation.tr("AV1 (GPU / NVENC)")
         case "libx264": return Translation.tr("H.264 (software)")
         case "libx265": return Translation.tr("H.265 / HEVC (software)")
         default: return codec
@@ -111,15 +125,23 @@ ContentPage {
         }
     }
 
-    function audioSourceDisplayName(source) {
+    function systemAudioSourceDisplayName(source) {
         if (source === "")
             return detectedDefaultAudioSource.length > 0
                 ? `${Translation.tr("Default output monitor")} (${detectedDefaultAudioSource})`
                 : Translation.tr("Default output monitor")
         if (source === detectedDefaultAudioSource)
             return `${Translation.tr("Default output monitor")} (${source})`
-        if (String(source).indexOf(".monitor") !== -1)
-            return `${Translation.tr("Output monitor")} (${source})`
+        return `${Translation.tr("Output monitor")} (${source})`
+    }
+
+    function microphoneSourceDisplayName(source) {
+        if (source === "")
+            return detectedDefaultSource.length > 0
+                ? `${Translation.tr("Default microphone")} (${detectedDefaultSource})`
+                : Translation.tr("Default microphone")
+        if (source === detectedDefaultSource)
+            return `${Translation.tr("Default microphone")} (${source})`
         return source
     }
 
@@ -137,12 +159,16 @@ ContentPage {
             detectedAudioSources = payload.audioSources ?? []
             detectedHardwareDevices = payload.hardwareDevices ?? []
             detectedDefaultSink = payload.defaultSink ?? ""
+            detectedDefaultSource = payload.defaultSource ?? ""
+            audioMixAvailable = payload.audioMixAvailable ?? false
         } catch (e) {
             detectedVideoCodecs = []
             detectedAudioCodecs = []
             detectedAudioSources = []
             detectedHardwareDevices = []
             detectedDefaultSink = ""
+            detectedDefaultSource = ""
+            audioMixAvailable = false
         }
         recordingCapabilitiesLoaded = true
     }
@@ -159,10 +185,23 @@ ContentPage {
         return options
     }
 
-    function availableAudioSourceOptions() {
-        let options = [{ value: "", displayName: audioSourceDisplayName("") }]
-        options = options.concat(detectedAudioSources.map(source => ({ value: source, displayName: audioSourceDisplayName(source) })))
-        options = ensureOption(options, Config.options?.screenRecord?.audioSource ?? "", `${Translation.tr("Configured source")}: ${Config.options?.screenRecord?.audioSource ?? ""}`)
+    function availableSystemAudioSourceOptions() {
+        let options = [{ value: "", displayName: systemAudioSourceDisplayName("") }]
+        options = options.concat(detectedAudioSources
+            .filter(source => String(source).endsWith(".monitor"))
+            .map(source => ({ value: source, displayName: systemAudioSourceDisplayName(source) })))
+        const configured = RecorderStatus.configuredSystemAudioSource
+        options = ensureOption(options, configured, `${Translation.tr("Configured source")}: ${configured}`)
+        return options
+    }
+
+    function availableMicrophoneSourceOptions() {
+        let options = [{ value: "", displayName: microphoneSourceDisplayName("") }]
+        options = options.concat(detectedAudioSources
+            .filter(source => !String(source).endsWith(".monitor"))
+            .map(source => ({ value: source, displayName: microphoneSourceDisplayName(source) })))
+        const configured = RecorderStatus.configuredMicrophoneSource
+        options = ensureOption(options, configured, `${Translation.tr("Configured source")}: ${configured}`)
         return options
     }
 
@@ -216,7 +255,7 @@ ContentPage {
     Process {
         id: recordingCapabilityProbe
         running: true
-        command: ["/usr/bin/bash", "-lc", "python3 - <<'PY'\nimport glob, json, subprocess\n\nenc = subprocess.run(['ffmpeg', '-hide_banner', '-encoders'], capture_output=True, text=True).stdout.splitlines()\nencoders = set()\nfor line in enc:\n    parts = line.split()\n    if len(parts) >= 2:\n        encoders.add(parts[1])\nvideo = [c for c in ['h264_vaapi','hevc_vaapi','vp9_vaapi','av1_vaapi','libx264','libx265'] if c in encoders]\naudio = [c for c in ['aac','libopus','opus'] if c in encoders]\nsources_raw = subprocess.run(['pactl', 'list', 'sources', 'short'], capture_output=True, text=True).stdout.splitlines()\nsources = []\nfor line in sources_raw:\n    parts = line.split()\n    if len(parts) >= 2:\n        sources.append(parts[1])\ndefault_sink = subprocess.run(['pactl', 'get-default-sink'], capture_output=True, text=True).stdout.strip()\ndevices = sorted(glob.glob('/dev/dri/renderD*'))\nprint(json.dumps({\n    'videoCodecs': video,\n    'audioCodecs': audio,\n    'audioSources': sources,\n    'hardwareDevices': devices,\n    'defaultSink': default_sink\n}))\nPY"]
+        command: [Directories.recordScriptPath, "--probe-capabilities"]
         stdout: StdioCollector {
             id: recordingCapabilityCollector
             onStreamFinished: root.updateRecordingCapabilities(recordingCapabilityCollector.text)
@@ -324,7 +363,7 @@ ContentPage {
 
             NoticeBox {
                 Layout.fillWidth: true
-                materialIcon: recordingCapabilitiesLoaded ? (gpuRecordingAvailable ? "memory" : "developer_mode") : "progress_activity"
+                materialIcon: recordingCapabilitiesLoaded ? (gpuRecordingAvailable ? "memory" : "developer_board") : "progress_activity"
                 text: !recordingCapabilitiesLoaded
                     ? Translation.tr("Detecting available encoders…")
                     : gpuRecordingAvailable
@@ -362,6 +401,45 @@ ContentPage {
                 text: Translation.tr("Fallback to safe mode if preferred encoder fails")
                 checked: Config.options?.screenRecord?.enableFallback ?? true
                 onCheckedChanged: root.setRecordingConfig("screenRecord.enableFallback", checked)
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Audio capture")
+
+                RecordingDropdownField {
+                    title: Translation.tr("Recording audio")
+                    description: Translation.tr("Choose whether recordings include system audio, microphone, both, or no audio.")
+                    options: root.recordingAudioModeOptions
+                    currentValue: root.recordingAudioMode
+                    onSelected: newValue => RecorderStatus.setConfiguredAudioMode(newValue)
+                }
+
+                NoticeBox {
+                    Layout.fillWidth: true
+                    visible: root.recordingAudioMode === "both"
+                    materialIcon: root.audioMixAvailable ? "instant_mix" : "warning"
+                    text: root.audioMixAvailable
+                        ? Translation.tr("iNiR combines system audio and microphone automatically. The temporary audio route is removed when recording ends.")
+                        : Translation.tr("System and microphone audio cannot be combined on this setup. Recording will continue with whichever source is available.")
+                }
+
+                RecordingDropdownField {
+                    visible: root.recordingAudioMode === "system" || root.recordingAudioMode === "both"
+                    title: Translation.tr("System audio source")
+                    description: Translation.tr("Auto follows the current default output device.")
+                    options: root.availableSystemAudioSourceOptions()
+                    currentValue: RecorderStatus.configuredSystemAudioSource
+                    onSelected: newValue => RecorderStatus.setConfiguredSystemAudioSource(newValue)
+                }
+
+                RecordingDropdownField {
+                    visible: root.recordingAudioMode === "microphone" || root.recordingAudioMode === "both"
+                    title: Translation.tr("Microphone source")
+                    description: Translation.tr("Auto follows the current default microphone.")
+                    options: root.availableMicrophoneSourceOptions()
+                    currentValue: RecorderStatus.configuredMicrophoneSource
+                    onSelected: newValue => RecorderStatus.setConfiguredMicrophoneSource(newValue)
+                }
             }
 
             ContentSubsection {
@@ -502,7 +580,7 @@ ContentPage {
 
             ContentSubsection {
                 visible: screenRecordSection.isCustomPreset
-                title: Translation.tr("Audio")
+                title: Translation.tr("Audio encoding")
 
                 ConfigRow {
                     uniform: true
@@ -543,19 +621,11 @@ ContentPage {
                         onSelected: newValue => root.setRecordingConfig("screenRecord.audioBackend", newValue)
                     }
                 }
-
-                RecordingDropdownField {
-                    title: Translation.tr("Audio source")
-                    description: Translation.tr("Default output monitor captures desktop audio.")
-                    options: root.availableAudioSourceOptions()
-                    currentValue: Config.options?.screenRecord?.audioSource ?? ""
-                    onSelected: newValue => root.setRecordingConfig("screenRecord.audioSource", newValue)
-                }
             }
 
             ContentSubsection {
-                visible: screenRecordSection.isCustomPreset && root.gpuRecordingAvailable
-                title: Translation.tr("GPU hardware")
+                visible: screenRecordSection.isCustomPreset && root.vaapiRecordingAvailable
+                title: Translation.tr("VAAPI hardware")
 
                 ConfigRow {
                     uniform: true
@@ -600,6 +670,20 @@ ContentPage {
         title: Translation.tr("Region selector (screen snipping/Google Lens)")
 
         SettingsGroup {
+            ContentSubsection {
+                title: Translation.tr("Snip behavior")
+
+                SettingsSwitch {
+                    buttonIcon: "history"
+                    text: Translation.tr("Remember last snip choice")
+                    checked: Config.options?.regionSelector?.rememberSnipChoice ?? true
+                    onCheckedChanged: Config.setNestedValue("regionSelector.rememberSnipChoice", checked)
+                    StyledToolTip {
+                        text: Translation.tr("The unified snip menu reopens with the action and shape last picked in its toolbar. Dedicated screenshot, OCR and visual-search shortcuts always keep their explicit action. Recording is never remembered. When off, the menu opens as a rectangle screenshot.")
+                    }
+                }
+            }
+
             ContentSubsection {
                 title: Translation.tr("Hint target regions")
                 ConfigRow {
@@ -775,7 +859,7 @@ ContentPage {
                     Layout.leftMargin: 10
                     color: Appearance.colors.colSubtext
                     font.pixelSize: Appearance.font.pixelSize.smallie
-                    text: Translation.tr("Press Super+G to toggle appearance")
+                    text: Translation.tr("Floating tools (Super+G)")
                 }
                 Item {
                     Layout.fillWidth: true
@@ -809,107 +893,6 @@ ContentPage {
                 wrapMode: TextEdit.NoWrap
                 onTextChanged: {
                     Config.setNestedValue("apps.discord", text);
-                }
-            }
-        }
-    }
-
-    SettingsCardSection {
-        expanded: false
-        icon: "layers"
-        title: Translation.tr("Overlay widgets")
-
-        SettingsGroup {
-            ContentSubsection {
-                title: Translation.tr("Background & dim")
-
-                SettingsSwitch {
-                    buttonIcon: "water"
-                    text: Translation.tr("Darken screen behind overlay")
-                    checked: Config.options?.overlay?.darkenScreen ?? false
-                    onCheckedChanged: {
-                        Config.setNestedValue("overlay.darkenScreen", checked);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Add a dark scrim behind overlay panels for better visibility")
-                    }
-                }
-
-                ConfigSpinBox {
-                    icon: "opacity"
-                    text: Translation.tr("Overlay scrim dim (%)")
-                    value: Config.options?.overlay?.scrimDim ?? 30
-                    from: 0
-                    to: 100
-                    stepSize: 5
-                    enabled: Config.options?.overlay?.darkenScreen ?? false
-                    onValueChanged: {
-                        Config.setNestedValue("overlay.scrimDim", value);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("How dark the background scrim should be")
-                    }
-                }
-
-                ConfigSpinBox {
-                    icon: "opacity"
-                    text: Translation.tr("Overlay background opacity (%)")
-                    value: Math.round((Config.options?.overlay?.backgroundOpacity ?? 0.9) * 100)
-                    from: 20
-                    to: 100
-                    stepSize: 5
-                    onValueChanged: {
-                        Config.setNestedValue("overlay.backgroundOpacity", value / 100);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Opacity of the overlay panel background")
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Animations")
-
-                SettingsSwitch {
-                    buttonIcon: "movie"
-                    text: Translation.tr("Enable opening zoom animation")
-                    checked: Config.options?.overlay?.openingZoomAnimation ?? true
-                    onCheckedChanged: {
-                        Config.setNestedValue("overlay.openingZoomAnimation", checked);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Animate overlay panels with a zoom effect when opening")
-                    }
-                }
-
-                ConfigSpinBox {
-                    icon: "speed"
-                    text: Translation.tr("Overlay animation duration (ms)")
-                    value: Config.options?.overlay?.animationDurationMs ?? 180
-                    from: 0
-                    to: 1000
-                    stepSize: 20
-                    onValueChanged: {
-                        Config.setNestedValue("overlay.animationDurationMs", value);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Duration of overlay open/close animations")
-                    }
-                }
-
-                ConfigSpinBox {
-                    icon: "speed"
-                    text: Translation.tr("Background dim animation (ms)")
-                    value: Config.options?.overlay?.scrimAnimationDurationMs ?? 140
-                    from: 0
-                    to: 1000
-                    stepSize: 20
-                    onValueChanged: {
-                        Config.setNestedValue("overlay.scrimAnimationDurationMs", value);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Duration of the background scrim fade animation")
-                    }
                 }
             }
         }

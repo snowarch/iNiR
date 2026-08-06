@@ -71,14 +71,4 @@ Scope {
         }
     }
 
-    function toggleOpen() {
-        GlobalStates.waffleWidgetsOpen = !GlobalStates.waffleWidgetsOpen
-    }
-
-    IpcHandler {
-        target: "wwidgets"
-        function toggle(): void { root.toggleOpen() }
-        function close(): void { GlobalStates.waffleWidgetsOpen = false }
-        function open(): void { GlobalStates.waffleWidgetsOpen = true }
-    }
 }

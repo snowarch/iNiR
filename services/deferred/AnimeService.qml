@@ -87,22 +87,30 @@ Singleton {
         const xhr = new XMLHttpRequest()
         xhr.onreadystatechange = function() {
             if (xhr.readyState === XMLHttpRequest.DONE) {
-                if (xhr.status === 200) {
+                let response = null
+                if (xhr.responseText.length > 0) {
                     try {
-                        const response = JSON.parse(xhr.responseText)
-                        if (response.errors) {
-                            callback(null, response.errors[0].message)
-                        } else {
-                            callback(response.data, null)
-                        }
+                        response = JSON.parse(xhr.responseText)
                     } catch (e) {
-                        callback(null, "Parse error: " + e.message)
+                        if (xhr.status === 200) {
+                            callback(null, "Parse error: " + e.message)
+                            return
+                        }
+                    }
+                }
+
+                if (xhr.status === 200) {
+                    if (response?.errors) {
+                        callback(null, response.errors[0].message)
+                    } else {
+                        callback(response?.data ?? null, null)
                     }
                 } else if (xhr.status === 429) {
                     root.lastError = "Rate limited, retrying..."
                     Qt.callLater(() => root._graphql(query, variables, callback), 1000)
                 } else {
-                    callback(null, "HTTP " + xhr.status)
+                    const apiError = response?.errors?.[0]?.message ?? response?.message ?? ""
+                    callback(null, apiError.length > 0 ? apiError : "HTTP " + xhr.status)
                 }
             }
         }

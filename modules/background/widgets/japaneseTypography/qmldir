@@ -1,0 +1,3 @@
+module qs.modules.background.widgets.japaneseTypography
+JapaneseTypographyWidget 1.0 JapaneseTypographyWidget.qml
+VerticalJapaneseText 1.0 VerticalJapaneseText.qml

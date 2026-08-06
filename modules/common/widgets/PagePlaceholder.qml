@@ -10,6 +10,9 @@ Item {
     property string icon: ""
     property string title: ""
     property string description: ""
+    // Optional mascot pose shown instead of the icon (gated by mascot.enable;
+    // the icon is the switched-off fallback)
+    property string mascotPose: ""
     property int shape: MaterialShape.Shape.Clover4Leaf
     property int descriptionHorizontalAlignment: Text.AlignLeft
 
@@ -29,9 +32,19 @@ Item {
         anchors.centerIn: parent
         spacing: Appearance.inirEverywhere ? 8 : 5
 
+        MascotImage {
+            id: placeholderMascot
+            visible: active && root.mascotPose.length > 0
+            Layout.alignment: Qt.AlignHCenter
+            Layout.preferredWidth: 110
+            Layout.preferredHeight: 110
+            pose: root.mascotPose
+            surface: "emptyStates"
+        }
+
         // Inir: simple rectangle with centered icon
         Item {
-            visible: Appearance.inirEverywhere
+            visible: Appearance.inirEverywhere && !placeholderMascot.visible
             Layout.alignment: Qt.AlignHCenter
             width: 72
             height: 72
@@ -54,7 +67,7 @@ Item {
 
         // Material/Aurora: decorative shape wrapper
         MaterialShapeWrappedMaterialSymbol {
-            visible: !Appearance.inirEverywhere
+            visible: !Appearance.inirEverywhere && !placeholderMascot.visible
             Layout.alignment: Qt.AlignHCenter
             text: root.icon
             shape: root.shape
@@ -72,7 +85,7 @@ Item {
                 pixelSize: Appearance.font.pixelSize.larger
                 variableAxes: Appearance.font.variableAxes.title
             }
-            color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.m3colors.m3outline
+            color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colOutline
             horizontalAlignment: Text.AlignHCenter
         }
         StyledText {
@@ -80,7 +93,7 @@ Item {
             Layout.fillWidth: true
             text: root.description
             font.pixelSize: Appearance.font.pixelSize.small
-            color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.m3colors.m3outline
+            color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colOutline
             horizontalAlignment: root.descriptionHorizontalAlignment
             wrapMode: Text.Wrap
         }

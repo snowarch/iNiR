@@ -2,10 +2,12 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
+import qs.modules.pill
 import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Services.SystemTray
 import Quickshell.Widgets
 import Quickshell.Wayland
 
@@ -25,7 +27,18 @@ DockButton {
     // the brief window before the map is populated.
     readonly property var toplevels: (appListRoot?.toplevelsByUniqueId?.[appToplevel?.uniqueId] ?? appToplevel?.toplevels ?? [])
     readonly property var activeToplevel: ToplevelManager.activeToplevel
+    readonly property var niriFocusedWindow: CompositorService.isNiri
+        ? (NiriService.windows?.find(window => window.is_focused)
+            ?? NiriService.activeWindow
+            ?? null)
+        : null
+    readonly property int niriFocusedWindowId:
+        Number(root.niriFocusedWindow?.id ?? -1)
     readonly property string activeWindowKey: {
+        if (CompositorService.isNiri)
+            return root.niriFocusedWindowId >= 0
+                ? "niri:" + root.niriFocusedWindowId
+                : ""
         const active = activeToplevel
         if (!active)
             return ""
@@ -48,24 +61,50 @@ DockButton {
             return "app:" + toplevel.wayland.appId + ":" + (toplevel.title ?? "")
         return ""
     }
-    property bool appIsActive: {
-        const active = activeToplevel
-        if (!active || !active.activated) return false
-        const activeKey = activeWindowKey
-        for (let i = 0; i < toplevels.length; i++) {
-            const toplevel = toplevels[i]
-            if (!toplevel)
-                continue
-            if (toplevel.activated)
+    function _toplevelIsActive(toplevel): bool {
+        if (!toplevel)
+            return false
+        if (CompositorService.isNiri) {
+            if (root.niriFocusedWindowId < 0)
+                return false
+            if (Number(toplevel.niriWindowId ?? -1) === root.niriFocusedWindowId)
                 return true
-            if (activeKey.length > 0 && _toplevelKey(toplevel) === activeKey)
+            const focusedAppId = String(root.niriFocusedWindow?.app_id ?? "").toLowerCase()
+            const toplevelAppId = String(toplevel.appId ?? "").toLowerCase()
+            if (focusedAppId.length === 0 || toplevelAppId !== focusedAppId)
+                return false
+            if (root.toplevels.length <= 1)
+                return true
+            return String(toplevel.title ?? "")
+                === String(root.niriFocusedWindow?.title ?? "")
+        }
+        if (toplevel.activated)
+            return true
+        const activeKey = root.activeWindowKey
+        return activeKey.length > 0 && root._toplevelKey(toplevel) === activeKey
+    }
+    property bool appIsActive: {
+        for (let i = 0; i < toplevels.length; i++) {
+            if (root._toplevelIsActive(toplevels[i]))
                 return true
         }
         return false
     }
     property bool hasWindows: toplevels.length > 0
-    property bool pillStyle:  Config.options?.dock?.style === "pill"
-    property bool macosStyle: Config.options?.dock?.style === "macos"
+    surfaceDialect: Appearance.surfaceDialectFor(
+        Config.options?.dock?.style === "island" ? "island" : "")
+    property bool pillStyle: Config.options?.dock?.style === "pill" && !root.zzzStyle
+    property bool islandStyle: root.surfaceDialect === "island"
+    property bool macosStyle: Config.options?.dock?.style === "macos" && !root.zzzStyle
+
+    readonly property int notificationCount: {
+        if (root.isSeparator || (Config.options?.dock?.notificationBadge ?? true) === false)
+            return 0
+        return Notifications.countForApp([
+            appToplevel?.originalAppId ?? appToplevel?.appId,
+            root.desktopEntry?.name
+        ])
+    }
 
     // Hover preview signals
     signal hoverPreviewRequested()
@@ -90,17 +129,8 @@ DockButton {
         if (!root.appIsActive || toplevels.length <= 1)
             return 0;
 
-        const active = activeToplevel;
-        if (!active) return 0;
-        const activeKey = activeWindowKey;
-
         for (let i = 0; i < toplevels.length; i++) {
-            const toplevel = toplevels[i]
-            if (!toplevel)
-                continue
-            if (toplevel.activated)
-                return i
-            if (activeKey.length > 0 && _toplevelKey(toplevel) === activeKey)
+            if (root._toplevelIsActive(toplevels[i]))
                 return i
         }
         return 0;
@@ -108,10 +138,23 @@ DockButton {
 
     // Subtle highlight for active app (disabled in macOS and pill modes —
     // macOS uses magnify, pill uses its own background highlight)
-    scale: (!macosStyle && !pillStyle && appIsActive) ? 1.05 : 1.0
+    scale: (!macosStyle && !pillStyle && appIsActive) ? (root.zzzStyle ? 1.02 : 1.05) : 1.0
     Behavior on scale {
         enabled: Appearance.animationsEnabled
         animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+    }
+
+    transform: Translate {
+        y: (root.zzzStyle || root.islandStyle) && !root.macosStyle && !root.pillStyle && root.buttonHovered && !root.vertical ? -3 : 0
+        x: (root.zzzStyle || root.islandStyle) && !root.macosStyle && !root.pillStyle && root.buttonHovered && root.vertical ? -3 : 0
+        Behavior on y {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutBack; easing.overshoot: 2.2 }
+        }
+        Behavior on x {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutBack; easing.overshoot: 2.2 }
+        }
     }
 
     property bool isSeparator: appToplevel.appId === "SEPARATOR"
@@ -120,6 +163,34 @@ DockButton {
     // which covers AppImages and other apps where heuristicLookup alone fails.
     property var desktopEntry: AppSearch.lookupDesktopEntry(appToplevel.originalAppId ?? appToplevel.appId)
     enabled: !isSeparator
+
+    readonly property var appTrayItem: {
+        const appKeys = [
+            appToplevel.originalAppId,
+            appToplevel.appId,
+            root.desktopEntry?.id,
+            root.desktopEntry?.name
+        ].map(value => root.normalizedAppKey(value)).filter(value => value.length >= 3)
+
+        return SystemTray.items.values.find(item => {
+            const trayKeys = [item?.id, item?.title]
+                .map(value => root.normalizedAppKey(value))
+                .filter(value => value.length >= 3)
+            return trayKeys.some(trayKey => appKeys.some(appKey => {
+                if (trayKey === appKey)
+                    return true
+                // Reverse-domain desktop ids often end in the short tray id.
+                // Require enough entropy to avoid collisions such as code/vscode.
+                return Math.min(trayKey.length, appKey.length) >= 5
+                    && (trayKey.endsWith(appKey) || appKey.endsWith(trayKey))
+            }))
+        }) ?? null
+    }
+
+    QsMenuOpener {
+        id: appTrayMenuOpener
+        menu: root.appTrayItem?.menu ?? null
+    }
 
     readonly property real dockHeight: Config.options?.dock?.height ?? 70
     readonly property real separatorSize: dockHeight - 50
@@ -132,20 +203,40 @@ DockButton {
     background.visible: !isSeparator && !pillStyle && !macosStyle
 
     // Suppress ripple/hover bg in macOS mode so no colored rect appears under icon
-    colBackgroundHover: macosStyle ? "transparent" : (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
-        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+    // Island mode hovers like a Ricelin row: a faint cream frame fill with a
+    // vermilion-tinted press, instead of the global style's hover chain.
+    colBackgroundHover: macosStyle ? "transparent" : root.islandStyle ? PillTheme.frameBg
+        : (root.zzzStyle ? "transparent"
+        : root.angelStyle ? Appearance.angel.colGlassCard
+        : root.inirStyle ? Appearance.inir.colLayer1Hover
+        : root.auroraStyle ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer0Hover)
-    colRipple: macosStyle ? "transparent" : (Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer1Active
-        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
+    colRipple: macosStyle ? "transparent" : root.islandStyle ? Qt.alpha(PillTheme.vermLit, 0.18)
+        : (root.zzzStyle ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.22)
+        : root.angelStyle ? Appearance.angel.colGlassCardActive
+        : root.inirStyle ? Appearance.inir.colLayer1Active
+        : root.auroraStyle ? Appearance.aurora.colSubSurfaceActive
         : Appearance.colors.colLayer0Active)
+
+    // Tune the inherited zzz tile (DockButton owns the only ZzzPlate).
+    // Hover lifts the tile with a fuller cut; active keeps a moderate chamfer so
+    // the focused read differs from hover. Whisper-thin console lift: a very
+    // faint paper tint so the icon stays the hero, edged with a soft stroke.
+    zzzPlateVisible: root.zzzStyle && !root.isSeparator && !root.islandStyle
+    zzzPlateChamfer: Appearance.zzz.cutCorner * (root.buttonHovered ? 0.85 : root.appIsActive ? 0.6 : 0.45)
+    zzzPlateFill: root.buttonHovered ? ColorUtils.applyAlpha(Appearance.zzz.paper, 0.14)
+        : root.appIsActive ? ColorUtils.applyAlpha(Appearance.zzz.sticker, 0.08)
+        : "transparent"
+    zzzPlateStroke: root.buttonHovered ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.55)
+        : root.appIsActive ? ColorUtils.applyAlpha(Appearance.zzz.sticker, 0.65)
+        : "transparent"
 
     // Pill background (replaces shared panel for this item)
     DockPillItem {
         id: pillBackground
         anchors.fill: parent
         visible: pillStyle && !isSeparator && !Appearance.gameModeMinimal
+        surfaceDialect: root.surfaceDialect
         appIsActive: root.appIsActive
         hasWindows: root.hasWindows
         windowCount: toplevels.length
@@ -160,6 +251,7 @@ DockButton {
         id: macItem
         anchors.fill: parent
         visible: macosStyle && !isSeparator && !Appearance.gameModeMinimal
+        surfaceDialect: root.surfaceDialect
         appIsActive: root.appIsActive
         hasWindows: root.hasWindows
         buttonHovered: root.buttonHovered
@@ -176,7 +268,7 @@ DockButton {
     // Hover shadow (disabled for angel — whole dock already has escalonado)
     StyledRectangularShadow {
         target: root.pillStyle ? pillBackground : root.background
-        visible: !Appearance.angelEverywhere && !root.macosStyle
+        visible: !root.angelStyle && !root.zzzStyle && !root.macosStyle
         opacity: root.buttonHovered && !root.isSeparator
             ? (Appearance.m3colors.darkmode ? 0.18 : 0.35) : 0
         spread: 0
@@ -192,8 +284,9 @@ DockButton {
         sourceComponent: Rectangle {
             width: root.vertical ? root.separatorSize : 1
             height: root.vertical ? 1 : root.separatorSize
-            color: Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
-                 : Appearance.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.7)
+            color: root.inirStyle ? Appearance.inir.colBorderSubtle
+                 : root.zzzStyle ? Appearance.zzz.hairlineStrong
+                 : root.auroraStyle ? ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.7)
                  : Appearance.colors.colOutlineVariant
         }
     }
@@ -232,14 +325,47 @@ DockButton {
         if (id === "spotify" || id === "spotify-launcher") {
             id = "spotify-launcher";
         }
+        // Tray-resident applications may ignore a second launch while hidden.
+        // Prefer their native Library/Open/Show entry when one is available.
+        if (!root.hasWindows) {
+            const restoreEntry = root.findTrayMenuEntry(["library", "open", "show"])
+            if (restoreEntry) {
+                restoreEntry.triggered()
+                return true
+            }
+        }
         if (id && id !== "" && id !== "SEPARATOR") {
-            const entry = AppSearch.lookupDesktopEntry(id);
+            const entry = root.desktopEntry ?? AppSearch.lookupDesktopEntry(id);
             if (entry && AppSearch.launchEntry(entry))
                 return true;
             ShellExec.execCmd(id);
             return true;
         }
         return false;
+    }
+
+    function focusToplevelAt(index: int): void {
+        const toplevel = toplevels[index]
+        if (CompositorService.isNiri) {
+            if (toplevel?.niriWindowId) {
+                NiriService.focusWindow(toplevel.niriWindowId)
+            } else if (toplevel?.activate) {
+                toplevel.activate()
+            }
+        } else {
+            toplevel?.activate()
+        }
+    }
+
+    // Rotate focus through this app's windows. step +1 forward, -1 backward.
+    function cycleWindows(step: int): void {
+        const total = toplevels.length
+        if (total === 0) return
+        // Start from whatever is focused now, so scrolling continues from what
+        // the user sees rather than from this button's own stale counter.
+        const base = root.appIsActive ? root.focusedWindowIndex : lastFocused
+        lastFocused = ((base + step) % total + total) % total
+        focusToplevelAt(lastFocused)
     }
 
     onClicked: {
@@ -255,18 +381,26 @@ DockButton {
             launchFromDesktopEntry();
             return;
         }
-        // Con ventanas: rotar foco entre instancias abiertas
-        const total = toplevels.length
-        lastFocused = (lastFocused + 1) % total
-        const toplevel = toplevels[lastFocused]
-        if (CompositorService.isNiri) {
-            if (toplevel?.niriWindowId) {
-                NiriService.focusWindow(toplevel.niriWindowId)
-            } else if (toplevel?.activate) {
-                toplevel.activate()
+        // Con ventanas: continuar desde la instancia realmente enfocada.
+        // Thumbnail, keyboard and other shell actions can change focus without
+        // updating this button's local counter.
+        cycleWindows(1)
+    }
+
+    // Scroll over an icon to walk through that app's windows.
+    WheelHandler {
+        enabled: root.toplevels.length > 1 && !root.isSeparator
+        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+        property real _accumulated: 0
+        onWheel: event => {
+            // Touchpads emit many small deltas; one notch is 120 units.
+            _accumulated += event.angleDelta.y
+            while (Math.abs(_accumulated) >= 120) {
+                const direction = _accumulated > 0 ? 1 : -1
+                _accumulated -= direction * 120
+                // Scrolling up walks backwards through the window list.
+                root.cycleWindows(-direction)
             }
-        } else {
-            toplevel?.activate()
         }
     }
 
@@ -283,32 +417,97 @@ DockButton {
         root.appListRoot.contextMenuOpen = true
         root.hoverPreviewDismissed()
         hoverDelayTimer.stop()
+        // Snapshot the entries. A live binding on `toplevels` re-evaluates on
+        // every window/title event, which resets the menu's Repeater and kills
+        // the hover state of the item under the cursor.
+        contextMenu.model = root.buildContextMenuModel()
         contextMenu.active = true
     }
 
-    Connections {
-        target: root.appListRoot
-        function onCloseAllContextMenus() {
-            contextMenu.close()
+    function desktopActionIcon(action): var {
+        const explicitIcon = String(action?.icon ?? "").trim()
+        if (explicitIcon.length > 0) {
+            return {
+                iconName: IconThemeService.smartIconName(explicitIcon,
+                    appToplevel.originalAppId ?? appToplevel.appId),
+                monochrome: false
+            }
+        }
+
+        const label = String(action?.name ?? "").toLowerCase()
+        const semanticIcons = [
+            { words: ["new window", "nueva ventana", "nouvelle fenêtre"], icon: "open_in_new" },
+            { words: ["private", "incognito", "privada", "privado"], icon: "visibility_off" },
+            { words: ["store", "tienda", "boutique"], icon: "storefront" },
+            { words: ["community", "comunidad", "communauté"], icon: "groups" },
+            { words: ["library", "biblioteca", "bibliothèque"], icon: "video_library" },
+            { words: ["server", "servidor", "serveur"], icon: "dns" },
+            { words: ["screenshot", "capture", "captura"], icon: "screenshot" },
+            { words: ["news", "noticias", "actualités"], icon: "newspaper" },
+            { words: ["setting", "preference", "parámetro", "ajuste", "paramètre"], icon: "settings" },
+            { words: ["big picture", "fullscreen", "pantalla completa"], icon: "fullscreen" },
+            { words: ["friend", "amigo", "amis"], icon: "group" },
+            { words: ["compose", "redactar", "write", "escribir"], icon: "edit_square" },
+            { words: ["quit", "exit", "salir", "cerrar"], icon: "logout" }
+        ]
+
+        for (const rule of semanticIcons) {
+            if (rule.words.some(word => label.includes(word)))
+                return { iconName: rule.icon, monochrome: true }
+        }
+
+        return {
+            iconName: IconThemeService.smartIconName(root.desktopEntry?.icon ?? "",
+                appToplevel.originalAppId ?? appToplevel.appId),
+            monochrome: false
         }
     }
 
-    DockContextMenu {
-        id: contextMenu
-        anchorItem: root
-        anchorHovered: root.buttonHovered
+    function normalizedAppKey(value): string {
+        return String(value ?? "")
+            .toLowerCase()
+            .replace(/\.desktop$/, "")
+            .replace(/[^a-z0-9]/g, "")
+    }
 
-        onActiveChanged: {
-            if (!active && root.appListRoot) root.appListRoot.contextMenuOpen = false
+    function normalizedActionKey(value): string {
+        return String(value ?? "")
+            .toLowerCase()
+            .replace(/[&_.…\s-]/g, "")
+    }
+
+    function findTrayMenuEntry(labels): var {
+        const wanted = labels.map(label => root.normalizedActionKey(label))
+            .filter(label => label.length > 0)
+        const entries = appTrayMenuOpener.children?.values ?? []
+        return entries.find(entry => entry?.enabled !== false
+            && wanted.includes(root.normalizedActionKey(entry?.text))) ?? null
+    }
+
+    function executeDesktopAction(action): void {
+        // A resident application is authoritative for its own commands. This
+        // also handles clients that ignore their desktop-action URI while hidden.
+        const trayEntry = root.findTrayMenuEntry([action?.id, action?.name])
+        if (trayEntry) {
+            trayEntry.triggered()
+            return
         }
 
-        model: [
+        action.execute()
+    }
+
+    function buildContextMenuModel(): var {
+        return [
             // Desktop actions (if available)
-            ...((root.desktopEntry?.actions?.length > 0) ? root.desktopEntry.actions.map(action => ({
-                iconName: action.icon ?? "",
-                text: action.name,
-                action: () => action.execute()
-            })).concat({ type: "separator" }) : []),
+            ...((root.desktopEntry?.actions?.length > 0) ? root.desktopEntry.actions.map(action => {
+                const resolvedIcon = root.desktopActionIcon(action)
+                return {
+                    iconName: resolvedIcon.iconName,
+                    text: action.name,
+                    monochromeIcon: resolvedIcon.monochrome,
+                    action: () => root.executeDesktopAction(action)
+                }
+            }).concat({ type: "separator" }) : []),
             // Launch new instance
             {
                 iconName: IconThemeService.smartIconName(root.desktopEntry?.icon ?? "", appToplevel.originalAppId ?? appToplevel.appId),
@@ -335,16 +534,37 @@ DockButton {
                 { type: "separator" },
                 {
                     iconName: "close",
-                    text: toplevels.length > 1 ? Translation.tr("Close all windows") : Translation.tr("Close window"),
+                    text: root.toplevels.length > 1 ? Translation.tr("Close all windows") : Translation.tr("Close window"),
                     monochromeIcon: true,
                     action: () => {
-                        for (let toplevel of toplevels) {
-                            toplevel.close()
+                        for (let toplevel of root.toplevels) {
+                            if (CompositorService.isNiri && toplevel?.niriWindowId) {
+                                NiriService.closeWindow(toplevel.niriWindowId)
+                            } else {
+                                toplevel?.close()
+                            }
                         }
                     }
                 }
             ] : [])
         ]
+    }
+
+    Connections {
+        target: root.appListRoot
+        function onCloseAllContextMenus() {
+            contextMenu.close()
+        }
+    }
+
+    DockContextMenu {
+        id: contextMenu
+        anchorItem: root
+        anchorHovered: root.buttonHovered
+
+        onActiveChanged: {
+            if (!active && root.appListRoot) root.appListRoot.contextMenuOpen = false
+        }
     }
 
       contentItem: Loader {
@@ -458,10 +678,52 @@ DockButton {
                     ColorOverlay {
                         anchors.fill: desaturatedIcon
                         source: desaturatedIcon
-                        color: ColorUtils.transparentize(Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary, 0.9)
+                        color: ColorUtils.transparentize(root.inirStyle ? Appearance.inir.colPrimary
+                            : root.zzzStyle ? Appearance.zzz.accent
+                            : Appearance.colors.colPrimary, 0.9)
                     }
                 }
             }
+
+              // Unread notification badge, anchored to the icon's top-right corner
+              Loader {
+                  active: root.notificationCount > 0
+                  anchors {
+                      right: iconImageLoader.right
+                      top: iconImageLoader.top
+                      rightMargin: -4
+                      topMargin: -2
+                  }
+                  sourceComponent: Rectangle {
+                      implicitWidth: Math.max(16, badgeText.implicitWidth + 8)
+                      implicitHeight: 16
+                      radius: root.zzzStyle ? Appearance.zzz.controlRadius : height / 2
+                      color: root.zzzStyle ? Appearance.zzz.signal
+                          : root.inirStyle ? Appearance.inir.colError : Appearance.colors.colError
+                      border.width: 1
+                      border.color: root.zzzStyle ? Appearance.zzz.paper
+                          : root.inirStyle ? Appearance.inir.colLayer1 : Appearance.colors.colLayer1
+
+                      Behavior on implicitWidth {
+                          enabled: Appearance.animationsEnabled
+                          NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                      }
+                      Behavior on color {
+                          enabled: Appearance.animationsEnabled
+                          ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                      }
+
+                      StyledText {
+                          id: badgeText
+                          anchors.centerIn: parent
+                          text: root.notificationCount > 99 ? "99+" : root.notificationCount
+                          font.pixelSize: Appearance.font.pixelSize.smallest
+                          font.weight: Font.Bold
+                          color: root.zzzStyle ? Appearance.zzz.onSignal
+                              : root.inirStyle ? Appearance.inir.colOnError : Appearance.colors.colOnError
+                      }
+                  }
+              }
 
               // Smart indicator: shows window count and which is focused
               // Hidden in macOS and pill modes — those render their own indicators
@@ -505,18 +767,36 @@ DockButton {
                                 return index === root.focusedWindowIndex;
                             }
 
-                            radius: Appearance.angelEverywhere ? 0 : Math.min(width, height) / 2
-                            implicitWidth: Appearance.angelEverywhere
+                            // ZZZ indicators are thin signal pills: accent for the
+                            // focused window, whispered ink for siblings.
+                            radius: root.zzzStyle ? Math.min(width, height) / 2
+                                : root.angelStyle ? 0 : Math.min(width, height) / 2
+                            Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                            implicitWidth: (root.islandStyle || root.zzzStyle)
+                                ? (isFocusedWindow ? 16 : 5)
+                                : root.angelStyle
                                 ? (isFocusedWindow ? 14 : 6)
                                 : (isFocusedWindow ? root.countDotWidth : root.countDotHeight)
-                            implicitHeight: Appearance.angelEverywhere ? 2 : root.countDotHeight
+                            implicitHeight: (root.islandStyle || root.zzzStyle) ? 3
+                                : root.angelStyle ? 2 : root.countDotHeight
+                            // Island indicators are Ricelin filaments: a lit vermilion
+                            // thread for the focused window, whispered cream siblings.
+                            // Island opt-in outranks the zzz accent chain.
                             color: isFocusedWindow
-                                   ? (Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                                   : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
-                                   : ColorUtils.transparentize(Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
-                                   : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0, 0.5)
+                                   ? (root.islandStyle ? PillTheme.vermLit
+                                   : root.zzzStyle ? Appearance.zzz.accent
+                                   : root.angelStyle ? Appearance.angel.colPrimary
+                                   : root.inirStyle ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
+                                   : root.islandStyle ? Qt.alpha(PillTheme.cream, 0.25)
+                                   : ColorUtils.transparentize(root.zzzStyle ? Appearance.zzz.ink
+                                   : root.angelStyle ? Appearance.angel.colTextSecondary
+                                   : root.inirStyle ? Appearance.inir.colText : Appearance.colors.colOnLayer0, 0.65)
 
                             Behavior on implicitWidth {
+                                enabled: Appearance.animationsEnabled
+                                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                            }
+                            Behavior on implicitHeight {
                                 enabled: Appearance.animationsEnabled
                                 NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                             }
@@ -531,11 +811,17 @@ DockButton {
                     Rectangle {
                         opacity: (!root.appIsActive && root.hasWindows && Config.options?.dock?.showAllWindowDots === false) ? 1 : 0
                         visible: opacity > 0
-                        width: Appearance.angelEverywhere ? 6 : 5
-                        height: Appearance.angelEverywhere ? 2 : 5
-                        radius: Appearance.angelEverywhere ? 0 : Math.min(width, height) / 2
-                        color: ColorUtils.transparentize(Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
-                            : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0, 0.5)
+                        width: (root.zzzStyle || root.islandStyle) ? 5 : (root.angelStyle ? 6 : 5)
+                        height: (root.zzzStyle || root.islandStyle) ? 3 : (root.angelStyle ? 2 : 5)
+                        radius: root.zzzStyle ? Math.min(width, height) / 2
+                            : root.angelStyle ? 0 : Math.min(width, height) / 2
+                        color: root.islandStyle ? Qt.alpha(PillTheme.cream, 0.25)
+                            : ColorUtils.transparentize(root.zzzStyle ? Appearance.zzz.ink
+                            : root.angelStyle ? Appearance.angel.colTextSecondary
+                            : root.inirStyle ? Appearance.inir.colText : Appearance.colors.colOnLayer0,
+                            root.zzzStyle ? 0.65 : 0.5)
+                        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animationCurves.zzzOvershoot } }
+                        Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
 
                         Behavior on opacity {
                             enabled: Appearance.animationsEnabled
