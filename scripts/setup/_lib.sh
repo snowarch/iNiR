@@ -72,7 +72,8 @@ setup_fail() {
 setup_init() {
     SETUP_TAG="setup-$1"
     SETUP_TITLE="$2"
-    trap 'setup_fail "$SETUP_TITLE failed at line $LINENO"' ERR
+    # Hold the terminal open on unexpected errors so the user can read the message.
+    trap 'setup_fail "$SETUP_TITLE failed at line $LINENO"; setup_finish_pause' ERR
     setup_notify "Starting…" "download"
     printf '\033[1;35m▶ %s\033[0m  (distro: %s)\n' "$SETUP_TITLE" "$DISTRO_ID"
 }
