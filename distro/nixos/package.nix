@@ -61,6 +61,9 @@
   xwayland-satellite,
   ydotool,
 
+  makeFontsConf,
+  material-symbols,
+
   kdePackages,
   qt6,
 }:
@@ -175,6 +178,9 @@ stdenvNoCC.mkDerivation (finalAttrs: {
         qt6.qtvirtualkeyboard
         qt6.qtwayland
       ];
+      fontconfig = makeFontsConf {
+        fontDirectories = [ material-symbols ];
+      };
     in
     ''
       runHook preInstall
@@ -213,6 +219,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
         --prefix PATH : "${lib.makeBinPath deps}" \
         --prefix QML2_IMPORT_PATH : "${lib.makeSearchPath "lib/qt-6/qml" qml}" \
         --prefix QT_PLUGIN_PATH : "${lib.makeSearchPath "lib/qt-6/plugins" qml}" \
+        --set FONTCONFIG_FILE "${fontconfig}" \
         --set-default INIR_SYSTEM_RUNTIME_DIR "$runtime" \
         --set-default INIR_FALLBACK_SYSTEM_RUNTIME_DIR "$runtime"
 
