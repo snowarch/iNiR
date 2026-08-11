@@ -85,85 +85,6 @@ stdenvNoCC.mkDerivation (finalAttrs: {
 
   installPhase =
     let
-      deps = [
-        bash
-        bc
-        coreutils
-        curl
-        findutils
-        gawk
-        git
-        gnugrep
-        gnused
-        jq
-        procps
-        python3
-        ripgrep
-        rsync
-        systemd
-        wget
-        xdg-utils
-        quickshell
-        wl-clipboard
-        cliphist
-        grim
-        slurp
-        playerctl
-        libnotify
-        glib
-        pipewire
-        pulseaudio
-        wireplumber
-
-        brightnessctl
-        cava
-        ddcutil
-        ffmpeg
-        fish
-        foot
-        fuzzel
-        geoclue2
-        hyprland
-        hyprpicker
-        gum
-        imagemagick
-        kitty
-        libqalculate
-        mpv
-        nautilus
-        networkmanager
-        socat
-        songrec
-        swappy
-        tesseract
-        translate-shell
-        upower
-        wf-recorder
-        wlsunset
-        wtype
-        xwayland-satellite
-        ydotool
-
-        kdePackages.breeze-icons
-        kdePackages.kdialog
-        kdePackages.kirigami
-        kdePackages.kconfig
-        kdePackages.plasma-integration
-        kdePackages.syntax-highlighting
-        qt6.qt5compat
-        qt6.qtbase
-        qt6.qtdeclarative
-        qt6.qtimageformats
-        qt6.qtmultimedia
-        qt6.qtpositioning
-        qt6.qtquicktimeline
-        qt6.qtsensors
-        qt6.qtsvg
-        qt6.qttools
-        qt6.qttranslations
-        qt6.qtvirtualkeyboard
-        qt6.qtwayland
-      ];
       qml = [
         kdePackages.kirigami.passthru.unwrapped
         kdePackages.syntax-highlighting
@@ -216,7 +137,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
         -exec sed -i '1!s#/usr/bin/##g' {} +
 
       makeWrapper "$runtime/scripts/inir" "$out/bin/inir" \
-        --prefix PATH : "${lib.makeBinPath deps}" \
+        --prefix PATH : "${lib.makeBinPath finalAttrs.passthru.runtimeDependencies}" \
         --prefix QML2_IMPORT_PATH : "${lib.makeSearchPath "lib/qt-6/qml" qml}" \
         --prefix QT_PLUGIN_PATH : "${lib.makeSearchPath "lib/qt-6/plugins" qml}" \
         --set FONTCONFIG_FILE "${fontconfig}" \
@@ -225,4 +146,92 @@ stdenvNoCC.mkDerivation (finalAttrs: {
 
       runHook postInstall
     '';
+
+  passthru.runtimeDependencies = [
+    bash
+    bc
+    coreutils
+    curl
+    findutils
+    gawk
+    git
+    gnugrep
+    gnused
+    jq
+    procps
+    python3
+    ripgrep
+    rsync
+    systemd
+    wget
+    xdg-utils
+    quickshell
+    wl-clipboard
+    cliphist
+    grim
+    slurp
+    playerctl
+    libnotify
+    glib
+    pipewire
+    pulseaudio
+    wireplumber
+
+    brightnessctl
+    cava
+    ddcutil
+    ffmpeg
+    fish
+    foot
+    fuzzel
+    geoclue2
+    hyprland
+    hyprpicker
+    gum
+    imagemagick
+    kitty
+    libqalculate
+    mpv
+    nautilus
+    networkmanager
+    socat
+    songrec
+    swappy
+    tesseract
+    translate-shell
+    upower
+    wf-recorder
+    wlsunset
+    wtype
+    xwayland-satellite
+    ydotool
+
+    kdePackages.breeze-icons
+    kdePackages.kdialog
+    kdePackages.kirigami
+    kdePackages.kconfig
+    kdePackages.plasma-integration
+    kdePackages.syntax-highlighting
+    qt6.qt5compat
+    qt6.qtbase
+    qt6.qtdeclarative
+    qt6.qtimageformats
+    qt6.qtmultimedia
+    qt6.qtpositioning
+    qt6.qtquicktimeline
+    qt6.qtsensors
+    qt6.qtsvg
+    qt6.qttools
+    qt6.qttranslations
+    qt6.qtvirtualkeyboard
+    qt6.qtwayland
+  ];
+
+  meta = {
+    description = "Complete desktop shell for Niri, built on Quickshell";
+    homepage = "https://github.com/snowarch/inir";
+    license = lib.licenses.gpl3Only;
+    platforms = lib.platforms.linux;
+    mainProgram = "inir";
+  };
 })
