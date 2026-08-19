@@ -1,0 +1,68 @@
+/* ==UserStyle==
+@name           material github
+@namespace      github.com/openstyles/stylus
+@version        1.0.0
+@description    A new userstyle
+@author         Me
+==/UserStyle== */
+
+@-moz-document domain("github.com") {
+    :root {
+        --bgColor-default: var(--background) !important;
+        --bgColor-muted: var(--surface-container-low) !important;
+        --bgColor-inset: var(--surface-container-lowest) !important;
+        --bgColor-emphasis: var(--surface-bright) !important;
+
+        /* Borders */
+        --borderColor-default: var(--outline-variant) !important;
+        --borderColor-muted: var(--outline-variant) !important;
+        --borderColor-emphasis: var(--outline) !important;
+
+        /* Text Colors */
+        --fgColor-default: var(--on-surface) !important;
+        --fgColor-muted: var(--on-surface-variant) !important;
+        --fgColor-accent: var(--primary) !important;
+
+        /* Buttons */
+        --button-primary-bgColor-rest: var(--primary) !important;
+        --button-primary-fgColor-rest: var(--on-primary) !important;
+        --button-primary-bgColor-hover: var(--primary-fixed-dim) !important;
+        --button-primary-bgColor-active: var(--primary-fixed) !important;
+        --button-primary-borderColor-rest: var(--outline-variant) !important;
+
+        --button-default-bgColor-rest: var(--surface-container-high) !important;
+        --button-default-fgColor-rest: var(--on-surface) !important;
+        --button-default-bgColor-hover: var(--surface-bright) !important;
+        --buttonCounter-default-bgColor-rest: var(--surface-container-highest) !important;
+
+        --bgColor-accent-emphasis: var(--primary) !important;
+        --borderColor-accent-emphasis: var(--primary) !important;
+        --bgColor-accent-muted: var(--primary-container) !important;
+        --borderColor-accent-muted: var(--primary-container) !important;
+
+        /* Looks kinda bad in issues but here if you want it */
+        /* --bgColor-success-emphasis: var(--tertiary) !important; */
+        /* --fgColor-success: var(--tertiary) !important; */
+
+        --bgColor-danger-emphasis: var(--error) !important;
+        --fgColor-danger: var(--error) !important;
+        --button-danger-fgColor-rest: var(--error) !important;
+        --button-danger-bgColor-hover: var(--error-container) !important;
+
+        --bgColor-attention-emphasis: var(--secondary) !important;
+        --borderColor-attention-muted: var(--secondary-container) !important;
+
+        --control-checked-bgColor-rest: var(--primary) !important;
+        --control-checked-bgColor-hover: var(--primary-fixed-dim) !important;
+        --control-checked-bgColor-active: var(--primary-fixed) !important;
+
+        /* Star button */
+        --button-star-iconColor: var(--primary) !important;
+
+        /* Hovered button color */
+        --control-bgColor-active: var(--surface-container-highest) !important;
+
+        /* Profile popout color */
+        --overlay-bgColor: var(--surface-container) !important;
+    }
+}

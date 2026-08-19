@@ -1,0 +1,125 @@
+/* ==UserStyle==
+@name           www.google.com
+@namespace      github.com/openstyles/stylus
+@version        1.0.0
+@description    A new userstyle
+@author         Me
+==/UserStyle== */
+@-moz-document url-prefix("https://www.google.com/"),
+url-prefix("https://ogs.google.com/") {
+
+    /*BACKGROUND*/
+    body,
+    .c93Gbe,
+    .Lvwayc,
+    .J5OKee,
+    .hCDve,
+    .aRDKUe,
+    .vbIt3d,
+    .eAQQC,
+    .p4wth,
+    .f6F9Be,
+    .zNsLfb,
+    .rfiSsc,
+    .wIjY0d,
+    .A9fM7e,
+    .zRQJhd {
+        background: var(--background) !important;
+        color: var(--on-background) !important;
+    }
+
+    /*SVG*/
+    svg {
+        fill: var(--tertiary-container) !important;
+    }
+
+    /*SVG*/
+    path {
+        fill: var(--tertiary-container) !important;
+    }
+
+    /*LINKS*/
+    a,
+    .R1QWuf,
+    .M5dSnd {
+        color: var(--secondary) !important;
+    }
+
+    hr {
+        background: var(--tertiary) !important;
+    }
+
+    /*BUTTONS*/
+    .lJ9FBc input[type="submit"],
+    .gbqfba,
+    .J5OKee .Lpl1Ef,
+    .aRDKUe .Lpl1Ef,
+    .ZFiwCf,
+    .in7vHe,
+    .UivI7b,
+    .WY0eLb .b3puKe,
+    .TQc1id .u7yw9 .b3puKe,
+    .YXe3R,
+    .dnXCYb .p8Jhnd,
+    .sr9hec,
+    .GKS7s,
+    .vBfb5,
+    .BA0zte,
+    .eA0Zlc.mkpRId.RLdvSe,
+    .iKaRFc,
+    .GQ0bde .niO4u,
+    .ZkkK1e,
+    .fxvkXe,
+    .p8Jhnd {
+        background-color: var(--surface-container) !important;
+        border-color: var(--outline) !important;
+        color: var(--surface-tint);
+    }
+
+    /*HEADER*/
+    .VHFyob .CvDJxb {
+        background: var(--surface-variant) !important;
+    }
+
+    /*SEARCH BOX*/
+    .RNNXgb,
+    .aajZCb,
+    .plR5qb {
+        background-color: var(--surface-container) !important;
+        border-color: var(--outline) !important;
+        color: var(--surface-tint);
+    }
+
+    .RDmXvc,
+    .Zze5V,
+    .F9Idpe {
+        display: none !important;
+    }
+
+    .UUhRt,
+    .WZ4MEf.KPxpKc {
+        background: var(--primary) !important;
+        color: var(--on-primary) !important;
+    }
+
+    .AOvabd,
+    .dxp44d,
+    .WZ4MEf {
+        background: var(--on-secondary) !important;
+        color: var(--secondary) !important;
+    }
+
+    .MEdqYd,
+    .feqqG,
+    .WZ4MEf.SMpThd {
+        background: var(--on-tertiary) !important;
+        color: var(--tertiary) !important;
+    }
+
+    .WZ4MEf.Et2wDc {
+        background: var(--on-primary) !important;
+        color: var(--primary) !important;
+    }
+
+    .dG2XIf {}
+}
