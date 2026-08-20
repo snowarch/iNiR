@@ -37,8 +37,20 @@ Row {
     height: span * s
     spacing: 1.2 * s
 
-    onRunningChanged: running ? CavaService.subscribe() : CavaService.unsubscribe()
-    Component.onDestruction: if (running) CavaService.unsubscribe()
+    readonly property bool _wanted: running && !Appearance.gameModeMinimal
+    property bool _held: false
+
+    function _reconcile(): void {
+        if (_wanted === _held)
+            return
+        if (_wanted) CavaService.subscribe()
+        else CavaService.unsubscribe()
+        _held = _wanted
+    }
+
+    on_WantedChanged: root._reconcile()
+    Component.onCompleted: root._reconcile()
+    Component.onDestruction: if (root._held) CavaService.unsubscribe()
 
     /**
      * Raw band peaks for the five drawn bars. Peak, not mean: ten source bands

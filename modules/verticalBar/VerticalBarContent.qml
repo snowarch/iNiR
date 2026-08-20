@@ -274,7 +274,7 @@ Item { // Bar content region
         onMovedAway: GlobalStates.osdBrightnessOpen = false
         onPressed: event => {
             if (event.button === Qt.LeftButton)
-                GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen;
+                GlobalStates.toggleSidebarLeft(root.screen?.name ?? "");
             else if (event.button === Qt.RightButton)
                 root.openBarContextMenu(event.x, event.y, barTopSectionMouseArea)
         }
@@ -370,7 +370,7 @@ Item { // Bar content region
 
                     onPressed: event => {
                         if (event.button === Qt.RightButton) {
-                            GlobalStates.overviewOpen = !GlobalStates.overviewOpen;
+                            GlobalStates.toggleOverview(root.screen?.name ?? "");
                         }
                     }
                 }
@@ -456,7 +456,7 @@ Item { // Bar content region
         onMovedAway: GlobalStates.osdVolumeOpen = false;
         onPressed: event => {
             if (event.button === Qt.LeftButton) {
-                GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen;
+                GlobalStates.toggleSidebarRight(root.screen?.name ?? "");
             } else if (event.button === Qt.RightButton) {
                 root.openBarContextMenu(event.x, event.y, barBottomSectionMouseArea)
             }
@@ -497,6 +497,7 @@ Item { // Bar content region
                 colBackgroundToggledHover: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.colors.colSecondaryContainerHover
                 colRippleToggled: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colSecondaryContainerActive
                 toggled: GlobalStates.sidebarRightOpen
+                    && GlobalStates.sidebarRightPresentationOutput === (root.screen?.name ?? "")
                 property color colText: toggled
                     ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnSecondaryContainer)
                     : Appearance.colors.colOnLayer0
@@ -506,7 +507,7 @@ Item { // Bar content region
                 }
 
                 onPressed: {
-                    GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen;
+                    GlobalStates.toggleSidebarRight(root.screen?.name ?? "");
                 }
 
                 ColumnLayout {

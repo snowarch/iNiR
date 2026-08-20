@@ -36,10 +36,9 @@ Scope {
         if (Cliphist.entryIsImage(entry)) {
             cleaned = cleaned.replace(/^\s*\[\[.*?\]\]\s*/, "")
         }
-        // Strip HTML tags if content looks like HTML markup
-        if (/^\s*<(!DOCTYPE|html|meta|div|span|p[\s>]|table|body|head)/i.test(cleaned)) {
-            cleaned = StringUtils.stripHtmlTags(cleaned)
-        }
+        const unwrapped = StringUtils.cliphistMarkupPreview(cleaned)
+        if (unwrapped !== cleaned)
+            cleaned = unwrapped.length > 0 ? unwrapped : Translation.tr("Rich text")
         cleaned = StringUtils.sanitizeDisplayText(cleaned)
         return cleaned.trim()
     }

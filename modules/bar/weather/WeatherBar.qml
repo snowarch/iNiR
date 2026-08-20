@@ -40,7 +40,7 @@ MouseArea {
             Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "mascot", "appear", "weather-umbrella", "top"])
         }
         GlobalStates.sidebarRightRequestedWidget = "weather"
-        GlobalStates.sidebarRightOpen = true
+        GlobalStates.openSidebarRight(root.QsWindow.window?.screen?.name ?? "")
     }
 
     RowLayout {

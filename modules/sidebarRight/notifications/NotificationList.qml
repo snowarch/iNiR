@@ -70,7 +70,7 @@ Item {
                 Layout.alignment: Qt.AlignHCenter
                 icon: "notifications_active"
                 shape: MaterialShape.Shape.Ghostish
-                text: Notifications.silent ? Translation.tr("Muted") : Translation.tr("Clear")
+                text: Notifications.silent ? Translation.tr("Muted") : Translation.tr("All caught up")
             }
         }
 
@@ -91,7 +91,7 @@ Item {
 
             StyledText {
                 Layout.alignment: Qt.AlignHCenter
-                text: Notifications.silent ? Translation.tr("Muted") : Translation.tr("Clear")
+                text: Notifications.silent ? Translation.tr("Muted") : Translation.tr("All caught up")
                 font.pixelSize: Appearance.font.pixelSize.normal
                 font.weight: Font.DemiBold
                 color: Appearance.colors.colOnSurface

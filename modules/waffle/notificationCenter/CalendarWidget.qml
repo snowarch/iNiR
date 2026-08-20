@@ -32,6 +32,7 @@ BodyRectangle {
         return cleaned ? Qt.locale(cleaned) : Qt.locale();
     }
 
+    // Animating this height resizes the layer surface every frame.
     implicitHeight: collapsed ? 0 : calendarContent.implicitHeight
     implicitWidth: calendarContent.implicitWidth
 
@@ -438,6 +439,7 @@ BodyRectangle {
     component DayButton: WButton {
         id: dayButton
         required property var model
+        animateStateChanges: false
         checked: model.today || (root.selectedDate !== null && root.selectedDate.toDateString() === dayButton.buttonDate?.toDateString())
         enabled: hovered || calendarView.scrolling || checked || model.month === calendarView.focusedMonth
         implicitWidth: calendarView.buttonSize

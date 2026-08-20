@@ -18,8 +18,8 @@ Item {
     readonly property bool inirEverywhere: Appearance.inirEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
 
-    function getGreeting(): string {
-        const hour = new Date().getHours()
+    readonly property string greeting: {
+        const hour = DateTime.clock.hours
         if (hour < 5) return Translation.tr("Good Night")
         if (hour < 12) return Translation.tr("Good Morning")
         if (hour < 18) return Translation.tr("Good Afternoon")
@@ -154,7 +154,7 @@ Item {
         ColumnLayout {
             spacing: 0
             StyledText {
-                text: root.getGreeting()
+                text: root.greeting
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 color: Appearance.angelEverywhere ? Appearance.angel.colPrimary
                      : root.inirEverywhere ? Appearance.inir.colPrimary 

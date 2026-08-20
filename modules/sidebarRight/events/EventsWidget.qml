@@ -49,10 +49,13 @@ Item {
         function onEventsUpdated() { root._externalTrigger++ }
     }
     
+    readonly property string _todayKey: Qt.formatDate(DateTime.clock.date, "yyyy-MM-dd")
+
     // Merged events: local + external, sorted by date
     readonly property var mergedEvents: {
         const _t = root._eventsTrigger
         const _t2 = root._externalTrigger
+        const _d = root._todayKey
         return _buildMergedEvents()
     }
 

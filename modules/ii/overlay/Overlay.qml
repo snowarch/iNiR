@@ -79,12 +79,17 @@ Scope {
             visible: GlobalStates.overlayOpen || OverlayContext.hasPinnedWidgets
             exclusionMode: ExclusionMode.Ignore
             WlrLayershell.namespace: "quickshell:overlay"
-            WlrLayershell.layer: WlrLayer.Overlay
+            // Native dialogs are ordinary toplevel windows. Yield the layer-shell
+            // overlay while one is visible so the picker is not buried behind it.
+            WlrLayershell.layer: OverlayContext.nativeDialogOpen
+                ? WlrLayer.Bottom : WlrLayer.Overlay
             // Exclusive focus when open; OnDemand for pinned clickable widgets when closed;
             // None otherwise (avoids input capture during GameMode)
-            WlrLayershell.keyboardFocus: GlobalStates.overlayOpen
+            WlrLayershell.keyboardFocus: OverlayContext.nativeDialogOpen
+                ? WlrKeyboardFocus.None
+                : GlobalStates.overlayOpen
                 ? WlrKeyboardFocus.Exclusive
-                : (OverlayContext.clickableWidgets.length > 0 && !GameMode.shouldHidePanels
+                : (OverlayContext.clickableWidgets.length > 0
                     ? WlrKeyboardFocus.OnDemand
                     : WlrKeyboardFocus.None)
             color: "transparent"
@@ -102,7 +107,7 @@ Scope {
             property var _activeClickableRegions: []
             function _rebuildClickableRegions() {
                 for (const region of overlayWindow._activeClickableRegions) region.destroy();
-                overlayWindow._activeClickableRegions = GameMode.shouldHidePanels ? [] : OverlayContext.clickableWidgets.map((widget) => regionComponent.createObject(overlayWindow, {
+                overlayWindow._activeClickableRegions = OverlayContext.clickableWidgets.map((widget) => regionComponent.createObject(overlayWindow, {
                     item: widget
                 }));
                 clickableRegionMask.regions = overlayWindow._activeClickableRegions;
@@ -112,14 +117,10 @@ Scope {
                 target: OverlayContext
                 function onClickableWidgetsChanged() { overlayWindow._rebuildClickableRegions(); }
             }
-            Connections {
-                target: GameMode
-                function onShouldHidePanelsChanged() { overlayWindow._rebuildClickableRegions(); }
-            }
-
             mask: Region {
                 id: clickableRegionMask
-                item: GlobalStates.overlayOpen ? overlayContent : emptyMask
+                item: GlobalStates.overlayOpen && !OverlayContext.nativeDialogOpen
+                    ? overlayContent : emptyMask
                 regions: []
             }
 
@@ -135,7 +136,8 @@ Scope {
                 windows: [overlayWindow]
                 active: false
                 onCleared: () => {
-                    if (!active) GlobalStates.overlayOpen = false;
+                    if (!active && !OverlayContext.nativeDialogOpen)
+                        GlobalStates.overlayOpen = false;
                 }
             }
 
@@ -146,12 +148,23 @@ Scope {
                 }
             }
 
+            Connections {
+                target: OverlayContext
+                function onNativeDialogOpenChanged() {
+                    if (OverlayContext.nativeDialogOpen)
+                        grab.active = false
+                    else
+                        delayedGrabTimer.restart()
+                }
+            }
+
             Timer {
                 id: delayedGrabTimer
                 interval: Appearance.calcEffectiveDuration(
                     Config.options.overlay.animationDurationMs ?? Appearance.animation.elementMoveFast.duration)
                 onTriggered: {
-                    grab.active = GlobalStates.overlayOpen;
+                    grab.active = GlobalStates.overlayOpen
+                        && !OverlayContext.nativeDialogOpen;
                 }
             }
 

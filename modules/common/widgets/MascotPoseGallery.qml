@@ -32,6 +32,24 @@ ColumnLayout {
     property bool expanded: false
     signal selected(string value)
 
+    // Chrome is parameterised so the same component can wear either family's
+    // skin. Defaults are the ii/Material tokens; waffle call sites override
+    // them with Looks-derived values so the gallery stops looking like a
+    // Material widget dropped into a waffle card.
+    property real surfaceRadius: Appearance.rounding.small
+    property real cellRadius: Appearance.rounding.verysmall
+    property color surfaceColor: Appearance.colors.colLayer2
+    property color surfaceHoverColor: Appearance.colors.colLayer2Hover
+    property color surfacePressedColor: Appearance.colors.colLayer2Active
+    property color thumbBackdropColor: Appearance.colors.colLayer3
+    property color selectedColor: Appearance.colors.colPrimaryContainer
+    property color selectedBorderColor: Appearance.colors.colPrimary
+    property color cellBorderColor: Appearance.colors.colOutlineVariant
+    property color textColor: Appearance.colors.colOnLayer1
+    property color subTextColor: Appearance.colors.colSubtext
+    property color iconColor: Appearance.colors.colOnLayer2
+    property color selectedTextColor: Appearance.colors.colOnPrimaryContainer
+
     readonly property var _current: {
         const found = options.find(o => o.value === root.currentValue)
         return found ?? (options.length ? options[0] : ({ displayName: "", value: "", image: "" }))
@@ -44,10 +62,10 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: 56
-        radius: Appearance.rounding.small
-        color: headerTap.pressed ? Appearance.colors.colLayer2Active
-             : headerHover.hovered ? Appearance.colors.colLayer2Hover
-             : Appearance.colors.colLayer2
+        radius: root.surfaceRadius
+        color: headerTap.pressed ? root.surfacePressedColor
+             : headerHover.hovered ? root.surfaceHoverColor
+             : root.surfaceColor
 
         RowLayout {
             anchors.fill: parent
@@ -58,8 +76,8 @@ ColumnLayout {
             Rectangle {
                 implicitWidth: 44
                 implicitHeight: 44
-                radius: Appearance.rounding.verysmall
-                color: Appearance.colors.colLayer3
+                radius: root.cellRadius
+                color: root.thumbBackdropColor
 
                 AnimatedImage {
                     anchors.fill: parent
@@ -79,7 +97,7 @@ ColumnLayout {
                     visible: !(root._current.image?.length > 0)
                     text: "casino"
                     iconSize: 24
-                    color: Appearance.colors.colOnLayer2
+                    color: root.iconColor
                 }
             }
 
@@ -90,14 +108,14 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: root.label
                     font.pixelSize: Appearance.font.pixelSize.small
-                    color: Appearance.colors.colOnLayer1
+                    color: root.textColor
                     elide: Text.ElideRight
                 }
                 StyledText {
                     Layout.fillWidth: true
                     text: root._current.displayName ?? ""
                     font.pixelSize: Appearance.font.pixelSize.smaller
-                    color: Appearance.colors.colSubtext
+                    color: root.subTextColor
                     elide: Text.ElideRight
                 }
             }
@@ -105,7 +123,7 @@ ColumnLayout {
             MaterialSymbol {
                 text: root.expanded ? "expand_less" : "expand_more"
                 iconSize: 22
-                color: Appearance.colors.colOnLayer2
+                color: root.iconColor
             }
         }
 
@@ -121,8 +139,8 @@ ColumnLayout {
         visible: root.expanded
         Layout.fillWidth: true
         implicitHeight: 330
-        radius: Appearance.rounding.small
-        color: Appearance.colors.colLayer2
+        radius: root.surfaceRadius
+        color: root.surfaceColor
 
         GridView {
             id: grid
@@ -146,13 +164,13 @@ ColumnLayout {
                 Rectangle {
                     anchors.fill: parent
                     anchors.margins: 4
-                    radius: Appearance.rounding.verysmall
-                    color: cell.isSelected ? Appearance.colors.colPrimaryContainer
-                         : cellHover.hovered ? Appearance.colors.colLayer2Hover
+                    radius: root.cellRadius
+                    color: cell.isSelected ? root.selectedColor
+                         : cellHover.hovered ? root.surfaceHoverColor
                          : "transparent"
                     border.width: cell.isSelected ? 2 : 1
-                    border.color: cell.isSelected ? Appearance.colors.colPrimary
-                                : Appearance.colors.colOutlineVariant
+                    border.color: cell.isSelected ? root.selectedBorderColor
+                                : root.cellBorderColor
 
                     ColumnLayout {
                         anchors.fill: parent
@@ -180,7 +198,7 @@ ColumnLayout {
                                 visible: !(cell.modelData.image?.length > 0)
                                 text: "casino"
                                 iconSize: 34
-                                color: Appearance.colors.colOnLayer2
+                                color: root.iconColor
                             }
                         }
 
@@ -188,7 +206,7 @@ ColumnLayout {
                             Layout.fillWidth: true
                             text: cell.modelData.displayName ?? ""
                             font.pixelSize: Appearance.font.pixelSize.smallest
-                            color: cell.isSelected ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colSubtext
+                            color: cell.isSelected ? root.selectedTextColor : root.subTextColor
                             horizontalAlignment: Text.AlignHCenter
                             elide: Text.ElideMiddle
                         }

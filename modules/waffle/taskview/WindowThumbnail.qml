@@ -166,7 +166,8 @@ Item {
 
         WRectangularShadow {
             target: windowRect
-            visible: root.hovered || root.Drag.active
+            visible: Looks.effectsEnabled
+                && (root.hovered || root.isFocused || root.Drag.active)
         }
 
         // Content container (title bar + preview)

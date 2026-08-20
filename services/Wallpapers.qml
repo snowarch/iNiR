@@ -313,6 +313,9 @@ Singleton {
     readonly property string effectiveDirectory: FileUtils.trimFileProtocol(folderModel.folder.toString())
     property url defaultFolder: Qt.resolvedUrl(Directories.wallpapersPath)
     property alias folderModel: folderModel
+    property bool _folderModelTransitioning: false
+    readonly property bool folderModelReady: !root._folderModelTransitioning
+        && folderModel.status === FolderListModel.Ready
     property string searchQuery: ""
     readonly property list<string> extensions: ["jpg", "jpeg", "png", "webp", "avif", "bmp", "svg", "gif", "mp4", "webm", "mkv", "avi", "mov"]
     property list<string> wallpapers: []
@@ -349,6 +352,21 @@ Singleton {
 
     function load() {}
     function refresh() {} // Compatibility - FolderListModel auto-refreshes
+
+    function _beginFolderModelTransition(): void {
+        root._folderModelTransitioning = true
+    }
+
+    function _scheduleFolderModelTransitionEnd(): void {
+        if (folderModel.status === FolderListModel.Ready)
+            folderModelTransitionTimer.restart()
+    }
+
+    function _setFolderModelDirectory(path: url): void {
+        root._beginFolderModelTransition()
+        root.directory = path
+        root._scheduleFolderModelTransitionEnd()
+    }
 
     function rebuildWallpapersCache(): void {
         root.wallpapers = []
@@ -804,7 +822,7 @@ Singleton {
         onExited: (exitCode, exitStatus) => {
             if (!validateDirProc._pendingFileCheck) {
                 if (exitCode === 0) {
-                    root.directory = Qt.resolvedUrl(validateDirProc.nicePath)
+                    root._setFolderModelDirectory(Qt.resolvedUrl(validateDirProc.nicePath))
                     return
                 }
                 validateDirProc._pendingFileCheck = true
@@ -812,22 +830,31 @@ Singleton {
                 return
             }
             if (exitCode === 0) {
-                root.directory = Qt.resolvedUrl(FileUtils.parentDirectory(validateDirProc.nicePath))
+                root._setFolderModelDirectory(Qt.resolvedUrl(FileUtils.parentDirectory(validateDirProc.nicePath)))
+            } else {
+                root._scheduleFolderModelTransitionEnd()
             }
         }
     }
 
     function setDirectory(path) {
+        root._beginFolderModelTransition()
         validateDirProc.setDirectoryIfValid(path)
     }
     function navigateUp() {
+        root._beginFolderModelTransition()
         folderModel.navigateUp()
+        root._scheduleFolderModelTransitionEnd()
     }
     function navigateBack() {
+        root._beginFolderModelTransition()
         folderModel.navigateBack()
+        root._scheduleFolderModelTransitionEnd()
     }
     function navigateForward() {
+        root._beginFolderModelTransition()
         folderModel.navigateForward()
+        root._scheduleFolderModelTransitionEnd()
     }
 
     FolderListModelWithHistory {
@@ -851,7 +878,26 @@ Singleton {
         sortField: FolderListModel.Time
         sortReversed: false
         onCountChanged: root.rebuildWallpapersCache()
-        onFolderChanged: root.folderChanged()
+        onFolderChanged: {
+            root.folderChanged()
+            root._scheduleFolderModelTransitionEnd()
+        }
+        onStatusChanged: {
+            if (folderModel.status === FolderListModel.Loading)
+                root._beginFolderModelTransition()
+            else if (folderModel.status === FolderListModel.Ready)
+                root._scheduleFolderModelTransitionEnd()
+        }
+    }
+
+    Timer {
+        id: folderModelTransitionTimer
+        interval: 0
+        repeat: false
+        onTriggered: {
+            if (folderModel.status === FolderListModel.Ready)
+                root._folderModelTransitioning = false
+        }
     }
 
     Timer {
@@ -1068,7 +1114,7 @@ Singleton {
         onExited: (exitCode) => {
             if (exitCode === 0) {
                 // Folder exists, temporarily set it and pick random
-                root.directory = Qt.resolvedUrl(_autoPickProc._targetFolder)
+                root._setFolderModelDirectory(Qt.resolvedUrl(_autoPickProc._targetFolder))
                 // Wait for folder model to update before picking
                 _autoPickFolderDelay.restart()
             }

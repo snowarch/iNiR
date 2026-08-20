@@ -314,18 +314,20 @@ def get_dominant_color(image_path, x, y, w, h, screen_width=None, screen_height=
     region = img[y:y+h, x:x+w]
     if region.size == 0 or region.shape[0] == 0 or region.shape[1] == 0:
         return [0, 0, 0]
-    region = region.reshape((-1, 3))
-    # Filter out black pixels (optional, improves accuracy for some images)
-    non_black = region[np.any(region > 10, axis=1)]
-    if non_black.shape[0] == 0:
-        non_black = region
-    region = np.float32(non_black)
+    # Keep the full sampled region. Discarding dark pixels biases mixed/dark
+    # wallpapers toward their bright highlights, which made desktop widgets
+    # choose an accent as if the backdrop were much brighter than it really is.
+    region = np.float32(region.reshape((-1, 3)))
     if region.shape[0] < 3:
         return [int(x) for x in np.mean(region, axis=0)]
     # K-means to find dominant color
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
     K = min(3, region.shape[0])
-    _, labels, centers = cv2.kmeans(region, K, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+    # OpenCV's random centers otherwise make the same widget position capable of
+    # returning a different dominant cluster on consecutive analyses. Stable
+    # editing needs identical input geometry to produce identical color output.
+    cv2.setRNGSeed(0)
+    _, labels, centers = cv2.kmeans(region, K, None, criteria, 10, cv2.KMEANS_PP_CENTERS)
     counts = np.bincount(labels.flatten())
     dominant = centers[np.argmax(counts)]
     # Reverse from BGR to RGB

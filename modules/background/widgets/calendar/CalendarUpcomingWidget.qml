@@ -39,7 +39,7 @@ AbstractBackgroundWidget {
     needsColText: true
     resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
     resizeMinWidth: 200
-    resizeMinHeight: 100
+    resizeMinHeight: 120
     resizeMaxWidth: 600
     resizeMaxHeight: 800
 
@@ -64,9 +64,12 @@ AbstractBackgroundWidget {
         function onEventsUpdated() { root._refreshTrigger++ }
     }
 
+    readonly property string _todayKey: Qt.formatDate(DateTime.clock.date, "yyyy-MM-dd")
+
     // ── Merged + sorted upcoming events ───────────────────────
     readonly property var upcomingEvents: {
         const _t = root._refreshTrigger
+        const _d = root._todayKey
         return root._buildList()
     }
 
@@ -194,6 +197,7 @@ AbstractBackgroundWidget {
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: Math.round(12 * root.scaleFactor)
+        clip: true
         spacing: Math.round(4 * root.scaleFactor)
 
         // Header

@@ -233,7 +233,7 @@ Item {
                     color: Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
                 }
                 StyledText {
-                    text: "Crypto"
+                    text: Translation.tr("Crypto")
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     font.weight: Font.Medium
                     color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1

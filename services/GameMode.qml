@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs
 import qs.modules.common
 import qs.services
 
@@ -35,10 +36,7 @@ Singleton {
     readonly property bool autoActivated: !_manualActive
         && (_autoActive || _reactiveAutoActive)
 
-    // True when panels should hide (slide-out + mask null + exclusiveZone 0).
-    // Always false — auto-detect applies the same effects as manual mode
-    // (performance optimizations only, no panel/background hiding).
-    readonly property bool shouldHidePanels: false
+    // Surface mapping caused native crash loops; GameMode only suppresses work.
     
     // When autoDetect is disabled, immediately clear auto state
     onAutoDetectChanged: {
@@ -415,7 +413,6 @@ Singleton {
         }
     }
 
-    // React to active changes for Niri animations
     onActiveChanged: {
         root._log("[GameMode] Active:", active, "(manual:", _manualActive, "auto:", _autoActive, ")")
         if (CompositorService.isNiri && controlNiriAnimations) {

@@ -69,16 +69,16 @@ MenuItem {
         }
     }
 
-    implicitHeight: Math.max(28, contentItem.implicitHeight) + topInset + bottomInset
+    implicitHeight: Math.max(Looks.dp(28), contentItem.implicitHeight) + topInset + bottomInset
     implicitWidth: contentItem.implicitWidth + leftInset + rightInset + leftPadding + rightPadding
 
     contentItem: RowLayout {
         id: contentLayout
-        spacing: 12
+        spacing: Looks.dp(12)
         FluentIcon {
             id: buttonIcon
             monochrome: true
-            implicitSize: 20
+            implicitSize: Looks.dp(20)
             Layout.fillWidth: false
             Layout.alignment: Qt.AlignVCenter
             color: root.fgColor

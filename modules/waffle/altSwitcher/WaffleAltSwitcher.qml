@@ -15,6 +15,8 @@ Scope {
 
     property var itemSnapshot: []
     property var iconCache: ({})  // Cache de iconos resueltos
+    property var iconCacheKeys: []
+    readonly property int maxIconCacheSize: 100
     property bool _warmedUp: false
     property bool overviewOpenedByAltSwitcher: false
     property int currentIndex: 0
@@ -42,9 +44,23 @@ Scope {
     // Resuelve y cachea el icono
     function getCachedIcon(appId, appName, title) {
         const key = appId || appName || title || ""
-        if (iconCache[key] !== undefined) return iconCache[key]
+        if (iconCache[key] !== undefined) {
+            const existingIndex = iconCacheKeys.indexOf(key)
+            if (existingIndex >= 0) {
+                iconCacheKeys.splice(existingIndex, 1)
+                iconCacheKeys.push(key)
+            }
+            return iconCache[key]
+        }
+
+        if (iconCacheKeys.length >= maxIconCacheSize) {
+            const oldestKey = iconCacheKeys.shift()
+            delete iconCache[oldestKey]
+        }
+
         const icon = AppSearch.getIconSource(key)
         iconCache[key] = icon
+        iconCacheKeys.push(key)
         return icon
     }
 

@@ -4,6 +4,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
+import qs
 import qs.services
 import qs.modules.common
 import qs.modules.waffle.looks
@@ -33,6 +34,25 @@ WSettingsPage {
     readonly property string detectedDefaultAudioSource: detectedDefaultSink.length > 0 ? `${detectedDefaultSink}.monitor` : ""
     readonly property bool gpuRecordingAvailable: vaapiAvailable || nvencAvailable
     readonly property bool customRecordingPreset: (Config.options?.screenRecord?.qualityPreset ?? "balanced") === "custom"
+
+    function floatingToolsEnabled(): bool {
+        return (Config.options?.enabledPanels ?? []).includes("iiOverlay")
+    }
+
+    function setFloatingToolsEnabled(enabled: bool): void {
+        const panels = [...(Config.options?.enabledPanels ?? [])]
+        const index = panels.indexOf("iiOverlay")
+        if (enabled && index === -1)
+            panels.push("iiOverlay")
+        else if (!enabled && index !== -1)
+            panels.splice(index, 1)
+        Config.setNestedValue("enabledPanels", panels)
+    }
+
+    function openFloatingTools(): void {
+        GlobalStates.settingsOverlayOpen = false
+        GlobalStates.overlayOpen = true
+    }
     readonly property var recordingAudioModeOptions: [
         { value: "none", displayName: Translation.tr("No audio") },
         { value: "system", displayName: Translation.tr("System audio") },
@@ -421,6 +441,85 @@ WSettingsPage {
         }
     }
     
+    WSettingsCard {
+        title: Translation.tr("Floating tools (Super+G)")
+        icon: "apps"
+
+        WSettingsInfoBar {
+            severity: WSettingsInfoBar.Severity.Info
+            message: Translation.tr("Floating image and widgets panel (Super+G)")
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("Enable")
+            icon: "apps"
+            checked: root.floatingToolsEnabled()
+            onCheckedChanged: root.setFloatingToolsEnabled(checked)
+        }
+
+        WSettingsButton {
+            label: Translation.tr("Floating tools (Super+G)")
+            icon: "apps"
+            description: "Super+G"
+            buttonText: Translation.tr("Open")
+            buttonIcon: "open"
+            enabled: root.floatingToolsEnabled()
+            onButtonClicked: root.openFloatingTools()
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("Darken screen behind overlay")
+            icon: "eye"
+            description: Translation.tr("Add a dark scrim behind overlay panels for better visibility")
+            checked: Config.options?.overlay?.darkenScreen ?? false
+            onCheckedChanged: Config.setNestedValue("overlay.darkenScreen", checked)
+        }
+
+        WSettingsSpinBox {
+            label: Translation.tr("Overlay scrim dim (%)")
+            icon: "eye"
+            suffix: "%"
+            from: 0; to: 100; stepSize: 5
+            enabled: Config.options?.overlay?.darkenScreen ?? false
+            value: Config.options?.overlay?.scrimDim ?? 30
+            onValueChanged: Config.setNestedValue("overlay.scrimDim", value)
+        }
+
+        WSettingsSpinBox {
+            label: Translation.tr("Overlay background opacity (%)")
+            icon: "eye"
+            suffix: "%"
+            from: 20; to: 100; stepSize: 5
+            value: Math.round((Config.options?.overlay?.backgroundOpacity ?? 0.9) * 100)
+            onValueChanged: Config.setNestedValue("overlay.backgroundOpacity", value / 100)
+        }
+
+        WSettingsSwitch {
+            label: Translation.tr("Enable opening zoom animation")
+            icon: "play"
+            checked: Config.options?.overlay?.openingZoomAnimation ?? true
+            onCheckedChanged: Config.setNestedValue("overlay.openingZoomAnimation", checked)
+        }
+
+        WSettingsSpinBox {
+            label: Translation.tr("Overlay animation duration (ms)")
+            icon: "arrow-clockwise"
+            suffix: "ms"
+            from: 0; to: 1000; stepSize: 20
+            value: Config.options?.overlay?.animationDurationMs ?? 180
+            onValueChanged: Config.setNestedValue("overlay.animationDurationMs", value)
+        }
+
+        WSettingsSpinBox {
+            label: Translation.tr("Background dim animation (ms)")
+            icon: "arrow-clockwise"
+            suffix: "ms"
+            from: 0; to: 1000; stepSize: 20
+            value: Config.options?.overlay?.scrimAnimationDurationMs ?? 140
+            onValueChanged: Config.setNestedValue("overlay.scrimAnimationDurationMs", value)
+        }
+    }
+
     WSettingsCard {
         title: Translation.tr("On-Screen Display")
         icon: "pulse"

@@ -194,6 +194,11 @@ Item {
                 property bool transitioning: false
                 property string pendingSource: ""
 
+                Component.onCompleted: {
+                    if (root.displayedArtFilePath)
+                        coverArt.source = root.displayedArtFilePath
+                }
+
                 Timer {
                     id: blurInTimer
                     interval: 150
@@ -233,7 +238,7 @@ Item {
                 Rectangle {
                     anchors.fill: parent
                     color: Appearance.inirEverywhere ? root.jiraColLayer2 : (blendedColors?.colLayer1 ?? Appearance.colors.colLayer1)
-                    visible: !root.downloaded
+                    visible: !root.downloaded || coverArt.status !== Image.Ready
 
                     MaterialSymbol {
                         anchors.centerIn: parent

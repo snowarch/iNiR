@@ -8,6 +8,7 @@ import Quickshell
 import Quickshell.Io
 import qs.modules.common
 import qs.modules.common.functions
+import qs.modules.common.widgets
 import qs.modules.waffle.looks
 import qs.services
 import qs.modules.waffle.settings
@@ -112,12 +113,39 @@ WSettingsPage {
         return parts[parts.length - 1] || ""
     }
 
+    readonly property real _dpr: Math.max(
+        1, root.QsWindow?.window?.devicePixelRatio ?? 1)
+
+    readonly property string gridThumbnailSizeName: {
+        const cell = Math.round(Math.max(1, wallpaperGrid.cellWidth) * root._dpr)
+        const auto = Images.thumbnailSizeNameForDimensions(cell, cell)
+        return (auto === "normal" || auto === "large") ? "x-large" : auto
+    }
+
+    // Decode at 2x the cell for headroom, capped at what the tier stores.
+    readonly property int gridThumbnailDecodeWidth: {
+        const tier = Images.thumbnailSizes[root.gridThumbnailSizeName] ?? 512
+        const wanted = Math.round(Math.max(1, wallpaperGrid.cellWidth) * root._dpr * 2)
+        return Math.max(1, Math.min(wanted, tier))
+    }
+
+    readonly property int gridThumbnailDecodeHeight: {
+        const tier = Images.thumbnailSizes[root.gridThumbnailSizeName] ?? 512
+        const wanted = Math.round(Math.max(1, wallpaperGrid.cellHeight) * root._dpr * 2)
+        return Math.max(1, Math.min(wanted, tier))
+    }
+
+    function refreshGridThumbnails(): void {
+        Wallpapers.generateThumbnail(root.gridThumbnailSizeName)
+    }
+
     Component.onCompleted: Wallpapers.load()
+    onGridThumbnailSizeNameChanged: root.refreshGridThumbnails()
 
     Connections {
         target: Wallpapers
         function onFolderChanged() {
-            Wallpapers.generateThumbnail("large")
+            root.refreshGridThumbnails()
             if (root.rootWallpaperDir.length === 0)
                 root.rootWallpaperDir = FileUtils.trimFileProtocol(Wallpapers.effectiveDirectory)
         }
@@ -214,8 +242,10 @@ WSettingsPage {
             source: visible ? root.currentWpUrl : ""
             asynchronous: true
             cache: false
-            sourceSize.width: heroCard.width * 2
-            sourceSize.height: heroCard.height * 2
+            smooth: true
+            mipmap: true
+            sourceSize.width: Math.round(heroCard.width * root._dpr * 2)
+            sourceSize.height: Math.round(heroCard.height * root._dpr * 2)
         }
 
         AnimatedImage {
@@ -353,15 +383,22 @@ WSettingsPage {
 
         // ── Bottom-left: mode pill badge ───
         Rectangle {
+            id: modeBadge
             anchors.bottom: parent.bottom
             anchors.left: parent.left
             anchors.margins: 12
             width: modeBadgeRow.implicitWidth + 16
             height: 26
             radius: height / 2
-            color: Qt.rgba(0, 0, 0, 0.55)
+            color: root.colorsOnlyMode
+                ? (modeBadgeMa.containsMouse ? Qt.rgba(1, 1, 1, 0.32) : Qt.rgba(1, 1, 1, 0.22))
+                : (modeBadgeMa.containsMouse ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(0, 0, 0, 0.55))
             border.width: 1
-            border.color: Qt.rgba(1, 1, 1, 0.12)
+            border.color: Qt.rgba(1, 1, 1, root.colorsOnlyMode ? 0.38 : 0.12)
+
+            Behavior on color {
+                animation: ColorAnimation { duration: Looks.transition.enabled ? 70 : 0 }
+            }
 
             Row {
                 id: modeBadgeRow
@@ -382,6 +419,26 @@ WSettingsPage {
                     color: "white"
                     anchors.verticalCenter: parent.verticalCenter
                 }
+            }
+
+            MouseArea {
+                id: modeBadgeMa
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    const next = !root.colorsOnlyMode
+                    Config.setNestedValue("appearance.wallpaperTheming.colorsOnlyMode", next)
+                    if (!next)
+                        Config.setNestedValue("appearance.wallpaperTheming.previewSourcePath", "")
+                }
+            }
+
+            WToolTip {
+                extraVisibleCondition: modeBadgeMa.containsMouse
+                text: root.colorsOnlyMode
+                    ? Translation.tr("Picking a thumbnail only recolours the theme. Click to also set the wallpaper.")
+                    : Translation.tr("Picking a thumbnail sets the wallpaper. Click to only take colours from it.")
             }
         }
 
@@ -621,8 +678,8 @@ WSettingsPage {
             anchors.rightMargin: 6
             anchors.bottomMargin: 6
             anchors.topMargin: root.isInSubfolder ? 2 : 6
-            model: Wallpapers.folderModel
-            Component.onCompleted: Wallpapers.generateThumbnail("large")
+            model: Wallpapers.folderModelReady ? Wallpapers.folderModel : null
+            Component.onCompleted: root.refreshGridThumbnails()
 
             property int minCellWidth: 140
             property int columns: Math.max(1, Math.floor(width / minCellWidth))
@@ -674,16 +731,18 @@ WSettingsPage {
                         return wpDelegateItem.filePath === root.displayWallpaperPath
                     }
 
-                    Image {
+                    ThumbnailImage {
                         visible: !WallpaperListener.isVideoPath(wpDelegateItem.filePath) && !WallpaperListener.isGifPath(wpDelegateItem.filePath) && !wpDelegateItem.fileIsDir
                         anchors.fill: parent
                         anchors.margins: parent.border.width
                         fillMode: Image.PreserveAspectCrop
-                        source: visible ? (wpDelegateItem.filePath.startsWith("file://") ? wpDelegateItem.filePath : "file://" + wpDelegateItem.filePath) : ""
-                        asynchronous: true
+                        sourcePath: visible ? wpDelegateItem.filePath : ""
                         cache: true
-                        sourceSize.width: wallpaperGrid.cellWidth * 2
-                        sourceSize.height: wallpaperGrid.cellHeight * 2
+                        thumbnailSizeName: root.gridThumbnailSizeName
+                        smooth: true
+                        mipmap: true
+                        sourceSize.width: root.gridThumbnailDecodeWidth
+                        sourceSize.height: root.gridThumbnailDecodeHeight
                     }
 
                     AnimatedImage {
@@ -901,8 +960,8 @@ WSettingsPage {
         Item {
             visible: root.multiMonitorEnabled
             Layout.fillWidth: true
-            Layout.leftMargin: 14
-            Layout.rightMargin: 14
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             Layout.bottomMargin: 6
             implicitHeight: 44
 

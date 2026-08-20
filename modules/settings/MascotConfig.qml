@@ -388,7 +388,7 @@ ContentPage {
             readonly property var eventDescriptors: [
                 { key: "music", icon: "music_note", label: Translation.tr("Music starts") },
                 { key: "battery", icon: "battery_alert", label: Translation.tr("Battery low") },
-                { key: "update", icon: "system_update", label: Translation.tr("Update available") },
+                { key: "update", icon: "system_update_alt", label: Translation.tr("Update available") },
                 { key: "network", icon: "wifi_off", label: Translation.tr("Network drops") },
                 { key: "dnd", icon: "do_not_disturb_on", label: Translation.tr("Do not disturb on") },
                 { key: "notification", icon: "notifications_active", label: Translation.tr("Notification snoop") },

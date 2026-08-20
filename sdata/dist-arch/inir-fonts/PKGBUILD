@@ -3,7 +3,7 @@ pkgver=1.0
 pkgrel=1
 pkgdesc='iNiR - fonts and theming dependency bundle'
 arch=(any)
-license=(MIT)
+license=('GPL-3.0-only')
 depends=(
   fontconfig
   noto-fonts-emoji
@@ -28,8 +28,10 @@ depends=(
 # darkly-bin (Qt style for Material You colors)
 # matugen (now in official repos)
 # otf-space-grotesk
+# ttf-gabarito-git (default title font)
 # ttf-jetbrains-mono-nerd
 # ttf-material-symbols-variable-git
+# ttf-oxanium (ZZZ and Angel styles)
 # ttf-readex-pro
 # ttf-roboto-flex (CRITICAL - default UI font)
 # ttf-rubik-vf

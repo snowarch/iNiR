@@ -12,9 +12,9 @@ Change them. Break them. Make them yours. We won't judge.
 |-----|--------|
 | `Mod+Space` | iNiR overview / app launcher |
 | `Mod+Tab` | Niri overview (native compositor) |
-| `Super+G` | Crosshair overlay toggle |
-| `Alt+Tab` | Window switcher (next) |
-| `Alt+Shift+Tab` | Window switcher (previous) |
+| `Super+G` | Floating tools (notes, images, crosshair, resources) |
+| `Alt+Tab` | Niri Recent Windows (next) |
+| `Alt+Shift+Tab` | Niri Recent Windows (previous) |
 | `Mod+V` | Clipboard history |
 | `Mod+/` | Cheatsheet |
 | `Mod+,` | Settings |
@@ -166,6 +166,11 @@ All media/volume/brightness keys are routed through iNiR IPC for OSD feedback.
 ## Customizing
 
 Keybinds live in `~/.config/niri/config.d/70-binds.kdl`. Add personal overrides in `90-user-extra.kdl` (never touched by updates).
+
+The distributed Alt-Tab uses Niri's native `recent-windows` surface. Its
+preview timing, highlight and size are tuned in `config.d/20-layout-and-overview.kdl`.
+The iNiR switcher remains available from Settings, but is disabled by default
+so two window switchers do not compete for the same keys.
 
 See [IPC.md](IPC.md) for all available iNiR targets you can bind.
 

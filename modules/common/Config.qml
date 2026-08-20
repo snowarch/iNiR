@@ -34,9 +34,9 @@ Singleton {
         fileReloadTimer.stop();
         root._prepareCustomInject();
         root._writeInFlight = true;
-        // Use mirror for flush — guaranteed to work, no onSaved dependency
+        root._writeRetries = 0;
         root._writeMirrorToDisk();
-        root._writeInFlight = false;
+        writeFlightGuard.restart();
     }
 
     function _applyNestedKey(nestedKey, value) {
@@ -327,6 +327,31 @@ Singleton {
     property bool _pendingCustomInject: false
     property bool _pendingMascotInject: false
     property bool _pendingReload: false
+    property int _writeRetries: 0
+
+    // Every write must exit through here; a stuck _writeInFlight freezes all persistence.
+    function _endWriteFlight(reason: string): void {
+        writeFlightGuard.stop();
+        root._writeInFlight = false;
+        root._writeRetries = 0;
+        if (reason.length > 0)
+            console.warn("[Config] write flight released:", reason);
+        if (root._pendingCustomInject || root._pendingMascotInject) {
+            root._pendingCustomInject = false;
+            root._pendingMascotInject = false;
+            customInjectTimer.restart();
+            return;
+        }
+        if (root._pendingWrite) {
+            root._pendingWrite = false;
+            fileWriteTimer.restart();
+            return;
+        }
+        if (root._pendingReload) {
+            root._pendingReload = false;
+            fileReloadTimer.restart();
+        }
+    }
     property var _customSnapshotForInject: ({})
     property var _mascotSnapshotForInject: ({})
     // In-memory mirror of the disk JSON. Updated synchronously on every
@@ -477,6 +502,7 @@ Singleton {
             root._prepareCustomInject();
             root._pendingWrite = false;
             root._writeInFlight = true;
+            root._writeRetries = 0;
             fileReloadTimer.stop();
             // Try writeAdapter first — it properly emits QObject property signals
             // which 2476 consumers depend on via Config.options?.x bindings.
@@ -492,10 +518,15 @@ Singleton {
         interval: 2000
         repeat: false
         onTriggered: {
-            if (root._writeInFlight) {
-                root._writeInFlight = false;
-                root._writeMirrorToDisk();
+            if (!root._writeInFlight)
+                return;
+            if (root._writeRetries >= 2) {
+                root._endWriteFlight("write never acknowledged");
+                return;
             }
+            root._writeRetries++;
+            root._writeMirrorToDisk();
+            writeFlightGuard.restart();
         }
     }
 
@@ -517,26 +548,15 @@ Singleton {
         path: root.filePath
         watchChanges: true
         blockWrites: root.blockWrites
-        onFileChanged: fileReloadTimer.restart()
-        onSaved: {
-            writeFlightGuard.stop();
-            root._writeInFlight = false;
-            if (root._pendingCustomInject || root._pendingMascotInject) {
-                root._pendingCustomInject = false;
-                root._pendingMascotInject = false;
-                customInjectTimer.restart();
+        onFileChanged: {
+            if (root._writeInFlight) {
+                root._pendingReload = true;
                 return;
             }
-            if (root._pendingWrite) {
-                root._pendingWrite = false;
-                fileWriteTimer.restart();
-                return;
-            }
-            if (root._pendingReload) {
-                root._pendingReload = false;
-                fileReloadTimer.restart();
-            }
+            fileReloadTimer.restart();
         }
+        onSaved: root._endWriteFlight("")
+        onSaveFailed: error => root._endWriteFlight(`save failed (${error})`)
         onLoaded: {
             // Initialize the in-memory JSON mirror from disk
             try {
@@ -953,8 +973,8 @@ Singleton {
                     }
                 }
                 property JsonObject cava: JsonObject {
-                    property string colorSource: "theme" // theme | vibrant | cover
-                    property int gradientCount: 8 // 2-8, external cava ~/.config/cava/config
+                    property string colorSource: "theme" // Internal visualizers + standalone cava: theme | vibrant | cover
+                    property int gradientCount: 8 // 1-8; one color becomes a solid standalone cava foreground
                     property string foreground: "" // empty = gradient; hex = solid foreground
                     property string background: "" // empty = palette surface; hex = override
                     property int sensitivity: 100 // 1-500
@@ -978,7 +998,7 @@ Singleton {
                     property JsonObject variableAxes: JsonObject {
                         property int wght: 300
                         property int wdth: 105
-                        property int grad: 175
+                        property int grad: 150
                     }
                 }
                 property string iconTheme: "WhiteSur-dark" // System icon theme (tray, GTK/Qt apps)
@@ -1057,7 +1077,7 @@ Singleton {
             }
 
             property JsonObject modules: JsonObject {
-                property bool altSwitcher: true
+                property bool altSwitcher: false
                 property bool bar: true
                 property bool background: true
                 property bool cheatsheet: true
@@ -1134,6 +1154,10 @@ Singleton {
                     // "panel" (stock per-style plate) | "island" (Ricelin card)
                     property string style: "panel"
                     property int dynamicOpacity: 0 // 0-100: reduce widget opacity when windows are on current workspace
+                    // Opt-in local wallpaper sampling. Off keeps semantic widget
+                    // colors stable when widgets move; on lets eligible widgets
+                    // choose readable ink/semantic foregrounds from their region.
+                    property bool adaptColorsToWallpaperPosition: false
                     property JsonObject powerSaving: JsonObject {
                         property bool enable: true
                         property bool pauseOnGameMode: true
@@ -1142,6 +1166,7 @@ Singleton {
                         property bool showPausedEffect: true
                     }
                     property list<string> screenList: []
+                    property list<var> outputOverrides: []
                     // Persistent bottom-to-top widget instance keys. Entries are
                     // output-qualified ("OUTPUT::configEntryName") so each screen
                     // keeps its own overlap order after edit mode closes/restarts.
@@ -1172,6 +1197,13 @@ Singleton {
                         property real borderOpacity: 0.08
                         property real cornerRadius: -1
                         property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property JsonObject cookie: JsonObject {
                             property bool aiStyling: false
                             property int sides: 15
@@ -1216,7 +1248,8 @@ Singleton {
                         property int tempFontWeight: 500 // Font.Medium
                         property real conditionOpacity: 0.7
                         property string preset: "default"
-                        property string style: "pill" // "pill" (original), "card" (adaptive overlay)
+                        property string style: "pill" // "pill" (shape), "card" (adaptive overlay), "detail" (M3 tonal)
+                        property bool showMetrics: true // "detail" style only
                         property string shape: "pill" // MaterialShape shape name
                         property int widgetScale: 100
                         property int widgetOpacity: 100
@@ -1228,21 +1261,93 @@ Singleton {
                         property real borderOpacity: 0.20
                         property real cornerRadius: -1
                         property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property int dim: 0
+                    }
+
+                    property JsonObject customImage: JsonObject {
+                        property bool enable: false
+                        property bool locked: false
+                        property string placementStrategy: "free"
+                        property string sourceMode: "file" // "file" | "folder"
+                        property string path: ""
+                        property string folder: ""
+                        property string mediaFilter: "all" // "all" | "images" | "gifs" | "videos"
+                        property int intervalSeconds: 30
+                        property string order: "sequential" // "sequential" | "random"
+                        property int transitionDuration: 450
+                        property string shape: "Cookie4Sided"
+                        property string fitMode: "cover"
+                        property int size: 220
+                        property int dim: 0
+                        property int widgetScale: 100
+                        property int widgetOpacity: 100
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
+                        property real x: 120
+                        property real y: 320
+                    }
+
+                    property JsonObject imageConverter: JsonObject {
+                        property bool enable: false
+                        property bool locked: false
+                        property string placementStrategy: "free"
+                        property string selectedFormat: "webp"
+                        property int contentWidth: 292
+                        property int contentHeight: 260
+                        property int widgetScale: 100
+                        property int widgetOpacity: 100
+                        property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
+                        property int dim: 0
+                        property bool showBackground: true
+                        property bool useBlur: false
+                        property bool showBorder: true
+                        property real backgroundOpacity: 0.22
+                        property real borderWidth: 1
+                        property real borderOpacity: 0.22
+                        property real cornerRadius: -1
+                        property real x: 120
+                        property real y: 360
                     }
 
                     property JsonObject mediaControls: JsonObject {
                         property bool enable: false
                         property bool locked: false
                         property string placementStrategy: "free" // "free", "leastBusy", "mostBusy"
-                        property string playerPreset: "full" // "full", "compact", "minimal", "albumart", "visualizer", "classic"
+                        property string playerPreset: "full" // "full", "compact", "minimal", "albumart", "visualizer", "classic", "lyrics", "lyricsSplit", "expandingLyrics"
                         property string visualizerType: "wave" // "wave", "bars"
                         property string visualizerPosition: "bottom" // "bottom", "top", "fill", "none"
+                        property bool lyricsExpanded: false
                         property real x: 240
                         property real y: 240
                         property int widgetScale: 100
                         property int widgetOpacity: 100
                         property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property int dim: 0
                     }
 
@@ -1252,11 +1357,22 @@ Singleton {
                         property string placementStrategy: "free"
                         property string vizType: "bars"
                         property string preset: "default" // legacy, kept for compat
+                        property string paletteMode: "cava" // "cava", "accent", "primary"
+                        property string barsOrigin: "bottom" // "bottom", "top", "center", "mirror"
+                        property string waveMode: "fill" // "fill", "line", "ribbon"
+                        property string frequencyProfile: "flat" // "flat", "bass", "warm", "vocal", "treble", "smile"
+                        property int smoothing: 2
+                        property int fillRatio: 90
+                        property int barOpacity: 100
                         property int waveOpacity: -1 // -1 = use global (appearance.cava.waveOpacity)
                         property int barCount: 48
                         property int barSpacing: 2
                         property int barRadius: 2
                         property int barMinHeight: 1
+                        property int lineWidth: 2
+                        property int edgeInset: 0
+                        property int edgeSoftness: 28
+                        property int accentStrength: 70
                         property int contentWidth: 304
                         property int contentHeight: 104
                         property int dim: 0
@@ -1270,6 +1386,13 @@ Singleton {
                         property real borderOpacity: 0.20
                         property real cornerRadius: -1
                         property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property real x: 100
                         property real y: 100
                     }
@@ -1278,7 +1401,7 @@ Singleton {
                         property bool enable: false
                         property bool locked: false
                         property string placementStrategy: "free"
-                        property string displayMode: "bars"
+                        property string displayMode: "bars" // "bars", "graph", "rings", "text", "tiles"
                         property int barCount: 32
                         property int barSpacing: 2
                         property real trackAlpha: 0.08
@@ -1304,6 +1427,13 @@ Singleton {
                         property real borderOpacity: 0.20
                         property real cornerRadius: -1
                         property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property real x: 50
                         property real y: 400
                     }
@@ -1332,6 +1462,13 @@ Singleton {
                         property real borderOpacity: 0.20
                         property real cornerRadius: -1
                         property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property real x: 50
                         property real y: 50
                     }
@@ -1357,6 +1494,13 @@ Singleton {
                         property real borderOpacity: 0.12
                         property real cornerRadius: -1
                         property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property real x: 80
                         property real y: 80
                     }
@@ -1423,6 +1567,13 @@ Singleton {
                         property real borderOpacity: 0.12
                         property real cornerRadius: -1
                         property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property real x: 56
                         property real y: 120
                     }
@@ -1449,6 +1600,13 @@ Singleton {
                         property real borderOpacity: 0.12
                         property real cornerRadius: -1
                         property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property real x: 80
                         property real y: 80
                     }
@@ -1469,9 +1627,73 @@ Singleton {
                         property real borderOpacity: 0.20
                         property real cornerRadius: -1
                         property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property int dim: 0
                         property real x: 80
                         property real y: 80
+                    }
+
+                    property JsonObject worldClock: JsonObject {
+                        property bool enable: false
+                        property bool locked: false
+                        property string placementStrategy: "free"
+                        property int contentWidth: 300
+                        property int contentHeight: 210
+                        property int widgetScale: 100
+                        property int widgetOpacity: 100
+                        property bool showBackground: true
+                        property bool useBlur: false
+                        property bool showBorder: true
+                        property real backgroundOpacity: 0.16
+                        property real borderWidth: 1
+                        property real borderOpacity: 0.20
+                        property real cornerRadius: -1
+                        property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
+                        property int dim: 0
+                        property real x: 80
+                        property real y: 200
+                        property list<string> timezones: ["Australia/Sydney", "Asia/Tokyo", "Europe/London", "America/New_York"]
+                    }
+
+                    property JsonObject userCard: JsonObject {
+                        property bool enable: false
+                        property bool locked: false
+                        property string placementStrategy: "free"
+                        property int contentWidth: 280
+                        property int contentHeight: 176
+                        property int widgetScale: 100
+                        property int widgetOpacity: 100
+                        property bool showBackground: true
+                        property bool useBlur: false
+                        property bool showBorder: true
+                        property real backgroundOpacity: 0.16
+                        property real borderWidth: 1
+                        property real borderOpacity: 0.20
+                        property real cornerRadius: -1
+                        property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
+                        property int dim: 0
+                        property real x: 80
+                        property real y: 420
                     }
 
                     property JsonObject mascot: JsonObject {
@@ -1489,6 +1711,13 @@ Singleton {
                         property real borderOpacity: 0.20
                         property real cornerRadius: -1
                         property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property int dim: 0
                         property string pose: "reading"
                         property string poseFilter: "all" // all | featured | pixel | street | chibi | loops | manual
@@ -1515,6 +1744,13 @@ Singleton {
                         property real borderOpacity: 0.20
                         property real cornerRadius: -1
                         property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property int dim: 0
                         property real x: 100
                         property real y: 260
@@ -1634,7 +1870,7 @@ Singleton {
                     property bool showGlyphs: true // 時 kanji instead of a clock icon at rest
                     property bool clockSeconds: false
                     property bool time12h: false
-                    property bool musicViz: true // Swap the rest glyph for a live cava spectrum
+                    property bool musicViz: true // Draw live spectrum wings outside the pill
                     property bool toasts: true // Notification toasts take over the resting pill
                     property bool osd: true // Volume/brightness/mic/workspace changes flash on the pill
                     property bool compactAnnounces: false // Keep toast/OSD faces at the resting pill size
@@ -1698,6 +1934,107 @@ Singleton {
                     property int padding: 12 // Horizontal capsule padding around edge-section content, px
                 }
 
+                // Options for the separate M3 implementation under modules/barM3/. It
+                // keeps its own layout/appearance contract instead of reusing
+                // bar.layout/bar.modules/bar.borderless, because its grouping
+                // model (three flat layouts of widget names, string grouping
+                // style, per-position pill radii) is incompatible with iNiR's
+                // five-zone registry. Nothing here changes any other bar.
+                property JsonObject m3: JsonObject {
+                    // 0: Hug | 1: Float | 2: Plain rectangle | 3: Material 3
+                    property int cornerStyle: 3
+                    // "pills" (adjacent groups join into one continuous shape)
+                    // | "separated" (every group is its own capsule)
+                    // | "transparent" (no group surface at all)
+                    property string borderless: "separated"
+                    property bool showBackground: true
+                    property bool verbose: true
+                    property int gapsOut: 5 // Outer gap the float/M3 styles detach by
+                    // Widget names resolve to modules/barM3/<Name>.qml. Available:
+                    // media, workspaces, activeWindow, leftSidebarButton, docktoPanel,
+                    // visualizer, divisor, resources, sysTray, systemIcons, utilButtons,
+                    // networkSpeed, updatesCount, batteryIndicator, weatherBar,
+                    // clockWidget, notificationUnreadCount, powerButton.
+                    // The showcase uses a mirrored visualizer around the in-bar dock.
+                    // The active layout is kept separate from the user's custom
+                    // layout. Presets may replace the active lists, but must never
+                    // destroy the last custom arrangement.
+                    property string layoutMode: "auto" // "auto" | "compact" | "showcase" | "information" | "custom"
+                    property bool customLayoutSaved: false
+                    property JsonObject layouts: JsonObject {
+                        property list<string> leftLayout: ["media", "workspaces"]
+                        property list<string> middleLayout: ["visualizer", "docktoPanel", "visualizer"]
+                        property list<string> rightLayout: ["utilButtons", "systemIcons", "weatherBar", "clockWidget"]
+                    }
+                    property JsonObject customLayouts: JsonObject {
+                        property list<string> leftLayout: []
+                        property list<string> middleLayout: []
+                        property list<string> rightLayout: []
+                    }
+                    property JsonObject divider: JsonObject {
+                        property string style: "rect" // "rect" | "dot" | "space"
+                        property int spacing: 20
+                    }
+                    property JsonObject tooltips: JsonObject {
+                        property bool clickToShow: false
+                    }
+                    property JsonObject indicators: JsonObject {
+                        property JsonObject notifications: JsonObject {
+                            property bool showUnreadCount: false
+                        }
+                    }
+                    property JsonObject media: JsonObject {
+                        property string preferredPlayer: ""
+                        property bool alwaysVisible: false
+                        property bool onlyTitle: false
+                        property int maxWidth: 280
+                        property int minWidth: 100
+                    }
+                    property JsonObject resources: JsonObject {
+                        property string style: "filled"
+                        property bool showValue: false
+                        property bool alwaysShowSwap: false
+                        property bool alwaysShowCpu: true
+                        property bool alwaysShowCpuTemp: false
+                        property bool alwaysShowDisk: false
+                        property bool alwaysShowRam: true
+                        property int memoryWarningThreshold: 95
+                        property int swapWarningThreshold: 85
+                        property int cpuWarningThreshold: 90
+                    }
+                    property JsonObject tray: JsonObject {
+                        // M3 tray icons follow the semantic pill foreground by default.
+                        // Users can opt out to keep each application's original colors.
+                        property bool monochromeIcons: true
+                    }
+                    property JsonObject workspaces: JsonObject {
+                        property bool monochromeIcons: true
+                        property bool showAppIcons: true
+                        property string indicatorStyle: "dot" // "dot" | "icon"
+                        property bool alwaysShowNumbers: false
+                        property list<string> numberMap: ["1", "2"]
+                        property bool useNerdFont: false
+                    }
+                    property JsonObject utilButtons: JsonObject {
+                        property bool showScreenSnip: true
+                        property bool showColorPicker: false
+                        property bool showMicToggle: false
+                        property bool showKeyboardToggle: true
+                        property bool showWallpaperToggle: false
+                        property bool showDarkModeToggle: true
+                        property bool showPerformanceProfileToggle: false
+                        property bool showScreenRecord: false
+                    }
+                    // The dock rendered inside the bar.
+                    // iconSize/buttonSize at 0 scale with the bar height; set a
+                    // px value to pin them regardless of how tall the bar is.
+                    property JsonObject dockToPanel: JsonObject {
+                        property real iconSize: 0
+                        property real buttonSize: 0
+                        property real buttonSpacing: 2
+                    }
+                }
+
                 property JsonObject activeWindow: JsonObject {
                     property bool showTitle: true // Show window title under the app name in the bar's active window indicator
                 }
@@ -1714,7 +2051,7 @@ Singleton {
                 property int height: 40 // Bar content height in px (pre-scale). 0 keeps the theme default (40). Range: 24–80.
                 property real opacity: 1.0 // Background opacity (0–1). Lets you make the bar translucent without changing global style.
                 property int cornerStyle: 1 // 0: Hug | 1: Float | 2: Plain rectangle
-                property string appearanceStyle: "classic" // "classic" | "islands" (separate floating groups) | "scenic" (gradient scrim) | "frame" (outlined floating frame) | "pill" (morphing centre island, see bar.pill). Horizontal bar only.
+                property string appearanceStyle: "classic" // "classic" | "islands" (separate floating groups) | "scenic" (gradient scrim) | "frame" (outlined floating frame) | "m3" (no bar surface; each section is a colLayer0 capsule and each module wears a Material 3 tonal container) | "pill" (morphing centre island, see bar.pill). Horizontal bar only.
                 property int customRounding: -1 // -1: use global theme rounding | 0+: override bar rounding (px)
                 property bool floatStyleShadow: true // Show shadow behind bar when cornerStyle == 1 (Float)
                 property bool borderless: true // true for no grouping of items
@@ -1726,6 +2063,31 @@ Singleton {
                 property JsonObject blurBackground: JsonObject {
                     property bool enabled: false
                     property real overlayOpacity: 0.3
+                }
+                // Audio spectrum painted into the bar surface. Only runs while
+                // something is actually playing.
+                property JsonObject visualizer: JsonObject {
+                    property bool enable: false
+                    property string multiMonitorMode: "primary" // "primary" | "all"
+                    property string type: "bars" // "bars" | "wave"
+                    property real height: 0.6 // Share of the bar height the spectrum may fill (0.1–1)
+                    property real opacity: 0.35 // Spectrum opacity over the bar surface (0–1)
+                    property string barsOrigin: "bottom" // "bottom" | "top" | "center" | "mirror"
+                    property int density: 12 // Horizontal pixels allocated to each rendered bar
+                    property int gap: 2 // Gap between rendered bars, px
+                    property int smoothing: 2 // Frequency smoothing radius
+                    property string waveMode: "fill" // "fill" | "line" | "ribbon"
+                    property real lineWidth: 2 // Wave edge width, px
+                    property int edgeInset: 0 // Horizontal inset from each surface edge, px
+                    property int edgeSoftness: 28 // Curvature-aware peak headroom, 0-100
+                    property string frequencyProfile: "flat" // "flat" | "bass" | "warm" | "vocal" | "treble" | "smile"
+                    property int accentStrength: 70 // Frequency profile strength, 0-100
+                    property string pillWingMode: "bounded" // "bounded" | "screen" | "bleed"
+                    property int pillWingLength: 180 // Spectrum length on each side of the pill, px
+                    property int pillWingGap: 12 // Air between the pill and each spectrum wing, px
+                    property int pillScreenPadding: 24 // Air between screen edges and screen-spanning wings, px
+                    property int pillUnderlap: 28 // Spectrum overlap behind the pill in bleed mode, px
+                    property int pillEdgeFade: 92 // Fade toward screen edges, 0-100
                 }
                 property bool verbose: true
                 property bool vertical: false
@@ -1745,7 +2107,7 @@ Singleton {
                     property bool battery: true
                     property bool rightSidebarButton: true
                     property bool sysTray: true
-                    property bool weather: false
+                    property bool weather: true
                     property bool taskbar: false
                 }
                 property JsonObject modulesPlacement: JsonObject {
@@ -1842,9 +2204,11 @@ Singleton {
                     property list<string> numberMap: ["1", "2"] // Characters to show instead of numbers on workspace indicator
                     property bool useNerdFont: false
                     property bool perMonitor: true // Each bar shows workspaces for its own monitor (Niri)
+                    property bool automaticIndicatorColor: true // Derive active workspace indicator color from the current theme
+                    property string indicatorColor: "" // Manual active workspace indicator color when automaticIndicatorColor is false
                 }
                 property JsonObject weather: JsonObject {
-                    property bool enable: false
+                    property bool enable: true
                     property bool useUSCS: false // Instead of metric (SI) units
                     property int fetchInterval: 10 // minutes
                     property string city: "" // Manual city name (e.g. "Buenos Aires"). Empty = auto-detect
@@ -1905,16 +2269,16 @@ Singleton {
             }
 
             property JsonObject dock: JsonObject {
-                property string style: "panel" // "panel" | "pill" | "macos" | "island"
+                property string style: "panel" // "panel" | "pill" | "macos" | "island" | "m3"
                 property bool cardStyle: false
-                property bool enable: false
+                property bool enable: true
                 property bool monochromeIcons: true
                 property string position: "bottom" // "top", "bottom", "left", "right"
                 property real height: 60
                 property real iconSize: 35
                 property real hoverRegionHeight: 2
-                property bool pinnedOnStartup: false
-                property bool hoverToReveal: true // When false, only reveals on empty workspace
+                property bool pinnedOnStartup: true
+                property bool hoverToReveal: false // When false, only reveals on empty workspace
                 property bool showOnDesktop: true // Show dock when no window is focused (desktop visible)
                 property bool showBackground: true
                 property bool minimizeUnfocused: false // Show dot for unfocused apps
@@ -2002,6 +2366,7 @@ Singleton {
             property JsonObject light: JsonObject {
                 property JsonObject night: JsonObject {
                     property bool automatic: true
+                    property bool enabled: false // Manual night light state when automatic mode is disabled
                     property string from: "19:00" // Format: "HH:mm", 24-hour time
                     property string to: "06:30"   // Format: "HH:mm", 24-hour time
                     property int colorTemperature: 5000
@@ -2174,7 +2539,7 @@ Singleton {
                 property bool keepOverviewOpenOnWindowClick: true
                 property bool closeAfterWindowMove: true
                 property bool showPreviews: false // Show window thumbnails in overview
-                property bool activeScreenOnly: false // Show only on active screen (multi-monitor)
+                property bool activeScreenOnly: true // Show only on active screen (multi-monitor)
                 property bool allAppsGrid: false // Show an all-apps grid instead of the workspace overview
                 property string allAppsGridMode: "minimal" // "minimal" (alphabetical) or "folder" (by category)
                 property JsonObject dashboard: JsonObject {
@@ -2312,13 +2677,14 @@ Singleton {
             property JsonObject sidebar: JsonObject {
                 property string style: "panel" // "panel" | "island" (Ricelin gradient card face)
                 property bool cardStyle: false
+                property list<string> screenList: []
                 property string layout: "default" // "default" | "compact"
                 property bool keepRightSidebarLoaded: true
                 property bool keepLeftSidebarLoaded: true
                 property bool instantOpen: false
                 property string animationType: "slide" // "slide" | "fade" | "pop" | "reveal"
-                property bool collapseEmptyNotifications: true // Shrink right sidebar when there are no notifications (default layout)
-                property bool collapseWidgetsTab: true // Shrink left sidebar to its content on tabs with finite height (Widgets)
+                property bool collapseEmptyNotifications: false // Shrink right sidebar when there are no notifications (default layout)
+                property bool collapseWidgetsTab: false // Shrink left sidebar to its content on tabs with finite height (Widgets)
                 property JsonObject shellLayout: JsonObject {
                     property JsonObject feature: JsonObject {
                         property string slot: "left" // "left" | "right"
@@ -2356,7 +2722,7 @@ Singleton {
                 // Wallhaven-specific sidebar module options
                 property JsonObject wallhaven: JsonObject {
                     // Enable/disable the Wallhaven tab in the left sidebar
-                    property bool enable: false
+                    property bool enable: true
                     // Default page size for API search
                     property int limit: 24
                     // Optional API key for NSFW & user-specific filters
@@ -2364,7 +2730,7 @@ Singleton {
                 }
                 // News tab - Google News RSS, geo feed follows the Weather location
                 property JsonObject news: JsonObject {
-                    property bool enable: false
+                    property bool enable: true
                     property string mode: "local" // "local" | "top" | "topic"
                     property string topic: "WORLD"
                 }
@@ -2444,8 +2810,8 @@ Singleton {
                     property bool context: true
                     property bool note: false
                     property bool launch: false
-                    property bool controls: false
-                    property bool status: false
+                    property bool controls: true
+                    property bool status: true
                     property bool crypto: false
                     property bool wallpaper: false
                     property bool worldClock: false
@@ -2548,12 +2914,20 @@ Singleton {
                         property int columns: 4
                         property list<var> toggles: [
                             {
-                                "size": 2,
+                                "size": 1,
                                 "type": "network"
                             },
                             {
-                                "size": 2,
+                                "size": 1,
                                 "type": "bluetooth"
+                            },
+                            {
+                                "size": 1,
+                                "type": "audio"
+                            },
+                            {
+                                "size": 1,
+                                "type": "mic"
                             }
                         ]
                     }
@@ -2574,7 +2948,7 @@ Singleton {
 
                 // Right sidebar widget toggles
                 property JsonObject right: JsonObject {
-                    property list<string> enabledWidgets: ["calendar", "todo", "calculator", "sysmon"]
+                    property list<string> enabledWidgets: ["calendar", "events", "todo", "calculator", "sysmon", "weather"]
                     // Controls section order for compact layout (drag to reorder)
                     property list<string> controlsSectionOrder: ["sliders", "toggles", "devices", "media", "quickActions"]
                     // Section order for the default layout (modular sidebar).
@@ -2588,7 +2962,7 @@ Singleton {
                     // Banner media of the profile header: "wallpaper" (the
                     // monitor's live wallpaper), "custom" (headerBannerPath),
                     // "solid" (flat token plate), or "none" (collapse it).
-                    property string headerBanner: "solid"
+                    property string headerBanner: "wallpaper"
                     property string headerBannerPath: ""
                     // Relative allocation of the two elastic zones. Values are
                     // normalized together by the live resize handle.
@@ -2610,7 +2984,7 @@ Singleton {
                 property bool timer: false
                 property bool pomodoro: false
                 property string theme: "freedesktop"
-                property bool notifications: false
+                property bool notifications: true
                 property real volume: 0.5
                 property JsonObject events: JsonObject {
                     // Per-event override: "" = theme default; a bare name
@@ -2759,6 +3133,7 @@ Singleton {
             property JsonObject welcomeWizard: JsonObject {
                 property bool completed: false
                 property bool skipped: false
+                property string profile: "balanced"
             }
 
             property JsonObject workspaceStrip: JsonObject {

@@ -33,10 +33,6 @@ binds {
     // iNiR shell overlays & tools
     // ═══════════════════════════════════════════════════════════════════════
 
-    // Alt-Tab window switcher (iNiR's animated switcher).
-    Alt+Tab { spawn "inir" "altSwitcher" "next"; }
-    Alt+Shift+Tab { spawn "inir" "altSwitcher" "previous"; }
-
     // Crosshair overlay toggle.
     Super+G { spawn "inir" "overlay" "toggle"; }
 
@@ -270,4 +266,11 @@ binds {
     Mod+Shift+P    { spawn "inir" "mpris" "playPause"; }
     Mod+Shift+N    { spawn "inir" "mpris" "next"; }
     Mod+Shift+B    { spawn "inir" "mpris" "previous"; }
+}
+
+recent-windows {
+    binds {
+        Alt+Tab { next-window; }
+        Alt+Shift+Tab { previous-window; }
+    }
 }

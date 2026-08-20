@@ -15,15 +15,26 @@ Scope {
     id: root
 
     required property string edge
+    property var screen: null
 
     readonly property bool isLeftEdge: root.edge === "left"
     readonly property string roleId: ShellLayoutController.sidebarRoleForSlot(root.edge)
     readonly property bool featureRole: root.roleId === "featureSidebar"
     readonly property bool systemRole: root.roleId === "systemSidebar"
-    readonly property bool roleOpen: root.featureRole
+    readonly property bool semanticRoleOpen: root.featureRole
         ? GlobalStates.sidebarLeftOpen : GlobalStates.sidebarRightOpen
-    readonly property bool otherRoleOpen: root.featureRole
+    readonly property string roleTargetOutput: root.featureRole
+        ? GlobalStates.sidebarLeftPresentationOutput
+        : GlobalStates.sidebarRightPresentationOutput
+    readonly property bool roleOpen: root.semanticRoleOpen
+        && root.roleTargetOutput === root._screenName
+    readonly property bool otherSemanticRoleOpen: root.featureRole
         ? GlobalStates.sidebarRightOpen : GlobalStates.sidebarLeftOpen
+    readonly property string otherRoleTargetOutput: root.featureRole
+        ? GlobalStates.sidebarRightPresentationOutput
+        : GlobalStates.sidebarLeftPresentationOutput
+    readonly property bool otherRoleOpen: root.otherSemanticRoleOpen
+        && root.otherRoleTargetOutput === root._screenName
     // Temporary editor mapping is deliberately independent from
     // `_sidebarShown`. That flag belongs only to semantic open/close animation
     // state; sharing it makes the next real opening skip its configured pose.
@@ -83,11 +94,18 @@ Scope {
     property bool _presentationCold: false
     property bool _renderUpdatesNeeded: true
     property bool _contentResident: false
+    property bool _nativeHostMapped: true
+    property bool _resumeRearmPending: false
     readonly property int contentIdleUnloadMs: {
         const override = Number(Quickshell.env("INIR_SIDEBAR_IDLE_UNLOAD_MS"))
         return Number.isFinite(override) && override >= 250
             ? Math.round(override) : 300000
     }
+
+    onRoleOpenChanged: Qt.callLater(() => {
+        root.syncPresentation()
+        root.reportRuntime()
+    })
 
     onPresentationOpenChanged: {
         if (root.presentationOpen) {
@@ -174,11 +192,27 @@ Scope {
         runtimeReportTimer.restart()
     }
 
+    function scheduleResumeRearm(): void {
+        root._resumeRearmPending = true
+        root._nativeHostMapped = false
+        root._presentationRequested = false
+        presentationTimer.stop()
+        resumeRemapTimer.stop()
+        if (!GlobalStates.screenLocked)
+            resumeRemapTimer.restart()
+        root.reportRuntime()
+    }
+
     function emitRuntimeReport(): void {
         ShellEditSession.reportHost(root.edge, {
             roleId: root.roleId,
             roleOpen: root.roleOpen,
             presentationOpen: root.presentationOpen,
+            roleHoldOpen: root.roleHoldOpen,
+            otherRoleOpen: root.otherRoleOpen,
+            renderUpdatesNeeded: root._renderUpdatesNeeded,
+            nativeHostMapped: root._nativeHostMapped,
+            resumeRearmPending: root._resumeRearmPending,
             windowVisible: sidebarRoot.visible,
             loaderActive: sidebarContentLoader.active,
             loaderStatus: sidebarContentLoader.status,
@@ -257,11 +291,44 @@ Scope {
         onTriggered: root.emitRuntimeReport()
     }
 
+    Timer {
+        id: resumeRemapTimer
+        interval: 140
+        onTriggered: {
+            if (GlobalStates.screenLocked)
+                return
+            root._nativeHostMapped = true
+            root._resumeRearmPending = false
+            root._renderUpdatesNeeded = true
+            Qt.callLater(() => {
+                if (root.presentationOpen)
+                    root.syncPresentation()
+                else
+                    renderSuspendTimer.restart()
+                root.reportRuntime()
+            })
+        }
+    }
+
+    Connections {
+        target: Idle
+        function onResumed(): void {
+            root.scheduleResumeRearm()
+        }
+    }
+
     function setRoleOpen(open: bool): void {
-        if (root.featureRole)
-            GlobalStates.sidebarLeftOpen = open
-        else if (root.systemRole)
-            GlobalStates.sidebarRightOpen = open
+        if (root.featureRole) {
+            if (open)
+                GlobalStates.openSidebarLeft(root._screenName)
+            else
+                GlobalStates.closeSidebarLeft()
+        } else if (root.systemRole) {
+            if (open)
+                GlobalStates.openSidebarRight(root._screenName)
+            else
+                GlobalStates.closeSidebarRight()
+        }
     }
 
     function clearFeatureExpansion(): void {
@@ -428,6 +495,7 @@ Scope {
 
     PanelWindow {
         id: sidebarRoot
+        screen: root.screen ?? Quickshell.screens[0]
 
         Component.onCompleted: {
             root._screenName = sidebarRoot.screen?.name ?? ""
@@ -461,6 +529,14 @@ Scope {
                     root.syncPresentation()
                     root.reportRuntime()
                 })
+            }
+
+            function onScreenLockedChanged(): void {
+                if (GlobalStates.screenLocked) {
+                    root.scheduleResumeRearm()
+                } else if (root._resumeRearmPending) {
+                    resumeRemapTimer.restart()
+                }
             }
         }
 
@@ -501,9 +577,11 @@ Scope {
         color: "transparent"
         // A closed transparent Overlay surface still prevents direct scanout.
         // Keep it mapped for normal warm opens, but release it while fullscreen
-        // owns this output. Explicit opens and their exit animation remain usable.
-        visible: !root.fullscreenCovered || root.presentationOpen
-            || sidebarContentLoader.animating
+        // owns this output or manual GameMode explicitly requests a quiet shell.
+        // Explicit fullscreen opens and their exit animation remain usable.
+        visible: root._nativeHostMapped && !GlobalStates.screenLocked
+            && (!root.fullscreenCovered || root.presentationOpen
+                || sidebarContentLoader.animating)
         updatesEnabled: sidebarRoot.visible && root._renderUpdatesNeeded
 
         anchors {

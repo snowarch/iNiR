@@ -75,7 +75,7 @@ Item {
         id: contentLayout
         anchors.fill: parent
         x: root.expanded ? 0 : dragManager.dragDiffX
-        spacing: 4
+        spacing: Looks.dp(4)
 
         Behavior on x {
             enabled: !dragManager.dragging
@@ -85,7 +85,10 @@ Item {
         GroupHeader {
             id: notifHeader
             Layout.fillWidth: true
-            Layout.margins: 11
+            Layout.leftMargin: Looks.dp(11)
+            Layout.rightMargin: Looks.dp(11)
+            Layout.topMargin: Looks.dp(11)
+            Layout.bottomMargin: Looks.dp(11)
         }
 
         ListView {
@@ -93,7 +96,7 @@ Item {
             implicitWidth: notifHeader.implicitWidth
             implicitHeight: contentHeight
             interactive: false
-            spacing: 4
+            spacing: Looks.dp(4)
 
             // Smooth transitions
             add: Transition {
@@ -112,10 +115,6 @@ Item {
             
             displaced: Transition {
                 NumberAnimation { properties: "x,y"; duration: Looks.transition.enabled ? Looks.transition.duration.medium : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
-            }
-
-            Behavior on implicitHeight {
-                NumberAnimation { duration: Looks.transition.enabled ? Looks.transition.duration.medium : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
             }
 
             model: ScriptModel {
@@ -194,9 +193,9 @@ Item {
             // Notification count badge
             Rectangle {
                 visible: root.notificationCount > 1
-                implicitWidth: Math.max(countText.implicitWidth + 8, 18)
-                implicitHeight: 18
-                radius: 9
+                implicitWidth: Math.max(countText.implicitWidth + Looks.dp(8), Looks.dp(18))
+                implicitHeight: Looks.dp(18)
+                radius: height / 2
                 color: Looks.colors.bg1Base
 
                 WText {

@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
 # Generate cava config for internal widget usage (CavaProcess.qml)
-# Usage: generate_config.sh <output_file> [framerate] [sensitivity] [bars] [stereo]
+# Usage: generate_config.sh <output_file> [framerate] [sensitivity] [bars] [stereo] [desktop_entry]
 #
 # All parameters after output_file are optional and fall back to sane defaults.
 # Supports both PipeWire and PulseAudio systems.
+
+case "$1" in
+    -h|--help)
+        echo "Usage: generate_config.sh <output_file> [framerate] [sensitivity] [bars] [stereo] [desktop_entry]"
+        exit 0
+        ;;
+esac
 
 OUTPUT_FILE="${1:-/tmp/cava_config.txt}"
 FRAMERATE="${2:-60}"

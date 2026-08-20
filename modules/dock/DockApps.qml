@@ -12,6 +12,7 @@ import Quickshell.Wayland
 
 Item {
     id: root
+    property bool _sortingConsumerAcquired: false
 
     // Debug logging gated behind QS_DEBUG env var (project convention)
     function _log(...args): void {
@@ -317,10 +318,15 @@ Item {
         id: rebuildTimer
         interval: 80
         repeat: false
-        onTriggered: root._doRebuildDockItems()
+        onTriggered: {
+            if (root.enabled)
+                root._doRebuildDockItems()
+        }
     }
 
     function rebuildDockItems() {
+        if (!root.enabled)
+            return
         rebuildTimer.restart()
     }
 
@@ -565,6 +571,7 @@ Item {
 
     Connections {
         target: ToplevelManager.toplevels
+        enabled: root.enabled
         function onValuesChanged() {
             root.rebuildDockItems()
         }
@@ -572,6 +579,7 @@ Item {
 
     Connections {
         target: CompositorService
+        enabled: root.enabled
         function onSortedToplevelsChanged() {
             root.rebuildDockItems()
         }
@@ -579,6 +587,7 @@ Item {
 
     Connections {
         target: Config.options?.dock
+        enabled: root.enabled
         function onPinnedAppsChanged() {
             root.rebuildDockItems()
         }
@@ -587,7 +596,24 @@ Item {
         }
     }
 
-    Component.onCompleted: rebuildDockItems()
+    function syncSortingDemand(): void {
+        if (root.enabled && !_sortingConsumerAcquired) {
+            CompositorService.acquireSortingConsumer()
+            _sortingConsumerAcquired = true
+            rebuildDockItems()
+        } else if (!root.enabled && _sortingConsumerAcquired) {
+            rebuildTimer.stop()
+            CompositorService.releaseSortingConsumer()
+            _sortingConsumerAcquired = false
+        }
+    }
+
+    onEnabledChanged: syncSortingDemand()
+    Component.onCompleted: syncSortingDemand()
+    Component.onDestruction: {
+        if (_sortingConsumerAcquired)
+            CompositorService.releaseSortingConsumer()
+    }
 
     StyledListView {
         id: listView
@@ -642,7 +668,7 @@ Item {
 
         model: ScriptModel {
             objectProp: "uniqueId"
-            values: root.dockItems
+            values: root.enabled ? root.dockItems : []
         }
 
           delegate: DockAppButton {
@@ -853,6 +879,14 @@ Item {
                         root.endDrag()
                     }
                     root._suppressNextClick = true
+                    // RippleButton follows releaseAction with click() only for
+                    // a normal release. MouseArea cancellation calls the same
+                    // releaseAction without that click, so expire the guard if
+                    // it was not consumed synchronously.
+                    Qt.callLater(() => {
+                        if (root._suppressNextClick)
+                            root._suppressNextClick = false
+                    })
                     dockDelegate._longPressTriggered = false
                 }
             }

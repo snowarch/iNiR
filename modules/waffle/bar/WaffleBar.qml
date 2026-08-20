@@ -40,13 +40,12 @@ Scope {
             component: PanelWindow { // Bar window
                 id: barRoot
                 screen: barWindowLoader.modelData
-                visible: !GameMode.shouldHidePanels
+                visible: true
                 exclusionMode: ExclusionMode.Ignore
-                exclusiveZone: GameMode.shouldHidePanels ? 0 : implicitHeight
+                exclusiveZone: implicitHeight
                 WlrLayershell.namespace: "quickshell:bar"
-                Item { id: emptyMask; width: 0; height: 0 }
                 mask: Region {
-                    item: GameMode.shouldHidePanels ? emptyMask : content
+                    item: content
                 }
 
                 anchors {
@@ -68,7 +67,7 @@ Scope {
                 WaffleBarContent {
                     id: content
 
-                    nativeBlurAllowed: !GameMode.shouldHidePanels
+                    nativeBlurAllowed: true
 
                     // Mascot chaos: her ground slam rattles the taskbar; a kick more so
                     property real _quakeY: 0
@@ -95,23 +94,6 @@ Scope {
                         right: parent.right
                         top: !root.isBottom ? parent.top : undefined
                         bottom: root.isBottom ? parent.bottom : undefined
-                    }
-                    anchors.topMargin: !root.isBottom && GameMode.shouldHidePanels ? -implicitHeight : 0
-                    anchors.bottomMargin: root.isBottom && GameMode.shouldHidePanels ? -implicitHeight : 0
-
-                    Behavior on anchors.topMargin {
-                        animation: NumberAnimation {
-                            duration: Looks.transition.enabled ? Looks.transition.duration.panel : 0
-                            easing.type: Easing.BezierSpline
-                            easing.bezierCurve: Looks.transition.easing.bezierCurve.decelerate
-                        }
-                    }
-                    Behavior on anchors.bottomMargin {
-                        animation: NumberAnimation {
-                            duration: Looks.transition.enabled ? Looks.transition.duration.panel : 0
-                            easing.type: Easing.BezierSpline
-                            easing.bezierCurve: Looks.transition.easing.bezierCurve.decelerate
-                        }
                     }
                 }
 

@@ -63,19 +63,20 @@ Item {
         id: iconTile
         anchors.left: parent.left
         anchors.top: parent.top
-        anchors.topMargin: root.compact ? 2 * root.s : 0
-        width: (root.compact ? 22 : 28) * root.s
+        anchors.topMargin: root.compact
+            ? Math.max(0, (parent.height - height) / 2) : 0
+        width: (root.compact ? 18 : 28) * root.s
         height: width
-        radius: (root.compact ? 7 : 9) * root.s
+        radius: (root.compact ? 5 : 9) * root.s
         color: PillTheme.tileBg
-        border.width: 1
+        border.width: root.compact ? 0 : 1
         border.color: PillTheme.border
 
         Image {
             id: toastImg
             anchors.fill: parent
             anchors.margins: root.imageValue.length > 0 && !root.imageIsIconHint
-                ? 0 : (root.compact ? 4 : 6) * root.s
+                ? 0 : (root.compact ? 3 : 6) * root.s
             source: root.iconSource
             sourceSize.width: 56
             sourceSize.height: 56
@@ -88,7 +89,7 @@ Item {
             anchors.centerIn: parent
             visible: !toastImg.visible
             text: root.materialSymbol
-            iconSize: (root.compact ? 15 : 17) * root.s
+            iconSize: (root.compact ? 12 : 17) * root.s
             color: root.critical ? PillTheme.vermLit : PillTheme.verm
         }
     }
@@ -120,12 +121,13 @@ Item {
     Column {
         id: col
         anchors.left: iconTile.right
-        anchors.leftMargin: 10 * root.s
+        anchors.leftMargin: (root.compact ? 6 : 10) * root.s
         anchors.right: root.compact ? parent.right : dismiss.left
         anchors.rightMargin: root.compact ? 0 : 8 * root.s
         anchors.top: parent.top
-        anchors.topMargin: root.compact ? 5 * root.s : 0
-        spacing: 3 * root.s
+        anchors.topMargin: root.compact
+            ? Math.max(0, (parent.height - implicitHeight) / 2) : 0
+        spacing: root.compact ? 1 * root.s : 3 * root.s
 
         Text {
             width: parent.width
@@ -147,21 +149,21 @@ Item {
             Item {
                 visible: root.critical
                 anchors.verticalCenter: parent.verticalCenter
-                width: 8 * root.s
-                height: 8 * root.s
+                width: (root.compact ? 6 : 8) * root.s
+                height: width
 
                 Rectangle {
                     anchors.centerIn: parent
-                    width: 8 * root.s
-                    height: 8 * root.s
+                    width: parent.width
+                    height: width
                     radius: 999
                     color: PillTheme.flameGlow
                     opacity: 0.3
                 }
                 Rectangle {
                     anchors.centerIn: parent
-                    width: 4 * root.s
-                    height: 4 * root.s
+                    width: parent.width / 2
+                    height: width
                     radius: 999
                     color: PillTheme.flameGlow
                 }
@@ -172,7 +174,7 @@ Item {
                 text: root.notif.summary
                 color: PillTheme.cream
                 font.family: PillTheme.font
-                font.pixelSize: (root.compact ? 10.5 : 11.5) * root.s
+                font.pixelSize: (root.compact ? 9.5 : 11.5) * root.s
                 font.weight: Font.DemiBold
                 maximumLineCount: 1
                 elide: Text.ElideRight

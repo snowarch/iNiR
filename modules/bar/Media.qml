@@ -320,7 +320,7 @@ Item {
                 colPrimary: Appearance.zzzEverywhere ? Appearance.zzz.accent
                     : Appearance.inirEverywhere ? Appearance.inir.colPrimary
                     : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
-                    : Appearance.colors.colOnSecondaryContainer
+                    : Appearance.colors.colOnLayer0
                 enableAnimation: activePlayer?.playbackState === MprisPlaybackState.Playing
 
                 Item {
@@ -336,7 +336,7 @@ Item {
                         color: Appearance.zzzEverywhere ? Appearance.zzz.ink
                             : Appearance.inirEverywhere ? Appearance.inir.colOnPrimary
                             : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer0
-                            : Appearance.colors.colOnSecondaryContainer
+                            : Appearance.colors.colOnLayer0
                         Behavior on color {
                             enabled: Appearance.animationsEnabled
                             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }

@@ -115,7 +115,7 @@ PillSurface {
                 root.usage[entry.id] = (root.usage[entry.id] || 0) + 1;
                 usageStore.setText(JSON.stringify(root.usage));
             }
-            entry.execute();
+            AppSearch.launchEntry(entry);
         }
         root.requestClose();
     }

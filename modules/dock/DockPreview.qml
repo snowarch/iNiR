@@ -100,6 +100,9 @@ PopupWindow {
     color: "transparent"
     implicitWidth: contentItem.implicitWidth + ambientShadowWidth + (visualMargin * 2)
     implicitHeight: contentItem.implicitHeight + ambientShadowWidth + (visualMargin * 2)
+    mask: Region {
+        item: contentItem
+    }
 
     // Brief immunity after closing a window from within the preview,
     // so the popup survives the resize that moves the cursor outside.

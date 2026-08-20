@@ -10,9 +10,7 @@ Canvas {
     property real maxVisualizerValue: 1000
     property int smoothing: 2
     property bool live: true
-    property color color: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                        : Appearance.inirEverywhere ? Appearance.inir.colPrimary
-                        : Appearance.colors.colPrimary
+    property color color: CavaTheme.primaryColor
     // Fill alpha — reads global config, consumers can override
     property real fillOpacity: (Config.options?.appearance?.cava?.waveOpacity ?? 30) / 100
     onPointsChanged: () => {

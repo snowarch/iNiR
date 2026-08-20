@@ -24,12 +24,14 @@ ExpandableChoiceButton {
             Layout.alignment: Qt.AlignTop
             property int strength: root.wifiNetwork?.strength ?? 0
             icon: "wifi-1"
+            filled: false
             implicitSize: 30
             color: Looks.colors.inactiveIcon
 
             FluentIcon { // Signal
                 property int strength: root.wifiNetwork?.strength ?? 0
                 icon: WIcons.wifiIconForStrength(strength)
+                filled: false
                 implicitSize: 30
 
                 FluentIcon { // Security

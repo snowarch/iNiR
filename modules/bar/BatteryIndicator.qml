@@ -32,7 +32,7 @@ MouseArea {
         value: percentage
         highlightColor: (isLow && !isCharging)
             ? (Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError)
-            : (Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSecondaryContainer)
+            : (Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0)
 
         Item {
             anchors.centerIn: parent

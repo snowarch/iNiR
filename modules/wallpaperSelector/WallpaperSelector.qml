@@ -52,7 +52,7 @@ Scope {
                     const s = Quickshell.screens.find(s => s.name === targetMon)
                     if (s) return s
                 }
-                return GlobalStates.primaryScreen
+                return GlobalStates.focusedScreen ?? GlobalStates.primaryScreen
             }
             readonly property HyprlandMonitor monitor: CompositorService.isHyprland ? Hyprland.monitorFor(panelWindow.screen) : null
             property bool monitorIsFocused: CompositorService.isHyprland 

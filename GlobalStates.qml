@@ -20,6 +20,7 @@ Singleton {
     property bool barOpen: true
     property bool crosshairOpen: false
     property bool sidebarLeftOpen: false
+    property string sidebarLeftTargetOutput: ""
     property bool sidebarLeftExpanded: false
     // A left-sidebar feature requests the panel stay open through implicit closes
     // (backdrop click / focus loss) and yield keyboard focus — e.g. the InnerTune
@@ -27,22 +28,51 @@ Singleton {
     property bool sidebarLeftHoldOpen: false
     property bool aiChatDetached: false
     property bool sidebarRightOpen: false
+    property string sidebarRightTargetOutput: ""
     property bool mediaControlsOpen: false
     property bool osdBrightnessOpen: false
     property bool osdVolumeOpen: false
     property bool osdMicOpen: false
     property bool osdMediaOpen: false
     property string osdMediaAction: "play" // "play", "pause", "next", "previous"
+    signal osdMediaActionTriggered(string action)
+
+    function showMediaAction(action: string): void {
+        const normalized = String(action ?? "")
+        if (!["play", "pause", "next", "previous"].includes(normalized))
+            return
+        root.osdMediaAction = normalized
+        root.osdMediaOpen = true
+        root.osdMediaActionTriggered(normalized)
+    }
+
     property bool osdKeyboardLayoutOpen: false
     property bool oskOpen: false
     property bool overlayOpen: false
     property bool overviewOpen: false
+    property string overviewTargetOutput: ""
     property string overviewSearchPrefix: ""
     property bool altSwitcherOpen: false
+    signal altSwitcherCommand(string command)
     property bool clipboardOpen: false
     property bool settingsOverlayOpen: false
     property int settingsOverlayRequestedPage: -1 // Set before opening to navigate to a specific page
     property int settingsOverlayCurrentPage: -1 // Published by whichever overlay chrome is loaded
+    property var _settingsNativeDialogs: ({})
+    readonly property bool settingsNativeDialogOpen:
+        Object.keys(root._settingsNativeDialogs).length > 0
+
+    function setSettingsNativeDialogVisible(dialogKey: string, visible: bool): void {
+        const key = String(dialogKey ?? "").trim()
+        if (!key) return
+        const next = Object.assign({}, root._settingsNativeDialogs)
+        if (visible)
+            next[key] = true
+        else
+            delete next[key]
+        root._settingsNativeDialogs = next
+    }
+
     property bool regionSelectorOpen: false
     property var regionSelectorAction: 0
     property var regionSelectorMode: 0
@@ -87,6 +117,7 @@ Singleton {
     property string wallpaperLauncherMode: "static"
     property bool widgetEditMode: false
     property string selectedDesktopWidget: ""
+    property string selectedDesktopItem: ""
     property string desktopWidgetQuickControls: ""
     property bool shellLayoutEditMode: false
 
@@ -95,6 +126,7 @@ Singleton {
             shellLayoutEditMode = false
         else {
             selectedDesktopWidget = ""
+            selectedDesktopItem = ""
             desktopWidgetQuickControls = ""
         }
         widgetEditMode = enabled
@@ -104,11 +136,22 @@ Singleton {
         if (!widgetEditMode)
             return
         selectedDesktopWidget = String(instanceKey ?? "")
+        selectedDesktopItem = ""
     }
 
     function clearDesktopWidgetSelection(): void {
         selectedDesktopWidget = ""
+        selectedDesktopItem = ""
         desktopWidgetQuickControls = ""
+    }
+
+    function selectDesktopItem(instanceKey: string): void {
+        selectedDesktopItem = String(instanceKey ?? "")
+        selectedDesktopWidget = ""
+    }
+
+    function clearDesktopItemSelection(): void {
+        selectedDesktopItem = ""
     }
 
     function requestDesktopWidgetQuickControls(instanceKey: string): void {
@@ -123,6 +166,7 @@ Singleton {
         if (enabled) {
             widgetEditMode = false
             selectedDesktopWidget = ""
+            selectedDesktopItem = ""
             desktopWidgetQuickControls = ""
         }
         shellLayoutEditMode = enabled
@@ -198,8 +242,8 @@ Singleton {
 
     signal requestRipple(real x, real y, string screenName)
 
-    // Primary screen: user-configured preferred monitor for single-window panels (OSD, notifications, wallpaper selector, etc.)
-    // Empty string = use compositor-focused screen, falling back to Quickshell.screens[0]
+    // User-configured fallback for singular panels such as wallpaper pickers.
+    // Empty string uses the first available Quickshell screen.
     readonly property var primaryScreen: {
         const name = Config.options?.display?.primaryMonitor ?? ""
         if (name.length > 0) {
@@ -207,6 +251,122 @@ Singleton {
             if (s) return s
         }
         return Quickshell.screens[0]
+    }
+
+    // Focus-following screen for singular interactive surfaces. Keep this
+    // separate from primaryScreen: the latter is a user fallback, while this
+    // follows the compositor and only falls back when focus cannot be resolved.
+    readonly property var focusedScreen: {
+        let name = ""
+        if (CompositorService.isNiri)
+            name = NiriService.currentOutput ?? ""
+        else if (CompositorService.isHyprland)
+            name = Hyprland.focusedMonitor?.name ?? ""
+        return Quickshell.screens.find(screen => (screen?.name ?? "") === name)
+            ?? root.primaryScreen
+            ?? Quickshell.screens[0]
+            ?? null
+    }
+
+    function connectedOutputNames(allowedOutputs): var {
+        const connected = Quickshell.screens
+            .map(screen => String(screen?.name ?? ""))
+            .filter(name => name.length > 0)
+        if (!Array.isArray(allowedOutputs) || allowedOutputs.length === 0)
+            return connected
+        const enabled = connected.filter(name => allowedOutputs.includes(name))
+        return enabled.length > 0 ? enabled : connected
+    }
+
+    function resolveOutputName(requestedOutput, allowedOutputs): string {
+        const names = root.connectedOutputNames(allowedOutputs)
+        if (names.length === 0)
+            return ""
+        const requested = String(requestedOutput ?? "")
+        if (requested.length > 0 && names.includes(requested))
+            return requested
+        const focused = String(root.focusedScreen?.name ?? "")
+        if (focused.length > 0 && names.includes(focused))
+            return focused
+        const primary = String(root.primaryScreen?.name ?? "")
+        if (primary.length > 0 && names.includes(primary))
+            return primary
+        return names[0]
+    }
+
+    readonly property string overviewPresentationOutput:
+        root.resolveOutputName(root.overviewTargetOutput, [])
+    readonly property string sidebarLeftPresentationOutput:
+        root.resolveOutputName(root.sidebarLeftTargetOutput,
+            Config.options?.sidebar?.screenList ?? [])
+    readonly property string sidebarRightPresentationOutput:
+        root.resolveOutputName(root.sidebarRightTargetOutput,
+            Config.options?.sidebar?.screenList ?? [])
+
+    function openOverview(outputName): void {
+        overviewTargetOutput = root.resolveOutputName(outputName, [])
+        overviewOpen = true
+    }
+
+    function closeOverview(): void {
+        overviewOpen = false
+    }
+
+    function toggleOverview(outputName): void {
+        const resolved = root.resolveOutputName(outputName, [])
+        if (overviewOpen && overviewPresentationOutput === resolved)
+            root.closeOverview()
+        else
+            root.openOverview(resolved)
+    }
+
+    function openSidebarLeft(outputName): void {
+        sidebarLeftTargetOutput = root.resolveOutputName(outputName,
+            Config.options?.sidebar?.screenList ?? [])
+        sidebarLeftOpen = true
+    }
+
+    function closeSidebarLeft(): void {
+        sidebarLeftOpen = false
+    }
+
+    function toggleSidebarLeft(outputName): void {
+        const resolved = root.resolveOutputName(outputName,
+            Config.options?.sidebar?.screenList ?? [])
+        if (sidebarLeftOpen && sidebarLeftPresentationOutput === resolved)
+            root.closeSidebarLeft()
+        else
+            root.openSidebarLeft(resolved)
+    }
+
+    function openSidebarRight(outputName): void {
+        sidebarRightTargetOutput = root.resolveOutputName(outputName,
+            Config.options?.sidebar?.screenList ?? [])
+        sidebarRightOpen = true
+    }
+
+    function closeSidebarRight(): void {
+        sidebarRightOpen = false
+    }
+
+    function toggleSidebarRight(outputName): void {
+        const resolved = root.resolveOutputName(outputName,
+            Config.options?.sidebar?.screenList ?? [])
+        if (sidebarRightOpen && sidebarRightPresentationOutput === resolved)
+            root.closeSidebarRight()
+        else
+            root.openSidebarRight(resolved)
+    }
+
+    onOverviewOpenChanged: {
+        if (overviewOpen && overviewTargetOutput.length === 0)
+            overviewTargetOutput = root.resolveOutputName("", [])
+    }
+
+    onSidebarLeftOpenChanged: {
+        if (sidebarLeftOpen && sidebarLeftTargetOutput.length === 0)
+            sidebarLeftTargetOutput = root.resolveOutputName("",
+                Config.options?.sidebar?.screenList ?? [])
     }
 
     // Close other waffle popups when one opens (unless allowMultiplePanels is enabled)
@@ -268,6 +428,9 @@ Singleton {
     }
 
     onSidebarRightOpenChanged: {
+        if (sidebarRightOpen && sidebarRightTargetOutput.length === 0)
+            sidebarRightTargetOutput = root.resolveOutputName("",
+                Config.options?.sidebar?.screenList ?? [])
         if (sidebarRightOpen) {
             Notifications.timeoutAll()
             Notifications.markAllRead()

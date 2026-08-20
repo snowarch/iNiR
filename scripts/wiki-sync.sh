@@ -30,7 +30,10 @@ copy_docs() {
     find "$target" -maxdepth 1 -type f -name '*.md' -delete
     while IFS= read -r file; do
         name="$(basename "$file")"
-        [[ "$name" == "index.md" ]] && name="Home.md"
+        case "$name" in
+            AGENTS.md|CLAUDE.md) continue ;;
+            index.md) name="Home.md" ;;
+        esac
         cp "$file" "$target/$name"
     done < <(find "$source_dir" -maxdepth 1 -type f -name '*.md' | sort)
 }

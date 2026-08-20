@@ -4,15 +4,19 @@ AngelAccentBar 1.0 AngelAccentBar.qml
 AngelBackground 1.0 AngelBackground.qml
 AngelPartialBorder 1.0 AngelPartialBorder.qml
 BarModuleOrderEditor 1.0 BarModuleOrderEditor.qml
+BarWidgetSwitcher 1.0 BarWidgetSwitcher.qml
+BarWidgetSwitcherArea 1.0 BarWidgetSwitcherArea.qml
 ButtonGroup 1.0 ButtonGroup.qml
 CalendarView 1.0 CalendarView.qml
 CavaProcess 1.0 CavaProcess.qml
+CavaSpectrum 1.0 CavaSpectrum.qml
 CavaVisualizer 1.0 CavaVisualizer.qml
 CavaWavyLine 1.0 CavaWavyLine.qml
 Circle 1.0 Circle.qml
 CircularProgress 1.0 CircularProgress.qml
 CliphistImage 1.0 CliphistImage.qml
 ClippedFilledCircularProgress 1.0 ClippedFilledCircularProgress.qml
+ClippedOutlineCircularProgress 1.0 ClippedOutlineCircularProgress.qml
 ClippedProgressBar 1.0 ClippedProgressBar.qml
 CollapsibleSection 1.0 CollapsibleSection.qml
 CompositorFocusGrab 1.0 CompositorFocusGrab.qml
@@ -47,6 +51,7 @@ GroupButton 1.0 GroupButton.qml
 IconThemeSelector 1.0 IconThemeSelector.qml
 IconToolbarButton 1.0 IconToolbarButton.qml
 InputChip 1.0 InputChip.qml
+FilterChip 1.0 FilterChip.qml
 KeyboardKey 1.0 KeyboardKey.qml
 LightDarkPreferenceButton 1.0 LightDarkPreferenceButton.qml
 MascotAnimation 1.0 MascotAnimation.qml
@@ -87,6 +92,7 @@ PanelSurface 1.0 PanelSurface.qml
 PointingHandInteraction 1.0 PointingHandInteraction.qml
 PointingHandLinkHover 1.0 PointingHandLinkHover.qml
 PopupToolTip 1.0 PopupToolTip.qml
+ResourceCard 1.0 ResourceCard.qml
 Revealer 1.0 Revealer.qml
 RippleButton 1.0 RippleButton.qml
 RippleButtonWithIcon 1.0 RippleButtonWithIcon.qml

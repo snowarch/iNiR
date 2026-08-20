@@ -23,7 +23,29 @@ Singleton {
 
     property string failMessage: Translation.tr("That didn't work. Tips:\n- Check your tags and NSFW settings\n- If you don't have a tag in mind, type a page number")
     property var responses: []
+    readonly property int responseLimit: 20
     property int runningRequests: 0
+
+    function _destroyResponsesLater(items) {
+        const doomed = (items || []).filter(item => item !== null && item !== undefined)
+        if (doomed.length === 0)
+            return
+        Qt.callLater(() => {
+            for (let i = 0; i < doomed.length; ++i) {
+                if (typeof doomed[i].destroy === "function")
+                    doomed[i].destroy()
+            }
+        })
+    }
+
+    function _appendResponse(response) {
+        const next = [...root.responses, response]
+        const removed = []
+        while (next.length > root.responseLimit)
+            removed.push(next.shift())
+        root.responses = next
+        root._destroyResponsesLater(removed)
+    }
     property var defaultUserAgent: Config.options?.networking?.userAgent || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
     property var providerList: Object.keys(providers).filter(provider => provider !== "system" && providers[provider].api)
     property var providers: {
@@ -309,17 +331,19 @@ Singleton {
     }
 
     function clearResponses() {
-        responses = []
+        const previous = root.responses
+        root.responses = []
+        root._destroyResponsesLater(previous)
     }
 
     function addSystemMessage(message) {
-        responses = [...responses, root.booruResponseDataComponent.createObject(null, {
+        root._appendResponse(root.booruResponseDataComponent.createObject(null, {
             "provider": "system",
             "tags": [],
             "page": -1,
             "images": [],
             "message": `${message}`
-        })]
+        }))
     }
 
     function constructRequestUrl(tags, nsfw=true, limit=20, page=1) {
@@ -428,14 +452,14 @@ Singleton {
                     newResponse.message = root.failMessage
                 } finally {
                     root.runningRequests--;
-                    root.responses = [...root.responses, newResponse]
+                    root._appendResponse(newResponse)
                 }
             }
             else if (xhr.readyState === XMLHttpRequest.DONE) {
                 console.log("[Booru] Request failed with status: " + xhr.status)
                 newResponse.message = root.failMessage
                 root.runningRequests--;
-                root.responses = [...root.responses, newResponse]
+                root._appendResponse(newResponse)
             }
             root.responseFinished()
         }

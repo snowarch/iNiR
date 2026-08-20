@@ -27,6 +27,7 @@ import qs.modules.wallpaperLauncher
 import qs.modules.ii.overlay
 import qs.modules.shellUpdate
 import qs.modules.workspaceStrip
+import "modules/barM3" as BarM3
 import "modules/clipboard" as ClipboardModule
 
 import QtQuick
@@ -75,9 +76,18 @@ Item {
         property bool retainAfterUse: false
         property bool used: false
         property int closeGraceMs: 300
+        // Stateful surfaces stay warm after use, but not forever. An unbounded
+        // retain-after-use cache made a long session accumulate every heavy panel
+        // the user had opened once. Five minutes preserves quick reopen behavior
+        // while eventually releasing the tree and its QML contexts.
+        property int retainIdleMs: 5 * 60 * 1000
         property bool resident: open || keepLoaded
         property Timer closeGrace: Timer {
             interval: onDemandLoader.closeGraceMs
+            onTriggered: onDemandLoader.resident = onDemandLoader.open || onDemandLoader.keepLoaded
+        }
+        property Timer retainIdle: Timer {
+            interval: onDemandLoader.retainIdleMs
             onTriggered: onDemandLoader.resident = onDemandLoader.open || onDemandLoader.keepLoaded
         }
         readonly property bool enabledPanel: Config.ready
@@ -87,17 +97,24 @@ Item {
             if (open) {
                 used = true
                 closeGrace.stop()
+                retainIdle.stop()
                 resident = true
-            } else if (!keepLoaded && !(retainAfterUse && used)) {
-                closeGrace.restart()
+            } else if (!keepLoaded) {
+                if (retainAfterUse && used)
+                    retainIdle.restart()
+                else
+                    closeGrace.restart()
             }
         }
         onKeepLoadedChanged: {
             if (keepLoaded) {
                 closeGrace.stop()
+                retainIdle.stop()
                 resident = true
             } else if (!open) {
-                if (!(retainAfterUse && used))
+                if (retainAfterUse && used)
+                    retainIdle.restart()
+                else
                     closeGrace.restart()
             }
         }
@@ -110,21 +127,63 @@ Item {
     // bar.appearanceStyle picks the horizontal bar's look. classic/islands/scenic/
     // frame are variants of Bar.qml itself; "pill" swaps in a different bar
     // entirely, so it is resolved here rather than inside Bar.qml.
+    // "m3" swaps in a separate bar implementation rather than restyling Bar.qml.
     readonly property bool barVertical: Config.options?.bar?.vertical ?? false
     readonly property bool barPill: (Config.options?.bar?.appearanceStyle ?? "classic") === "pill"
+    readonly property bool barM3: (Config.options?.bar?.appearanceStyle ?? "classic") === "m3"
+    readonly property bool barStock: !panelsRoot.barPill && !panelsRoot.barM3
+    readonly property bool pillHostActive: panelsRoot.barPill
+        && !panelsRoot.barVertical
+        && (Config.options?.enabledPanels ?? []).includes("iiBar")
+    readonly property bool pillToastTakeover: panelsRoot.pillHostActive
+        && (Config.options?.bar?.pill?.toasts ?? true)
+    readonly property bool pillOsdTakeover: panelsRoot.pillHostActive
+        && (Config.options?.bar?.pill?.osd ?? true)
 
-    PanelLoader { identifier: "iiBar"; extraCondition: !panelsRoot.barVertical && !panelsRoot.barPill; component: Bar {} }
+    function screensFor(list: var): var {
+        const screens = Quickshell.screens
+        if (!list || list.length === 0)
+            return screens
+        const matched = screens.filter(screen => {
+            const screenName = screen?.name ?? ""
+            return screenName.length > 0 && list.includes(screenName)
+        })
+        return matched.length > 0 ? matched : screens
+    }
+
+    readonly property var pillHostScreens: panelsRoot.pillHostActive
+        ? panelsRoot.screensFor(Config.options?.bar?.screenList ?? []) : []
+    readonly property var pillHostScreenNames: panelsRoot.pillHostScreens.map(screen => screen?.name ?? "")
+    readonly property var notificationScreens: panelsRoot.screensFor(Config.options?.notifications?.screenList ?? [])
+    readonly property var osdScreens: panelsRoot.screensFor(Config.options?.osd?.screenList ?? [])
+    readonly property bool notificationStandaloneNeeded: !panelsRoot.pillToastTakeover
+        || panelsRoot.notificationScreens.some(screen => !panelsRoot.pillHostScreenNames.includes(screen?.name ?? ""))
+    readonly property bool osdStandaloneNeeded: !panelsRoot.pillOsdTakeover
+        || panelsRoot.osdScreens.some(screen => !panelsRoot.pillHostScreenNames.includes(screen?.name ?? ""))
+
+    PanelLoader { identifier: "iiBar"; extraCondition: !panelsRoot.barVertical && panelsRoot.barStock; component: Bar {} }
     PanelLoader { identifier: "iiBar"; extraCondition: !panelsRoot.barVertical && panelsRoot.barPill; component: PillBar {} }
+    PanelLoader { identifier: "iiBar"; extraCondition: !panelsRoot.barVertical && panelsRoot.barM3; component: BarM3.M3Bar {} }
     PanelLoader { identifier: "iiVerticalBar"; extraCondition: panelsRoot.barVertical; component: VerticalBar {} }
     PanelLoader { identifier: "iiBackground"; component: Background {} }
     PanelLoader { identifier: "iiBackdrop"; extraCondition: Config.options?.background?.backdrop?.enable ?? false; component: Backdrop {} }
     PanelLoader { identifier: "iiDock"; extraCondition: Config.options?.dock?.enable ?? true; component: Dock {} }
-    // The pill bar hosts its own toast and OSD faces, so the standalone popup and
-    // OSD panels would double every notification and every volume flash. Turning
-    // the pill's faces off (bar.pill.toasts / bar.pill.osd) hands each duty back
-    // to the standalone panel instead of silencing it.
-    PanelLoader { identifier: "iiNotificationPopup"; extraCondition: !panelsRoot.barPill || !(Config.options?.bar?.pill?.toasts ?? true); component: NotificationPopup {} }
-    PanelLoader { identifier: "iiOnScreenDisplay"; extraCondition: !panelsRoot.barPill || !(Config.options?.bar?.pill?.osd ?? true); component: OnScreenDisplay {} }
+    // Pill owns transient feedback only where a horizontal Pill host exists.
+    // Standalone panels fill any selected outputs the bar does not cover.
+    PanelLoader {
+        identifier: "iiNotificationPopup"
+        extraCondition: panelsRoot.notificationStandaloneNeeded
+        component: NotificationPopup {
+            excludedScreenNames: panelsRoot.pillToastTakeover ? panelsRoot.pillHostScreenNames : []
+        }
+    }
+    PanelLoader {
+        identifier: "iiOnScreenDisplay"
+        extraCondition: panelsRoot.osdStandaloneNeeded
+        component: OnScreenDisplay {
+            excludedScreenNames: panelsRoot.pillOsdTakeover ? panelsRoot.pillHostScreenNames : []
+        }
+    }
 
     // === Deferred panels (user-triggered or non-critical at boot) ===
     DeferredPanelLoader { identifier: "iiBootGreeting"; component: BootGreeting {} }
@@ -163,42 +222,52 @@ Item {
     DeferredPanelLoader { identifier: "iiScreenCorners"; component: ScreenCorners {} }
     OnDemandPanelLoader { identifier: "iiSessionScreen"; open: GlobalStates.sessionOpen; component: SessionScreen {} }
 
-    // One input-only backdrop owns outside clicks for either sidebar. It maps
-    // only while needed: the surface is fully transparent and sits below the
-    // sidebar hosts, so keeping a fullscreen swapchain while both are closed
-    // has no visual or interaction value.
-    PanelWindow {
-        id: dualSidebarBackdrop
-        visible: GlobalStates.sidebarLeftOpen
-            || GlobalStates.sidebarRightOpen
-        updatesEnabled: GlobalStates.sidebarLeftOpen
-            || GlobalStates.sidebarRightOpen
-        color: "transparent"
-        exclusiveZone: 0
-        WlrLayershell.namespace: "quickshell:dualSidebarBackdrop"
-        WlrLayershell.layer: WlrLayer.Top
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+    // One input-only backdrop per selected output owns outside clicks for
+    // either sidebar. Each maps only while needed: the transparent surface
+    // sits below the sidebar hosts, so keeping fullscreen swapchains while both
+    // are closed has no visual or interaction value.
+    Variants {
+        model: panelsRoot.screensFor(Config.options?.sidebar?.screenList ?? [])
 
-        anchors {
-            top: true
-            bottom: true
-            left: true
-            right: true
-        }
+        PanelWindow {
+            id: dualSidebarBackdrop
+            required property var modelData
+            readonly property bool leftPresented: GlobalStates.sidebarLeftOpen
+                && GlobalStates.sidebarLeftPresentationOutput === (modelData?.name ?? "")
+            readonly property bool rightPresented: GlobalStates.sidebarRightOpen
+                && GlobalStates.sidebarRightPresentationOutput === (modelData?.name ?? "")
+            screen: modelData
+            visible: leftPresented || rightPresented
+            updatesEnabled: leftPresented || rightPresented
+            color: "transparent"
+            exclusiveZone: 0
+            WlrLayershell.namespace: "quickshell:dualSidebarBackdrop"
+            WlrLayershell.layer: WlrLayer.Top
+            WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
 
-        Item { id: emptyDualSidebarMask; width: 0; height: 0 }
-        mask: Region {
-            item: GlobalStates.sidebarLeftOpen || GlobalStates.sidebarRightOpen
-                ? dualSidebarBackdropArea : emptyDualSidebarMask
-        }
+            anchors {
+                top: true
+                bottom: true
+                left: true
+                right: true
+            }
 
-        MouseArea {
-            id: dualSidebarBackdropArea
-            anchors.fill: parent
-            enabled: GlobalStates.sidebarLeftOpen || GlobalStates.sidebarRightOpen
-            onClicked: {
-                GlobalStates.sidebarLeftOpen = false
-                GlobalStates.sidebarRightOpen = false
+            Item { id: emptyDualSidebarMask; width: 0; height: 0 }
+            mask: Region {
+                item: dualSidebarBackdrop.leftPresented || dualSidebarBackdrop.rightPresented
+                    ? dualSidebarBackdropArea : emptyDualSidebarMask
+            }
+
+            MouseArea {
+                id: dualSidebarBackdropArea
+                anchors.fill: parent
+                enabled: dualSidebarBackdrop.leftPresented || dualSidebarBackdrop.rightPresented
+                onClicked: {
+                    if (dualSidebarBackdrop.leftPresented)
+                        GlobalStates.closeSidebarLeft()
+                    if (dualSidebarBackdrop.rightPresented)
+                        GlobalStates.closeSidebarRight()
+                }
             }
         }
     }
@@ -245,12 +314,12 @@ Item {
 
     IpcHandler {
         target: "sidebarLeft"
-        function toggle(): void { GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen }
-        function close(): void { GlobalStates.sidebarLeftOpen = false }
-        function open(): void { GlobalStates.sidebarLeftOpen = true }
+        function toggle(): void { GlobalStates.toggleSidebarLeft("") }
+        function close(): void { GlobalStates.closeSidebarLeft() }
+        function open(): void { GlobalStates.openSidebarLeft("") }
         function expand(): void {
             GlobalStates.aiChatDetached = false
-            GlobalStates.sidebarLeftOpen = true
+            GlobalStates.openSidebarLeft("")
             GlobalStates.sidebarLeftExpanded = true
         }
         function compact(): void { GlobalStates.sidebarLeftExpanded = false }
@@ -269,15 +338,15 @@ Item {
         function attach(): void {
             GlobalStates.aiChatDetached = false
             GlobalStates.sidebarLeftExpanded = false
-            GlobalStates.sidebarLeftOpen = true
+            GlobalStates.openSidebarLeft("")
         }
     }
 
     IpcHandler {
         target: "sidebarRight"
-        function toggle(): void { GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen }
-        function close(): void { GlobalStates.sidebarRightOpen = false }
-        function open(): void { GlobalStates.sidebarRightOpen = true }
+        function toggle(): void { GlobalStates.toggleSidebarRight("") }
+        function close(): void { GlobalStates.closeSidebarRight() }
+        function open(): void { GlobalStates.openSidebarRight("") }
     }
 
     IpcHandler {
@@ -357,17 +426,17 @@ Item {
             GlobalShortcut {
                 name: "sidebarLeftToggle"
                 description: "Toggles left sidebar on press"
-                onPressed: GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen
+                onPressed: GlobalStates.toggleSidebarLeft("")
             }
             GlobalShortcut {
                 name: "sidebarLeftOpen"
                 description: "Opens left sidebar on press"
-                onPressed: GlobalStates.sidebarLeftOpen = true
+                onPressed: GlobalStates.openSidebarLeft("")
             }
             GlobalShortcut {
                 name: "sidebarLeftClose"
                 description: "Closes left sidebar on press"
-                onPressed: GlobalStates.sidebarLeftOpen = false
+                onPressed: GlobalStates.closeSidebarLeft()
             }
         }
     }
@@ -378,17 +447,17 @@ Item {
             GlobalShortcut {
                 name: "sidebarRightToggle"
                 description: "Toggles right sidebar on press"
-                onPressed: GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen
+                onPressed: GlobalStates.toggleSidebarRight("")
             }
             GlobalShortcut {
                 name: "sidebarRightOpen"
                 description: "Opens right sidebar on press"
-                onPressed: GlobalStates.sidebarRightOpen = true
+                onPressed: GlobalStates.openSidebarRight("")
             }
             GlobalShortcut {
                 name: "sidebarRightClose"
                 description: "Closes right sidebar on press"
-                onPressed: GlobalStates.sidebarRightOpen = false
+                onPressed: GlobalStates.closeSidebarRight()
             }
         }
     }

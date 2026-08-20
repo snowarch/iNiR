@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import qs
 import qs.modules.common
+import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.services
 
@@ -99,8 +100,7 @@ Item {
                     
                     onClicked: {
                         if (!modelData.cmd) return
-                        const parts = modelData.cmd.split(" ")
-                        Quickshell.execDetached(parts)
+                        ShellExec.execCmd(String(modelData.cmd))
                     }
 
                     altAction: () => {

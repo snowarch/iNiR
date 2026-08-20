@@ -17,7 +17,7 @@ AppButton {
     onClicked: GlobalStates.waffleWidgetsOpen = !GlobalStates.waffleWidgetsOpen
 
     BarToolTip {
-        extraVisibleCondition: root.shouldShowTooltip
+        barExtraVisibleCondition: root.shouldShowTooltip
         text: Translation.tr("Widgets")
     }
 }

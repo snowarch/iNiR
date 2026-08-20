@@ -26,6 +26,10 @@ Rectangle {
     property bool enableBlurTransition: true
     property int slideDirection: 1
     property string transitionKey: root.artSource
+    property bool animateChanges: Appearance.animationsEnabled
+
+    signal transitionStarted(string source)
+    signal transitionFinished(string source)
     
     radius: artRadius
     color: "transparent"
@@ -41,5 +45,8 @@ Rectangle {
         iconColor: root.iconColor
         iconSize: root.iconSize
         artRadius: root.artRadius
+        animateChanges: root.animateChanges
+        onTransitionStarted: source => root.transitionStarted(source)
+        onTransitionFinished: source => root.transitionFinished(source)
     }
 }

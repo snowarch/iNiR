@@ -170,9 +170,8 @@ ContentPage {
                     buttonIcon: "battery_saver"
                     text: Translation.tr("Charge limit")
                     checked: Config.options?.battery?.chargeLimit?.enable ?? false
-                    onCheckedChanged: {
-                        Config.setNestedValue("battery.chargeLimit.enable", checked);
-                    }
+                    autoToggle: false
+                    onToggledByUser: checked => Config.setNestedValue("battery.chargeLimit.enable", checked)
                     StyledToolTip {
                         text: !Battery.chargeLimitSupported
                             ? Translation.tr("Not supported on this device")
@@ -182,6 +181,7 @@ ContentPage {
                     }
                 }
                 ConfigSpinBox {
+                    property bool _ready: false
                     visible: Battery.chargeLimitAdjustable
                     enabled: (Config.options?.battery?.chargeLimit?.enable ?? false) && Battery.chargeLimitAdjustable
                     icon: "speed"
@@ -190,8 +190,10 @@ ContentPage {
                     from: 20
                     to: 100
                     stepSize: 5
+                    Component.onCompleted: _ready = true
                     onValueChanged: {
-                        Config.setNestedValue("battery.chargeLimit.threshold", value);
+                        if (_ready && value !== (Config.options?.battery?.chargeLimit?.threshold ?? 80))
+                            Config.setNestedValue("battery.chargeLimit.threshold", value);
                     }
                     StyledToolTip {
                         text: Translation.tr("Maximum charge percentage")

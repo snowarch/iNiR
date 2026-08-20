@@ -41,9 +41,13 @@ Button {
     }
     property var downAction // When left clicking (down)
     property var releaseAction // When left clicking (release)
+    property var cancelAction // When the press is canceled before release
     property var moveAction // When mouse moves while pressed (for drag support)
     property var altAction // When right clicking
     property var middleClickAction // When middle clicking
+    property Item dragTarget: null
+    property int pointerDragThreshold: 10
+    readonly property bool pointerDragActive: buttonMouseArea.drag.active
 
     property color colBackground: Appearance.zzzEverywhere ? "transparent"
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
@@ -108,6 +112,10 @@ Button {
         hoverEnabled: true
         cursorShape: root.pointingHandCursor ? Qt.PointingHandCursor : Qt.ArrowCursor
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+        drag.target: root.dragTarget
+        drag.axis: Drag.XAndYAxis
+        drag.smoothed: false
+        drag.threshold: root.pointerDragThreshold
         onPressed: (event) => {
             if(event.button === Qt.RightButton) {
                 if (root.altAction) root.altAction(event);
@@ -139,7 +147,8 @@ Button {
         }
         onCanceled: (event) => {
             root.down = false
-            if (root.releaseAction) root.releaseAction();
+            if (root.cancelAction) root.cancelAction(event)
+            else if (root.releaseAction) root.releaseAction();
             if (!root.rippleEnabled) return;
             rippleFadeAnim.restart();
         }
@@ -207,7 +216,14 @@ Button {
             enabled: Appearance.animationsEnabled
             animation: ColorAnimation { duration: Appearance.animation.stateChange.duration; easing.type: Appearance.animation.stateChange.type; easing.bezierCurve: Appearance.animation.stateChange.bezierCurve }
         }
-        scale: Appearance.cookieEverywhere && root.down ? 0.97 : 1
+        readonly property real _pressScale: {
+            const w = Math.max(width, 1);
+            const h = Math.max(height, 1);
+            const inset = Appearance.cookieEverywhere ? 3 : 2;
+            return Math.max(0.94, Math.min(0.995,
+                1 - inset / Math.max(w, h)));
+        }
+        scale: root.down && root.enabled ? _pressScale : 1
         Behavior on scale {
             enabled: Appearance.animationsEnabled
             NumberAnimation {

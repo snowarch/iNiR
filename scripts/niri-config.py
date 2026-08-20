@@ -2048,7 +2048,22 @@ def _set_xkb_value(content, prop, value):
     kb_content = content[kb_inner_start:kb_inner_end]
     xkb_bounds = _find_block_bounds(kb_content, "xkb")
     if not xkb_bounds:
-        return content
+        if not value:
+            return content
+        opening_line = content[kb_start:kb_inner_start].splitlines()[-1]
+        keyboard_indent = re.match(r"\s*", opening_line).group(0)
+        xkb_indent = keyboard_indent + "    "
+        prop_indent = xkb_indent + "    "
+        trailing = kb_content[len(kb_content.rstrip()) :]
+        if not trailing:
+            trailing = "\n" + keyboard_indent
+        new_xkb_block = (
+            f'{xkb_indent}xkb {{\n'
+            f'{prop_indent}{prop} "{value}"\n'
+            f"{xkb_indent}}}"
+        )
+        new_kb_content = kb_content.rstrip() + "\n" + new_xkb_block + trailing
+        return content[:kb_inner_start] + new_kb_content + content[kb_inner_end:]
 
     _, xkb_inner_start, xkb_inner_end, _ = xkb_bounds
     xkb_content = kb_content[xkb_inner_start:xkb_inner_end]

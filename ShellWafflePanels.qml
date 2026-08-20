@@ -38,6 +38,17 @@ import qs.services.deferred
 import "."
 
 Item {
+    id: root
+
+    readonly property var waffleAltSwitcherOptions:
+        Config.options?.waffles?.altSwitcher ?? ({})
+    readonly property string waffleAltSwitcherPreset:
+        root.waffleAltSwitcherOptions.preset ?? "thumbnails"
+    readonly property bool waffleAltSwitcherVisual:
+        root.waffleAltSwitcherPreset !== "none"
+        && !((root.waffleAltSwitcherOptions.noVisualUi ?? false)
+            && root.waffleAltSwitcherPreset !== "skew")
+
     // Immediate panels — visible at first frame or must catch early events
     // Uses `active` which loads synchronously (required for first-frame visibility)
     component PanelLoader: LazyLoader {
@@ -66,9 +77,17 @@ Item {
         property bool retainAfterUse: false
         property bool used: false
         property int closeGraceMs: 250
+        // Retained Waffle surfaces are a bounded warm cache, not a permanent
+        // session allocation. This releases start/action-center trees after a
+        // long idle period while keeping ordinary reopen latency effectively warm.
+        property int retainIdleMs: 5 * 60 * 1000
         property bool resident: open
         property Timer closeGrace: Timer {
             interval: onDemandLoader.closeGraceMs
+            onTriggered: onDemandLoader.resident = onDemandLoader.open
+        }
+        property Timer retainIdle: Timer {
+            interval: onDemandLoader.retainIdleMs
             onTriggered: onDemandLoader.resident = onDemandLoader.open
         }
         readonly property bool enabledPanel: Config.ready
@@ -77,8 +96,11 @@ Item {
             if (open) {
                 used = true
                 closeGrace.stop()
+                retainIdle.stop()
                 resident = true
-            } else if (!(retainAfterUse && used)) {
+            } else if (retainAfterUse && used) {
+                retainIdle.restart()
+            } else {
                 closeGrace.restart()
             }
         }
@@ -153,10 +175,14 @@ Item {
     IpcHandler {
         target: "wactionCenter"
         function toggle(): void { GlobalStates.waffleActionCenterOpen = !GlobalStates.waffleActionCenterOpen }
+        function close(): void { GlobalStates.waffleActionCenterOpen = false }
+        function open(): void { GlobalStates.waffleActionCenterOpen = true }
     }
     IpcHandler {
         target: "wnotificationCenter"
         function toggle(): void { GlobalStates.waffleNotificationCenterOpen = !GlobalStates.waffleNotificationCenterOpen }
+        function close(): void { GlobalStates.waffleNotificationCenterOpen = false }
+        function open(): void { GlobalStates.waffleNotificationCenterOpen = true }
     }
     IpcHandler {
         target: "wwidgets"
@@ -177,7 +203,10 @@ Item {
     LazyLoader {
         loading: Config.ready && GlobalStates.shellEntryReady
             && Config.options?.panelFamily === "waffle"
-        activeAsync: Config.ready && GlobalStates.deferredPanelsReady && Config.options?.panelFamily === "waffle"
+            && root.waffleAltSwitcherVisual
+        activeAsync: Config.ready && GlobalStates.deferredPanelsReady
+            && Config.options?.panelFamily === "waffle"
+            && root.waffleAltSwitcherVisual
         component: WaffleAltSwitcherModule.WaffleAltSwitcher {}
     }
 

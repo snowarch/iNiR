@@ -132,6 +132,9 @@ Item {
         font.family: PillTheme.font
         font.pixelSize: 9 * root.s
         font.weight: Font.DemiBold
+        // Percent readouts that tick while dragging; without tabular figures the
+        // label jitters horizontally as digit widths change.
+        font.features: { "tnum": 1 }
         Behavior on opacity { NumberAnimation { duration: PillMotion.fast } }
     }
 

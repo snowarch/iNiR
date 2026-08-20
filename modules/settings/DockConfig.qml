@@ -51,7 +51,8 @@ ContentPage {
                         { displayName: Translation.tr("Panel"),  icon: "dock_to_bottom", value: "panel"  },
                         { displayName: Translation.tr("Pill"),   icon: "interests",      value: "pill"   },
                         { displayName: Translation.tr("macOS"),  icon: "desktop_mac",    value: "macos"  },
-                        { displayName: Translation.tr("Island"), icon: "blur_on",        value: "island" }
+                        { displayName: Translation.tr("Island"), icon: "blur_on",        value: "island" },
+                        { displayName: Translation.tr("M3"),     icon: "category",       value: "m3"     }
                     ]
                 }
 

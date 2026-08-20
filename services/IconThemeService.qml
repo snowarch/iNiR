@@ -321,24 +321,38 @@ else:
             "/usr/bin/python3",
             "-c",
             `
-import os, re
+import configparser
+import datetime
+import os
+import shutil
 
 theme = "${gtkSettingsProc.themeName}"
 
 for subdir in ["gtk-3.0", "gtk-4.0"]:
     path = os.path.expanduser(f"~/.config/{subdir}/settings.ini")
-    if not os.path.isfile(path):
-        continue
-    with open(path, "r") as f:
-        content = f.read()
-    content = re.sub(
-        r"^gtk-icon-theme-name=.*$",
-        f"gtk-icon-theme-name={theme}",
-        content,
-        flags=re.MULTILINE,
-    )
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+
+    config = configparser.ConfigParser(interpolation=None)
+    config.optionxform = str
+    valid = False
+    if os.path.isfile(path):
+        try:
+            config.read(path)
+            valid = config.has_section("Settings")
+        except configparser.Error:
+            valid = False
+
+    if not valid:
+        if os.path.isfile(path) and os.path.getsize(path) > 0:
+            stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+            shutil.copy2(path, f"{path}.corrupt-{stamp}.bak")
+        config = configparser.ConfigParser(interpolation=None)
+        config.optionxform = str
+        config["Settings"] = {}
+
+    config["Settings"]["gtk-icon-theme-name"] = theme
     with open(path, "w") as f:
-        f.write(content)
+        config.write(f, space_around_delimiters=False)
 `
         ]
         onExited: (exitCode, exitStatus) => {

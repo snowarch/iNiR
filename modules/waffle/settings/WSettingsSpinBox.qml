@@ -17,19 +17,19 @@ WSettingsRow {
     
     control: Component {
         RowLayout {
-            spacing: 2
+            spacing: Looks.dp(2)
             
             WBorderlessButton {
                 id: decrementBtn
-                implicitWidth: 32
-                implicitHeight: 32
+                implicitWidth: Looks.dp(32)
+                implicitHeight: Looks.dp(32)
                 enabled: root.value > root.from
-                radius: Looks.radius.medium
+                radius: Looks.settings.radiusMedium
                 
                 contentItem: FluentIcon {
                     anchors.centerIn: parent
                     icon: "subtract"
-                    implicitSize: 13
+                    implicitSize: Looks.dp(13)
                     color: {
                         if (!decrementBtn.enabled) return Looks.colors.subfg
                         if (decrementBtn.hovered) return Looks.colors.accent
@@ -46,12 +46,12 @@ WSettingsRow {
             }
             
             Rectangle {
-                implicitWidth: Math.max(58, valueText.implicitWidth + 20)
-                implicitHeight: 32
-                radius: Looks.radius.medium
+                implicitWidth: Math.max(Looks.dp(58), valueText.implicitWidth + Looks.dp(20))
+                implicitHeight: Looks.dp(32)
+                radius: Looks.settings.radiusLarge
                 color: Looks.colors.inputBg
                 border.width: 1
-                border.color: Looks.colors.bg2Border
+                border.color: Looks.settings.strokeStrong
                 
                 WText {
                     id: valueText
@@ -65,15 +65,15 @@ WSettingsRow {
             
             WBorderlessButton {
                 id: incrementBtn
-                implicitWidth: 32
-                implicitHeight: 32
+                implicitWidth: Looks.dp(32)
+                implicitHeight: Looks.dp(32)
                 enabled: root.value < root.to
-                radius: Looks.radius.medium
+                radius: Looks.settings.radiusMedium
                 
                 contentItem: FluentIcon {
                     anchors.centerIn: parent
                     icon: "add"
-                    implicitSize: 13
+                    implicitSize: Looks.dp(13)
                     color: {
                         if (!incrementBtn.enabled) return Looks.colors.subfg
                         if (incrementBtn.hovered) return Looks.colors.accent

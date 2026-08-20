@@ -27,7 +27,13 @@ RippleButton {
     property bool blurImage: entry?.blurImage ?? false
     property string blurImageText: entry?.blurImageText ?? "Image hidden"
     property bool compactClipboardPreview: entry?.compactClipboardPreview ?? false
+    readonly property string desktopEntryId: String(root.entry?.desktopEntryId ?? "")
+    readonly property bool draggableApplication: root.desktopEntryId.length > 0
+    property bool suppressClick: false
+    signal applicationDragChanged(bool active)
     readonly property bool zzzEverywhere: Appearance.zzzEverywhere
+    dragTarget: root.draggableApplication ? desktopEntryDrag : null
+    pointerDragThreshold: 10
     
     visible: root.entryShown
     property int horizontalMargin: Appearance.sizes.elevationMargin
@@ -82,6 +88,22 @@ RippleButton {
     colBackgroundHover: root.hoverBackgroundColor
     colRipple: root.activeRippleColor
 
+    releaseAction: () => {
+        if (root.suppressClick)
+            dragSuppressionResetTimer.restart()
+    }
+    cancelAction: () => {
+        root.suppressClick = false
+        dragSuppressionResetTimer.stop()
+    }
+    onPointerDragActiveChanged: {
+        root.applicationDragChanged(root.pointerDragActive)
+        if (root.pointerDragActive)
+            root.suppressClick = true
+        else if (root.suppressClick)
+            dragSuppressionResetTimer.restart()
+    }
+
     // Matched-char colour must contrast with the CURRENT row background: when the
     // row is selected the bg is the accent plate, so the accent-coloured match
     // would vanish into it — switch to onSignal (the readable on-accent ink).
@@ -135,9 +157,65 @@ RippleButton {
     }
 
     onClicked: {
+        if (root.suppressClick) {
+            root.suppressClick = false
+            return
+        }
         GlobalStates.overviewOpen = false
         if (root.entry && root.entry.execute)
             root.entry.execute()
+    }
+
+    Timer {
+        id: dragSuppressionResetTimer
+        interval: 0
+        onTriggered: root.suppressClick = false
+    }
+
+    Item {
+        id: desktopEntryDrag
+        width: root.width
+        height: root.height
+        z: -100
+
+        Drag.dragType: Drag.Automatic
+        Drag.supportedActions: Qt.CopyAction
+        Drag.keys: ["application/x-inir-desktop-entry"]
+        Drag.mimeData: ({
+            "application/x-inir-desktop-entry": root.desktopEntryId
+        })
+        Drag.imageSource: Quickshell.iconPath(root.itemIcon, "application-x-executable")
+        Drag.imageSourceSize: Qt.size(52, 52)
+        Drag.hotSpot: Qt.point(26, 26)
+        Drag.active: root.pointerDragActive && root.draggableApplication
+        Drag.onDragFinished: dropAction => {
+            desktopEntryDrag.x = 0
+            desktopEntryDrag.y = 0
+            root.applicationDragChanged(false)
+            if (dropAction === Qt.CopyAction)
+                GlobalStates.closeOverview()
+            dragSuppressionResetTimer.restart()
+        }
+    }
+
+    Component.onDestruction: root.applicationDragChanged(false)
+
+    Rectangle {
+        anchors.fill: parent
+        visible: root.pointerDragActive
+        z: 3
+        color: ColorUtils.applyAlpha(root.selectedBackgroundColor, 0.18)
+        border.width: 2
+        border.color: Appearance.colors.colPrimary
+        radius: root.buttonRadius
+        opacity: 0.95
+
+        MaterialSymbol {
+            anchors.centerIn: parent
+            text: "open_with"
+            iconSize: Appearance.font.pixelSize.normal
+            color: Appearance.colors.colPrimary
+        }
     }
     Keys.onPressed: (event) => {
         if (event.key === Qt.Key_Delete && event.modifiers === Qt.ShiftModifier) {

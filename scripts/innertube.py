@@ -82,10 +82,27 @@ def _read_cookie_header():
     """Build a `Cookie:` header string for YTM API requests from the Netscape cookie jar.
     Returns (cookie_str, cookies_dict) or (None, None) if no logged-in session is present. Only the
     auth-relevant cookies go into the header string (see `_YTM_HEADER_COOKIES`) — the full dict is
-    still returned so callers can check markers like LOGIN_INFO."""
+    still returned so callers can check markers like LOGIN_INFO.
+
+    Browser exports commonly contain duplicate Google auth cookie names for both `.youtube.com`
+    and `.google.com`. A real request to music.youtube.com sends the YouTube-domain value. Keep
+    Google-domain cookies only as a fallback for names absent from the YouTube jar; allowing their
+    later row order to overwrite YouTube values turns a valid session into a signed-out one."""
     if not os.path.exists(YTCOOKIE_PATH):
         return None, None
     cookies = {}
+    priorities = {}
+
+    def domain_priority(domain):
+        host = domain.lstrip(".").lower()
+        if host == "music.youtube.com":
+            return 3
+        if host == "youtube.com" or host.endswith(".youtube.com"):
+            return 2
+        if host == "google.com" or host.endswith(".google.com"):
+            return 1
+        return 0
+
     try:
         with open(YTCOOKIE_PATH) as f:
             for line in f:
@@ -95,7 +112,11 @@ def _read_cookie_header():
                 # The session auth cookies (SAPISID/HSID/SSID/APISID) live on .google.com, while
                 # YTM-specific ones live on .youtube.com — we need BOTH for an authenticated request.
                 if len(p) >= 7 and ("youtube.com" in p[0] or "google.com" in p[0]):
-                    cookies[p[5]] = p[6]
+                    priority = domain_priority(p[0])
+                    name = p[5]
+                    if priority >= priorities.get(name, -1):
+                        cookies[name] = p[6]
+                        priorities[name] = priority
     except Exception:
         return None, None
     # SAPISID (or its __Secure variants) is the signal that we have a real logged-in session.

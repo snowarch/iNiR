@@ -363,7 +363,7 @@ ContentPage {
 
             NoticeBox {
                 Layout.fillWidth: true
-                materialIcon: recordingCapabilitiesLoaded ? (gpuRecordingAvailable ? "memory" : "developer_mode") : "progress_activity"
+                materialIcon: recordingCapabilitiesLoaded ? (gpuRecordingAvailable ? "memory" : "developer_board") : "progress_activity"
                 text: !recordingCapabilitiesLoaded
                     ? Translation.tr("Detecting available encoders…")
                     : gpuRecordingAvailable
@@ -859,7 +859,7 @@ ContentPage {
                     Layout.leftMargin: 10
                     color: Appearance.colors.colSubtext
                     font.pixelSize: Appearance.font.pixelSize.smallie
-                    text: Translation.tr("Press Super+G to toggle appearance")
+                    text: Translation.tr("Floating tools (Super+G)")
                 }
                 Item {
                     Layout.fillWidth: true
@@ -893,107 +893,6 @@ ContentPage {
                 wrapMode: TextEdit.NoWrap
                 onTextChanged: {
                     Config.setNestedValue("apps.discord", text);
-                }
-            }
-        }
-    }
-
-    SettingsCardSection {
-        expanded: false
-        icon: "layers"
-        title: Translation.tr("Overlay widgets")
-
-        SettingsGroup {
-            ContentSubsection {
-                title: Translation.tr("Background & dim")
-
-                SettingsSwitch {
-                    buttonIcon: "water"
-                    text: Translation.tr("Darken screen behind overlay")
-                    checked: Config.options?.overlay?.darkenScreen ?? false
-                    onCheckedChanged: {
-                        Config.setNestedValue("overlay.darkenScreen", checked);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Add a dark scrim behind overlay panels for better visibility")
-                    }
-                }
-
-                ConfigSpinBox {
-                    icon: "opacity"
-                    text: Translation.tr("Overlay scrim dim (%)")
-                    value: Config.options?.overlay?.scrimDim ?? 30
-                    from: 0
-                    to: 100
-                    stepSize: 5
-                    enabled: Config.options?.overlay?.darkenScreen ?? false
-                    onValueChanged: {
-                        Config.setNestedValue("overlay.scrimDim", value);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("How dark the background scrim should be")
-                    }
-                }
-
-                ConfigSpinBox {
-                    icon: "opacity"
-                    text: Translation.tr("Overlay background opacity (%)")
-                    value: Math.round((Config.options?.overlay?.backgroundOpacity ?? 0.9) * 100)
-                    from: 20
-                    to: 100
-                    stepSize: 5
-                    onValueChanged: {
-                        Config.setNestedValue("overlay.backgroundOpacity", value / 100);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Opacity of the overlay panel background")
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Animations")
-
-                SettingsSwitch {
-                    buttonIcon: "movie"
-                    text: Translation.tr("Enable opening zoom animation")
-                    checked: Config.options?.overlay?.openingZoomAnimation ?? true
-                    onCheckedChanged: {
-                        Config.setNestedValue("overlay.openingZoomAnimation", checked);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Animate overlay panels with a zoom effect when opening")
-                    }
-                }
-
-                ConfigSpinBox {
-                    icon: "speed"
-                    text: Translation.tr("Overlay animation duration (ms)")
-                    value: Config.options?.overlay?.animationDurationMs ?? 180
-                    from: 0
-                    to: 1000
-                    stepSize: 20
-                    onValueChanged: {
-                        Config.setNestedValue("overlay.animationDurationMs", value);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Duration of overlay open/close animations")
-                    }
-                }
-
-                ConfigSpinBox {
-                    icon: "speed"
-                    text: Translation.tr("Background dim animation (ms)")
-                    value: Config.options?.overlay?.scrimAnimationDurationMs ?? 140
-                    from: 0
-                    to: 1000
-                    stepSize: 20
-                    onValueChanged: {
-                        Config.setNestedValue("overlay.scrimAnimationDurationMs", value);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Duration of the background scrim fade animation")
-                    }
                 }
             }
         }

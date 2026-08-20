@@ -1135,13 +1135,13 @@ Item {
 
             CredRow {
                 field: "name"
-                label: "Network"
+                label: Translation.tr("Network")
                 value: root.hsName
             }
 
             CredRow {
                 field: "pw"
-                label: "Password"
+                label: Translation.tr("Password")
                 value: root.hsPw
                 secret: true
             }

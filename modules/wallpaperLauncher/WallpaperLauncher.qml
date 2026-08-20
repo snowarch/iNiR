@@ -19,6 +19,7 @@ PanelWindow {
     screen: {
         const target = GlobalStates.wallpaperSelectorTargetMonitor
         return Quickshell.screens.find(candidate => candidate.name === target)
+            ?? GlobalStates.focusedScreen
             ?? GlobalStates.primaryScreen
     }
     exclusionMode: ExclusionMode.Ignore

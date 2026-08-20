@@ -8,6 +8,7 @@ import Quickshell.Wayland
 import qs
 import qs.services
 import qs.modules.common
+import qs.modules.common.widgets
 
 /**
  * Pill top shell. Each monitor carries two layer-shell windows:
@@ -129,16 +130,47 @@ Scope {
              */
             readonly property real reservedH: Math.max(0, restHeight + topGapPx - 12 * (1 - root.appGap) * s)
 
+            /**
+             * Same per-screen fullscreen focus check as Pill.fsCovered: in niri
+             * a fullscreen window only covers the monitor while it is the
+             * focused tile. Scrolling to another window in the same workspace
+             * unfocuses the fullscreen game without changing its size, so
+             * GameMode.active stays true but the pill is no longer hidden.
+             * The reserve band must then give the pill its full rest height,
+             * not the thin game-face height.
+             */
+            readonly property string screenName: modelData ? modelData.name : ""
+            readonly property bool fsCovered: {
+                if (!CompositorService.isNiri)
+                    return GameMode.hasAnyFullscreenWindow;
+                const wins = NiriService.windows ?? [];
+                for (const w of wins) {
+                    const ws = NiriService.workspaces?.[w.workspace_id];
+                    if (!(ws?.is_active ?? false))
+                        continue;
+                    if (screenName.length > 0 && ws.output !== screenName)
+                        continue;
+                    if (!w.is_focused)
+                        continue;
+                    if (GameMode.isWindowFullscreen(w))
+                        return true;
+                }
+                return false;
+            }
+            /** Game-face height only when the pill is actually hidden by a
+             * focused fullscreen window, or Game Mode was manually engaged. */
+            readonly property bool useGameZone: GameMode.manuallyActivated || fsCovered
+
             screen: modelData
             visible: !GlobalStates.widgetEditMode
             color: "transparent"
             exclusionMode: ExclusionMode.Normal
             exclusiveZone: GlobalStates.widgetEditMode ? 0
-                : GameMode.active ? gameBarH : reservedH
+                : (useGameZone ? gameBarH : reservedH)
             aboveWindows: true
 
             anchors { top: true; left: true; right: true }
-            implicitHeight: GameMode.active ? gameBarH : reservedH
+            implicitHeight: useGameZone ? gameBarH : reservedH
 
             mask: emptyReserve
             Region { id: emptyReserve }
@@ -162,7 +194,8 @@ Scope {
             color: "transparent"
             exclusionMode: ExclusionMode.Ignore
             WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: surfaceOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
+            WlrLayershell.keyboardFocus: surfaceOpen || pill.held
+                ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
             WlrLayershell.namespace: "inir-pill"
 
             anchors { top: true; left: true; right: true; bottom: true }
@@ -224,13 +257,45 @@ Scope {
              * and `hovered` flickers off on every mouse step inside the pill.
              */
             FocusScope {
+                id: spectrumScope
                 anchors.fill: parent
                 focus: overlay.surfaceOpen
+
+                readonly property bool spectrumPlaying: MprisController.isPlaying || YtMusic.isPlaying
+                readonly property bool spectrumOutputEnabled:
+                    (Config.options?.bar?.visualizer?.multiMonitorMode ?? "primary") === "all"
+                    || Quickshell.screens.length <= 1
+                    || String(overlay.modelData?.name ?? "")
+                        === String(GlobalStates.primaryScreen?.name ?? "")
+                readonly property bool spectrumConfigured: (Config.options?.bar?.pill?.musicViz ?? true)
+                    && spectrumOutputEnabled
+                    && !Appearance.gameModeMinimal
+                readonly property bool spectrumProcessWanted: spectrumConfigured && spectrumPlaying
+                readonly property bool spectrumVisible: spectrumConfigured
+                    && pillCava.audioSignalActive
+                    && !pill.fsHide
+                    && !overlay.surfaceOpen
 
                 HoverHandler {
                     onHoveredChanged: pill.hovered = hovered
                 }
                 Keys.onEscapePressed: root.close()
+
+                CavaProcess {
+                    id: pillCava
+                    active: spectrumScope.spectrumProcessWanted
+                    sampleCount: pillWings.requestedSampleCount
+                }
+
+                PillSpectrumWings {
+                    id: pillWings
+                    anchors.fill: parent
+                    pillItem: pill
+                    active: spectrumScope.spectrumVisible
+                    points: active ? pillCava.points : []
+                    normalizationCeiling: active ? pillCava.normalizationCeiling : 100
+                    s: overlay.s
+                }
 
                 Pill {
                     id: pill

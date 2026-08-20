@@ -13,6 +13,7 @@ It provides the bar, dock, sidebars, notifications, settings, wallpapers, overvi
 - [Panel families](PANEL_FAMILIES)
 - [Configuration](CONFIG_SYSTEM)
 - [Known limitations](LIMITATIONS)
+- [Managed desktop items](DESKTOP_ITEMS)
 
 ## Common commands
 
@@ -52,6 +53,7 @@ The shell is configurable through Settings and `config.json`. Persistent writes 
 | Runtime and architecture | [Runtime](RUNTIME), [Architecture](ARCHITECTURE_OVERVIEW) |
 | Services and modules | [Services](SERVICES), [Modules](MODULES) |
 | Wallpapers and theming | [Wallpaper](WALLPAPER), [Theming](THEMING_ARCHITECTURE) |
+| Desktop references | [Managed desktop items](DESKTOP_ITEMS) |
 | Compositor support | [Compositors](COMPOSITORS) |
 | Performance | [Optimization](OPTIMIZATION) |
 

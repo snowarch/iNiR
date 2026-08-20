@@ -935,28 +935,26 @@ Singleton {
 		}
 
 		function playPause(): void {
+			const wasPlaying = root.isPlaying
 			if (root.isYtMusicActive && YtMusic.currentVideoId) {
 				YtMusic.togglePlaying();
 			} else {
 				root.togglePlaying();
 			}
 			if (Config.options?.osd?.mediaEnabled ?? true) {
-				GlobalStates.osdMediaAction = root.isPlaying ? "pause" : "play";
-				GlobalStates.osdMediaOpen = true;
+				GlobalStates.showMediaAction(wasPlaying ? "pause" : "play");
 			}
 		}
 		function previous(): void {
 			root.previous();
 			if (Config.options?.osd?.mediaEnabled ?? true) {
-				GlobalStates.osdMediaAction = "previous";
-				GlobalStates.osdMediaOpen = true;
+				GlobalStates.showMediaAction("previous");
 			}
 		}
 		function next(): void {
 			root.next();
 			if (Config.options?.osd?.mediaEnabled ?? true) {
-				GlobalStates.osdMediaAction = "next";
-				GlobalStates.osdMediaOpen = true;
+				GlobalStates.showMediaAction("next");
 			}
 		}
 	}

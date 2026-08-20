@@ -117,7 +117,7 @@ ContentPage {
                 }
                 StyledText {
                     Layout.fillWidth: true
-                    text: Translation.tr("Toggle with a keybinding running: %1").arg("inir ipc call dashboard toggle")
+                    text: Translation.tr("Toggle with a keybinding running: %1").arg("inir ipc dashboard toggle")
                     color: Appearance.colors.colSubtext
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     wrapMode: Text.WordWrap

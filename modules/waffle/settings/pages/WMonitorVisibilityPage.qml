@@ -20,9 +20,25 @@ WSettingsPage {
     ]
     readonly property var sharedSurfaces: [
         { title: Translation.tr("Notification popups"), description: Translation.tr("Transient notification toasts"), icon: "alert-filled", path: "notifications.screenList" },
-        { title: Translation.tr("OSD indicators"), description: Translation.tr("Volume, brightness, media, and keyboard feedback"), icon: "speaker", path: "osd.screenList" },
-        { title: Translation.tr("Desktop widgets"), description: Translation.tr("Clock, media, visualizer, and custom widgets"), icon: "widgets", path: "background.widgets.screenList" }
+        { title: Translation.tr("OSD indicators"), description: Translation.tr("Volume, brightness, media, and keyboard feedback"), icon: "speaker", path: "osd.screenList" }
     ]
+    readonly property var desktopWidgetSurface: ({
+        title: Translation.tr("Desktop widgets"),
+        description: Translation.tr("Desktop Clock"),
+        icon: "widgets",
+        path: "background.widgets.screenList"
+    })
+    readonly property var desktopWidgetDescriptors: {
+        void Config.revision
+        return [
+            {
+                key: "waffle.clock",
+                title: Translation.tr("Desktop Clock"),
+                icon: "timer",
+                defaultOn: Boolean(Config.options?.waffles?.background?.widgets?.clock?.enable ?? false)
+            }
+        ]
+    }
 
     function connectedScreenNames(): var {
         const screens = Quickshell.screens
@@ -57,6 +73,30 @@ WSettingsPage {
         if (width <= 0 || height <= 0)
             return Translation.tr("Resolution unknown")
         return width + "×" + height
+    }
+
+    function desktopWidgetOutputNames(): var {
+        const names = connectedScreenNames().slice()
+        for (const name of DesktopWidgetLayout.savedOutputNames()) {
+            if (name.length > 0 && !names.includes(name))
+                names.push(name)
+        }
+        return names
+    }
+
+    function desktopWidgetBaseEnabled(descriptor): bool {
+        return Boolean(DesktopWidgetLayout.baseValue(
+            descriptor.key, "enable", descriptor.defaultOn ?? false))
+    }
+
+    function desktopWidgetEnabled(outputName: string, descriptor): bool {
+        return DesktopWidgetLayout.enabled(outputName, descriptor.key,
+            desktopWidgetBaseEnabled(descriptor))
+    }
+
+    function desktopWidgetHasOverrides(outputName: string, widgetKey: string): bool {
+        const override = DesktopWidgetLayout.widgetOverride(outputName, widgetKey)
+        return override !== null && Object.keys(override).length > 0
     }
 
     function configuredScreens(path: string): var {
@@ -434,6 +474,111 @@ WSettingsPage {
         }
     }
 
+    component DesktopWidgetOutputBlock: Rectangle {
+        id: outputBlock
+        required property string outputName
+        readonly property bool connected: root.connectedScreenNames().includes(outputName)
+        readonly property bool primary: outputName === root.primaryScreenName()
+        readonly property bool hasOverrides: DesktopWidgetLayout.outputRecord(outputName) !== null
+        readonly property bool globallyVisible: DesktopWidgetLayout.outputAllowed(outputName)
+
+        Layout.fillWidth: true
+        Layout.leftMargin: Looks.dp(14)
+        Layout.rightMargin: Looks.dp(14)
+        Layout.topMargin: Looks.dp(5)
+        implicitHeight: outputColumn.implicitHeight + Looks.dp(20)
+        radius: Looks.radius.large
+        color: Looks.colors.bg2Base
+        border.width: 1
+        border.color: outputBlock.primary ? Looks.colors.accent : Looks.colors.bg2Border
+
+        ColumnLayout {
+            id: outputColumn
+            anchors.fill: parent
+            anchors.margins: Looks.dp(10)
+            spacing: Looks.dp(4)
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Looks.dp(8)
+
+                FluentIcon {
+                    icon: "desktop"
+                    implicitSize: Looks.dp(17)
+                    color: outputBlock.primary ? Looks.colors.accent : Looks.colors.subfg
+                }
+
+                WText {
+                    Layout.fillWidth: true
+                    text: outputBlock.outputName
+                    font.pixelSize: Looks.font.pixelSize.normal
+                    font.weight: Looks.font.weight.strong
+                    color: Looks.colors.fg
+                    elide: Text.ElideRight
+                }
+
+                WText {
+                    visible: !outputBlock.connected
+                    text: Translation.tr("Disconnected")
+                    font.pixelSize: Looks.font.pixelSize.small
+                    color: Looks.colors.danger
+                }
+
+                WText {
+                    visible: !outputBlock.globallyVisible
+                    text: Translation.tr("Desktop widgets") + ": " + Translation.tr("Disabled")
+                    font.pixelSize: Looks.font.pixelSize.small
+                    color: Looks.colors.danger
+                }
+
+                WButton {
+                    visible: outputBlock.hasOverrides
+                    text: Translation.tr("Reset")
+                    icon.name: "arrow-reset"
+                    onClicked: DesktopWidgetLayout.clearOutput(outputBlock.outputName)
+                }
+            }
+
+            Repeater {
+                model: root.desktopWidgetDescriptors
+
+                WSettingsRow {
+                    id: widgetOutputRow
+                    required property var modelData
+                    enableSettingsSearch: false
+                    icon: widgetOutputRow.modelData.icon
+                    label: widgetOutputRow.modelData.title
+                    description: outputBlock.outputName
+                    clickable: false
+
+                    control: Component {
+                        RowLayout {
+                            spacing: Looks.dp(5)
+
+                            WSwitch {
+                                enabled: outputBlock.globallyVisible
+                                checked: root.desktopWidgetEnabled(
+                                    outputBlock.outputName, widgetOutputRow.modelData)
+                                onClicked: DesktopWidgetLayout.setEnabled(
+                                    outputBlock.outputName, widgetOutputRow.modelData.key,
+                                    !checked)
+                            }
+
+                            WButton {
+                                visible: root.desktopWidgetHasOverrides(
+                                    outputBlock.outputName, widgetOutputRow.modelData.key)
+                                text: ""
+                                icon.name: "arrow-reset"
+                                onClicked: DesktopWidgetLayout.clearWidget(
+                                    outputBlock.outputName, widgetOutputRow.modelData.key)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     WSettingsCard {
         title: Translation.tr("Shell visibility")
         icon: "desktop"
@@ -466,6 +611,19 @@ WSettingsPage {
     }
 
     WSettingsCard {
+        title: Translation.tr("Overview placement")
+        icon: "multitasking"
+
+        WSettingsSwitch {
+            label: Translation.tr("Active screen only")
+            icon: "desktop"
+            description: Translation.tr("Open the overview on the monitor where it was invoked")
+            checked: Config.options?.overview?.activeScreenOnly ?? true
+            onCheckedChanged: Config.setNestedValue("overview.activeScreenOnly", checked)
+        }
+    }
+
+    WSettingsCard {
         title: Translation.tr("Waffle shell surfaces")
         icon: "desktop"
 
@@ -488,7 +646,32 @@ WSettingsPage {
     }
 
     WSettingsCard {
-        title: Translation.tr("Shared popups and widgets")
+        title: Translation.tr("Desktop widgets")
+        icon: "widgets"
+        collapsible: true
+        expanded: false
+
+        InfoBanner {
+            iconName: "desktop"
+            message: Translation.tr("Desktop Clock")
+        }
+
+        SurfaceVisibilityBlock {
+            surface: root.desktopWidgetSurface
+        }
+
+        Repeater {
+            model: root.desktopWidgetOutputNames()
+
+            DesktopWidgetOutputBlock {
+                required property var modelData
+                outputName: String(modelData ?? "")
+            }
+        }
+    }
+
+    WSettingsCard {
+        title: Translation.tr("Popups")
         icon: "alert"
 
         InfoBanner {

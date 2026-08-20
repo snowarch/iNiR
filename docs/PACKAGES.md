@@ -177,8 +177,11 @@ Fonts, theming, and utilities.
 | Package | Purpose | Required |
 |---------|---------|----------|
 | `darkly-bin` | Darkly Qt style (Material You widget style for Qt apps) | Yes |
-| `ttf-jetbrains-mono-nerd` | JetBrains Mono Nerd | Yes (monospace) |
-| `ttf-material-symbols-variable-git` | Material icons | Yes (UI icons) |
+| `ttf-jetbrains-mono-nerd` | JetBrains Mono Nerd | Yes (monospace and glyphs) |
+| `ttf-material-symbols-variable-git` | Material Symbols | Yes (UI icons) |
+| `ttf-roboto-flex` | Roboto Flex variable font | Yes (default UI font) |
+| `ttf-oxanium` | Oxanium font | Yes (ZZZ and Angel styles) |
+| `ttf-gabarito-git` | Gabarito variable font | Yes (default title font) |
 | `ttf-readex-pro` | Readex Pro font | No (has fallback) |
 | `ttf-rubik-vf` | Rubik variable font | No (has fallback) |
 | `otf-space-grotesk` | Space Grotesk font | No (has fallback) |

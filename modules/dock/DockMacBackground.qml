@@ -71,12 +71,12 @@ Rectangle {
     // ─── Drop shadow ─────────────────────────────────────────────────
     StyledRectangularShadow {
         target: root
-        visible: !gameModeMinimal && !zzzEverywhere
+        visible: root.visible && !gameModeMinimal && !zzzEverywhere
     }
 
     // ─── Clip + rounded mask so blur respects corners ─────────────────
     clip: true
-    layer.enabled: !gameModeMinimal
+    layer.enabled: root.visible && !gameModeMinimal
     layer.effect: GE.OpacityMask {
         maskSource: Rectangle {
             width:  root.width
@@ -88,8 +88,8 @@ Rectangle {
     // ─── Blurred wallpaper ────────────────────────────────────────────
     Image {
         id: macBlurWall
-        visible: !root.gameModeMinimal
-        source: root.nativeBlurActive ? "" : root.wallpaperUrl
+        visible: root.visible && !root.gameModeMinimal
+        source: root.visible && !root.nativeBlurActive ? root.wallpaperUrl : ""
         fillMode: Image.PreserveAspectCrop
         cache: true
         sourceSize.width: macBlurWall.scrW
@@ -107,7 +107,8 @@ Rectangle {
             : (-(scrH)     + root.height + Appearance.sizes.hyprlandGapsOut)
 
         // See #159 — skip QML blur when compositor blur covers this layer
-        layer.enabled: Appearance.effectsEnabled && !root.gameModeMinimal && !root.nativeBlurActive
+        layer.enabled: root.visible && Appearance.effectsEnabled
+            && !root.gameModeMinimal && !root.nativeBlurActive
         layer.effect: MultiEffect {
             source: macBlurWall
             anchors.fill: source

@@ -82,27 +82,12 @@ AbstractBackgroundWidget {
     // ── Style tokens ──────────────────────────────────────────
     readonly property real cardRadius: root.widgetCardRadius
 
-    // Shared desktop-widget identity (AbstractBackgroundWidget): low = signal,
-    // charging = tertiary accent, normal = primary accent. Same family everywhere.
-    // The fill always renders ON the track (ring arc, bar fill, pill fill), so
-    // clamp against it — a light theme's deep accents vanish when a bright
-    // wallpaper region flips the track to the near-black plate.
-    readonly property color accentColor: ColorUtils.adaptAccent(
-        Battery.isLow ? root.widgetSignal
-        : Battery.isCharging ? root.widgetAccent3
-        : root.widgetAccent,
-        root.trackColor)
-
-    // Region-aware shared plate (dark on bright wallpaper regions).
-    readonly property color trackColor: root.regionIsBright && !Appearance.zzzEverywhere
-        && !Appearance.cookieEverywhere && !Appearance.angelEverywhere
-        ? root.widgetPlateColor
-        : Appearance.cookieEverywhere ? Appearance.colors.colLayer3
-        : Appearance.zzzEverywhere ? Appearance.zzz.chrome
-        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer2
-        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
-        : Appearance.colors.colSecondaryContainer
+    // Battery state chooses one configured semantic slot; fill and track then use
+    // that role's generated color/container pair exactly like a tonal Tile.
+    readonly property string _batteryRole: Battery.isLow ? root.widgetSignalRole
+        : Battery.isCharging ? root.widgetTertiaryRole : root.widgetPrimaryRole
+    readonly property color accentColor: root.widgetSemanticColor(root._batteryRole)
+    readonly property color trackColor: root.widgetSemanticContainer(root._batteryRole)
 
     // ── Text helpers ─────────────────────────────────────────
     readonly property string percentText: Math.round(Battery.percentage * 100) + "%"

@@ -584,7 +584,7 @@ ColumnLayout {
 
                     contentItem: MaterialSymbol {
                         anchors.centerIn: parent
-                        text: "delete_outline"
+                        text: "delete"
                         iconSize: 15
                         color: Appearance.colors.colSubtext
                     }
@@ -699,7 +699,7 @@ ColumnLayout {
 
         SliderRow {
             label: Translation.tr("Tooltips")
-            icon: "chat_bubble_outline"
+            icon: "chat_bubble"
             description: Translation.tr("Hover tooltips — lower values improve readability")
             configValue: Appearance.angel.tooltipTransparentize
             configPath: "appearance.angel.transparency.tooltip"

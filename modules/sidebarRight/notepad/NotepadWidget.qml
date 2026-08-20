@@ -251,7 +251,7 @@ Item {
             Item { Layout.fillWidth: true }
 
             NotepadToolButton {
-                icon: "delete_outline"
+                icon: "delete"
                 tooltipText: Translation.tr("Clear all")
                 enabled: textArea.text.length > 0
                 destructive: true

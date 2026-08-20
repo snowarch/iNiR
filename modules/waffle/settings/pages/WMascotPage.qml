@@ -167,7 +167,8 @@ WSettingsPage {
 
         WSettingsDropdown {
             label: Translation.tr("Voice")
-            icon: "chat"
+            // `chat` is not in assets/icons/fluent — it rendered blank.
+            icon: "people"
             description: Translation.tr("Adaptive follows her mood; fixed modes keep one conversational register")
             currentValue: Config.options?.mascot?.personality?.voiceMode ?? "adaptive"
             options: [
@@ -292,7 +293,7 @@ WSettingsPage {
                     onCheckedChanged: Config.setNestedValue("mascot.companion.events." + eventCol.modelData.key, checked)
                 }
 
-                MascotPoseGallery {
+                WMascotPoseGallery {
                     Layout.fillWidth: true
                     Layout.leftMargin: 12
                     visible: Config.options?.mascot?.companion?.events?.[eventCol.modelData.key] ?? true
@@ -367,7 +368,7 @@ WSettingsPage {
                 { key: "updates", label: Translation.tr("Update overlay pose") },
                 { key: "dialogs", label: Translation.tr("Dialogs pose") }
             ]
-            delegate: MascotPoseGallery {
+            delegate: WMascotPoseGallery {
                 required property var modelData
                 Layout.fillWidth: true
                 label: modelData.label

@@ -421,8 +421,12 @@ Scope {
 
             exclusionMode: ExclusionMode.Ignore
             WlrLayershell.namespace: "quickshell:settingsOverlay"
-            WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: root.settingsOpen && !GlobalStates.regionSelectorOpen
+            // Yield the layer-shell overlay while a native dialog is visible.
+            WlrLayershell.layer: GlobalStates.settingsNativeDialogOpen
+                ? WlrLayer.Bottom : WlrLayer.Overlay
+            WlrLayershell.keyboardFocus: root.settingsOpen
+                && !GlobalStates.regionSelectorOpen
+                && !GlobalStates.settingsNativeDialogOpen
                 ? WlrKeyboardFocus.Exclusive
                 : WlrKeyboardFocus.None
             color: "transparent"
@@ -490,7 +494,8 @@ Scope {
                 windows: [settingsPanel]
                 active: false
                 onCleared: () => {
-                    if (!active) GlobalStates.settingsOverlayOpen = false
+                    if (!active && !GlobalStates.settingsNativeDialogOpen)
+                        GlobalStates.settingsOverlayOpen = false
                 }
             }
 
@@ -499,12 +504,16 @@ Scope {
                 function onSettingsOverlayOpenChanged() {
                     grabTimer.restart()
                 }
+                function onSettingsNativeDialogOpenChanged() {
+                    grabTimer.restart()
+                }
             }
 
             Timer {
                 id: grabTimer
                 interval: 100
                 onTriggered: grab.active = (GlobalStates.settingsOverlayOpen ?? false)
+                    && !GlobalStates.settingsNativeDialogOpen
             }
 
             // ── Scrim backdrop ──
@@ -533,6 +542,7 @@ Scope {
             MouseArea {
                 anchors.fill: parent
                 visible: GlobalStates.settingsOverlayOpen ?? false
+                enabled: !GlobalStates.settingsNativeDialogOpen
                 onClicked: GlobalStates.settingsOverlayOpen = false
             }
 

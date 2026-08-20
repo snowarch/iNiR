@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
+import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
@@ -18,6 +19,135 @@ ContentPage {
     settingsPageName: Translation.tr("Panels")
 
     property bool isIiActive: Config.options?.panelFamily !== "waffle"
+
+    function floatingToolsEnabled(): bool {
+        return (Config.options?.enabledPanels ?? []).includes("iiOverlay")
+    }
+
+    function setFloatingToolsEnabled(enabled: bool): void {
+        const panels = [...(Config.options?.enabledPanels ?? [])]
+        const index = panels.indexOf("iiOverlay")
+        if (enabled && index === -1)
+            panels.push("iiOverlay")
+        else if (!enabled && index !== -1)
+            panels.splice(index, 1)
+        Config.setNestedValue("enabledPanels", panels)
+    }
+
+    function openFloatingTools(): void {
+        GlobalStates.settingsOverlayOpen = false
+        GlobalStates.overlayOpen = true
+    }
+
+    SettingsCardSection {
+        expanded: true
+        icon: "dashboard_customize"
+        title: Translation.tr("Floating tools (Super+G)")
+
+        SettingsGroup {
+            NoticeBox {
+                Layout.fillWidth: true
+                materialIcon: "info"
+                text: Translation.tr("Floating image and widgets panel (Super+G)")
+            }
+
+            SettingsSwitch {
+                buttonIcon: "dashboard_customize"
+                text: Translation.tr("Enable")
+                checked: root.floatingToolsEnabled()
+                onCheckedChanged: root.setFloatingToolsEnabled(checked)
+            }
+
+            RippleButtonWithIcon {
+                Layout.fillWidth: true
+                enabled: root.floatingToolsEnabled()
+                materialIcon: "open_in_new"
+                mainText: Translation.tr("Open")
+                onClicked: root.openFloatingTools()
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Background & dim")
+
+                SettingsSwitch {
+                    buttonIcon: "water"
+                    text: Translation.tr("Darken screen behind overlay")
+                    checked: Config.options?.overlay?.darkenScreen ?? false
+                    onCheckedChanged: Config.setNestedValue("overlay.darkenScreen", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Add a dark scrim behind overlay panels for better visibility")
+                    }
+                }
+
+                ConfigSpinBox {
+                    icon: "opacity"
+                    text: Translation.tr("Overlay scrim dim (%)")
+                    value: Config.options?.overlay?.scrimDim ?? 30
+                    from: 0
+                    to: 100
+                    stepSize: 5
+                    enabled: Config.options?.overlay?.darkenScreen ?? false
+                    onValueChanged: Config.setNestedValue("overlay.scrimDim", value)
+                    StyledToolTip {
+                        text: Translation.tr("How dark the background scrim should be")
+                    }
+                }
+
+                ConfigSpinBox {
+                    icon: "opacity"
+                    text: Translation.tr("Overlay background opacity (%)")
+                    value: Math.round((Config.options?.overlay?.backgroundOpacity ?? 0.9) * 100)
+                    from: 20
+                    to: 100
+                    stepSize: 5
+                    onValueChanged: Config.setNestedValue("overlay.backgroundOpacity", value / 100)
+                    StyledToolTip {
+                        text: Translation.tr("Opacity of the overlay panel background")
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Animations")
+
+                SettingsSwitch {
+                    buttonIcon: "movie"
+                    text: Translation.tr("Enable opening zoom animation")
+                    checked: Config.options?.overlay?.openingZoomAnimation ?? true
+                    onCheckedChanged: Config.setNestedValue("overlay.openingZoomAnimation", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Animate overlay panels with a zoom effect when opening")
+                    }
+                }
+
+                ConfigSpinBox {
+                    icon: "speed"
+                    text: Translation.tr("Overlay animation duration (ms)")
+                    value: Config.options?.overlay?.animationDurationMs ?? 180
+                    from: 0
+                    to: 1000
+                    stepSize: 20
+                    onValueChanged: Config.setNestedValue("overlay.animationDurationMs", value)
+                    StyledToolTip {
+                        text: Translation.tr("Duration of overlay open/close animations")
+                    }
+                }
+
+                ConfigSpinBox {
+                    icon: "speed"
+                    text: Translation.tr("Background dim animation (ms)")
+                    value: Config.options?.overlay?.scrimAnimationDurationMs ?? 140
+                    from: 0
+                    to: 1000
+                    stepSize: 20
+                    onValueChanged: Config.setNestedValue("overlay.scrimAnimationDurationMs", value)
+                    StyledToolTip {
+                        text: Translation.tr("Duration of the background scrim fade animation")
+                    }
+                }
+            }
+        }
+    }
 
     // ── Shell Desaturation Effect ───────────────────────────────────────
     SettingsCardSection {
@@ -1895,15 +2025,6 @@ ContentPage {
                 }
                 StyledToolTip {
                     text: Translation.tr("Display thumbnail previews of windows in the overview")
-                }
-            }
-            SettingsSwitch {
-                buttonIcon: "screen_share"
-                text: Translation.tr("Active screen only")
-                checked: Config.options?.overview?.activeScreenOnly ?? false
-                onCheckedChanged: Config.setNestedValue("overview.activeScreenOnly", checked)
-                StyledToolTip {
-                    text: Translation.tr("Show overview only on the currently focused screen (multi-monitor)")
                 }
             }
             ConfigSpinBox {

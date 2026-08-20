@@ -77,7 +77,7 @@ def main() -> None:
 
     image_path = sys.argv[1]
     count = int(sys.argv[2]) if len(sys.argv) > 2 else 8
-    count = max(2, min(8, count))
+    count = max(1, min(8, count))
 
     state_dir = os.environ.get("XDG_STATE_HOME", os.path.expanduser("~/.local/state"))
     default_output = Path(state_dir) / "quickshell" / "user" / "generated" / "cover-colors.json"
@@ -96,7 +96,7 @@ def main() -> None:
         print(f"Error: {exc}", file=sys.stderr)
         sys.exit(1)
 
-    if len(colors) < 2:
+    if len(colors) < 1:
         print("Not enough distinct colors found", file=sys.stderr)
         sys.exit(1)
 

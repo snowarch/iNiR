@@ -27,6 +27,7 @@ MouseArea {
     //   SessionModel: NameRole = UserRole+4
     readonly property int _nameRole:     Qt.UserRole + 1
     readonly property int _realNameRole: Qt.UserRole + 2
+    readonly property int _iconRole:     Qt.UserRole + 4
     readonly property int _sessNameRole: Qt.UserRole + 4   // session display name
 
     readonly property string currentUserLogin: {
@@ -41,6 +42,11 @@ MouseArea {
         return s.length > 0 ? s : root.currentUserLogin
     }
     readonly property bool multiUser: userModel.count > 1
+    readonly property string currentUserIcon: {
+        if (userModel.count <= 0) return ""
+        var v = userModel.data(userModel.index(root.currentUserIndex, 0), root._iconRole)
+        return (v !== undefined && v !== null) ? String(v) : ""
+    }
 
     readonly property string currentSessionName: {
         if (sessionModel.count <= 0) return "Desktop"
@@ -69,10 +75,13 @@ MouseArea {
         return p.startsWith("file://") ? p : "file://" + p
     }
 
-    // Avatar paths — dynamic based on selected user
-    readonly property string _avatarPath0: root.currentUserLogin ? "/home/" + root.currentUserLogin + "/.face" : ""
-    readonly property string _avatarPath1: root.currentUserLogin ? "/var/lib/AccountsService/icons/" + root.currentUserLogin : ""
-    readonly property string _avatarPath2: Qt.resolvedUrl("assets/user-face.png")
+    // Let SDDM resolve the selected user's avatar. Its UserModel already
+    // applies FacesDir / ~/.face.icon / AccountsService policy and exposes a
+    // greeter-ready URL through the `icon` role. The bundled copy remains a
+    // fallback for systems where the model has no user-specific icon.
+    readonly property string _avatarPath0: root.currentUserIcon
+    readonly property string _avatarPath1: Qt.resolvedUrl("assets/user-face.png")
+    readonly property string _avatarPath2: ""
     readonly property string _avatarPath3: ""
 
     function switchToLogin(captureChar) {

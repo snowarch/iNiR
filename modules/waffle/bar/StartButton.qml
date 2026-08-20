@@ -28,7 +28,7 @@ AppButton {
     BarToolTip {
         id: tooltip
         text: Translation.tr("Start")
-        extraVisibleCondition: root.shouldShowTooltip
+        barExtraVisibleCondition: root.shouldShowTooltip
     }
 
     altAction: () => {

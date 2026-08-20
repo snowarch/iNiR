@@ -27,6 +27,7 @@ Item {
         : Qt.vector2d(0.0, 1.0)
 
     visible: !Appearance.zzzEverywhere
+        && !Appearance.gameModeMinimal
         && (Appearance.angelEverywhere || Appearance.effectsEnabled)
     anchors.fill: target
 

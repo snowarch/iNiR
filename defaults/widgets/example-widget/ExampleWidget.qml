@@ -115,7 +115,7 @@ AbstractBackgroundWidget {
             spacing: Math.round(4 * root.scaleFactor)
             anchors.verticalCenter: parent.verticalCenter
             MaterialSymbol {
-                text: Weather.isNightNow() ? "nights_stay" : "wb_sunny"
+                text: Weather.isNightNow() ? "bedtime" : "wb_sunny"
                 iconSize: root.ico; color: root.colText; anchors.verticalCenter: parent.verticalCenter
             }
             StyledText {

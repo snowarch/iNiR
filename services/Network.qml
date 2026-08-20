@@ -6,6 +6,7 @@ pragma ComponentBehavior: Bound
 import Quickshell
 import Quickshell.Io
 import QtQuick
+import qs.modules.common.functions
 import qs.services.network
 
 /**
@@ -81,7 +82,7 @@ Singleton {
     }
 
     function openPublicWifiPortal() {
-        Quickshell.execDetached(["xdg-open", "https://nmcheck.gnome.org/"]) // From some StackExchange thread, seems to work
+        ShellExec.execDetachedArgs(["xdg-open", "https://nmcheck.gnome.org/"], "Open network check") // From some StackExchange thread, seems to work
     }
 
     function changePassword(network: WifiAccessPoint, password: string, username = ""): void {

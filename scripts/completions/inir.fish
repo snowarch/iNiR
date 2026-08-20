@@ -120,7 +120,7 @@ complete -c inir -n '__fish_seen_subcommand_from brightness' -a 'increment decre
 complete -c inir -n '__fish_seen_subcommand_from cheatsheet' -a 'toggle close open'
 complete -c inir -n '__fish_seen_subcommand_from clipboard' -a 'open close toggle'
 complete -c inir -n '__fish_seen_subcommand_from cliphistService cliphist-service' -a 'update'
-complete -c inir -n '__fish_seen_subcommand_from closeConfirm close-confirm' -a 'trigger close'
+complete -c inir -n '__fish_seen_subcommand_from closeConfirm close-confirm' -a 'trigger triggerWindow close'
 complete -c inir -n '__fish_seen_subcommand_from controlPanel control-panel' -a 'toggle close open'
 complete -c inir -n '__fish_seen_subcommand_from coverflowSelector coverflow-selector' -a 'toggle open close'
 complete -c inir -n '__fish_seen_subcommand_from gamemode' -a 'toggle activate deactivate status'

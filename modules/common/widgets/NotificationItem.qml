@@ -30,6 +30,23 @@ Item { // Notification item area
     property var dragIndexDiff: Math.abs(parentDragIndex - index)
     property real xOffset: dragIndexDiff == 0 ? parentDragDistance : 0
 
+    readonly property bool notificationCritical:
+        root.notificationObject?.urgency === NotificationUrgency.Critical
+        || String(root.notificationObject?.urgency ?? "").toLowerCase() === "critical"
+
+    function notificationSummary(): string {
+        return String(root.notificationObject?.summary ?? "")
+    }
+
+    function processedNotificationBody(): string {
+        if (!root.notificationObject) return ""
+        const body = String(root.notificationObject.body ?? "")
+        const source = String(root.notificationObject.appName
+            ?? root.notificationObject.summary ?? "")
+        return String(NotificationUtils.processNotificationBody(body, source) ?? "")
+            .replace(/\n/g, "<br/>")
+    }
+
     implicitHeight: background.implicitHeight
 
     function destroyWithAnimation(left = false) {
@@ -44,7 +61,7 @@ Item { // Notification item area
     TextMetrics {
         id: summaryTextMetrics
         font.pixelSize: root.fontSize
-        text: root.notificationObject?.summary ?? ""
+        text: root.notificationSummary()
     }
 
     SequentialAnimation { // Drag finish animation
@@ -56,9 +73,9 @@ Item { // Notification item area
             target: background.anchors
             property: "leftMargin"
             to: (root.width + root.dismissOvershoot) * (destroyAnimation.left ? -1 : 1)
-            duration: root._dismissAnim.duration
-            easing.type: root._dismissAnim.type
-            easing.bezierCurve: root._dismissAnim.bezierCurve
+            duration: Number(root._dismissAnim?.duration ?? 200)
+            easing.type: Number(root._dismissAnim?.type ?? Easing.OutCubic)
+            easing.bezierCurve: root._dismissAnim?.bezierCurve ?? []
         }
         onFinished: () => {
             Notifications.discardNotification(notificationObject.notificationId);
@@ -125,8 +142,8 @@ Item { // Notification item area
         }
 
         color: (expanded && !onlyNotification) ?
-            Appearance.zzzEverywhere ? (notificationObject?.urgency == NotificationUrgency.Critical ? Appearance.zzz.secondary : Appearance.zzz.chrome) :
-            (notificationObject?.urgency == NotificationUrgency.Critical) ?
+            Appearance.zzzEverywhere ? (root.notificationCritical ? Appearance.zzz.secondary : Appearance.zzz.chrome) :
+            root.notificationCritical ?
                 ColorUtils.mix(Appearance.colors.colSecondaryContainer, Appearance.colors.colLayer2, 0.35) :
                 (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                     : Appearance.inirEverywhere ? Appearance.inir.colLayer2
@@ -195,7 +212,7 @@ Item { // Notification item area
                         ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                     }
                     elide: Text.ElideRight
-                    text: root.notificationObject?.summary ?? ""
+                    text: root.notificationSummary()
                 }
                 StyledText {
                     opacity: !root.expanded ? 1 : 0
@@ -215,10 +232,7 @@ Item { // Notification item area
                     wrapMode: Text.Wrap // Needed for proper eliding????
                     maximumLineCount: 1
                     textFormat: Text.StyledText
-                    text: {
-                        if (!root.notificationObject) return ""
-                        return NotificationUtils.processNotificationBody(notificationObject.body, notificationObject.appName || notificationObject.summary).replace(/\n/g, "<br/>")
-                    }
+                    text: root.processedNotificationBody()
                 }
             }
 
@@ -244,11 +258,9 @@ Item { // Notification item area
                     wrapMode: Text.Wrap
                     elide: Text.ElideRight
                     textFormat: Text.RichText
-                    text: {
-                        if (!root.notificationObject) return ""
-                        return `<style>img{max-width:100%;}</style>` +
-                            `${NotificationUtils.processNotificationBody(notificationObject.body, notificationObject.appName || notificationObject.summary).replace(/\n/g, "<br/>")}`
-                    }
+                    text: root.notificationObject
+                        ? `<style>img{max-width:100%;}</style>${root.processedNotificationBody()}`
+                        : ""
 
                     onLinkActivated: (link) => {
                         Qt.openUrlExternally(link)
@@ -300,11 +312,12 @@ Item { // Notification item area
                         RowLayout {
                             id: actionRowLayout
                             Layout.alignment: Qt.AlignBottom
+                            spacing: 4
 
                             NotificationActionButton {
                                 Layout.fillWidth: true
                                 buttonText: Translation.tr("Close")
-                                urgency: notificationObject?.urgency ?? NotificationUrgency.Normal
+                                urgency: root.notificationObject?.urgency ?? NotificationUrgency.Normal
                                 implicitWidth: (!notificationObject?.actions || notificationObject.actions.length == 0) ? ((actionsFlickable.width - actionRowLayout.spacing) / 2) :
                                     (contentItem.implicitWidth + leftPadding + rightPadding)
 
@@ -315,8 +328,9 @@ Item { // Notification item area
                                 contentItem: MaterialSymbol {
                                     iconSize: Appearance.font.pixelSize.larger
                                     horizontalAlignment: Text.AlignHCenter
-                                    color: (notificationObject?.urgency == NotificationUrgency.Critical) ?
-                                        Appearance.colors.colOnSurfaceVariant : Appearance.colors.colOnSurface
+                                    color: root.notificationCritical
+                                        ? Appearance.colors.colOnSecondaryContainer
+                                        : Appearance.colors.colOnLayer3
                                     text: "close"
                                 }
                             }
@@ -327,8 +341,8 @@ Item { // Notification item area
                                 NotificationActionButton {
                                     required property var modelData
                                     Layout.fillWidth: true
-                                    buttonText: modelData.text
-                                    urgency: notificationObject?.urgency ?? NotificationUrgency.Normal
+                                    buttonText: String(modelData?.text ?? "")
+                                    urgency: root.notificationObject?.urgency ?? NotificationUrgency.Normal
                                     onClicked: {
                                         Notifications.attemptInvokeAction(notificationObject.notificationId, modelData.identifier);
                                     }
@@ -337,7 +351,7 @@ Item { // Notification item area
 
                             NotificationActionButton {
                                 Layout.fillWidth: true
-                                urgency: notificationObject?.urgency ?? NotificationUrgency.Normal
+                                urgency: root.notificationObject?.urgency ?? NotificationUrgency.Normal
                                 implicitWidth: (!notificationObject?.actions || notificationObject.actions.length == 0) ? ((actionsFlickable.width - actionRowLayout.spacing) / 2) :
                                     (contentItem.implicitWidth + leftPadding + rightPadding)
 
@@ -360,8 +374,9 @@ Item { // Notification item area
                                     id: copyIcon
                                     iconSize: Appearance.font.pixelSize.larger
                                     horizontalAlignment: Text.AlignHCenter
-                                    color: (notificationObject?.urgency == NotificationUrgency.Critical) ?
-                                        Appearance.colors.colOnSurfaceVariant : Appearance.colors.colOnSurface
+                                    color: root.notificationCritical
+                                        ? Appearance.colors.colOnSecondaryContainer
+                                        : Appearance.colors.colOnLayer3
                                     text: "content_copy"
                                 }
                             }

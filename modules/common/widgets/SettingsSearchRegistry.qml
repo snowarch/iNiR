@@ -305,6 +305,29 @@ Singleton {
         }
     }
     
+    function findSectionControl(pageIndex, title) {
+        var wanted = String(title || "").toLowerCase().trim();
+        if (!wanted.length)
+            return null;
+
+        var loose = null;
+        for (var i = 0; i < _entryStore.length; ++i) {
+            var e = _entryStore[i];
+            if (!e || _removedEntryIds[e.id] || !e.control)
+                continue;
+            if (e.pageIndex !== pageIndex)
+                continue;
+            var label = String(e.label || "").toLowerCase().trim();
+            if (!label.length)
+                continue;
+            if (label === wanted)
+                return e.control;
+            if (!loose && (label.indexOf(wanted) >= 0 || wanted.indexOf(label) >= 0))
+                loose = e.control;
+        }
+        return loose;
+    }
+
     function getControlById(optionId) {
         var e = _entryById[optionId];
         return e ? e.control : null;

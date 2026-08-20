@@ -11,24 +11,20 @@ Singleton {
 
     property bool isHyprland: false
     property bool isNiri: false
-    property bool isGnome: false
-    property string compositor: "unknown"
 
     readonly property string hyprlandSignature: Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE")
     readonly property string niriSocket: Quickshell.env("NIRI_SOCKET")
-    readonly property string xdgCurrentDesktop: Quickshell.env("XDG_CURRENT_DESKTOP")
-    property bool useNiriSorting: isNiri && NiriService
 
-    property var sortedToplevels: sortedToplevelsCache
-    property var sortedToplevelsCache: []
+    property var sortedToplevels: []
 
     property var _sortingConsumers: ({})
     property int _sortingConsumersCount: 0
-    readonly property bool sortingActive: root.isNiri || root._sortingConsumersCount > 0
+    property int _sortingLeaseCount: 0
+    readonly property bool sortingActive:
+        root._sortingConsumersCount + root._sortingLeaseCount > 0
 
     property bool _sortScheduled: false
     property bool _refreshScheduled: false
-    property bool _hasRefreshedOnce: false
 
     property var _coordCache: ({})
 
@@ -41,7 +37,6 @@ Singleton {
                 Hyprland.refreshToplevels()
             } catch(e) {}
             _refreshScheduled = false
-            _hasRefreshedOnce = true
             scheduleSort()
         }
     }
@@ -52,12 +47,12 @@ Singleton {
         repeat: false
         onTriggered: {
             _sortScheduled = false
-            sortedToplevelsCache = computeSortedToplevels()
+            sortedToplevels = computeSortedToplevels()
         }
     }
 
     function scheduleSort() {
-        if (root.isHyprland && !root.sortingActive) return
+        if (!root.sortingActive) return
         if (_sortScheduled) return
         _sortScheduled = true
         sortTimer.restart()
@@ -77,6 +72,7 @@ Singleton {
         const prev = !!root._sortingConsumers[name]
         if (prev === active)
             return;
+        const wasActive = root.sortingActive
         root._sortingConsumers[name] = active
 
         let count = 0
@@ -84,22 +80,42 @@ Singleton {
             if (root._sortingConsumers[k]) count++
         }
         root._sortingConsumersCount = count
+        root._handleSortingDemandChanged(wasActive)
+    }
 
-        if (root.isHyprland && root.sortingActive) {
+    function acquireSortingConsumer(): void {
+        const wasActive = root.sortingActive
+        root._sortingLeaseCount++
+        root._handleSortingDemandChanged(wasActive)
+    }
+
+    function releaseSortingConsumer(): void {
+        if (root._sortingLeaseCount <= 0)
+            return
+        const wasActive = root.sortingActive
+        root._sortingLeaseCount--
+        root._handleSortingDemandChanged(wasActive)
+    }
+
+    function _handleSortingDemandChanged(wasActive: bool): void {
+        if (!wasActive && root.sortingActive) {
             root.scheduleSort()
+        } else if (wasActive && !root.sortingActive) {
+            sortTimer.stop()
+            root._sortScheduled = false
+            root.sortedToplevels = []
         }
     }
 
     Connections {
         target: ToplevelManager.toplevels
-        enabled: !root.isHyprland || root.sortingActive
+        enabled: root.sortingActive
         function onValuesChanged() { root.scheduleSort() }
     }
     Connections {
         target: Hyprland.toplevels
         enabled: root.isHyprland && root.sortingActive
         function onValuesChanged() {
-            root._hasRefreshedOnce = false
             root.scheduleSort()
         }
     }
@@ -115,21 +131,19 @@ Singleton {
     }
     Connections {
         target: NiriService
-        enabled: root.isNiri
-        function onWindowsChanged() { root.scheduleSort() }
+        enabled: root.isNiri && root.sortingActive
+        function onWindowOrderChanged() { root.scheduleSort() }
+        function onActiveWindowChanged() { root.scheduleSort() }
     }
     Component.onCompleted: {
         detectCompositor()
-        if (root.isNiri) {
-            scheduleSort()
-        }
     }
 
     function computeSortedToplevels() {
         if (!ToplevelManager.toplevels || !ToplevelManager.toplevels.values)
             return []
 
-        if (useNiriSorting)
+        if (isNiri)
             return NiriService.sortToplevels(ToplevelManager.toplevels.values)
 
         if (isHyprland)
@@ -151,7 +165,7 @@ Singleton {
 
     function sortHyprlandToplevelsSafe() {
         if (!Hyprland.toplevels || !Hyprland.toplevels.values) return []
-        if (_refreshScheduled) return sortedToplevelsCache
+        if (_refreshScheduled) return sortedToplevels
 
         const items = Array.from(Hyprland.toplevels.values)
 
@@ -215,7 +229,6 @@ Singleton {
         }
 
         if (missingAnyPosition && hasNewWindow) {
-            _hasRefreshedOnce = false
             scheduleRefresh()
         }
 
@@ -302,36 +315,47 @@ Singleton {
     }
 
     function filterCurrentWorkspace(toplevels, screen) {
-        if (useNiriSorting) return NiriService.filterCurrentWorkspace(toplevels, screen)
-        if (isHyprland) return filterHyprlandCurrentWorkspaceSafe(toplevels, screen)
+        if (isNiri)
+            return NiriService.filterCurrentWorkspace(toplevels, screen)
+        if (isHyprland)
+            return filterHyprlandCurrentWorkspaceSafe(toplevels, screen)
         return toplevels
     }
 
     function filterHyprlandCurrentWorkspaceSafe(toplevels, screenName) {
-        if (!toplevels || toplevels.length === 0 || !Hyprland.toplevels) return toplevels
+        if (!toplevels || toplevels.length === 0 || !Hyprland.toplevels)
+            return toplevels
 
         let currentWorkspaceId = null
         try {
             const hy = Array.from(Hyprland.toplevels.values)
-            for (const t of hy) {
-                const mon = _get(t, ["monitor", "name"], "")
-                const wsId = _get(t, ["workspace", "id"], null)
-                const active = !!_get(t, ["activated"], false)
-                if (mon === screenName && wsId !== null) {
-                    if (active) { currentWorkspaceId = wsId; break }
-                    if (currentWorkspaceId === null) currentWorkspaceId = wsId
+            for (const toplevel of hy) {
+                const monitor = _get(toplevel, ["monitor", "name"], "")
+                const workspaceId = _get(toplevel, ["workspace", "id"], null)
+                const active = !!_get(toplevel, ["activated"], false)
+                if (monitor === screenName && workspaceId !== null) {
+                    if (active) {
+                        currentWorkspaceId = workspaceId
+                        break
+                    }
+                    if (currentWorkspaceId === null)
+                        currentWorkspaceId = workspaceId
                 }
             }
 
             if (currentWorkspaceId === null && Hyprland.workspaces) {
-                const wss = Array.from(Hyprland.workspaces.values)
+                const workspaces = Array.from(Hyprland.workspaces.values)
                 const focusedId = _get(Hyprland, ["focusedWorkspace", "id"], null)
-                for (const ws of wss) {
-                    const monName = _get(ws, ["monitor"], "")
-                    const wsId = _get(ws, ["id"], null)
-                    if (monName === screenName && wsId !== null) {
-                        if (focusedId !== null && wsId === focusedId) { currentWorkspaceId = wsId; break }
-                        if (currentWorkspaceId === null) currentWorkspaceId = wsId
+                for (const workspace of workspaces) {
+                    const monitor = _get(workspace, ["monitor"], "")
+                    const workspaceId = _get(workspace, ["id"], null)
+                    if (monitor === screenName && workspaceId !== null) {
+                        if (focusedId !== null && workspaceId === focusedId) {
+                            currentWorkspaceId = workspaceId
+                            break
+                        }
+                        if (currentWorkspaceId === null)
+                            currentWorkspaceId = workspaceId
                     }
                 }
             }
@@ -339,27 +363,27 @@ Singleton {
             console.warn("CompositorService: workspace snapshot failed:", e)
         }
 
-        if (currentWorkspaceId === null) return toplevels
+        if (currentWorkspaceId === null)
+            return toplevels
 
-        // Map wayland → wsId snapshot
-        let map = new Map()
+        const workspaceByToplevel = new Map()
         try {
             const hy = Array.from(Hyprland.toplevels.values)
-            for (const t of hy) {
-                const wsId = _get(t, ["workspace", "id"], null)
-                if (t && t.wayland && wsId !== null) map.set(t.wayland, wsId)
+            for (const toplevel of hy) {
+                const workspaceId = _get(toplevel, ["workspace", "id"], null)
+                if (toplevel?.wayland && workspaceId !== null)
+                    workspaceByToplevel.set(toplevel.wayland, workspaceId)
             }
         } catch (e) {}
 
-        return toplevels.filter(w => map.get(w) === currentWorkspaceId)
+        return toplevels.filter(toplevel =>
+            workspaceByToplevel.get(toplevel) === currentWorkspaceId)
     }
 
     function detectCompositor() {
         if (hyprlandSignature && hyprlandSignature.length > 0) {
             isHyprland = true
             isNiri = false
-            isGnome = false
-            compositor = "hyprland"
             console.info("CompositorService: Detected Hyprland")
             try {
                 Hyprland.refreshToplevels()
@@ -370,38 +394,27 @@ Singleton {
         if (niriSocket && niriSocket.length > 0) {
             isNiri = true
             isHyprland = false
-            isGnome = false
-            compositor = "niri"
             console.info("CompositorService: Detected Niri with socket:", niriSocket)
-            return
-        }
-
-        // Detect GNOME
-        if (xdgCurrentDesktop && (xdgCurrentDesktop.includes("GNOME") || xdgCurrentDesktop.includes("gnome"))) {
-            isHyprland = false
-            isNiri = false
-            isGnome = true
-            compositor = "gnome"
-            console.info("CompositorService: Detected GNOME Shell")
             return
         }
 
         isHyprland = false
         isNiri = false
-        isGnome = false
-        compositor = "unknown"
-        // Silent - expected when running on Niri (no HYPRLAND_INSTANCE_SIGNATURE set)
     }
 
     function powerOffMonitors() {
-        if (isNiri) return NiriService.powerOffMonitors()
-        if (isHyprland) return Hyprland.dispatch("dpms off")
+        if (isNiri)
+            return NiriService.powerOffMonitors()
+        if (isHyprland)
+            return Hyprland.dispatch("dpms off")
         console.warn("CompositorService: Cannot power off monitors, unknown compositor")
     }
 
     function powerOnMonitors() {
-        if (isNiri) return NiriService.powerOnMonitors()
-        if (isHyprland) return Hyprland.dispatch("dpms on")
+        if (isNiri)
+            return NiriService.powerOnMonitors()
+        if (isHyprland)
+            return Hyprland.dispatch("dpms on")
         console.warn("CompositorService: Cannot power on monitors, unknown compositor")
     }
 }

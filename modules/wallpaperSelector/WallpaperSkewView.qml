@@ -269,8 +269,8 @@ Item {
     on_ContentVisibleChanged: {
         // Defensive re-position: when content becomes visible the ListView layout
         // is guaranteed to be complete, so re-enforce the target position.
-        if (_contentVisible && _initialized && hasImages && skewView && skewView.width > 0)
-            skewView.positionViewAtIndex(currentImageIndex, ListView.Center)
+        if (_contentVisible && _initialized && hasImages)
+            root._positionAtIndex(currentImageIndex)
     }
 
     // ─── Skew / layout parameters (matching skwd geometry) ───
@@ -395,6 +395,12 @@ Item {
         return nameMatchIdx
     }
 
+    function _positionAtIndex(index: int): void {
+        if (!skewView || skewView.width <= 0 || index < 0 || index >= root.imageCount)
+            return
+        skewView.positionViewAtIndex(index, ListView.Center)
+    }
+
     // Rebuild index map + sync to current wallpaper in one shot.
     // Used by filter/sort changes that invalidate the map.
     function _rebuildAndSync(): void {
@@ -421,11 +427,10 @@ Item {
 
         // Position immediately if layout is ready
         if (skewView && skewView.width > 0) {
-            skewView.positionViewAtIndex(target, ListView.Center)
+            root._positionAtIndex(target)
             // Deferred re-position: one extra frame so delegates are created
             Qt.callLater(() => {
-                if (skewView && skewView.width > 0)
-                    skewView.positionViewAtIndex(target, ListView.Center)
+                root._positionAtIndex(target)
             })
         } else {
             // Layout not ready — retry once after a short delay
@@ -440,10 +445,9 @@ Item {
         property int _retries: 0
         onTriggered: {
             if (skewView && skewView.width > 0) {
-                skewView.positionViewAtIndex(root.currentImageIndex, ListView.Center)
+                root._positionAtIndex(root.currentImageIndex)
                 Qt.callLater(() => {
-                    if (skewView && skewView.width > 0)
-                        skewView.positionViewAtIndex(root.currentImageIndex, ListView.Center)
+                    root._positionAtIndex(root.currentImageIndex)
                 })
                 _retries = 0
             } else if (_retries < 10) {
@@ -846,7 +850,9 @@ Item {
 
         boundsBehavior: Flickable.StopAtBounds
         model: root.imageCount
-        currentIndex: root.currentImageIndex
+        currentIndex: root.imageCount > 0
+            ? Math.max(0, Math.min(root.currentImageIndex, root.imageCount - 1))
+            : -1
 
         // Fade-in + scale entrance (skwd: 400ms OutCubic → M3 enter token)
         opacity: root._contentVisible ? 1 : 0
@@ -870,7 +876,7 @@ Item {
         }
 
         onCurrentIndexChanged: {
-            if (currentIndex !== root.currentImageIndex)
+            if (currentIndex >= 0 && currentIndex !== root.currentImageIndex)
                 root.currentImageIndex = currentIndex
         }
 
@@ -2197,7 +2203,7 @@ Item {
         IconToolbarButton {
             implicitWidth: height
             onClicked: root.favouriteFilterActive = !root.favouriteFilterActive
-            text: root.favouriteFilterActive ? "favorite" : "favorite_border"
+            text: "favorite"
             opacity: root.favouriteFilterActive ? 1.0 : 0.6
             StyledToolTip { text: root.favouriteFilterActive ? Translation.tr("Show all") : Translation.tr("Show favourites only") }
         }

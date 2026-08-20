@@ -423,7 +423,7 @@ Item {
                         onClicked: isLiked ? YtMusic.unlikeSong(YtMusic.currentVideoId) : YtMusic.likeSong()
                         contentItem: MaterialSymbol { 
                             anchors.centerIn: parent
-                            text: parent.isLiked ? "favorite" : "favorite_border"
+                            text: "favorite"
                             iconSize: 13
                             fill: parent.isLiked ? 1 : 0
                             animateFill: true

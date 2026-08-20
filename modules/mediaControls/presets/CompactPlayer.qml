@@ -148,14 +148,15 @@ Item {
         }
 
         RowLayout {
+            id: compactRow
             anchors.fill: parent
             anchors.margins: 10
             spacing: 10
 
-            // Compact cover art
             PlayerArtwork {
-                Layout.preferredWidth: 110
-                Layout.preferredHeight: 110
+                Layout.preferredWidth: compactRow.height
+                Layout.preferredHeight: compactRow.height
+                Layout.alignment: Qt.AlignVCenter
                 artSource: playerBase.displayedArtFilePath
                 transitionKey: playerBase.mediaTransitionKey
                 downloaded: playerBase.downloaded

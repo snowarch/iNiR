@@ -9,6 +9,11 @@ import qs.services
 Item {
     id: root
     implicitHeight: col.implicitHeight + col.anchors.topMargin
+    readonly property bool volumeMuted: Boolean(Audio.sink?.audio?.muted ?? false)
+    readonly property real volumeLevel: {
+        const value = Number(Audio.sink?.audio?.volume ?? 0)
+        return Number.isFinite(value) ? Math.max(0, value) : 0
+    }
 
     readonly property var locale: {
         const env = Quickshell.env("LC_TIME") || Quickshell.env("LC_ALL") || Quickshell.env("LANG") || ""
@@ -144,13 +149,13 @@ Item {
 
                                 MaterialSymbol {
                                     anchors.verticalCenter: parent.verticalCenter
-                                    text: Audio.sink?.audio?.muted ? "volume_off" :
-                                          (Audio.sink?.audio?.volume ?? 0) < 0.01 ? "volume_mute" :
-                                          (Audio.sink?.audio?.volume ?? 0) < 0.5 ? "volume_down" : "volume_up"
+                                    text: root.volumeMuted ? "volume_off" :
+                                          root.volumeLevel < 0.01 ? "volume_mute" :
+                                          root.volumeLevel < 0.5 ? "volume_down" : "volume_up"
                                     iconSize: 18
-                                    fill: Audio.sink?.audio?.muted ? 1 : 0
+                                    fill: root.volumeMuted ? 1 : 0
                                     animateFill: true
-                                    color: Audio.sink?.audio?.muted
+                                    color: root.volumeMuted
                                         ? (Appearance.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext)
                                         : (Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0)
                                     Behavior on color { enabled: Appearance.animationsEnabled; animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
@@ -158,10 +163,10 @@ Item {
 
                                 StyledText {
                                     anchors.verticalCenter: parent.verticalCenter
-                                    text: Math.round((Audio.sink?.audio?.volume ?? 0) * 100)
+                                    text: String(Math.round(root.volumeLevel * 100))
                                     font.pixelSize: Appearance.font.pixelSize.smaller
                                     font.family: Appearance.font.family.numbers
-                                    color: Audio.sink?.audio?.muted
+                                    color: root.volumeMuted
                                         ? (Appearance.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext)
                                         : (Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0)
 
@@ -173,7 +178,7 @@ Item {
                             }
                         }
 
-                        StyledToolTip { text: Audio.sink?.audio?.muted ? Translation.tr("Unmute") : Translation.tr("Scroll to adjust volume") }
+                        StyledToolTip { text: root.volumeMuted ? Translation.tr("Unmute") : Translation.tr("Scroll to adjust volume") }
                     }
 
                     MouseArea {

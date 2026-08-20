@@ -90,7 +90,7 @@ ContentPage {
 
             MaterialSymbol {
                 text: root._statusType === "error" ? "error"
-                    : root._statusType === "removed" ? "remove_circle"
+                    : root._statusType === "removed" ? "do_not_disturb_on"
                     : "check_circle"
                 iconSize: Appearance.font.pixelSize.normal
                 color: root._statusType === "error" ? Appearance.colors.colError

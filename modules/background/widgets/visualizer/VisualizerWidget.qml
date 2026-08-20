@@ -8,7 +8,6 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
-import qs.modules.common.widgets.widgetCanvas
 import qs.modules.background.widgets
 
 AbstractBackgroundWidget {
@@ -17,7 +16,10 @@ AbstractBackgroundWidget {
     configEntryName: "visualizer"
     defaultConfig: ({
         placementStrategy: "free", preset: "default", vizType: "bars", waveOpacity: -1,
+        paletteMode: "cava", barsOrigin: "bottom", waveMode: "fill",
+        frequencyProfile: "flat", smoothing: 2, fillRatio: 90, barOpacity: 100,
         barCount: 48, barSpacing: 2, barRadius: 2, barMinHeight: 1,
+        lineWidth: 2, edgeInset: 0, edgeSoftness: 28, accentStrength: 70,
         contentWidth: 304, contentHeight: 104, dim: 0,
         widgetScale: 100, widgetOpacity: 100, colorMode: "auto",
         showBackground: true, useBlur: false, showBorder: true,
@@ -31,9 +33,23 @@ AbstractBackgroundWidget {
     visibleWhenLocked: false
     needsColText: true
     resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
+    resizeMinWidth: 120
+    resizeMinHeight: 48
 
     readonly property string vizType: Config.getNestedValue("background.widgets.visualizer.vizType", "bars")
     readonly property int waveOpacity: Config.getNestedValue("background.widgets.visualizer.waveOpacity", -1)
+    readonly property string paletteMode: Config.getNestedValue(
+        "background.widgets.visualizer.paletteMode", "cava")
+    // Cava already owns its own palette. Show the shared widget-color presets
+    // only when this widget is actually consuming the semantic widget palette.
+    semanticPaletteQuickControls: root.paletteMode !== "cava"
+    readonly property var spectrumPalette: {
+        if (root.paletteMode === "accent")
+            return [root.widgetAccentVisible, root.widgetAccent2Visible, root.widgetAccent3Visible]
+        if (root.paletteMode === "primary")
+            return [root.widgetAccent]
+        return CavaTheme.visualizerColors
+    }
 
     editPopoverContent: Component {
         ColumnLayout {
@@ -47,17 +63,89 @@ AbstractBackgroundWidget {
 
                 Repeater {
                     model: [
-                        { label: "Bars", icon: "equalizer", value: "bars" },
-                        { label: "Wave", icon: "graphic_eq", value: "wave" }
+                        { label: Translation.tr("Bars"), icon: "equalizer", value: "bars" },
+                        { label: Translation.tr("Wave"), icon: "graphic_eq", value: "wave" }
                     ]
                     SelectionGroupButton {
                         required property var modelData
                         Layout.fillWidth: true
                         leftmost: true; rightmost: true
                         buttonIcon: modelData.icon
-                        buttonText: Translation.tr(modelData.label)
+                        buttonText: modelData.label
                         toggled: root.vizType === modelData.value
                         onClicked: Config.setNestedValue("background.widgets.visualizer.vizType", modelData.value)
+                    }
+                }
+            }
+
+            StyledText {
+                text: Translation.tr("Palette")
+                color: Appearance.colors.colOnLayer2
+                font.pixelSize: Appearance.font.pixelSize.smaller
+            }
+
+            GridLayout {
+                Layout.fillWidth: true
+                columns: 3
+                columnSpacing: 4
+                rowSpacing: 4
+
+                Repeater {
+                    model: [
+                        { label: Translation.tr("Cava"), icon: "palette", value: "cava" },
+                        { label: Translation.tr("Accent"), icon: "colors", value: "accent" },
+                        { label: Translation.tr("Primary"), icon: "format_color_fill", value: "primary" }
+                    ]
+                    SelectionGroupButton {
+                        required property var modelData
+                        Layout.fillWidth: true
+                        leftmost: true; rightmost: true
+                        buttonIcon: modelData.icon
+                        buttonText: modelData.label
+                        toggled: root.paletteMode === modelData.value
+                        onClicked: Config.setNestedValue(
+                            "background.widgets.visualizer.paletteMode", modelData.value)
+                    }
+                }
+            }
+
+            StyledText {
+                text: Translation.tr("Shape")
+                color: Appearance.colors.colOnLayer2
+                font.pixelSize: Appearance.font.pixelSize.smaller
+            }
+
+            GridLayout {
+                Layout.fillWidth: true
+                columns: root.vizType === "bars" ? 4 : 3
+                columnSpacing: 4
+                rowSpacing: 4
+
+                Repeater {
+                    model: root.vizType === "bars" ? [
+                        { label: Translation.tr("Bottom"), icon: "vertical_align_bottom", value: "bottom" },
+                        { label: Translation.tr("Top"), icon: "vertical_align_top", value: "top" },
+                        { label: Translation.tr("Center"), icon: "center_focus_strong", value: "center" },
+                        { label: Translation.tr("Mirror"), icon: "unfold_more", value: "mirror" }
+                    ] : [
+                        { label: Translation.tr("Fill"), icon: "waves", value: "fill" },
+                        { label: Translation.tr("Line"), icon: "line_weight", value: "line" },
+                        { label: Translation.tr("Ribbon"), icon: "unfold_more", value: "ribbon" }
+                    ]
+                    SelectionGroupButton {
+                        required property var modelData
+                        Layout.fillWidth: true
+                        leftmost: true; rightmost: true
+                        buttonIcon: modelData.icon
+                        buttonText: modelData.label
+                        toggled: root.vizType === "bars"
+                            ? Config.getNestedValue(
+                                "background.widgets.visualizer.barsOrigin", "bottom") === modelData.value
+                            : Config.getNestedValue(
+                                "background.widgets.visualizer.waveMode", "fill") === modelData.value
+                        onClicked: Config.setNestedValue(root.vizType === "bars"
+                            ? "background.widgets.visualizer.barsOrigin"
+                            : "background.widgets.visualizer.waveMode", modelData.value)
                     }
                 }
             }
@@ -90,11 +178,30 @@ AbstractBackgroundWidget {
                     onValueModified: Config.setNestedValue("background.widgets.visualizer.waveOpacity", value)
                 }
             }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Translation.tr("Smoothing")
+                    color: Appearance.colors.colOnLayer2
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                }
+
+                StyledSpinBox {
+                    from: 0; to: 8; stepSize: 1
+                    value: Config.getNestedValue("background.widgets.visualizer.smoothing", 2)
+                    onValueModified: Config.setNestedValue(
+                        "background.widgets.visualizer.smoothing", value)
+                }
+            }
         }
     }
 
-    readonly property bool _active: (Config.options?.background?.widgets?.visualizer?.enable ?? false)
-        && root.visible && root.powerActive && MprisController.isPlaying
+    readonly property bool _active: root.visible
+        && root.powerActive && MprisController.isPlaying
 
     // ── Style tokens ───────────────────────────────────────────
     readonly property real cardRadius: root.widgetCardRadius
@@ -102,6 +209,8 @@ AbstractBackgroundWidget {
     CavaProcess {
         id: cavaProcess
         active: root._active
+        sampleCount: Math.max(50,
+            Config.getNestedValue("background.widgets.visualizer.barCount", 48))
     }
 
     // ── Card background ────────────────────────────────────────
@@ -127,34 +236,39 @@ AbstractBackgroundWidget {
     }
 
     // ── Visualizer rendering ─────────────────────────────────────
-    CavaVisualizer {
-        visible: root.vizType === "bars"
+    CavaSpectrum {
         anchors.fill: parent
         anchors.margins: Appearance.angelEverywhere || Appearance.inirEverywhere ? 4 : 0
         points: cavaProcess.points
-        live: root._active
-        barCount: Config.getNestedValue("background.widgets.visualizer.barCount", 48)
+        active: root._active && cavaProcess.audioSignalActive
+        threadedRendering: true
+        visualizerType: root.vizType
+        normalizationCeiling: cavaProcess.normalizationCeiling
+        spectrumColors: root.spectrumPalette
+        spectrumColor: root.widgetAccentVisible
+        spectrumOpacity: (root.vizType === "wave"
+            ? (root.waveOpacity >= 0 ? root.waveOpacity
+                : (Config.options?.appearance?.cava?.waveOpacity ?? 30))
+            : Config.getNestedValue("background.widgets.visualizer.barOpacity", 100)) / 100
+        fillRatio: Config.getNestedValue("background.widgets.visualizer.fillRatio", 90) / 100
+        pixelsPerBar: Math.max(3, (width + barSpacing)
+            / Math.max(4, Config.getNestedValue("background.widgets.visualizer.barCount", 48)))
         barSpacing: Config.getNestedValue("background.widgets.visualizer.barSpacing", 2)
         barMinHeight: Config.getNestedValue("background.widgets.visualizer.barMinHeight", 1)
         barRadius: Config.getNestedValue("background.widgets.visualizer.barRadius", 2)
-        colorLow: Appearance.cookieEverywhere ? Appearance.colors.colLayer3
-            : Appearance.zzzEverywhere ? Appearance.zzz.chrome
-            : Appearance.colors.colSecondaryContainer
-        colorMed: root.widgetAccentVisible
-        colorHigh: root.widgetAccent3Visible
-    }
-
-    WaveVisualizer {
-        visible: root.vizType === "wave"
-        anchors.fill: parent
-        anchors.margins: Appearance.angelEverywhere || Appearance.inirEverywhere ? 4 : 0
-        points: cavaProcess.points
-        live: root._active
-        fillOpacity: (root.waveOpacity >= 0 ? root.waveOpacity : (Config.options?.appearance?.cava?.waveOpacity ?? 30)) / 100
-        color: root.widgetAccentVisible
-        Behavior on color {
-            enabled: Appearance.animationsEnabled
-            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-        }
+        barsOrigin: Config.getNestedValue("background.widgets.visualizer.barsOrigin", "bottom")
+        smoothing: Config.getNestedValue("background.widgets.visualizer.smoothing", 2)
+        waveMode: Config.getNestedValue("background.widgets.visualizer.waveMode", "fill")
+        lineWidth: Config.getNestedValue("background.widgets.visualizer.lineWidth", 2)
+        edgeInset: Config.getNestedValue("background.widgets.visualizer.edgeInset", 0)
+        edgeSoftness: Config.getNestedValue("background.widgets.visualizer.edgeSoftness", 28) / 100
+        frequencyProfile: Config.getNestedValue(
+            "background.widgets.visualizer.frequencyProfile", "flat")
+        accentStrength: Config.getNestedValue(
+            "background.widgets.visualizer.accentStrength", 70) / 100
+        topLeftRadius: cardBg.surfaceRadius
+        topRightRadius: cardBg.surfaceRadius
+        bottomLeftRadius: cardBg.surfaceRadius
+        bottomRightRadius: cardBg.surfaceRadius
     }
 }

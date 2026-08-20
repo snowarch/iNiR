@@ -13,7 +13,8 @@ Item {
 
     // Emitted when a day with events is clicked (for navigation in legacy mode)
     signal dayWithEventsClicked(var date)
-    // Emitted to open the events dialog for creating/editing
+    // Emitted to open the events dialog. An event object means edit it, a Date
+    // means a new event prefilled to that day.
     signal openEventsDialog(var editEvent)
 
     // Two states: "month" (grid + upcoming) and "day" (day detail)
@@ -365,14 +366,10 @@ Item {
                 onEventClicked: (event) => {
                     if ((event?.source ?? "local") === "local") root.openEventsDialog(event)
                 }
-                onAddEventClicked: (date) => {
-                    // Create a pre-filled event template for this date
-                    const template = {
-                        dateTime: date.toISOString(),
-                        _isNew: true
-                    }
-                    root.openEventsDialog(template)
-                }
+                // A Date means "new event on this day". Hosts must not treat it
+                // as an existing event to edit: a template object would make the
+                // dialog call updateEvent() with no id and silently drop the event.
+                onAddEventClicked: (date) => root.openEventsDialog(date)
             }
         }
     }

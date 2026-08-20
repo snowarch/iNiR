@@ -12,14 +12,39 @@ import qs.modules.waffle.looks
 
 Rectangle {
     id: root
-    implicitHeight: 120
-    implicitWidth: 358
+    implicitHeight: Looks.dp(136)
+    implicitWidth: Looks.dp(358)
     color: Looks.colors.bgPanelBody
 
     readonly property var activePlayer: MprisController.activePlayer
-    readonly property string effectiveArtUrl: MprisController.isYtMusicActive ? YtMusic.currentThumbnail : (activePlayer?.trackArtUrl ?? "")
     readonly property string effectiveTitle: MprisController.isYtMusicActive ? YtMusic.currentTitle : (activePlayer?.trackTitle ?? "")
     readonly property string effectiveArtist: MprisController.isYtMusicActive ? YtMusic.currentArtist : (activePlayer?.trackArtist ?? "")
+    readonly property real effectivePosition: MprisController.isYtMusicActive
+        ? YtMusic.currentPosition : (activePlayer?.position ?? 0)
+    readonly property real effectiveLength: MprisController.isYtMusicActive
+        ? YtMusic.currentDuration
+        : ((activePlayer?.lengthSupported ?? false) ? activePlayer.length : 0)
+    readonly property bool effectiveCanSeek: MprisController.isYtMusicActive
+        ? YtMusic.canSeek
+        : ((activePlayer?.canSeek ?? false)
+            && (activePlayer?.positionSupported ?? false))
+    readonly property real effectiveVolume: MprisController.getVolume()
+
+    function formatTime(seconds: real): string {
+        if (!Number.isFinite(seconds) || seconds < 0)
+            return "0:00"
+        const whole = Math.floor(seconds)
+        return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`
+    }
+
+    Timer {
+        running: (root.QsWindow?.window?.visible ?? false)
+            && !MprisController.isYtMusicActive
+            && (root.activePlayer?.isPlaying ?? false)
+        interval: 1000
+        repeat: true
+        onTriggered: root.activePlayer?.positionChanged()
+    }
 
     // Volume feedback overlay
     Rectangle {
@@ -39,13 +64,13 @@ Rectangle {
 
             FluentIcon {
                 Layout.alignment: Qt.AlignHCenter
-                icon: root.activePlayer?.volume > 0 ? "speaker" : "speaker-mute"
+                icon: root.effectiveVolume > 0 ? "speaker" : "speaker-mute"
                 implicitSize: 24
             }
 
             WText {
                 Layout.alignment: Qt.AlignHCenter
-                text: Math.round((root.activePlayer?.volume ?? 0) * 100) + "%"
+                text: Math.round(root.effectiveVolume * 100) + "%"
                 font.pixelSize: Looks.font.pixelSize.normal
                 font.weight: Font.DemiBold
             }
@@ -83,13 +108,13 @@ Rectangle {
 
     RowLayout {
         anchors.fill: parent
-        anchors.margins: 16
-        spacing: 14
+        anchors.margins: Looks.dp(16)
+        spacing: Looks.dp(14)
 
         // Album art
         Rectangle {
-            Layout.preferredWidth: 88
-            Layout.preferredHeight: 88
+            Layout.preferredWidth: Looks.dp(104)
+            Layout.preferredHeight: Looks.dp(104)
             radius: Looks.radius.medium
             color: Looks.colors.bg1Base
             clip: true
@@ -114,7 +139,7 @@ Rectangle {
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            spacing: 8
+            spacing: Looks.dp(4)
 
             // Track info
             ColumnLayout {
@@ -127,7 +152,8 @@ Rectangle {
 
                     WText {
                         Layout.fillWidth: true
-                        text: StringUtils.cleanMusicTitle(root.activePlayer?.trackTitle) || Translation.tr("Not playing")
+                        text: StringUtils.cleanMusicTitle(root.effectiveTitle)
+                            || Translation.tr("Not playing")
                         font.pixelSize: Looks.font.pixelSize.normal
                         font.weight: Font.DemiBold
                         elide: Text.ElideRight
@@ -167,7 +193,7 @@ Rectangle {
 
                 WText {
                     Layout.fillWidth: true
-                    text: root.activePlayer?.trackArtist || ""
+                    text: root.effectiveArtist
                     font.pixelSize: Looks.font.pixelSize.small
                     color: Looks.colors.fg1
                     elide: Text.ElideRight
@@ -175,11 +201,50 @@ Rectangle {
                 }
             }
 
+            RowLayout {
+                Layout.fillWidth: true
+                visible: root.effectiveCanSeek && root.effectiveLength > 0
+                spacing: Looks.dp(6)
+
+                WText {
+                    text: root.formatTime(root.effectivePosition)
+                    color: Looks.colors.subfg
+                    font.pixelSize: Looks.font.pixelSize.tiny
+                }
+
+                WSlider {
+                    id: seekSlider
+                    Layout.fillWidth: true
+                    from: 0
+                    to: Math.max(1, root.effectiveLength)
+                    property real modelValue: root.effectivePosition
+                    Binding {
+                        target: seekSlider
+                        property: "value"
+                        value: seekSlider.modelValue
+                        when: !seekSlider.pressed && !seekSlider._userInteracting
+                    }
+                    onMoved: {
+                        if (MprisController.isYtMusicActive && root.effectiveCanSeek)
+                            YtMusic.seek(value)
+                        else if (root.activePlayer && root.effectiveCanSeek)
+                            root.activePlayer.position = value
+                    }
+                }
+
+                WText {
+                    text: root.formatTime(root.effectiveLength)
+                    color: Looks.colors.subfg
+                    font.pixelSize: Looks.font.pixelSize.tiny
+                }
+            }
+
             Item { Layout.fillHeight: true }
 
             // Controls
             RowLayout {
-                spacing: 4
+                Layout.fillWidth: true
+                spacing: Looks.dp(4)
 
                 MediaBtn {
                     iconName: "previous"
@@ -187,7 +252,7 @@ Rectangle {
                     onClicked: MprisController.previous()
                 }
                 MediaBtn {
-                    iconName: root.activePlayer?.isPlaying ? "pause" : "play"
+                    iconName: MprisController.isPlaying ? "pause" : "play"
                     size: 36
                     iconSize: 18
                     onClicked: MprisController.togglePlaying()
@@ -197,14 +262,24 @@ Rectangle {
                     enabled: MprisController.canGoNext
                     onClicked: MprisController.next()
                 }
+                Item { Layout.fillWidth: true }
+                MediaBtn {
+                    iconName: root.effectiveVolume > 0
+                        ? "speaker" : "speaker-mute"
+                    enabled: MprisController.canChangeVolume
+                    onClicked: {
+                        volumeOverlay.opacity = 1
+                        volumeHideTimer.restart()
+                    }
+                }
             }
         }
     }
 
     component MediaBtn: WBorderlessButton {
         property string iconName
-        property int size: 32
-        property int iconSize: 14
+        property int size: Looks.dp(32)
+        property int iconSize: Looks.dp(14)
         implicitWidth: size
         implicitHeight: size
         contentItem: FluentIcon {

@@ -1,4 +1,5 @@
 import qs.modules.common
+import qs.services
 import QtQuick
 import QtQuick.Layouts
 
@@ -8,15 +9,15 @@ Item {
     property real maxVisualizerValue: 1000
     property int smoothing: 2
     property bool live: true
-    property color colorLow: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                           : Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
-                           : Appearance.colors.colSecondaryContainer
-    property color colorMed: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                           : Appearance.inirEverywhere ? Appearance.inir.colPrimary
-                           : Appearance.colors.colPrimary
-    property color colorHigh: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                            : Appearance.inirEverywhere ? Appearance.inir.colPrimary
-                            : Appearance.colors.colPrimary
+    readonly property var _cavaPalette: CavaTheme.visualizerColors
+    property color colorLow: root._cavaPalette.length > 0
+        ? root._cavaPalette[0] : Appearance.colors.colSecondaryContainer
+    property color colorMed: root._cavaPalette.length > 0
+        ? root._cavaPalette[Math.floor(root._cavaPalette.length / 2)]
+        : Appearance.colors.colPrimary
+    property color colorHigh: root._cavaPalette.length > 0
+        ? root._cavaPalette[root._cavaPalette.length - 1]
+        : Appearance.colors.colPrimary
     property int barCount: 50
     property real barSpacing: 2
     property real barMinHeight: 2
@@ -39,9 +40,9 @@ Item {
 
                 property real barValue: {
                     if (!root.visible || !root.live || root.points.length === 0) return 0;
-                    const step = Math.max(1, Math.floor(root.points.length / root.barCount));
-                    const start = index * step;
-                    const end = Math.min(start + step, root.points.length);
+                    const start = Math.floor(index * root.points.length / root.barCount);
+                    const end = Math.min(root.points.length,
+                        Math.max(start + 1, Math.ceil((index + 1) * root.points.length / root.barCount)));
                     let sum = 0;
                     let count = 0;
                     for (let i = start; i < end; i++) {

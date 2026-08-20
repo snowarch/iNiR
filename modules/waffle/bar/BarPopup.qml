@@ -22,7 +22,7 @@ Loader {
     signal focusCleared()
     
     property Item anchorItem: parent
-    property real visualMargin: 12
+    property real visualMargin: Looks.dp(12)
     readonly property bool barAtBottom: Config.options?.waffles?.bar?.bottom ?? false
     property bool popupBelow: false  // Force popup to appear below anchor
     property real ambientShadowWidth: 1
@@ -183,6 +183,8 @@ Loader {
             }
             color: Looks.colors.bg1Base
             radius: Looks.radius.large
+            border.width: 1
+            border.color: Looks.colors.bg2Border
 
             implicitWidth: root.contentItem.implicitWidth + (root.padding * 2)
             implicitHeight: root.contentItem.implicitHeight + (root.padding * 2)

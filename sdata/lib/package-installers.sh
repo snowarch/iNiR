@@ -636,7 +636,14 @@ EOF
 
   # GTK 4
   mkdir -p ~/.config/gtk-4.0
-  cp ~/.config/gtk-3.0/settings.ini ~/.config/gtk-4.0/settings.ini
+  cat > ~/.config/gtk-4.0/settings.ini << EOF
+[Settings]
+gtk-theme-name=${gtk_theme}
+gtk-icon-theme-name=${icon_theme}
+gtk-font-name=${font}
+gtk-cursor-theme-name=${cursor_theme}
+gtk-cursor-theme-size=24
+EOF
 
   log_success "GTK configuration set"
 }

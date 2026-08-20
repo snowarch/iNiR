@@ -235,6 +235,18 @@ Singleton {
                 property string gowallEffect: "grayscale"
             }
 
+            // Desktop-widget editor workspace state. This is transient UI
+            // continuity, not user widget configuration: reopening the manager
+            // should restore the tool where the user left it without adding
+            // editor geometry to config.json.
+            property JsonObject desktopWidgets: JsonObject {
+                property real managerXRatio: 0.76
+                property real managerYRatio: 0.42
+                property int managerWidth: 420
+                property int managerHeight: 520
+                property string managerFilter: "all"
+            }
+
             property JsonObject screenCast: JsonObject {
                 property bool active: false
             }

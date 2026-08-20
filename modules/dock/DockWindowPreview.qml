@@ -90,7 +90,9 @@ Button {
                     id: appTitleText
                     anchors.fill: parent
                     anchors.rightMargin: closeButton.visible ? closeButton.width + 4 : 0
-                    text: root.toplevel?.title ?? ""
+                    text: root.toplevel?._sourceToplevel?.title
+                        ?? root.toplevel?.title
+                        ?? ""
                     elide: Text.ElideRight
                     font.pixelSize: Appearance.font.pixelSize.small
                     color: Appearance.inirEverywhere 
@@ -117,7 +119,11 @@ Button {
                 
                 onClicked: {
                     root.windowCloseClicked()
-                    root.toplevel?.close()
+                    if (CompositorService.isNiri && root.toplevel?.niriWindowId) {
+                        NiriService.closeWindow(root.toplevel.niriWindowId)
+                    } else {
+                        root.toplevel?.close()
+                    }
                 }
 
                 contentItem: MaterialSymbol {

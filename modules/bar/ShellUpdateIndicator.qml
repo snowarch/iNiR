@@ -151,17 +151,18 @@ MouseArea {
         // Wrapper caps implicitWidth so StyledPopup doesn't grow unbounded
         // (monospace hashes + branch names exceed the visual area otherwise)
         Item {
+            readonly property real minW: 220
             readonly property real maxW: 280
             anchors.centerIn: parent
-            width: Math.min(columnContent.implicitWidth, maxW)
-            height: columnContent.height
+            width: Math.min(Math.max(columnContent.implicitWidth, minW), maxW)
+            height: columnContent.implicitHeight
             implicitWidth: width
             implicitHeight: height
+            clip: true
 
             ColumnLayout {
                 id: columnContent
-                anchors.left: parent.left
-                anchors.right: parent.right
+                width: parent.width
                 spacing: 6
 
                 // Header row
@@ -201,6 +202,7 @@ MouseArea {
                     visible: ShellUpdates.isUpdating
                     spacing: 5
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
 
                     MaterialSymbol {
                         text: "info"
@@ -209,6 +211,7 @@ MouseArea {
                     }
                     StyledText {
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         text: ShellUpdates.updateStepMessage.length > 0 ? Translation.tr(ShellUpdates.updateStepMessage) : Translation.tr("Processing...")
                         color: Appearance.colors.colOnSurfaceVariant
                         elide: Text.ElideRight
@@ -226,6 +229,7 @@ MouseArea {
                     visible: !ShellUpdates.isUpdating
                     spacing: 5
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
 
                     MaterialSymbol {
                         text: "download"
@@ -238,6 +242,7 @@ MouseArea {
                     }
                     StyledText {
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         horizontalAlignment: Text.AlignRight
                         elide: Text.ElideRight
                         text: ShellUpdates.commitsBehind > 0
@@ -255,6 +260,7 @@ MouseArea {
                     visible: !ShellUpdates.isUpdating && ShellUpdates.localVersion.length > 0 && ShellUpdates.remoteVersion.length > 0 && ShellUpdates.remoteVersion !== ShellUpdates.localVersion
                     spacing: 5
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
 
                     MaterialSymbol {
                         text: "tag"
@@ -267,6 +273,7 @@ MouseArea {
                     }
                     StyledText {
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         horizontalAlignment: Text.AlignRight
                         elide: Text.ElideMiddle
                         text: "v" + ShellUpdates.localVersion + "  →  v" + ShellUpdates.remoteVersion
@@ -283,6 +290,7 @@ MouseArea {
                     visible: !ShellUpdates.isUpdating
                     spacing: 5
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
 
                     MaterialSymbol {
                         text: "commit"
@@ -295,6 +303,7 @@ MouseArea {
                     }
                     StyledText {
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         horizontalAlignment: Text.AlignRight
                         elide: Text.ElideMiddle
                         text: (ShellUpdates.localCommit || "\u2014") +
@@ -312,6 +321,7 @@ MouseArea {
                     visible: !ShellUpdates.isUpdating && ShellUpdates.currentBranch.length > 0
                     spacing: 5
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
 
                     MaterialSymbol {
                         text: "account_tree"
@@ -326,6 +336,7 @@ MouseArea {
                     }
                     StyledText {
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         horizontalAlignment: Text.AlignRight
                         elide: Text.ElideMiddle
                         text: ShellUpdates.currentBranch
@@ -340,6 +351,7 @@ MouseArea {
                 StyledText {
                     visible: ShellUpdates.isNonMainBranch && !ShellUpdates.isUpdating
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     text: Translation.tr("You are on a non-release branch. Updates track this branch.")
                     font.pixelSize: Appearance.font.pixelSize.smallest
                     color: Appearance.colors.colTertiary
@@ -352,6 +364,7 @@ MouseArea {
                     spacing: 5
                     visible: !ShellUpdates.isUpdating && ShellUpdates.lastError.length > 0
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
 
                     MaterialSymbol {
                         text: "error"
@@ -360,6 +373,7 @@ MouseArea {
                     }
                     StyledText {
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         text: ShellUpdates.lastError
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         color: Appearance.m3colors?.m3error ?? Appearance.colors.colOnSurfaceVariant

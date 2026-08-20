@@ -62,7 +62,7 @@ WPanelPageColumn {
 
     function activateFirst() {
         if (flatApps.length > 0) {
-            flatApps[0].execute()
+            AppSearch.launchEntry(flatApps[0])
             GlobalStates.searchOpen = false
         }
     }
@@ -237,7 +237,7 @@ WPanelPageColumn {
                                                 implicitHeight: 76
 
                                             onClicked: {
-                                                appBtn.modelData.execute()
+                                                AppSearch.launchEntry(appBtn.modelData)
                                                 GlobalStates.searchOpen = false
                                             }
 

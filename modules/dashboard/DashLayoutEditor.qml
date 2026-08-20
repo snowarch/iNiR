@@ -345,7 +345,7 @@ ColumnLayout {
                 implicitWidth: 26; implicitHeight: 26
                 buttonRadius: Appearance.rounding.full
                 onClicked: root._remove(rowRoot.zone, rowRoot.rowIndex)
-                contentItem: MaterialSymbol { anchors.centerIn: parent; text: "remove_circle_outline"; iconSize: Appearance.font.pixelSize.small; color: Appearance.colors.colSubtext }
+                contentItem: MaterialSymbol { anchors.centerIn: parent; text: "do_not_disturb_on"; iconSize: Appearance.font.pixelSize.small; color: Appearance.colors.colSubtext }
                 StyledToolTip { text: Translation.tr("Remove from layout") }
             }
         }

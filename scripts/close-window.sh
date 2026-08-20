@@ -38,9 +38,14 @@ if ! pgrep -x qs >/dev/null 2>&1 && ! pgrep -x quickshell >/dev/null 2>&1; then
     exit 0
 fi
 
-# QS is running — try IPC. QS also captures its own view of the active window
-# and closes by ID, so even if this path succeeds the right window is targeted.
-if timeout 1 "$launcher_path" closeConfirm trigger 2>/dev/null; then
+# QS is running — pass the snapshot through IPC so confirmation and fast-close
+# use the same window that was focused when the keybind fired.
+if [ -n "$focused_id" ]; then
+    ipc_args=(closeConfirm triggerWindow "$focused_id" "$focused_app_id")
+else
+    ipc_args=(closeConfirm trigger)
+fi
+if timeout 1 "$launcher_path" "${ipc_args[@]}" 2>/dev/null; then
     exit 0
 fi
 

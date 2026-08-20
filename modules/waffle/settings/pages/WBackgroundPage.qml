@@ -118,9 +118,9 @@ WSettingsPage {
         }
 
         WSettingsSwitch {
-            label: Translation.tr("Hide when fullscreen")
+            label: Translation.tr("Hide main wallpaper in fullscreen")
             icon: "eye-off"
-            description: Translation.tr("Hide the Waffle wallpaper layer while a fullscreen window is active")
+            description: Translation.tr("Hide the main wallpaper while a fullscreen window is active. The Task View backdrop stays available.")
             checked: root.wBg.hideWhenFullscreen ?? true
             onCheckedChanged: root.setNestedValueWhenReady("waffles.background.hideWhenFullscreen", checked)
         }
@@ -200,7 +200,7 @@ WSettingsPage {
                 spacing: 4
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
-                model: root.heavySectionsReady ? Wallpapers.folderModel : null
+                model: root.heavySectionsReady && Wallpapers.folderModelReady ? Wallpapers.folderModel : null
 
                 delegate: Rectangle {
                     id: mainWpThumb
@@ -565,8 +565,8 @@ WSettingsPage {
         Rectangle {
             id: wMonPreviewCard
             Layout.fillWidth: true
-            Layout.leftMargin: 16
-            Layout.rightMargin: 16
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             Layout.bottomMargin: 4
             implicitHeight: wMonPreviewCol.implicitHeight
             radius: Looks.radius.large
@@ -932,7 +932,7 @@ WSettingsPage {
                                 spacing: 3
                                 clip: true
                                 boundsBehavior: Flickable.StopAtBounds
-                                model: root.heavySectionsReady ? Wallpapers.folderModel : null
+                                model: root.heavySectionsReady && Wallpapers.folderModelReady ? Wallpapers.folderModel : null
 
                                 delegate: Rectangle {
                                     id: bgWpThumb
@@ -1329,8 +1329,8 @@ WSettingsPage {
                     }
 
                     WSettingsChoiceGroup {
-                        Layout.leftMargin: 16
-                        Layout.rightMargin: 16
+                        Layout.leftMargin: 0
+                        Layout.rightMargin: 0
                         Layout.bottomMargin: 8
                         columns: 3
                         options: [

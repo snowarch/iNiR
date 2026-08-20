@@ -49,6 +49,18 @@ Item {
         return pageRepeater.itemAt(index)
     }
 
+    function _syncResidency() {
+        for (let index = 0; index < pageRepeater.count; index++) {
+            const loader = pageRepeater.itemAt(index)
+            if (!loader)
+                continue
+            const shouldBeActive = loadEnabled
+                && _retainedIndices.indexOf(index) >= 0
+            if (loader.active !== shouldBeActive)
+                loader.active = shouldBeActive
+        }
+    }
+
     function _retain(index) {
         if (index < 0)
             return
@@ -62,6 +74,7 @@ Item {
         let lru = _lruIndices.filter(value => value !== index)
         lru.push(index)
         _lruIndices = lru
+        _syncResidency()
     }
 
     function _trimCache() {
@@ -89,6 +102,7 @@ Item {
 
         _retainedIndices = retained
         _lruIndices = lru.filter(value => retained.indexOf(value) >= 0)
+        _syncResidency()
     }
 
     function _reset() {
@@ -98,6 +112,7 @@ Item {
         _pendingIndex = -1
         _retainedIndices = []
         _lruIndices = []
+        _syncResidency()
         _statusRevision++
     }
 
@@ -257,10 +272,8 @@ Item {
             required property int index
 
             anchors.fill: parent
-            active: root.loadEnabled && root._retainedIndices.indexOf(index) >= 0
-            // `active` already owns residency. Making `source` depend on it
-            // creates a Loader-internal active/source feedback cycle during
-            // first construction and can report a binding loop.
+            // Imperative residency avoids a Loader construction feedback cycle.
+            active: false
             source: root._sourceFor(index)
             asynchronous: index !== root._currentIndex && index !== root._pendingIndex
             visible: active && (index === root._currentIndex || index === root._pendingIndex)
@@ -278,6 +291,11 @@ Item {
                     x = 0
                 }
             }
+        }
+
+        onItemAdded: (index, item) => {
+            item.active = root.loadEnabled
+                && root._retainedIndices.indexOf(index) >= 0
         }
     }
 

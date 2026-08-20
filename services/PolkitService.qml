@@ -25,6 +25,26 @@ Singleton {
     property bool active: impl?.active ?? false
     property var flow: impl?.flow ?? null
     property bool interactionAvailable: impl?.interactionAvailable ?? false
+
+    readonly property string rawMessage: String(flow?.message ?? "").trim()
+    readonly property bool batteryChargeLimitRequest: rawMessage.includes("battery-charge-limit")
+    readonly property string cleanMessage: {
+        if (batteryChargeLimitRequest)
+            return Translation.tr("Do you want to allow this app to make changes to your device?")
+        return rawMessage.endsWith(".") ? rawMessage.slice(0, -1) : rawMessage
+    }
+    readonly property string cleanPrompt: {
+        const prompt = String(flow?.inputPrompt ?? "").trim()
+        const cleaned = prompt.endsWith(":") ? prompt.slice(0, -1) : prompt
+        if (cleaned.length > 0)
+            return cleaned
+        return flow?.responseVisible
+            ? Translation.tr("Input")
+            : Translation.tr("Password")
+    }
+    readonly property string actionLabel: batteryChargeLimitRequest
+        ? Translation.tr("Charge limit")
+        : Translation.tr("Authentication")
     
     // Whether the Polkit module is available
     readonly property bool available: impl !== null

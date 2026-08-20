@@ -1,10 +1,10 @@
 pkgbase = inir-meta
 	pkgdesc = Full iNiR desktop experience meta-package
-	pkgver = 2.27.0
+	pkgver = 2.29.1
 	pkgrel = 1
 	url = https://github.com/snowarch/iNiR
 	arch = any
-	license = MIT
+	license = GPL-3.0-only
 	depends = adw-gtk-theme
 	depends = awww
 	depends = blueman

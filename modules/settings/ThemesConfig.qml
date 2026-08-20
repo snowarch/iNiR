@@ -1041,7 +1041,7 @@ ContentPage {
                 Layout.fillWidth: true
                 spacing: 8
 
-                MaterialSymbol { text: "nights_stay"; iconSize: 18; color: Appearance.colors.colSubtext }
+                MaterialSymbol { text: "bedtime"; iconSize: 18; color: Appearance.colors.colSubtext }
                 StyledText { text: Translation.tr("Night starts at"); Layout.fillWidth: true }
 
                 StyledSpinBox {
@@ -1864,9 +1864,9 @@ ContentPage {
                     icon: "gradient"
                     text: Translation.tr("Grade")
                     from: -200
-                    to: 200
+                    to: 150
                     stepSize: 25
-                    value: Config.options?.appearance?.typography?.variableAxes?.grad ?? 175
+                    value: Config.options?.appearance?.typography?.variableAxes?.grad ?? 150
                     onValueChanged: {
                         if (Config.options?.appearance?.typography?.variableAxes)
                             Config.setNestedValue("appearance.typography.variableAxes.grad", value)

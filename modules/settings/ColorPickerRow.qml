@@ -125,4 +125,9 @@ Item {
             root.colorChanged()
         }
     }
+
+    SettingsNativeDialogGuard {
+        dialog: colorDialog
+        dialogKey: "color-picker-row-" + root.colorKey
+    }
 }

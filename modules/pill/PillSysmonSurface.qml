@@ -87,7 +87,10 @@ PillSurface {
                 var full = 270 * Math.PI / 180;
                 ctx.lineCap = "round";
                 ctx.lineWidth = lw;
-                ctx.strokeStyle = PillTheme.hex(PillTheme.threadBg);
+                // threadBg is a 0.13-alpha cream. It must keep that alpha: the
+                // 6-digit hex path would paint the track as a solid cream ring
+                // that outshouts the value arc it is supposed to sit behind.
+                ctx.strokeStyle = PillTheme.canvasColor(PillTheme.threadBg);
                 ctx.beginPath();
                 ctx.arc(cx, cy, r, start, start + full, false);
                 ctx.stroke();
@@ -263,9 +266,17 @@ PillSurface {
 
         Item { width: 1; height: 13 * root.s }
 
-        Item {
+        /**
+         * The stat strip sizes itself off its own content instead of a fixed
+         * band: every cell stacks one caption over one 13px value line, so the
+         * cells are inherently equal height and the Row can carry the strip's
+         * height up into the surface's implicitHeight. The previous fixed 30px
+         * band was shorter than that stack and pushed the values into the
+         * surface's bottom margin.
+         */
+        Row {
+            id: statStrip
             width: parent.width
-            height: 30 * root.s
 
             Repeater {
                 model: root.cellKeys
@@ -276,15 +287,13 @@ PillSurface {
                     required property var modelData
                     readonly property string key: modelData
 
-                    width: parent.width / root.cellKeys.length
-                    height: parent.height
-                    x: index * width
+                    width: statStrip.width / root.cellKeys.length
+                    implicitHeight: statCol.implicitHeight + 6 * root.s
+                    height: implicitHeight
 
                     Rectangle {
                         anchors.left: parent.left
-                        anchors.top: parent.top
-                        anchors.topMargin: 2 * root.s
-                        anchors.bottomMargin: 2 * root.s
+                        anchors.verticalCenter: parent.verticalCenter
                         height: parent.height - 4 * root.s
                         width: 1
                         visible: cell.index > 0
@@ -292,9 +301,15 @@ PillSurface {
                     }
 
                     Column {
+                        id: statCol
                         anchors.centerIn: parent
                         spacing: 6 * root.s
 
+                        /**
+                         * One caption scale on the card: this matches the dial
+                         * labels exactly, so the strip reads as the same family
+                         * of furniture rather than a second, tighter caption.
+                         */
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: cell.key === "net" ? "Net · MB/s"
@@ -303,10 +318,10 @@ PillSurface {
                                 : "VRAM · GB"
                             color: PillTheme.faint
                             font.family: PillTheme.font
-                            font.pixelSize: 8 * root.s
+                            font.pixelSize: 8.5 * root.s
                             font.weight: Font.Bold
                             font.capitalization: Font.AllUppercase
-                            font.letterSpacing: 0.9 * root.s
+                            font.letterSpacing: 1 * root.s
                         }
 
                         Row {
@@ -332,17 +347,40 @@ PillSurface {
                             }
                         }
 
-                        Text {
+                        /**
+                         * VRAM carries a used/total pair, so it gets the same
+                         * treatment the memory dial gives its own total: the
+                         * used figure stays the bright hero and the denominator
+                         * drops to the subdued sub scale on the shared baseline.
+                         * Rendering both at hero weight made the cell read as
+                         * one long number.
+                         */
+                        Row {
                             anchors.horizontalCenter: parent.horizontalCenter
+                            spacing: 3 * root.s
                             visible: cell.key !== "net"
-                            text: cell.key === "disk" ? "" + PillSysmon.diskPct
-                                : cell.key === "swap" ? PillSysmon.swapUsedGb.toFixed(1)
-                                : PillSysmon.vramUsedGb.toFixed(1) + " / " + PillSysmon.vramTotalGb.toFixed(0)
-                            color: PillTheme.cream
-                            font.family: PillTheme.font
-                            font.pixelSize: 13 * root.s
-                            font.weight: Font.ExtraBold
-                            font.features: { "tnum": 1 }
+
+                            Text {
+                                id: statValue
+                                text: cell.key === "disk" ? "" + PillSysmon.diskPct
+                                    : cell.key === "swap" ? PillSysmon.swapUsedGb.toFixed(1)
+                                    : PillSysmon.vramUsedGb.toFixed(1)
+                                color: PillTheme.cream
+                                font.family: PillTheme.font
+                                font.pixelSize: 13 * root.s
+                                font.weight: Font.ExtraBold
+                                font.features: { "tnum": 1 }
+                            }
+                            Text {
+                                anchors.baseline: statValue.baseline
+                                visible: cell.key === "vram"
+                                text: "/ " + PillSysmon.vramTotalGb.toFixed(0)
+                                color: PillTheme.subtle
+                                font.family: PillTheme.font
+                                font.pixelSize: 10 * root.s
+                                font.weight: Font.Bold
+                                font.features: { "tnum": 1 }
+                            }
                         }
                     }
                 }

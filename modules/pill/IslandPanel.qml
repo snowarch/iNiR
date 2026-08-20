@@ -40,7 +40,7 @@ Rectangle {
     property real glassScreenWidth: screen?.width ?? 1920
     property real glassScreenHeight: screen?.height ?? 1080
     property var screen: null
-    readonly property bool glassActive: glassEnabled
+    readonly property bool glassActive: root.visible && glassEnabled
         && (Config.options?.appearance?.island?.glass ?? true)
         && Appearance.blurBackendFor("islands",
             Appearance.blurTopology.roundedRectangle) === "wallpaper"

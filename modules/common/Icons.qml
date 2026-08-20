@@ -33,7 +33,7 @@ Singleton {
         "185": "rainy",
         "200": "thunderstorm",
         "227": "cloudy_snowing",
-        "230": "snowing_heavy",
+        "230": "weather_snowy",
         "248": "foggy",
         "260": "foggy",
         "263": "rainy",
@@ -52,10 +52,10 @@ Singleton {
         "320": "cloudy_snowing",
         "323": "cloudy_snowing",
         "326": "cloudy_snowing",
-        "329": "snowing_heavy",
-        "332": "snowing_heavy",
-        "335": "snowing",
-        "338": "snowing_heavy",
+        "329": "weather_snowy",
+        "332": "weather_snowy",
+        "335": "weather_snowy",
+        "338": "weather_snowy",
         "350": "rainy",
         "353": "rainy",
         "356": "rainy",
@@ -63,13 +63,13 @@ Singleton {
         "362": "rainy",
         "365": "rainy",
         "368": "cloudy_snowing",
-        "371": "snowing",
+        "371": "weather_snowy",
         "374": "rainy",
         "377": "rainy",
         "386": "thunderstorm",
         "389": "thunderstorm",
         "392": "thunderstorm",
-        "395": "snowing"
+        "395": "weather_snowy"
     })
 
     
@@ -79,7 +79,7 @@ Singleton {
         if (weatherIconMap.hasOwnProperty(key)) {
             const icon = weatherIconMap[key]
             if (night) {
-                if (icon === "clear_day") return "clear_night"
+                if (icon === "clear_day") return "bedtime"
                 if (icon === "partly_cloudy_day") return "partly_cloudy_night"
             }
             return icon

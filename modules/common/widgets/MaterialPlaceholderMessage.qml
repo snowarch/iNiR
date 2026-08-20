@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import org.kde.kirigami as Kirigami
 import qs.modules.common
 import qs.modules.common.widgets
 
@@ -13,7 +12,6 @@ Item {
     property string text: ""
     property string explanation: ""
     property int shape: MaterialShape.Shape.Clover4Leaf
-    property int type: helpfulAction ? Kirigami.PlaceholderMessage.Type.Actionable : Kirigami.PlaceholderMessage.Type.Informational
     property Action helpfulAction
     property real maximumWidth: 340
     property string actionIcon: ""
@@ -81,13 +79,6 @@ Item {
                 padding: 12
                 iconSize: 56
             }
-        }
-
-        Kirigami.PlaceholderMessage {
-            visible: false
-            text: root.text
-            explanation: root.explanation
-            type: root.type
         }
 
         StyledText {

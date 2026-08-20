@@ -311,13 +311,21 @@ Singleton {
             // curve under zzz is already animationCurves.zzzOvershoot (see
             // elementMoveEnter), so a deeper closedScale reads as a console plate
             // snapping into place rather than a soft material fade.
-            property bool enableFade: root.zzzEverywhere || root.contextualMotionProfile
+            property bool enableFade: root.cookieEverywhere || root.zzzEverywhere || root.contextualMotionProfile
             property bool enableScale: root.zzzEverywhere || root.contextualMotionProfile
             // 0.97 read as "barely there" in practice — bumped to match zzz's proven-visible
             // 0.90 pop so Classic (hard snap, no fade) vs Contextual (fade + grow) is unmistakable
             // on tray menu / context menu / combobox dropdown / widget gear menu.
             property real closedScale: root.zzzEverywhere ? 0.90
                 : (root.contextualMotionProfile ? 0.90 : 1.0)
+            // Popup windows have fixed geometry. Cookie's spatial spring exceeds
+            // 1.0, so using it for opacity, scale, or an anchored margin makes
+            // the content collide with and get clipped by that fixed boundary.
+            // Keep the spring for free-moving shell elements and use a bounded
+            // deceleration curve for popup reveals.
+            property list<real> enterBezierCurve: root.cookieEverywhere
+                ? root.animationCurves.emphasizedDecel
+                : root.animation.elementMoveEnter.bezierCurve
         }
     }
 
@@ -606,9 +614,9 @@ Singleton {
                 "YTAS": 716,
                 "YTLC": 490,
                 "XTRA": 488,
-                "wdth": Config.options?.appearance?.typography?.variableAxes?.wdth ?? 105,
-                "GRAD": Config.options?.appearance?.typography?.variableAxes?.grad ?? 175,
-                "wght": Config.options?.appearance?.typography?.variableAxes?.wght ?? 300,
+                "wdth": Math.max(25, Math.min(151, Config.options?.appearance?.typography?.variableAxes?.wdth ?? 105)),
+                "GRAD": Math.max(-200, Math.min(150, Config.options?.appearance?.typography?.variableAxes?.grad ?? 150)),
+                "wght": Math.max(100, Math.min(1000, Config.options?.appearance?.typography?.variableAxes?.wght ?? 300)),
             })
             property var numbers: ({
                 "wght": 400,
@@ -699,7 +707,11 @@ Singleton {
         }
 
         property QtObject elementMoveExit: QtObject {
-            property int duration: root.calcEffectiveDuration(root.contextualMotionProfile ? 280 : 200, root.animationSpeed.enterExit)
+            // Cookie enters with a 420ms spatial spring. The generic 200ms exit
+            // made menus vanish in half that time and became a 150ms blink with
+            // the common 0.75 motion multiplier. Keep the exit shorter than the
+            // entrance, but long enough for its rounded surfaces to remain legible.
+            property int duration: root.calcEffectiveDuration(root.cookieEverywhere ? root.cookie.exitDuration : (root.contextualMotionProfile ? 280 : 200), root.animationSpeed.enterExit)
             property int type: root.resolveCurveType("enterExit", Easing.BezierSpline)
             property list<real> bezierCurve: root.resolveCurveBezier("enterExit", animationCurves.emphasizedAccel)
             property int velocity: 650
@@ -1499,6 +1511,7 @@ Singleton {
         // Cookie pushes the spring out to the whole shell.
         readonly property var spring: [0.34, 1.75, 0.36, 1.0, 1, 1]
         readonly property int springDuration: 420
+        readonly property int exitDuration: 320
     }
 
      sizes: QtObject {

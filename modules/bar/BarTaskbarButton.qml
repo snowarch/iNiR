@@ -25,7 +25,18 @@ RippleButton {
 
     readonly property var toplevels: appEntry?.toplevels ?? []
     readonly property var activeToplevel: ToplevelManager.activeToplevel
+    readonly property var niriFocusedWindow: CompositorService.isNiri
+        ? (NiriService.windows?.find(window => window.is_focused)
+            ?? NiriService.activeWindow
+            ?? null)
+        : null
+    readonly property int niriFocusedWindowId:
+        Number(root.niriFocusedWindow?.id ?? -1)
     readonly property string activeWindowKey: {
+        if (CompositorService.isNiri)
+            return root.niriFocusedWindowId >= 0
+                ? "niri:" + root.niriFocusedWindowId
+                : ""
         const active = activeToplevel
         if (!active) return ""
         if (active.niriWindowId !== undefined && active.niriWindowId !== null)
@@ -48,15 +59,33 @@ RippleButton {
         return ""
     }
 
+    function _toplevelIsActive(toplevel: var): bool {
+        if (!toplevel)
+            return false
+        if (CompositorService.isNiri) {
+            if (root.niriFocusedWindowId < 0)
+                return false
+            if (Number(toplevel.niriWindowId ?? -1) === root.niriFocusedWindowId)
+                return true
+            const focusedAppId = String(root.niriFocusedWindow?.app_id ?? "").toLowerCase()
+            const toplevelAppId = String(toplevel.appId ?? "").toLowerCase()
+            if (focusedAppId.length === 0 || toplevelAppId !== focusedAppId)
+                return false
+            if (root.toplevels.length <= 1)
+                return true
+            return String(toplevel.title ?? "")
+                === String(root.niriFocusedWindow?.title ?? "")
+        }
+        if (toplevel.activated)
+            return true
+        const activeKey = root.activeWindowKey
+        return activeKey.length > 0 && root._toplevelKey(toplevel) === activeKey
+    }
+
     property bool appIsActive: {
-        const active = activeToplevel
-        if (!active || !active.activated) return false
-        const activeKey = activeWindowKey
         for (let i = 0; i < toplevels.length; i++) {
-            const toplevel = toplevels[i]
-            if (!toplevel) continue
-            if (toplevel.activated) return true
-            if (activeKey.length > 0 && _toplevelKey(toplevel) === activeKey) return true
+            if (root._toplevelIsActive(toplevels[i]))
+                return true
         }
         return false
     }
@@ -68,14 +97,9 @@ RippleButton {
     // Focused window index for smart indicator
     property int focusedWindowIndex: {
         if (!appIsActive || toplevels.length <= 1) return 0
-        const active = activeToplevel
-        if (!active) return 0
-        const activeKey = activeWindowKey
         for (let i = 0; i < toplevels.length; i++) {
-            const toplevel = toplevels[i]
-            if (!toplevel) continue
-            if (toplevel.activated) return i
-            if (activeKey.length > 0 && _toplevelKey(toplevel) === activeKey) return i
+            if (root._toplevelIsActive(toplevels[i]))
+                return i
         }
         return 0
     }
@@ -233,7 +257,7 @@ RippleButton {
             ...((root.desktopEntry?.actions?.length > 0) ? root.desktopEntry.actions.map(action => ({
                 iconName: action.icon ?? "",
                 text: action.name,
-                action: () => action.execute()
+                action: () => AppSearch.launchDesktopAction(root.desktopEntry, action)
             })).concat({ type: "separator" }) : []),
             // Launch
             {

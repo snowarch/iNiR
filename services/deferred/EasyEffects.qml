@@ -131,7 +131,7 @@ Singleton {
     Process {
         id: nativeStatusProc
         running: false
-        command: ["/usr/bin/bash", "-lc", "/usr/bin/pgrep -af '(^|/)easyeffects($| )' | /usr/bin/grep -v ' -b ' | /usr/bin/grep -v ' -q' >/dev/null"]
+        command: ["/usr/bin/pgrep", "-x", "easyeffects"]
         onExited: (exitCode, _exitStatus) => {
             root.active = (exitCode === 0)
         }

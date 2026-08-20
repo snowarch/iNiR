@@ -27,7 +27,18 @@ DockButton {
     // the brief window before the map is populated.
     readonly property var toplevels: (appListRoot?.toplevelsByUniqueId?.[appToplevel?.uniqueId] ?? appToplevel?.toplevels ?? [])
     readonly property var activeToplevel: ToplevelManager.activeToplevel
+    readonly property var niriFocusedWindow: CompositorService.isNiri
+        ? (NiriService.windows?.find(window => window.is_focused)
+            ?? NiriService.activeWindow
+            ?? null)
+        : null
+    readonly property int niriFocusedWindowId:
+        Number(root.niriFocusedWindow?.id ?? -1)
     readonly property string activeWindowKey: {
+        if (CompositorService.isNiri)
+            return root.niriFocusedWindowId >= 0
+                ? "niri:" + root.niriFocusedWindowId
+                : ""
         const active = activeToplevel
         if (!active)
             return ""
@@ -50,17 +61,31 @@ DockButton {
             return "app:" + toplevel.wayland.appId + ":" + (toplevel.title ?? "")
         return ""
     }
-    property bool appIsActive: {
-        const active = activeToplevel
-        if (!active || !active.activated) return false
-        const activeKey = activeWindowKey
-        for (let i = 0; i < toplevels.length; i++) {
-            const toplevel = toplevels[i]
-            if (!toplevel)
-                continue
-            if (toplevel.activated)
+    function _toplevelIsActive(toplevel): bool {
+        if (!toplevel)
+            return false
+        if (CompositorService.isNiri) {
+            if (root.niriFocusedWindowId < 0)
+                return false
+            if (Number(toplevel.niriWindowId ?? -1) === root.niriFocusedWindowId)
                 return true
-            if (activeKey.length > 0 && _toplevelKey(toplevel) === activeKey)
+            const focusedAppId = String(root.niriFocusedWindow?.app_id ?? "").toLowerCase()
+            const toplevelAppId = String(toplevel.appId ?? "").toLowerCase()
+            if (focusedAppId.length === 0 || toplevelAppId !== focusedAppId)
+                return false
+            if (root.toplevels.length <= 1)
+                return true
+            return String(toplevel.title ?? "")
+                === String(root.niriFocusedWindow?.title ?? "")
+        }
+        if (toplevel.activated)
+            return true
+        const activeKey = root.activeWindowKey
+        return activeKey.length > 0 && root._toplevelKey(toplevel) === activeKey
+    }
+    property bool appIsActive: {
+        for (let i = 0; i < toplevels.length; i++) {
+            if (root._toplevelIsActive(toplevels[i]))
                 return true
         }
         return false
@@ -104,17 +129,8 @@ DockButton {
         if (!root.appIsActive || toplevels.length <= 1)
             return 0;
 
-        const active = activeToplevel;
-        if (!active) return 0;
-        const activeKey = activeWindowKey;
-
         for (let i = 0; i < toplevels.length; i++) {
-            const toplevel = toplevels[i]
-            if (!toplevel)
-                continue
-            if (toplevel.activated)
-                return i
-            if (activeKey.length > 0 && _toplevelKey(toplevel) === activeKey)
+            if (root._toplevelIsActive(toplevels[i]))
                 return i
         }
         return 0;
@@ -365,10 +381,10 @@ DockButton {
             launchFromDesktopEntry();
             return;
         }
-        // Con ventanas: rotar foco entre instancias abiertas
-        const total = toplevels.length
-        lastFocused = (lastFocused + 1) % total
-        focusToplevelAt(lastFocused)
+        // Con ventanas: continuar desde la instancia realmente enfocada.
+        // Thumbnail, keyboard and other shell actions can change focus without
+        // updating this button's local counter.
+        cycleWindows(1)
     }
 
     // Scroll over an icon to walk through that app's windows.
@@ -477,7 +493,7 @@ DockButton {
             return
         }
 
-        action.execute()
+        AppSearch.launchDesktopAction(root.desktopEntry, action)
     }
 
     function buildContextMenuModel(): var {
@@ -522,7 +538,11 @@ DockButton {
                     monochromeIcon: true,
                     action: () => {
                         for (let toplevel of root.toplevels) {
-                            toplevel.close()
+                            if (CompositorService.isNiri && toplevel?.niriWindowId) {
+                                NiriService.closeWindow(toplevel.niriWindowId)
+                            } else {
+                                toplevel?.close()
+                            }
                         }
                     }
                 }

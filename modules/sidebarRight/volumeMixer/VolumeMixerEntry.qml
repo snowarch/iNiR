@@ -27,11 +27,13 @@ Item {
             sourceSize.width: size
             sourceSize.height: size
             source: {
+                if (!root.node)
+                    return ""
                 let icon;
-                icon = AppSearch.guessIcon(root.node.properties["application.icon-name"]);
+                icon = AppSearch.guessIcon(root.node.properties?.["application.icon-name"] ?? "");
                 if (AppSearch.iconExists(icon))
                     return Quickshell.iconPath(icon, "image-missing");
-                icon = AppSearch.guessIcon(root.node.properties["node.name"]);
+                icon = AppSearch.guessIcon(root.node.properties?.["node.name"] ?? "");
                 return Quickshell.iconPath(icon, "image-missing");
             }
         }
@@ -46,9 +48,11 @@ Item {
                 color: Appearance.colors.colSubtext
                 elide: Text.ElideRight
                 text: {
+                    if (!root.node)
+                        return ""
                     // application.name -> description -> name
-                    const app = root.node.properties["application.name"] ?? (root.node.description != "" ? root.node.description : root.node.name);
-                    const media = root.node.properties["media.name"];
+                    const app = root.node.properties?.["application.name"] ?? (root.node.description != "" ? root.node.description : root.node.name);
+                    const media = root.node.properties?.["media.name"];
                     return media != undefined ? `${app} • ${media}` : app;
                 }
             }

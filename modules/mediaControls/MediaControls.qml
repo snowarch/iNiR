@@ -40,17 +40,25 @@ Scope {
     property real popupRounding: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
         : Appearance.inirEverywhere ? Appearance.inir.roundingLarge : Appearance.rounding.large
     readonly property bool visualizerActive: mediaControlsLoader.active && MprisController.isPlaying
-    property var focusedScreen: CompositorService.isNiri
+    property var focusedScreen: GlobalStates.focusedScreen ?? (CompositorService.isNiri
         ? Quickshell.screens.find(s => s.name === NiriService.currentOutput) ?? GlobalStates.primaryScreen
-        : Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? GlobalStates.primaryScreen
-    property var targetScreen: screenFromList(Config.options?.media?.screenList ?? [], focusedScreen)
-
-    function screenFromList(list, preferred) {
-        if (!list || list.length === 0)
-            return preferred ?? GlobalStates.primaryScreen
-        if (preferred && list.includes(preferred.name ?? ""))
+        : Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? GlobalStates.primaryScreen)
+    property var targetScreens: screensFromList(
+        Config.options?.media?.screenList ?? [])
+    readonly property string keyboardScreenName: {
+        const preferred = String(root.focusedScreen?.name ?? "")
+        if (root.targetScreens.some(screen => String(screen?.name ?? "") === preferred))
             return preferred
-        return Quickshell.screens.find(s => list.includes(s?.name ?? "")) ?? GlobalStates.primaryScreen ?? preferred
+        return String(root.targetScreens[0]?.name ?? "")
+    }
+
+    function screensFromList(list) {
+        const screens = Quickshell.screens
+        if (!list || list.length === 0)
+            return screens
+        const matched = screens.filter(screen =>
+            list.includes(String(screen?.name ?? "")))
+        return matched.length > 0 ? matched : screens
     }
 
     CavaProcess {
@@ -80,27 +88,33 @@ Scope {
             }
         }
 
-        sourceComponent: PanelWindow {
-            id: mediaControlsRoot
-            visible: true
-            screen: root.targetScreen
+        sourceComponent: Variants {
+            model: root.targetScreens
 
-            exclusionMode: ExclusionMode.Ignore
-            exclusiveZone: 0
-            color: "transparent"
-            WlrLayershell.namespace: "quickshell:mediaControls"
-            WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: GlobalStates.mediaControlsOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+            PanelWindow {
+                id: mediaControlsRoot
+                required property var modelData
+                visible: true
+                screen: modelData
 
-            anchors {
-                top: true
-                bottom: true
-                left: true
-                right: true
-            }
+                exclusionMode: ExclusionMode.Ignore
+                exclusiveZone: 0
+                color: "transparent"
+                WlrLayershell.namespace: "quickshell:mediaControls"
+                WlrLayershell.layer: WlrLayer.Overlay
+                WlrLayershell.keyboardFocus: GlobalStates.mediaControlsOpen
+                    && String(mediaControlsRoot.screen?.name ?? "") === root.keyboardScreenName
+                    ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
-            // Click outside to close - covers entire screen
-            FocusScope {
+                anchors {
+                    top: true
+                    bottom: true
+                    left: true
+                    right: true
+                }
+
+                // Click outside to close - covers entire screen
+                FocusScope {
                 id: inputScope
                 anchors.fill: parent
                 focus: true
@@ -290,6 +304,7 @@ Scope {
                             }
                         }
                     }
+                }
                 }
             }
         }

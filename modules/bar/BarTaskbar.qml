@@ -17,6 +17,7 @@ import qs.modules.common.models
 // Supports horizontal (top/bottom bar) and vertical (left/right bar) orientations.
 Item {
     id: root
+    property bool _sortingConsumerAcquired: false
 
     property var parentWindow: null
     property bool vertical: false
@@ -159,7 +160,9 @@ Item {
 
     // App id of the currently focused window (lowercased). Used to flag the
     // focused item so it's prioritised for visibility when space runs out.
-    readonly property string focusedAppId: (ToplevelManager.activeToplevel?.appId ?? "").toLowerCase()
+    readonly property string focusedAppId: CompositorService.isNiri
+        ? String(NiriService.activeWindow?.app_id ?? "").toLowerCase()
+        : String(ToplevelManager.activeToplevel?.appId ?? "").toLowerCase()
 
     function _doRebuildDockItems(): void {
         const pinnedApps = Config.options?.dock?.pinnedApps ?? [];
@@ -353,7 +356,15 @@ Item {
         function onPinnedAppsChanged() { root.rebuildDockItems() }
         function onIgnoredAppRegexesChanged() { root.rebuildDockItems() }
     }
-    Component.onCompleted: rebuildDockItems()
+    Component.onCompleted: {
+        CompositorService.acquireSortingConsumer()
+        _sortingConsumerAcquired = true
+        rebuildDockItems()
+    }
+    Component.onDestruction: {
+        if (_sortingConsumerAcquired)
+            CompositorService.releaseSortingConsumer()
+    }
 
     // ─── Hover preview state ────────────────────────────────────────
     property Item lastHoveredButton

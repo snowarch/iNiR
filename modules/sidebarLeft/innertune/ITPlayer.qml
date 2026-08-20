@@ -201,7 +201,7 @@ Item {
             // Favorite (dimmer until liked).
             ITIconButton {
                 Layout.fillWidth: true
-                symbol: root.liked ? "favorite" : "favorite_border"
+                symbol: "favorite"
                 color: root.liked ? Appearance.colors.colError : Appearance.colors.colOnSurfaceVariant
                 onClicked: root.liked ? YtMusic.unlikeSong(YtMusic.currentVideoId) : YtMusic.likeSong()
             }

@@ -471,11 +471,15 @@ MouseArea {
                         }
 
                         function moveSelection(delta) {
+                            if (!grid.model || grid.model.count <= 0)
+                                return
                             currentIndex = Math.max(0, Math.min(grid.model.count - 1, currentIndex + delta));
                             positionViewAtIndex(currentIndex, GridView.Contain);
                         }
 
                         function activateCurrent() {
+                            if (!grid.model || grid.model.count <= 0)
+                                return
                             const filePath = grid.model.get(currentIndex, "filePath")
                             const isDir = grid.model.get(currentIndex, "fileIsDir")
                             if (isDir) {
@@ -485,8 +489,9 @@ MouseArea {
                             }
                         }
 
-                        model: Wallpapers.folderModel
+                        model: Wallpapers.folderModelReady ? Wallpapers.folderModel : null
                         onModelChanged: currentIndex = 0
+                        onCountChanged: currentIndex = count > 0 ? Math.min(currentIndex, count - 1) : 0
                         delegate: WallpaperDirectoryItem {
                             required property int index
                             required property string filePath
