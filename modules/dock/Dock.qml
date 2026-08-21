@@ -81,8 +81,11 @@ Scope {
             sourceComponent: PanelWindow {
                 id: dockRoot
                 screen: panelLoader.modelData
-                visible: !GlobalStates.screenLocked
-                    && !GlobalStates.widgetEditMode
+                // Anything in here hides the dock outright.
+                readonly property bool hiddenByOverlay: GlobalStates.screenLocked
+                    || GlobalStates.widgetEditMode
+                    || GlobalStates.screenshotEditorOpen
+                visible: !hiddenByOverlay
 
                 property bool reveal: !GlobalStates.coverflowSelectorOpen
                     && !(GlobalStates.wallpaperLauncherOpen && root.position === "bottom")

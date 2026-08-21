@@ -103,6 +103,13 @@ Singleton {
     }
     property bool tilingOverlayPickerOpen: false
     property bool tilingOverlayOsdOpen: false
+    property bool screenshotEditorOpen: false // Unified capture+crop+annotate flow (screenshotEdit action)
+    // Which output owns the screenshot editor session (first click claims; others stay dim-only).
+    property string screenshotEditorActiveScreen: ""
+    onScreenshotEditorOpenChanged: {
+        if (!screenshotEditorOpen)
+            screenshotEditorActiveScreen = ""
+    }
     // Native screenshot annotation editor (Edit action)
     property bool annotationEditorOpen: false
     property string annotationEditorPath: ""

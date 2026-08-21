@@ -2154,6 +2154,7 @@ _KB_IPC_MAP = {
     ("clipboard", "toggle"): "Clipboard",
     ("lock", "activate"): "Lock screen",
     ("region", "screenshot"): "Screenshot region",
+    ("region", "screenshotEdit"): "Screenshot & annotate region",
     ("region", "ocr"): "OCR region",
     ("region", "search"): "Reverse image search",
     ("wallpaperSelector", "toggle"): "Wallpaper selector",
