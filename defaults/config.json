@@ -321,6 +321,11 @@
             "maxAllowedIncrease": 10
         }
     },
+    "bluetooth": {
+        "persistState": true,
+        "lastState": false,
+        "lastBootId": ""
+    },
     "compositor": {
         "autoExpandSingleTilingWindow": false
     },
