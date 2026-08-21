@@ -457,7 +457,15 @@ ShellRoot {
         function toggle(): void {
             open()
         }
+      }
+
+    IpcHandler {
+    target: "launchVideoEditor"
+    function handle(path: string): void {
+        GlobalStates.videoEditorPath = path
+        GlobalStates.videoEditorPopupOpen = true
     }
+}
 
     // One owner for settingsNav, here rather than inside a chrome. Both overlay
     // layouts used to declare this target themselves; switching layouts leaves
@@ -629,7 +637,7 @@ ShellRoot {
         loading: enabled
         activeAsync: enabled
         source: "ShellIiPanels.qml"
-    }
+      }
 
     LazyLoader {
         loading: Config.ready && (Config.options?.panelFamily ?? "ii") === "waffle"
@@ -649,6 +657,9 @@ ShellRoot {
     // Close confirmation dialog (always loaded, handles IPC)
     LazyLoader { active: Config.ready; source: "modules/closeConfirm/CloseConfirm.qml" }
 
+// Video Editor
+    LazyLoader { active: Config.ready; source: "modules/videoEditor/VideoEditorPopup.qml" }
+    LazyLoader { active: Config.ready; source: "modules/videoEditor/VideoEditor.qml" }
     // Shared (always loaded via ToastManager)
     ToastManager {}
 

@@ -4,7 +4,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/lib/config-path.sh
 source "$SCRIPT_DIR/../lib/config-path.sh"
-
+if ! command -v wf-recorder >/dev/null 2>&1 || ! command -v ffmpeg >/dev/null 2>&1; then
+    notify-send "Recording failed" "Missing dependencies: wf-recorder or ffmpeg is not installed." -a 'Recorder' & disown
+    exit 1
+fi
 is_truthy() {
     case "$1" in
         1|true|TRUE|yes|YES|on|ON) return 0 ;;
@@ -937,6 +940,7 @@ if start_recording_command "$recording_geometry" "$output_name"; then
         notify-send "Recording saved" "${SAVE_PATH%/}/$output_name" -a 'Recorder' & disown
     fi
     maybe_compress_recording "$output_file"
+    quickshell -c inir ipc call launchVideoEditor handle "${SAVE_PATH%/}/$output_name"
 else
     exit $?
 fi
