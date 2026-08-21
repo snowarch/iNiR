@@ -46,6 +46,8 @@ ContentPage {
     readonly property string niriConfigDir: customConfigData?.config_dir ?? ""
     readonly property bool hasAnyProcessError: processErrors.outputs.length > 0 || processErrors.input.length > 0 || processErrors.layout.length > 0 || processErrors.animations.length > 0 || processErrors.windowRules.length > 0 || processErrors.cursorThemes.length > 0 || processErrors.validation.length > 0 || processErrors.customizations.length > 0
 
+    property var animationPresetsData: ({current: "default", presets: ["default"]})
+
     readonly property var resolutionOptions: {
         const out = currentOutput
         if (!out?.resolutions) return []
@@ -249,7 +251,7 @@ ContentPage {
     function loadOutputs() { outputsProcess.running = true }
     function loadInput() { inputProcess.running = true }
     function loadLayout() { layoutProcess.running = true }
-    function loadAnimations() { animationsProcess.running = true }
+    function loadAnimations() { animationsProcess.running = true; animationPresetsProcess.running = true }
     function loadWindowRules() { windowRulesProcess.running = true }
     function loadCursorThemes() { cursorThemesProcess.running = true }
     function loadValidation() { validationProcess.running = true }
@@ -655,6 +657,30 @@ ContentPage {
         onExited: (exitCode) => {
             if (exitCode !== 0)
                 root.setProcessError("outputs", (outputsErrorCollector.text || outputsCollector.text || Translation.tr("Unable to query connected outputs.")).trim())
+        }
+    }
+
+
+    Process {
+        id: animationPresetsProcess
+        command: ["python3", root.scriptPath, "get-animation-presets"]
+        stdout: StdioCollector {
+            id: animationPresetsCollector
+            onStreamFinished: {
+                root.handleJsonResult(animationPresetsCollector.text, "animationPresets", data => {
+                    root.animationPresetsData = data
+                })
+            }
+        }
+    }
+
+    Process {
+        id: setAnimationPresetProcess
+        command: []
+        onExited: (exitCode) => {
+            if (exitCode === 0) {
+                animationPresetsProcess.running = true
+            }
         }
     }
 
@@ -2927,6 +2953,27 @@ ContentPage {
         title: Translation.tr("Animations")
 
         SettingsGroup {
+            ContentSubsection {
+                title: Translation.tr("Animation Preset")
+                tooltip: Translation.tr("Select a custom animation preset from ~/.config/niri/animations/")
+
+                StyledComboBox {
+                    Layout.fillWidth: true
+                    model: root.animationPresetsData?.presets ?? ["default"]
+                    currentIndex: {
+                        const list = root.animationPresetsData?.presets ?? ["default"]
+                        const cur = root.animationPresetsData?.current ?? "default"
+                        const idx = list.indexOf(cur)
+                        return idx >= 0 ? idx : 0
+                    }
+                    onActivated: {
+                        const selected = model[currentIndex]
+                        setAnimationPresetProcess.command = ["python3", root.scriptPath, "set-animation-preset", selected]
+                        setAnimationPresetProcess.running = true
+                    }
+                }
+            }
+
             SettingsSwitch {
                 Layout.fillWidth: true
                 buttonIcon: "animation"

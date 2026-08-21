@@ -60,6 +60,59 @@ def get_repo_default_niri_dir():
     return Path(__file__).resolve().parent / ".." / "defaults" / "niri"
 
 
+def cmd_get_animation_presets():
+    anim_dir = Path.home() / ".config" / "niri" / "animations"
+    files = []
+    if anim_dir.exists() and anim_dir.is_dir():
+        files = sorted([f.name for f in anim_dir.glob("*.kdl")])
+
+    cur = "default"
+    config_file = get_niri_config_path()
+    if config_file.exists():
+        content = config_file.read_text()
+        m = re.search(r'^\s*include\s+"animations/([^"]+)"', content, re.MULTILINE)
+        if m:
+            cur = m.group(1)
+
+    res = {
+        "current": cur,
+        "presets": ["default"] + files
+    }
+
+    print(json.dumps(res))
+    return 0
+
+
+def cmd_set_animation_preset(args):
+    if not args:
+        print(json.dumps({"error": "No preset specified"}))
+        return 1
+
+    preset_name = args[0]
+    config_file = get_niri_config_path()
+    if not config_file.exists():
+        print(json.dumps({"error": "config.kdl not found"}))
+        return 1
+
+    content = config_file.read_text()
+
+    if preset_name == "default":
+        target = 'include "config.d/60-animations.kdl"'
+    else:
+        target = f'include "animations/{preset_name}"'
+
+    pattern = r'^\s*include\s+"(?:animations/[^"]*|config\.d/60-animations\.kdl)"'
+    if re.search(pattern, content, re.MULTILINE):
+        new_content = re.sub(pattern, target, content, flags=re.MULTILINE)
+    else:
+        new_content = content.rstrip() + f"\n{target}\n"
+
+    config_file.write_text(new_content)
+    print(json.dumps({"status": "ok"}))
+    return 0
+
+
+
 def _root_includes(relative_path: str) -> bool:
     config_file = get_niri_config_path()
     if not config_file.exists():
@@ -2777,6 +2830,8 @@ def main():
         "get-input": lambda: cmd_get_input(),
         "get-layout": lambda: cmd_get_layout(),
         "get-animations": lambda: cmd_get_animations(),
+        "get-animation-presets": lambda: cmd_get_animation_presets(),
+        "set-animation-preset": lambda: cmd_set_animation_preset(args),
         "get-window-rules": lambda: cmd_get_window_rules(),
         "list-cursor-themes": lambda: cmd_list_cursor_themes(),
         "sync-cursor": lambda: cmd_sync_cursor(),
