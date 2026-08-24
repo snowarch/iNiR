@@ -163,6 +163,9 @@ Scope {
             readonly property bool suppressed: edgeSidebarOpen
                 || edgeNotificationOpen || dominantSurfaceOpen
 
+            readonly property bool gameFullscreen:
+                GameMode.hasFullscreenOnOutput(modelData?.name ?? "")
+
             readonly property int previewSize: Math.max(64, Config.options?.workspaceStrip?.previewSize ?? 150)
             // panelWidth is clamped below to whatever actually fits rail + flyout
             // for the chosen previewSize (see _minPanelWidth); a too-small value
@@ -293,7 +296,8 @@ Scope {
                 return map
             }
 
-            readonly property bool shown: !suppressed && (root.ipcOpen || _hoverOpen)
+            readonly property bool shown: !suppressed
+                && (root.ipcOpen || (_hoverOpen && !gameFullscreen))
             property bool _hoverOpen: false
             property int _hoveredKey: -1
             property Item _selDelegate: null
@@ -446,7 +450,7 @@ Scope {
             implicitWidth: panelWidth
             implicitHeight: Math.max(1,
                 screenHeight - topPanelInset - bottomPanelInset)
-            visible: !GameMode.shouldHidePanels
+            visible: true
             color: "transparent"
             exclusionMode: ExclusionMode.Ignore
             WlrLayershell.namespace: "quickshell:workspaceStrip"
@@ -478,7 +482,8 @@ Scope {
             // mask read the content's geometry a frame late, which dropped hover
             // mid-animation and oscillated open/closed under heavier styles.
             mask: Region {
-                item: GameMode.shouldHidePanels || stripWindow.suppressed
+                item: (stripWindow.suppressed
+                    || (stripWindow.gameFullscreen && !stripWindow.shown))
                     ? emptyMask : stripContent
             }
 
@@ -513,10 +518,18 @@ Scope {
                 _hoveredKey = -1
             }
 
+            onGameFullscreenChanged: if (gameFullscreen) {
+                openTimer.stop()
+                closeTimer.stop()
+                _hoverOpen = false
+                _hoveredKey = -1
+            }
+
             Timer {
                 id: openTimer
                 interval: stripWindow.openDelay
                 onTriggered: {
+                    if (stripWindow.gameFullscreen) return
                     if (!stripContent.containsMouse) return
                     stripWindow._hoverOpen = true
                     root.refreshCachedPreviews()

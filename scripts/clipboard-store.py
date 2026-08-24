@@ -15,10 +15,12 @@ paste it. Asking for text/plain instead would drop those entries entirely, which
 is worse. So take whatever wl-paste gives us and strip the markup when it is
 markup.
 
-Detection is the meta prefix every browser prepends to a text/html payload, so
-copied source code that merely happens to contain "<div>" is never touched.
-Anything that is not that payload is forwarded byte for byte -- a trailing
-newline is part of what you copied.
+Detection is one of the two wrappers a browser puts around a text/html payload:
+Firefox and friends prepend a content-type meta tag, while Chromium and every
+Electron app (Discord, Slack, VS Code) emit the CF_HTML fragment markers around
+the selection. Neither appears in copied source code that merely happens to
+contain "<div>". Anything that is not one of those payloads is forwarded byte
+for byte -- a trailing newline is part of what you copied.
 """
 
 import html
@@ -26,13 +28,21 @@ import re
 import subprocess
 import sys
 
-# Every browser prepends this to a text/html clipboard payload.
+# Firefox-style: a content-type meta tag prepended to the payload.
 HTML_PAYLOAD_PREFIX = b'<meta http-equiv="content-type" content="text/html'
+# Chromium/Electron-style: the selection wrapped in CF_HTML fragment markers,
+# usually inside a bare <html><body>.
+HTML_FRAGMENT_MARKER = b"<!--StartFragment-->"
+
+
+def is_browser_markup(payload: bytes) -> bool:
+    return payload.startswith(HTML_PAYLOAD_PREFIX) or HTML_FRAGMENT_MARKER in payload
 
 
 def strip_browser_markup(markup: str) -> str:
     markup = re.sub(r"^<meta[^>]*>", "", markup, count=1)
     markup = re.sub(r"(?is)<(script|style)\b.*?</\1>", "", markup)
+    markup = re.sub(r"(?s)<!--.*?-->", "", markup)
 
     # Block-level tags carry the line structure of the copied selection.
     markup = re.sub(r"(?i)<br\s*/?>", "\n", markup)
@@ -53,7 +63,7 @@ def strip_browser_markup(markup: str) -> str:
 def main() -> int:
     payload = sys.stdin.buffer.read()
 
-    if payload.startswith(HTML_PAYLOAD_PREFIX):
+    if is_browser_markup(payload):
         text = strip_browser_markup(payload.decode("utf-8", "replace"))
         if not text:
             return 0

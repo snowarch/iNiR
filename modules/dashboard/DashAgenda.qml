@@ -44,11 +44,14 @@ DashCard {
         return Qt.formatDate(day, "ddd d MMM")
     }
 
+    readonly property string _todayKey: Qt.formatDate(DateTime.clock.date, "yyyy-MM-dd")
+
     // Day-grouped entries: { header } and { event } rows, capped at maxRows
     // events with an overflow counter.
     readonly property var entries: {
         const _t1 = card._localTrigger
         const _t2 = card._externalTrigger
+        const _d = card._todayKey
         return card._buildEntries()
     }
     property int overflowCount: 0

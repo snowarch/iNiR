@@ -12,6 +12,32 @@ iNiR provides a flake with:
 
 The module does not run `./setup install` or `./setup update`. Nix owns the installed files, and iNiR runs from the package store path.
 
+The package and modules are ordinary Nix expressions under `nix/`. Flakes are only one entrypoint, so traditional Nix configurations can import them directly. Both entrypoints use the same `package.nix`, NixOS module, and Home Manager module rather than maintaining separate implementations.
+
+## Without flakes
+
+Point `inirSrc` at a local checkout or a source pinned with your preferred Nix fetcher:
+
+```nix
+{ pkgs, ... }:
+let
+  inirSrc = /path/to/inir;
+in
+{
+  imports = [
+    (import (inirSrc + "/nix/nixos-module.nix"))
+  ];
+
+  programs.inir = {
+    enable = true;
+    package = pkgs.callPackage (inirSrc + "/nix/package.nix") { inherit pkgs; };
+    service.compositor = "niri";
+  };
+}
+```
+
+For Home Manager, import `nix/home-module.nix` instead. The package expression accepts the consumer's `pkgs` set explicitly, so traditional configurations can choose or pin nixpkgs without converting the project to a flake. Both modules use that same package expression by default unless `programs.inir.package` is overridden.
+
 ## With niri-flake
 
 Add both flakes:

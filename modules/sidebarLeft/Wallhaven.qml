@@ -171,13 +171,20 @@ Item {
                 Connections {
                     target: root
                     function onResponsesChanged() {
-                        if (root.responses.length > wallhavenResponseListView.lastResponseLength) {
-                            // Only auto-scroll if user is not actively scrolling
-                            if (!wallhavenResponseListView.userIsScrolling && wallhavenResponseListView.lastResponseLength > 0) {
-                                wallhavenResponseListView.contentY = wallhavenResponseListView.contentY + root.scrollOnNewResponse
-                            }
-                            wallhavenResponseListView.lastResponseLength = root.responses.length
+                        const nextLength = root.responses.length
+                        if (nextLength === 0) {
+                            wallhavenResponseListView.lastResponseLength = 0
+                            return
                         }
+
+                        // Once the bounded list is full, a new page rotates the
+                        // oldest response without changing the model length.
+                        if (nextLength >= wallhavenResponseListView.lastResponseLength
+                                && !wallhavenResponseListView.userIsScrolling
+                                && wallhavenResponseListView.lastResponseLength > 0) {
+                            wallhavenResponseListView.contentY += root.scrollOnNewResponse
+                        }
+                        wallhavenResponseListView.lastResponseLength = nextLength
                     }
                 }
 

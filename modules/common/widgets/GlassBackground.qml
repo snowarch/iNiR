@@ -7,11 +7,7 @@ import QtQuick.Effects
 import Qt5Compat.GraphicalEffects as GE
 import Quickshell
 
-// Reusable glass/acrylic background component
-// For correct blur positioning, parent must set screenX/screenY to component's screen position
-//
-// GPU optimization: Uses BlurredWallpaperProvider singleton to share ONE blur FBO
-// instead of each instance creating its own (~16 MiB saved per instance).
+// Hidden instances release their blur FBO; decoded wallpaper pixmaps remain shared.
 Rectangle {
     id: root
     

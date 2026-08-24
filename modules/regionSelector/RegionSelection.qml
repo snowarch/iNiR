@@ -643,7 +643,7 @@ PanelWindow {
                             onColorPickerRequested: {
                                 // Dismiss first so hyprpicker grabs the live desktop, not this overlay.
                                 root.dismiss();
-                                Quickshell.execDetached(["/usr/bin/bash", "-c", "sleep 0.3; /usr/bin/hyprpicker -a"]);
+                                ShellExec.execDetachedArgs(["/usr/bin/bash", "-c", "sleep 0.3; /usr/bin/hyprpicker -a"], "Pick color");
                             }
                         }
                         Item {
@@ -683,7 +683,7 @@ PanelWindow {
                         onFullscreenRequested: root.snipFullscreen()
                         onColorPickerRequested: {
                             root.dismiss();
-                            Quickshell.execDetached(["/usr/bin/bash", "-c", "sleep 0.3; /usr/bin/hyprpicker -a"]);
+                            ShellExec.execDetachedArgs(["/usr/bin/bash", "-c", "sleep 0.3; /usr/bin/hyprpicker -a"], "Pick color");
                         }
                     }
                 }

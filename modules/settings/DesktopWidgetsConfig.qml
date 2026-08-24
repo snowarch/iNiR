@@ -2,6 +2,7 @@ import qs
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Dialogs
+import Qt.labs.folderlistmodel
 import Quickshell
 import Quickshell.Io
 import qs.services
@@ -17,6 +18,48 @@ ContentPage {
     settingsPageName: Translation.tr("Widgets")
 
     property bool isIiActive: Config.options?.panelFamily !== "waffle"
+    property int _customMediaFolderCount: 0
+    property int _customMediaFolderImageCount: 0
+    property int _customMediaFolderGifCount: 0
+    property int _customMediaFolderVideoCount: 0
+
+    readonly property var _customImageShapes: [
+        { value: "Circle", shape: MaterialShape.Shape.Circle },
+        { value: "Square", shape: MaterialShape.Shape.Square },
+        { value: "Slanted", shape: MaterialShape.Shape.Slanted },
+        { value: "Arch", shape: MaterialShape.Shape.Arch },
+        { value: "Fan", shape: MaterialShape.Shape.Fan },
+        { value: "Arrow", shape: MaterialShape.Shape.Arrow },
+        { value: "SemiCircle", shape: MaterialShape.Shape.SemiCircle },
+        { value: "Oval", shape: MaterialShape.Shape.Oval },
+        { value: "Pill", shape: MaterialShape.Shape.Pill },
+        { value: "Triangle", shape: MaterialShape.Shape.Triangle },
+        { value: "Diamond", shape: MaterialShape.Shape.Diamond },
+        { value: "ClamShell", shape: MaterialShape.Shape.ClamShell },
+        { value: "Pentagon", shape: MaterialShape.Shape.Pentagon },
+        { value: "Gem", shape: MaterialShape.Shape.Gem },
+        { value: "Sunny", shape: MaterialShape.Shape.Sunny },
+        { value: "VerySunny", shape: MaterialShape.Shape.VerySunny },
+        { value: "Cookie4Sided", shape: MaterialShape.Shape.Cookie4Sided },
+        { value: "Cookie6Sided", shape: MaterialShape.Shape.Cookie6Sided },
+        { value: "Cookie7Sided", shape: MaterialShape.Shape.Cookie7Sided },
+        { value: "Cookie9Sided", shape: MaterialShape.Shape.Cookie9Sided },
+        { value: "Cookie12Sided", shape: MaterialShape.Shape.Cookie12Sided },
+        { value: "Ghostish", shape: MaterialShape.Shape.Ghostish },
+        { value: "Clover4Leaf", shape: MaterialShape.Shape.Clover4Leaf },
+        { value: "Clover8Leaf", shape: MaterialShape.Shape.Clover8Leaf },
+        { value: "Burst", shape: MaterialShape.Shape.Burst },
+        { value: "SoftBurst", shape: MaterialShape.Shape.SoftBurst },
+        { value: "Boom", shape: MaterialShape.Shape.Boom },
+        { value: "SoftBoom", shape: MaterialShape.Shape.SoftBoom },
+        { value: "Flower", shape: MaterialShape.Shape.Flower },
+        { value: "Puffy", shape: MaterialShape.Shape.Puffy },
+        { value: "PuffyDiamond", shape: MaterialShape.Shape.PuffyDiamond },
+        { value: "PixelCircle", shape: MaterialShape.Shape.PixelCircle },
+        { value: "PixelTriangle", shape: MaterialShape.Shape.PixelTriangle },
+        { value: "Bun", shape: MaterialShape.Shape.Bun },
+        { value: "Heart", shape: MaterialShape.Shape.Heart }
+    ]
 
     readonly property string _japanesePath: "background.widgets.japaneseTypography"
     readonly property bool _widgetBlurAvailable: Appearance.effectsEnabled
@@ -35,6 +78,134 @@ ContentPage {
 
     function _applyJapaneseCompositionPreset(preset: string): void {
         Config.setNestedValues(JapanesePresets.composition(root._japanesePath, preset));
+    }
+
+    function _customMediaChoiceActive(choice: string): bool {
+        const base = "background.widgets.customImage"
+        const mode = Config.getNestedValue(base + ".sourceMode", "file")
+        const filter = Config.getNestedValue(base + ".mediaFilter", "all")
+        return mode === "file" ? choice === "file" : choice === filter
+    }
+
+    function _customMediaFolderUrl(path: string): string {
+        const value = String(path ?? "")
+        if (!value) return ""
+        return value.startsWith("file:") ? value : "file://" + value
+    }
+
+    function _refreshCustomMediaFolderInventory(): void {
+        let mediaCount = 0
+        let imageCount = 0
+        let gifCount = 0
+        let videoCount = 0
+        if (customMediaFolderInventory.status === FolderListModel.Ready) {
+            for (let i = 0; i < customMediaFolderInventory.count; ++i) {
+                const path = String(customMediaFolderInventory.get(i, "filePath")
+                    || FileUtils.trimFileProtocol(customMediaFolderInventory.get(i, "fileURL")) || "")
+                if (!Images.isValidMediaByName(path)) continue
+                mediaCount++
+                if (Images.isValidVideoByName(path)) videoCount++
+                else if (path.toLowerCase().endsWith(".gif")) gifCount++
+                else if (Images.isValidImageByName(path)) imageCount++
+            }
+        }
+        root._customMediaFolderCount = mediaCount
+        root._customMediaFolderImageCount = imageCount
+        root._customMediaFolderGifCount = gifCount
+        root._customMediaFolderVideoCount = videoCount
+
+        const base = "background.widgets.customImage"
+        const mode = Config.getNestedValue(base + ".sourceMode", "file")
+        const filter = Config.getNestedValue(base + ".mediaFilter", "all")
+        const selectedCount = filter === "images" ? imageCount
+            : filter === "gifs" ? gifCount
+            : filter === "videos" ? videoCount
+            : mediaCount
+        if (mode === "folder" && mediaCount > 0 && selectedCount === 0
+                && filter !== "all")
+            Qt.callLater(() => Config.setNestedValue(base + ".mediaFilter", "all"))
+    }
+
+    function _activateCustomMediaChoice(choice: string): void {
+        const base = "background.widgets.customImage"
+        const path = Config.getNestedValue(base + ".path", "")
+        const updates = {}
+        if (choice === "file") {
+            if (!Images.isValidMediaByName(path)) return
+            updates[base + ".sourceMode"] = "file"
+        } else {
+            const count = choice === "images" ? root._customMediaFolderImageCount
+                : choice === "gifs" ? root._customMediaFolderGifCount
+                : choice === "videos" ? root._customMediaFolderVideoCount
+                : root._customMediaFolderCount
+            if (count === 0) return
+            updates[base + ".sourceMode"] = "folder"
+            updates[base + ".mediaFilter"] = choice
+        }
+        Config.setNestedValues(updates)
+    }
+
+    FolderListModel {
+        id: customMediaFolderInventory
+        folder: root._customMediaFolderUrl(
+            Config.options?.background?.widgets?.customImage?.folder ?? "")
+        nameFilters: Images.validImageExtensions.concat(Images.validVideoExtensions)
+            .map(ext => "*." + ext)
+        caseSensitive: false
+        showDirs: false
+        showDotAndDotDot: false
+        showHidden: false
+        showOnlyReadable: true
+        sortField: FolderListModel.Name
+        onCountChanged: root._refreshCustomMediaFolderInventory()
+        onStatusChanged: if (status === FolderListModel.Ready)
+            root._refreshCustomMediaFolderInventory()
+        onFolderChanged: Qt.callLater(root._refreshCustomMediaFolderInventory)
+    }
+
+    FileDialog {
+        id: customImageFileDialog
+        title: Translation.tr("Choose media file")
+        fileMode: FileDialog.OpenFile
+        nameFilters: [
+            Translation.tr("Media") + " (*.jpg *.jpeg *.png *.webp *.tif *.tiff *.svg *.gif *.mp4 *.webm *.mkv *.avi *.mov)",
+            Translation.tr("Images") + " (*.jpg *.jpeg *.png *.webp *.tif *.tiff *.svg *.gif)",
+            Translation.tr("Videos") + " (*.mp4 *.webm *.mkv *.avi *.mov)",
+            Translation.tr("All files") + " (*)"
+        ]
+        onAccepted: {
+            const path = FileUtils.trimFileProtocol(String(selectedFile));
+            if (Images.isValidMediaByName(path)) {
+                Config.setNestedValues({
+                    "background.widgets.customImage.path": path,
+                    "background.widgets.customImage.sourceMode": "file"
+                });
+            }
+        }
+    }
+
+    FolderDialog {
+        id: customImageFolderDialog
+        title: Translation.tr("Choose media folder")
+        onAccepted: {
+            const path = FileUtils.trimFileProtocol(String(selectedFolder));
+            if (path.length > 0) {
+                Config.setNestedValues({
+                    "background.widgets.customImage.folder": path,
+                    "background.widgets.customImage.sourceMode": "folder"
+                });
+            }
+        }
+    }
+
+    SettingsNativeDialogGuard {
+        dialog: customImageFileDialog
+        dialogKey: "desktop-widgets-custom-media-file"
+    }
+
+    SettingsNativeDialogGuard {
+        dialog: customImageFolderDialog
+        dialogKey: "desktop-widgets-custom-media-folder"
     }
 
     function _applyJapanesePalettePreset(preset: string): void {
@@ -80,6 +251,108 @@ ContentPage {
             { displayName: Translation.tr("Light ink"), icon: "light_mode", value: "light" },
             { displayName: Translation.tr("Dark ink"), icon: "dark_mode", value: "dark" },
         ]
+    }
+
+    readonly property var _paletteWidgetKeys: [
+        "clock", "weather", "customImage", "imageConverter", "mediaControls",
+        "visualizer", "systemMonitor", "battery", "notes", "japaneseTypography",
+        "calendarUpcoming", "uptime", "worldClock", "userCard", "mascot", "newsTicker"
+    ]
+
+    function _semanticRoleOptions(): var {
+        return [
+            { displayName: Translation.tr("Primary"), icon: "palette", value: "primary" },
+            { displayName: Translation.tr("Secondary"), icon: "filter_2", value: "secondary" },
+            { displayName: Translation.tr("Tertiary"), icon: "filter_3", value: "tertiary" },
+            { displayName: Translation.tr("Warning"), icon: "warning", value: "warning" },
+            { displayName: Translation.tr("Signal"), icon: "error", value: "signal" },
+            { displayName: Translation.tr("Surface"), icon: "layers", value: "surface" }
+        ]
+    }
+
+    function _palettePresetOptions(): var {
+        return [
+            { value: "balanced", label: Translation.tr("Default"), roles: ["primary", "secondary", "tertiary"] },
+            { value: "primary", label: Translation.tr("Primary"), roles: ["primary", "primary", "primary"] },
+            { value: "secondary", label: Translation.tr("Secondary"), roles: ["secondary", "secondary", "secondary"] },
+            { value: "tertiary", label: Translation.tr("Tertiary"), roles: ["tertiary", "tertiary", "tertiary"] }
+        ]
+    }
+
+    function _palettePresetSpec(preset: string): var {
+        switch (preset) {
+        case "primary":
+            return { primary: "primary", secondary: "primary", tertiary: "primary", signal: "signal", surface: "surface" };
+        case "secondary":
+            return { primary: "secondary", secondary: "secondary", tertiary: "secondary", signal: "signal", surface: "surface" };
+        case "tertiary":
+            return { primary: "tertiary", secondary: "tertiary", tertiary: "tertiary", signal: "signal", surface: "surface" };
+        default:
+            return { primary: "primary", secondary: "secondary", tertiary: "tertiary", signal: "signal", surface: "surface" };
+        }
+    }
+
+    function _palettePresetForPath(configPath: string): string {
+        const roles = {
+            primary: String(Config.getNestedValue(configPath + ".palette.primary", "primary")),
+            secondary: String(Config.getNestedValue(configPath + ".palette.secondary", "secondary")),
+            tertiary: String(Config.getNestedValue(configPath + ".palette.tertiary", "tertiary")),
+            signal: String(Config.getNestedValue(configPath + ".palette.signal", "signal")),
+            surface: String(Config.getNestedValue(configPath + ".palette.surface", "surface"))
+        }
+        for (const preset of root._palettePresetOptions()) {
+            const spec = root._palettePresetSpec(preset.value)
+            if (roles.primary === spec.primary && roles.secondary === spec.secondary
+                    && roles.tertiary === spec.tertiary && roles.signal === spec.signal
+                    && roles.surface === spec.surface)
+                return preset.value
+        }
+        return "custom"
+    }
+
+    function _applyPalettePreset(configPath: string, preset: string): void {
+        const spec = root._palettePresetSpec(preset)
+        const prefix = configPath + ".palette."
+        const updates = {}
+        updates[prefix + "primary"] = spec.primary
+        updates[prefix + "secondary"] = spec.secondary
+        updates[prefix + "tertiary"] = spec.tertiary
+        updates[prefix + "signal"] = spec.signal
+        updates[prefix + "surface"] = spec.surface
+        Config.setNestedValues(updates)
+    }
+
+    function _commonPalettePreset(): string {
+        let common = ""
+        for (const widgetKey of root._paletteWidgetKeys) {
+            const preset = root._palettePresetForPath("background.widgets." + widgetKey)
+            if (preset === "custom") return "mixed"
+            if (common.length === 0) common = preset
+            else if (common !== preset) return "mixed"
+        }
+        return common.length > 0 ? common : "balanced"
+    }
+
+    function _applyPalettePresetAll(preset: string): void {
+        const spec = root._palettePresetSpec(preset)
+        const updates = {}
+        for (const widgetKey of root._paletteWidgetKeys) {
+            const prefix = "background.widgets." + widgetKey + ".palette."
+            updates[prefix + "primary"] = spec.primary
+            updates[prefix + "secondary"] = spec.secondary
+            updates[prefix + "tertiary"] = spec.tertiary
+            updates[prefix + "signal"] = spec.signal
+            updates[prefix + "surface"] = spec.surface
+        }
+        Config.setNestedValues(updates)
+    }
+
+    function _semanticPreviewColor(role: string): color {
+        switch (role) {
+        case "secondary": return Appearance.colors.colSecondary
+        case "tertiary": return Appearance.colors.colTertiary
+        default: return Appearance.colors.colPrimary
+        }
     }
 
     function _manifestSupportsSurface(configKeys: var): bool {
@@ -351,6 +624,8 @@ ContentPage {
         id: wrb
         required property string configPath
         required property var defaults
+        property bool resetSemanticPalette: wrb.configPath.startsWith("background.widgets.")
+            && !wrb.configPath.startsWith("background.widgets.custom.")
         property bool armed: false
         Layout.fillWidth: false
         Layout.alignment: Qt.AlignRight
@@ -377,6 +652,15 @@ ContentPage {
                 if (key === "enable")
                     continue
                 updates[wrb.configPath + "." + key] = wrb.defaults[key]
+            }
+            if (wrb.resetSemanticPalette) {
+                const spec = root._palettePresetSpec("balanced")
+                const prefix = wrb.configPath + ".palette."
+                updates[prefix + "primary"] = spec.primary
+                updates[prefix + "secondary"] = spec.secondary
+                updates[prefix + "tertiary"] = spec.tertiary
+                updates[prefix + "signal"] = spec.signal
+                updates[prefix + "surface"] = spec.surface
             }
             Config.setNestedValues(updates)
         }
@@ -484,6 +768,114 @@ ContentPage {
         }
     }
 
+    component WidgetPalettePresetPicker: ColumnLayout {
+        id: palettePicker
+        required property string configPath
+        property bool applyGlobally: false
+
+        Layout.fillWidth: true
+        spacing: 7
+
+        readonly property string currentPreset: {
+            void Config.revision
+            return palettePicker.applyGlobally
+                ? root._commonPalettePreset()
+                : root._palettePresetForPath(palettePicker.configPath)
+        }
+
+        GridLayout {
+            id: palettePresetGrid
+            Layout.fillWidth: true
+            columns: palettePicker.width >= 520 ? 4 : 2
+            columnSpacing: 6
+            rowSpacing: 6
+
+            Repeater {
+                model: root._palettePresetOptions()
+
+                delegate: RippleButton {
+                    id: presetButton
+                    required property var modelData
+                    readonly property color presetAccent: root._semanticPreviewColor(modelData.roles[0])
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 112
+                    Layout.preferredHeight: 38
+                    buttonRadius: Appearance.rounding.small
+                    toggled: palettePicker.currentPreset === modelData.value
+                    colBackground: Appearance.colors.colLayer2
+                    colBackgroundHover: Appearance.colors.colLayer2Hover
+                    colBackgroundToggled: ColorUtils.mix(
+                        Appearance.colors.colLayer2, presetButton.presetAccent, 0.93)
+                    colBackgroundToggledHover: ColorUtils.mix(
+                        Appearance.colors.colLayer2Hover, presetButton.presetAccent, 0.90)
+                    colRipple: ColorUtils.applyAlpha(presetButton.presetAccent, 0.10)
+                    colRippleToggled: ColorUtils.applyAlpha(presetButton.presetAccent, 0.14)
+                    downAction: () => {
+                        if (palettePicker.applyGlobally)
+                            root._applyPalettePresetAll(modelData.value)
+                        else
+                            root._applyPalettePreset(palettePicker.configPath, modelData.value)
+                    }
+
+                    contentItem: Item {
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: presetButton.buttonRadius
+                            color: "transparent"
+                            border.width: presetButton.toggled ? 1.5 : 0
+                            border.color: presetButton.presetAccent
+                        }
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 8
+                            anchors.rightMargin: 8
+                            spacing: 6
+
+                            Row {
+                                spacing: -4
+                                Repeater {
+                                    model: presetButton.modelData.roles
+                                    Rectangle {
+                                        required property var modelData
+                                        required property int index
+                                        width: 14
+                                        height: 14
+                                        radius: 7
+                                        color: root._semanticPreviewColor(modelData)
+                                        border.width: 1
+                                        border.color: Qt.rgba(0, 0, 0, 0.25)
+                                        z: 3 - index
+                                    }
+                                }
+                            }
+
+                            StyledText {
+                                Layout.fillWidth: true
+                                text: presetButton.modelData.label
+                                color: presetButton.toggled
+                                    ? presetButton.presetAccent : Appearance.colors.colOnLayer2
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                font.weight: presetButton.toggled ? Font.DemiBold : Font.Normal
+                                elide: Text.ElideRight
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        StyledText {
+            visible: palettePicker.currentPreset === "custom"
+                || palettePicker.currentPreset === "mixed"
+            text: palettePicker.currentPreset === "mixed"
+                ? Translation.tr("Widgets currently use different palettes")
+                : Translation.tr("Custom role mapping")
+            color: Appearance.colors.colSubtext
+            font.pixelSize: Appearance.font.pixelSize.smaller
+        }
+    }
+
     // ── Reusable appearance controls for any widget ──────────
     component WidgetAppearanceControls: ColumnLayout {
         id: wac
@@ -492,6 +884,8 @@ ContentPage {
         property bool hasDim: true
         property bool hasColorMode: true
         property bool hasCardControls: false
+        property bool hasSemanticPalette: !wac.configPath.startsWith("background.widgets.custom.")
+        property bool paletteDetailsOpen: false
         property int dimDefault: 0
 
         Layout.fillWidth: true
@@ -559,6 +953,89 @@ ContentPage {
                 configPath: wac.configPath + ".dim"
                 sliderFrom: 0; sliderTo: 100; sliderStep: 5
                 sliderValue: Config.getNestedValue(wac.configPath + ".dim", wac.configEntry?.dim ?? wac.dimDefault)
+            }
+        }
+
+        // ── Colors ──
+        ContentSubsection {
+            visible: wac.hasSemanticPalette
+            title: Translation.tr("Colors")
+
+            StyledText {
+                Layout.fillWidth: true
+                text: Translation.tr("Choose a palette preset. Fine tuning is optional and stays out of the way until you open it.")
+                color: Appearance.colors.colSubtext
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                wrapMode: Text.WordWrap
+            }
+
+            WidgetPalettePresetPicker {
+                configPath: wac.configPath
+            }
+
+            RippleButton {
+                Layout.fillWidth: false
+                Layout.alignment: Qt.AlignLeft
+                implicitWidth: paletteDetailsRow.implicitWidth + 20
+                implicitHeight: 30
+                buttonRadius: Appearance.rounding.full
+                toggled: wac.paletteDetailsOpen
+                colBackground: "transparent"
+                colBackgroundHover: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.07)
+                colBackgroundToggled: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.12)
+                colBackgroundToggledHover: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.18)
+                colRipple: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.10)
+                downAction: () => wac.paletteDetailsOpen = !wac.paletteDetailsOpen
+
+                contentItem: RowLayout {
+                    id: paletteDetailsRow
+                    anchors.centerIn: parent
+                    spacing: 5
+                    MaterialSymbol {
+                        text: wac.paletteDetailsOpen ? "expand_less" : "tune"
+                        iconSize: 16
+                        color: wac.paletteDetailsOpen
+                            ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
+                    }
+                    StyledText {
+                        text: Translation.tr("Customize roles")
+                        color: wac.paletteDetailsOpen
+                            ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                    }
+                }
+            }
+
+            ColumnLayout {
+                visible: wac.paletteDetailsOpen
+                Layout.fillWidth: true
+                spacing: 0
+
+                Repeater {
+                    model: [
+                        { key: "primary", label: Translation.tr("Main accent"), icon: "palette", fallback: "primary" },
+                        { key: "secondary", label: Translation.tr("Secondary accent"), icon: "filter_2", fallback: "secondary" },
+                        { key: "tertiary", label: Translation.tr("Tertiary accent"), icon: "filter_3", fallback: "tertiary" },
+                        { key: "signal", label: Translation.tr("Alerts"), icon: "error", fallback: "signal" },
+                        { key: "surface", label: Translation.tr("Surface"), icon: "layers", fallback: "surface" }
+                    ]
+
+                    delegate: WidgetSettingRow {
+                        required property var modelData
+                        label: modelData.label
+                        icon: modelData.icon
+                        trailing: false
+
+                        ConfigSelectionArray {
+                            Layout.fillWidth: true
+                            currentValue: String(Config.getNestedValue(
+                                wac.configPath + ".palette." + modelData.key, modelData.fallback))
+                            onSelected: newValue => Config.setNestedValue(
+                                wac.configPath + ".palette." + modelData.key, newValue)
+                            options: root._semanticRoleOptions()
+                        }
+                    }
+                }
             }
         }
 
@@ -901,6 +1378,11 @@ ContentPage {
             selectedColor: colorRow.currentColor
             onAccepted: root._setJapaneseValue(colorRow.configKey, selectedColor.toString(), "palette")
         }
+
+        SettingsNativeDialogGuard {
+            dialog: colorDialog
+            dialogKey: "desktop-widgets-japanese-color"
+        }
     }
 
     // ── Overview: every widget toggleable at a glance ─────────
@@ -926,6 +1408,8 @@ ContentPage {
                     model: [
                         { key: "clock", icon: "schedule", label: Translation.tr("Clock"), def: true },
                         { key: "weather", icon: "cloud", label: Translation.tr("Weather"), def: false },
+                        { key: "customImage", icon: "add_photo_alternate", label: Translation.tr("Custom image"), def: false },
+                        { key: "imageConverter", icon: "transform", label: Translation.tr("Image converter"), def: false },
                         { key: "mediaControls", icon: "album", label: Translation.tr("Media"), def: false },
                         { key: "visualizer", icon: "graphic_eq", label: Translation.tr("Visualizer"), def: false },
                         { key: "systemMonitor", icon: "monitor_heart", label: Translation.tr("System"), def: false },
@@ -935,7 +1419,9 @@ ContentPage {
                         { key: "uptime", icon: "avg_pace", label: Translation.tr("Uptime"), def: false },
                         { key: "newsTicker", icon: "newspaper", label: Translation.tr("News"), def: false },
                         { key: "mascot", icon: "pets", label: Translation.tr("Mascot"), def: false },
-                        { key: "japaneseTypography", icon: "translate", label: Translation.tr("Japanese Typography"), def: false }
+                        { key: "japaneseTypography", icon: "translate", label: Translation.tr("Japanese Typography"), def: false },
+                        { key: "worldClock", icon: "public", label: Translation.tr("World Clock"), def: false },
+                        { key: "userCard", icon: "account_circle", label: Translation.tr("User Card"), def: false }
                     ]
                     delegate: WidgetToggleChip {
                         required property var modelData
@@ -993,6 +1479,42 @@ ContentPage {
                 sliderValue: Config.getNestedValue("background.widgets.dynamicOpacity", 0)
                 sliderStep: 10
                 tooltipText: Translation.tr("Reduce widget opacity when windows are on the current workspace (0 = off)")
+            }
+        }
+    }
+
+    // ── Widget colors ─────────────────────────────────────────
+    SettingsCardSection {
+        expanded: true
+        icon: "palette"
+        title: Translation.tr("Widget Colors")
+
+        SettingsGroup {
+            StyledText {
+                Layout.fillWidth: true
+                text: Translation.tr("Apply one wallpaper-generated color preset to every built-in desktop widget. You can still tune any widget individually below.")
+                color: Appearance.colors.colSubtext
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                wrapMode: Text.WordWrap
+            }
+
+            SettingsSwitch {
+                Layout.fillWidth: true
+                buttonIcon: "wallpaper"
+                text: Translation.tr("Adapt colors to widget position")
+                autoToggle: false
+                checked: Config.getNestedValue(
+                    "background.widgets.adaptColorsToWallpaperPosition", false)
+                onToggledByUser: checked => Config.setNestedValue(
+                    "background.widgets.adaptColorsToWallpaperPosition", checked)
+                StyledToolTip {
+                    text: Translation.tr("Sample the wallpaper behind each widget to adjust readable ink and semantic foreground choices. Off keeps colors stable when widgets move.")
+                }
+            }
+
+            WidgetPalettePresetPicker {
+                configPath: ""
+                applyGlobally: true
             }
         }
     }
@@ -1193,6 +1715,8 @@ ContentPage {
                 title: Translation.tr("Display options")
 
                 ConfigRow {
+                    visible: Config.getNestedValue(
+                        "background.widgets.weather.style", "pill") !== "detail"
                     Layout.fillWidth: true
                     SettingsSwitch {
                         Layout.fillWidth: false
@@ -1239,12 +1763,18 @@ ContentPage {
                     SettingsSwitch {
                         Layout.fillWidth: false
                         buttonIcon: "wallpaper"
-                        text: Translation.tr("Adapt colors to wallpaper")
+                        text: Translation.tr("Adapt digital clock locally")
                         autoToggle: false
-
+                        enabled: Config.getNestedValue(
+                            "background.widgets.adaptColorsToWallpaperPosition", false)
+                        opacity: enabled ? 1 : 0.45
                         checked: Config.getNestedValue("background.widgets.clock.digital.adaptToWallpaper", true)
                         onToggledByUser: checked => Config.setNestedValue("background.widgets.clock.digital.adaptToWallpaper", checked)
-                        StyledToolTip { text: Translation.tr("Adapt clock colors to the wallpaper behind the text") }
+                        StyledToolTip {
+                            text: enabled
+                                ? Translation.tr("Let the digital clock use the wallpaper sample behind it.")
+                                : Translation.tr("Enable Adapt colors to widget position in Widget Colors first.")
+                        }
                     }
                 }
 
@@ -2020,6 +2550,7 @@ ContentPage {
                 configEntry: Config.getNestedValue("background.widgets.japaneseTypography", ({}))
                 dimDefault: 10
                 hasColorMode: Config.getNestedValue(root._japanesePath + ".paletteMode", "adaptive") === "adaptive"
+                hasSemanticPalette: Config.getNestedValue(root._japanesePath + ".paletteMode", "adaptive") === "adaptive"
                 hasCardControls: true
             }
 
@@ -2130,6 +2661,7 @@ ContentPage {
                     options: [
                         { displayName: Translation.tr("Shape"), icon: "category", value: "pill" },
                         { displayName: Translation.tr("Card"), icon: "crop_landscape", value: "card" },
+                        { displayName: Translation.tr("Detail"), icon: "dashboard", value: "detail" },
                     ]
                 }
 
@@ -2184,9 +2716,19 @@ ContentPage {
                     buttonIcon: "description"
                     text: Translation.tr("Condition text")
                     autoToggle: false
+                    visible: Config.getNestedValue("background.widgets.weather.style", "pill") !== "detail"
 
                     checked: Config.getNestedValue("background.widgets.weather.showCondition", false)
                     onToggledByUser: checked => Config.setNestedValue("background.widgets.weather.showCondition", checked)
+                }
+                SettingsSwitch {
+                    buttonIcon: "monitoring"
+                    text: Translation.tr("Metric chips")
+                    autoToggle: false
+                    visible: Config.getNestedValue("background.widgets.weather.style", "pill") === "detail"
+
+                    checked: Config.getNestedValue("background.widgets.weather.showMetrics", true)
+                    onToggledByUser: checked => Config.setNestedValue("background.widgets.weather.showMetrics", checked)
                 }
             }
 
@@ -2255,8 +2797,10 @@ ContentPage {
             WidgetAppearanceControls {
                 configPath: "background.widgets.weather"
                 configEntry: Config.getNestedValue("background.widgets.weather", ({}))
-                hasColorMode: Config.getNestedValue("background.widgets.weather.style", "pill") === "card"
-                hasCardControls: Config.getNestedValue("background.widgets.weather.style", "pill") === "card"
+                hasColorMode: Config.getNestedValue(
+                    "background.widgets.weather.style", "pill") !== "pill"
+                hasCardControls: Config.getNestedValue(
+                    "background.widgets.weather.style", "pill") !== "pill"
             }
 
         }
@@ -2288,11 +2832,429 @@ ContentPage {
                     "showTemp": true,
                     "showIcon": true,
                     "showCondition": false,
+                    "showMetrics": true,
                     "padding": 20,
                     "tempFontWeight": 500,
                     "conditionOpacity": 0.7,
                     "locked": false
 })
+            }
+        }
+    }
+
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
+        icon: "add_photo_alternate"
+        title: Translation.tr("Custom image")
+
+        SettingsGroup {
+            WidgetStateControls {
+                configPath: "background.widgets.customImage"
+                configEntry: Config.getNestedValue("background.widgets.customImage", ({}))
+                defaultStrategy: "free"
+                defaultEnabled: false
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Source")
+
+                WidgetSettingRow {
+                    label: Translation.tr("Show")
+                    icon: "filter_alt"
+                    trailing: false
+
+                    GridLayout {
+                        id: customMediaQuickChoices
+                        Layout.fillWidth: true
+                        readonly property var choices: [
+                            { label: Translation.tr("File"), icon: "draft", value: "file",
+                                available: Images.isValidMediaByName(Config.options?.background?.widgets?.customImage?.path ?? "") },
+                            { label: Translation.tr("All") + " " + root._customMediaFolderCount,
+                                icon: "perm_media", value: "all", available: root._customMediaFolderCount > 0 },
+                            { label: Translation.tr("Images") + " " + root._customMediaFolderImageCount,
+                                icon: "image", value: "images", available: root._customMediaFolderImageCount > 0 },
+                            { label: "GIF " + root._customMediaFolderGifCount,
+                                icon: "motion_photos_on", value: "gifs", available: root._customMediaFolderGifCount > 0 },
+                            { label: Translation.tr("Videos") + " " + root._customMediaFolderVideoCount,
+                                icon: "movie", value: "videos", available: root._customMediaFolderVideoCount > 0 }
+                        ].filter(choice => choice.available)
+                        columns: Math.max(1, choices.length)
+                        columnSpacing: 4
+                        rowSpacing: 4
+
+                        Repeater {
+                            model: customMediaQuickChoices.choices
+
+                            SelectionGroupButton {
+                                required property var modelData
+                                Layout.fillWidth: true
+                                leftmost: true; rightmost: true
+                                toggled: root._customMediaChoiceActive(modelData.value)
+                                buttonIcon: modelData.icon
+                                buttonText: modelData.label
+                                onClicked: root._activateCustomMediaChoice(modelData.value)
+                            }
+                        }
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Source type")
+                    icon: "perm_media"
+                    trailing: false
+
+                    ConfigSelectionArray {
+                        Layout.fillWidth: true
+                        currentValue: Config.getNestedValue("background.widgets.customImage.sourceMode", "file")
+                        onSelected: newValue => {
+                            const path = Config.getNestedValue("background.widgets.customImage.path", "")
+                            const folder = Config.getNestedValue("background.widgets.customImage.folder", "")
+                            if (newValue === "folder" && folder.length === 0) {
+                                customImageFolderDialog.open()
+                                return
+                            }
+                            if (newValue === "file" && path.length === 0) {
+                                customImageFileDialog.open()
+                                return
+                            }
+                            Config.setNestedValue("background.widgets.customImage.sourceMode", newValue)
+                        }
+                        options: [
+                            { displayName: Translation.tr("Single file"), icon: "draft", value: "file" },
+                            { displayName: Translation.tr("Folder gallery"), icon: "folder_open", value: "folder" }
+                        ]
+                    }
+                }
+
+                WidgetSettingRow {
+                    visible: Config.getNestedValue("background.widgets.customImage.sourceMode", "file") === "file"
+                    label: Translation.tr("Media file")
+                    icon: "perm_media"
+                    trailing: false
+
+                    MaterialTextField {
+                        Layout.fillWidth: true
+                        placeholderText: Translation.tr("Image, GIF, or video")
+                        text: Config.getNestedValue("background.widgets.customImage.path", "")
+                        onAccepted: {
+                            const path = text.trim();
+                            if (path.length === 0 || Images.isValidMediaByName(path))
+                                Config.setNestedValue("background.widgets.customImage.path", path);
+                        }
+                        onEditingFinished: {
+                            const path = text.trim();
+                            if (path.length === 0 || Images.isValidMediaByName(path))
+                                Config.setNestedValue("background.widgets.customImage.path", path);
+                        }
+                    }
+
+                    SelectionGroupButton {
+                        Layout.fillWidth: false
+                        leftmost: true; rightmost: true
+                        buttonIcon: "folder_open"
+                        buttonText: Translation.tr("Browse")
+                        onClicked: customImageFileDialog.open()
+                    }
+
+                    SelectionGroupButton {
+                        visible: Config.getNestedValue("background.widgets.customImage.path", "").length > 0
+                        Layout.fillWidth: false
+                        leftmost: true; rightmost: true
+                        buttonIcon: "close"
+                        buttonText: Translation.tr("Clear")
+                        onClicked: {
+                            const folder = Config.getNestedValue("background.widgets.customImage.folder", "")
+                            const updates = ({ "background.widgets.customImage.path": "" })
+                            if (folder.length > 0)
+                                updates["background.widgets.customImage.sourceMode"] = "folder"
+                            Config.setNestedValues(updates)
+                        }
+                    }
+                }
+
+                WidgetSettingRow {
+                    visible: Config.getNestedValue("background.widgets.customImage.sourceMode", "file") === "folder"
+                    label: Translation.tr("Media folder")
+                    icon: "folder_open"
+                    trailing: false
+
+                    MaterialTextField {
+                        Layout.fillWidth: true
+                        placeholderText: Translation.tr("Folder containing images or videos")
+                        text: Config.getNestedValue("background.widgets.customImage.folder", "")
+                        onAccepted: Config.setNestedValue("background.widgets.customImage.folder", text.trim())
+                        onEditingFinished: Config.setNestedValue("background.widgets.customImage.folder", text.trim())
+                    }
+
+                    SelectionGroupButton {
+                        Layout.fillWidth: false
+                        leftmost: true; rightmost: true
+                        buttonIcon: "folder_open"
+                        buttonText: Translation.tr("Browse")
+                        onClicked: customImageFolderDialog.open()
+                    }
+
+                    SelectionGroupButton {
+                        visible: Config.getNestedValue("background.widgets.customImage.folder", "").length > 0
+                        Layout.fillWidth: false
+                        leftmost: true; rightmost: true
+                        buttonIcon: "close"
+                        buttonText: Translation.tr("Clear")
+                        onClicked: {
+                            const path = Config.getNestedValue("background.widgets.customImage.path", "")
+                            const updates = ({ "background.widgets.customImage.folder": "" })
+                            if (path.length > 0)
+                                updates["background.widgets.customImage.sourceMode"] = "file"
+                            Config.setNestedValues(updates)
+                        }
+                    }
+                }
+
+                WidgetSettingRow {
+                    visible: Config.getNestedValue("background.widgets.customImage.sourceMode", "file") === "folder"
+                    label: Translation.tr("Media type")
+                    icon: "filter_alt"
+                    trailing: false
+
+                    ConfigSelectionArray {
+                        Layout.fillWidth: true
+                        currentValue: Config.getNestedValue("background.widgets.customImage.mediaFilter", "all")
+                        onSelected: newValue => Config.setNestedValue("background.widgets.customImage.mediaFilter", newValue)
+                        options: [
+                            { displayName: Translation.tr("All media") + " (" + root._customMediaFolderCount + ")", icon: "perm_media", value: "all", available: true },
+                            { displayName: Translation.tr("Images only") + " (" + root._customMediaFolderImageCount + ")", icon: "image", value: "images", available: root._customMediaFolderImageCount > 0 },
+                            { displayName: "GIF (" + root._customMediaFolderGifCount + ")", icon: "motion_photos_on", value: "gifs", available: root._customMediaFolderGifCount > 0 },
+                            { displayName: Translation.tr("Videos only") + " (" + root._customMediaFolderVideoCount + ")", icon: "movie", value: "videos", available: root._customMediaFolderVideoCount > 0 }
+                        ].filter(option => option.available)
+                    }
+                }
+
+                SettingsNote {
+                    icon: "volume_off"
+                    text: Translation.tr("Videos play silently. Images, animated GIFs, and videos can share the same folder.")
+                }
+            }
+
+            ContentSubsection {
+                visible: Config.getNestedValue("background.widgets.customImage.sourceMode", "file") === "folder"
+                title: Translation.tr("Gallery rotation")
+
+                WidgetSettingRow {
+                    label: Translation.tr("Order")
+                    icon: "swap_vert"
+                    trailing: false
+
+                    ConfigSelectionArray {
+                        Layout.fillWidth: true
+                        currentValue: Config.getNestedValue("background.widgets.customImage.order", "sequential")
+                        onSelected: newValue => Config.setNestedValue("background.widgets.customImage.order", newValue)
+                        options: [
+                            { displayName: Translation.tr("Sequential"), icon: "format_list_numbered", value: "sequential" },
+                            { displayName: Translation.tr("Random"), icon: "shuffle", value: "random" }
+                        ]
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Change every")
+                    icon: "timer"
+                    StyledSpinBox {
+                        from: 3; to: 3600; stepSize: 1
+                        value: Config.getNestedValue("background.widgets.customImage.intervalSeconds", 30)
+                        onValueModified: Config.setNestedValue("background.widgets.customImage.intervalSeconds", value)
+                        StyledToolTip { text: Translation.tr("Seconds between media changes") }
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Quick timing")
+                    icon: "speed"
+                    trailing: false
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 4
+
+                        Repeater {
+                            model: [3, 10, 30, 60]
+                            SelectionGroupButton {
+                                required property int modelData
+                                Layout.fillWidth: true
+                                leftmost: true; rightmost: true
+                                toggled: Config.getNestedValue(
+                                    "background.widgets.customImage.intervalSeconds", 30) === modelData
+                                buttonText: modelData + "s"
+                                onClicked: Config.setNestedValue(
+                                    "background.widgets.customImage.intervalSeconds", modelData)
+                            }
+                        }
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Shape")
+
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 6
+
+                    Repeater {
+                        model: root._customImageShapes
+
+                        Rectangle {
+                            id: shapeCell
+                            required property var modelData
+                            width: 52
+                            height: 52
+                            radius: Appearance.rounding.small
+                            readonly property bool selected: Config.getNestedValue("background.widgets.customImage.shape", "Cookie4Sided") === modelData.value
+                            color: selected
+                                ? ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.14)
+                                : ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, shapeMouse.containsMouse ? 0.07 : 0.03)
+                            border.width: selected ? 1.5 : 0
+                            border.color: Appearance.colors.colPrimary
+
+                            MaterialShape {
+                                anchors.centerIn: parent
+                                implicitSize: 28
+                                shape: shapeCell.modelData.shape
+                                color: shapeCell.selected
+                                    ? Appearance.colors.colPrimary
+                                    : Appearance.colors.colOnLayer1
+                            }
+
+                            MouseArea {
+                                id: shapeMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: Config.setNestedValue("background.widgets.customImage.shape", shapeCell.modelData.value)
+                            }
+                        }
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Layout")
+
+                WidgetSettingRow {
+                    label: Translation.tr("Size")
+                    icon: "photo_size_select_large"
+                    StyledSpinBox {
+                        from: 80; to: 1200; stepSize: 10
+                        value: Config.getNestedValue("background.widgets.customImage.size", 220)
+                        onValueModified: Config.setNestedValue("background.widgets.customImage.size", value)
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Fit")
+                    icon: "fit_screen"
+                    trailing: false
+                    ConfigSelectionArray {
+                        Layout.fillWidth: true
+                        currentValue: Config.getNestedValue("background.widgets.customImage.fitMode", "cover")
+                        onSelected: newValue => Config.setNestedValue("background.widgets.customImage.fitMode", newValue)
+                        options: [
+                            { displayName: Translation.tr("Crop to fill"), icon: "crop_free", value: "cover" },
+                            { displayName: Translation.tr("Show full media"), icon: "fit_screen", value: "contain" }
+                        ]
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Transition")
+                    icon: "animation"
+                    StyledSpinBox {
+                        from: 0; to: 2000; stepSize: 50
+                        value: Config.getNestedValue("background.widgets.customImage.transitionDuration", 450)
+                        onValueModified: Config.setNestedValue("background.widgets.customImage.transitionDuration", value)
+                        StyledToolTip { text: Translation.tr("Crossfade duration in milliseconds; 0 disables it") }
+                    }
+                }
+            }
+
+            WidgetAppearanceControls {
+                configPath: "background.widgets.customImage"
+                configEntry: Config.getNestedValue("background.widgets.customImage", ({}))
+                hasColorMode: false
+                hasCardControls: false
+            }
+        }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.customImage"
+                defaults: ({
+                    enable: false, locked: false, placementStrategy: "free",
+                    sourceMode: "file", path: "", folder: "", mediaFilter: "all",
+                    intervalSeconds: 30, order: "sequential", transitionDuration: 450,
+                    shape: "Cookie4Sided", fitMode: "cover", size: 220,
+                    dim: 0, widgetScale: 100, widgetOpacity: 100, x: 120, y: 320
+                })
+            }
+        }
+    }
+
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
+        icon: "transform"
+        title: Translation.tr("Image converter")
+
+        SettingsGroup {
+            WidgetStateControls {
+                configPath: "background.widgets.imageConverter"
+                configEntry: Config.getNestedValue("background.widgets.imageConverter", ({}))
+                defaultStrategy: "free"
+                defaultEnabled: false
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Conversion")
+
+                ConfigSelectionArray {
+                    currentValue: Config.getNestedValue("background.widgets.imageConverter.selectedFormat", "webp")
+                    onSelected: newValue => Config.setNestedValue("background.widgets.imageConverter.selectedFormat", newValue)
+                    options: [
+                        { displayName: "PNG", icon: "image", value: "png" },
+                        { displayName: "JPG", icon: "photo", value: "jpg" },
+                        { displayName: "WEBP", icon: "motion_photos_on", value: "webp" },
+                        { displayName: "AVIF", icon: "hd", value: "avif" },
+                        { displayName: "BMP", icon: "grid_on", value: "bmp" },
+                        { displayName: "TIFF", icon: "photo_library", value: "tiff" },
+                        { displayName: "PDF", icon: "picture_as_pdf", value: "pdf" }
+                    ]
+                }
+
+                SettingsNote {
+                    icon: "info"
+                    text: Translation.tr("Drop one or more images onto the desktop widget. Converted files are saved next to the originals.")
+                }
+            }
+
+            WidgetAppearanceControls {
+                configPath: "background.widgets.imageConverter"
+                configEntry: Config.getNestedValue("background.widgets.imageConverter", ({}))
+                hasColorMode: true
+                hasCardControls: true
+            }
+        }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.imageConverter"
+                defaults: ({
+                    enable: false, locked: false, placementStrategy: "free",
+                    selectedFormat: "webp", contentWidth: 292, contentHeight: 260,
+                    widgetScale: 100, widgetOpacity: 100, colorMode: "auto", dim: 0,
+                    showBackground: true, useBlur: false, showBorder: true,
+                    backgroundOpacity: 0.22, borderWidth: 1, borderOpacity: 0.22,
+                    cornerRadius: -1, x: 120, y: 360
+                })
             }
         }
     }
@@ -2330,6 +3292,9 @@ ContentPage {
                         { displayName: Translation.tr("Album Art"), icon: "image", value: "albumart" },
                         { displayName: Translation.tr("Visualizer"), icon: "equalizer", value: "visualizer" },
                         { displayName: Translation.tr("Classic"), icon: "radio", value: "classic" },
+                        { displayName: Translation.tr("Lyrics"), icon: "lyrics", value: "lyrics" },
+                        { displayName: Translation.tr("Lyrics wide"), icon: "subtitles", value: "lyricsSplit" },
+                        { displayName: Translation.tr("Cover"), icon: "art_track", value: "expandingLyrics" },
                     ]
                 }
             }
@@ -2385,6 +3350,7 @@ ContentPage {
                     "playerPreset": "full",
                     "visualizerType": "wave",
                     "visualizerPosition": "bottom",
+                    "lyricsExpanded": false,
                     "widgetScale": 100,
                     "widgetOpacity": 100,
                     "colorMode": "auto",
@@ -2461,10 +3427,64 @@ ContentPage {
                         { displayName: Translation.tr("Wide"), icon: "width_wide", value: "wide" },
                     ]
                 }
+
+                ConfigSelectionArray {
+                    currentValue: Config.getNestedValue(
+                        "background.widgets.visualizer.vizType", "bars")
+                    onSelected: newValue => Config.setNestedValue(
+                        "background.widgets.visualizer.vizType", newValue)
+                    options: [
+                        { displayName: Translation.tr("Bars"), icon: "equalizer", value: "bars" },
+                        { displayName: Translation.tr("Wave"), icon: "waves", value: "wave" },
+                    ]
+                }
+
+                ConfigSelectionArray {
+                    currentValue: Config.getNestedValue(
+                        "background.widgets.visualizer.paletteMode", "cava")
+                    onSelected: newValue => Config.setNestedValue(
+                        "background.widgets.visualizer.paletteMode", newValue)
+                    options: [
+                        { displayName: Translation.tr("Cava"), icon: "palette", value: "cava" },
+                        { displayName: Translation.tr("Accent"), icon: "colors", value: "accent" },
+                        { displayName: Translation.tr("Primary"), icon: "format_color_fill", value: "primary" },
+                    ]
+                }
+
+                ConfigSelectionArray {
+                    visible: Config.getNestedValue(
+                        "background.widgets.visualizer.vizType", "bars") === "bars"
+                    currentValue: Config.getNestedValue(
+                        "background.widgets.visualizer.barsOrigin", "bottom")
+                    onSelected: newValue => Config.setNestedValue(
+                        "background.widgets.visualizer.barsOrigin", newValue)
+                    options: [
+                        { displayName: Translation.tr("Bottom"), icon: "vertical_align_bottom", value: "bottom" },
+                        { displayName: Translation.tr("Top"), icon: "vertical_align_top", value: "top" },
+                        { displayName: Translation.tr("Center rise"), icon: "center_focus_strong", value: "center" },
+                        { displayName: Translation.tr("Mirrored"), icon: "unfold_more", value: "mirror" },
+                    ]
+                }
+
+                ConfigSelectionArray {
+                    visible: Config.getNestedValue(
+                        "background.widgets.visualizer.vizType", "bars") === "wave"
+                    currentValue: Config.getNestedValue(
+                        "background.widgets.visualizer.waveMode", "fill")
+                    onSelected: newValue => Config.setNestedValue(
+                        "background.widgets.visualizer.waveMode", newValue)
+                    options: [
+                        { displayName: Translation.tr("Fill"), icon: "waves", value: "fill" },
+                        { displayName: Translation.tr("Line"), icon: "line_weight", value: "line" },
+                        { displayName: Translation.tr("Ribbon"), icon: "unfold_more", value: "ribbon" },
+                    ]
+                }
             }
             }
 
             ContentSubsection {
+                visible: Config.getNestedValue(
+                    "background.widgets.visualizer.vizType", "bars") === "bars"
                 title: Translation.tr("Bars")
 
                 GridLayout {
@@ -2507,6 +3527,138 @@ ContentPage {
                             onValueModified: Config.setNestedValue("background.widgets.visualizer.barMinHeight", value)
                         }
                     }
+
+                    WidgetSettingRow {
+                        label: Translation.tr("Opacity")
+                        StyledSpinBox {
+                            from: 5; to: 100; stepSize: 5
+                            value: Config.getNestedValue(
+                                "background.widgets.visualizer.barOpacity", 100)
+                            onValueModified: Config.setNestedValue(
+                                "background.widgets.visualizer.barOpacity", value)
+                        }
+                    }
+                }
+            }
+
+            ContentSubsection {
+                visible: Config.getNestedValue(
+                    "background.widgets.visualizer.vizType", "bars") === "wave"
+                title: Translation.tr("Wave")
+
+                GridLayout {
+                    columns: 2
+                    columnSpacing: 12
+                    Layout.fillWidth: true
+
+                    WidgetSettingRow {
+                        label: Translation.tr("Opacity")
+                        StyledSpinBox {
+                            from: 5; to: 100; stepSize: 5
+                            value: {
+                                const value = Config.getNestedValue(
+                                    "background.widgets.visualizer.waveOpacity", -1)
+                                return value >= 0 ? value
+                                    : (Config.options?.appearance?.cava?.waveOpacity ?? 30)
+                            }
+                            onValueModified: Config.setNestedValue(
+                                "background.widgets.visualizer.waveOpacity", value)
+                        }
+                    }
+
+                    WidgetSettingRow {
+                        label: Translation.tr("Line width")
+                        StyledSpinBox {
+                            from: 1; to: 8; stepSize: 1
+                            value: Config.getNestedValue(
+                                "background.widgets.visualizer.lineWidth", 2)
+                            onValueModified: Config.setNestedValue(
+                                "background.widgets.visualizer.lineWidth", value)
+                        }
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Response")
+
+                ConfigSelectionArray {
+                    currentValue: Config.getNestedValue(
+                        "background.widgets.visualizer.frequencyProfile", "flat")
+                    onSelected: newValue => Config.setNestedValue(
+                        "background.widgets.visualizer.frequencyProfile", newValue)
+                    options: [
+                        { displayName: Translation.tr("Flat"), icon: "horizontal_rule", value: "flat" },
+                        { displayName: Translation.tr("Bass"), icon: "graphic_eq", value: "bass" },
+                        { displayName: Translation.tr("Warm"), icon: "local_fire_department", value: "warm" },
+                        { displayName: Translation.tr("Vocal"), icon: "record_voice_over", value: "vocal" },
+                        { displayName: Translation.tr("Treble"), icon: "trending_up", value: "treble" },
+                        { displayName: Translation.tr("Smile"), icon: "waves", value: "smile" },
+                    ]
+                }
+
+                GridLayout {
+                    columns: 2
+                    columnSpacing: 12
+                    Layout.fillWidth: true
+
+                    WidgetSettingRow {
+                        label: Translation.tr("Smoothing")
+                        StyledSpinBox {
+                            from: 0; to: 8; stepSize: 1
+                            value: Config.getNestedValue(
+                                "background.widgets.visualizer.smoothing", 2)
+                            onValueModified: Config.setNestedValue(
+                                "background.widgets.visualizer.smoothing", value)
+                        }
+                    }
+
+                    WidgetSettingRow {
+                        label: Translation.tr("Spectrum height (%)")
+                        StyledSpinBox {
+                            from: 10; to: 100; stepSize: 5
+                            value: Config.getNestedValue(
+                                "background.widgets.visualizer.fillRatio", 90)
+                            onValueModified: Config.setNestedValue(
+                                "background.widgets.visualizer.fillRatio", value)
+                        }
+                    }
+
+                    WidgetSettingRow {
+                        label: Translation.tr("Edge inset (px)")
+                        StyledSpinBox {
+                            from: 0; to: 32; stepSize: 1
+                            value: Config.getNestedValue(
+                                "background.widgets.visualizer.edgeInset", 0)
+                            onValueModified: Config.setNestedValue(
+                                "background.widgets.visualizer.edgeInset", value)
+                        }
+                    }
+
+                    WidgetSettingRow {
+                        label: Translation.tr("Curve headroom (%)")
+                        StyledSpinBox {
+                            from: 0; to: 100; stepSize: 5
+                            value: Config.getNestedValue(
+                                "background.widgets.visualizer.edgeSoftness", 28)
+                            onValueModified: Config.setNestedValue(
+                                "background.widgets.visualizer.edgeSoftness", value)
+                        }
+                    }
+
+                    WidgetSettingRow {
+                        label: Translation.tr("Frequency accent strength (%)")
+                        enabled: Config.getNestedValue(
+                            "background.widgets.visualizer.frequencyProfile", "flat") !== "flat"
+                        opacity: enabled ? 1 : 0.45
+                        StyledSpinBox {
+                            from: 0; to: 100; stepSize: 5
+                            value: Config.getNestedValue(
+                                "background.widgets.visualizer.accentStrength", 70)
+                            onValueModified: Config.setNestedValue(
+                                "background.widgets.visualizer.accentStrength", value)
+                        }
+                    }
                 }
             }
 
@@ -2534,6 +3686,8 @@ ContentPage {
             WidgetAppearanceControls {
                 configPath: "background.widgets.visualizer"
                 configEntry: Config.getNestedValue("background.widgets.visualizer", ({}))
+                hasSemanticPalette: Config.getNestedValue(
+                    "background.widgets.visualizer.paletteMode", "cava") !== "cava"
                 hasCardControls: true
             }
 
@@ -2546,9 +3700,20 @@ ContentPage {
                     "placementStrategy": "free",
                     "preset": "default",
                     "vizType": "bars",
+                    "paletteMode": "cava",
+                    "barsOrigin": "bottom",
+                    "waveMode": "fill",
+                    "frequencyProfile": "flat",
+                    "smoothing": 2,
+                    "fillRatio": 90,
+                    "barOpacity": 100,
                     "waveOpacity": -1,
                     "barCount": 48,
                     "barSpacing": 2,
+                    "lineWidth": 2,
+                    "edgeInset": 0,
+                    "edgeSoftness": 28,
+                    "accentStrength": 70,
                     "dim": 0,
                     "widgetScale": 100,
                     "widgetOpacity": 100,
@@ -2635,6 +3800,7 @@ ContentPage {
                         { displayName: Translation.tr("Graph"), icon: "show_chart", value: "graph" },
                         { displayName: Translation.tr("Rings"), icon: "radio_button_checked", value: "rings" },
                         { displayName: Translation.tr("Text"), icon: "text_fields", value: "text" },
+                        { displayName: Translation.tr("Tiles"), icon: "grid_view", value: "tiles" },
                     ]
                 }
             }
@@ -3233,6 +4399,144 @@ ContentPage {
                     useBlur: false, showBorder: true, backgroundOpacity: 0.16,
                     borderWidth: 1, borderOpacity: 0.20, cornerRadius: -1,
                     colorMode: "auto", locked: false, x: 80, y: 80
+                })
+            }
+        }
+    }
+
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
+        icon: "public"
+        title: Translation.tr("World clock")
+
+        SettingsGroup {
+            WidgetStateControls {
+                configPath: "background.widgets.worldClock"
+                configEntry: Config.getNestedValue("background.widgets.worldClock", ({}))
+                defaultStrategy: "free"
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Time zones")
+
+                Repeater {
+                    model: 4
+                    delegate: WidgetSettingRow {
+                        id: tzRow
+                        required property int index
+                        label: Translation.tr("City %1").arg(tzRow.index + 1)
+                        icon: "schedule"
+                        trailing: false
+
+                        StyledComboBox {
+                            Layout.fillWidth: true
+                            model: WorldClock.comboModel
+                            textRole: "label"
+                            currentIndex: Math.max(0, WorldClock.comboModel.findIndex(o => o.tz === WorldClock.timezones[tzRow.index]))
+                            onActivated: idx => WorldClock.setTimezone(tzRow.index, WorldClock.comboModel[idx].tz)
+                        }
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Dimensions")
+
+                WidgetSettingRow {
+                    label: Translation.tr("Width")
+                    icon: "swap_horiz"
+                    StyledSpinBox {
+                        from: 240; to: 700; stepSize: 10
+                        value: Config.getNestedValue("background.widgets.worldClock.contentWidth", 300)
+                        onValueModified: Config.setNestedValue("background.widgets.worldClock.contentWidth", value)
+                    }
+                }
+                WidgetSettingRow {
+                    label: Translation.tr("Height")
+                    icon: "swap_vert"
+                    StyledSpinBox {
+                        from: 170; to: 480; stepSize: 4
+                        value: Config.getNestedValue("background.widgets.worldClock.contentHeight", 210)
+                        onValueModified: Config.setNestedValue("background.widgets.worldClock.contentHeight", value)
+                    }
+                }
+            }
+
+            WidgetAppearanceControls {
+                configPath: "background.widgets.worldClock"
+                configEntry: Config.getNestedValue("background.widgets.worldClock", ({}))
+                hasCardControls: true
+            }
+        }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.worldClock"
+                defaults: ({
+                    placementStrategy: "free", contentWidth: 300, contentHeight: 210,
+                    dim: 0, widgetScale: 100, widgetOpacity: 100, showBackground: true,
+                    useBlur: false, showBorder: true, backgroundOpacity: 0.16,
+                    borderWidth: 1, borderOpacity: 0.20, cornerRadius: -1,
+                    colorMode: "auto", locked: false, x: 80, y: 200,
+                    timezones: ["Australia/Sydney", "Asia/Tokyo", "Europe/London", "America/New_York"]
+                })
+            }
+        }
+    }
+
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
+        icon: "account_circle"
+        title: Translation.tr("User card")
+
+        SettingsGroup {
+            WidgetStateControls {
+                configPath: "background.widgets.userCard"
+                configEntry: Config.getNestedValue("background.widgets.userCard", ({}))
+                defaultStrategy: "free"
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Dimensions")
+
+                WidgetSettingRow {
+                    label: Translation.tr("Width")
+                    icon: "swap_horiz"
+                    StyledSpinBox {
+                        from: 240; to: 600; stepSize: 10
+                        value: Config.getNestedValue("background.widgets.userCard.contentWidth", 280)
+                        onValueModified: Config.setNestedValue("background.widgets.userCard.contentWidth", value)
+                    }
+                }
+                WidgetSettingRow {
+                    label: Translation.tr("Height")
+                    icon: "swap_vert"
+                    StyledSpinBox {
+                        from: 170; to: 320; stepSize: 2
+                        value: Config.getNestedValue("background.widgets.userCard.contentHeight", 176)
+                        onValueModified: Config.setNestedValue("background.widgets.userCard.contentHeight", value)
+                    }
+                }
+            }
+
+            WidgetAppearanceControls {
+                configPath: "background.widgets.userCard"
+                configEntry: Config.getNestedValue("background.widgets.userCard", ({}))
+                hasCardControls: true
+            }
+        }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.userCard"
+                defaults: ({
+                    placementStrategy: "free", contentWidth: 280, contentHeight: 176,
+                    dim: 0, widgetScale: 100, widgetOpacity: 100, showBackground: true,
+                    useBlur: false, showBorder: true, backgroundOpacity: 0.16,
+                    borderWidth: 1, borderOpacity: 0.20, cornerRadius: -1,
+                    colorMode: "auto", locked: false, x: 80, y: 420
                 })
             }
         }

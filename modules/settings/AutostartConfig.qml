@@ -69,7 +69,7 @@ ContentPage {
 
     SettingsCardSection {
         expanded: true
-        icon: "file_off"
+        icon: "folder_off"
         title: Translation.tr("Startup file not found")
         visible: Autostart.isNiri && Autostart.status === "missing"
 
@@ -128,8 +128,7 @@ ContentPage {
                     Layout.preferredHeight: 30
                     buttonRadius: Appearance.rounding.full
                     enabled: Autostart.startupFilePath.length > 0
-                    onClicked: Quickshell.execDetached(["/usr/bin/bash", "-lc",
-                        `xdg-open '${Autostart.startupFilePath}' 2>/dev/null || true`])
+                    onClicked: ShellExec.execDetachedArgs(["xdg-open", Autostart.startupFilePath], "Open autostart file")
                     contentItem: MaterialSymbol {
                         anchors.centerIn: parent
                         text: "open_in_new"

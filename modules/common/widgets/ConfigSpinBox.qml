@@ -86,6 +86,7 @@ RowLayout {
     }
 
     RowLayout {
+        Layout.fillWidth: true
         spacing: 10
         OptionalMaterialSymbol {
             icon: root.icon
@@ -98,6 +99,8 @@ RowLayout {
             StyledText {
                 id: labelWidget
                 Layout.fillWidth: true
+                elide: Text.ElideRight
+                maximumLineCount: 1
                 text: root.text
                 color: Appearance.angelEverywhere ? Appearance.angel.colText
                     : Appearance.inirEverywhere ? Appearance.inir.colText

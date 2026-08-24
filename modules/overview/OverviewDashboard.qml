@@ -45,7 +45,7 @@ Item {
 
     // ── Greeting based on time ──
     readonly property string greeting: {
-        const hour = new Date().getHours()
+        const hour = DateTime.clock.hours
         if (hour < 6) return Translation.tr("Good night")
         if (hour < 12) return Translation.tr("Good morning")
         if (hour < 18) return Translation.tr("Good afternoon")
@@ -390,7 +390,7 @@ Item {
 
                         StyledText {
                             Layout.alignment: Qt.AlignRight
-                            text: Qt.formatDate(new Date(), "dddd, MMMM d")
+                            text: Qt.formatDate(DateTime.clock.date, "dddd, MMMM d")
                             font.pixelSize: Appearance.font.pixelSize.small
                             color: root.colSubtext
                         }

@@ -219,27 +219,24 @@ sync_user_inir_service_from_repo_if_present() {
         "$service_asset" > "$tmp_file"
 
     if [[ -L "$service_target" ]]; then
-        local service_dropin_dir="${service_target_dir}/inir.service.d"
-        local service_override="${service_dropin_dir}/override.conf"
-        local override_tmp="${XDG_CACHE_HOME:-$HOME/.cache}/inir.service.override.$$"
-        mkdir -p "$service_dropin_dir"
-        cat > "$override_tmp" <<EOF
-# Managed locally: keep the repo unit template portable while running the
-# developer launcher path from this machine.
-[Service]
-ExecStart=
-ExecStart=${launcher_target} run --session
-ExecStopPost=
-ExecStopPost=-${launcher_target} cleanup-orphans
-EOF
-        if ! cmp -s "$override_tmp" "$service_override"; then
-            changed=true
-            cp -f "$override_tmp" "$service_override"
-        fi
-        rm -f "$override_tmp"
+        # A repo-link unit points at the portable template, whose /usr/bin/inir
+        # path is wrong for developer installs.  A drop-in fixes it only after
+        # the first setup/doctor run, so a fresh login can hit 203/EXEC before
+        # that override exists.  Materialize the rendered unit instead.
+        rm -f "$service_target"
+        cp -f "$tmp_file" "$service_target"
+        changed=true
     elif ! cmp -s "$tmp_file" "$service_target"; then
         changed=true
         cp -f "$tmp_file" "$service_target"
+    fi
+
+    local service_dropin_dir="${service_target_dir}/inir.service.d"
+    local service_override="${service_dropin_dir}/override.conf"
+    if [[ -f "$service_override" ]] && grep -q '^# Managed locally:' "$service_override"; then
+        rm -f "$service_override"
+        rmdir "$service_dropin_dir" 2>/dev/null || true
+        changed=true
     fi
 
     rm -f "$tmp_file"

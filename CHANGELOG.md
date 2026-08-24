@@ -5,14 +5,108 @@ All notable changes to iNiR will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.29.1] - 2026-08-11
 
-The five weeks since 2.27.0 were not quiet. The shell grew a cat, a
-dashboard, a fifth bar style and a live layout editor, and a long tail of
-things got fixed by people with better eyes than ours. Everything below
-lives on `prerelease` and reaches `main` with the next release.
+A smaller release focused on making the desktop editor easier to trust, fixing a few rough runtime edges, and closing the reports that surfaced after 2.29.0.
 
 ### Added
+- **Workspace indicator colors**: the active workspace can now use an automatic theme color or a custom color from Bar Settings. Foreground contrast stays readable automatically. Fixes [#215](https://github.com/snowarch/iNiR/issues/215).
+- **Reusable Nix expressions**: the package, NixOS module, and Home Manager module can now be imported without flakes; the flake remains a thin entrypoint. The Nix wrapper also carries Material Symbols so shell icons work without a separate host font install. Fixes [#216](https://github.com/snowarch/iNiR/issues/216).
+- **Desktop widget palette presets**: Quick Controls and Widgets Settings share the same Default/Primary/Secondary/Tertiary presets, with detailed role overrides available when needed.
+
+### Changed
+- **Desktop widget editing**: dragging, resizing, grid snapping, manager navigation, filters, and locked-widget handling now use the same panel-aware layout rules. Widget selection no longer shifts the layout.
+- **Widget colors**: System Monitor and other desktop widgets now use the shell's existing semantic roles instead of inventing local wallpaper colors. This keeps accent identity and warning states consistent across themes.
+- **Cava controls**: shell visualizers and terminal Cava now share stereo/channel state and expose the same spectrum, palette, response, smoothing, geometry, and opacity controls.
+- **Fingerprint authentication**: lock-screen fingerprint polling now follows Quickshell's real PAM lifecycle, starts after late device discovery, survives locked-state resets, and retries without duplicate sessions. Hardware acceptance remains tracked in [#211](https://github.com/snowarch/iNiR/issues/211).
+
+### Fixed
+- **XWayland app launches**: apps such as Steam, Wine, and Warp recover the live `DISPLAY` instead of inheriting a stale shell environment. Fixes [#217](https://github.com/snowarch/iNiR/issues/217).
+- **Notification hot reload**: notification wrappers, actions, urgency, text, and animations survive QML reloads without transient type/null warnings.
+- **Blurry dialogs**: shared dialogs keep text and icons on fixed pixel-aligned geometry while their background animates, fixing soft text in Close Confirm, Audio, Wi-Fi, Bluetooth, Hotspot, Night Light, Events, and Polkit.
+- **Audio device dialogs**: device menus close with their parent sidebar, and mixer rows tolerate PipeWire nodes disappearing during teardown instead of leaving a popup or QML warning behind.
+- **M3 tray colors**: the M3 tray uses its own semantic tint setting again instead of inheriting the classic tray value.
+- **Update hover card**: long branch names, commits, versions, and status messages stay inside the popup.
+- **Desktop and popup polish**: managed desktop menus use the correct screen coordinate space, Cookie popup motion stays inside fixed window geometry, and Wallhaven hover actions require clearer intent.
+- **Session/runtime cleanup**: XEmbed tray supervision, screenshot clipboard ownership, SDDM avatar lookup, and legacy GTK4 dark-preference handling are more reliable.
+
+### Issues / PRs
+- Fixed [#215](https://github.com/snowarch/iNiR/issues/215), [#216](https://github.com/snowarch/iNiR/issues/216), and [#217](https://github.com/snowarch/iNiR/issues/217).
+- Continued work on [#211](https://github.com/snowarch/iNiR/issues/211); end-to-end fingerprint acceptance still needs enrolled hardware.
+
+### Contributors
+- [@MacaylaMarvelous81](https://github.com/MacaylaMarvelous81) caught the missing Material Symbols font while working on [#218](https://github.com/snowarch/iNiR/pull/218).
+- [@TildeEthDoUsPart](https://github.com/TildeEthDoUsPart) corrected the Dashboard IPC hint in [#212](https://github.com/snowarch/iNiR/pull/212).
+
+## [2.29.0] - 2026-08-06
+
+Four days after 2.28.0, the multi-monitor work became a coherent desktop
+instead of a collection of surfaces that happened to share a process. This
+release makes monitor ownership explicit, adds managed desktop references and
+finishes the startup, media and visual fixes that were already in flight.
+
+### Added
+- Managed desktop items for applications, files, folders and URLs. Applications
+  can be dragged from Overview; image drops can create a file reference, place
+  the Custom Image widget or use the converter queue.
+- Per-output desktop-widget visibility, placement, size and lock overrides in
+  both Settings families, including disconnected-output reset controls.
+
+### Changed
+- Sidebars, Overview and wallpaper pickers now open on the invoking or focused
+  output. Overview defaults to active-screen-only behavior.
+- Monitor Settings puts panel-family surfaces before the less common desktop
+  widget overrides, which now start collapsed in both Settings families.
+- The mixed-media gallery supports images, GIFs and videos, editable intervals
+  up to one hour, and stable quick controls for long file names.
+- Bar spectrum rendering uses one shared Cava process, defaults to the primary
+  output and adapts Classic, Islands, Scenic, Frame, M3 and Pill layouts.
+- The media OSD is compact and resolution-aware, shows explicit transport
+  feedback, and keeps the old cover until the next image is decoded.
+- Super+G is named **Floating tools** in Settings and search. Floating Image has
+  a native chooser and yields the overlay layer while the chooser is open.
+
+### Fixed
+- Sidebars no longer open on every monitor, and desktop widgets no longer share
+  accidental geometry or power state across outputs.
+- Native tray applications wait for the StatusNotifier watcher at login, and
+  the legacy XEmbed proxy starts without the old delay.
+- AMD backlight devices are detected explicitly and brightness writes are
+  throttled during slider animations.
+- Material 3, Classic and vertical bar controls keep readable foregrounds on
+  difficult wallpaper palettes; media-button hover colors use their real
+  button surface.
+- Wallpaper selection, desktop-item drops and context menus keep the correct
+  output and owner through focus, drag and teardown changes.
+- Desktop-item menus open at the pointer, launch without replacing the label
+  with a temporary status, and use the nearest free desktop-widget grid cell
+  for drops, moves and monitor transfers.
+- Floating media controls now create one surface on every selected output;
+  choosing all outputs no longer presents the player on only one monitor.
+- Floating Image handles local files, remote URLs, empty sources and corrupt
+  cache entries without publishing invalid image paths.
+- Repo-link service installs use a rendered unit instead of a broken portable
+  symlink, and invalid GTK settings files are backed up and rebuilt safely.
+
+### Issues / PRs
+- Fixed [#185](https://github.com/snowarch/iNiR/issues/185), [#187](https://github.com/snowarch/iNiR/issues/187), [#188](https://github.com/snowarch/iNiR/issues/188), [#209](https://github.com/snowarch/iNiR/issues/209), [#210](https://github.com/snowarch/iNiR/issues/210), [#213](https://github.com/snowarch/iNiR/issues/213), and [#214](https://github.com/snowarch/iNiR/issues/214).
+- Closed already-shipped reports [#172](https://github.com/snowarch/iNiR/issues/172), [#190](https://github.com/snowarch/iNiR/issues/190), [#195](https://github.com/snowarch/iNiR/issues/195), and [#202](https://github.com/snowarch/iNiR/issues/202).
+
+### Contributors
+Reports from [@developercrocodiles](https://github.com/developercrocodiles), [@tflori](https://github.com/tflori), [@Vanbayt](https://github.com/Vanbayt), [@InterstellarOne](https://github.com/InterstellarOne), and [@polska4au](https://github.com/polska4au) shaped the keyboard, tray, brightness, spectrum, gallery and multi-monitor fixes.
+
+## [2.28.0] - 2026-08-02
+
+The seven weeks since 2.27.0 were not quiet. The shell grew a cat, a
+dashboard, several new bar styles and a live layout editor, and a long tail
+of things got fixed by people with better eyes than ours. That work ships as
+2.28.0.
+
+### Added
+- Four desktop widgets add a shaped local image or GIF, drag-and-drop image
+  conversion, four configurable world clocks, and a profile card with weather
+  and session actions. They use the shared placement, resize, opacity and edit
+  controls.
 - A compact wallpaper launcher adds a fast, searchable carousel with static
   and animated libraries and matching ii and Waffle settings. It reuses the
   grid's wallpaper cards, switches libraries with Tab, and keeps keyboard,
@@ -79,6 +173,10 @@ lives on `prerelease` and reaches `main` with the next release.
   heatmap. `dashboard` IPC target.
 - Bar styles islands, scenic and frame join Classic, with a preset gallery
   of live mini-mockups.
+- A configurable Material 3 bar adds tonal widget groups, an in-bar dock,
+  media and system resources, delayed tooltips, tray menus, and matching
+  Settings controls. Window focus indicators now follow Niri focus changes
+  without dropping out after repeated switches.
 - The pill bar, a fifth bar style: a morphing centre island that rests as a
   clock and grows into workspaces, mixer, launcher, recorder and the rest as
   you hover, docks flush in game mode, and hosts its own OSD and toasts.
@@ -134,6 +232,9 @@ lives on `prerelease` and reaches `main` with the next release.
   plays them (desktop, backdrop, lock screen, both families) freezes on the
   current frame while unplugged. On by default; Settings › Background turns
   it off if you'd rather spend the charge.
+- The desktop media widget has three synchronized lyrics layouts, including
+  compact, split and expandable views. Lyrics are fetched only while a lyrics
+  surface is visible.
 
 ### Changed
 - Focused Settings groups pages into category cards, opens with an account
@@ -141,10 +242,20 @@ lives on `prerelease` and reaches `main` with the next release.
 - Pill notifications and OSD can stay inside the resting capsule instead of
   expanding into a larger card. The alternate mode lives in both Pill settings
   sections.
-- Fresh installs start quieter: Focused Settings, lean sidebars, no desktop
-  clock, weather polling or notification sounds until requested, and a shorter
-  Welcome flow built around structure and daily essentials. Workspace Strip is
-  now an explicit preview opt-in instead of a default module.
+- Fresh installs now start with the useful signals people expect: weather is
+  available in the bar and dashboard, notification sounds are enabled, and
+  decorative desktop widgets remain off so the wallpaper stays composed.
+  Minimum, Balanced and Full in Welcome refine that baseline without enabling
+  provider-backed integrations or overlapping desktop widgets. Workspace Strip
+  remains an explicit preview opt-in instead of a default module.
+- Alt-Tab now uses Niri's native Recent Windows surface with tuned preview
+  timing, highlight padding and corner radius. The iNiR switcher stays available
+  as an opt-in module and no longer owns the distributed Alt-Tab keys.
+- Welcome fits the screen it opens on. Every step scrolls, the card is sized
+  from the display instead of a fixed percentage, and the stepper thins out on
+  short laptop panels rather than pushing controls out of reach. Each step now
+  carries one heading, and the second step is a starting point you pick before
+  appearance and layout, so nothing you choose gets overwritten later.
 - The assistant behaves like a shell feature, not an API client: provider
   cards hide endpoints and raw model codes, shell tools run through a
   bounded registry with typed approvals, and arbitrary bash moved behind an
@@ -186,11 +297,23 @@ lives on `prerelease` and reaches `main` with the next release.
   Material containers, so GTK, Qt, terminals, editors and the rest were left
   on a palette the shell had stopped using. Switching styles re-themes them
   in place without re-extracting colours from the wallpaper.
+- iNiR is now GPL-3.0, not MIT. It started as a fork of end-4's
+  illogical-impulse, which is GPL-3.0, and that license carries into every
+  derivative. The README states the copyright and the upstream terms, and the
+  Arch and Nix packages declare GPL-3.0 as well. Nothing changes for you as a
+  user: iNiR was free software before and stays free software.
 - Public documentation now lives in the GitHub Wiki as plain Markdown. The
   repository keeps the source pages and a local sync helper instead of a
   second MkDocs and GitHub Pages build pipeline.
 
 ### Fixed
+- `Super+Q` now keeps the window captured when the keybind fires through the
+  confirmation and immediate-close paths instead of consulting a later cached
+  focus snapshot that could target another window.
+- GTK file choosers and other long-lived portal dialogs now reload generated
+  colours when the palette changes. Font synchronization also reconciles GTK,
+  KDE and XSettings at startup, and `inir doctor` reports missing configured
+  families instead of allowing silent fallback.
 - App theming ran four times per action instead of once. Three code paths
   each spawned their own pass over every target, so a single wallpaper or
   theme change sent four parallel waves through GTK, chromium, spicetify and
@@ -212,7 +335,27 @@ lives on `prerelease` and reaches `main` with the next release.
   fullscreen window on one monitor no longer pauses widgets on another;
   explicit manual Game Mode remains global.
 - Workspace indicators rebuild cleanly after config reloads instead of feeding
-  transient undefined values into typed QML properties.
+  transient undefined values into typed QML properties. The indicator row also
+  waits for the final workspace count before laying out, so a reload no longer
+  flashes a row wider than the bar reserved for it.
+- Settings kept accepting changes that were never written after a failed save.
+  A config write that the file layer rejected left the shell believing a write
+  was still in flight, which silently froze every later save and every reload
+  until the next restart. Writes now always resolve, retry twice, and say so in
+  the log when they cannot.
+- Wallpaper grids no longer rebuild against a half-loaded folder. Opening a
+  subfolder in Quick settings, Waffle Background or the wallpaper selector used
+  to briefly show the previous folder's thumbnails, or an empty grid, before
+  settling.
+- The Material 3 bar resource meters stopped updating after a few minutes.
+  The widget never registered as a permanent reader, so system polling
+  auto-stopped underneath it while it was still on screen.
+- Clipboard history survives rapid copying. Overlapping refreshes are queued
+  instead of racing each other, and a read that loses to `cliphist` mid-write
+  is retried rather than logged as a failure.
+- Typing an icon name in Bar settings no longer saves on every keystroke.
+  Each prefix was persisted and resolved as a real icon, filling the log with
+  failures for names nobody asked for.
 - Optional Kira art updates are staged and verified before installation, keep
   the shell-owned manifest untouched, and repair missing or corrupt assets even
   when the published release tag has not changed.
@@ -313,10 +456,8 @@ lives on `prerelease` and reaches `main` with the next release.
   replaced with imperative recomputation.
 - Dark/light choice persists through palette regeneration (#178, partial),
   overview search text no longer clips with scaled fonts (#179), screen
-  recording honors the configured acceleration mode (#181), `flake.nix`
-  ships a working NixOS/Home Manager payload (#186), XEmbed SNI proxy starts
-  immediately so autostart tray icons survive (#187), and brightness detects
-  the active backlight device for AMD GPUs (#188).
+  recording honors the configured acceleration mode (#181), and `flake.nix`
+  ships a working NixOS/Home Manager payload (#186).
 - Lock screen no longer crashes on screen sleep or disconnect, and `lock`
   IPC honors `lock.useHyprlock` (#176).
 - Wi-Fi state parses correctly on non-English locales (`LANG=C`).
@@ -330,13 +471,13 @@ lives on `prerelease` and reaches `main` with the next release.
   last unwashed corners.
 
 ### Issues / PRs
-- Fixed [#174](https://github.com/snowarch/iNiR/issues/174), [#178](https://github.com/snowarch/iNiR/issues/178), [#179](https://github.com/snowarch/iNiR/issues/179), [#181](https://github.com/snowarch/iNiR/issues/181), [#187](https://github.com/snowarch/iNiR/issues/187), [#188](https://github.com/snowarch/iNiR/issues/188), [#190](https://github.com/snowarch/iNiR/issues/190), [#202](https://github.com/snowarch/iNiR/issues/202).
+- Fixed [#174](https://github.com/snowarch/iNiR/issues/174), [#178](https://github.com/snowarch/iNiR/issues/178), [#179](https://github.com/snowarch/iNiR/issues/179), [#181](https://github.com/snowarch/iNiR/issues/181), [#190](https://github.com/snowarch/iNiR/issues/190), [#202](https://github.com/snowarch/iNiR/issues/202).
 - Included contributions from [#176](https://github.com/snowarch/iNiR/pull/176), [#186](https://github.com/snowarch/iNiR/pull/186), [#199](https://github.com/snowarch/iNiR/pull/199), [#200](https://github.com/snowarch/iNiR/pull/200), [#201](https://github.com/snowarch/iNiR/pull/201), [#203](https://github.com/snowarch/iNiR/pull/203).
 
 ### Contributors
 Thanks to [@owarizz](https://github.com/owarizz) for a long run of correctness and resilience fixes: thumbnail hashing, the qalc spawn loop, multi-monitor workspace switching, the mic binding, the wifi retry prompt, the brightness monitor leak, the Super-tap daemon, the memfd counter, and the removal of the dead mpvpaper restore-script machinery ([#199](https://github.com/snowarch/iNiR/pull/199), [#200](https://github.com/snowarch/iNiR/pull/200), [#201](https://github.com/snowarch/iNiR/pull/201), [#203](https://github.com/snowarch/iNiR/pull/203)); [@xdvi](https://github.com/xdvi) for the lock screen crash guard and `lock.useHyprlock` handling ([#176](https://github.com/snowarch/iNiR/pull/176)); and [@Pigbuy](https://github.com/Pigbuy) for repairing the NixOS and Home Manager payload in `flake.nix` ([#186](https://github.com/snowarch/iNiR/pull/186)).
 
-Thanks also to [@Gergish001](https://github.com/Gergish001) for the flexible spacer request ([#174](https://github.com/snowarch/iNiR/issues/174)), [@dvytvs](https://github.com/dvytvs) for the VRR flickering report that turned the switch into a three-way choice ([#202](https://github.com/snowarch/iNiR/issues/202)), and [@tvvano16-dotcom](https://github.com/tvvano16-dotcom) ([#178](https://github.com/snowarch/iNiR/issues/178)), [@KiriVaelorn](https://github.com/KiriVaelorn) ([#179](https://github.com/snowarch/iNiR/issues/179)), [@vkleshnin](https://github.com/vkleshnin) ([#181](https://github.com/snowarch/iNiR/issues/181)), [@tflori](https://github.com/tflori) ([#187](https://github.com/snowarch/iNiR/issues/187)), [@Vanbayt](https://github.com/Vanbayt) ([#188](https://github.com/snowarch/iNiR/issues/188)) and [@Haretsu-Kimagure](https://github.com/Haretsu-Kimagure) ([#190](https://github.com/snowarch/iNiR/issues/190)) for the reports behind the dark-mode, overview search, recording acceleration, tray autostart, AMD brightness and PipeWire crash fixes.
+Thanks also to [@Gergish001](https://github.com/Gergish001) for the flexible spacer request ([#174](https://github.com/snowarch/iNiR/issues/174)), [@dvytvs](https://github.com/dvytvs) for the VRR flickering report that turned the switch into a three-way choice ([#202](https://github.com/snowarch/iNiR/issues/202)), and [@tvvano16-dotcom](https://github.com/tvvano16-dotcom) ([#178](https://github.com/snowarch/iNiR/issues/178)), [@KiriVaelorn](https://github.com/KiriVaelorn) ([#179](https://github.com/snowarch/iNiR/issues/179)), [@vkleshnin](https://github.com/vkleshnin) ([#181](https://github.com/snowarch/iNiR/issues/181)) and [@Haretsu-Kimagure](https://github.com/Haretsu-Kimagure) ([#190](https://github.com/snowarch/iNiR/issues/190)) for the reports behind the dark-mode, overview search, recording acceleration and PipeWire crash fixes.
 
 ## [2.27.0] - 2026-06-11
 

@@ -18,6 +18,8 @@ singleton ConflictKiller 1.0 ConflictKiller.qml
 singleton CustomWidgets 1.0 CustomWidgets.qml
 DankSocket 1.0 DankSocket.qml
 singleton DateTime 1.0 DateTime.qml
+singleton DesktopItems 1.0 DesktopItems.qml
+singleton DesktopWidgetLayout 1.0 DesktopWidgetLayout.qml
 singleton DevNavigation 1.0 DevNavigation.qml
 singleton Events 1.0 Events.qml
 singleton FirstRunExperience 1.0 FirstRunExperience.qml
@@ -29,6 +31,7 @@ singleton Hyprsunset 1.0 Hyprsunset.qml
 singleton IconThemeService 1.0 IconThemeService.qml
 singleton Idle 1.0 Idle.qml
 singleton KeyboardIndicators 1.0 KeyboardIndicators.qml
+singleton LyricsService 1.0 LyricsService.qml
 singleton MaterialThemeLoader 1.0 MaterialThemeLoader.qml
 singleton MemoryPressureService 1.0 MemoryPressureService.qml
 singleton MinimizedWindows 1.0 MinimizedWindows.qml
@@ -64,4 +67,5 @@ singleton Wallpapers 1.0 Wallpapers.qml
 singleton Weather 1.0 Weather.qml
 singleton WidgetPowerManager 1.0 WidgetPowerManager.qml
 singleton WindowPreviewService 1.0 WindowPreviewService.qml
+singleton WorldClock 1.0 WorldClock.qml
 singleton YtMusic 1.0 YtMusic.qml

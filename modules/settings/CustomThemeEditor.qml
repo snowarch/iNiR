@@ -314,60 +314,30 @@ ColumnLayout {
                     RowLayout {
                         id: segmentRow
                         anchors.centerIn: parent
-                        spacing: 0
+                        spacing: 4
 
-                        RippleButton {
-                            implicitWidth: 60
-                            implicitHeight: 28
-                            buttonRadius: 14
-                            toggled: !(Config.options.appearance.customTheme?.darkmode ?? true)
-                            colBackground: toggled ? Appearance.colors.colPrimary : "transparent"
+                        FilterChip {
+                            minimumWidth: 62
+                            chipIcon: "light_mode"
+                            text: Translation.tr("Light")
+                            selected: !(Config.options.appearance.customTheme?.darkmode ?? true)
+                            surfaceColor: Appearance.colors.colLayer2
                             onClicked: {
                                 if (Config.options.appearance.customTheme?.darkmode ?? true) {
                                     root.invertColorsForMode(true) // Switch to light
                                 }
                             }
-
-                            contentItem: RowLayout {
-                                anchors.centerIn: parent
-                                spacing: 2
-                                MaterialSymbol {
-                                    text: "light_mode"
-                                    iconSize: 14
-                                    color: parent.parent.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer2
-                                }
-                                StyledText {
-                                    text: "Light"
-                                    font.pixelSize: Appearance.font.pixelSize.smallest
-                                    color: parent.parent.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer2
-                                }
-                            }
                         }
 
-                        RippleButton {
-                            implicitWidth: 60
-                            implicitHeight: 28
-                            buttonRadius: 14
-                            toggled: Config.options.appearance.customTheme?.darkmode ?? true
-                            colBackground: toggled ? Appearance.colors.colPrimary : "transparent"
+                        FilterChip {
+                            minimumWidth: 62
+                            chipIcon: "dark_mode"
+                            text: Translation.tr("Dark")
+                            selected: Config.options.appearance.customTheme?.darkmode ?? true
+                            surfaceColor: Appearance.colors.colLayer2
                             onClicked: {
                                 if (!(Config.options.appearance.customTheme?.darkmode ?? true)) {
                                     root.invertColorsForMode(false) // Switch to dark
-                                }
-                            }
-
-                            contentItem: RowLayout {
-                                anchors.centerIn: parent
-                                spacing: 2
-                                MaterialSymbol {
-                                    text: "dark_mode"
-                                    iconSize: 14
-                                    color: parent.parent.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer2
-                                }
-                                StyledText {
-                                    text: "Dark"
-                                    font.pixelSize: Appearance.font.pixelSize.smallest
-                                    color: parent.parent.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer2
                                 }
                             }
                         }
@@ -562,7 +532,7 @@ ColumnLayout {
 
                                     StyledText {
                                         anchors.centerIn: parent
-                                        text: "Cancel"
+                                        text: Translation.tr("Cancel")
                                         font.pixelSize: Appearance.font.pixelSize.smallest
                                         color: Appearance.m3colors.m3onSecondaryContainer
                                     }
@@ -945,7 +915,7 @@ ColumnLayout {
                 spacing: 8
 
                 MaterialSymbol {
-                    text: "auto_fix_high"
+                    text: "auto_fix"
                     iconSize: 20
                     color: Appearance.colors.colPrimary
                 }
@@ -2463,6 +2433,11 @@ ColumnLayout {
                     root.applyToShell()
                 }
             }
+        }
+
+        SettingsNativeDialogGuard {
+            dialog: colorPicker
+            dialogKey: "custom-theme-palette-color"
         }
     }
 }

@@ -106,14 +106,14 @@ Item {
         }
 
         RowLayout {
+            id: minimalRow
             anchors.fill: parent
             anchors.margins: 12
             spacing: 12
 
-            // Small artwork
             PlayerArtwork {
-                Layout.preferredWidth: 70
-                Layout.preferredHeight: 70
+                Layout.preferredWidth: minimalRow.height
+                Layout.preferredHeight: minimalRow.height
                 Layout.alignment: Qt.AlignVCenter
                 artSource: playerBase.displayedArtFilePath
                 transitionKey: playerBase.mediaTransitionKey
@@ -135,11 +135,12 @@ Item {
                 enableBlurTransition: false
             }
 
-            // Info & controls
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                spacing: 4
+                spacing: 3
+
+                Item { Layout.fillHeight: true }
 
                 // Title
                 StyledText {
@@ -178,11 +179,10 @@ Item {
                     visible: text !== ""
                 }
 
-                Item { Layout.fillHeight: true }
-
                 // Progress bar
                 PlayerProgress {
                     Layout.fillWidth: true
+                    Layout.topMargin: 2
                     implicitHeight: 14
                     position: playerBase.effectivePosition
                     length: playerBase.effectiveLength
@@ -204,73 +204,68 @@ Item {
                     onSeekRequested: seconds => playerBase.seek(seconds)
                 }
 
-                // Controls + time
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 4
-
-                    PlayerControls {
-                        canGoPrevious: playerBase.effectiveCanGoPrevious
-                        canGoNext: playerBase.effectiveCanGoNext
-                        buttonSize: 28
-                        playButtonSize: 36
-                        iconSize: 18
-                        playIconSize: 20
-                        isPlaying: playerBase.effectiveIsPlaying
-                        buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
-                            : Appearance.inirEverywhere
-                            ? Appearance.inir.roundingSmall
-                            : Appearance.rounding.full
-                        buttonHoverColor: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
-                            : Appearance.inirEverywhere
-                            ? Appearance.inir.colLayer2Hover
-                            : Appearance.auroraEverywhere
-                                ? Appearance.aurora.colSubSurface
-                                : ColorUtils.transparentize(
-                                    blendedColors?.colLayer1 ?? Appearance.colors.colLayer1, 0.5
-                                  )
-                        buttonRippleColor: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.28)
-                            : Appearance.inirEverywhere
-                            ? Appearance.inir.colLayer2Active
-                            : Appearance.auroraEverywhere
-                                ? Appearance.aurora.colSubSurfaceActive
-                                : (blendedColors?.colLayer1Active ?? Appearance.colors.colLayer1Active)
-                        iconColor: Appearance.zzzEverywhere ? Appearance.zzz.ink
-                            : Appearance.inirEverywhere
-                            ? playerBase.inirText
-                            : Appearance.auroraEverywhere
-                                ? Appearance.colors.colOnLayer0
-                                : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
-                        playIconColor: Appearance.zzzEverywhere ? (blendedColors?.colPrimary ?? Appearance.zzz.accent)
-                            : Appearance.inirEverywhere
-                            ? playerBase.inirPrimary
-                            : Appearance.auroraEverywhere
-                                ? Appearance.colors.colOnLayer0
-                                : Appearance.colors.colOnLayer1
-                        onPreviousClicked: playerBase.previous()
-                        onPlayPauseClicked: playerBase.togglePlaying()
-                        onNextClicked: playerBase.next()
-                    }
-
-                    Item { Layout.fillWidth: true }
-
-                    // Time display
-                    StyledText {
-                        text: StringUtils.friendlyTimeForSeconds(playerBase.effectivePosition)
-                            + " / "
-                            + StringUtils.friendlyTimeForSeconds(playerBase.effectiveLength)
-                        font.pixelSize: Appearance.font.pixelSize.smallest
-                        font.family: Appearance.font.family.numbers
-                        color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
-                            : Appearance.inirEverywhere
-                            ? playerBase.inirTextSecondary
-                            : (blendedColors?.colSubtext ?? Appearance.colors.colSubtext)
-                        Behavior on color {
-                            enabled: Appearance.animationsEnabled
-                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                        }
+                StyledText {
+                    Layout.alignment: Qt.AlignRight
+                    text: StringUtils.friendlyTimeForSeconds(playerBase.effectivePosition)
+                        + " / "
+                        + StringUtils.friendlyTimeForSeconds(playerBase.effectiveLength)
+                    font.pixelSize: Appearance.font.pixelSize.smallest
+                    font.family: Appearance.font.family.numbers
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
+                        : Appearance.inirEverywhere
+                        ? playerBase.inirTextSecondary
+                        : (blendedColors?.colSubtext ?? Appearance.colors.colSubtext)
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                     }
                 }
+
+                Item { Layout.fillHeight: true }
+            }
+
+            PlayerControls {
+                Layout.alignment: Qt.AlignVCenter
+                canGoPrevious: playerBase.effectiveCanGoPrevious
+                canGoNext: playerBase.effectiveCanGoNext
+                buttonSize: 28
+                playButtonSize: 36
+                iconSize: 18
+                playIconSize: 20
+                isPlaying: playerBase.effectiveIsPlaying
+                buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+                    : Appearance.inirEverywhere
+                    ? Appearance.inir.roundingSmall
+                    : Appearance.rounding.full
+                buttonHoverColor: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
+                    : Appearance.inirEverywhere
+                    ? Appearance.inir.colLayer2Hover
+                    : Appearance.auroraEverywhere
+                        ? Appearance.aurora.colSubSurface
+                        : ColorUtils.transparentize(
+                            blendedColors?.colLayer1 ?? Appearance.colors.colLayer1, 0.5
+                          )
+                buttonRippleColor: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.28)
+                    : Appearance.inirEverywhere
+                    ? Appearance.inir.colLayer2Active
+                    : Appearance.auroraEverywhere
+                        ? Appearance.aurora.colSubSurfaceActive
+                        : (blendedColors?.colLayer1Active ?? Appearance.colors.colLayer1Active)
+                iconColor: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                    : Appearance.inirEverywhere
+                    ? playerBase.inirText
+                    : Appearance.auroraEverywhere
+                        ? Appearance.colors.colOnLayer0
+                        : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
+                playIconColor: Appearance.zzzEverywhere ? (blendedColors?.colPrimary ?? Appearance.zzz.accent)
+                    : Appearance.inirEverywhere
+                    ? playerBase.inirPrimary
+                    : Appearance.auroraEverywhere
+                        ? Appearance.colors.colOnLayer0
+                        : Appearance.colors.colOnLayer1
+                onPreviousClicked: playerBase.previous()
+                onPlayPauseClicked: playerBase.togglePlaying()
+                onNextClicked: playerBase.next()
             }
         }
     }

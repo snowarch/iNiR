@@ -29,8 +29,8 @@ Menu {
 
     implicitWidth: background.implicitWidth + margins * 2
     implicitHeight: background.implicitHeight + margins * 2
-    margins: 10
-    padding: 3
+    margins: Looks.dp(10)
+    padding: Looks.dp(3)
     property real sourceEdgeMargin: -implicitHeight
     clip: true
     

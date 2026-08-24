@@ -197,6 +197,7 @@ Scope {
         root.searchResults = [];
         root._pendingOptionId = -1;
         root._pendingPageIndex = -1;
+        root._pendingSection = "";
         root._spotlightRetries = 0;
         spotlightTimer.stop();
     }
@@ -288,6 +289,7 @@ Scope {
     // ── Spotlight: land on the page, then scroll the matched control in ──
     property int _pendingOptionId: -1
     property int _pendingPageIndex: -1
+    property string _pendingSection: ""
     property int _spotlightRetries: 0
     readonly property int _spotlightMaxRetries: 15
 
@@ -299,14 +301,17 @@ Scope {
         if (!entry || entry.pageIndex === undefined || entry.pageIndex < 0) {
             root._pendingOptionId = -1;
             root._pendingPageIndex = -1;
+            root._pendingSection = "";
             return;
         }
 
         root._pendingOptionId = (entry.optionId !== undefined) ? entry.optionId : -1;
         root._pendingPageIndex = entry.pageIndex;
+        root._pendingSection = (root._pendingOptionId < 0 && entry.section)
+            ? String(entry.section) : "";
         root.openPage(entry.pageIndex);
 
-        if (root._pendingOptionId >= 0)
+        if (root._pendingOptionId >= 0 || root._pendingSection.length > 0)
             spotlightTimer.restart();
         else
             root._pendingPageIndex = -1;
@@ -319,10 +324,12 @@ Scope {
     }
 
     function _trySpotlight(): void {
-        if (root._pendingOptionId < 0)
+        if (root._pendingOptionId < 0 && root._pendingSection.length === 0)
             return;
 
-        var control = SettingsSearchRegistry.getControlById(root._pendingOptionId);
+        var control = root._pendingOptionId >= 0
+            ? SettingsSearchRegistry.getControlById(root._pendingOptionId)
+            : SettingsSearchRegistry.findSectionControl(root._pendingPageIndex, root._pendingSection);
         if (!control) {
             if (root._spotlightRetries < root._spotlightMaxRetries) {
                 root._spotlightRetries++;
@@ -330,6 +337,7 @@ Scope {
             } else {
                 root._pendingOptionId = -1;
                 root._pendingPageIndex = -1;
+                root._pendingSection = "";
             }
             return;
         }
@@ -346,6 +354,7 @@ Scope {
 
         root._pendingOptionId = -1;
         root._pendingPageIndex = -1;
+        root._pendingSection = "";
     }
 
     function _findParentFlickable(item): var {
@@ -391,8 +400,11 @@ Scope {
             visible: root.settingsOpen || root._closeAnimRunning
             exclusionMode: ExclusionMode.Ignore
             WlrLayershell.namespace: "quickshell:settingsFocus"
-            WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: root.settingsOpen && !GlobalStates.regionSelectorOpen
+            WlrLayershell.layer: GlobalStates.settingsNativeDialogOpen
+                ? WlrLayer.Bottom : WlrLayer.Overlay
+            WlrLayershell.keyboardFocus: root.settingsOpen
+                && !GlobalStates.regionSelectorOpen
+                && !GlobalStates.settingsNativeDialogOpen
                 ? WlrKeyboardFocus.Exclusive
                 : WlrKeyboardFocus.None
             color: "transparent"
@@ -509,7 +521,7 @@ Scope {
                 windows: [settingsPanel]
                 active: false
                 onCleared: () => {
-                    if (!active)
+                    if (!active && !GlobalStates.settingsNativeDialogOpen)
                         GlobalStates.settingsOverlayOpen = false;
                 }
             }
@@ -517,12 +529,14 @@ Scope {
             Connections {
                 target: GlobalStates
                 function onSettingsOverlayOpenChanged() { grabTimer.restart() }
+                function onSettingsNativeDialogOpenChanged() { grabTimer.restart() }
             }
 
             Timer {
                 id: grabTimer
                 interval: 100
                 onTriggered: grab.active = (GlobalStates.settingsOverlayOpen ?? false)
+                    && !GlobalStates.settingsNativeDialogOpen
             }
 
             // ── Scrim ──
@@ -550,6 +564,7 @@ Scope {
             MouseArea {
                 anchors.fill: parent
                 visible: GlobalStates.settingsOverlayOpen ?? false
+                enabled: !GlobalStates.settingsNativeDialogOpen
                 onClicked: GlobalStates.settingsOverlayOpen = false
             }
 

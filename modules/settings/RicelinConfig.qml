@@ -267,7 +267,7 @@ ContentPage {
 
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("One shared skin: these apply to every island surface at once (bar islands, dock, sidebars, search).")
+                text: Translation.tr("One shared skin: these apply to every island surface at once — the pill bar itself, bar islands, dock, sidebars and search. The pill keeps its own fill opacity in Bar › Pill options, which multiplies with this one.")
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 wrapMode: Text.WordWrap

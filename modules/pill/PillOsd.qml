@@ -10,6 +10,7 @@ Item {
 
     property real s: 1
     property string screenName: ""
+    property bool outputAllowed: true
     property bool suppressed: false
     property bool expanded: false
     property bool compact: false
@@ -106,24 +107,12 @@ Item {
         }
     }
 
-    /**
-     * Every pill carries its own Osd but the volume/track/battery signals are
-     * global, so without this gate one keypress flashes every monitor at once.
-     * Workspace flashes skip it: those are already keyed to this screen's own
-     * active workspace.
-     */
-    readonly property bool onFocusedMonitor: CompositorService.isNiri
-        ? (NiriService.currentOutput.length === 0 || NiriService.currentOutput === root.screenName)
-        : (!Hyprland.focusedMonitor || Hyprland.focusedMonitor.name === root.screenName)
-
     function flash(which) {
         // OSD face switched off: the standalone OnScreenDisplay panel owns the
         // flashes instead (ShellIiPanels hands it back when this key is false).
         if (!(Config.options?.bar?.pill?.osd ?? true))
             return false;
-        if (!armed || suppressed)
-            return false;
-        if (which !== "workspace" && !onFocusedMonitor)
+        if (!outputAllowed || !armed || suppressed)
             return false;
         if (which === "track" && flashing && (kind === "volume" || kind === "brightness" || kind === "mic"))
             return false;
@@ -143,6 +132,12 @@ Item {
         } else if (dirty) {
             tryShow();
         }
+    }
+
+    onOutputAllowedChanged: if (!outputAllowed) {
+        dirty = false;
+        hideTimer.stop();
+        flashing = false;
     }
 
     /** A track announce that lost to live hardware feedback replays once the bar clears. */
@@ -202,6 +197,8 @@ Item {
     Connections {
         target: PillPlayers
         function onAnnounce(player) {
+            if (!root.outputAllowed)
+                return;
             root.pendingSubject = player;
             root.dirty = true;
             root.tryShow();
@@ -243,14 +240,14 @@ Item {
         anchors.fill: parent
         opacity: root.kind === "volume" ? 1 : 0
         visible: opacity > 0.01
-        Behavior on opacity { NumberAnimation { duration: 150 } }
+        Behavior on opacity { NumberAnimation { duration: PillMotion.fast } }
 
         GlyphIcon {
             id: volGlyph
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            width: 17 * root.s
-            height: 17 * root.s
+            width: (root.compact ? 13 : 17) * root.s
+            height: width
             name: root.muted ? "speaker-off" : "speaker"
             color: root.muted ? PillTheme.dim : PillTheme.iconDim
             stroke: 1.7
@@ -260,24 +257,24 @@ Item {
             id: volPct
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            width: 32 * root.s
+            width: (root.compact ? 26 : 32) * root.s
             horizontalAlignment: Text.AlignRight
             text: Math.round(root.volume * 100) + "%"
             color: root.muted ? PillTheme.dim : PillTheme.cream
             font.family: PillTheme.font
-            font.pixelSize: 11 * root.s
+            font.pixelSize: (root.compact ? 9.5 : 11) * root.s
             font.weight: Font.DemiBold
             font.features: { "tnum": 1 }
         }
 
         Rectangle {
             anchors.left: volGlyph.right
-            anchors.leftMargin: 12 * root.s
+            anchors.leftMargin: (root.compact ? 6 : 12) * root.s
             anchors.right: volPct.left
-            anchors.rightMargin: 12 * root.s
+            anchors.rightMargin: (root.compact ? 6 : 12) * root.s
             anchors.verticalCenter: parent.verticalCenter
-            height: 4 * root.s
-            radius: 2 * root.s
+            height: (root.compact ? 3 : 4) * root.s
+            radius: height / 2
             color: PillTheme.threadBg
 
             Rectangle {
@@ -298,14 +295,14 @@ Item {
         anchors.fill: parent
         opacity: root.kind === "mic" ? 1 : 0
         visible: opacity > 0.01
-        Behavior on opacity { NumberAnimation { duration: 150 } }
+        Behavior on opacity { NumberAnimation { duration: PillMotion.fast } }
 
         GlyphIcon {
             id: micGlyph
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            width: 17 * root.s
-            height: 17 * root.s
+            width: (root.compact ? 13 : 17) * root.s
+            height: width
             name: root.micMuted ? "mic-off" : "mic"
             color: root.micMuted ? PillTheme.dim : PillTheme.iconDim
             stroke: 1.7
@@ -315,24 +312,24 @@ Item {
             id: micPct
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            width: 32 * root.s
+            width: (root.compact ? 26 : 32) * root.s
             horizontalAlignment: Text.AlignRight
             text: root.micMuted ? "off" : Math.round(root.micVolume * 100) + "%"
             color: root.micMuted ? PillTheme.dim : PillTheme.cream
             font.family: PillTheme.font
-            font.pixelSize: 11 * root.s
+            font.pixelSize: (root.compact ? 9.5 : 11) * root.s
             font.weight: Font.DemiBold
             font.features: ({ "tnum": 1 })
         }
 
         Rectangle {
             anchors.left: micGlyph.right
-            anchors.leftMargin: 12 * root.s
+            anchors.leftMargin: (root.compact ? 6 : 12) * root.s
             anchors.right: micPct.left
-            anchors.rightMargin: 12 * root.s
+            anchors.rightMargin: (root.compact ? 6 : 12) * root.s
             anchors.verticalCenter: parent.verticalCenter
-            height: 4 * root.s
-            radius: 2 * root.s
+            height: (root.compact ? 3 : 4) * root.s
+            radius: height / 2
             color: PillTheme.threadBg
 
             Rectangle {
@@ -353,7 +350,7 @@ Item {
         anchors.fill: parent
         opacity: root.kind === "track" ? 1 : 0
         visible: opacity > 0.01
-        Behavior on opacity { NumberAnimation { duration: 150 } }
+        Behavior on opacity { NumberAnimation { duration: PillMotion.fast } }
 
         ClippingRectangle {
             id: coverBox
@@ -422,7 +419,7 @@ Item {
             id: trackCtrl
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            width: (root.compact ? 15 : 18) * root.s
+            width: (root.compact ? 12 : 18) * root.s
             height: width
             name: root.subjectPlaying ? "play" : "pause"
             color: root.subjectPlaying ? PillTheme.vermLit : PillTheme.iconDim
@@ -430,9 +427,9 @@ Item {
 
         Column {
             anchors.left: coverBox.right
-            anchors.leftMargin: (root.compact ? 8 : 12) * root.s
+            anchors.leftMargin: (root.compact ? 6 : 12) * root.s
             anchors.right: trackCtrl.left
-            anchors.rightMargin: (root.compact ? 8 : 12) * root.s
+            anchors.rightMargin: (root.compact ? 4 : 12) * root.s
             anchors.verticalCenter: parent.verticalCenter
             spacing: 3 * root.s
 
@@ -441,7 +438,7 @@ Item {
                 text: root.subjectHas ? root.subjectTitle : "Nothing playing"
                 color: PillTheme.cream
                 font.family: PillTheme.font
-                font.pixelSize: (root.compact ? 10.5 : 14) * root.s
+                font.pixelSize: (root.compact ? 9.5 : 14) * root.s
                 font.weight: Font.DemiBold
                 maximumLineCount: 1
                 elide: Text.ElideRight
@@ -465,14 +462,14 @@ Item {
         anchors.fill: parent
         opacity: root.kind === "brightness" ? 1 : 0
         visible: opacity > 0.01
-        Behavior on opacity { NumberAnimation { duration: 150 } }
+        Behavior on opacity { NumberAnimation { duration: PillMotion.fast } }
 
         GlyphIcon {
             id: brightGlyph
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            width: 17 * root.s
-            height: 17 * root.s
+            width: (root.compact ? 13 : 17) * root.s
+            height: width
             name: "sun"
             color: PillTheme.iconDim
             stroke: 1.7
@@ -482,24 +479,24 @@ Item {
             id: brightPct
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            width: 32 * root.s
+            width: (root.compact ? 26 : 32) * root.s
             horizontalAlignment: Text.AlignRight
             text: Math.round(root.brightness * 100) + "%"
             color: PillTheme.cream
             font.family: PillTheme.font
-            font.pixelSize: 11 * root.s
+            font.pixelSize: (root.compact ? 9.5 : 11) * root.s
             font.weight: Font.DemiBold
             font.features: { "tnum": 1 }
         }
 
         Rectangle {
             anchors.left: brightGlyph.right
-            anchors.leftMargin: 12 * root.s
+            anchors.leftMargin: (root.compact ? 6 : 12) * root.s
             anchors.right: brightPct.left
-            anchors.rightMargin: 12 * root.s
+            anchors.rightMargin: (root.compact ? 6 : 12) * root.s
             anchors.verticalCenter: parent.verticalCenter
-            height: 4 * root.s
-            radius: 2 * root.s
+            height: (root.compact ? 3 : 4) * root.s
+            radius: height / 2
             color: PillTheme.threadBg
 
             Rectangle {
@@ -519,14 +516,14 @@ Item {
         anchors.fill: parent
         opacity: root.kind === "battery" ? 1 : 0
         visible: opacity > 0.01
-        Behavior on opacity { NumberAnimation { duration: 150 } }
+        Behavior on opacity { NumberAnimation { duration: PillMotion.fast } }
 
         GlyphIcon {
             id: battGlyph
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            width: 17 * root.s
-            height: 17 * root.s
+            width: (root.compact ? 13 : 17) * root.s
+            height: width
             name: "bolt"
             color: PillTheme.flameGlow
             stroke: 1.7
@@ -536,24 +533,24 @@ Item {
             id: battPct
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            width: 40 * root.s
+            width: (root.compact ? 30 : 40) * root.s
             horizontalAlignment: Text.AlignRight
             text: PillBattery.pct + "%"
             color: PillTheme.cream
             font.family: PillTheme.font
-            font.pixelSize: 11 * root.s
+            font.pixelSize: (root.compact ? 9.5 : 11) * root.s
             font.weight: Font.DemiBold
             font.features: { "tnum": 1 }
         }
 
         Rectangle {
             anchors.left: battGlyph.right
-            anchors.leftMargin: 12 * root.s
+            anchors.leftMargin: (root.compact ? 6 : 12) * root.s
             anchors.right: battPct.left
-            anchors.rightMargin: 12 * root.s
+            anchors.rightMargin: (root.compact ? 6 : 12) * root.s
             anchors.verticalCenter: parent.verticalCenter
-            height: 4 * root.s
-            radius: 2 * root.s
+            height: (root.compact ? 3 : 4) * root.s
+            radius: height / 2
             color: PillTheme.threadBg
             clip: true
 
@@ -576,11 +573,14 @@ Item {
                     anchors.bottom: parent.bottom
                     width: 34 * root.s
                     color: "transparent"
+                    // Cream-derived so the charge sweep stays legible on a light
+                    // palette; the literal warm white it replaced was invisible
+                    // against a bright generated scheme.
                     gradient: Gradient {
                         orientation: Gradient.Horizontal
-                        GradientStop { position: 0.0; color: "#00ffffff" }
-                        GradientStop { position: 0.5; color: "#55ffe6d6" }
-                        GradientStop { position: 1.0; color: "#00ffffff" }
+                        GradientStop { position: 0.0; color: Qt.alpha(PillTheme.cream, 0) }
+                        GradientStop { position: 0.5; color: Qt.alpha(PillTheme.cream, 0.33) }
+                        GradientStop { position: 1.0; color: Qt.alpha(PillTheme.cream, 0) }
                     }
 
                     NumberAnimation on x {
@@ -600,14 +600,14 @@ Item {
         anchors.fill: parent
         opacity: root.kind === "workspace" ? 1 : 0
         visible: opacity > 0.01
-        Behavior on opacity { NumberAnimation { duration: 150 } }
+        Behavior on opacity { NumberAnimation { duration: PillMotion.fast } }
 
         PillWorkspaces {
             id: wsIndicator
             anchors.centerIn: parent
             screenName: root.screenName
             s: root.s
-            gap: 8 * root.s
+            gap: (root.compact ? 5 : 8) * root.s
             enabled: false
         }
     }
@@ -617,14 +617,14 @@ Item {
         anchors.fill: parent
         opacity: root.kind === "record" ? 1 : 0
         visible: opacity > 0.01
-        Behavior on opacity { NumberAnimation { duration: 150 } }
+        Behavior on opacity { NumberAnimation { duration: PillMotion.fast } }
 
         Rectangle {
             id: recGlyph
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            width: 13 * root.s
-            height: 13 * root.s
+            width: (root.compact ? 9 : 13) * root.s
+            height: width
             radius: width / 2
             color: root.recordStarted ? PillTheme.verm : PillTheme.dim
 
@@ -638,13 +638,15 @@ Item {
 
         Text {
             anchors.left: recGlyph.right
-            anchors.leftMargin: 13 * root.s
+            anchors.leftMargin: (root.compact ? 8 : 13) * root.s
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            text: root.recordStarted ? "Recording started" : "Recording stopped"
+            text: root.compact
+                ? (root.recordStarted ? "REC" : "Stopped")
+                : (root.recordStarted ? "Recording started" : "Recording stopped")
             color: PillTheme.cream
             font.family: PillTheme.font
-            font.pixelSize: (root.compact ? 10.5 : 11.5) * root.s
+            font.pixelSize: (root.compact ? 9.5 : 11.5) * root.s
             font.weight: Font.DemiBold
             elide: Text.ElideRight
             maximumLineCount: 1

@@ -38,7 +38,6 @@ Variants {
         }
 
         visible: vignetteEnabled
-            && !GameMode.hasFullscreenOnOutput(modelData?.name ?? "")
 
         anchors {
             left: true

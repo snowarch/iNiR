@@ -102,7 +102,7 @@ BarIconButton {
     }
 
     BarToolTip {
-        extraVisibleCondition: root.shouldShowTooltip && !root.Drag.active
+        barExtraVisibleCondition: root.shouldShowTooltip && !root.Drag.active
         text: TrayService.getTooltipForItem(root.item)
     }
 }

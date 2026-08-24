@@ -201,15 +201,23 @@ Item {
                 Connections {
                     target: root
                     function onResponsesChanged() {
-                        if (root.responses.length > booruResponseListView.lastResponseLength) {
-                            // Only auto-scroll if user is not actively scrolling
-                            if (!booruResponseListView.userIsScrolling && 
-                                booruResponseListView.lastResponseLength > 0 && 
-                                root.responses[booruResponseListView.lastResponseLength].provider != "system") {
-                                booruResponseListView.contentY = booruResponseListView.contentY + root.scrollOnNewResponse
-                            }
-                            booruResponseListView.lastResponseLength = root.responses.length
+                        const nextLength = root.responses.length
+                        if (nextLength === 0) {
+                            booruResponseListView.lastResponseLength = 0
+                            return
                         }
+
+                        // A bounded response list rotates its oldest item once full,
+                        // so a new page can arrive without increasing the length.
+                        if (nextLength >= booruResponseListView.lastResponseLength) {
+                            const newestResponse = root.responses[nextLength - 1]
+                            if (!booruResponseListView.userIsScrolling
+                                    && booruResponseListView.lastResponseLength > 0
+                                    && newestResponse?.provider !== "system") {
+                                booruResponseListView.contentY += root.scrollOnNewResponse
+                            }
+                        }
+                        booruResponseListView.lastResponseLength = nextLength
                     }
                 }
 

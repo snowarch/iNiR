@@ -17,7 +17,7 @@ Item {
     // Boards: "local" (geo, via Weather location) / "top" / one topic per entry.
     readonly property var boards: {
         const result = [
-            { key: "local", topic: "", label: Translation.tr("Local"), icon: "location_on" },
+            { key: "local", topic: "", label: Translation.tr("Local"), icon: "place" },
             { key: "top", topic: "", label: Translation.tr("Top"), icon: "trending_up" }
         ]
         const topicLabels = {
@@ -286,6 +286,7 @@ Item {
                 onClicked: root.refreshCurrent()
 
                 contentItem: MaterialSymbol {
+                    id: refreshIcon
                     anchors.centerIn: parent
                     text: "refresh"
                     iconSize: 18
@@ -297,6 +298,7 @@ Item {
                         to: 360
                         duration: 1000
                         loops: Animation.Infinite
+                        onRunningChanged: if (!running) refreshIcon.rotation = 0
                     }
                 }
 

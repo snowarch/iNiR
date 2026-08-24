@@ -2,19 +2,22 @@
 Description=iNiR shell
 # Lifecycle: stop/restart inir when the graphical session stops/restarts.
 PartOf=graphical-session.target
-# Ordering: wait for the compositor to signal readiness (niri is Type=notify,
-# so graphical-session.target is only reached once the Wayland socket exists).
-After=graphical-session.target
-# Guard: fail immediately if the graphical session isn't active or starting.
-# inir is a session consumer, not a producer — it must never pull in the target.
-Requisite=graphical-session.target
+# Ordering: the compositor-specific wants link starts iNiR alongside the
+# compositor. The launcher waits for the Wayland socket, then systemd keeps the
+# graphical session target blocked until Quickshell owns the tray watcher name.
+# XDG autostart applications start after graphical-session.target, so native
+# StatusNotifierItems cannot race the watcher on cold login.
+Wants=graphical-session-pre.target
+After=graphical-session-pre.target
+Before=graphical-session.target
 # Rate-limit restarts: max 3 attempts in 30 seconds, then stop trying.
 # These MUST live in [Unit], not [Service] — systemd ignores them elsewhere.
 StartLimitIntervalSec=30
 StartLimitBurst=3
 
 [Service]
-Type=simple
+Type=dbus
+BusName=org.kde.StatusNotifierWatcher
 
 # Pre-seed stable environment so the bash wrapper skips detection at boot.
 # QT_SCALE_FACTOR must be 1 — shell scaling is handled in QML.

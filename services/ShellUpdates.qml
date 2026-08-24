@@ -244,7 +244,9 @@ Singleton {
             const termSlot = (AppLauncher && typeof AppLauncher.commandFor === "function")
                 ? AppLauncher.commandFor("terminal") : ""
             const termBin = (termSlot.length > 0 ? termSlot : "kitty").trim().split(/\s+/)[0]
-            Quickshell.execDetached([termBin, "-e", "/usr/bin/bash", "-c", bashCmd])
+            ShellExec.execDetachedArgs(
+                [termBin, "-e", "/usr/bin/bash", "-c", bashCmd],
+                "Update iNiR", repoDir)
             print("[ShellUpdates] Update launched in terminal (" + termBin + ") from: " + repoDir)
         } else {
             // Detached background — same path as before the terminal toggle existed.

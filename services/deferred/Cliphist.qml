@@ -19,6 +19,8 @@ Singleton {
     property bool sloppySearch: Config.options?.search.sloppy ?? false
     property real scoreThreshold: 0.2
     property list<string> entries: []
+    property int _readAttempts: 0
+    property bool _refreshQueued: false
     readonly property var preparedEntries: entries.map(a => ({
         name: Fuzzy.prepare(`${a.replace(/^\s*\S+\s+/, "")}`),
         entry: a
@@ -78,6 +80,10 @@ Singleton {
     }
 
     function refresh() {
+        if (readProc.running) {
+            root._refreshQueued = true
+            return
+        }
         readProc.buffer = []
         readProc.running = true
     }
@@ -216,13 +222,20 @@ Singleton {
         }
     }
 
-    // Browsers prepend this to a text/html payload; it is the only reliable sign
-    // that the content is markup rather than text that happens to contain tags.
+    // Two wrappers mark a text/html payload: Firefox's content-type meta tag and
+    // the CF_HTML fragment markers Chromium and Electron apps emit. They are the
+    // only reliable sign that the content is markup rather than text that happens
+    // to contain tags. Kept in sync with scripts/clipboard-store.py.
+    function isBrowserMarkup(str): bool {
+        return str.startsWith('<meta http-equiv="content-type" content="text/html')
+            || str.indexOf("<!--StartFragment-->") !== -1
+    }
+
     function stripBrowserMarkup(text): string {
         const str = String(text ?? "")
-        if (!str.startsWith('<meta http-equiv="content-type" content="text/html'))
+        if (!root.isBrowserMarkup(str))
             return str
-        return StringUtils.stripHtmlTags(str.replace(/^<meta[^>]*>/, "")).trim()
+        return StringUtils.stripHtmlTags(str.replace(/<!--[\s\S]*?-->/g, "")).trim()
     }
 
     Connections {
@@ -266,6 +279,13 @@ Singleton {
         }
     }
 
+    Timer {
+        id: readRetryTimer
+        interval: 250
+        repeat: false
+        onTriggered: root.refresh()
+    }
+
     Process {
         id: readProc
         property list<string> buffer: []
@@ -282,8 +302,20 @@ Singleton {
             if (exitCode === 0) {
                 // Cap the number of entries we keep to avoid heavy models
                 root.entries = readProc.buffer.slice(0, root.maxEntries)
+                root._readAttempts = 0
+                if (root._refreshQueued) {
+                    root._refreshQueued = false
+                    root.refresh()
+                }
             } else {
-                console.error("[Cliphist] Failed to refresh with code", exitCode, "and status", exitStatus)
+                if (root._readAttempts < 3) {
+                    root._readAttempts++
+                    readRetryTimer.interval = 250 * root._readAttempts
+                    readRetryTimer.restart()
+                } else {
+                    root._readAttempts = 0
+                    console.error("[Cliphist] Failed to refresh with code", exitCode, "and status", exitStatus)
+                }
             }
         }
     }

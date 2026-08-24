@@ -29,47 +29,44 @@ Scope {
             property bool monitorIsFocused: CompositorService.isHyprland 
                 ? (Hyprland.focusedMonitor?.id == monitor?.id)
                 : (NiriService.currentOutput === root.screen?.name)
-            readonly property bool activeScreenOnly: Config.options?.overview?.activeScreenOnly ?? false
-            readonly property bool shouldShow: GlobalStates.overviewOpen && (!activeScreenOnly || monitorIsFocused)
+            readonly property bool activeScreenOnly: Config.options?.overview?.activeScreenOnly ?? true
+            readonly property bool isTargetOutput:
+                GlobalStates.overviewPresentationOutput === (root.modelData?.name ?? "")
+            readonly property bool shouldShow: GlobalStates.overviewOpen
+                && (!activeScreenOnly || isTargetOutput)
+            readonly property bool applicationDragActive: searchWidget.applicationDragActive
+                || (allAppsGridLoader.item?.applicationDragActive ?? false)
             screen: modelData
 
-            Component.onCompleted: {
-                visible = root.shouldShow
-                if (root.shouldShow) {
-                    Qt.callLater(() => { root._presentedOpen = root.shouldShow })
-                    Qt.callLater(() => {
-                        const prefix = GlobalStates.overviewSearchPrefix
-                        if (prefix.length > 0) {
-                            overviewScope.dontAutoCancelSearch = true
-                            root.setSearchingText(prefix)
-                        } else {
-                            searchWidget.cancelSearch()
-                        }
-                        searchWidget.focusSearchInput()
-                        root.maybeSwitchWorkspaceOnOpen()
-                        delayedGrabTimer.start()
-                    })
-                }
-            }
-
-            onShouldShowChanged: {
-                if (shouldShow)
-                    Qt.callLater(() => { root._presentedOpen = root.shouldShow })
-                else
-                    root._presentedOpen = false
-            }
-
-            Connections {
-                target: root
-                function onShouldShowChanged() {
-                    if (root.shouldShow) {
-                        _overviewCloseTimer.stop()
-                        root.visible = true
+            function present(): void {
+                _overviewCloseTimer.stop()
+                visible = true
+                Qt.callLater(() => {
+                    if (!root.shouldShow)
+                        return
+                    root._presentedOpen = true
+                    if (!root.isTargetOutput)
+                        return
+                    const prefix = GlobalStates.overviewSearchPrefix
+                    if (prefix.length > 0) {
+                        overviewScope.dontAutoCancelSearch = true
+                        root.setSearchingText(prefix)
                     } else {
-                        _overviewCloseTimer.restart()
+                        searchWidget.cancelSearch()
                     }
-                }
+                    searchWidget.focusSearchInput()
+                    root.maybeSwitchWorkspaceOnOpen()
+                    delayedGrabTimer.start()
+                })
             }
+
+            function dismiss(): void {
+                root._presentedOpen = false
+                _overviewCloseTimer.restart()
+            }
+
+            Component.onCompleted: root.shouldShow ? root.present() : (root.visible = false)
+            onShouldShowChanged: root.shouldShow ? root.present() : root.dismiss()
 
             Timer {
                 id: _overviewCloseTimer
@@ -85,8 +82,26 @@ Scope {
             WlrLayershell.namespace: "quickshell:overview"
             WlrLayershell.layer: WlrLayer.Overlay
             // Keyboard focus only on the monitor that should show
-            WlrLayershell.keyboardFocus: root.shouldShow && !GlobalStates.regionSelectorOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+            WlrLayershell.keyboardFocus: root.shouldShow
+                && !root.applicationDragActive
+                && !GlobalStates.regionSelectorOpen
+                ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
             color: "transparent"
+
+            mask: Region {
+                item: root.applicationDragActive ? emptyDragMask : overviewInputMask
+            }
+
+            Item {
+                id: emptyDragMask
+                width: 0
+                height: 0
+            }
+
+            Item {
+                id: overviewInputMask
+                anchors.fill: parent
+            }
 
             anchors {
                 top: true
@@ -129,6 +144,7 @@ Scope {
             MouseArea {
                 id: backdropClickArea
                 anchors.fill: parent
+                enabled: !root.applicationDragActive
                 onClicked: mouse => {
                     // Cierra solo si el click es fuera del contenido visible
                     // Check against searchWidget and overviewLoader, not columnLayout
@@ -162,7 +178,7 @@ Scope {
             CompositorFocusGrab {
                 id: grab
                 windows: [root]
-                property bool canBeActive: root.monitorIsFocused
+                property bool canBeActive: root.shouldShow && root.isTargetOutput
                 active: false
                 onCleared: () => {
                     if (!active)
@@ -198,10 +214,6 @@ Scope {
                         if (!overviewScope.dontAutoCancelSearch) {
                             searchWidget.cancelSearch();
                         }
-                        // Al abrir, garantizar foco en el campo de búsqueda
-                        Qt.callLater(() => searchWidget.focusSearchInput());
-                        root.maybeSwitchWorkspaceOnOpen();
-                        delayedGrabTimer.start();
                     }
                 }
             }
@@ -211,7 +223,7 @@ Scope {
                 interval: Config.options.hacks.arbitraryRaceConditionDelay
                 repeat: false
                 onTriggered: {
-                    if (!grab.canBeActive)
+                    if (!root.shouldShow || !grab.canBeActive)
                         return;
                     grab.active = GlobalStates.overviewOpen;
                 }
@@ -232,14 +244,17 @@ Scope {
 
                 if (CompositorService.isNiri) {
                     const screenName = root.modelData && root.modelData.name;
-                    if (!screenName || screenName !== NiriService.currentOutput)
+                    if (!screenName)
                         return;
                     const targetIdx = ov.switchWorkspaceIndex;
                     if (!targetIdx || targetIdx <= 0)
                         return;
-                    NiriService.switchToWorkspace(targetIdx);
+                    const targetWorkspace = NiriService.allWorkspaces.find(workspace =>
+                        workspace.output === screenName && workspace.idx === targetIdx)
+                    if (targetWorkspace)
+                        NiriService.switchToWorkspaceById(targetWorkspace.id)
                 } else if (CompositorService.isHyprland) {
-                    if (!root.monitorIsFocused)
+                    if (!root.isTargetOutput)
                         return;
                     const wsNumber = ov.switchWorkspaceIndex;
                     Hyprland.dispatch(`workspace ${wsNumber}`);
@@ -348,11 +363,13 @@ Scope {
                     } else if (event.key === Qt.Key_Left) {
                         if (!root.searchingText) {
                             if (CompositorService.isNiri) {
-                                // Niri uses a 1-based idx for workspaces on the monitor.
-                                const currentIdx = NiriService.getCurrentWorkspaceNumber();
-                                const targetIdx = currentIdx - 1;
-                                if (targetIdx >= 1)
-                                    NiriService.switchToWorkspace(targetIdx);
+                                const outputName = root.screen?.name ?? ""
+                                const workspaces = NiriService.allWorkspaces
+                                    .filter(workspace => workspace.output === outputName)
+                                    .sort((a, b) => a.idx - b.idx)
+                                const currentIndex = workspaces.findIndex(workspace => workspace.is_active)
+                                if (currentIndex > 0)
+                                    NiriService.switchToWorkspaceById(workspaces[currentIndex - 1].id)
                             } else {
                                 Hyprland.dispatch("workspace r-1");
                             }
@@ -360,9 +377,13 @@ Scope {
                     } else if (event.key === Qt.Key_Right) {
                         if (!root.searchingText) {
                             if (CompositorService.isNiri) {
-                                const currentIdx = NiriService.getCurrentWorkspaceNumber();
-                                const targetIdx = currentIdx + 1;
-                                NiriService.switchToWorkspace(targetIdx);
+                                const outputName = root.screen?.name ?? ""
+                                const workspaces = NiriService.allWorkspaces
+                                    .filter(workspace => workspace.output === outputName)
+                                    .sort((a, b) => a.idx - b.idx)
+                                const currentIndex = workspaces.findIndex(workspace => workspace.is_active)
+                                if (currentIndex >= 0 && currentIndex < workspaces.length - 1)
+                                    NiriService.switchToWorkspaceById(workspaces[currentIndex + 1].id)
                             } else {
                                 Hyprland.dispatch("workspace r+1");
                             }
@@ -385,7 +406,7 @@ Scope {
                     anchors.horizontalCenter: parent.horizontalCenter
                     readonly property bool dashboardMode: Config.options?.overview?.dashboard?.enable ?? false
                     readonly property bool allAppsGridEnabled: Config.options?.overview?.allAppsGrid ?? false
-                    active: GlobalStates.overviewOpen && !dashboardMode && !allAppsGridEnabled && (Config.options?.overview?.enable ?? true)
+                    active: root.shouldShow && !dashboardMode && !allAppsGridEnabled && (Config.options?.overview?.enable ?? true)
                     visible: active && (root.searchingText == "")
                     sourceComponent: CompositorService.isNiri ? niriComponent : hyprComponent
                 }
@@ -395,7 +416,7 @@ Scope {
                     anchors.horizontalCenter: parent.horizontalCenter
                     readonly property bool allAppsEnabled: Config.options?.overview?.allAppsGrid ?? false
                     readonly property bool dashboardMode: Config.options?.overview?.dashboard?.enable ?? false
-                    active: GlobalStates.overviewOpen && allAppsEnabled && !dashboardMode
+                    active: root.shouldShow && allAppsEnabled && !dashboardMode
                     visible: active && (root.searchingText == "")
                     sourceComponent: allAppsGridComponent
                 }
@@ -430,7 +451,8 @@ Scope {
                     id: dashboardPanel
                     anchors.horizontalCenter: parent.horizontalCenter
                     panelVisible: root.visible
-                    visible: (root.searchingText == "") && (Config.options?.overview?.dashboard?.enable ?? false)
+                    visible: root.shouldShow && (root.searchingText == "")
+                        && (Config.options?.overview?.dashboard?.enable ?? false)
                     opacity: root._presentedOpen ? 1 : 0
 
                     Behavior on opacity {

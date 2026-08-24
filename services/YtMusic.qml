@@ -160,7 +160,9 @@ Singleton {
     property string userAvatar: ""
     property string userChannelUrl: ""
     
-    property bool googleConnected: false
+    // InnerTube owns the current browser-cookie session. Keep the legacy surface in sync with its
+    // verified runtime state instead of trusting the persisted `connected` hint before validation.
+    property bool googleConnected: InnerTube.authenticated
     property bool googleChecking: false
     property string googleError: ""
     property string googleBrowser: "firefox"
@@ -507,7 +509,9 @@ Singleton {
     // Guard flag: true while a user-initiated play is pending (between _playInternal and new mpv start).
     // Suppresses spurious playNext() from old mpv's onExited or stale IPC EOF queries.
     property bool _userInitiatedPlay: false
-    property bool isPlaying: _mpvPlayer?.isPlaying ?? !_ipcPaused
+    property bool isPlaying: _mpvPlayer?.isPlaying
+        ?? (_playProc.running && root.currentVideoId !== ""
+            && !root._ipcPaused && !root._ipcEofReached)
 
     onEnabledChanged: {
         if (enabled) {
@@ -586,6 +590,10 @@ Singleton {
         // onExited or stale IPC EOF from triggering playNext() before the new mpv starts.
         root._userInitiatedPlay = true
         root._ipcEofReached = false
+        // mpv starts without --pause; clear the previous track's paused state so
+        // the isPlaying fallback reports true instead of a stale false for up to
+        // the first IPC poll after the player starts.
+        root._ipcPaused = false
         
         _fadeOutOtherPlayers()
         
@@ -677,6 +685,9 @@ Singleton {
     }
 
     function stop(): void {
+        // Mark this exit as intentional before stopping mpv. Depending on timing, Quickshell may
+        // deliver onExited synchronously or after the rest of this function has cleared the track.
+        root._userInitiatedPlay = true
         _playProc.running = false
         _killOrphanedMpvProc.running = true // kill any orphaned mpv too
         _stopProc.running = true  // clean up socket
@@ -760,9 +771,9 @@ Singleton {
         if (!root.currentVideoId) return false
         // Signal-killed exits are never natural — we killed mpv to switch tracks.
         if (code === 9 || code === 15 || code === 137 || code === 143) return false
+        // mpv documents 0 as successful playback completion. Exit 4 means it quit because of a
+        // signal or quit command; treating it as EOF made failed/interrupted starts skip tracks.
         if (code === 0) return true
-        // mpv can exit with code 4 for EOF-style finishes in some streams/builds.
-        if (code === 4) return true
         return false
     }
 
@@ -1627,7 +1638,9 @@ print("")
     // shared yt-cookies.txt (rotation-safe direct read). Playback reads that static file rather
     // than yt-dlp's --cookies-from-browser, whose completed YouTube request rotates and invalidates
     // the session. When no account is connected, omit cookies entirely (public playback still works).
-    readonly property bool _hasCookieSession: Config.options?.sidebar?.ytmusic?.connected ?? false
+    // Only use cookies after a session has been validated in this process. The persisted flag is
+    // merely an auto-heal hint; using it directly feeds stale cookies to yt-dlp during startup.
+    readonly property bool _hasCookieSession: InnerTube.authenticated || root.googleConnected
     property var _cookieArgs: root._hasCookieSession
         ? ["--cookies", root._mpvCookiesFile, "--js-runtimes", "node", "--remote-components", "ejs:github"]
         : ["--js-runtimes", "node", "--remote-components", "ejs:github"]
@@ -1636,6 +1649,9 @@ print("")
     // When user provides a manual cookies file, use that instead of the auto-exported one
     readonly property string _mpvCookiesFile: root._useManualCookies && root.customCookiesPath
         ? root.customCookiesPath : root._cookiesFilePath
+    // yt-dlp's --cookies option writes the jar back after a request. Playback therefore gets a
+    // disposable copy so server-side rotations can never corrupt InnerTube's canonical session.
+    readonly property string _playbackCookiesFile: Directories.cachePath + "/inir/ytmusic-playback-cookies.txt"
 
     function _getThumbnailUrl(videoId): string {
         if (!videoId) return ""
@@ -1698,13 +1714,6 @@ print("")
             root._resolvedBrowserArg = savedResolvedArg
         }
         
-        // Restore persisted connection state
-        const wasConnected = Config.options?.sidebar?.ytmusic?.connected ?? false
-        if (wasConnected) {
-            root.googleConnected = true
-        }
-        
-
     }
 
     Process {
@@ -1859,18 +1868,8 @@ print("")
             // _userInitiatedPlay is cleared in _playProc.onRunningChanged when the new
             // mpv actually starts.
 
-            // Refresh static cookie file for mpv before playing
-            if (root.googleConnected) {
-                _refreshCookiesForMpvProc.running = true
-            }
             _playProc.running = true
         }
-    }
-
-    // Lightweight cookie refresh for mpv — exports fresh cookies from browser
-    Process {
-        id: _refreshCookiesForMpvProc
-        command: ["python3", Directories.scriptPath + "/ytmusic_auth.py", root.googleBrowser]
     }
 
     // _trackEndDetector removed — track advancement is handled by _playProc.onExited (code 0)
@@ -1996,7 +1995,7 @@ print("")
 
     Process {
         id: _deleteCookiesProc
-        command: ["/bin/rm", "-f", root._cookiesFilePath]
+        command: ["/bin/rm", "-f", "--", root._cookiesFilePath, root._playbackCookiesFile]
     }
 
     Process {
@@ -2249,7 +2248,8 @@ print("")
     Process {
         id: _playProc
         property string _stderr: ""
-        command: ["/usr/bin/mpv",
+        function _mpvArgs(): var {
+            return ["/usr/bin/mpv",
             "--no-video",
             "--force-window=no",
             "--audio-display=no",
@@ -2269,12 +2269,25 @@ print("")
             "--cache-secs=30",
             "--script-opts=ytdl_hook-ytdl_path=yt-dlp",
             "--ytdl-format=" + root._ytdlFormat,
-            ...(root.googleConnected && root._mpvCookiesFile ? [
-                "--ytdl-raw-options=cookies=" + root._mpvCookiesFile + ",js-runtimes=node,remote-components=ejs:github",
-                "--cookies-file=" + root._mpvCookiesFile
+            ...(root._hasCookieSession && root._mpvCookiesFile ? [
+                "--ytdl-raw-options=cookies=" + root._playbackCookiesFile + ",js-runtimes=node,remote-components=ejs:github",
+                "--cookies-file=" + root._playbackCookiesFile
             ] : []),
             root._playUrl
-        ]
+            ]
+        }
+        command: {
+            const args = _playProc._mpvArgs()
+            if (!root._hasCookieSession || !root._mpvCookiesFile) return args
+            // Copy and exec in one process lifecycle: mpv cannot start against a half-written jar,
+            // and Quickshell still supervises the final mpv process directly after shell `exec`.
+            return [
+                "/bin/sh", "-c",
+                "/usr/bin/install -Dm600 -- \"$1\" \"$2\" && shift 2 && exec \"$@\"",
+                "_", root._mpvCookiesFile, root._playbackCookiesFile,
+                ...args
+            ]
+        }
         stderr: SplitParser {
             onRead: line => { _playProc._stderr += line + "\n" }
         }
@@ -2300,12 +2313,12 @@ print("")
             root._mpvPlayer = null
             // Skip auto-advance if a user-initiated play is pending — the old mpv was killed
             // to make room for the new one, this exit is NOT a natural track end.
-            if (root._userInitiatedPlay) return
+            if (root._userInitiatedPlay || root.currentVideoId === "") return
             if (root._didTrackEndNaturally(code, _stderr) && !root._autoAdvanceTriggered) {
                 // Track ended naturally, advance according to playlist/queue/repeat state
                 root._autoAdvanceTriggered = true
                 root.playNext(true)
-            } else if (code !== 0 && code !== 4 && code !== 9 && code !== 15 && code !== 143 && code !== 137) {
+            } else if (code !== 0 && code !== 9 && code !== 15 && code !== 143 && code !== 137) {
                 const hint = _stderr.trim().split("\n").slice(-2).join(" ").substring(0, 120)
                 root.error = Translation.tr("Playback failed") + (hint ? ": " + hint : "")
             }

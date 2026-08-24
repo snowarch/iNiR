@@ -134,25 +134,38 @@ Singleton {
     // Physical-side sidebar helpers for spatial triggers (bar corner buttons):
     // a left-corner control always addresses whatever role currently occupies
     // the left slot, while feature-specific triggers keep semantic open state.
-    function sidebarOpenAtSlot(slot: string): bool {
+    function sidebarOpenAtSlot(slot: string, outputName): bool {
         const role = root.sidebarRoleForSlot(slot)
+        const requestedOutput = String(outputName ?? "")
         if (role === "featureSidebar")
             return GlobalStates.sidebarLeftOpen
+                && (requestedOutput.length === 0
+                    || GlobalStates.sidebarLeftPresentationOutput === requestedOutput)
         if (role === "systemSidebar")
             return GlobalStates.sidebarRightOpen
+                && (requestedOutput.length === 0
+                    || GlobalStates.sidebarRightPresentationOutput === requestedOutput)
         return false
     }
 
-    function setSidebarOpenAtSlot(slot: string, open: bool): void {
+    function setSidebarOpenAtSlot(slot: string, open: bool, outputName): void {
         const role = root.sidebarRoleForSlot(slot)
-        if (role === "featureSidebar")
-            GlobalStates.sidebarLeftOpen = open
-        else if (role === "systemSidebar")
-            GlobalStates.sidebarRightOpen = open
+        if (role === "featureSidebar") {
+            if (open)
+                GlobalStates.openSidebarLeft(outputName)
+            else
+                GlobalStates.closeSidebarLeft()
+        } else if (role === "systemSidebar") {
+            if (open)
+                GlobalStates.openSidebarRight(outputName)
+            else
+                GlobalStates.closeSidebarRight()
+        }
     }
 
-    function toggleSidebarAtSlot(slot: string): void {
-        root.setSidebarOpenAtSlot(slot, !root.sidebarOpenAtSlot(slot))
+    function toggleSidebarAtSlot(slot: string, outputName): void {
+        root.setSidebarOpenAtSlot(slot,
+            !root.sidebarOpenAtSlot(slot, outputName), outputName)
     }
 
     function _sidebarSizeState(surfaceId: string): var {
@@ -244,15 +257,26 @@ Singleton {
                 thickness = Math.max(0, restHeight + topGap - 12 * (1 - appGap) * scale)
             } else if (barVertical) {
                 thickness = Appearance.sizes.verticalBarWidth + Appearance.rounding.screenRounding
+            } else if (appearanceStyle === "m3") {
+                // M3Bar's layer surface includes the rounded screen decorator;
+                // reserve its visual extent, not only the exclusive-zone core.
+                thickness = Appearance.sizes.barHeight + Appearance.rounding.screenRounding
             } else {
+                const showBackground = Config.options?.bar?.showBackground ?? true
+                const cornerStyle = Config.options?.bar?.cornerStyle ?? 0
                 const detachedZzz = Appearance.zzzEverywhere
                     && Appearance.zzz.round
                     && appearanceStyle === "classic"
-                    && (Config.options?.bar?.showBackground ?? true)
-                    && ([1, 3].includes(Config.options?.bar?.cornerStyle ?? 0))
+                    && showBackground
+                    && ([1, 3].includes(cornerStyle))
+                const hugCorners = !Appearance.zzzEverywhere
+                    && appearanceStyle === "classic"
+                    && showBackground
+                    && cornerStyle === 0
                 thickness = detachedZzz
                     ? Appearance.sizes.baseBarHeight + Appearance.sizes.elevationMargin * 2
                     : Appearance.sizes.barHeight
+                        + (hugCorners ? Appearance.rounding.screenRounding : 0)
             }
             result.barEdge = barState.ok ? barState.slot : ""
             root._applyInset(result, result.barEdge, thickness)

@@ -26,7 +26,7 @@ BodyRectangle {
         Rectangle {
             implicitHeight: 1
             Layout.fillWidth: true
-            color: Looks.colors.bg1Border
+            color: Looks.colors.bgPanelSeparator
         }
 
         MainPageBodySliders {

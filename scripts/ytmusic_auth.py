@@ -59,7 +59,7 @@ def _profile_from_ini(base):
         return None
 
     def resolve(path_value, is_relative):
-        p = path_value if (is_relative is False) else os.path.join(base, path_value)
+        p = os.path.join(base, path_value) if is_relative else os.path.expanduser(path_value)
         return p if os.path.exists(os.path.join(p, "cookies.sqlite")) else None
 
     # 1) [Install*] Default= — the path the browser is actually using right now.
@@ -80,12 +80,12 @@ def _profile_from_ini(base):
         profiles.append((is_default, path, is_rel))
     for is_default, path, is_rel in profiles:
         if is_default:
-            r = resolve(path, not is_rel)
+            r = resolve(path, is_rel)
             if r:
                 return r
     # 3) First profile listed that has a cookie DB.
     for _, path, is_rel in profiles:
-        r = resolve(path, not is_rel)
+        r = resolve(path, is_rel)
         if r:
             return r
     return None

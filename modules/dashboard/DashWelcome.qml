@@ -13,8 +13,8 @@ DashCard {
 
     readonly property string customSubtitle: Config.options?.dashboard?.subtitle ?? ""
 
-    function getGreeting(): string {
-        const hour = (new Date()).getHours()
+    readonly property string greeting: {
+        const hour = DateTime.clock.hours
         if (hour < 5) return Translation.tr("Up late, %1?")
         if (hour < 12) return Translation.tr("Good morning, %1!")
         if (hour < 19) return Translation.tr("Welcome, %1!")
@@ -106,7 +106,7 @@ DashCard {
         StyledText {
             Layout.alignment: Qt.AlignHCenter
             Layout.fillWidth: true
-            text: root.getGreeting().arg(SystemInfo.displayName || SystemInfo.username)
+            text: root.greeting.arg(SystemInfo.displayName || SystemInfo.username)
             horizontalAlignment: Text.AlignHCenter
             font.pixelSize: Appearance.font.pixelSize.huge
             font.family: Appearance.font.family.title

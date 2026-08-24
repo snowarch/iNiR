@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import qs
 import qs.services
 import qs.modules.common
@@ -47,10 +48,12 @@ RippleButton {
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
         : Appearance.colors.colSecondaryContainerActive
     // Spatial control: addresses whatever sidebar role occupies the left slot.
-    toggled: ShellLayoutController.sidebarOpenAtSlot("left")
+    toggled: ShellLayoutController.sidebarOpenAtSlot("left",
+        root.QsWindow.window?.screen?.name ?? "")
 
     onPressed: {
-        ShellLayoutController.toggleSidebarAtSlot("left");
+        ShellLayoutController.toggleSidebarAtSlot("left",
+            root.QsWindow.window?.screen?.name ?? "");
     }
 
     Connections {

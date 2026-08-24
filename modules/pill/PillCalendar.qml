@@ -628,7 +628,7 @@ PillSurface {
                         height: 22 * root.s
                         radius: PillMotion.rSmall * root.s
                         color: cellArea.containsMouse && cell.inMonth && !cell.current
-                            ? Qt.rgba(0.94, 0.88, 0.84, 0.04) : "transparent"
+                            ? PillTheme.frameBg : "transparent"
                     }
 
                     Rectangle {
@@ -982,7 +982,7 @@ PillSurface {
                         color: PillTheme.cream
                         font.family: PillTheme.font
                         font.pixelSize: 13 * root.s
-                        placeholderText: "what's on"
+                        placeholderText: Translation.tr("what's on")
                         placeholderTextColor: PillTheme.faint
                         selectByMouse: true
                         selectionColor: PillTheme.verm

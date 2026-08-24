@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Effects
+import Qt5Compat.GraphicalEffects as GE
 import Quickshell
 import qs
 import qs.services
@@ -58,8 +59,14 @@ Item {
     readonly property real hoverH: 58 * s
     readonly property real gameH: 34 * s
     readonly property real gameW: barWindow ? barWindow.width : 1920
-    readonly property real restCorner: 18 * s
-    readonly property real openCorner: 22 * s
+    /**
+     * Corners follow the shared island skin instead of two hardcoded constants,
+     * so Settings › Ricelin › Island skin governs the pill exactly as it governs
+     * the dock, sidebars and search. PillTheme applies the global style's
+     * character on top (square ZZZ sharpens; every soft style keeps Ricelin).
+     */
+    readonly property real restCorner: PillTheme.cardCorner * s
+    readonly property real openCorner: PillTheme.openCorner * s
 
     readonly property real powerW: 330 * s
     readonly property real powerH: 150 * s
@@ -101,8 +108,20 @@ Item {
 
     // Toasts off hands notifications back to the standalone popup panel
     // (ShellIiPanels re-enables it), so nothing goes silent.
-    readonly property bool toastActive: (Config.options?.bar?.pill?.toasts ?? true) && PillNotifs.popups.length > 0
-    readonly property bool osdActive: osd.flashing
+    function outputEnabled(list: var): bool {
+        if (!list || list.length === 0)
+            return true
+        if (screenName.length > 0 && list.includes(screenName))
+            return true
+        const currentNames = Quickshell.screens.map(screen => screen?.name ?? "")
+        return !list.some(name => currentNames.includes(name))
+    }
+
+    readonly property bool toastOutputEnabled: pill.outputEnabled(Config.options?.notifications?.screenList ?? [])
+    readonly property bool osdOutputEnabled: pill.outputEnabled(Config.options?.osd?.screenList ?? [])
+    readonly property bool toastActive: (Config.options?.bar?.pill?.toasts ?? true)
+        && pill.toastOutputEnabled && PillNotifs.popups.length > 0
+    readonly property bool osdActive: pill.osdOutputEnabled && osd.flashing
     readonly property bool compactAnnounces: Config.options?.bar?.pill?.compactAnnounces ?? false
 
     /**
@@ -159,7 +178,9 @@ Item {
      * A fullscreen window on this pill's active workspace hides the resting
      * faces — classic-bar parity: top-layer bars get covered by the
      * compositor, but the pill's Overlay layer never is, so it opts out
-     * itself. Transient announces (osd/toast) and open surfaces still show.
+     * itself. Only the resting faces: transient OSD flashes still play over a
+     * game, because a track change or a volume keypress is exactly the feedback
+     * the game cannot give you. Toasts and open surfaces still show.
      */
     readonly property bool fsCovered: {
         if (!CompositorService.isNiri)
@@ -170,6 +191,13 @@ Item {
             if (!(ws?.is_active ?? false))
                 continue;
             if (screenName.length > 0 && ws.output !== screenName)
+                continue;
+            // In niri a fullscreen window covers the monitor only while it
+            // is the focused tile. Scrolling to another window in the same
+            // workspace unfocuses the fullscreen window without changing its
+            // size, so without this focus check the pill stays hidden even
+            // though the game no longer covers the screen.
+            if (!w.is_focused)
                 continue;
             if (GameMode.isWindowFullscreen(w))
                 return true;
@@ -303,10 +331,15 @@ Item {
     property int soulWsIndex: -1
     property real kanjiFlash: 0
 
+    /**
+     * Bespoke snap-and-settle timing (a fast strike, a slower decay) that no
+     * motion token expresses, so the literals stay but are scaled by the shared
+     * multiplier — otherwise the flash keeps firing with animations disabled.
+     */
     SequentialAnimation {
         id: kanjiFlashAnim
-        NumberAnimation { target: pill; property: "kanjiFlash"; to: 1; duration: 90; easing.type: Easing.OutCubic }
-        NumberAnimation { target: pill; property: "kanjiFlash"; to: 0; duration: 320; easing.type: Easing.OutCubic }
+        NumberAnimation { target: pill; property: "kanjiFlash"; to: 1; duration: Math.round(90 * PillMotion.mult); easing.type: Easing.OutCubic }
+        NumberAnimation { target: pill; property: "kanjiFlash"; to: 0; duration: Math.round(320 * PillMotion.mult); easing.type: Easing.OutCubic }
     }
 
     Behavior on width { NumberAnimation { duration: pill.hoverHop ? PillMotion.glide : PillMotion.morph; easing.type: PillMotion.easeMorph; easing.bezierCurve: PillMotion.morphCurve } }
@@ -371,6 +404,63 @@ Item {
         }
     }
 
+    /**
+     * Frosted glass under the pill, from the same shared island skin. The card
+     * gradient above is only translucent when the user lowers the pill opacity,
+     * so without a backdrop a low opacity reads as raw see-through rather than
+     * glass — exactly the reason IslandPanel grew this path.
+     *
+     * The wallpaper is drawn at screen scale and offset by the pill's position
+     * inside its screen-sized overlay window, so the blur stays registered with
+     * the desktop while the pill morphs across the top of the screen. Masked to
+     * the live morph radius so it never squares off mid-animation.
+     */
+    Item {
+        id: glass
+        anchors.fill: parent
+        z: -1
+
+        readonly property bool active: pill.visible
+            && PillTheme.islandGlass
+            && Appearance.effectsEnabled
+            && PillTheme.pillOpacity < 0.999
+
+        visible: active
+        layer.enabled: active
+        layer.effect: GE.OpacityMask {
+            maskSource: Rectangle {
+                width: glass.width
+                height: glass.height
+                radius: body.radius
+            }
+        }
+
+        Image {
+            id: glassWallpaper
+            x: -pill.x
+            y: -pill.y
+            width: pill.barWindow ? pill.barWindow.width : 1920
+            height: pill.barWindow ? pill.barWindow.height : 1080
+            visible: glass.active && status === Image.Ready
+            source: glass.active ? Wallpapers.effectiveWallpaperUrl : ""
+            fillMode: Image.PreserveAspectCrop
+            cache: true
+            asynchronous: true
+            sourceSize.width: width
+            sourceSize.height: height
+
+            layer.enabled: glass.active
+            layer.effect: MultiEffect {
+                source: glassWallpaper
+                anchors.fill: source
+                saturation: 0.15
+                blurEnabled: true
+                blurMax: 64
+                blur: PillTheme.islandGlassBlur
+            }
+        }
+    }
+
     Rectangle {
         id: body
         anchors.fill: parent
@@ -394,7 +484,10 @@ Item {
             GradientStop { position: 1.0; color: Qt.alpha(PillTheme.cardBot, PillTheme.pillOpacity) }
         }
 
-        layer.enabled: true
+        // Shared island skin: the user's drop-shadow switch owns the pill too.
+        // Keeping a layer allocated for a disabled shadow would still cost a
+        // full-surface texture on every morph frame, so gate the layer itself.
+        layer.enabled: PillTheme.islandShadow
         layer.effect: MultiEffect {
             shadowEnabled: true
             shadowColor: Qt.rgba(0, 0, 0, PillTheme.shadowOpacity)
@@ -410,6 +503,7 @@ Item {
             anchors.leftMargin: body.radius * 0.6
             anchors.rightMargin: body.radius * 0.6
             height: 1
+            visible: PillTheme.islandSheen
             color: PillTheme.sheen
         }
     }
@@ -643,16 +737,9 @@ Item {
                 width: kanjiFill.implicitWidth
                 height: kanjiFill.implicitHeight
 
-                /**
-                 * Audio actually leaving the speakers flips the clock glyph over to
-                 * the live waveform. A paused player still counts as `hasMedia`, so
-                 * gate on playback, not on the player existing.
-                 */
-                readonly property bool barsOn: (Config.options?.bar?.pill?.musicViz ?? true) && PillPlayers.playing
-
                 Text {
                     anchors.fill: parent
-                    opacity: (PillTheme.showGlyphs && !restKanji.barsOn) ? 1 : 0
+                    opacity: PillTheme.showGlyphs ? 1 : 0
                     text: kanjiFill.text
                     color: "transparent"
                     font: kanjiFill.font
@@ -664,7 +751,7 @@ Item {
 
                 Text {
                     id: kanjiFill
-                    opacity: (PillTheme.showGlyphs && !restKanji.barsOn) ? 1 : 0
+                    opacity: PillTheme.showGlyphs ? 1 : 0
                     text: PillTheme.glyph("clock")
                     color: PillTheme.cream
                     font.family: PillTheme.fontJp
@@ -675,7 +762,7 @@ Item {
 
                 GlyphIcon {
                     anchors.centerIn: parent
-                    opacity: (!PillTheme.showGlyphs && !restKanji.barsOn) ? 1 : 0
+                    opacity: PillTheme.showGlyphs ? 0 : 1
                     width: pill.iconPx
                     height: pill.iconPx
                     name: "clock"
@@ -684,17 +771,6 @@ Item {
                     Behavior on opacity { NumberAnimation { duration: PillMotion.standard; easing.type: PillMotion.easeStandard } }
                 }
 
-                MusicBars {
-                    id: musicBars
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.bottom: kanjiFill.baseline
-                    s: pill.s
-                    running: restKanji.barsOn && rest.visible
-                    opacity: restKanji.barsOn ? 1 : 0
-                    scale: restKanji.barsOn ? 1 : 0.7
-                    Behavior on opacity { NumberAnimation { duration: PillMotion.standard; easing.type: PillMotion.easeStandard } }
-                    Behavior on scale { NumberAnimation { duration: PillMotion.standard; easing.type: PillMotion.easeStandard } }
-                }
             }
 
             Text {
@@ -1151,7 +1227,7 @@ Item {
                         enabled: hover.live
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen;
+                            GlobalStates.toggleSidebarLeft(pill.screenName);
                             pill.pinned = false;
                         }
                         onContainsMouseChanged: if (containsMouse) pill.soulTarget = "sidebarLeft"
@@ -1180,7 +1256,7 @@ Item {
                         enabled: hover.live
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen;
+                            GlobalStates.toggleSidebarRight(pill.screenName);
                             pill.pinned = false;
                         }
                         onContainsMouseChanged: if (containsMouse) pill.soulTarget = "sidebarRight"
@@ -1230,6 +1306,7 @@ Item {
         s: pill.s
         compact: pill.compactAnnounceMode
         screenName: pill.screenName
+        outputAllowed: pill.osdOutputEnabled
         suppressed: pill.surfaceOpen || pill.held
         expanded: pill.expanded
         enabled: pill.mode === "osd"

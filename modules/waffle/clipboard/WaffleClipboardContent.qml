@@ -32,6 +32,9 @@ Item {
         if (Cliphist.entryIsImage(entry)) {
             cleaned = cleaned.replace(/^\s*\[\[.*?\]\]\s*/, "")
         }
+        const unwrapped = StringUtils.cliphistMarkupPreview(cleaned)
+        if (unwrapped !== cleaned)
+            cleaned = unwrapped.length > 0 ? unwrapped : Translation.tr("Rich text")
         return cleaned.trim()
     }
 

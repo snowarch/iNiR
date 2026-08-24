@@ -1,6 +1,7 @@
 import qs
 import qs.services
 import qs.modules.common
+import qs.modules.common.functions
 import qs.modules.common.widgets
 import QtQuick
 import QtQuick.Layouts
@@ -45,7 +46,7 @@ AbstractQuickPanel {
         }
         
         EasyEffectsToggle {
-            altAction: () => Quickshell.execDetached(["easyeffects"])
+            altAction: () => ShellExec.execDetachedArgs(["easyeffects"], "Open EasyEffects")
         }
         
         IdleInhibitor {}

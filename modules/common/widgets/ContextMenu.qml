@@ -22,6 +22,9 @@ Loader {
     property bool closeOnHoverLostAfterEntered: false
     property int closeOnHoverLostDelay: 500  // ms before closing when hover lost (waffle uses 500)
     property bool anchorHovered: false
+    property bool closeOnOutsideClick: false
+    property var anchorRect: null
+    property var popupAdjustment: null
     signal focusCleared()
 
     property real visualMargin: 8
@@ -54,8 +57,33 @@ Loader {
     sourceComponent: PopupWindow {
         id: popupWindow
         visible: true
+        grabFocus: CompositorService.isNiri
         property bool closing: false
         property bool popupWasHovered: false
+
+        // Keep the Niri click surface below the popup content, matching the
+        // SysTrayMenu stacking order so outside clicks close without blocking buttons.
+        PanelWindow {
+            id: clickOutsideBackdrop
+            visible: CompositorService.isNiri && popupWindow.visible
+                && (root.closeOnFocusLost || root.closeOnOutsideClick)
+            color: "transparent"
+            exclusiveZone: 0
+            WlrLayershell.layer: WlrLayer.Top
+            WlrLayershell.namespace: "quickshell:contextMenuBackdrop"
+
+            anchors {
+                top: true
+                bottom: true
+                left: true
+                right: true
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: root.close()
+            }
+        }
 
         Component.onCompleted: {
             realContent.shown = true;
@@ -76,10 +104,14 @@ Loader {
         }
 
         anchor {
-            adjustment: (root.popupSide !== 0)
+            adjustment: root.popupAdjustment ?? ((root.popupSide !== 0)
                 ? (PopupAdjustment.ResizeX | PopupAdjustment.SlideY)
-                : (PopupAdjustment.ResizeY | PopupAdjustment.SlideX)
+                : (PopupAdjustment.ResizeY | PopupAdjustment.SlideX))
             item: root.anchorItem
+            rect.x: Number(root.anchorRect?.x ?? 0)
+            rect.y: Number(root.anchorRect?.y ?? 0)
+            rect.width: Number(root.anchorRect?.width ?? (root.anchorItem?.width ?? 0))
+            rect.height: Number(root.anchorRect?.height ?? (root.anchorItem?.height ?? 0))
             gravity: root.popupSide !== 0 
                 ? root.popupSide 
                 : (root.popupAbove ? Edges.Top : Edges.Bottom)
@@ -122,8 +154,16 @@ Loader {
 
         implicitWidth: realContent.implicitWidth + (root.ambientShadowWidth * 2) + (root.visualMargin * 2)
         implicitHeight: realContent.implicitHeight + (root.ambientShadowWidth * 2) + (root.visualMargin * 2)
+        mask: Region {
+            item: realContent
+        }
 
-        property real sourceEdgeMargin: -implicitHeight
+        readonly property real settledMargin: root.ambientShadowWidth + root.visualMargin
+        // Cookie fades in at its final geometry. Sliding an overshooting spring
+        // inside this fixed PopupWindow clipped the face and temporarily split
+        // visual rows from their pointer regions.
+        property real sourceEdgeMargin: Appearance.cookieEverywhere
+            ? settledMargin : -implicitHeight
         readonly property bool isHorizontalPopup: root.popupSide !== 0
         readonly property bool isLeftSide: root.popupSide === Edges.Left
 
@@ -131,10 +171,10 @@ Loader {
             id: openAnim
             target: popupWindow
             property: "sourceEdgeMargin"
-            to: (root.ambientShadowWidth + root.visualMargin)
+            to: popupWindow.settledMargin
             duration: Appearance.animation.elementMoveEnter.duration
             easing.type: Appearance.animation.elementMoveEnter.type
-            easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
+            easing.bezierCurve: Appearance.motion.popupReveal.enterBezierCurve
         }
         SequentialAnimation {
             id: closeAnim
@@ -209,7 +249,7 @@ Loader {
                         : Appearance.animation.elementMoveEnter.type
                     easing.bezierCurve: popupWindow.closing
                         ? Appearance.animation.elementMoveExit.bezierCurve
-                        : Appearance.animation.elementMoveEnter.bezierCurve
+                        : Appearance.motion.popupReveal.enterBezierCurve
                 }
             }
 
@@ -224,7 +264,7 @@ Loader {
                         : Appearance.animation.elementMoveEnter.type
                     easing.bezierCurve: popupWindow.closing
                         ? Appearance.animation.elementMoveExit.bezierCurve
-                        : Appearance.animation.elementMoveEnter.bezierCurve
+                        : Appearance.motion.popupReveal.enterBezierCurve
                 }
             }
 
@@ -258,6 +298,7 @@ Loader {
                                 required property var modelData
                                 enabled: modelData.enabled !== false
                                 opacity: enabled ? 1 : 0.45
+                                buttonHovered: enabled && menuHover.hovered
 
                                 implicitWidth: Math.max(140, menuRow.implicitWidth + 20)
                                 implicitHeight: 32
@@ -278,8 +319,16 @@ Loader {
 
                                 onClicked: {
                                     if (!enabled) return;
-                                    if (modelData.action) modelData.action();
+                                    // Some actions remove the delegate that owns this menu.
+                                    // Close first so the follow-up does not dereference a
+                                    // context-menu loader destroyed by its own action.
+                                    const action = modelData.action;
                                     root.close();
+                                    if (action) action();
+                                }
+
+                                HoverHandler {
+                                    id: menuHover
                                 }
 
                                 contentItem: RowLayout {
@@ -337,27 +386,5 @@ Loader {
         }
         readonly property bool popupContainsMouse: popupHoverHandler.hovered
 
-        PanelWindow {
-            id: clickOutsideBackdrop
-            visible: popupWindow.visible && CompositorService.isNiri && root.closeOnFocusLost
-            color: "transparent"
-            exclusiveZone: 0
-            WlrLayershell.layer: WlrLayer.Top
-            WlrLayershell.namespace: "quickshell:contextMenuBackdrop"
-
-            anchors {
-                top: true
-                bottom: true
-                left: true
-                right: true
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    root.close();
-                }
-            }
-        }
     }
 }

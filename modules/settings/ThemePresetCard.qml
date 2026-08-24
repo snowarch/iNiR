@@ -137,7 +137,8 @@ Item {
 
             MaterialSymbol {
                 anchors.centerIn: parent
-                text: root.isFavorite ? "star" : "star_outline"
+                text: "star"
+                fill: root.isFavorite ? 1 : 0
                 iconSize: 16
                 color: root.isFavorite
                     ? Appearance.colors.colTertiary

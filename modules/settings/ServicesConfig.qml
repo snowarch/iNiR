@@ -82,7 +82,7 @@ ContentPage {
             ConfigSpinBox {
                 visible: Battery.available
                 enabled: Config.options?.idle?.onBattery?.enable ?? false
-                icon: "screen_lock_portrait"
+                icon: "lock_clock"
                 text: Translation.tr("Battery: screen off") + ` (${value > 0 ? Math.floor(value/60) + "m" : Translation.tr("disabled")})`
                 value: Config.options?.idle?.onBattery?.screenOffTimeout ?? 120
                 from: 0
@@ -367,7 +367,7 @@ ContentPage {
 
     SettingsCardSection {
         expanded: false
-        icon: "system_update"
+        icon: "system_update_alt"
         title: Translation.tr("Updates")
 
         SettingsGroup {

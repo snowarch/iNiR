@@ -131,14 +131,14 @@ ComboBox {
                 from: Appearance.motion.popupReveal.enableFade ? 0 : 1; to: 1
                 duration: Appearance.animation.elementMoveEnter.duration
                 easing.type: Appearance.animation.elementMoveEnter.type
-                easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
+                easing.bezierCurve: Appearance.motion.popupReveal.enterBezierCurve
             }
             NumberAnimation {
                 property: "scale"
                 from: Appearance.motion.popupReveal.enableScale ? Appearance.motion.popupReveal.closedScale : 1; to: 1
                 duration: Appearance.animation.elementMoveEnter.duration
                 easing.type: Appearance.animation.elementMoveEnter.type
-                easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
+                easing.bezierCurve: Appearance.motion.popupReveal.enterBezierCurve
             }
         }
         exit: Transition {
@@ -171,6 +171,7 @@ ComboBox {
         }
 
         contentItem: ListView {
+            id: popupList
             clip: true
             implicitHeight: contentHeight
             model: root.popup.visible ? root.delegateModel : null
@@ -178,7 +179,7 @@ ComboBox {
             boundsBehavior: Flickable.StopAtBounds
 
             ScrollBar.vertical: ScrollBar {
-                policy: contentHeight > 290 ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+                policy: popupList.contentHeight > 290 ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
             }
         }
     }

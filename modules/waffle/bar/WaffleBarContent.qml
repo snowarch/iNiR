@@ -75,7 +75,7 @@ Rectangle {
     // Glass background for aurora/angel styles
     GlassBackground {
         anchors.fill: parent
-        visible: root.glassActive && !root.nativeBlurActive
+        visible: root.glassActive && !root.nativeBlurActive && !Looks.gameModeMinimal
         radius: 0
         screenX: 0
         screenY: root.barAtBottom ? (root._screenH - root.height) : 0

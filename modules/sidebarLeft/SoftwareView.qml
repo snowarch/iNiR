@@ -221,6 +221,7 @@ Item {
                     onClicked: AppCatalog.refresh()
 
                     contentItem: MaterialSymbol {
+                        id: catalogRefreshIcon
                         anchors.centerIn: parent
                         text: "refresh"
                         iconSize: 16
@@ -232,6 +233,7 @@ Item {
                             to: 360
                             duration: 1000
                             loops: Animation.Infinite
+                            onRunningChanged: if (!running) catalogRefreshIcon.rotation = 0
                         }
                     }
 
@@ -268,7 +270,7 @@ Item {
 
                 MaterialSymbol {
                     Layout.alignment: Qt.AlignHCenter
-                    text: "error_outline"
+                    text: "error"
                     iconSize: 48
                     color: root.colTextSecondary
                 }

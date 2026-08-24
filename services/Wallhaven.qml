@@ -28,7 +28,29 @@ QtObject {
 
     property string failMessage: Translation.tr("That didn't work. Tips:\n- Check your query and NSFW settings\n- Make sure your Wallhaven API key is set if you want NSFW")
     property var responses: []
+    readonly property int responseLimit: 20
     property int runningRequests: 0
+
+    function _destroyResponsesLater(items) {
+        const doomed = (items || []).filter(item => item !== null && item !== undefined)
+        if (doomed.length === 0)
+            return
+        Qt.callLater(() => {
+            for (let i = 0; i < doomed.length; ++i) {
+                if (typeof doomed[i].destroy === "function")
+                    doomed[i].destroy()
+            }
+        })
+    }
+
+    function _appendResponse(response) {
+        const next = [...root.responses, response]
+        const removed = []
+        while (next.length > root.responseLimit)
+            removed.push(next.shift())
+        root.responses = next
+        root._destroyResponsesLater(removed)
+    }
 
     property string _lastTagSuggestionQuery: ""
     property var _lastTagSuggestions: ([])
@@ -84,6 +106,8 @@ QtObject {
     // Tag fetch queue
     property var tagQueue: ([])
     property var wallpaperTagCache: ({})
+    property var _wallpaperTagCacheKeys: []
+    readonly property int wallpaperTagCacheLimit: 256
     property var wallpaperTagRequests: ({})
 
     // Basic settings
@@ -95,13 +119,54 @@ QtObject {
     property string tagSuggestionBase: "https://wallhaven.cc/tag/search"
     property int tagSuggestionCacheMs: 5 * 60 * 1000
     property var _tagSuggestionCache: ({})
+    property var _tagSuggestionCacheKeys: []
+    readonly property int tagSuggestionCacheLimit: 64
     property var currentTagRequest: null
 
     // Cache + queue for counts (meta.total) per tag id
     property int tagCountCacheMs: 10 * 60 * 1000
     property var _tagCountCache: ({})
+    property var _tagCountCacheKeys: []
+    readonly property int tagCountCacheLimit: 256
     property var _tagCountRequests: ({})
     property var _tagCountQueue: ([])
+
+    function _boundedCacheInsert(cache, keys, key, value, limit) {
+        const nextCache = Object.assign({}, cache)
+        const nextKeys = (keys || []).slice()
+        const existingIndex = nextKeys.indexOf(key)
+        if (existingIndex >= 0)
+            nextKeys.splice(existingIndex, 1)
+
+        nextCache[key] = value
+        nextKeys.push(key)
+        while (nextKeys.length > limit) {
+            const oldestKey = nextKeys.shift()
+            delete nextCache[oldestKey]
+        }
+        return { cache: nextCache, keys: nextKeys }
+    }
+
+    function _storeTagSuggestion(key, value) {
+        const bounded = root._boundedCacheInsert(root._tagSuggestionCache,
+            root._tagSuggestionCacheKeys, key, value, root.tagSuggestionCacheLimit)
+        root._tagSuggestionCache = bounded.cache
+        root._tagSuggestionCacheKeys = bounded.keys
+    }
+
+    function _storeTagCount(key, value) {
+        const bounded = root._boundedCacheInsert(root._tagCountCache,
+            root._tagCountCacheKeys, key, value, root.tagCountCacheLimit)
+        root._tagCountCache = bounded.cache
+        root._tagCountCacheKeys = bounded.keys
+    }
+
+    function _storeWallpaperTags(key, value) {
+        const bounded = root._boundedCacheInsert(root.wallpaperTagCache,
+            root._wallpaperTagCacheKeys, key, value, root.wallpaperTagCacheLimit)
+        root.wallpaperTagCache = bounded.cache
+        root._wallpaperTagCacheKeys = bounded.keys
+    }
 
     // Process for main search requests
     property var _currentSearchUrl: ""
@@ -249,7 +314,7 @@ QtObject {
 
     function _handleTagCountResponse(text): void {
         const id = root._tagCountCurrentId
-        root._tagCountRequests[id] = false
+        delete root._tagCountRequests[id]
         root._tagCountCurrentId = ""
 
         if (!text || text.length === 0) {
@@ -260,7 +325,7 @@ QtObject {
             const payload = JSON.parse(text)
             const meta = payload.meta || {}
             const total = meta.total !== undefined ? parseInt(meta.total) : 0
-            root._tagCountCache[id] = { ts: root.nowMs, total: total }
+            root._storeTagCount(id, { ts: root.nowMs, total: total })
 
             if (root._lastTagSuggestions && root._lastTagSuggestions.length > 0) {
                 let changed = false
@@ -341,7 +406,7 @@ QtObject {
                 return s
             })
 
-            root._tagSuggestionCache[q] = { ts: root.nowMs, items: enriched }
+            root._storeTagSuggestion(q, { ts: root.nowMs, items: enriched })
             root._lastTagSuggestionQuery = q
             root._lastTagSuggestions = enriched
             root.tagSuggestion(q, enriched)
@@ -418,10 +483,10 @@ QtObject {
     function _handleTagDetailResponse(text): void {
         const id = root._tagDetailCurrentId
         root._tagDetailCurrentId = ""
-        wallpaperTagRequests[id] = false
+        delete wallpaperTagRequests[id]
 
         if (!text || text.length === 0) {
-            wallpaperTagCache[id] = ""
+            root._storeWallpaperTags(id, "")
             return
         }
 
@@ -433,11 +498,11 @@ QtObject {
             if (tags && tags.length > 0) {
                 joined = tags.map(function(t) { return t.name; }).join(" ")
             }
-            wallpaperTagCache[id] = joined
+            root._storeWallpaperTags(id, joined)
             _applyTagsToResponses(id, joined)
         } catch (e) {
             console.log("[Wallhaven] Failed to parse detail response:", e)
-            wallpaperTagCache[id] = ""
+            root._storeWallpaperTags(id, "")
         }
     }
 
@@ -456,7 +521,9 @@ QtObject {
     property string topRange: "1M"
 
     function clearResponses() {
-        responses = []
+        const previous = root.responses
+        root.responses = []
+        root._destroyResponsesLater(previous)
     }
 
     function addSystemMessage(message) {
@@ -467,7 +534,7 @@ QtObject {
             "images": [],
             "message": message
         })
-        responses = [...responses, resp]
+        root._appendResponse(resp)
         responseFinished()
     }
 
@@ -555,7 +622,7 @@ QtObject {
         if (!text || text.length === 0) {
             _log("[Wallhaven] Request failed: empty response")
             newResponse.message = failMessage
-            responses = [...responses, newResponse]
+            root._appendResponse(newResponse)
             root.responseFinished()
             root._currentSearchResponse = null
             root._processPendingSearch()
@@ -606,7 +673,7 @@ QtObject {
             newResponse.message = failMessage
         }
 
-        responses = [...responses, newResponse]
+        root._appendResponse(newResponse)
         root.responseFinished()
         root._currentSearchResponse = null
         root._processPendingSearch()

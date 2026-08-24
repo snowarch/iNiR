@@ -21,6 +21,7 @@ Button {
     property color colForegroundToggled: Looks.colors.accentFg
     property color colForegroundDisabled: ColorUtils.transparentize(Looks.colors.subfg, 0.4)
     property bool cookieMorphing: false
+    property bool animateStateChanges: true
     property alias backgroundOpacity: backgroundRect.opacity
     property color color: {
         if (!root.enabled) return colBackground;
@@ -126,6 +127,7 @@ Button {
         opacity: root.down ? 0.9 : 1.0
         
         Behavior on color {
+            enabled: root.animateStateChanges
             animation: ColorAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
         }
         Behavior on scale {

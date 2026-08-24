@@ -32,7 +32,7 @@ Variants {
         anchors.right: true
 
         color: "transparent"
-        visible: !GameMode.shouldHidePanels
+        visible: true
 
         // Multi-monitor wallpaper support
         readonly property string _perMonitorMainPath: {
@@ -168,7 +168,9 @@ Variants {
                 visible: backdropWindow.wallpaperIsGif
                 playing: visible && backdropWindow.enableAnimation && !Wallpapers.batteryPauseActive
 
-                layer.enabled: Appearance.effectsEnabled && backdropWindow.enableAnimatedBlur && backdropWindow.backdropBlurRadius > 0
+                layer.enabled: visible && Appearance.effectsEnabled
+                    && backdropWindow.enableAnimatedBlur
+                    && backdropWindow.backdropBlurRadius > 0
                 layer.effect: MultiEffect {
                     blurEnabled: true
                     blur: (backdropWindow.backdropBlurRadius * Math.max(0, Math.min(1, backdropWindow.thumbnailBlurStrength / 100))) / 100.0
@@ -192,7 +194,9 @@ Variants {
                 smooth: true
                 sourceSize: backdropWindow.backdropSourceSize
 
-                layer.enabled: Appearance.effectsEnabled && backdropWindow.enableAnimatedBlur && backdropWindow.backdropBlurRadius > 0
+                layer.enabled: visible && Appearance.effectsEnabled
+                    && backdropWindow.enableAnimatedBlur
+                    && backdropWindow.backdropBlurRadius > 0
                 layer.effect: MultiEffect {
                     blurEnabled: true
                     blur: (backdropWindow.backdropBlurRadius * Math.max(0, Math.min(1, backdropWindow.thumbnailBlurStrength / 100))) / 100.0
@@ -252,7 +256,9 @@ Variants {
                     }
                 }
 
-                layer.enabled: Appearance.effectsEnabled && backdropWindow.enableAnimatedBlur && backdropWindow.backdropBlurRadius > 0
+                layer.enabled: visible && Appearance.effectsEnabled
+                    && backdropWindow.enableAnimatedBlur
+                    && backdropWindow.backdropBlurRadius > 0
                 layer.effect: MultiEffect {
                     blurEnabled: true
                     blur: (backdropWindow.backdropBlurRadius * Math.max(0, Math.min(1, backdropWindow.thumbnailBlurStrength / 100))) / 100.0

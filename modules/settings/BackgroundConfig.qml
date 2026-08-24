@@ -211,6 +211,33 @@ ContentPage {
     SettingsCardSection {
         visible: root.isIiActive
         expanded: false
+        icon: "fullscreen"
+        title: Translation.tr("Fullscreen behavior")
+
+        SettingsGroup {
+            SettingsSwitch {
+                buttonIcon: "visibility_off"
+                text: Translation.tr("Hide main wallpaper in fullscreen")
+                checked: Config.options?.background?.hideWhenFullscreen ?? true
+                onCheckedChanged: Config.setNestedValue("background.hideWhenFullscreen", checked)
+                StyledToolTip {
+                    text: Translation.tr("Hide the main wallpaper on monitors covered by a fullscreen window. The overview backdrop stays available.")
+                }
+            }
+
+            StyledText {
+                Layout.fillWidth: true
+                text: Translation.tr("Reduces background rendering during games and fullscreen video without removing the overview backdrop.")
+                color: Appearance.colors.colSubtext
+                font.pixelSize: Appearance.font.pixelSize.small
+                wrapMode: Text.WordWrap
+            }
+        }
+    }
+
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
         icon: "devices"
         title: Translation.tr("Multi-monitor")
 
@@ -778,7 +805,7 @@ ContentPage {
                                                 anchors.verticalCenter: parent.verticalCenter
                                             }
                                             StyledText {
-                                                text: "Backdrop"
+                                                text: Translation.tr("Backdrop")
                                                 font.pixelSize: Appearance.font.pixelSize.smaller - 1
                                                 color: Appearance.colors.colOnSecondaryContainer
                                                 anchors.verticalCenter: parent.verticalCenter

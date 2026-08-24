@@ -11,6 +11,8 @@ import qs.services
 Singleton {
     id: root
 
+    signal resumed()
+
     property bool inhibit: false
 
     // Battery profile: only meaningful on a laptop that is actually unplugged.
@@ -43,6 +45,10 @@ Singleton {
             inhibit = !inhibit;
         }
         Persistent.states.idle.inhibit = inhibit;
+    }
+
+    function notifyResumed(): void {
+        root.resumed()
     }
 
     function _restartSwayidle() {
@@ -87,6 +93,11 @@ Singleton {
             cmd.push("before-sleep", `'${StringUtils.shellSingleQuoteEscape(root.launcherPath)}' lock activate`)
         }
 
+        // Re-focus the lock surface and broadcast a shell-wide resume event.
+        // The latter lets persistent layer-shell hosts renegotiate native state
+        // after logind resumes without restarting the whole shell.
+        cmd.push("after-resume", `'${StringUtils.shellSingleQuoteEscape(root.launcherPath)}' lock focus`)
+
         if (Quickshell.env("QS_DEBUG") === "1") console.log("[Idle] Starting swayidle")
         Quickshell.execDetached(cmd)
     }
@@ -110,6 +121,13 @@ Singleton {
             if (Persistent.ready && Persistent.states?.idle?.inhibit)
                 root.inhibit = true
         }
+    }
+
+    Component.onCompleted: {
+        if (Persistent.ready && (Persistent.states?.idle?.inhibit ?? false))
+            root.inhibit = true
+        else if (Config.ready)
+            root._restartSwayidle()
     }
 
     Component.onDestruction: _stopSwayidle()

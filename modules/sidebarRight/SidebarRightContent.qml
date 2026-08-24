@@ -67,7 +67,8 @@ Item {
     readonly property real minimumUsefulWidth: 320
     readonly property real maximumUsefulWidth: 900
 
-    // Events dialog editing state
+    // Events dialog target: an event object to edit, a Date for a new event
+    // prefilled to that day, or null for a blank new event.
     property var eventsDialogEditEvent: null
     
     // Debounce timers to prevent accidental double-clicks
@@ -338,14 +339,16 @@ Item {
         function onRequestWifiDialogChanged() {
             if (GlobalStates.requestWifiDialog) {
                 GlobalStates.requestWifiDialog = false
-                if (!GlobalStates.sidebarRightOpen) GlobalStates.sidebarRightOpen = true
+                if (!GlobalStates.sidebarRightOpen)
+                    GlobalStates.openSidebarRight(GlobalStates.sidebarLeftTargetOutput)
                 root.showWifiDialog = true
             }
         }
         function onRequestBluetoothDialogChanged() {
             if (GlobalStates.requestBluetoothDialog) {
                 GlobalStates.requestBluetoothDialog = false
-                if (!GlobalStates.sidebarRightOpen) GlobalStates.sidebarRightOpen = true
+                if (!GlobalStates.sidebarRightOpen)
+                    GlobalStates.openSidebarRight(GlobalStates.sidebarLeftTargetOutput)
                 root.showBluetoothDialog = true
             }
         }
@@ -943,8 +946,12 @@ Item {
         dialog: EventsDialog {}
         onShownChanged: {
             if (shown && eventsToggle.item) {
-                if (root.eventsDialogEditEvent) {
-                    eventsToggle.item.loadEvent(root.eventsDialogEditEvent);
+                const arg = root.eventsDialogEditEvent;
+                if (arg instanceof Date) {
+                    eventsToggle.item.resetForm();
+                    eventsToggle.item.eventDate = arg;
+                } else if (arg) {
+                    eventsToggle.item.loadEvent(arg);
                 } else {
                     eventsToggle.item.resetForm();
                 }

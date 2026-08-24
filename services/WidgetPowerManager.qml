@@ -74,6 +74,8 @@ Singleton {
     function _triggersForOutput(outputName: string): var {
         const scopedOutput = String(outputName ?? "");
         return {
+            outputDisabled: scopedOutput.length > 0
+                && !DesktopWidgetLayout.outputAllowed(scopedOutput),
             gameMode: root.pauseOnGameMode && GameMode.manuallyActivated,
             fullscreen: root.pauseOnFullscreen && root._fullscreenForOutput(scopedOutput),
             windowsPresent: root.pauseWhenWindowsPresent
@@ -83,10 +85,15 @@ Singleton {
     }
 
     function shouldPauseForOutput(outputName: string): bool {
+        const scopedOutput = String(outputName ?? "");
+        if (scopedOutput.length > 0
+                && !DesktopWidgetLayout.outputAllowed(scopedOutput))
+            return true;
         if (!root.enabled || GlobalStates.widgetEditMode)
             return false;
         const triggers = root._triggersForOutput(outputName);
-        return triggers.gameMode || triggers.fullscreen || triggers.windowsPresent;
+        return triggers.outputDisabled || triggers.gameMode
+            || triggers.fullscreen || triggers.windowsPresent;
     }
 
     function widgetsActiveForOutput(outputName: string): bool {

@@ -6,10 +6,6 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.waffle.looks
 
-/**
- * Waffle-style timer indicator for the taskbar.
- * Shows when pomodoro, countdown, or stopwatch is active.
- */
 BarButton {
     id: root
 
@@ -42,8 +38,9 @@ BarButton {
     }
 
     readonly property string iconName: {
-        if (pomodoroActive) return (TimerService?.pomodoroBreak ?? false) ? "drink-coffee" : "target"
-        if (countdownActive) return "hourglass-half"
+        // Missing Fluent assets render blank without warning.
+        if (pomodoroActive) return (TimerService?.pomodoroBreak ?? false) ? "drink-coffee" : "flash-on"
+        if (countdownActive) return "timer"
         if (stopwatchActive) return "timer"
         return "drink-coffee"
     }
@@ -97,7 +94,7 @@ BarButton {
     }
 
     BarToolTip {
-        extraVisibleCondition: root.shouldShowTooltip
+        barExtraVisibleCondition: root.shouldShowTooltip
         text: {
             if (root.pomodoroActive) {
                 const isLongBreak = TimerService?.pomodoroLongBreak ?? false

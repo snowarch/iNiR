@@ -107,10 +107,10 @@ Singleton {
         closeAll()
         currentDestination = destination
         switch (entry.surface) {
-        case "sidebar-left": GlobalStates.sidebarLeftOpen = true; break
+        case "sidebar-left": GlobalStates.openSidebarLeft(""); break
         case "sidebar-right":
             GlobalStates.sidebarRightRequestedWidget = entry.view
-            GlobalStates.sidebarRightOpen = true
+            GlobalStates.openSidebarRight("")
             break
         case "control-panel": GlobalStates.controlPanelOpen = true; break
         case "dashboard": GlobalStates.dashboardOpen = true; break
@@ -121,7 +121,7 @@ Singleton {
             GlobalStates.overviewSearchPrefix = entry.view === "actions"
                 ? (Config.options?.search?.prefix?.action ?? "/")
                 : entry.view === "clipboard" ? (Config.options?.search?.prefix?.clipboard ?? ";") : ""
-            GlobalStates.overviewOpen = true
+            GlobalStates.openOverview("")
             break
         case "wallpaper-grid": GlobalStates.wallpaperSelectorOpen = true; break
         case "wallpaper-coverflow": GlobalStates.coverflowSelectorOpen = true; break

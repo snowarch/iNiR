@@ -26,6 +26,7 @@ WindowDialog {
 
     VolumeDialogContent {
         isSink: root.isSink
+        dialogShown: root.show
     }
 
     WindowDialogButtonRow {

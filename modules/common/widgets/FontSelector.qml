@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import qs.services
 import qs.modules.common
 
 Item {
@@ -92,7 +93,7 @@ Item {
             TextField {
                 id: searchField
                 Layout.fillWidth: true
-                placeholderText: "Search fonts..."
+                placeholderText: Translation.tr("Search fonts...")
                 renderType: Text.NativeRendering
                 font.pixelSize: Appearance.font.pixelSize.small
                 background: Rectangle {

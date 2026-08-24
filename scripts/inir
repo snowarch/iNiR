@@ -1240,8 +1240,8 @@ _inir_doctor_perf() {
         printf '=== Enabled features ===\n'
         local style family animations effects_blur compositor_blur
         style="$(jq -r '.appearance.globalStyle // "material"' "$cfg_path" 2>/dev/null)"
-        family="$(jq -r '.appearance.panelFamily // "ii"' "$cfg_path" 2>/dev/null)"
-        animations="$(jq -r '.appearance.animationsEnabled // true' "$cfg_path" 2>/dev/null)"
+        family="$(jq -r '.panelFamily // "ii"' "$cfg_path" 2>/dev/null)"
+        animations="$(jq -r 'if (.performance.reduceAnimations // false) then false else true end' "$cfg_path" 2>/dev/null)"
         effects_blur="$(jq -r '.background.effects.enableBlur // false' "$cfg_path" 2>/dev/null)"
         compositor_blur="$(jq -r '.performance.compositorBlur // true' "$cfg_path" 2>/dev/null)"
         printf '  Config file:     %s\n' "$cfg_path"
@@ -1573,8 +1573,9 @@ _get_systemd_user_env() {
     fi
     _cached_systemd_env_fetched=true
     # 3s timeout: if D-Bus isn't ready yet, bail out and let the shell start
-    # with whatever env it already has.  Apps launched later will inherit the
-    # full env from systemd once it catches up.
+    # with whatever env it already has. ShellExec re-reads the live user-manager
+    # environment at application launch time, so this startup snapshot is not
+    # treated as the application environment.
     _cached_systemd_env="$(timeout 3s systemctl --user show-environment 2>/dev/null)" || true
     printf '%s' "$_cached_systemd_env"
 }
@@ -1614,24 +1615,57 @@ apply_gpu_policy() {
     done
     [[ -z "$has_dgpu" || -z "$igpu_pci" ]] && return
 
+    # Track only variables iNiR injects for the shell. App launchers use this
+    # marker to remove shell-only GPU policy before starting user applications,
+    # so Steam/Wine/compute workloads retain the user's normal GPU selection.
+    local _gpu_policy_vars=""
+
     # Vulkan loader: skip NVIDIA's ICD entirely (loader 1.3.207+).  Without
     # this the loader dlopens libnvidia-* during enumeration, which is what
     # opens the /dev/nvidia* fds in #136's lsof.
-    [[ -z "${VK_LOADER_DRIVERS_DISABLE:-}" ]] && export VK_LOADER_DRIVERS_DISABLE="*nvidia*"
+    if [[ -z "${VK_LOADER_DRIVERS_DISABLE:-}" ]]; then
+        export VK_LOADER_DRIVERS_DISABLE="*nvidia*"
+        _gpu_policy_vars+=" VK_LOADER_DRIVERS_DISABLE"
+    fi
     # Mesa Vulkan device-select: prefer the iGPU PCI bus.
-    [[ -z "${MESA_VK_DEVICE_SELECT:-}" ]] && export MESA_VK_DEVICE_SELECT="pci-$igpu_pci"
-    [[ -z "${MESA_VK_DEVICE_SELECT_FORCE_DEFAULT_DEVICE:-}" ]] && export MESA_VK_DEVICE_SELECT_FORCE_DEFAULT_DEVICE=1
+    if [[ -z "${MESA_VK_DEVICE_SELECT:-}" ]]; then
+        export MESA_VK_DEVICE_SELECT="pci-$igpu_pci"
+        _gpu_policy_vars+=" MESA_VK_DEVICE_SELECT"
+    fi
+    if [[ -z "${MESA_VK_DEVICE_SELECT_FORCE_DEFAULT_DEVICE:-}" ]]; then
+        export MESA_VK_DEVICE_SELECT_FORCE_DEFAULT_DEVICE=1
+        _gpu_policy_vars+=" MESA_VK_DEVICE_SELECT_FORCE_DEFAULT_DEVICE"
+    fi
     # GLVND: OpenGL via Mesa, not NVIDIA's libGLX.
-    [[ -z "${__GLX_VENDOR_LIBRARY_NAME:-}" ]] && export __GLX_VENDOR_LIBRARY_NAME=mesa
-    [[ -z "${__NV_PRIME_RENDER_OFFLOAD:-}" ]] && export __NV_PRIME_RENDER_OFFLOAD=0
+    if [[ -z "${__GLX_VENDOR_LIBRARY_NAME:-}" ]]; then
+        export __GLX_VENDOR_LIBRARY_NAME=mesa
+        _gpu_policy_vars+=" __GLX_VENDOR_LIBRARY_NAME"
+    fi
+    if [[ -z "${__NV_PRIME_RENDER_OFFLOAD:-}" ]]; then
+        export __NV_PRIME_RENDER_OFFLOAD=0
+        _gpu_policy_vars+=" __NV_PRIME_RENDER_OFFLOAD"
+    fi
     # Qt FFmpeg: keep the NVIDIA decoder paths out without disabling hardware
     # decoding altogether. VAAPI uses the Mesa iGPU selected above; when VAAPI
     # is unavailable Qt falls back to software decoding instead of waking CUDA.
-    [[ -z "${QT_FFMPEG_DECODING_HW_DEVICE_TYPES+x}" ]] && export QT_FFMPEG_DECODING_HW_DEVICE_TYPES=vaapi
+    if [[ -z "${QT_FFMPEG_DECODING_HW_DEVICE_TYPES+x}" ]]; then
+        export QT_FFMPEG_DECODING_HW_DEVICE_TYPES=vaapi
+        _gpu_policy_vars+=" QT_FFMPEG_DECODING_HW_DEVICE_TYPES"
+    fi
     # NVIDIA optimus Vulkan layer: pretend iGPU only.
-    [[ -z "${__VK_LAYER_NV_optimus:-}" ]] && export __VK_LAYER_NV_optimus=non_NVIDIA_only
+    if [[ -z "${__VK_LAYER_NV_optimus:-}" ]]; then
+        export __VK_LAYER_NV_optimus=non_NVIDIA_only
+        _gpu_policy_vars+=" __VK_LAYER_NV_optimus"
+    fi
     # Block legacy NVIDIA VDPAU probing; Qt Multimedia still has VAAPI above.
-    [[ -z "${VDPAU_DRIVER:-}" ]] && export VDPAU_DRIVER=none
+    if [[ -z "${VDPAU_DRIVER:-}" ]]; then
+        export VDPAU_DRIVER=none
+        _gpu_policy_vars+=" VDPAU_DRIVER"
+    fi
+
+    if [[ -n "$_gpu_policy_vars" ]]; then
+        export INIR_SHELL_GPU_POLICY_VARS="${_gpu_policy_vars# }"
+    fi
 }
 
 apply_qt_runtime_env() {
@@ -1727,10 +1761,10 @@ apply_qt_runtime_env() {
     # XDG_SESSION_TYPE, no DISPLAY, no XCURSOR_*, etc.).  By the time
     # wait_for_wayland_socket() returns, the compositor (niri/hyprland) has
     # already run its import-environment step, so the systemd user manager's
-    # environment is complete.  We pull any still-missing critical vars into
-    # this process so that Quickshell's INITIAL_ENVIRONMENT snapshot — which
-    # is frozen at QS startup and inherited by every app launched via
-    # DesktopEntry.execute() — contains them.
+    # environment is complete. We still pull missing critical vars into the
+    # Quickshell process because internal helpers and the shell itself need a
+    # healthy startup environment. User-facing app launches re-sync through
+    # ShellExec instead of trusting this frozen process snapshot.
     #
     # Without this:
     #   • Chromium/Brave/Electron apps don't see XDG_SESSION_TYPE=wayland and
@@ -1754,9 +1788,8 @@ apply_qt_runtime_env() {
         done
         # Use the manager's rich PATH (set by compositor + PAM login) which
         # includes user dirs (~/.local/bin, flatpak exports, nvm, pnpm, etc.)
-        # absent from the minimal systemd unit PATH.  All apps launched via
-        # DesktopEntry.execute() inherit Quickshell's INITIAL_ENVIRONMENT, so
-        # they need the full PATH to locate binaries outside /usr/bin.
+        # absent from the minimal systemd unit PATH. ShellExec repeats this
+        # synchronization at user-app launch time to avoid a stale snapshot.
         local _qs_sys_path
         _qs_sys_path="$(grep '^PATH=' <<< "$_qs_sys_env" | head -1 | cut -d= -f2- || true)"
         if [[ -n "$_qs_sys_path" && "$_qs_sys_path" != "$PATH" ]]; then
@@ -1771,12 +1804,25 @@ apply_qt_runtime_env() {
         fi
     fi
 
-    # Electron Wayland hint — must be in the process env so launched Electron apps
-    # (Discord, VS Code, Chrome, Brave) use Wayland natively instead of X11.
-    # The systemd import above may already have set it; this is the hardcoded fallback
-    # for race conditions where niri hasn't propagated it yet.
+    # Electron Wayland hint for the shell's startup environment and legacy
+    # internal child paths. User-facing apps take the live user-manager value
+    # through ShellExec, so this fallback never becomes a forced app policy.
     if [[ -z "${ELECTRON_OZONE_PLATFORM_HINT:-}" ]]; then
         export ELECTRON_OZONE_PLATFORM_HINT=auto
+    fi
+
+    # DISPLAY fallback for Quickshell's own startup snapshot. X11-only children
+    # need a valid display, but :0 is not special: a greeter may own it while
+    # niri/xwayland-satellite owns :1 or later. ShellExec validates DISPLAY
+    # again at application launch time and prefers the live user-manager value.
+    if [[ -z "${DISPLAY:-}" ]]; then
+        local _x _xnum
+        for _x in /tmp/.X11-unix/X*; do
+            [[ -S "$_x" ]] || continue
+            [[ "$(stat -c %U "$_x" 2>/dev/null)" == "$(id -un)" ]] || continue
+            export DISPLAY=":${_x##*/X}"
+            break
+        done
     fi
 }
 
@@ -2047,11 +2093,13 @@ ensure_systemd_graphical_env() {
         if [[ -n "${DISPLAY:-}" ]]; then
             vars_to_import+=("DISPLAY=$DISPLAY")
         else
-            # Probe for XWayland socket — compositor may have started it but not
-            # yet exported DISPLAY to systemd.
+            # Probe for the live XWayland socket — the compositor may have
+            # started it but not yet exported DISPLAY to systemd.  Only
+            # user-owned sockets count; the greeter's root-owned Xorg socket
+            # (sddm on :0) is not the session display.
             local _xsock
             for _xsock in /tmp/.X11-unix/X*; do
-                if [[ -S "$_xsock" ]]; then
+                if [[ -S "$_xsock" ]] && [[ "$(stat -c %U "$_xsock" 2>/dev/null)" == "$(id -un)" ]]; then
                     local _xnum
                     _xnum="$(basename "$_xsock" | sed 's/^X//')"
                     vars_to_import+=("DISPLAY=:${_xnum}")
@@ -2796,25 +2844,20 @@ install_user_service() {
         -e "s|^ExecStopPost=-.*|ExecStopPost=-${escaped_launcher} cleanup-orphans|" \
         "$asset_path" > "$tmp_file"
     if [[ -L "$systemd_user_dir/inir.service" ]]; then
-        local service_dropin_dir="$systemd_user_dir/inir.service.d"
-        local service_override="$service_dropin_dir/override.conf"
-        local override_tmp="${XDG_CACHE_HOME:-$HOME/.cache}/inir.service.override.$$"
-        mkdir -p "$service_dropin_dir"
-        cat > "$override_tmp" <<EOF
-# Managed locally: keep the repo unit template portable while running the
-# developer launcher path from this machine.
-[Service]
-ExecStart=
-ExecStart=${launcher_path} run --session
-ExecStopPost=
-ExecStopPost=-${launcher_path} cleanup-orphans
-EOF
-        cp -f "$override_tmp" "$service_override"
-        rm -f "$override_tmp"
-    else
-        cp -f "$tmp_file" "$systemd_user_dir/inir.service"
+        # Never leave a developer install pointing at the portable template:
+        # it uses /usr/bin/inir and fails with 203/EXEC before a local drop-in
+        # has been generated.  Install the fully rendered unit as a real file.
+        rm -f "$systemd_user_dir/inir.service"
     fi
+    cp -f "$tmp_file" "$systemd_user_dir/inir.service"
     rm -f "$tmp_file"
+
+    local service_dropin_dir="$systemd_user_dir/inir.service.d"
+    local service_override="$service_dropin_dir/override.conf"
+    if [[ -f "$service_override" ]] && grep -q '^# Managed locally:' "$service_override"; then
+        rm -f "$service_override"
+        rmdir "$service_dropin_dir" 2>/dev/null || true
+    fi
 
     # Migrate: remove old WantedBy=graphical-session.target symlink left by
     # previous versions that used [Install] + systemctl enable.  This is the

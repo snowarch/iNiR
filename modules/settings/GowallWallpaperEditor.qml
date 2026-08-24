@@ -220,7 +220,7 @@ ColumnLayout {
             onSelected: newValue => { root.operationMode = newValue }
             options: [
                 { displayName: Translation.tr("Recolor"), icon: "palette", value: "convert" },
-                { displayName: Translation.tr("Effects"), icon: "auto_fix_high", value: "effects" },
+                { displayName: Translation.tr("Effects"), icon: "auto_fix", value: "effects" },
                 { displayName: Translation.tr("Invert"), icon: "invert_colors", value: "invert" },
                 { displayName: Translation.tr("Pixelate"), icon: "grid_on", value: "pixelate" },
                 { displayName: Translation.tr("Upscale"), icon: "zoom_in", value: "upscale" }
@@ -305,26 +305,16 @@ ColumnLayout {
                 Flow {
                     id: themeFlow
                     width: parent.width
-                    spacing: 4
+                    spacing: 6
 
                     Repeater {
                         model: root.filteredThemes
-                        delegate: RippleButton {
+                        delegate: FilterChip {
                             required property var modelData
-                            implicitHeight: 28
-                            implicitWidth: themeLabel.implicitWidth + 20
-                            buttonRadius: 14
-                            toggled: root.selectedTheme === String(modelData)
-                            colBackground: toggled ? Appearance.colors.colPrimaryContainer : "transparent"
-                            colBackgroundHover: toggled ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colLayer1Hover
+                            text: String(modelData)
+                            selected: root.selectedTheme === String(modelData)
+                            surfaceColor: SettingsMaterialPreset.groupColor
                             onClicked: root.selectedTheme = String(modelData)
-                            contentItem: StyledText {
-                                id: themeLabel
-                                anchors.centerIn: parent
-                                text: String(modelData)
-                                font.pixelSize: Appearance.font.pixelSize.smaller
-                                color: parent.toggled ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer1
-                            }
                         }
                     }
                 }
@@ -851,5 +841,15 @@ ColumnLayout {
                 root.customColors = next
             }
         }
+    }
+
+    SettingsNativeDialogGuard {
+        dialog: imageDialog
+        dialogKey: "gowall-source-image"
+    }
+
+    SettingsNativeDialogGuard {
+        dialog: colorDialog
+        dialogKey: "gowall-palette-color"
     }
 }

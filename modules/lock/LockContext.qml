@@ -41,6 +41,8 @@ Scope {
         root.clearText();
         root.unlockInProgress = false;
         stopFingerPam();
+        if (GlobalStates.screenLocked)
+            Qt.callLater(root.tryFingerUnlock);
     }
 
     Timer {
@@ -82,15 +84,24 @@ Scope {
     }
 
     function tryFingerUnlock() {
-        if (root.fingerprintsConfigured) {
-            fingerPam.start();
-        }
+        if (!GlobalStates.screenLocked || !root.fingerprintsConfigured || fingerPam.active)
+            return;
+        fingerprintRetryTimer.stop();
+        if (!fingerPam.start())
+            fingerprintRetryTimer.restart();
     }
 
     function stopFingerPam() {
-        if (fingerPam.running) {
+        fingerprintRetryTimer.stop();
+        if (fingerPam.active)
             fingerPam.abort();
-        }
+    }
+
+    Timer {
+        id: fingerprintRetryTimer
+        interval: 750
+        repeat: false
+        onTriggered: root.tryFingerUnlock()
     }
 
     Process {
@@ -100,7 +111,11 @@ Scope {
         stdout: StdioCollector {
             id: fingerprintOutputCollector
             onStreamFinished: {
-                root.fingerprintsConfigured = fingerprintOutputCollector.text.includes("Fingerprints for user");
+                // fprintd's enrolled-print rows are stable machine-readable finger
+                // identifiers; do not depend on the localized heading text.
+                root.fingerprintsConfigured = /(^|\n)\s*-\s+#\d+:/.test(fingerprintOutputCollector.text);
+                if (root.fingerprintsConfigured && GlobalStates.screenLocked)
+                    Qt.callLater(root.tryFingerUnlock);
             }
         }
         onExited: (exitCode, exitStatus) => {
@@ -145,10 +160,13 @@ Scope {
 
         onCompleted: result => {
             if (result == PamResult.Success) {
+                fingerprintRetryTimer.stop();
                 root.unlocked(root.targetAction);
-                stopFingerPam();
-            } else if (result == PamResult.Error) { // if timeout or etc..
-                tryFingerUnlock()
+            } else if (GlobalStates.screenLocked && root.fingerprintsConfigured) {
+                // Failed scans, PAM errors and max-tries completions are all
+                // recoverable while the lock remains active. Retry through a
+                // timer so a broken device/PAM stack cannot create a tight loop.
+                fingerprintRetryTimer.restart();
             }
         }
     }

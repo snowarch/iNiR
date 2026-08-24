@@ -47,65 +47,6 @@ Singleton {
     property double _lastCaptureEndTime: 0
     readonly property int _captureCooldownMs: 2000  // 2 seconds between capture cycles
     
-    // Clipboard save/restore: the script does its own save/restore but there's a race
-    // with async niri screenshot-window IPC. We do a SECOND restore from QML after 
-    // the cliphistRestoreTimer fires, guaranteeing the clipboard is clean.
-    property string _savedClipMime: ""
-    property string _savedClipFile: ""
-
-    Process {
-        id: clipboardSaveProcess
-        property bool saveOk: false
-        // Dynamically set command before running
-        onExited: (exitCode) => {
-            clipboardSaveProcess.saveOk = (exitCode === 0)
-            if (exitCode !== 0) {
-                root._savedClipMime = ""
-                root._savedClipFile = ""
-            }
-        }
-    }
-
-    Process {
-        id: clipboardRestoreProcess
-        onExited: {
-            // Cleanup temp file
-            if (root._savedClipFile.length > 0) {
-                Quickshell.execDetached(["/usr/bin/rm", "-f", root._savedClipFile])
-                root._savedClipFile = ""
-                root._savedClipMime = ""
-            }
-            // Clipboard restored — now safe to unsuppress and refresh cliphist
-            Cliphist.suppressRefresh = false
-            Cliphist.refresh()
-        }
-    }
-
-    function _saveClipboard(): void {
-        const tmpFile = "/tmp/inir-clipboard-qml-" + Date.now() + ".tmp"
-        root._savedClipFile = tmpFile
-        // Detect MIME and save in one shot
-        clipboardSaveProcess.command = ["/usr/bin/bash", "-c",
-            `mime=$(/usr/bin/wl-paste -l 2>/dev/null | head -1); ` +
-            `[ -z "$mime" ] && exit 1; ` +
-            `echo "$mime" > '${tmpFile}.mime'; ` +
-            `/usr/bin/wl-paste --type "$mime" > '${tmpFile}' 2>/dev/null`
-        ]
-        clipboardSaveProcess.running = true
-    }
-
-    function _restoreClipboard(): void {
-        if (root._savedClipFile.length === 0) return
-        const tmpFile = root._savedClipFile
-        clipboardRestoreProcess.command = ["/usr/bin/bash", "-c",
-            `[ -f '${tmpFile}.mime' ] && [ -f '${tmpFile}' ] || exit 1; ` +
-            `mime=$(cat '${tmpFile}.mime'); ` +
-            `/usr/bin/wl-copy --type "$mime" < '${tmpFile}' 2>/dev/null; ` +
-            `rm -f '${tmpFile}' '${tmpFile}.mime' 2>/dev/null`
-        ]
-        clipboardRestoreProcess.running = true
-    }
-
     signal captureComplete()
     signal previewUpdated(int windowId)
 
@@ -223,7 +164,6 @@ Singleton {
         capturing = true
         initialCapturesDone = true
         Cliphist.suppressRefresh = true
-        root._saveClipboard()
         
         // Build command with IDs
         const cmd = ShellExec.supportsFish()
@@ -250,7 +190,6 @@ Singleton {
         _log("[WindowPreviewService] Force capturing all", windows.length, "windows")
         capturing = true
         Cliphist.suppressRefresh = true
-        root._saveClipboard()
         
         const ids = windows.map(w => w.id)
         captureProcess.idsToCapture = ids
@@ -291,8 +230,10 @@ Singleton {
             }
             
             idsToCapture = []
-            // Restore clipboard refresh after script cleanup has finished
-            cliphistRestoreTimer.restart()
+            // The capture script has already removed only its own entries and
+            // conditionally restored the clipboard before returning.
+            Cliphist.suppressRefresh = false
+            Cliphist.refresh()
             root.captureComplete()
         }
     }
@@ -307,22 +248,6 @@ Singleton {
         }
     }
     
-    Timer {
-        id: cliphistRestoreTimer
-        interval: 1500
-        onTriggered: {
-            if (root._savedClipFile.length === 0) {
-                // Nothing to restore — just unsuppress and refresh
-                Cliphist.suppressRefresh = false
-                Cliphist.refresh()
-            } else {
-                // Restore clipboard first; unsuppress+refresh happens in
-                // clipboardRestoreProcess.onExited after wl-copy finishes.
-                root._restoreClipboard()
-            }
-        }
-    }
-
     Timer {
         id: cleanupTimer
         interval: 1000

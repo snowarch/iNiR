@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Pick a cava [input] source that follows music, not VoIP/system mix.
 
-Prefers PipeWire/Pulse streams tagged media.role=music, then streams whose
-client binary matches the active MPRIS desktop entry. Falls back to the
-default sink monitor when nothing better exists.
+Prefers an uncorked PipeWire/Pulse stream belonging to the active MPRIS
+player, then other active music streams. Falls back to the default sink
+monitor when nothing better exists.
 """
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ from dataclasses import dataclass
 
 
 EXCLUDED_APP_NAMES = (
+    "quickshell",
     "discord",
     "vesktop",
     "webRTC",
@@ -30,6 +31,7 @@ EXCLUDED_APP_NAMES = (
 )
 
 EXCLUDED_BINARIES = (
+    "quickshell",
     "discord",
     "vesktop",
     "teams",
@@ -45,6 +47,26 @@ EXCLUDED_MEDIA_ROLES = (
     "alert",
     "game",
     "production",
+)
+
+PREFERRED_PLAYBACK_TOKENS = (
+    "spotify",
+    "chromium",
+    "chrome",
+    "brave",
+    "firefox",
+    "zen",
+    "mpv",
+    "vlc",
+    "strawberry",
+    "audacious",
+    "rhythmbox",
+    "clementine",
+    "haruna",
+    "youtube music",
+    "youtube-music",
+    "youtube_music",
+    "ytmusic",
 )
 
 DESKTOP_ENTRY_BINARIES: dict[str, tuple[str, ...]] = {
@@ -65,6 +87,10 @@ DESKTOP_ENTRY_BINARIES: dict[str, tuple[str, ...]] = {
     "clementine": ("clementine",),
     "haruna": ("haruna",),
     "com.github.thitzekai.Mooz": ("mooz",),
+    "youtube-music": ("youtube-music", "youtube_music", "ytmusic", "mpv"),
+    "youtube_music": ("youtube-music", "youtube_music", "ytmusic", "mpv"),
+    "ytmusic": ("youtube-music", "youtube_music", "ytmusic", "mpv"),
+    "com.github.th_ch.youtube_music": ("youtube-music", "youtube_music", "ytmusic"),
 }
 
 
@@ -73,9 +99,13 @@ class SinkInput:
     index: int
     client_id: str
     node_name: str
+    object_serial: str
     media_role: str
+    media_name: str
     app_name: str
+    app_id: str
     binary: str
+    corked: bool
 
 
 @dataclass
@@ -145,9 +175,16 @@ def _parse_sink_inputs(text: str, clients: dict[str, PulseClient]) -> list[SinkI
                 index=int(sink_index),
                 client_id=client_id,
                 node_name=node_name,
+                object_serial=block.get("object.serial", ""),
                 media_role=block.get("media.role", "").lower(),
-                app_name=(client.app_name if client else "").lower(),
-                binary=(client.binary if client else "").lower(),
+                media_name=block.get("media.name", "").lower(),
+                app_name=(block.get("application.name")
+                    or (client.app_name if client else "")).lower(),
+                app_id=block.get("application.id", "").lower(),
+                binary=(block.get("application.process.binary")
+                    or (client.binary if client else "")).lower(),
+                corked=(block.get("Corked", block.get("pulse.corked", "false"))
+                    .lower() in ("yes", "true", "1")),
             )
         )
         block = {}
@@ -158,6 +195,10 @@ def _parse_sink_inputs(text: str, clients: dict[str, PulseClient]) -> list[SinkI
         if match:
             flush()
             sink_index = match.group(1)
+            continue
+        corked_match = re.match(r"^\s+Corked:\s+(yes|no)$", line, re.IGNORECASE)
+        if corked_match and sink_index:
+            block["Corked"] = corked_match.group(1)
             continue
         prop = re.match(r"^\s+([^=]+) = \"(.*)\"$", line)
         if prop and sink_index:
@@ -171,7 +212,7 @@ def _parse_sink_inputs(text: str, clients: dict[str, PulseClient]) -> list[SinkI
 
 def _hint_binaries(desktop_entry: str) -> set[str]:
     entry = desktop_entry.strip().lower()
-    if not entry:
+    if not entry or entry == "__inir_music_player__":
         return set()
     hints: set[str] = set()
     for key, binaries in DESKTOP_ENTRY_BINARIES.items():
@@ -180,6 +221,12 @@ def _hint_binaries(desktop_entry: str) -> set[str]:
     base = entry.split(".")[-1]
     if base and base not in ("desktop", "client"):
         hints.add(base)
+    if "chrom" in entry or "brave" in entry:
+        hints.update(("chromium", "chrome", "google-chrome", "google-chrome-stable", "brave", "electron"))
+    if "firefox" in entry or "zen" in entry:
+        hints.update(("firefox", "zen"))
+    if "youtube" in entry or "ytmusic" in entry or "yt-music" in entry:
+        hints.update(("youtube-music", "youtube_music", "ytmusic", "mpv", "electron"))
     return hints
 
 
@@ -198,23 +245,40 @@ def _is_excluded(stream: SinkInput) -> bool:
 def _score_stream(stream: SinkInput, hint_binaries: set[str]) -> int:
     if _is_excluded(stream):
         return -10_000
+    if stream.corked:
+        return -5_000
 
-    score = 0
+    score = 180
     if stream.media_role == "music":
-        score += 100
+        score += 120
     elif stream.media_role in ("video", "multimedia"):
-        score += 40
+        score += 50
     elif stream.media_role:
         score -= 20
 
+    identity = " ".join((
+        stream.node_name.lower(), stream.media_name, stream.app_name,
+        stream.app_id, stream.binary,
+    ))
+    hint_match = not hint_binaries or (
+        stream.binary in hint_binaries
+        or stream.node_name.lower() in hint_binaries
+        or stream.app_id in hint_binaries
+        or any(hint in identity for hint in hint_binaries)
+    )
+    if not hint_match:
+        return -1_000
+
     if hint_binaries:
         if stream.binary in hint_binaries:
-            score += 80
-        if any(h in stream.app_name for h in hint_binaries):
-            score += 40
+            score += 500
+        if stream.node_name.lower() in hint_binaries or stream.app_id in hint_binaries:
+            score += 420
+        if any(h in identity for h in hint_binaries):
+            score += 260
 
-    if stream.binary in ("spotify", "mpv", "vlc", "strawberry", "clementine", "rhythmbox"):
-        score += 15
+    if any(token in identity for token in PREFERRED_PLAYBACK_TOKENS):
+        score += 40
 
     return score
 
@@ -227,8 +291,10 @@ def _default_sink_monitor() -> str:
 
 
 def resolve_source(desktop_entry: str = "") -> str:
-    if not _run(["pactl", "info"]):
+    server_info = _run(["pactl", "info"])
+    if not server_info:
         return "auto"
+    is_pipewire = "pipewire" in server_info.lower()
 
     clients = _parse_clients(_run(["pactl", "list", "clients"]))
     streams = _parse_sink_inputs(_run(["pactl", "list", "sink-inputs"]), clients)
@@ -236,12 +302,14 @@ def resolve_source(desktop_entry: str = "") -> str:
 
     ranked = sorted(
         ((_score_stream(stream, hint_binaries), stream) for stream in streams),
-        key=lambda item: item[0],
+        key=lambda item: (item[0], item[1].index),
         reverse=True,
     )
 
     for score, stream in ranked:
         if score > 0 and stream.node_name:
+            if is_pipewire and stream.object_serial:
+                return stream.object_serial
             return stream.node_name
 
     # VoIP/system streams only — don't fall back to the full sink mix (Discord voices, etc.)

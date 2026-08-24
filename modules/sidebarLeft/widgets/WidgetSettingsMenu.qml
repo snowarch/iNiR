@@ -86,7 +86,8 @@ Loader {
         }
 
         // Animation logic
-        property real sourceEdgeMargin: -implicitHeight
+        property real sourceEdgeMargin: Appearance.cookieEverywhere
+            ? root.visualMargin : -implicitHeight
 
         SequentialAnimation {
             id: openAnim
@@ -96,7 +97,7 @@ Loader {
                 to: root.visualMargin
                 duration: Appearance.animation.elementMoveEnter.duration
                 easing.type: Appearance.animation.elementMoveEnter.type
-                easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
+                easing.bezierCurve: Appearance.motion.popupReveal.enterBezierCurve
             }
         }
 
@@ -155,7 +156,7 @@ Loader {
                         : Appearance.animation.elementMoveEnter.type
                     easing.bezierCurve: popupWindow.closing
                         ? Appearance.animation.elementMoveExit.bezierCurve
-                        : Appearance.animation.elementMoveEnter.bezierCurve
+                        : Appearance.motion.popupReveal.enterBezierCurve
                 }
             }
 
@@ -170,7 +171,7 @@ Loader {
                         : Appearance.animation.elementMoveEnter.type
                     easing.bezierCurve: popupWindow.closing
                         ? Appearance.animation.elementMoveExit.bezierCurve
-                        : Appearance.animation.elementMoveEnter.bezierCurve
+                        : Appearance.motion.popupReveal.enterBezierCurve
                 }
             }
 

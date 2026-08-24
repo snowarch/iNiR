@@ -548,7 +548,7 @@ ContentPage {
                                     id: wallpaperGrid
                                     anchors.fill: parent
                                     anchors.margins: Appearance.sizes.spacingSmall
-                                    model: Wallpapers.folderModel
+                                    model: Wallpapers.folderModelReady ? Wallpapers.folderModel : null
                                     Component.onCompleted: Wallpapers.generateThumbnail("large")
 
                                     add: Transition {

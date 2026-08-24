@@ -170,8 +170,8 @@ WSettingsPage {
         
         ColumnLayout {
             Layout.fillWidth: true
-            Layout.leftMargin: 16
-            Layout.rightMargin: 16
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             Layout.bottomMargin: 6
             spacing: 12
             

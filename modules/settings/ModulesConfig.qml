@@ -521,7 +521,7 @@ ContentPage {
 
             SettingsSwitch {
                 buttonIcon: "widgets"
-                text: Translation.tr("Overlay")
+                text: Translation.tr("Floating tools (Super+G)")
                 checked: modulesPage.isPanelEnabled("iiOverlay")
                 onCheckedChanged: modulesPage.setPanelEnabled("iiOverlay", checked)
                 StyledToolTip { text: Translation.tr("Floating image and widgets panel (Super+G)") }
@@ -799,7 +799,7 @@ ContentPage {
 
             SettingsSwitch {
                 buttonIcon: "widgets"
-                text: Translation.tr("Overlay")
+                text: Translation.tr("Floating tools (Super+G)")
                 checked: modulesPage.isPanelEnabled("iiOverlay")
                 onCheckedChanged: modulesPage.setPanelEnabled("iiOverlay", checked)
                 StyledToolTip { text: Translation.tr("Floating image and widgets panel (Super+G)") }

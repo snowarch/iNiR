@@ -29,11 +29,16 @@ AbstractBackgroundWidget {
     })
 
     implicitWidth: Math.round(Number(root._readConfigKey("contentWidth") ?? 320) * scaleFactor)
-    implicitHeight: Math.round(Number(root._readConfigKey("contentHeight") ?? 120) * scaleFactor)
+    implicitHeight: {
+        const stored = Math.round(Number(root._readConfigKey("contentHeight") ?? 120) * scaleFactor);
+        return root.displayMode === "tiles" ? Math.max(stored, root._tilesMinHeight) : stored;
+    }
 
     visibleWhenLocked: false
     needsColText: true
     resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
+    resizeMinWidth: root.displayMode === "tiles" ? 100 : 120
+    resizeMinHeight: root.displayMode === "tiles" ? 100 : 60
 
     // ── Popover: mode + resource toggles ──
     editPopoverContent: Component {
@@ -46,17 +51,18 @@ AbstractBackgroundWidget {
                 Layout.alignment: Qt.AlignHCenter
                 Repeater {
                     model: [
-                        { label: "Bars", icon: "bar_chart", value: "bars" },
-                        { label: "Graph", icon: "show_chart", value: "graph" },
-                        { label: "Rings", icon: "donut_large", value: "rings" },
-                        { label: "Text", icon: "text_fields", value: "text" }
+                        { label: Translation.tr("Bars"), icon: "bar_chart", value: "bars" },
+                        { label: Translation.tr("Graph"), icon: "show_chart", value: "graph" },
+                        { label: Translation.tr("Rings"), icon: "donut_large", value: "rings" },
+                        { label: Translation.tr("Text"), icon: "text_fields", value: "text" },
+                        { label: Translation.tr("Tiles"), icon: "grid_view", value: "tiles" }
                     ]
                     SelectionGroupButton {
                         required property var modelData
                         Layout.fillWidth: true
                         leftmost: true; rightmost: true
                         buttonIcon: modelData.icon
-                        buttonText: Translation.tr(modelData.label)
+                        buttonText: modelData.label
                         toggled: root.displayMode === modelData.value
                         onClicked: Config.setNestedValue("background.widgets.systemMonitor.displayMode", modelData.value)
                     }
@@ -69,18 +75,18 @@ AbstractBackgroundWidget {
                 Layout.alignment: Qt.AlignHCenter
                 Repeater {
                     model: [
-                        { label: "CPU", icon: "memory", key: "showCpu", active: root.showCpu },
-                        { label: "RAM", icon: "storage", key: "showMemory", active: root.showMemory },
-                        { label: "GPU", icon: "developer_board", key: "showGpu", active: root.showGpu },
-                        { label: "Temp", icon: "thermostat", key: "showTemp", active: root.showTemp },
-                        { label: "Disk", icon: "hard_drive", key: "showDisk", active: root.showDisk }
+                        { label: Translation.tr("CPU"), icon: "memory", key: "showCpu", active: root.showCpu },
+                        { label: Translation.tr("RAM"), icon: "storage", key: "showMemory", active: root.showMemory },
+                        { label: Translation.tr("GPU"), icon: "developer_board", key: "showGpu", active: root.showGpu },
+                        { label: Translation.tr("Temp"), icon: "thermostat", key: "showTemp", active: root.showTemp },
+                        { label: Translation.tr("Disk"), icon: "hard_drive", key: "showDisk", active: root.showDisk }
                     ]
                     SelectionGroupButton {
                         required property var modelData
                         Layout.fillWidth: true
                         leftmost: true; rightmost: true
                         buttonIcon: modelData.icon
-                        buttonText: Translation.tr(modelData.label)
+                        buttonText: modelData.label
                         toggled: modelData.active
                         onClicked: Config.setNestedValue("background.widgets.systemMonitor." + modelData.key, !modelData.active)
                     }
@@ -90,7 +96,10 @@ AbstractBackgroundWidget {
     }
 
     // ── Config properties ──
-    readonly property bool _active: Config.getNestedValue("background.widgets.systemMonitor.enable", false)
+    // The loader already represents the effective per-output enabled state.
+    // Rechecking the global base here breaks output-local overrides and can
+    // leave a visible monitor without ResourceUsage keep-alive.
+    readonly property bool _active: root.visible
     readonly property string displayMode: Config.getNestedValue("background.widgets.systemMonitor.displayMode", "bars")
     readonly property bool showCpu: Config.getNestedValue("background.widgets.systemMonitor.showCpu", true)
     readonly property bool showMemory: Config.getNestedValue("background.widgets.systemMonitor.showMemory", true)
@@ -105,11 +114,11 @@ AbstractBackgroundWidget {
     // ── Static resource model (metadata only — no live values) ──
     readonly property var _resourceModel: {
         const items = [];
-        if (root.showCpu) items.push({ icon: "memory", label: "CPU", key: "cpu" });
-        if (root.showMemory) items.push({ icon: "storage", label: "RAM", key: "mem" });
-        if (root.showGpu) items.push({ icon: "developer_board", label: "GPU", key: "gpu" });
-        if (root.showTemp) items.push({ icon: "thermostat", label: "Temp", key: "temp" });
-        if (root.showDisk) items.push({ icon: "hard_drive", label: "Disk", key: "disk" });
+        if (root.showCpu) items.push({ icon: "memory", label: Translation.tr("CPU"), key: "cpu" });
+        if (root.showMemory) items.push({ icon: "storage", label: Translation.tr("RAM"), key: "mem" });
+        if (root.showGpu) items.push({ icon: "developer_board", label: Translation.tr("GPU"), key: "gpu" });
+        if (root.showTemp) items.push({ icon: "thermostat", label: Translation.tr("Temp"), key: "temp" });
+        if (root.showDisk) items.push({ icon: "hard_drive", label: Translation.tr("Disk"), key: "disk" });
         return items;
     }
 
@@ -141,19 +150,127 @@ AbstractBackgroundWidget {
         return Math.round(root._getValue(key) * 100) + "%";
     }
 
+    function _tileShape(key: string): int {
+        switch (key) {
+            case "cpu": return MaterialShape.Shape.Gem;
+            case "mem": return MaterialShape.Shape.Cookie4Sided;
+            case "gpu": return MaterialShape.Shape.Cookie12Sided;
+            case "temp": return MaterialShape.Shape.Sunny;
+            case "disk": return MaterialShape.Shape.Clover4Leaf;
+            default: return MaterialShape.Shape.Cookie12Sided;
+        }
+    }
+
+    // Tiles are the reference composition: each resource is a semantic role pair
+    // (container + badge). The same selected slots feed every other monitor mode.
+    function _tileRole(key: string): var {
+        const role = key === "mem" ? root.widgetSecondaryRole
+            : key === "gpu" ? root.widgetTertiaryRole
+            : key === "temp" ? root.widgetSignalRole
+            : key === "disk" ? root.widgetSurfaceRole
+            : root.widgetPrimaryRole;
+        const set = root.widgetSemanticSet(role);
+        if (key === "disk") {
+            const accent = root.widgetSemanticSet(root.widgetTertiaryRole);
+            return { bg: set.container, ink: set.onContainer,
+                badge: accent.color, onBadge: accent.onColor };
+        }
+        return { bg: set.container, ink: set.onContainer,
+            badge: set.color, onBadge: set.onColor };
+    }
+
+    readonly property real _tileUnit: Math.round(96 * root.scaleFactor)
+    readonly property real _tileGap: Math.round(10 * root.scaleFactor)
+
+    // Width determines both column and row counts.
+    readonly property int _tileColumns: {
+        const count = Math.max(1, root._resourceModel.length);
+        const fit = Math.floor((root.width + root._tileGap) / (root._tileUnit + root._tileGap));
+        return Math.max(1, Math.min(count, fit));
+    }
+    readonly property int _tileRows: Math.ceil(
+        Math.max(1, root._resourceModel.length) / Math.max(1, root._tileColumns))
+    readonly property real _tilesMinHeight: root._tileRows * root._tileUnit
+        + (root._tileRows - 1) * root._tileGap + root._innerMargin * 2
+
     // ── Style tokens ──
     readonly property real cardRadius: root.widgetCardRadius
     readonly property int _innerMargin: Appearance.angelEverywhere || Appearance.inirEverywhere ? 6 : 2
 
-    // Shared desktop-widget identity (AbstractBackgroundWidget) so every metric reads
-    // as the same wallpaper-generated family across all widgets.
-    // Display variants: clamped against the plate/region actually behind them.
-    readonly property color cpuColor: root.widgetAccentVisible
-    readonly property color memColor: root.widgetAccent2Visible
-    readonly property color gpuColor: root.widgetAccent3Visible
-    readonly property color tempColor: root.widgetRoleColor(root.widgetSignal, 3.0, 0.50)
-    readonly property color diskColor: root.widgetRoleColor(
-        ColorUtils.mix(root.widgetAccent2, root.widgetAccent3, 0.55), 3.0, 0.42)
+    // Rings/bars/text reuse the same categorical palette as Tiles. The wallpaper
+    // already generated these semantic roles, so position analysis must not invent
+    // a second hue. Threshold state only overrides that base role when a metric is
+    // actually caution/warning.
+    function _metricBaseColor(key: string): color {
+        return root._tileRole(key).badge;
+    }
+    readonly property color _metricNormal: root._metricBaseColor("cpu")
+    readonly property color _metricCaution: root.widgetSemanticColor("warning")
+    readonly property color _metricWarning: root.widgetSignal
+
+    // Telemetry text is neutral information, not another accent. Select between
+    // the generated on-surface and inverse-on-surface roles according to the real
+    // backdrop polarity; do not saturate or re-hue either token. This keeps the
+    // labels consistent with the shell's text hierarchy while the metric arc owns
+    // the accent color.
+    readonly property color _metricLightInk: Appearance.m3colors.darkmode
+        ? Appearance.colors.colOnLayer0 : Appearance.m3colors.m3inverseOnSurface
+    readonly property color _metricDarkInk: Appearance.m3colors.darkmode
+        ? Appearance.m3colors.m3inverseOnSurface : Appearance.colors.colOnLayer0
+    readonly property color _metricText: root.forceLightInk ? root._metricLightInk
+        : root.forceDarkInk ? root._metricDarkInk
+        : root.widgetHasSurface
+            ? (root.widgetPlateIsDark ? root._metricLightInk : root._metricDarkInk)
+            : (root.regionIsBright ? root._metricDarkInk : root._metricLightInk)
+    readonly property color _metricSubtext: ColorUtils.applyAlpha(root._metricText, 0.66)
+
+    // The track is the background of the metric, not an outline. Keep it in the
+    // exact same semantic color family as the active arc and let the existing
+    // Track opacity setting control only its alpha. This restores the original
+    // System Monitor composition without reintroducing gray/black helper rings.
+    function _metricTrackColor(key: string): color {
+        return ColorUtils.applyAlpha(root._metricColor(key), root.trackAlpha);
+    }
+
+    // Graph mode needs categorical identity but no severity override: use the
+    // exact same generated role that the corresponding Tile badge uses.
+    function _graphColor(key: string): color {
+        return root._metricBaseColor(key);
+    }
+
+    function _metricSeverity(key: string): int {
+        const value = root._getValue(key) * 100;
+        switch (key) {
+        case "temp": {
+            const caution = Config.options?.bar?.resources?.tempCautionThreshold ?? 65;
+            const warning = Config.options?.bar?.resources?.tempWarningThreshold ?? 80;
+            return value >= warning ? 2 : value >= caution ? 1 : 0;
+        }
+        case "cpu":
+            return value >= (Config.options?.bar?.resources?.cpuWarningThreshold ?? 90) ? 2 : 0;
+        case "mem":
+            return value >= (Config.options?.bar?.resources?.memoryWarningThreshold ?? 90) ? 2 : 0;
+        case "gpu":
+            return value >= (Config.options?.bar?.resources?.gpuWarningThreshold ?? 90) ? 2 : 0;
+        case "disk":
+            return value >= 90 ? 2 : 0;
+        default:
+            return 0;
+        }
+    }
+
+    function _metricColor(key: string): color {
+        const severity = root._metricSeverity(key);
+        return severity >= 2 ? root._metricWarning
+            : severity === 1 ? root._metricCaution
+            : root._metricBaseColor(key);
+    }
+
+    readonly property color cpuColor: root._metricColor("cpu")
+    readonly property color memColor: root._metricColor("mem")
+    readonly property color gpuColor: root._metricColor("gpu")
+    readonly property color tempColor: root._metricColor("temp")
+    readonly property color diskColor: root._metricColor("disk")
 
     // Animation duration for smooth value transitions
     readonly property int _animDuration: Appearance.animation.elementMove.duration
@@ -193,7 +310,8 @@ AbstractBackgroundWidget {
         screenY: root.y
         screenWidth: root.scaledScreenWidth
         screenHeight: root.scaledScreenHeight
-        visible: root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur
+        visible: root.displayMode !== "tiles"
+            && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
     }
 
     // ══════════════════════════════════════════════════════════
@@ -233,7 +351,7 @@ AbstractBackgroundWidget {
                     Rectangle {
                         anchors.fill: parent
                         radius: Appearance.rounding.verysmall
-                        color: ColorUtils.applyAlpha(barRow._liveColor, root.trackAlpha)
+                        color: root._metricTrackColor(barRow.modelData.key)
                     }
 
                     Rectangle {
@@ -255,7 +373,7 @@ AbstractBackgroundWidget {
                 StyledText {
                     visible: root.showLabels
                     text: root._getDisplayText(barRow.modelData.key)
-                    color: ColorUtils.applyAlpha(root.widgetInk, root.fillOpacity)
+                    color: barRow._liveColor
                     font {
                         pixelSize: Appearance.font.pixelSize.smaller
                         family: Appearance.font.family.numbers
@@ -291,12 +409,12 @@ AbstractBackgroundWidget {
                     MaterialSymbol {
                         text: modelData.icon
                         iconSize: Appearance.font.pixelSize.smaller
-                        color: root._getColor(modelData.key)
+                        color: root._graphColor(modelData.key)
                         anchors.verticalCenter: parent.verticalCenter
                     }
                     StyledText {
                         text: root._getDisplayText(modelData.key)
-                        color: root._getColor(modelData.key)
+                        color: root._graphColor(modelData.key)
                         font { pixelSize: Appearance.font.pixelSize.smaller; family: Appearance.font.family.numbers }
                         anchors.verticalCenter: parent.verticalCenter
                     }
@@ -314,7 +432,7 @@ AbstractBackgroundWidget {
             StyledText {
                 required property var modelData
                 text: modelData.label
-                color: ColorUtils.applyAlpha(root.widgetInk, 0.3)
+                color: root._metricSubtext
                 font { pixelSize: Appearance.font.pixelSize.smaller - 2; family: Appearance.font.family.numbers }
                 anchors.right: parent.right
                 anchors.rightMargin: 2
@@ -330,7 +448,7 @@ AbstractBackgroundWidget {
                 anchors { left: parent.left; right: parent.right }
                 y: parent._legendH + (parent.height - parent._legendH) * (1.0 - modelData)
                 height: 1
-                color: ColorUtils.applyAlpha(root.widgetInk, 0.06)
+                color: ColorUtils.applyAlpha(root._metricText, 0.06)
             }
         }
 
@@ -338,7 +456,7 @@ AbstractBackgroundWidget {
             anchors.fill: parent
             anchors.topMargin: parent._legendH
             values: root.showCpu ? ResourceUsage.cpuUsageHistory : []
-            color: root.cpuColor
+            color: root._graphColor("cpu")
             fillOpacity: root.graphFillOpacity + 0.05
             alignment: Graph.Alignment.Right
             visible: root.showCpu
@@ -348,7 +466,7 @@ AbstractBackgroundWidget {
             anchors.fill: parent
             anchors.topMargin: parent._legendH
             values: root.showMemory ? ResourceUsage.memoryUsageHistory : []
-            color: root.memColor
+            color: root._graphColor("mem")
             fillOpacity: root.graphFillOpacity
             alignment: Graph.Alignment.Right
             visible: root.showMemory
@@ -358,7 +476,7 @@ AbstractBackgroundWidget {
             anchors.fill: parent
             anchors.topMargin: parent._legendH
             values: root.showGpu ? ResourceUsage.gpuUsageHistory : []
-            color: root.gpuColor
+            color: root._graphColor("gpu")
             fillOpacity: root.graphFillOpacity - 0.05
             alignment: Graph.Alignment.Right
             visible: root.showGpu
@@ -410,7 +528,7 @@ AbstractBackgroundWidget {
                         // rendering for most of every 3-second polling cycle.
                         enableAnimation: false
                         colPrimary: ringCol._liveColor
-                        colSecondary: ColorUtils.applyAlpha(ringCol._liveColor, root.trackAlpha + 0.04)
+                        colSecondary: root._metricTrackColor(ringCol.modelData.key)
                     }
 
                     // Percentage/value inside the ring
@@ -434,12 +552,12 @@ AbstractBackgroundWidget {
                     MaterialSymbol {
                         text: ringCol.modelData.icon
                         iconSize: Appearance.font.pixelSize.smaller
-                        color: root.widgetInkMuted
+                        color: root._metricSubtext
                         anchors.verticalCenter: parent.verticalCenter
                     }
                     StyledText {
-                        text: Translation.tr(ringCol.modelData.label)
-                        color: root.widgetInkMuted
+                        text: ringCol.modelData.label
+                        color: root._metricSubtext
                         font { pixelSize: Appearance.font.pixelSize.smaller; family: Appearance.font.family.main }
                         anchors.verticalCenter: parent.verticalCenter
                     }
@@ -467,7 +585,7 @@ AbstractBackgroundWidget {
                 width: chipRow.implicitWidth + 12
                 height: chipRow.implicitHeight + 8
                 radius: Appearance.rounding.small
-                color: ColorUtils.applyAlpha(textChip._liveColor, root.trackAlpha)
+                color: root._metricTrackColor(textChip.modelData.key)
 
                 Row {
                     id: chipRow
@@ -482,8 +600,8 @@ AbstractBackgroundWidget {
                     }
 
                     StyledText {
-                        text: Translation.tr(textChip.modelData.label)
-                        color: root.widgetInkMuted
+                        text: textChip.modelData.label
+                        color: root._metricSubtext
                         font {
                             pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
                             family: Appearance.font.family.main
@@ -506,6 +624,93 @@ AbstractBackgroundWidget {
         }
     }
 
+    GridLayout {
+        id: tileGrid
+        anchors.fill: parent
+        anchors.margins: root._innerMargin
+        visible: root.displayMode === "tiles" && root._resourceModel.length > 0
+        columnSpacing: root._tileGap
+        rowSpacing: root._tileGap
+        columns: root._tileColumns
+
+        Repeater {
+            model: root._resourceModel
+
+            Rectangle {
+                id: tile
+                required property var modelData
+                readonly property var role: root._tileRole(modelData.key)
+
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                radius: root.cardRadius
+                color: tile.role.bg
+
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation {
+                        duration: root._animDuration
+                        easing.type: Appearance.animation.elementMove.type
+                        easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
+                    }
+                }
+
+                StyledRectangularShadow {
+                    target: tile
+                    z: -2
+                    visible: !Appearance.zzzEverywhere && !Appearance.inirEverywhere
+                }
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: Math.round(tile.height * 0.13)
+                    spacing: 0
+
+                    MaterialShapeWrappedMaterialSymbol {
+                        Layout.alignment: Qt.AlignRight
+                        visible: tile.height >= 76
+                        shape: root._tileShape(tile.modelData.key)
+                        color: tile.role.badge
+                        colSymbol: tile.role.onBadge
+                        text: tile.modelData.icon
+                        fill: 1
+                        iconSize: Math.max(13, Math.round(tile.height * 0.17))
+                        padding: Math.max(5, Math.round(tile.height * 0.055))
+                    }
+
+                    Item { Layout.fillHeight: true }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: root._getDisplayText(tile.modelData.key)
+                        color: tile.role.ink
+                        elide: Text.ElideRight
+                        font {
+                            pixelSize: Math.max(14, Math.min(
+                                Math.round(Appearance.font.pixelSize.hugeass * root.scaleFactor),
+                                Math.round(tile.height * 0.30),
+                                Math.round(tile.width * 0.34)))
+                            family: Appearance.font.family.numbers
+                            weight: Font.Bold
+                        }
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        Layout.topMargin: -Math.round(tile.height * 0.03)
+                        visible: root.showLabels && tile.height >= 62
+                        text: tile.modelData.label
+                        color: ColorUtils.applyAlpha(tile.role.ink, 0.62)
+                        elide: Text.ElideRight
+                        font.pixelSize: Math.max(10, Math.min(
+                            Math.round(Appearance.font.pixelSize.small * root.scaleFactor),
+                            Math.round(tile.height * 0.14)))
+                    }
+                }
+            }
+        }
+    }
+
     Column {
         visible: root._resourceModel.length === 0
         anchors.centerIn: parent
@@ -515,20 +720,20 @@ AbstractBackgroundWidget {
             anchors.horizontalCenter: parent.horizontalCenter
             implicitSize: Math.round(48 * root.scaleFactor)
             shape: MaterialShape.Shape.Ghostish
-            color: ColorUtils.applyAlpha(root.widgetAccent, 0.16)
+            color: ColorUtils.applyAlpha(root._metricNormal, 0.16)
 
             MaterialSymbol {
                 anchors.centerIn: parent
                 text: "monitor_heart"
                 iconSize: Math.round(24 * root.scaleFactor)
-                color: root.widgetAccentVisible
+                color: root._metricNormal
             }
         }
 
         StyledText {
             anchors.horizontalCenter: parent.horizontalCenter
             text: Translation.tr("Select a metric")
-            color: root.widgetInkMuted
+            color: root._metricSubtext
             font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
         }
     }

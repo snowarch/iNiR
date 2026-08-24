@@ -724,14 +724,16 @@ Item {
         function onRequestWifiDialogChanged() {
             if (GlobalStates.requestWifiDialog) {
                 GlobalStates.requestWifiDialog = false
-                if (!GlobalStates.sidebarRightOpen) GlobalStates.sidebarRightOpen = true
+                if (!GlobalStates.sidebarRightOpen)
+                    GlobalStates.openSidebarRight(GlobalStates.sidebarLeftTargetOutput)
                 root.showWifiDialog = true
             }
         }
         function onRequestBluetoothDialogChanged() {
             if (GlobalStates.requestBluetoothDialog) {
                 GlobalStates.requestBluetoothDialog = false
-                if (!GlobalStates.sidebarRightOpen) GlobalStates.sidebarRightOpen = true
+                if (!GlobalStates.sidebarRightOpen)
+                    GlobalStates.openSidebarRight(GlobalStates.sidebarLeftTargetOutput)
                 root.showBluetoothDialog = true
             }
         }
@@ -1995,7 +1997,7 @@ Item {
                 compact: true
                 shown: emptyPlaceholder.visible
                 icon: Notifications.silent ? "notifications_off" : "notifications_active"
-                text: Notifications.silent ? Translation.tr("Muted") : Translation.tr("Clear")
+                text: Notifications.silent ? Translation.tr("Muted") : Translation.tr("All caught up")
                 shape: MaterialShape.Shape.Ghostish
             }
 
@@ -2131,11 +2133,11 @@ Item {
 
             QuickActionButton {
                 Layout.fillWidth: true
-                icon: "color_lens"
+                icon: "palette"
                 label: Translation.tr("Color Picker")
                 onClicked: {
                     GlobalStates.sidebarRightOpen = false
-                    Qt.callLater(() => Quickshell.execDetached(["/usr/bin/hyprpicker", "-a"]))
+                    Qt.callLater(() => ShellExec.execDetachedArgs(["/usr/bin/hyprpicker", "-a"], "Pick color"))
                 }
             }
 
@@ -2143,7 +2145,7 @@ Item {
                 Layout.fillWidth: true
                 icon: "folder_open"
                 label: Translation.tr("Files")
-                onClicked: Quickshell.execDetached(["xdg-open", Quickshell.env("HOME")])
+                onClicked: ShellExec.execDetachedArgs(["xdg-open", Quickshell.env("HOME")], "Open home folder")
             }
         }
     }

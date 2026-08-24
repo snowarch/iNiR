@@ -16,12 +16,14 @@ WSettingsRow {
 
     control: Component {
         Rectangle {
-            implicitWidth: 220
-            implicitHeight: 36
-            radius: Looks.radius.medium
+            implicitWidth: Looks.dp(220)
+            implicitHeight: Looks.dp(36)
+            radius: Looks.settings.radiusMedium
             color: Looks.colors.inputBg
             border.width: fieldInput.activeFocus ? 2 : 1
-            border.color: fieldInput.activeFocus ? Looks.colors.accent : Looks.colors.bg1Border
+            border.color: fieldInput.activeFocus
+                ? Looks.colors.accent
+                : Looks.settings.strokeStrong
 
             Behavior on border.color {
                 animation: ColorAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
@@ -33,8 +35,8 @@ WSettingsRow {
             Item {
                 anchors {
                     fill: parent
-                    leftMargin: 12
-                    rightMargin: 12
+                    leftMargin: Looks.dp(12)
+                    rightMargin: Looks.dp(12)
                 }
 
                 WTextInput {

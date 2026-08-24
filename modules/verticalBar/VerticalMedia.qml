@@ -73,7 +73,7 @@ MouseArea {
 
         lineWidth: Appearance.rounding.unsharpen
         value: activePlayer?.position / activePlayer?.length
-        colPrimary: Appearance.colors.colOnSecondaryContainer
+        colPrimary: Appearance.colors.colOnLayer0
         enableAnimation: false
 
         Item {
@@ -86,7 +86,7 @@ MouseArea {
                 fill: 1
                 text: activePlayer?.isPlaying ? "pause" : "music_note"
                 iconSize: Appearance.font.pixelSize.normal
-                color: Appearance.colors.colOnSecondaryContainer
+                color: Appearance.colors.colOnLayer0
             }
         }
     }

@@ -1,6 +1,7 @@
 import qs
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.services
@@ -98,7 +99,7 @@ MouseArea {
     cursorShape: Qt.PointingHandCursor
 
     function openTimerPanel(): void {
-        GlobalStates.sidebarRightOpen = true
+        GlobalStates.openSidebarRight(root.QsWindow.window?.screen?.name ?? "")
 
         if (Persistent?.states?.sidebar?.bottomGroup) {
             Persistent.states.sidebar.bottomGroup.tab = 3

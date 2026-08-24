@@ -3,7 +3,7 @@ pkgver=1.0
 pkgrel=1
 pkgdesc='iNiR - input and desktop toolkit dependency bundle'
 arch=(any)
-license=(MIT)
+license=('GPL-3.0-only')
 depends=(
   upower
   wtype

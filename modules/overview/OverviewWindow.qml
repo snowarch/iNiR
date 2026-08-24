@@ -96,9 +96,11 @@ Item { // Window
     ScreencopyView {
         id: windowPreview
         anchors.fill: parent
-        captureSource: GlobalStates.overviewOpen ? root.toplevel : null
+        // Fullscreen GameMode must not retain a live screencopy source.
+        captureSource: (GlobalStates.overviewOpen && !GameMode.active)
+            ? root.toplevel : null
         // Pause during recording to avoid lag
-        live: !RecorderStatus.isRecording
+        live: !RecorderStatus.isRecording && !GameMode.active
 
         // Color overlay for interactions
         Rectangle {

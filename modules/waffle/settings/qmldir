@@ -16,3 +16,4 @@ WSettingsSlider 1.0 WSettingsSlider.qml
 WSettingsInfoBar 1.0 WSettingsInfoBar.qml
 WSettingsChoiceGroup 1.0 WSettingsChoiceGroup.qml
 WSettingsFontSelector 1.0 WSettingsFontSelector.qml
+WMascotPoseGallery 1.0 WMascotPoseGallery.qml

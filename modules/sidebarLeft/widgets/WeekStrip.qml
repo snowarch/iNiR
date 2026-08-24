@@ -18,7 +18,11 @@ Item {
     }
 
     property int weekOffset: 0
-    property var today: new Date()
+    readonly property string _todayKey: Qt.formatDate(DateTime.clock.date, "yyyy-MM-dd")
+    readonly property var today: {
+        root._todayKey;
+        return new Date();
+    }
     property var weekStart: {
         const fdow = locale?.firstDayOfWeek ?? Qt.locale().firstDayOfWeek
         const d = new Date(today)

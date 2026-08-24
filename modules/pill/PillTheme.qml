@@ -20,13 +20,30 @@ Singleton {
     readonly property color ink: Appearance.colors.colOnLayer0
 
     /**
-     * Canvas gradients take raw hex strings only: a color property serializes to
-     * #aarrggbb and silently corrupts addColorStop/strokeStyle. Rebuild a strict
-     * 6-digit hex from the channels instead of relying on toString().
+     * Canvas gradient stops take raw hex strings only: a color property
+     * serializes to #aarrggbb, which addColorStop parses as #rrggbbaa and
+     * silently corrupts the ramp. Rebuild a strict 6-digit hex from the channels
+     * instead of relying on toString().
+     *
+     * OPAQUE ONLY. Six digits carry no alpha, so passing an alpha-bearing token
+     * (hair, hairSoft, sheen, threadBg, frameBg, frameBorder, creamMenu) through
+     * here paints it fully opaque — a 0.13 cream hairline becomes a solid cream
+     * band. Use `canvasColor` for anything that is not a gradient stop.
      */
     function hex(c) {
         const f = v => Math.round(Math.max(0, Math.min(1, v)) * 255).toString(16).padStart(2, "0");
         return "#" + f(c.r) + f(c.g) + f(c.b);
+    }
+
+    /**
+     * Alpha-preserving colour for ctx.strokeStyle/fillStyle. Qt's Context2D
+     * documents Qt.rgba() as a valid — and the fastest — style value, since it
+     * is already a QColor and skips string parsing, so the alpha channel of a
+     * token survives the assignment. Only CanvasGradient.addColorStop needs the
+     * string form from `hex`.
+     */
+    function canvasColor(c) {
+        return Qt.rgba(c.r, c.g, c.b, c.a);
     }
 
     readonly property color onGlow: accent
@@ -71,6 +88,40 @@ Singleton {
 
     readonly property color shadow: Qt.rgba(0, 0, 0, 0.55)
     readonly property real shadowOpacity: 0.5
+
+    /**
+     * Shared island skin. The Ricelin settings hub promises "One shared skin:
+     * these apply to every island surface at once", and IslandPanel honours it —
+     * but the pill body used to hardcode its own chrome, so a user who switched
+     * the lit edge or the shadow off still got both on the one surface the page
+     * is named after. These re-expose the same keys so every pill surface reads
+     * one place instead of each re-deriving Config.
+     *
+     * pillOpacity stays separate and composes with the skin: it predates this
+     * and is exposed on its own Bar settings row, so folding it in would
+     * silently change existing pills.
+     */
+    readonly property real islandRadius: Config.options?.appearance?.island?.radius ?? 18
+    readonly property bool islandShadow: Config.options?.appearance?.island?.shadow ?? true
+    readonly property bool islandSheen: Config.options?.appearance?.island?.sheen ?? true
+    readonly property bool islandGlass: Config.options?.appearance?.island?.glass ?? true
+    readonly property real islandGlassBlur: Config.options?.appearance?.island?.glassBlur ?? 1
+
+    /**
+     * Global-style character. Ricelin keeps its own deliberate radius ladder
+     * (card 18 / open 22 / tile 13 / chip 7) under every style that is itself
+     * soft — inheriting Appearance.rounding wholesale would erase the dialect.
+     * ZZZ is the one style whose identity is hard chrome, and it already exposes
+     * a square/round personality axis, so square ZZZ collapses the ladder to a
+     * near-sharp edge while round ZZZ leaves Ricelin alone.
+     */
+    readonly property bool sharpChrome: Appearance.zzzEverywhere && !(Appearance.zzz?.round ?? false)
+    readonly property real cornerScale: sharpChrome ? 0.12 : 1
+
+    /** Body corner in unscaled px: the user's skin radius, in the style's character. */
+    readonly property real cardCorner: Math.max(0, Math.round(islandRadius * cornerScale))
+    /** Open surfaces sit one step softer than the resting body, as upstream did. */
+    readonly property real openCorner: Math.max(0, Math.round((islandRadius + 4) * cornerScale))
 
     readonly property real pillOpacity: Config.options?.bar?.pill?.opacity ?? 1
     readonly property bool showGlyphs: Config.options?.bar?.pill?.showGlyphs ?? true

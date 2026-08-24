@@ -1,0 +1,102 @@
+import qs.modules.barM3
+import qs.modules.common
+import qs.modules.common.widgets
+import qs.services
+import QtQuick
+import QtQuick.Layouts
+
+MouseArea {
+    id: root
+    property bool vertical: false
+    property bool isMaterial: Config.options.bar.m3.cornerStyle === 3
+    readonly property var chargeState: Battery.chargeState
+    readonly property bool isCharging: Battery.isCharging
+    readonly property bool isPluggedIn: Battery.isPluggedIn
+    readonly property real percentage: Battery.percentage
+    readonly property bool isLow: percentage <= Config.options.battery.low / 100
+    readonly property string displayText: (root.vertical && root.percentage > 99) ? "" : batteryProgress.text
+
+    implicitWidth:  vertical ? Appearance.sizes.verticalBarWidth : batteryProgress.valueBarWidth + 8
+    implicitHeight: vertical ? batteryProgress.valueBarWidth + 8 : Appearance.sizes.barHeight
+
+    readonly property bool clickForDetails: Config.options?.bar?.m3?.tooltips?.clickToShow ?? false
+    hoverEnabled: true
+
+    onClicked: mouse => {
+        if (mouse.button === Qt.LeftButton && root.clickForDetails)
+            batteryPopup.active = !batteryPopup.active
+    }
+
+    ClippedProgressBar {
+        id: batteryProgress
+        anchors.centerIn: parent
+        value: percentage
+        rotation: root.vertical ? -90 : 0
+        highlightColor: (isLow && !isCharging) ? M3Palette.error : M3Palette.pillInk("batteryIndicator")
+        Item {
+            anchors.centerIn: parent
+            width: batteryProgress.valueBarWidth
+            height: batteryProgress.valueBarHeight
+            // Horizontal
+            Loader {
+                id: rowLoader
+                active: !root.vertical
+                visible: active
+                anchors.centerIn: parent
+                sourceComponent: RowLayout {
+                    spacing: 0
+                    MaterialSymbol {
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.topMargin: 2
+                        Layout.leftMargin: -2
+                        Layout.rightMargin: -2
+                        fill: 1
+                        text: "bolt"
+                        iconSize: Appearance.font.pixelSize.smaller
+                        visible: root.isCharging && root.percentage < 1
+                    }
+                    StyledText {
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.topMargin: 2
+                        font: batteryProgress.font
+                        text: batteryProgress.text
+                    }
+                }
+            }
+            // Vertical
+            Loader {
+                id: colLoader
+                active: root.vertical
+                visible: active
+                anchors.centerIn: parent
+                sourceComponent: ColumnLayout {
+                    rotation: 90
+                    spacing: -7
+                    MaterialSymbol {
+                        Layout.alignment: Qt.AlignHCenter
+                        fill: 1
+                        text: "bolt"
+                        Layout.topMargin: 4
+                        iconSize: Appearance.font.pixelSize.smaller
+                        visible: root.isCharging && root.percentage < 1
+                    }
+                    StyledText {
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.topMargin: root.isCharging ? 2 : 4
+                        font: batteryProgress.font
+                        text: root.percentage * 100
+                        visible: root.percentage < 1
+                    }
+                }
+            }
+        }
+    }
+
+    BatteryPopup {
+        id: batteryPopup
+        hoverTarget: root
+        hoverActivates: !root.clickForDetails
+        closeOnOutsideClick: root.clickForDetails
+        onRequestClose: active = false
+    }
+}

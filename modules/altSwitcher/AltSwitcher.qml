@@ -698,7 +698,8 @@ Scope {
                 Text {
                     anchors.centerIn: parent
                     visible: root.windowCount === 0
-                    text: "NO WINDOWS"
+                    text: Translation.tr("No windows")
+                    font.capitalization: Font.AllUppercase
                     font.family: Appearance.font.family.main
                     font.weight: Font.Bold
                     font.pixelSize: 18
@@ -974,7 +975,8 @@ Scope {
                             Text {
                                 id: focusedLabel
                                 anchors.centerIn: parent
-                                text: "FOCUSED"
+                                text: Translation.tr("Focused")
+                                font.capitalization: Font.AllUppercase
                                 font.family: Appearance.font.family.main
                                 font.pixelSize: 9
                                 font.weight: Font.Bold
@@ -1077,7 +1079,8 @@ Scope {
                             Text {
                                 id: floatLabel
                                 anchors.centerIn: parent
-                                text: "FLOAT"
+                                text: Translation.tr("Float")
+                                font.capitalization: Font.AllUppercase
                                 font.family: Appearance.font.family.main
                                 font.pixelSize: 9
                                 font.weight: Font.Bold
@@ -1930,141 +1933,85 @@ Scope {
         }
     }
 
-    readonly property bool waffleFamilyActive: (Config.options?.panelFamily ?? "ii") === "waffle"
-
-    function routeToWaffle(functionName: string): void {
-        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "waffleAltSwitcher", functionName])
+    function handleOpen(): void {
+        if (root.skewStyle) {
+            root.openSkewSwitcher()
+            return
+        }
+        ensureOpen()
+        autoHideTimer.restart()
     }
 
-    IpcHandler {
-        target: "altSwitcher"
+    function handleClose(): void {
+        GlobalStates.altSwitcherOpen = false
+    }
 
-        function open(): void {
-            if (root.waffleFamilyActive) {
-                root.routeToWaffle("open")
-                return
-            }
-            if (root.skewStyle) {
+    function handleToggle(): void {
+        if (root.skewStyle) {
+            if (GlobalStates.altSwitcherOpen)
+                GlobalStates.altSwitcherOpen = false
+            else
+                root.openSkewSwitcher()
+            return
+        }
+        GlobalStates.altSwitcherOpen = !GlobalStates.altSwitcherOpen
+        if (GlobalStates.altSwitcherOpen)
+            autoHideTimer.restart()
+    }
+
+    function handleNext(): void {
+        if (root.skewStyle) {
+            if (!GlobalStates.altSwitcherOpen) {
                 root.openSkewSwitcher()
                 return
             }
-            ensureOpen()
-            autoHideTimer.restart()
-        }
-
-        function close(): void {
-            if (root.waffleFamilyActive) {
-                root.routeToWaffle("close")
-                return
-            }
-            GlobalStates.altSwitcherOpen = false
-        }
-
-        function toggle(): void {
-            if (root.waffleFamilyActive) {
-                root.routeToWaffle("toggle")
-                return
-            }
-            if (root.skewStyle) {
-                if (GlobalStates.altSwitcherOpen)
-                    GlobalStates.altSwitcherOpen = false
-                else
-                    root.openSkewSwitcher()
-                return
-            }
-            GlobalStates.altSwitcherOpen = !GlobalStates.altSwitcherOpen
-            if (GlobalStates.altSwitcherOpen)
-                autoHideTimer.restart()
-        }
-
-        function next(): void {
-            if (root.waffleFamilyActive) {
-                root.routeToWaffle("next")
-                return
-            }
-            if (root.effectiveNoVisualUi) {
-                autoHideTimer.stop()
-                GlobalStates.altSwitcherOpen = false
-
-                const len = root.noUiSnapshot?.length ?? 0
-                if (!root.quickSwitchDone || len === 0) {
-                    root.rebuildNoUiSnapshotSync()  // Use sync version for immediate response
-                }
-
-                const newLen = root.noUiSnapshot?.length ?? 0
-                if (newLen === 0)
-                    return
-
-                if (!root.quickSwitchDone) {
-                    root.quickSwitchDone = true
-                    root.noUiIndex = newLen > 1 ? 1 : 0
-                } else {
-                    root.noUiIndex = (root.noUiIndex + 1) % newLen
-                }
-
-                root.focusNoUiIndex()
-                quickSwitchResetTimer.restart()
-                return
-            }
-
-            if (root.skewStyle) {
-                if (!GlobalStates.altSwitcherOpen) {
-                    root.openSkewSwitcher()
-                    return
-                }
-                nextItem()
-                return
-            }
-
-            ensureOpen()
             nextItem()
-            activateCurrent()
-            autoHideTimer.restart()
+            return
         }
 
-        function previous(): void {
-            if (root.waffleFamilyActive) {
-                root.routeToWaffle("previous")
+        ensureOpen()
+        nextItem()
+        activateCurrent()
+        autoHideTimer.restart()
+    }
+
+    function handlePrevious(): void {
+        if (root.skewStyle) {
+            if (!GlobalStates.altSwitcherOpen) {
+                root.openSkewSwitcher()
                 return
             }
-            if (root.effectiveNoVisualUi) {
-                autoHideTimer.stop()
-                GlobalStates.altSwitcherOpen = false
-
-                const len = root.noUiSnapshot?.length ?? 0
-                if (!root.quickSwitchDone || len === 0) {
-                    root.rebuildNoUiSnapshotSync()  // Use sync version for immediate response
-                }
-
-                const newLen = root.noUiSnapshot?.length ?? 0
-                if (newLen === 0)
-                    return
-
-                if (!root.quickSwitchDone) {
-                    root.quickSwitchDone = true
-                    root.noUiIndex = newLen > 1 ? (newLen - 1) : 0
-                } else {
-                    root.noUiIndex = (root.noUiIndex - 1 + newLen) % newLen
-                }
-
-                root.focusNoUiIndex()
-                quickSwitchResetTimer.restart()
-                return
-            }
-
-            if (root.skewStyle) {
-                if (!GlobalStates.altSwitcherOpen) {
-                    root.openSkewSwitcher()
-                    return
-                }
-                previousItem()
-                return
-            }
-
-            ensureOpen()
             previousItem()
-            activateCurrent()
-            autoHideTimer.restart()
+            return
+        }
+
+        ensureOpen()
+        previousItem()
+        activateCurrent()
+        autoHideTimer.restart()
+    }
+
+    Connections {
+        target: GlobalStates
+
+        function onAltSwitcherCommand(command: string): void {
+            switch (command) {
+            case "open":
+                root.handleOpen()
+                break
+            case "close":
+                root.handleClose()
+                break
+            case "toggle":
+                root.handleToggle()
+                break
+            case "next":
+                root.handleNext()
+                break
+            case "previous":
+                root.handlePrevious()
+                break
+            }
         }
     }
 }

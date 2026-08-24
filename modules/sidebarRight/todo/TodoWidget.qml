@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import qs.modules.common
+import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.services
 
@@ -165,7 +166,7 @@ Item {
         anchors.bottom: fabButton.top
         anchors.bottomMargin: 8
         baseSize: 40
-        onClicked: Quickshell.execDetached(["xdg-open", Directories.todoTxtPath])
+        onClicked: ShellExec.execDetachedArgs(["xdg-open", Directories.todoTxtPath], "Open todo file")
         iconText: "edit_note"
     }
 

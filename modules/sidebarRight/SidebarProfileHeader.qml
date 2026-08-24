@@ -122,12 +122,20 @@ Item {
     readonly property real _avatarTop: root._bannerAllowed
         ? root._bannerHeight - root._avatarOverlap : root._contentPadding
 
-    readonly property real _cardRadius: (root.atPanelTop && root.panelRadius > root.panelInset)
-        ? (root.panelRadius - root.panelInset) : -1
-    readonly property real _bannerRadius: root._zzz ? Appearance.zzz.controlRadius
+    // The profile header is a hero card, not another dense sidebar tile. Give
+    // each dialect its established large-card silhouette, while keeping a
+    // concentric minimum where the card nests into the panel's top corner.
+    readonly property real _profileRadius: root._zzz ? Appearance.zzz.cardRadius
         : root._cookie ? Appearance.rounding.normal
-        : root._island ? Math.max(8, (Config.options?.appearance?.island?.radius ?? 18) - root._bannerInset)
-        : card._radius
+        : root._island ? (Config.options?.appearance?.island?.radius ?? 18)
+        : root._angel ? Appearance.angel.roundingLarge
+        : root._inir ? Appearance.inir.roundingLarge
+        : Appearance.rounding.large
+    readonly property real _panelConcentricRadius: (root.atPanelTop && root.panelRadius > root.panelInset)
+        ? Appearance.concentricRadius(root.panelRadius, root.panelInset) : 0
+    readonly property real _cardRadius: Math.max(root._profileRadius, root._panelConcentricRadius)
+    readonly property real _bannerRadius: root._zzz ? Appearance.zzz.controlRadius
+        : Appearance.concentricRadius(root._cardRadius, root._bannerInset)
 
     readonly property string _displayName: SystemInfo.displayName || SystemInfo.username || "user"
     readonly property string _accountIdentity: {

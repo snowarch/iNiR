@@ -13,7 +13,6 @@
 //-@ pragma Env QTWEBENGINE_CHROMIUM_FLAGS=--disable-features=ThirdPartyCookieBlocking,StorageAccessAPI
 
 import qs.modules.common
-import qs.modules.altSwitcher
 import qs.modules.closeConfirm
 import qs.modules.settings
 import qs.modules.regionSelector
@@ -40,6 +39,9 @@ ShellRoot {
     property var _powerProfilePersistence: PowerProfilePersistence
     property var _devNavigationService: DevNavigation
     property var _shellEditSessionService: ShellEditSession
+    // Acquire org.kde.StatusNotifierWatcher before graphical-session.target
+    // releases XDG autostart applications. The systemd unit uses Type=dbus.
+    property var _trayService: TrayService
     property var _globalActionsService
 
     // Deferred singletons — initialized after first frame to reduce boot contention
@@ -391,8 +393,25 @@ ShellRoot {
     }
 
     // === Panel Loaders ===
-    // AltSwitcher IPC router (material/waffle)
-    LazyLoader { active: Config.ready; component: AltSwitcher {} }
+    // Keep one permanent IPC router so mode/family changes never overlap two
+    // `altSwitcher` handlers during Loader teardown. The heavy ii visual tree is
+    // present only for visual ii presets; the router handles no-UI cycling and
+    // forwards visual commands to ii internally or to Waffle's family module.
+    readonly property bool iiAltSwitcherNoVisual:
+        (Config.options?.altSwitcher?.noVisualUi ?? false)
+        && (Config.options?.altSwitcher?.preset ?? "default") !== "skew"
+
+    LazyLoader {
+        active: Config.ready
+        source: "modules/altSwitcher/AltSwitcherNoVisual.qml"
+    }
+
+    LazyLoader {
+        active: Config.ready
+            && (Config.options?.panelFamily ?? "ii") !== "waffle"
+            && !root.iiAltSwitcherNoVisual
+        source: "modules/altSwitcher/AltSwitcher.qml"
+    }
 
     // Load ONLY the active family panels to reduce startup time.
     // Using `source:` instead of `component:` to avoid parsing inactive family at compile time.
@@ -460,7 +479,7 @@ ShellRoot {
         function toggle(): void {
             if (_isWaffle()) { GlobalStates.searchOpen = !GlobalStates.searchOpen; return }
             GlobalStates.overviewSearchPrefix = ""
-            GlobalStates.overviewOpen = !GlobalStates.overviewOpen
+            GlobalStates.toggleOverview("")
         }
         function close(): void {
             if (_isWaffle()) { GlobalStates.searchOpen = false; return }
@@ -469,7 +488,7 @@ ShellRoot {
         function open(): void {
             if (_isWaffle()) { GlobalStates.searchOpen = true; return }
             GlobalStates.overviewSearchPrefix = ""
-            GlobalStates.overviewOpen = true
+            GlobalStates.openOverview("")
         }
         function toggleReleaseInterrupt(): void { GlobalStates.superReleaseMightTrigger = false }
         function clipboardToggle(): void {
@@ -483,7 +502,7 @@ ShellRoot {
                 GlobalStates.overviewOpen = false
             } else {
                 GlobalStates.overviewSearchPrefix = prefix
-                GlobalStates.overviewOpen = true
+                GlobalStates.openOverview("")
             }
         }
         function actionOpen(): void {
@@ -494,7 +513,7 @@ ShellRoot {
                 return
             }
             GlobalStates.overviewSearchPrefix = prefix
-            GlobalStates.overviewOpen = true
+            GlobalStates.openOverview("")
         }
     }
 
@@ -515,8 +534,9 @@ ShellRoot {
     ToastManager {}
 
     // === Panel Families ===
-    // Note: iiAltSwitcher is always loaded (not in families) as it acts as IPC router
-    // for the unified "altSwitcher" target, redirecting to wAltSwitcher when waffle is active
+    // AltSwitcher controller selection lives above the family loaders. Waffle
+    // receives the lightweight shared router; ii receives either that controller
+    // or the full visual tree according to its no-visual setting.
     property list<string> families: ["ii", "waffle"]
     property var panelFamilies: ({
         "ii": [
@@ -530,7 +550,8 @@ ShellRoot {
         "waffle": [
             "wBar", "wBackground", "wBackdrop", "wStartMenu", "wActionCenter", "wNotificationCenter", "wNotificationPopup", "wOnScreenDisplay", "wWidgets", "wTaskView", "wLock", "wPolkit", "wSessionScreen",
             // Shared modules that work with waffle
-            // Note: wAltSwitcher is always loaded when waffle is active (not in this list)
+            // WaffleAltSwitcher is family-local and loaded by ShellWafflePanels;
+            // the shared `altSwitcher` target reaches it through the lightweight router.
             "iiBootGreeting", "iiCheatsheet", "iiOnScreenKeyboard", "iiOverlay", "iiOverview",
             "iiRegionSelector", "iiScreenCorners", "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard",
             "iiMascotCompanion"
@@ -627,9 +648,11 @@ ShellRoot {
         GlobalStates.familyTransitionActive = false
     }
 
-    // Family transition overlay - lazy loaded to avoid parsing waffle on startup
+    // Family transition overlay stays absent outside a real family switch, so
+    // the inactive family's visual tree and font/token imports are not retained.
     Loader {
         active: Config.ready
+            && (GlobalStates.familyTransitionActive || root._transitionInProgress)
         source: "FamilyTransitionOverlay.qml"
         onLoaded: {
             item.exitComplete.connect(root.applyPendingFamily)

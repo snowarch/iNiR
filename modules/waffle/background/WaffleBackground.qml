@@ -107,7 +107,7 @@ Variants {
         readonly property int _wallpaperTransitionDurationMs: {
             const transitionBaseDuration = Config.options?.background?.transition?.duration ?? 800
             const qmlTransitionDuration = (Config.options?.background?.transition?.enable ?? true)
-                ? Appearance.calcEffectiveDuration(transitionBaseDuration)
+                ? Looks.effectiveDuration(transitionBaseDuration)
                 : 0
             const awwwTransitionDuration = AwwwBackend.active ? AwwwBackend.transitionDurationMs : 0
             return Math.max(qmlTransitionDuration, awwwTransitionDuration)
@@ -141,7 +141,8 @@ Variants {
         // Hide wallpaper (show only backdrop for overview)
         readonly property bool backdropOnly: (wBg.backdrop?.enable ?? false) && (wBg.backdrop?.hideWallpaper ?? false)
 
-        visible: !GameMode.shouldHidePanels && !backdropOnly && (GlobalStates.screenLocked || !hasFullscreenWindow || !(wBg.hideWhenFullscreen ?? true))
+        visible: !backdropOnly && (GlobalStates.screenLocked
+            || !hasFullscreenWindow || !(wBg.hideWhenFullscreen ?? true))
 
         // Dynamic focus based on windows
         property bool hasWindowsOnCurrentWorkspace: {
@@ -212,6 +213,18 @@ Variants {
                 id: wallpaperContainer
                 anchors.fill: parent
 
+                readonly property bool localBlurNeedsStaticTexture:
+                    panelRoot.visible
+                    && Looks.effectsEnabled
+                    && panelRoot.blurProgress > 0
+                    && !panelRoot.wallpaperIsGif
+                    && !panelRoot.wallpaperIsVideo
+                readonly property bool needsStaticTexture:
+                    !panelRoot.wallpaperIsGif
+                    && !panelRoot.wallpaperIsVideo
+                    && (panelRoot.showInternalStaticWallpaper
+                        || wallpaperContainer.localBlurNeedsStaticTexture)
+
                 WallpaperCrossfader {
                     id: wallpaper
                     anchors.fill: parent
@@ -221,12 +234,12 @@ Variants {
                     transitionType: Config.options?.background?.transition?.type ?? "crossfade"
                     transitionDirection: Config.options?.background?.transition?.direction ?? "right"
                     transitionBaseDuration: Config.options?.background?.transition?.duration ?? 800
-                    source: panelRoot.wallpaperUrl && !panelRoot.wallpaperIsGif && !panelRoot.wallpaperIsVideo
-                        ? panelRoot.wallpaperUrl
-                        : ""
+                    source: wallpaperContainer.needsStaticTexture
+                        ? panelRoot.wallpaperUrl : ""
                     visible: !panelRoot.wallpaperIsGif && !panelRoot.wallpaperIsVideo && ready
                     opacity: panelRoot.showInternalStaticWallpaper ? 1 : 0
-                    layer.enabled: !panelRoot.showInternalStaticWallpaper
+                    layer.enabled: wallpaperContainer.needsStaticTexture
+                        && !panelRoot.showInternalStaticWallpaper
                     sourceSize {
                         width: panelRoot.screen.width
                         height: panelRoot.screen.height
@@ -247,9 +260,13 @@ Variants {
                     sourceSize.width: 1920
                     sourceSize.height: 1080
                     visible: panelRoot.wallpaperIsGif && !blurEffect.visible && !panelRoot.externalMainWallpaperActive
-                    playing: visible && panelRoot.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive && !Wallpapers.batteryPauseActive
+                    playing: visible && panelRoot.enableAnimation
+                        && !GlobalStates.screenLocked && !Looks.gameModeActive
+                        && !Wallpapers.batteryPauseActive
 
-                    layer.enabled: Appearance.effectsEnabled && panelRoot.enableAnimatedBlur && (panelRoot.wEffects.blurRadius ?? 0) > 0
+                    layer.enabled: visible && Looks.effectsEnabled
+                        && panelRoot.enableAnimatedBlur
+                        && (panelRoot.wEffects.blurRadius ?? 0) > 0
                     layer.effect: MultiEffect {
                         blurEnabled: true
                         blur: ((panelRoot.wEffects.blurRadius ?? 32) * Math.max(0, Math.min(1, panelRoot.thumbnailBlurStrength / 100))) / 100.0
@@ -269,11 +286,13 @@ Variants {
                     enableTransitions: Config.options?.background?.transition?.enable ?? true
                     transitionBaseDuration: Config.options?.background?.transition?.duration ?? 800
                     shouldPlay: panelRoot.enableAnimation && !GlobalStates.screenLocked
-                        && !Appearance._gameModeActive && !Wallpapers.batteryPauseActive
+                        && !Looks.gameModeActive && !Wallpapers.batteryPauseActive
                         && panelRoot._familyOwnsScreen
                         && visible
 
-                    layer.enabled: Appearance.effectsEnabled && panelRoot.enableAnimatedBlur && (panelRoot.wEffects.blurRadius ?? 0) > 0
+                    layer.enabled: visible && Looks.effectsEnabled
+                        && panelRoot.enableAnimatedBlur
+                        && (panelRoot.wEffects.blurRadius ?? 0) > 0
                     layer.effect: MultiEffect {
                         blurEnabled: true
                         blur: ((panelRoot.wEffects.blurRadius ?? 32) * Math.max(0, Math.min(1, panelRoot.thumbnailBlurStrength / 100))) / 100.0
@@ -287,7 +306,7 @@ Variants {
                 id: blurEffect
                 anchors.fill: parent
                 source: wallpaper
-                visible: Appearance.effectsEnabled && panelRoot.blurProgress > 0 &&
+                visible: Looks.effectsEnabled && panelRoot.blurProgress > 0 &&
                          !panelRoot.wallpaperIsGif && !panelRoot.wallpaperIsVideo &&
                          wallpaper.ready
                 blurEnabled: visible
@@ -326,15 +345,13 @@ Variants {
 
             WidgetCanvas {
                 anchors.fill: parent
-                visible: {
-                    const list = Config.options?.background?.widgets?.screenList ?? [];
-                    if (!list || list.length === 0) return true;
-                    return list.includes(panelRoot.modelData?.name ?? "");
-                }
+                visible: DesktopWidgetLayout.outputAllowed(
+                    panelRoot.modelData?.name ?? "")
                 enabled: visible && !GlobalStates.overviewOpen
 
                 WaffleBackgroundClock {
                     id: backgroundClockWidget
+                    outputName: panelRoot.modelData?.name ?? ""
                     screenWidth: panelRoot.screen.width
                     screenHeight: panelRoot.screen.height
                     scaledScreenWidth: panelRoot.screen.width
@@ -360,7 +377,7 @@ Variants {
                 }
 
                 Text {
-                    text: "Activate Waffle"
+                    text: Translation.tr("Activate Waffle")
                     font.pixelSize: Math.round(22 * Looks.fontScale)
                     font.family: "Segoe UI"
                     font.weight: Font.Light
@@ -369,7 +386,7 @@ Variants {
                 }
 
                 Text {
-                    text: "Go to Settings to activate Waffle."
+                    text: Translation.tr("Go to Settings to activate Waffle.")
                     font.pixelSize: Math.round(14 * Looks.fontScale)
                     font.family: "Segoe UI"
                     font.weight: Font.Light

@@ -11,6 +11,23 @@ Item {
     property bool nativeBlurActive: false
     property var screen: null
     property bool vertical: false
+    property bool spectrumEnabled: false
+    property var spectrumPoints: []
+    property real spectrumCeiling: 1000
+    property string spectrumType: "bars"
+    property real spectrumOpacity: 0.35
+    property real spectrumFillRatio: 0.6
+    property string spectrumBarsOrigin: "bottom"
+    property real spectrumDensity: 12
+    property real spectrumGap: 2
+    property int spectrumSmoothing: 2
+    property string spectrumWaveMode: "fill"
+    property real spectrumLineWidth: 2
+    property real spectrumEdgeInset: 0
+    property real spectrumEdgeSoftness: 0.28
+    property string spectrumFrequencyProfile: "flat"
+    property real spectrumAccentStrength: 0.7
+    property Item spectrumDomain: null
     // Islands: the capsule needs real breathing room around content (matches
     // the edge islands' inner padding); classic groups keep the tight fit and
     // bare chips (no surface of their own) don't pad like a capsule.
@@ -32,6 +49,21 @@ Item {
     // callers collapse the pill entirely instead of showing a ghost background.
     readonly property bool empty: gridLayout.implicitWidth < 1
     default property alias items: gridLayout.children
+
+    readonly property real _spectrumX: {
+        const geometryDependency = root.x + root.y + root.width + root.height
+            + (root.parent?.x ?? 0) + (root.parent?.width ?? 0)
+        if (!root.spectrumDomain || !(root.spectrumDomain.width > 0))
+            return 0
+        return root.mapToItem(root.spectrumDomain, 0, 0).x
+    }
+    readonly property real _spectrumStartRatio: !root.spectrumDomain
+        ? 0
+        : Math.max(0, Math.min(1, root._spectrumX / root.spectrumDomain.width))
+    readonly property real _spectrumEndRatio: !root.spectrumDomain
+        ? 1
+        : Math.max(root._spectrumStartRatio,
+            Math.min(1, (root._spectrumX + root.width) / root.spectrumDomain.width))
 
     // El fondo de cada grupo de la barra ahora sale del molde compartido
     // (PanelSurface) en vez de dibujarse a mano. Misma pinta que antes, pero
@@ -81,6 +113,34 @@ Item {
         }
         glassScreenWidth: root.screen?.width ?? 1920
         glassScreenHeight: root.screen?.height ?? 1080
+
+        CavaSpectrum {
+            anchors.fill: parent
+            active: root.spectrumEnabled && islandSurface.visible
+            threadedRendering: true
+            points: active ? root.spectrumPoints : []
+            normalizationCeiling: active ? root.spectrumCeiling : 100
+            visualizerType: root.spectrumType
+            spectrumOpacity: root.spectrumOpacity
+            fillRatio: root.spectrumFillRatio
+            spectrumColor: Appearance.colors.colPrimary
+            sampleStartRatio: root._spectrumStartRatio
+            sampleEndRatio: root._spectrumEndRatio
+            barsOrigin: root.spectrumBarsOrigin
+            pixelsPerBar: root.spectrumDensity
+            barSpacing: root.spectrumGap
+            smoothing: root.spectrumSmoothing
+            waveMode: root.spectrumWaveMode
+            lineWidth: root.spectrumLineWidth
+            edgeInset: root.spectrumEdgeInset
+            edgeSoftness: root.spectrumEdgeSoftness
+            frequencyProfile: root.spectrumFrequencyProfile
+            accentStrength: root.spectrumAccentStrength
+            topLeftRadius: islandSurface.radius
+            topRightRadius: islandSurface.radius
+            bottomLeftRadius: islandSurface.radius
+            bottomRightRadius: islandSurface.radius
+        }
     }
 
     GridLayout {

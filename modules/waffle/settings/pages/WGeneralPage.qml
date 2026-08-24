@@ -81,6 +81,7 @@ WSettingsPage {
         }
 
         WSettingsSwitch {
+            property bool _ready: false
             label: Translation.tr("Charge limit")
             icon: "battery-saver"
             description: !Battery.chargeLimitSupported
@@ -90,10 +91,15 @@ WSettingsPage {
                     : Translation.tr("Use your device's built-in battery conservation mode (requires polkit)")
             enabled: Battery.chargeLimitSupported
             checked: Config.options?.battery?.chargeLimit?.enable ?? false
-            onCheckedChanged: Config.setNestedValue("battery.chargeLimit.enable", checked)
+            Component.onCompleted: _ready = true
+            onCheckedChanged: {
+                if (_ready && checked !== (Config.options?.battery?.chargeLimit?.enable ?? false))
+                    Config.setNestedValue("battery.chargeLimit.enable", checked)
+            }
         }
 
         WSettingsSpinBox {
+            property bool _ready: false
             visible: Battery.chargeLimitAdjustable
             enabled: Config.options?.battery?.chargeLimit?.enable ?? false
             label: Translation.tr("Charge limit threshold")
@@ -101,7 +107,11 @@ WSettingsPage {
             suffix: "%"
             from: 20; to: 100; stepSize: 5
             value: Config.options?.battery?.chargeLimit?.threshold ?? 80
-            onValueChanged: Config.setNestedValue("battery.chargeLimit.threshold", value)
+            Component.onCompleted: _ready = true
+            onValueChanged: {
+                if (_ready && value !== (Config.options?.battery?.chargeLimit?.threshold ?? 80))
+                    Config.setNestedValue("battery.chargeLimit.threshold", value)
+            }
         }
     }
     
@@ -235,6 +245,15 @@ WSettingsPage {
             description: Translation.tr("Show dialog when closing windows with Super+Q")
             checked: Config.options?.closeConfirm?.enabled ?? false
             onCheckedChanged: Config.setNestedValue("closeConfirm.enabled", checked)
+        }
+
+        WSettingsSwitch {
+            visible: CompositorService.isNiri
+            label: Translation.tr("Auto-expand a single tiling window")
+            icon: "auto"
+            description: Translation.tr("Automatically maximizes a single tiling window to fill the screen. When a second window appears, the first is restored to its normal width.")
+            checked: Config.options?.compositor?.autoExpandSingleTilingWindow ?? false
+            onCheckedChanged: Config.setNestedValue("compositor.autoExpandSingleTilingWindow", checked)
         }
         
         WSettingsSwitch {

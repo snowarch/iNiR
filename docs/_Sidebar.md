@@ -6,6 +6,7 @@
 - [Setup and updates](SETUP)
 - [Keybinds](KEYBINDS)
 - [Known limitations](LIMITATIONS)
+- [Managed desktop items](DESKTOP_ITEMS)
 
 ### Use
 - [Panel families](PANEL_FAMILIES)

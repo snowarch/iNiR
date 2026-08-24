@@ -6,20 +6,12 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
 
-// Direction-aware cross-slide cover art. On `source` change the incoming art
-// slides in from one side while the outgoing art slides out the other:
-//   slideDirection +1 (next/forward) → new enters from the right, old exits left
-//   slideDirection -1 (previous)      → new enters from the left, old exits right
-// One semantic surface with two layers — legitimate here because two distinct
-// cover arts are genuinely different content (carries the same intent as the
-// blur-swap it replaces, but reads as "one leaves, one enters" side-to-side).
-// Reusable so every media surface (popups, sidebar, action center) stays in sync.
 Rectangle {
     id: root
 
     property string source: ""
     property string transitionKey: source
-    property int slideDirection: 1            // +1 forward, -1 backward
+    property int slideDirection: 1
     property bool downloaded: true
     property color placeholderColor: Appearance.colors.colLayer1
     property color iconColor: Appearance.colors.colSubtext
@@ -30,7 +22,33 @@ Rectangle {
     property real blur: 0
     property real blurMax: 32
     property real saturation: 1
-    property bool animateChanges: true
+    property bool animateChanges: Appearance.animationsEnabled
+    property int enterDuration: Appearance.animationsEnabled
+        ? Appearance.animation.elementMoveEnter.duration : 240
+    property int exitDuration: Appearance.animationsEnabled
+        ? Appearance.animation.elementMoveExit.duration : 150
+
+    signal transitionStarted(string source)
+    signal transitionFinished(string source)
+
+    property int _frontIndex: 0
+    readonly property var _frontLayer: root._frontIndex === 0 ? layerA : layerB
+    readonly property var _backLayer: root._frontIndex === 0 ? layerB : layerA
+    readonly property bool _hasRenderableArt:
+        (layerA.visible && layerA.status === Image.Ready)
+        || (layerB.visible && layerB.status === Image.Ready)
+    property string _displayedSrc: ""
+    property string _displayedKey: ""
+    property string _pendingSrc: ""
+    property string _pendingKey: ""
+    property int _pendingDirection: 1
+    property string _candidateSrc: ""
+    property string _candidateKey: ""
+    property int _candidateDirection: 1
+    property bool _waitingForReady: false
+    property bool _transitionRunning: false
+    property var _transitionIncoming: null
+    property var _transitionOutgoing: null
 
     radius: artRadius
     color: "transparent"
@@ -45,76 +63,219 @@ Rectangle {
         }
     }
 
-    property string _prevSrc: ""
-    property string _prevKey: ""
-    property string _pendingSrc: ""
-    property string _pendingKey: ""
-    property bool _waitingForReady: false
+    function _resetLayer(layer, shown: bool): void {
+        layer.x = 0
+        layer.opacity = shown ? 1 : 0
+        layer.visible = shown
+    }
 
-    function _resetLiveGeometry(): void {
-        liveLayer.x = 0
-        liveLayer.opacity = 1
+    function _clearLayer(layer): void {
+        layer.visible = false
+        layer.opacity = 0
+        layer.x = 0
+        layer.source = ""
+    }
+
+    function _stopAnimations(): void {
+        slideAToB.stop()
+        slideBToA.stop()
+    }
+
+    function _clearAll(): void {
+        root._stopAnimations()
+        emptySourceTimer.stop()
+        root._transitionRunning = false
+        root._transitionIncoming = null
+        root._transitionOutgoing = null
+        root._waitingForReady = false
+        root._pendingSrc = ""
+        root._pendingKey = ""
+        root._candidateSrc = ""
+        root._candidateKey = ""
+        root._displayedSrc = ""
+        root._displayedKey = ""
+        root._frontIndex = 0
+        root._clearLayer(layerA)
+        root._clearLayer(layerB)
+    }
+
+    function _finishTransition(): void {
+        if (!root._transitionRunning)
+            return
+
+        const incoming = root._transitionIncoming
+        const outgoing = root._transitionOutgoing
+        if (incoming)
+            root._resetLayer(incoming, true)
+        if (outgoing)
+            root._clearLayer(outgoing)
+
+        root._frontIndex = root._frontIndex === 0 ? 1 : 0
+        root._transitionRunning = false
+        root._transitionIncoming = null
+        root._transitionOutgoing = null
+        root.transitionFinished(root._displayedSrc)
+    }
+
+    function _settleTransition(): void {
+        if (!root._transitionRunning)
+            return
+        root._stopAnimations()
+        root._finishTransition()
     }
 
     function _showFirstSource(src: string, key: string): void {
-        slide.stop()
-        outLayer.visible = false
-        outLayer.source = ""
+        root._clearAll()
+        root._displayedSrc = src
+        root._displayedKey = key
+        layerA.source = src
+        root._resetLayer(layerA, true)
+    }
+
+    function _promotePendingInstantly(): void {
+        const incoming = root._backLayer
+        const outgoing = root._frontLayer
+        root._displayedSrc = root._pendingSrc
+        root._displayedKey = root._pendingKey
         root._pendingSrc = ""
         root._pendingKey = ""
         root._waitingForReady = false
-        liveLayer.source = src
-        liveLayer.visible = true
-        root._resetLiveGeometry()
-        root._prevSrc = src
-        root._prevKey = key
+        root.transitionStarted(root._displayedSrc)
+        root._resetLayer(incoming, true)
+        root._clearLayer(outgoing)
+        root._frontIndex = root._frontIndex === 0 ? 1 : 0
+        root.transitionFinished(root._displayedSrc)
     }
 
     function _startTransitionWhenReady(): void {
         if (!root._waitingForReady || !root._pendingSrc.length)
             return
 
-        if (liveLayer.status !== Image.Ready) {
+        const incoming = root._backLayer
+        if (incoming.status !== Image.Ready
+                || incoming.source.toString() !== root._pendingSrc)
+            return
+
+        if (!root._frontLayer.visible
+                || root._frontLayer.status !== Image.Ready
+                || !root.animateChanges) {
+            root._promotePendingInstantly()
+            return
+        }
+
+        root._transitionIncoming = incoming
+        root._transitionOutgoing = root._frontLayer
+        root._transitionRunning = true
+        root._displayedSrc = root._pendingSrc
+        root._displayedKey = root._pendingKey
+        root._waitingForReady = false
+        root._pendingSrc = ""
+        root._pendingKey = ""
+
+        const distance = Math.min(18, Math.max(8, root.width * 0.28))
+        root._transitionIncoming.visible = true
+        root._transitionIncoming.x = root._pendingDirection * distance
+        root._transitionIncoming.opacity = 0
+        root._transitionOutgoing.visible = true
+        root._transitionOutgoing.x = 0
+        root._transitionOutgoing.opacity = 1
+        root.transitionStarted(root._displayedSrc)
+        if (root._frontIndex === 0) {
+            slideAToB.dir = root._pendingDirection
+            slideAToB.distance = distance
+            slideAToB.restart()
+        } else {
+            slideBToA.dir = root._pendingDirection
+            slideBToA.distance = distance
+            slideBToA.restart()
+        }
+    }
+
+    function _queueSource(src: string, key: string): void {
+        root._settleTransition()
+        emptySourceTimer.stop()
+
+        if (src === root._displayedSrc) {
+            root._displayedKey = key
+            return
+        }
+        if (src === root._pendingSrc) {
+            root._pendingKey = key
+            root._pendingDirection = root.slideDirection < 0 ? -1 : 1
             return
         }
 
         root._waitingForReady = false
-        liveLayer.visible = true
-        root._prevSrc = root._pendingSrc
-        root._prevKey = root._pendingKey
-        root._pendingSrc = ""
-        root._pendingKey = ""
+        root._pendingSrc = src
+        root._pendingKey = key
+        root._pendingDirection = root.slideDirection < 0 ? -1 : 1
 
-        if (Appearance.animationsEnabled) {
-            slide.dir = root.slideDirection
-            slide.restart()
-        } else {
-            root._resetLiveGeometry()
-            outLayer.visible = false
-            outLayer.source = ""
-        }
+        const incoming = root._backLayer
+        root._clearLayer(incoming)
+        incoming.source = src
+        incoming.x = root._pendingDirection * Math.min(18, Math.max(8, root.width * 0.28))
+        incoming.opacity = 0
+        incoming.visible = true
+        root._waitingForReady = true
+        root._startTransitionWhenReady()
     }
 
-    // Live (incoming) cover. No binding on `source` — set imperatively so the
-    // transition handler fully controls when the new art appears.
+    function _handleSourceChange(): void {
+        const src = root.source
+        const key = root.transitionKey && root.transitionKey.length > 0
+            ? root.transitionKey : src
+
+        if (!src || src.length === 0) {
+            sourceSettleTimer.stop()
+            root._candidateSrc = ""
+            root._candidateKey = ""
+            root._waitingForReady = false
+            root._pendingSrc = ""
+            root._pendingKey = ""
+            if (!root._transitionRunning)
+                root._clearLayer(root._backLayer)
+            if (root._hasRenderableArt)
+                emptySourceTimer.restart()
+            else
+                root._clearAll()
+            return
+        }
+
+        emptySourceTimer.stop()
+        if (!root._displayedSrc.length) {
+            root._showFirstSource(src, key)
+            return
+        }
+        if (src === root._displayedSrc) {
+            sourceSettleTimer.stop()
+            root._candidateSrc = ""
+            root._candidateKey = ""
+            root._displayedKey = key
+            return
+        }
+
+        root._candidateSrc = src
+        root._candidateKey = key
+        root._candidateDirection = root.slideDirection < 0 ? -1 : 1
+        sourceSettleTimer.restart()
+    }
+
     Image {
-        id: liveLayer
+        id: layerA
         width: root.width
         height: root.height
-        x: 0
-        y: 0
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         cache: false
         smooth: true
         mipmap: true
         visible: false
-        // Players ship cover art at native resolution (often 1000px+). Bound the
-        // decode to what is actually drawn, or every track change allocates the
-        // full bitmap twice (live + outgoing snapshot).
         sourceSize.width: Math.max(1, Math.round(root.width * 2))
         sourceSize.height: Math.max(1, Math.round(root.height * 2))
-        onStatusChanged: root._startTransitionWhenReady()
+        onStatusChanged: {
+            if (root._backLayer === layerA)
+                root._startTransitionWhenReady()
+        }
         layer.enabled: root.effectEnabled
         layer.effect: MultiEffect {
             blurEnabled: root.blurEnabled
@@ -124,13 +285,10 @@ Rectangle {
         }
     }
 
-    // Snapshot of the previous art, only visible during a transition.
     Image {
-        id: outLayer
+        id: layerB
         width: root.width
         height: root.height
-        x: 0
-        y: 0
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         cache: false
@@ -139,6 +297,10 @@ Rectangle {
         visible: false
         sourceSize.width: Math.max(1, Math.round(root.width * 2))
         sourceSize.height: Math.max(1, Math.round(root.height * 2))
+        onStatusChanged: {
+            if (root._backLayer === layerB)
+                root._startTransitionWhenReady()
+        }
         layer.enabled: root.effectEnabled
         layer.effect: MultiEffect {
             blurEnabled: root.blurEnabled
@@ -151,7 +313,7 @@ Rectangle {
     Rectangle {
         anchors.fill: parent
         color: root.placeholderColor
-        visible: !root.downloaded
+        visible: !root._hasRenderableArt
 
         MaterialSymbol {
             anchors.centerIn: parent
@@ -161,115 +323,121 @@ Rectangle {
         }
     }
 
-    // Explicit from/to animations so the start position (off-screen) is honored
-    // instantly — a Behavior on x would animate the reset-to-start as well.
     ParallelAnimation {
-        id: slide
-        property int dir: root.slideDirection
+        id: slideAToB
+        property int dir: 1
+        property real distance: 12
 
         NumberAnimation {
-            target: liveLayer
+            target: layerB
             property: "x"
-            from: slide.dir * root.width
+            from: slideAToB.dir * slideAToB.distance
             to: 0
-            duration: Appearance.animation.elementMoveFast.duration
-            easing.type: Appearance.animation.elementMoveFast.type
-            easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+            duration: root.enterDuration
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Appearance.animationCurves.standardDecel
         }
         NumberAnimation {
-            target: liveLayer
+            target: layerB
             property: "opacity"
             from: 0
             to: 1
-            duration: Appearance.animation.elementMoveFast.duration
-            easing.type: Appearance.animation.elementMoveFast.type
-            easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+            duration: root.enterDuration
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Appearance.animationCurves.standardDecel
         }
         NumberAnimation {
-            target: outLayer
+            target: layerA
             property: "x"
             from: 0
-            to: -slide.dir * root.width
-            duration: Appearance.animation.elementMoveFast.duration
-            easing.type: Appearance.animation.elementMoveFast.type
-            easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+            to: -slideAToB.dir * slideAToB.distance * 0.65
+            duration: root.exitDuration
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Appearance.animationCurves.standardAccel
         }
         NumberAnimation {
-            target: outLayer
+            target: layerA
             property: "opacity"
             from: 1
             to: 0
-            duration: Appearance.animation.elementMoveFast.duration
-            easing.type: Appearance.animation.elementMoveFast.type
-            easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+            duration: root.exitDuration
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Appearance.animationCurves.standardAccel
         }
-        onStopped: {
-            outLayer.visible = false
-            outLayer.source = ""
-            root._resetLiveGeometry()
+        onFinished: root._finishTransition()
+    }
+
+    ParallelAnimation {
+        id: slideBToA
+        property int dir: 1
+        property real distance: 12
+
+        NumberAnimation {
+            target: layerA
+            property: "x"
+            from: slideBToA.dir * slideBToA.distance
+            to: 0
+            duration: root.enterDuration
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Appearance.animationCurves.standardDecel
+        }
+        NumberAnimation {
+            target: layerA
+            property: "opacity"
+            from: 0
+            to: 1
+            duration: root.enterDuration
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Appearance.animationCurves.standardDecel
+        }
+        NumberAnimation {
+            target: layerB
+            property: "x"
+            from: 0
+            to: -slideBToA.dir * slideBToA.distance * 0.65
+            duration: root.exitDuration
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Appearance.animationCurves.standardAccel
+        }
+        NumberAnimation {
+            target: layerB
+            property: "opacity"
+            from: 1
+            to: 0
+            duration: root.exitDuration
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Appearance.animationCurves.standardAccel
+        }
+        onFinished: root._finishTransition()
+    }
+
+    Timer {
+        id: sourceSettleTimer
+        interval: 140
+        repeat: false
+        onTriggered: {
+            if (!root._candidateSrc.length
+                    || root.source !== root._candidateSrc)
+                return
+            const src = root._candidateSrc
+            const key = root._candidateKey
+            root._candidateSrc = ""
+            root._candidateKey = ""
+            root._pendingDirection = root._candidateDirection
+            root._queueSource(src, key)
         }
     }
 
-    function _handleSourceChange(): void {
-        const src = root.source
-        const key = (root.transitionKey && root.transitionKey.length > 0) ? root.transitionKey : src
-        if (!src || src === "") {
-            if (root._prevSrc.length > 0) {
-                return
-            }
-            slide.stop()
-            liveLayer.source = ""
-            liveLayer.visible = false
-            outLayer.visible = false
-            outLayer.source = ""
-            root._prevSrc = ""
-            root._prevKey = ""
-            root._pendingSrc = ""
-            root._pendingKey = ""
-            root._waitingForReady = false
-            root._resetLiveGeometry()
-            return
+    Timer {
+        id: emptySourceTimer
+        interval: 600
+        repeat: false
+        onTriggered: {
+            if (!root.source.length)
+                root._clearAll()
         }
-        // First ever set: just show, no slide
-        if (root._prevSrc === "" || !liveLayer.source || !liveLayer.source.toString()) {
-            root._showFirstSource(src, key)
-            return
-        }
-        if (src === root._prevSrc)
-            return
-        if (!root.animateChanges) {
-            slide.stop()
-            outLayer.visible = false
-            outLayer.source = ""
-            liveLayer.source = src
-            liveLayer.visible = true
-            root._resetLiveGeometry()
-            root._prevSrc = src
-            root._prevKey = key
-            return
-        }
-        if (key === root._prevKey) {
-            root._pendingSrc = ""
-            root._pendingKey = ""
-            root._waitingForReady = false
-            return
-        }
-        // Snapshot previous art into the outgoing layer, load the new art in the
-        // live layer, then cross-slide only once the incoming image is ready.
-        slide.stop()
-        outLayer.source = root._prevSrc
-        outLayer.x = 0
-        outLayer.opacity = 1
-        outLayer.visible = true
-        liveLayer.visible = false
-        liveLayer.source = src
-        liveLayer.x = root.slideDirection * root.width
-        liveLayer.opacity = 0
-        root._pendingSrc = src
-        root._pendingKey = key
-        root._waitingForReady = true
-        root._startTransitionWhenReady()
     }
 
     onSourceChanged: root._handleSourceChange()
+    Component.onCompleted: root._handleSourceChange()
 }

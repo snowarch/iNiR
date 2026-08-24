@@ -31,8 +31,16 @@ AbstractBackgroundWidget {
         x: 120, y: 320
     })
 
-    readonly property int mascotContentSize: Math.round(
-        Number(root._readConfigKey("contentWidth") ?? 200) * root._baseScale)
+    property int mascotContentSize: 200
+    function _syncMascotContentSize(): void {
+        const contentWidth = Number(root._readConfigKey("contentWidth") ?? 200)
+        const baseScale = Number(root._baseScale)
+        const next = Math.round(
+            (Number.isFinite(contentWidth) ? contentWidth : 200)
+            * (Number.isFinite(baseScale) ? baseScale : 1))
+        if (root.mascotContentSize !== next)
+            root.mascotContentSize = next
+    }
     implicitWidth: root.mascotContentSize
     implicitHeight: root.mascotContentSize
     // She's an image — no ink to adapt — but her optional card is the shared
@@ -76,18 +84,21 @@ AbstractBackgroundWidget {
     readonly property var _anchorCandidates: {
         Config.revision
         const keys = ["clock", "weather", "mediaControls", "visualizer", "systemMonitor",
-            "battery", "notes", "calendarUpcoming", "uptime", "newsTicker"]
+            "battery", "notes", "calendarUpcoming", "uptime", "newsTicker",
+            "worldClock", "userCard"]
         const list = []
         for (const k of keys) {
             if (k === root.configEntryName) continue
-            if (Boolean(Config.getNestedValue("background.widgets." + k + ".enable", false)))
+            if (DesktopWidgetLayout.enabled(root.outputName, k,
+                    Config.getNestedValue("background.widgets." + k + ".enable", false)))
                 list.push(k)
         }
         const extra = Config.getNestedValue("background.widgets.mascotInstances", {}) ?? {}
         for (const id of Object.keys(extra)) {
             const key = "mascotInstances." + id
             if (key === root.configEntryName) continue
-            if (Boolean(Config.getNestedValue("background.widgets." + key + ".enable", false)))
+            if (DesktopWidgetLayout.enabled(root.outputName, key,
+                    Config.getNestedValue("background.widgets." + key + ".enable", false)))
                 list.push(key)
         }
         return list
@@ -97,10 +108,10 @@ AbstractBackgroundWidget {
         if (options.length === 0) return
         const cur = options.indexOf(root.anchorWidget)
         const next = options[((cur === -1 ? 0 : cur) + dir + options.length) % options.length]
-        Config.setNestedValue(root._configPath + ".anchorWidget", next)
+        root._setOutputValue("anchorWidget", next)
     }
     function _toggleSeat(): void {
-        Config.setNestedValue(root._configPath + ".anchorWidget",
+        root._setOutputValue("anchorWidget",
             root.perched ? "" : (root._anchorCandidates[0] ?? ""))
     }
 
@@ -127,11 +138,7 @@ AbstractBackgroundWidget {
         const ny = Math.round(root._clampY(above >= 0 ? above : anchor.y + anchor.height - sink))
         if (Math.round(root.x) === nx && Math.round(root.y) === ny) return
         root._syncingAnchor = true
-        const updates = {}
-        updates[root._configPath + ".x"] = nx
-        updates[root._configPath + ".y"] = ny
-        updates[root._configPath + ".placementStrategy"] = "free"
-        Config.setNestedValues(updates)
+        root._setOutputValues({ x: nx, y: ny, placementStrategy: "free" })
         // "free" mode's live x/y aren't driven by a reactive Binding (see
         // AbstractBackgroundWidget's _autoPosition gate) — force the resync
         // the same way a drag-release does, or she won't visually move.
@@ -145,6 +152,8 @@ AbstractBackgroundWidget {
         function on_AnchorItemChanged() { root._syncToAnchor() }
         function onWidthChanged() { root._syncToAnchor() }
         function onHeightChanged() { root._syncToAnchor() }
+        function on_ResizePreviewValuesChanged() { root._syncMascotContentSize() }
+        function on_IsResizingChanged() { root._syncMascotContentSize() }
     }
     Connections {
         target: root._anchorItem
@@ -159,6 +168,7 @@ AbstractBackgroundWidget {
     Connections {
         target: Config
         function onConfigChanged() {
+            root._syncMascotContentSize()
             root._resolveAnchorItem()
             root._syncToAnchor()
         }
@@ -167,6 +177,7 @@ AbstractBackgroundWidget {
     // synchronous Config write during instantiation re-enters that binding
     // mid-evaluation (logged as a binding loop on `shown`).
     Component.onCompleted: Qt.callLater(() => {
+        root._syncMascotContentSize()
         root._resolveAnchorItem()
         root._syncToAnchor()
     })
@@ -747,7 +758,7 @@ AbstractBackgroundWidget {
 
         // Custom images render regardless of the mascot switch; catalog
         // poses stay gated behind it
-        visible: (root.customPath.length > 0 || (Config.options?.mascot?.enable ?? false)) && status !== Image.Error
+        visible: (root.customPath.length > 0 || Boolean(root._readConfigKey("enable") ?? false)) && status !== Image.Error
     }
     MaterialSymbol {
         anchors.centerIn: parent

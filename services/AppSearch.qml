@@ -344,45 +344,60 @@ Singleton {
     function launchEntry(entry): bool {
         if (!entry) return false
 
-        const desktopId = String(entry.id ?? entry.originalEntry?.id ?? "").trim()
-        const displayName = String(entry.name ?? entry.originalEntry?.name ?? desktopId).trim()
+        const rawEntry = entry.originalEntry ?? entry
+        const desktopId = String(entry.id ?? rawEntry?.id ?? "").trim()
+        const displayName = String(entry.name ?? rawEntry?.name ?? desktopId).trim()
+        const workingDirectory = String(entry.workingDirectory ?? rawEntry?.workingDirectory ?? "").trim()
 
-        // 1. Prefer direct command execution — most reliable, fixes DBusActivatable apps
-        //    like Telegram where gtk-launch may fail silently.
-        const command = Array.from(entry.command ?? entry.originalEntry?.command ?? []).map(arg => String(arg ?? "")).filter(arg => arg.length > 0)
+        // Prefer the parsed desktop command so every shell surface shares the
+        // same launch environment, transient-scope lifetime and Path= handling.
+        const command = Array.from(entry.command ?? rawEntry?.command ?? []).map(arg => String(arg ?? "")).filter(arg => arg.length > 0)
         if (command.length > 0) {
-            if (entry.runInTerminal ?? entry.originalEntry?.runInTerminal ?? false) {
+            if (entry.runInTerminal ?? rawEntry?.runInTerminal ?? false) {
                 const terminal = String(Config.options?.apps?.terminal ?? "kitty").trim() || "kitty"
                 const quotedCommand = command.map(arg => `'${StringUtils.shellSingleQuoteEscape(arg)}'`).join(" ")
                 if (terminal === "wezterm") {
-                    ShellExec.execCmd(`${terminal} start --always-new-process -- ${quotedCommand}`)
+                    ShellExec.execCmd(`${terminal} start --always-new-process -- ${quotedCommand}`, workingDirectory)
                 } else {
-                    ShellExec.execCmd(`${terminal} -e ${quotedCommand}`)
+                    ShellExec.execCmd(`${terminal} -e ${quotedCommand}`, workingDirectory)
                 }
                 return true
             }
 
-            ShellExec.execDetachedArgs(command, displayName.length > 0 ? `Launch ${displayName}` : "")
+            ShellExec.execDetachedArgs(command,
+                displayName.length > 0 ? `Launch ${displayName}` : "",
+                workingDirectory)
             return true
         }
 
-        // 2. Custom entry execute callback
-        //    - If wrapped (_decorateEntry result), call the raw originalEntry's execute
-        //    - If raw object with execute (non-desktop-entry results), call it directly
-        //    - Never call the decorated wrapper's execute — that wrapper recurses into launchEntry
-        if (entry.originalEntry && typeof entry.originalEntry.execute === "function") {
-            entry.originalEntry.execute()
-            return true
+        // Real desktop entries stay on ShellExec even when they have no usable
+        // command. This avoids falling back to DesktopEntry.execute(), which
+        // would inherit Quickshell's frozen/shell-private environment again.
+        if (desktopId.length > 0) {
+            return ShellExec.launchDesktopEntry(desktopId,
+                displayName.length > 0 ? `Launch ${displayName}` : "")
         }
-        if (!entry.originalEntry && typeof entry.execute === "function") {
+
+        // Non-desktop search providers can still expose their own callback.
+        if (typeof entry.execute === "function") {
             entry.execute()
             return true
         }
 
-        // 3. Fall back to gtk-launch for DBusActivatable / odd desktop entries
-        //    that have no usable Exec line.
-        if (desktopId.length > 0) {
-            return ShellExec.launchDesktopEntry(desktopId, displayName.length > 0 ? `Launch ${displayName}` : "")
+        return false
+    }
+
+    function launchDesktopAction(entry, action): bool {
+        if (!entry || !action) return false
+
+        const command = Array.from(action.command ?? []).map(arg => String(arg ?? "")).filter(arg => arg.length > 0)
+        if (command.length > 0) {
+            const actionName = String(action.name ?? entry.name ?? "").trim()
+            const workingDirectory = String(entry.workingDirectory ?? "").trim()
+            ShellExec.execDetachedArgs(command,
+                actionName.length > 0 ? `Launch ${actionName}` : "",
+                workingDirectory)
+            return true
         }
 
         return false

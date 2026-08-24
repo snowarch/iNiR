@@ -85,11 +85,11 @@ Rectangle {
     // Keep the generated hue while preserving a predictable surface/on-surface
     // relationship. Accent belongs to active data and icons, not to the whole card.
     readonly property color _plateDark: {
-        const p = Qt.color(Appearance.colors.colPrimary);
+        const p = Qt.color(root.surfaceAccent);
         return Qt.hsla(p.hslHue, Math.min(0.22, p.hslSaturation), 0.11, 1.0);
     }
     readonly property color _plateLight: {
-        const p = Qt.color(Appearance.colors.colPrimary);
+        const p = Qt.color(root.surfaceAccent);
         return Qt.hsla(p.hslHue, Math.min(0.20, p.hslSaturation), 0.93, 1.0);
     }
     // Mirrors AbstractBackgroundWidget.widgetPlateIsDark — dark theme stays black
@@ -205,7 +205,7 @@ Rectangle {
                 ? ColorUtils.applyAlpha(Appearance.aurora.colTooltipBorder,
                     root.surfaceBorderOpacity)
                 : ColorUtils.applyAlpha(
-                    ColorUtils.ensureReadable(Appearance.colors.colPrimary, root._flatFill, 3),
+                    ColorUtils.ensureReadable(root.surfaceAccent, root._flatFill, 3),
                     Math.min(1, root.surfaceBorderOpacity * 2))
     }
 

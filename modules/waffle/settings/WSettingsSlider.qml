@@ -18,11 +18,21 @@ WSettingsRow {
     property int sliderWidth: 180
     property string tooltipContent: ""
 
+    property string leadingIcon: ""
+    property string trailingIcon: ""
+
     signal moved()
 
     control: Component {
         RowLayout {
-            spacing: 10
+            spacing: Looks.dp(10)
+
+            FluentIcon {
+                visible: root.leadingIcon !== ""
+                icon: root.leadingIcon
+                implicitSize: Looks.dp(14)
+                color: Looks.colors.subfg
+            }
 
             WSlider {
                 id: slider
@@ -42,8 +52,15 @@ WSettingsRow {
                 }
             }
 
+            FluentIcon {
+                visible: root.trailingIcon !== ""
+                icon: root.trailingIcon
+                implicitSize: Looks.dp(18)
+                color: Looks.colors.subfg
+            }
+
             WText {
-                Layout.preferredWidth: 44
+                Layout.preferredWidth: Looks.dp(44)
                 horizontalAlignment: Text.AlignRight
                 text: root.displayDecimals > 0
                     ? `${root.value.toFixed(root.displayDecimals)}${root.suffix}`

@@ -1215,7 +1215,9 @@ Item {
             model: root.totalCount
             cacheBuffer: 800
             boundsBehavior: Flickable.StopAtBounds
-            currentIndex: root.currentIndex
+            currentIndex: root.totalCount > 0
+                ? Math.max(0, Math.min(root.currentIndex, root.totalCount - 1))
+                : -1
 
             // ─── Fluid navigation (same pattern as SkewView) ───
             readonly property real _delegateWidth: root.previewMode ? 108 : 132
@@ -1226,7 +1228,7 @@ Item {
             highlightFollowsCurrentItem: true
 
             onCurrentIndexChanged: {
-                if (currentIndex !== root.currentIndex)
+                if (currentIndex >= 0 && currentIndex !== root.currentIndex)
                     root.currentIndex = currentIndex
             }
 

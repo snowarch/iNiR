@@ -13,10 +13,41 @@ Rectangle {
     id: root
 
     property var screen: root.QsWindow.window?.screen
-    // Brightness monitor may be undefined (e.g. Niri without matching monitor); guard it.
     property var brightnessMonitor: screen ? Brightness.getMonitorForScreen(screen) : null
+    property bool hasBrightnessMonitor: false
+    readonly property bool brightnessEnabled: Config.options?.sidebar?.quickSliders?.showBrightness ?? true
+    property real brightnessValue: 0.0
+    property real volumeValue: 0.0
     property real sliderSpacing: 10
     property bool compactSurface: false
+
+    function syncBrightness(): void {
+        const monitor = root.brightnessMonitor;
+        root.hasBrightnessMonitor = monitor !== null && monitor !== undefined;
+        const value = Number(monitor?.brightness ?? 0.0);
+        root.brightnessValue = Number.isFinite(value) ? value : 0.0;
+    }
+
+    function syncVolume(): void {
+        const value = Number(Audio.value ?? 0.0);
+        root.volumeValue = Number.isFinite(value) ? value : 0.0;
+    }
+
+    onBrightnessMonitorChanged: root.syncBrightness()
+    Component.onCompleted: {
+        root.syncBrightness();
+        root.syncVolume();
+    }
+
+    Connections {
+        target: Brightness
+        function onBrightnessChanged(): void { root.syncBrightness(); }
+    }
+
+    Connections {
+        target: Audio
+        function onValueChanged(): void { root.syncVolume(); }
+    }
 
     implicitWidth: contentItem.implicitWidth + root.horizontalPadding * 2
     implicitHeight: contentItem.implicitHeight + root.verticalPadding * 2
@@ -73,7 +104,7 @@ Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
             visible: active
-            active: (Config.options?.sidebar?.quickSliders?.showBrightness ?? true) && !!root.brightnessMonitor
+            active: root.brightnessEnabled && root.hasBrightnessMonitor
             sourceComponent: Appearance.zzzEverywhere ? zzzBrightnessSlider : defaultBrightnessSlider
         }
 
@@ -280,7 +311,7 @@ Rectangle {
         id: defaultBrightnessSlider
         DefaultQuickSlider {
             materialSymbol: "brightness_6"
-            modelValue: root.brightnessMonitor?.brightness ?? 0
+            modelValue: root.brightnessValue
             onMoved: root.brightnessMonitor?.setBrightness(value)
         }
     }
@@ -289,7 +320,7 @@ Rectangle {
         id: defaultVolumeSlider
         DefaultQuickSlider {
             materialSymbol: "volume_up"
-            modelValue: Audio.sink?.audio?.volume ?? 0
+            modelValue: root.volumeValue
             onMoved: Audio.setSinkVolume(value)
         }
     }
@@ -307,7 +338,7 @@ Rectangle {
         id: zzzBrightnessSlider
         ZzzQuickSlider {
             materialSymbol: "brightness_6"
-            modelValue: root.brightnessMonitor?.brightness ?? 0
+            modelValue: root.brightnessValue
             onMoved: root.brightnessMonitor?.setBrightness(value)
         }
     }
@@ -316,7 +347,7 @@ Rectangle {
         id: zzzVolumeSlider
         ZzzQuickSlider {
             materialSymbol: "volume_up"
-            modelValue: Audio.sink?.audio?.volume ?? 0
+            modelValue: root.volumeValue
             onMoved: Audio.setSinkVolume(value)
         }
     }

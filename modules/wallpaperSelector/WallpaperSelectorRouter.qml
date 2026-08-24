@@ -10,13 +10,12 @@ import qs.services
 
 Scope {
     id: root
-    readonly property var focusedScreen: CompositorService.isNiri
-        ? (Quickshell.screens.find(s => s.name === NiriService.currentOutput) ?? GlobalStates.primaryScreen)
-        : (Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? GlobalStates.primaryScreen)
+    readonly property var focusedScreen: GlobalStates.focusedScreen
     readonly property string focusedMonitorName: focusedScreen?.name ?? ""
-    readonly property var defaultScreen: GlobalStates.primaryScreen ?? focusedScreen
+    readonly property var defaultScreen: focusedScreen ?? GlobalStates.primaryScreen
     readonly property string defaultMonitorName: defaultScreen?.name ?? focusedMonitorName
-    property bool _pendingCoverflow: false
+    property string _pendingSurface: ""
+    property string _pendingLauncherMode: ""
 
     Process {
         id: niriOutputDetector
@@ -29,26 +28,62 @@ Scope {
                 catch (error) {}
             }
             niriOutputDetector._buffer = ""
-            if (!monitorName) monitorName = root.focusedMonitorName
-            if (root._pendingCoverflow) {
-                root._pendingCoverflow = false
-                root._toggleCoverflowWithMonitor(monitorName)
-            } else root._openWithMonitor(monitorName)
+            if (!monitorName) monitorName = root.defaultMonitorName
+            const surface = root._pendingSurface
+            const launcherMode = root._pendingLauncherMode
+            root._pendingSurface = ""
+            root._pendingLauncherMode = ""
+            root._openResolvedSurface(surface, monitorName, launcherMode)
         }
     }
 
-    function _openWithMonitor(monitorName: string): void {
-        if (monitorName) {
-            GlobalStates.wallpaperSelectorTargetMonitor = monitorName
-            Config.setNestedValue("wallpaperSelector.targetMonitor", monitorName)
+    function _openResolvedSurface(surface: string, monitorName: string,
+            launcherMode: string): void {
+        if (surface === "coverflow")
+            root._toggleCoverflowWithMonitor(monitorName)
+        else if (surface === "launcher")
+            root._commitLauncher(launcherMode, monitorName)
+        else
+            root._openWithMonitor(monitorName)
+    }
+
+    function _openOnFocusedMonitor(surface: string,
+            launcherMode: string): void {
+        if (CompositorService.isNiri) {
+            if (niriOutputDetector.running)
+                return
+            root._pendingSurface = surface
+            root._pendingLauncherMode = launcherMode
+            niriOutputDetector.exec(["niri", "msg", "-j", "focused-output"])
+            return
         }
+        root._openResolvedSurface(surface, root.defaultMonitorName, launcherMode)
+    }
+
+    function _openWithMonitor(monitorName: string): void {
+        GlobalStates.wallpaperSelectorTargetMonitor = monitorName || ""
+        Config.setNestedValue("wallpaperSelector.targetMonitor", monitorName || "")
         GlobalStates.wallpaperSelectorOpen = true
     }
 
     function _toggleCoverflowWithMonitor(monitorName: string): void {
-        Config.setNestedValue("wallpaperSelector.targetMonitor", monitorName || "")
         GlobalStates.wallpaperSelectorOpen = false
+        GlobalStates.wallpaperSelectorTargetMonitor = monitorName || ""
+        Config.setNestedValue("wallpaperSelector.targetMonitor", monitorName || "")
         GlobalStates.coverflowSelectorOpen = !GlobalStates.coverflowSelectorOpen
+    }
+
+    function toggleCoverflow(): void {
+        if (GlobalStates.coverflowSelectorOpen) {
+            GlobalStates.coverflowSelectorOpen = false
+            return
+        }
+        const explicitMonitor = GlobalStates.wallpaperSelectorTargetMonitor
+            || (Config.options?.wallpaperSelector?.targetMonitor ?? "")
+        if (explicitMonitor)
+            root._toggleCoverflowWithMonitor(explicitMonitor)
+        else
+            root._openOnFocusedMonitor("coverflow", "")
     }
 
     function toggle(): void {
@@ -67,15 +102,7 @@ Scope {
         }
         if (selectorStyle === "coverflow") {
             GlobalStates.wallpaperSelectorOpen = false
-            const multiMonitor = Config.options?.background?.multiMonitor?.enable ?? false
-            const explicitMonitor = Config.options?.wallpaperSelector?.targetMonitor ?? ""
-            if (!explicitMonitor && multiMonitor && !root.defaultMonitorName
-                    && CompositorService.isNiri && !niriOutputDetector.running) {
-                root._pendingCoverflow = true
-                niriOutputDetector.exec(["niri", "msg", "-j", "focused-output"])
-                return
-            }
-            root._toggleCoverflowWithMonitor(explicitMonitor || (multiMonitor ? root.defaultMonitorName : ""))
+            root.toggleCoverflow()
             return
         }
         GlobalStates.coverflowSelectorOpen = false
@@ -83,40 +110,36 @@ Scope {
             GlobalStates.wallpaperSelectorOpen = false
             return
         }
-        const explicitMonitor = Config.options?.wallpaperSelector?.targetMonitor ?? ""
+        const explicitMonitor = GlobalStates.wallpaperSelectorTargetMonitor
+            || (Config.options?.wallpaperSelector?.targetMonitor ?? "")
         const explicitTarget = Config.options?.wallpaperSelector?.selectionTarget ?? "main"
         if (!explicitMonitor && explicitTarget === "main") {
             if (Config.options?.panelFamily === "waffle") {
                 const useMain = Config.options?.waffles?.background?.useMainWallpaper ?? true
                 Config.setNestedValue("wallpaperSelector.selectionTarget", useMain ? "main" : "waffle")
             } else Config.setNestedValue("wallpaperSelector.selectionTarget", "main")
-            if (Config.options?.background?.multiMonitor?.enable ?? false) {
-                if (CompositorService.isNiri && !root.defaultMonitorName && !niriOutputDetector.running) {
-                    niriOutputDetector.exec(["niri", "msg", "-j", "focused-output"])
-                    return
-                }
-                root._openWithMonitor(root.defaultMonitorName)
-                return
-            }
-        } else if (explicitMonitor) GlobalStates.wallpaperSelectorTargetMonitor = explicitMonitor
-        GlobalStates.wallpaperSelectorOpen = true
+        }
+        if (explicitMonitor)
+            root._openWithMonitor(explicitMonitor)
+        else
+            root._openOnFocusedMonitor("grid", "")
     }
 
     // An empty mode means "match what is on screen": opening the picker while a
     // video wallpaper is applied must land on Animated, not on Static where the
     // current wallpaper cannot even appear.
-    function _resolveLauncherMode(mode: string): string {
+    function _resolveLauncherMode(mode: string, monitorName: string): string {
         if (mode === "animated" || mode === "static")
             return mode
         const currentPath = Wallpapers.currentWallpaperPathForTarget(
             Wallpapers.currentSelectionTarget(),
             (Config.options?.background?.multiMonitor?.enable ?? false)
-                ? (Config.options?.wallpaperSelector?.targetMonitor ?? "") : "")
+                ? monitorName : "")
         return WallpaperListener.isAnimatedPath(currentPath) ? "animated" : "static"
     }
 
-    function _openLauncher(mode: string, requestedMonitor: string): void {
-        const nextMode = root._resolveLauncherMode(mode)
+    function _commitLauncher(mode: string, monitorName: string): void {
+        const nextMode = root._resolveLauncherMode(mode, monitorName)
         GlobalStates.wallpaperSelectorOpen = false
         GlobalStates.coverflowSelectorOpen = false
         // Opening the launcher makes it the active picker, so the wallpaper
@@ -124,16 +147,22 @@ Scope {
         // The grid button inside the launcher is the way back out.
         Config.setNestedValue("wallpaperSelector.style", "launcher")
         GlobalStates.wallpaperLauncherMode = nextMode
-        const configuredMonitor = Config.options?.wallpaperSelector?.targetMonitor ?? ""
-        const monitorName = requestedMonitor || configuredMonitor
-            || ((Config.options?.background?.multiMonitor?.enable ?? false)
-                ? root.defaultMonitorName : "")
         const target = Wallpapers.currentSelectionTarget()
         GlobalStates.wallpaperSelectionTarget = target
         Config.setNestedValue("wallpaperSelector.selectionTarget", target)
-        GlobalStates.wallpaperSelectorTargetMonitor = monitorName
-        Config.setNestedValue("wallpaperSelector.targetMonitor", monitorName)
+        GlobalStates.wallpaperSelectorTargetMonitor = monitorName || ""
+        Config.setNestedValue("wallpaperSelector.targetMonitor", monitorName || "")
         GlobalStates.wallpaperLauncherOpen = true
+    }
+
+    function _openLauncher(mode: string, requestedMonitor: string): void {
+        const configuredMonitor = GlobalStates.wallpaperSelectorTargetMonitor
+            || (Config.options?.wallpaperSelector?.targetMonitor ?? "")
+        const monitorName = requestedMonitor || configuredMonitor
+        if (monitorName)
+            root._commitLauncher(mode, monitorName)
+        else
+            root._openOnFocusedMonitor("launcher", mode)
     }
 
     function openLauncher(mode: string): void {
@@ -152,6 +181,7 @@ Scope {
         function close(): void {
             GlobalStates.wallpaperSelectorOpen = false
             GlobalStates.wallpaperLauncherOpen = false
+            GlobalStates.coverflowSelectorOpen = false
         }
         function openLauncher(mode: string): void { root.openLauncher(mode) }
         function toggleOnMonitor(monitorName: string): void {
@@ -166,12 +196,28 @@ Scope {
             root.toggle()
         }
         function random(): void { Wallpapers.randomFromCurrentFolder() }
+        function status(): string {
+            return JSON.stringify({
+                style: Config.options?.wallpaperSelector?.style ?? "grid",
+                gridOpen: GlobalStates.wallpaperSelectorOpen,
+                launcherOpen: GlobalStates.wallpaperLauncherOpen,
+                coverflowOpen: GlobalStates.coverflowSelectorOpen,
+                targetMonitor: GlobalStates.wallpaperSelectorTargetMonitor
+                    || (Config.options?.wallpaperSelector?.targetMonitor ?? ""),
+                focusedMonitor: root.focusedMonitorName,
+                selectionTarget: Wallpapers.currentSelectionTarget(),
+                multiMonitor: Config.options?.background?.multiMonitor?.enable ?? false
+            })
+        }
     }
 
     IpcHandler {
         target: "coverflowSelector"
-        function toggle(): void { GlobalStates.coverflowSelectorOpen = !GlobalStates.coverflowSelectorOpen }
-        function open(): void { GlobalStates.coverflowSelectorOpen = true }
+        function toggle(): void { root.toggleCoverflow() }
+        function open(): void {
+            if (!GlobalStates.coverflowSelectorOpen)
+                root.toggleCoverflow()
+        }
         function close(): void { GlobalStates.coverflowSelectorOpen = false }
     }
 
@@ -180,7 +226,7 @@ Scope {
         sourceComponent: Item {
             GlobalShortcut { name: "wallpaperSelectorToggle"; description: "Toggle wallpaper selector"; onPressed: root.toggle() }
             GlobalShortcut { name: "wallpaperSelectorRandom"; description: "Select random wallpaper in current folder"; onPressed: Wallpapers.randomFromCurrentFolder() }
-            GlobalShortcut { name: "coverflowSelectorToggle"; description: "Toggle coverflow wallpaper selector"; onPressed: GlobalStates.coverflowSelectorOpen = !GlobalStates.coverflowSelectorOpen }
+            GlobalShortcut { name: "coverflowSelectorToggle"; description: "Toggle coverflow wallpaper selector"; onPressed: root.toggleCoverflow() }
         }
     }
 }

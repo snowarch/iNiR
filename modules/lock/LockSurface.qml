@@ -1886,9 +1886,12 @@ MouseArea {
     }
     
     Component.onDestruction: {
-        // Log destruction — if this appears without a corresponding unlock, the surface crashed
-        console.warn("[LockSurface] Component destroying — screenLocked:", GlobalStates.screenLocked,
-                     "hasAttemptedUnlock:", root.hasAttemptedUnlock)
+        const message = ["[LockSurface] Component destroying — screenLocked:",
+                         GlobalStates.screenLocked, "hasAttemptedUnlock:", root.hasAttemptedUnlock]
+        if (GlobalStates.screenLocked)
+            console.warn(...message)
+        else
+            console.info(...message)
     }
     
     // Reset state when lock screen is activated

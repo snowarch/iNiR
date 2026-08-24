@@ -30,7 +30,8 @@ Item {
 
     WRectangularShadow {
         target: borderRect
-        visible: !root.glassActive || !Looks.useMaterial
+        visible: root.visible && Looks.effectsEnabled
+            && (!root.glassActive || !Looks.useMaterial)
     }
 
     Rectangle {
@@ -58,7 +59,7 @@ Item {
         color: root.glassActive && Looks.useMaterial ? "transparent" : Looks.colors.bgPanelFooterBase
         implicitWidth: contentItem.implicitWidth
         implicitHeight: contentItem.implicitHeight
-        layer.enabled: Appearance.effectsEnabled
+        layer.enabled: root.visible && Looks.effectsEnabled
         layer.effect: OpacityMask {
             maskSource: Rectangle {
                 id: contentAreaMask
@@ -72,7 +73,7 @@ Item {
         GlassBackground {
             id: glassBackground
             anchors.fill: parent
-            visible: root.glassActive && Looks.useMaterial
+            visible: root.visible && root.glassActive && Looks.useMaterial
             radius: borderRect.radius - borderRect.border.width
             fallbackColor: Appearance.colors.colLayer0
             auroraTransparency: Appearance.angelEverywhere

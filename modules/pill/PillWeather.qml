@@ -5,31 +5,12 @@ import Quickshell
 import qs.services
 import qs.modules.common
 
-/**
- * Weather facade for the pill's calendar surface and hover glance.
- *
- * Upstream read open-meteo directly and keyed its icons off WMO codes (0, 1, 45,
- * 61…). iNiR's Weather service normalises everything to WWO codes (113, 116,
- * 248, 296…) in `data.wCode`, so the glyph and label tables here are rewritten
- * against WWO. Copying the upstream tables would have mapped every condition to
- * the wrong icon.
- */
 Singleton {
     id: root
 
     readonly property bool ready: Weather.enabled && (Weather.data?.temp ?? "--°C") !== "--°C"
 
-    /**
-     * visibleCity is blank when the user hid the location; fall back to whatever
-     * the service resolved so the calendar's town line still says something.
-     */
-    readonly property string city: {
-        const v = Weather.visibleCity ?? "";
-        if (v.length > 0)
-            return v;
-        const c = String(Weather.data?.city ?? "");
-        return (c.length > 0 && c.toLowerCase() !== "city") ? c : "";
-    }
+    readonly property string city: Weather.visibleCity ?? ""
 
     /** The manual town, shared with the rest of the shell's weather settings. */
     readonly property string configCity: Config.options?.bar?.weather?.city ?? ""

@@ -37,6 +37,6 @@ BarButton {
 
     BarToolTip {
         id: tooltip
-        extraVisibleCondition: root.shouldShowTooltip && text !== ""
+        barExtraVisibleCondition: root.shouldShowTooltip && text !== ""
     }
 }

@@ -32,12 +32,13 @@ Scope {
     readonly property bool isPillStyle:   Config.options?.dock?.style === "pill"
     readonly property bool isMacosStyle:  Config.options?.dock?.style === "macos"
     readonly property bool isIslandStyle: Config.options?.dock?.style === "island"
+    readonly property bool isM3Style:     Config.options?.dock?.style === "m3"
     // Island is a complete Ricelin material. Pill and macOS are layout modes
     // that still inherit the selected global worldview (except ZZZ, whose shelf
     // intentionally wins as before).
     readonly property string surfaceDialect: Appearance.surfaceDialectFor(
         root.isIslandStyle ? "island" : "")
-    readonly property bool zzzEverywhere: root.surfaceDialect === "zzz"
+    readonly property bool zzzEverywhere: !root.isM3Style && root.surfaceDialect === "zzz"
 
     // Track bar position to force dock recreation when bar changes
     readonly property bool barIsVertical: Config.options?.bar?.bottom !== undefined
@@ -80,7 +81,7 @@ Scope {
             sourceComponent: PanelWindow {
                 id: dockRoot
                 screen: panelLoader.modelData
-                visible: !GlobalStates.screenLocked && !GameMode.shouldHidePanels
+                visible: !GlobalStates.screenLocked
                     && !GlobalStates.widgetEditMode
 
                 property bool reveal: !GlobalStates.coverflowSelectorOpen
@@ -151,7 +152,7 @@ Scope {
                     right: !root.isLeft || !root.isVertical
                 }
 
-                exclusiveZone: GameMode.shouldHidePanels ? 0 : root.pinned ? (dockHeight + Appearance.sizes.elevationMargin) : 0
+                exclusiveZone: root.pinned ? (dockHeight + Appearance.sizes.elevationMargin) : 0
 
                 implicitWidth: root.isVertical ? (dockHeight + Appearance.sizes.elevationMargin + Appearance.sizes.hyprlandGapsOut) : dockBackground.implicitWidth
                 implicitHeight: root.isVertical ? dockBackground.implicitHeight : (dockHeight + Appearance.sizes.elevationMargin + Appearance.sizes.hyprlandGapsOut)
@@ -180,9 +181,8 @@ Scope {
                     radius: dockRoot.nativeBlurItem?.radius ?? 0
                 }
 
-                Item { id: emptyMask; width: 0; height: 0 }
                 mask: Region {
-                    item: GameMode.shouldHidePanels ? emptyMask : dockMouseArea
+                    item: dockMouseArea
                 }
 
                 MouseArea {
@@ -306,9 +306,9 @@ Scope {
                                     readonly property bool zzzGlassActive: root.zzzEverywhere
                                         && Appearance.effectsEnabled
                                         && (Config.options?.appearance?.zzz?.glass ?? true)
-                                    readonly property bool angelEverywhere: root.surfaceDialect === "angel"
-                                    readonly property bool auroraEverywhere: root.surfaceDialect === "aurora" || angelEverywhere
-                                    readonly property bool inirEverywhere: root.surfaceDialect === "inir"
+                                    readonly property bool angelEverywhere: !root.isM3Style && root.surfaceDialect === "angel"
+                                    readonly property bool auroraEverywhere: !root.isM3Style && (root.surfaceDialect === "aurora" || angelEverywhere)
+                                    readonly property bool inirEverywhere: !root.isM3Style && root.surfaceDialect === "inir"
                                     readonly property bool gameModeMinimal: Appearance.gameModeMinimal
                                     readonly property string wallpaperUrl: {
                                         const _dep1 = WallpaperListener.multiMonitorEnabled
@@ -342,19 +342,23 @@ Scope {
                                 // islands bar).
                                 visible: (Config.options?.dock?.showBackground ?? true) && !gameModeMinimal && ((root.zzzEverywhere && !root.isIslandStyle) || (!root.isPillStyle && !root.isMacosStyle && !root.isIslandStyle))
                                 // ZZZ: the visible shelf is the chamfered ZzzPlate below.
-                                color: root.zzzEverywhere ? "transparent"
+                                color: root.isM3Style ? Appearance.colors.colLayer0
+                                    : root.zzzEverywhere ? "transparent"
                                     : auroraEverywhere ? ColorUtils.applyAlpha(
                                         (blendedColors?.colLayer0 ?? Appearance.colors.colLayer0),
                                         dockRoot.nativeBlurActive ? 0.46 : 1)
                                     : inirEverywhere ? Appearance.inir.colLayer1
                                     : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
-                                border.width: root.zzzEverywhere ? 0
+                                border.width: root.isM3Style ? 1
+                                    : root.zzzEverywhere ? 0
                                     : angelEverywhere ? Appearance.angel.panelBorderWidth : 1
-                                border.color: root.zzzEverywhere ? "transparent"
+                                border.color: root.isM3Style ? Appearance.colors.colLayer0Border
+                                    : root.zzzEverywhere ? "transparent"
                                     : angelEverywhere ? Appearance.angel.colPanelBorder
                                     : inirEverywhere ? Appearance.inir.colBorder
                                     : Appearance.colors.colLayer0Border
-                                radius: root.zzzEverywhere ? Appearance.zzz.panelRadius
+                                radius: root.isM3Style ? Appearance.rounding.normal + 6
+                                    : root.zzzEverywhere ? Appearance.zzz.panelRadius
                                     : angelEverywhere ? Appearance.angel.roundingNormal
                                     : inirEverywhere ? Appearance.inir.roundingNormal
                                     : cardStyle ? Appearance.rounding.normal : Appearance.rounding.large
@@ -491,11 +495,12 @@ Scope {
                                 id: dockRow
                                 visible: !root.isVertical
                                 anchors.centerIn: (root.isMacosStyle && !root.zzzEverywhere) ? macBackground : dockVisualBackground
-                                spacing: root.zzzEverywhere ? 5 : 2
+                                spacing: root.isM3Style ? 3 : (root.zzzEverywhere ? 5 : 2)
                                 property real padding: root.zzzEverywhere ? 7 : 5
 
                                 DockApps {
                                     id: dockApps
+                                    enabled: !root.isVertical
                                     buttonPadding: dockRow.padding
                                     vertical: false
                                     dockPosition: root.position
@@ -504,7 +509,7 @@ Scope {
                                 DockButton {
                                     vertical: false
                                     dockPosition: root.position
-                                    onClicked: GlobalStates.overviewOpen = !GlobalStates.overviewOpen
+                                    onClicked: GlobalStates.toggleOverview(dockRoot.screen?.name ?? "")
                                     contentItem: MaterialSymbol {
                                         anchors.centerIn: parent
                                         font.pixelSize: parent.width * 0.5
@@ -522,11 +527,12 @@ Scope {
                                   id: dockColumn
                                   visible: root.isVertical
                                   anchors.centerIn: (root.isMacosStyle && !root.zzzEverywhere) ? macBackground : dockVisualBackground
-                                spacing: root.zzzEverywhere ? 5 : 2
+                                spacing: root.isM3Style ? 3 : (root.zzzEverywhere ? 5 : 2)
                                 property real padding: root.zzzEverywhere ? 7 : 5
 
                                 DockApps {
                                     id: dockAppsVertical
+                                    enabled: root.isVertical
                                     buttonPadding: dockColumn.padding
                                     vertical: true
                                     dockPosition: root.position
@@ -535,7 +541,7 @@ Scope {
                                 DockButton {
                                     vertical: true
                                     dockPosition: root.position
-                                    onClicked: GlobalStates.overviewOpen = !GlobalStates.overviewOpen
+                                    onClicked: GlobalStates.toggleOverview(dockRoot.screen?.name ?? "")
                                     contentItem: MaterialSymbol {
                                         anchors.centerIn: parent
                                         font.pixelSize: parent.width * 0.5

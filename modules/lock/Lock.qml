@@ -322,6 +322,10 @@ Scope {
         }
 
         function focus(): void {
+            // swayidle calls this after logind resumes. Besides restoring lock
+            // focus, broadcast the lifecycle event so persistent layer-shell
+            // hosts can renegotiate native focus/input state.
+            Idle.notifyResumed();
             lockContext.shouldReFocus();
         }
     }

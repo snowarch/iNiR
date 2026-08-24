@@ -284,6 +284,14 @@ Blur eligibility is topology-based. A surface must declare an exact `rectangle`,
 
 Desktop widgets keep decoded wallpaper images warm, but release their per-widget mask and blur framebuffer objects whenever the widget is hidden or the widget power manager pauses visual work. Clocks, Cava and resource sampling continue to use their own visibility and consumer gates, so returning to the desktop restores the same visuals without keeping invisible render targets active.
 
+The bar spectrum uses one shared Cava process regardless of monitor count. Its
+`Primary only` mode is the performance default: only the configured primary
+output uploads and paints spectrum canvases, while the other bars keep their
+normal layout. `All monitors` is available in Settings › Bar › Audio spectrum
+for users who prefer matching visualizers on every output. M3 visualizer slots
+collapse while the shared service reports no audio signal, so an empty Cava
+frame does not reserve bar space.
+
 
 ## Tools
 

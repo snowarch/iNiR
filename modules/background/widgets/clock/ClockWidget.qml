@@ -51,8 +51,9 @@ AbstractBackgroundWidget {
         root.statusShown ? statusText.implicitWidth : 0)
     // Digital mode resizes via timeScale, cookie via cookie.size — avoids scaleFactor churn
     resizableAxes: root.clockStyle === "cookie" ? ({ uniform: "cookie.size" }) : ({ uniform: "timeScale" })
-    resizeMinWidth: 80
-    resizeMinHeight: 40
+    resizeMinWidth: root.clockStyle === "cookie" ? 120 : 80
+    resizeMinHeight: root.clockStyle === "cookie" ? 120
+        : root.clockStyle === "androidStacked" ? 80 : 40
 
     editPopoverContent: Component {
         ColumnLayout {
@@ -140,26 +141,8 @@ AbstractBackgroundWidget {
     // One semantic palette for both renderers. Global-style dispatch already
     // happens in Appearance; ZZZ must keep its primary-container sticker face,
     // not fall back to the near-black chrome used by rectangular plates.
-    readonly property color cookieFace: Appearance.colors.colPrimaryContainer
-    readonly property color cookieBaseInk: Appearance.zzzEverywhere
-        ? Appearance.zzz.onAccent : Appearance.colors.colOnPrimaryContainer
-    function readableClockColor(candidate: color, backdrop: color, minContrast: real): color {
-        const source = Qt.color(candidate);
-        if (ColorUtils.contrastRatio(source, backdrop) >= minContrast)
-            return source;
-        for (let step = 1; step <= 20; step++) {
-            const distance = step * 0.04;
-            const darker = Qt.hsla(source.hslHue, source.hslSaturation,
-                Math.max(0, source.hslLightness - distance), source.a);
-            const lighter = Qt.hsla(source.hslHue, source.hslSaturation,
-                Math.min(1, source.hslLightness + distance), source.a);
-            const darkRatio = ColorUtils.contrastRatio(darker, backdrop);
-            const lightRatio = ColorUtils.contrastRatio(lighter, backdrop);
-            if (darkRatio >= minContrast || lightRatio >= minContrast)
-                return darkRatio >= minContrast ? darker : lighter;
-        }
-        return ColorUtils.contrastColor(backdrop);
-    }
+    readonly property color cookieFace: root.widgetSemanticContainer(root.widgetPrimaryRole)
+    readonly property color cookieBaseInk: root.widgetSemanticOnContainer(root.widgetPrimaryRole)
     function supportingOnFace(strongInk: color, face: color): color {
         for (let weight = 0.72; weight <= 1.001; weight += 0.04) {
             const candidate = ColorUtils.mix(strongInk, face, weight);
@@ -168,17 +151,13 @@ AbstractBackgroundWidget {
         }
         return strongInk;
     }
-    // Hands sit on the cookie FACE — clamp against it, not the wallpaper.
-    readonly property color handPrimary: root.readableClockColor(
-        ColorUtils.adaptAccent(root.accentPrimary, root.cookieFace), root.cookieFace, 3.0)
-    readonly property color handTertiary: root.readableClockColor(
-        ColorUtils.adaptAccent(root.accentTertiary, root.cookieFace), root.cookieFace, 3.0)
+    // Hands use the configured semantic accents directly; the face is the matching
+    // generated container, so no local hue/lightness rewrite is needed.
+    readonly property color handPrimary: root.accentPrimary
+    readonly property color handTertiary: root.accentTertiary
     // Marks/numbers use the strong on-face ink. Supporting information remains
     // solid (not alpha-composited) so small text keeps an AA contrast floor.
-    readonly property color cookieInk: root.readableClockColor(
-        root.cookieBaseInk,
-        root.cookieFace,
-        4.5)
+    readonly property color cookieInk: root.cookieBaseInk
     readonly property color cookieInfo: root.supportingOnFace(root.cookieInk, root.cookieFace)
 
     // Local clock with seconds precision when needed (and power is active)
@@ -263,28 +242,16 @@ AbstractBackgroundWidget {
         : Appearance.colors.colLayer0
     readonly property color _digitalBackdrop: root.adaptDigitalToWallpaper
         ? root._inkBackdrop : Appearance.colors.colLayer0
-    // Digital uses the same generated identity as the Cookie hands, but does
-    // not borrow the local wallpaper hue. The region only determines which
-    // lightness band is readable. This keeps the palette coherent across
-    // wallpaper changes instead of producing an arbitrary color per position.
-    function digitalRole(seed: color, minContrast: real, minSaturation: real): color {
-        const source = Qt.color(seed);
-        if (root.adaptDigitalToWallpaper || root.colorMode !== "auto")
-            return root.widgetRoleColor(source, minContrast, minSaturation);
-        return root.readableClockColor(source, root._digitalBackdrop, minContrast);
-    }
-
-    readonly property color digitalTimeSeed: root.accentPrimary
-    readonly property color digitalDateSeed: ColorUtils.mix(
-        root.accentPrimary, root.accentSecondary, 0.78)
-    readonly property color digitalMetaSeed: ColorUtils.mix(
-        root.accentPrimary, root.accentTertiary, 0.82)
-    readonly property color digitalStatusSeed: ColorUtils.mix(
-        root.accentPrimary, root.widgetSignal, 0.84)
-    readonly property color digitalTimeColor: root.digitalRole(root.digitalTimeSeed, 4.5, 0.50)
-    readonly property color digitalDateColor: root.digitalRole(root.digitalDateSeed, 4.5, 0.42)
-    readonly property color digitalMetaColor: root.digitalRole(root.digitalMetaSeed, 4.5, 0.36)
-    readonly property color digitalStatusColor: root.digitalRole(root.digitalStatusSeed, 4.5, 0.45)
+    // Digital text may switch between generated tokens for contrast, but never
+    // synthesizes a region-specific hue. Each line maps to one configurable slot.
+    readonly property color digitalTimeColor: root.widgetSemanticForeground(
+        root.widgetPrimaryRole, root._digitalBackdrop, 4.5)
+    readonly property color digitalDateColor: root.widgetSemanticForeground(
+        root.widgetSecondaryRole, root._digitalBackdrop, 4.5)
+    readonly property color digitalMetaColor: root.widgetSemanticForeground(
+        root.widgetTertiaryRole, root._digitalBackdrop, 4.5)
+    readonly property color digitalStatusColor: root.widgetSemanticForeground(
+        root.widgetSignalRole, root._digitalBackdrop, 4.5)
 
     readonly property string debugPaletteReport: JSON.stringify({
         style: root.clockStyle,
@@ -486,7 +453,8 @@ AbstractBackgroundWidget {
         Item {
             id: statusText
             x: Math.round((parent.width - width) / 2)
-            implicitHeight: statusTextBg.implicitHeight
+            visible: root.statusShown
+            implicitHeight: root.statusShown ? statusTextBg.implicitHeight : 0
             implicitWidth: statusTextBg.implicitWidth
             StyledRectangularShadow {
                 target: statusTextBg

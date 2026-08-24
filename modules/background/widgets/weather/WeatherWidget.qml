@@ -15,7 +15,7 @@ AbstractBackgroundWidget {
     defaultConfig: ({
         placementStrategy: "free", preset: "default", style: "pill", shape: "pill",
         size: 200, tempSize: 80, iconSize: 80,
-        showTemp: true, showIcon: true, showCondition: false,
+        showTemp: true, showIcon: true, showCondition: false, showMetrics: true,
         padding: 20, tempFontWeight: 500, conditionOpacity: 0.7,
         widgetScale: 100, widgetOpacity: 100, colorMode: "auto", dim: 0,
         showBackground: true, useBlur: false, showBorder: true,
@@ -38,6 +38,25 @@ AbstractBackgroundWidget {
     readonly property bool showTemp: Boolean(root._readConfigKey("showTemp") ?? true)
     readonly property bool showIcon: Boolean(root._readConfigKey("showIcon") ?? true)
     readonly property bool showCondition: Boolean(root._readConfigKey("showCondition") ?? false)
+    readonly property bool showMetrics: Boolean(root._readConfigKey("showMetrics") ?? true)
+
+    readonly property var _metricModel: {
+        const d = Weather.data;
+        if (!d)
+            return [];
+        const items = [];
+        const push = (icon, value) => {
+            if (value !== undefined && value !== null && String(value).length > 0)
+                items.push({ icon: icon, value: String(value) });
+        };
+        push("humidity_percentage", d.humidity);
+        push("air", d.wind);
+        push("visibility", d.visib);
+        push("rainy", d.precip);
+        push("wb_sunny", d.sunrise);
+        push("bedtime", d.sunset);
+        return items;
+    }
     readonly property int visibleContentCount: Number(showTemp) + Number(showIcon) + Number(showCondition)
     readonly property int weatherPadding: Math.max(4, Math.round(
         Number(root._readConfigKey("padding") ?? 20)
@@ -55,11 +74,11 @@ AbstractBackgroundWidget {
         return raw + "°";
     }
 
-    implicitHeight: shapeSize
-    implicitWidth: shapeSize
+    implicitWidth: root.weatherStyle === "detail" ? Math.round(shapeSize * 2.2) : shapeSize
+    implicitHeight: root.weatherStyle === "detail" ? Math.round(shapeSize * 0.95) : shapeSize
     resizableAxes: ({ uniform: "size" })
-    resizeMinWidth: 80
-    resizeMinHeight: 80
+    resizeMinWidth: root.weatherStyle === "detail" ? 280 : 80
+    resizeMinHeight: root.weatherStyle === "detail" ? 150 : 80
     // Analyze the region in BOTH modes: card needs colText for its overlay, pill needs
     // it so ensureVisible() and the region-aware halo can make the shape read on any
     // wallpaper instead of dissolving into a same-tone background.
@@ -77,15 +96,10 @@ AbstractBackgroundWidget {
 
     // ── Accent colors ── primary from the shared desktop-widget identity.
     readonly property color accentPrimary: root.widgetAccent
-    readonly property color accentPrimaryContainer: Appearance.zzzEverywhere ? Appearance.zzz.sticker
-        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer1
-        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-        : Appearance.colors.colPrimaryContainer
-    readonly property color accentOnPrimaryContainer: Appearance.zzzEverywhere ? Appearance.zzz.onSticker
-        : Appearance.colors.colOnPrimaryContainer
+    readonly property color accentPrimaryContainer: root.widgetSemanticContainer(root.widgetPrimaryRole)
+    readonly property color accentOnPrimaryContainer: root.widgetSemanticOnContainer(root.widgetPrimaryRole)
     readonly property color shapeFill: root.accentPrimaryContainer
-    readonly property color shapeInk: ColorUtils.ensureReadable(root.accentOnPrimaryContainer, root.shapeFill, 4.5)
+    readonly property color shapeInk: root.accentOnPrimaryContainer
     // Card text follows the real backdrop: widget ink uses the configured
     // surface when present and wallpaper-region ink when the card is disabled.
     readonly property color cardInk: root.widgetInk
@@ -95,33 +109,39 @@ AbstractBackgroundWidget {
 
     // Shape options for popover
     readonly property var _shapeOptions: [
-        { label: "Pill", value: "pill" }, { label: "Circle", value: "circle" },
-        { label: "Oval", value: "oval" }, { label: "Diamond", value: "diamond" },
-        { label: "Heart", value: "heart" }, { label: "Flower", value: "flower" },
-        { label: "Cookie", value: "cookie4" }, { label: "Sunny", value: "sunny" },
-        { label: "Clover", value: "clover" }, { label: "Burst", value: "softBurst" },
-        { label: "Gem", value: "gem" }, { label: "Puffy", value: "puffy" }
+        { label: Translation.tr("Pill"), value: "pill" },
+        { label: Translation.tr("Circle"), value: "circle" },
+        { label: Translation.tr("Oval"), value: "oval" },
+        { label: Translation.tr("Diamond"), value: "diamond" },
+        { label: Translation.tr("Heart"), value: "heart" },
+        { label: Translation.tr("Flower"), value: "flower" },
+        { label: Translation.tr("Cookie"), value: "cookie4" },
+        { label: Translation.tr("Sunny"), value: "sunny" },
+        { label: Translation.tr("Clover"), value: "clover" },
+        { label: Translation.tr("Burst"), value: "softBurst" },
+        { label: Translation.tr("Gem"), value: "gem" },
+        { label: Translation.tr("Puffy"), value: "puffy" }
     ]
 
     editPopoverContent: Component {
         ColumnLayout {
             spacing: 6
-            // Style mode
             GridLayout {
-                columns: 2
+                columns: 3
                 columnSpacing: 4
                 rowSpacing: 4
                 Repeater {
                     model: [
-                        { label: "Shape", icon: "category", value: "pill" },
-                        { label: "Card", icon: "crop_landscape", value: "card" }
+                        { label: Translation.tr("Shape"), icon: "category", value: "pill" },
+                        { label: Translation.tr("Card"), icon: "crop_landscape", value: "card" },
+                        { label: Translation.tr("Detail"), icon: "dashboard", value: "detail" }
                     ]
                     SelectionGroupButton {
                         required property var modelData
                         Layout.fillWidth: true
                         leftmost: true; rightmost: true
                         buttonIcon: modelData.icon
-                        buttonText: Translation.tr(modelData.label)
+                        buttonText: modelData.label
                         toggled: root.weatherStyle === modelData.value
                         onClicked: Config.setNestedValue("background.widgets.weather.style", modelData.value)
                     }
@@ -161,7 +181,7 @@ AbstractBackgroundWidget {
                             hoverEnabled: true
                             onClicked: Config.setNestedValue("background.widgets.weather.shape", modelData.value)
                         }
-                        StyledToolTip { text: Translation.tr(modelData.label) }
+                        StyledToolTip { text: modelData.label }
                     }
                 }
             }
@@ -172,16 +192,16 @@ AbstractBackgroundWidget {
                 rowSpacing: 4
                 Repeater {
                     model: [
-                        { label: "Temp", icon: "thermostat", key: "showTemp", active: root.showTemp },
-                        { label: "Icon", icon: "cloud", key: "showIcon", active: root.showIcon },
-                        { label: "Text", icon: "text_fields", key: "showCondition", active: root.showCondition }
+                        { label: Translation.tr("Temp"), icon: "thermostat", key: "showTemp", active: root.showTemp },
+                        { label: Translation.tr("Icon"), icon: "cloud", key: "showIcon", active: root.showIcon },
+                        { label: Translation.tr("Text"), icon: "text_fields", key: "showCondition", active: root.showCondition }
                     ]
                     SelectionGroupButton {
                         required property var modelData
                         Layout.fillWidth: true
                         leftmost: true; rightmost: true
                         buttonIcon: modelData.icon
-                        buttonText: Translation.tr(modelData.label)
+                        buttonText: modelData.label
                         toggled: modelData.active
                         onClicked: {
                             if (modelData.active && root.visibleContentCount <= 1) return
@@ -244,7 +264,7 @@ AbstractBackgroundWidget {
     WidgetSurface {
         regionBrightness: root.regionBrightness
         id: cardBackground
-        visible: root.weatherStyle === "card"
+        visible: (root.weatherStyle === "card" || root.weatherStyle === "detail")
             && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
         anchors.fill: parent
         surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.cardRadius
@@ -261,8 +281,121 @@ AbstractBackgroundWidget {
         screenHeight: root.scaledScreenHeight
     }
 
+    ColumnLayout {
+        id: detailLayout
+        visible: root.weatherStyle === "detail"
+        anchors.fill: parent
+        anchors.margins: Math.round(16 * root.scaleFactor)
+        clip: true
+        spacing: Math.round(6 * root.scaleFactor)
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Math.round(10 * root.scaleFactor)
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignVCenter
+                spacing: -Math.round(2 * root.scaleFactor)
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: root.temperatureText
+                    elide: Text.ElideRight
+                    color: root.widgetInk
+                    font {
+                        family: Appearance.font.family.expressive
+                        pixelSize: Math.round(38 * root.scaleFactor)
+                        weight: Font.Bold
+                    }
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Weather.data?.description ?? ""
+                    elide: Text.ElideRight
+                    color: ColorUtils.applyAlpha(root.widgetInk, 0.72)
+                    font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    visible: Weather.showVisibleCity
+                        && root.height >= Math.round(150 * root.scaleFactor)
+                    text: Weather.visibleCity
+                    elide: Text.ElideRight
+                    color: ColorUtils.applyAlpha(root.widgetInk, 0.5)
+                    font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
+                }
+            }
+
+            MaterialShapeWrappedMaterialSymbol {
+                Layout.alignment: Qt.AlignTop
+                shape: MaterialShape.Shape.Sunny
+                color: root.widgetSemanticContainer(root.widgetPrimaryRole)
+                colSymbol: root.widgetSemanticOnContainer(root.widgetPrimaryRole)
+                text: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "cloud"
+                fill: 1
+                iconSize: Math.round(24 * root.scaleFactor)
+                padding: Math.round(10 * root.scaleFactor)
+            }
+        }
+
+        Item { Layout.fillHeight: true }
+
+        Flow {
+            Layout.fillWidth: true
+            visible: root.showMetrics
+                && root.height >= Math.round(132 * root.scaleFactor)
+            spacing: Math.round(6 * root.scaleFactor)
+
+            Repeater {
+                model: root._metricModel
+
+                Rectangle {
+                    id: metricChip
+                    required property var modelData
+                    required property int index
+                    readonly property bool alternate: index % 2 === 0
+                    readonly property string chipRole: metricChip.alternate
+                        ? root.widgetSecondaryRole : root.widgetTertiaryRole
+                    readonly property color chipColor: root.widgetSemanticContainer(metricChip.chipRole)
+                    readonly property color chipInk: root.widgetSemanticOnContainer(metricChip.chipRole)
+
+                    width: chipRow.implicitWidth + Math.round(16 * root.scaleFactor)
+                    height: chipRow.implicitHeight + Math.round(8 * root.scaleFactor)
+                    radius: height / 2
+                    color: metricChip.chipColor
+
+                    Row {
+                        id: chipRow
+                        anchors.centerIn: parent
+                        spacing: Math.round(4 * root.scaleFactor)
+
+                        MaterialSymbol {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: metricChip.modelData.icon
+                            fill: 1
+                            iconSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
+                            color: ColorUtils.applyAlpha(metricChip.chipInk, 0.75)
+                        }
+
+                        StyledText {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: metricChip.modelData.value
+                            color: metricChip.chipInk
+                            font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
+                            font.weight: Font.Medium
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     Item {
         anchors.fill: parent
+        visible: root.weatherStyle !== "detail"
 
         MaterialSymbol {
             visible: root.visibleContentCount === 0

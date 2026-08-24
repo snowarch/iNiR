@@ -428,6 +428,11 @@ ContentPage {
                     onAccepted: Config.setNestedValue("sidebar.right.headerBannerPath",
                         FileUtils.trimFileProtocol(String(selectedFile)))
                 }
+
+                SettingsNativeDialogGuard {
+                    dialog: bannerImageDialog
+                    dialogKey: "sidebar-header-media"
+                }
             }
 
             ContentSubsection {

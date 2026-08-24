@@ -13,6 +13,7 @@ SNAPSHOT_PATHS=(
     "${XDG_CONFIG_HOME}/quickshell/inir"
     "${INIR_CONFIG_DIR}/config.json"
     "${XDG_CONFIG_HOME}/niri/config.kdl"
+    "${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/user/desktop-items.json"
 )
 
 ###############################################################################
@@ -53,6 +54,13 @@ create_snapshot() {
     # Copy migrations state
     if [[ -f "${INIR_CONFIG_DIR}/migrations.json" ]]; then
         cp "${INIR_CONFIG_DIR}/migrations.json" "${snapshot_dir}/"
+    fi
+
+    # Copy managed desktop-item state. It lives in XDG state, not the config
+    # tree, so include it explicitly in snapshots and restores.
+    local desktop_items_state="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/user/desktop-items.json"
+    if [[ -f "$desktop_items_state" ]]; then
+        cp "$desktop_items_state" "${snapshot_dir}/desktop-items.json"
     fi
     
     # Create metadata
@@ -175,6 +183,13 @@ restore_snapshot() {
     if [[ -f "${snapshot_dir}/migrations.json" ]]; then
         mkdir -p "${INIR_CONFIG_DIR}"
         cp "${snapshot_dir}/migrations.json" "${INIR_CONFIG_DIR}/"
+    fi
+
+    if [[ -f "${snapshot_dir}/desktop-items.json" ]]; then
+        log_info "Restoring managed desktop items..."
+        mkdir -p "${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/user"
+        cp "${snapshot_dir}/desktop-items.json" \
+            "${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/user/desktop-items.json"
     fi
     
     # Checkout git to that commit (stay on branch if possible)

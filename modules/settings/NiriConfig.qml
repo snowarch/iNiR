@@ -83,10 +83,10 @@ ContentPage {
     ]
 
     readonly property var transformOptions: [
-        { displayName: Translation.tr("Normal"), icon: "screen_rotation", value: "normal" },
-        { displayName: "90°", icon: "screen_rotation", value: "90" },
-        { displayName: "180°", icon: "screen_rotation", value: "180" },
-        { displayName: "270°", icon: "screen_rotation", value: "270" },
+        { displayName: Translation.tr("Normal"), icon: "screen_rotation_alt", value: "normal" },
+        { displayName: "90°", icon: "screen_rotation_alt", value: "90" },
+        { displayName: "180°", icon: "screen_rotation_alt", value: "180" },
+        { displayName: "270°", icon: "screen_rotation_alt", value: "270" },
         { displayName: Translation.tr("Flipped"), icon: "flip", value: "flipped" },
         { displayName: Translation.tr("Flipped 90°"), icon: "flip", value: "flipped-90" },
         { displayName: Translation.tr("Flipped 180°"), icon: "flip", value: "flipped-180" },
@@ -2829,7 +2829,7 @@ ContentPage {
     // =====================
     SettingsCardSection {
         expanded: false
-        icon: "settings_input_composite"
+        icon: "settings_input_component"
         title: Translation.tr("General Input")
 
         SettingsGroup {

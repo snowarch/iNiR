@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -10,12 +12,13 @@ import qs.modules.waffle.looks
 Rectangle {
     id: root
 
-    color: "black"  // fallback behind wallpaper
+    color: Looks.colors.bg0Opaque
     readonly property bool usePasswordChars: !(PolkitService.flow?.responseVisible ?? false)
 
     Keys.onPressed: event => {
         if (event.key === Qt.Key_Escape) {
             PolkitService.cancel()
+            event.accepted = true
         }
     }
 
@@ -26,182 +29,200 @@ Rectangle {
 
         Rectangle {
             anchors.fill: parent
-            color: ColorUtils.transparentize("black", 0.31)  // dark scrim over wallpaper
+            color: ColorUtils.applyAlpha(Looks.colors.bg0Opaque, 0.69)
 
-            PolkitDialog {
+            WPane {
                 id: dialog
-                DragHandler {
-                    target: null
-                    property real startX: dialog.x
-                    property real startY: dialog.y
-                    onActiveChanged: {
-                        if (!active) return
-                        startX = dialog.x
-                        startY = dialog.y
-                    }
-                    xAxis.onActiveValueChanged: {
-                        dialog.x = Math.round(startX + xAxis.activeValue)
-                    }
-                    yAxis.onActiveValueChanged: {
-                        dialog.y = Math.round(startY + yAxis.activeValue)
+                anchors.centerIn: parent
+                implicitWidth: Looks.dp(460)
+                radius: Looks.cookieEverywhere ? Looks.radius.xLarge : Looks.radius.large
+                borderColor: Looks.glassActive ? Looks.colors.tooltipBorder : Looks.colors.bg2Border
+
+                scale: 0.96
+                opacity: 0
+                Component.onCompleted: {
+                    scale = 1
+                    opacity = 1
+                }
+                Behavior on scale {
+                    animation: NumberAnimation {
+                        duration: Looks.transition.enabled ? Looks.transition.duration.panel : 0
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Looks.transition.easing.bezierCurve.decelerate
                     }
                 }
-                x: Math.round((parent.width - width) / 2)
-                y: Math.round((parent.height - height) / 2)
-            }
-        }
-    }
+                Behavior on opacity {
+                    animation: NumberAnimation {
+                        duration: Looks.transition.enabled ? Looks.transition.duration.normal : 0
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Looks.transition.easing.bezierCurve.standard
+                    }
+                }
 
-    component PolkitDialog: WPane {
-        borderColor: Looks.colors.ambientShadow
+                contentItem: ColumnLayout {
+                    spacing: 0
 
-        contentItem: WPanelPageColumn {
-            PolkitDialogHeader {
-                Layout.fillWidth: true
-            }
-            BodyRectangle {
-                id: dialogBody
-                implicitHeight: bodyContent.implicitHeight + 48
-                implicitWidth: 434
-                color: Looks.colors.bg1Base
-
-                ColumnLayout {
-                    id: bodyContent
-                    anchors.fill: parent
-                    anchors.margins: 24
-                    spacing: 20
-
-                    RowLayout {
+                    Item {
                         Layout.fillWidth: true
-                        spacing: 15
+                        implicitHeight: authContent.implicitHeight + Looks.dp(40)
 
-                        WAppIcon {
-                            iconName: PolkitService.flow?.iconName ?? "window-shield"
-                            fallback: (PolkitService.flow?.iconName ?? "") === "" ? `${Looks.iconsPath}/window-shield` : (PolkitService.flow?.iconName ?? "")
-                            isMask: (PolkitService.flow?.iconName ?? "") === ""
-                            tryCustomIcon: false
-                        }
-                        WText {
-                            Layout.fillWidth: true
-                            horizontalAlignment: Text.AlignLeft
-                            font.pixelSize: Looks.font.pixelSize.larger
-                            font.weight: Looks.font.weight.strongest
-                            text: {
-                                const iconName = PolkitService.flow?.iconName ?? ""
-                                if (iconName === "")
-                                    return Translation.tr("Command-line-invoked Action")
-                                const desktopEntry = DesktopEntries.applications.values.find(entry => {
-                                    return entry.icon === iconName
-                                })
-                                return desktopEntry ? desktopEntry.name : Translation.tr("Unknown Application")
+                        ColumnLayout {
+                            id: authContent
+                            anchors.fill: parent
+                            anchors.margins: Looks.dp(20)
+                            spacing: Looks.dp(16)
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: Looks.dp(14)
+
+                                Rectangle {
+                                    Layout.preferredWidth: Looks.dp(58)
+                                    Layout.preferredHeight: Looks.dp(58)
+                                    Layout.alignment: Qt.AlignTop
+                                    radius: Looks.cookieEverywhere ? height / 2 : Looks.radius.large
+                                    color: Looks.colors.bg1
+                                    border.width: 1
+                                    border.color: Looks.colors.bg2Border
+
+                                    FluentIcon {
+                                        anchors.centerIn: parent
+                                        icon: PolkitService.batteryChargeLimitRequest
+                                            ? "battery-saver" : "shield"
+                                        implicitSize: Looks.dp(26)
+                                        color: Looks.colors.accent
+                                    }
+                                }
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: Looks.dp(3)
+
+                                    WText {
+                                        Layout.fillWidth: true
+                                        text: Translation.tr("Authentication")
+                                        font.pixelSize: Looks.font.pixelSize.xlarger
+                                        font.weight: Looks.font.weight.strongest
+                                        color: Looks.colors.fg
+                                        wrapMode: Text.WordWrap
+                                    }
+
+                                    WText {
+                                        Layout.fillWidth: true
+                                        visible: PolkitService.actionLabel !== Translation.tr("Authentication")
+                                        text: PolkitService.actionLabel
+                                        font.pixelSize: Looks.font.pixelSize.small
+                                        font.weight: Looks.font.weight.strong
+                                        color: Looks.colors.accent
+                                        elide: Text.ElideRight
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                implicitHeight: messageText.implicitHeight + Looks.dp(20)
+                                radius: Looks.cookieEverywhere ? Looks.radius.xLarge : Looks.radius.medium
+                                color: Looks.colors.bg1
+                                border.width: 1
+                                border.color: Looks.colors.bg2Border
+
+                                RowLayout {
+                                    id: messageRow
+                                    anchors.fill: parent
+                                    anchors.margins: Looks.dp(10)
+                                    spacing: Looks.dp(10)
+
+                                    FluentIcon {
+                                        icon: "info-filled"
+                                        implicitSize: Looks.dp(16)
+                                        color: Looks.colors.accent
+                                        Layout.alignment: Qt.AlignTop
+                                    }
+
+                                    WText {
+                                        id: messageText
+                                        Layout.fillWidth: true
+                                        text: PolkitService.cleanMessage
+                                        font.pixelSize: Looks.font.pixelSize.small
+                                        color: Looks.colors.fg1
+                                        wrapMode: Text.WrapAnywhere
+                                    }
+                                }
+                            }
+
+                            WTextField {
+                                id: inputField
+                                Layout.fillWidth: true
+                                focus: true
+                                enabled: PolkitService.interactionAvailable
+                                placeholderText: PolkitService.cleanPrompt
+                                echoMode: root.usePasswordChars ? TextInput.Password : TextInput.Normal
+                                onAccepted: PolkitService.submit(inputField.text)
+
+                                Keys.onPressed: event => {
+                                    if (event.key === Qt.Key_Escape) {
+                                        PolkitService.cancel()
+                                        event.accepted = true
+                                    }
+                                }
+
+                                Component.onCompleted: forceActiveFocus()
+
+                                Connections {
+                                    target: PolkitService
+                                    function onInteractionAvailableChanged(): void {
+                                        if (!PolkitService.interactionAvailable)
+                                            return
+                                        inputField.text = ""
+                                        inputField.forceActiveFocus()
+                                    }
+                                }
                             }
                         }
                     }
 
-                    WText {
+                    Rectangle {
                         Layout.fillWidth: true
-                        wrapMode: Text.Wrap
-                        horizontalAlignment: Text.AlignLeft
-                        text: PolkitService.cleanMessage
+                        Layout.preferredHeight: 1
+                        color: Looks.colors.bg0Border
                     }
 
-                    WTextField {
-                        id: inputField
+                    Item {
                         Layout.fillWidth: true
-                        focus: true
-                        enabled: PolkitService.interactionAvailable
-                        placeholderText: PolkitService.cleanPrompt
-                        echoMode: root.usePasswordChars ? TextInput.Password : TextInput.Normal
-                        onAccepted: PolkitService.submit(inputField.text)
+                        implicitHeight: actionRow.implicitHeight + Looks.dp(28)
 
-                        Keys.onPressed: event => {
-                            if (event.key === Qt.Key_Escape) {
-                                PolkitService.cancel()
+                        RowLayout {
+                            id: actionRow
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.rightMargin: Looks.dp(16)
+                            spacing: Looks.dp(8)
+
+                            WBorderedButton {
+                                implicitWidth: Looks.dp(104)
+                                implicitHeight: Looks.dp(34)
+                                text: Translation.tr("Cancel")
+                                icon.name: "dismiss"
+                                forceShowIcon: true
+                                cookieMorphing: Looks.cookieEverywhere
+                                onClicked: PolkitService.cancel()
                             }
-                        }
 
-                        Component.onCompleted: forceActiveFocus()
-                        Connections {
-                            target: PolkitService
-                            function onInteractionAvailableChanged() {
-                                if (!PolkitService.interactionAvailable)
-                                    return
-                                inputField.text = ""
-                                inputField.forceActiveFocus()
+                            WButton {
+                                implicitWidth: Looks.dp(104)
+                                implicitHeight: Looks.dp(34)
+                                enabled: PolkitService.interactionAvailable
+                                text: Translation.tr("OK")
+                                icon.name: "checkmark"
+                                forceShowIcon: true
+                                cookieMorphing: Looks.cookieEverywhere
+                                checked: true
+                                onClicked: PolkitService.submit(inputField.text)
                             }
                         }
                     }
                 }
-            }
-            BodyRectangle {
-                implicitHeight: 80
-                color: Looks.colors.bgPanelFooterBase
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: 24
-                    spacing: 8
-                    uniformCellSizes: true
-
-                    WButton {
-                        Layout.fillWidth: true
-                        implicitHeight: 32
-                        colBackground: Looks.colors.bg1
-                        horizontalAlignment: Text.AlignHCenter
-                        text: Translation.tr("Yes")
-                        onClicked: PolkitService.submit(inputField.text)
-                    }
-                    WButton {
-                        Layout.fillWidth: true
-                        implicitHeight: 32
-                        horizontalAlignment: Text.AlignHCenter
-                        checked: true
-                        text: Translation.tr("No")
-                        onClicked: PolkitService.cancel()
-                    }
-                }
-            }
-        }
-    }
-
-    component PolkitDialogHeader: BodyRectangle {
-        implicitHeight: headerContent.implicitHeight
-        color: Looks.colors.bg2Base
-
-        CloseButton {
-            anchors {
-                top: parent.top
-                right: parent.right
-            }
-            radius: 0
-            implicitWidth: 32
-            implicitHeight: 32
-
-            onClicked: {
-                PolkitService.cancel()
-            }
-        }
-
-        ColumnLayout {
-            id: headerContent
-            anchors.fill: parent
-            anchors.leftMargin: 24
-            anchors.rightMargin: 24
-            spacing: 18
-
-            WText {
-                Layout.topMargin: 20
-                Layout.fillWidth: true
-                horizontalAlignment: Text.AlignLeft
-                text: Translation.tr("Polkit")
-            }
-            WText {
-                Layout.fillWidth: true
-                Layout.bottomMargin: 12
-                horizontalAlignment: Text.AlignLeft
-                wrapMode: Text.Wrap
-                text: Translation.tr("Do you want to allow this app to make changes to your device?")
-                font.pixelSize: Looks.font.pixelSize.xlarger
-                font.weight: Looks.font.weight.strongest
             }
         }
     }

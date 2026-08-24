@@ -132,8 +132,8 @@ WSettingsPage {
 
         WText {
             Layout.fillWidth: true
-            Layout.leftMargin: 16
-            Layout.rightMargin: 16
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             wrapMode: Text.Wrap
             text: Translation.tr("Choose a provider. iNiR discovers its current models and API protocol automatically.")
             font.pixelSize: Looks.font.pixelSize.small
@@ -187,8 +187,8 @@ WSettingsPage {
                 readonly property var providerState: AiProviderCatalog.stateFor(providerId)
                 readonly property bool guided: preset !== null
                 Layout.fillWidth: true
-                Layout.leftMargin: 16
-                Layout.rightMargin: 16
+                Layout.leftMargin: 0
+                Layout.rightMargin: 0
                 spacing: 10
 
                 ColumnLayout {
@@ -263,8 +263,8 @@ WSettingsPage {
 
         WText {
             Layout.fillWidth: true
-            Layout.leftMargin: 16
-            Layout.rightMargin: 16
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             visible: providersCard.extraModels.length === 0
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
@@ -364,8 +364,8 @@ WSettingsPage {
 
             WSettingsChoiceGroup {
                 visible: !providerForm.guidedPreset
-                Layout.leftMargin: 16
-                Layout.rightMargin: 16
+                Layout.leftMargin: 0
+                Layout.rightMargin: 0
                 columns: 4
                 currentValue: providerForm.selectedFormat
                 onSelected: newValue => providerForm.selectedFormat = newValue
@@ -379,8 +379,8 @@ WSettingsPage {
 
             RowLayout {
                 Layout.fillWidth: true
-                Layout.leftMargin: 16
-                Layout.rightMargin: 16
+                Layout.leftMargin: 0
+                Layout.rightMargin: 0
                 Layout.topMargin: 4
                 spacing: 8
 
@@ -493,8 +493,8 @@ WSettingsPage {
         }
 
         WSettingsChoiceGroup {
-            Layout.leftMargin: 16
-            Layout.rightMargin: 16
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             columns: 4
             currentValue: Config.options?.ai?.tool ?? "search"
             onSelected: newValue => Config.setNestedValue("ai.tool", newValue)
@@ -534,8 +534,8 @@ WSettingsPage {
         }
 
         WSettingsChoiceGroup {
-            Layout.leftMargin: 16
-            Layout.rightMargin: 16
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             columns: 3
             currentValue: Config.options?.policies?.ai ?? 0
             onSelected: newValue => Config.setNestedValue("policies.ai", newValue)
@@ -559,8 +559,8 @@ WSettingsPage {
         }
 
         WSettingsChoiceGroup {
-            Layout.leftMargin: 16
-            Layout.rightMargin: 16
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             columns: 5
             currentValue: Config.options?.voiceSearch?.provider ?? "auto"
             onSelected: newValue => Config.setNestedValue("voiceSearch.provider", newValue)
@@ -599,8 +599,8 @@ WSettingsPage {
         }
 
         WSettingsChoiceGroup {
-            Layout.leftMargin: 16
-            Layout.rightMargin: 16
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             columns: 4
             currentValue: Config.options?.voiceSearch?.language ?? "auto"
             onSelected: newValue => Config.setNestedValue("voiceSearch.language", newValue)
@@ -638,8 +638,8 @@ WSettingsPage {
 
         WText {
             Layout.fillWidth: true
-            Layout.leftMargin: 16
-            Layout.rightMargin: 16
+            Layout.leftMargin: 0
+            Layout.rightMargin: 0
             wrapMode: Text.Wrap
             text: Translation.tr("The same backend is used for chat dictation and voice web search. Keys are passed through the process environment and never written to commands or config files.")
             font.pixelSize: Looks.font.pixelSize.small

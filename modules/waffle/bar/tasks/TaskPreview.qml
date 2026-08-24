@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
+import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.functions
@@ -14,14 +15,18 @@ PopupWindow {
     required property bool tasksHovered
     property var appEntry
     property Item anchorItem
+    property bool contentResident: false
 
     //////////////////// Functions ////////////////////
-    function close() { // Closing doesn't animate, not sure if they're just lazy or it's intentional
+    function close() {
         marginBehavior.enabled = false;
         root.visible = false;
+        releaseTimer.restart()
     }
 
     function open() {
+        releaseTimer.stop()
+        root.contentResident = true
         marginBehavior.enabled = true;
         root.visible = true;
         // Capture previews for windows in this app entry
@@ -37,14 +42,15 @@ PopupWindow {
 
     // Capture previews for windows in the current app entry
     function captureAppPreviews(): void {
-        if (!root.appEntry?.toplevels) return;
-        
+        if (!CompositorService.isNiri) return
+
         const windowIds = [];
-        for (const tl of root.appEntry.toplevels) {
-            const match = NiriService.findNiriWindow(tl);
-            if (match?.niriWindow?.id) {
-                windowIds.push(match.niriWindow.id);
-            }
+        for (const tl of root.appEntry?.toplevels ?? []) {
+            const id = tl?.niriWindowId
+                ?? NiriService.findNiriWindow(tl)?.niriWindow?.id
+                ?? -1
+            if (id > 0)
+                windowIds.push(id)
         }
         
         if (windowIds.length > 0) {
@@ -56,13 +62,16 @@ PopupWindow {
 
     ///////////////////// Internals /////////////////////
     readonly property bool bottom: Config.options?.waffles?.bar?.bottom ?? false
-    property real visualMargin: 12
+    property real visualMargin: Looks.dp(12)
     property real ambientShadowWidth: 1
 
     visible: false
     color: "transparent"
-    implicitWidth: contentItem.implicitWidth + ambientShadowWidth + (visualMargin * 2)
-    implicitHeight: contentItem.implicitHeight + ambientShadowWidth + (visualMargin * 2)
+    implicitWidth: contentItem.implicitWidth + (ambientShadowWidth * 2) + (visualMargin * 2)
+    implicitHeight: contentItem.implicitHeight + (ambientShadowWidth * 2) + (visualMargin * 2)
+    mask: Region {
+        item: contentItem
+    }
     anchor {
         adjustment: PopupAdjustment.Slide
         item: root.anchorItem
@@ -75,6 +84,24 @@ PopupWindow {
         running: root.visible && !hoverChecker.containsMouse && !root.tasksHovered
         onTriggered: {
             root.close();
+        }
+    }
+
+    readonly property bool _anyPanelOpen: GlobalStates.searchOpen
+        || GlobalStates.waffleActionCenterOpen
+        || GlobalStates.waffleNotificationCenterOpen
+        || GlobalStates.waffleWidgetsOpen
+        || GlobalStates.waffleAltSwitcherOpen
+        || GlobalStates.waffleClipboardOpen
+        || GlobalStates.waffleTaskViewOpen
+    on_AnyPanelOpenChanged: if (_anyPanelOpen && root.visible) root.close()
+
+    Timer {
+        id: releaseTimer
+        interval: 250
+        onTriggered: {
+            root.contentResident = false
+            root.appEntry = null
         }
     }
 
@@ -109,7 +136,7 @@ PopupWindow {
             color: Looks.colors.popupSurface
             radius: Looks.radius.large
 
-            layer.enabled: Appearance.effectsEnabled
+            layer.enabled: root.contentResident && Looks.effectsEnabled
             layer.effect: OpacityMask {
                 maskSource: Rectangle {
                     width: contentItem.width
@@ -118,24 +145,33 @@ PopupWindow {
                 }
             }
 
-            // Testing
-            implicitHeight: Math.min(158, windowsRow.implicitHeight)
-            implicitWidth: windowsRow.implicitWidth
+            implicitHeight: Math.min(Looks.dp(158), previewBranch.item?.implicitHeight ?? 0)
+            implicitWidth: previewBranch.item?.implicitWidth ?? 0
 
-            RowLayout {
-                id: windowsRow
+            // Avoid resident screencopy captures while hidden.
+            Loader {
+                id: previewBranch
                 anchors.fill: parent
+                active: root.contentResident
+                sourceComponent: classicWindows
+            }
+        }
+    }
 
-                Repeater {
-                    model: ScriptModel {
-                        values: root.appEntry?.toplevels ?? []
-                    }
-                    delegate: WindowPreview {
-                        required property var modelData
-                        toplevel: modelData
-                    }
+    Component {
+        id: classicWindows
+
+        RowLayout {
+            Repeater {
+                model: ScriptModel {
+                    values: root.appEntry?.toplevels ?? []
+                }
+                delegate: WindowPreview {
+                    required property var modelData
+                    toplevel: modelData
                 }
             }
         }
     }
+
 }

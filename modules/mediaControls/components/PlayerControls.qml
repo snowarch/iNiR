@@ -26,6 +26,7 @@ RowLayout {
         : Appearance.rounding.full
     property real playButtonRadius: buttonRadius
     property color buttonColor: "transparent"
+    property color playButtonColor: root.buttonColor
     property color buttonHoverColor: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover 
@@ -42,6 +43,12 @@ RowLayout {
         : Appearance.angelEverywhere ? Appearance.angel.colPrimary
         : Appearance.inirEverywhere ? Appearance.inir.colPrimary 
         : Appearance.colors.colOnLayer1
+    property color playButtonHoverColor: root.playButtonColor.a > 0.01
+        ? ColorUtils.mix(root.playButtonColor, root.playIconColor, 0.90)
+        : root.buttonHoverColor
+    property color playButtonRippleColor: root.playButtonColor.a > 0.01
+        ? ColorUtils.mix(root.playButtonColor, root.playIconColor, 0.78)
+        : root.buttonRippleColor
     property bool showLabels: true
     property bool canGoPrevious: true
     property bool canGoNext: true
@@ -87,9 +94,9 @@ RowLayout {
         implicitWidth: root.playButtonSize
         implicitHeight: root.playButtonSize
         buttonRadius: root.playButtonRadius
-        colBackground: root.buttonColor
-        colBackgroundHover: root.buttonHoverColor
-        colRipple: root.buttonRippleColor
+        colBackground: root.playButtonColor
+        colBackgroundHover: root.playButtonHoverColor
+        colRipple: root.playButtonRippleColor
         onClicked: root.playPauseClicked()
         
         contentItem: Item {

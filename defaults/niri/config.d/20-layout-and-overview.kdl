@@ -111,3 +111,20 @@ overview {
     //     off
     // }
 }
+
+recent-windows {
+    open-delay-ms 120
+    debounce-ms 750
+
+    highlight {
+        active-color "#e5989bff"
+        urgent-color "#ffb4abff"
+        padding 18
+        corner-radius 14
+    }
+
+    previews {
+        max-height 520
+        max-scale 0.55
+    }
+}

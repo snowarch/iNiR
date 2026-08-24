@@ -301,9 +301,13 @@ PillSurface {
             }
             IconChip {
                 glyph: "dnd"
-                on: Notifications.silent
+                on: Notifications.manualDndActive
                 tipTitle: Translation.tr("Do not disturb")
-                tipDesc: Translation.tr("Silence notifications")
+                tipDesc: Notifications.manualDndActive
+                    ? Translation.tr("Silence notifications")
+                    : Notifications.quietHoursActive
+                        ? Translation.tr("Quiet hours")
+                        : Translation.tr("Silence notifications")
                 onToggled: Notifications.toggleSilent()
             }
             IconChip {
@@ -324,7 +328,9 @@ PillSurface {
                 glyph: "gamepad"
                 on: GameMode.active
                 tipTitle: Translation.tr("Game mode")
-                tipDesc: Translation.tr("Strip effects, quiet the desktop")
+                tipDesc: Notifications.gameModeSuppressionActive
+                    ? Translation.tr("Hide notification popups while Game Mode is active")
+                    : Translation.tr("Strip effects, quiet the desktop")
                 onToggled: GameMode.toggle()
             }
         }

@@ -332,7 +332,7 @@ Singleton {
             id: "nightowl",
             name: "Night Owl",
             description: "For the night owls",
-            icon: "nights_stay",
+            icon: "bedtime",
             colors: nightOwlColors,
             tags: ["dark", "minimal"],
             meta: {

@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import qs.modules.common
+import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.services
 import qs.services.deferred
@@ -55,7 +56,11 @@ PillSurface {
     }
 
     function entryPreview(entry) {
-        return String(entry ?? "").replace(/^\s*\S+\s+/, "");
+        const cleaned = String(entry ?? "").replace(/^\s*\S+\s+/, "");
+        const unwrapped = StringUtils.cliphistMarkupPreview(cleaned);
+        if (unwrapped === cleaned)
+            return cleaned;
+        return unwrapped.length > 0 ? unwrapped : Translation.tr("Rich text");
     }
 
     function focusField() { search.input.forceActiveFocus(); }

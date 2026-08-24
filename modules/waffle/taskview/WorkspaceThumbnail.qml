@@ -243,8 +243,10 @@ Item {
 
         WRectangularShadow {
             target: thumbnailRect
-            // In centered mode, only show shadow for selected
-            visible: root.isCenteredMode ? root.isSelected : (root.isActive || root.isDragTarget || thumbnailArea.containsMouse)
+            visible: Looks.effectsEnabled
+                && (root.isCenteredMode
+                    ? (root.isSelected || root.isLastEmpty)
+                    : (root.isActive || root.isDragTarget || thumbnailArea.containsMouse))
         }
 
         Rectangle {
@@ -253,12 +255,16 @@ Item {
             radius: Looks.radius.large
             // In centered mode: hide background for non-selected (except New desktop), no borders
             color: (root.isCenteredMode && !root.isSelected && !root.isLastEmpty) ? "transparent" : (root.isLastEmpty ? ColorUtils.transparentize(Looks.colors.bg1Base, 0.4) : Looks.colors.bg0Opaque)
-            border.width: root.isCenteredMode ? 0 : ((root.isActive || root.isDragTarget || (root.isLastEmpty && thumbnailArea.containsMouse)) ? 2 : 1)
+            border.width: root.isCenteredMode
+                ? 0
+                : ((root.isActive || root.isDragTarget
+                    || (root.isLastEmpty && thumbnailArea.containsMouse)) ? 2 : 1)
             border.color: (root.isActive || root.isDragTarget || (root.isLastEmpty && thumbnailArea.containsMouse)) ? Looks.colors.accent : Looks.colors.bg2Border
             clip: true
 
             // Opacity for centered mode
-            readonly property real baseOpacity: root.isSelected ? 1 : (thumbnailArea.containsMouse ? 0.9 : 0.7)
+            readonly property real baseOpacity: root.isSelected
+                ? 1 : (thumbnailArea.containsMouse ? 0.92 : 0.7)
             opacity: baseOpacity * root.coverflowOpacity
             
             Behavior on opacity { 
@@ -296,12 +302,12 @@ Item {
                 anchors.fill: parent
                 anchors.margins: 1
                 source: wallpaperSource
-                blurEnabled: Appearance.effectsEnabled
-                blur: Appearance.effectsEnabled ? 0.4 : 0
+                blurEnabled: Looks.effectsEnabled
+                blur: Looks.effectsEnabled ? 0.4 : 0
                 blurMax: 32
                 saturation: 0.6
                 
-                layer.enabled: Appearance.effectsEnabled
+                layer.enabled: Looks.effectsEnabled
                 layer.effect: OpacityMask {
                     maskSource: Rectangle {
                         width: thumbnailRect.width - 2
