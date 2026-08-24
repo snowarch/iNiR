@@ -1,0 +1,22 @@
+module qs.modules.sidebarRight.quickToggles.androidStyle
+AndroidAntiFlashbangToggle 1.0 AndroidAntiFlashbangToggle.qml
+AndroidAudioToggle 1.0 AndroidAudioToggle.qml
+AndroidBluetoothToggle 1.0 AndroidBluetoothToggle.qml
+AndroidCloudflareWarpToggle 1.0 AndroidCloudflareWarpToggle.qml
+AndroidColorPickerToggle 1.0 AndroidColorPickerToggle.qml
+AndroidDarkModeToggle 1.0 AndroidDarkModeToggle.qml
+AndroidEasyEffectsToggle 1.0 AndroidEasyEffectsToggle.qml
+AndroidGameModeToggle 1.0 AndroidGameModeToggle.qml
+AndroidHotspotToggle 1.0 AndroidHotspotToggle.qml
+AndroidIdleInhibitorToggle 1.0 AndroidIdleInhibitorToggle.qml
+AndroidMicToggle 1.0 AndroidMicToggle.qml
+AndroidMusicRecognition 1.0 AndroidMusicRecognition.qml
+AndroidNetworkToggle 1.0 AndroidNetworkToggle.qml
+AndroidNightLightToggle 1.0 AndroidNightLightToggle.qml
+AndroidNotificationToggle 1.0 AndroidNotificationToggle.qml
+AndroidOnScreenKeyboardToggle 1.0 AndroidOnScreenKeyboardToggle.qml
+AndroidPowerProfileToggle 1.0 AndroidPowerProfileToggle.qml
+AndroidQuickToggleButton 1.0 AndroidQuickToggleButton.qml
+AndroidScreenSnipToggle 1.0 AndroidScreenSnipToggle.qml
+AndroidToggleDelegateChooser 1.0 AndroidToggleDelegateChooser.qml
+AndroidVoiceSearch 1.0 AndroidVoiceSearch.qml

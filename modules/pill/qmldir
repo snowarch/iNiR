@@ -1,0 +1,48 @@
+module qs.modules.pill
+Ame 1.0 Ame.qml
+Filament 1.0 Filament.qml
+GlyphIcon 1.0 GlyphIcon.qml
+HeatHold 1.0 HeatHold.qml
+HFader 1.0 HFader.qml
+IslandPanel 1.0 IslandPanel.qml
+LinkBt 1.0 LinkBt.qml
+LinkToggle 1.0 LinkToggle.qml
+LinkWifi 1.0 LinkWifi.qml
+Marquee 1.0 Marquee.qml
+MusicBars 1.0 MusicBars.qml
+PillBar 1.0 PillBar.qml
+singleton PillBattery 1.0 PillBattery.qml
+PillBatterySurface 1.0 PillBatterySurface.qml
+PillCalendar 1.0 PillCalendar.qml
+PillClipboard 1.0 PillClipboard.qml
+singleton PillDevices 1.0 PillDevices.qml
+singleton PillEvents 1.0 PillEvents.qml
+PillGlance 1.0 PillGlance.qml
+PillLauncher 1.0 PillLauncher.qml
+PillLink 1.0 PillLink.qml
+PillMedia 1.0 PillMedia.qml
+PillMixer 1.0 PillMixer.qml
+singleton PillMotion 1.0 PillMotion.qml
+singleton PillNotifs 1.0 PillNotifs.qml
+PillOsd 1.0 PillOsd.qml
+singleton PillPlayers 1.0 PillPlayers.qml
+PillPower 1.0 PillPower.qml
+Pill 1.0 Pill.qml
+PillRecorder 1.0 PillRecorder.qml
+PillSpectrumWings 1.0 PillSpectrumWings.qml
+PillSurface 1.0 PillSurface.qml
+singleton PillSysmon 1.0 PillSysmon.qml
+PillSysmonSurface 1.0 PillSysmonSurface.qml
+singleton PillTheme 1.0 PillTheme.qml
+PillTrayMenu 1.0 PillTrayMenu.qml
+singleton PillWeather 1.0 PillWeather.qml
+PillWorkspaces 1.0 PillWorkspaces.qml
+ScrubValue 1.0 ScrubValue.qml
+SearchField 1.0 SearchField.qml
+SettingsSeg 1.0 SettingsSeg.qml
+Toast 1.0 Toast.qml
+Tooltip 1.0 Tooltip.qml
+Tray 1.0 Tray.qml
+VFader 1.0 VFader.qml
+WheelScroller 1.0 WheelScroller.qml
+WifiGlyph 1.0 WifiGlyph.qml

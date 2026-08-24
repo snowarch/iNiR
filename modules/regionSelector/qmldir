@@ -1,0 +1,11 @@
+module qs.modules.regionSelector
+
+AnnotationEditor 1.0 AnnotationEditor.qml
+CircleSelectionDetails 1.0 CircleSelectionDetails.qml
+OptionsToolbar 1.0 OptionsToolbar.qml
+RectCornersSelectionDetails 1.0 RectCornersSelectionDetails.qml
+singleton RegionFunctions 1.0 RegionFunctions.qml
+RegionSelection 1.0 RegionSelection.qml
+RegionSelector 1.0 RegionSelector.qml
+RegionSelectorRouter 1.0 RegionSelectorRouter.qml
+TargetRegion 1.0 TargetRegion.qml

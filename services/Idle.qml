@@ -57,7 +57,8 @@ Singleton {
     }
 
     function _stopSwayidle() {
-        Quickshell.execDetached(["/usr/bin/pkill", "-x", "swayidle"])
+        _startSwayidleDelayed.stop()
+        swayidleProcess.running = false
     }
 
     function _startSwayidle() {
@@ -67,7 +68,10 @@ Singleton {
         const lockBeforeSleep = Config.options?.idle?.lockBeforeSleep !== false
 
         if (screenOffTimeout > 0 && CompositorService.isNiri) {
-            cmd.push("timeout", screenOffTimeout.toString(), "/usr/bin/niri msg action power-off-monitors", "resume", "/usr/bin/niri msg action power-on-monitors")
+            const inir = StringUtils.shellSingleQuoteEscape(root.launcherPath);
+            const offCmd = `'${inir}' brightness sleepBegin; /usr/bin/niri msg action power-off-monitors`;
+            const resumeCmd = `/usr/bin/niri msg action power-on-monitors && /usr/bin/sleep 0.5 && '${inir}' brightness restoreAfterWake`;
+            cmd.push("timeout", screenOffTimeout.toString(), offCmd, "resume", resumeCmd)
         }
 
         // Determine effective lock timeout
@@ -99,7 +103,12 @@ Singleton {
         cmd.push("after-resume", `'${StringUtils.shellSingleQuoteEscape(root.launcherPath)}' lock focus`)
 
         if (Quickshell.env("QS_DEBUG") === "1") console.log("[Idle] Starting swayidle")
-        Quickshell.execDetached(cmd)
+        swayidleProcess.command = cmd
+        swayidleProcess.running = true
+    }
+
+    Process {
+        id: swayidleProcess
     }
 
     Timer {

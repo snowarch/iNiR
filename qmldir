@@ -1,0 +1,2 @@
+module qs
+singleton GlobalStates 1.0 GlobalStates.qml

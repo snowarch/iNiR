@@ -42,7 +42,21 @@ window-rule {
 
 window-rule {
     match app-id="steam" title=r#"^notificationtoasts_\d+_desktop$"#
+    open-floating true
+    open-focused false
     default-floating-position x=10 y=10 relative-to="bottom-right"
+}
+
+// KDE's XEmbed→SNI bridge exposes a transient X11 window during tray watcher
+// restarts. Keep it floating, transparent and unfocused so it never flashes.
+window-rule {
+    match app-id=r#"^xembedsniproxy$"#
+    open-floating true
+    open-focused false
+    opacity 0.0
+    focus-ring { off; }
+    border { off; }
+    shadow { off; }
 }
 
 // ── Privacy: block password managers from screen capture ────────────────────

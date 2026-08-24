@@ -13,11 +13,7 @@
 //-@ pragma Env QTWEBENGINE_CHROMIUM_FLAGS=--disable-features=ThirdPartyCookieBlocking,StorageAccessAPI
 
 import qs.modules.common
-import qs.modules.closeConfirm
 import qs.modules.settings
-import qs.modules.regionSelector
-import qs.modules.tilingOverlay
-import qs.modules.wallpaperSelector
 
 import QtQuick
 import Quickshell
@@ -88,7 +84,6 @@ ShellRoot {
         root._log("[Boot] Tier 0: startup-critical singletons");
         FirstRunExperience.load();
         ConflictKiller.load();
-        DevNavigation.registerSettingsPages(SettingsPageRegistry.pages);
         // Force MemoryPressureService instantiation for IPC (#164)
         void MemoryPressureService.enabled;
         // Same reason: GlobalActions owns the `globalActions` IPC target and is
@@ -96,6 +91,7 @@ ShellRoot {
         // scripts and keybinds got "Target not found" until then. Tier 0 also
         // keeps the gap after a config reload as short as every other handler's.
         root._globalActionsService = GlobalActions;
+        DevNavigation.registerSettingsPages(SettingsPageRegistry.pages);
         
         // Reset shell entry state (hot-reload may preserve singletons)
         GlobalStates.shellEntryReady = false;
@@ -110,7 +106,6 @@ ShellRoot {
             Qt.callLater(() => ThemeService.applyCurrentTheme());
             Qt.callLater(() => IconThemeService.ensureInitialized());
             shellEntryTimer.start();
-            deferredInitTimer.start();
         }
     }
 
@@ -126,6 +121,7 @@ ShellRoot {
             if (!root._bootShellEntryAt) root._bootShellEntryAt = Date.now();
             console.info("[Boot] T+" + (root._bootShellEntryAt - root._bootCompletedAt) + "ms: shellEntryReady (first frame)");
             GlobalStates.shellEntryReady = true;
+            deferredInitTimer.start();
         }
     }
 
@@ -226,10 +222,10 @@ ShellRoot {
                 root._log("[Boot] Applying theme and icon theme");
                 Qt.callLater(() => ThemeService.applyCurrentTheme());
                 Qt.callLater(() => IconThemeService.ensureInitialized());
-                // Kick off shell entry animation after panels have been created
+                // Kick off shell entry animation after panels have been created.
+                // Tier 3 is scheduled by shellEntryTimer so its 500 ms delay is
+                // measured from the first frame, not concurrently with it.
                 shellEntryTimer.start();
-                // Schedule deferred init (non-critical services + panels) after first frame
-                deferredInitTimer.start();
                 // Only reset enabledPanels if it's empty or undefined (first run / corrupted config)
                 if (!Config.options?.enabledPanels || Config.options.enabledPanels.length === 0) {
                     const family = Config.options?.panelFamily ?? "ii"
@@ -334,6 +330,109 @@ ShellRoot {
         }
     }
 
+    // ii interaction routers stay resident with the root so commands remain
+    // available while the heavier family panel tree is deferred.
+    IpcHandler {
+        target: "controlPanel"
+        function toggle(): void { GlobalStates.controlPanelOpen = !GlobalStates.controlPanelOpen }
+        function close(): void { GlobalStates.controlPanelOpen = false }
+        function open(): void { GlobalStates.controlPanelOpen = true }
+    }
+
+    IpcHandler {
+        target: "dashboard"
+        function toggle(): void { GlobalStates.dashboardOpen = !GlobalStates.dashboardOpen }
+        function close(): void { GlobalStates.dashboardOpen = false }
+        function open(): void { GlobalStates.dashboardOpen = true }
+    }
+
+    IpcHandler {
+        target: "sidebarLeft"
+        function toggle(): void { GlobalStates.toggleSidebarLeft("") }
+        function close(): void { GlobalStates.closeSidebarLeft() }
+        function open(): void { GlobalStates.openSidebarLeft("") }
+        function expand(): void {
+            GlobalStates.aiChatDetached = false
+            GlobalStates.openSidebarLeft("")
+            GlobalStates.sidebarLeftExpanded = true
+        }
+        function compact(): void { GlobalStates.sidebarLeftExpanded = false }
+        function status(): string {
+            return JSON.stringify({
+                open: GlobalStates.sidebarLeftOpen,
+                expanded: GlobalStates.sidebarLeftExpanded,
+                detached: GlobalStates.aiChatDetached,
+            })
+        }
+        function detach(): void {
+            GlobalStates.sidebarLeftOpen = false
+            GlobalStates.sidebarLeftExpanded = false
+            GlobalStates.aiChatDetached = true
+        }
+        function attach(): void {
+            GlobalStates.aiChatDetached = false
+            GlobalStates.sidebarLeftExpanded = false
+            GlobalStates.openSidebarLeft("")
+        }
+    }
+
+    IpcHandler {
+        target: "sidebarRight"
+        function toggle(): void { GlobalStates.toggleSidebarRight("") }
+        function close(): void { GlobalStates.closeSidebarRight() }
+        function open(): void { GlobalStates.openSidebarRight("") }
+    }
+
+    IpcHandler {
+        target: "mediaControls"
+        function toggle(): void {
+            GlobalStates.mediaControlsOpen = !GlobalStates.mediaControlsOpen
+            if (GlobalStates.mediaControlsOpen) Notifications.timeoutAll()
+        }
+        function close(): void { GlobalStates.mediaControlsOpen = false }
+        function open(): void {
+            GlobalStates.mediaControlsOpen = true
+            Notifications.timeoutAll()
+        }
+    }
+
+    // Waffle interaction routers are also root-owned so commands remain
+    // available while the heavier Waffle host is deferred.
+    IpcHandler {
+        target: "search"
+        function toggle(): void { GlobalStates.searchOpen = !GlobalStates.searchOpen }
+        function close(): void { GlobalStates.searchOpen = false }
+        function open(): void { GlobalStates.searchOpen = true }
+    }
+
+    IpcHandler {
+        target: "wactionCenter"
+        function toggle(): void { GlobalStates.waffleActionCenterOpen = !GlobalStates.waffleActionCenterOpen }
+        function close(): void { GlobalStates.waffleActionCenterOpen = false }
+        function open(): void { GlobalStates.waffleActionCenterOpen = true }
+    }
+
+    IpcHandler {
+        target: "wnotificationCenter"
+        function toggle(): void { GlobalStates.waffleNotificationCenterOpen = !GlobalStates.waffleNotificationCenterOpen }
+        function close(): void { GlobalStates.waffleNotificationCenterOpen = false }
+        function open(): void { GlobalStates.waffleNotificationCenterOpen = true }
+    }
+
+    IpcHandler {
+        target: "wwidgets"
+        function toggle(): void { GlobalStates.waffleWidgetsOpen = !GlobalStates.waffleWidgetsOpen }
+        function close(): void { GlobalStates.waffleWidgetsOpen = false }
+        function open(): void { GlobalStates.waffleWidgetsOpen = true }
+    }
+
+    IpcHandler {
+        target: "taskview"
+        function toggle(): void { GlobalStates.waffleTaskViewOpen = !GlobalStates.waffleTaskViewOpen }
+        function close(): void { GlobalStates.waffleTaskViewOpen = false }
+        function open(): void { GlobalStates.waffleTaskViewOpen = true }
+    }
+
     // IPC for settings - overlay mode or separate window based on config
     // Note: waffle family ALWAYS uses its own window (waffleSettings.qml), never the Material overlay
     IpcHandler {
@@ -421,9 +520,9 @@ ShellRoot {
     // being torn down — two instances existed and Quickshell dropped one
     // handler per target (region, tiling, wallpaperSelector, coverflowSelector).
     // One owner here is valid whichever family is loaded.
-    LazyLoader { active: Config.ready; component: RegionSelectorRouter {} }
-    LazyLoader { active: Config.ready; component: TilingOverlayRouter {} }
-    LazyLoader { active: Config.ready; component: WallpaperSelectorRouter {} }
+    LazyLoader { active: Config.ready; source: "modules/regionSelector/RegionSelectorRouter.qml" }
+    LazyLoader { active: Config.ready; source: "modules/tilingOverlay/TilingOverlayRouter.qml" }
+    LazyLoader { active: Config.ready; source: "modules/wallpaperSelector/WallpaperSelectorRouter.qml" }
 
     // Same reason as the routers: both panel files declared these, so every
     // family switch registered them twice and Quickshell kept whichever won the
@@ -518,17 +617,37 @@ ShellRoot {
     }
 
     LazyLoader {
-        active: Config.ready && (Config.options?.panelFamily ?? "ii") !== "waffle"
+        loading: Config.ready && (Config.options?.panelFamily ?? "ii") !== "waffle"
+        activeAsync: Config.ready && (Config.options?.panelFamily ?? "ii") !== "waffle"
+        source: "modules/ii/critical/ShellIiCriticalPanels.qml"
+    }
+
+    LazyLoader {
+        readonly property bool enabled: Config.ready
+            && GlobalStates.deferredPanelsReady
+            && (Config.options?.panelFamily ?? "ii") !== "waffle"
+        loading: enabled
+        activeAsync: enabled
         source: "ShellIiPanels.qml"
     }
 
     LazyLoader {
-        active: Config.ready && (Config.options?.panelFamily ?? "ii") === "waffle"
+        loading: Config.ready && (Config.options?.panelFamily ?? "ii") === "waffle"
+        activeAsync: Config.ready && (Config.options?.panelFamily ?? "ii") === "waffle"
+        source: "modules/waffle/critical/ShellWaffleCriticalPanels.qml"
+    }
+
+    LazyLoader {
+        readonly property bool enabled: Config.ready
+            && GlobalStates.deferredPanelsReady
+            && (Config.options?.panelFamily ?? "ii") === "waffle"
+        loading: enabled
+        activeAsync: enabled
         source: "ShellWafflePanels.qml"
     }
 
     // Close confirmation dialog (always loaded, handles IPC)
-    LazyLoader { active: Config.ready; component: CloseConfirm {} }
+    LazyLoader { active: Config.ready; source: "modules/closeConfirm/CloseConfirm.qml" }
 
     // Shared (always loaded via ToastManager)
     ToastManager {}

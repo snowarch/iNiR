@@ -11,6 +11,10 @@ BarWidgetSwitcher {
     property var today: new Date()
     readonly property string dateTimeString: DateTime.time
     readonly property bool hasAmPm: dateTimeString.toLowerCase().includes("am") || dateTimeString.toLowerCase().includes("pm")
+    readonly property string _timeFontFamily: Config.options?.bar?.m3?.clock?.timeFontFamily ?? ""
+    readonly property int _timePixelSize: Config.options?.bar?.m3?.clock?.timePixelSize ?? 0
+    readonly property string _dateFontFamily: Config.options?.bar?.m3?.clock?.dateFontFamily ?? ""
+    readonly property int _datePixelSize: Config.options?.bar?.m3?.clock?.datePixelSize ?? 0
 
     Timer {
         interval: 60000
@@ -37,11 +41,15 @@ BarWidgetSwitcher {
                         horizontalAlignment: Text.AlignHCenter
                         font.letterSpacing: -0.2
                         font.features: { "tnum": 1 }
+                        font.family: root._timeFontFamily.length > 0
+                            ? root._timeFontFamily
+                            : (/^\d+$/.test(modelData) ? Appearance.font.family.numbers : Appearance.font.family.main)
                         font.pixelSize: {
                             if (modelData.match(/am|pm/i))
                                 return Appearance.font.pixelSize.smaller;
                             else
-                                return Appearance.font.pixelSize.large;
+                                return root._timePixelSize > 0
+                                    ? root._timePixelSize : Appearance.font.pixelSize.large;
                         }
                         color: Appearance.colors.colOnLayer1
                         text: modelData.padStart(2, "0")
@@ -52,7 +60,10 @@ BarWidgetSwitcher {
             StyledText {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.bottomMargin: 5
-                font.pixelSize: Appearance.font.pixelSize.smallest
+                font.family: root._dateFontFamily.length > 0
+                    ? root._dateFontFamily : Appearance.font.family.main
+                font.pixelSize: root._datePixelSize > 0
+                    ? root._datePixelSize : Appearance.font.pixelSize.smallest
                 color: Appearance.colors.colOnLayer1
                 text: DateTime.shortDate
             }
@@ -78,9 +89,13 @@ BarWidgetSwitcher {
                         horizontalAlignment: Text.AlignHCenter
                         font.letterSpacing: -0.2
                         font.features: { "tnum": 1 }
+                        font.family: root._timeFontFamily.length > 0
+                            ? root._timeFontFamily
+                            : (/^\d+$/.test(modelData) ? Appearance.font.family.numbers : Appearance.font.family.main)
                         font.pixelSize: modelData.match(/am|pm/i)
                             ? Appearance.font.pixelSize.smallest - 2
-                            : Appearance.font.pixelSize.small
+                            : (root._timePixelSize > 0
+                                ? root._timePixelSize : Appearance.font.pixelSize.small)
                         color: Appearance.colors.colPrimary
                         text: modelData.padStart(2, "0")
                     }
@@ -110,7 +125,10 @@ BarWidgetSwitcher {
             spacing: 4
             StyledText {
                 visible: root.showDate
-                font.pixelSize: Appearance.font.pixelSize.small
+                font.family: root._dateFontFamily.length > 0
+                    ? root._dateFontFamily : Appearance.font.family.main
+                font.pixelSize: root._datePixelSize > 0
+                    ? root._datePixelSize : Appearance.font.pixelSize.small
                 color: Appearance.colors.colOnLayer1
                 text: DateTime.longDate ?? ""
             }
@@ -121,7 +139,10 @@ BarWidgetSwitcher {
                 text: "•"
             }
             StyledText {
-                font.pixelSize: Appearance.font.pixelSize.large
+                font.family: root._timeFontFamily.length > 0
+                    ? root._timeFontFamily : Appearance.font.family.main
+                font.pixelSize: root._timePixelSize > 0
+                    ? root._timePixelSize : Appearance.font.pixelSize.large
                 color: Appearance.colors.colOnLayer1
                 text: DateTime.time ?? ""
                 font.letterSpacing: -0.4
@@ -142,7 +163,10 @@ BarWidgetSwitcher {
 
             StyledText {
                 visible: root.showDate
-                font.pixelSize: Appearance.font.pixelSize.small
+                font.family: root._dateFontFamily.length > 0
+                    ? root._dateFontFamily : Appearance.font.family.main
+                font.pixelSize: root._datePixelSize > 0
+                    ? root._datePixelSize : Appearance.font.pixelSize.small
                 color: M3Palette.pillInk("clockWidget")
                 // iNiR's DateTime exposes `date` (long form) and `shortDate`;
                 // upstream's `longDate` does not exist here.
@@ -160,7 +184,10 @@ BarWidgetSwitcher {
                 StyledText {
                     id: timeText
                     anchors.centerIn: parent
-                    font.pixelSize: Appearance.font.pixelSize.smallie
+                    font.family: root._timeFontFamily.length > 0
+                        ? root._timeFontFamily : Appearance.font.family.main
+                    font.pixelSize: root._timePixelSize > 0
+                        ? root._timePixelSize : Appearance.font.pixelSize.smallie
                     color: M3Palette.primaryForeground
                     font.weight: Font.Bold
                     text: pill.ampm !== "" ? pill.hours.padStart(2, "0") + ":" + pill.minutes.padStart(2, "0") : DateTime.time
@@ -181,6 +208,8 @@ BarWidgetSwitcher {
                 StyledText {
                     id: ampmText
                     anchors.centerIn: parent
+                    font.family: root._timeFontFamily.length > 0
+                        ? root._timeFontFamily : Appearance.font.family.main
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     color: M3Palette.tertiaryContainerForeground
                     text: pill.ampm

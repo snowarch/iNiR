@@ -1,0 +1,12 @@
+module qs.modules.sidebarLeft.aiChat
+AiMessageControlButton 1.0 AiMessageControlButton.qml
+AiMessage 1.0 AiMessage.qml
+AiModelIcon 1.0 AiModelIcon.qml
+AiModelSelector 1.0 AiModelSelector.qml
+AnnotationSourceButton 1.0 AnnotationSourceButton.qml
+AttachedFileIndicator 1.0 AttachedFileIndicator.qml
+ChatHistoryPanel 1.0 ChatHistoryPanel.qml
+MessageCodeBlock 1.0 MessageCodeBlock.qml
+MessageTextBlock 1.0 MessageTextBlock.qml
+MessageThinkBlock 1.0 MessageThinkBlock.qml
+SearchQueryButton 1.0 SearchQueryButton.qml

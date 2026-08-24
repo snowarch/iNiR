@@ -11,6 +11,14 @@ Singleton {
 
     readonly property bool sortingEnabled:
         (Config.options?.panelFamily ?? "ii") === "waffle"
+    property int _identityRulesRevision: 0
+
+    Connections {
+        target: Config.options?.windows
+        function onAppIdentityRulesChanged() {
+            root._identityRulesRevision++
+        }
+    }
 
     function syncSortingDemand(): void {
         CompositorService.setSortingConsumer("waffleTaskbar",
@@ -30,6 +38,7 @@ Singleton {
     }
 
     property list<var> apps: {
+        const identityRulesRevision = root._identityRulesRevision;
         var map = new Map();
 
         // Pinned apps
@@ -70,7 +79,7 @@ Singleton {
 
         // Open windows
         for (const toplevel of sourceToplevels) {
-            const appId = String(toplevel?.appId ?? "");
+            const appId = AppSearch.resolveWindowIdentity(toplevel);
             if (appId.length === 0 || ignoredRegexes.some(re => re.test(appId)))
                 continue;
             const lowerAppId = appId.toLowerCase();

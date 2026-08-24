@@ -374,6 +374,12 @@ DockButton {
             appListRoot._suppressNextClick = false
             return
         }
+        if (root.notificationCount > 0) {
+            Notifications.markReadForApp([
+                appToplevel?.originalAppId ?? appToplevel?.appId,
+                root.desktopEntry?.name
+            ])
+        }
         // macOS click micro-pulse
         if (macosStyle) macItem.clickPulse()
         // Sin ventanas abiertas: lanzar nueva instancia desde desktop entry o fallbacks

@@ -1,0 +1,9 @@
+module qs.modules.cheatsheet
+CheatsheetElementLegend 1.0 CheatsheetElementLegend.qml
+CheatsheetKeybindRow 1.0 CheatsheetKeybindRow.qml
+CheatsheetKeybinds 1.0 CheatsheetKeybinds.qml
+CheatsheetNoResults 1.0 CheatsheetNoResults.qml
+CheatsheetPeriodicTable 1.0 CheatsheetPeriodicTable.qml
+Cheatsheet 1.0 Cheatsheet.qml
+ElementTile 1.0 ElementTile.qml
+ElementTooltip 1.0 ElementTooltip.qml

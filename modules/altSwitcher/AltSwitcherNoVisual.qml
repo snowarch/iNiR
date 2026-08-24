@@ -76,7 +76,7 @@ Scope {
         const itemsById = ({})
         for (let i = 0; i < windows.length; ++i) {
             const window = windows[i]
-            const appId = window.app_id ?? ""
+            const appId = AppSearch.resolveWindowIdentity(window)
             const item = {
                 id: window.id,
                 appId: appId,

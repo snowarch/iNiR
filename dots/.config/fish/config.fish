@@ -17,7 +17,7 @@ if status is-interactive
     alias celar "printf '\033[2J\033[3J\033[1;1H'"
     alias claer "printf '\033[2J\033[3J\033[1;1H'"
     if command -v eza &>/dev/null
-        alias ls 'eza --icons'
+        alias ls 'eza --icons=auto'
     end
     alias q 'inir run'
 end

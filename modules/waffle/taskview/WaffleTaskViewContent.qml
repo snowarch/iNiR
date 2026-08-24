@@ -51,7 +51,7 @@ Item {
         const query = searchQuery.toLowerCase()
         return cachedWindowItems.filter(w => {
             const title = (w.window.title ?? "").toLowerCase()
-            const appId = (w.window.app_id ?? "").toLowerCase()
+            const appId = (AppSearch.resolveWindowIdentity(w.window) ?? "").toLowerCase()
             return title.includes(query) || appId.includes(query)
         })
     }
@@ -216,7 +216,7 @@ Item {
                 result.push({
                     window: {
                         id: win.id,
-                        app_id: win.app_id,
+                        app_id: AppSearch.resolveWindowIdentity(win),
                         title: win.title,
                         workspace_id: win.workspace_id,
                         is_focused: win.is_focused

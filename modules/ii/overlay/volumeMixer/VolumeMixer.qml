@@ -86,6 +86,7 @@ StyledOverlayWidget {
                 fill: parent
                 margins: paddedVolumeDialogContent.padding
             }
+            dialogShown: SwipeView.isCurrentItem
         }
     }
 

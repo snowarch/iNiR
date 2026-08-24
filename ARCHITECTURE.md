@@ -250,7 +250,7 @@ for the current maximum).
 inir run                    # Launch the shell
 inir restart                # Graceful restart
 inir logs | tail -50        # Check for errors
-inir status                 # Runtime health check
+inir status                 # Installation/repository diagnostic summary
 inir doctor                 # Auto-diagnose + fix
 inir settings               # Open settings GUI
 

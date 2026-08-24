@@ -2230,10 +2230,10 @@ cleanup_orphans() {
         done <<< "$alive_pids"
     fi
 
-    # Phase 5: Kill orphaned inir helper daemons still in inir.service cgroup.
-    # KillMode=process only kills the main QS pid; keyboard daemon, nmcli monitor,
-    # and awww-daemon (when not in their own transient scope) get reparented to the
-    # user manager but stay in the cgroup, accumulating across restarts.
+    # Phase 5: Kill orphaned iNiR helper processes still in inir.service cgroup.
+    # KillMode=process only kills the main QS pid; swayidle, the keyboard daemon,
+    # and nmcli monitor can be reparented to the user manager while remaining in
+    # the service cgroup, accumulating across restarts.
     local _pid _cgroup
     while IFS= read -r _pid; do
         [[ -n "$_pid" ]] || continue
@@ -2246,7 +2246,7 @@ cleanup_orphans() {
         _cgroup="$(cat /proc/$_pid/cgroup 2>/dev/null || true)"
         [[ "$_cgroup" == *"inir.service"* ]] || continue
         kill "$_pid" 2>/dev/null || true
-    done < <(pgrep -f 'keyboard_lock_state_daemon\.py|nmcli monitor' 2>/dev/null || true)
+    done < <(pgrep -f 'keyboard_lock_state_daemon\.py|nmcli monitor|/usr/bin/swayidle -w' 2>/dev/null || true)
 
     # Phase 6: Thumbnail generation uses a multiprocessing pool. Older runs
     # could outlive qs because KillMode=process intentionally preserves apps

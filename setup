@@ -2270,9 +2270,13 @@ run_update() {
             local pending=$(count_pending_migrations)
             if [[ "$pending" -gt 0 ]]; then
                 echo ""
-                tui_warn "$pending pending migration(s) available"
-                if $ask && tui_confirm "Apply migrations now?"; then
-                    run_migrations_interactive
+                run_migrations_auto
+                pending=$(count_pending_migrations)
+                if [[ "$pending" -gt 0 ]]; then
+                    tui_warn "$pending optional migration(s) available"
+                    if $ask && tui_confirm "Apply migrations now?"; then
+                        run_migrations_interactive
+                    fi
                 fi
             fi
             return 0

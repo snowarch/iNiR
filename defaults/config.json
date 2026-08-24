@@ -1812,7 +1812,8 @@
     },
     "windows": {
         "centerTitle": true,
-        "showTitlebar": true
+        "showTitlebar": true,
+        "appIdentityRules": []
     },
     "workSafety": {
         "enable": {

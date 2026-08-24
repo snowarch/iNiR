@@ -1,0 +1,11 @@
+module qs.modules.overview
+ActionModeView 1.0 ActionModeView.qml
+OverviewAllAppsGrid 1.0 OverviewAllAppsGrid.qml
+OverviewDashboard 1.0 OverviewDashboard.qml
+OverviewNiriWidget 1.0 OverviewNiriWidget.qml
+Overview 1.0 Overview.qml
+OverviewWidget 1.0 OverviewWidget.qml
+OverviewWindow 1.0 OverviewWindow.qml
+SearchBar 1.0 SearchBar.qml
+SearchItem 1.0 SearchItem.qml
+SearchWidget 1.0 SearchWidget.qml

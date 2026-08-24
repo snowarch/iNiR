@@ -409,15 +409,16 @@ Item {
                 if (count <= 0) continue;
                 liveToplevelCounts.set(key, count - 1);
             }
-            const lowerAppId = toplevel.appId.toLowerCase();
+            const effectiveId = AppSearch.resolveWindowIdentity(toplevel);
+            const lowerAppId = effectiveId.toLowerCase();
 
-            if (ignoredRegexes.some(re => re.test(toplevel.appId))) {
+            if (ignoredRegexes.some(re => re.test(effectiveId))) {
                 continue;
             }
 
             if (!runningAppsMap.has(lowerAppId)) {
                 runningAppsMap.set(lowerAppId, {
-                    appId: toplevel.appId,
+                    appId: effectiveId,
                     toplevels: [],
                     pinned: false
                 });
@@ -592,6 +593,13 @@ Item {
             root.rebuildDockItems()
         }
         function onIgnoredAppRegexesChanged() {
+            root.rebuildDockItems()
+        }
+    }
+    Connections {
+        target: Config.options?.windows
+        enabled: root.enabled
+        function onAppIdentityRulesChanged() {
             root.rebuildDockItems()
         }
     }

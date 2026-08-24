@@ -11,6 +11,76 @@ import (
 	"strings"
 )
 
+// stripJSONCComments removes // and /* */ comments and trailing commas from
+// JSONC so encoding/json can parse it. String contents are preserved.
+func stripJSONCComments(data []byte) []byte {
+	var out strings.Builder
+	out.Grow(len(data))
+
+	inString := false
+	escaped := false
+	i := 0
+	n := len(data)
+
+	for i < n {
+		c := data[i]
+
+		if inString {
+			out.WriteByte(c)
+			if escaped {
+				escaped = false
+			} else if c == '\\' {
+				escaped = true
+			} else if c == '"' {
+				inString = false
+			}
+			i++
+			continue
+		}
+
+		switch {
+		case c == '"':
+			inString = true
+			out.WriteByte(c)
+			i++
+
+		case c == '/' && i+1 < n && data[i+1] == '/':
+			for i < n && data[i] != '\n' {
+				i++
+			}
+
+		case c == '/' && i+1 < n && data[i+1] == '*':
+			i += 2
+			for i+1 < n && !(data[i] == '*' && data[i+1] == '/') {
+				i++
+			}
+			if i+1 < n {
+				i += 2
+			} else {
+				i = n
+			}
+
+		case c == ',' && i+1 < n:
+			j := i + 1
+			for j < n && (data[j] == ' ' || data[j] == '\t' || data[j] == '\n' || data[j] == '\r') {
+				j++
+			}
+			if j < n && (data[j] == ']' || data[j] == '}') {
+				i++
+			} else {
+				out.WriteByte(c)
+				i++
+			}
+
+		default:
+			out.WriteByte(c)
+			i++
+		}
+	}
+
+	return []byte(out.String())
+}
+
 const (
 	themeName        = "iNiR Material"
 	themeExtensionID = "inir-material-theme"
@@ -719,7 +789,7 @@ func stripThemeForFork(settingsPath, forkKey string) bool {
 		return true // nothing to strip
 	}
 	var settings map[string]any
-	if err := json.Unmarshal(data, &settings); err != nil {
+	if err := json.Unmarshal(stripJSONCComments(data), &settings); err != nil {
 		return false
 	}
 	changed := false
@@ -791,15 +861,13 @@ func loadSettings(path string) (map[string]any, error) {
 	settings := map[string]any{}
 	data, err := os.ReadFile(path)
 	if err == nil {
-		if err := json.Unmarshal(data, &settings); err != nil {
-			backup := path + ".backup"
-			if strings.HasSuffix(path, ".json") {
-				backup = strings.TrimSuffix(path, ".json") + ".json.backup"
-			}
-			if renameErr := os.Rename(path, backup); renameErr != nil {
-				return nil, renameErr
-			}
-			settings = map[string]any{}
+		// VSCode settings.json is JSONC. Strip comments/trailing commas
+		// before parsing so we never fall back to destroying the file.
+		stripped := stripJSONCComments(data)
+		if err := json.Unmarshal(stripped, &settings); err != nil {
+			// Do not rename or overwrite the file on parse failure.
+			// Return the error so the caller skips settings injection.
+			return nil, fmt.Errorf("parse %s: %w", path, err)
 		}
 	} else if !os.IsNotExist(err) {
 		return nil, err

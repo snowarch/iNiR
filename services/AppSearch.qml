@@ -528,6 +528,67 @@ Singleton {
         return null;
     }
 
+    // Optional per-window identity rules (Config.options.windows.appIdentityRules).
+    // Apps whose windows all report the same app_id (e.g. browser PWA windows)
+    // can be grouped and displayed under a different desktop entry. Each rule:
+    //   { appIdRegex, titleRegex, desktopId }
+    // Both regexes are optional but at least one is required; the first
+    // matching rule wins; malformed rules are silently ignored. Empty rules
+    // leave every window's identity untouched. The configured desktopId is
+    // intentionally not resolved during parsing: desktop entries can load
+    // after the first window event.
+    property var _identityRules: []
+    property var _identityRulesKey: null
+
+    function _parseIdentityRules(): var {
+        const rules = Config.options?.windows?.appIdentityRules ?? []
+        const key = JSON.stringify(rules)
+        if (root._identityRulesKey === key)
+            return root._identityRules
+        const parsed = []
+        for (const rule of rules) {
+            if (!rule || typeof rule !== "object") continue
+            const desktopId = String(rule.desktopId ?? "").trim()
+            if (desktopId.length === 0) continue
+            const wantsAppIdRe = rule.appIdRegex !== undefined && rule.appIdRegex !== null
+                && String(rule.appIdRegex).length > 0
+            const wantsTitleRe = rule.titleRegex !== undefined && rule.titleRegex !== null
+                && String(rule.titleRegex).length > 0
+            if (!wantsAppIdRe && !wantsTitleRe) continue
+            let appIdRe = null
+            let titleRe = null
+            let valid = true
+            if (wantsAppIdRe) {
+                try { appIdRe = new RegExp(String(rule.appIdRegex), "i") } catch (e) { valid = false }
+            }
+            if (wantsTitleRe) {
+                try { titleRe = new RegExp(String(rule.titleRegex), "i") } catch (e) { valid = false }
+            }
+            if (!valid) continue
+            parsed.push({ appIdRe: appIdRe, titleRe: titleRe, desktopId: desktopId })
+        }
+        root._identityRules = parsed
+        root._identityRulesKey = key
+        return parsed
+    }
+
+    // Resolve the display identity of a running window. Accepts foreign-toplevel
+    // handles (appId) and Niri window objects (app_id) alike. Returns the
+    // window's reported app_id unless a configured rule remaps it.
+    function resolveWindowIdentity(toplevel): string {
+        const appId = String(toplevel?.appId ?? toplevel?.app_id ?? "")
+        if (appId.length === 0) return appId
+        const rules = root._parseIdentityRules()
+        if (rules.length === 0) return appId
+        const title = String(toplevel?.title ?? "")
+        for (const rule of rules) {
+            if (rule.appIdRe && !rule.appIdRe.test(appId)) continue
+            if (rule.titleRe && !rule.titleRe.test(title)) continue
+            return rule.desktopId
+        }
+        return appId
+    }
+
     function guessIcon(str) {
         if (!str || str.length == 0) return "image-missing";
 

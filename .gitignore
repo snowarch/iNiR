@@ -6,9 +6,11 @@
 *~
 .backups/
 
-# ── AI tooling (local-only, never distribute) ─────────────────
-# Agent config files
+# ── AI tooling (local development only; never distributed) ───
 AGENTS.md
+**/AGENTS.md
+.agents/
+**/.agents/
 CODEX.md
 PI.md
 GEMINI.md*
@@ -27,7 +29,6 @@ session-*.md
 .pi/
 .cortexkit/
 .factory/
-.agents/
 .vera/
 .claude/
 .cline/

@@ -23,7 +23,7 @@ Rectangle {
     property string downloadPath
     property string nsfwPath
 
-    readonly property bool isWallhaven: root.responseData.provider === "wallhaven"
+    readonly property bool isWallhaven: root.responseData != null && root.responseData.provider === "wallhaven"
 
     property real availableWidth: parent.width
     property real rowTooShortThreshold: 190
@@ -91,13 +91,13 @@ Rectangle {
                     font.pixelSize: Appearance.font.pixelSize.large
                     color: Appearance.colors.colOnSecondaryContainer
                     text: root.isWallhaven
-                        ? Translation.tr("Page %1").arg(root.responseData.page)
-                        : Booru.providers[root.responseData.provider].name
+                        ? Translation.tr("Page %1").arg(root.responseData?.page ?? "")
+                        : (Booru.providers[root.responseData?.provider ?? ""]?.name ?? "")
                 }
             }
             Item { Layout.fillWidth: true }
             Item { // Page number
-                visible: !root.isWallhaven && root.responseData.page != "" && root.responseData.page > 0
+                visible: !root.isWallhaven && (root.responseData?.page ?? "") != "" && (root.responseData?.page ?? 0) > 0
                 implicitWidth: Math.max(pageNumber.implicitWidth + 10 * 2, 30)
                 implicitHeight: pageNumber.implicitHeight + 5 * 2
                 Layout.alignment: Qt.AlignVCenter
@@ -108,14 +108,14 @@ Rectangle {
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     color: Appearance.colors.colOnLayer2
                     // text: `Page ${root.responseData.page}`
-                    text: Translation.tr("Page %1").arg(root.responseData.page)
+                    text: Translation.tr("Page %1").arg(root.responseData?.page ?? "")
                 }
             }
         }
 
         StyledFlickable { // Tag strip
             id: tagsFlickable
-            visible: !cleanLayout && root.responseData.tags.length > 0
+            visible: !cleanLayout && (root.responseData?.tags?.length ?? 0) > 0
             Layout.alignment: Qt.AlignLeft
             Layout.fillWidth: true
             implicitHeight: tagRowLayout.implicitHeight
@@ -142,7 +142,7 @@ Rectangle {
 
                 Repeater {
                     id: tagRepeater
-                    model: root.responseData.tags
+                    model: root.responseData?.tags ?? []
 
                     ApiCommandButton {
                         Layout.fillWidth: false
@@ -160,10 +160,10 @@ Rectangle {
         StyledText { // Message
             id: messageText
             Layout.fillWidth: true
-            visible: root.responseData.message.length > 0 && (!cleanLayout || root.responseData.images.length === 0)
+            visible: (root.responseData?.message?.length ?? 0) > 0 && (!cleanLayout || (root.responseData?.images?.length ?? 0) === 0)
             font.pixelSize: Appearance.font.pixelSize.small
             color: Appearance.colors.colOnLayer1
-            text: root.responseData.message
+            text: root.responseData?.message ?? ""
             wrapMode: Text.WordWrap
             Layout.margins: responsePadding
             textFormat: Text.MarkdownText
@@ -180,7 +180,7 @@ Rectangle {
                     // Greedily add images to a row as long as rowHeight >= rowTooShortThreshold
                     let i = 0;
                     let rows = [];
-                    const responseList = root.responseData.images;
+                    const responseList = root.responseData?.images ?? [];
                     const minRowHeight = rowTooShortThreshold;
                     // For clean layout, use full width; otherwise subtract padding
                     const paddingOffset = root.cleanLayout ? 0 : (responsePadding * 2);
@@ -248,8 +248,8 @@ Rectangle {
                     delegate: BooruImage {
                         required property var modelData
                         imageData: modelData
-                        fallbackTags: root.responseData.tags
-                        aspectCrop: root.responseData.provider === "wallhaven"
+                        fallbackTags: root.responseData?.tags ?? []
+                        aspectCrop: root.responseData?.provider === "wallhaven"
                         rowHeight: imageRow.rowHeight
                         // Clean layout: no radius, no background. Normal: 50 for single image, normal rounding for multiple
                         imageRadius: root.cleanLayout ? Appearance.rounding.small : (imageRow.modelData.images.length == 1 ? 50 : Appearance.rounding.normal)
@@ -257,7 +257,7 @@ Rectangle {
                         // Wallhaven search often lacks per-image tags; BooruImage will fall back to response tags.
                         enableTooltip: Persistent.states.booru.showTagsOnHover
                         // Download manually to reduce redundant requests or make sure downloading works
-                        manualDownload: ["danbooru", "waifu.im", "t.alcy.cc"].includes(root.responseData.provider)
+                        manualDownload: ["danbooru", "waifu.im", "t.alcy.cc"].includes(root.responseData?.provider ?? "")
                         previewDownloadPath: root.previewDownloadPath
                         downloadPath: root.downloadPath
                         nsfwPath: root.nsfwPath
@@ -270,7 +270,7 @@ Rectangle {
             id: pagingButtonsRow
             Layout.alignment: Qt.AlignRight
             spacing: 6
-            visible: root.showPagingButtons && root.responseData.page != "" && root.responseData.page > 0
+            visible: root.showPagingButtons && (root.responseData?.page ?? "") != "" && (root.responseData?.page ?? 0) > 0
 
             RippleButton { // Next page button
                 id: button

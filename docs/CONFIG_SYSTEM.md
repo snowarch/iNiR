@@ -120,6 +120,34 @@ The full schema is `modules/common/Config.qml`. The full defaults are `defaults/
 
 ## Common keys people actually ask about
 
+### Per-window app identity
+
+Some applications give every window the same compositor `app_id`, even when
+the windows represent separate desktop applications (browser PWAs are a
+common example). `windows.appIdentityRules` can map those windows to the
+desktop entry that should own them:
+
+```json
+{
+  "windows": {
+    "appIdentityRules": [
+      {
+        "appIdRegex": "^browser$",
+        "titleRegex": "^Example PWA(?: |$)",
+        "desktopId": "example-pwa"
+      }
+    ]
+  }
+}
+```
+
+Rules are case-insensitive, the first matching rule wins, and at least one of
+`appIdRegex` or `titleRegex` is required. Malformed rules are ignored. The
+setting is empty by default and is intentionally advanced: the compositor
+does not expose enough metadata to distinguish every PWA from a normal tab
+automatically. `desktopId` should match an installed `.desktop` entry so the
+matching icon, name, launcher, and taskbar grouping are used.
+
 ### Bar layout
 
 `bar.layout` controls the modular ii bar:

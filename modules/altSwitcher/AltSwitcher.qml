@@ -206,8 +206,11 @@ Scope {
 
         for (let i = 0; i < windows.length; i++) {
             const w = windows[i]
-            const appId = w.app_id || ""
+            const appId = AppSearch.resolveWindowIdentity(w)
             let appName = appId
+            const resolvedEntry = AppSearch.lookupDesktopEntry(appId)
+            if (resolvedEntry?.name)
+                appName = resolvedEntry.name
             if (appName && appName.indexOf(".") !== -1) {
                 const parts = appName.split(".")
                 appName = parts[parts.length - 1]
@@ -1906,9 +1909,9 @@ Scope {
             const wins = NiriService.windows || []
             for (let i = 0; i < wins.length; i++) {
                 const w = wins[i]
-                const key = w.app_id || ""
+                const key = AppSearch.resolveWindowIdentity(w)
                 if (key && root.iconCache[key] === undefined) {
-                    root.getCachedIcon(w.app_id, "", w.title)
+                    root.getCachedIcon(key, "", w.title)
                 }
             }
         }

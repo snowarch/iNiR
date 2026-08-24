@@ -65,7 +65,7 @@ Item {
             model: ScriptModel {
                 values: Persistent.states.overlay.open.map(identifier => {
                     return OverlayContext.availableWidgets.find(w => w.identifier === identifier);
-                })
+                }).filter(w => w !== undefined && w !== null)
                 objectProp: "identifier"
             }
             delegate: OverlayWidgetDelegateChooser {

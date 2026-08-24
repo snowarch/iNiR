@@ -1,0 +1,10 @@
+module qs.modules.wallpaperSelector
+
+WallpaperCoverflow 1.0 WallpaperCoverflow.qml
+WallpaperCoverflowGallery 1.0 WallpaperCoverflowGallery.qml
+WallpaperCoverflowView 1.0 WallpaperCoverflowView.qml
+WallpaperDirectoryItem 1.0 WallpaperDirectoryItem.qml
+WallpaperSelector 1.0 WallpaperSelector.qml
+WallpaperSelectorContent 1.0 WallpaperSelectorContent.qml
+WallpaperSelectorRouter 1.0 WallpaperSelectorRouter.qml
+WallpaperSkewView 1.0 WallpaperSkewView.qml

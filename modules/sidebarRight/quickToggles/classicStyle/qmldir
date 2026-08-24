@@ -1,0 +1,11 @@
+module qs.modules.sidebarRight.quickToggles.classicStyle
+BluetoothToggle 1.0 BluetoothToggle.qml
+ClassicToggleDelegateChooser 1.0 ClassicToggleDelegateChooser.qml
+CloudflareWarp 1.0 CloudflareWarp.qml
+EasyEffectsToggle 1.0 EasyEffectsToggle.qml
+GameMode 1.0 GameMode.qml
+HotspotToggle 1.0 HotspotToggle.qml
+IdleInhibitor 1.0 IdleInhibitor.qml
+NetworkToggle 1.0 NetworkToggle.qml
+NightLight 1.0 NightLight.qml
+QuickToggleButton 1.0 QuickToggleButton.qml
