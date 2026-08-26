@@ -2,8 +2,8 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: 9a5215708831bdca
-# Targets: 60
+# IPC.md hash: b3a5df40331701a0
+# Targets: 62
 
 declare -gA IPC_TARGET_DESC=(
   [ai]="Shared multi-provider AI service. It supports Gemini, OpenAI-compatible chat and Responses APIs, Mistral and Anthropic; live provider catalogs are normalized into capability-aware model records. Catalog visibility is separate from execution readiness, so public model lists remain browseable without pretending an API key exists. OpenCode Zen and Go resolve their current model lists and per-model API routes dynamically. Normal shell tools use typed actions and approval cards, while arbitrary commands are isolated in Advanced mode."
@@ -14,6 +14,7 @@ declare -gA IPC_TARGET_DESC=(
   [background]="Desktop background and widget controls."
   [bar]="Top bar visibility."
   [brightness]="Display brightness control."
+  [browser]="Launch the configured browser. Launches are routed through the shell so long-running processes are raised by \`ShellExec.launch\` inside a transient systemd scope."
   [cheatsheet]="Keyboard shortcuts reference. For when you forget what you just configured five minutes ago."
   [clipboard]="Clipboard history panel. Because Ctrl+V only remembers one thing, and that's not enough for power users."
   [cliphistService]="Clipboard history service. The backend that makes clipboard panel work. You probably don't need to call this directly."
@@ -23,6 +24,7 @@ declare -gA IPC_TARGET_DESC=(
   [customWidgets]="Custom widget management. Create, list, reload, and remove user-installed widgets from \`~/.config/inir/widgets/\`."
   [dashboard]="Centered welcome hub panel (ii family): greeting, clock, notifications, media, weather, calendar, todo, system usage and GitHub activity."
   [dev]="Development navigation for loading lazy surfaces and internal views without automating pointer or keyboard input. Destination identifiers are stable and returned as JSON by \`list\`."
+  [files]="Launch the configured file manager. Launches are routed through the shell so long-running processes are raised by \`ShellExec.launch\` inside a transient systemd scope."
   [gamemode]="Performance mode for gaming. Auto-detects fullscreen apps and disables animations/effects. Can also be toggled manually for those stubborn games that don't go fullscreen properly."
   [globalActions]="Command palette / action registry. Search and execute shell actions from scripts or keybinds."
   [keyboard]="Keyboard layout switching (Niri only). Cycles through configured keyboard layouts and queries layout info."
@@ -77,6 +79,7 @@ declare -gA IPC_TARGET_FAMILY=(
   [background]="shared"
   [bar]="shared"
   [brightness]="shared"
+  [browser]="shared"
   [cheatsheet]="shared"
   [clipboard]="shared"
   [cliphistService]="shared"
@@ -86,6 +89,7 @@ declare -gA IPC_TARGET_FAMILY=(
   [customWidgets]="waffle"
   [dashboard]="shared"
   [dev]="shared"
+  [files]="shared"
   [gamemode]="shared"
   [globalActions]="shared"
   [keyboard]="shared"
@@ -140,6 +144,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [background]="toggleEditMode setEditMode editState desktopItemsState focusWidget promoteWidget resetLayerOrder setWidgetEnabled clockDebugState clockDebugSetMode clockDebugSetRegion clockDebugSetLayout clockDebugRestore"
   [bar]="toggle close open"
   [brightness]="increment decrement"
+  [browser]="open openUrl"
   [cheatsheet]="toggle close open"
   [clipboard]="open close toggle"
   [cliphistService]="update"
@@ -149,6 +154,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [customWidgets]="reload list create remove"
   [dashboard]="toggle close open"
   [dev]="list open close current"
+  [files]="open"
   [gamemode]="toggle activate deactivate status"
   [globalActions]="run runWithArgs list search open"
   [keyboard]="switchLayout switchLayoutPrevious getCurrentLayout getLayouts"
@@ -239,6 +245,8 @@ declare -gA IPC_FUNCTION_DESC=(
   ["bar:open"]="Show bar"
   ["brightness:increment"]="Increase brightness"
   ["brightness:decrement"]="Decrease brightness"
+  ["browser:open"]="Open the configured browser (\`apps.browser\`)"
+  ["browser:openUrl"]="Open the configured browser with a URL"
   ["cheatsheet:toggle"]="Open/close cheatsheet"
   ["cheatsheet:close"]="Hide cheatsheet overlay"
   ["cheatsheet:open"]="Show cheatsheet overlay"
@@ -266,6 +274,7 @@ declare -gA IPC_FUNCTION_DESC=(
   ["dev:open"]="Open a destination by semantic identifier"
   ["dev:close"]="Close development-opened surfaces and clear the request"
   ["dev:current"]="Return the current destination or \`closed\`"
+  ["files:open"]="Open the configured file manager (\`apps.files\`), or \`nautilus\` if none is set"
   ["gamemode:toggle"]="Toggle gamemode on/off"
   ["gamemode:activate"]="Force enable gamemode"
   ["gamemode:deactivate"]="Force disable gamemode"
@@ -465,6 +474,7 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["background:clockDebugSetMode"]="<style> <adaptToWallpaper>"
   ["background:clockDebugSetRegion"]="<color> <brightness> <spread>"
   ["background:clockDebugSetLayout"]="<x> <y> <quickControlsOpen>"
+  ["browser:openUrl"]="<url>"
   ["closeConfirm:triggerWindow"]="<windowId> <appId>"
   ["customWidgets:create"]="<name>"
   ["customWidgets:remove"]="<widgetId>"
@@ -502,9 +512,11 @@ declare -gA IPC_TARGET_EXAMPLE=(
   [altSwitcher]='bind "Alt+Tab" { spawn "inir" "altSwitcher" "next"; }
 bind "Alt+Shift+Tab" { spawn "inir" "altSwitcher" "previous"; }'
   [background]='bind "Super+W" { spawn "inir" "background" "toggleEditMode"; }'
+  [browser]='bind "Super+W" { spawn "inir" "browser"; }'
   [cheatsheet]='bind "Super+Slash" { spawn "inir" "cheatsheet" "toggle"; }'
   [clipboard]='bind "Super+V" repeat=false { spawn "inir" "clipboard" "toggle"; }'
   [closeConfirm]='bind "Mod+Q" repeat=false { spawn "inir" "close-window"; }'
+  [files]='bind "Super+E" { spawn "inir" "files"; }'
   [gamemode]='bind "Super+F12" { spawn "inir" "gamemode" "toggle"; }'
   [globalActions]='bind "Super+Slash" { spawn "inir" "globalActions" "open"; }
 bind "Super+M" { spawn "inir" "globalActions" "run" "toggle-mute"; }'
@@ -531,8 +543,8 @@ bind "Ctrl+Alt+A" { spawn "inir" "wallpaperSelector" "openLauncher" "animated"; 
   [ytmusic]='bind "Mod+M+Space" { spawn "inir" "ytmusic" "playPause"; }'
 )
 
-IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets dashboard dev gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osd osdVolume osk overlay overview packageSearch panelFamily pill recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
-IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector dashboard dev gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osdVolume osk overlay overview packageSearch panelFamily pill region session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight tiling voiceSearch wallpaperLauncher wallpaperSelector workspaceStrip ytmusic zoom)
+IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar brightness browser cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets dashboard dev files gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osd osdVolume osk overlay overview packageSearch panelFamily pill recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
+IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar brightness browser cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector dashboard dev files gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osdVolume osk overlay overview packageSearch panelFamily pill region session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight tiling voiceSearch wallpaperLauncher wallpaperSelector workspaceStrip ytmusic zoom)
 IPC_II_TARGETS=()
 IPC_WAFFLE_TARGETS=(autostart customWidgets osd recordingOsd search taskview wactionCenter waffleAltSwitcher wbar widgetpower wnotificationCenter wwidgets)
 

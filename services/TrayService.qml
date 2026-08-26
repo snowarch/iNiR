@@ -251,6 +251,7 @@ Singleton {
         }
     }
 
+    // launch-policy: allow bridge lifecycle bound to shell
     Process {
         id: xembedProxyStartProc
         stdout: SplitParser {

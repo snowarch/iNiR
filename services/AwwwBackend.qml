@@ -97,6 +97,8 @@ Singleton {
         if (root.previewActive && signature === root._previewSignature)
             return
 
+        root.ensureDaemon()
+
         // Preview uses the user's configured transition, exactly like an apply.
         // Hardcoding one here made every browse step look identical and unlike
         // the wallpaper change it is previewing.
@@ -298,20 +300,38 @@ Singleton {
         probeProc.running = true
     }
 
+    function ensureDaemon(): void {
+        if (!available)
+            return
+        ShellExec.launchDaemon({
+            program: "awww-daemon",
+            scope: "awww-daemon",
+            description: "iNiR wallpaper daemon",
+            ifActive: "reuse"
+        })
+    }
+
     // Applying a video wallpaper stops the daemon (awww cannot display video),
     // so any later awww command must be able to bring it back up first.
     readonly property string _ensureDaemonScript: `
                 awww_bin=$(command -v awww 2>/dev/null || true)
-                daemon_bin=$(command -v awww-daemon 2>/dev/null || true)
-                if [ -n "$awww_bin" ] && [ -n "$daemon_bin" ] && ! "$awww_bin" query >/dev/null 2>&1; then
-                    if command -v systemd-run >/dev/null 2>&1; then
-                        if ! systemd-run --user --quiet --collect --property=Description="iNiR wallpaper daemon" --setenv="WAYLAND_DISPLAY=$WAYLAND_DISPLAY" --setenv="XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR" -- "$daemon_bin" >/dev/null 2>&1; then
-                            nohup "$daemon_bin" >/dev/null 2>&1 &
-                        fi
-                    else
-                        nohup "$daemon_bin" >/dev/null 2>&1 &
+                if [ -n "$awww_bin" ] && ! "$awww_bin" query >/dev/null 2>&1; then
+                    _i=0
+                    while [ "$_i" -lt 30 ]; do
+                        "$awww_bin" query >/dev/null 2>&1 && break
+                        systemctl --user is-active --quiet inir-awww-daemon 2>/dev/null || true
+                        sleep 0.1
+                        _i=$((_i + 1))
+                    done
+                    if ! "$awww_bin" query >/dev/null 2>&1; then
+                        systemctl --user start inir-awww-daemon.service >/dev/null 2>&1 || true
+                        _i=0
+                        while [ "$_i" -lt 30 ]; do
+                            "$awww_bin" query >/dev/null 2>&1 && break
+                            sleep 0.1
+                            _i=$((_i + 1))
+                        done
                     fi
-                    for _ in 1 2 3 4 5 6 7 8 9 10; do "$awww_bin" query >/dev/null 2>&1 && break; sleep 0.1; done
                 fi
             `
 
@@ -379,6 +399,8 @@ Singleton {
         // kill the in-progress transition just to restart the same one.
         if (applyProc.running && applyProc._pendingSignature === signature)
             return
+
+        root.ensureDaemon()
 
         const lines = [root._ensureDaemonScript]
 

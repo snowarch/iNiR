@@ -2,6 +2,7 @@ pragma Singleton
 pragma ComponentBehavior: Bound
 
 import qs.modules.common
+import qs.modules.common.functions
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -48,9 +49,9 @@ Singleton {
         if (!root.available) return
         root.active = true
         if (root.nativeInstalled) {
-            Quickshell.execDetached(["/usr/bin/easyeffects", "--service-mode"])
+            ShellExec.launchDaemon({ program: "/usr/bin/easyeffects", args: ["--service-mode"], scope: "easyeffects", description: "EasyEffects service mode", ifActive: "reuse" })
         } else {
-            Quickshell.execDetached(["/usr/bin/flatpak", "run", "com.github.wwmm.easyeffects", "--service-mode"])
+            ShellExec.launchDaemon({ program: "/usr/bin/flatpak", args: ["run", "com.github.wwmm.easyeffects", "--service-mode"], scope: "easyeffects", description: "EasyEffects service mode (flatpak)", ifActive: "reuse" })
         }
         refreshStateTimer.restart()
     }
