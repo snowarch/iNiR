@@ -59,7 +59,7 @@ Singleton {
             else Quickshell.execDetached(["/usr/bin/killall", "mako", "dunst"])
         }
         if (openDialog) {
-            Quickshell.execDetached(["/usr/bin/qs", "-p", root.killDialogQmlPath])
+            ShellExec.launch({ program: "/usr/bin/qs", args: ["-p", root.killDialogQmlPath], scope: "killdialog", description: "Conflict resolution dialog" })
         }
     }
 

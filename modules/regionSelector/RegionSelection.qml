@@ -387,11 +387,13 @@ PanelWindow {
                 snipProc.command = ["/usr/bin/bash", "-c", `${cropInPlace} && /usr/bin/tesseract '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}' stdout -l $(/usr/bin/tesseract --list-langs | /usr/bin/awk 'NR>1{print $1}' | /usr/bin/tr '\\n' '+' | /usr/bin/sed 's/\\+$/\\n/') | tee >(/usr/bin/wl-copy --primary) | /usr/bin/wl-copy && ${cleanup} && /usr/bin/notify-send "Text recognized" "OCR text copied to clipboard" -a "OCR" -i edit-find -t 3000`]
                 break;
             case RegionSelection.SnipAction.Record:
-                snipProc.command = ["/usr/bin/bash", "-c", `${Directories.recordScriptPath} --region '${slurpRegion}'`]
-                break;
+                ShellExec.launch({ program: ShellExec.bashPath, args: [Directories.recordScriptPath, "--region", slurpRegion], scope: "record", description: "Record region" });
+                root.dismiss();
+                return;
             case RegionSelection.SnipAction.RecordWithSound:
-                snipProc.command = ["/usr/bin/bash", "-c", `${Directories.recordScriptPath} --region '${slurpRegion}' --sound`]
-                break;
+                ShellExec.launch({ program: ShellExec.bashPath, args: [Directories.recordScriptPath, "--region", slurpRegion, "--sound"], scope: "record", description: "Record region with sound" });
+                root.dismiss();
+                return;
             default:
                 root.dismiss();
                 return;

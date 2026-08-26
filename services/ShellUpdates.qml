@@ -250,7 +250,7 @@ Singleton {
             print("[ShellUpdates] Update launched in terminal (" + termBin + ") from: " + repoDir)
         } else {
             // Detached background — same path as before the terminal toggle existed.
-            Quickshell.execDetached(["/usr/bin/bash", "-c", bashCmd])
+            ShellExec.launch({ program: ShellExec.bashPath, args: ["-c", bashCmd], scope: "update", description: "Update iNiR" })
             print("[ShellUpdates] Update launched (detached) from: " + repoDir)
         }
         print("[ShellUpdates] Log: " + logPath + " | Status: " + statusPath)

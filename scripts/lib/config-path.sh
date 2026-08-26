@@ -44,6 +44,20 @@ inir_config_file() {
     printf '%s/config.json\n' "$(inir_config_dir)"
 }
 
+_read_apps_slot() {
+    local slot="${1:-}"
+    local config_file value=""
+    config_file="$(inir_config_file)"
+    if [[ -n "$slot" && -f "$config_file" ]]; then
+        if command -v jq >/dev/null 2>&1; then
+            value="$(jq -r --arg slot "$slot" '.apps[$slot] // empty' "$config_file" 2>/dev/null || true)"
+        else
+            value="$(sed -n "s/.*\"${slot}\"[[:space:]]*:[[:space:]]*\"\\([^\"]*\\)\".*/\\1/p" "$config_file" | head -1)"
+        fi
+    fi
+    printf '%s\n' "$value"
+}
+
 inir_version_file() {
     printf '%s/version.json\n' "$(inir_config_dir)"
 }

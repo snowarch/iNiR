@@ -33,11 +33,7 @@ Scope {
         }
     }
     function unlockKeyring() {
-        // Note: unlock.sh is a bash script, so we run it directly
         unlockKeyringProc.exec({
-            environment: ({
-                "UNLOCK_PASSWORD": lockContext.currentText
-            }),
             command: ["/usr/bin/bash", Quickshell.shellPath("scripts/keyring/unlock.sh")]
         })
     }
@@ -47,15 +43,18 @@ Scope {
     // Fallback lock screen when QS lock fails
     function useFallbackLock(): void {
         console.warn("[Lock] Activating fallback lock screen")
-        // Release QS lock first
         GlobalStates.screenLocked = false
-        // Try swaylock first (works on both Niri and Hyprland), then hyprlock
-        // Using shell to check existence and run
-        Quickshell.execDetached(["/usr/bin/bash", "-c", 
-            "command -v swaylock && exec swaylock -f -c 1a1a2e || " +
-            "command -v hyprlock && exec hyprlock || " +
-            "notify-send -u critical 'Lock Failed' 'Install swaylock or hyprlock as fallback'"
-        ])
+        ShellExec.launch({
+            program: ShellExec.bashPath,
+            args: ["-c",
+                "pidof swaylock >/dev/null && exit 0; pidof hyprlock >/dev/null && exit 0; " +
+                "command -v swaylock >/dev/null && exec swaylock -f -c 1a1a2e; " +
+                "command -v hyprlock >/dev/null && exec hyprlock; " +
+                "notify-send -u critical 'Lock Failed' 'Install swaylock or hyprlock as fallback'"
+            ],
+            scope: "lock",
+            description: "Fallback lock screen"
+        })
     }
     
     function saveWindowPositionAndTile() {
@@ -300,7 +299,7 @@ Scope {
 
         function activate(): void {
             if (Config.options?.lock?.useHyprlock ?? false) {
-                Quickshell.execDetached(["/usr/bin/bash", "-lc", "/usr/bin/pidof hyprlock || /usr/bin/hyprlock"]);
+                ShellExec.launch({ program: ShellExec.bashPath, args: ["-lc", "/usr/bin/pidof hyprlock || /usr/bin/hyprlock"], scope: "lock", description: "Lock screen (hyprlock)" });
                 return;
             }
             if (GlobalStates.screenLocked || root._lockActivating)
@@ -339,7 +338,7 @@ Scope {
 
                 onPressed: {
                     if (Config.options?.lock?.useHyprlock ?? false) {
-                        Quickshell.execDetached(["/usr/bin/bash", "-lc", "/usr/bin/pidof hyprlock || /usr/bin/hyprlock"]);
+                        ShellExec.launch({ program: ShellExec.bashPath, args: ["-lc", "/usr/bin/pidof hyprlock || /usr/bin/hyprlock"], scope: "lock", description: "Lock screen (hyprlock)" });
                         return;
                     }
                     if (!GlobalStates.screenLocked && !root._lockActivating)
@@ -359,14 +358,16 @@ Scope {
     }
 
     function initIfReady() {
-        if (!Config.ready || !Persistent.ready) return;
-        if ((Config.options?.lock?.launchOnStartup ?? false) && Persistent.isNewHyprlandInstance) {
-            // Launch lock screen on startup
-            if (CompositorService.isHyprland) {
-                Hyprland.dispatch("global quickshell:lock")
-            } else {
-                if (!GlobalStates.screenLocked && !root._lockActivating)
-                    lockActivateDelay.restart();
+        if (!Config.ready || !Persistent.ready || GlobalStates.startupLockDone)
+            return;
+
+        GlobalStates.startupLockDone = true;
+
+        if (Config.options?.lock?.launchOnStartup ?? false) {
+            if (Config.options?.lock?.useHyprlock ?? false) {
+                ShellExec.launch({ program: ShellExec.bashPath, args: ["-lc", "/usr/bin/pidof hyprlock || /usr/bin/hyprlock"], scope: "lock", description: "Lock screen (hyprlock)" });
+            } else if (!GlobalStates.screenLocked && !root._lockActivating) {
+                lockActivateDelay.restart();
             }
         } else {
             KeyringStorage.fetchKeyringData();

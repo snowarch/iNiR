@@ -50,6 +50,20 @@ Singleton {
             ]
         },
         {
+            id: "files",
+            label: Translation.tr("File manager"),
+            description: Translation.tr("Used by file manager shortcuts and app launch tiles."),
+            defaultCommand: "nautilus",
+            placeholder: "nautilus",
+            presets: [
+                { id: "nautilus", label: "GNOME Files", command: "nautilus" },
+                { id: "dolphin", label: "Dolphin", command: "dolphin" },
+                { id: "thunar", label: "Thunar", command: "thunar" },
+                { id: "nemo", label: "Nemo", command: "nemo" },
+                { id: "pcmanfm", label: "PCManFM", command: "pcmanfm" }
+            ]
+        },
+        {
             id: "manageUser",
             label: Translation.tr("Manage my account"),
             description: Translation.tr("Used by the profile menu and start menu account shortcuts."),
@@ -205,7 +219,8 @@ Singleton {
         Config.setNestedValue(`apps.${slotId}`, String(command ?? "").trim())
     }
 
-    function launch(slotId: string): void {
+    function launch(slotId: string, extraArgs): void {
+        const extras = Array.from(extraArgs ?? []).map(arg => String(arg ?? "")).filter(arg => arg.length > 0)
         const command = root.commandFor(slotId)
         if (command.length === 0)
             return
@@ -216,12 +231,39 @@ Singleton {
         if (!command.includes(" ") && !command.includes("/")) {
             const entry = DesktopEntries.heuristicLookup(command)
             if (entry) {
-                AppSearch.launchEntry(entry)
+                if (extras.length === 0) {
+                    AppSearch.launchEntry(entry)
+                    return
+                }
+                const cmd = AppSearch._sanitizeDesktopArgs(entry.command)
+                AppSearch.launchEntry({
+                    originalEntry: entry.originalEntry ?? entry,
+                    id: entry.id,
+                    name: entry.name,
+                    command: cmd.concat(extras),
+                    workingDirectory: entry.workingDirectory,
+                    runInTerminal: entry.runInTerminal
+                })
                 return
             }
         }
 
-        ShellExec.execCmd(command)
+        if (extras.length === 0) {
+            ShellExec.execCmd(command)
+            return
+        }
+
+        const words = command.split(/\s+/).filter(word => word.length > 0)
+        ShellExec.execDetachedArgs(words.concat(extras))
+    }
+
+    function launchUrl(slotId: string, url: string): void {
+        const raw = String(url ?? "").trim()
+        if (raw.length === 0) {
+            root.launch(slotId)
+            return
+        }
+        root.launch(slotId, [raw])
     }
 
     function launchNetworkSettings(useEthernet: bool): void {

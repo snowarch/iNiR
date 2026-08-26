@@ -27,7 +27,7 @@ WChoiceButton {
 
     function execute() {
         GlobalStates.searchOpen = false;
-        root.entry?.execute?.();
+        AppSearch.launchEntry(root.entry);
     }
 
     contentItem: RowLayout {

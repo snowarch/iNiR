@@ -341,6 +341,21 @@ Singleton {
         }
     }
 
+    function _sanitizeDesktopArgs(rawArgs): var {
+        const cleaned = Array.from(rawArgs ?? [])
+            .map(arg => String(arg ?? "").trim())
+            .filter(arg => {
+                if (arg.length === 0) return false
+                if (/^%[a-zA-Z]$/.test(arg)) return false
+                if (/^--[a-zA-Z0-9_-]+=(%[a-zA-Z])?$/.test(arg)) return false
+                return true
+            })
+        if (cleaned.length > 1 && cleaned[cleaned.length - 1] === "--") {
+            cleaned.pop()
+        }
+        return cleaned
+    }
+
     function launchEntry(entry): bool {
         if (!entry) return false
 
@@ -351,20 +366,17 @@ Singleton {
 
         // Prefer the parsed desktop command so every shell surface shares the
         // same launch environment, transient-scope lifetime and Path= handling.
-        const command = Array.from(entry.command ?? rawEntry?.command ?? []).map(arg => String(arg ?? "")).filter(arg => arg.length > 0)
+        const command = root._sanitizeDesktopArgs(entry.command ?? rawEntry?.command)
         if (command.length > 0) {
             if (entry.runInTerminal ?? rawEntry?.runInTerminal ?? false) {
-                const terminal = String(Config.options?.apps?.terminal ?? "kitty").trim() || "kitty"
-                const quotedCommand = command.map(arg => `'${StringUtils.shellSingleQuoteEscape(arg)}'`).join(" ")
-                if (terminal === "wezterm") {
-                    ShellExec.execCmd(`${terminal} start --always-new-process -- ${quotedCommand}`, workingDirectory)
-                } else {
-                    ShellExec.execCmd(`${terminal} -e ${quotedCommand}`, workingDirectory)
-                }
+                const terminalScript = `${Directories.scriptsPath}/launch-terminal.sh`
+                ShellExec.execDetachedArgs([terminalScript, ...command],
+                    displayName.length > 0 ? `Launch ${displayName}` : "",
+                    workingDirectory)
                 return true
             }
 
-            ShellExec.execDetachedArgs(command,
+            ShellExec.execDetachedArgs(ShellExec.privilegedGuiArgv(command),
                 displayName.length > 0 ? `Launch ${displayName}` : "",
                 workingDirectory)
             return true
@@ -378,7 +390,7 @@ Singleton {
                 displayName.length > 0 ? `Launch ${displayName}` : "")
         }
 
-        // Non-desktop search providers can still expose their own callback.
+        // launch-policy: allow provider-managed actions
         if (typeof entry.execute === "function") {
             entry.execute()
             return true
@@ -387,20 +399,26 @@ Singleton {
         return false
     }
 
+    // Launch a desktop entry action
     function launchDesktopAction(entry, action): bool {
-        if (!entry || !action) return false
-
-        const command = Array.from(action.command ?? []).map(arg => String(arg ?? "")).filter(arg => arg.length > 0)
-        if (command.length > 0) {
-            const actionName = String(action.name ?? entry.name ?? "").trim()
-            const workingDirectory = String(entry.workingDirectory ?? "").trim()
-            ShellExec.execDetachedArgs(command,
-                actionName.length > 0 ? `Launch ${actionName}` : "",
-                workingDirectory)
-            return true
+        if (action === undefined) {
+            action = entry
+            entry = null
         }
+        if (!action) return false
 
-        return false
+        const raw = (Array.isArray(action.command) && action.command.length > 0)
+            ? action.command
+            : (String(action.execString ?? "").trim().length > 0 ? [action.execString] : [])
+        const command = root._sanitizeDesktopArgs(raw)
+        if (command.length === 0) return false
+
+        const actionName = String(action.name ?? entry?.name ?? "app action").trim()
+        const workingDirectory = String(entry?.workingDirectory ?? "").trim()
+        ShellExec.execDetachedArgs(ShellExec.privilegedGuiArgv(command),
+            actionName.length > 0 ? `Launch ${actionName}` : "",
+            workingDirectory)
+        return true
     }
 
     function iconExists(iconName) {

@@ -11,7 +11,7 @@ max_polls="${INIR_RESTART_MAX_POLLS:-60}"
 max_rapid_restarts="${INIR_MAX_RAPID_RESTARTS:-5}"
 restart_window="${INIR_RESTART_WINDOW:-60}"
 systemd_user_dir="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
-script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+script_dir="$(cd -- "$(dirname -- "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 launcher_root="$(cd -- "$script_dir/.." 2>/dev/null && pwd || printf '%s' "$script_dir")"
 
 source_config_path_helper() {
@@ -37,6 +37,28 @@ source_config_path_helper() {
 }
 
 source_config_path_helper
+
+source_exec_scoped_helper() {
+    local helper_candidates=(
+        "$script_dir/lib/exec-scoped.sh"
+        "$launcher_root/share/quickshell/inir/scripts/lib/exec-scoped.sh"
+        "$user_config_dir/scripts/lib/exec-scoped.sh"
+        "$system_config_dir/scripts/lib/exec-scoped.sh"
+        "$fallback_system_config_dir/scripts/lib/exec-scoped.sh"
+    )
+
+    local helper_path
+    for helper_path in "${helper_candidates[@]}"; do
+        if [[ -f "$helper_path" ]]; then
+            # shellcheck source=/dev/null
+            source "$helper_path"
+            return
+        fi
+    done
+
+    echo "Unable to locate exec-scoped helper (scripts/lib/exec-scoped.sh)." >&2
+    exit 1
+}
 
 _ipc_registry_loaded=false
 
@@ -102,7 +124,7 @@ EOF
 
     cat <<'EOF'
 Runtime:
-  start, stop, run, restart, kill, terminal, browser, close-window, colorpicker
+  start, stop, run, restart, kill, terminal, browser, files, close-window, colorpicker
 
 Maintenance (delegates to setup):
   install, reinstall, update, doctor, status, migrate, rollback, my-changes, uninstall
@@ -3475,36 +3497,51 @@ EOF
 }
 
 launch_configured_browser() {
-    local config_file
-    config_file="$(inir_config_file)"
-    local browser=""
-
-    if [[ -f "$config_file" ]]; then
-        if command -v jq >/dev/null 2>&1; then
-            browser="$(jq -r '.apps.browser // empty' "$config_file" 2>/dev/null || true)"
-        else
-            browser="$(sed -n 's/.*"browser"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$config_file" | head -1)"
-        fi
-    fi
-
+    local browser
+    browser="$(_read_apps_slot browser)"
     browser="${browser:-xdg-open}"
 
     if command -v "$browser" >/dev/null 2>&1; then
-        if [[ $# -gt 0 ]]; then
-            exec "$browser" "$@"
-        fi
-        exec "$browser"
+        exec_scoped "$browser" "$@"
     fi
 
     if command -v xdg-open >/dev/null 2>&1; then
-        if [[ $# -gt 0 ]]; then
-            exec xdg-open "$@"
-        fi
-        exec xdg-open "https://"
+        exec_scoped xdg-open "${@:-https://}"
     fi
 
     echo "No browser launcher found" >&2
     exit 1
+}
+
+launch_configured_files() {
+    local fm
+    fm="$(_read_apps_slot files)"
+    fm="${fm:-nautilus}"
+
+    if command -v "$fm" >/dev/null 2>&1; then
+        exec_scoped "$fm" "$@"
+    fi
+
+    local fallback
+    for fallback in nautilus dolphin thunar nemo pcmanfm; do
+        if command -v "$fallback" >/dev/null 2>&1; then
+            exec_scoped "$fallback" "$@"
+        fi
+    done
+
+    echo "No file manager found" >&2
+    exit 1
+}
+
+# Exec command inside transient user scope
+exec_scoped() {
+    if ! declare -F inir_exec_scoped >/dev/null 2>&1; then
+        source_exec_scoped_helper
+    fi
+    local bin_name unit_prefix
+    bin_name="$(basename "$1")"
+    unit_prefix="inir-${bin_name//[^a-zA-Z0-9_:.-]/-}"
+    inir_exec_scoped "$unit_prefix" "$@"
 }
 
 parse_config_flag() {
@@ -3762,6 +3799,28 @@ case "$command_name" in
         done
         launch_configured_browser "$@"
         ;;
+    files)
+        while [[ $# -gt 0 ]]; do
+            case "$1" in
+                -c|--config)
+                    parse_config_flag "$@"
+                    shift 2
+                    ;;
+                --)
+                    shift
+                    break
+                    ;;
+                -h|--help)
+                    echo "Usage: inir files [-c PATH] [path]" >&2
+                    exit 0
+                    ;;
+                *)
+                    break
+                    ;;
+            esac
+        done
+        launch_configured_files "$@"
+        ;;
     close-window)
         while [[ $# -gt 0 ]]; do
             case "$1" in
@@ -3817,13 +3876,16 @@ case "$command_name" in
                     usage
                     exit 0
                     ;;
+                call)
+                    shift
+                    ;;
                 *)
                     break
                     ;;
             esac
         done
         if [[ $# -lt 2 ]]; then
-            echo "Usage: inir ipc <target> <function> [args...]" >&2
+            echo "Usage: inir ipc [call] <target> <function> [args...]" >&2
             exit 1
         fi
         resolve_config_dir

@@ -121,6 +121,41 @@ Singleton {
         }
     }
 
+    IpcHandler {
+        target: "browser"
+
+        function open(): string {
+            console.debug("[ipc] request=browser open source=keybind")
+            AppLauncher.launch("browser")
+            return "ok"
+        }
+
+        function openUrl(url: string): string {
+            const rawUrl = String(url ?? "").trim()
+            if (rawUrl.length === 0) {
+                AppLauncher.launch("browser")
+                return "ok"
+            }
+            console.debug("[ipc] request=browser openUrl source=keybind")
+            AppLauncher.launchUrl("browser", rawUrl)
+            return "ok"
+        }
+    }
+
+    IpcHandler {
+        target: "files"
+
+        function open(): string {
+            console.debug("[ipc] request=files open source=keybind")
+            if (AppLauncher.slotDefinition("files")) {
+                AppLauncher.launch("files")
+            } else {
+                ShellExec.execCmd("nautilus")
+            }
+            return "ok"
+        }
+    }
+
     // ── Built-in Providers ──────────────────────────────────────────────
 
     // SYSTEM: WiFi, Bluetooth, Night Light, Game Mode, DND, Lock, Session
@@ -410,12 +445,12 @@ Singleton {
             category: "tools",
             keywords: ["record", "screen", "video", "capture", "wf-recorder", "audio", "microphone", "mic"],
             execute: () => {
-                const args = ["/usr/bin/bash", Directories.recordScriptPath]
+                const args = [Directories.recordScriptPath]
                 if (RecorderStatus.isRecording)
                     args.push("--stop")
                 else
                     args.push("--fullscreen", "--sound")
-                Quickshell.execDetached(args)
+                ShellExec.launch({ program: ShellExec.bashPath, args, scope: "record", description: "Toggle screen recording" })
                 RecorderStatus.scheduleQuickCheck()
             }
         },
@@ -892,7 +927,7 @@ Singleton {
         ShellExec.execDetachedArgs(term === "wezterm"
             ? [term, "start", "--always-new-process", "--", "/usr/bin/bash", path]
             : [term, "-e", "/usr/bin/bash", path], `Setup ${target.name}`)
-        Quickshell.execDetached(["/usr/bin/notify-send",
+        ShellExec.execDetachedArgs(["/usr/bin/notify-send",
             "-a", "Setup", "-i", target.icon || "download",
             "-h", `string:x-canonical-private-synchronous:setup-${target.slug}`,
             "--", target.name, Translation.tr("Starting setup in terminal…")])

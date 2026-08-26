@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import qs.services
 import qs.modules.common
+import qs.modules.common.functions
 
 /**
  * Recorder surface: start/stop screen recording from the pill. Upstream's
@@ -41,12 +42,12 @@ PillSurface {
     }
 
     function start(fullscreen) {
-        const args = ["/usr/bin/bash", Directories.recordScriptPath];
+        const args = [Directories.recordScriptPath];
         if (fullscreen)
             args.push("--fullscreen");
         if (root.withSound)
             args.push("--sound");
-        Quickshell.execDetached(args);
+        ShellExec.launch({ program: ShellExec.bashPath, args, scope: "record", description: "Record " + (fullscreen ? "screen" : "region") });
         RecorderStatus.scheduleQuickCheck();
         // Region capture hands the screen to slurp; the pill must get out of
         // the way either way.
@@ -54,7 +55,7 @@ PillSurface {
     }
 
     function stop() {
-        Quickshell.execDetached(["/usr/bin/bash", Directories.recordScriptPath, "--stop"]);
+        ShellExec.launch({ program: ShellExec.bashPath, args: [Directories.recordScriptPath, "--stop"], scope: "record", description: "Stop recording" });
         RecorderStatus.scheduleQuickCheck();
     }
 

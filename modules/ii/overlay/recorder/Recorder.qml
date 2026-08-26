@@ -234,7 +234,12 @@ StyledOverlayWidget {
                     Behavior on scale { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                     onClicked: {
                         GlobalStates.overlayOpen = false;
-                        Quickshell.execDetached([Directories.recordScriptPath, "--fullscreen", "--sound"]);
+                        ShellExec.launch({
+                            program: Directories.recordScriptPath,
+                            args: ["--fullscreen", "--sound"],
+                            scope: "record",
+                            description: "Screen recorder"
+                        });
                         RecorderStatus.scheduleQuickCheck();
                     }
                 }
@@ -250,7 +255,12 @@ StyledOverlayWidget {
                     Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                     Behavior on scale { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                     onClicked: {
-                        Quickshell.execDetached([Directories.recordScriptPath, "--stop"]);
+                        ShellExec.launch({
+                            program: Directories.recordScriptPath,
+                            args: ["--stop"],
+                            scope: "record",
+                            description: "Stop screen recorder"
+                        });
                         RecorderStatus.scheduleQuickCheck();
                     }
                 }

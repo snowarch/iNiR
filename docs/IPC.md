@@ -539,6 +539,39 @@ Display brightness control.
 
 ---
 
+### browser
+
+Launch the configured browser. Launches are
+routed through the shell so long-running processes are raised by `ShellExec.launch`
+inside a transient systemd scope.
+
+| Function | Description |
+|----------|-------------|
+| `open` | Open the configured browser (`apps.browser`) |
+| `openUrl <url>` | Open the configured browser with a URL |
+
+```kdl
+bind "Super+W" { spawn "inir" "browser"; }
+```
+
+---
+
+### files
+
+Launch the configured file manager. Launches are
+routed through the shell so long-running processes are raised by `ShellExec.launch`
+inside a transient systemd scope.
+
+| Function | Description |
+|----------|-------------|
+| `open` | Open the configured file manager (`apps.files`), or `nautilus` if none is set |
+
+```kdl
+bind "Super+E" { spawn "inir" "files"; }
+```
+
+---
+
 ### mpris
 
 Media player control. Automatically detects and uses YtMusic controls when active, otherwise uses the active MPRIS player.

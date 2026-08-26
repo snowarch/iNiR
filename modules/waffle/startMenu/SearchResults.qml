@@ -192,7 +192,7 @@ RowLayout {
                             iconName: isAppEntry ? "open_in_new" : "keyboard_return",
                             iconType: LauncherSearchResult.IconType.Material,
                             execute: () => {
-                                resultPreview.entry?.execute();
+                                AppSearch.launchEntry(resultPreview.entry);
                             }
                         }),
                         ...(isAppEntry ? [
@@ -218,7 +218,14 @@ RowLayout {
                     implicitHeight: 32
                     icon.name: modelData.iconName
                     text: modelData.name
-                    onClicked: modelData.execute();
+                    onClicked: {
+                        const actionCommand = Array.from(modelData.command ?? []).filter(arg => String(arg ?? "").length > 0)
+                        if (actionCommand.length > 0) {
+                            AppSearch.launchDesktopAction(modelData)
+                        } else {
+                            modelData.execute();
+                        }
+                    }
 
                     contentItem: RowLayout {
                         spacing: 8

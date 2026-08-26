@@ -17,6 +17,7 @@ Singleton {
     // Boot greeting lifecycle — singleton preserves across hot-reload so greeting shows once per session
     property bool bootGreetingOpen: false
     property bool bootGreetingDone: false
+    property bool startupLockDone: false
     property bool barOpen: true
     property bool crosshairOpen: false
     property bool sidebarLeftOpen: false
