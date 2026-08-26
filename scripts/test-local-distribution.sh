@@ -79,7 +79,7 @@ schema_checks = {
     "schema dock not hover-only": "property bool hoverToReveal: false" in schema,
     "schema right sidebar full height": "property bool collapseEmptyNotifications: false" in schema,
     "schema left sidebar full height": "property bool collapseWidgetsTab: false" in schema,
-    "schema wallhaven tab": "property JsonObject wallhaven: JsonObject {\n                    // Enable/disable the Wallhaven tab in the left sidebar\n                    property bool enable: true" in schema,
+    "schema wallhaven tab": "property JsonObject wallhaven: JsonObject {\n                    // Enable/disable the Wallpapers tab in the left sidebar\n                    property bool enable: true" in schema,
     "schema news tab": "property JsonObject news: JsonObject {\n                    property bool enable: true" in schema,
     "wizard applies initial profile": "root.applyProfile(root.selectedProfile)" in wizard,
     "wizard dock pinned": '"dock.pinnedOnStartup": true' in wizard,
@@ -218,6 +218,17 @@ if command -v python3 &>/dev/null && [[ -f "$runtime_root/scripts/lib/generate-i
     python3 "$runtime_root/scripts/lib/generate-ipc-registry.py" --check
 fi
 
+if command -v python3 &>/dev/null && [[ -f "$runtime_root/scripts/lib/check-launch-policy.py" ]]; then
+    step "launch policy scan"
+    # set -euo pipefail at the top makes a scanner violation fatal.
+    python3 "$runtime_root/scripts/lib/check-launch-policy.py"
+fi
+
+if [[ -f "$runtime_root/scripts/tests/test-launch-daemon.sh" ]]; then
+    step "launch daemon contract suite"
+    bash "$runtime_root/scripts/tests/test-launch-daemon.sh"
+fi
+
 if [[ "$run_runtime" == true ]]; then
     step "runtime restart"
     bash "$runtime_root/scripts/inir" kill >/dev/null 2>&1 || true
@@ -292,7 +303,7 @@ done
 # Maintainer and development tooling must be stripped by both install paths.
 dev_tooling_files=(release.sh wiki-sync.sh verify-docs.sh qml-check.fish
     test-local-distribution.sh test-mascot-pack-flow.sh)
-dev_tooling_dirs=(agents tools l10n)
+dev_tooling_dirs=(agents tools l10n tests)
 for tool in "${dev_tooling_files[@]}" "${dev_tooling_dirs[@]}"; do
     pattern="--exclude='/$tool'"
     [[ " ${dev_tooling_dirs[*]} " == *" $tool "* ]] && pattern="--exclude='/$tool/'"

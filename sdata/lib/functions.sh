@@ -180,7 +180,7 @@ RUNTIME_EXCLUDES=(
   # Maintainer and development tooling. Anchored with a leading slash so these
   # common names only ever match at the top of a payload directory, never a
   # future modules/…/tools/ that has every right to ship.
-  --exclude='/agents/' --exclude='/tools/' --exclude='/l10n/'
+  --exclude='/agents/' --exclude='/tools/' --exclude='/l10n/' --exclude='/tests/'
   --exclude='/release.sh' --exclude='/wiki-sync.sh' --exclude='/verify-docs.sh'
   --exclude='/qml-check.fish' --exclude='/test-local-distribution.sh'
   --exclude='/test-mascot-pack-flow.sh'
