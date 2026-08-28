@@ -101,15 +101,38 @@ DialogListItem {
 
                 Item { Layout.fillWidth: true }
                 ActionButton {
-                    buttonText: root.device?.connected ? Translation.tr("Disconnect") : Translation.tr("Connect")
+                    id: connectBtn
+                    property bool operationPending: false
+                    buttonText: {
+                        if (operationPending) {
+                            return root.device?.connected ? Translation.tr("Disconnecting…") : Translation.tr("Connecting…");
+                        }
+                        return root.device?.connected ? Translation.tr("Disconnect") : Translation.tr("Connect")
+                    }
 
                     onClicked: {
+                        operationPending = true;
+                        pendingTimeout.start();
                         if (root.device?.connected) {
                             root.device.disconnect();
                         } else {
                             root.device.trusted = true;
                             root.device.connect();
                         }
+                    }
+
+                    Connections {
+                        target: root.device
+                        function onConnectedChanged() {
+                            connectBtn.operationPending = false;
+                            pendingTimeout.stop();
+                        }
+                    }
+
+                    Timer {
+                        id: pendingTimeout
+                        interval: 15000
+                        onTriggered: connectBtn.operationPending = false
                     }
                 }
                 Revealer {
