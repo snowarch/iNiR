@@ -1531,6 +1531,39 @@ Item { // Bar content region
                     iconSize: Appearance.font.pixelSize.larger
                     color: rightSidebarButton.colText
                     Layout.rightMargin: BluetoothStatus.available ? indicatorsRowLayout.realSpacing : 0
+
+                    HoverHandler {
+                        id: wifiHover
+                        onHoveredChanged: {
+                            if (hovered) {
+                                Network.refreshActiveNetworkDetails();
+                            }
+                        }
+                    }
+
+                    StyledToolTip {
+                        extraVisibleCondition: wifiHover.hovered
+                        text: {
+                            if (!Network.wifiEnabled) return Translation.tr("Wi-Fi is disabled");
+                            if (Network.ethernet) return Translation.tr("Ethernet connected");
+                            if (!Network.networkName) return Translation.tr("Not connected");
+                            let lines = [Translation.tr("Connected to %1").arg(Network.networkName)];
+                            if (Network.active) {
+                                lines.push(Network.networkStrength + "%");
+                                if (Network.active.frequency) {
+                                    let ghz = Network.active.frequency > 5900 ? "6 GHz" : (Network.active.frequency > 4000 ? "5 GHz" : "2.4 GHz");
+                                    lines.push(ghz + " (" + Network.active.frequency + " MHz)");
+                                }
+                                if (Network.active.rate) {
+                                    lines.push(Network.active.rate);
+                                }
+                                if (Network.active.bssid) {
+                                    lines.push(Network.active.bssid);
+                                }
+                            }
+                            return lines.join(" | ");
+                        }
+                    }
                 }
                 Revealer {
                     reveal: BluetoothStatus.available
