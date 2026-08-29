@@ -7,30 +7,47 @@
 # @meta icon: music_note
 # @meta keywords: spotify music spicetify aur flatpak
 #
-# Arch family : `spotify` (AUR) + `spicetify-cli` (AUR). Repairs the
-#               Spicetify v2.44+ wrapper asset when source-built packages omit
-#               it, then tries `spicetify backup apply` first. It only launches
-#               Spotify (so the user can sign in and Spotify can generate its
-#               prefs file) if the first apply fails. Then sets prefs_path,
-#               retries, installs the Marketplace, and — only if the user has
-#               enabled `appearance.wallpaperTheming.enableSpicetify` in
-#               config.json — applies the iNiR Spicetify theme.
+# Arch family : `spotify` (AUR) + `spicetify-cli` (AUR).
+#               Follows the official Spicetify docs for Linux setup:
+#               https://spicetify.app/docs/getting-started
+#
+#               Removes incompatible installs (Flatpak, Snap, spotify-launcher,
+#               and conflicting spicetify-cli-git package), configures paths
+#               and permissions, repairs missing Spicetify v2.44+ wrapper assets,
+#               generates prefs if needed, applies Spicetify backup with
+#               progressive recovery, installs Marketplace, automatically
+#               enables Spicetify theming in iNiR config, and applies the theme.
 # Other distros: falls back to the Flatpak build of Spotify. Spicetify is
 #                skipped because it cannot patch the Flatpak install reliably.
+#
+# --- Developer notes ---------------------------------------------------------
+# Set TRACE=1 to enable bash trace (set -x) for debugging.
+# ------------------------------------------------------------------------------
 
+[[ "${TRACE:-}" == "1" ]] && set -x
 set -Eeuo pipefail
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
 . "$SCRIPT_DIR/_lib.sh"
+# shellcheck source=scripts/lib/config-path.sh
+. "$SCRIPT_DIR/../lib/config-path.sh"
 
-CONFIG_PATH="${XDG_CONFIG_HOME:-$HOME/.config}/illogical-impulse/config.json"
+# ------------------------------------------------------------------------------
+# Config & Paths
+# ------------------------------------------------------------------------------
+CONFIG_PATH="$(inir_config_file)"
+THEME_SCRIPT="$SCRIPT_DIR/../colors/apply-spicetify-theme.sh"
 
-_find_prefs() {
-    find "$HOME" -path '*/spotify/prefs' -print -quit 2>/dev/null
-}
+# ------------------------------------------------------------------------------
+# Helpers
+# ------------------------------------------------------------------------------
 
-_have_spotify_and_spicetify() {
-    have_cmd spotify && have_cmd spicetify
+# Print an error and exit, holding the terminal open.
+_die() {
+    setup_fail "$1"
+    setup_finish_pause
+    exit 1
 }
 
 _run_may_fail() {
@@ -39,6 +56,14 @@ _run_may_fail() {
     local status=$?
     set -e
     return "$status"
+}
+
+_find_prefs() {
+    find "$HOME" -path '*/spotify/prefs' -print -quit 2>/dev/null
+}
+
+_have_spotify_and_spicetify() {
+    have_cmd spotify && have_cmd spicetify
 }
 
 _spicetify_version() {
@@ -186,6 +211,12 @@ _sync_spotify_wrapper_asset() {
     echo "  · Synced missing Spotify XPUI wrapper asset."
 }
 
+_spotify_dir() {
+    for d in /opt/spotify "$HOME/.local/share/spotify-launcher/install/usr/share/spotify"; do
+        [[ -d "$d/Apps" ]] && echo "$d" && return 0
+    done
+}
+
 _ensure_spotify_writable() {
     local spotify_root="$1"
     local apps_dir="$spotify_root/Apps"
@@ -209,20 +240,26 @@ _ensure_spotify_writable() {
     return 1
 }
 
-_await_or_force_close_spotify() {
+# Wait for the user to close Spotify (or force-close with Enter).
+_await_spotify_close() {
     echo
-    echo "  ┌─────────────────────────────────────────────────────────────┐"
-    echo "  │  Sign in to Spotify so it can write its prefs file.         │"
-    echo "  │  Quit Spotify normally to continue, OR press Enter here     │"
-    echo "  │  to force-quit it.                                          │"
-    echo "  └─────────────────────────────────────────────────────────────┘"
+    cat <<'BANNER'
+  ┌─────────────────────────────────────────────────────────────┐
+  │  Sign in to Spotify so it can write its prefs file.         │
+  │  Quit Spotify normally to continue, OR press Enter here     │
+  │  to force-quit it.                                          │
+  └─────────────────────────────────────────────────────────────┘
+BANNER
     echo
 
     local waited=0
     while ! pgrep -x spotify >/dev/null 2>&1; do
         sleep 1
         waited=$((waited + 1))
-        (( waited >= 30 )) && { echo "  · Spotify did not start; continuing anyway." >&2; return 0; }
+        if (( waited >= 30 )); then
+            echo "  · Spotify did not start; continuing anyway." >&2
+            return 0
+        fi
     done
 
     while pgrep -x spotify >/dev/null 2>&1; do
@@ -240,150 +277,263 @@ _await_or_force_close_spotify() {
     echo "  · Spotify closed — resuming setup."
 }
 
-_theme_enabled_in_config() {
-    [[ -f "$CONFIG_PATH" ]] || return 1
-    have_cmd jq || return 1
-    [[ "$(jq -r '.appearance.wallpaperTheming.enableSpicetify // false' \
-        "$CONFIG_PATH" 2>/dev/null)" == "true" ]]
+_enable_spicetify_theming() {
+    if ! have_cmd jq; then
+        echo "  · jq not available; cannot enable Spicetify theming in config." >&2
+        return 1
+    fi
+    echo "  · Enabling Spicetify theming in iNiR config…"
+    if [[ ! -f "$CONFIG_PATH" ]]; then
+        mkdir -p "$(dirname "$CONFIG_PATH")"
+        echo '{}' > "$CONFIG_PATH"
+    fi
+    local lockfile="$CONFIG_PATH.lock"
+    (
+        flock -w 5 200 || { echo "  · Config lock timeout." >&2; return 1; }
+        jq '.appearance.wallpaperTheming.enableSpicetify = true' \
+            "$CONFIG_PATH" > "$CONFIG_PATH.tmp" \
+            && mv "$CONFIG_PATH.tmp" "$CONFIG_PATH"
+    ) 200>"$lockfile"
 }
 
-setup_init "spotify" "Setup Spotify + Spicetify"
+# ------------------------------------------------------------------------------
+# Phase 1 — Remove incompatible installs
+# ------------------------------------------------------------------------------
+# Spicetify can only patch the official AUR package at /opt/spotify.
+# Conflicting package formats (Flatpak, Snap, launcher) must be removed first.
+# ------------------------------------------------------------------------------
+_remove_incompatible() {
+    local helper
+    helper="$(ensure_aur_helper)"
 
-if is_arch_like; then
-    TOTAL=6
+    # Flatpak Spotify
+    if have_cmd flatpak; then
+        if flatpak list --app 2>/dev/null | grep -q "com.spotify.Client"; then
+            echo "  · Removing Flatpak Spotify…"
+            flatpak uninstall -y --user com.spotify.Client 2>/dev/null || \
+                flatpak uninstall -y com.spotify.Client 2>/dev/null || true
+        fi
+    fi
 
-    setup_progress 1 $TOTAL "Installing Spotify (AUR) and Spicetify CLI"
+    # Snap Spotify
+    if have_cmd snap; then
+        if snap list spotify >/dev/null 2>&1; then
+            echo "  · Removing Snap Spotify…"
+            sudo snap remove spotify >/dev/null 2>&1 || true
+        fi
+    fi
+
+    # spotify-launcher (AUR)
+    if have_cmd spotify-launcher; then
+        echo "  · Removing spotify-launcher…"
+        "$helper" -Rns --noconfirm spotify-launcher 2>/dev/null || true
+        rm -rf "$HOME/.local/share/spotify-launcher" 2>/dev/null || true
+    fi
+
+    # Conflicting spicetify packages (prevent interactive "Remove X? [y/N]" prompt)
+    if "$helper" -Q spicetify-cli-git >/dev/null 2>&1; then
+        echo "  · Removing spicetify-cli-git (conflicts with spicetify-cli)…"
+        "$helper" -Rns --noconfirm spicetify-cli-git 2>/dev/null || true
+    fi
+}
+
+# ------------------------------------------------------------------------------
+# Phase 2 — Install packages
+# ------------------------------------------------------------------------------
+_install_packages() {
     if _have_spotify_and_spicetify; then
         echo "  · Spotify and Spicetify are already installed."
     elif ! _run_may_fail install_arch -- spotify spicetify-cli; then
         if _have_spotify_and_spicetify; then
             echo "  · Package install reported an error, but Spotify and Spicetify are available; continuing." >&2
         else
-            setup_fail "Could not install Spotify and Spicetify CLI."
-            setup_finish_pause
-            exit 1
+            _die "Could not install Spotify and Spicetify CLI."
         fi
     fi
 
-    # Detect the Spotify install directory. Prefer /opt/spotify (AUR package,
-    # has .spa files spicetify needs) over the spotify-launcher expanded dir.
-    _spotify_dir() {
-        for d in /opt/spotify "$HOME/.local/share/spotify-launcher/install/usr/share/spotify"; do
-            [[ -d "$d/Apps" ]] && echo "$d" && return
-        done
-    }
+    # Verify spicetify is in PATH; fall back to the curl installer location if present.
+    if ! have_cmd spicetify && [[ -x "$HOME/.spicetify/spicetify" ]]; then
+        export PATH="$HOME/.spicetify:$PATH"
+    fi
+    if ! have_cmd spicetify; then
+        _die "spicetify was installed but is not in PATH. Open a new terminal and rerun /setup-spotify."
+    fi
+}
 
-    setup_progress 2 $TOTAL "Configuring Spicetify paths"
-    spotify_dir="$(_spotify_dir)"
+# ------------------------------------------------------------------------------
+# Phase 3 — Configure Spicetify paths & permissions
+# ------------------------------------------------------------------------------
+_configure_spicetify() {
+    spotify_dir="$(_spotify_dir || true)"
     if [[ -z "$spotify_dir" ]]; then
-        setup_fail "Could not find Spotify install directory."
-        setup_finish_pause
-        exit 1
+        _die "Could not find Spotify install directory (/opt/spotify)."
     fi
     echo "  · Spotify at: $spotify_dir"
-    # Ensure spicetify points to the .spa-based install, not a launcher dir
+
+    # Ensure Spicetify config directory exists
+    local spicetify_cfg_dir
+    spicetify_cfg_dir="${XDG_CONFIG_HOME:-$HOME/.config}/spicetify"
+    mkdir -p "$spicetify_cfg_dir"
+
+    # Ensure spicetify points to the .spa-based install
     spicetify config spotify_path "$spotify_dir" >/dev/null 2>&1 || true
+
     if ! _ensure_spotify_writable "$spotify_dir"; then
-        setup_fail "Could not make Spotify writable for Spicetify patching."
-        setup_finish_pause
-        exit 1
+        _die "Could not make Spotify writable for Spicetify patching."
     fi
 
-    setup_progress 3 $TOTAL "Repairing Spicetify wrapper assets"
     if ! _ensure_spicetify_wrapper_asset; then
-        setup_fail "Could not build/install Spicetify wrapper asset."
-        setup_finish_pause
-        exit 1
+        _die "Could not build/install Spicetify wrapper asset."
     fi
+}
 
-    setup_progress 4 $TOTAL "Applying Spicetify backup"
+# ------------------------------------------------------------------------------
+# Phase 4 — First-run: generate prefs file (if needed)
+# ------------------------------------------------------------------------------
+_generate_prefs_if_needed() {
+    local prefs
     prefs="$(_find_prefs)"
     if [[ -n "$prefs" ]]; then
         echo "  · prefs already exists at $prefs"
         spicetify config prefs_path "$prefs" >/dev/null 2>&1 || true
+        return 0
     fi
 
-    _spicetify_apply() {
-        if _run_may_fail spicetify backup apply; then
-            _sync_spotify_wrapper_asset "$spotify_dir"
-            return 0
-        fi
-        # Stale backup — try restore then redo
-        if _run_may_fail spicetify restore backup apply; then
-            _sync_spotify_wrapper_asset "$spotify_dir"
-            return 0
-        fi
-        # Deadlocked (version mismatch) — nuke backup state and retry
-        local cfg_dir
-        cfg_dir="$(dirname "$(spicetify -c 2>/dev/null)" 2>/dev/null)"
-        if [[ -n "$cfg_dir" ]]; then
-            echo "  · Clearing stale backup state…"
-            rm -rf "${cfg_dir:?}/Backup" 2>/dev/null || true
-            # Clear [Backup] section values in config
+    # Close any lingering Spotify process first
+    if pgrep -x spotify >/dev/null 2>&1; then
+        echo "  · Spotify is running. Closing it before first-run setup…"
+        pkill -x spotify || true
+        sleep 2
+    fi
+
+    echo "  · Launching Spotify so it can generate its prefs file…"
+    setsid -f spotify >/dev/null 2>&1 < /dev/null || \
+        nohup spotify >/dev/null 2>&1 < /dev/null &
+
+    setup_notify "Sign in to Spotify, then quit it (or press Enter in the terminal to force-quit)" "media-playback-start"
+    _await_spotify_close
+
+    prefs="$(_find_prefs)"
+    if [[ -z "$prefs" ]]; then
+        _die "Could not locate spotify/prefs after first run; aborting."
+    fi
+    echo "  · Found prefs at $prefs"
+    spicetify config prefs_path "$prefs" >/dev/null 2>&1 || true
+}
+
+# ------------------------------------------------------------------------------
+# Phase 5 — Apply Spicetify backup with progressive recovery
+# ------------------------------------------------------------------------------
+_apply_spicetify() {
+    local spotify_root="$1"
+
+    if _run_may_fail spicetify backup apply; then
+        _sync_spotify_wrapper_asset "$spotify_root"
+        return 0
+    fi
+
+    # Stale backup — try restore then redo
+    if _run_may_fail spicetify restore backup apply; then
+        _sync_spotify_wrapper_asset "$spotify_root"
+        return 0
+    fi
+
+    # Deadlocked (version mismatch) — nuke backup state and retry
+    local cfg_dir
+    cfg_dir="$(dirname "$(spicetify -c 2>/dev/null)" 2>/dev/null)"
+    if [[ -n "$cfg_dir" ]]; then
+        echo "  · Clearing stale backup state…"
+        rm -rf "${cfg_dir:?}/Backup" 2>/dev/null || true
+        if [[ -f "${cfg_dir}/config-xpui.ini" ]]; then
             sed -i '/^\[Backup\]/,/^\[/{/^\[Backup\]/!{/^\[/!d}}' \
                 "${cfg_dir}/config-xpui.ini" 2>/dev/null || true
         fi
-        if _run_may_fail spicetify backup apply; then
-            _sync_spotify_wrapper_asset "$spotify_dir"
-            return 0
-        fi
-        return 1
-    }
-
-    if ! _spicetify_apply; then
-        echo
-        echo "  · backup apply failed (likely no prefs file yet)."
-        echo "  · Launching Spotify so it can generate its prefs…"
-        setsid -f spotify >/dev/null 2>&1 < /dev/null || \
-            nohup spotify >/dev/null 2>&1 < /dev/null &
-        setup_notify "Sign in to Spotify, then quit it (or press Enter in the terminal to force-quit)" "media-playback-start"
-        _await_or_force_close_spotify
-
-        prefs="$(_find_prefs)"
-        if [[ -z "$prefs" ]]; then
-            setup_fail "Could not locate spotify/prefs after first run; aborting."
-            setup_finish_pause
-            exit 1
-        fi
-        echo "  · Found prefs at $prefs"
-        spicetify config prefs_path "$prefs" >/dev/null 2>&1 || true
-        if ! _spicetify_apply; then
-            setup_fail "Spicetify backup/apply failed after Spotify generated prefs."
-            setup_finish_pause
-            exit 1
-        fi
     fi
 
-    setup_progress 5 $TOTAL "Installing Spicetify Marketplace"
+    if _run_may_fail spicetify backup apply; then
+        _sync_spotify_wrapper_asset "$spotify_root"
+        return 0
+    fi
+
+    return 1
+}
+
+# ------------------------------------------------------------------------------
+# Phase 6 — Marketplace & theme
+# ------------------------------------------------------------------------------
+_install_marketplace() {
     if curl -fsSL https://raw.githubusercontent.com/spicetify/marketplace/main/resources/install.sh \
         | sh; then
-        echo "Marketplace installed."
+        echo "  · Marketplace installed."
     else
-        echo "warning: Marketplace installer failed; you can rerun it later." >&2
+        echo "  · warning: Marketplace installer failed; you can rerun it later." >&2
+    fi
+}
+
+_apply_theme() {
+    if ! _enable_spicetify_theming; then
+        echo "  · warning: Could not enable Spicetify theming in config; continuing." >&2
     fi
 
-    if _theme_enabled_in_config; then
-        setup_progress 6 $TOTAL "Applying iNiR Spicetify theme"
-        theme_script="$SCRIPT_DIR/../colors/apply-spicetify-theme.sh"
-        if [[ -x "$theme_script" ]]; then
-            theme_name="$(jq -r '.appearance.wallpaperTheming.spicetifyTheme // "Inir"' "$CONFIG_PATH" 2>/dev/null)"
-            if [[ "$theme_name" != "Inir" && "$theme_name" != "InirTUI" ]]; then
-                theme_name="Inir"
-            fi
-            if "$theme_script" --theme "$theme_name"; then
-                echo "iNiR theme applied."
-            else
-                echo "warning: theme script returned non-zero; rerun it manually if Spotify looks unstyled." >&2
-            fi
+    if [[ -x "$THEME_SCRIPT" ]]; then
+        local theme_name
+        theme_name="$(jq -r '.appearance.wallpaperTheming.spicetifyTheme // "Inir"' "$CONFIG_PATH" 2>/dev/null || printf 'Inir')"
+        if [[ "$theme_name" != "Inir" && "$theme_name" != "InirTUI" ]]; then
+            theme_name="Inir"
+        fi
+        echo "  · Applying iNiR theme ($theme_name)…"
+        if "$THEME_SCRIPT" --theme "$theme_name"; then
+            echo "  · iNiR theme applied."
         else
-            echo "warning: $theme_script not found or not executable; skipping theme." >&2
+            echo "  · warning: theme script returned non-zero; rerun it manually if Spotify looks unstyled." >&2
         fi
     else
-        setup_progress 6 $TOTAL "Skipping iNiR theme (appearance.wallpaperTheming.enableSpicetify is off)"
-        echo "  · Enable it in Settings → Themes → 'Spotify theming' to apply the iNiR theme."
+        echo "  · warning: $THEME_SCRIPT not found or not executable; skipping theme." >&2
+    fi
+}
+
+# ------------------------------------------------------------------------------
+# Main
+# ------------------------------------------------------------------------------
+setup_init "spotify" "Setup Spotify + Spicetify"
+
+if is_arch_like; then
+    TOTAL=6
+
+    setup_progress 1 $TOTAL "Removing incompatible Spotify installs"
+    _remove_incompatible
+
+    setup_progress 2 $TOTAL "Installing Spotify (AUR) and Spicetify CLI"
+    _install_packages
+
+    setup_progress 3 $TOTAL "Configuring Spicetify paths and assets"
+    _configure_spicetify
+
+    setup_progress 4 $TOTAL "Checking Spotify configuration and preferences"
+    prefs="$(_find_prefs)"
+    if [[ -z "$prefs" ]]; then
+        _generate_prefs_if_needed
+    else
+        echo "  · Found existing prefs at $prefs"
+        spicetify config prefs_path "$prefs" >/dev/null 2>&1 || true
     fi
 
-    setup_done "Spotify + Spicetify ready. Launch Spotify to verify."
+    setup_progress 5 $TOTAL "Applying Spicetify backup"
+    spotify_dir="$(_spotify_dir)"
+    if ! _apply_spicetify "$spotify_dir"; then
+        # If first apply fails and prefs were missing or incomplete, try first-run launch
+        echo "  · backup apply failed; launching Spotify to refresh preferences…"
+        _generate_prefs_if_needed
+        if ! _apply_spicetify "$spotify_dir"; then
+            _die "Spicetify backup apply failed even after generating prefs. Check the error above."
+        fi
+    fi
+
+    setup_progress 6 $TOTAL "Installing Spicetify Marketplace and applying theme"
+    _install_marketplace
+    _apply_theme
+
+    setup_done "Spotify + Spicetify ready with iNiR theming enabled. Launch Spotify to verify."
 else
     TOTAL=2
     setup_progress 1 $TOTAL "Installing Spotify via Flatpak (no Spicetify on non-Arch)"
