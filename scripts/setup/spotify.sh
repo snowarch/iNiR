@@ -12,9 +12,8 @@
 #               it, then tries `spicetify backup apply` first. It only launches
 #               Spotify (so the user can sign in and Spotify can generate its
 #               prefs file) if the first apply fails. Then sets prefs_path,
-#               retries, installs the Marketplace, and — only if the user has
-#               enabled `appearance.wallpaperTheming.enableSpicetify` in
-#               config.json — applies the iNiR Spicetify theme.
+#               retries, installs the Marketplace, enables the iNiR Spicetify
+#               theme in config.json, and applies it immediately.
 # Other distros: falls back to the Flatpak build of Spotify. Spicetify is
 #                skipped because it cannot patch the Flatpak install reliably.
 
@@ -22,8 +21,10 @@ set -Eeuo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
 . "$SCRIPT_DIR/_lib.sh"
+# shellcheck source=scripts/lib/config-path.sh
+. "$SCRIPT_DIR/../lib/config-path.sh"
 
-CONFIG_PATH="${XDG_CONFIG_HOME:-$HOME/.config}/illogical-impulse/config.json"
+CONFIG_PATH="$(inir_config_file)"
 
 _find_prefs() {
     find "$HOME" -path '*/spotify/prefs' -print -quit 2>/dev/null
@@ -247,6 +248,24 @@ _theme_enabled_in_config() {
         "$CONFIG_PATH" 2>/dev/null)" == "true" ]]
 }
 
+_enable_spicetify_theming() {
+    if ! have_cmd jq; then
+        echo "  · jq not available; cannot enable Spicetify theming in config." >&2
+        return 1
+    fi
+    echo "  · Enabling Spicetify theming in iNiR config…"
+    if [[ ! -f "$CONFIG_PATH" ]]; then
+        echo '{}' > "$CONFIG_PATH"
+    fi
+    local lockfile="$CONFIG_PATH.lock"
+    (
+        flock -w 5 200 || { echo "  · Config lock timeout." >&2; return 1; }
+        jq '.appearance.wallpaperTheming.enableSpicetify = true' \
+            "$CONFIG_PATH" > "$CONFIG_PATH.tmp" \
+            && mv "$CONFIG_PATH.tmp" "$CONFIG_PATH"
+    ) 200>"$lockfile"
+}
+
 setup_init "spotify" "Setup Spotify + Spicetify"
 
 if is_arch_like; then
@@ -362,28 +381,26 @@ if is_arch_like; then
         echo "warning: Marketplace installer failed; you can rerun it later." >&2
     fi
 
-    if _theme_enabled_in_config; then
-        setup_progress 6 $TOTAL "Applying iNiR Spicetify theme"
-        theme_script="$SCRIPT_DIR/../colors/apply-spicetify-theme.sh"
-        if [[ -x "$theme_script" ]]; then
-            theme_name="$(jq -r '.appearance.wallpaperTheming.spicetifyTheme // "Inir"' "$CONFIG_PATH" 2>/dev/null)"
-            if [[ "$theme_name" != "Inir" && "$theme_name" != "InirTUI" ]]; then
-                theme_name="Inir"
-            fi
-            if "$theme_script" --theme "$theme_name"; then
-                echo "iNiR theme applied."
-            else
-                echo "warning: theme script returned non-zero; rerun it manually if Spotify looks unstyled." >&2
-            fi
+    setup_progress 6 $TOTAL "Enabling and applying iNiR Spicetify theme"
+    if ! _enable_spicetify_theming; then
+        echo "warning: Could not enable Spicetify theming in config; continuing." >&2
+    fi
+    theme_script="$SCRIPT_DIR/../colors/apply-spicetify-theme.sh"
+    if [[ -x "$theme_script" ]]; then
+        theme_name="$(jq -r '.appearance.wallpaperTheming.spicetifyTheme // "Inir"' "$CONFIG_PATH" 2>/dev/null)"
+        if [[ "$theme_name" != "Inir" && "$theme_name" != "InirTUI" ]]; then
+            theme_name="Inir"
+        fi
+        if "$theme_script" --theme "$theme_name"; then
+            echo "iNiR theme applied."
         else
-            echo "warning: $theme_script not found or not executable; skipping theme." >&2
+            echo "warning: theme script returned non-zero; rerun it manually if Spotify looks unstyled." >&2
         fi
     else
-        setup_progress 6 $TOTAL "Skipping iNiR theme (appearance.wallpaperTheming.enableSpicetify is off)"
-        echo "  · Enable it in Settings → Themes → 'Spotify theming' to apply the iNiR theme."
+        echo "warning: $theme_script not found or not executable; skipping theme." >&2
     fi
 
-    setup_done "Spotify + Spicetify ready. Launch Spotify to verify."
+    setup_done "Spotify + Spicetify ready with iNiR theming enabled. Launch Spotify to verify."
 else
     TOTAL=2
     setup_progress 1 $TOTAL "Installing Spotify via Flatpak (no Spicetify on non-Arch)"
