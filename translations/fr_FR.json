@@ -1299,7 +1299,7 @@
   "Generate Discord theme from wallpaper colors": "Générer un thème Discord à partir des couleurs du papier peint",
   "Generate Discord theme from wallpaper colors (requires Vesktop with system24 theme)": "Générer un thème Discord à partir des couleurs du papier peint (nécessite Vesktop avec le thème system24)",
   "Generate Zed editor theme from wallpaper colors": "Générer le thème de l'éditeur Zed à partir des couleurs du papier peint",
-  "Generate aether.nvim theme plugin for Neovim/LazyVim from wallpaper colors (writes to ~/.config/nvim/lua/plugins/neovim.lua)": "Générez le plugin de thème aether.nvim pour Neovim/LazyVim à partir des couleurs du papier peint (écrit dans ~/.config/nvim/lua/plugins/neovim.lua)",
+  "Generate inir.nvim theme plugin for Neovim/LazyVim from wallpaper colors (writes to ~/.config/nvim/lua/plugins/neovim.lua)": "Générez le plugin de thème inir.nvim pour Neovim/LazyVim à partir des couleurs du papier peint (écrit dans ~/.config/nvim/lua/plugins/neovim.lua)",
   "Generate and apply Spicetify theme from wallpaper colors": "Générez et appliquez le thème Spicetify à partir des couleurs du papier peint",
   "Generate and apply a Spicetify theme from wallpaper colors": "Générez et appliquez un thème Spicetify à partir des couleurs du papier peint",
   "Generate color configs for:": "Générez des configurations de couleurs pour :",

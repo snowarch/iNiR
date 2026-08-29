@@ -1299,7 +1299,7 @@
   "Generate Discord theme from wallpaper colors": "वॉलपेपर रंगों से Discord थीम उत्पन्न करें",
   "Generate Discord theme from wallpaper colors (requires Vesktop with system24 theme)": "वॉलपेपर रंगों से Discord थीम जेनरेट करें (सिस्टम24 थीम के साथ Vesktop की आवश्यकता है)",
   "Generate Zed editor theme from wallpaper colors": "वॉलपेपर रंगों से जेड संपादक थीम उत्पन्न करें",
-  "Generate aether.nvim theme plugin for Neovim/LazyVim from wallpaper colors (writes to ~/.config/nvim/lua/plugins/neovim.lua)": "वॉलपेपर रंगों से Neovim/LazyVim के लिए aether.nvim थीम प्लगइन जेनरेट करें (~/.config/nvim/lua/plugins/neovim.lua पर लिखें)",
+  "Generate inir.nvim theme plugin for Neovim/LazyVim from wallpaper colors (writes to ~/.config/nvim/lua/plugins/neovim.lua)": "वॉलपेपर रंगों से Neovim/LazyVim के लिए inir.nvim थीम प्लगइन जेनरेट करें (~/.config/nvim/lua/plugins/neovim.lua पर लिखें)",
   "Generate and apply Spicetify theme from wallpaper colors": "वॉलपेपर रंगों से Spicetify थीम बनाएं और लागू करें",
   "Generate and apply a Spicetify theme from wallpaper colors": "वॉलपेपर रंगों से Spicetify थीम बनाएं और लागू करें",
   "Generate color configs for:": "इनके लिए रंग कॉन्फ़िगरेशन जनरेट करें:",

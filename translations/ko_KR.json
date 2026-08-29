@@ -1299,7 +1299,7 @@
   "Generate Discord theme from wallpaper colors": "배경 화면 색상에서 Discord 테마 생성",
   "Generate Discord theme from wallpaper colors (requires Vesktop with system24 theme)": "배경 화면 색상에서 Discord 테마 생성(system24 테마가 있는 Vesktop 필요)",
   "Generate Zed editor theme from wallpaper colors": "배경 화면 색상에서 Zed 편집기 테마 생성",
-  "Generate aether.nvim theme plugin for Neovim/LazyVim from wallpaper colors (writes to ~/.config/nvim/lua/plugins/neovim.lua)": "배경 화면 색상에서 Neovim/LazyVim용 aether.nvim 테마 플러그인 생성(~/.config/nvim/lua/plugins/neovim.lua에 기록)",
+  "Generate inir.nvim theme plugin for Neovim/LazyVim from wallpaper colors (writes to ~/.config/nvim/lua/plugins/neovim.lua)": "배경 화면 색상에서 Neovim/LazyVim용 inir.nvim 테마 플러그인 생성(~/.config/nvim/lua/plugins/neovim.lua에 기록)",
   "Generate and apply Spicetify theme from wallpaper colors": "배경 화면 색상에서 Spicetify 테마 생성 및 적용",
   "Generate and apply a Spicetify theme from wallpaper colors": "배경 화면 색상에서 Spicetify 테마 생성 및 적용",
   "Generate color configs for:": "다음에 대한 색상 구성 생성:",

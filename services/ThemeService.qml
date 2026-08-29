@@ -35,6 +35,7 @@ Singleton {
         enableChrome: wallpaperThemingCfg?.enableChrome ?? true,
         enableZed: wallpaperThemingCfg?.enableZed ?? true,
         enableVSCode: wallpaperThemingCfg?.enableVSCode ?? true,
+        enableNeovim: wallpaperThemingCfg?.enableNeovim ?? false,
         useBackdropForColors: wallpaperThemingCfg?.useBackdropForColors ?? false,
         forceTerminalDarkMode: wallpaperThemingCfg?.terminalGenerationProps?.forceDarkMode ?? false,
         termSaturation: terminalAdjCfg?.saturation ?? 0.65,

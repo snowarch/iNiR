@@ -1299,7 +1299,7 @@
   "Generate Discord theme from wallpaper colors": "إنشاء سمة Discord من ألوان ورق الحائط",
   "Generate Discord theme from wallpaper colors (requires Vesktop with system24 theme)": "إنشاء سمة Discord من ألوان ورق الحائط (يتطلب Vesktop مع سمة system24)",
   "Generate Zed editor theme from wallpaper colors": "قم بإنشاء سمة محرر Zed من ألوان ورق الحائط",
-  "Generate aether.nvim theme plugin for Neovim/LazyVim from wallpaper colors (writes to ~/.config/nvim/lua/plugins/neovim.lua)": "قم بإنشاء مكون إضافي لموضوع aether.nvim لـ Neovim/LazyVim من ألوان ورق الحائط (يكتب إلى ~/.config/nvim/lua/plugins/neovim.lua)",
+  "Generate inir.nvim theme plugin for Neovim/LazyVim from wallpaper colors (writes to ~/.config/nvim/lua/plugins/neovim.lua)": "قم بإنشاء مكون إضافي لموضوع inir.nvim لـ Neovim/LazyVim من ألوان ورق الحائط (يكتب إلى ~/.config/nvim/lua/plugins/neovim.lua)",
   "Generate and apply Spicetify theme from wallpaper colors": "قم بإنشاء وتطبيق سمة Spicetify من ألوان ورق الحائط",
   "Generate and apply a Spicetify theme from wallpaper colors": "قم بإنشاء وتطبيق سمة Spicetify من ألوان ورق الحائط",
   "Generate color configs for:": "إنشاء تكوينات الألوان لـ:",

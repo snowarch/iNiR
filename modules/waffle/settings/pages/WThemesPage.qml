@@ -852,7 +852,7 @@ WSettingsPage {
         WSettingsSwitch {
             label: Translation.tr("Neovim / LazyVim")
             icon: "terminal"
-            description: Translation.tr("Generate aether.nvim theme plugin for Neovim/LazyVim from wallpaper colors (writes to ~/.config/nvim/lua/plugins/neovim.lua)")
+            description: Translation.tr("Generate inir.nvim theme plugin for Neovim/LazyVim from wallpaper colors (writes to ~/.config/nvim/lua/plugins/neovim.lua)")
             checked: Config.options?.appearance?.wallpaperTheming?.enableNeovim ?? false
             onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.enableNeovim", checked)
         }

@@ -1299,7 +1299,7 @@
   "Generate Discord theme from wallpaper colors": "壁紙の色からDiscordテーマを生成",
   "Generate Discord theme from wallpaper colors (requires Vesktop with system24 theme)": "壁紙の色から Discord テーマを生成 (system24 テーマを備えた Vesktop が必要)",
   "Generate Zed editor theme from wallpaper colors": "壁紙の色から Zed エディターのテーマを生成",
-  "Generate aether.nvim theme plugin for Neovim/LazyVim from wallpaper colors (writes to ~/.config/nvim/lua/plugins/neovim.lua)": "壁紙の色から Neovim/LazyVim 用の aether.nvim テーマ プラグインを生成します (~/.config/nvim/lua/plugins/neovim.lua に書き込みます)",
+  "Generate inir.nvim theme plugin for Neovim/LazyVim from wallpaper colors (writes to ~/.config/nvim/lua/plugins/neovim.lua)": "壁紙の色から Neovim/LazyVim 用の inir.nvim テーマ プラグインを生成します (~/.config/nvim/lua/plugins/neovim.lua に書き込みます)",
   "Generate and apply Spicetify theme from wallpaper colors": "壁紙の色から Spicetify テーマを生成して適用する",
   "Generate and apply a Spicetify theme from wallpaper colors": "壁紙の色から Spicetify テーマを生成して適用する",
   "Generate color configs for:": "以下のカラー構成を生成します。",
