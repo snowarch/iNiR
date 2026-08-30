@@ -80,6 +80,8 @@ def _resolve_output_files(env_var: str, default_path: Path) -> list[Path]:
         Path(f"~/.config/Vesktop/themes/{basename}").expanduser(),
         Path(f"~/.config/equicord/themes/{basename}").expanduser(),
         Path(f"~/.config/Equicord/themes/{basename}").expanduser(),
+        Path(f"~/.config/equibop/themes/{basename}").expanduser(),
+        Path(f"~/.config/Equibop/themes/{basename}").expanduser(),
     ]
 
     existing_dirs = [p for p in candidates if p.parent.exists()]
