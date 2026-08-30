@@ -232,6 +232,19 @@ Item { // Wrapper
             })
         }
 
+        const hasSearchPrefix = [
+            root.prefixAction,
+            root.prefixApp,
+            root.prefixClipboard,
+            root.prefixEmojis,
+            root.prefixMath,
+            root.prefixShellCommand,
+            root.prefixWebSearch
+        ].some(prefix => text.startsWith(prefix))
+        const developmentResultObjects = hasSearchPrefix
+            ? []
+            : DevelopmentEnvironments.searchResults(text)
+
         const commandResultObject = {
             key: "__run_command__",
             name: StringUtils.cleanPrefix(text, root.prefixShellCommand).replace("file://", ""),
@@ -303,6 +316,7 @@ Item { // Wrapper
         }
 
         result = result.concat(appResultObjects);
+        result = result.concat(developmentResultObjects);
         result = result.concat(launcherActionObjects);
 
         if (root.searchPrefixes.showDefaultActionsWithoutPrefix ?? true) {

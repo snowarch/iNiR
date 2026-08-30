@@ -18,6 +18,7 @@ step "shell syntax"
 bash -n \
     "$runtime_root/setup" \
     "$runtime_root/scripts/inir" \
+    "$runtime_root/scripts/setup/development.sh" \
     "$runtime_root/sdata/lib/"*.sh \
     "$runtime_root/sdata/subcmd-install/"*.sh \
     "$runtime_root/sdata/migrations/"*.sh
@@ -113,6 +114,19 @@ if grep -Fq 'pacman -S $installflags "${depends[@]}"' "$arch_installer"; then
 fi
 
 step "runtime payload manifests"
+python3 - "$runtime_root/defaults/dev-environments.json" <<'PY'
+import json
+import pathlib
+import sys
+
+manifest = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+required = {"id", "name", "description", "group", "icon", "tags"}
+if len(manifest) != 19 or any(not required.issubset(entry) for entry in manifest):
+    raise SystemExit("FAIL: development environment manifest is incomplete")
+if len({entry["id"] for entry in manifest}) != len(manifest):
+    raise SystemExit("FAIL: development environment IDs are not unique")
+PY
+
 while IFS= read -r runtime_file; do
     [[ -n "$runtime_file" ]] || continue
     [[ -f "$runtime_root/$runtime_file" ]]

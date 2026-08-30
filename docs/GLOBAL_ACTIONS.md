@@ -62,6 +62,16 @@ The action id (`/setup-<slug>`), display name, icon, keywords, terminal launchin
 
 You can disable the whole category by setting `search.globalActions.enableSetup` to `false` in your config.
 
+## Development environments
+
+Search for a language, runtime, framework, or database by name in an unprefixed search. Results show the current state and open a terminal action to install or remove the selected environment.
+
+Supported entries include Ruby/Rails, Node.js, Bun, Deno, Go, PHP, Laravel, Symfony, Python, Elixir, Phoenix, Rust, Java, Zig, .NET, OCaml, Clojure, Scala, and Docker databases. The setup backend currently targets Arch-based systems and keeps the package/runtime recipes in `scripts/setup/development.sh`.
+
+The metadata is maintained in [`defaults/dev-environments.json`](https://github.com/snowarch/inir/blob/main/defaults/dev-environments.json). Prefix searches remain routed to their existing providers.
+
+For Bun and Deno, Remove also handles an exact Arch package (`bun`, `bun-bin`, or `deno`) when the command resolves to `/usr/bin`; unrelated system packages are not removed.
+
 ## Custom actions
 
 You can add your own actions by creating scripts in:
