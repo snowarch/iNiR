@@ -15,6 +15,7 @@ import Quickshell.Wayland
 WindowDialog {
     id: root
     backgroundHeight: 450
+    readonly property bool bluetoothOn: Bluetooth.defaultAdapter?.enabled ?? false
 
     WindowDialogTitle {
         text: Translation.tr("Bluetooth devices")
@@ -45,9 +46,11 @@ WindowDialog {
         clip: true
         spacing: 4
         animateAppearance: false
+        enabled: root.bluetoothOn
+        opacity: root.bluetoothOn ? 1 : 0.45
 
         model: ScriptModel {
-            values: [...Bluetooth.devices.values].sort((a, b) => {
+            values: root.bluetoothOn ? [...Bluetooth.devices.values].sort((a, b) => {
                 // Connected -> paired -> others
                 let conn = (b.connected - a.connected) || (b.paired - a.paired);
                 if (conn !== 0) return conn;
@@ -60,7 +63,7 @@ WindowDialog {
 
                 // Alphabetical by name
                 return a.name.localeCompare(b.name);
-            })
+            }) : []
         }
         delegate: BluetoothDeviceItem {
             required property BluetoothDevice modelData
@@ -70,6 +73,32 @@ WindowDialog {
                 right: parent?.right
                 leftMargin: 8
                 rightMargin: 8
+            }
+        }
+
+        // Empty state: no devices or bluetooth off
+        ColumnLayout {
+            anchors.centerIn: parent
+            spacing: 6
+            visible: Bluetooth.devices.values.length === 0 || (!root.bluetoothOn && !(Bluetooth.defaultAdapter?.discovering ?? false))
+
+            MaterialSymbol {
+                Layout.alignment: Qt.AlignHCenter
+                iconSize: 48
+                text: !root.bluetoothOn ? "bluetooth_disabled" : "bluetooth_searching"
+                color: Appearance.colors.colSubtext
+            }
+            StyledText {
+                Layout.alignment: Qt.AlignHCenter
+                text: {
+                    if (!root.bluetoothOn)
+                        return Translation.tr("Bluetooth is off")
+                    if (Bluetooth.defaultAdapter?.discovering)
+                        return Translation.tr("Searching devices…")
+                    return Translation.tr("No devices found")
+                }
+                font.pixelSize: Appearance.font.pixelSize.small
+                color: Appearance.colors.colSubtext
             }
         }
     }

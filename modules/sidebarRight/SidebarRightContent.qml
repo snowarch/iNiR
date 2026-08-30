@@ -927,8 +927,7 @@ Item {
             if (!Bluetooth.defaultAdapter) return
             if (!shown) {
                 Bluetooth.defaultAdapter.discovering = false;
-            } else {
-                Bluetooth.defaultAdapter.enabled = true;
+            } else if (Bluetooth.defaultAdapter.enabled) {
                 Bluetooth.defaultAdapter.discovering = true;
             }
         }
@@ -949,8 +948,8 @@ Item {
         dialog: WifiDialog {}
         onShownChanged: {
             if (!shown) return;
-            Network.enableWifi();
-            Network.rescanWifi();
+            if (Network.wifiEnabled)
+                Network.rescanWifi();
         }
     }
 
