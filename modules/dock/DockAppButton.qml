@@ -138,7 +138,8 @@ DockButton {
 
     // Subtle highlight for active app (disabled in macOS and pill modes —
     // macOS uses magnify, pill uses its own background highlight)
-    scale: (!macosStyle && !pillStyle && appIsActive) ? (root.zzzStyle ? 1.02 : 1.05) : 1.0
+    scale: (!macosStyle && !pillStyle && appIsActive)
+        ? (root.regaliaStyle ? 1.0 : root.zzzStyle ? 1.02 : 1.05) : 1.0
     Behavior on scale {
         enabled: Appearance.animationsEnabled
         animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -169,12 +170,13 @@ DockButton {
             appToplevel.originalAppId,
             appToplevel.appId,
             root.desktopEntry?.id,
-            root.desktopEntry?.name
+            root.desktopEntry?.startupClass
         ].map(value => root.normalizedAppKey(value)).filter(value => value.length >= 3)
 
         return SystemTray.items.values.find(item => {
-            const trayKeys = [item?.id, item?.title]
-                .map(value => root.normalizedAppKey(value))
+            // SNI id is application identity; title is descriptive/localizable
+            // and must not be used to associate an unrelated tray item.
+            const trayKeys = [root.normalizedTrayKey(item?.id)]
                 .filter(value => value.length >= 3)
             return trayKeys.some(trayKey => appKeys.some(appKey => {
                 if (trayKey === appKey)
@@ -206,13 +208,15 @@ DockButton {
     // Island mode hovers like a Ricelin row: a faint cream frame fill with a
     // vermilion-tinted press, instead of the global style's hover chain.
     colBackgroundHover: macosStyle ? "transparent" : root.islandStyle ? PillTheme.frameBg
-        : (root.zzzStyle ? "transparent"
+        : (root.regaliaStyle ? Appearance.regalia.hoverPlate
+        : root.zzzStyle ? "transparent"
         : root.angelStyle ? Appearance.angel.colGlassCard
         : root.inirStyle ? Appearance.inir.colLayer1Hover
         : root.auroraStyle ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer0Hover)
     colRipple: macosStyle ? "transparent" : root.islandStyle ? Qt.alpha(PillTheme.vermLit, 0.18)
-        : (root.zzzStyle ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.22)
+        : (root.regaliaStyle ? Appearance.regalia.pressPlate
+        : root.zzzStyle ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.22)
         : root.angelStyle ? Appearance.angel.colGlassCardActive
         : root.inirStyle ? Appearance.inir.colLayer1Active
         : root.auroraStyle ? Appearance.aurora.colSubSurfaceActive
@@ -325,8 +329,6 @@ DockButton {
         if (id === "spotify" || id === "spotify-launcher") {
             id = "spotify-launcher";
         }
-        // Tray-resident applications may ignore a second launch while hidden.
-        // Prefer their native Library/Open/Show entry when one is available.
         if (!root.hasWindows) {
             const restoreEntry = root.findTrayMenuEntry(["library", "open", "show"])
             if (restoreEntry) {
@@ -338,6 +340,13 @@ DockButton {
             const entry = root.desktopEntry ?? AppSearch.lookupDesktopEntry(id);
             if (entry && AppSearch.launchEntry(entry))
                 return true;
+            // Only use SNI activation as a last resort when there is no usable
+            // desktop entry. activate() has no success signal and some clients
+            // accept it without ever restoring a window.
+            if (!entry && root.appTrayItem?.onlyMenu === false) {
+                root.appTrayItem.activate()
+                return true
+            }
             ShellExec.execCmd(id);
             return true;
         }
@@ -373,6 +382,12 @@ DockButton {
         if (appListRoot?._suppressNextClick) {
             appListRoot._suppressNextClick = false
             return
+        }
+        if (root.notificationCount > 0) {
+            Notifications.markReadForApp([
+                appToplevel?.originalAppId ?? appToplevel?.appId,
+                root.desktopEntry?.name
+            ])
         }
         // macOS click micro-pulse
         if (macosStyle) macItem.clickPulse()
@@ -421,7 +436,7 @@ DockButton {
         // every window/title event, which resets the menu's Repeater and kills
         // the hover state of the item under the cursor.
         contextMenu.model = root.buildContextMenuModel()
-        contextMenu.active = true
+        contextMenu.requestOpen()
     }
 
     function desktopActionIcon(action): var {
@@ -470,6 +485,13 @@ DockButton {
             .replace(/[^a-z0-9]/g, "")
     }
 
+    function normalizedTrayKey(value): string {
+        // Some SNI implementations decorate their otherwise stable app id with
+        // an instance suffix. Strip only that transport suffix, never app ids.
+        return root.normalizedAppKey(String(value ?? "")
+            .replace(/(?:[_.-]?status[_.-]?icon[_.-]?\d+)$/i, ""))
+    }
+
     function normalizedActionKey(value): string {
         return String(value ?? "")
             .toLowerCase()
@@ -485,15 +507,15 @@ DockButton {
     }
 
     function executeDesktopAction(action): void {
-        // A resident application is authoritative for its own commands. This
-        // also handles clients that ignore their desktop-action URI while hidden.
-        const trayEntry = root.findTrayMenuEntry([action?.id, action?.name])
-        if (trayEntry) {
-            trayEntry.triggered()
+        // The desktop entry owns desktop actions. Tray-menu text is only a
+        // compatibility fallback: using it first can silently redirect a dock
+        // context-menu action to a similarly named resident-menu command.
+        if (AppSearch.launchDesktopAction(root.desktopEntry, action))
             return
-        }
 
-        AppSearch.launchDesktopAction(root.desktopEntry, action)
+        const trayEntry = root.findTrayMenuEntry([action?.id, action?.name])
+        if (trayEntry)
+            trayEntry.triggered()
     }
 
     function buildContextMenuModel(): var {

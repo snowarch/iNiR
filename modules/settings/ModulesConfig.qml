@@ -70,7 +70,26 @@ ContentPage {
         Config.setNestedValue("enabledPanels", [...(defaultPanels[family] ?? [])])
     }
 
+    property string activeSection: "panels"
+
+    SettingsTaskNavigator {
+        icon: "extension"
+        title: Translation.tr("Modules")
+        description: Translation.tr("Choose which shell modules run, pick your default terminal and tune interface behavior in focused views.")
+        summary: Translation.tr("Panels \u00b7 Terminal \u00b7 Modules \u00b7 Interface")
+        currentValue: modulesPage.activeSection
+        onSelected: value => modulesPage.activeSection = value
+        options: [
+            { displayName: Translation.tr("Panels"), icon: "extension", value: "panels" },
+            { displayName: Translation.tr("Terminal"), icon: "terminal", value: "terminal" },
+            { displayName: Translation.tr("Modules"), icon: "dashboard", value: "modules" },
+            { displayName: Translation.tr("Interface"), icon: "tune", value: "interface" }
+        ]
+    }
+
     SettingsCardSection {
+        settingsTaskSection: "panels"
+        visible: modulesPage.activeSection === "panels"
         expanded: true
         icon: "extension"
         title: Translation.tr("Shell Modules")
@@ -117,7 +136,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "panels"
+        visible: modulesPage.activeSection === "panels"
+        expanded: true
         icon: "style"
         title: Translation.tr("Panel Style")
 
@@ -204,7 +225,9 @@ ContentPage {
     // ==================== DEFAULT TERMINAL ====================
     SettingsCardSection {
         id: terminalSection
-        expanded: false
+        settingsTaskSection: "terminal"
+        visible: modulesPage.activeSection === "terminal"
+        expanded: true
         icon: "terminal"
         title: Translation.tr("Default Terminal")
 
@@ -473,8 +496,9 @@ ContentPage {
 
     // ==================== MATERIAL II ====================
     SettingsCardSection {
-        visible: !modulesPage.isWaffle
-        expanded: false
+        settingsTaskSection: "modules"
+        visible: !modulesPage.isWaffle && modulesPage.activeSection === "modules"
+        expanded: true
         icon: "dashboard"
         title: Translation.tr("Core")
 
@@ -546,8 +570,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: !modulesPage.isWaffle
-        expanded: false
+        settingsTaskSection: "modules"
+        visible: !modulesPage.isWaffle && modulesPage.activeSection === "modules"
+        expanded: true
         icon: "notifications"
         title: Translation.tr("Feedback")
 
@@ -579,8 +604,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: !modulesPage.isWaffle
-        expanded: false
+        settingsTaskSection: "modules"
+        visible: !modulesPage.isWaffle && modulesPage.activeSection === "modules"
+        expanded: true
         icon: "build"
         title: Translation.tr("Utilities")
 
@@ -660,8 +686,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: !modulesPage.isWaffle
-        expanded: false
+        settingsTaskSection: "modules"
+        visible: !modulesPage.isWaffle && modulesPage.activeSection === "modules"
+        expanded: true
         icon: "more_horiz"
         title: Translation.tr("Optional")
 
@@ -694,8 +721,9 @@ ContentPage {
 
     // ==================== WAFFLE ====================
     SettingsCardSection {
-        visible: modulesPage.isWaffle
-        expanded: false
+        settingsTaskSection: "modules"
+        visible: modulesPage.isWaffle && modulesPage.activeSection === "modules"
+        expanded: true
         icon: "window"
         title: Translation.tr("Waffle Core")
 
@@ -767,8 +795,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: modulesPage.isWaffle
-        expanded: false
+        settingsTaskSection: "modules"
+        visible: modulesPage.isWaffle && modulesPage.activeSection === "modules"
+        expanded: true
         icon: "share"
         title: Translation.tr("Shared Modules")
 
@@ -888,7 +917,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "interface"
+        visible: modulesPage.activeSection === "interface"
+        expanded: true
         icon: "aspect_ratio"
         title: Translation.tr("Display scaling")
 
@@ -935,7 +966,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "interface"
+        visible: modulesPage.activeSection === "interface"
+        expanded: true
         icon: "wallpaper_slideshow"
         title: Translation.tr("Wallpaper selector")
 
@@ -982,7 +1015,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "interface"
+        visible: modulesPage.activeSection === "interface"
+        expanded: true
         icon: "web_asset"
         title: Translation.tr("Settings UI")
 

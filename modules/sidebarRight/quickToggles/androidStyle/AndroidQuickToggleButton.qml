@@ -86,38 +86,47 @@ GroupButton {
 
     // ZZZ: the visible surface is the chamfered ZzzPlate below, so the GroupButton's
     // own rounded rect is held transparent.
-    colBackground: Appearance.zzzEverywhere ? "transparent"
+    colBackground: Appearance.regaliaEverywhere ? Appearance.regalia.controlPlate
+        : Appearance.zzzEverywhere ? "transparent"
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2
         : root.colDarkSurface
-    colBackgroundHover: Appearance.zzzEverywhere ? "transparent"
+    colBackgroundHover: Appearance.regaliaEverywhere ? Appearance.regalia.controlPlateHover
+        : Appearance.zzzEverywhere ? "transparent"
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
         : root.colDarkSurfaceHover
-    colBackgroundToggled: Appearance.zzzEverywhere ? "transparent"
+    colBackgroundToggled: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlate
+        : Appearance.zzzEverywhere ? "transparent"
         : Appearance.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimary, 0.45)
         : Appearance.inirEverywhere
         ? Appearance.inir.colPrimaryContainer
         : Appearance.colors.colPrimary
-    colBackgroundToggledHover: Appearance.zzzEverywhere ? "transparent"
+    colBackgroundToggledHover: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateHover
+        : Appearance.zzzEverywhere ? "transparent"
         : Appearance.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimaryHover, 0.35)
         : Appearance.inirEverywhere
         ? Appearance.inir.colPrimaryContainerHover
         : Appearance.colors.colPrimaryHover
-    colBackgroundToggledActive: Appearance.zzzEverywhere ? "transparent"
+    colBackgroundToggledActive: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateActive
+        : Appearance.zzzEverywhere ? "transparent"
         : Appearance.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimaryActive, 0.30)
         : Appearance.inirEverywhere
         ? Appearance.inir.colPrimaryContainerActive
         : Appearance.colors.colPrimaryActive
-    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+    buttonRadius: Appearance.regaliaEverywhere ? Appearance.regalia.controlRadius
+        : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere
         ? Appearance.inir.roundingSmall
         : (toggled ? Appearance.rounding.large : baseHeight / 2)
-    buttonRadiusPressed: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
+    buttonRadiusPressed: Appearance.regaliaEverywhere ? Appearance.regalia.controlRadius
+        : Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.normal
-    property color colText: Appearance.zzzEverywhere
+    property color colText: Appearance.regaliaEverywhere
+        ? (toggled ? Appearance.regalia.primaryPlateInk : Appearance.regalia.onMuted)
+        : Appearance.zzzEverywhere
         ? (toggled ? Appearance.zzz.onAccentSoft : Appearance.zzz.inkMuted)
         : Appearance.angelEverywhere
         ? (toggled ? Appearance.angel.colOnPrimary : Appearance.angel.colText)
@@ -126,7 +135,9 @@ GroupButton {
         : Appearance.auroraEverywhere
         ? (toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurface)
         : toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer2
-    property color colIcon: Appearance.zzzEverywhere
+    property color colIcon: Appearance.regaliaEverywhere
+        ? (toggled ? Appearance.regalia.primaryPlateInk : Appearance.regalia.onColor)
+        : Appearance.zzzEverywhere
         ? (toggled ? Appearance.zzz.onAccentSoft : Appearance.zzz.ink)
         : Appearance.angelEverywhere
         ? (toggled ? Appearance.angel.colOnPrimary : Appearance.angel.colText)
@@ -173,35 +184,38 @@ GroupButton {
         acceptedButtons: Qt.AllButtons
 
         function toggleEnabled() {
-            const index = root.buttonIndex;
-            const toggleList = Config.options?.sidebar?.quickToggles?.android?.toggles ?? [];
+            // Identify the entry by type: buttonIndex is positional and goes
+            // stale when rows are reused mid-edit, pinning/unpinning the wrong
+            // toggle.
             const buttonType = root.buttonData.type;
-            if (!toggleList.find(toggle => toggle.type === buttonType)) {
+            const toggleList = [...(Config.options?.sidebar?.quickToggles?.android?.toggles ?? [])];
+            const existingIndex = toggleList.findIndex(toggle => toggle && toggle.type === buttonType);
+            if (existingIndex === -1) {
                 toggleList.push({ type: buttonType, size: 1 });
             } else {
-                toggleList.splice(index, 1);
+                toggleList.splice(existingIndex, 1);
             }
             Config.setNestedValue("sidebar.quickToggles.android.toggles", toggleList);
         }
 
         function toggleSize() {
-            const index = root.buttonIndex;
-            const toggleList = Config.options?.sidebar?.quickToggles?.android?.toggles ?? [];
             const buttonType = root.buttonData.type;
-            if (!toggleList.find(toggle => toggle.type === buttonType)) return;
-            toggleList[index].size = 3 - toggleList[index].size; // Alternate between 1 and 2
+            const toggleList = [...(Config.options?.sidebar?.quickToggles?.android?.toggles ?? [])];
+            const existingIndex = toggleList.findIndex(toggle => toggle && toggle.type === buttonType);
+            if (existingIndex === -1) return;
+            toggleList[existingIndex].size = 3 - toggleList[existingIndex].size; // Alternate between 1 and 2
             Config.setNestedValue("sidebar.quickToggles.android.toggles", toggleList);
         }
 
         function movePositionBy(offset) {
-            const index = root.buttonIndex;
-            const toggleList = Config.options?.sidebar?.quickToggles?.android?.toggles ?? [];
             const buttonType = root.buttonData.type;
-            const targetIndex = index + offset;
-            if (!toggleList.find(toggle => toggle.type === buttonType)) return;
+            const toggleList = [...(Config.options?.sidebar?.quickToggles?.android?.toggles ?? [])];
+            const existingIndex = toggleList.findIndex(toggle => toggle && toggle.type === buttonType);
+            if (existingIndex === -1) return;
+            const targetIndex = existingIndex + offset;
             if (targetIndex < 0 || targetIndex >= toggleList.length) return;
-            const temp = toggleList[index];
-            toggleList[index] = toggleList[targetIndex];
+            const temp = toggleList[existingIndex];
+            toggleList[existingIndex] = toggleList[targetIndex];
             toggleList[targetIndex] = temp;
             Config.setNestedValue("sidebar.quickToggles.android.toggles", toggleList);
         }
@@ -217,9 +231,6 @@ GroupButton {
             toggleSize();
         }
         onWheel: (event) => {
-            const index = root.buttonIndex;
-            const toggleList = Config.options?.sidebar?.quickToggles?.android?.toggles ?? [];
-            const buttonType = root.buttonData.type;
             if (event.angleDelta.y < 0) { // Move to right
                 movePositionBy(1);
             } else if (event.angleDelta.y > 0) { // Move to left

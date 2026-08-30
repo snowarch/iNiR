@@ -68,6 +68,28 @@ Singleton {
             }
         },
         {
+            id: "regalia",
+            name: "Regalia",
+            description: "Neutral-black chassis, warm ivory ink and restrained champagne hardware",
+            icon: "event_seat",
+            colors: regaliaColors,
+            tags: ["dark"],
+            meta: {
+                roundingScale: 0.9
+            }
+        },
+        {
+            id: "regalia-ivory",
+            name: "Regalia Ivory",
+            description: "Warm ivory shell with black hardware and restrained champagne accents",
+            icon: "event_seat",
+            colors: regaliaIvoryColors,
+            tags: ["light"],
+            meta: {
+                roundingScale: 0.9
+            }
+        },
+        {
             id: "catppuccin-mocha",
             name: "Catppuccin Mocha",
             description: "Pastel colors on dark backgrounds",
@@ -256,6 +278,18 @@ Singleton {
                 fontStyle: "mono",
                 roundingScale: 0.7,
                 borderWidthScale: 1.1
+            }
+        },
+        {
+            id: "crush-charm",
+            name: "Crush Charm",
+            description: "Charm's Crush TUI palette (Charmtone Pantera)",
+            icon: "terminal",
+            colors: crushCharmColors,
+            tags: ["dark", "vibrant", "retro"],
+            meta: {
+                fontStyle: "mono",
+                roundingScale: 0.9
             }
         },
         {
@@ -1068,6 +1102,121 @@ Singleton {
         m3onSuccess: "#181616",
         m3successContainer: "#2e4a3a",
         m3onSuccessContainer: "#b5d5b5"
+    })
+
+    // Regalia - The International 2026: black lacquer, Aegis gold, warm ivory, crimson signal
+    readonly property var regaliaColors: ({
+        darkmode: true,
+        m3background: "#090A0C",
+        m3onBackground: "#F1E8D8",
+        m3surface: "#101217",
+        m3surfaceDim: "#07080A",
+        m3surfaceBright: "#2A3039",
+        m3surfaceContainerLowest: "#07080A",
+        m3surfaceContainerLow: "#101217",
+        m3surfaceContainer: "#171A20",
+        m3surfaceContainerHigh: "#20242C",
+        m3surfaceContainerHighest: "#2A3039",
+        m3onSurface: "#F1E8D8",
+        m3surfaceVariant: "#21262E",
+        m3onSurfaceVariant: "#B7AD9D",
+        m3inverseSurface: "#E9DFCF",
+        m3inverseOnSurface: "#111319",
+        m3outline: "#5F5B55",
+        m3outlineVariant: "#34363A",
+        m3shadow: "#000000",
+        m3scrim: "#050608",
+        m3surfaceTint: "#C8A45D",
+        m3primary: "#C8A45D",
+        m3onPrimary: "#15110A",
+        m3primaryContainer: "#20232A",
+        m3onPrimaryContainer: "#F1E8D8",
+        m3inversePrimary: "#8F7039",
+        m3secondary: "#9D865D",
+        m3onSecondary: "#120F0A",
+        m3secondaryContainer: "#1C1F24",
+        m3onSecondaryContainer: "#F1E8D8",
+        m3tertiary: "#9A363B",
+        m3onTertiary: "#FFF1EA",
+        m3tertiaryContainer: "#2B1C1C",
+        m3onTertiaryContainer: "#F3DEDA",
+        m3error: "#9A363B",
+        m3onError: "#FFF1EA",
+        m3errorContainer: "#32191B",
+        m3onErrorContainer: "#F7DEDA",
+        m3primaryFixed: "#E0BF76",
+        m3primaryFixedDim: "#C8A45D",
+        m3onPrimaryFixed: "#15110A",
+        m3onPrimaryFixedVariant: "#20232A",
+        m3secondaryFixed: "#B9A173",
+        m3secondaryFixedDim: "#9D865D",
+        m3onSecondaryFixed: "#120F0A",
+        m3onSecondaryFixedVariant: "#1C1F24",
+        m3tertiaryFixed: "#BC4B50",
+        m3tertiaryFixedDim: "#9A363B",
+        m3onTertiaryFixed: "#1C0D0F",
+        m3onTertiaryFixedVariant: "#432024",
+        m3success: "#8FA178",
+        m3onSuccess: "#10140D",
+        m3successContainer: "#20291D",
+        m3onSuccessContainer: "#DCE7D2"
+    })
+
+    readonly property var regaliaIvoryColors: ({
+        darkmode: false,
+        m3background: "#DDD0B8",
+        m3onBackground: "#18130E",
+        m3surface: "#E7DBC6",
+        m3surfaceDim: "#CFBFA3",
+        m3surfaceBright: "#FFF9EF",
+        m3surfaceContainerLowest: "#FFF9EF",
+        m3surfaceContainerLow: "#F5EEE2",
+        m3surfaceContainer: "#EFE6D6",
+        m3surfaceContainerHigh: "#E7DBC6",
+        m3surfaceContainerHighest: "#D8C7AD",
+        m3onSurface: "#18130E",
+        m3surfaceVariant: "#D8C7AD",
+        m3onSurfaceVariant: "#6A5B48",
+        m3inverseSurface: "#10100E",
+        m3inverseOnSurface: "#F5EDDE",
+        m3outline: "#756A58",
+        m3outlineVariant: "#C6B79F",
+        m3shadow: "#000000",
+        m3scrim: "#060504",
+        m3surfaceTint: "#745126",
+        m3primary: "#745126",
+        m3onPrimary: "#FFF9EF",
+        m3primaryContainer: "#10100E",
+        m3onPrimaryContainer: "#F5EDDE",
+        m3inversePrimary: "#B58D4F",
+        m3secondary: "#6A4C2A",
+        m3onSecondary: "#FFF9EF",
+        m3secondaryContainer: "#D4C09F",
+        m3onSecondaryContainer: "#18130E",
+        m3tertiary: "#672019",
+        m3onTertiary: "#FFF1EA",
+        m3tertiaryContainer: "#DAB8AD",
+        m3onTertiaryContainer: "#18130E",
+        m3error: "#8D3A31",
+        m3onError: "#FFF1EA",
+        m3errorContainer: "#F0C9C0",
+        m3onErrorContainer: "#4A1713",
+        m3primaryFixed: "#B58D4F",
+        m3primaryFixedDim: "#8D622F",
+        m3onPrimaryFixed: "#18130E",
+        m3onPrimaryFixedVariant: "#3A2A18",
+        m3secondaryFixed: "#B39A73",
+        m3secondaryFixedDim: "#7B5C38",
+        m3onSecondaryFixed: "#18130E",
+        m3onSecondaryFixedVariant: "#362D23",
+        m3tertiaryFixed: "#B25548",
+        m3tertiaryFixedDim: "#84332A",
+        m3onTertiaryFixed: "#FFF1EA",
+        m3onTertiaryFixedVariant: "#4A1E1A",
+        m3success: "#526448",
+        m3onSuccess: "#F5EDDE",
+        m3successContainer: "#D8E1D1",
+        m3onSuccessContainer: "#283121"
     })
 
     // Samurai - Deep crimson and steel
@@ -3136,6 +3285,81 @@ Singleton {
         term13: "#a13865",
         term14: "#2993a3",
         term15: "#393a34"
+    })
+
+    // Crush Charm - Charm's Crush TUI default theme (Charmtone Pantera)
+    readonly property var crushCharmColors: ({
+        darkmode: true,
+        m3background: "#201f26", // Pepper
+        m3onBackground: "#ecebf0", // Sash
+        m3surface: "#201f26", // Pepper
+        m3surfaceDim: "#1a1920",
+        m3surfaceBright: "#4d4c57", // Iron
+        m3surfaceContainerLowest: "#1a1920",
+        m3surfaceContainerLow: "#201f26", // Pepper
+        m3surfaceContainer: "#2d2c36", // BBQ
+        m3surfaceContainerHigh: "#3a3943", // Char
+        m3surfaceContainerHighest: "#4d4c57", // Iron
+        m3onSurface: "#ecebf0", // Sash
+        m3surfaceVariant: "#3a3943", // Char
+        m3onSurfaceVariant: "#bfbcc8", // Smoke
+        m3inverseSurface: "#ecebf0", // Sash
+        m3inverseOnSurface: "#201f26", // Pepper
+        m3outline: "#605f6b", // Oyster
+        m3outlineVariant: "#3a3943", // Char (separator)
+        m3shadow: "#000000",
+        m3scrim: "#000000",
+        m3surfaceTint: "#6b50ff", // Charple
+        m3primary: "#6b50ff", // Charple
+        m3onPrimary: "#fffaf1", // Butter
+        m3primaryContainer: "#3d2e8f",
+        m3onPrimaryContainer: "#d6ccff",
+        m3inversePrimary: "#8f7aff",
+        m3secondary: "#ff60ff", // Dolly
+        m3onSecondary: "#201f26", // Dark on magenta
+        m3secondaryContainer: "#6e2a6e",
+        m3onSecondaryContainer: "#ffc8ff",
+        m3tertiary: "#68ffd6", // Bok
+        m3onTertiary: "#201f26", // Dark on mint
+        m3tertiaryContainer: "#12c78f", // Guac
+        m3onTertiaryContainer: "#0a2e22",
+        m3error: "#eb4268", // Sriracha
+        m3onError: "#fffaf1", // Butter
+        m3errorContainer: "#5c1f2e",
+        m3onErrorContainer: "#ffb3c2", // Coral tint
+        m3primaryFixed: "#b7a6ff",
+        m3primaryFixedDim: "#6b50ff", // Charple
+        m3onPrimaryFixed: "#241452",
+        m3onPrimaryFixedVariant: "#3d2e8f",
+        m3secondaryFixed: "#ffa6ff", // Blush lightened
+        m3secondaryFixedDim: "#ff60ff", // Dolly
+        m3onSecondaryFixed: "#4a104a",
+        m3onSecondaryFixedVariant: "#6e2a6e",
+        m3tertiaryFixed: "#a8ffe8",
+        m3tertiaryFixedDim: "#68ffd6", // Bok
+        m3onTertiaryFixed: "#00382a",
+        m3onTertiaryFixedVariant: "#0b5c43",
+        m3success: "#12c78f", // Guac
+        m3onSuccess: "#0a2e22",
+        m3successContainer: "#0b5c43",
+        m3onSuccessContainer: "#8cf5d2",
+        // Charmtone terminal accents (Pink Floyd, Malibu, Zest, Julep...)
+        term0:  "#201f26",
+        term1:  "#eb4268",
+        term2:  "#12c78f",
+        term3:  "#f5ef34",
+        term4:  "#00a4ff",
+        term5:  "#ff60ff",
+        term6:  "#10b1ae",
+        term7:  "#ecebf0",
+        term8:  "#605f6b",
+        term9:  "#ff577d",
+        term10: "#00ffb2",
+        term11: "#e8fe96",
+        term12: "#6b50ff",
+        term13: "#ff84ff",
+        term14: "#68ffd6",
+        term15: "#fffaf1"
     })
 
     function getPreset(id) {

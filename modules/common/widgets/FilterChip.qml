@@ -16,9 +16,12 @@ RippleButton {
     property color surfaceColor: Appearance.colors.colLayer1
 
     implicitWidth: Math.max(root.minimumWidth,
-        label.implicitWidth + (icon.visible ? icon.implicitWidth + 6 : 0) + 24)
-    implicitHeight: 30
-    buttonRadius: root._zzz ? Appearance.zzz.controlRadius : height / 2
+        label.implicitWidth
+            + (icon.visible ? icon.implicitWidth + (Appearance.regaliaEverywhere ? Appearance.regalia.controlGap : 6) : 0)
+            + (Appearance.regaliaEverywhere ? Appearance.regalia.controlPaddingHorizontal * 2 : 24))
+    implicitHeight: Appearance.regaliaEverywhere ? Appearance.regalia.compactControlHeight : 30
+    buttonRadius: Appearance.regaliaEverywhere ? Appearance.regalia.controlRadius
+        : root._zzz ? Appearance.zzz.controlRadius : height / 2
     buttonRadiusPressed: buttonRadius
     toggled: root.selected
 
@@ -28,11 +31,13 @@ RippleButton {
 
     readonly property bool _zzz: Appearance.zzzEverywhere
 
-    readonly property color _restFill: root.selected
-        ? Appearance.colors.colPrimaryContainer
+    readonly property color _restFill: Appearance.regaliaEverywhere
+        ? (root.selected ? Appearance.regalia.primaryPlate : Appearance.regalia.controlPlate)
+        : root.selected ? Appearance.colors.colPrimaryContainer
         : ColorUtils.mix(root.surfaceColor, Appearance.colors.colOnLayer1, 0.945)
-    readonly property color _hoverFill: root.selected
-        ? Appearance.colors.colPrimaryContainerHover
+    readonly property color _hoverFill: Appearance.regaliaEverywhere
+        ? (root.selected ? Appearance.regalia.primaryPlateHover : Appearance.regalia.controlPlateHover)
+        : root.selected ? Appearance.colors.colPrimaryContainerHover
         : ColorUtils.mix(root.surfaceColor, Appearance.colors.colOnLayer1, 0.88)
 
     colBackground: root._restFill
@@ -44,8 +49,8 @@ RippleButton {
         root.selected ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer1,
         root.buttonHovered ? root._hoverFill : root._restFill, 4.5)
 
-    readonly property color _border: root.selected
-        ? "transparent"
+    readonly property color _border: Appearance.regaliaEverywhere ? "transparent"
+        : root.selected ? "transparent"
         : (root.buttonHovered ? Appearance.colors.colOutline : Appearance.colors.colOutlineVariant)
 
     Rectangle {
@@ -53,7 +58,7 @@ RippleButton {
         z: 2
         radius: root.buttonEffectiveRadius
         color: "transparent"
-        border.width: root.visualFocus ? 2
+        border.width: root.visualFocus ? (Appearance.regaliaEverywhere ? 1 : 2)
             : (root._border === "transparent" ? 0 : 1)
         border.color: root.visualFocus
             ? Appearance.colors.colPrimary : root._border
@@ -61,7 +66,7 @@ RippleButton {
 
     contentItem: Row {
         anchors.centerIn: parent
-        spacing: icon.visible ? 6 : 0
+        spacing: icon.visible ? (Appearance.regaliaEverywhere ? Appearance.regalia.controlGap : 6) : 0
 
         MaterialSymbol {
             id: icon

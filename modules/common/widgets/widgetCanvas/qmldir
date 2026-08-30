@@ -1,0 +1,4 @@
+module qs.modules.common.widgets.widgetCanvas
+AbstractOverlayWidget 1.0 AbstractOverlayWidget.qml
+AbstractWidget 1.0 AbstractWidget.qml
+WidgetCanvas 1.0 WidgetCanvas.qml

@@ -386,7 +386,9 @@ The following are removed without prompting (iNiR-exclusive):
 ~/.cache/inir/                                   # Cache
 ~/.local/bin/inir_super_overview_daemon.py       # Super daemon
 ~/.config/systemd/user/inir-super-overview.service # Daemon service
-~/.config/vesktop/themes/system24.theme.css      # Vesktop theme
+~/.config/vesktop/themes/system24.theme.css      # Vesktop Material theme
+~/.config/vesktop/themes/inir-tui.theme.css      # Vesktop TUI theme
+~/.config/vesktop/themes/inir-midnight.theme.css # Vesktop Midnight theme
 ~/.config/vesktop/themes/ii-colors.css           # Vesktop colors
 ```
 
@@ -467,8 +469,12 @@ rm -rf ~/.cache/inir
 rm -f ~/.local/bin/inir_super_overview_daemon.py
 rm -f ~/.config/systemd/user/inir-super-overview.service
 rm -f ~/.config/vesktop/themes/system24.theme.css
+rm -f ~/.config/vesktop/themes/inir-tui.theme.css
+rm -f ~/.config/vesktop/themes/inir-midnight.theme.css
 rm -f ~/.config/vesktop/themes/ii-colors.css
 rm -f ~/.config/Vesktop/themes/system24.theme.css
+rm -f ~/.config/Vesktop/themes/inir-tui.theme.css
+rm -f ~/.config/Vesktop/themes/inir-midnight.theme.css
 rm -f ~/.config/Vesktop/themes/ii-colors.css
 
 # Remove shared configs (review before running)

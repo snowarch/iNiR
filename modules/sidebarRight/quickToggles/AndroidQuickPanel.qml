@@ -82,13 +82,15 @@ AbstractQuickPanel {
 
                 Repeater {
                     id: usedRowsRepeater
-                    model: ScriptModel {
-                        values: Array(root.toggleRows.length)
-                    }
+                    // Plain array Repeater on purpose: ScriptModel + DelegateChooser
+                    // reuse kept stale delegates when rows shifted (pinned toggles
+                    // stayed in the unused list, clicks acted on the wrong one).
+                    // Rows are few; a full rebuild per change is deterministic.
+                    model: root.toggleRows
                     delegate: ButtonGroup {
                         id: toggleRow
                         required property int index
-                        property var modelData: root.toggleRows[index]
+                        required property var modelData
                         property int startingIndex: {
                             const rows = root.toggleRows;
                             let sum = 0;
@@ -100,10 +102,7 @@ AbstractQuickPanel {
                         spacing: root.spacing
 
                         Repeater {
-                            model: ScriptModel {
-                                values: toggleRow?.modelData ?? []
-                                objectProp: "type"
-                            }
+                            model: toggleRow.modelData ?? []
                             delegate: AndroidToggleDelegateChooser {
                                 startingIndex: toggleRow.startingIndex
                                 editMode: root.editMode
@@ -145,20 +144,16 @@ AbstractQuickPanel {
                 spacing: root.spacing
 
                 Repeater {
-                    model: ScriptModel {
-                        values: Array(root.unusedToggleRows.length)
-                    }
+                    // See the used-rows comment: deterministic rebuild, no reuse.
+                    model: root.unusedToggleRows
                     delegate: ButtonGroup {
                         id: unusedToggleRow
                         required property int index
-                        property var modelData: root.unusedToggleRows[index]
+                        required property var modelData
                         spacing: root.spacing
 
                         Repeater {
-                            model: ScriptModel {
-                                values: unusedToggleRow?.modelData ?? []
-                                objectProp: "type"
-                            }
+                            model: unusedToggleRow.modelData ?? []
                             delegate: AndroidToggleDelegateChooser {
                                 startingIndex: -1
                                 editMode: root.editMode

@@ -216,6 +216,7 @@ Item {
             Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
             font.pixelSize: Appearance.font.pixelSize.larger
             color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+                : Appearance.regaliaEverywhere ? Appearance.regalia.onMuted
                 : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
             text: "•"
             visible: root.showSeparator && SystemTray.items.values.length > 0

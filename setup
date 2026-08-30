@@ -682,20 +682,44 @@ show_status_boot_timing() {
         fi
     }
 
-    # Build a single timeline anchored at the earliest known timestamp.
-    local origin=$service_start_ms
-    if [[ "$origin" == "0" || "$origin" -gt "$qs_start_ms" && "$qs_start_ms" -gt 0 ]]; then
-        origin=$qs_start_ms
+    # last-boot.json is rewritten on every shell (re)load, including hot reloads,
+    # so its epochs can describe a newer in-process reload than the running
+    # service/process birth. Mixing them produced multi-hour "boot" times.
+    # Only mix sources when they describe the same run.
+    local cache_shell_pid cache_origin_ms live_start_ms coherent=1
+    cache_shell_pid=$(jq -r '.shellPid // 0' "$cache_file" 2>/dev/null)
+    cache_origin_ms=$component_ms
+    if [[ "$config_ms" -gt 0 && "$config_ms" -lt "$cache_origin_ms" ]]; then
+        cache_origin_ms=$config_ms
     fi
-    if [[ "$origin" == "0" || "$origin" -gt "$component_ms" ]]; then
-        origin=$component_ms
+    live_start_ms=$service_start_ms
+    [[ "$qs_start_ms" -gt "$live_start_ms" ]] && live_start_ms=$qs_start_ms
+    if [[ "${cache_shell_pid:-0}" -gt 0 && -n "$qs_pid" && "$cache_shell_pid" != "$qs_pid" ]]; then
+        coherent=0
+    elif [[ "$live_start_ms" -gt 0 ]]; then
+        local epoch_gap=$(( cache_origin_ms - live_start_ms ))
+        (( epoch_gap < 0 )) && epoch_gap=$(( -epoch_gap ))
+        (( epoch_gap > 120000 )) && coherent=0
     fi
 
+    local origin
+    if (( coherent )); then
+        origin=$live_start_ms
+        if [[ "$origin" == "0" || "$origin" -gt "$cache_origin_ms" ]]; then
+            origin=$cache_origin_ms
+        fi
+    else
+        origin=$cache_origin_ms
+    fi
+
+    if (( ! coherent )); then
+        tui_info "(phases are from the most recent shell load, not this process start)"
+    fi
     tui_table_header "Phase" "Elapsed from start" 22 28
-    if [[ "$service_start_ms" -gt 0 ]]; then
+    if (( coherent )) && [[ "$service_start_ms" -gt 0 ]]; then
         tui_table_row "systemd ExecStart" "$(_fmt_ms 0) (T+0)" 22 28
     fi
-    if [[ "$qs_start_ms" -gt 0 && "$service_start_ms" -gt 0 ]]; then
+    if (( coherent )) && [[ "$qs_start_ms" -gt 0 && "$service_start_ms" -gt 0 ]]; then
         tui_table_row "qs process started" "$(_fmt_ms $((qs_start_ms - origin)))" 22 28
     fi
     tui_table_row "QML evaluated" "$(_fmt_ms $((component_ms - origin)))" 22 28
@@ -864,6 +888,14 @@ show_status() {
         repo_path_display="$(realpath "$repo_path_display" 2>/dev/null || printf '%s' "$repo_path_display")"
     fi
 
+    if [[ -n "$runtime_dir" && -L "$runtime_dir" ]]; then
+        local runtime_target
+        runtime_target="$(readlink -f "$runtime_dir" 2>/dev/null || true)"
+        if [[ -n "$runtime_target" && "$runtime_target" != "$runtime_dir" ]]; then
+            runtime_dir_display="${runtime_dir} -> ${runtime_target}"
+        fi
+    fi
+
     if [[ -n "$installed_repo_path" && -f "${installed_repo_path}/VERSION" ]]; then
         repo_ver="$(head -1 "${installed_repo_path}/VERSION" | tr -d '[:space:]')"
         repo_commit="$(git -C "$installed_repo_path" rev-parse --short HEAD 2>/dev/null || echo "unknown")"
@@ -876,27 +908,27 @@ show_status() {
         "What is installed, what is running, and whether this checkout still matches reality." \
         "If any of this looks cursed, run ./setup doctor before you start randomly editing files."
 
-    tui_table_header "Property" "Value" 14 36
-    tui_table_row "Version" "$installed_ver" 14 36
-    tui_table_row "Commit" "$installed_commit" 14 36
-    tui_table_row "Install Mode" "$installed_mode" 14 36
-    tui_table_row "Updates" "$update_strategy" 14 36
-    tui_table_row "Branch" "$branch_display" 14 36
-    tui_table_row "Tracks" "origin/${tracked_branch}" 14 36
-    tui_table_row "Remote State" "$remote_state" 14 36
-    tui_table_row "Runtime State" "$runtime_state" 14 36
-    tui_table_row "Runtime Path" "$runtime_dir_display" 14 36
-    tui_table_row "Launcher" "inir run" 14 36
-    [[ -n "$repo_path_display" ]] && tui_table_row "Repo Path" "$repo_path_display" 14 36
+    tui_table_header "Property" "Value" 18 36
+    tui_table_row "Installed Version" "$installed_ver" 18 36
+    tui_table_row "Installed Commit" "$installed_commit" 18 36
+    tui_table_row "Install Mode" "$installed_mode" 18 36
+    tui_table_row "Updates" "$update_strategy" 18 36
+    tui_table_row "Branch" "$branch_display" 18 36
+    tui_table_row "Tracks" "origin/${tracked_branch}" 18 36
+    tui_table_row "Remote State" "$remote_state" 18 36
+    tui_table_row "Local Changes" "$runtime_state" 18 36
+    tui_table_row "Runtime Path" "$runtime_dir_display" 18 36
+    tui_table_row "Launcher" "inir run" 18 36
+    [[ -n "$repo_path_display" ]] && tui_table_row "Repo Path" "$repo_path_display" 18 36
     if [[ "$update_strategy" == "package-manager" ]]; then
-        [[ -n "$update_hint" ]] && tui_table_row "Update Cmd" "$update_hint" 14 36
-        tui_table_row "Workspace Ver" "$repo_ver" 14 36
-        tui_table_row "Workspace SHA" "$repo_commit" 14 36
+        [[ -n "$update_hint" ]] && tui_table_row "Update Cmd" "$update_hint" 18 36
+        tui_table_row "Workspace Ver" "$repo_ver" 18 36
+        tui_table_row "Workspace SHA" "$repo_commit" 18 36
     else
-        tui_table_row "Repo Version" "$repo_ver" 14 36
-        tui_table_row "Repo Commit" "$repo_commit" 14 36
+        tui_table_row "Repo Version" "$repo_ver" 18 36
+        tui_table_row "Repo Commit" "$repo_commit" 18 36
     fi
-    tui_table_footer 14 36
+    tui_table_footer 18 36
 
     if [[ "$update_strategy" == "package-manager" ]]; then
         echo ""
@@ -2270,9 +2302,13 @@ run_update() {
             local pending=$(count_pending_migrations)
             if [[ "$pending" -gt 0 ]]; then
                 echo ""
-                tui_warn "$pending pending migration(s) available"
-                if $ask && tui_confirm "Apply migrations now?"; then
-                    run_migrations_interactive
+                run_migrations_auto
+                pending=$(count_pending_migrations)
+                if [[ "$pending" -gt 0 ]]; then
+                    tui_warn "$pending optional migration(s) available"
+                    if $ask && tui_confirm "Apply migrations now?"; then
+                        run_migrations_interactive
+                    fi
                 fi
             fi
             return 0

@@ -8,11 +8,14 @@ import Quickshell.Io
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.common.functions
 
 ContentPage {
     id: root
     settingsPageIndex: 12
     settingsPageName: Translation.tr("Compositor")
+    property string activeSection: "displays"
+    property bool pageReady: false
 
     property var outputList: []
     property int selectedOutputIndex: 0
@@ -190,11 +193,61 @@ ContentPage {
         { displayName: Translation.tr("Custom..."), value: "__custom__" }
     ]
 
-    function openPathExternally(path: string): void {
-        if (!path || path.length === 0)
+    // Folders resolve the inode/directory handler explicitly because common
+    // terminal emulators claim that type (kitty-open ships as the first cached
+    // handler on many distros), which makes bare xdg-open launch a terminal.
+    // When the resolved handler looks like a terminal, fall back to the first
+    // installed real file manager so the button keeps its promised semantics.
+    function openConfigFolderExternally(): void {
+        if (!root.niriConfigDir || root.niriConfigDir.length === 0)
             return;
-        const target = path.startsWith("file://") ? path : ("file://" + path);
-        Qt.openUrlExternally(target);
+        if (!defaultFileManagerQuery.running)
+            defaultFileManagerQuery.running = true;
+    }
+
+    function openConfigFileExternally(): void {
+        if (!root.niriConfigPath || root.niriConfigPath.length === 0)
+            return;
+        if (!defaultEditorQuery.running)
+            defaultEditorQuery.running = true;
+    }
+
+    Process {
+        id: defaultFileManagerQuery
+        command: ["bash", "-c", `
+            id=$(xdg-mime query default inode/directory)
+            case "$id" in
+                ""|kitty-open*|*terminal*|foot*|alacritty*|konsole*|xterm*|wezterm*)
+                    for c in org.gnome.Nautilus org.kde.dolphin thunar nemo pcmanfm-qt; do
+                        [ -f "/usr/share/applications/$c.desktop" ] && { echo "$c"; exit 0; }
+                    done ;;
+                *) echo "\${id%.desktop}" ;;
+            esac`]
+        stdout: StdioCollector {
+            id: defaultFileManagerCollector
+        }
+        onExited: (exitCode) => {
+            const desktopId = (defaultFileManagerCollector.text || "").trim();
+            if (exitCode === 0 && desktopId.length > 0)
+                ShellExec.execDetachedArgs(["gtk-launch", desktopId, root.niriConfigDir], Translation.tr("Open config folder"));
+            else
+                ShellExec.execDetachedArgs(["xdg-open", root.niriConfigDir], Translation.tr("Open config folder"));
+        }
+    }
+
+    Process {
+        id: defaultEditorQuery
+        command: ["xdg-mime", "query", "default", "text/plain"]
+        stdout: StdioCollector {
+            id: defaultEditorCollector
+        }
+        onExited: (exitCode) => {
+            const desktopId = (defaultEditorCollector.text || "").trim().replace(/\.desktop$/, "");
+            if (exitCode === 0 && desktopId.length > 0)
+                ShellExec.execDetachedArgs(["gtk-launch", desktopId, root.niriConfigPath], Translation.tr("Open config file"));
+            else
+                ShellExec.execDetachedArgs(["xdg-open", root.niriConfigPath], Translation.tr("Open config file"));
+        }
     }
 
     // Humanized animation type names
@@ -302,6 +355,25 @@ ContentPage {
         loadCursorThemes()
         loadValidation()
         loadCustomizations()
+    }
+
+    function refreshActiveSection(): void {
+        switch (root.activeSection) {
+        case "displays": loadOutputs(); break
+        case "input":
+            loadInput()
+            loadCursorThemes()
+            break
+        case "layout": loadLayout(); break
+        case "animations": loadAnimations(); break
+        case "rules": loadWindowRules(); break
+        }
+    }
+
+    function refreshInitial(): void {
+        loadValidation()
+        loadCustomizations()
+        refreshActiveSection()
     }
 
     function getConfigValue(path, fallback) {
@@ -574,7 +646,13 @@ ContentPage {
     }
 
     Component.onCompleted: {
-        refreshAll()
+        root.pageReady = true
+        root.refreshInitial()
+    }
+
+    onActiveSectionChanged: {
+        if (root.pageReady)
+            root.refreshActiveSection()
     }
 
     onCurrentOutputChanged: armPositionEditor()
@@ -1069,31 +1147,20 @@ ContentPage {
         }
     }
 
-    Item {
-        Layout.fillWidth: true
-        implicitHeight: compositorIntro.implicitHeight
-
-        ColumnLayout {
-            id: compositorIntro
-            anchors.left: parent.left
-            anchors.right: parent.right
-            spacing: 4
-
-            StyledText {
-                text: Translation.tr("Niri Configuration")
-                font.pixelSize: Appearance.font.pixelSize.huge
-                font.family: Appearance.font.family.title
-                color: Appearance.colors.colOnLayer1
-            }
-
-            StyledText {
-                Layout.fillWidth: true
-                text: Translation.tr("Adjust displays, input, layout and animation behavior. Display changes preview live and revert automatically if you don't keep them.")
-                font.pixelSize: Appearance.font.pixelSize.small
-                color: Appearance.colors.colSubtext
-                wrapMode: Text.WordWrap
-            }
-        }
+    SettingsTaskNavigator {
+        icon: "monitor"
+        title: Translation.tr("Compositor")
+        description: Translation.tr("Adjust displays, input, layout, animation and window-rule behavior in focused views. Display changes preview live and revert automatically if you don't keep them.")
+        summary: Translation.tr("Displays · Input · Layout · Animations · Rules")
+        currentValue: root.activeSection
+        onSelected: value => root.activeSection = value
+        options: [
+            { displayName: Translation.tr("Displays"), icon: "monitor", value: "displays" },
+            { displayName: Translation.tr("Input"), icon: "keyboard", value: "input" },
+            { displayName: Translation.tr("Layout"), icon: "grid_view", value: "layout" },
+            { displayName: Translation.tr("Animations"), icon: "animation", value: "animations" },
+            { displayName: Translation.tr("Rules"), icon: "rule", value: "rules" }
+        ]
     }
 
     Item {
@@ -1213,220 +1280,12 @@ ContentPage {
     }
 
     // =====================
-    // NIRI CONFIG STATUS
-    // =====================
-    SettingsCardSection {
-        visible: root.showCustomConfigStatusSection
-        expanded: false
-        icon: "rule_settings"
-        title: Translation.tr("Niri config status")
-
-        SettingsGroup {
-            Item {
-                Layout.fillWidth: true
-                implicitHeight: summaryRow.implicitHeight
-
-                RowLayout {
-                    id: summaryRow
-                    anchors.fill: parent
-                    spacing: 8
-
-                    MaterialSymbol {
-                        text: root.hasCustomConfigDiffs ? "warning" : "task_alt"
-                        iconSize: Appearance.font.pixelSize.normal
-                        color: root.hasCustomConfigDiffs ? Appearance.colors.colError : Appearance.colors.colPrimary
-                    }
-
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: root.hasCustomConfigDiffs
-                            ? Translation.tr("%1 actionable override files detected").arg(root.customConfigActionableCount)
-                            : Translation.tr("No actionable managed overrides detected")
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        font.weight: Font.Medium
-                        color: Appearance.colors.colOnLayer1
-                        wrapMode: Text.WordWrap
-                    }
-                }
-            }
-
-            StyledText {
-                Layout.fillWidth: true
-                text: root.hasCustomConfigDiffs
-                    ? Translation.tr("These entries differ from iNiR-managed defaults and may affect update compatibility.")
-                    : Translation.tr("Only expected generated/user-owned files were found. No managed override warnings.")
-                font.pixelSize: Appearance.font.pixelSize.small
-                color: Appearance.colors.colSubtext
-                wrapMode: Text.WordWrap
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-
-                StyledText {
-                    text: Translation.tr("Managed overrides: %1").arg(root.customConfigManagedOverrideCount)
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                    color: root.customConfigManagedOverrideCount > 0 ? Appearance.colors.colError : Appearance.colors.colSubtext
-                }
-
-                StyledText {
-                    text: Translation.tr("Extra files: %1").arg(root.customConfigExtraFileCount)
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                    color: root.customConfigExtraFileCount > 0 ? Appearance.colors.colError : Appearance.colors.colSubtext
-                }
-
-                StyledText {
-                    text: Translation.tr("Generated/user files: %1").arg(root.customConfigExpectedGeneratedCount + root.customConfigUserExtraCount)
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                    color: Appearance.colors.colSubtext
-                }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                Button {
-                    visible: root.niriConfigDir.length > 0
-                    text: Translation.tr("Open config folder")
-                    onClicked: root.openPathExternally(root.niriConfigDir)
-
-                    background: Rectangle {
-                        implicitWidth: 140
-                        implicitHeight: 36
-                        radius: Appearance.rounding.small
-                        color: Appearance.colors.colLayer2
-                    }
-
-                    contentItem: StyledText {
-                        text: parent.text
-                        color: Appearance.colors.colOnLayer1
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        font.pixelSize: Appearance.font.pixelSize.small
-                    }
-                }
-
-                Button {
-                    visible: root.niriConfigPath.length > 0
-                    text: Translation.tr("Open config file")
-                    onClicked: root.openPathExternally(root.niriConfigPath)
-
-                    background: Rectangle {
-                        implicitWidth: 120
-                        implicitHeight: 36
-                        radius: Appearance.rounding.small
-                        color: Appearance.colors.colLayer2
-                    }
-
-                    contentItem: StyledText {
-                        text: parent.text
-                        color: Appearance.colors.colOnLayer1
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        font.pixelSize: Appearance.font.pixelSize.small
-                    }
-                }
-            }
-
-            StyledText {
-                Layout.fillWidth: true
-                visible: root.niriConfigDir.length > 0
-                text: Translation.tr("Config directory: %1").arg(root.niriConfigDir)
-                wrapMode: Text.WrapAnywhere
-                color: Appearance.colors.colSubtext
-                font.pixelSize: Appearance.font.pixelSize.smallest
-                font.family: Appearance.font.family.monospace
-            }
-
-            Repeater {
-                model: root.actionableCustomConfigFiles
-
-                delegate: ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 6
-
-                    required property var modelData
-
-                    SettingsDivider {}
-
-                    ContentSubsection {
-                        title: modelData.path ?? ""
-                    }
-
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: modelData.reason ?? ""
-                        wrapMode: Text.WordWrap
-                        color: Appearance.colors.colSubtext
-                        font.pixelSize: Appearance.font.pixelSize.small
-                    }
-
-                    Rectangle {
-                        Layout.fillWidth: true
-                        visible: (modelData.preview?.length ?? 0) > 0
-                        color: Appearance.colors.colLayer2
-                        radius: Appearance.rounding.small
-                        border.width: 1
-                        border.color: Appearance.colors.colOutlineVariant
-                        implicitHeight: previewText.implicitHeight + 16
-
-                        StyledText {
-                            id: previewText
-                            anchors.fill: parent
-                            anchors.margins: 8
-                            text: (modelData.preview ?? []).join("\n")
-                            wrapMode: Text.WrapAnywhere
-                            font.pixelSize: Appearance.font.pixelSize.smallest
-                            font.family: Appearance.font.family.monospace
-                            color: Appearance.colors.colOnLayer1
-                        }
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Informational files")
-                visible: root.informationalCustomConfigFiles.length > 0
-            }
-
-            Repeater {
-                model: root.informationalCustomConfigFiles
-
-                delegate: ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 6
-
-                    required property var modelData
-
-                    SettingsDivider {}
-
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: modelData.path ?? ""
-                        color: Appearance.colors.colOnLayer1
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        font.weight: Font.Medium
-                        wrapMode: Text.WrapAnywhere
-                    }
-
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: modelData.reason ?? ""
-                        wrapMode: Text.WordWrap
-                        color: Appearance.colors.colSubtext
-                        font.pixelSize: Appearance.font.pixelSize.small
-                    }
-                }
-            }
-        }
-    }
-
-    // =====================
     // DISPLAYS SECTION
     // =====================
     SettingsCardSection {
+        settingsTaskSection: "displays"
+        visible: root.activeSection === "displays"
+        expanded: true
         icon: "monitor"
         title: Translation.tr("Displays")
 
@@ -1651,7 +1510,9 @@ ContentPage {
     // LAYOUT SECTION
     // =====================
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "layout"
+        visible: root.activeSection === "layout"
+        expanded: true
         icon: "grid_view"
         title: Translation.tr("Layout")
 
@@ -2088,7 +1949,9 @@ ContentPage {
     // WINDOW RULES SECTION
     // =====================
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "rules"
+        visible: root.activeSection === "rules"
+        expanded: true
         icon: "rounded_corner"
         title: Translation.tr("Window Rules")
 
@@ -2180,7 +2043,9 @@ ContentPage {
     // KEYBOARD SECTION
     // =====================
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "input"
+        visible: root.activeSection === "input"
+        expanded: true
         icon: "keyboard"
         title: Translation.tr("Keyboard")
 
@@ -2335,7 +2200,9 @@ ContentPage {
     // TOUCHPAD SECTION
     // =====================
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "input"
+        visible: root.activeSection === "input"
+        expanded: true
         icon: "touch_app"
         title: Translation.tr("Touchpad")
 
@@ -2530,7 +2397,9 @@ ContentPage {
     // MOUSE SECTION
     // =====================
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "input"
+        visible: root.activeSection === "input"
+        expanded: true
         icon: "mouse"
         title: Translation.tr("Mouse")
 
@@ -2646,7 +2515,9 @@ ContentPage {
     // TRACKPOINT SECTION
     // =====================
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "input"
+        visible: root.activeSection === "input"
+        expanded: true
         icon: "joystick"
         title: Translation.tr("Trackpoint")
 
@@ -2760,7 +2631,9 @@ ContentPage {
     // CURSOR SECTION
     // =====================
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "input"
+        visible: root.activeSection === "input"
+        expanded: true
         icon: "point_scan"
         title: Translation.tr("Cursor")
 
@@ -2828,7 +2701,9 @@ ContentPage {
     // GENERAL INPUT SECTION
     // =====================
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "input"
+        visible: root.activeSection === "input"
+        expanded: true
         icon: "settings_input_component"
         title: Translation.tr("General Input")
 
@@ -2922,7 +2797,9 @@ ContentPage {
     // ANIMATIONS SECTION
     // =====================
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "animations"
+        visible: root.activeSection === "animations"
+        expanded: true
         icon: "animation"
         title: Translation.tr("Animations")
 
@@ -3089,7 +2966,9 @@ ContentPage {
     // APPLICATIONS SECTION
     // =====================
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "rules"
+        visible: root.activeSection === "rules"
+        expanded: true
         icon: "apps"
         title: Translation.tr("Applications")
 
@@ -3179,4 +3058,214 @@ ContentPage {
             }
         }
     }
+    // =====================
+    // NIRI CONFIG STATUS
+    // =====================
+    SettingsCardSection {
+        visible: root.showCustomConfigStatusSection
+        expanded: false
+        icon: "rule_settings"
+        title: Translation.tr("Niri config status")
+
+        SettingsGroup {
+            Item {
+                Layout.fillWidth: true
+                implicitHeight: summaryRow.implicitHeight
+
+                RowLayout {
+                    id: summaryRow
+                    anchors.fill: parent
+                    spacing: 8
+
+                    MaterialSymbol {
+                        text: root.hasCustomConfigDiffs ? "info" : "task_alt"
+                        iconSize: Appearance.font.pixelSize.normal
+                        color: Appearance.colors.colSubtext
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: root.hasCustomConfigDiffs
+                            ? Translation.tr("%1 config files differ from iNiR defaults").arg(root.customConfigActionableCount)
+                            : Translation.tr("iNiR-managed files are unmodified")
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        color: Appearance.colors.colOnLayer1
+                        wrapMode: Text.WordWrap
+                    }
+                }
+            }
+
+            StyledText {
+                Layout.fillWidth: true
+                text: root.hasCustomConfigDiffs
+                    ? Translation.tr("These files were changed after installation. iNiR may overwrite them on update — review them to keep your modifications.")
+                    : Translation.tr("Only generated and user-owned files differ from the managed defaults. Nothing needs attention.")
+                font.pixelSize: Appearance.font.pixelSize.small
+                color: Appearance.colors.colSubtext
+                wrapMode: Text.WordWrap
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+
+                StyledText {
+                    text: Translation.tr("Modified by you: %1").arg(root.customConfigManagedOverrideCount)
+                    font.pixelSize: Appearance.font.pixelSize.smallest
+                    color: Appearance.colors.colSubtext
+                }
+
+                StyledText {
+                    text: Translation.tr("Extra files: %1").arg(root.customConfigExtraFileCount)
+                    font.pixelSize: Appearance.font.pixelSize.smallest
+                    color: Appearance.colors.colSubtext
+                }
+
+                StyledText {
+                    text: Translation.tr("Generated/user-owned: %1").arg(root.customConfigExpectedGeneratedCount + root.customConfigUserExtraCount)
+                    font.pixelSize: Appearance.font.pixelSize.smallest
+                    color: Appearance.colors.colSubtext
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                Button {
+                    visible: root.niriConfigDir.length > 0
+                    text: Translation.tr("Open config folder")
+                    onClicked: root.openConfigFolderExternally()
+
+                    background: Rectangle {
+                        implicitWidth: 140
+                        implicitHeight: 36
+                        radius: Appearance.rounding.small
+                        color: Appearance.colors.colLayer2
+                    }
+
+                    contentItem: StyledText {
+                        text: parent.text
+                        color: Appearance.colors.colOnLayer1
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.pixelSize: Appearance.font.pixelSize.small
+                    }
+                }
+
+                Button {
+                    visible: root.niriConfigPath.length > 0
+                    text: Translation.tr("Open config file")
+                    onClicked: root.openConfigFileExternally()
+
+                    background: Rectangle {
+                        implicitWidth: 120
+                        implicitHeight: 36
+                        radius: Appearance.rounding.small
+                        color: Appearance.colors.colLayer2
+                    }
+
+                    contentItem: StyledText {
+                        text: parent.text
+                        color: Appearance.colors.colOnLayer1
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.pixelSize: Appearance.font.pixelSize.small
+                    }
+                }
+            }
+
+            StyledText {
+                Layout.fillWidth: true
+                visible: root.niriConfigDir.length > 0
+                text: Translation.tr("Config directory: %1").arg(root.niriConfigDir)
+                wrapMode: Text.WrapAnywhere
+                color: Appearance.colors.colSubtext
+                font.pixelSize: Appearance.font.pixelSize.smallest
+                font.family: Appearance.font.family.monospace
+            }
+
+            Repeater {
+                model: root.actionableCustomConfigFiles
+
+                delegate: ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 6
+
+                    required property var modelData
+
+                    SettingsDivider {}
+
+                    ContentSubsection {
+                        title: modelData.path ?? ""
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: modelData.reason ?? ""
+                        wrapMode: Text.WordWrap
+                        color: Appearance.colors.colSubtext
+                        font.pixelSize: Appearance.font.pixelSize.small
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        visible: (modelData.preview?.length ?? 0) > 0
+                        color: Appearance.colors.colLayer2
+                        radius: Appearance.rounding.small
+                        border.width: 1
+                        border.color: Appearance.colors.colOutlineVariant
+                        implicitHeight: previewText.implicitHeight + 16
+
+                        StyledText {
+                            id: previewText
+                            anchors.fill: parent
+                            anchors.margins: 8
+                            text: (modelData.preview ?? []).join("\n")
+                            wrapMode: Text.WrapAnywhere
+                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            font.family: Appearance.font.family.monospace
+                            color: Appearance.colors.colOnLayer1
+                        }
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Informational files")
+                visible: root.informationalCustomConfigFiles.length > 0
+            }
+
+            Repeater {
+                model: root.informationalCustomConfigFiles
+
+                delegate: ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 6
+
+                    required property var modelData
+
+                    SettingsDivider {}
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: modelData.path ?? ""
+                        color: Appearance.colors.colOnLayer1
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        font.weight: Font.Medium
+                        wrapMode: Text.WrapAnywhere
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: modelData.reason ?? ""
+                        wrapMode: Text.WordWrap
+                        color: Appearance.colors.colSubtext
+                        font.pixelSize: Appearance.font.pixelSize.small
+                    }
+                }
+            }
+        }
+    }
+
 }

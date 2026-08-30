@@ -39,7 +39,6 @@ MouseArea { // Notification group area
     property real xOffset: dragIndexDiff == 0 ? parentDragDistance : 0
 
     // Animation tokens — use fast timing for dismiss in all modes
-    readonly property QtObject _dismissAnim: Appearance.animation.elementMoveFast
     readonly property QtObject _contentAnim: Appearance.animation.elementMoveFast
 
     function destroyWithAnimation(left = false) {
@@ -69,10 +68,9 @@ MouseArea { // Notification group area
             target: background.anchors
             property: "leftMargin"
             to: (root.width + root.dismissOvershoot) * (destroyAnimation.left ? -1 : 1)
-            // Appearance animation tokens can be partially initialized during startup.
-            duration: Number(root._dismissAnim?.duration ?? 200)
-            easing.type: Number(root._dismissAnim?.type ?? Easing.OutCubic)
-            easing.bezierCurve: root._dismissAnim?.bezierCurve ?? []
+            duration: Number(Appearance.animation?.elementMoveFast?.duration ?? 200)
+            easing.type: Number(Appearance.animation?.elementMoveFast?.type ?? Easing.OutCubic)
+            easing.bezierCurve: Appearance.animation?.elementMoveFast?.bezierCurve ?? [0.2, 0, 0, 1, 1, 1]
         }
         onFinished: () => {
             root.notifications.forEach((notif) => {
@@ -161,23 +159,35 @@ MouseArea { // Notification group area
 
         // For popup: glass blur for aurora/angel, solid for others
         // For sidebar: transparent to show parent's blur
-        color: Appearance.zzzEverywhere ? "transparent"
+        color: Appearance.regaliaEverywhere ? "transparent"
+            : Appearance.zzzEverywhere ? "transparent"
             : Appearance.angelEverywhere ? (popup ? "transparent" : Appearance.angel.colGlassCard)
             : Appearance.inirEverywhere ? (popup ? Appearance.inir.colLayer2 : Appearance.inir.colLayer1)
             : Appearance.auroraEverywhere ? "transparent"
             : (popup ? ColorUtils.applyAlpha(Appearance.colors.colLayer2, 1 - Appearance.backgroundTransparency)
                      : Appearance.colors.colLayer2)
 
-        radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+        radius: Appearance.regaliaEverywhere ? Appearance.regalia.roundNormal
+            : Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
             : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
             : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-        border.width: Appearance.zzzEverywhere ? 0
+        border.width: Appearance.regaliaEverywhere ? 0
+            : Appearance.zzzEverywhere ? 0
             : Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
             : (Appearance.inirEverywhere || (Appearance.auroraEverywhere && popup)) ? 1 : 0
-        border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
+        border.color: Appearance.regaliaEverywhere ? "transparent"
+            : Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
             : Appearance.angelEverywhere ? Appearance.angel.colBorder
             : Appearance.inirEverywhere ? Appearance.inir.colBorder
             : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder : "transparent"
+        RegaliaPlate {
+            anchors.fill: parent
+            visible: Appearance.regaliaEverywhere
+            radius: background.radius
+            fillColor: root.popup ? Appearance.regalia.bg2 : Appearance.regalia.bg1
+            elevated: root.popup
+        }
+
         // Organic morph on style/shape switch (organic-transitions)
         Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
         Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }

@@ -5,6 +5,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Mpris
+import qs
 import qs.modules.common
 import qs.services.deferred
 
@@ -2410,11 +2411,19 @@ print("")
         }
         
         function next(): void {
+            if (!root.canGoNext)
+                return
             root.playNext()
+            if (Config.options?.osd?.mediaEnabled ?? true)
+                GlobalStates.showMediaAction("next")
         }
         
         function previous(): void {
+            if (!root.currentVideoId)
+                return
             root.playPrevious()
+            if (Config.options?.osd?.mediaEnabled ?? true)
+                GlobalStates.showMediaAction("previous")
         }
         
         function stop(): void {

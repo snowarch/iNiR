@@ -38,7 +38,7 @@ Singleton {
     property string scriptsPath: FileUtils.trimFileProtocol(scriptPath)
     property string stateUserPath: `${Directories.statePath}/user`
     property string wallpapersPath: Config.options?.wallpapers?.directory || `${Directories.picturesPath}/Wallpapers`
-    property string screenshotsPath: `${Directories.picturesPath}/Screenshots`
+    property string screenshotsPath: Config.options?.regionSelector?.savePath || `${Directories.picturesPath}/Screenshots`
     property string persistentStatesPath: `${Directories.statePath}/states.json`
     property string eventsPath: `${Directories.stateUserPath}/events.json`
     property string screenTimePath: `${Directories.stateUserPath}/screentime`

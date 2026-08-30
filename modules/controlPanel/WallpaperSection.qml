@@ -20,7 +20,7 @@ PanelSurface {
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
 
     elevation: 1
-    radiusOverride: inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+    radiusOverride: islandSkin ? -1 : (inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal)
 
     ColumnLayout {
         id: wallpaperLayout

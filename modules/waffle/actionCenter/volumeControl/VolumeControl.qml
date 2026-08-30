@@ -128,7 +128,7 @@ Item {
         }
 
         Repeater {
-            model: root.output ? Audio.outputAppNodes : Audio.inputAppNodes
+            model: root.output ? MprisController.mixerAppNodes : Audio.inputAppNodes
             delegate: VolumeEntry {
                 required property var modelData
                 node: modelData

@@ -3,158 +3,588 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
-import Quickshell
 import qs.services
 import qs.modules.common
+import qs.modules.common.functions
 import qs.modules.common.widgets
 
-/**
- * Arrange settings — pick & place editor for the settings nav.
- *
- * Interaction model (no fragile drag, no arrow spam): tap a page chip or
- * a group handle to LIFT it; every valid insertion point lights up as an
- * ArrangeDropSlot; tap one to place, tap the lifted thing again (or the
- * banner) to cancel. Groups are cards; pages are ArrangeChips flowing
- * inside them.
- *
- * Persistence: settingsUi.categories as a JSON string ("" = defaults;
- * `property var` inside JsonObject crashes the VME). Every mutation
- * writes a full snapshot; SettingsPageRegistry sanitizes on read so no
- * page can ever be lost — orphans land in a trailing "More" group.
- * Components + method: inir-settings-ui skill.
- */
 ContentPage {
     id: root
     settingsPageIndex: 20
     settingsPageName: Translation.tr("Arrange")
 
-    // lifted: null | { type: "page", ci, pi, pageIdx } | { type: "group", index }
-    property var lifted: null
-    // which group's name is being edited inline (-1 = none)
-    property int editingGroup: -1
-    readonly property bool liftActive: lifted !== null
-    readonly property bool liftIsPage: liftActive && lifted.type === "page"
-    readonly property bool liftIsGroup: liftActive && lifted.type === "group"
+    readonly property int pageRowHeight: 48
+    readonly property int pageRowGap: 5
+    readonly property real pagePitch: pageRowHeight + pageRowGap
 
-    function _snapshot(): var {
-        return ({
-            groups: SettingsPageRegistry.categories.map(c => ({ label: c.label, pages: c.pages.slice() })),
-            hidden: SettingsPageRegistry.hiddenPages.slice()
-        })
+    property var dragInfo: null
+    property int pageDropCategory: -2
+    property int pageDropIndex: -1
+    property int editingGroup: -1
+
+    readonly property bool pageDragging: dragInfo?.type === "page"
+    readonly property bool groupDragging: dragInfo?.type === "group"
+    readonly property int visiblePageCount: SettingsPageRegistry.pages.length - SettingsPageRegistry.hiddenPages.length
+
+    function _pageIndexFromY(y: real, count: int): int {
+        return Math.max(0, Math.min(Math.round(y / root.pagePitch), count))
     }
-    function _save(arr): void {
-        Config.setNestedValue("settingsUi.categories", JSON.stringify(arr))
-        root.lifted = null
+
+    function _beginPageDrag(categoryIndex: int, pageIndex: int, pageIdx: int): void {
+        root.dragInfo = ({ type: "page", ci: categoryIndex, pi: pageIndex, pageIdx: pageIdx })
+        root.pageDropCategory = -2
+        root.pageDropIndex = -1
     }
-    // lifted page may come from a group (ci >= 0) or from the hidden zone (ci === -1)
-    function _takeLifted(arr): var {
-        const { ci, pi } = root.lifted
-        if (ci === -1) return arr.hidden.splice(pi, 1)[0]
-        return arr.groups[ci]?.pages.splice(pi, 1)[0]
+
+    function _beginGroupDrag(index: int): void {
+        root.dragInfo = ({ type: "group", index: index })
+        root.editingGroup = -1
     }
-    function placePage(targetCi: int, insertPos: int): void {
-        if (!root.liftIsPage) return
-        const a = _snapshot()
-        const page = _takeLifted(a)
-        if (page === undefined || !a.groups[targetCi]) { root.lifted = null; return }
-        let pos = insertPos
-        if (root.lifted.ci === targetCi && insertPos > root.lifted.pi) pos--
-        a.groups[targetCi].pages.splice(Math.max(0, Math.min(pos, a.groups[targetCi].pages.length)), 0, page)
-        _save(a)
+
+    function _endDrag(): void {
+        root.dragInfo = null
+        root.pageDropCategory = -2
+        root.pageDropIndex = -1
     }
-    function hidePage(): void {
-        if (!root.liftIsPage) return
-        const a = _snapshot()
-        const page = _takeLifted(a)
-        if (page === undefined) { root.lifted = null; return }
-        if (!a.hidden.includes(page)) a.hidden.push(page)
-        _save(a)
+
+    function _moveDraggedPage(targetCategory: int, targetIndex: int): void {
+        if (!root.pageDragging) {
+            root._endDrag()
+            return
+        }
+        SettingsArrangement.movePage(root.dragInfo.ci, root.dragInfo.pi,
+            root.dragInfo.pageIdx, targetCategory, targetIndex)
+        root.editingGroup = -1
+        root._endDrag()
     }
-    function placeGroup(insertPos: int): void {
-        if (!root.liftIsGroup) return
-        const a = _snapshot()
-        const from = root.lifted.index
-        if (!a.groups[from]) { root.lifted = null; return }
-        const g = a.groups.splice(from, 1)[0]
-        let pos = insertPos
-        if (insertPos > from) pos--
-        a.groups.splice(Math.max(0, Math.min(pos, a.groups.length)), 0, g)
-        _save(a)
+
+    function _hidePage(categoryIndex: int, pageIndex: int, pageIdx: int): void {
+        if (SettingsArrangement.hidePage(categoryIndex, pageIndex, pageIdx))
+            root.editingGroup = -1
+        root._endDrag()
     }
-    function renameCategory(i: int, label: string): void {
-        const a = _snapshot()
-        if (!a.groups[i] || label.trim().length === 0) return
-        a.groups[i].label = label.trim()
-        _save(a)
+
+    function _hideDraggedPage(): void {
+        if (!root.pageDragging || root.dragInfo.ci < 0) {
+            root._endDrag()
+            return
+        }
+        root._hidePage(root.dragInfo.ci, root.dragInfo.pi, root.dragInfo.pageIdx)
     }
-    function removeCategory(i: int): void {
-        const a = _snapshot()
-        if (!a.groups[i] || a.groups[i].pages.length > 0) return
-        a.groups.splice(i, 1)
-        _save(a)
+
+    function _restorePage(pageIdx: int): void {
+        if (SettingsArrangement.restorePage(pageIdx))
+            root.editingGroup = -1
+        root._endDrag()
     }
+
+    function _moveGroup(insertIndex: int): void {
+        if (!root.groupDragging) {
+            root._endDrag()
+            return
+        }
+        SettingsArrangement.moveGroup(root.dragInfo.index, insertIndex)
+        root.editingGroup = -1
+        root._endDrag()
+    }
+
+    function renameCategory(index: int, label: string): void {
+        if (SettingsArrangement.renameCategory(index, label))
+            root.editingGroup = -1
+        root._endDrag()
+    }
+
+    function removeCategory(index: int): void {
+        if (SettingsArrangement.removeCategory(index))
+            root.editingGroup = -1
+        root._endDrag()
+    }
+
     function addCategory(): void {
-        const a = _snapshot()
-        a.groups.push({ label: Translation.tr("New group"), pages: [] })
-        _save(a)
+        SettingsArrangement.addCategory()
+        root.editingGroup = -1
+        root._endDrag()
+    }
+
+    component IconAction: RippleButton {
+        property string symbol: ""
+        property string tip: ""
+        implicitWidth: 30
+        implicitHeight: 30
+        buttonRadius: Appearance.rounding.full
+        contentItem: MaterialSymbol {
+            anchors.centerIn: parent
+            text: parent.symbol
+            iconSize: Appearance.font.pixelSize.normal
+            color: Appearance.colors.colOnLayer1
+        }
+        StyledToolTip { text: parent.tip }
+    }
+
+    component PageRow: Rectangle {
+        id: rowRoot
+        required property int categoryIndex
+        required property int pageIndex
+        required property int pageIdx
+        property bool hiddenSource: false
+
+        readonly property var page: SettingsPageRegistry.pages[rowRoot.pageIdx] ?? null
+        readonly property bool beingDragged: root.pageDragging
+            && root.dragInfo.pageIdx === rowRoot.pageIdx
+            && root.dragInfo.ci === rowRoot.categoryIndex
+
+        width: parent ? parent.width : implicitWidth
+        height: root.pageRowHeight
+        radius: Appearance.rounding.small
+        color: rowRoot.beingDragged
+            ? Appearance.colors.colLayer2
+            : (rowHover.hovered ? Appearance.colors.colLayer1Hover : Appearance.colors.colLayer1)
+        border.width: rowRoot.beingDragged ? 2 : 1
+        border.color: rowRoot.beingDragged ? Appearance.colors.colPrimary : Appearance.colors.colOutlineVariant
+        scale: rowRoot.beingDragged ? 1.025 : 1
+        opacity: root.pageDragging && !rowRoot.beingDragged ? 0.72 : 1
+
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+        }
+        Behavior on scale {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+        }
+        Behavior on opacity {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: 100 }
+        }
+
+        StyledRectangularShadow {
+            target: rowRoot.beingDragged ? rowRoot : null
+            visible: rowRoot.beingDragged
+            z: -1
+        }
+
+        Drag.active: rowDrag.drag.active
+        Drag.source: rowRoot
+        Drag.keys: ["inir-settings-page"]
+        Drag.hotSpot.x: width / 2
+        Drag.hotSpot.y: height / 2
+        states: State {
+            when: rowDrag.drag.active
+            ParentChange { target: rowRoot; parent: dragLayer }
+            PropertyChanges { rowRoot { z: 500 } }
+        }
+
+        HoverHandler { id: rowHover }
+
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 7
+            anchors.rightMargin: 7
+            spacing: 8
+
+            Item {
+                Layout.preferredWidth: 30
+                Layout.preferredHeight: 30
+
+                MaterialSymbol {
+                    anchors.centerIn: parent
+                    text: "drag_indicator"
+                    iconSize: Appearance.font.pixelSize.normal
+                    color: Appearance.colors.colSubtext
+                }
+
+                MouseArea {
+                    id: rowDrag
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                    drag.target: rowRoot
+                    drag.axis: Drag.XAndYAxis
+                    onPressed: root._beginPageDrag(rowRoot.categoryIndex, rowRoot.pageIndex, rowRoot.pageIdx)
+                    onReleased: {
+                        if (rowRoot.Drag.target) rowRoot.Drag.drop()
+                        else root._endDrag()
+                    }
+                    onCanceled: root._endDrag()
+                }
+            }
+
+            Rectangle {
+                Layout.preferredWidth: 30
+                Layout.preferredHeight: 30
+                radius: Appearance.rounding.full
+                color: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.88)
+                MaterialSymbol {
+                    anchors.centerIn: parent
+                    text: rowRoot.page?.icon ?? "settings"
+                    rotation: rowRoot.page?.iconRotation ?? 0
+                    iconSize: Appearance.font.pixelSize.normal
+                    color: Appearance.colors.colPrimary
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                spacing: 0
+                StyledText {
+                    Layout.fillWidth: true
+                    text: rowRoot.page?.name ?? "?"
+                    font.pixelSize: Appearance.font.pixelSize.small
+                    font.weight: Font.Medium
+                    color: Appearance.colors.colOnLayer1
+                    elide: Text.ElideRight
+                }
+                StyledText {
+                    Layout.fillWidth: true
+                    text: rowRoot.page?.desc ?? ""
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    color: Appearance.colors.colSubtext
+                    elide: Text.ElideRight
+                }
+            }
+
+            IconAction {
+                symbol: rowRoot.hiddenSource ? "visibility" : "visibility_off"
+                tip: rowRoot.hiddenSource
+                    ? Translation.tr("Show in navigation")
+                    : Translation.tr("Hide from navigation")
+                onClicked: {
+                    if (rowRoot.hiddenSource) root._restorePage(rowRoot.pageIdx)
+                    else root._hidePage(rowRoot.categoryIndex, rowRoot.pageIndex, rowRoot.pageIdx)
+                }
+            }
+        }
+    }
+
+    component GroupDropSlot: DropArea {
+        id: groupSlot
+        required property int insertIndex
+        readonly property bool noOp: root.groupDragging
+            && (root.dragInfo.index === groupSlot.insertIndex || root.dragInfo.index + 1 === groupSlot.insertIndex)
+
+        keys: ["inir-settings-group"]
+        Layout.fillWidth: true
+        implicitHeight: root.groupDragging ? (groupSlot.noOp ? 6 : 20) : 4
+        enabled: root.groupDragging && !groupSlot.noOp
+
+        onDropped: root._moveGroup(groupSlot.insertIndex)
+
+        Rectangle {
+            anchors.centerIn: parent
+            width: parent.width - 20
+            height: parent.containsDrag ? 5 : 2
+            radius: height / 2
+            visible: root.groupDragging && !groupSlot.noOp
+            color: parent.containsDrag
+                ? Appearance.colors.colPrimary
+                : ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.22)
+            opacity: parent.containsDrag ? 1 : 0.65
+            Behavior on height {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: 100 }
+            }
+            Behavior on color {
+                enabled: Appearance.animationsEnabled
+                ColorAnimation { duration: 100 }
+            }
+        }
+    }
+
+    component CategoryCard: Rectangle {
+        id: cardRoot
+        required property int categoryIndex
+        readonly property var category: SettingsPageRegistry.categories[cardRoot.categoryIndex] ?? ({ label: "", pages: [] })
+        readonly property bool beingDragged: root.groupDragging && root.dragInfo.index === cardRoot.categoryIndex
+        readonly property bool pageDropActive: root.pageDragging && root.pageDropCategory === cardRoot.categoryIndex
+
+        width: parent ? parent.width : implicitWidth
+        height: implicitHeight
+        implicitHeight: cardColumn.implicitHeight + 16
+        radius: Appearance.rounding.normal
+        color: cardRoot.pageDropActive
+            ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.94)
+            : Appearance.colors.colLayer0
+        border.width: cardRoot.beingDragged ? 2 : 1
+        border.color: cardRoot.beingDragged || cardRoot.pageDropActive
+            ? Appearance.colors.colPrimary
+            : Appearance.colors.colOutlineVariant
+        scale: cardRoot.beingDragged ? 1.015 : 1
+        opacity: root.groupDragging && !cardRoot.beingDragged ? 0.72 : 1
+
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+        }
+        Behavior on scale {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+        }
+        Behavior on opacity {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: 100 }
+        }
+
+        StyledRectangularShadow {
+            target: cardRoot.beingDragged ? cardRoot : null
+            visible: cardRoot.beingDragged
+            z: -1
+        }
+
+        Drag.active: groupDrag.drag.active
+        Drag.source: cardRoot
+        Drag.keys: ["inir-settings-group"]
+        Drag.hotSpot.x: width / 2
+        Drag.hotSpot.y: 22
+        states: State {
+            when: groupDrag.drag.active
+            ParentChange { target: cardRoot; parent: dragLayer }
+            PropertyChanges { cardRoot { z: 450 } }
+        }
+
+        ColumnLayout {
+            id: cardColumn
+            anchors.fill: parent
+            anchors.margins: 8
+            spacing: 7
+
+            RowLayout {
+                id: categoryHeader
+                Layout.fillWidth: true
+                spacing: 7
+                readonly property bool editing: root.editingGroup === cardRoot.categoryIndex
+
+                Item {
+                    Layout.preferredWidth: 30
+                    Layout.preferredHeight: 30
+                    enabled: !categoryHeader.editing
+                    opacity: enabled ? 1 : 0.45
+
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: "drag_indicator"
+                        iconSize: Appearance.font.pixelSize.normal
+                        color: Appearance.colors.colSubtext
+                    }
+                    MouseArea {
+                        id: groupDrag
+                        anchors.fill: parent
+                        enabled: parent.enabled
+                        hoverEnabled: true
+                        cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                        drag.target: cardRoot
+                        drag.axis: Drag.XAndYAxis
+                        onPressed: root._beginGroupDrag(cardRoot.categoryIndex)
+                        onReleased: {
+                            if (cardRoot.Drag.target) cardRoot.Drag.drop()
+                            else root._endDrag()
+                        }
+                        onCanceled: root._endDrag()
+                    }
+                }
+
+                ColumnLayout {
+                    visible: !categoryHeader.editing
+                    Layout.fillWidth: true
+                    spacing: 0
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: cardRoot.category.label
+                        font.pixelSize: Appearance.font.pixelSize.normal
+                        font.weight: Font.DemiBold
+                        color: Appearance.colors.colOnLayer0
+                        elide: Text.ElideRight
+                    }
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: cardRoot.category.pages.length === 1
+                            ? Translation.tr("1 page")
+                            : Translation.tr("%1 pages").arg(cardRoot.category.pages.length)
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        color: Appearance.colors.colSubtext
+                    }
+                }
+
+                Item {
+                    visible: categoryHeader.editing
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 34
+                    MaterialTextField {
+                        id: renameField
+                        anchors.fill: parent
+                        text: cardRoot.category.label
+                        onVisibleChanged: if (visible) { text = cardRoot.category.label; forceActiveFocus() }
+                        onAccepted: root.renameCategory(cardRoot.categoryIndex, text)
+                    }
+                }
+
+                IconAction {
+                    symbol: categoryHeader.editing ? "check" : "edit"
+                    tip: categoryHeader.editing ? Translation.tr("Save group name") : Translation.tr("Rename group")
+                    visible: !root.groupDragging && !root.pageDragging
+                    onClicked: {
+                        if (categoryHeader.editing) root.renameCategory(cardRoot.categoryIndex, renameField.text)
+                        else root.editingGroup = cardRoot.categoryIndex
+                    }
+                }
+
+                IconAction {
+                    symbol: "delete"
+                    tip: SettingsPageRegistry.categories.length <= 1
+                        ? Translation.tr("Keep at least one group")
+                        : Translation.tr("Delete empty group")
+                    visible: cardRoot.category.pages.length === 0 && !categoryHeader.editing
+                        && !root.groupDragging && !root.pageDragging
+                    enabled: SettingsPageRegistry.categories.length > 1
+                    onClicked: root.removeCategory(cardRoot.categoryIndex)
+                }
+            }
+
+            DropArea {
+                id: pageDrop
+                Layout.fillWidth: true
+                implicitHeight: Math.max(pageRows.implicitHeight, root.pageRowHeight)
+                keys: ["inir-settings-page"]
+                readonly property int liveCount: cardRoot.category.pages.length
+                    - ((root.pageDragging && root.dragInfo.ci === cardRoot.categoryIndex) ? 1 : 0)
+
+                function updateDrop(y: real): void {
+                    root.pageDropCategory = cardRoot.categoryIndex
+                    root.pageDropIndex = root._pageIndexFromY(y, pageDrop.liveCount)
+                }
+
+                onEntered: drag => pageDrop.updateDrop(drag.y)
+                onPositionChanged: drag => pageDrop.updateDrop(drag.y)
+                onExited: {
+                    if (root.pageDropCategory === cardRoot.categoryIndex) {
+                        root.pageDropCategory = -2
+                        root.pageDropIndex = -1
+                    }
+                }
+                onDropped: root._moveDraggedPage(cardRoot.categoryIndex, root.pageDropIndex)
+
+                Rectangle {
+                    anchors.fill: parent
+                    visible: pageDrop.liveCount === 0
+                    radius: Appearance.rounding.small
+                    color: pageDrop.containsDrag
+                        ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.9)
+                        : ColorUtils.transparentize(Appearance.colors.colOnLayer1, 0.97)
+                    border.width: 1
+                    border.color: pageDrop.containsDrag ? Appearance.colors.colPrimary : Appearance.colors.colOutlineVariant
+
+                    RowLayout {
+                        anchors.centerIn: parent
+                        spacing: 6
+                        MaterialSymbol {
+                            text: pageDrop.containsDrag ? "move_down" : "add"
+                            iconSize: Appearance.font.pixelSize.normal
+                            color: pageDrop.containsDrag ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
+                        }
+                        StyledText {
+                            text: pageDrop.containsDrag ? Translation.tr("Release to add") : Translation.tr("Drag pages here")
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            color: pageDrop.containsDrag ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
+                        }
+                    }
+                }
+
+                Column {
+                    id: pageRows
+                    width: parent.width
+                    spacing: root.pageRowGap
+
+                    Repeater {
+                        model: cardRoot.category.pages
+                        delegate: PageRow {
+                            required property int modelData
+                            required property int index
+                            categoryIndex: cardRoot.categoryIndex
+                            pageIndex: index
+                            pageIdx: modelData
+                        }
+                    }
+
+                    Item {
+                        visible: root.pageDragging && root.dragInfo.ci === cardRoot.categoryIndex
+                        width: parent.width
+                        height: visible ? root.pageRowHeight : 0
+                    }
+                }
+
+                Rectangle {
+                    visible: pageDrop.containsDrag && root.pageDropIndex >= 0 && pageDrop.liveCount > 0
+                    x: 6
+                    width: parent.width - 12
+                    height: 4
+                    radius: 2
+                    color: Appearance.colors.colPrimary
+                    y: Math.min(root.pageDropIndex, pageDrop.liveCount) * root.pagePitch
+                        - root.pageRowGap / 2 - height / 2
+                    z: 40
+                    Behavior on y {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation {
+                            duration: Appearance.animation.elementMoveFast.duration
+                            easing.type: Appearance.animation.elementMoveFast.type
+                            easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                        }
+                    }
+                    Rectangle { width: 8; height: 8; radius: 4; color: parent.color; anchors.verticalCenter: parent.verticalCenter; x: -4 }
+                    Rectangle { width: 8; height: 8; radius: 4; color: parent.color; anchors.verticalCenter: parent.verticalCenter; x: parent.width - 4 }
+                }
+            }
+        }
     }
 
     SettingsCardSection {
         expanded: true
         icon: "swap_vert"
-        title: Translation.tr("Arrange settings")
+        title: Translation.tr("Navigation layout")
 
         SettingsGroup {
-            StyledText {
+            RowLayout {
                 Layout.fillWidth: true
-                text: Translation.tr("Tap a page or a group handle to pick it up, then tap where it should go. Search always finds everything, whatever you do here.")
-                font.pixelSize: Appearance.font.pixelSize.smaller
-                color: Appearance.colors.colSubtext
-                wrapMode: Text.Wrap
-            }
+                spacing: 12
 
-            // Floating status banner while something is lifted
-            Rectangle {
-                Layout.fillWidth: true
-                visible: root.liftActive
-                implicitHeight: bannerRow.implicitHeight + 16
-                radius: Appearance.rounding.small
-                color: Appearance.colors.colPrimaryContainer
-
-                RowLayout {
-                    id: bannerRow
-                    anchors.fill: parent
-                    anchors.margins: 8
-                    spacing: 8
-
-                    MaterialSymbol {
-                        text: root.liftIsGroup ? "folder" : "description"
-                        iconSize: 20
-                        color: Appearance.colors.colOnPrimaryContainer
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 3
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: Translation.tr("Make Settings yours")
+                        font.pixelSize: Appearance.font.pixelSize.normal
+                        font.weight: Font.DemiBold
+                        color: Appearance.colors.colOnLayer1
                     }
                     StyledText {
                         Layout.fillWidth: true
-                        text: {
-                            if (root.liftIsGroup)
-                                return Translation.tr("Moving group “%1” — tap a slot between groups").arg(SettingsPageRegistry.categories[root.lifted.index]?.label ?? "")
-                            const p = SettingsPageRegistry.pages[root.lifted?.pageIdx ?? -1]
-                            return Translation.tr("Moving “%1” — tap a slot inside any group").arg(p?.name ?? "")
-                        }
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnPrimaryContainer
-                        elide: Text.ElideRight
+                        text: Translation.tr("Drag groups and pages into the order you want. Hide anything you don't need in the sidebar — Search can still open hidden pages.")
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        color: Appearance.colors.colSubtext
+                        wrapMode: Text.WordWrap
                     }
-                    RippleButtonWithIcon {
-                        materialIcon: "close"
-                        mainText: Translation.tr("Cancel")
-                        onClicked: root.lifted = null
+                }
+
+                Rectangle {
+                    implicitWidth: visibleCount.implicitWidth + 18
+                    implicitHeight: 28
+                    radius: Appearance.rounding.full
+                    color: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.87)
+                    StyledText {
+                        id: visibleCount
+                        anchors.centerIn: parent
+                        text: Translation.tr("%1 visible").arg(root.visiblePageCount)
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        font.weight: Font.Medium
+                        color: Appearance.colors.colPrimary
                     }
                 }
             }
 
             Flow {
                 Layout.fillWidth: true
-                spacing: 5
+                spacing: 6
                 RippleButtonWithIcon {
                     materialIcon: "create_new_folder"
                     mainText: Translation.tr("Add group")
@@ -164,207 +594,161 @@ ContentPage {
                     materialIcon: "restart_alt"
                     mainText: Translation.tr("Reset arrangement")
                     onClicked: {
-                        root.lifted = null
+                        root._endDrag()
+                        root.editingGroup = -1
                         Config.setNestedValue("settingsUi.categories", "")
                     }
                 }
             }
         }
 
-        // Group cards with drop bars between them
+        Item {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 0
+            z: 1000
+            Item {
+                id: dragLayer
+                width: root.width
+                height: root.height
+            }
+        }
+
         Repeater {
-            model: SettingsPageRegistry.categories.length + 1
+            id: categoryRepeater
+            model: SettingsPageRegistry.categories.length
+
             delegate: ColumnLayout {
-                id: slotCol
+                id: groupWrapper
                 required property int index
                 Layout.fillWidth: true
                 spacing: 0
 
-                // Insertion bar for group moves (before group `index`)
-                ArrangeDropSlot {
+                GroupDropSlot { insertIndex: groupWrapper.index }
+
+                Item {
                     Layout.fillWidth: true
-                    compact: false
-                    active: root.liftIsGroup && root.lifted.index !== slotCol.index && root.lifted.index !== slotCol.index - 1
-                    onPlaced: root.placeGroup(slotCol.index)
-                }
-
-                SettingsGroup {
-                    id: catGroup
-                    visible: slotCol.index < SettingsPageRegistry.categories.length
-                    readonly property var cat: SettingsPageRegistry.categories[slotCol.index] ?? ({ label: "", pages: [] })
-                    readonly property bool groupLifted: root.liftIsGroup && root.lifted.index === slotCol.index
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 8
-                        readonly property bool editing: root.editingGroup === slotCol.index
-
-                        // The group's grab handle — tap to lift the whole group
-                        ArrangeChip {
-                            icon: "drag_indicator"
-                            lifted: catGroup.groupLifted
-                            dimmed: root.liftActive && !catGroup.groupLifted
-                            onTapped: {
-                                root.lifted = catGroup.groupLifted ? null : ({ type: "group", index: slotCol.index })
-                            }
-                        }
-
-                        // Display mode: plain title + subtle count; pencil to edit
-                        StyledText {
-                            visible: !parent.editing
-                            text: catGroup.cat.label
-                            font.pixelSize: Appearance.font.pixelSize.normal
-                            font.weight: Font.DemiBold
-                            color: Appearance.colors.colOnLayer1
-                            elide: Text.ElideRight
-                        }
-                        StyledText {
-                            visible: !parent.editing
-                            text: catGroup.cat.pages.length === 1
-                                ? Translation.tr("1 page")
-                                : Translation.tr("%1 pages").arg(catGroup.cat.pages.length)
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                            color: Appearance.colors.colSubtext
-                        }
-
-                        // Edit mode: compact field, confirmed with Enter or the check
-                        MaterialTextField {
-                            id: renameField
-                            visible: parent.editing
-                            Layout.preferredWidth: 240
-                            text: catGroup.cat.label
-                            onVisibleChanged: if (visible) { text = catGroup.cat.label; forceActiveFocus() }
-                            onAccepted: {
-                                root.renameCategory(slotCol.index, text)
-                                root.editingGroup = -1
-                            }
-                        }
-
-                        Item { Layout.fillWidth: true }
-
-                        RippleButtonWithIcon {
-                            materialIcon: parent.editing ? "check" : "edit"
-                            visible: !root.liftActive
-                            onClicked: {
-                                if (parent.editing) {
-                                    root.renameCategory(slotCol.index, renameField.text)
-                                    root.editingGroup = -1
-                                } else {
-                                    root.editingGroup = slotCol.index
-                                }
-                            }
-                        }
-                        RippleButtonWithIcon {
-                            materialIcon: "delete"
-                            visible: catGroup.cat.pages.length === 0 && !root.liftActive && !parent.editing
-                            onClicked: root.removeCategory(slotCol.index)
-                        }
-                    }
-
-                    Flow {
-                        Layout.fillWidth: true
-                        spacing: 6
-
-                        Repeater {
-                            model: catGroup.cat.pages.length + 1
-                            delegate: Row {
-                                id: chipCell
-                                required property int index
-                                readonly property bool isTail: chipCell.index >= catGroup.cat.pages.length
-                                readonly property int pageIdx: isTail ? -1 : (catGroup.cat.pages[chipCell.index] ?? -1)
-                                readonly property var page: SettingsPageRegistry.pages[chipCell.pageIdx] ?? null
-                                readonly property bool chipLifted: root.liftIsPage
-                                    && root.lifted.ci === slotCol.index && root.lifted.pi === chipCell.index
-                                spacing: 6
-
-                                // Insertion tile before this chip (and as the tail slot)
-                                ArrangeDropSlot {
-                                    compact: true
-                                    active: root.liftIsPage
-                                        && !(root.lifted.ci === slotCol.index
-                                             && (root.lifted.pi === chipCell.index || root.lifted.pi === chipCell.index - 1))
-                                    onPlaced: root.placePage(slotCol.index, chipCell.index)
-                                }
-
-                                ArrangeChip {
-                                    visible: !chipCell.isTail
-                                    icon: chipCell.page?.icon ?? "settings"
-                                    label: chipCell.page?.name ?? "?"
-                                    lifted: chipCell.chipLifted
-                                    dimmed: root.liftActive && !chipCell.chipLifted
-                                    onTapped: {
-                                        root.lifted = chipCell.chipLifted ? null
-                                            : ({ type: "page", ci: slotCol.index, pi: chipCell.index, pageIdx: chipCell.pageIdx })
-                                    }
-                                }
-                            }
-                        }
+                    Layout.preferredHeight: groupCard.implicitHeight
+                    CategoryCard {
+                        id: groupCard
+                        categoryIndex: groupWrapper.index
                     }
                 }
             }
         }
 
-        // Hidden zone: drop a page here and it leaves the sidebar entirely.
-        // Search still finds hidden pages, and lifting a chip brings it back.
-        SettingsGroup {
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-                MaterialSymbol {
-                    text: "visibility_off"
-                    iconSize: 20
-                    color: Appearance.colors.colSubtext
-                }
-                StyledText {
-                    text: Translation.tr("Hidden pages")
-                    font.pixelSize: Appearance.font.pixelSize.normal
-                    font.weight: Font.DemiBold
-                    color: Appearance.colors.colOnLayer1
-                }
-                StyledText {
-                    Layout.fillWidth: true
-                    text: Translation.tr("— out of the sidebar, still searchable")
-                    font.pixelSize: Appearance.font.pixelSize.smaller
-                    color: Appearance.colors.colSubtext
-                    elide: Text.ElideRight
-                }
+        GroupDropSlot { insertIndex: SettingsPageRegistry.categories.length }
+
+        Rectangle {
+            id: hiddenCard
+            Layout.fillWidth: true
+            implicitHeight: hiddenColumn.implicitHeight + 18
+            radius: Appearance.rounding.normal
+            color: hiddenDrop.containsDrag
+                ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.92)
+                : Appearance.colors.colLayer0
+            border.width: 1
+            border.color: hiddenDrop.containsDrag ? Appearance.colors.colPrimary : Appearance.colors.colOutlineVariant
+
+            Behavior on color {
+                enabled: Appearance.animationsEnabled
+                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
             }
 
-            Flow {
-                Layout.fillWidth: true
-                spacing: 6
+            DropArea {
+                id: hiddenDrop
+                anchors.fill: parent
+                keys: ["inir-settings-page"]
+                onDropped: root._hideDraggedPage()
+            }
 
-                ArrangeDropSlot {
-                    compact: true
-                    active: root.liftIsPage && root.lifted.ci !== -1
-                    onPlaced: root.hidePage()
+            ColumnLayout {
+                id: hiddenColumn
+                anchors.fill: parent
+                anchors.margins: 9
+                spacing: 7
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    Rectangle {
+                        Layout.preferredWidth: 30
+                        Layout.preferredHeight: 30
+                        radius: Appearance.rounding.full
+                        color: hiddenDrop.containsDrag
+                            ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.82)
+                            : ColorUtils.transparentize(Appearance.colors.colOnLayer1, 0.94)
+                        MaterialSymbol {
+                            anchors.centerIn: parent
+                            text: hiddenDrop.containsDrag ? "move_down" : "visibility_off"
+                            iconSize: Appearance.font.pixelSize.normal
+                            color: hiddenDrop.containsDrag ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
+                        }
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 0
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: Translation.tr("Hidden from navigation")
+                            font.pixelSize: Appearance.font.pixelSize.normal
+                            font.weight: Font.DemiBold
+                            color: Appearance.colors.colOnLayer0
+                        }
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: hiddenDrop.containsDrag
+                                ? Translation.tr("Release to hide this page")
+                                : Translation.tr("Still available from Search")
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            color: hiddenDrop.containsDrag ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
+                        }
+                    }
+
+                    Rectangle {
+                        implicitWidth: hiddenCount.implicitWidth + 14
+                        implicitHeight: 24
+                        radius: Appearance.rounding.full
+                        color: ColorUtils.transparentize(Appearance.colors.colOnLayer1, 0.94)
+                        StyledText {
+                            id: hiddenCount
+                            anchors.centerIn: parent
+                            text: SettingsPageRegistry.hiddenPages.length + ""
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            color: Appearance.colors.colSubtext
+                        }
+                    }
                 }
 
-                Repeater {
-                    model: SettingsPageRegistry.hiddenPages.length
-                    delegate: ArrangeChip {
-                        id: hiddenChip
-                        required property int index
-                        readonly property int pageIdx: SettingsPageRegistry.hiddenPages[hiddenChip.index] ?? -1
-                        readonly property var page: SettingsPageRegistry.pages[hiddenChip.pageIdx] ?? null
-                        readonly property bool chipLifted: root.liftIsPage
-                            && root.lifted.ci === -1 && root.lifted.pi === hiddenChip.index
-                        icon: hiddenChip.page?.icon ?? "settings"
-                        label: hiddenChip.page?.name ?? "?"
-                        lifted: chipLifted
-                        dimmed: root.liftActive && !chipLifted
-                        onTapped: {
-                            root.lifted = hiddenChip.chipLifted ? null
-                                : ({ type: "page", ci: -1, pi: hiddenChip.index, pageIdx: hiddenChip.pageIdx })
+                Column {
+                    Layout.fillWidth: true
+                    spacing: root.pageRowGap
+                    visible: SettingsPageRegistry.hiddenPages.length > 0
+
+                    Repeater {
+                        model: SettingsPageRegistry.hiddenPages
+                        delegate: PageRow {
+                            required property int modelData
+                            required property int index
+                            categoryIndex: -1
+                            pageIndex: index
+                            pageIdx: modelData
+                            hiddenSource: true
                         }
                     }
                 }
 
                 StyledText {
-                    visible: SettingsPageRegistry.hiddenPages.length === 0 && !root.liftActive
-                    text: Translation.tr("Nothing hidden")
+                    visible: SettingsPageRegistry.hiddenPages.length === 0
+                    Layout.fillWidth: true
+                    text: Translation.tr("Nothing hidden. Use the eye button on any page or drag it here.")
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     color: Appearance.colors.colSubtext
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.WordWrap
+                    Layout.topMargin: 6
+                    Layout.bottomMargin: 6
                 }
             }
         }

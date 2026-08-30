@@ -470,6 +470,9 @@ QtObject {
             } else if (root._retryCount < root._maxRetries) {
                 root._retryCount += 1;
                 retryTimer.restart();
+            } else if (root._pathFromFileUrl(root.displaySource) === artFilePath) {
+                root.ready = false;
+                root.displaySource = "";
             }
         }
     }

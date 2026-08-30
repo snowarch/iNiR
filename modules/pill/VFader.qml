@@ -32,7 +32,7 @@ Item {
 
     readonly property bool lit: focused
 
-    readonly property real trackH: 86 * s
+    readonly property real trackH: 96 * s
 
     /**
      * Live tick centre in this fader's coordinates. tick.y and root.width are
@@ -47,8 +47,8 @@ Item {
         return tick.mapToItem(root, tick.width / 2, tick.height / 2);
     }
 
-    implicitWidth: 54 * s
-    implicitHeight: trackH + (subLabel.length ? 56 : 44) * s
+    implicitWidth: 64 * s
+    implicitHeight: trackH + (subLabel.length ? 60 : 48) * s
 
     /**
      * Nudge the value by a signed percentage (e.g. +1 / -1), clamped to 0..100%,
@@ -64,7 +64,7 @@ Item {
         id: trackArea
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        width: 22 * root.s
+        width: 28 * root.s
         height: root.trackH
 
         Rectangle {
@@ -130,7 +130,7 @@ Item {
         color: root.lit ? PillTheme.cream : PillTheme.dim
         opacity: root.lit ? 1 : 0
         font.family: PillTheme.font
-        font.pixelSize: 9 * root.s
+        font.pixelSize: 10.5 * root.s
         font.weight: Font.DemiBold
         // Percent readouts that tick while dragging; without tabular figures the
         // label jitters horizontally as digit widths change.
@@ -143,8 +143,8 @@ Item {
         anchors.top: readout.bottom
         anchors.topMargin: 3 * root.s
         anchors.horizontalCenter: parent.horizontalCenter
-        width: 18 * root.s
-        height: 18 * root.s
+        width: 22 * root.s
+        height: 22 * root.s
 
         GlyphIcon {
             anchors.fill: parent
@@ -171,7 +171,7 @@ Item {
         text: root.subLabel
         color: root.lit ? PillTheme.cream : PillTheme.faint
         font.family: PillTheme.font
-        font.pixelSize: 9 * root.s
+        font.pixelSize: 10.5 * root.s
         font.weight: Font.DemiBold
         font.letterSpacing: 0.3 * root.s
         Behavior on opacity { NumberAnimation { duration: PillMotion.fast } }

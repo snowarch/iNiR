@@ -1,0 +1,3 @@
+module qs.modules.clipboard
+ClipboardItem 1.0 ClipboardItem.qml
+ClipboardPanel 1.0 ClipboardPanel.qml

@@ -20,7 +20,7 @@ AbstractBackgroundWidget {
         barCount: 32, barSpacing: 2, trackAlpha: 0.08,
         fillOpacity: 0.7, graphFillOpacity: 0.3,
         showCpu: true, showMemory: true, showGpu: true,
-        showTemp: false, showDisk: false, showLabels: true,
+        showTemp: false, showGpuTemp: false, showDisk: false, showLabels: true,
         contentWidth: 320, contentHeight: 120, dim: 0,
         widgetScale: 100, widgetOpacity: 100, colorMode: "auto",
         showBackground: true, useBlur: false, showBorder: true,
@@ -79,6 +79,7 @@ AbstractBackgroundWidget {
                         { label: Translation.tr("RAM"), icon: "storage", key: "showMemory", active: root.showMemory },
                         { label: Translation.tr("GPU"), icon: "developer_board", key: "showGpu", active: root.showGpu },
                         { label: Translation.tr("Temp"), icon: "thermostat", key: "showTemp", active: root.showTemp },
+                        { label: Translation.tr("GPU temp"), icon: "device_thermostat", key: "showGpuTemp", active: root.showGpuTemp },
                         { label: Translation.tr("Disk"), icon: "hard_drive", key: "showDisk", active: root.showDisk }
                     ]
                     SelectionGroupButton {
@@ -105,6 +106,7 @@ AbstractBackgroundWidget {
     readonly property bool showMemory: Config.getNestedValue("background.widgets.systemMonitor.showMemory", true)
     readonly property bool showGpu: Config.getNestedValue("background.widgets.systemMonitor.showGpu", true)
     readonly property bool showTemp: Config.getNestedValue("background.widgets.systemMonitor.showTemp", false)
+    readonly property bool showGpuTemp: Config.getNestedValue("background.widgets.systemMonitor.showGpuTemp", false)
     readonly property bool showDisk: Config.getNestedValue("background.widgets.systemMonitor.showDisk", false)
     readonly property bool showLabels: Config.getNestedValue("background.widgets.systemMonitor.showLabels", true)
     readonly property real trackAlpha: Config.getNestedValue("background.widgets.systemMonitor.trackAlpha", 0.08)
@@ -118,6 +120,7 @@ AbstractBackgroundWidget {
         if (root.showMemory) items.push({ icon: "storage", label: Translation.tr("RAM"), key: "mem" });
         if (root.showGpu) items.push({ icon: "developer_board", label: Translation.tr("GPU"), key: "gpu" });
         if (root.showTemp) items.push({ icon: "thermostat", label: Translation.tr("Temp"), key: "temp" });
+        if (root.showGpuTemp) items.push({ icon: "device_thermostat", label: Translation.tr("GPU temp"), key: "gpuTemp" });
         if (root.showDisk) items.push({ icon: "hard_drive", label: Translation.tr("Disk"), key: "disk" });
         return items;
     }
@@ -129,6 +132,7 @@ AbstractBackgroundWidget {
             case "mem": return ResourceUsage.memoryUsedPercentage;
             case "gpu": return ResourceUsage.gpuUsage;
             case "temp": return ResourceUsage.tempPercentage;
+            case "gpuTemp": return ResourceUsage.gpuTempPercentage;
             case "disk": return ResourceUsage.diskUsedPercentage;
             default: return 0;
         }
@@ -140,6 +144,7 @@ AbstractBackgroundWidget {
             case "mem": return root.memColor;
             case "gpu": return root.gpuColor;
             case "temp": return root.tempColor;
+            case "gpuTemp": return root.gpuTempColor;
             case "disk": return root.diskColor;
             default: return root.cpuColor;
         }
@@ -147,6 +152,7 @@ AbstractBackgroundWidget {
 
     function _getDisplayText(key: string): string {
         if (key === "temp") return ResourceUsage.maxTemp + "°C";
+        if (key === "gpuTemp") return ResourceUsage.gpuTemp + "°C";
         return Math.round(root._getValue(key) * 100) + "%";
     }
 
@@ -156,6 +162,7 @@ AbstractBackgroundWidget {
             case "mem": return MaterialShape.Shape.Cookie4Sided;
             case "gpu": return MaterialShape.Shape.Cookie12Sided;
             case "temp": return MaterialShape.Shape.Sunny;
+            case "gpuTemp": return MaterialShape.Shape.Cookie9Sided;
             case "disk": return MaterialShape.Shape.Clover4Leaf;
             default: return MaterialShape.Shape.Cookie12Sided;
         }
@@ -166,7 +173,7 @@ AbstractBackgroundWidget {
     function _tileRole(key: string): var {
         const role = key === "mem" ? root.widgetSecondaryRole
             : key === "gpu" ? root.widgetTertiaryRole
-            : key === "temp" ? root.widgetSignalRole
+            : key === "temp" || key === "gpuTemp" ? root.widgetSignalRole
             : key === "disk" ? root.widgetSurfaceRole
             : root.widgetPrimaryRole;
         const set = root.widgetSemanticSet(role);
@@ -241,7 +248,8 @@ AbstractBackgroundWidget {
     function _metricSeverity(key: string): int {
         const value = root._getValue(key) * 100;
         switch (key) {
-        case "temp": {
+        case "temp":
+        case "gpuTemp": {
             const caution = Config.options?.bar?.resources?.tempCautionThreshold ?? 65;
             const warning = Config.options?.bar?.resources?.tempWarningThreshold ?? 80;
             return value >= warning ? 2 : value >= caution ? 1 : 0;
@@ -270,6 +278,7 @@ AbstractBackgroundWidget {
     readonly property color memColor: root._metricColor("mem")
     readonly property color gpuColor: root._metricColor("gpu")
     readonly property color tempColor: root._metricColor("temp")
+    readonly property color gpuTempColor: root._metricColor("gpuTemp")
     readonly property color diskColor: root._metricColor("disk")
 
     // Animation duration for smooth value transitions
@@ -305,6 +314,7 @@ AbstractBackgroundWidget {
         surfaceColor: root.widgetSurfaceInk
         colorMode: root.colorMode
         surfaceAccent: root.widgetAccent
+        surfaceFill: root.widgetPlateColor
         surfaceUseBlur: root.effectiveBlur
         screenX: root.x
         screenY: root.y
@@ -475,6 +485,16 @@ AbstractBackgroundWidget {
         Graph {
             anchors.fill: parent
             anchors.topMargin: parent._legendH
+            values: root.showGpuTemp ? ResourceUsage.gpuTempHistory : []
+            color: root._graphColor("gpuTemp")
+            fillOpacity: root.graphFillOpacity - 0.05
+            alignment: Graph.Alignment.Right
+            visible: root.showGpuTemp
+        }
+
+        Graph {
+            anchors.fill: parent
+            anchors.topMargin: parent._legendH
             values: root.showGpu ? ResourceUsage.gpuUsageHistory : []
             color: root._graphColor("gpu")
             fillOpacity: root.graphFillOpacity - 0.05
@@ -534,7 +554,9 @@ AbstractBackgroundWidget {
                     // Percentage/value inside the ring
                     StyledText {
                         anchors.centerIn: parent
-                        text: ringCol.modelData.key === "temp" ? ResourceUsage.maxTemp + "°" : Math.round(ringCol._animatedValue * 100)
+                        text: ringCol.modelData.key === "temp" ? ResourceUsage.maxTemp + "°"
+                            : ringCol.modelData.key === "gpuTemp" ? ResourceUsage.gpuTemp + "°"
+                            : Math.round(ringCol._animatedValue * 100)
                         color: ringCol._liveColor
                         font {
                             pixelSize: Math.max(10, Math.round(ringCol._ringSize * 0.26))
@@ -644,7 +666,17 @@ AbstractBackgroundWidget {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 radius: root.cardRadius
-                color: tile.role.bg
+                color: Appearance.regaliaEverywhere ? "transparent" : tile.role.bg
+
+                RegaliaPlate {
+                    anchors.fill: parent
+                    z: -1
+                    visible: Appearance.regaliaEverywhere
+                    radius: tile.radius
+                    fillColor: tile.role.bg
+                    inset: Appearance.regalia.surfaceInset
+                    elevated: true
+                }
 
                 Behavior on color {
                     enabled: Appearance.animationsEnabled
@@ -659,6 +691,7 @@ AbstractBackgroundWidget {
                     target: tile
                     z: -2
                     visible: !Appearance.zzzEverywhere && !Appearance.inirEverywhere
+                        && !Appearance.regaliaEverywhere
                 }
 
                 ColumnLayout {

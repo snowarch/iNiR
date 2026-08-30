@@ -36,21 +36,33 @@ Item {
 
     Rectangle {
         id: chipBackground
-        implicitWidth: chipContent.implicitWidth + 20
-        implicitHeight: 30
-        radius: Appearance.zzzEverywhere ? Appearance.zzz.pillRadius : height / 2
+        implicitWidth: chipContent.implicitWidth
+            + (Appearance.regaliaEverywhere ? Appearance.regalia.controlPaddingHorizontal * 2 : 20)
+        implicitHeight: Appearance.regaliaEverywhere ? Appearance.regalia.compactControlHeight : 30
+        radius: Appearance.regaliaEverywhere ? Appearance.regalia.controlRadius
+            : Appearance.zzzEverywhere ? Appearance.zzz.pillRadius : height / 2
         // ZZZ: a tag is a neutral data tile with a hairline, not a bright
         // secondary block (colSecondaryContainer → zzz.secondary signal).
-        color: closeArea.containsMouse
-            ? Appearance.colors.colErrorContainer
+        color: Appearance.regaliaEverywhere ? "transparent"
+            : closeArea.containsMouse ? Appearance.colors.colErrorContainer
             : Appearance.zzzEverywhere
                 ? (bodyArea.containsMouse ? Appearance.colors.colLayer2Hover : Appearance.colors.colLayer2)
                 : bodyArea.containsMouse
                     ? Appearance.colors.colSecondaryContainerHover
                     : Appearance.colors.colSecondaryContainer
-        border.width: 1
+        border.width: Appearance.regaliaEverywhere ? 0 : 1
+
+        RegaliaControlFace {
+            anchors.fill: parent
+            visible: Appearance.regaliaEverywhere
+            fillColor: closeArea.containsMouse ? Appearance.regalia.signalPlate : Appearance.regalia.controlPlate
+            radius: chipBackground.radius
+            hovered: bodyArea.containsMouse || closeArea.containsMouse
+            pressed: bodyArea.pressed || closeArea.pressed
+        }
         border.color: closeArea.containsMouse
             ? Appearance.colors.colError
+            : Appearance.regaliaEverywhere ? "transparent"
             : Appearance.zzzEverywhere
                 ? (bodyArea.containsMouse ? Appearance.zzz.hairlineStrong : Appearance.zzz.hairline)
                 : bodyArea.containsMouse
@@ -77,7 +89,8 @@ Item {
         RowLayout {
             id: chipContent
             anchors.centerIn: parent
-            spacing: (root.chipIcon.length > 0 || root.removable) ? 4 : 0
+            spacing: (root.chipIcon.length > 0 || root.removable)
+                ? (Appearance.regaliaEverywhere ? Appearance.regalia.controlGap : 4) : 0
 
             Behavior on spacing {
                 enabled: Appearance.animationsEnabled
@@ -108,6 +121,7 @@ Item {
                     iconSize: 16
                     color: closeArea.containsMouse
                         ? Appearance.colors.colOnErrorContainer
+                        : Appearance.regaliaEverywhere ? Appearance.regalia.onColor
                         : Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnSecondaryContainer
                 }
             }
@@ -118,6 +132,7 @@ Item {
                 font.family: root.monospace ? Appearance.font.family.monospace : Appearance.font.family.main
                 color: closeArea.containsMouse
                     ? Appearance.colors.colOnErrorContainer
+                    : Appearance.regaliaEverywhere ? Appearance.regalia.onColor
                     : Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnSecondaryContainer
             }
 
@@ -144,6 +159,7 @@ Item {
                     iconSize: 14
                     color: closeArea.containsMouse
                         ? Appearance.colors.colOnErrorContainer
+                        : Appearance.regaliaEverywhere ? Appearance.regalia.onMuted
                         : Appearance.colors.colOnSecondaryContainer
                     opacity: closeArea.containsMouse ? 1 : (bodyArea.containsMouse ? 0.7 : 0.4)
 
@@ -159,7 +175,8 @@ Item {
         MouseArea {
             id: bodyArea
             anchors.fill: parent
-            anchors.rightMargin: root.removable ? 24 : 0
+            anchors.rightMargin: root.removable
+                ? (Appearance.regaliaEverywhere ? 16 + Appearance.regalia.controlGap : 24) : 0
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: root.activated()

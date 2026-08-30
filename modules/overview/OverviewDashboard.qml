@@ -28,6 +28,8 @@ Item {
     // ── Screen & wallpaper for blur (angel/aurora) ──
     property int screenWidth: root.QsWindow?.window?.screen?.width ?? 1920
     property int screenHeight: root.QsWindow?.window?.screen?.height ?? 1080
+    property real availableWidth: root.screenWidth
+    property real availableHeight: root.screenHeight
     readonly property string wallpaperUrl: Wallpapers.effectiveWallpaperUrl
 
     // ── Config shortcuts ──
@@ -125,7 +127,7 @@ Item {
     readonly property int dashboardMaxWidth: 560
     readonly property int dashboardHorizontalPadding: 12
     readonly property int dashboardVerticalPadding: 12
-    readonly property real dashboardSafeHeight: Math.max(260, (root.parent?.height ?? root.screenHeight) - (dashboardVerticalPadding * 2))
+    readonly property real dashboardSafeHeight: Math.max(260, root.availableHeight - (dashboardVerticalPadding * 2))
 
     // ── Media-adaptive colors ──
     readonly property color mediaBg: {
@@ -234,7 +236,7 @@ Item {
     GlassBackground {
         id: dashContainer
         anchors.centerIn: parent
-        width: Math.min(root.dashboardMaxWidth, (root.parent?.width ?? root.screenWidth) - (root.dashboardHorizontalPadding * 2))
+        width: Math.min(root.dashboardMaxWidth, root.availableWidth - (root.dashboardHorizontalPadding * 2))
         implicitWidth: width
         implicitHeight: Math.min(mainCol.implicitHeight + 24, root.dashboardSafeHeight)
         height: implicitHeight

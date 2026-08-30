@@ -54,6 +54,13 @@ MIDNIGHT_OUTPUT_FILE = Path(
     )
 ).expanduser()
 
+TUI_OUTPUT_FILE = Path(
+    os.environ.get(
+        "INIR_TUI_CSS",
+        "~/.config/vesktop/themes/inir-tui.theme.css",
+    )
+).expanduser()
+
 
 def _resolve_output_files(env_var: str, default_path: Path) -> list[Path]:
     """Return a list of paths to write the theme to.
@@ -144,6 +151,62 @@ body {{
 {palette_css}
 
 /* Material Design System */
+"""
+
+TUI_THEME_TEMPLATE = """/**
+ * @name iNiR TUI
+ * @description System24 TUI layout with iNiR Material You colors.
+ * @author refact0r (system24 base), iNiR (palette integration)
+ * @version 2.2.0
+ * @source https://github.com/snowarch/inir
+ */
+
+@import url('system24.local.css');
+@import url('https://refact0r.github.io/system24/build/system24.css');
+
+body {{
+    --font: 'JetBrainsMono Nerd Font';
+    --code-font: 'JetBrainsMono Nerd Font';
+    font-weight: 300;
+    letter-spacing: -0.05ch;
+    --gap: 12px;
+    --divider-thickness: 4px;
+    --border-thickness: 2px;
+    --border-hover-transition: 0.2s ease;
+    --animations: on;
+    --list-item-transition: 0.2s ease;
+    --dms-icon-svg-transition: 0.4s ease;
+    --top-bar-height: var(--gap);
+    --top-bar-button-position: titlebar;
+    --top-bar-title-position: off;
+    --subtle-top-bar-title: off;
+    --custom-window-controls: off;
+    --window-control-size: 14px;
+    --custom-dms-icon: off;
+    --dms-icon-svg-size: 90%;
+    --dms-icon-color-before: var(--text-4);
+    --dms-icon-color-after: var(--text-1);
+    --custom-dms-background: off;
+    --background-image: off;
+    --transparency-tweaks: off;
+    --remove-bg-layer: off;
+    --panel-blur: off;
+    --blur-amount: 12px;
+    --bg-floating: var(--bg-3);
+    --small-user-panel: on;
+    --unrounding: on;
+    --round-pfp: off;
+    --remove-pfp-decor: off;
+    --custom-spotify-bar: on;
+    --ascii-titles: on;
+    --ascii-loader: system24;
+    --panel-labels: on;
+    --label-color: var(--text-5);
+    --label-font-weight: 500;
+}}
+
+/* Material You Palette - Auto-generated */
+{palette_css}
 """
 
 MIDNIGHT_THEME_TEMPLATE = """/**
@@ -399,12 +462,14 @@ def _write_palette(palette: Dict[str, str]) -> None:
 
     system24_outputs = _resolve_output_files("SYSTEM24_PALETTE_CSS", OUTPUT_FILE)
     midnight_outputs = _resolve_output_files("MIDNIGHT_DMS_CSS", MIDNIGHT_OUTPUT_FILE)
+    tui_outputs = _resolve_output_files("INIR_TUI_CSS", TUI_OUTPUT_FILE)
 
-    for out in system24_outputs + midnight_outputs:
+    for out in system24_outputs + midnight_outputs + tui_outputs:
         _ensure_parent(out)
 
     system24_content = THEME_TEMPLATE.format(palette_css=palette_css)
     midnight_content = MIDNIGHT_THEME_TEMPLATE.format(palette_css=palette_css)
+    tui_content = TUI_THEME_TEMPLATE.format(palette_css=palette_css)
 
     for out in system24_outputs:
         with out.open("w", encoding="utf-8") as fh:
@@ -417,6 +482,11 @@ def _write_palette(palette: Dict[str, str]) -> None:
         legacy_out = out.parent / "ii-midnight.theme.css"
         if legacy_out != out:
             legacy_out.unlink(missing_ok=True)
+        print(f"Generated: {out}")
+
+    for out in tui_outputs:
+        with out.open("w", encoding="utf-8") as fh:
+            fh.write(tui_content)
         print(f"Generated: {out}")
 
 

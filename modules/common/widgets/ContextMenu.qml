@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Widgets
+import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
@@ -47,12 +48,29 @@ Loader {
         else root.active = false;
     }
 
+    function requestOpen(): void {
+        if (GlobalStates.activeContextMenu && GlobalStates.activeContextMenu !== root)
+            GlobalStates.activeContextMenu.active = false
+        root.active = true
+    }
+
     function updateAnchor(): void {
         item?.anchor.updateAnchor();
     }
 
     active: false
     visible: active
+
+    onActiveChanged: {
+        if (active) {
+            GlobalStates.activeContextMenu = root
+            GlobalStates.activeContextMenuCount++
+        } else {
+            if (GlobalStates.activeContextMenu === root)
+                GlobalStates.activeContextMenu = null
+            GlobalStates.activeContextMenuCount--
+        }
+    }
 
     sourceComponent: PopupWindow {
         id: popupWindow
@@ -214,18 +232,29 @@ Loader {
                 leftMargin: popupWindow.isHorizontalPopup && !popupWindow.isLeftSide ? popupWindow.sourceEdgeMargin : (root.ambientShadowWidth + root.visualMargin)
                 rightMargin: popupWindow.isHorizontalPopup && popupWindow.isLeftSide ? popupWindow.sourceEdgeMargin : (root.ambientShadowWidth + root.visualMargin)
             }
-            fallbackColor: Appearance.colors.colSurfaceContainer
+            fallbackColor: Appearance.regaliaEverywhere ? "transparent" : Appearance.colors.colSurfaceContainer
             inirColor: Appearance.inir.colLayer2
             auroraTransparency: Appearance.aurora.popupTransparentize
             radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
                 : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
                 : Appearance.rounding.normal
-            border.width: 1
-            border.color: Appearance.angelEverywhere ? Appearance.angel.colBorder
+            border.width: Appearance.regaliaEverywhere ? 0 : 1
+            border.color: Appearance.regaliaEverywhere ? "transparent"
+                        : Appearance.angelEverywhere ? Appearance.angel.colBorder
                         : Appearance.inirEverywhere ? Appearance.inir.colBorder
                         : Appearance.auroraEverywhere
                             ? Appearance.aurora.colTooltipBorder
                             : Appearance.colors.colSurfaceContainerHighest
+
+            RegaliaPlate {
+                anchors.fill: parent
+                z: -1
+                visible: Appearance.regaliaEverywhere
+                fillColor: Appearance.regalia.bg2
+                radius: realContent.radius
+                inset: Appearance.regalia.surfaceInset
+                elevated: true
+            }
             opacity: Appearance.motion.popupReveal.enableFade ? (shown ? 1 : 0) : 1
             scale: shown ? 1
                 : (Appearance.motion.popupReveal.enableScale
@@ -300,22 +329,28 @@ Loader {
                                 opacity: enabled ? 1 : 0.45
                                 buttonHovered: enabled && menuHover.hovered
 
-                                implicitWidth: Math.max(140, menuRow.implicitWidth + 20)
-                                implicitHeight: 32
-                                buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+                                implicitWidth: Math.max(140, menuRow.implicitWidth
+                                    + (Appearance.regaliaEverywhere ? Appearance.regalia.controlPaddingHorizontal * 2 : 20))
+                                implicitHeight: Appearance.regaliaEverywhere ? Appearance.regalia.compactControlHeight : 32
+                                buttonRadius: Appearance.regaliaEverywhere ? Appearance.regalia.controlRadius
+                                    : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
                                     : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
                                     : Appearance.rounding.small
                                 colBackground: "transparent"
-                                colBackgroundHover: Appearance.angelEverywhere
-                                    ? Appearance.angel.colGlassPopupHover
-                                    : Appearance.inirEverywhere 
-                                        ? Appearance.inir.colLayer2Hover
-                                        : ColorUtils.transparentize(Appearance.colors.colPrimary, 0.85)
-                                colRipple: Appearance.angelEverywhere
-                                    ? Appearance.angel.colGlassPopupActive
-                                    : Appearance.inirEverywhere
-                                        ? Appearance.inir.colLayer2Active
-                                        : ColorUtils.transparentize(Appearance.colors.colPrimary, 0.7)
+                                colBackgroundHover: Appearance.regaliaEverywhere
+                                    ? Appearance.regalia.controlPlateHover
+                                    : Appearance.angelEverywhere
+                                        ? Appearance.angel.colGlassPopupHover
+                                        : Appearance.inirEverywhere
+                                            ? Appearance.inir.colLayer2Hover
+                                            : ColorUtils.transparentize(Appearance.colors.colPrimary, 0.85)
+                                colRipple: Appearance.regaliaEverywhere
+                                    ? Appearance.regalia.controlPlateActive
+                                    : Appearance.angelEverywhere
+                                        ? Appearance.angel.colGlassPopupActive
+                                        : Appearance.inirEverywhere
+                                            ? Appearance.inir.colLayer2Active
+                                            : ColorUtils.transparentize(Appearance.colors.colPrimary, 0.7)
 
                                 onClicked: {
                                     if (!enabled) return;
@@ -334,9 +369,10 @@ Loader {
                                 contentItem: RowLayout {
                                     id: menuRow
                                     anchors.fill: parent
-                                    anchors.leftMargin: 8
-                                    anchors.rightMargin: 8
-                                    spacing: 8
+                                    anchors.leftMargin: Appearance.regaliaEverywhere
+                                        ? Appearance.regalia.controlPaddingHorizontal : 8
+                                    anchors.rightMargin: anchors.leftMargin
+                                    spacing: Appearance.regaliaEverywhere ? Appearance.regalia.controlGap : 8
 
                                     Loader {
                                         active: root.hasIcons

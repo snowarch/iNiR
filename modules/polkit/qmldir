@@ -1,0 +1,3 @@
+module qs.modules.polkit
+PolkitContent 1.0 PolkitContent.qml
+Polkit 1.0 Polkit.qml

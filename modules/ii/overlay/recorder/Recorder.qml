@@ -13,8 +13,8 @@ import qs.services
 
 StyledOverlayWidget {
     id: root
-    minimumWidth: 350
-    minimumHeight: 205
+    minimumWidth: 400
+    minimumHeight: Math.max(250, contentColumn.implicitHeight)
 
     // Dynamic title: "Recorder" normally, "Recorder — 15:23" when recording
     title: RecorderStatus.isRecording
@@ -28,8 +28,11 @@ StyledOverlayWidget {
         const videosDir = FileUtils.trimFileProtocol(Directories.videos);
         return videosDir || `${FileUtils.trimFileProtocol(Directories.home)}/Videos`;
     }
+    readonly property string effectiveScreenshotPath: Directories.screenshotsPath
     readonly property string audioMode: RecorderStatus.configuredAudioMode
     readonly property string statusAudioMode: RecorderStatus.isRecording ? RecorderStatus.effectiveAudioMode : audioMode
+    property string folderDialogTarget: "recordings"
+    property bool _folderDialogEngaged: false
 
     function audioModeLabel(mode: string): string {
         switch (mode) {
@@ -75,13 +78,25 @@ StyledOverlayWidget {
         diskQueryProcess.running = true;
     }
 
+    function openFolderDialog(target: string): void {
+        root.folderDialogTarget = target
+        folderDialog.open()
+    }
+
+    function syncFolderDialogLayer(): void {
+        const visible = Boolean(folderDialog.visible)
+        if (visible === root._folderDialogEngaged) return
+        root._folderDialogEngaged = visible
+        OverlayContext.setNativeDialogVisible("recorder-folder", visible)
+    }
+
     Process {
         id: diskQueryProcess
-        command: ["/usr/bin/bash", "-c",
-            "df -BG --output=avail \"" + root.effectiveSavePath + "\" 2>/dev/null | tail -1 | tr -d ' \\n'"]
+        command: ["/usr/bin/df", "-BG", "--output=avail", root.effectiveSavePath]
         stdout: StdioCollector {
             onStreamFinished: {
-                root._diskFreeText = text.trim();
+                const lines = text.trim().split("\n")
+                root._diskFreeText = lines.length > 1 ? lines[lines.length - 1].trim() : "?"
                 root._diskInfoPending = false;
             }
         }
@@ -100,8 +115,13 @@ StyledOverlayWidget {
 
         ColumnLayout {
             id: contentColumn
-            anchors.centerIn: parent
-            spacing: 8
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.topMargin: 10
+            anchors.bottomMargin: 10
+            width: Math.min(parent.width - 20, 620)
+            spacing: 10
 
             // ── Recording indicator + timer (only when recording) ──
             Rectangle {
@@ -157,81 +177,95 @@ StyledOverlayWidget {
                 }
             }
 
-            // ── Audio profile ──
-            Row {
-                Layout.alignment: Qt.AlignHCenter
-                spacing: 6
+            PanelSurface {
+                Layout.fillWidth: true
+                implicitHeight: 42
+                elevation: 2
+                outlined: false
 
-                RecorderAudioButton {
-                    audioModeValue: "none"
-                    materialSymbol: "volume_off"
-                    labelText: Translation.tr("No audio")
-                }
-                RecorderAudioButton {
-                    audioModeValue: "system"
-                    materialSymbol: "volume_up"
-                    labelText: Translation.tr("System audio")
-                }
-                RecorderAudioButton {
-                    audioModeValue: "microphone"
-                    materialSymbol: "mic"
-                    labelText: Translation.tr("Microphone")
-                }
-                RecorderAudioButton {
-                    audioModeValue: "both"
-                    materialSymbol: "instant_mix"
-                    labelText: Translation.tr("System + microphone")
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.margins: 6
+                    spacing: 6
+
+                    StyledText {
+                        text: Translation.tr("Audio")
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        color: Appearance.colors.colOnLayer2
+                        Layout.leftMargin: 4
+                    }
+
+                    Item { Layout.fillWidth: true }
+
+                    RecorderAudioButton {
+                        audioModeValue: "none"
+                        materialSymbol: "volume_off"
+                        labelText: Translation.tr("No audio")
+                    }
+                    RecorderAudioButton {
+                        audioModeValue: "system"
+                        materialSymbol: "volume_up"
+                        labelText: Translation.tr("System audio")
+                    }
+                    RecorderAudioButton {
+                        audioModeValue: "microphone"
+                        materialSymbol: "mic"
+                        labelText: Translation.tr("Microphone")
+                    }
+                    RecorderAudioButton {
+                        audioModeValue: "both"
+                        materialSymbol: "instant_mix"
+                        labelText: Translation.tr("System + microphone")
+                    }
                 }
             }
 
-            // ── Action buttons row ──
-            Row {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.topMargin: 2
-                spacing: 8
+            GridLayout {
+                Layout.fillWidth: true
+                columns: 2
+                columnSpacing: 8
+                rowSpacing: 8
 
-                BigRecorderButton {
+                RecorderActionButton {
+                    Layout.fillWidth: true
                     materialSymbol: "screenshot_region"
-                    name: Translation.tr("Screenshot region")
+                    labelText: Translation.tr("Screenshot region")
+                    detailText: Translation.tr("Save + copy")
                     onClicked: {
                         GlobalStates.overlayOpen = false;
                         Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "screenshot"]);
                     }
                 }
 
-                BigRecorderButton {
-                    materialSymbol: "photo_camera"
-                    name: Translation.tr("Screenshot")
+                RecorderActionButton {
+                    Layout.fillWidth: true
+                    materialSymbol: "content_copy"
+                    labelText: Translation.tr("Copy screen")
+                    detailText: Translation.tr("Clipboard only")
                     onClicked: {
                         GlobalStates.overlayOpen = false;
                         Quickshell.execDetached(["/usr/bin/bash", "-c", "/usr/bin/grim - | /usr/bin/wl-copy"]);
                     }
                 }
 
-                BigRecorderButton {
-                    id: recordButton
+                RecorderActionButton {
+                    Layout.fillWidth: true
+                    visible: !RecorderStatus.isRecording
                     materialSymbol: "screen_record"
-                    name: Translation.tr("Record region") + " · " + root.audioModeLabel(root.audioMode)
-                    opacity: !RecorderStatus.isRecording ? 1 : 0
-                    visible: opacity > 0
-                    scale: !RecorderStatus.isRecording ? 1 : 0.8
-                    Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
-                    Behavior on scale { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                    labelText: Translation.tr("Record region")
+                    detailText: root.audioModeLabel(root.audioMode)
                     onClicked: {
                         GlobalStates.overlayOpen = false;
                         Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "recordWithSound"]);
                     }
                 }
 
-                BigRecorderButton {
-                    id: fullscreenRecordButton
+                RecorderActionButton {
+                    Layout.fillWidth: true
+                    visible: !RecorderStatus.isRecording
                     materialSymbol: "capture"
-                    name: Translation.tr("Record screen") + " · " + root.audioModeLabel(root.audioMode)
-                    opacity: !RecorderStatus.isRecording ? 1 : 0
-                    visible: opacity > 0
-                    scale: !RecorderStatus.isRecording ? 1 : 0.8
-                    Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
-                    Behavior on scale { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                    labelText: Translation.tr("Record screen")
+                    detailText: root.audioModeLabel(root.audioMode)
                     onClicked: {
                         GlobalStates.overlayOpen = false;
                         Quickshell.execDetached([Directories.recordScriptPath, "--fullscreen", "--sound"]);
@@ -239,16 +273,14 @@ StyledOverlayWidget {
                     }
                 }
 
-                // Dedicated STOP button — morphs in when recording
-                BigRecorderButton {
+                RecorderActionButton {
+                    Layout.fillWidth: true
+                    Layout.columnSpan: 2
+                    visible: RecorderStatus.isRecording
                     materialSymbol: "stop_circle"
-                    name: Translation.tr("Stop recording")
-                    isRecording: true
-                    opacity: RecorderStatus.isRecording ? 1 : 0
-                    visible: opacity > 0
-                    scale: RecorderStatus.isRecording ? 1 : 0.8
-                    Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
-                    Behavior on scale { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                    labelText: Translation.tr("Stop recording")
+                    detailText: root.formatElapsed(RecorderStatus.elapsedSeconds)
+                    destructive: true
                     onClicked: {
                         Quickshell.execDetached([Directories.recordScriptPath, "--stop"]);
                         RecorderStatus.scheduleQuickCheck();
@@ -262,41 +294,44 @@ StyledOverlayWidget {
                 Layout.fillWidth: true
             }
 
-            // ── Separator before game mode section ──
-            Rectangle {
+            PanelSurface {
                 Layout.fillWidth: true
-                Layout.leftMargin: 4
-                Layout.rightMargin: 4
-                height: 1
-                color: Appearance.colors.colOutlineVariant
-                opacity: 0.3
-            }
+                implicitHeight: destinationsColumn.implicitHeight + 16
+                elevation: 2
+                outlined: false
 
-            // ── Game Mode overrides (collapsible) ──
-            RecorderGameModeSection {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.fillWidth: true
-            }
+                ColumnLayout {
+                    id: destinationsColumn
+                    anchors.fill: parent
+                    anchors.margins: 8
+                    spacing: 4
 
-            // ── Folder actions ──
-            Row {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.topMargin: 2
-                spacing: 8
-
-                ActionButton {
-                    materialSymbol: "folder_open"
-                    labelText: Translation.tr("Open folder")
-                    onClicked: {
-                        GlobalStates.overlayOpen = false;
-                        Qt.openUrlExternally(`file://${root.effectiveSavePath}`);
+                    StyledText {
+                        text: Translation.tr("Capture folders")
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        font.weight: Font.Medium
+                        color: Appearance.colors.colOnLayer2
                     }
-                }
 
-                ActionButton {
-                    materialSymbol: "drive_file_move"
-                    labelText: Translation.tr("Change folder")
-                    onClicked: folderDialog.open()
+                    DestinationRow {
+                        titleText: Translation.tr("Recordings")
+                        pathText: Directories.shortHomePath(root.effectiveSavePath)
+                        onOpenRequested: {
+                            GlobalStates.overlayOpen = false
+                            ShellExec.openDirectory(root.effectiveSavePath, Translation.tr("Open recordings folder"))
+                        }
+                        onChangeRequested: root.openFolderDialog("recordings")
+                    }
+
+                    DestinationRow {
+                        titleText: Translation.tr("Screenshots")
+                        pathText: Directories.shortHomePath(root.effectiveScreenshotPath)
+                        onOpenRequested: {
+                            GlobalStates.overlayOpen = false
+                            ShellExec.openDirectory(root.effectiveScreenshotPath, Translation.tr("Open screenshots folder"))
+                        }
+                        onChangeRequested: root.openFolderDialog("screenshots")
+                    }
                 }
             }
         }
@@ -304,12 +339,25 @@ StyledOverlayWidget {
 
     FolderDialog {
         id: folderDialog
-        title: Translation.tr("Select recordings folder")
-        currentFolder: `file://${root.effectiveSavePath}`
+        title: root.folderDialogTarget === "screenshots"
+            ? Translation.tr("Select screenshots folder")
+            : Translation.tr("Select recordings folder")
+        currentFolder: `file://${root.folderDialogTarget === "screenshots" ? root.effectiveScreenshotPath : root.effectiveSavePath}`
         onAccepted: {
             const path = FileUtils.trimFileProtocol(selectedFolder.toString());
-            Config.setNestedValue("screenRecord.savePath", path);
+            Config.setNestedValue(root.folderDialogTarget === "screenshots"
+                ? "regionSelector.savePath" : "screenRecord.savePath", path);
         }
+    }
+
+    Connections {
+        target: folderDialog
+        function onVisibleChanged(): void { root.syncFolderDialogLayer() }
+    }
+
+    Component.onDestruction: {
+        if (root._folderDialogEngaged)
+            OverlayContext.setNativeDialogVisible("recorder-folder", false)
     }
 
     // ── Sub-components ──
@@ -354,58 +402,122 @@ StyledOverlayWidget {
         }
     }
 
-    component BigRecorderButton: RippleButton {
-        id: bigButton
+    component RecorderActionButton: RippleButton {
+        id: actionButton
         required property string materialSymbol
-        required property string name
-        property bool isRecording: false
-        implicitHeight: 62
-        implicitWidth: 62
-        buttonRadius: height / 2
+        required property string labelText
+        required property string detailText
+        property bool destructive: false
+        implicitHeight: 54
+        buttonRadius: Appearance.regaliaEverywhere ? Appearance.regalia.roundSmall
+            : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+            : Appearance.rounding.normal
+        colBackground: destructive ? Appearance.colors.colErrorContainer : Appearance.colors.colLayer3
+        colBackgroundHover: destructive ? Appearance.colors.colError : Appearance.colors.colLayer3Hover
+        colRipple: destructive ? Appearance.colors.colErrorActive : Appearance.colors.colLayer3Active
 
-        colBackground: isRecording ? Appearance.colors.colErrorContainer : Appearance.colors.colLayer3
-        colBackgroundHover: isRecording ? Appearance.colors.colError : Appearance.colors.colLayer3Hover
-        colRipple: isRecording ? Appearance.colors.colErrorActive : Appearance.colors.colLayer3Active
+        contentItem: RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 12
+            anchors.rightMargin: 12
+            spacing: 10
 
-        contentItem: MaterialSymbol {
-            anchors.centerIn: parent
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-            text: bigButton.materialSymbol
-            iconSize: 26
-            color: bigButton.isRecording ? Appearance.colors.colOnErrorContainer : Appearance.colors.colOnLayer3
-        }
+            MaterialSymbol {
+                text: actionButton.materialSymbol
+                iconSize: 22
+                color: actionButton.destructive
+                    ? Appearance.colors.colOnErrorContainer : Appearance.colors.colOnLayer3
+            }
 
-        StyledToolTip {
-            text: bigButton.name
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 1
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: actionButton.labelText
+                    font.pixelSize: Appearance.font.pixelSize.small
+                    font.weight: Font.Medium
+                    color: actionButton.destructive
+                        ? Appearance.colors.colOnErrorContainer : Appearance.colors.colOnLayer3
+                    elide: Text.ElideRight
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: actionButton.detailText
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    color: actionButton.destructive
+                        ? Appearance.colors.colOnErrorContainer : Appearance.colors.colSubtext
+                    opacity: 0.78
+                    elide: Text.ElideRight
+                }
+            }
         }
     }
 
-    component ActionButton: RippleButton {
-        id: actionBtn
-        required property string materialSymbol
-        required property string labelText
-        implicitHeight: 30
-        buttonRadius: height / 2
-        colBackground: "transparent"
-        colBackgroundHover: Appearance.colors.colLayer3Hover
-        colRipple: Appearance.colors.colLayer3Active
+    component DestinationRow: RowLayout {
+        id: destinationRow
+        required property string titleText
+        required property string pathText
+        signal openRequested()
+        signal changeRequested()
+        Layout.fillWidth: true
+        spacing: 6
 
-        contentItem: Row {
-            anchors.centerIn: parent
-            spacing: 4
-            MaterialSymbol {
-                anchors.verticalCenter: parent.verticalCenter
-                text: actionBtn.materialSymbol
-                iconSize: 16
+        MaterialSymbol {
+            text: "folder"
+            iconSize: 15
+            color: Appearance.colors.colOnLayer2
+        }
+
+        StyledText {
+            text: destinationRow.titleText
+            font.pixelSize: Appearance.font.pixelSize.smaller
+            color: Appearance.colors.colOnLayer2
+        }
+
+        StyledText {
+            Layout.fillWidth: true
+            text: destinationRow.pathText
+            font.pixelSize: Appearance.font.pixelSize.smaller
+            color: Appearance.colors.colSubtext
+            horizontalAlignment: Text.AlignRight
+            elide: Text.ElideMiddle
+        }
+
+        RippleButton {
+            implicitWidth: 26
+            implicitHeight: 26
+            buttonRadius: height / 2
+            colBackground: "transparent"
+            colBackgroundHover: Appearance.colors.colLayer3Hover
+            colRipple: Appearance.colors.colLayer3Active
+            onClicked: destinationRow.openRequested()
+            contentItem: MaterialSymbol {
+                anchors.centerIn: parent
+                text: "folder_open"
+                iconSize: 15
                 color: Appearance.colors.colOnLayer2
             }
-            StyledText {
-                anchors.verticalCenter: parent.verticalCenter
-                text: actionBtn.labelText
-                font.pixelSize: Appearance.font.pixelSize.small
+            StyledToolTip { text: Translation.tr("Open folder") }
+        }
+
+        RippleButton {
+            implicitWidth: 26
+            implicitHeight: 26
+            buttonRadius: height / 2
+            colBackground: "transparent"
+            colBackgroundHover: Appearance.colors.colLayer3Hover
+            colRipple: Appearance.colors.colLayer3Active
+            onClicked: destinationRow.changeRequested()
+            contentItem: MaterialSymbol {
+                anchors.centerIn: parent
+                text: "drive_file_move"
+                iconSize: 15
                 color: Appearance.colors.colOnLayer2
             }
+            StyledToolTip { text: Translation.tr("Change folder") }
         }
     }
 
@@ -476,7 +588,6 @@ StyledOverlayWidget {
                 }
             }
 
-            // Disk + Path row
             RowLayout {
                 spacing: 12
                 Layout.alignment: Qt.AlignHCenter
@@ -496,27 +607,6 @@ StyledOverlayWidget {
                         anchors.verticalCenter: parent.verticalCenter
                     }
                 }
-
-                Row {
-                    spacing: 4
-                    MaterialSymbol {
-                        text: "folder"
-                        iconSize: 14
-                        color: Appearance.colors.colOnLayer2
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                    StyledText {
-                        text: {
-                            const p = root.effectiveSavePath;
-                            const parts = p.split("/");
-                            return parts.length > 0 ? "~/" + parts[parts.length - 1] : p;
-                        }
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: Appearance.colors.colOnLayer2
-                        opacity: 0.7
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
             }
         }
 
@@ -529,147 +619,4 @@ StyledOverlayWidget {
         }
     }
 
-    component RecorderGameModeSection: ColumnLayout {
-        id: gameModeSection
-        spacing: 4
-
-        property bool _expanded: false
-
-        // Header button
-        Row {
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignHCenter
-            spacing: 6
-
-            RippleButton {
-                id: toggleBtn
-                implicitHeight: 26
-                buttonRadius: height / 2
-                colBackground: "transparent"
-                colBackgroundHover: Appearance.colors.colLayer3Hover
-                colRipple: Appearance.colors.colLayer3Active
-                onClicked: gameModeSection._expanded = !gameModeSection._expanded
-
-                contentItem: Row {
-                    anchors.centerIn: parent
-                    spacing: 4
-                    MaterialSymbol {
-                        text: "sports_esports"
-                        iconSize: 14
-                        color: Appearance.colors.colOnLayer2
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                    StyledText {
-                        text: Translation.tr("Game Mode Overrides")
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnLayer2
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                    MaterialSymbol {
-                        text: gameModeSection._expanded ? "expand_less" : "expand_more"
-                        iconSize: 14
-                        color: Appearance.colors.colOnLayer2
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
-            }
-        }
-
-        // Collapsible content
-        Item {
-            Layout.fillWidth: true
-            Layout.preferredHeight: gameModeSection._expanded ? gameModeContent.implicitHeight : 0
-            clip: true
-            opacity: gameModeSection._expanded ? 1 : 0
-
-            Behavior on Layout.preferredHeight {
-                enabled: Appearance.animationsEnabled
-                NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
-            }
-            Behavior on opacity {
-                enabled: Appearance.animationsEnabled
-                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-            }
-
-            ColumnLayout {
-                id: gameModeContent
-                width: parent.width
-                anchors.left: parent.left
-                anchors.leftMargin: 8
-                anchors.right: parent.right
-                anchors.rightMargin: 8
-                spacing: 2
-
-                GameModeToggle {
-                    text: Translation.tr("Auto-hide OSD during fullscreen")
-                    configKey: "overlay.recorder.autoHideOnFullscreen"
-                    defaultVal: true
-                }
-
-                GameModeToggle {
-                    text: Translation.tr("Suppress notifications")
-                    configKey: "overlay.recorder.suppressToasts"
-                    defaultVal: true
-                }
-
-                GameModeToggle {
-                    text: Translation.tr("Disable Niri animations")
-                    configKey: "overlay.recorder.disableNiriAnims"
-                    defaultVal: false
-                }
-            }
-        }
-    }
-
-    component GameModeToggle: Row {
-        id: gmToggle
-        required property string text
-        required property string configKey
-        property bool defaultVal: false
-
-        spacing: 8
-        Layout.fillWidth: true
-
-        StyledText {
-            text: gmToggle.text
-            font.pixelSize: Appearance.font.pixelSize.smaller
-            color: Appearance.colors.colOnLayer2
-            Layout.fillWidth: true
-            elide: Text.ElideRight
-            anchors.verticalCenter: parent.verticalCenter
-        }
-
-        RippleButton {
-            id: checkBox
-            implicitWidth: 18
-            implicitHeight: 18
-            buttonRadius: 3
-            toggled: {
-                const keys = gmToggle.configKey.split(".");
-                let val = Config.options;
-                for (let i = 0; val && i < keys.length; i++) val = val[keys[i]];
-                return val !== undefined ? val : gmToggle.defaultVal;
-            }
-            colBackgroundToggled: Appearance.colors.colPrimary
-            colBackground: Appearance.colors.colLayer3
-            colBackgroundHover: Appearance.colors.colLayer3Hover
-
-            contentItem: MaterialSymbol {
-                anchors.centerIn: parent
-                text: "check"
-                iconSize: 12
-                scale: checkBox.toggled ? 1 : 0
-                visible: scale > 0
-                color: Appearance.colors.colOnPrimary
-                Behavior on scale {
-                    enabled: Appearance.animationsEnabled
-                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                }
-            }
-
-            onClicked: {
-                Config.setNestedValue(gmToggle.configKey, !checkBox.toggled);
-            }
-        }
-    }
 }

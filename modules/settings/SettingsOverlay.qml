@@ -23,6 +23,7 @@ Scope {
     id: root
 
     property bool settingsOpen: GlobalStates.settingsOverlayOpen ?? false
+    property bool navEditMode: false
 
     // Keep the PanelWindow alive briefly after close so the scrim backdrop
     // can fade out (the settings card itself shows/hides instantly, matching
@@ -63,9 +64,6 @@ Scope {
         onTriggered: root.recomputeOverlaySearchResults()
     }
 
-    // Shared static index — single source of truth in SettingsPageRegistry
-    readonly property var overlaySearchIndex: SettingsPageRegistry.staticSearchIndex
-
     function getWaffleSettingsPageIndex() {
         for (var i = 0; i < overlayPages.length; i++) {
             var componentPath = String(overlayPages[i].component || "");
@@ -89,6 +87,8 @@ Scope {
         var isWaffleActive = Config.options?.panelFamily === "waffle";
         var wafflePageIndex = getWaffleSettingsPageIndex();
         var easyOn = root.easyMode;
+
+        const overlaySearchIndex = SettingsPageRegistry.searchIndex();
 
         // 1. Static index
         for (var i = 0; i < overlaySearchIndex.length; i++) {
@@ -218,6 +218,12 @@ Scope {
     }
 
     function trySpotlight() {
+        const pageItem = overlayPagesHost.currentItem
+        if (pageItem && overlayPagesHost.currentIndex === pendingSpotlightPageIndex
+                && pendingSpotlightSection.length > 0
+                && typeof pageItem.activateSettingsSearchSection === "function")
+            pageItem.activateSettingsSearchSection(pendingSpotlightSection)
+
         var control = null;
 
         // Try by optionId first
@@ -305,6 +311,7 @@ Scope {
 
         // Expand the section containing the control and collapse others
         if (typeof SettingsSearchRegistry !== "undefined") {
+            SettingsSearchRegistry.activateTaskSectionForControl(control);
             SettingsSearchRegistry.expandSectionForControl(control);
         }
 
@@ -566,6 +573,7 @@ Scope {
                 width: maxCardWidth
                 height: maxCardHeight
                 radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+                      : Appearance.regaliaEverywhere ? Appearance.regalia.panelRadius
                       : Appearance.angelEverywhere ? Appearance.angel.roundingLarge
                       : Appearance.inirEverywhere ? Appearance.inir.roundingLarge
                       : Appearance.rounding.windowRounding
@@ -579,7 +587,7 @@ Scope {
                 // that is inherited by children and would dim the whole UI
                 // instead of the panel background. At the default 1.0 both paths
                 // are identity, so no style changes appearance.
-                color: Appearance.auroraEverywhere ? "transparent"
+                color: Appearance.auroraEverywhere || Appearance.regaliaEverywhere ? "transparent"
                      : CF.ColorUtils.applyAlpha(
                          Appearance.inirEverywhere ? Appearance.inir.colLayer0
                        : Appearance.zzzEverywhere ? Appearance.zzz.chrome
@@ -616,6 +624,18 @@ Scope {
                 // backdrop already carries the transition).
                 opacity: (GlobalStates.settingsOverlayOpen ?? false) ? 1 : 0
                 visible: opacity > 0
+
+                RegaliaPlate {
+                    anchors.fill: parent
+                    z: -1
+                    visible: Appearance.regaliaEverywhere
+                    fillColor: CF.ColorUtils.applyAlpha(Appearance.regalia.bg0,
+                        settingsCard.panelBgOpacity)
+                    radius: settingsCard.radius
+                    inset: Appearance.regalia.panelInset
+                    elevated: true
+                    glassEnabled: true
+                }
 
                 // Glass background for aurora/angel wallpaper blur
                 GlassBackground {
@@ -685,103 +705,209 @@ Scope {
                     spacing: 0
 
                     // ── Title bar ──
-                    RowLayout {
+                    Item {
+                        id: overlayHeader
                         Layout.fillWidth: true
+                        Layout.preferredHeight: root.navEditMode ? 58 : 44
                         Layout.leftMargin: 4
                         Layout.rightMargin: 4
                         Layout.bottomMargin: 12
-                        spacing: 12
+
+                        function slotBlock(index: int): string {
+                            return SettingsChromeLayout.headerOrder[index] ?? ""
+                        }
+
+                        readonly property real headerGap: root.navEditMode ? 8 : 12
+                        readonly property real identityWidth: root.navEditMode ? 176 : 190
+                        readonly property real actionsWidth: Math.max(112, overlayHeaderActionsRow.implicitWidth)
+                        readonly property bool defaultOrder: SettingsChromeLayout.headerOrder.join(",") === "identity,search,actions"
+
+                        function searchWidth(): real {
+                            const preferred = root.navEditMode ? 390 : 420
+                            const minimum = root.navEditMode ? 150 : 180
+                            if (overlayHeader.defaultOrder) {
+                                const side = Math.max(overlayHeader.identityWidth, overlayHeader.actionsWidth)
+                                return Math.max(minimum, Math.min(preferred,
+                                    overlayHeader.width - 2 * (side + overlayHeader.headerGap)))
+                            }
+                            return Math.max(minimum, Math.min(preferred,
+                                overlayHeader.width - overlayHeader.identityWidth
+                                    - overlayHeader.actionsWidth - 2 * overlayHeader.headerGap))
+                        }
+
+                        function slotWidth(index: int): real {
+                            const block = overlayHeader.slotBlock(index)
+                            if (block === "identity")
+                                return overlayHeader.identityWidth
+                            if (block === "actions")
+                                return overlayHeader.actionsWidth
+                            return overlayHeader.searchWidth()
+                        }
+
+                        function slotX(index: int): real {
+                            const block = overlayHeader.slotBlock(index)
+                            if (overlayHeader.defaultOrder) {
+                                if (block === "identity")
+                                    return 0
+                                if (block === "actions")
+                                    return Math.max(0, overlayHeader.width - overlayHeader.actionsWidth)
+                                return Math.max(0, (overlayHeader.width - overlayHeader.searchWidth()) / 2)
+                            }
+
+                            const total = overlayHeader.identityWidth + overlayHeader.searchWidth()
+                                + overlayHeader.actionsWidth + 2 * overlayHeader.headerGap
+                            let x = Math.max(0, (overlayHeader.width - total) / 2)
+                            for (let i = 0; i < index; ++i)
+                                x += overlayHeader.slotWidth(i) + overlayHeader.headerGap
+                            return x
+                        }
+
 
                         Item {
-                            implicitWidth: 38
-                            implicitHeight: 38
+                            anchors.fill: parent
 
-                            Rectangle {
-                                anchors.fill: parent
-                                radius: width / 2
-                                color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                                    : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                                    : Appearance.inirEverywhere ? Appearance.inir.colLayer1
-                                    : Appearance.colors.colLayer1
-                                border.width: 1
-                                border.color: Appearance.colors.colPrimary
+                            Item {
+                                id: overlayHeaderSlot0
+                                x: overlayHeader.slotX(0)
+                                width: overlayHeader.slotWidth(0)
+                                height: parent.height
                             }
-
-                            Rectangle {
-                                id: overlayAvatarMask
-                                anchors.centerIn: parent
-                                width: 34
-                                height: 34
-                                radius: width / 2
-                                visible: false
+                            Item {
+                                id: overlayHeaderSlot1
+                                x: overlayHeader.slotX(1)
+                                width: overlayHeader.slotWidth(1)
+                                height: parent.height
                             }
-
-                            Image {
-                                id: overlayAvatarImage
-                                anchors.centerIn: parent
-                                width: 34
-                                height: 34
-                                source: Directories.userAvatarSourcePrimary
-                                fillMode: Image.PreserveAspectCrop
-                                asynchronous: true
-                                cache: true
-                                smooth: true
-                                mipmap: true
-                                visible: status === Image.Ready
-                                layer.enabled: visible
-                                layer.effect: GE.OpacityMask {
-                                    maskSource: overlayAvatarMask
-                                }
-                                onStatusChanged: {
-                                    if (status === Image.Error) {
-                                        const nextSource = Directories.nextAvatarSource(source)
-                                        if (nextSource.length > 0 && nextSource !== source)
-                                            source = nextSource
-                                    }
-                                }
-                            }
-
-                            MaterialSymbol {
-                                anchors.centerIn: parent
-                                visible: overlayAvatarImage.status !== Image.Ready
-                                text: "person"
-                                iconSize: 18
-                                color: Appearance.colors.colPrimary
+                            Item {
+                                id: overlayHeaderSlot2
+                                x: overlayHeader.slotX(2)
+                                width: overlayHeader.slotWidth(2)
+                                height: parent.height
                             }
                         }
 
-                        ColumnLayout {
-                            spacing: 0
+                        Item {
+                            id: overlayHeaderIdentity
+                            parent: SettingsChromeLayout.columnFor("identity") === 0 ? overlayHeaderSlot0
+                                : SettingsChromeLayout.columnFor("identity") === 1 ? overlayHeaderSlot1
+                                : overlayHeaderSlot2
+                            anchors.fill: parent
+                            anchors.topMargin: 4
+                            anchors.bottomMargin: 4
 
                             RowLayout {
-                                spacing: 8
-                                StyledText {
-                                    text: Translation.tr("Settings")
-                                    font {
-                                        family: Appearance.font.family.title
-                                        pixelSize: Appearance.font.pixelSize.title
-                                        variableAxes: Appearance.font.variableAxes.title
+                                anchors.fill: parent
+                                spacing: 9
+
+                                Item {
+                                    implicitWidth: 38
+                                    implicitHeight: 38
+
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        radius: Appearance.regaliaEverywhere ? Appearance.regalia.roundSmall : width / 2
+                                        color: Appearance.regaliaEverywhere ? "transparent"
+                                            : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                                            : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+                                            : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+                                            : Appearance.colors.colLayer1
+                                        border.width: Appearance.regaliaEverywhere ? 0 : 1
+                                        border.color: Appearance.colors.colPrimary
+
+                                        RegaliaControlFace {
+                                            anchors.fill: parent
+                                            visible: Appearance.regaliaEverywhere
+                                            fillColor: Appearance.regalia.controlPlate
+                                            radius: parent.radius
+                                        }
                                     }
-                                    color: Appearance.colors.colOnLayer0
+
+                                    Rectangle {
+                                        id: overlayAvatarMask
+                                        anchors.centerIn: parent
+                                        width: 34
+                                        height: 34
+                                        radius: Appearance.regaliaEverywhere ? Appearance.regalia.roundVerySmall : width / 2
+                                        visible: false
+                                    }
+
+                                    Image {
+                                        id: overlayAvatarImage
+                                        anchors.centerIn: parent
+                                        width: 34
+                                        height: 34
+                                        source: Directories.userAvatarSourcePrimary
+                                        fillMode: Image.PreserveAspectCrop
+                                        asynchronous: true
+                                        cache: true
+                                        smooth: true
+                                        mipmap: true
+                                        visible: status === Image.Ready
+                                        layer.enabled: visible
+                                        layer.effect: GE.OpacityMask {
+                                            maskSource: overlayAvatarMask
+                                        }
+                                        onStatusChanged: {
+                                            if (status === Image.Error) {
+                                                const nextSource = Directories.nextAvatarSource(source)
+                                                if (nextSource.length > 0 && nextSource !== source)
+                                                    source = nextSource
+                                            }
+                                        }
+                                    }
+
+                                    MaterialSymbol {
+                                        anchors.centerIn: parent
+                                        visible: overlayAvatarImage.status !== Image.Ready
+                                        text: "person"
+                                        iconSize: 18
+                                        color: Appearance.colors.colPrimary
+                                    }
+                                }
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 0
+
+                                    StyledText {
+                                        Layout.fillWidth: true
+                                        text: Translation.tr("Settings")
+                                        font {
+                                            family: Appearance.font.family.title
+                                            pixelSize: Appearance.font.pixelSize.title
+                                            variableAxes: Appearance.font.variableAxes.title
+                                        }
+                                        color: Appearance.colors.colOnLayer0
+                                        elide: Text.ElideRight
+                                    }
+
+                                    StyledText {
+                                        Layout.fillWidth: true
+                                        text: SystemInfo.displayName || SystemInfo.username
+                                        font.pixelSize: Appearance.font.pixelSize.small
+                                        color: Appearance.colors.colSubtext
+                                        elide: Text.ElideRight
+                                    }
                                 }
                             }
 
-                            StyledText {
-                                text: SystemInfo.displayName || SystemInfo.username
-                                font.pixelSize: Appearance.font.pixelSize.small
-                                color: Appearance.colors.colSubtext
+                            SettingsChromeEditFrame {
+                                anchors.fill: parent
+                                active: root.navEditMode
+                                blockId: "identity"
+                                label: Translation.tr("Identity")
+                                targetIndex: SettingsChromeLayout.columnFor("identity")
                             }
                         }
-
-                        Item { Layout.fillWidth: true; Layout.minimumWidth: 8 }
 
                         Rectangle {
                             id: overlaySearchContainer
-                            Layout.fillWidth: true
-                            Layout.maximumWidth: 420
-                            Layout.minimumWidth: 180
-                            Layout.preferredHeight: 36
-                            Layout.alignment: Qt.AlignVCenter
+                            parent: SettingsChromeLayout.columnFor("search") === 0 ? overlayHeaderSlot0
+                                : SettingsChromeLayout.columnFor("search") === 1 ? overlayHeaderSlot1
+                                : overlayHeaderSlot2
+                            anchors.fill: parent
+                            anchors.topMargin: root.navEditMode ? 10 : 4
+                            anchors.bottomMargin: root.navEditMode ? 10 : 4
                             radius: Appearance.rounding.full
                             color: overlaySearchField.activeFocus
                                 ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
@@ -953,64 +1079,92 @@ Scope {
                                     }
                                 }
                             }
+
+                            SettingsChromeEditFrame {
+                                anchors.fill: parent
+                                active: root.navEditMode
+                                blockId: "search"
+                                label: Translation.tr("Search")
+                                targetIndex: SettingsChromeLayout.columnFor("search")
+                            }
                         }
 
-                        Item { Layout.fillWidth: true; Layout.minimumWidth: 8 }
+                        Item {
+                            id: overlayHeaderActions
+                            parent: SettingsChromeLayout.columnFor("actions") === 0 ? overlayHeaderSlot0
+                                : SettingsChromeLayout.columnFor("actions") === 1 ? overlayHeaderSlot1
+                                : overlayHeaderSlot2
+                            anchors.fill: parent
+                            anchors.topMargin: root.navEditMode ? 10 : 4
+                            anchors.bottomMargin: root.navEditMode ? 10 : 4
 
-                        // Easy / Advanced mode toggle
-                        RippleButton {
-                            id: easyModeToggle
-                            buttonRadius: Appearance.rounding.full
-                            implicitWidth: 36
-                            implicitHeight: 36
-                            onClicked: root.setEasyMode(!root.easyMode)
-                            contentItem: MaterialSymbol {
-                                anchors.centerIn: parent
-                                horizontalAlignment: Text.AlignHCenter
-                                text: root.easyMode ? "school" : "tune"
-                                iconSize: 20
-                                color: root.easyMode
-                                    ? Appearance.colors.colPrimary
-                                    : Appearance.colors.colOnSurfaceVariant
-                                Behavior on color {
-                                    enabled: Appearance.animationsEnabled
-                                    animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                            RowLayout {
+                                id: overlayHeaderActionsRow
+                                anchors.fill: parent
+                                spacing: 4
+
+                                RippleButton {
+                                    id: easyModeToggle
+                                    buttonRadius: Appearance.rounding.full
+                                    implicitWidth: 36
+                                    implicitHeight: 36
+                                    onClicked: root.setEasyMode(!root.easyMode)
+                                    contentItem: MaterialSymbol {
+                                        anchors.centerIn: parent
+                                        horizontalAlignment: Text.AlignHCenter
+                                        text: root.easyMode ? "school" : "tune"
+                                        iconSize: 20
+                                        color: root.easyMode
+                                            ? Appearance.colors.colPrimary
+                                            : Appearance.colors.colOnSurfaceVariant
+                                        Behavior on color {
+                                            enabled: Appearance.animationsEnabled
+                                            animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                                        }
+                                    }
+                                    StyledToolTip {
+                                        position: "left"
+                                        text: root.easyMode
+                                            ? Translation.tr("Switch to Advanced mode")
+                                            : Translation.tr("Switch to Easy mode")
+                                    }
+                                }
+
+                                RippleButton {
+                                    buttonRadius: Appearance.rounding.full
+                                    implicitWidth: 36
+                                    implicitHeight: 36
+                                    onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "lock", "activate"])
+                                    contentItem: MaterialSymbol {
+                                        anchors.centerIn: parent
+                                        horizontalAlignment: Text.AlignHCenter
+                                        text: "lock"
+                                        iconSize: 20
+                                        color: Appearance.colors.colOnSurfaceVariant
+                                    }
+                                }
+
+                                RippleButton {
+                                    buttonRadius: Appearance.rounding.full
+                                    implicitWidth: 36
+                                    implicitHeight: 36
+                                    onClicked: GlobalStates.settingsOverlayOpen = false
+                                    contentItem: MaterialSymbol {
+                                        anchors.centerIn: parent
+                                        horizontalAlignment: Text.AlignHCenter
+                                        text: "close"
+                                        iconSize: 20
+                                        color: Appearance.colors.colOnSurfaceVariant
+                                    }
                                 }
                             }
-                            StyledToolTip {
-                                position: "left"
-                                text: root.easyMode
-                                    ? Translation.tr("Switch to Advanced mode")
-                                    : Translation.tr("Switch to Easy mode")
-                            }
-                        }
 
-                        // Close button
-                        RippleButton {
-                            buttonRadius: Appearance.rounding.full
-                            implicitWidth: 36
-                            implicitHeight: 36
-                            onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "lock", "activate"])
-                            contentItem: MaterialSymbol {
-                                anchors.centerIn: parent
-                                horizontalAlignment: Text.AlignHCenter
-                                text: "lock"
-                                iconSize: 20
-                                color: Appearance.colors.colOnSurfaceVariant
-                            }
-                        }
-
-                        RippleButton {
-                            buttonRadius: Appearance.rounding.full
-                            implicitWidth: 36
-                            implicitHeight: 36
-                            onClicked: GlobalStates.settingsOverlayOpen = false
-                            contentItem: MaterialSymbol {
-                                anchors.centerIn: parent
-                                horizontalAlignment: Text.AlignHCenter
-                                text: "close"
-                                iconSize: 20
-                                color: Appearance.colors.colOnSurfaceVariant
+                            SettingsChromeEditFrame {
+                                anchors.fill: parent
+                                active: root.navEditMode
+                                blockId: "actions"
+                                label: Translation.tr("Actions")
+                                targetIndex: SettingsChromeLayout.columnFor("actions")
                             }
                         }
                     }
@@ -1025,15 +1179,25 @@ Scope {
                         Rectangle {
                             id: navColumn
                             Layout.fillHeight: true
-                            Layout.preferredWidth: 150
+                            Layout.preferredWidth: root.navEditMode ? 228 : 150
                             radius: Appearance.rounding.normal
                             color: "transparent"
 
+                            Behavior on Layout.preferredWidth {
+                                enabled: Appearance.animationsEnabled
+                                NumberAnimation {
+                                    duration: Appearance.animation.elementResize.duration
+                                    easing.type: Appearance.animation.elementResize.type
+                                    easing.bezierCurve: Appearance.animation.elementResize.bezierCurve
+                                }
+                            }
+
                             Flickable {
                                 id: navFlickable
+                                visible: !root.navEditMode || navEditLoader.status !== Loader.Ready
                                 anchors.fill: parent
                                 anchors.margins: 2
-                                anchors.bottomMargin: overlayWindowToggle.height + 6
+                                anchors.bottomMargin: overlayNavActions.height + 6
                                 contentHeight: navCol.implicitHeight
                                 clip: true
                                 boundsBehavior: Flickable.StopAtBounds
@@ -1103,7 +1267,8 @@ Scope {
                                                 id: navBtn
                                                 visible: navItem.modelData.type === "page"
                                                 width: parent.width
-                                                implicitHeight: visible ? 34 : 0
+                                                implicitHeight: visible
+                                                    ? (Appearance.regaliaEverywhere ? Appearance.regalia.controlHeight : 34) : 0
                                                 z: 1
 
                                                 readonly property int pageRealIndex: navItem.modelData.realIndex !== undefined ? navItem.modelData.realIndex : navItem.index
@@ -1114,17 +1279,22 @@ Scope {
                                                 // click point on a transparent nav item.
                                                 rippleEnabled: !Appearance.zzzEverywhere
 
-                                                buttonRadius: Appearance.zzzEverywhere
+                                                buttonRadius: Appearance.regaliaEverywhere
+                                                    ? Appearance.regalia.roundSmall
+                                                    : Appearance.zzzEverywhere
                                                     ? Appearance.zzz.controlRadius
                                                     : Math.min(width, height) / 2
                                                 toggled: overlayCurrentPage === pageRealIndex
                                                 colBackground: "transparent"
-                                                colBackgroundToggled: "transparent"
+                                                colBackgroundToggled: Appearance.regaliaEverywhere
+                                                    ? Appearance.regalia.primaryPlate : "transparent"
                                                 // zzz: transparent, not paperAlt — this Control's own
                                                 // background renders above sharedNavIndicator (z:1 vs
                                                 // z:-1 below), so any opaque fill here fully hides the
                                                 // sticker pill on hover instead of layering with it.
-                                                colBackgroundToggledHover: Appearance.zzzEverywhere
+                                                colBackgroundToggledHover: Appearance.regaliaEverywhere
+                                                    ? Appearance.regalia.primaryPlateHover
+                                                    : Appearance.zzzEverywhere
                                                     ? "transparent"
                                                     : Appearance.angelEverywhere
                                                     ? Appearance.angel.colGlassCardHover
@@ -1133,7 +1303,9 @@ Scope {
                                                         : Appearance.auroraEverywhere
                                                             ? Appearance.aurora.colElevatedSurface
                                                             : CF.ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 0.5)
-                                                colBackgroundHover: Appearance.zzzEverywhere
+                                                colBackgroundHover: Appearance.regaliaEverywhere
+                                                    ? Appearance.regalia.surfacePlateHover
+                                                    : Appearance.zzzEverywhere
                                                     ? Appearance.zzz.paperAlt
                                                     : Appearance.colors.colLayer1Hover
 
@@ -1144,15 +1316,20 @@ Scope {
 
                                                     RowLayout {
                                                         anchors.fill: parent
-                                                        anchors.leftMargin: 10
-                                                        anchors.rightMargin: 8
-                                                        spacing: 10
+                                                        anchors.leftMargin: Appearance.regaliaEverywhere
+                                                            ? Appearance.regalia.controlPaddingHorizontal : 10
+                                                        anchors.rightMargin: Appearance.regaliaEverywhere
+                                                            ? Appearance.regalia.controlPaddingHorizontal : 8
+                                                        spacing: Appearance.regaliaEverywhere
+                                                            ? Appearance.regalia.controlGap : 10
 
                                                         MaterialSymbol {
                                                             text: navItem.modelData.icon || ""
                                                             iconSize: 18
-                                                            color: navBtn.toggled
-                                                                ? (Appearance.zzzEverywhere
+                                                            color: navBtn.toggled || (Appearance.regaliaEverywhere && navBtn.buttonHovered)
+                                                                ? (Appearance.regaliaEverywhere
+                                                                    ? Appearance.regalia.hardwarePrimary
+                                                                    : Appearance.zzzEverywhere
                                                                     ? Appearance.zzz.ink
                                                                     : Appearance.inirEverywhere
                                                                     ? Appearance.inir.colAccent
@@ -1174,8 +1351,9 @@ Scope {
                                                                 pixelSize: Appearance.font.pixelSize.small
                                                                 weight: navBtn.toggled ? Font.Medium : Font.Normal
                                                             }
-                                                            color: navBtn.toggled
-                                                                ? (Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer1)
+                                                            color: navBtn.toggled || (Appearance.regaliaEverywhere && navBtn.buttonHovered)
+                                                                ? (Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateInk
+                                                                    : Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer1)
                                                                 : Appearance.colors.colOnSurfaceVariant
                                                             elide: Text.ElideRight
 
@@ -1312,62 +1490,150 @@ Scope {
                                 }
                             }
 
-                            // Window mode toggle at bottom of nav
-                            RippleButton {
-                                id: overlayWindowToggle
+                            Loader {
+                                id: navEditLoader
+                                anchors {
+                                    top: parent.top
+                                    left: parent.left
+                                    right: parent.right
+                                    bottom: overlayNavActions.top
+                                    margins: 2
+                                    bottomMargin: 6
+                                }
+                                active: root.navEditMode
+                                asynchronous: true
+                                visible: status === Loader.Ready
+                                opacity: visible ? 1 : 0
+
+                                Behavior on opacity {
+                                    enabled: Appearance.animationsEnabled
+                                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                }
+
+                                sourceComponent: Component {
+                                    SettingsNavEditPane {
+                                        currentPage: overlayCurrentPage
+                                        onPageActivated: pageIndex => overlayCurrentPage = pageIndex
+                                        onPageHidden: pageIndex => {
+                                            if (overlayCurrentPage !== pageIndex)
+                                                return
+                                            Qt.callLater(() => {
+                                                if (root.navPageOrder.length > 0)
+                                                    overlayCurrentPage = root.navPageOrder[0]
+                                            })
+                                        }
+                                        onDoneRequested: root.navEditMode = false
+                                    }
+                                }
+                            }
+
+                            ColumnLayout {
+                                id: overlayNavActions
                                 anchors.bottom: parent.bottom
                                 anchors.left: parent.left
                                 anchors.right: parent.right
                                 anchors.margins: 2
-                                height: 36
-                                buttonRadius: Appearance.rounding.small
-                                colBackground: "transparent"
-                                colBackgroundHover: Appearance.angelEverywhere
-                                    ? Appearance.angel.colGlassCard
-                                    : Appearance.inirEverywhere
-                                        ? Appearance.inir.colLayer1Hover
-                                        : Appearance.auroraEverywhere
-                                            ? Appearance.aurora.colSubSurface
-                                            : CF.ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 0.5)
+                                spacing: 2
 
-                                onClicked: {
-                                    // Launch the window FIRST — once overlayMode flips,
-                                    // the LazyLoader in shell.qml unloads this whole
-                                    // component (timers and all), so a deferred restart
-                                    // never gets to fire.  The spawned process survives
-                                    // independently of our QML scope.
-                                    Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings-window"])
-                                    Config.setNestedValue("settingsUi.overlayMode", false)
-                                    GlobalStates.settingsOverlayOpen = false
-                                }
+                                RippleButton {
+                                    id: overlayNavEditToggle
+                                    readonly property color editSurface: Appearance.colors.colPrimaryContainer
+                                    readonly property color editSurfaceHover: Appearance.colors.colPrimaryContainerHover
+                                    readonly property color editForeground: Appearance.colors.colOnPrimaryContainer
+                                    Layout.fillWidth: true
+                                    implicitHeight: 36
+                                    buttonRadius: Appearance.rounding.small
+                                    toggled: root.navEditMode
+                                    colBackground: "transparent"
+                                    colBackgroundHover: Appearance.colors.colLayer1Hover
+                                    colBackgroundToggled: editSurface
+                                    colBackgroundToggledHover: editSurfaceHover
+                                    onClicked: root.navEditMode = !root.navEditMode
 
-                                contentItem: RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: 10
-                                    anchors.rightMargin: 8
-                                    spacing: 10
 
-                                    MaterialSymbol {
-                                        text: "open_in_new"
-                                        iconSize: 18
-                                        color: Appearance.colors.colOnSurfaceVariant
-                                    }
+                                    contentItem: RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 10
+                                        anchors.rightMargin: 8
+                                        spacing: 10
 
-                                    StyledText {
-                                        Layout.fillWidth: true
-                                        text: Translation.tr("Window")
-                                        font {
-                                            family: Appearance.font.family.main
-                                            pixelSize: Appearance.font.pixelSize.small
+                                        MaterialSymbol {
+                                            text: root.navEditMode ? "done" : "edit"
+                                            iconSize: 18
+                                            color: root.navEditMode
+                                                ? overlayNavEditToggle.editForeground
+                                                : Appearance.colors.colOnSurfaceVariant
                                         }
-                                        color: Appearance.colors.colOnSurfaceVariant
-                                        elide: Text.ElideRight
+
+                                        StyledText {
+                                            Layout.fillWidth: true
+                                            text: root.navEditMode
+                                                ? Translation.tr("Done")
+                                                : Translation.tr("Edit navigation")
+                                            font.pixelSize: Appearance.font.pixelSize.small
+                                            color: root.navEditMode
+                                                ? overlayNavEditToggle.editForeground
+                                                : Appearance.colors.colOnSurfaceVariant
+                                            elide: Text.ElideRight
+                                        }
+                                    }
+
+                                    StyledToolTip {
+                                        position: "top"
+                                        text: root.navEditMode
+                                            ? Translation.tr("Finish editing navigation")
+                                            : Translation.tr("Reorder or hide Settings pages directly in the sidebar")
                                     }
                                 }
 
-                                StyledToolTip {
-                                    position: "top"
-                                    text: Translation.tr("Switch to window mode")
+                                RippleButton {
+                                    id: overlayWindowToggle
+                                    Layout.fillWidth: true
+                                    implicitHeight: 36
+                                    buttonRadius: Appearance.rounding.small
+                                    colBackground: "transparent"
+                                    colBackgroundHover: Appearance.angelEverywhere
+                                        ? Appearance.angel.colGlassCard
+                                        : Appearance.inirEverywhere
+                                            ? Appearance.inir.colLayer1Hover
+                                            : Appearance.auroraEverywhere
+                                                ? Appearance.aurora.colSubSurface
+                                                : CF.ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 0.5)
+
+                                    onClicked: {
+                                        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings-window"])
+                                        Config.setNestedValue("settingsUi.overlayMode", false)
+                                        GlobalStates.settingsOverlayOpen = false
+                                    }
+
+                                    contentItem: RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 10
+                                        anchors.rightMargin: 8
+                                        spacing: 10
+
+                                        MaterialSymbol {
+                                            text: "open_in_new"
+                                            iconSize: 18
+                                            color: Appearance.colors.colOnSurfaceVariant
+                                        }
+
+                                        StyledText {
+                                            Layout.fillWidth: true
+                                            text: Translation.tr("Window")
+                                            font {
+                                                family: Appearance.font.family.main
+                                                pixelSize: Appearance.font.pixelSize.small
+                                            }
+                                            color: Appearance.colors.colOnSurfaceVariant
+                                            elide: Text.ElideRight
+                                        }
+                                    }
+
+                                    StyledToolTip {
+                                        position: "top"
+                                        text: Translation.tr("Switch to window mode")
+                                    }
                                 }
                             }
                         }
@@ -1436,11 +1702,10 @@ Scope {
                                     anchors.rightMargin: 20
                                     spacing: 10
 
-                                    MaterialSymbol {
+                                    MaterialShapeWrappedMaterialSymbol {
                                         text: overlayPageHeader.meta.icon ?? ""
-                                        rotation: overlayPageHeader.meta.iconRotation ?? 0
-                                        iconSize: 20
-                                        color: Appearance.inirEverywhere ? Appearance.inir.colAccent : Appearance.colors.colPrimary
+                                        iconSize: 15
+                                        Layout.alignment: Qt.AlignVCenter
                                     }
 
                                     StyledText {
@@ -1482,34 +1747,19 @@ Scope {
                                 }
                             }
 
-                            // Loading indicator (with morphing entrance/exit)
-                            CircularProgress {
-                                id: pageLoadingIndicator
-                                anchors.centerIn: parent
-                                z: 10
-
-                                readonly property bool isLoading: overlayPagesHost.loading
-
-                                opacity: isLoading ? 1 : 0
-                                scale: isLoading ? 1 : 0.7
-                                visible: opacity > 0
-
-                                Behavior on opacity {
-                                    enabled: Appearance.animationsEnabled
-                                    animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                                }
-                                Behavior on scale {
-                                    enabled: Appearance.animationsEnabled
-                                    animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                                }
-                            }
-
                             SettingsPageHost {
                                 id: overlayPagesHost
                                 anchors { top: overlayPageHeader.bottom; left: parent.left; right: parent.right; bottom: parent.bottom }
                                 pages: root.overlayPages
                                 requestedIndex: root.overlayCurrentPage
-                                loadEnabled: Config.ready
+                                loadEnabled: Config.ready && root.settingsOpen
+                            }
+
+                            SettingsPageLoadingOverlay {
+                                anchors.fill: overlayPagesHost
+                                loading: overlayPagesHost.loading
+                                text: Translation.tr("Loading page…")
+                                z: 15
                             }
 
                         }

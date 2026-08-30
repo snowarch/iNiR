@@ -210,7 +210,7 @@ Item {
                 Layout.fillWidth: true
                 symbol: "skip_previous"
                 enabled: YtMusic.canGoPrevious
-                onClicked: YtMusic.playPrevious()
+                onClicked: MprisController.previousForPlayer(YtMusic.mpvPlayer)
             }
             Item { Layout.preferredWidth: 8 }
             // Play / pause (64dp squircle; animated roundness; spinner while buffering).
@@ -268,7 +268,7 @@ Item {
                 Layout.fillWidth: true
                 symbol: "skip_next"
                 enabled: YtMusic.canGoNext
-                onClicked: YtMusic.playNext()
+                onClicked: MprisController.nextForPlayer(YtMusic.mpvPlayer)
             }
             // Repeat.
             ITIconButton {

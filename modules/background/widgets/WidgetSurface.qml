@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Effects
 import Qt5Compat.GraphicalEffects as GE
+import Quickshell
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
@@ -22,6 +23,7 @@ Rectangle {
     property real surfaceBorderWidth: 1
     property real surfaceBorderOpacity: 0.08
     property color surfaceColor: Appearance.colors.colOnLayer0
+    property color surfaceFill: Appearance.colors.colLayer1
     // Auto preserves each global style's native plate. Explicit ink modes
     // force the opposite plate polarity so the selected ink remains visible.
     property string colorMode: "auto"
@@ -29,9 +31,8 @@ Rectangle {
     // an actual color seat instead of a neutral wallpaper-luminance scrim.
     property color surfaceAccent: Appearance.colors.colPrimary
     property real surfaceRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
-    // Allows per-widget blur override. When false, blur is disabled even if the
-    // active style (aurora/angel) supports it. Lets users get a flat,
-    // non-blurred resources widget while keeping a frosted-glass clock, etc.
+    // Allows per-widget blur override for styles that do not explicitly own
+    // their material. Ricelin Island glass follows the shared Island setting.
     property bool surfaceUseBlur: true
 
     // Follow the owning widget's per-output power state. Standalone surfaces
@@ -48,30 +49,26 @@ Rectangle {
     // otherwise blur twice as wide) and the layer is smoothed on upscale.
     readonly property real _blurScale: 0.5
 
-    readonly property bool _angel: Appearance.angelEverywhere
-    readonly property bool _aurora: Appearance.auroraEverywhere && !Appearance.inirEverywhere
-    readonly property bool _inir: Appearance.inirEverywhere
-    readonly property bool _zzz: Appearance.zzzEverywhere
-    readonly property bool _cookie: Appearance.cookieEverywhere
-    // Ricelin island dialect is an optional widget skin, but it must not
-    // override a selected global style with its own surface worldview.
-    readonly property bool _island: !root._zzz && !root._cookie && !root._angel
-        && !root._aurora && !root._inir
-        && (Config.options?.background?.widgets?.style ?? "panel") === "island"
+    readonly property string _surfaceDialect: (Config.options?.background?.widgets?.style ?? "panel") === "island"
+        ? "island" : Appearance.globalStyle
+    readonly property bool _angel: root._surfaceDialect === "angel"
+    readonly property bool _aurora: root._surfaceDialect === "aurora" || root._angel
+    readonly property bool _inir: root._surfaceDialect === "inir"
+    readonly property bool _zzz: root._surfaceDialect === "zzz"
+    readonly property bool _cookie: root._surfaceDialect === "cookie"
+    readonly property bool _regalia: root._surfaceDialect === "regalia"
+    readonly property bool _island: root._surfaceDialect === "island"
     readonly property real _surfaceStrength: Math.max(0, Math.min(1, Number(root.surfaceOpacity) || 0))
     readonly property bool _backgroundVisible: root._surfaceStrength > 0.001
+    // Explicit Island style owns its material opacity. A widget's legacy
+    // backgroundOpacity controls whether the plate exists, but must not multiply
+    // the shared Ricelin opacity again or every widget becomes nearly invisible.
     readonly property real _plateAlpha: root._backgroundVisible
-        ? Math.min(0.96, 0.72 + root._surfaceStrength * 0.24) : 0
-    readonly property real _islandOpacity: Config.options?.appearance?.island?.opacity ?? 1
-    readonly property bool _islandGlass: _island && root._backgroundVisible && root.surfaceUseBlur
-        && (Config.options?.appearance?.island?.glass ?? true) && _islandOpacity < 0.999
-    // Auto preserves the selected global style; an explicit Widgets override
-    // is allowed to opt any card into the shared wallpaper backend.
-    readonly property bool _glass: root._backgroundVisible
-        && Appearance.blurBackendFor("widgets",
-            Appearance.blurTopology.unsupported) === "wallpaper"
+        ? (root._island ? 1 : Math.min(0.96, 0.72 + root._surfaceStrength * 0.24)) : 0
+    readonly property bool _glass: !root._island && root._backgroundVisible
+        && Appearance.blurBackendFor("widgets", Appearance.blurTopology.unsupported) === "wallpaper"
         && root.surfaceUseBlur
-    readonly property string _wallpaperUrl: Wallpapers.effectiveWallpaperUrl
+    readonly property string _wallpaperUrl: WallpaperListener.wallpaperUrlForScreen(root.QsWindow?.window?.screen ?? null)
 
     // Wallpaper region brightness behind the widget (0-1; -1 = unknown).
     // Parent widgets bind their own regionBrightness so the plate opposes the
@@ -97,11 +94,12 @@ Rectangle {
     // region, where a light card would read as glare.
     readonly property bool _plateIsDark: root.colorMode === "light" ? true
         : root.colorMode === "dark" ? false
-        : Appearance.m3colors.darkmode || root._regionBright
+        : ColorUtils.relativeLuminance(root.surfaceFill) < 0.38
     readonly property color _plate: root._plateIsDark ? root._plateDark : root._plateLight
-    readonly property color _flatFill: ColorUtils.applyAlpha(root._plate, root._plateAlpha)
+    readonly property color _flatFill: ColorUtils.applyAlpha(
+        root.colorMode === "auto" ? root.surfaceFill : root._plate, root._plateAlpha)
     readonly property color _cookieFillBase: root.colorMode === "auto"
-        ? Appearance.colors.colLayer2 : root._plate
+        ? root.surfaceFill : root._plate
     readonly property color _cookieFill: root._backgroundVisible
         ? ColorUtils.applyAlpha(root._cookieFillBase, root._plateAlpha)
         : "transparent"
@@ -110,6 +108,7 @@ Rectangle {
     readonly property string surfaceReport: JSON.stringify({
         style: root._cookie ? "cookie"
             : root._zzz ? "zzz"
+            : root._regalia ? "regalia"
             : root._island ? "island"
             : root._angel ? "angel"
             : root._aurora ? "aurora"
@@ -123,7 +122,7 @@ Rectangle {
         borderWidth: root.surfaceBorderWidth,
         borderOpacity: root.surfaceBorderOpacity,
         radius: root.radius,
-        fill: String(root._cookie ? root._cookieFill : root.color)
+        fill: String(root._cookie ? root._cookieFill : root._flatFill)
     })
 
     radius: surfaceRadius
@@ -131,6 +130,7 @@ Rectangle {
         : _glass ? "transparent"
         : _zzz ? "transparent"
         : _cookie ? "transparent"
+        : _regalia ? "transparent"
         : _inir ? "transparent"
         : root._backgroundVisible ? _flatFill : "transparent"
     border.width: 0
@@ -196,7 +196,7 @@ Rectangle {
         anchors.fill: parent
         radius: root.radius
         color: "transparent"
-        visible: !root._zzz && !root._cookie && !root._island && !root._angel
+        visible: !root._zzz && !root._cookie && !root._regalia && !root._island && !root._angel
             && root.surfaceBorderWidth > 0 && root.surfaceBorderOpacity > 0
         border.width: root.surfaceBorderWidth
         border.color: root._inir
@@ -207,6 +207,17 @@ Rectangle {
                 : ColorUtils.applyAlpha(
                     ColorUtils.ensureReadable(root.surfaceAccent, root._flatFill, 3),
                     Math.min(1, root.surfaceBorderOpacity * 2))
+    }
+
+    Rectangle {
+        anchors.fill: parent
+        visible: root._regalia && root.surfaceBorderWidth > 0
+            && root.surfaceBorderOpacity > 0
+        radius: root.radius
+        color: "transparent"
+        border.width: root.surfaceBorderWidth
+        border.color: ColorUtils.applyAlpha(root.surfaceColor,
+            Math.min(0.45, root.surfaceBorderOpacity * 0.6))
     }
 
     // Removed: the ZZZ accent registration tick. Every fix to keep it inside
@@ -256,9 +267,7 @@ Rectangle {
                 : 0.15
             blurEnabled: true
             blurMax: Math.max(1, Math.round(64 * root._blurScale))
-            blur: root._angel ? Appearance.angel.blurIntensity
-                : root._islandGlass ? (Config.options?.appearance?.island?.glassBlur ?? 1)
-                : 0.8
+            blur: root._angel ? Appearance.angel.blurIntensity : 0.8
         }
     }
 
@@ -271,32 +280,17 @@ Rectangle {
             : ColorUtils.transparentize(Appearance.colors.colLayer0Base, Appearance.aurora.popupTransparentize * 1.2)
     }
 
-    // Island card: washi gradient + hairline border + lit top sheen (the blur
-    // above provides the glass; screenX/Y keep its crop aligned per widget).
-    Rectangle {
-        id: islandCard
+    RicelinSurface {
         anchors.fill: parent
-        visible: root._island && (root._backgroundVisible
-            || (root.surfaceBorderWidth > 0 && root.surfaceBorderOpacity > 0))
+        visible: root._island && root._backgroundVisible
         radius: root.radius
-        border.width: root.surfaceBorderWidth
-        border.color: ColorUtils.applyAlpha(Appearance.colors.colLayer0Border,
-            root.surfaceBorderOpacity)
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: Qt.alpha(Appearance.colors.colLayer3,
-                root._islandOpacity * root._plateAlpha) }
-            GradientStop { position: 1.0; color: Qt.alpha(Appearance.colors.colLayer1,
-                root._islandOpacity * root._plateAlpha) }
-        }
-        Rectangle {
-            anchors { top: parent.top; left: parent.left; right: parent.right }
-            anchors.topMargin: 1
-            anchors.leftMargin: islandCard.radius * 0.6
-            anchors.rightMargin: islandCard.radius * 0.6
-            height: 1
-            visible: root._backgroundVisible && (Config.options?.appearance?.island?.sheen ?? true)
-            color: Qt.alpha(Appearance.colors.colOnLayer0, 0.07)
-        }
+        glassEnabled: root.powerActive
+        screen: root.QsWindow?.window?.screen ?? null
+        glassScreenX: root.screenX
+        glassScreenY: root.screenY
+        glassScreenWidth: root.screenWidth
+        glassScreenHeight: root.screenHeight
+        shadow: false
     }
 
     // Inset glow — angel only
@@ -314,6 +308,21 @@ Rectangle {
         borderWidth: Math.max(1, root.surfaceBorderWidth)
         borderColor: ColorUtils.applyAlpha(Appearance.angel.colBorder,
             root.surfaceBorderOpacity)
+    }
+
+    // Regalia desktop widgets use the same fitted chassis/content construction
+    // as shell panels. The widget remains one visual object, but no longer reads
+    // as a generic card with a different fill.
+    RegaliaPlate {
+        id: regaliaCard
+        anchors.fill: parent
+        visible: root._regalia && root._backgroundVisible
+        radius: root.radius
+        fillColor: ColorUtils.applyAlpha(
+            root.colorMode === "auto" ? root.surfaceFill : root._plate,
+            root._plateAlpha)
+        inset: Appearance.regalia.surfaceInset
+        elevated: true
     }
 
     // Inir subtle fill

@@ -148,33 +148,51 @@ RowLayout {
             text: Translation.tr("Recognize music")
         }
 
-        colText: toggled ? (Appearance.inirEverywhere ? Appearance.inir.colOnPrimary : Appearance.colors.colOnPrimary) : (Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurfaceVariant)
-        background: MaterialShape {
-            RotationAnimation on rotation {
-                running: songRecButton.toggled
-                duration: 12000
-                easing.type: Easing.Linear
-                loops: Animation.Infinite
-                from: 0
-                to: 360
+        colText: toggled
+            ? (Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateInk
+                : Appearance.inirEverywhere ? Appearance.inir.colOnPrimary : Appearance.colors.colOnPrimary)
+            : (Appearance.regaliaEverywhere ? Appearance.regalia.onMuted
+                : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurfaceVariant)
+        background: Item {
+            RegaliaControlFace {
+                anchors.fill: parent
+                visible: Appearance.regaliaEverywhere
+                fillColor: songRecButton.toggled ? Appearance.regalia.primaryPlate : Appearance.regalia.controlPlate
+                radius: Appearance.regalia.roundSmall
+                hovered: songRecButton.hovered
+                pressed: songRecButton.down
+                selected: songRecButton.toggled
             }
-            shape: {
-                if (songRecButton.down) {
-                    return songRecButton.toggled ? MaterialShape.Shape.Circle : MaterialShape.Shape.Square
-                } else {
-                    return songRecButton.toggled ? MaterialShape.Shape.SoftBurst : MaterialShape.Shape.Circle
+
+            MaterialShape {
+                anchors.fill: parent
+                visible: !Appearance.regaliaEverywhere
+                RotationAnimation on rotation {
+                    running: songRecButton.toggled
+                    duration: 12000
+                    easing.type: Easing.Linear
+                    loops: Animation.Infinite
+                    from: 0
+                    to: 360
                 }
-            }
-            color: {
-                if (songRecButton.toggled) {
-                    return songRecButton.hovered ? (Appearance.inirEverywhere ? Appearance.inir.colPrimaryHover : Appearance.colors.colPrimaryHover) : (Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
-                } else {
-                    return songRecButton.hovered ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover : Appearance.colors.colSurfaceContainerHigh) : (Appearance.inirEverywhere ? Appearance.inir.colLayer2 : ColorUtils.transparentize(Appearance.colors.colSurfaceContainerHigh))
+                shape: {
+                    if (songRecButton.down) {
+                        return songRecButton.toggled ? MaterialShape.Shape.Circle : MaterialShape.Shape.Square
+                    } else {
+                        return songRecButton.toggled ? MaterialShape.Shape.SoftBurst : MaterialShape.Shape.Circle
+                    }
                 }
-            }
-            Behavior on color {
-                enabled: Appearance.animationsEnabled
-                animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                color: {
+                    if (songRecButton.toggled) {
+                        return songRecButton.hovered ? (Appearance.inirEverywhere ? Appearance.inir.colPrimaryHover : Appearance.colors.colPrimaryHover) : (Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
+                    } else {
+                        return songRecButton.hovered ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover : Appearance.colors.colSurfaceContainerHigh) : (Appearance.inirEverywhere ? Appearance.inir.colLayer2 : ColorUtils.transparentize(Appearance.colors.colSurfaceContainerHigh))
+                    }
+                }
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
             }
         }
     }

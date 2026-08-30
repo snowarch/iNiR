@@ -1,0 +1,4 @@
+module qs.modules.sidebarRight.quickToggles
+AbstractQuickPanel 1.0 AbstractQuickPanel.qml
+AndroidQuickPanel 1.0 AndroidQuickPanel.qml
+ClassicQuickPanel 1.0 ClassicQuickPanel.qml

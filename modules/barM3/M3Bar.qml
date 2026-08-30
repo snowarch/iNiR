@@ -59,9 +59,16 @@ Scope {
                     }
                 }
                 property bool superShow: false
+                readonly property bool autoHideEnabled: Config.options?.bar?.autoHide?.enable ?? false
+                readonly property real layerGap: Config.options.bar.m3.cornerStyle === 3
+                    ? Config.options.bar.m3.gapsOut : 0
+                readonly property real shownExclusiveZone: Appearance.sizes.baseBarHeight
+                    + (Config.options.bar.m3.cornerStyle === 1 ? Config.options.bar.m3.gapsOut : 0)
+                    + (Config.options.bar.m3.cornerStyle === 2 ? -6 : 0)
                 property bool mustShow: hoverRegion.containsMouse || superShow
                 exclusionMode: ExclusionMode.Ignore
-                exclusiveZone: (Config?.options.bar.autoHide.enable && (!mustShow || !Config?.options.bar.autoHide.pushWindows)) ? 0 : Appearance.sizes.baseBarHeight + (Config.options.bar.m3.cornerStyle === 1 ? Config.options.bar.m3.gapsOut : 0) + (Config.options.bar.m3.cornerStyle === 2 ? -6 : 0)
+                exclusiveZone: (autoHideEnabled && (!mustShow || !Config.options.bar.autoHide.pushWindows))
+                    ? 0 : shownExclusiveZone
                 WlrLayershell.namespace: "quickshell:bar"
                 // Upstream raised the bar to Overlay only while a Hyprland
                 // special workspace sat over a fullscreen window. Niri has no
@@ -69,6 +76,7 @@ Scope {
                 // windows cover it, which is what iNiR's own bar does too.
                 WlrLayershell.layer: WlrLayer.Top
                 implicitHeight: Appearance.sizes.barHeight + Appearance.rounding.screenRounding
+                    + (barRoot.autoHideEnabled ? barRoot.layerGap : 0)
                 // When Overlay-layer, bar shares a layer with the screen-corner click zones (ScreenCorners.qml)
                 // and same-layer overlap is resolved by stacking, not layer priority - bar was winning and
                 // swallowing the tiny corner-open hit rects. Carve them out of the bar's own mask so clicks
@@ -81,6 +89,13 @@ Scope {
                 property int cornerOpenCutHeight: cutOutCornerOpenZones ? Config.options.sidebar.cornerOpen.cornerRegionHeight : 0
                 mask: Region {
                     item: hoverMaskRegion
+                    // Keep a fixed screen-edge hit strip while barContent is
+                    // translated off-screen. Anchoring the only hit region to
+                    // the moving bar made M3 hide correctly but unable to reveal
+                    // reliably on some layer-shell/compositor combinations.
+                    Region {
+                        item: autoHideEdgeRegion
+                    }
                     Region {
                         intersection: Intersection.Subtract
                         x: 0
@@ -98,6 +113,18 @@ Scope {
                 }
                 color: "transparent"
 
+                Item {
+                    id: autoHideEdgeRegion
+                    anchors {
+                        left: parent.left
+                        right: parent.right
+                        top: !Config.options.bar.bottom ? parent.top : undefined
+                        bottom: Config.options.bar.bottom ? parent.bottom : undefined
+                    }
+                    height: barRoot.autoHideEnabled
+                        ? Math.max(1, Config.options?.bar?.autoHide?.hoverRegionWidth ?? 2) + barRoot.layerGap : 0
+                }
+
                 // Positioning
                 anchors {
                     top: !Config.options.bar.bottom
@@ -107,12 +134,12 @@ Scope {
                 }
 
                 margins {
-                    top: barRoot.anchors.top && Config.options.bar.m3.cornerStyle === 3
-                        ? Config.options.bar.m3.gapsOut : 0
+                    top: barRoot.anchors.top && !barRoot.autoHideEnabled
+                        ? barRoot.layerGap : 0
                     right: (Config.options.interactions.deadPixelWorkaround.enable && barRoot.anchors.right) ? -1 : 0
                     bottom: barRoot.anchors.bottom
                         ? ((Config.options.interactions.deadPixelWorkaround.enable ? -1 : 0)
-                            + (Config.options.bar.m3.cornerStyle === 3 ? Config.options.bar.m3.gapsOut : 0))
+                            + (!barRoot.autoHideEnabled ? barRoot.layerGap : 0))
                         : 0
                 }
 
@@ -171,7 +198,9 @@ Scope {
                             left: parent.left
                             top: parent.top
                             bottom: undefined
-                            topMargin: (Config?.options.bar.autoHide.enable && !mustShow) ? -Appearance.sizes.barHeight : 0
+                            topMargin: barRoot.autoHideEnabled
+                                ? (!mustShow ? -Appearance.sizes.barHeight : barRoot.layerGap)
+                                : 0
                             bottomMargin: (Config.options.interactions.deadPixelWorkaround.enable && barRoot.anchors.bottom) * -1
                             rightMargin: (Config.options.interactions.deadPixelWorkaround.enable && barRoot.anchors.right) * -1
                         }
@@ -197,7 +226,9 @@ Scope {
                             PropertyChanges {
                                 target: barContent
                                 anchors.topMargin: 0
-                                anchors.bottomMargin: (Config?.options.bar.autoHide.enable && !mustShow) ? -Appearance.sizes.barHeight : 0
+                                anchors.bottomMargin: barRoot.autoHideEnabled
+                                    ? (!mustShow ? -Appearance.sizes.barHeight : barRoot.layerGap)
+                                    : 0
                             }
                         }
                     }

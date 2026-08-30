@@ -13,6 +13,7 @@ Item {
     property bool expanded: true
     property bool collapsible: true
     property int animationDuration: Appearance.animation.elementMove.duration
+    property string settingsTaskSection: ""
     default property alias contentData: sectionContent.data
 
     property bool enableSettingsSearch: true
@@ -112,8 +113,8 @@ Item {
     // Non-ZZZ, non-angel: subtle left accent bar when expanded
     Rectangle {
         id: accentBar
-        visible: !Appearance.angelEverywhere && !Appearance.zzzEverywhere
-            && !Appearance.cookieEverywhere
+        visible: !Appearance.angelEverywhere && !Appearance.regaliaEverywhere
+            && !Appearance.zzzEverywhere && !Appearance.cookieEverywhere
         anchors {
             left: card.left
             top: card.top
@@ -158,12 +159,14 @@ Item {
         anchors.fill: parent
         implicitHeight: cardColumn.implicitHeight + SettingsMaterialPreset.cardPadding * 2
         radius: SettingsMaterialPreset.cardRadius
-        color: Appearance.cookieEverywhere ? "transparent" : SettingsMaterialPreset.cardColor
+        color: Appearance.cookieEverywhere || Appearance.regaliaEverywhere
+            ? "transparent" : SettingsMaterialPreset.cardColor
         border.width: Appearance.angelEverywhere ? 0
+                     : (Appearance.regaliaEverywhere ? 0
                      : (Appearance.zzzEverywhere ? 0
                      : (Appearance.cookieEverywhere ? 0
                      : (Appearance.inirEverywhere ? 1
-                     : (Appearance.auroraEverywhere ? 1 : 1))))
+                     : (Appearance.auroraEverywhere ? 1 : 1)))))
         border.color: Appearance.angelEverywhere ? "transparent" : SettingsMaterialPreset.cardBorderColor
 
         Behavior on color {
@@ -177,6 +180,15 @@ Item {
         Behavior on border.width {
             enabled: Appearance.animationsEnabled
             NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+
+        RegaliaPlate {
+            anchors.fill: parent
+            visible: Appearance.regaliaEverywhere
+            fillColor: SettingsMaterialPreset.cardColor
+            radius: card.radius
+            inset: Appearance.regalia.surfaceInset
+            elevated: true
         }
 
         // Angel partial border
@@ -205,12 +217,20 @@ Item {
                 Layout.fillWidth: true
                 implicitHeight: headerRow.implicitHeight + SettingsMaterialPreset.headerPaddingY * 2
                 radius: SettingsMaterialPreset.headerRadius
-                color: headerMouseArea.containsMouse && root.collapsible
-                    ? SettingsMaterialPreset.headerHoverColor
-                    : ColorUtils.applyAlpha(SettingsMaterialPreset.headerHoverColor, 0)
+                color: Appearance.regaliaEverywhere ? "transparent"
+                    : headerMouseArea.containsMouse && root.collapsible
+                        ? SettingsMaterialPreset.headerHoverColor
+                        : ColorUtils.applyAlpha(SettingsMaterialPreset.headerHoverColor, 0)
 
                 Behavior on color {
                     animation: ColorAnimation { duration: Appearance.animation.stateChange.duration; easing.type: Appearance.animation.stateChange.type; easing.bezierCurve: Appearance.animation.stateChange.bezierCurve }
+                }
+
+                RegaliaControlFace {
+                    anchors.fill: parent
+                    visible: Appearance.regaliaEverywhere && root.collapsible && headerMouseArea.containsMouse
+                    fillColor: Appearance.regalia.controlPlateHover
+                    radius: Appearance.regalia.roundSmall
                 }
 
                 RowLayout {
@@ -299,9 +319,11 @@ Item {
                         visible: root.collapsible
                         text: "expand_more"
                         iconSize: Appearance.font.pixelSize.normal
-                        color: Appearance.angelEverywhere
-                            ? Appearance.angel.colTextMuted
-                            : Appearance.colors.colSubtext
+                        color: Appearance.regaliaEverywhere
+                            ? (root.expanded ? Appearance.regalia.onColor : Appearance.regalia.onMuted)
+                            : Appearance.angelEverywhere
+                                ? Appearance.angel.colTextMuted
+                                : Appearance.colors.colSubtext
                         // One glyph that rotates instead of swapping icons
                         rotation: root.expanded ? 180 : 0
                         Behavior on rotation {
@@ -309,6 +331,7 @@ Item {
                             animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                         }
                     }
+
                 }
 
                 MouseArea {

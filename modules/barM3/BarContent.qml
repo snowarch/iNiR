@@ -52,6 +52,8 @@ Item {
         let filtered = Array.from(layout ?? [])
         if (!root.trayHasItems)
             filtered = filtered.filter(name => name !== "sysTray")
+        if (!Battery.available)
+            filtered = filtered.filter(name => name !== "batteryIndicator")
         if (!root.spectrumSignalActive)
             filtered = filtered.filter(name => name !== "visualizer")
         if (root.useShortenedForm === 2)

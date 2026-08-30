@@ -17,19 +17,22 @@ PanelSurface {
     
     readonly property bool inirEverywhere: Appearance.inirEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
+    readonly property bool regaliaEverywhere: Appearance.regaliaEverywhere
 
     elevation: 1
-    radiusOverride: inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+    radiusOverride: islandSkin ? -1 : (inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal)
 
-    AngelPartialBorder { targetRadius: root.radiusOverride; coverage: 0.45; visible: Appearance.angelEverywhere }
+    AngelPartialBorder { targetRadius: root.radiusOverride; coverage: 0.45; visible: Appearance.angelEverywhere && !root.islandSkin }
 
     GridLayout {
         id: actionsGrid
         anchors.fill: parent
-        anchors.margins: root.compactMode ? 6 : 8
+        anchors.margins: root.regaliaEverywhere ? Appearance.regalia.tilePadding
+            : root.compactMode ? 6 : 8
         columns: 4
-        rowSpacing: root.compactMode ? 4 : 6
-        columnSpacing: root.compactMode ? 4 : 6
+        rowSpacing: root.regaliaEverywhere ? Appearance.regalia.controlGap
+            : root.compactMode ? 4 : 6
+        columnSpacing: rowSpacing
 
         // Row 1: Audio
         ActionTile {
@@ -126,44 +129,48 @@ PanelSurface {
         id: tile
         property string icon
         property bool active: false
-        property color iconColor: active 
-            ? (Appearance.cookieEverywhere ? Appearance.colors.colOnPrimaryContainer
+        property color iconColor: active
+            ? (root.regaliaEverywhere ? Appearance.regalia.primaryPlateInk
+             : Appearance.cookieEverywhere ? Appearance.colors.colOnPrimaryContainer
              : Appearance.angelEverywhere ? Appearance.angel.colOnPrimary
-             : root.inirEverywhere ? Appearance.inir.colOnPrimary 
+             : root.inirEverywhere ? Appearance.inir.colOnPrimary
              : root.auroraEverywhere ? Appearance.colors.colOnPrimary
              : Appearance.colors.colOnPrimary)
-            : (Appearance.angelEverywhere ? Appearance.angel.colText
-             : root.inirEverywhere ? Appearance.inir.colText 
+            : (root.regaliaEverywhere ? Appearance.regalia.onColor
+             : Appearance.angelEverywhere ? Appearance.angel.colText
+             : root.inirEverywhere ? Appearance.inir.colText
              : root.auroraEverywhere ? Appearance.colors.colOnSurface
              : Appearance.colors.colOnLayer1)
         signal clicked()
 
         Layout.fillWidth: true
         implicitHeight: root.compactMode ? 30 : 36
-        radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+        radius: root.regaliaEverywhere ? Appearance.regalia.controlRadius
+            : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
             : root.inirEverywhere ? Appearance.inir.roundingSmall
             : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
             : Appearance.rounding.small
         
-        color: tileMouseArea.containsMouse 
-            ? (active 
-                ? (Appearance.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimaryHover, 0.35)
-                 : root.inirEverywhere ? Appearance.inir.colPrimaryHover 
-                 : root.auroraEverywhere ? Appearance.colors.colPrimaryHover
-                 : Appearance.colors.colPrimaryHover)
-                : (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                 : root.inirEverywhere ? Appearance.inir.colLayer2Hover 
-                 : root.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
-                 : Appearance.colors.colLayer2Hover))
-            : (active 
-                ? (Appearance.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimary, 0.45)
-                 : root.inirEverywhere ? Appearance.inir.colPrimary 
-                 : root.auroraEverywhere ? Appearance.colors.colPrimary
-                 : Appearance.colors.colPrimary)
-                : (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                 : root.inirEverywhere ? Appearance.inir.colLayer2 
-                 : root.auroraEverywhere ? Appearance.aurora.colSubSurface
-                 : Appearance.colors.colLayer2))
+        color: root.regaliaEverywhere ? "transparent"
+            : tileMouseArea.containsMouse
+                ? (active
+                    ? (Appearance.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimaryHover, 0.35)
+                     : root.inirEverywhere ? Appearance.inir.colPrimaryHover
+                     : root.auroraEverywhere ? Appearance.colors.colPrimaryHover
+                     : Appearance.colors.colPrimaryHover)
+                    : (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                     : root.inirEverywhere ? Appearance.inir.colLayer2Hover
+                     : root.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
+                     : Appearance.colors.colLayer2Hover))
+                : (active
+                    ? (Appearance.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimary, 0.45)
+                     : root.inirEverywhere ? Appearance.inir.colPrimary
+                     : root.auroraEverywhere ? Appearance.colors.colPrimary
+                     : Appearance.colors.colPrimary)
+                    : (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                     : root.inirEverywhere ? Appearance.inir.colLayer2
+                     : root.auroraEverywhere ? Appearance.aurora.colSubSurface
+                     : Appearance.colors.colLayer2))
 
         border.width: Appearance.angelEverywhere ? 0 : (root.inirEverywhere ? 1 : Appearance.zzzEverywhere ? 1 : 0)
         border.color: Appearance.angelEverywhere ? "transparent"
@@ -180,6 +187,16 @@ PanelSurface {
         }
 
         AngelPartialBorder { targetRadius: parent.radius; coverage: 0.4; borderColor: active ? Appearance.angel.colPrimary : Appearance.angel.colBorderSubtle }
+
+        RegaliaControlFace {
+            anchors.fill: parent
+            visible: root.regaliaEverywhere
+            fillColor: tile.active ? Appearance.regalia.primaryPlate : Appearance.regalia.controlPlate
+            radius: tile.radius
+            hovered: tileMouseArea.containsMouse
+            pressed: tileMouseArea.pressed
+            selected: tile.active
+        }
 
         Loader {
             anchors.centerIn: parent

@@ -122,9 +122,7 @@ Singleton {
     function setSourceVolume(target: real): void {
         const clamped = Math.max(0, Math.min(root.hardMaxValue, target))
         root._micVolume = clamped
-        if (root.source?.audio)
-            root.source.audio.volume = clamped
-        wpctlSetSourceVolume.exec(["wpctl", "set-volume", "@DEFAULT_AUDIO_SOURCE@", String(clamped)])
+        root._queueSourceVolume(clamped)
     }
 
     function toggleMicMute() {
@@ -168,12 +166,50 @@ Singleton {
             // After switching default sink, immediately nudge volume via wpctl so
             // USB/device-route sinks (e.g. USB mic used as output) get their volume
             // state initialised in PipeWire without requiring pavucontrol interaction.
-            if (!wpctlSetSinkVolume.running) {
-                wpctlSetSinkVolume.command = ["wpctl", "set-volume",
-                    "@DEFAULT_AUDIO_SINK@",
-                    String(root.sink?.audio?.volume ?? 0.5)]
-                wpctlSetSinkVolume.running = true
-            }
+            root._queueSinkVolume(root.sink?.audio?.volume ?? 0.5)
+        }
+    }
+
+    property real _queuedSinkVolume: 0
+    property bool _sinkVolumePending: false
+    property real _queuedSourceVolume: 0
+    property bool _sourceVolumePending: false
+
+    function _queueSinkVolume(value: real): void {
+        root._queuedSinkVolume = value
+        root._sinkVolumePending = true
+        if (!wpctlSetSinkVolume.running && !sinkVolumeDispatch.running)
+            sinkVolumeDispatch.start()
+    }
+
+    function _queueSourceVolume(value: real): void {
+        root._queuedSourceVolume = value
+        root._sourceVolumePending = true
+        if (!wpctlSetSourceVolume.running && !sourceVolumeDispatch.running)
+            sourceVolumeDispatch.start()
+    }
+
+    Timer {
+        id: sinkVolumeDispatch
+        interval: 16
+        onTriggered: {
+            if (wpctlSetSinkVolume.running || !root._sinkVolumePending)
+                return
+            root._sinkVolumePending = false
+            wpctlSetSinkVolume.command = ["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", String(root._queuedSinkVolume)]
+            wpctlSetSinkVolume.running = true
+        }
+    }
+
+    Timer {
+        id: sourceVolumeDispatch
+        interval: 16
+        onTriggered: {
+            if (wpctlSetSourceVolume.running || !root._sourceVolumePending)
+                return
+            root._sourceVolumePending = false
+            wpctlSetSourceVolume.command = ["wpctl", "set-volume", "@DEFAULT_AUDIO_SOURCE@", String(root._queuedSourceVolume)]
+            wpctlSetSourceVolume.running = true
         }
     }
 
@@ -182,6 +218,7 @@ Singleton {
     Process {
         id: wpctlSetSinkVolume
         command: ["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", "1.0"]
+        onExited: if (root._sinkVolumePending) sinkVolumeDispatch.restart()
     }
 
     // Relative increment/decrement — does not require reading current volume from QML,
@@ -205,7 +242,12 @@ Singleton {
     Process {
         id: wpctlSetSourceVolume
         command: ["wpctl", "set-volume", "@DEFAULT_AUDIO_SOURCE@", "1.0"]
-        onExited: root._refreshMicState()
+        onExited: {
+            if (root._sourceVolumePending)
+                sourceVolumeDispatch.restart()
+            else
+                root._refreshMicState()
+        }
     }
 
     Process {
@@ -228,23 +270,14 @@ Singleton {
 
     // Set sink volume safely. When protection is enabled, large jumps are rejected as "Illegal increment".
     // To keep UX consistent with brightness (click anywhere on slider), we ramp in small steps.
-    // wpctl is fired before the QML guard so USB/device-route sinks are always reachable
-    // even when Quickshell has not fully tracked the node yet.
+    // The queued wpctl path also works while Quickshell is rebuilding its node bindings.
     function setSinkVolume(target: real): void {
         const maxAllowed = (Config.options?.audio?.protection?.maxAllowed ?? 100) / 100;
         const clamped = Math.max(0, Math.min(Math.min(maxAllowed, root.hardMaxValue), target));
 
-        // Always send to wpctl regardless of QML node availability.
-        if (!wpctlSetSinkVolume.running) {
-            wpctlSetSinkVolume.command = ["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", String(clamped)]
-            wpctlSetSinkVolume.running = true
-        }
-
-        if (!root.sink?.audio) return;
-
         const protectionEnabled = (Config.options?.audio?.protection?.enable ?? false);
         if (!protectionEnabled) {
-            root.sink.audio.volume = clamped;
+            root._queueSinkVolume(clamped)
             return;
         }
 
@@ -262,13 +295,14 @@ Singleton {
         running: false
         onTriggered: {
             if (!root.sink?.audio) {
+                root._queueSinkVolume(root._rampTarget)
                 running = false;
                 return;
             }
 
             const protectionEnabled = (Config.options?.audio?.protection?.enable ?? false);
             if (!protectionEnabled) {
-                root.sink.audio.volume = root._rampTarget;
+                root._queueSinkVolume(root._rampTarget)
                 running = false;
                 return;
             }
@@ -278,11 +312,11 @@ Singleton {
             const current = root.sink.audio.volume;
             const diff = root._rampTarget - current;
             if (Math.abs(diff) <= step) {
-                root.sink.audio.volume = root._rampTarget;
+                root._queueSinkVolume(root._rampTarget)
                 running = false;
                 return;
             }
-            root.sink.audio.volume = current + Math.sign(diff) * step;
+            root._queueSinkVolume(current + Math.sign(diff) * step)
         }
     }
 
@@ -290,20 +324,12 @@ Singleton {
         // Fire wpctl relative increment first — works even when sink?.audio is not yet tracked.
         if (!wpctlIncrementSinkVolume.running)
             wpctlIncrementSinkVolume.running = true
-        if (!root.sink?.audio) return;
-        const currentVolume = root.sink.audio.volume;
-        const step = currentVolume < 0.1 ? 0.01 : 0.02;
-        root.sink.audio.volume = Math.min(root.hardMaxValue, currentVolume + step);
     }
 
     function decrementVolume() {
         // Fire wpctl relative decrement first — works even when sink?.audio is not yet tracked.
         if (!wpctlDecrementSinkVolume.running)
             wpctlDecrementSinkVolume.running = true
-        if (!root.sink?.audio) return;
-        const currentVolume = root.sink.audio.volume;
-        const step = currentVolume <= 0.1 ? 0.01 : 0.02;
-        root.sink.audio.volume = Math.max(0, currentVolume - step);
     }
 
     function setDefaultNode(node, isSink: bool): void {
@@ -335,6 +361,9 @@ Singleton {
     // Internals
     PwObjectTracker {
         objects: [rawSink, sink, source]
+            .concat(root.outputAppNodes ?? [])
+            .concat(root.inputAppNodes ?? [])
+            .filter(node => node)
     }
 
     // Reset protection state and stop any in-flight ramp when sink changes so
@@ -353,7 +382,7 @@ Singleton {
         property real lastVolume: 0
         function onVolumeChanged() {
             if (!(Config.options?.audio?.protection?.enable ?? false)) return;
-            if (!sink?.audio) return;
+            if (!sink?.ready || !sink?.audio) return;
             const newVolume = sink.audio.volume;
             // when resuming from suspend, we should not write volume to avoid pipewire volume reset issues
             if (isNaN(newVolume) || newVolume === undefined || newVolume === null) {
@@ -370,13 +399,16 @@ Singleton {
             const maxAllowed = (Config.options?.audio?.protection?.maxAllowed ?? 99) / 100;
 
             if (newVolume - lastVolume > maxAllowedIncrease) {
-                sink.audio.volume = lastVolume;
+                root._queueSinkVolume(lastVolume)
                 root.sinkProtectionTriggered(Translation.tr("Illegal increment"));
+                return
             } else if (newVolume > maxAllowed || newVolume > root.hardMaxValue) {
                 root.sinkProtectionTriggered(Translation.tr("Exceeded max allowed"));
-                sink.audio.volume = Math.min(lastVolume, maxAllowed);
+                lastVolume = Math.min(lastVolume, maxAllowed)
+                root._queueSinkVolume(lastVolume)
+                return
             }
-            lastVolume = sink.audio.volume;
+            lastVolume = newVolume;
         }
     }
 

@@ -32,6 +32,7 @@ ApplicationWindow {
         return entry;
     })
     property int currentPage: 0
+    property bool navEditMode: false
     property int _requestedStartPage: -1
     property string _requestedStartSection: ""
     property bool _navigationInitialized: false
@@ -57,6 +58,7 @@ ApplicationWindow {
     }
 
     onCurrentPageChanged: root._persistCurrentPage()
+
     property bool uiReady: Config.ready
 
     // Easy mode helpers — derived list filtered to essentials when on
@@ -121,8 +123,6 @@ ApplicationWindow {
     property var searchTargetControl: null
 
     // Static section/option index — shared with the overlay via SettingsPageRegistry.
-    readonly property var settingsSearchIndex: SettingsPageRegistry.staticSearchIndex
-
     function getWaffleSettingsPageIndex() {
         for (var i = 0; i < pages.length; i++) {
             if ((pages[i].component || "").indexOf("modules/settings/WaffleConfig.qml") >= 0)
@@ -147,6 +147,7 @@ ApplicationWindow {
         var easyOn = root.easyMode;
 
         // 1. Buscar en el índice estático de secciones (para navegación rápida a secciones)
+        const settingsSearchIndex = SettingsPageRegistry.searchIndex();
         for (var i = 0; i < settingsSearchIndex.length; i++) {
             var entry = settingsSearchIndex[i];
 
@@ -289,6 +290,12 @@ ApplicationWindow {
     }
 
     function trySpotlight() {
+        const pageItem = pagesStack.currentItem
+        if (pageItem && pagesStack.currentIndex === pendingSpotlightPageIndex
+                && pendingSpotlightSection.length > 0
+                && typeof pageItem.activateSettingsSearchSection === "function")
+            pageItem.activateSettingsSearchSection(pendingSpotlightSection)
+
         var control = null;
 
         // Try by optionId first
@@ -369,6 +376,7 @@ ApplicationWindow {
 
         // Expand the section containing the control and collapse others
         if (typeof SettingsSearchRegistry !== "undefined") {
+            SettingsSearchRegistry.activateTaskSectionForControl(control);
             SettingsSearchRegistry.expandSectionForControl(control);
         }
 
@@ -520,117 +528,212 @@ ApplicationWindow {
             }
         }
 
-        RowLayout { // Titlebar with integrated search
+        Item { // Titlebar with integrated search
+            id: settingsHeader
             visible: Config.options?.windows?.showTitlebar ?? true
             Layout.fillWidth: true
-            Layout.preferredHeight: 52
+            Layout.preferredHeight: root.navEditMode ? 58 : 52
             Layout.leftMargin: 12
             Layout.rightMargin: 6
-            spacing: 12
+
+            Behavior on Layout.preferredHeight {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.elementResize.duration }
+            }
+
+            function slotBlock(index: int): string {
+                return SettingsChromeLayout.headerOrder[index] ?? ""
+            }
+
+            readonly property real headerGap: root.navEditMode ? 8 : 12
+            readonly property real identityWidth: root.navEditMode ? 176 : 210
+            readonly property real actionsWidth: Math.max(108, actionsRow.implicitWidth)
+            readonly property bool defaultOrder: SettingsChromeLayout.headerOrder.join(",") === "identity,search,actions"
+
+            function searchWidth(): real {
+                const preferred = root.navEditMode ? 420 : 480
+                const minimum = root.navEditMode ? 150 : 200
+                if (settingsHeader.defaultOrder) {
+                    const side = Math.max(settingsHeader.identityWidth, settingsHeader.actionsWidth)
+                    return Math.max(minimum, Math.min(preferred,
+                        settingsHeader.width - 2 * (side + settingsHeader.headerGap)))
+                }
+                return Math.max(minimum, Math.min(preferred,
+                    settingsHeader.width - settingsHeader.identityWidth
+                        - settingsHeader.actionsWidth - 2 * settingsHeader.headerGap))
+            }
+
+            function slotWidth(index: int): real {
+                const block = settingsHeader.slotBlock(index)
+                if (block === "identity")
+                    return settingsHeader.identityWidth
+                if (block === "actions")
+                    return settingsHeader.actionsWidth
+                return settingsHeader.searchWidth()
+            }
+
+            function slotX(index: int): real {
+                const block = settingsHeader.slotBlock(index)
+                if (settingsHeader.defaultOrder) {
+                    if (block === "identity")
+                        return 0
+                    if (block === "actions")
+                        return Math.max(0, settingsHeader.width - settingsHeader.actionsWidth)
+                    return Math.max(0, (settingsHeader.width - settingsHeader.searchWidth()) / 2)
+                }
+
+                const total = settingsHeader.identityWidth + settingsHeader.searchWidth()
+                    + settingsHeader.actionsWidth + 2 * settingsHeader.headerGap
+                let x = Math.max(0, (settingsHeader.width - total) / 2)
+                for (let i = 0; i < index; ++i)
+                    x += settingsHeader.slotWidth(i) + settingsHeader.headerGap
+                return x
+            }
+
+
+            Item {
+                anchors.fill: parent
 
                 Item {
-                    implicitWidth: 36
-                    implicitHeight: 36
+                    id: settingsHeaderSlot0
+                    x: settingsHeader.slotX(0)
+                    width: settingsHeader.slotWidth(0)
+                    height: parent.height
+                }
+                Item {
+                    id: settingsHeaderSlot1
+                    x: settingsHeader.slotX(1)
+                    width: settingsHeader.slotWidth(1)
+                    height: parent.height
+                }
+                Item {
+                    id: settingsHeaderSlot2
+                    x: settingsHeader.slotX(2)
+                    width: settingsHeader.slotWidth(2)
+                    height: parent.height
+                }
+            }
 
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: width / 2
-                        color: Appearance.colors.colLayer1
-                        border.width: 1
-                        border.color: Appearance.colors.colPrimary
-                    }
+            Item {
+                id: headerIdentity
+                parent: SettingsChromeLayout.columnFor("identity") === 0 ? settingsHeaderSlot0
+                    : SettingsChromeLayout.columnFor("identity") === 1 ? settingsHeaderSlot1
+                    : settingsHeaderSlot2
+                anchors.fill: parent
+                anchors.topMargin: 4
+                anchors.bottomMargin: 4
 
-                    Rectangle {
-                        id: settingsAvatarMask
-                        anchors.centerIn: parent
-                        width: 32
-                        height: 32
-                        radius: width / 2
-                        visible: false
-                    }
+                RowLayout {
+                    anchors.fill: parent
+                    spacing: 9
 
-                    Image {
-                        id: settingsAvatarImage
-                        anchors.centerIn: parent
-                        width: 32
-                        height: 32
-                        source: settingsAvatarResolver.resolvedSource
-                        fillMode: Image.PreserveAspectCrop
-                        asynchronous: true
-                        cache: true
-                        smooth: true
-                        mipmap: true
-                        sourceSize.width: 64
-                        sourceSize.height: 64
-                        visible: status === Image.Ready
-                        layer.enabled: visible
-                        layer.effect: OpacityMask {
-                            maskSource: settingsAvatarMask
+                    Item {
+                        Layout.preferredWidth: 36
+                        Layout.preferredHeight: 36
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: width / 2
+                            color: Appearance.colors.colLayer1
+                            border.width: 1
+                            border.color: Appearance.colors.colPrimary
                         }
 
-                        // Walk the fallback chain from the signal, not from a bound
-                        // property: binding status back into the index that feeds
-                        // source is a loop.
-                        onStatusChanged: {
-                            if (settingsAvatarImage.status !== Image.Error)
-                                return
-                            const next = settingsAvatarResolver.avatarIndex + 1
-                            if (next < Directories.userAvatarPaths.length)
-                                settingsAvatarResolver.avatarIndex = next
+                        Rectangle {
+                            id: settingsAvatarMask
+                            anchors.centerIn: parent
+                            width: 32
+                            height: 32
+                            radius: width / 2
+                            visible: false
+                        }
+
+                        Image {
+                            id: settingsAvatarImage
+                            anchors.centerIn: parent
+                            width: 32
+                            height: 32
+                            source: settingsAvatarResolver.resolvedSource
+                            fillMode: Image.PreserveAspectCrop
+                            asynchronous: true
+                            cache: true
+                            smooth: true
+                            mipmap: true
+                            sourceSize.width: 64
+                            sourceSize.height: 64
+                            visible: status === Image.Ready
+                            layer.enabled: visible
+                            layer.effect: OpacityMask { maskSource: settingsAvatarMask }
+
+                            onStatusChanged: {
+                                if (settingsAvatarImage.status !== Image.Error)
+                                    return
+                                const next = settingsAvatarResolver.avatarIndex + 1
+                                if (next < Directories.userAvatarPaths.length)
+                                    settingsAvatarResolver.avatarIndex = next
+                            }
+                        }
+
+                        QtObject {
+                            id: settingsAvatarResolver
+                            property int avatarIndex: 0
+                            readonly property string resolvedSource: Directories.avatarSourceAt(avatarIndex)
+                            readonly property string primaryWatch: Directories.userAvatarSourcePrimary
+                            onPrimaryWatchChanged: avatarIndex = 0
+                        }
+
+                        MaterialSymbol {
+                            anchors.centerIn: parent
+                            visible: settingsAvatarImage.status !== Image.Ready
+                            text: "person"
+                            iconSize: 18
+                            color: Appearance.colors.colPrimary
                         }
                     }
 
-                    // Reactive avatar resolver — retries fallback paths without breaking bindings
-                    QtObject {
-                        id: settingsAvatarResolver
-                        property int avatarIndex: 0
-                        readonly property string resolvedSource: Directories.avatarSourceAt(avatarIndex)
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 0
 
-                        // Reset to primary whenever Directories re-resolves (e.g. username changes)
-                        readonly property string primaryWatch: Directories.userAvatarSourcePrimary
-                        onPrimaryWatchChanged: avatarIndex = 0
-                    }
+                        StyledText {
+                            Layout.fillWidth: true
+                            color: Appearance.colors.colOnLayer0
+                            text: Translation.tr("Settings")
+                            font {
+                                family: Appearance.font.family.title
+                                pixelSize: Appearance.font.pixelSize.title
+                                variableAxes: Appearance.font.variableAxes.title
+                            }
+                            elide: Text.ElideRight
+                        }
 
-                    MaterialSymbol {
-                        anchors.centerIn: parent
-                        visible: settingsAvatarImage.status !== Image.Ready
-                        text: "person"
-                        iconSize: 18
-                        color: Appearance.colors.colPrimary
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: SystemInfo.displayName || SystemInfo.username
+                            color: Appearance.colors.colSubtext
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            elide: Text.ElideRight
+                        }
                     }
                 }
 
-                ColumnLayout {
-                    spacing: 0
-
-                    StyledText {
-                        color: Appearance.colors.colOnLayer0
-                        text: Translation.tr("Settings")
-                        font {
-                            family: Appearance.font.family.title
-                            pixelSize: Appearance.font.pixelSize.title
-                            variableAxes: Appearance.font.variableAxes.title
-                        }
-                    }
-
-                    StyledText {
-                        text: SystemInfo.displayName || SystemInfo.username
-                        color: Appearance.colors.colSubtext
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        elide: Text.ElideRight
-                    }
+                SettingsChromeEditFrame {
+                    anchors.fill: parent
+                    active: root.navEditMode
+                    blockId: "identity"
+                    label: Translation.tr("Identity")
+                    targetIndex: SettingsChromeLayout.columnFor("identity")
                 }
+            }
 
-                Item { Layout.fillWidth: true; Layout.minimumWidth: 8 }
-
-                // Search container with visual feedback
             Rectangle {
                 id: searchContainer
-                Layout.fillWidth: true
-                Layout.maximumWidth: 480
-                Layout.minimumWidth: 200
-                Layout.preferredHeight: 40
-                Layout.alignment: Qt.AlignVCenter
+                parent: SettingsChromeLayout.columnFor("search") === 0 ? settingsHeaderSlot0
+                    : SettingsChromeLayout.columnFor("search") === 1 ? settingsHeaderSlot1
+                    : settingsHeaderSlot2
+                anchors.fill: parent
+                anchors.topMargin: root.navEditMode ? 8 : 6
+                anchors.bottomMargin: root.navEditMode ? 8 : 6
                 radius: Appearance.rounding.full
                 color: settingsSearchField.activeFocus
                     ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
@@ -789,58 +892,88 @@ ApplicationWindow {
                         }
                     }
                 }
+
+                SettingsChromeEditFrame {
+                    anchors.fill: parent
+                    active: root.navEditMode
+                    blockId: "search"
+                    label: Translation.tr("Search")
+                    targetIndex: SettingsChromeLayout.columnFor("search")
+                }
             }
 
-                Item { Layout.fillWidth: true; Layout.minimumWidth: 8 }
+            Item {
+                id: headerActions
+                parent: SettingsChromeLayout.columnFor("actions") === 0 ? settingsHeaderSlot0
+                    : SettingsChromeLayout.columnFor("actions") === 1 ? settingsHeaderSlot1
+                    : settingsHeaderSlot2
+                anchors.fill: parent
+                anchors.topMargin: root.navEditMode ? 8 : 6
+                anchors.bottomMargin: root.navEditMode ? 8 : 6
 
-                // Easy / Advanced mode toggle
-                RippleButton {
-                    buttonRadius: Appearance.rounding.full
-                    implicitWidth: 35
-                    implicitHeight: 35
-                    onClicked: root.setEasyMode(!root.easyMode)
-                    contentItem: MaterialSymbol {
-                        anchors.centerIn: parent
-                        horizontalAlignment: Text.AlignHCenter
-                        text: root.easyMode ? "school" : "tune"
-                        iconSize: 20
-                        color: root.easyMode ? Appearance.colors.colPrimary : Appearance.colors.colOnSurfaceVariant
-                        Behavior on color {
-                            enabled: Appearance.animationsEnabled
-                            animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                RowLayout {
+                    id: actionsRow
+                    anchors.fill: parent
+                    spacing: 4
+
+                    RippleButton {
+                        buttonRadius: Appearance.rounding.full
+                        implicitWidth: 35
+                        implicitHeight: 35
+                        onClicked: root.setEasyMode(!root.easyMode)
+                        contentItem: MaterialSymbol {
+                            anchors.centerIn: parent
+                            horizontalAlignment: Text.AlignHCenter
+                            text: root.easyMode ? "school" : "tune"
+                            iconSize: 20
+                            color: root.easyMode ? Appearance.colors.colPrimary : Appearance.colors.colOnSurfaceVariant
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                            }
+                        }
+                        StyledToolTip {
+                            text: root.easyMode
+                                ? Translation.tr("Easy mode — click to show all settings")
+                                : Translation.tr("Advanced mode — click to switch to Easy mode (essentials only)")
                         }
                     }
-                    StyledToolTip {
-                        text: root.easyMode
-                            ? Translation.tr("Easy mode — click to show all settings")
-                            : Translation.tr("Advanced mode — click to switch to Easy mode (essentials only)")
+
+                    RippleButton {
+                        buttonRadius: Appearance.rounding.full
+                        implicitWidth: 35
+                        implicitHeight: 35
+                        onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "lock", "activate"])
+                        contentItem: MaterialSymbol {
+                            anchors.centerIn: parent
+                            horizontalAlignment: Text.AlignHCenter
+                            text: "lock"
+                            iconSize: 20
+                        }
+                    }
+
+                    RippleButton {
+                        buttonRadius: Appearance.rounding.full
+                        implicitWidth: 35
+                        implicitHeight: 35
+                        onClicked: root.close()
+                        contentItem: MaterialSymbol {
+                            anchors.centerIn: parent
+                            horizontalAlignment: Text.AlignHCenter
+                            text: "close"
+                            iconSize: 20
+                        }
                     }
                 }
 
-                RippleButton {
-                    buttonRadius: Appearance.rounding.full
-                    implicitWidth: 35
-                    implicitHeight: 35
-                    onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "lock", "activate"])
-                    contentItem: MaterialSymbol {
-                        anchors.centerIn: parent
-                        horizontalAlignment: Text.AlignHCenter
-                        text: "lock"
-                        iconSize: 20
-                    }
+                SettingsChromeEditFrame {
+                    anchors.fill: parent
+                    active: root.navEditMode
+                    blockId: "actions"
+                    label: Translation.tr("Actions")
+                    targetIndex: SettingsChromeLayout.columnFor("actions")
                 }
-                RippleButton {
-                    buttonRadius: Appearance.rounding.full
-                    implicitWidth: 35
-                    implicitHeight: 35
-                    onClicked: root.close()
-                    contentItem: MaterialSymbol {
-                        anchors.centerIn: parent
-                        horizontalAlignment: Text.AlignHCenter
-                        text: "close"
-                        iconSize: 20
-                    }
-                }
+            }
         }
 
         RowLayout { // Window content with navigation rail and content pane
@@ -851,10 +984,20 @@ ApplicationWindow {
                 id: navRailWrapper
                 Layout.fillHeight: true
                 Layout.margins: 5
-                implicitWidth: 168
+                implicitWidth: root.navEditMode ? 228 : 168
+
+                Behavior on implicitWidth {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation {
+                        duration: Appearance.animation.elementResize.duration
+                        easing.type: Appearance.animation.elementResize.type
+                        easing.bezierCurve: Appearance.animation.elementResize.bezierCurve
+                    }
+                }
 
                 Flickable {
                     id: navRailFlickable
+                    visible: !root.navEditMode || navEditLoader.status !== Loader.Ready
                     anchors.fill: parent
                     anchors.bottomMargin: navBottomActions.height + 8
                     contentHeight: navCol.implicitHeight
@@ -927,7 +1070,9 @@ ApplicationWindow {
 
                                     readonly property int pageRealIndex: navItem.modelData.realIndex !== undefined ? navItem.modelData.realIndex : navItem.index
 
-                                    buttonRadius: Appearance.zzzEverywhere
+                                    buttonRadius: Appearance.regaliaEverywhere
+                                        ? Appearance.regalia.roundSmall
+                                        : Appearance.zzzEverywhere
                                         ? Appearance.zzz.controlRadius
                                         : Math.min(width, height) / 2
                                     toggled: root.currentPage === pageRealIndex
@@ -936,8 +1081,11 @@ ApplicationWindow {
                                     // Control's own background (which renders above the pill).
                                     rippleEnabled: !Appearance.zzzEverywhere
                                     colBackground: "transparent"
-                                    colBackgroundToggled: "transparent"
-                                    colBackgroundToggledHover: Appearance.zzzEverywhere
+                                    colBackgroundToggled: Appearance.regaliaEverywhere
+                                        ? Appearance.regalia.primaryPlate : "transparent"
+                                    colBackgroundToggledHover: Appearance.regaliaEverywhere
+                                        ? Appearance.regalia.primaryPlateHover
+                                        : Appearance.zzzEverywhere
                                         ? "transparent"
                                         : Appearance.angelEverywhere
                                         ? Appearance.angel.colGlassCardHover
@@ -946,7 +1094,9 @@ ApplicationWindow {
                                             : Appearance.auroraEverywhere
                                                 ? Appearance.aurora.colElevatedSurface
                                                 : CF.ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 0.5)
-                                    colBackgroundHover: Appearance.zzzEverywhere
+                                    colBackgroundHover: Appearance.regaliaEverywhere
+                                        ? Appearance.regalia.surfacePlateHover
+                                        : Appearance.zzzEverywhere
                                         ? Appearance.zzz.paperAlt
                                         : Appearance.colors.colLayer1Hover
 
@@ -964,8 +1114,10 @@ ApplicationWindow {
                                             MaterialSymbol {
                                                 text: navItem.modelData.icon || ""
                                                 iconSize: 18
-                                                color: navBtn.toggled
-                                                    ? (Appearance.zzzEverywhere
+                                                color: navBtn.toggled || (Appearance.regaliaEverywhere && navBtn.buttonHovered)
+                                                    ? (Appearance.regaliaEverywhere
+                                                        ? Appearance.regalia.hardwarePrimary
+                                                        : Appearance.zzzEverywhere
                                                         ? Appearance.zzz.ink
                                                         : Appearance.inirEverywhere
                                                         ? Appearance.inir.colAccent
@@ -987,8 +1139,10 @@ ApplicationWindow {
                                                     pixelSize: Appearance.font.pixelSize.small
                                                     weight: navBtn.toggled ? Font.Medium : Font.Normal
                                                 }
-                                                color: navBtn.toggled
-                                                    ? Appearance.colors.colOnLayer1
+                                                color: navBtn.toggled || (Appearance.regaliaEverywhere && navBtn.buttonHovered)
+                                                    ? (Appearance.regaliaEverywhere
+                                                        ? Appearance.regalia.primaryPlateInk
+                                                        : Appearance.colors.colOnLayer1)
                                                     : Appearance.colors.colOnSurfaceVariant
                                                 elide: Text.ElideRight
 
@@ -1117,6 +1271,42 @@ ApplicationWindow {
                     }
                 }
 
+                Loader {
+                    id: navEditLoader
+                    anchors {
+                        top: parent.top
+                        left: parent.left
+                        right: parent.right
+                        bottom: navBottomActions.top
+                        bottomMargin: 8
+                    }
+                    active: root.navEditMode
+                    asynchronous: true
+                    visible: status === Loader.Ready
+                    opacity: visible ? 1 : 0
+
+                    Behavior on opacity {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                    }
+
+                    sourceComponent: Component {
+                        SettingsNavEditPane {
+                            currentPage: root.currentPage
+                            onPageActivated: pageIndex => root.currentPage = pageIndex
+                            onPageHidden: pageIndex => {
+                                if (root.currentPage !== pageIndex)
+                                    return
+                                Qt.callLater(() => {
+                                    if (root.navPageOrder.length > 0)
+                                        root.currentPage = root.navPageOrder[0]
+                                })
+                            }
+                            onDoneRequested: root.navEditMode = false
+                        }
+                    }
+                }
+
                 // Bottom actions: config file + overlay mode
                 ColumnLayout {
                     id: navBottomActions
@@ -1124,6 +1314,60 @@ ApplicationWindow {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     spacing: 2
+
+                    RippleButton {
+                        id: navEditToggle
+                        readonly property color editSurface: Appearance.colors.colPrimaryContainer
+                        readonly property color editSurfaceHover: Appearance.colors.colPrimaryContainerHover
+                        readonly property color editForeground: Appearance.colors.colOnPrimaryContainer
+                        Layout.fillWidth: true
+                        implicitHeight: 36
+                        buttonRadius: Appearance.rounding.small
+                        toggled: root.navEditMode
+                        colBackground: "transparent"
+                        colBackgroundHover: Appearance.colors.colLayer1Hover
+                        colBackgroundToggled: editSurface
+                        colBackgroundToggledHover: editSurfaceHover
+                        onClicked: root.navEditMode = !root.navEditMode
+
+
+                        contentItem: RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 10
+                            anchors.rightMargin: 8
+                            spacing: 10
+
+                            MaterialSymbol {
+                                text: root.navEditMode ? "done" : "edit"
+                                iconSize: 18
+                                color: root.navEditMode
+                                    ? navEditToggle.editForeground
+                                    : Appearance.colors.colOnSurfaceVariant
+                            }
+
+                            StyledText {
+                                Layout.fillWidth: true
+                                text: root.navEditMode
+                                    ? Translation.tr("Done")
+                                    : Translation.tr("Edit navigation")
+                                font {
+                                    family: Appearance.font.family.main
+                                    pixelSize: Appearance.font.pixelSize.small
+                                }
+                                color: root.navEditMode
+                                    ? navEditToggle.editForeground
+                                    : Appearance.colors.colOnSurfaceVariant
+                                elide: Text.ElideRight
+                            }
+                        }
+
+                        StyledToolTip {
+                            position: "top"
+                            text: root.navEditMode
+                                ? Translation.tr("Finish editing navigation")
+                                : Translation.tr("Reorder or hide Settings pages directly in the sidebar")
+                        }
+                    }
 
                     RippleButton {
                         id: configFileBtn
@@ -1267,11 +1511,10 @@ ApplicationWindow {
                         anchors.rightMargin: 20
                         spacing: 10
 
-                        MaterialSymbol {
+                        MaterialShapeWrappedMaterialSymbol {
                             text: windowPageHeader.meta.icon ?? ""
-                            rotation: windowPageHeader.meta.iconRotation ?? 0
-                            iconSize: 20
-                            color: Appearance.inirEverywhere ? Appearance.inir.colAccent : Appearance.colors.colPrimary
+                            iconSize: 15
+                            Layout.alignment: Qt.AlignVCenter
                         }
 
                         StyledText {
@@ -1290,7 +1533,6 @@ ApplicationWindow {
                             font.pixelSize: Appearance.font.pixelSize.small
                             color: Appearance.colors.colSubtext
                             elide: Text.ElideRight
-                            opacity: 0.85
                         }
                     }
 
@@ -1318,25 +1560,13 @@ ApplicationWindow {
 
                     pages: root.pages
                     requestedIndex: root.currentPage
-                    loadEnabled: Config.ready
+                    loadEnabled: Config.ready && root._navigationInitialized
 
-                    // Loading indicator while the target page incubates
-                    CircularProgress {
-                        id: windowPageLoading
-                        anchors.centerIn: parent
-                        z: 10
-                        readonly property bool isLoading: pagesStack.loading
-                        opacity: isLoading ? 1 : 0
-                        scale: isLoading ? 1 : 0.7
-                        visible: opacity > 0
-                        Behavior on opacity {
-                            enabled: Appearance.animationsEnabled
-                            animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                        }
-                        Behavior on scale {
-                            enabled: Appearance.animationsEnabled
-                            animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                        }
+                    SettingsPageLoadingOverlay {
+                        anchors.fill: parent
+                        loading: pagesStack.loading
+                        text: Translation.tr("Loading page…")
+                        z: 15
                     }
 
                 }

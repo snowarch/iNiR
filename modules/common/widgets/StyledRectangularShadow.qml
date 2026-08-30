@@ -15,16 +15,20 @@ Item {
     property bool hovered: false
     property real radius: (target && target.radius !== undefined) ? Number(target.radius) : 0
     // Passthrough properties for backward compat (some sites override these)
-    property real blur: Appearance.cookieEverywhere
-        ? Appearance.cookie.shadowBlur
-        : ((Appearance.sizes && Appearance.sizes.elevationMargin !== undefined)
-            ? (0.9 * Number(Appearance.sizes.elevationMargin)) : 0)
-    property real spread: Appearance.cookieEverywhere ? Appearance.cookie.shadowSpread : 1
-    property color color: Appearance.cookieEverywhere
-        ? Appearance.cookie.shadowColor : Appearance.colors.colShadow
-    property vector2d offset: Appearance.cookieEverywhere
-        ? Qt.vector2d(0.0, Appearance.cookie.shadowOffset)
-        : Qt.vector2d(0.0, 1.0)
+    property real blur: Appearance.regaliaEverywhere ? 5
+        : Appearance.cookieEverywhere
+            ? Appearance.cookie.shadowBlur
+            : ((Appearance.sizes && Appearance.sizes.elevationMargin !== undefined)
+                ? (0.9 * Number(Appearance.sizes.elevationMargin)) : 0)
+    property real spread: Appearance.regaliaEverywhere ? 0
+        : Appearance.cookieEverywhere ? Appearance.cookie.shadowSpread : 1
+    property color color: Appearance.regaliaEverywhere
+        ? Appearance.regalia.shadow
+        : Appearance.cookieEverywhere ? Appearance.cookie.shadowColor : Appearance.colors.colShadow
+    property vector2d offset: Appearance.regaliaEverywhere ? Qt.vector2d(0.0, 1.0)
+        : Appearance.cookieEverywhere
+            ? Qt.vector2d(0.0, Appearance.cookie.shadowOffset)
+            : Qt.vector2d(0.0, 1.0)
 
     visible: !Appearance.zzzEverywhere
         && !Appearance.gameModeMinimal

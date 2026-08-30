@@ -1,0 +1,6 @@
+module qs.modules.background.widgets
+AbstractBackgroundWidget 1.0 AbstractBackgroundWidget.qml
+CustomImageWidget 1.0 CustomImageWidget.qml
+ManifestPopover 1.0 ManifestPopover.qml
+WidgetManagerPanel 1.0 WidgetManagerPanel.qml
+WidgetSurface 1.0 WidgetSurface.qml

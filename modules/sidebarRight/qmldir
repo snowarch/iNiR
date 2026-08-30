@@ -1,0 +1,10 @@
+module qs.modules.sidebarRight
+BottomWidgetGroup 1.0 BottomWidgetGroup.qml
+CenterWidgetGroup 1.0 CenterWidgetGroup.qml
+CompactMediaPlayer 1.0 CompactMediaPlayer.qml
+CompactSidebarRightContent 1.0 CompactSidebarRightContent.qml
+QuickSliders 1.0 QuickSliders.qml
+SectionDivider 1.0 SectionDivider.qml
+SidebarProfileHeader 1.0 SidebarProfileHeader.qml
+SidebarRightContent 1.0 SidebarRightContent.qml
+SidebarRight 1.0 SidebarRight.qml

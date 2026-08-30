@@ -77,7 +77,10 @@ PopupWindow {
             const allToplevels = CompositorService.sortedToplevels && CompositorService.sortedToplevels.length
                     ? CompositorService.sortedToplevels
                     : ToplevelManager.toplevels.values;
-            const current = allToplevels.filter(t => t.appId && t.appId.toLowerCase() === appId)
+            const current = allToplevels.filter(t => {
+                const id = AppSearch.resolveWindowIdentity(t)
+                return id && id.toLowerCase() === appId
+            })
             if (current.length === 0) {
                 root.close()
             } else {

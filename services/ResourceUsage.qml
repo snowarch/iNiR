@@ -39,6 +39,7 @@ Singleton {
     property int gpuTemp: 0
     property int maxTemp: Math.max(cpuTemp, gpuTemp)
     property real tempPercentage: Math.min(maxTemp / 100, 1.0)  // Normalized to 100°C max
+    property real gpuTempPercentage: Math.min(gpuTemp / 100, 1.0)  // Normalized to 100°C max
     property int tempWarningThreshold: 80  // Warning at 80°C
 
     // Disk usage (root partition)
@@ -54,6 +55,7 @@ Singleton {
     readonly property int historyLength: Config.options?.resources?.historyLength ?? 60
     property list<real> cpuUsageHistory: []
     property list<real> gpuUsageHistory: []
+    property list<real> gpuTempHistory: []
     property list<real> memoryUsageHistory: []
     property list<real> swapUsageHistory: []
 
@@ -198,11 +200,18 @@ Singleton {
             gpuUsageHistory.shift();
         }
     }
+    function updateGpuTempHistory() {
+        gpuTempHistory = [...gpuTempHistory, gpuTempPercentage];
+        if (gpuTempHistory.length > historyLength) {
+            gpuTempHistory.shift();
+        }
+    }
     function updateHistories() {
         updateMemoryUsageHistory();
         updateSwapUsageHistory();
         updateCpuUsageHistory();
         updateGpuUsageHistory();
+        updateGpuTempHistory();
     }
 
     function clampPercentToUnit(value: real): real {

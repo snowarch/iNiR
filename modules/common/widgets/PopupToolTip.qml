@@ -136,25 +136,28 @@ Item {
                 return anchorItem.mapToItem(fallbackItem.parent, 0, 0)
             }
             readonly property real gap: 4
-
-            x: {
+            readonly property real viewportMargin: 6
+            readonly property real preferredX: {
                 const edges = root.anchorEdges
                 if (edges === Edges.Left)
                     return anchorPos.x - tooltipW - gap
                 if (edges === Edges.Right)
                     return anchorPos.x + (anchorItem?.width ?? 0) + gap
-                // Top or Bottom: center horizontally
                 return anchorPos.x + ((anchorItem?.width ?? 0) - tooltipW) / 2
             }
-            y: {
+            readonly property real preferredY: {
                 const edges = root.anchorEdges
                 if (edges === Edges.Top)
                     return anchorPos.y - tooltipH - gap
                 if (edges === Edges.Bottom)
                     return anchorPos.y + (anchorItem?.height ?? 0) + gap
-                // Left or Right: center vertically
                 return anchorPos.y + ((anchorItem?.height ?? 0) - tooltipH) / 2
             }
+
+            x: Math.max(viewportMargin, Math.min(preferredX,
+                Math.max(viewportMargin, (parent?.width ?? tooltipW) - tooltipW - viewportMargin)))
+            y: Math.max(viewportMargin, Math.min(preferredY,
+                Math.max(viewportMargin, (parent?.height ?? tooltipH) - tooltipH - viewportMargin)))
 
             data: [root.contentItem]
         }

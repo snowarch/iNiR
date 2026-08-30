@@ -288,9 +288,9 @@ Singleton {
 
     // The effective surface ramp of the active global style, in the shape
     // build_app_palette() emits. Same derivations as the generator — only the
-    // input ramp differs, because zzz and cookie replace the Material
-    // containers with their own generated plates and every other style
-    // resolves back to the Material roles.
+    // input ramp differs, because Regalia, ZZZ, and Cookie replace the Material
+    // containers with their own plates and every other style resolves back to
+    // the Material roles.
     function _styleAppPaletteOverlay(): var {
         const c = Appearance.colors
         if (!c) return null

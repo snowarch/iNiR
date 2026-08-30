@@ -91,7 +91,7 @@ Item {
             text: root.title
             color: PillTheme.cream
             font.family: PillTheme.font
-            font.pixelSize: 11 * root.s
+            font.pixelSize: 12 * root.s
             font.weight: Font.Bold
         }
         Text {
@@ -101,7 +101,7 @@ Item {
             text: root.desc
             color: PillTheme.subtle
             font.family: PillTheme.font
-            font.pixelSize: 10 * root.s
+            font.pixelSize: 11 * root.s
         }
     }
 

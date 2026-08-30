@@ -2,8 +2,8 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: 9a5215708831bdca
-# Targets: 60
+# IPC.md hash: 4c84576f3a708194
+# Targets: 61
 
 declare -gA IPC_TARGET_DESC=(
   [ai]="Shared multi-provider AI service. It supports Gemini, OpenAI-compatible chat and Responses APIs, Mistral and Anthropic; live provider catalogs are normalized into capability-aware model records. Catalog visibility is separate from execution readiness, so public model lists remain browseable without pretending an API key exists. OpenCode Zen and Go resolve their current model lists and per-model API routes dynamically. Normal shell tools use typed actions and approval cards, while arbitrary commands are isolated in Advanced mode."
@@ -34,6 +34,7 @@ declare -gA IPC_TARGET_DESC=(
   [minimize]="Window minimization (Niri workaround - moves windows to hidden workspace)."
   [mpris]="Media player control. Automatically detects and uses YtMusic controls when active, otherwise uses the active MPRIS player."
   [notifications]="Notification management."
+  [orbit]="Niri-only Material session navigator for the ii family. Orbit presents nearby workspaces and readable window previews, with MRU Trail navigation and temporary Stash parking."
   [osd]="Waffle on-screen display indicator (volume, brightness)."
   [osdVolume]="On-screen volume indicator."
   [osk]="On-screen keyboard."
@@ -52,7 +53,7 @@ declare -gA IPC_TARGET_DESC=(
   [shellUpdate]="Shell update checker. Monitors the git repo for new commits and shows an update overlay."
   [sidebarLeft]="Left sidebar (AI chat, apps)."
   [sidebarRight]="Right sidebar (quick toggles, notepad, settings)."
-  [taskview]="Waffle task view (Win+Tab style)."
+  [taskview]="Compatibility entry point for task navigation. On Waffle it opens the Waffle Task View; on ii/Niri it routes to Orbit."
   [tiling]="Tiling layout overlay. Pick or cycle through tiling presets for the current workspace."
   [voiceSearch]="Provider-neutral voice input for web search and AI dictation. Auto prefers local whisper.cpp, then connected Groq, Gemini and OpenAI speech backends. Keys stay in the system keyring and are passed to adapters through the process environment."
   [wactionCenter]="Waffle action center (quick settings)."
@@ -97,6 +98,7 @@ declare -gA IPC_TARGET_FAMILY=(
   [minimize]="shared"
   [mpris]="shared"
   [notifications]="shared"
+  [orbit]="shared"
   [osd]="waffle"
   [osdVolume]="shared"
   [osk]="shared"
@@ -115,7 +117,7 @@ declare -gA IPC_TARGET_FAMILY=(
   [shellUpdate]="shared"
   [sidebarLeft]="shared"
   [sidebarRight]="shared"
-  [taskview]="waffle"
+  [taskview]="shared"
   [tiling]="shared"
   [voiceSearch]="shared"
   [wactionCenter]="waffle"
@@ -139,7 +141,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [autostart]="status addCommand addApp removeLast reload"
   [background]="toggleEditMode setEditMode editState desktopItemsState focusWidget promoteWidget resetLayerOrder setWidgetEnabled clockDebugState clockDebugSetMode clockDebugSetRegion clockDebugSetLayout clockDebugRestore"
   [bar]="toggle close open"
-  [brightness]="increment decrement"
+  [brightness]="increment decrement sleepBegin restoreAfterWake"
   [cheatsheet]="toggle close open"
   [clipboard]="open close toggle"
   [cliphistService]="update"
@@ -157,9 +159,10 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [mascotMood]="set current"
   [mediaControls]="toggle close open"
   [memory]="collect stats restart dismiss reset"
-  [minimize]="minimize restore"
+  [minimize]="minimize minimizeId restore restoreOriginal"
   [mpris]="pauseAll playPause previous next"
   [notifications]="test clearAll toggleSilent"
+  [orbit]="toggle close open"
   [osd]="trigger"
   [osdVolume]="trigger hide toggle"
   [osk]="toggle close open"
@@ -239,6 +242,8 @@ declare -gA IPC_FUNCTION_DESC=(
   ["bar:open"]="Show bar"
   ["brightness:increment"]="Increase brightness"
   ["brightness:decrement"]="Decrease brightness"
+  ["brightness:sleepBegin"]=""
+  ["brightness:restoreAfterWake"]=""
   ["cheatsheet:toggle"]="Open/close cheatsheet"
   ["cheatsheet:close"]="Hide cheatsheet overlay"
   ["cheatsheet:open"]="Show cheatsheet overlay"
@@ -305,7 +310,9 @@ declare -gA IPC_FUNCTION_DESC=(
   ["memory:dismiss"]="Dismiss the memory warning notification"
   ["memory:reset"]="Reset notification state (re-enables warnings)"
   ["minimize:minimize"]="Minimize focused window"
+  ["minimize:minimizeId"]="Minimize a window by Niri window ID"
   ["minimize:restore"]="Restore a minimized window by ID"
+  ["minimize:restoreOriginal"]="Restore a minimized window to the workspace it came from"
   ["mpris:pauseAll"]="Pause all players"
   ["mpris:playPause"]="Toggle play/pause (uses YtMusic if active)"
   ["mpris:previous"]="Previous track (uses YtMusic if active)"
@@ -313,6 +320,9 @@ declare -gA IPC_FUNCTION_DESC=(
   ["notifications:test"]="Send test notifications"
   ["notifications:clearAll"]="Dismiss all notifications"
   ["notifications:toggleSilent"]="Toggle Do Not Disturb mode"
+  ["orbit:toggle"]="Open/close Orbit"
+  ["orbit:close"]="Close Orbit if it is active"
+  ["orbit:open"]="Open Orbit on the focused output"
   ["osd:trigger"]="Show the OSD indicator"
   ["osdVolume:trigger"]="Show volume OSD"
   ["osdVolume:hide"]="Hide volume OSD"
@@ -394,9 +404,9 @@ declare -gA IPC_FUNCTION_DESC=(
   ["sidebarRight:toggle"]="Open/close right sidebar"
   ["sidebarRight:close"]="Hide right sidebar"
   ["sidebarRight:open"]="Show right sidebar"
-  ["taskview:toggle"]="Open/close task view"
-  ["taskview:close"]="Hide task view"
-  ["taskview:open"]="Show task view"
+  ["taskview:toggle"]="Open/close the active family's task navigator"
+  ["taskview:close"]="Close the active family's task navigator"
+  ["taskview:open"]="Open the active family's task navigator"
   ["tiling:toggle"]="Open/close tiling picker"
   ["tiling:open"]="Open tiling picker"
   ["tiling:hide"]="Close picker and OSD"
@@ -478,7 +488,9 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["mascot:appearContextual"]="<pose> <sourceWidget>"
   ["mascot:appearWithLine"]="<pose> <edge> <line>"
   ["mascotMood:set"]="<mood>"
+  ["minimize:minimizeId"]="<windowId>"
   ["minimize:restore"]="<windowId>"
+  ["minimize:restoreOriginal"]="<windowId>"
   ["packageSearch:search"]="<query>"
   ["panelFamily:set"]="<family>"
   ["pill:open"]="<surface>"
@@ -531,10 +543,10 @@ bind "Ctrl+Alt+A" { spawn "inir" "wallpaperSelector" "openLauncher" "animated"; 
   [ytmusic]='bind "Mod+M+Space" { spawn "inir" "ytmusic" "playPause"; }'
 )
 
-IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets dashboard dev gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osd osdVolume osk overlay overview packageSearch panelFamily pill recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
-IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector dashboard dev gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osdVolume osk overlay overview packageSearch panelFamily pill region session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight tiling voiceSearch wallpaperLauncher wallpaperSelector workspaceStrip ytmusic zoom)
+IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets dashboard dev gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily pill recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
+IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector dashboard dev gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications orbit osdVolume osk overlay overview packageSearch panelFamily pill region session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wallpaperLauncher wallpaperSelector workspaceStrip ytmusic zoom)
 IPC_II_TARGETS=()
-IPC_WAFFLE_TARGETS=(autostart customWidgets osd recordingOsd search taskview wactionCenter waffleAltSwitcher wbar widgetpower wnotificationCenter wwidgets)
+IPC_WAFFLE_TARGETS=(autostart customWidgets osd recordingOsd search wactionCenter waffleAltSwitcher wbar widgetpower wnotificationCenter wwidgets)
 
 declare -gA IPC_KEBAB_ALIASES=(
   [alt-switcher]=altSwitcher

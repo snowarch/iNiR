@@ -747,6 +747,18 @@ Item {
         visible: bg.angelEverywhere && !Appearance.gameModeMinimal
     }
 
+    IslandPanel {
+        anchors.fill: bg
+        visible: bg.islandStyle
+        radius: bg.radius
+        glassEnabled: true
+        screen: root.panelScreen ?? root.QsWindow?.window?.screen ?? null
+        glassScreenX: root.screenWidth - bg.width - Appearance.sizes.hyprlandGapsOut
+        glassScreenY: Appearance.sizes.hyprlandGapsOut
+        glassScreenWidth: root.screenWidth
+        glassScreenHeight: root.screenHeight
+    }
+
     ZzzPlate {
         anchors.fill: bg
         visible: bg.zzzEverywhere && !Appearance.gameModeMinimal
@@ -859,19 +871,6 @@ Item {
             maskSource: Rectangle {
                 width: bg.width; height: bg.height; radius: bg.radius
             }
-        }
-
-        // Ricelin island face. Angel alone keeps the outer stepped shadow.
-        IslandPanel {
-            anchors.fill: parent
-            visible: bg.islandStyle && !bg.gameModeMinimal
-            radius: bg.radius
-            shadow: false
-            glassEnabled: true
-            glassScreenX: root.screenWidth - bg.width - Appearance.sizes.hyprlandGapsOut
-            glassScreenY: Appearance.sizes.hyprlandGapsOut
-            glassScreenWidth: root.screenWidth ?? 1920
-            glassScreenHeight: root.screenHeight ?? 1080
         }
 
         // Aurora blurred wallpaper

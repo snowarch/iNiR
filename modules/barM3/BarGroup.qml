@@ -13,6 +13,9 @@ Item {
     property bool paintMaterialPill: false
     property real padding: (root.isMaterial && !root.paintMaterialPill) ? 0 : 5
     property color bgColor: M3Palette.primaryContainer
+    readonly property bool empty: root.vertical
+        ? gridLayout.implicitHeight < 1
+        : gridLayout.implicitWidth < 1
     readonly property Item spectrumClipItem: background
     readonly property var spectrumClipRadii: [
         background.topLeftRadius, background.topRightRadius,
@@ -32,8 +35,15 @@ Item {
         return midRadius;
     }
 
-    implicitWidth: vertical && root.isMaterial ? Appearance.sizes.baseVerticalBarWidth - 6 : (gridLayout.implicitWidth + padding * 2)
-    implicitHeight: vertical ? (gridLayout.implicitHeight + padding * 2) : Appearance.sizes.baseBarHeight
+    visible: !root.empty
+    implicitWidth: root.empty ? 0
+        : vertical && root.isMaterial
+            ? Appearance.sizes.baseVerticalBarWidth - 6
+            : (gridLayout.implicitWidth + padding * 2)
+    implicitHeight: root.empty ? 0
+        : vertical
+            ? (gridLayout.implicitHeight + padding * 2)
+            : Appearance.sizes.baseBarHeight
 
     default property alias items: gridLayout.children
 

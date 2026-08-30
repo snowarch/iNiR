@@ -516,7 +516,7 @@ Item {
                 text: Translation.tr("WIFI")
                 color: PillTheme.subtle
                 font.family: PillTheme.font
-                font.pixelSize: 10 * root.s
+                font.pixelSize: 11.5 * root.s
                 font.weight: Font.DemiBold
                 font.capitalization: Font.AllUppercase
                 font.letterSpacing: 1.6 * root.s
@@ -527,7 +527,7 @@ Item {
                 text: "· " + root.statusText
                 color: root.activeNet ? PillTheme.vermLit : PillTheme.faint
                 font.family: PillTheme.font
-                font.pixelSize: 9.5 * root.s
+                font.pixelSize: 10.5 * root.s
                 font.weight: Font.Medium
                 elide: Text.ElideRight
             }
@@ -650,8 +650,8 @@ Item {
 
                         Rectangle {
                             width: parent.width
-                            height: 30 * root.s
-                            radius: 9 * root.s
+                            height: 38 * root.s
+                            radius: 10 * root.s
                             color: netItem.isActive ? Qt.rgba(PillTheme.verm.r, PillTheme.verm.g, PillTheme.verm.b, 0.14)
                                 : (rowHover.hovered ? PillTheme.frameBg : "transparent")
 
@@ -713,7 +713,7 @@ Item {
                         Item {
                             visible: netItem.confirming
                             width: parent.width
-                            height: 30 * root.s
+                            height: 38 * root.s
 
                             Text {
                                 anchors.left: parent.left
@@ -724,7 +724,7 @@ Item {
                                 text: netItem.isActive ? "Connected" : "Saved network"
                                 color: PillTheme.faint
                                 font.family: PillTheme.font
-                                font.pixelSize: 9.5 * root.s
+                                font.pixelSize: 10.5 * root.s
                                 font.weight: Font.Medium
                                 elide: Text.ElideRight
                             }
@@ -739,8 +739,8 @@ Item {
                                 Rectangle {
                                     id: primaryBtn
                                     anchors.verticalCenter: parent.verticalCenter
-                                    width: primaryLabel.implicitWidth + 20 * root.s
-                                    height: 22 * root.s
+                                    width: primaryLabel.implicitWidth + 22 * root.s
+                                    height: 28 * root.s
                                     radius: 7 * root.s
                                     color: primaryArea.containsMouse ? PillTheme.tileBg : "transparent"
                                     border.width: 1
@@ -773,8 +773,8 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                     visible: netItem.known
                                     readonly property bool shown: root.revealedSsid === netItem.ssid
-                                    width: revealLabel.implicitWidth + 20 * root.s
-                                    height: 22 * root.s
+                                    width: revealLabel.implicitWidth + 22 * root.s
+                                    height: 28 * root.s
                                     radius: 7 * root.s
                                     color: revealArea.containsMouse ? PillTheme.tileBg : "transparent"
                                     border.width: 1
@@ -805,8 +805,8 @@ Item {
                                 Rectangle {
                                     id: forgetBtn
                                     anchors.verticalCenter: parent.verticalCenter
-                                    width: forgetLabel.implicitWidth + 20 * root.s
-                                    height: 22 * root.s
+                                    width: forgetLabel.implicitWidth + 22 * root.s
+                                    height: 28 * root.s
                                     radius: 7 * root.s
                                     color: forgetArea.containsMouse
                                         ? Qt.rgba(PillTheme.verm.r, PillTheme.verm.g, PillTheme.verm.b, 0.2)
@@ -850,7 +850,7 @@ Item {
                                 text: Translation.tr("PASSWORD")
                                 color: PillTheme.faint
                                 font.family: PillTheme.font
-                                font.pixelSize: 9 * root.s
+                                font.pixelSize: 10.5 * root.s
                                 font.weight: Font.Medium
                                 font.capitalization: Font.AllUppercase
                                 font.letterSpacing: 1 * root.s
@@ -963,7 +963,7 @@ Item {
                             text: Translation.tr("Connection failed")
                             color: PillTheme.vermLit
                             font.family: PillTheme.font
-                            font.pixelSize: 9.5 * root.s
+                            font.pixelSize: 10.5 * root.s
                             leftPadding: 10 * root.s
                         }
                     }
@@ -1022,7 +1022,7 @@ Item {
                     text: cr.label
                     color: PillTheme.faint
                     font.family: PillTheme.font
-                    font.pixelSize: 9 * root.s
+                    font.pixelSize: 10.5 * root.s
                     font.weight: Font.Medium
                     font.capitalization: Font.AllUppercase
                     font.letterSpacing: 1 * root.s
@@ -1110,7 +1110,7 @@ Item {
                         text: root.hsBusy ? "…" : (root.hsActive ? "Active" : "Off")
                         color: root.hsActive ? PillTheme.flameGlow : PillTheme.dim
                         font.family: PillTheme.font
-                        font.pixelSize: 9.5 * root.s
+                        font.pixelSize: 10.5 * root.s
                         font.weight: Font.Medium
                     }
                 }

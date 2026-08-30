@@ -13,6 +13,22 @@ ContentPage {
     id: root
     settingsPageIndex: 17
     settingsPageName: Translation.tr("Autostart")
+    property string activeSection: "apps"
+
+    SettingsTaskNavigator {
+        visible: Autostart.isNiri
+        icon: "rocket_launch"
+        title: Translation.tr("Autostart")
+        description: Translation.tr("Manage applications and custom startup commands separately; the guide explains exactly what iNiR writes to niri.")
+        summary: Translation.tr("Applications · commands · guide")
+        currentValue: root.activeSection
+        onSelected: value => root.activeSection = value
+        options: [
+            { displayName: Translation.tr("Applications"), icon: "apps", value: "apps" },
+            { displayName: Translation.tr("Commands"), icon: "terminal", value: "commands" },
+            { displayName: Translation.tr("Guide"), icon: "info", value: "guide" }
+        ]
+    }
 
     // ── Helpers ──────────────────────────────────────────────────────────
 
@@ -90,7 +106,8 @@ ContentPage {
         expanded: true
         icon: "info"
         title: Translation.tr("How autostart works")
-        visible: Autostart.isNiri
+        settingsTaskSection: "guide"
+        visible: Autostart.isNiri && root.activeSection === "guide"
 
         ColumnLayout {
             Layout.fillWidth: true
@@ -159,7 +176,8 @@ ContentPage {
         expanded: true
         icon: "apps"
         title: Translation.tr("Applications")
-        visible: Autostart.isNiri
+        settingsTaskSection: "apps"
+        visible: Autostart.isNiri && root.activeSection === "apps"
 
         ColumnLayout {
             Layout.fillWidth: true
@@ -332,7 +350,8 @@ ContentPage {
         expanded: true
         icon: "terminal"
         title: Translation.tr("Custom Commands")
-        visible: Autostart.isNiri
+        settingsTaskSection: "commands"
+        visible: Autostart.isNiri && root.activeSection === "commands"
 
         ColumnLayout {
             Layout.fillWidth: true

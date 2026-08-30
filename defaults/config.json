@@ -73,6 +73,14 @@
             "glassBlur": 1
         },
         "iiMotionProfile": "classic",
+        "regalia": {
+            "glass": true,
+            "glassBlur": 0.72,
+            "glassTintTransparency": 0.52,
+            "glassSurfaceOpacity": 0.60,
+            "glassSaturation": 0.12,
+            "radiusScale": 1.0
+        },
         "aurora": {
             "transparency": {
                 "overlay": 0.38,
@@ -106,6 +114,7 @@
             "aurora": 0,
             "inir": 1,
             "angel": 1,
+            "regalia": 1,
             "zzz": 0,
             "cookie": 1
         },
@@ -213,6 +222,7 @@
             "enableVSCode": true,
             "enableChrome": true,
             "enableSpicetify": false,
+            "spicetifyTheme": "Inir",
             "enableSteam": false,
             "enablePearDesktop": true,
             "enableNeovim": false,
@@ -562,6 +572,7 @@
                 "showGpu": true,
                 "showTemp": false,
                 "showDisk": false,
+                "showGpuTemp": false,
                 "showLabels": true,
                 "dim": 0,
                 "widgetScale": 100,
@@ -800,8 +811,8 @@
     "bar": {
         "pill": {
             "barMode": false,
+            "floatOverWindows": false,
             "scale": 1,
-            "opacity": 1,
             "topGap": 1,
             "appGap": 1,
             "showGlyphs": true,
@@ -829,9 +840,16 @@
                 "sidebars": true,
                 "power": true
             },
-            "rowSpacing": 20,
-            "iconSpacing": 12,
-            "iconSize": 17,
+            "rowSpacing": 24,
+            "iconSpacing": 14,
+            "iconSize": 19,
+            "batteryDisplay": "both",
+            "mediaAccess": "row",
+            "superSpaceLauncher": "overview",
+            "mixerAppRows": 5,
+            "restWidth": 176,
+            "restHeight": 44,
+            "expandedHeight": 66,
             "soul": {
                 "enable": true,
                 "size": 1,
@@ -855,7 +873,8 @@
                 "calendar": "",
                 "mixer": "",
                 "launcher": "",
-                "workspaces": ""
+                "workspaces": "",
+                "settings": ""
             }
         },
         "activeWindow": {
@@ -1114,6 +1133,7 @@
         "overlayStyle": "rail",
         "easyMode": true,
         "categories": "",
+        "chromeLayout": "",
         "overlayAppearance": {
             "scrimDim": 35,
             "backgroundOpacity": 1.0,
@@ -1328,11 +1348,6 @@
             "scale": 0.5
         },
         "openingZoomAnimation": false,
-        "recorder": {
-            "autoHideOnFullscreen": true,
-            "suppressToasts": true,
-            "disableNiriAnims": false
-        },
         "scrimAnimationDurationMs": 60,
         "scrimDim": 100
     },
@@ -1364,6 +1379,45 @@
         "topMargin": 80,
         "windowTileMargin": 6,
         "workspaceSpacing": 5
+    },
+    "orbit": {
+        "balancedGrid": true,
+        "closeOnSelect": true,
+        "enable": true,
+        "hotCorner": "topRight",
+        "hotCornerDwellMs": 0,
+        "hotCornerEnable": true,
+        "hotCornerSize": 12,
+        "maxPanelWidthPercent": 92,
+        "motionStyle": "spring",
+        "scrimDim": 35,
+        "scrollNavigation": true,
+        "scrollSteps": 1,
+        "showStash": true,
+        "showTrail": true,
+        "showWorkspaceNumbers": true,
+        "shelf": {
+            "closeOnAction": true,
+            "enable": true,
+            "modules": [
+                "locator",
+                "trail",
+                "niri",
+                "actions",
+                "stash"
+            ],
+            "pinnedActions": [
+                "open-clipboard",
+                "toggle-tiling",
+                "toggle-dashboard"
+            ]
+        },
+        "stashRestoreMode": "original",
+        "trailItems": 5,
+        "windowGap": 4,
+        "workspaceCount": 3,
+        "workspaceScalePercent": 27,
+        "workspaceSpacing": 18
     },
     "performance": {
         "blurAreas": {
@@ -1479,6 +1533,10 @@
             "enable": false,
             "valueScroll": true,
             "visualize": true
+        },
+        "edgeOpen": {
+            "enable": false,
+            "regionWidth": 2
         },
         "style": "panel",
         "cardStyle": false,
@@ -1644,6 +1702,7 @@
         "wallhaven": {
             "enable": true,
             "limit": 24,
+            "fitMode": "auto",
             "apiKey": ""
         },
         "news": {
@@ -1812,7 +1871,8 @@
     },
     "windows": {
         "centerTitle": true,
-        "showTitlebar": true
+        "showTitlebar": true,
+        "appIdentityRules": []
     },
     "workSafety": {
         "enable": {

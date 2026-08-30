@@ -53,6 +53,10 @@ Variants {
             Math.round((screen?.height ?? 1080) * backdropSourceScale))
         readonly property int thumbnailBlurStrength: Config.options?.background?.effects?.thumbnailBlurStrength ?? 50
         readonly property bool enableAnimatedBlur: iiBackdrop.enableAnimatedBlur ?? false
+        readonly property string fillMode: iiBackdrop.fillMode === "fit" ? "fit" : "fill"
+        readonly property bool fitWallpaper: fillMode === "fit"
+        readonly property int imageFillMode: fitWallpaper ? Image.PreserveAspectFit : Image.PreserveAspectCrop
+        readonly property int videoFillMode: fitWallpaper ? VideoOutput.PreserveAspectFit : VideoOutput.PreserveAspectCrop
         readonly property int backdropDim: iiBackdrop.dim ?? 35
         readonly property real backdropSaturation: iiBackdrop.saturation ?? 0
         readonly property real backdropContrast: iiBackdrop.contrast ?? 0
@@ -162,13 +166,20 @@ Variants {
             // wallpaper source items are oversized by blurMax (64px) on every side,
             // and this parent clips the result to exact screen bounds.
             readonly property int blurOverflow: 64
+            readonly property int mediaMargin: backdropWindow.fitWallpaper ? 0 : -blurOverflow
+
+            Rectangle {
+                anchors.fill: parent
+                visible: backdropWindow.fitWallpaper
+                color: Appearance.colors.colLayer0Base
+            }
 
             // Static wallpaper with crossfade transitions (shares workspace transition settings)
             WallpaperCrossfader {
                 id: wallpaper
                 anchors.fill: parent
-                anchors.margins: -parent.blurOverflow
-                fillMode: Image.PreserveAspectCrop
+                anchors.margins: parent.mediaMargin
+                fillMode: backdropWindow.imageFillMode
                 source: backdropWindow.effectiveWallpaperPath && !backdropWindow.wallpaperIsGif && !backdropWindow.wallpaperIsVideo
                     ? (backdropWindow.effectiveWallpaperPath.startsWith("file://")
                         ? backdropWindow.effectiveWallpaperPath
@@ -196,8 +207,8 @@ Variants {
             AnimatedImage {
                 id: gifWallpaper
                 anchors.fill: parent
-                anchors.margins: -parent.blurOverflow
-                fillMode: Image.PreserveAspectCrop
+                anchors.margins: parent.mediaMargin
+                fillMode: backdropWindow.imageFillMode
                 source: backdropWindow.wallpaperIsGif && backdropWindow.wallpaperPathRaw
                     ? (backdropWindow.wallpaperPathRaw.startsWith("file://")
                         ? backdropWindow.wallpaperPathRaw
@@ -228,10 +239,10 @@ Variants {
             Image {
                 id: frozenVideoWallpaper
                 anchors.fill: parent
-                anchors.margins: -parent.blurOverflow
+                anchors.margins: parent.mediaMargin
                 visible: !backdropWindow.useAuroraStyle && backdropWindow.useFrozenVideoFrame
                 source: visible ? backdropWindow.frozenVideoFramePath : ""
-                fillMode: Image.PreserveAspectCrop
+                fillMode: backdropWindow.imageFillMode
                 asynchronous: true
                 cache: false
                 smooth: true
@@ -254,7 +265,7 @@ Variants {
             Video {
                 id: videoWallpaper
                 anchors.fill: parent
-                anchors.margins: -parent.blurOverflow
+                anchors.margins: parent.mediaMargin
                 visible: !backdropWindow.useAuroraStyle && backdropWindow.wallpaperIsVideo
                     && !backdropWindow.useFrozenVideoFrame
                 source: {
@@ -265,7 +276,7 @@ Variants {
                     if (!path) return "";
                     return path.startsWith("file://") ? path : ("file://" + path);
                 }
-                fillMode: VideoOutput.PreserveAspectCrop
+                fillMode: backdropWindow.videoFillMode
                 loops: MediaPlayer.Infinite
                 muted: true
                 autoPlay: true
@@ -318,8 +329,8 @@ Variants {
             Image {
                 id: auroraWallpaper
                 anchors.fill: parent
-                anchors.margins: -parent.blurOverflow
-                fillMode: Image.PreserveAspectCrop
+                anchors.margins: parent.mediaMargin
+                fillMode: backdropWindow.imageFillMode
                 source: backdropWindow.wallpaperIsGif ? gifWallpaper.source : wallpaper.source
                 asynchronous: true
                 cache: false
@@ -352,8 +363,8 @@ Variants {
             AnimatedImage {
                 id: auroraGifWallpaper
                 anchors.fill: parent
-                anchors.margins: -parent.blurOverflow
-                fillMode: Image.PreserveAspectCrop
+                anchors.margins: parent.mediaMargin
+                fillMode: backdropWindow.imageFillMode
                 source: backdropWindow.wallpaperIsGif ? gifWallpaper.source : ""
                 asynchronous: true
                 cache: false
@@ -379,10 +390,10 @@ Variants {
             Image {
                 id: auroraFrozenVideoWallpaper
                 anchors.fill: parent
-                anchors.margins: -parent.blurOverflow
+                anchors.margins: parent.mediaMargin
                 visible: backdropWindow.useAuroraStyle && backdropWindow.useFrozenVideoFrame
                 source: visible ? backdropWindow.frozenVideoFramePath : ""
-                fillMode: Image.PreserveAspectCrop
+                fillMode: backdropWindow.imageFillMode
                 asynchronous: true
                 cache: false
                 smooth: true
@@ -408,7 +419,7 @@ Variants {
             Video {
                 id: auroraVideoWallpaper
                 anchors.fill: parent
-                anchors.margins: -parent.blurOverflow
+                anchors.margins: parent.mediaMargin
                 visible: backdropWindow.useAuroraStyle && backdropWindow.wallpaperIsVideo
                     && !backdropWindow.useFrozenVideoFrame
                 source: {
@@ -419,7 +430,7 @@ Variants {
                     if (!path) return "";
                     return path.startsWith("file://") ? path : ("file://" + path);
                 }
-                fillMode: VideoOutput.PreserveAspectCrop
+                fillMode: backdropWindow.videoFillMode
                 loops: MediaPlayer.Infinite
                 muted: true
                 autoPlay: true

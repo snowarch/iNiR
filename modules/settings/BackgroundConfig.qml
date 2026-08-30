@@ -15,6 +15,25 @@ ContentPage {
     settingsPageName: Translation.tr("Background")
 
     property bool isIiActive: Config.options?.panelFamily !== "waffle"
+    property string activeSection: "source"
+    readonly property bool screensTaskActive: root.isIiActive && root.activeSection === "screens"
+
+    SettingsTaskNavigator {
+        visible: root.isIiActive
+        icon: "texture"
+        title: Translation.tr("Wallpaper")
+        description: Translation.tr("Choose the source and rotation first, then tune motion, screen behavior or visual effects without scrolling through unrelated controls.")
+        summary: Translation.tr("Source · motion · screens · effects · notifications")
+        currentValue: root.activeSection
+        onSelected: value => root.activeSection = value
+        options: [
+            { displayName: Translation.tr("Source"), icon: "wallpaper", value: "source" },
+            { displayName: Translation.tr("Motion"), icon: "transition_fade", value: "motion" },
+            { displayName: Translation.tr("Screens"), icon: "devices", value: "screens" },
+            { displayName: Translation.tr("Effects"), icon: "auto_awesome", value: "effects" },
+            { displayName: Translation.tr("Notifications"), icon: "notifications", value: "notifications" }
+        ]
+    }
     readonly property var iiParallax: Config.options?.background?.parallax ?? {}
     readonly property string iiParallaxPreset: ParallaxMath.detectPreset(
         iiParallax.zoom ?? iiParallax.workspaceZoom ?? 1.0,
@@ -58,8 +77,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
-        expanded: false
+        settingsTaskSection: "motion"
+        visible: root.isIiActive && root.activeSection === "motion"
+        expanded: true
         icon: "sync_alt"
         title: Translation.tr("Parallax")
 
@@ -209,8 +229,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
-        expanded: false
+        settingsTaskSection: "screens"
+        visible: root.isIiActive && root.activeSection === "screens"
+        expanded: true
         icon: "fullscreen"
         title: Translation.tr("Fullscreen behavior")
 
@@ -236,8 +257,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
-        expanded: false
+        settingsTaskSection: "screens"
+        visible: root.isIiActive && root.activeSection === "screens"
+        expanded: true
         icon: "devices"
         title: Translation.tr("Multi-monitor")
 
@@ -310,7 +332,7 @@ ContentPage {
                         height: parent.height - 28
 
                         Repeater {
-                            model: Quickshell.screens
+                            model: root.screensTaskActive ? Quickshell.screens : []
 
                             Item {
                                 id: bgMonDelegate
@@ -332,8 +354,8 @@ ContentPage {
                                     return wpPath
                                 }
 
-                                onWpPathChanged: if (WallpaperListener.isVideoPath(wpPath)) Wallpapers.ensureVideoFirstFrame(wpPath)
-                                onBackdropWpPathChanged: if (WallpaperListener.isVideoPath(backdropWpPath)) Wallpapers.ensureVideoFirstFrame(backdropWpPath)
+                                onWpPathChanged: if (root.screensTaskActive && WallpaperListener.isVideoPath(wpPath)) Wallpapers.ensureVideoFirstFrame(wpPath)
+                                onBackdropWpPathChanged: if (root.screensTaskActive && WallpaperListener.isVideoPath(backdropWpPath)) Wallpapers.ensureVideoFirstFrame(backdropWpPath)
 
                                 Layout.preferredWidth: cardWidth + backdropOffset + 4
                                 Layout.preferredHeight: parent.height - 8
@@ -384,7 +406,7 @@ ContentPage {
                                         anchors.fill: parent
                                         anchors.margins: parent.border.width
                                         fillMode: Image.PreserveAspectCrop
-                                        source: (!WallpaperListener.isVideoPath(bgMonDelegate.backdropWpPath) && !WallpaperListener.isGifPath(bgMonDelegate.backdropWpPath)) ? (bgMonDelegate.backdropWpPath || "") : ""
+                                        source: root.screensTaskActive && !WallpaperListener.isVideoPath(bgMonDelegate.backdropWpPath) && !WallpaperListener.isGifPath(bgMonDelegate.backdropWpPath) ? (bgMonDelegate.backdropWpPath || "") : ""
                                         sourceSize.width: 200
                                         sourceSize.height: 200
                                         cache: true
@@ -395,6 +417,7 @@ ContentPage {
                                         anchors.margins: parent.border.width
                                         fillMode: Image.PreserveAspectCrop
                                         source: {
+                                            if (!root.screensTaskActive) return ""
                                             if (!WallpaperListener.isGifPath(bgMonDelegate.backdropWpPath)) return ""
                                             const p = bgMonDelegate.backdropWpPath
                                             return p.startsWith("file://") ? p : "file://" + p
@@ -409,11 +432,15 @@ ContentPage {
                                         anchors.margins: parent.border.width
                                         fillMode: Image.PreserveAspectCrop
                                         source: {
+                                            if (!root.screensTaskActive) return ""
                                             const ff = Wallpapers.videoFirstFrames[bgMonDelegate.backdropWpPath]
                                             return ff ? (ff.startsWith("file://") ? ff : "file://" + ff) : ""
                                         }
                                         cache: true
-                                        Component.onCompleted: Wallpapers.ensureVideoFirstFrame(bgMonDelegate.backdropWpPath)
+                                        Component.onCompleted: {
+                                            if (root.screensTaskActive && WallpaperListener.isVideoPath(bgMonDelegate.backdropWpPath))
+                                                Wallpapers.ensureVideoFirstFrame(bgMonDelegate.backdropWpPath)
+                                        }
                                     }
 
                                     // Dim overlay for back position
@@ -531,7 +558,7 @@ ContentPage {
                                         anchors.fill: parent
                                         anchors.margins: bgMonCard.border.width
                                         fillMode: Image.PreserveAspectCrop
-                                        source: (!WallpaperListener.isVideoPath(bgMonDelegate.wpPath) && !WallpaperListener.isGifPath(bgMonDelegate.wpPath)) ? (bgMonDelegate.wpPath || "") : ""
+                                        source: root.screensTaskActive && !WallpaperListener.isVideoPath(bgMonDelegate.wpPath) && !WallpaperListener.isGifPath(bgMonDelegate.wpPath) ? (bgMonDelegate.wpPath || "") : ""
                                         sourceSize.width: 240
                                         sourceSize.height: 240
                                         cache: true
@@ -542,6 +569,7 @@ ContentPage {
                                         anchors.margins: bgMonCard.border.width
                                         fillMode: Image.PreserveAspectCrop
                                         source: {
+                                            if (!root.screensTaskActive) return ""
                                             if (!WallpaperListener.isGifPath(bgMonDelegate.wpPath)) return ""
                                             const p = bgMonDelegate.wpPath
                                             return p.startsWith("file://") ? p : "file://" + p
@@ -556,11 +584,15 @@ ContentPage {
                                         anchors.margins: bgMonCard.border.width
                                         fillMode: Image.PreserveAspectCrop
                                         source: {
+                                            if (!root.screensTaskActive) return ""
                                             const ff = Wallpapers.videoFirstFrames[bgMonDelegate.wpPath]
                                             return ff ? (ff.startsWith("file://") ? ff : "file://" + ff) : ""
                                         }
                                         cache: true
-                                        Component.onCompleted: Wallpapers.ensureVideoFirstFrame(bgMonDelegate.wpPath)
+                                        Component.onCompleted: {
+                                            if (root.screensTaskActive && WallpaperListener.isVideoPath(bgMonDelegate.wpPath))
+                                                Wallpapers.ensureVideoFirstFrame(bgMonDelegate.wpPath)
+                                        }
                                     }
 
                                     // Dim overlay when in back position
@@ -697,7 +729,7 @@ ContentPage {
                     readonly property bool isVideo: WallpaperListener.isVideoPath(_activePath)
                     readonly property bool isGif: WallpaperListener.isGifPath(_activePath)
 
-                    on_ActivePathChanged: if (isVideo) Wallpapers.ensureVideoFirstFrame(_activePath)
+                    on_ActivePathChanged: if (root.screensTaskActive && isVideo) Wallpapers.ensureVideoFirstFrame(_activePath)
 
                     ColumnLayout {
                         id: bgMonPreviewCol
@@ -715,7 +747,7 @@ ContentPage {
                                 visible: !bgMonPreviewCard.isGif && !bgMonPreviewCard.isVideo
                                 anchors.fill: parent
                                 fillMode: Image.PreserveAspectCrop
-                                source: visible ? bgMonPreviewCard.wpUrl : ""
+                                source: root.screensTaskActive && visible ? bgMonPreviewCard.wpUrl : ""
                                 sourceSize.width: 600
                                 sourceSize.height: 340
                                 cache: false
@@ -726,7 +758,7 @@ ContentPage {
                                 visible: bgMonPreviewCard.isGif
                                 anchors.fill: parent
                                 fillMode: Image.PreserveAspectCrop
-                                source: visible ? bgMonPreviewCard.wpUrl : ""
+                                source: root.screensTaskActive && visible ? bgMonPreviewCard.wpUrl : ""
                                 asynchronous: true
                                 cache: false
                                 playing: false
@@ -738,11 +770,15 @@ ContentPage {
                                 anchors.fill: parent
                                 fillMode: Image.PreserveAspectCrop
                                 source: {
+                                    if (!root.screensTaskActive) return ""
                                     const ff = Wallpapers.videoFirstFrames[bgMonPreviewCard._activePath]
                                     return ff ? (ff.startsWith("file://") ? ff : "file://" + ff) : ""
                                 }
                                 cache: false
-                                Component.onCompleted: Wallpapers.ensureVideoFirstFrame(bgMonPreviewCard._activePath)
+                                Component.onCompleted: {
+                                    if (root.screensTaskActive && bgMonPreviewCard.isVideo)
+                                        Wallpapers.ensureVideoFirstFrame(bgMonPreviewCard._activePath)
+                                }
                             }
 
                             // Bottom gradient overlay with monitor info
@@ -1066,7 +1102,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "source"
+        visible: !root.isIiActive || root.activeSection === "source"
+        expanded: true
         icon: "wallpaper"
         title: Translation.tr("Wallpaper backend (awww)")
 
@@ -1123,7 +1161,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "source"
+        visible: !root.isIiActive || root.activeSection === "source"
+        expanded: true
         icon: "folder"
         title: Translation.tr("Wallpapers folder")
 
@@ -1143,7 +1183,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "source"
+        visible: !root.isIiActive || root.activeSection === "source"
+        expanded: true
         icon: "shuffle"
         title: Translation.tr("Shuffle wallpapers")
 
@@ -1199,8 +1241,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
-        expanded: false
+        settingsTaskSection: "motion"
+        visible: root.isIiActive && root.activeSection === "motion"
+        expanded: true
         icon: "transition_fade"
         title: Translation.tr("Wallpaper transitions")
 
@@ -1341,8 +1384,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
-        expanded: false
+        settingsTaskSection: "screens"
+        visible: root.isIiActive && root.activeSection === "screens"
+        expanded: true
         icon: "aspect_ratio"
         title: Translation.tr("Wallpaper scaling")
 
@@ -1486,7 +1530,7 @@ ContentPage {
                             readonly property bool isVideo: WallpaperListener.isVideoPath(wpPath)
                             readonly property string previewPath: isVideo
                                 ? Wallpapers.getVideoFirstFramePath(wpPath) : wpPath
-                            source: previewPath
+                            source: root.screensTaskActive && previewPath
                                 ? (previewPath.startsWith("file://") ? previewPath : "file://" + previewPath)
                                 : ""
                             sourceSize.width: 1200
@@ -1495,11 +1539,11 @@ ContentPage {
                             visible: status === Image.Ready
 
                             Component.onCompleted: {
-                                if (isVideo)
+                                if (root.screensTaskActive && isVideo)
                                     Wallpapers.ensureVideoFirstFrame(wpPath)
                             }
                             onWpPathChanged: {
-                                if (isVideo)
+                                if (root.screensTaskActive && isVideo)
                                     Wallpapers.ensureVideoFirstFrame(wpPath)
                             }
 
@@ -1708,8 +1752,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
-        expanded: false
+        settingsTaskSection: "effects"
+        visible: root.isIiActive && root.activeSection === "effects"
+        expanded: true
         icon: "wallpaper"
         title: Translation.tr("Wallpaper effects")
 
@@ -2040,6 +2085,18 @@ ContentPage {
                 }
 
                 SettingsSwitch {
+                    visible: (Config.options?.background?.backdrop?.enable ?? true)
+                        && (Config.options?.background?.backdrop?.hideWallpaper ?? false)
+                    buttonIcon: "fit_screen"
+                    text: Translation.tr("Show entire backdrop")
+                    checked: (Config.options?.background?.backdrop?.fillMode ?? "fill") === "fit"
+                    onCheckedChanged: Config.setNestedValue("background.backdrop.fillMode", checked ? "fit" : "fill")
+                    StyledToolTip {
+                        text: Translation.tr("Fit the full backdrop inside the screen instead of cropping it. Bars may appear when the image aspect ratio differs from the display.")
+                    }
+                }
+
+                SettingsSwitch {
                     visible: (Config.options?.background?.backdrop?.enable ?? true) && !(Config.options?.background?.backdrop?.hideWallpaper ?? false)
                     buttonIcon: "image"
                     text: Translation.tr("Use main wallpaper")
@@ -2196,7 +2253,9 @@ ContentPage {
     // Desktop widget settings moved to DesktopWidgetsConfig.qml (settingsPageIndex: 14)
 
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "notifications"
+        visible: !root.isIiActive || root.activeSection === "notifications"
+        expanded: true
         icon: "notifications"
         title: Translation.tr("Notifications")
 

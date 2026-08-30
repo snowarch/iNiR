@@ -60,10 +60,12 @@ Singleton {
 
     function registerSettingsPages(pages): void {
         const out = []
-        for (const page of (pages ?? [])) {
+        const list = pages ?? []
+        for (let index = 0; index < list.length; index++) {
+            const page = list[index]
             const key = String(page?.key ?? "")
             if (key.length === 0) continue
-            out.push({ id: "settings/" + key, family: "shared", surface: "settings", view: key, safe: true, settleMs: 300 })
+            out.push({ id: "settings/" + key, family: "shared", surface: "settings", view: key, pageIndex: index, safe: true, settleMs: 300 })
         }
         settingsDestinations = out
     }
@@ -129,7 +131,14 @@ Singleton {
             GlobalStates.tilingOverlayPickerOpen = entry.view === "picker"
             GlobalStates.tilingOverlayOsdOpen = entry.view === "osd"
             break
-        case "settings": GlobalStates.settingsOverlayOpen = true; break
+        case "settings":
+            if ((Config.options?.panelFamily ?? "ii") === "waffle"
+                    && Config.options?.waffles?.settings?.useMaterialStyle !== true) {
+                currentDestination = ""
+                return "error:material-settings-page-unavailable-in-waffle"
+            }
+            GlobalStates.openSettingsPage(entry.pageIndex ?? -1)
+            break
         case "waffle-search":
             requestedWaffleStartView = entry.view
             LauncherSearch.query = entry.view === "search" ? "a" : ""

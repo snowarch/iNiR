@@ -42,20 +42,12 @@ Item {
     
     function doPrevious(): void {
         root.slideDirection = -1
-        if (isYtMusicPlayer && YtMusic.canGoPrevious) {
-            YtMusic.playPrevious()
-        } else {
-            MprisController.previousForPlayer(root.player)
-        }
+        MprisController.previousForPlayer(root.player)
     }
     
     function doNext(): void {
         root.slideDirection = 1
-        if (isYtMusicPlayer && YtMusic.canGoNext) {
-            YtMusic.playNext()
-        } else {
-            MprisController.nextForPlayer(root.player)
-        }
+        MprisController.nextForPlayer(root.player)
     }
     
     // Screen position for aurora glass effect

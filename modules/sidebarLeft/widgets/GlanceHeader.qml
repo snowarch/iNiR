@@ -10,10 +10,7 @@ Item {
     id: root
     implicitHeight: col.implicitHeight + col.anchors.topMargin
     readonly property bool volumeMuted: Boolean(Audio.sink?.audio?.muted ?? false)
-    readonly property real volumeLevel: {
-        const value = Number(Audio.sink?.audio?.volume ?? 0)
-        return Number.isFinite(value) ? Math.max(0, value) : 0
-    }
+    readonly property real volumeLevel: Math.max(0, Audio.value)
 
     readonly property var locale: {
         const env = Quickshell.env("LC_TIME") || Quickshell.env("LC_ALL") || Quickshell.env("LANG") || ""

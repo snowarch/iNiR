@@ -30,7 +30,8 @@ Text {
         // (token-driven, absolute px). Numbers stay untracked so digit columns
         // don't drift. Other styles unaffected (0).
         letterSpacing: (Appearance?.zzzEverywhere && !root.shouldUseNumberFont)
-            ? (Appearance?.zzz.tracking ?? 0) : 0
+            ? (Appearance?.zzz.tracking ?? 0)
+            : (Appearance?.regaliaEverywhere && !root.shouldUseNumberFont) ? 0.12 : 0
     }
     color: Appearance?.colors.colOnLayer0 ?? "black"
     linkColor: Appearance?.colors.colPrimary

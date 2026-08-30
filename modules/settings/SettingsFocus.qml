@@ -226,7 +226,7 @@ Scope {
         }
 
         // Static section index — coarse targets, ranked below real controls.
-        var index = SettingsPageRegistry.staticSearchIndex;
+        var index = SettingsPageRegistry.searchIndex();
         for (var i = 0; i < index.length; i++) {
             var e = index[i];
             if (!allowed(e.pageIndex))
@@ -327,6 +327,12 @@ Scope {
         if (root._pendingOptionId < 0 && root._pendingSection.length === 0)
             return;
 
+        const pageItem = pageHost.currentItem
+        if (pageItem && pageHost.currentIndex === root._pendingPageIndex
+                && root._pendingSection.length > 0
+                && typeof pageItem.activateSettingsSearchSection === "function")
+            pageItem.activateSettingsSearchSection(root._pendingSection)
+
         var control = root._pendingOptionId >= 0
             ? SettingsSearchRegistry.getControlById(root._pendingOptionId)
             : SettingsSearchRegistry.findSectionControl(root._pendingPageIndex, root._pendingSection);
@@ -342,6 +348,7 @@ Scope {
             return;
         }
 
+        SettingsSearchRegistry.activateTaskSectionForControl(control);
         SettingsSearchRegistry.expandSectionForControl(control);
 
         var flick = root._findParentFlickable(control);
@@ -580,13 +587,14 @@ Scope {
                 width: Math.min(1040, Math.max(780, settingsPanel.width * 0.66))
                 height: Math.min(840, Math.max(600, settingsPanel.height * 0.82))
                 radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+                      : Appearance.regaliaEverywhere ? Appearance.regalia.panelRadius
                       : Appearance.angelEverywhere ? Appearance.angel.roundingLarge
                       : Appearance.inirEverywhere ? Appearance.inir.roundingLarge
                       : Appearance.rounding.windowRounding
                 // Same contract as the rail overlay: backgroundOpacity lands on
                 // the fill alpha (solid) or the blur transparentize (glass),
                 // never on Item opacity, which children inherit.
-                color: Appearance.auroraEverywhere ? "transparent"
+                color: Appearance.auroraEverywhere || Appearance.regaliaEverywhere ? "transparent"
                      : CF.ColorUtils.applyAlpha(
                          Appearance.inirEverywhere ? Appearance.inir.colLayer0
                        : Appearance.zzzEverywhere ? Appearance.zzz.chrome
@@ -631,6 +639,18 @@ Scope {
                         easing.type: Appearance.animation.elementMoveFast.type
                         easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
                     }
+                }
+
+                RegaliaPlate {
+                    anchors.fill: parent
+                    z: -1
+                    visible: Appearance.regaliaEverywhere
+                    fillColor: CF.ColorUtils.applyAlpha(Appearance.regalia.bg0,
+                        card.panelBgOpacity)
+                    radius: card.radius
+                    inset: Appearance.regalia.panelInset
+                    elevated: true
+                    glassEnabled: true
                 }
 
                 GlassBackground {
@@ -715,7 +735,7 @@ Scope {
                     radius: SettingsMaterialPreset.cardRadius
                     color: Appearance.zzzEverywhere
                         ? "transparent" : SettingsMaterialPreset.cardColor
-                    border.width: Appearance.angelEverywhere || Appearance.zzzEverywhere ? 0 : 1
+                    border.width: Appearance.regaliaEverywhere || Appearance.angelEverywhere || Appearance.zzzEverywhere ? 0 : 1
                     border.color: SettingsMaterialPreset.cardBorderColor
                     clip: true
 
@@ -2027,9 +2047,10 @@ Scope {
 
                             pages: root.pages
                             requestedIndex: root.currentPage
-                            // Stays enabled at level 0 so the LRU keeps recently
-                            // visited pages warm across home ↔ page navigation.
-                            loadEnabled: Config.ready
+                            // Keep recently visited pages warm while Settings is open,
+                            // including home ↔ page navigation, but release them when
+                            // the Settings surface itself closes.
+                            loadEnabled: Config.ready && root.settingsOpen
 
                             // Same soft scroll edge as the home grid. Read through
                             // `var`, not the host's Item-typed currentItem, because
@@ -2069,22 +2090,11 @@ Scope {
                                 }
                             }
 
-                            CircularProgress {
-                                anchors.centerIn: parent
-                                z: 10
-                                readonly property bool isLoading: pageHost.loading
-                                opacity: isLoading ? 1 : 0
-                                scale: isLoading ? 1 : 0.7
-                                visible: opacity > 0
-
-                                Behavior on opacity {
-                                    enabled: Appearance.animationsEnabled
-                                    animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
-                                }
-                                Behavior on scale {
-                                    enabled: Appearance.animationsEnabled
-                                    animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
-                                }
+                            SettingsPageLoadingOverlay {
+                                anchors.fill: parent
+                                loading: pageHost.loading
+                                text: Translation.tr("Loading page…")
+                                z: 15
                             }
                         }
                     }

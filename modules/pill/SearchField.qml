@@ -26,7 +26,7 @@ Item {
     signal dismissed()
     signal keyPressed(var event)
 
-    height: 30 * s
+    height: 36 * s
 
     Text {
         id: glyph
@@ -38,7 +38,7 @@ Item {
         color: PillTheme.dim
         font.family: PillTheme.fontJp
         font.weight: Font.Medium
-        font.pixelSize: 16 * root.s
+        font.pixelSize: 18 * root.s
     }
 
     TextField {
@@ -52,7 +52,7 @@ Item {
         padding: 0
         color: PillTheme.cream
         font.family: PillTheme.font
-        font.pixelSize: 15 * root.s
+        font.pixelSize: 16 * root.s
         placeholderText: root.placeholder
         placeholderTextColor: PillTheme.faint
         selectByMouse: true
@@ -96,7 +96,7 @@ Item {
         text: root.counterText
         color: PillTheme.faint
         font.family: PillTheme.font
-        font.pixelSize: 10.5 * root.s
+        font.pixelSize: 11.5 * root.s
         font.features: { "tnum": 1 }
     }
 

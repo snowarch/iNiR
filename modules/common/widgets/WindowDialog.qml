@@ -58,7 +58,8 @@ Rectangle {
         // NativeRendering, which Qt documents as unsuitable under transforms;
         // centering on a half pixel makes the softened result persist after open.
         x: Math.round((root.width - implicitWidth) / 2)
-        radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+        radius: Appearance.regaliaEverywhere ? Appearance.regalia.panelRadius
+            : Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
             : Appearance.angelEverywhere ? Appearance.angel.roundingLarge
             : Appearance.inirEverywhere ? Appearance.inir.roundingLarge
             : Appearance.rounding.large
@@ -66,13 +67,15 @@ Rectangle {
             enabled: Appearance.animationsEnabled
             NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
-        fallbackColor: Appearance.zzzEverywhere ? Appearance.zzz.paper : Appearance.colors.colSurfaceContainerHigh
+        fallbackColor: Appearance.regaliaEverywhere ? "transparent"
+            : Appearance.zzzEverywhere ? Appearance.zzz.paper : Appearance.colors.colSurfaceContainerHigh
         inirColor: Appearance.inir.colLayer2
         auroraTransparency: Appearance.aurora.popupTransparentize * 0.85
         // ZZZ owns its wallpaper wash through ZzzPanelBackdrop. Letting both
         // layers blur the same wallpaper softens compact dialog text and chrome.
-        wallpaperBackdropEnabled: !Appearance.zzzEverywhere
-        border.width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick
+        wallpaperBackdropEnabled: !Appearance.zzzEverywhere && !Appearance.regaliaEverywhere
+        border.width: Appearance.regaliaEverywhere ? 0
+            : Appearance.zzzEverywhere ? Appearance.zzz.borderThick
             : (Appearance.angelEverywhere || Appearance.inirEverywhere || Appearance.auroraEverywhere) ? 1 : 0
         Behavior on border.width {
             enabled: Appearance.animationsEnabled
@@ -87,6 +90,16 @@ Rectangle {
             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
         
+        RegaliaPlate {
+            anchors.fill: parent
+            visible: Appearance.regaliaEverywhere
+            fillColor: Appearance.regalia.bg2
+            radius: dialogBackground.radius
+            inset: Appearance.regalia.surfaceInset
+            elevated: true
+            glassEnabled: true
+        }
+
         readonly property real measuredContentHeight: contentColumn.implicitHeight
             + dialogBackground.contentPad * 2
         readonly property real resolvedHeight: Math.round(root.backgroundHeight >= 0

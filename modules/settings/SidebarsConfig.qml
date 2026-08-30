@@ -21,11 +21,30 @@ ContentPage {
 
     property bool isIiActive: Config.options?.panelFamily !== "waffle"
 
-    SettingsCardSection {
-        visible: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false)
-        expanded: true
+    property string activeSection: "general"
+
+    SettingsTaskNavigator {
         icon: "side_navigation"
         title: Translation.tr("Sidebars")
+        description: Translation.tr("Configure the sidebars in focused views: layout, widgets, media panels and edge opening behavior.")
+        summary: Translation.tr("General \u00b7 Left \u00b7 Right \u00b7 Media \u00b7 Opening")
+        currentValue: root.activeSection
+        onSelected: value => root.activeSection = value
+        options: [
+            { displayName: Translation.tr("General"), icon: "tune", value: "general" },
+            { displayName: Translation.tr("Left sidebar"), icon: "first_page", value: "left" },
+            { displayName: Translation.tr("Right sidebar"), icon: "last_page", value: "right" },
+            { displayName: Translation.tr("Media & content"), icon: "music_note", value: "media" },
+            { displayName: Translation.tr("Opening"), icon: "swipe", value: "open" }
+        ]
+    }
+
+    SettingsCardSection {
+        settingsTaskSection: "general"
+        visible: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false) && root.activeSection === "general"
+        expanded: true
+        icon: "tune"
+        title: Translation.tr("General")
 
         SettingsGroup {
             ContentSubsection {
@@ -162,6 +181,7 @@ ContentPage {
             }
             }
 
+
             ContentSubsection {
                 title: Translation.tr("Arrange")
                 tooltip: Translation.tr("Arrange sidebar sections, tab order and elastic heights")
@@ -171,6 +191,17 @@ ContentPage {
                 }
             }
 
+        }
+    }
+
+    SettingsCardSection {
+        settingsTaskSection: "left"
+        visible: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false) && root.activeSection === "left"
+        expanded: true
+        icon: "first_page"
+        title: Translation.tr("Left sidebar")
+
+        SettingsGroup {
             ContentSubsection {
                 title: Translation.tr("Left Sidebar")
                 tooltip: Translation.tr("Choose which tabs appear in the left sidebar")
@@ -297,66 +328,17 @@ ContentPage {
                 // }
             }
 
-            ContentSubsection {
-                title: Translation.tr("YT Music")
-                tooltip: Translation.tr("Control how next-track notifications behave")
-                visible: Config.options.sidebar?.ytmusic?.enable ?? false
+        }
+    }
 
-                SettingsSwitch {
-                    buttonIcon: "sync"
-                    text: Translation.tr("Reconnect account on launch")
-                    checked: Config.options.sidebar?.ytmusic?.autoConnect ?? true
-                    onCheckedChanged: Config.setNestedValue("sidebar.ytmusic.autoConnect", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Re-reads your browser's YouTube session on startup so a stale login heals itself.")
-                    }
-                }
+    SettingsCardSection {
+        settingsTaskSection: "right"
+        visible: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false) && root.activeSection === "right"
+        expanded: true
+        icon: "last_page"
+        title: Translation.tr("Right sidebar")
 
-                SettingsSwitch {
-                    buttonIcon: "music_note"
-                    text: Translation.tr("Up Next notifications")
-                    checked: Config.options.sidebar?.ytmusic?.upNextNotifications ?? true
-                    onCheckedChanged: Config.setNestedValue("sidebar.ytmusic.upNextNotifications", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Show a desktop notification with the upcoming track when playback auto-advances")
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "sports_esports"
-                    text: Translation.tr("Mute while fullscreen or GameMode")
-                    enabled: Config.options.sidebar?.ytmusic?.upNextNotifications ?? true
-                    checked: Config.options.sidebar?.ytmusic?.suppressUpNextInFullscreen ?? true
-                    onCheckedChanged: Config.setNestedValue("sidebar.ytmusic.suppressUpNextInFullscreen", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Suppress Up Next notifications when a fullscreen app is active or GameMode is enabled")
-                    }
-                }
-
-                ConfigSelectionArray {
-                    options: [
-                        { displayName: Translation.tr("Best"), icon: "high_quality", value: "best" },
-                        { displayName: Translation.tr("Medium (≤128 kbps)"), icon: "graphic_eq", value: "medium" },
-                        { displayName: Translation.tr("Low"), icon: "data_saver_on", value: "low" }
-                    ]
-                    currentValue: Config.options.sidebar?.ytmusic?.audioQuality ?? "best"
-                    onSelected: (newValue) => Config.setNestedValue("sidebar.ytmusic.audioQuality", newValue)
-                    StyledToolTip {
-                        text: Translation.tr("Audio quality for playback — lower quality uses less bandwidth")
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "graphic_eq"
-                    text: Translation.tr("Normalize loudness")
-                    checked: Config.options.sidebar?.ytmusic?.normalizeVolume ?? true
-                    onCheckedChanged: Config.setNestedValue("sidebar.ytmusic.normalizeVolume", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Even out volume across tracks (EBU R128, like YouTube Music). Disable for the unprocessed stream.")
-                    }
-                }
-            }
-
+        SettingsGroup {
             ContentSubsection {
                 title: Translation.tr("Right sidebar header")
                 tooltip: Translation.tr("Look of the system section at the top of the right sidebar")
@@ -434,6 +416,7 @@ ContentPage {
                     dialogKey: "sidebar-header-media"
                 }
             }
+
 
             ContentSubsection {
                 id: rightSidebarWidgets
@@ -547,6 +530,167 @@ ContentPage {
                     }
                 }
             }
+
+            ContentSubsection {
+                title: Translation.tr("Quick toggles")
+
+                ConfigSelectionArray {
+                    Layout.fillWidth: false
+                    currentValue: Config.options.sidebar.quickToggles.style
+                    onSelected: newValue => {
+                        Config.setNestedValue("sidebar.quickToggles.style", newValue);
+                    }
+                    options: [
+                        { displayName: Translation.tr("Classic"), icon: "password_2", value: "classic" },
+                        { displayName: Translation.tr("Android"), icon: "action_key", value: "android" }
+                    ]
+                }
+
+                ConfigSpinBox {
+                    enabled: Config.options.sidebar.quickToggles.style === "android"
+                    icon: "splitscreen_left"
+                    text: Translation.tr("Columns")
+                    value: Config.options.sidebar.quickToggles.android.columns
+                    from: 1
+                    to: 8
+                    stepSize: 1
+                    onValueChanged: {
+                        Config.setNestedValue("sidebar.quickToggles.android.columns", value);
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Number of columns for the Android-style quick settings grid")
+                    }
+                }
+            }
+
+
+            ContentSubsection {
+                title: Translation.tr("Sliders")
+
+                SettingsSwitch {
+                    buttonIcon: "check"
+                    text: Translation.tr("Enable")
+                    checked: Config.options.sidebar.quickSliders.enable
+                    onCheckedChanged: {
+                        Config.setNestedValue("sidebar.quickSliders.enable", checked);
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Show volume/brightness/mic sliders in the sidebar")
+                    }
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "brightness_6"
+                    text: Translation.tr("Brightness")
+                    enabled: Config.options.sidebar.quickSliders.enable
+                    checked: Config.options.sidebar.quickSliders.showBrightness
+                    onCheckedChanged: {
+                        Config.setNestedValue("sidebar.quickSliders.showBrightness", checked);
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Show brightness slider")
+                    }
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "volume_up"
+                    text: Translation.tr("Volume")
+                    enabled: Config.options.sidebar.quickSliders.enable
+                    checked: Config.options.sidebar.quickSliders.showVolume
+                    onCheckedChanged: {
+                        Config.setNestedValue("sidebar.quickSliders.showVolume", checked);
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Show volume slider")
+                    }
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "mic"
+                    text: Translation.tr("Microphone")
+                    enabled: Config.options.sidebar.quickSliders.enable
+                    checked: Config.options.sidebar.quickSliders.showMic
+                    onCheckedChanged: {
+                        Config.setNestedValue("sidebar.quickSliders.showMic", checked);
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Show microphone input level slider")
+                    }
+                }
+            }
+
+        }
+    }
+
+    SettingsCardSection {
+        settingsTaskSection: "media"
+        visible: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false) && root.activeSection === "media"
+        expanded: true
+        icon: "music_note"
+        title: Translation.tr("Media & content")
+
+        SettingsGroup {
+            ContentSubsection {
+                title: Translation.tr("YT Music")
+                tooltip: Translation.tr("Control how next-track notifications behave")
+                visible: Config.options.sidebar?.ytmusic?.enable ?? false
+
+                SettingsSwitch {
+                    buttonIcon: "sync"
+                    text: Translation.tr("Reconnect account on launch")
+                    checked: Config.options.sidebar?.ytmusic?.autoConnect ?? true
+                    onCheckedChanged: Config.setNestedValue("sidebar.ytmusic.autoConnect", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Re-reads your browser's YouTube session on startup so a stale login heals itself.")
+                    }
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "music_note"
+                    text: Translation.tr("Up Next notifications")
+                    checked: Config.options.sidebar?.ytmusic?.upNextNotifications ?? true
+                    onCheckedChanged: Config.setNestedValue("sidebar.ytmusic.upNextNotifications", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Show a desktop notification with the upcoming track when playback auto-advances")
+                    }
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "sports_esports"
+                    text: Translation.tr("Mute while fullscreen or GameMode")
+                    enabled: Config.options.sidebar?.ytmusic?.upNextNotifications ?? true
+                    checked: Config.options.sidebar?.ytmusic?.suppressUpNextInFullscreen ?? true
+                    onCheckedChanged: Config.setNestedValue("sidebar.ytmusic.suppressUpNextInFullscreen", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Suppress Up Next notifications when a fullscreen app is active or GameMode is enabled")
+                    }
+                }
+
+                ConfigSelectionArray {
+                    options: [
+                        { displayName: Translation.tr("Best"), icon: "high_quality", value: "best" },
+                        { displayName: Translation.tr("Medium (≤128 kbps)"), icon: "graphic_eq", value: "medium" },
+                        { displayName: Translation.tr("Low"), icon: "data_saver_on", value: "low" }
+                    ]
+                    currentValue: Config.options.sidebar?.ytmusic?.audioQuality ?? "best"
+                    onSelected: (newValue) => Config.setNestedValue("sidebar.ytmusic.audioQuality", newValue)
+                    StyledToolTip {
+                        text: Translation.tr("Audio quality for playback — lower quality uses less bandwidth")
+                    }
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "graphic_eq"
+                    text: Translation.tr("Normalize loudness")
+                    checked: Config.options.sidebar?.ytmusic?.normalizeVolume ?? true
+                    onCheckedChanged: Config.setNestedValue("sidebar.ytmusic.normalizeVolume", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Even out volume across tracks (EBU R128, like YouTube Music). Disable for the unprocessed stream.")
+                    }
+                }
+            }
+
+
             ContentSubsection {
                 title: Translation.tr("Anime Schedule")
                 visible: Config.options.sidebar?.animeSchedule?.enable ?? false
@@ -604,6 +748,7 @@ ContentPage {
                 }
             }
 
+
             ContentSubsection {
                 title: Translation.tr("Booru download paths")
                 visible: (Config.options?.policies?.weeb ?? 0) !== 0
@@ -628,6 +773,7 @@ ContentPage {
                     onEditingFinished: Config.setNestedValue("sidebar.booru.downloadPath.nsfw", text)
                 }
             }
+
 
             ContentSubsection {
                 title: Translation.tr("Wallhaven")
@@ -680,92 +826,43 @@ ContentPage {
                 }
             }
 
+        }
+    }
+
+    SettingsCardSection {
+        settingsTaskSection: "open"
+        visible: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false) && root.activeSection === "open"
+        expanded: true
+        icon: "swipe"
+        title: Translation.tr("Opening")
+
+        SettingsGroup {
             ContentSubsection {
-                title: Translation.tr("Quick toggles")
+                title: Translation.tr("Side edge open")
+                tooltip: Translation.tr("Open the left or right sidebar by touching that screen edge")
 
-                ConfigSelectionArray {
-                    Layout.fillWidth: false
-                    currentValue: Config.options.sidebar.quickToggles.style
-                    onSelected: newValue => {
-                        Config.setNestedValue("sidebar.quickToggles.style", newValue);
+                ConfigRow {
+                    uniform: true
+                    SettingsSwitch {
+                        buttonIcon: "dock_to_left"
+                        text: Translation.tr("Hover screen edges")
+                        checked: Config.options?.sidebar?.edgeOpen?.enable ?? false
+                        onCheckedChanged: Config.setNestedValue("sidebar.edgeOpen.enable", checked)
                     }
-                    options: [
-                        { displayName: Translation.tr("Classic"), icon: "password_2", value: "classic" },
-                        { displayName: Translation.tr("Android"), icon: "action_key", value: "android" }
-                    ]
-                }
-
-                ConfigSpinBox {
-                    enabled: Config.options.sidebar.quickToggles.style === "android"
-                    icon: "splitscreen_left"
-                    text: Translation.tr("Columns")
-                    value: Config.options.sidebar.quickToggles.android.columns
-                    from: 1
-                    to: 8
-                    stepSize: 1
-                    onValueChanged: {
-                        Config.setNestedValue("sidebar.quickToggles.android.columns", value);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Number of columns for the Android-style quick settings grid")
+                    ConfigSpinBox {
+                        icon: "width"
+                        text: Translation.tr("Trigger width (px)")
+                        value: Config.options?.sidebar?.edgeOpen?.regionWidth ?? 2
+                        from: 1
+                        to: 12
+                        stepSize: 1
+                        enabled: Config.options?.sidebar?.edgeOpen?.enable ?? false
+                        opacity: enabled ? 1 : 0.5
+                        onValueChanged: Config.setNestedValue("sidebar.edgeOpen.regionWidth", value)
                     }
                 }
             }
 
-            ContentSubsection {
-                title: Translation.tr("Sliders")
-
-                SettingsSwitch {
-                    buttonIcon: "check"
-                    text: Translation.tr("Enable")
-                    checked: Config.options.sidebar.quickSliders.enable
-                    onCheckedChanged: {
-                        Config.setNestedValue("sidebar.quickSliders.enable", checked);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Show volume/brightness/mic sliders in the sidebar")
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "brightness_6"
-                    text: Translation.tr("Brightness")
-                    enabled: Config.options.sidebar.quickSliders.enable
-                    checked: Config.options.sidebar.quickSliders.showBrightness
-                    onCheckedChanged: {
-                        Config.setNestedValue("sidebar.quickSliders.showBrightness", checked);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Show brightness slider")
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "volume_up"
-                    text: Translation.tr("Volume")
-                    enabled: Config.options.sidebar.quickSliders.enable
-                    checked: Config.options.sidebar.quickSliders.showVolume
-                    onCheckedChanged: {
-                        Config.setNestedValue("sidebar.quickSliders.showVolume", checked);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Show volume slider")
-                    }
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "mic"
-                    text: Translation.tr("Microphone")
-                    enabled: Config.options.sidebar.quickSliders.enable
-                    checked: Config.options.sidebar.quickSliders.showMic
-                    onCheckedChanged: {
-                        Config.setNestedValue("sidebar.quickSliders.showMic", checked);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Show microphone input level slider")
-                    }
-                }
-            }
 
             ContentSubsection {
                 title: Translation.tr("Corner open")

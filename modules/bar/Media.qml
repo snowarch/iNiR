@@ -9,7 +9,6 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Services.Mpris
-import Quickshell.Services.Pipewire
 import Quickshell.Io
 import Quickshell.Wayland
 
@@ -50,40 +49,12 @@ Item {
     property bool volumePopupVisible: false
     property real volumePopupValue: Math.max(0, Math.min(1, MprisController.getVolume()))
 
-    // PipeWire stream fallback: players without MPRIS volume support (browser
-    // MPRIS bridges, some Electron apps) still have an audio stream whose
-    // volume we can drive directly. Cached (not a reactive binding) to avoid a
-    // binding loop: the binding read Audio.outputAppNodes, and the
-    // PwObjectTracker holding the resolved node invalidates node-property reads
-    // that feed outputAppNodes. Recomputed on active-player + node-list change.
-    property var playerStreamNode: null
-    function _updatePlayerStreamNode() {
-        const p = root.activePlayer
-        if (!p) { root.playerStreamNode = null; return }
-        const id = (p.identity ?? "").toLowerCase()
-        const entry = (p.desktopEntry ?? "").toLowerCase()
-        if (!id && !entry) { root.playerStreamNode = null; return }
-        root.playerStreamNode = Audio.outputAppNodes.find(n => {
-            const an = ((n.properties?.["application.name"] ?? n.name) ?? "").toLowerCase()
-            if (!an) return false
-            return (id && (an.includes(id) || id.includes(an)))
-                || (entry && (an.includes(entry) || entry.includes(an)))
-        }) ?? null
-    }
-    PwObjectTracker { objects: root.playerStreamNode ? [root.playerStreamNode] : [] }
-    Connections {
-        target: Audio
-        function onOutputAppNodesChanged() { root._updatePlayerStreamNode() }
-    }
-
     // Track switch can swap the active player object; a stale popup value
     // would then be applied to the new player on the next wheel tick.
     onActivePlayerChanged: {
         volumePopupVisible = false
         volumePopupValue = Math.max(0, Math.min(1, MprisController.getVolume()))
-        root._updatePlayerStreamNode()
     }
-    Component.onCompleted: root._updatePlayerStreamNode()
 
 
     // Bar-anchored media popup
@@ -96,11 +67,10 @@ Item {
     }
 
     Connections {
-        target: activePlayer
+        target: MprisController
         function onVolumeChanged() {
-            if (!root.volumePopupVisible) {
-                root.volumePopupValue = Math.max(0, Math.min(1, root.activePlayer?.volume ?? 0))
-            }
+            if (!root.volumePopupVisible)
+                root.volumePopupValue = MprisController.getVolume()
         }
     }
 
@@ -273,18 +243,13 @@ Item {
             }
         }
         onWheel: (event) => {
-            const mprisOk = MprisController.canChangeVolume
-            const node = root.playerStreamNode
-            const streamOk = !mprisOk && node?.audio
-            if (!mprisOk && !streamOk) return
+            if (!MprisController.canChangeVolume) return
             const step = 0.05
             const current = root.volumePopupVisible
-                ? root.volumePopupValue
-                : Math.max(0, Math.min(1, mprisOk ? MprisController.getVolume() : node.audio.volume))
+                ? root.volumePopupValue : MprisController.getVolume()
             if (event.angleDelta.y > 0) root.volumePopupValue = Math.min(1, current + step)
             else if (event.angleDelta.y < 0) root.volumePopupValue = Math.max(0, current - step)
-            if (mprisOk) MprisController.setVolume(root.volumePopupValue)
-            else node.audio.volume = root.volumePopupValue
+            MprisController.setVolume(root.volumePopupValue)
             volumePopupVisible = true
             hideTimer.restart()
         }

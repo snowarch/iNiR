@@ -47,8 +47,8 @@ Rectangle {
                 readonly property bool current: seg.value === modelData.value
                 property bool hovered: false
 
-                width: optLabel.implicitWidth + 18 * seg.s
-                height: optLabel.implicitHeight + 12 * seg.s
+                width: optLabel.implicitWidth + 22 * seg.s
+                height: optLabel.implicitHeight + 14 * seg.s
                 radius: 8 * seg.s
                 color: opt.current ? Qt.alpha(PillTheme.onGlow, 0.16) : (opt.hovered ? PillTheme.frameBg : "transparent")
                 Behavior on color { ColorAnimation { duration: PillMotion.fast } }
@@ -59,7 +59,7 @@ Rectangle {
                     text: opt.modelData.label
                     color: opt.current ? PillTheme.cream : PillTheme.subtle
                     font.family: PillTheme.font
-                    font.pixelSize: 10.5 * seg.s
+                    font.pixelSize: 11.5 * seg.s
                     font.weight: Font.Bold
                     font.letterSpacing: 0.3 * seg.s
                 }

@@ -346,27 +346,28 @@ Singleton {
         }))
     }
 
-    function constructRequestUrl(tags, nsfw=true, limit=20, page=1) {
-        var provider = providers[currentProvider]
+    function constructRequestUrlForProvider(providerId, tags, nsfw=true, limit=20, page=1) {
+        const resolvedProviderId = providers[providerId] ? providerId : currentProvider
+        var provider = providers[resolvedProviderId]
         var baseUrl = provider.api
         var url = baseUrl
         var tagString = tags.join(" ")
-        if (!nsfw && !(["zerochan", "waifu.im", "t.alcy.cc"].includes(currentProvider))) {
-            if (currentProvider == "gelbooru") 
+        if (!nsfw && !(["zerochan", "waifu.im", "t.alcy.cc"].includes(resolvedProviderId))) {
+            if (resolvedProviderId == "gelbooru")
                 tagString += " rating:general";
             else 
                 tagString += " rating:safe";
         }
         var params = []
         // Tags & limit
-        if (currentProvider === "zerochan") {
+        if (resolvedProviderId === "zerochan") {
             params.push("c=" + tagString) // zerochan doesn't have search in api, so we use color
             params.push("l=" + limit)
             params.push("s=" + "fav")
             params.push("t=" + 1)
             params.push("p=" + page)
         }
-        else if (currentProvider === "waifu.im") {
+        else if (resolvedProviderId === "waifu.im") {
             // https://docs.waifu.im/docs/getting-started#filter-by-tags
             // All tags: https://api.waifu.im/tags
             //
@@ -377,10 +378,8 @@ Singleton {
             });
 
             // https://docs.waifu.im/docs/getting-started#pagination
-            //
-            // There is no limit. You can request all the images at once. 
-            // Although, the number of pages may differ when requesting different ratings/categories.
             params.push("PageSize=" + limit)
+            params.push("Page=" + page)
             
             // https://docs.waifu.im/docs/getting-started#nsfw-content
             //
@@ -393,7 +392,7 @@ Singleton {
             // Change 'True' to 'All' to see both SFW and NSFW images in NSFW mode.
             if (nsfw) { params.push("IsNsfw=True") }
         }
-        else if (currentProvider === "t.alcy.cc") {
+        else if (resolvedProviderId === "t.alcy.cc") {
             // https://t.alcy.cc/docs.html
             url += "json"
             let tag = tags[0] || "pc" // Alcy only takes one tag as param. Use `pc` as the default one if no tags are provided
@@ -402,7 +401,7 @@ Singleton {
         else {
             params.push("tags=" + encodeURIComponent(tagString))
             params.push("limit=" + limit)
-            if (currentProvider == "gelbooru") {
+            if (resolvedProviderId == "gelbooru") {
                 params.push("pid=" + page)
             }
             else {
@@ -417,12 +416,18 @@ Singleton {
         return url
     }
 
-    function makeRequest(tags, nsfw=false, limit=20, page=1) {
-        var url = constructRequestUrl(tags, nsfw, limit, page)
+    function constructRequestUrl(tags, nsfw=true, limit=20, page=1) {
+        return root.constructRequestUrlForProvider(currentProvider, tags, nsfw, limit, page)
+    }
+
+    function makeRequest(tags, nsfw=false, limit=20, page=1, providerOverride) {
+        const requestProviderId = providers[providerOverride] ? providerOverride : currentProvider
+        const requestProvider = providers[requestProviderId]
+        var url = root.constructRequestUrlForProvider(requestProviderId, tags, nsfw, limit, page)
         _log("[Booru] Making request to " + url)
 
         const newResponse = root.booruResponseDataComponent.createObject(null, {
-            "provider": currentProvider,
+            "provider": requestProviderId,
             "tags": tags,
             "page": page,
             "images": [],
@@ -435,13 +440,12 @@ Singleton {
             if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
                 try {
                     // console.log("[Booru] Raw response: " + xhr.responseText)
-                    const provider = providers[currentProvider]
                     let response;
-                    if (provider.manualParseFunc) {
-                        response = provider.manualParseFunc(xhr.responseText)
+                    if (requestProvider.manualParseFunc) {
+                        response = requestProvider.manualParseFunc(xhr.responseText)
                     } else {
                         response = JSON.parse(xhr.responseText)
-                        response = provider.mapFunc(response)
+                        response = requestProvider.mapFunc(response)
                     }
                     // console.log("[Booru] Mapped response: " + JSON.stringify(response))
                     newResponse.images = response
@@ -466,10 +470,13 @@ Singleton {
 
         try {
             // Required for danbooru
-            if (currentProvider == "danbooru") {
+            if (requestProviderId == "danbooru") {
                 xhr.setRequestHeader("User-Agent", defaultUserAgent)
             }
-            else if (currentProvider == "zerochan") {
+            else if (requestProviderId == "waifu.im") {
+                xhr.setRequestHeader("Accept-Version", "v7")
+            }
+            else if (requestProviderId == "zerochan") {
                 const userAgent = (Config.options?.sidebar?.booru?.zerochan?.username)
                     ? `Desktop sidebar booru viewer - username: ${Config.options?.sidebar?.booru?.zerochan?.username}`
                     : defaultUserAgent
@@ -521,6 +528,8 @@ Singleton {
             // Required for danbooru
             if (currentProvider == "danbooru") {
                 xhr.setRequestHeader("User-Agent", defaultUserAgent)
+            } else if (currentProvider == "waifu.im") {
+                xhr.setRequestHeader("Accept-Version", "v7")
             }
             xhr.send()
         } catch (error) {

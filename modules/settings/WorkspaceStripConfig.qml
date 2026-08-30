@@ -8,6 +8,20 @@ ContentPage {
     id: root
     settingsPageIndex: 18
     settingsPageName: Translation.tr("Workspace Strip")
+    property string activeSection: "behavior"
+
+    SettingsTaskNavigator {
+        icon: "view_sidebar"
+        title: Translation.tr("Workspace Strip")
+        description: Translation.tr("Set the edge interaction first, then decide how much information each workspace card should expose.")
+        summary: Translation.tr("Edge behavior · cards")
+        currentValue: root.activeSection
+        onSelected: value => root.activeSection = value
+        options: [
+            { displayName: Translation.tr("Behavior"), icon: "swipe", value: "behavior" },
+            { displayName: Translation.tr("Cards"), icon: "preview", value: "cards" }
+        ]
+    }
 
     function isPanelEnabled(): bool {
         return (Config.options?.enabledPanels ?? []).includes("iiWorkspaceStrip")
@@ -24,6 +38,8 @@ ContentPage {
     }
 
     SettingsCardSection {
+        settingsTaskSection: "behavior"
+        visible: root.activeSection === "behavior"
         expanded: true
         icon: "view_sidebar"
         title: Translation.tr("Edge behavior")
@@ -205,6 +221,8 @@ ContentPage {
     }
 
     SettingsCardSection {
+        settingsTaskSection: "cards"
+        visible: root.activeSection === "cards"
         expanded: true
         icon: "preview"
         title: Translation.tr("Workspace cards")

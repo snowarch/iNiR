@@ -19,6 +19,23 @@ ContentPage {
     settingsPageName: Translation.tr("Panels")
 
     property bool isIiActive: Config.options?.panelFamily !== "waffle"
+    property string activeSection: "control"
+
+    SettingsTaskNavigator {
+        icon: "bottom_app_bar"
+        title: Translation.tr("Panels")
+        description: Translation.tr("Configure each shell surface in context instead of mixing control-panel, overview, notification and floating-tool options in one stack.")
+        summary: Translation.tr("Control panel · overview · notifications · widgets · tools")
+        currentValue: root.activeSection
+        onSelected: value => root.activeSection = value
+        options: [
+            { displayName: Translation.tr("Control"), icon: "tune", value: "control" },
+            { displayName: Translation.tr("Overview"), icon: "overview_key", value: "overview" },
+            { displayName: Translation.tr("Notifications"), icon: "notifications", value: "notifications" },
+            { displayName: Translation.tr("Widgets"), icon: "widgets", value: "widgets" },
+            { displayName: Translation.tr("Tools"), icon: "dashboard_customize", value: "tools" }
+        ]
+    }
 
     function floatingToolsEnabled(): bool {
         return (Config.options?.enabledPanels ?? []).includes("iiOverlay")
@@ -40,6 +57,8 @@ ContentPage {
     }
 
     SettingsCardSection {
+        settingsTaskSection: "tools"
+        visible: root.activeSection === "tools"
         expanded: true
         icon: "dashboard_customize"
         title: Translation.tr("Floating tools (Super+G)")
@@ -151,7 +170,9 @@ ContentPage {
 
     // ── Shell Desaturation Effect ───────────────────────────────────────
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "tools"
+        visible: root.activeSection === "tools"
+        expanded: true
         icon: "filter_b_and_w"
         title: Translation.tr("Visual Effects")
 
@@ -286,8 +307,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false)
-        expanded: false
+        settingsTaskSection: "tools"
+        visible: root.activeSection === "tools" && root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false)
+        expanded: true
         icon: "keyboard_tab"
         title: Translation.tr("Alt-Tab switcher (Material ii)")
 
@@ -467,8 +489,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
-        expanded: false
+        settingsTaskSection: "notifications"
+        visible: root.activeSection === "notifications" && root.isIiActive
+        expanded: true
         icon: "notifications"
         title: Translation.tr("Notifications")
 
@@ -599,8 +622,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
-        expanded: false
+        settingsTaskSection: "control"
+        visible: root.activeSection === "control" && root.isIiActive
+        expanded: true
         icon: "tune"
         title: Translation.tr("Control panel")
 
@@ -688,8 +712,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false)
-        expanded: false
+        settingsTaskSection: "widgets"
+        visible: root.activeSection === "widgets" && root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false)
+        expanded: true
         icon: "widgets"
         title: Translation.tr("Widgets")
 
@@ -1281,7 +1306,7 @@ ContentPage {
                 Process {
                     id: sysTzProc
                     command: ["/usr/bin/readlink", "/etc/localtime"]
-                    running: true
+                    running: root.activeSection === "widgets"
                     stdout: StdioCollector {
                         onStreamFinished: {
                             const raw = text.trim()
@@ -1350,7 +1375,7 @@ ContentPage {
 
                 Timer {
                     interval: 20000
-                    running: worldClockSection.visible
+                    running: root.activeSection === "widgets" && worldClockSection.visible
                     repeat: true
                     triggeredOnStart: true
                     onTriggered: worldClockSection.refreshLiveTimes()
@@ -1358,7 +1383,10 @@ ContentPage {
 
                 Connections {
                     target: Config
-                    function onConfigChanged() { worldClockSection.refreshLiveTimes() }
+                    function onConfigChanged() {
+                        if (root.activeSection === "widgets")
+                            worldClockSection.refreshLiveTimes()
+                    }
                 }
 
                 // ═══════════════════════════════════════════════════════
@@ -1917,8 +1945,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false)
-        expanded: false
+        settingsTaskSection: "overview"
+        visible: root.activeSection === "overview" && root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false)
+        expanded: true
         icon: "overview_key"
         title: Translation.tr("Overview")
 

@@ -359,6 +359,15 @@ Singleton {
             execute: () => { root.applyGlobalStyle("angel") }
         },
         {
+            id: "style-regalia",
+            name: Translation.tr("Style: Regalia"),
+            description: Translation.tr("Switch to Regalia style"),
+            icon: "event_seat",
+            category: "appearance",
+            keywords: ["style", "regalia", "secretlab", "ti", "tiles", "ivory", "gold", "black", "theme"],
+            execute: () => { root.applyGlobalStyle("regalia") }
+        },
+        {
             id: "style-zzz",
             name: Translation.tr("Style: ZZZ"),
             description: Translation.tr("Switch to ZZZ style"),

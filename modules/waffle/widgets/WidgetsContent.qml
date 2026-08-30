@@ -540,13 +540,13 @@ WBarAttachedPanelContent {
 
                         FluentIcon {
                             Layout.alignment: Qt.AlignHCenter
-                            icon: MprisController.activePlayer?.volume > 0 ? "speaker" : "speaker-mute"
+                            icon: MprisController.volume > 0 ? "speaker" : "speaker-mute"
                             implicitSize: Looks.dp(24)
                         }
 
                         WText {
                             Layout.alignment: Qt.AlignHCenter
-                            text: Math.round((MprisController.activePlayer?.volume ?? 0) * 100) + "%"
+                            text: Math.round(MprisController.volume * 100) + "%"
                             font.pixelSize: Looks.font.pixelSize.normal
                             font.weight: Font.DemiBold
                         }

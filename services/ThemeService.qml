@@ -110,6 +110,7 @@ Singleton {
         case "aurora": return styles?.aurora ?? 1
         case "inir": return styles?.inir ?? 1
         case "angel": return styles?.angel ?? 1
+        case "regalia": return styles?.regalia ?? 1
         case "zzz": return styles?.zzz ?? 0
         case "cookie": return styles?.cookie ?? 1
         default: return styles?.material ?? 1

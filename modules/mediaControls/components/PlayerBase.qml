@@ -96,20 +96,12 @@ QtObject {
     
     function previous(): void {
         root.slideDirection = -1
-        if (isYtMusicPlayer && YtMusic.canGoPrevious) {
-            YtMusic.playPrevious()
-        } else {
-            MprisController.previousForPlayer(root.player)
-        }
+        MprisController.previousForPlayer(root.player)
     }
     
     function next(): void {
         root.slideDirection = 1
-        if (isYtMusicPlayer && YtMusic.canGoNext) {
-            YtMusic.playNext()
-        } else {
-            MprisController.nextForPlayer(root.player)
-        }
+        MprisController.nextForPlayer(root.player)
     }
     
     function seek(seconds: real): void {

@@ -5,6 +5,54 @@ All notable changes to iNiR will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [2.29.3] - 2026-08-25
+
+A polish release for Pill controls and surfaces, settings navigation, TUI app themes, and several runtime fixes including privileged graphical apps and audio feedback stability.
+
+### Added
+- **TUI app themes**: Discord/Vesktop gains an iNiR TUI flavor on top of System24, and Spotify gains an `InirTUI` Spicetify flavor based on the upstream `text` theme. Settings can switch Spotify between Sleek and TUI while preserving wallpaper-driven iNiR colors; Text receives semantic iNiR accent/border/header/highlight roles and readable playback-control contrast without forking its layout.
+- **Pill controls and app mixer**: battery display can use icon, percentage or both; Now Playing gets a wide hover-row capsule with wheel volume control instead of relying on the tiny side bud; monitor-aware sizing plus roomier calendar/weather, launcher, tray, workspace and shared search controls improve 1080p+ usability; Super+Space can open either iNiR Overview or the Pill launcher; a Ricelin settings index links directly into iNiR settings pages; and Mixer uses Ricelin-style vertical output/app faders with resolved desktop-entry names/icons, wheel volume, mute controls, a horizontally scrollable app rail, and a separate System view.
+- **Floating Pill**: Pill can remain visible and hover-expand above normal windows without reserving the top edge. Fullscreen still hides and unmaps the overlay to preserve game performance.
+
+### Changed
+- **Pill and Ricelin settings**: Pill setup is now grouped by interaction, readability, surfaces, hover row, clock/glyphs and advanced geometry with a live shape preview; Pill and every Ricelin Island surface now consume one body-opacity/glass material with shared blur, radius, shadow and sheen, including nested PanelSurface consumers.
+- **Pill sizing**: Scale now honors values below the monitor readability presets, and the previously working compact width, height, icon and spacing ranges are available again without changing the current defaults.
+- **Settings navigation**: dense multi-purpose pages use task-oriented sections, and search activates the owning section before focusing a result across standalone and overlay hosts.
+
+### Fixed
+- **Audio and media feedback**: right-sidebar volume writes are coalesced to prevent freezes and Pill media wheel feedback follows the effective player stream without jumping to zero; explicit track changes still show the media OSD while automatic changes can stay suppressed during games or fullscreen sessions.
+- **Privileged graphical apps**: GParted and Ventoy retain the Wayland/XWayland session environment after Polkit authentication; Ventoy uses its Qt frontend instead of forcing an inaccessible root X11 connection.
+- **Pill notifications**: blank or whitespace-only notification actions are ignored instead of rendering empty action buttons, and the unread indicator remains anchored to the capsule.
+- **Text fields**: shared fields no longer expose native Material outline fragments beneath custom global-style surfaces.
+
+## [2.29.2] - 2026-08-24
+
+A focused polish release for Regalia, wallpapers, startup reliability, bar behavior, and recent runtime regressions.
+
+### Added
+- **Regalia global style**: a theme-reactive luxury material system with shared surfaces, controls, glass support, a Settings editor, and coverage across bars, dock, sidebars, search, dialogs, overlays, widgets, and Waffle selection parity.
+- **Online wallpaper browser**: Wallhaven-first discovery with Wikimedia Commons, Konachan and yande.re; monitor-aware aspect/resolution filtering, weekly ranking, ricing-focused collections, provider favicons, tag-hover control, configurable results per page, and cleaner paging/navigation.
+- **M3 clock overrides**: per-widget time/date font family and pixel-size controls.
+- **Sidebar edge reveal**: optional full-height left/right hover zones open the physical sidebar on that monitor, follow Shell Layout slot swaps, and auto-close transient reveals after the pointer leaves.
+
+### Changed
+- **Startup loading**: critical panels and deferred services are split more aggressively to reduce first-frame contention.
+- **Dock ordering**: running applications keep first-open order; combined mode keeps pinned apps canonical while they are running, and notification badges clear when their app is opened.
+- **Window identity**: shared application identities are resolved per window instead of collapsing unrelated windows together.
+
+### Fixed
+- **Boot greeting and lock-on-startup**: deferred panel loading no longer misses startup triggers; lock-on-startup is compositor-independent and runs once per real shell session rather than per hot reload.
+- **Bar auto-hide**: M3 keeps its reveal zone on the physical screen edge even with outer gaps; Pill/Pill Bar use a short hover grace across their top gap; both styles honor shared hover-region and push-windows settings. Super-only peek remains available where the compositor exposes held-Super state.
+- **Media player volume**: mouse-wheel volume now controls the player’s actual PipeWire stream when MPRIS volume is missing or ineffective, with shared behavior across bar/vertical/Waffle consumers.
+- **Wallpaper switching with custom themes**: setting an online wallpaper updates the wallpaper path even when a static/custom color theme is active, without replacing that palette.
+- **Regalia polish**: shared text fields/text areas no longer stack Material focus chrome with Regalia; the right-sidebar profile banner uses concentric insets and shared surfaces keep consistent hover/focus treatment.
+- **Waffle controls**: shared button icons remain centered and use the common transition timing token instead of a local animation duration.
+- **Monitor lifecycle**: disconnects and idle power-off no longer produce output flicker.
+- **Updates and migrations**: required migrations still run when the checkout is already current; migration quoting handles apostrophes correctly.
+- **Runtime stability**: guarded null accesses in QML delegates, cleaned orphaned `swayidle`, repaired the Spicetify wrapper asset, preserved VS Code JSONC settings during theme generation, and stopped Steam notifications from stealing focus on Niri.
+
 ## [2.29.1] - 2026-08-11
 
 A smaller release focused on making the desktop editor easier to trust, fixing a few rough runtime edges, and closing the reports that surfaced after 2.29.0.

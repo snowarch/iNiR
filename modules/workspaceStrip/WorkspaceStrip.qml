@@ -190,9 +190,9 @@ Scope {
             readonly property bool showMetadata: Config.options?.workspaceStrip?.showMetadata ?? true
             readonly property bool showPreviews: Config.options?.workspaceStrip?.showPreviews ?? true
             readonly property bool showMediaPlayer: Config.options?.workspaceStrip?.showMediaPlayer ?? true
-            // Chrome dialect. The Ricelin island look is opt-in so every global
-            // style keeps its own surface design: "auto" follows the bar (island
-            // only while the pill bar is active), "island"/"stock" force it.
+            // Chrome dialect. Keep explicit global-style ownership intact: ZZZ
+            // retains its own strip language; otherwise Island can be selected
+            // directly or follow the active Pill bar in auto mode.
             readonly property string chromeStyle: Config.options?.workspaceStrip?.style ?? "auto"
             readonly property bool islandChrome: !Appearance.zzzEverywhere
                 && (chromeStyle === "island"

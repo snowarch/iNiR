@@ -44,19 +44,22 @@ Item {
     readonly property bool expanded: surfaceOpen || held || hoverLatch || barMode
 
     readonly property bool hasMedia: PillPlayers.has
+    readonly property string mediaAccess: (Config.options?.bar?.pill?.mediaAccess ?? "row") === "bud" ? "bud" : "row"
+    property real mediaVolumeFeedback: -1
+    property real mediaVolumeFeedbackWidth: 0
 
     signal requestSurface(string name)
     signal requestClose()
 
     /** Forwarded up so the root Scope can host the tray menu's own window. */
-    signal trayMenuRequested(var item, real anchorX)
+    signal trayMenuRequested(var item, real anchorX, real anchorY)
     property bool trayMenuOpen: false
 
-    readonly property real restW: 160 * s
-    readonly property real restH: 38 * s
-    readonly property real hoverPad: 20 * s
+    readonly property real restW: Math.max(160, Config.options?.bar?.pill?.restWidth ?? 176) * s
+    readonly property real restH: Math.max(38, Config.options?.bar?.pill?.restHeight ?? 44) * s
+    readonly property real hoverPad: 24 * s
     readonly property real hoverW: hoverRow.implicitWidth + 2 * hoverPad
-    readonly property real hoverH: 58 * s
+    readonly property real hoverH: Math.max(58, Config.options?.bar?.pill?.expandedHeight ?? 66) * s
     readonly property real gameH: 34 * s
     readonly property real gameW: barWindow ? barWindow.width : 1920
     /**
@@ -70,19 +73,20 @@ Item {
 
     readonly property real powerW: 330 * s
     readonly property real powerH: 150 * s
-    readonly property real mediaW: (PillPlayers.pickable.length > 1 ? 460 : 390) * s
-    readonly property real mediaH: 150 * s
+    readonly property real mediaW: (PillPlayers.pickable.length > 1 ? 480 : 420) * s
+    readonly property real mediaH: 164 * s
     readonly property real batteryW: 316 * s
     readonly property real toastW: 342 * s
     readonly property real sysmonW: 392 * s
     readonly property real clipboardW: 360 * s
     readonly property real clipboardH: 332 * s
-    readonly property real glanceW: 470 * s
-    readonly property real glanceH: 178 * s
-    readonly property real launcherW: 360 * s
-    readonly property real launcherH: 332 * s
+    readonly property real glanceW: 560 * s
+    readonly property real glanceH: 220 * s
+    readonly property real launcherW: 430 * s
+    readonly property real launcherH: 402 * s
     readonly property real recorderW: 330 * s
     readonly property real recorderH: 176 * s
+    readonly property real settingsW: 420 * s
 
     /**
      * Per-surface config gates for the two optional faces. The core surfaces
@@ -104,7 +108,7 @@ Item {
 
     // Icon size for the pill's furniture, snapped to whole pixels so the vector
     // glyphs rasterise crisp. Hit areas grow with it.
-    readonly property real iconPx: Math.round((Config.options?.bar?.pill?.iconSize ?? 17) * s)
+    readonly property real iconPx: Math.round(Math.max(17, Config.options?.bar?.pill?.iconSize ?? 19) * s)
 
     // Toasts off hands notifications back to the standalone popup panel
     // (ShellIiPanels re-enables it), so nothing goes silent.
@@ -151,12 +155,13 @@ Item {
         battery:  { size: () => Qt.size(batteryW, surfaceItem(ldBattery).implicitHeight + 26 * s), ame: () => surfaceItem(ldBattery) },
         calendar: { size: () => { const it = surfaceItem(ldCalendar); return Qt.size((it.implicitWidth > 0 ? it.implicitWidth : 282 * s) + 36 * s, it.implicitHeight + 32 * s); }, ame: () => surfaceItem(ldCalendar) },
         link:     { size: () => { const it = surfaceItem(ldLink); return Qt.size(it.desiredW, it.implicitHeight + 26 * s); }, ame: () => surfaceItem(ldLink) },
-        mixer:    { size: () => Qt.size(93 * Math.max(4, surfaceItem(ldMixer).faderCount) * s, mixerH), ame: () => surfaceItem(ldMixer) },
+        mixer:    { size: () => { const it = surfaceItem(ldMixer); return Qt.size(it.desiredWidth, it.desiredHeight); }, ame: () => surfaceItem(ldMixer) },
         sysmon:   { size: () => Qt.size(sysmonW, surfaceItem(ldSysmon).implicitHeight + 33 * s), ame: () => surfaceItem(ldSysmon) },
         clipboard: { size: () => { surfaceItem(ldClipboard); return Qt.size(clipboardW, clipboardH); }, ame: () => surfaceItem(ldClipboard) },
         glance:   { size: () => { surfaceItem(ldGlance); return Qt.size(glanceW, glanceH); }, ame: () => surfaceItem(ldGlance) },
         launcher: { size: () => { surfaceItem(ldLauncher); return Qt.size(launcherW, launcherH); }, ame: () => surfaceItem(ldLauncher) },
-        recorder: { size: () => { surfaceItem(ldRecorder); return Qt.size(recorderW, recorderH); }, ame: () => surfaceItem(ldRecorder) }
+        recorder: { size: () => { surfaceItem(ldRecorder); return Qt.size(recorderW, recorderH); }, ame: () => surfaceItem(ldRecorder) },
+        settings: { size: () => Qt.size(settingsW, surfaceItem(ldSettings).implicitHeight + 28 * s), ame: () => surfaceItem(ldSettings) }
     })
 
     readonly property real mixerH: 214 * s
@@ -178,9 +183,9 @@ Item {
      * A fullscreen window on this pill's active workspace hides the resting
      * faces — classic-bar parity: top-layer bars get covered by the
      * compositor, but the pill's Overlay layer never is, so it opts out
-     * itself. Only the resting faces: transient OSD flashes still play over a
-     * game, because a track change or a volume keypress is exactly the feedback
-     * the game cannot give you. Toasts and open surfaces still show.
+     * itself. Hardware OSD feedback such as volume and brightness can still play
+     * over a game, but automatic track-change announcements are suppressed.
+     * Toasts and open surfaces still show.
      */
     readonly property bool fsCovered: {
         if (!CompositorService.isNiri)
@@ -348,7 +353,7 @@ Item {
 
     Rectangle {
         id: bud
-        readonly property bool shown: pill.mode === "hover" && pill.hasMedia
+        readonly property bool shown: pill.mode === "hover" && pill.hasMedia && pill.mediaAccess === "bud"
         property real budR: (budArea.containsMouse ? 15 : 12) * pill.s
         width: budR * 2
         height: budR * 2
@@ -404,59 +409,60 @@ Item {
         }
     }
 
-    /**
-     * Frosted glass under the pill, from the same shared island skin. The card
-     * gradient above is only translucent when the user lowers the pill opacity,
-     * so without a backdrop a low opacity reads as raw see-through rather than
-     * glass — exactly the reason IslandPanel grew this path.
-     *
-     * The wallpaper is drawn at screen scale and offset by the pill's position
-     * inside its screen-sized overlay window, so the blur stays registered with
-     * the desktop while the pill morphs across the top of the screen. Masked to
-     * the live morph radius so it never squares off mid-animation.
-     */
     Item {
-        id: glass
+        id: glassClip
         anchors.fill: parent
         z: -1
+        clip: true
 
-        readonly property bool active: pill.visible
-            && PillTheme.islandGlass
-            && Appearance.effectsEnabled
-            && PillTheme.pillOpacity < 0.999
+        Item {
+            id: glass
+            anchors.fill: parent
+            anchors.bottomMargin: 1
 
-        visible: active
-        layer.enabled: active
-        layer.effect: GE.OpacityMask {
-            maskSource: Rectangle {
-                width: glass.width
-                height: glass.height
-                radius: body.radius
+            readonly property bool active: pill.visible
+                && PillTheme.islandGlass
+                && Appearance.effectsEnabled
+                && PillTheme.pillOpacity < 0.999
+
+            visible: active
+            layer.enabled: active
+            layer.effect: GE.OpacityMask {
+                maskSource: Rectangle {
+                    width: glass.width
+                    height: glass.height
+                    radius: body.radius
+                    topLeftRadius: body.topLeftRadius
+                    topRightRadius: body.topRightRadius
+                    bottomLeftRadius: body.bottomLeftRadius
+                    bottomRightRadius: body.bottomRightRadius
+                }
             }
-        }
 
-        Image {
-            id: glassWallpaper
-            x: -pill.x
-            y: -pill.y
-            width: pill.barWindow ? pill.barWindow.width : 1920
-            height: pill.barWindow ? pill.barWindow.height : 1080
-            visible: glass.active && status === Image.Ready
-            source: glass.active ? Wallpapers.effectiveWallpaperUrl : ""
-            fillMode: Image.PreserveAspectCrop
-            cache: true
-            asynchronous: true
-            sourceSize.width: width
-            sourceSize.height: height
+            Image {
+                id: glassWallpaper
+                x: -pill.x
+                y: -pill.y
+                width: pill.barWindow?.width ?? 1920
+                height: pill.barWindow?.height ?? 1080
+                visible: glass.active && status === Image.Ready
+                source: glass.active
+                    ? WallpaperListener.wallpaperUrlForScreen(pill.barWindow?.screen ?? null) : ""
+                fillMode: Image.PreserveAspectCrop
+                cache: true
+                asynchronous: true
+                sourceSize.width: Math.round(width)
+                sourceSize.height: Math.round(height)
 
-            layer.enabled: glass.active
-            layer.effect: MultiEffect {
-                source: glassWallpaper
-                anchors.fill: source
-                saturation: 0.15
-                blurEnabled: true
-                blurMax: 64
-                blur: PillTheme.islandGlassBlur
+                layer.enabled: glass.active
+                layer.effect: MultiEffect {
+                    source: glassWallpaper
+                    anchors.fill: source
+                    saturation: 0.15
+                    blurEnabled: true
+                    blurMax: 64
+                    blur: PillTheme.islandGlassBlur
+                }
             }
         }
     }
@@ -465,10 +471,6 @@ Item {
         id: body
         anchors.fill: parent
 
-        /**
-         * Corner flatness rides the morph curve so docking into the game bar
-         * squares the corners as one continuous shape change instead of a snap.
-         */
         property real gameFlat: pill.mode === "game" ? 1 : 0
         Behavior on gameFlat { NumberAnimation { duration: PillMotion.morph; easing.type: PillMotion.easeMorph; easing.bezierCurve: PillMotion.morphCurve } }
 
@@ -477,22 +479,10 @@ Item {
         topRightRadius: pill.morphRadius * (1 - gameFlat)
         bottomLeftRadius: pill.morphRadius * (1 - gameFlat)
         bottomRightRadius: pill.morphRadius * (1 - gameFlat)
-        border.width: 1
-        border.color: PillTheme.border
+        border.width: 0
         gradient: Gradient {
             GradientStop { position: 0.0; color: Qt.alpha(PillTheme.cardTop, PillTheme.pillOpacity) }
             GradientStop { position: 1.0; color: Qt.alpha(PillTheme.cardBot, PillTheme.pillOpacity) }
-        }
-
-        // Shared island skin: the user's drop-shadow switch owns the pill too.
-        // Keeping a layer allocated for a disabled shadow would still cost a
-        // full-surface texture on every morph frame, so gate the layer itself.
-        layer.enabled: PillTheme.islandShadow
-        layer.effect: MultiEffect {
-            shadowEnabled: true
-            shadowColor: Qt.rgba(0, 0, 0, PillTheme.shadowOpacity)
-            shadowBlur: 0.7
-            shadowVerticalOffset: 3 * pill.s
         }
 
         Rectangle {
@@ -506,6 +496,18 @@ Item {
             visible: PillTheme.islandSheen
             color: PillTheme.sheen
         }
+    }
+
+    GE.DropShadow {
+        anchors.fill: body
+        source: body
+        visible: Appearance.effectsEnabled && PillTheme.islandShadow && pill.visible
+        z: -2
+        color: Qt.rgba(0, 0, 0, PillTheme.shadowOpacity)
+        radius: 16
+        samples: 33
+        verticalOffset: 3 * pill.s
+        transparentBorder: true
     }
 
     /**
@@ -534,6 +536,8 @@ Item {
             return batteryIcon.mapToItem(pill, batteryIcon.width / 2, batteryIcon.height + drop * 0.55);
         if (soulTarget === "inbox")
             return inboxIcon.mapToItem(pill, inboxIcon.width / 2, inboxIcon.height + drop * 0.55);
+        if (soulTarget === "media")
+            return mediaShortcut.mapToItem(pill, mediaShortcut.width / 2, mediaShortcut.height + drop * 0.55);
         if (soulTarget === "mixer")
             return mixerIcon.mapToItem(pill, mixerIcon.width / 2, mixerIcon.height + drop * 0.55);
         if (soulTarget === "glance")
@@ -626,6 +630,20 @@ Item {
             }
             pill.graceRetries = 0;
             pill.hoverLatch = false;
+        }
+    }
+
+    Timer {
+        id: mediaVolumeFeedbackTimer
+        interval: 900
+        onTriggered: pill.mediaVolumeFeedback = -1
+    }
+
+    Connections {
+        target: MprisController
+        function onActivePlayerChanged(): void {
+            mediaVolumeFeedbackTimer.stop()
+            pill.mediaVolumeFeedback = -1
         }
     }
 
@@ -756,7 +774,7 @@ Item {
                     color: PillTheme.cream
                     font.family: PillTheme.fontJp
                     font.weight: Font.Medium
-                    font.pixelSize: 15 * pill.s
+                    font.pixelSize: 17 * pill.s
                     Behavior on opacity { NumberAnimation { duration: PillMotion.standard; easing.type: PillMotion.easeStandard } }
                 }
 
@@ -778,7 +796,7 @@ Item {
                 text: clock.hhmm
                 color: PillTheme.cream
                 font.family: PillTheme.font
-                font.pixelSize: 16 * pill.s
+                font.pixelSize: 18 * pill.s
                 font.weight: Font.DemiBold
                 font.features: ({ "tnum": 1 })
             }
@@ -800,7 +818,7 @@ Item {
             // every glyph on a half pixel and smear the strokes.
             x: Math.round((parent.width - width) / 2)
             y: Math.round((parent.height - height) / 2)
-            spacing: Math.round((Config.options?.bar?.pill?.rowSpacing ?? 20) * pill.s)
+            spacing: Math.round(Math.max(20, Config.options?.bar?.pill?.rowSpacing ?? 24) * pill.s)
 
             PillWorkspaces {
                 id: ws
@@ -820,7 +838,7 @@ Item {
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 1
-                height: 22 * pill.s
+                height: 28 * pill.s
                 visible: ws.visible
                 color: PillTheme.hair
             }
@@ -839,7 +857,7 @@ Item {
                         text: clock.hhmm
                         color: PillTheme.cream
                         font.family: PillTheme.font
-                        font.pixelSize: 18 * pill.s
+                        font.pixelSize: 22 * pill.s
                         font.weight: Font.DemiBold
                         font.features: ({ "tnum": 1 })
                     }
@@ -848,7 +866,7 @@ Item {
                         text: clock.date
                         color: PillTheme.dim
                         font.family: PillTheme.font
-                        font.pixelSize: 8.5 * pill.s
+                        font.pixelSize: 11 * pill.s
                         font.weight: Font.Medium
                         font.capitalization: Font.AllUppercase
                         font.letterSpacing: 1.6 * pill.s
@@ -868,7 +886,7 @@ Item {
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 1
-                height: 22 * pill.s
+                height: 28 * pill.s
                 visible: statusRow.visibleChildren.length > 0
                 color: PillTheme.hair
             }
@@ -876,7 +894,7 @@ Item {
             Row {
                 id: statusRow
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: Math.round((Config.options?.bar?.pill?.iconSpacing ?? 12) * pill.s)
+                spacing: Math.round(Math.max(12, Config.options?.bar?.pill?.iconSpacing ?? 14) * pill.s)
 
                 Row {
                     id: weatherGlance
@@ -895,8 +913,8 @@ Item {
 
                     GlyphIcon {
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 16 * pill.s
-                        height: 16 * pill.s
+                        width: 19 * pill.s
+                        height: 19 * pill.s
                         name: PillWeather.glyphFor(PillWeather.codeNow, PillWeather.isDay)
                         color: PillTheme.subtle
                         stroke: 1.8
@@ -907,7 +925,7 @@ Item {
                         text: PillWeather.tempNow + "°"
                         color: PillTheme.subtle
                         font.family: PillTheme.font
-                        font.pixelSize: 12.5 * pill.s
+                        font.pixelSize: 13.5 * pill.s
                         font.weight: Font.Medium
                         font.features: ({ "tnum": 1 })
                     }
@@ -921,7 +939,10 @@ Item {
                     barWindow: pill.barWindow
                     enabled: hover.live
                     menuOpen: pill.trayMenuOpen
-                    onMenuRequested: (item, anchorX) => pill.trayMenuRequested(item, anchorX)
+                    onMenuRequested: (item, anchorX, _anchorY) => {
+                        const bottom = pill.mapToItem(null, 0, pill.height);
+                        pill.trayMenuRequested(item, anchorX, bottom.y);
+                    }
                 }
 
                 Item {
@@ -956,19 +977,39 @@ Item {
                     id: batteryIcon
                     anchors.verticalCenter: parent.verticalCenter
                     visible: (pill.hoverModules?.battery ?? true) && Battery.available
-                    width: Math.ceil(battPct.implicitWidth)
+                    readonly property string displayMode: Config.options?.bar?.pill?.batteryDisplay ?? "both"
+                    readonly property bool showIcon: displayMode !== "percentage"
+                    readonly property bool showPercentage: displayMode !== "icon"
+                    width: batteryRow.implicitWidth
                     height: pill.iconPx
 
-                    Text {
-                        id: battPct
+                    Row {
+                        id: batteryRow
                         anchors.centerIn: parent
-                        text: Math.round(Battery.percentage * 100) + "%"
-                        color: Battery.isLow ? PillTheme.vermLit
-                            : (Battery.isCharging ? PillTheme.flameGlow : PillTheme.subtle)
-                        font.family: PillTheme.font
-                        font.pixelSize: 13 * pill.s
-                        font.weight: Battery.isCharging ? Font.DemiBold : Font.Medium
-                        font.features: ({ "tnum": 1 })
+                        spacing: 5 * pill.s
+
+                        GlyphIcon {
+                            visible: batteryIcon.showIcon
+                            width: pill.iconPx
+                            height: pill.iconPx
+                            name: "battery"
+                            color: Battery.isLow ? PillTheme.vermLit
+                                : (Battery.isCharging ? PillTheme.flameGlow : PillTheme.iconDim)
+                            stroke: 1.7
+                        }
+
+                        Text {
+                            id: battPct
+                            visible: batteryIcon.showPercentage
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: Math.round(Battery.percentage * 100) + "%"
+                            color: Battery.isLow ? PillTheme.vermLit
+                                : (Battery.isCharging ? PillTheme.flameGlow : PillTheme.subtle)
+                            font.family: PillTheme.font
+                            font.pixelSize: 13 * pill.s
+                            font.weight: Battery.isCharging ? Font.DemiBold : Font.Medium
+                            font.features: ({ "tnum": 1 })
+                        }
                     }
 
                     MouseArea {
@@ -1000,10 +1041,8 @@ Item {
                         visible: Notifications.unread > 0
                         anchors.top: parent.top
                         anchors.right: parent.right
-                        anchors.topMargin: -2 * pill.s
-                        anchors.rightMargin: -2 * pill.s
-                        width: 5 * pill.s
-                        height: 5 * pill.s
+                        width: Math.max(5, 5 * pill.s)
+                        height: width
                         radius: width / 2
                         color: PillTheme.flameGlow
                     }
@@ -1029,7 +1068,78 @@ Item {
                     height: 18 * pill.s
                     color: PillTheme.hair
                     visible: (weatherGlance.visible || trayRowItem.visible || wifiIcon.visible || batteryIcon.visible || inboxIcon.visible)
-                        && (launcherIcon.visible || glanceIcon.visible || mixerIcon.visible || clipboardIcon.visible || recorderIcon.visible || sysmonIcon.visible)
+                        && (mediaShortcut.visible || launcherIcon.visible || glanceIcon.visible || mixerIcon.visible || clipboardIcon.visible || recorderIcon.visible || sysmonIcon.visible)
+                }
+
+                Rectangle {
+                    id: mediaShortcut
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: pill.hasMedia && pill.mediaAccess !== "bud"
+                    width: pill.mediaVolumeFeedback >= 0
+                        ? pill.mediaVolumeFeedbackWidth
+                        : Math.min(184 * pill.s, mediaShortcutRow.implicitWidth + 26 * pill.s)
+                    height: 38 * pill.s
+                    radius: height / 2
+                    color: mediaShortcutArea.containsMouse || pill.mediaVolumeFeedback >= 0
+                        ? PillTheme.frameBg : "transparent"
+                    border.width: 1
+                    border.color: mediaShortcutArea.containsMouse ? PillTheme.frameBorder : PillTheme.border
+
+                    Row {
+                        id: mediaShortcutRow
+                        anchors.centerIn: parent
+                        spacing: 8 * pill.s
+
+                        GlyphIcon {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 20 * pill.s
+                            height: 20 * pill.s
+                            name: pill.mediaVolumeFeedback >= 0
+                                ? (pill.mediaVolumeFeedback <= 0 ? "speaker-off" : "speaker")
+                                : (MprisController.activePlayer?.isPlaying ? "pause-s" : "music")
+                            color: mediaShortcutArea.containsMouse ? PillTheme.cream : PillTheme.vermLit
+                            stroke: 1.7
+                        }
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: Math.min(126 * pill.s, implicitWidth)
+                            text: pill.mediaVolumeFeedback >= 0
+                                ? Math.round(pill.mediaVolumeFeedback * 100) + "%"
+                                : (MprisController.activePlayer?.trackTitle ?? Translation.tr("Media"))
+                            color: pill.mediaVolumeFeedback >= 0 ? PillTheme.cream : PillTheme.subtle
+                            font.family: PillTheme.font
+                            font.pixelSize: 12.5 * pill.s
+                            font.weight: Font.Medium
+                            elide: Text.ElideRight
+                        }
+                    }
+
+                    MouseArea {
+                        id: mediaShortcutArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        enabled: hover.live
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: pill.requestSurface("media")
+                        onWheel: (event) => {
+                            if (!MprisController.canChangeVolume)
+                                return;
+                            const current = pill.mediaVolumeFeedback >= 0
+                                ? pill.mediaVolumeFeedback
+                                : MprisController.getVolume();
+                            const next = event.angleDelta.y > 0
+                                ? Math.min(1, current + 0.05)
+                                : Math.max(0, current - 0.05);
+                            if (pill.mediaVolumeFeedback < 0)
+                                pill.mediaVolumeFeedbackWidth = mediaShortcut.width;
+                            pill.mediaVolumeFeedback = next;
+                            mediaVolumeFeedbackTimer.restart();
+                            MprisController.setVolume(next);
+                            event.accepted = true;
+                        }
+                        onContainsMouseChanged: if (containsMouse) pill.soulTarget = "media"
+                    }
                 }
 
                 Item {
@@ -1202,7 +1312,32 @@ Item {
                     color: PillTheme.hair
                     visible: (launcherIcon.visible || glanceIcon.visible || mixerIcon.visible || clipboardIcon.visible || recorderIcon.visible || sysmonIcon.visible
                         || weatherGlance.visible || trayRowItem.visible || wifiIcon.visible || batteryIcon.visible || inboxIcon.visible)
-                        && (sidebarLeftIcon.visible || sidebarRightIcon.visible || powerIcon.visible)
+                        && (settingsIcon.visible || sidebarLeftIcon.visible || sidebarRightIcon.visible || powerIcon.visible)
+                }
+
+                Item {
+                    id: settingsIcon
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: pill.iconPx
+                    height: pill.iconPx
+
+                    GlyphIcon {
+                        anchors.fill: parent
+                        name: "cog"
+                        color: settingsArea.containsMouse ? PillTheme.cream : PillTheme.iconDim
+                        stroke: 1.7
+                    }
+
+                    MouseArea {
+                        id: settingsArea
+                        anchors.fill: parent
+                        anchors.margins: -8 * pill.s
+                        hoverEnabled: true
+                        enabled: hover.live
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: pill.requestSurface("settings")
+                        onContainsMouseChanged: if (containsMouse) pill.soulTarget = "settings"
+                    }
                 }
 
                 Item {
@@ -1214,7 +1349,7 @@ Item {
 
                     GlyphIcon {
                         anchors.fill: parent
-                        name: "sparkles"
+                        name: "sidebar-left"
                         color: sidebarLeftArea.containsMouse ? PillTheme.cream : PillTheme.iconDim
                         stroke: 1.7
                     }
@@ -1243,7 +1378,7 @@ Item {
 
                     GlyphIcon {
                         anchors.fill: parent
-                        name: "cog"
+                        name: "sidebar-right"
                         color: sidebarRightArea.containsMouse ? PillTheme.cream : PillTheme.iconDim
                         stroke: 1.6
                     }
@@ -1308,6 +1443,7 @@ Item {
         screenName: pill.screenName
         outputAllowed: pill.osdOutputEnabled
         suppressed: pill.surfaceOpen || pill.held
+        trackSuppressed: pill.fsCovered || pill.manualGameFace
         expanded: pill.expanded
         enabled: pill.mode === "osd"
         opacity: pill.mode === "osd" ? 1 : 0
@@ -1452,6 +1588,18 @@ Item {
         sourceComponent: PillRecorder {
             s: pill.s
             open: pill.surface === "recorder"
+            morphCloseness: pill.morphCloseness
+            onRequestClose: pill.requestClose()
+        }
+    }
+
+    Loader {
+        id: ldSettings
+        active: false
+        anchors.fill: parent
+        sourceComponent: PillSettings {
+            s: pill.s
+            open: pill.surface === "settings"
             morphCloseness: pill.morphCloseness
             onRequestClose: pill.requestClose()
         }

@@ -75,6 +75,11 @@ WSettingsPage {
         return palette + " · " + chrome
     }
     readonly property string currentScheme: Config.options?.appearance?.palette?.type ?? "auto"
+    readonly property string effectiveRecordingPath: {
+        const configured = Config.options?.screenRecord?.savePath ?? ""
+        return configured.length > 0 ? configured : Directories.videosPath
+    }
+    readonly property string effectiveScreenshotPath: Directories.screenshotsPath
 
     property string targetMonitor: {
         if (!root.multiMonitorEnabled)
@@ -1114,6 +1119,31 @@ WSettingsPage {
             description: Translation.tr("Toast when Quickshell or Niri config reloads")
             checked: Config.options?.reloadToasts?.enable ?? true
             onCheckedChanged: Config.setNestedValue("reloadToasts.enable", checked)
+        }
+    }
+
+    WSettingsSection {
+        title: Translation.tr("Capture locations")
+        icon: "folder"
+    }
+
+    WSettingsCard {
+        WSettingsRow {
+            label: Translation.tr("Recordings folder")
+            icon: "record"
+            description: Directories.shortHomePath(root.effectiveRecordingPath)
+            clickable: true
+            showChevron: true
+            onClicked: root.navigateRequested(6)
+        }
+
+        WSettingsRow {
+            label: Translation.tr("Screenshots folder")
+            icon: "image"
+            description: Directories.shortHomePath(root.effectiveScreenshotPath)
+            clickable: true
+            showChevron: true
+            onClicked: root.navigateRequested(6)
         }
     }
 }

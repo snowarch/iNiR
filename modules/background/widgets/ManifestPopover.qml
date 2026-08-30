@@ -40,19 +40,23 @@ Item {
 
                     // Bool: toggle button
                     RippleButton {
+                        id: boolButton
                         visible: keyDelegate.cfgType === "bool"
                         width: visible ? Math.max(100, _boolLabel.implicitWidth + 16) : 0; height: 28
                         buttonRadius: Appearance.rounding.small
                         toggled: Boolean(keyDelegate.currentVal)
-                        colBackground: toggled ? ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.16) : "transparent"
-                        colBackgroundHover: ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.08)
-                        colRipple: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.12)
+                        colBackground: "transparent"
+                        colBackgroundHover: Appearance.colors.colLayer1Hover
+                        colBackgroundToggled: Appearance.colors.colPrimaryContainer
+                        colBackgroundToggledHover: Appearance.colors.colPrimaryContainerHover
+                        colRipple: Appearance.colors.colLayer1Active
+                        colRippleToggled: Appearance.colors.colPrimaryContainerActive
                         downAction: () => Config.setNestedValue("background.widgets." + root.configEntryName + "." + keyDelegate.cfgKey, !Boolean(keyDelegate.currentVal))
                         contentItem: StyledText {
                             id: _boolLabel
                             anchors.centerIn: parent
                             text: keyDelegate.label
-                            color: Appearance.colors.colOnLayer2
+                            color: boolButton.toggled ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer2
                             font.pixelSize: Appearance.font.pixelSize.small
                         }
                     }

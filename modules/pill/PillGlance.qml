@@ -86,7 +86,7 @@ PillSurface {
                 text: Translation.tr("TODAY")
                 color: PillTheme.subtle
                 font.family: PillTheme.font
-                font.pixelSize: 10 * root.s
+                font.pixelSize: 11.5 * root.s
                 font.weight: Font.DemiBold
                 font.capitalization: Font.AllUppercase
                 font.letterSpacing: 1.6 * root.s
@@ -99,7 +99,7 @@ PillSurface {
             text: Qt.locale().toString(root.now, "ddd d MMM")
             color: PillTheme.dim
             font.family: PillTheme.font
-            font.pixelSize: 9.5 * root.s
+            font.pixelSize: 10.5 * root.s
             font.weight: Font.Bold
             font.capitalization: Font.AllUppercase
             font.letterSpacing: 1.2 * root.s
@@ -121,7 +121,7 @@ PillSurface {
     component ColCaption: Text {
         color: PillTheme.faint
         font.family: PillTheme.font
-        font.pixelSize: 8.5 * root.s
+        font.pixelSize: 10 * root.s
         font.weight: Font.DemiBold
         font.capitalization: Font.AllUppercase
         font.letterSpacing: 1.4 * root.s
@@ -145,12 +145,13 @@ PillSurface {
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             anchors.left: parent.left
-            width: 104 * root.s
+            width: 120 * root.s
 
             Column {
-                anchors.top: parent.top
-                anchors.left: parent.left
-                spacing: 4 * root.s
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width - 14 * root.s
+                spacing: 5 * root.s
 
                 GlyphIcon {
                     name: PillWeather.ready
@@ -177,7 +178,7 @@ PillSurface {
                     width: weatherCol.width - 10 * root.s
                     elide: Text.ElideRight
                     font.family: PillTheme.font
-                    font.pixelSize: 9 * root.s
+                    font.pixelSize: 10.5 * root.s
                     font.weight: Font.DemiBold
                     font.capitalization: Font.AllUppercase
                     font.letterSpacing: 1.1 * root.s
@@ -278,7 +279,7 @@ PillSurface {
                     text: "+" + (root.events.length - root.maxRows) + " " + Translation.tr("more")
                     color: PillTheme.faint
                     font.family: PillTheme.font
-                    font.pixelSize: 9.5 * root.s
+                    font.pixelSize: 10.5 * root.s
                     font.weight: Font.Medium
                 }
             }
@@ -289,7 +290,7 @@ PillSurface {
                 text: Translation.tr("Clear day")
                 color: PillTheme.faint
                 font.family: PillTheme.font
-                font.pixelSize: 10.5 * root.s
+                font.pixelSize: 11.5 * root.s
             }
 
             MouseArea {
@@ -312,7 +313,7 @@ PillSurface {
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             anchors.right: parent.right
-            width: 148 * root.s
+            width: 164 * root.s
 
             ColCaption {
                 id: taskCap
@@ -326,7 +327,7 @@ PillSurface {
                 text: root.pendingTodos.length
                 color: PillTheme.dim
                 font.family: PillTheme.font
-                font.pixelSize: 9 * root.s
+                font.pixelSize: 10 * root.s
                 font.weight: Font.Bold
                 font.features: ({ "tnum": 1 })
             }
@@ -346,14 +347,14 @@ PillSurface {
                         required property var modelData
 
                         width: parent.width
-                        height: 17 * root.s
+                        height: 22 * root.s
 
                         Rectangle {
                             id: ring
                             anchors.left: parent.left
                             anchors.verticalCenter: parent.verticalCenter
-                            width: 11 * root.s
-                            height: 11 * root.s
+                            width: 14 * root.s
+                            height: 14 * root.s
                             radius: width / 2
                             color: ringArea.containsMouse ? Qt.alpha(PillTheme.vermLit, 0.25) : "transparent"
                             border.width: 1
@@ -378,7 +379,7 @@ PillSurface {
                             color: PillTheme.subtle
                             elide: Text.ElideRight
                             font.family: PillTheme.font
-                            font.pixelSize: 11 * root.s
+                            font.pixelSize: 11.5 * root.s
                             font.weight: Font.Medium
                         }
                     }
@@ -389,7 +390,7 @@ PillSurface {
                     text: "+" + (root.pendingTodos.length - root.maxRows) + " " + Translation.tr("more")
                     color: PillTheme.faint
                     font.family: PillTheme.font
-                    font.pixelSize: 9.5 * root.s
+                    font.pixelSize: 10.5 * root.s
                     font.weight: Font.Medium
                 }
             }
@@ -400,7 +401,7 @@ PillSurface {
                 text: Translation.tr("All done")
                 color: PillTheme.faint
                 font.family: PillTheme.font
-                font.pixelSize: 10.5 * root.s
+                font.pixelSize: 11.5 * root.s
             }
         }
     }

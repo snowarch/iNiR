@@ -66,7 +66,9 @@ Singleton {
         const info = {
             appId: targetWindow.app_id || "",
             title: targetWindow.title || "",
-            originalWorkspace: NiriService.focusedWorkspaceIndex
+            originalWorkspace: NiriService.workspaces?.[targetWindow.workspace_id]?.idx
+                ?? NiriService.focusedWorkspaceIndex,
+            originalOutput: NiriService.workspaces?.[targetWindow.workspace_id]?.output ?? ""
         };
         
         minimizedWindows[windowId] = info;
@@ -110,6 +112,25 @@ Singleton {
         ];
         restoreProc.running = true;
     }
+
+    function restoreOriginal(windowId) {
+        if (!CompositorService.isNiri) return;
+        if (!isMinimized(windowId)) return;
+
+        const info = minimizedWindows[windowId];
+        if (!info) return;
+
+        const targetWorkspace = info.originalWorkspace ?? NiriService.focusedWorkspaceIndex;
+        delete minimizedWindows[windowId];
+        minimizedIds = minimizedIds.filter(id => id !== windowId);
+
+        restoreProc.command = [
+            "niri", "msg", "action", "move-window-to-workspace",
+            "--window-id", windowId.toString(),
+            targetWorkspace.toString()
+        ];
+        restoreProc.running = true;
+    }
     
     // Restore all minimized windows for an app
     function restoreApp(appId) {
@@ -125,6 +146,34 @@ Singleton {
         if (windowIds.length > 0) {
             restore(windowIds[windowIds.length - 1]);
         }
+    }
+
+    function restoreLatest() {
+        if (minimizedIds.length === 0) return;
+        restore(minimizedIds[minimizedIds.length - 1]);
+    }
+
+    function restoreLatestOriginal() {
+        if (minimizedIds.length === 0) return;
+        restoreOriginal(minimizedIds[minimizedIds.length - 1]);
+    }
+
+    function getMinimizedForOutput(outputName) {
+        const output = String(outputName ?? "");
+        return minimizedIds.filter(id => {
+            const info = minimizedWindows[id];
+            return info && (info.originalOutput || "") === output;
+        });
+    }
+
+    function restoreLatestForOutput(outputName, originalWorkspace = true) {
+        const ids = getMinimizedForOutput(outputName);
+        if (ids.length === 0) return;
+        const windowId = ids[ids.length - 1];
+        if (originalWorkspace)
+            restoreOriginal(windowId);
+        else
+            restore(windowId);
     }
     
     Process {
@@ -156,9 +205,17 @@ Singleton {
         function minimize(): void {
             root.minimize();
         }
+
+        function minimizeId(windowId: int): void {
+            root.minimize(windowId);
+        }
         
         function restore(windowId: int): void {
             root.restore(windowId);
+        }
+
+        function restoreOriginal(windowId: int): void {
+            root.restoreOriginal(windowId);
         }
     }
 }

@@ -37,10 +37,27 @@ ContentPage {
 
     // Wallpaper section
     // Wallpaper section
+    property string activeSection: "wallpaper"
+
+    SettingsTaskNavigator {
+        icon: "window"
+        title: Translation.tr("Waffle Style")
+        description: Translation.tr("Tune the Windows 11 style surfaces in focused views: wallpaper, taskbar, theming and family switching.")
+        summary: Translation.tr("Wallpaper \u00b7 Taskbar \u00b7 Style \u00b7 Transition")
+        currentValue: root.activeSection
+        onSelected: value => root.activeSection = value
+        options: [
+            { displayName: Translation.tr("Wallpaper"), icon: "wallpaper_slideshow", value: "wallpaper" },
+            { displayName: Translation.tr("Taskbar"), icon: "toolbar", value: "taskbar" },
+            { displayName: Translation.tr("Style"), icon: "palette", value: "style" },
+            { displayName: Translation.tr("Transition"), icon: "swap_horiz", value: "transition" }
+        ]
+    }
+
     SettingsCardSection {
-        visible: root.isWaffleActive && root.isPanelEnabled("wBackground")
+        settingsTaskSection: "wallpaper"
+        visible: root.isWaffleActive && root.isPanelEnabled("wBackground") && root.activeSection === "wallpaper"
         expanded: true
-        icon: "wallpaper"
         title: Translation.tr("Wallpaper")
 
         SettingsGroup {
@@ -104,9 +121,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isWaffleActive && root.isPanelEnabled("wBackground")
-        expanded: false
-        icon: "auto_awesome"
+        settingsTaskSection: "wallpaper"
+        visible: root.isWaffleActive && root.isPanelEnabled("wBackground") && root.activeSection === "wallpaper"
+        expanded: true
         title: Translation.tr("Wallpaper Effects")
 
         SettingsGroup {
@@ -146,9 +163,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isWaffleActive
-        expanded: false
-        icon: "layers"
+        settingsTaskSection: "wallpaper"
+        visible: root.isWaffleActive && root.activeSection === "wallpaper"
+        expanded: true
         title: Translation.tr("Backdrop (Niri Overview)")
 
         SettingsGroup {
@@ -272,9 +289,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isWaffleActive && root.isPanelEnabled("wBar")
-        expanded: false
-        icon: "toolbar"
+        settingsTaskSection: "taskbar"
+        visible: root.isWaffleActive && root.isPanelEnabled("wBar") && root.activeSection === "taskbar"
+        expanded: true
         title: Translation.tr("Taskbar")
 
         SettingsGroup {
@@ -310,9 +327,9 @@ ContentPage {
 
     SettingsCardSection {
         id: themingSection
-        visible: root.isWaffleActive
-        expanded: false
-        icon: "palette"
+        settingsTaskSection: "style"
+        visible: root.isWaffleActive && root.activeSection === "style"
+        expanded: true
         title: Translation.tr("Theming")
 
         property string currentFontFamily: Config.options?.waffles?.theming?.font?.family ?? "Noto Sans"
@@ -389,9 +406,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isWaffleActive
-        expanded: false
-        icon: "widgets"
+        settingsTaskSection: "style"
+        visible: root.isWaffleActive && root.activeSection === "style"
+        expanded: true
         title: Translation.tr("Behavior")
 
         SettingsGroup {
@@ -405,8 +422,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: false
-        icon: "swap_horiz"
+        settingsTaskSection: "transition"
+        visible: root.activeSection === "transition"
+        expanded: true
         title: Translation.tr("Family Transition")
 
         SettingsGroup {

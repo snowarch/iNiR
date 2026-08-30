@@ -268,6 +268,38 @@ Singleton {
         return true
     }
 
+    function setGloballyEnabled(widgetKey, enabled): bool {
+        const path = root._basePath(widgetKey)
+        if (!path)
+            return false
+        Config.setNestedValue(path + ".enable", Boolean(enabled))
+        root.clearEnableOverrides()
+        return true
+    }
+
+    function clearEnableOverrides(): bool {
+        const list = root._normalizedRecords()
+        let changed = false
+        for (let i = 0; i < list.length; ++i) {
+            const widgets = list[i].widgets
+            for (const widgetKey of Object.keys(widgets)) {
+                const override = widgets[widgetKey]
+                if (!Object.prototype.hasOwnProperty.call(override, "enable"))
+                    continue
+                delete override.enable
+                changed = true
+                if (Object.keys(override).length === 0)
+                    delete widgets[widgetKey]
+            }
+        }
+        if (!changed)
+            return false
+        const next = list.filter(record => Object.keys(record.widgets).length > 0
+            || Number(record.layoutVersion ?? 0) > 0)
+        Config.setNestedValue("background.widgets.outputOverrides", next)
+        return true
+    }
+
     function clearOutput(outputName): bool {
         const output = root._outputName(outputName)
         if (!output)
@@ -278,6 +310,21 @@ Singleton {
             return false
         Config.setNestedValue("background.widgets.outputOverrides", next)
         return true
+    }
+
+    // Effective enable state across outputs: on if enabled on any saved output,
+    // otherwise resolved against the first connected output (or base when none saved).
+    function effectiveEnabled(widgetKey, fallback = false): bool {
+        const saved = root.savedOutputNames()
+        if (saved.length > 0) {
+            for (let i = 0; i < saved.length; ++i)
+                if (root.enabled(saved[i], widgetKey, fallback))
+                    return true
+            return false
+        }
+        const screens = Quickshell.screens
+        const name = String(screens[0]?.name ?? "")
+        return root.enabled(name, widgetKey, fallback)
     }
 
     function savedOutputNames(): list<string> {

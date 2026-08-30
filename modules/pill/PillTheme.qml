@@ -89,23 +89,13 @@ Singleton {
     readonly property color shadow: Qt.rgba(0, 0, 0, 0.55)
     readonly property real shadowOpacity: 0.5
 
-    /**
-     * Shared island skin. The Ricelin settings hub promises "One shared skin:
-     * these apply to every island surface at once", and IslandPanel honours it —
-     * but the pill body used to hardcode its own chrome, so a user who switched
-     * the lit edge or the shadow off still got both on the one surface the page
-     * is named after. These re-expose the same keys so every pill surface reads
-     * one place instead of each re-deriving Config.
-     *
-     * pillOpacity stays separate and composes with the skin: it predates this
-     * and is exposed on its own Bar settings row, so folding it in would
-     * silently change existing pills.
-     */
+    /** Shared Ricelin material. Pill and every Island surface read one owner. */
     readonly property real islandRadius: Config.options?.appearance?.island?.radius ?? 18
     readonly property bool islandShadow: Config.options?.appearance?.island?.shadow ?? true
     readonly property bool islandSheen: Config.options?.appearance?.island?.sheen ?? true
     readonly property bool islandGlass: Config.options?.appearance?.island?.glass ?? true
     readonly property real islandGlassBlur: Config.options?.appearance?.island?.glassBlur ?? 1
+    readonly property real islandOpacity: Config.options?.appearance?.island?.opacity ?? 1
 
     /**
      * Global-style character. Ricelin keeps its own deliberate radius ladder
@@ -123,7 +113,7 @@ Singleton {
     /** Open surfaces sit one step softer than the resting body, as upstream did. */
     readonly property real openCorner: Math.max(0, Math.round((islandRadius + 4) * cornerScale))
 
-    readonly property real pillOpacity: Config.options?.bar?.pill?.opacity ?? 1
+    readonly property real pillOpacity: islandOpacity
     readonly property bool showGlyphs: Config.options?.bar?.pill?.showGlyphs ?? true
     readonly property bool clockSeconds: Config.options?.bar?.pill?.clockSeconds ?? false
     readonly property bool time12h: Config.options?.bar?.pill?.time12h ?? false
@@ -140,7 +130,7 @@ Singleton {
         clock: "時", media: "奏", mediaPaused: "休", link: "繋", notify: "報",
         clear: "払", dnd: "静", sysmon: "系", glance: "今", clipboard: "掃",
         recorder: "録", power: "電", battery: "蓄", calendar: "暦", mixer: "調",
-        launcher: "探", clipboardSearch: "控", workspaces: "場"
+        launcher: "探", clipboardSearch: "控", workspaces: "場", settings: "設"
     })
     function glyph(key) {
         const o = Config.options?.bar?.pill?.glyphs?.[key];

@@ -2,7 +2,7 @@
 
 > A complete desktop shell built on [Quickshell](https://quickshell.org/) for the [Niri](https://github.com/YaLTeR/niri) Wayland compositor.
 
-**Version**: 2.29.1 · **Stack**: QML (Quickshell), Bash, Python, Go
+**Version**: 2.29.3 · **Stack**: QML (Quickshell), Bash, Python, Go
 
 Originally forked from [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland) (illogical-impulse). Secondary Hyprland support is maintained.
 
@@ -250,7 +250,7 @@ for the current maximum).
 inir run                    # Launch the shell
 inir restart                # Graceful restart
 inir logs | tail -50        # Check for errors
-inir status                 # Runtime health check
+inir status                 # Installation/repository diagnostic summary
 inir doctor                 # Auto-diagnose + fix
 inir settings               # Open settings GUI
 

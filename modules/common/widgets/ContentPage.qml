@@ -16,9 +16,10 @@ StyledFlickable {
     contentHeight: contentColumn.implicitHeight + root.bottomContentPadding
     implicitWidth: contentColumn.implicitWidth
 
-    // Settings content reads best as a centered column: cap the line length
-    // and center it instead of stretching cards across very wide containers.
-    readonly property real maxContentWidth: 880
+    // Fill the available width up to a generous cap so normal-sized hosts
+    // (overlay card, focus panel, settings window) don't leave dead side
+    // margins; beyond the cap, center instead of stretching indefinitely.
+    readonly property real maxContentWidth: Math.min(1200, Math.max(880, root.width - 64))
     readonly property real _horizontalMargin: {
         const w = root.width
         if (w > maxContentWidth + 64) return (w - maxContentWidth) / 2

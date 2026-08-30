@@ -128,7 +128,7 @@ Button {
         
         Behavior on color {
             enabled: root.animateStateChanges
-            animation: ColorAnimation { duration: Looks.transition.enabled ? 70 : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
+            animation: ColorAnimation { duration: Looks.transition.enabled ? Looks.transition.duration.ultraFast : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
         }
         Behavior on scale {
             NumberAnimation {
@@ -172,16 +172,22 @@ Button {
                 rightMargin: root.horizontalPadding
             }
             spacing: 12
-            FluentIcon {
-                id: buttonIcon
-                monochrome: true
-                implicitSize: 18
+            Item {
                 Layout.leftMargin: root.iconLeftMargin
                 Layout.fillWidth: false
                 Layout.alignment: Qt.AlignVCenter
-                icon: root.icon.name
-                color: root.fgColor
                 visible: root.icon.name !== ""
+                implicitWidth: 18
+                implicitHeight: implicitWidth
+
+                FluentIcon {
+                    id: buttonIcon
+                    anchors.centerIn: parent
+                    monochrome: true
+                    implicitSize: 18
+                    icon: root.icon.name
+                    color: root.fgColor
+                }
             }
             WText {
                 id: buttonText

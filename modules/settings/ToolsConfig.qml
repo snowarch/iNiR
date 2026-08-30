@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import QtQuick.Dialogs
 import Quickshell
 import Quickshell.Io
 import qs.services
@@ -11,6 +12,23 @@ ContentPage {
     id: root
     settingsPageIndex: 6
     settingsPageName: Translation.tr("Tools")
+    property string activeSection: "recording"
+
+    SettingsTaskNavigator {
+        icon: "build"
+        title: Translation.tr("Tools")
+        description: Translation.tr("Open only the tool you are configuring; capture, selection and overlay controls no longer share one long settings stack.")
+        summary: Translation.tr("Recording · snipping · crosshair · Discord · OSD")
+        currentValue: root.activeSection
+        onSelected: value => root.activeSection = value
+        options: [
+            { displayName: Translation.tr("Recording"), icon: "screen_record", value: "recording" },
+            { displayName: Translation.tr("Snipping"), icon: "screenshot_frame_2", value: "snipping" },
+            { displayName: Translation.tr("Crosshair"), icon: "point_scan", value: "crosshair" },
+            { displayName: Translation.tr("Discord"), icon: "forum", value: "discord" },
+            { displayName: Translation.tr("OSD"), icon: "voting_chip", value: "osd" }
+        ]
+    }
 
     property bool recordingCapabilitiesLoaded: false
     property var detectedVideoCodecs: []
@@ -20,8 +38,14 @@ ContentPage {
     property string detectedDefaultSink: ""
     property string detectedDefaultSource: ""
     property bool audioMixAvailable: false
+    property string captureFolderTarget: "recordings"
 
     readonly property string recordingAudioMode: RecorderStatus.configuredAudioMode
+    readonly property string effectiveRecordingPath: {
+        const configured = Config.options?.screenRecord?.savePath ?? ""
+        return configured.length > 0 ? configured : Directories.videosPath
+    }
+    readonly property string effectiveScreenshotPath: Directories.screenshotsPath
     readonly property string detectedDefaultAudioSource: detectedDefaultSink.length > 0 ? `${detectedDefaultSink}.monitor` : ""
     readonly property var recordingAudioModeOptions: [
         { value: "none", displayName: Translation.tr("No audio") },
@@ -29,6 +53,30 @@ ContentPage {
         { value: "microphone", displayName: Translation.tr("Microphone") },
         { value: "both", displayName: Translation.tr("System + microphone") }
     ]
+
+    function openCaptureFolderDialog(target: string): void {
+        root.captureFolderTarget = target
+        captureFolderDialog.open()
+    }
+
+    FolderDialog {
+        id: captureFolderDialog
+        title: root.captureFolderTarget === "screenshots"
+            ? Translation.tr("Select screenshots folder")
+            : Translation.tr("Select recordings folder")
+        currentFolder: `file://${root.captureFolderTarget === "screenshots"
+            ? root.effectiveScreenshotPath : root.effectiveRecordingPath}`
+        onAccepted: {
+            const path = FileUtils.trimFileProtocol(String(selectedFolder))
+            Config.setNestedValue(root.captureFolderTarget === "screenshots"
+                ? "regionSelector.savePath" : "screenRecord.savePath", path)
+        }
+    }
+
+    SettingsNativeDialogGuard {
+        dialog: captureFolderDialog
+        dialogKey: "tools-capture-folder"
+    }
     readonly property bool vaapiRecordingAvailable: detectedVideoCodecs.some(codec => String(codec).indexOf("_vaapi") !== -1)
     readonly property bool nvencRecordingAvailable: detectedVideoCodecs.some(codec => String(codec).indexOf("_nvenc") !== -1)
     readonly property bool gpuRecordingAvailable: vaapiRecordingAvailable || nvencRecordingAvailable
@@ -322,7 +370,9 @@ ContentPage {
 
     SettingsCardSection {
         id: screenRecordSection
-        expanded: false
+        settingsTaskSection: "recording"
+        visible: root.activeSection === "recording"
+        expanded: true
         icon: "screen_record"
         title: Translation.tr("Screen recording")
 
@@ -369,6 +419,36 @@ ContentPage {
                     : gpuRecordingAvailable
                         ? Translation.tr("GPU recording available. Hardware acceleration will be used when possible.")
                         : Translation.tr("No GPU encoder detected. Software recording will be used.")
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Recording folder")
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Directories.shortHomePath(root.effectiveRecordingPath)
+                    color: Appearance.colors.colOnLayer1
+                    elide: Text.ElideMiddle
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Appearance.sizes.spacingSmall
+
+                    RippleButtonWithIcon {
+                        Layout.fillWidth: true
+                        materialIcon: "folder_open"
+                        mainText: Translation.tr("Open folder")
+                        onClicked: ShellExec.openDirectory(root.effectiveRecordingPath, Translation.tr("Open recordings folder"))
+                    }
+
+                    RippleButtonWithIcon {
+                        Layout.fillWidth: true
+                        materialIcon: "drive_file_move"
+                        mainText: Translation.tr("Change folder")
+                        onClicked: root.openCaptureFolderDialog("recordings")
+                    }
+                }
             }
 
             ConfigRow {
@@ -665,7 +745,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "snipping"
+        visible: root.activeSection === "snipping"
+        expanded: true
         icon: "screenshot_frame_2"
         title: Translation.tr("Region selector (screen snipping/Google Lens)")
 
@@ -680,6 +762,36 @@ ContentPage {
                     onCheckedChanged: Config.setNestedValue("regionSelector.rememberSnipChoice", checked)
                     StyledToolTip {
                         text: Translation.tr("The unified snip menu reopens with the action and shape last picked in its toolbar. Dedicated screenshot, OCR and visual-search shortcuts always keep their explicit action. Recording is never remembered. When off, the menu opens as a rectangle screenshot.")
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Screenshots folder")
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Directories.shortHomePath(root.effectiveScreenshotPath)
+                    color: Appearance.colors.colOnLayer1
+                    elide: Text.ElideMiddle
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Appearance.sizes.spacingSmall
+
+                    RippleButtonWithIcon {
+                        Layout.fillWidth: true
+                        materialIcon: "folder_open"
+                        mainText: Translation.tr("Open folder")
+                        onClicked: ShellExec.openDirectory(root.effectiveScreenshotPath, Translation.tr("Open screenshots folder"))
+                    }
+
+                    RippleButtonWithIcon {
+                        Layout.fillWidth: true
+                        materialIcon: "drive_file_move"
+                        mainText: Translation.tr("Change folder")
+                        onClicked: root.openCaptureFolderDialog("screenshots")
                     }
                 }
             }
@@ -839,7 +951,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "crosshair"
+        visible: root.activeSection === "crosshair"
+        expanded: true
         icon: "point_scan"
         title: Translation.tr("Crosshair overlay")
 
@@ -857,8 +971,8 @@ ContentPage {
             RowLayout {
                 StyledText {
                     Layout.leftMargin: 10
-                    color: Appearance.colors.colSubtext
-                    font.pixelSize: Appearance.font.pixelSize.smallie
+                    color: Appearance.colors.colOnLayer1
+                    font.pixelSize: Appearance.font.pixelSize.small
                     text: Translation.tr("Floating tools (Super+G)")
                 }
                 Item {
@@ -881,7 +995,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "discord"
+        visible: root.activeSection === "discord"
+        expanded: true
         icon: "forum"
         title: Translation.tr("Overlay: Discord")
 
@@ -899,7 +1015,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "osd"
+        visible: root.activeSection === "osd"
+        expanded: true
         icon: "voting_chip"
         title: Translation.tr("On-screen display")
 
@@ -912,7 +1030,7 @@ ContentPage {
                     Config.setNestedValue("osd.mediaEnabled", checked);
                 }
                 StyledToolTip {
-                    text: Translation.tr("Show now playing feedback when media shortcuts are pressed")
+                    text: Translation.tr("Show feedback for explicit media controls and Pill track changes. During games, explicit skips stay visible while automatic track progression stays hidden.")
                 }
             }
 

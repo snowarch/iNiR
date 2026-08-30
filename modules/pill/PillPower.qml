@@ -95,7 +95,7 @@ PillSurface {
                 text: Translation.tr("POWER")
                 color: PillTheme.subtle
                 font.family: PillTheme.font
-                font.pixelSize: 10 * root.s
+                font.pixelSize: 11.5 * root.s
                 font.weight: Font.DemiBold
                 font.capitalization: Font.AllUppercase
                 font.letterSpacing: 1.6 * root.s

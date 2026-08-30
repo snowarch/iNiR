@@ -29,16 +29,18 @@ Scope {
      */
     property bool wantOpen: false
     property real anchorX: 0
+    property real anchorY: 0
     property int expandedIdx: -1
 
     readonly property bool shown: wantOpen
 
-    function open(item, anchorX) {
+    function open(item, anchorX, anchorY) {
         if (!item || !item.hasMenu)
             return;
         root.expandedIdx = -1;
         opener.menu = item.menu;
         root.anchorX = anchorX;
+        root.anchorY = anchorY;
         root.wantOpen = true;
     }
 
@@ -71,7 +73,7 @@ Scope {
         readonly property bool isSeparator: mrow.entryData?.isSeparator ?? false
         readonly property bool isEnabled: mrow.entryData?.enabled ?? false
 
-        height: mrow.isSeparator ? 9 * root.s : 32 * root.s
+        height: mrow.isSeparator ? Math.round(9 * root.s) : Math.round(32 * root.s)
 
         Rectangle {
             visible: mrow.isSeparator
@@ -157,7 +159,7 @@ Scope {
                 text: mrow.entryData?.text ?? ""
                 color: mrow.isEnabled ? PillTheme.creamMenu : PillTheme.faint
                 font.family: PillTheme.font
-                font.pixelSize: 12 * root.s
+                font.pixelSize: Math.round(12 * root.s)
                 elide: Text.ElideRight
             }
 
@@ -218,9 +220,11 @@ Scope {
             Rectangle {
                 id: card
 
-                /** Whole pixels: a card on a half pixel renders its labels blurred. */
+                /** Anchor just below the tray icon that opened the menu, whole
+                 * pixels to keep labels sharp; clamped inside the screen. */
                 x: Math.round(Math.max(8 * root.s, Math.min(root.anchorX - width / 2, menu.width - width - 8 * root.s)))
-                y: Math.round(50 * root.s)
+                y: Math.round(Math.max(8 * root.s, Math.min(
+                    root.anchorY + 8 * root.s, menu.height - height - 8 * root.s)))
                 width: Math.round(220 * root.s)
                 radius: 12 * root.s
                 clip: true

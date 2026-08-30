@@ -9,7 +9,9 @@ AndroidQuickToggleButton {
     id: root
 
     toggled: VoiceSearch.running
-    enabled: VoiceSearch.hasApiKey
+    // Must stay clickable in edit mode even without an API key, otherwise
+    // the toggle can never be unpinned.
+    enabled: root.editMode || VoiceSearch.hasApiKey
 
     name: Translation.tr("Voice Search")
     statusText: {

@@ -291,17 +291,32 @@ Singleton {
         })
     }
 
-    // Pending notifications held for an app. Counts the stored history, so it
-    // clears when the user dismisses that app's notifications.
+    // Unread notifications held for an app. Counts only popup (unread)
+    // notifications, so the dock badge clears when the popup expires or
+    // when the user activates the app via markReadForApp.
     function countForApp(identifiers): int {
         const keys = (identifiers ?? []).map(root._normalizeAppKey).filter(k => k.length > 0)
         if (keys.length === 0) return 0
-        const groups = root.groupsByAppName
+        const groups = root.popupGroupsByAppName
         for (const appName in groups) {
             if (keys.indexOf(root._normalizeAppKey(appName)) !== -1)
                 return groups[appName].notifications?.length ?? 0
         }
         return 0
+    }
+
+    function markReadForApp(identifiers) {
+        const keys = (identifiers ?? []).map(root._normalizeAppKey).filter(k => k.length > 0)
+        if (keys.length === 0) return
+        let changed = false
+        root.list.forEach((notif) => {
+            if (notif.popup && keys.indexOf(root._normalizeAppKey(notif.appName)) !== -1) {
+                cancelTimeout(notif.notificationId)
+                notif.popup = false
+                changed = true
+            }
+        })
+        if (changed) triggerListChange()
     }
 
     // Public API - use cached values

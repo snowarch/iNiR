@@ -143,10 +143,10 @@ Scope {
     }
     
     Component.onCompleted: {
-        // Initialize cache
-        if (Config.ready) {
+        // Initialize cache.
+        if (Config.ready)
             root._cachedUseWaffleLock = Config.options?.panelFamily === "waffle"
-        }
+        root.initIfReady()
     }
     
     Component {
@@ -359,19 +359,27 @@ Scope {
     }
 
     function initIfReady() {
-        if (!Config.ready || !Persistent.ready) return;
-        if ((Config.options?.lock?.launchOnStartup ?? false) && Persistent.isNewHyprlandInstance) {
-            // Launch lock screen on startup
-            if (CompositorService.isHyprland) {
-                Hyprland.dispatch("global quickshell:lock")
-            } else {
-                if (!GlobalStates.screenLocked && !root._lockActivating)
-                    lockActivateDelay.restart();
+        if (!Config.ready || !Persistent.ready || GlobalStates.startupLockDone)
+            return;
+
+        // This is session startup state, not compositor-instance state. The Lock
+        // component is loaded asynchronously, so Config/Persistent may already
+        // be ready before its Connections exist; Component.onCompleted below
+        // mirrors the current state and this singleton guard prevents hot-reload
+        // from locking again.
+        GlobalStates.startupLockDone = true;
+
+        if (Config.options?.lock?.launchOnStartup ?? false) {
+            if (Config.options?.lock?.useHyprlock ?? false) {
+                Quickshell.execDetached(["/usr/bin/bash", "-lc", "/usr/bin/pidof hyprlock || /usr/bin/hyprlock"]);
+            } else if (!GlobalStates.screenLocked && !root._lockActivating) {
+                lockActivateDelay.restart();
             }
         } else {
             KeyringStorage.fetchKeyringData();
         }
     }
+
     Connections {
         target: Config
         function onReadyChanged() {

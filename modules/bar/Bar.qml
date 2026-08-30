@@ -67,6 +67,7 @@ Scope {
                 readonly property real panelSurfaceHeight: zzzDetachedRounded
                     ? (Appearance.sizes.baseBarHeight + Appearance.sizes.elevationMargin * 2)
                     : Appearance.sizes.barHeight
+                readonly property real islandShadowAllowance: barContent.islandShadowAllowance
                 // Hug corners belong to the classic bar surface. Islands, scenic,
                 // frame and pill draw their own, so the decorators must go with it.
                 readonly property bool hugCorners: bar.showBarBackground
@@ -116,6 +117,7 @@ Scope {
                     barRoot.panelSurfaceHeight
                 WlrLayershell.namespace: "quickshell:bar"
                 implicitHeight: barRoot.panelSurfaceHeight + barRoot.roundDecoratorAllowance
+                    + barRoot.islandShadowAllowance
                 // Explicit zero-size item prevents ambiguous null input region during
                 // surface map/unmap transitions. Region { item: null } can be interpreted
                 // as "full surface accepts input" by the compositor, causing an invisible
@@ -202,7 +204,7 @@ Scope {
                             left: parent.left
                             top: parent.top
                             bottom: undefined
-                            topMargin: ((Config?.options.bar.autoHide.enable && !mustShow) || GlobalStates.coverflowSelectorOpen || !GlobalStates.shellEntryReady) ? -barRoot.panelSurfaceHeight : 0
+                            topMargin: ((Config?.options.bar.autoHide.enable && !mustShow) || GlobalStates.coverflowSelectorOpen || !GlobalStates.shellEntryReady) ? -(barRoot.panelSurfaceHeight + barRoot.islandShadowAllowance) : 0
                             bottomMargin: barRoot.bottomDeadPixelWorkaround ? -1 : 0
                             rightMargin: barRoot.rightDeadPixelWorkaround ? -1 : 0
                         }
@@ -230,7 +232,7 @@ Scope {
                             PropertyChanges {
                                 target: barContent
                                 anchors.topMargin: 0
-                                anchors.bottomMargin: ((Config?.options.bar.autoHide.enable && !mustShow) || GlobalStates.coverflowSelectorOpen || !GlobalStates.shellEntryReady) ? -barRoot.panelSurfaceHeight : 0
+                                anchors.bottomMargin: ((Config?.options.bar.autoHide.enable && !mustShow) || GlobalStates.coverflowSelectorOpen || !GlobalStates.shellEntryReady) ? -(barRoot.panelSurfaceHeight + barRoot.islandShadowAllowance) : 0
                             }
                         }
                     }

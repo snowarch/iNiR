@@ -215,6 +215,34 @@ Singleton {
         Quickshell.execDetached([root.bashPath, "-lc", script, "inir-scope", root.systemdRunPath, desc, workDir, ...argv])
     }
 
+    function openDirectory(path: string, description: string): void {
+        const target = String(path ?? "").trim()
+        if (target.length === 0) return
+
+        const script = `
+            target="$1"
+            desktop_id="$(xdg-mime query default inode/directory 2>/dev/null || true)"
+            case "$desktop_id" in
+                ""|kitty-open*|*terminal*|foot*|alacritty*|konsole*|xterm*|wezterm*)
+                    desktop_id=""
+                    for candidate in org.gnome.Nautilus org.kde.dolphin thunar nemo pcmanfm-qt; do
+                        if [ -f "/usr/share/applications/$candidate.desktop" ]; then
+                            desktop_id="$candidate"
+                            break
+                        fi
+                    done
+                    ;;
+                *) desktop_id="\${desktop_id%.desktop}" ;;
+            esac
+
+            if [ -n "$desktop_id" ] && command -v gtk-launch >/dev/null 2>&1; then
+                exec gtk-launch "$desktop_id" "$target"
+            fi
+            exec xdg-open "$target"
+        `
+        root.execDetachedArgs([root.bashPath, "-lc", script, "inir-open-directory", target], description)
+    }
+
     function execCmd(cmd: string, workingDirectory = ""): void {
         const c = String(cmd ?? "").trim()
         if (c.length === 0) return

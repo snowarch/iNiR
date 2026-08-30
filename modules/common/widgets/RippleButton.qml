@@ -19,13 +19,16 @@ Button {
     property string buttonText
     property bool pointingHandCursor: true
     property real buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+        : Appearance.regaliaEverywhere ? Appearance.regalia.controlRadius
         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : (Appearance?.rounding?.small ?? 4)
     property real buttonRadiusPressed: buttonRadius
     property real buttonEffectiveRadius: root.down ? root.buttonRadiusPressed : root.buttonRadius
-    property int rippleDuration: Appearance.cookieEverywhere ? Appearance.animation.elementMoveFast.duration
+    property int rippleDuration: Appearance.regaliaEverywhere ? Appearance.regalia.pressDuration
+        : Appearance.cookieEverywhere ? Appearance.animation.elementMoveFast.duration
         : Appearance.zzzEverywhere ? Appearance.zzz.overshootDuration : 1200
-    property bool rippleEnabled: true
+    // Regalia uses material compression + metal edge feedback, not a Material ripple.
+    property bool rippleEnabled: !Appearance.regaliaEverywhere
     // Expensive organic morph is explicit. Generic buttons remain familiar
     // pills; compact semantic controls can opt in and keep one persistent face.
     property bool cookieMorphing: false
@@ -49,12 +52,14 @@ Button {
     property int pointerDragThreshold: 10
     readonly property bool pointerDragActive: buttonMouseArea.drag.active
 
-    property color colBackground: Appearance.zzzEverywhere ? "transparent"
+    property color colBackground: Appearance.regaliaEverywhere ? Appearance.regalia.controlPlate
+        : Appearance.zzzEverywhere ? "transparent"
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : "transparent"
-    property color colBackgroundHover: Appearance.colLayer1Hover
-    property color colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colPrimary
-    property color colBackgroundToggledHover: Appearance.colors.colPrimaryHover
+    property color colBackgroundHover: Appearance.regaliaEverywhere ? Appearance.regalia.controlPlateHover : Appearance.colLayer1Hover
+    property color colBackgroundToggled: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlate
+        : Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colPrimary
+    property color colBackgroundToggledHover: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateHover : Appearance.colors.colPrimaryHover
     property color colRipple: Appearance.colLayer1Active
     property color colRippleToggled: Appearance.colors.colPrimaryActive
 
@@ -196,16 +201,16 @@ Button {
 
     background: Rectangle {
         id: buttonBackground
-        implicitHeight: 30
+        implicitHeight: Appearance.regaliaEverywhere ? Appearance.regalia.compactControlHeight : 30
 
-        color: Appearance.cookieEverywhere && root.cookieMorphing ? "transparent" : root.buttonColor
+        color: (Appearance.cookieEverywhere && root.cookieMorphing) || Appearance.regaliaEverywhere
+            ? "transparent" : root.buttonColor
         radius: Appearance.cookieEverywhere ? root._cookieRadius : root.buttonEffectiveRadius
         // Cookie has no rectangular chrome: a pill focus ring fights the organic
         // silhouette. cookieMorphing surfaces still show focus through CookieFace.
-        border.width: Appearance.cookieEverywhere ? 0
+        border.width: Appearance.cookieEverywhere || Appearance.regaliaEverywhere ? 0
             : (Appearance.angelEverywhere ? 1 : 0)
-        border.color: Appearance.cookieEverywhere ? "transparent"
-            : Appearance.angelEverywhere
+        border.color: Appearance.angelEverywhere
             ? (root.buttonHovered ? Appearance.angel.colBorderHover : "transparent")
             : "transparent"
         Behavior on border.color {
@@ -219,11 +224,13 @@ Button {
         readonly property real _pressScale: {
             const w = Math.max(width, 1);
             const h = Math.max(height, 1);
+            if (Appearance.regaliaEverywhere)
+                return Appearance.regalia.pressScale;
             const inset = Appearance.cookieEverywhere ? 3 : 2;
             return Math.max(0.94, Math.min(0.995,
                 1 - inset / Math.max(w, h)));
         }
-        scale: root.down && root.enabled ? _pressScale : 1
+        scale: root.down && root.enabled && !Appearance.regaliaEverywhere ? _pressScale : 1
         Behavior on scale {
             enabled: Appearance.animationsEnabled
             NumberAnimation {
@@ -231,6 +238,15 @@ Button {
                 easing.type: Appearance.animation.elementMoveFast.type
                 easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
             }
+        }
+
+        RegaliaControlFace {
+            anchors.fill: parent
+            visible: Appearance.regaliaEverywhere
+            fillColor: root.buttonColor
+            radius: root.buttonEffectiveRadius
+            selected: root.toggled
+            focused: root.visualFocus
         }
 
         Loader {
@@ -306,8 +322,10 @@ Button {
 
     contentItem: StyledText {
         text: root.buttonText
-        color: Appearance.zzzEverywhere
-            ? (root.toggled ? Appearance.zzz.onSticker : Appearance.zzz.onColor)
-            : Appearance.colors.colOnLayer0
+        color: Appearance.regaliaEverywhere
+            ? (root.toggled ? Appearance.regalia.primaryPlateInk : Appearance.regalia.onColor)
+            : Appearance.zzzEverywhere
+                ? (root.toggled ? Appearance.zzz.onSticker : Appearance.zzz.onColor)
+                : Appearance.colors.colOnLayer0
     }
 }

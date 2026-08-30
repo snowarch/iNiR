@@ -15,8 +15,8 @@
 # - This script never starts/opens Spotify itself.
 #
 # Reads: app-palette.json first, then palette.json/colors.json fallback
-# Writes: ~/.config/spicetify/Themes/Inir/color.ini
-#         ~/.config/spicetify/Themes/Inir/user.css  (bridge block only)
+# Writes: ~/.config/spicetify/Themes/Inir/{color.ini,user.css}
+#         ~/.config/spicetify/Themes/InirTUI/{color.ini,user.css}
 
 set -euo pipefail
 
@@ -31,11 +31,27 @@ COLORS_JSON="$STATE_DIR/user/generated/colors.json"
 LOG_FILE="$STATE_DIR/user/generated/spicetify_theme.log"
 
 THEME_NAME="Inir"
+TUI_THEME_NAME="InirTUI"
 SCHEME_NAME="matugen"
 SLEEK_CSS_URL="https://raw.githubusercontent.com/spicetify/spicetify-themes/master/Sleek/user.css"
+TEXT_CSS_URL="https://raw.githubusercontent.com/spicetify/spicetify-themes/master/text/user.css"
+REQUESTED_THEME=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --theme)
+      REQUESTED_THEME="${2:-}"
+      shift 2
+      ;;
+    *)
+      shift
+      ;;
+  esac
+done
 
 # Global associative array for colors
 declare -A COLORS
+declare -A SPICE_COLORS
 
 # ─── Setup directories and logging ─────────────────────────────────────────────
 
@@ -209,30 +225,66 @@ read_colors() {
   COLORS[shadow]=$(jq -r '.shadow // "#000000"' "$color_source")
 }
 
+derive_spicetify_colors() {
+  SPICE_COLORS[text]="${COLORS[on_surface]}"
+  SPICE_COLORS[subtext]="${COLORS[on_surface_variant]}"
+  SPICE_COLORS[main]="${COLORS[surface]}"
+  SPICE_COLORS[sidebar]="${COLORS[surface_container_low]}"
+  SPICE_COLORS[player]="${COLORS[surface_container]}"
+  SPICE_COLORS[card]="${COLORS[surface_container_high]}"
+  SPICE_COLORS[popup]="${COLORS[surface_container_highest]}"
+  SPICE_COLORS[selection_hover]="${COLORS[secondary_container]}"
+  SPICE_COLORS[accent]="${COLORS[primary]}"
+  SPICE_COLORS[disabled]="${COLORS[outline_variant]}"
+  SPICE_COLORS[border]="${COLORS[outline]}"
+  SPICE_COLORS[notification]="${COLORS[tertiary]}"
+  SPICE_COLORS[error]="${COLORS[error]}"
+  SPICE_COLORS[shadow]="${COLORS[shadow]}"
+}
+
 # ─── Theme generation ───────────────────────────────────────────────────────────
 
 generate_color_ini() {
   local color_file="$1"
 
-  # COLORS array is now populated by configure_spicetify before this is called
+  cat > "$color_file" << EOF
+[${SCHEME_NAME}]
+text               = $(strip_hash "${SPICE_COLORS[text]}")
+subtext            = $(strip_hash "${SPICE_COLORS[subtext]}")
+main               = $(strip_hash "${SPICE_COLORS[main]}")
+sidebar            = $(strip_hash "${SPICE_COLORS[sidebar]}")
+player             = $(strip_hash "${SPICE_COLORS[player]}")
+card               = $(strip_hash "${SPICE_COLORS[card]}")
+shadow             = $(strip_hash "${SPICE_COLORS[shadow]}")
+selected-row       = $(strip_hash "${SPICE_COLORS[subtext]}")
+button             = $(strip_hash "${SPICE_COLORS[accent]}")
+button-active      = $(strip_hash "${SPICE_COLORS[selection_hover]}")
+button-disabled    = $(strip_hash "${SPICE_COLORS[disabled]}")
+tab-active         = $(strip_hash "${SPICE_COLORS[popup]}")
+notification       = $(strip_hash "${SPICE_COLORS[notification]}")
+notification-error = $(strip_hash "${SPICE_COLORS[error]}")
+misc               = $(strip_hash "${SPICE_COLORS[border]}")
+EOF
+}
+
+generate_tui_color_ini() {
+  local color_file="$1"
 
   cat > "$color_file" << EOF
 [${SCHEME_NAME}]
-text               = $(strip_hash "${COLORS[on_surface]}")
-subtext            = $(strip_hash "${COLORS[on_surface_variant]}")
-main               = $(strip_hash "${COLORS[surface]}")
-sidebar            = $(strip_hash "${COLORS[surface_container_low]}")
-player             = $(strip_hash "${COLORS[surface_container]}")
-card               = $(strip_hash "${COLORS[surface_container_high]}")
-shadow             = $(strip_hash "${COLORS[shadow]}")
-selected-row       = $(strip_hash "${COLORS[on_surface_variant]}")
-button             = $(strip_hash "${COLORS[primary]}")
-button-active      = $(strip_hash "${COLORS[secondary_container]}")
-button-disabled    = $(strip_hash "${COLORS[outline_variant]}")
-tab-active         = $(strip_hash "${COLORS[surface_container_highest]}")
-notification       = $(strip_hash "${COLORS[tertiary]}")
-notification-error = $(strip_hash "${COLORS[error]}")
-misc               = $(strip_hash "${COLORS[outline]}")
+accent             = $(strip_hash "${SPICE_COLORS[accent]}")
+accent-active      = $(strip_hash "${SPICE_COLORS[accent]}")
+accent-inactive    = $(strip_hash "${SPICE_COLORS[disabled]}")
+banner             = $(strip_hash "${SPICE_COLORS[accent]}")
+border-active      = $(strip_hash "${SPICE_COLORS[accent]}")
+border-inactive    = $(strip_hash "${SPICE_COLORS[border]}")
+header             = $(strip_hash "${SPICE_COLORS[subtext]}")
+highlight          = $(strip_hash "${SPICE_COLORS[card]}")
+main               = $(strip_hash "${SPICE_COLORS[main]}")
+notification       = $(strip_hash "${SPICE_COLORS[notification]}")
+notification-error = $(strip_hash "${SPICE_COLORS[error]}")
+subtext            = $(strip_hash "${SPICE_COLORS[subtext]}")
+text               = $(strip_hash "${SPICE_COLORS[text]}")
 EOF
 }
 
@@ -417,6 +469,142 @@ download_sleek_css() {
   fi
 }
 
+download_text_css() {
+  local css_file="$1"
+  # Older iNiR TUI revisions appended the Sleek palette bridge to text. Refresh
+  # those files once from upstream so the text theme owns its complete CSS again.
+  if [[ ! -f "$css_file" ]] || grep -q 'iNiR CSS variable bridge' "$css_file"; then
+    log "Downloading current text theme CSS..."
+    if curl -L --fail --create-dirs -o "$css_file" "$TEXT_CSS_URL" 2>/dev/null; then
+      log "Downloaded current text base CSS"
+    else
+      log "Warning: Failed to download text base CSS"
+      return 1
+    fi
+  fi
+}
+
+regenerate_tui_color_bridge() {
+  local css_file="$1"
+  [[ -f "$css_file" ]] || return 0
+
+  local color_block
+  color_block="/* === iNiR TUI color bridge - auto-generated === */
+:root {
+  --spice-accent:             #$(strip_hash "${SPICE_COLORS[accent]}");
+  --spice-accent-active:      #$(strip_hash "${SPICE_COLORS[accent]}");
+  --spice-accent-inactive:    #$(strip_hash "${SPICE_COLORS[disabled]}");
+  --spice-banner:             #$(strip_hash "${SPICE_COLORS[accent]}");
+  --spice-border-active:      #$(strip_hash "${SPICE_COLORS[accent]}");
+  --spice-border-inactive:    #$(strip_hash "${SPICE_COLORS[border]}");
+  --spice-header:             #$(strip_hash "${SPICE_COLORS[subtext]}");
+  --spice-highlight:          #$(strip_hash "${SPICE_COLORS[card]}");
+  --spice-main:               #$(strip_hash "${SPICE_COLORS[main]}");
+  --spice-notification:       #$(strip_hash "${SPICE_COLORS[notification]}");
+  --spice-notification-error: #$(strip_hash "${SPICE_COLORS[error]}");
+  --spice-subtext:            #$(strip_hash "${SPICE_COLORS[subtext]}");
+  --spice-text:               #$(strip_hash "${SPICE_COLORS[text]}");
+
+  --spice-rgb-accent:             $(hex_to_rgb "${SPICE_COLORS[accent]}");
+  --spice-rgb-accent-active:      $(hex_to_rgb "${SPICE_COLORS[accent]}");
+  --spice-rgb-accent-inactive:    $(hex_to_rgb "${SPICE_COLORS[disabled]}");
+  --spice-rgb-banner:             $(hex_to_rgb "${SPICE_COLORS[accent]}");
+  --spice-rgb-border-active:      $(hex_to_rgb "${SPICE_COLORS[accent]}");
+  --spice-rgb-border-inactive:    $(hex_to_rgb "${SPICE_COLORS[border]}");
+  --spice-rgb-header:             $(hex_to_rgb "${SPICE_COLORS[subtext]}");
+  --spice-rgb-highlight:          $(hex_to_rgb "${SPICE_COLORS[card]}");
+  --spice-rgb-main:               $(hex_to_rgb "${SPICE_COLORS[main]}");
+  --spice-rgb-notification:       $(hex_to_rgb "${SPICE_COLORS[notification]}");
+  --spice-rgb-notification-error: $(hex_to_rgb "${SPICE_COLORS[error]}");
+  --spice-rgb-subtext:            $(hex_to_rgb "${SPICE_COLORS[subtext]}");
+  --spice-rgb-text:               $(hex_to_rgb "${SPICE_COLORS[text]}");
+}
+/* === end iNiR TUI color bridge === */"
+
+  python3 - "$css_file" "$color_block" <<'PYEOF'
+import pathlib, re, sys
+
+css_path = pathlib.Path(sys.argv[1])
+new_block = sys.argv[2]
+content = css_path.read_text()
+pattern = re.compile(
+    r'/\* === iNiR TUI color bridge - auto-generated === \*/.*?/\* === end iNiR TUI color bridge === \*/\n?',
+    re.DOTALL,
+)
+content = pattern.sub('', content).rstrip()
+content += '\n\n' + new_block + '\n'
+css_path.write_text(content)
+PYEOF
+
+  log "TUI color bridge regenerated from current palette"
+}
+
+regenerate_tui_overrides() {
+  local css_file="$1"
+  [[ -f "$css_file" ]] || return 0
+
+  # Keep upstream text responsible for layout. iNiR supplies the local font and
+  # raises playback control contrast so generated palettes remain readable.
+  local tui_block
+  tui_block="/* === iNiR TUI overrides - auto-generated === */
+:root {
+  --font-family: 'JetBrainsMono Nerd Font', 'JetBrains Mono', monospace;
+}
+
+.player-controls__buttons,
+.main-nowPlayingBar-extraControls {
+  opacity: 0.68;
+}
+
+.player-controls__buttons:hover,
+.player-controls__buttons:focus-within,
+.main-nowPlayingBar-extraControls:hover,
+.main-nowPlayingBar-extraControls:focus-within {
+  opacity: 1;
+}
+
+.main-playPauseButton-button,
+button[data-testid='control-button-playpause'] > span,
+.main-nowPlayingBar-extraControls button,
+.main-connectToDevice-button {
+  color: var(--spice-subtext) !important;
+}
+
+.main-playPauseButton-button:hover,
+.main-playPauseButton-button:focus,
+button[data-testid='control-button-playpause']:hover > span,
+.main-nowPlayingBar-extraControls button:hover,
+.main-nowPlayingBar-extraControls button:focus-visible,
+.main-connectToDevice-button:hover,
+.main-connectToDevice-button:focus-visible {
+  color: var(--spice-text) !important;
+}
+
+button[data-testid='control-button-shuffle'][aria-checked='true'],
+button[data-testid='control-button-repeat'][aria-checked='true'],
+button[data-testid='control-button-repeat'][aria-checked='mixed'] {
+  color: var(--spice-accent-active) !important;
+}
+/* === end iNiR TUI overrides === */"
+
+  python3 - "$css_file" "$tui_block" <<'PYEOF'
+import pathlib, re, sys
+
+css_path = pathlib.Path(sys.argv[1])
+new_block = sys.argv[2]
+content = css_path.read_text()
+pattern = re.compile(
+    r'/\* === iNiR TUI overrides - auto-generated === \*/.*?/\* === end iNiR TUI overrides === \*/\n?',
+    re.DOTALL,
+)
+content = pattern.sub('', content).rstrip()
+content += '\n\n' + new_block + '\n'
+css_path.write_text(content)
+PYEOF
+
+  log "TUI overrides regenerated"
+}
+
 # ─── Spicetify operations ──────────────────────────────────────────────────────
 
 CDP_PORT=8976
@@ -444,13 +632,18 @@ ensure_spotify_desktop_override() {
 
 configure_spicetify() {
   local theme_dir="$1"
+  local tui_theme_dir="$2"
+  local active_theme="$3"
   local color_file="$theme_dir/color.ini"
   local user_css="$theme_dir/user.css"
+  local tui_color_file="$tui_theme_dir/color.ini"
+  local tui_user_css="$tui_theme_dir/user.css"
 
-  mkdir -p "$theme_dir" 2>/dev/null || return 1
+  mkdir -p "$theme_dir" "$tui_theme_dir" 2>/dev/null || return 1
 
   # Read the palette first so COLORS array is populated for both steps
   read_colors || return 1
+  derive_spicetify_colors
 
   download_sleek_css "$user_css"
   patch_existing_user_css "$user_css"
@@ -460,8 +653,13 @@ configure_spicetify() {
   regenerate_playback_controls_fix "$user_css"
   generate_color_ini "$color_file" || return 1
 
+  download_text_css "$tui_user_css"
+  regenerate_tui_color_bridge "$tui_user_css"
+  regenerate_tui_overrides "$tui_user_css"
+  generate_tui_color_ini "$tui_color_file" || return 1
+
   spicetify config inject_css 1 replace_colors 1 >> "$LOG_FILE" 2>&1 || true
-  spicetify config current_theme "$THEME_NAME" color_scheme "$SCHEME_NAME" >> "$LOG_FILE" 2>&1 || true
+  spicetify config current_theme "$active_theme" color_scheme "$SCHEME_NAME" >> "$LOG_FILE" 2>&1 || true
 }
 
 apply_spicetify_theme() {
@@ -494,6 +692,53 @@ sync_live_user_css() {
   cp "$user_css" "$live_user_css"
 }
 
+find_spicetify_wrapper_source() {
+  local candidate base
+
+  # setup/spotify.sh builds this asset for source-built Spicetify packages that
+  # omit it. This theme script does not build dependencies; it only preserves a
+  # working patched Spotify bundle across later theme reapplies.
+  if [[ -s "/opt/spicetify-cli/jsHelper/spicetifyWrapper.js" ]]; then
+    printf '%s\n' "/opt/spicetify-cli/jsHelper/spicetifyWrapper.js"
+    return 0
+  fi
+
+  for base in "$HOME/.cache/paru/clone/spicetify-cli" "$HOME/.cache/yay/spicetify-cli"; do
+    [[ -d "$base" ]] || continue
+    candidate="$(
+      find "$base" -maxdepth 5 -type f -path '*/jsHelper/spicetifyWrapper.js' -print 2>/dev/null \
+        | sort -Vr \
+        | head -n1
+    )"
+    if [[ -s "$candidate" ]]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+}
+
+sync_spicetify_wrapper() {
+  local xpui_dir="$1"
+  local index_html="$xpui_dir/index.html"
+  local live_wrapper="$xpui_dir/helper/spicetifyWrapper.js"
+
+  [[ -f "$index_html" ]] || return 1
+  grep -q "helper/spicetifyWrapper.js" "$index_html" || return 0
+  [[ -s "$live_wrapper" ]] && return 0
+
+  local wrapper_source=""
+  wrapper_source="$(find_spicetify_wrapper_source || true)"
+
+  if [[ -z "$wrapper_source" ]]; then
+    log "spicetifyWrapper.js is missing; run setup-spotify or pnpm build:wrapper in the Spicetify source tree"
+    return 1
+  fi
+
+  mkdir -p "$xpui_dir/helper"
+  cp "$wrapper_source" "$live_wrapper"
+  log "Synced missing spicetifyWrapper.js from $wrapper_source"
+}
+
 # ─── Main logic ────────────────────────────────────────────────────────────────
 
 main() {
@@ -507,10 +752,21 @@ main() {
   local spicetify_root
   spicetify_root="$(dirname "$spicetify_config")"
   local theme_dir="$spicetify_root/Themes/$THEME_NAME"
+  local tui_theme_dir="$spicetify_root/Themes/$TUI_THEME_NAME"
+  local active_theme="$THEME_NAME"
+  if [[ "$REQUESTED_THEME" == "$TUI_THEME_NAME" || "$REQUESTED_THEME" == "$THEME_NAME" ]]; then
+    active_theme="$REQUESTED_THEME"
+  elif [[ -f "$spicetify_config" ]]; then
+    local configured_theme
+    configured_theme="$(awk -F'= *' '/^current_theme[[:space:]]*=/{print $2; exit}' "$spicetify_config" | xargs)"
+    [[ "$configured_theme" == "$TUI_THEME_NAME" ]] && active_theme="$TUI_THEME_NAME"
+  fi
+  local active_theme_dir="$theme_dir"
+  [[ "$active_theme" == "$TUI_THEME_NAME" ]] && active_theme_dir="$tui_theme_dir"
   local xpui_dir
   xpui_dir="$(get_spotify_xpui_dir "$spicetify_config")"
 
-  configure_spicetify "$theme_dir" || {
+  configure_spicetify "$theme_dir" "$tui_theme_dir" "$active_theme" || {
     log "Failed to configure spicetify"
     exit 1
   }
@@ -521,8 +777,12 @@ main() {
   local spotify_running=false
   is_process_running "spotify" && spotify_running=true
 
+  if [[ -n "$xpui_dir" ]]; then
+    sync_spicetify_wrapper "$xpui_dir" || true
+  fi
+
   if [[ -n "$xpui_dir" ]] && is_live_install_patched "$xpui_dir"; then
-    if sync_live_user_css "$theme_dir/user.css" "$xpui_dir"; then
+    if sync_live_user_css "$active_theme_dir/user.css" "$xpui_dir"; then
       log "Synced live Spotify user.css"
       if $spotify_running; then
         local debugger_port
@@ -544,6 +804,11 @@ main() {
     exit 1
   fi
 
+  xpui_dir="$(get_spotify_xpui_dir "$spicetify_config")"
+  if [[ -n "$xpui_dir" ]]; then
+    sync_spicetify_wrapper "$xpui_dir" || true
+  fi
+
   # Some spicetify versions launch Spotify as a side effect despite -n.
   # Kill it if it wasn't running before we called apply.
   if ! $spotify_running && is_process_running "spotify"; then
@@ -557,7 +822,7 @@ main() {
   fi
 
   if [[ -n "$xpui_dir" ]] && is_live_install_patched "$xpui_dir"; then
-    sync_live_user_css "$theme_dir/user.css" "$xpui_dir" || true
+    sync_live_user_css "$active_theme_dir/user.css" "$xpui_dir" || true
     local debugger_port
     debugger_port="$(get_debugger_port)"
     if [[ -n "$debugger_port" ]] && reload_running_spotify "$debugger_port"; then

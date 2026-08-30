@@ -35,7 +35,7 @@ Item {
     implicitHeight: effectiveSize
     
     readonly property real clampedFill: Math.max(0, Math.min(1, fill))
-    readonly property real effectiveFill: animateFill
+    readonly property real effectiveFill: animateFill && !Appearance.regaliaEverywhere
         ? (clampedFill < 0.01 ? 0 : (clampedFill > 0.99 ? 1 : clampedFill))
         : Math.round(clampedFill)
     // Material Symbols variable font axis range is 20..48; keeping it in-range avoids distorted fill at small icon sizes.
@@ -69,7 +69,7 @@ Item {
     }
 
     Behavior on fill {
-        enabled: root.animateFill && Appearance.animationsEnabled
+        enabled: root.animateFill && Appearance.animationsEnabled && !Appearance.regaliaEverywhere
         NumberAnimation {
             duration: Appearance?.animation.elementMoveFast.duration ?? 200
             easing.type: Appearance?.animation.elementMoveFast.type ?? Easing.BezierSpline

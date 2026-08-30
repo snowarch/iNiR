@@ -374,6 +374,15 @@ switch() {
     fi
 
     if [[ "$color_flag" == "1" ]]; then
+        # Static/custom themes keep their palette, but an explicit wallpaper
+        # selection must still update the wallpaper path. Previously this branch
+        # skipped set_wallpaper_path() entirely, so online "Set as wallpaper"
+        # appeared to do nothing whenever appearance.theme was not "auto".
+        if [[ -n "$imgpath" && -f "$imgpath" && "$skip_config_write" != "1" ]]; then
+            set_wallpaper_path "$imgpath"
+            set_thumbnail_path ""
+            remove_restore
+        fi
         generate_colors_material_args=(--color "$color")
     else
         if [[ -z "$imgpath" ]]; then

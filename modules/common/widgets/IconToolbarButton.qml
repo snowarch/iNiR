@@ -9,12 +9,14 @@ ToolbarButton {
     id: iconBtn
     implicitWidth: height
 
-    colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.sticker
+    colBackgroundToggled: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlate
+        : Appearance.zzzEverywhere ? Appearance.zzz.sticker
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colSelection 
         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface 
         : Appearance.colors.colSecondaryContainer
-    colBackgroundToggledHover: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover
+    colBackgroundToggledHover: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateHover
+        : Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : Appearance.inirEverywhere ? Appearance.inir.colSelectionHover 
         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover 
@@ -25,16 +27,18 @@ ToolbarButton {
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive 
         : Appearance.colors.colSecondaryContainerActive
     property color colText: toggled
-        ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker
+        ? (Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateInk
+            : Appearance.zzzEverywhere ? Appearance.zzz.onSticker
             : Appearance.inirEverywhere ? Appearance.inir.colOnSelection : Appearance.colors.colOnSecondaryContainer)
-        : (Appearance.zzzEverywhere ? Appearance.zzz.ink
+        : (Appearance.regaliaEverywhere ? Appearance.regalia.onColor
+            : Appearance.zzzEverywhere ? Appearance.zzz.ink
             : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurfaceVariant)
 
     contentItem: MaterialSymbol {
         anchors.centerIn: parent
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
-        iconSize: 22
+        iconSize: Appearance.regaliaEverywhere ? 18 : 22
         text: iconBtn.text
         color: iconBtn.colText
     }

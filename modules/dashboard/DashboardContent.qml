@@ -501,10 +501,13 @@ Item {
                                         Rectangle {
                                             anchors.fill: parent
                                             visible: root.editMode && !cardWrap.isSource
-                                            color: "transparent"
+                                            color: dragMa.containsMouse
+                                                ? ColorUtils.transparentize(Appearance.colors.colPrimaryContainer, 0.82)
+                                                : ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 0.9)
                                             radius: Appearance.rounding.normal
-                                            border.width: 1
-                                            border.color: dragMa.containsMouse ? Appearance.colors.colPrimary : Appearance.colors.colOutlineVariant
+                                            border.width: dragMa.containsMouse ? 1 : 0
+                                            border.color: Appearance.colors.colPrimary
+                                            Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
                                             Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
                                         }
 
@@ -539,9 +542,9 @@ Item {
                                             visible: root.editMode && !cardWrap.isSource && !root.dragging
                                             implicitWidth: 26; implicitHeight: 26
                                             radius: Appearance.rounding.full
-                                            color: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.85)
+                                            color: Appearance.colors.colPrimaryContainer
                                             z: 5
-                                            MaterialSymbol { anchors.centerIn: parent; text: "drag_indicator"; iconSize: Appearance.font.pixelSize.small; color: Appearance.colors.colPrimary }
+                                            MaterialSymbol { anchors.centerIn: parent; text: "drag_indicator"; iconSize: Appearance.font.pixelSize.small; color: Appearance.colors.colOnPrimaryContainer }
                                         }
                                         // Hide button (top-right).
                                         RippleButton {
@@ -792,16 +795,16 @@ Item {
                 enabled: Appearance.animationsEnabled
                 NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
             }
-            colBackground: root.editMode ? Appearance.colors.colPrimary : Appearance.colors.colLayer2
-            colBackgroundHover: root.editMode ? Appearance.colors.colPrimaryHover : Appearance.colors.colLayer2Hover
-            colRipple: root.editMode ? Appearance.colors.colPrimaryActive : Appearance.colors.colLayer2Active
+            colBackground: root.editMode ? Appearance.colors.colPrimaryContainer : Appearance.colors.colLayer2
+            colBackgroundHover: root.editMode ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colLayer2Hover
+            colRipple: root.editMode ? Appearance.colors.colPrimaryContainerActive : Appearance.colors.colLayer2Active
             onClicked: root.editMode = !root.editMode
             StyledToolTip { text: root.editMode ? Translation.tr("Done") : Translation.tr("Edit layout") }
             contentItem: MaterialSymbol {
                 anchors.centerIn: parent
                 text: root.editMode ? "done" : "edit"
                 iconSize: Appearance.font.pixelSize.larger
-                color: root.editMode ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer2
+                color: root.editMode ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer2
                 horizontalAlignment: Text.AlignHCenter
             }
         }

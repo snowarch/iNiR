@@ -8,9 +8,9 @@ import QtQuick.Controls
 TextArea {
     id: root
     renderType: Text.NativeRendering
-    selectedTextColor: Appearance.colors.colOnSecondaryContainer
-    selectionColor: Appearance.colors.colSecondaryContainer
-    placeholderTextColor: Appearance.colors.colOutline
+    selectedTextColor: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateInk : Appearance.colors.colOnSecondaryContainer
+    selectionColor: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlate : Appearance.colors.colSecondaryContainer
+    placeholderTextColor: Appearance.regaliaEverywhere ? Appearance.regalia.onMuted : Appearance.colors.colOutline
     font {
         family: Appearance.font.family.main
         pixelSize: Appearance?.font.pixelSize.small ?? 15

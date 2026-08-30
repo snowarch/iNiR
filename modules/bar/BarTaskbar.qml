@@ -199,7 +199,8 @@ Item {
         const runningAppsMap = new Map();
         for (const toplevel of allToplevels) {
             if (!toplevel.appId || toplevel.appId === "" || toplevel.appId === "null") continue;
-            if (ignoredRegexes.some(re => re.test(toplevel.appId))) continue;
+            const effectiveId = AppSearch.resolveWindowIdentity(toplevel);
+            if (ignoredRegexes.some(re => re.test(effectiveId))) continue;
             if (crossCheck) {
                 const key = root._toplevelLiveKey(toplevel);
                 const count = liveToplevelCounts.get(key) ?? 0;
@@ -207,10 +208,10 @@ Item {
                 liveToplevelCounts.set(key, count - 1);
             }
 
-            const lowerAppId = toplevel.appId.toLowerCase();
+            const lowerAppId = effectiveId.toLowerCase();
             if (!runningAppsMap.has(lowerAppId)) {
                 runningAppsMap.set(lowerAppId, {
-                    appId: toplevel.appId,
+                    appId: effectiveId,
                     toplevels: [],
                     pinned: false
                 });
@@ -355,6 +356,10 @@ Item {
         target: Config.options?.dock
         function onPinnedAppsChanged() { root.rebuildDockItems() }
         function onIgnoredAppRegexesChanged() { root.rebuildDockItems() }
+    }
+    Connections {
+        target: Config.options?.windows
+        function onAppIdentityRulesChanged() { root.rebuildDockItems() }
     }
     Component.onCompleted: {
         CompositorService.acquireSortingConsumer()

@@ -237,6 +237,7 @@ ApplicationWindow {
         
         pages: root.pages
         currentPage: root.currentPage
+        loadEnabled: root.uiReady && root._navigationInitialized
         onCurrentPageChanged: {
             if (navigationReady && root.currentPage !== currentPage)
                 root.currentPage = currentPage

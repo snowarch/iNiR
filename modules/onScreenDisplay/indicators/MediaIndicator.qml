@@ -117,12 +117,10 @@ Item {
     function invokeMediaAction(action: string): void {
         if (action === "previous") {
             MprisController.previous()
-            GlobalStates.showMediaAction("previous")
             return
         }
         if (action === "next") {
             MprisController.next()
-            GlobalStates.showMediaAction("next")
             return
         }
         const wasPlaying = root.isPlaying

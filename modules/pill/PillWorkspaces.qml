@@ -21,9 +21,9 @@ Item {
 
     property string screenName: ""
     property real s: 1
-    property real stickW: 17 * s
-    property real dotW: 5 * s
-    property real gap: 4 * s
+    property real stickW: 21 * s
+    property real dotW: 6 * s
+    property real gap: 5 * s
 
     property int hoverIndex: -1
 
@@ -127,7 +127,7 @@ Item {
                 readonly property bool isActive: slot.modelData.active
 
                 Layout.preferredWidth: slot.isActive ? workspaces.stickW : workspaces.dotW
-                Layout.preferredHeight: 22 * workspaces.s
+                Layout.preferredHeight: 30 * workspaces.s
                 Behavior on Layout.preferredWidth {
                     NumberAnimation { duration: PillMotion.fast; easing.type: PillMotion.easeStandard }
                 }
@@ -147,8 +147,8 @@ Item {
                     anchors.fill: parent
                     anchors.leftMargin: -workspaces.gap / 2
                     anchors.rightMargin: -workspaces.gap / 2
-                    anchors.topMargin: -8 * workspaces.s
-                    anchors.bottomMargin: -8 * workspaces.s
+                    anchors.topMargin: -10 * workspaces.s
+                    anchors.bottomMargin: -10 * workspaces.s
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: workspaces.focusSlot(slot.modelData.key)

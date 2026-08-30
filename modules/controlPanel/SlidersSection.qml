@@ -24,11 +24,12 @@ PanelSurface {
     property var brightnessMonitor: screen ? Brightness.getMonitorForScreen(screen) : null
 
     elevation: 1
-    radiusOverride: inirEverywhere ? Appearance.inir.roundingNormal
+    radiusOverride: islandSkin ? -1
+        : inirEverywhere ? Appearance.inir.roundingNormal
         : Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
         : Appearance.rounding.normal
 
-    AngelPartialBorder { targetRadius: root.radiusOverride; coverage: 0.45; visible: Appearance.angelEverywhere }
+    AngelPartialBorder { targetRadius: root.radiusOverride; coverage: 0.45; visible: Appearance.angelEverywhere && !root.islandSkin }
 
     QuickSliders {
         id: slidersRow

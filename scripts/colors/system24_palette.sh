@@ -31,6 +31,7 @@ log() {
 }
 
 ensure_go_themegen() {
+  [[ -f "$SCRIPT_DIR/system24_themegen/main.go" ]] || return 1
   command -v go &>/dev/null || return 1
   if [[ ! -x "$GO_BIN" || "$REPO_ROOT/go.mod" -nt "$GO_BIN" || "$SCRIPT_DIR/system24_themegen/main.go" -nt "$GO_BIN" ]]; then
     log "building Go system24 generator"

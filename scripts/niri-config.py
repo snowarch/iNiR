@@ -17,6 +17,7 @@ Commands:
   list-cursor-themes   List available cursor themes from icon dirs
   validate             Validate current Niri config via niri validate
   detect-customizations Report Niri files that differ from shipped iNiR defaults
+  sync-backdrop-overview-shadow on|off  Manage the backdrop-only overview shadow override
   set SECTION KEY VAL  Surgical edit of a single config value
   get-binds            JSON of all keybinds from 70-binds.kdl with categories/metadata
   set-bind KEY ACTION  Add or update a keybind in 70-binds.kdl (surgical edit)
@@ -44,6 +45,9 @@ DEFAULT_NIRI_FILES = [
     "config.d/80-layer-rules.kdl",
     "config.d/90-user-extra.kdl",
 ]
+
+BACKDROP_SHADOW_OVERRIDE_START = "// >>> inir-backdrop-only >>>"
+BACKDROP_SHADOW_OVERRIDE_END = "// <<< inir-backdrop-only <<<"
 
 
 def get_niri_config_dir():
@@ -404,10 +408,11 @@ def _ensure_vrr_window_rule():
 def _set_in_block(block_content, key, value):
     """Set a key=value inside a KDL block, preserving other content.
     If key exists, replace the line. If not, append it."""
-    # Escape key for regex (handles hyphens)
+    # Escape key for regex (handles hyphens). Anchored to line start so
+    # commented example lines mentioning the key are never edited.
     escaped = re.escape(key)
     # Try to replace existing line
-    pattern = rf"(\n?\s*){escaped}\b[^\n]*"
+    pattern = rf"(?m)^([ \t]*){escaped}\b[^\n]*"
     if re.search(pattern, block_content):
         if value:
             return re.sub(pattern, rf"\g<1>{key} {value}", block_content, count=1)
@@ -511,13 +516,13 @@ def cmd_get_input():
         if kb_block:
             xkb_block = _extract_block(kb_block, "xkb")
             if xkb_block:
-                m = re.search(r'layout\s+"([^"]*)"', xkb_block)
+                m = re.search(r'^[ \t]*layout\s+"([^"]*)"', xkb_block, re.MULTILINE)
                 if m:
                     result["keyboard"]["layout"] = m.group(1)
-                m = re.search(r'variant\s+"([^"]*)"', xkb_block)
+                m = re.search(r'^[ \t]*variant\s+"([^"]*)"', xkb_block, re.MULTILINE)
                 if m:
                     result["keyboard"]["variant"] = m.group(1)
-                m = re.search(r'options\s+"([^"]*)"', xkb_block)
+                m = re.search(r'^[ \t]*options\s+"([^"]*)"', xkb_block, re.MULTILINE)
                 if m:
                     result["keyboard"]["options"] = m.group(1)
             m = re.search(r"repeat-delay\s+(\d+)", kb_block)
@@ -1365,6 +1370,41 @@ def cmd_set(args):
         return 1
 
 
+def cmd_sync_backdrop_overview_shadow(args):
+    if len(args) != 1 or args[0] not in ("on", "off"):
+        print(json.dumps({"error": "Usage: sync-backdrop-overview-shadow on|off"}))
+        return 1
+
+    target_file = resolve_niri_section_file("config.d/90-user-extra.kdl")
+    content = target_file.read_text() if target_file.exists() else ""
+    managed_pattern = re.compile(
+        rf"\n?{re.escape(BACKDROP_SHADOW_OVERRIDE_START)}.*?"
+        rf"{re.escape(BACKDROP_SHADOW_OVERRIDE_END)}\n?",
+        re.DOTALL,
+    )
+    next_content = managed_pattern.sub("\n", content).rstrip()
+
+    if args[0] == "on":
+        managed_block = (
+            f"{BACKDROP_SHADOW_OVERRIDE_START}\n"
+            "overview {\n"
+            "    workspace-shadow {\n"
+            "        off\n"
+            "    }\n"
+            "}\n"
+            f"{BACKDROP_SHADOW_OVERRIDE_END}"
+        )
+        next_content = f"{next_content}\n\n{managed_block}\n" if next_content else f"{managed_block}\n"
+    elif next_content:
+        next_content += "\n"
+
+    if next_content == content:
+        print(json.dumps({"success": True, "file": str(target_file), "changed": False}))
+        return 0
+
+    return _write_validated(target_file, next_content)
+
+
 def _sync_cursor_env(theme=None, size=None):
     """Sync cursor theme/size to environment.d, gsettings, and running session.
 
@@ -2032,7 +2072,7 @@ def _toggle_subsection_enabled(content, section, enable):
 
 def _remove_key_from_block_content(block_content, key):
     return re.sub(
-        rf"\n?\s*{re.escape(key)}\b[^\n]*",
+        rf"(?m)^[ \t]*{re.escape(key)}\b[^\n]*\n?",
         "",
         block_content,
         count=1,
@@ -2782,6 +2822,7 @@ def main():
         "sync-cursor": lambda: cmd_sync_cursor(),
         "validate": lambda: cmd_validate(),
         "detect-customizations": lambda: cmd_detect_customizations(),
+        "sync-backdrop-overview-shadow": lambda: cmd_sync_backdrop_overview_shadow(args),
         "set": lambda: cmd_set(args),
         "get-binds": lambda: cmd_get_binds(),
         "set-bind": lambda: cmd_set_bind(args),

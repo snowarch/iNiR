@@ -14,9 +14,10 @@ Singleton {
     property bool shellEntryReady: false
     // Deferred panel loading gate — non-critical panels wait for this before activating
     property bool deferredPanelsReady: false
-    // Boot greeting lifecycle — singleton preserves across hot-reload so greeting shows once per session
+    // Startup lifecycle — singleton preserves one-shot state across hot reloads.
     property bool bootGreetingOpen: false
     property bool bootGreetingDone: false
+    property bool startupLockDone: false
     property bool barOpen: true
     property bool crosshairOpen: false
     property bool sidebarLeftOpen: false
@@ -50,10 +51,14 @@ Singleton {
     property bool oskOpen: false
     property bool overlayOpen: false
     property bool overviewOpen: false
+    property string overviewMode: "default"
     property string overviewTargetOutput: ""
     property string overviewSearchPrefix: ""
+    signal pillSurfaceCommand(string command, string surface)
     property bool altSwitcherOpen: false
     signal altSwitcherCommand(string command)
+    property int activeContextMenuCount: 0
+    property var activeContextMenu: null
     property bool clipboardOpen: false
     property bool settingsOverlayOpen: false
     property int settingsOverlayRequestedPage: -1 // Set before opening to navigate to a specific page
@@ -61,6 +66,21 @@ Singleton {
     property var _settingsNativeDialogs: ({})
     readonly property bool settingsNativeDialogOpen:
         Object.keys(root._settingsNativeDialogs).length > 0
+
+    function openSettingsPage(index: int): void {
+        const isWaffle = Config.options?.panelFamily === "waffle"
+            && Config.options?.waffles?.settings?.useMaterialStyle !== true
+        if (isWaffle) {
+            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),
+                "waffle-settings-window"])
+        } else if (Config.options?.settingsUi?.overlayMode ?? false) {
+            root.settingsOverlayRequestedPage = index
+            root.settingsOverlayOpen = true
+        } else {
+            Quickshell.execDetached(["/usr/bin/env", `QS_SETTINGS_PAGE=${index}`,
+                Quickshell.shellPath("scripts/inir"), "settings-window"])
+        }
+    }
 
     function setSettingsNativeDialogVisible(dialogKey: string, visible: bool): void {
         const key = String(dialogKey ?? "").trim()
@@ -304,6 +324,7 @@ Singleton {
             Config.options?.sidebar?.screenList ?? [])
 
     function openOverview(outputName): void {
+        overviewMode = "default"
         overviewTargetOutput = root.resolveOutputName(outputName, [])
         overviewOpen = true
     }
@@ -314,11 +335,31 @@ Singleton {
 
     function toggleOverview(outputName): void {
         const resolved = root.resolveOutputName(outputName, [])
-        if (overviewOpen && overviewPresentationOutput === resolved)
+        if (overviewOpen && overviewMode === "default" && overviewPresentationOutput === resolved)
             root.closeOverview()
         else
             root.openOverview(resolved)
     }
+
+    function openOrbit(outputName): void {
+        if (!(Config.options?.orbit?.enable ?? true))
+            return
+        overviewMode = "orbit"
+        overviewSearchPrefix = ""
+        overviewTargetOutput = root.resolveOutputName(outputName, [])
+        overviewOpen = true
+    }
+
+    function toggleOrbit(outputName): void {
+        const resolved = root.resolveOutputName(outputName, [])
+        if (overviewOpen && overviewMode === "orbit" && overviewPresentationOutput === resolved)
+            root.closeOverview()
+        else
+            root.openOrbit(resolved)
+    }
+
+    function openTaskView(outputName): void { root.openOrbit(outputName) }
+    function toggleTaskView(outputName): void { root.toggleOrbit(outputName) }
 
     function openSidebarLeft(outputName): void {
         sidebarLeftTargetOutput = root.resolveOutputName(outputName,

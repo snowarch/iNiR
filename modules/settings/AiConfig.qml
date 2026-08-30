@@ -10,13 +10,33 @@ import qs.modules.common.functions
 import qs.modules.common.widgets
 
 ContentPage {
+    id: root
     settingsPageIndex: 24
     settingsPageName: Translation.tr("AI")
+    property string activeSection: "setup"
+
+    SettingsTaskNavigator {
+        icon: "neurology"
+        title: Translation.tr("AI")
+        description: Translation.tr("Connect a provider, choose the assistant behavior, then opt into privacy-sensitive or voice features only when you need them.")
+        summary: Translation.tr("Setup · providers · behavior · privacy · voice")
+        currentValue: root.activeSection
+        onSelected: value => root.activeSection = value
+        options: [
+            { displayName: Translation.tr("Setup"), icon: "rocket_launch", value: "setup" },
+            { displayName: Translation.tr("Providers"), icon: "cloud", value: "providers" },
+            { displayName: Translation.tr("Behavior"), icon: "psychology", value: "behavior" },
+            { displayName: Translation.tr("Privacy"), icon: "policy", value: "privacy" },
+            { displayName: Translation.tr("Voice"), icon: "mic", value: "voice" }
+        ]
+    }
 
     Component.onCompleted: Ai.ensureInitialized()
 
     // ── Setup status ─────────────────────────────────────────────
     SettingsCardSection {
+        settingsTaskSection: "setup"
+        visible: root.activeSection === "setup"
         expanded: true
         icon: "rocket_launch"
         title: Translation.tr("Get started")
@@ -140,6 +160,8 @@ ContentPage {
 
     // ── Providers ────────────────────────────────────────────────
     SettingsCardSection {
+        settingsTaskSection: "providers"
+        visible: root.activeSection === "providers"
         expanded: true
         icon: "cloud"
         title: Translation.tr("Providers & models")
@@ -872,7 +894,9 @@ ContentPage {
 
     // ── Assistant behavior ───────────────────────────────────────
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "behavior"
+        visible: root.activeSection === "behavior"
+        expanded: true
         icon: "psychology"
         title: Translation.tr("Assistant behavior")
 
@@ -960,7 +984,9 @@ ContentPage {
 
     // ── Privacy ──────────────────────────────────────────────────
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "privacy"
+        visible: root.activeSection === "privacy"
+        expanded: true
         icon: "policy"
         title: Translation.tr("Privacy & policy")
 
@@ -987,7 +1013,9 @@ ContentPage {
 
     // ── Voice input ──────────────────────────────────────────────
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "voice"
+        visible: root.activeSection === "voice"
+        expanded: true
         icon: "mic"
         title: Translation.tr("Voice input")
 

@@ -91,6 +91,7 @@ AbstractBackgroundWidget {
         surfaceColor: root.surfaceInk
         colorMode: root.colorMode
         surfaceAccent: root.widgetAccent3
+        surfaceFill: root.widgetPlateColor
         surfaceUseBlur: root.effectiveBlur
         screenX: root.x
         screenY: root.y

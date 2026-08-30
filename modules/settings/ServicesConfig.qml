@@ -9,10 +9,30 @@ import qs.modules.common.functions
 import qs.modules.common.widgets
 
 ContentPage {
+    id: root
     settingsPageIndex: 7
     settingsPageName: Translation.tr("Services")
+    property string activeSection: "system"
+
+    SettingsTaskNavigator {
+        icon: "settings"
+        title: Translation.tr("Services")
+        description: Translation.tr("Service controls are grouped by responsibility: local system behavior, networking, search, updates and external data sources.")
+        summary: Translation.tr("System · network · search · updates · data")
+        currentValue: root.activeSection
+        onSelected: value => root.activeSection = value
+        options: [
+            { displayName: Translation.tr("System"), icon: "memory", value: "system" },
+            { displayName: Translation.tr("Network"), icon: "cell_tower", value: "network" },
+            { displayName: Translation.tr("Search"), icon: "search", value: "search" },
+            { displayName: Translation.tr("Updates"), icon: "system_update_alt", value: "updates" },
+            { displayName: Translation.tr("Data"), icon: "cloud", value: "data" }
+        ]
+    }
 
     SettingsCardSection {
+        settingsTaskSection: "system"
+        visible: root.activeSection === "system"
         expanded: true
         icon: "bedtime"
         title: Translation.tr("Idle & Sleep")
@@ -130,7 +150,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "system"
+        visible: root.activeSection === "system"
+        expanded: true
         icon: "music_cast"
         title: Translation.tr("Music Recognition")
 
@@ -167,7 +189,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "network"
+        visible: root.activeSection === "network"
+        expanded: true
         icon: "cell_tower"
         title: Translation.tr("Networking")
 
@@ -185,7 +209,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "network"
+        visible: root.activeSection === "network"
+        expanded: true
         icon: "wifi_tethering"
         title: Translation.tr("Hotspot")
 
@@ -224,7 +250,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "system"
+        visible: root.activeSection === "system"
+        expanded: true
         icon: "memory"
         title: Translation.tr("Resources")
 
@@ -247,7 +275,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "search"
+        visible: root.activeSection === "search"
+        expanded: true
         icon: "search"
         title: Translation.tr("Search")
 
@@ -366,7 +396,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "updates"
+        visible: root.activeSection === "updates"
+        expanded: true
         icon: "system_update_alt"
         title: Translation.tr("Updates")
 
@@ -421,7 +453,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "updates"
+        visible: root.activeSection === "updates"
+        expanded: true
         icon: "deployed_code_update"
         title: Translation.tr("iNiR Shell Updates")
 
@@ -880,7 +914,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "data"
+        visible: root.activeSection === "data"
+        expanded: true
         icon: "cloud"
         title: Translation.tr("Weather")
 
@@ -1053,6 +1089,9 @@ ContentPage {
     }
 
     SettingsCardSection {
+        settingsTaskSection: "data"
+        visible: root.activeSection === "data"
+        expanded: true
         icon: "calendar_month"
         title: Translation.tr("Calendar Sync")
 

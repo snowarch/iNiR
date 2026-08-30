@@ -1,0 +1,12 @@
+module qs.modules.dock
+DockAppButton 1.0 DockAppButton.qml
+DockApps 1.0 DockApps.qml
+DockButton 1.0 DockButton.qml
+DockContextMenu 1.0 DockContextMenu.qml
+DockMacBackground 1.0 DockMacBackground.qml
+DockMacItem 1.0 DockMacItem.qml
+DockPillItem 1.0 DockPillItem.qml
+DockPreview 1.0 DockPreview.qml
+Dock 1.0 Dock.qml
+DockSeparator 1.0 DockSeparator.qml
+DockWindowPreview 1.0 DockWindowPreview.qml

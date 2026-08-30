@@ -120,12 +120,7 @@ Singleton {
     function labelOf(p) {
         if (!p)
             return "";
-        const id = p.identity ?? "";
-        if (id.length > 0)
-            return id;
-        const name = String(p.dbusName ?? "");
-        const tail = name.split(".").pop();
-        return tail ? tail.charAt(0).toUpperCase() + tail.slice(1) : "";
+        return MprisController.playerDisplayName(p);
     }
 
     function artUrlFor(p) {

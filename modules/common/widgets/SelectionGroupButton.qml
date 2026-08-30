@@ -10,17 +10,19 @@ import qs.modules.common.functions
 
 GroupButton {
     id: root
-    horizontalPadding: 11
-    verticalPadding: 6
+    horizontalPadding: Appearance.regaliaEverywhere ? Appearance.regalia.controlPaddingHorizontal : 11
+    verticalPadding: Appearance.regaliaEverywhere ? Appearance.regalia.controlPaddingVertical : 6
     bounce: false
     property string buttonIcon
     property string buttonPreviewKind: ""
     property bool leftmost: false
     property bool rightmost: false
     readonly property bool showZzzPreview: Appearance.zzzEverywhere && buttonPreviewKind.length > 0
-    leftRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+    leftRadius: Appearance.regaliaEverywhere ? Appearance.regalia.controlRadius
+        : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
         : (toggled || leftmost) ? (height / 2) : Appearance.rounding.unsharpenmore
-    rightRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+    rightRadius: Appearance.regaliaEverywhere ? Appearance.regalia.controlRadius
+        : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
         : (toggled || rightmost) ? (height / 2) : Appearance.rounding.unsharpenmore
     Behavior on leftRadius {
         enabled: Appearance.animationsEnabled
@@ -34,13 +36,16 @@ GroupButton {
     // colSecondaryContainer resolves to zzz.secondary (a signal) — using it for
     // the unselected base/hover made every segment glow and the hover glare.
     // Selected state stays the inherited GroupButton sticker (colBackgroundToggled).
-    colBackground: Appearance.zzzEverywhere ? ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 1)
+    colBackground: Appearance.regaliaEverywhere ? Appearance.regalia.controlPlate
+        : Appearance.zzzEverywhere ? ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 1)
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colSecondaryContainer
-    colBackgroundHover: Appearance.zzzEverywhere ? Appearance.colors.colLayer1Hover
+    colBackgroundHover: Appearance.regaliaEverywhere ? Appearance.regalia.controlPlateHover
+        : Appearance.zzzEverywhere ? Appearance.colors.colLayer1Hover
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colSecondaryContainerHover
-    colBackgroundActive: Appearance.zzzEverywhere ? Appearance.colors.colLayer1Active
+    colBackgroundActive: Appearance.regaliaEverywhere ? Appearance.regalia.controlPlateActive
+        : Appearance.zzzEverywhere ? Appearance.colors.colLayer1Active
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colSecondaryContainerActive
 
@@ -130,9 +135,11 @@ GroupButton {
                 visible: !root.showZzzPreview
                 text: root.buttonIcon
                 iconSize: Appearance.font.pixelSize.normal
-                color: Appearance.zzzEverywhere
-                    ? (root.toggled ? Appearance.zzz.onSticker : Appearance.zzz.ink)
-                    : (root.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSecondaryContainer)
+                color: Appearance.regaliaEverywhere
+                    ? (root.toggled ? Appearance.regalia.primaryPlateInk : Appearance.regalia.onColor)
+                    : Appearance.zzzEverywhere
+                        ? (root.toggled ? Appearance.zzz.onSticker : Appearance.zzz.ink)
+                        : (root.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSecondaryContainer)
             }
         }
 
@@ -161,9 +168,11 @@ GroupButton {
             StyledText {
                 id: textItem
                 anchors.centerIn: parent
-                color: Appearance.zzzEverywhere
-                    ? (root.toggled ? Appearance.zzz.onSticker : Appearance.zzz.ink)
-                    : (root.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSecondaryContainer)
+                color: Appearance.regaliaEverywhere
+                    ? (root.toggled ? Appearance.regalia.primaryPlateInk : Appearance.regalia.onColor)
+                    : Appearance.zzzEverywhere
+                        ? (root.toggled ? Appearance.zzz.onSticker : Appearance.zzz.ink)
+                        : (root.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSecondaryContainer)
                 text: root.buttonText
             }
         }

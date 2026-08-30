@@ -28,7 +28,8 @@ Item { // Full hitbox
 
             ShapePath {
                 strokeWidth: 1.2
-                strokeColor: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+                strokeColor: Appearance.regaliaEverywhere ? Appearance.regalia.onMuted
+                    : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
                 fillColor: "transparent"
                 startX: content.width - diagonalLine.padding
                 startY: diagonalLine.padding

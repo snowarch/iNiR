@@ -14,14 +14,17 @@ RippleButton {
     // Square and standalone, so the face stays organic in cookie mode.
     cookieMorphing: true
     contentItem: content
-    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
-    colBackground: "transparent"
-    colBackgroundHover: Appearance.zzzEverywhere ? "transparent"
+    buttonRadius: Appearance.regaliaEverywhere ? Appearance.regalia.controlRadius
+        : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
+    colBackground: Appearance.regaliaEverywhere ? Appearance.regalia.controlPlate : "transparent"
+    colBackgroundHover: Appearance.regaliaEverywhere ? Appearance.regalia.controlPlateHover
+        : Appearance.zzzEverywhere ? "transparent"
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
         : Appearance.colors.colLayer1Hover
-    colRipple: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.20)
+    colRipple: Appearance.regaliaEverywhere ? Appearance.regalia.controlPlateActive
+        : Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.20)
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1Active
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive

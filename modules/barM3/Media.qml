@@ -90,8 +90,8 @@ Item {
         hoverEnabled: !Config.options.bar.m3.tooltips.clickToShow
         onPressed: (event) => {
             if (event.button === Qt.MiddleButton)      activePlayer?.togglePlaying()
-            else if (event.button === Qt.BackButton)   activePlayer?.previous()
-            else if (event.button === Qt.ForwardButton || event.button === Qt.RightButton) activePlayer?.next()
+            else if (event.button === Qt.BackButton)   MprisController.previousForPlayer(activePlayer)
+            else if (event.button === Qt.ForwardButton || event.button === Qt.RightButton) MprisController.nextForPlayer(activePlayer)
             else if (event.button === Qt.LeftButton)   GlobalStates.mediaControlsOpen = !GlobalStates.mediaControlsOpen
         }
     }
@@ -365,8 +365,8 @@ Item {
                         colBackground: "transparent"
                         colBackgroundHover: root.transparentHover
                         colRipple: root.transparentActive
-                        downAction: () => root.activePlayer?.next()
-                        altAction: () => root.activePlayer?.previous()
+                        downAction: () => MprisController.nextForPlayer(root.activePlayer)
+                        altAction: () => MprisController.previousForPlayer(root.activePlayer)
                         contentItem: MaterialSymbol {
                             anchors.centerIn: parent
                             horizontalAlignment: Text.AlignHCenter

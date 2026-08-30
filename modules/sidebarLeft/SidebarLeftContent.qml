@@ -118,7 +118,7 @@ Item {
         if (root.translatorEnabled) result.push({ id: "translator", icon: "translate", name: Translation.tr("Translator") })
         if (root.animeEnabled && !root.animeCloset) result.push({ id: "anime", icon: "bookmark_heart", name: Translation.tr("Anime") })
         if (root.animeScheduleEnabled) result.push({ id: "animeSchedule", icon: "calendar_month", name: Translation.tr("Schedule") })
-        if (root.wallhavenEnabled) result.push({ id: "wallhaven", icon: "collections", name: Translation.tr("Wallhaven") })
+        if (root.wallhavenEnabled) result.push({ id: "wallhaven", icon: "collections", name: Translation.tr("Wallpapers") })
         if (root.newsEnabled) result.push({ id: "news", icon: "newspaper", name: Translation.tr("News") })
         if (root.ytMusicEnabled) result.push({ id: "ytmusic", icon: "library_music", name: Translation.tr("YT Music") })
         if (root.toolsEnabled) result.push({ id: "tools", icon: "build", name: Translation.tr("Tools") })
@@ -208,6 +208,19 @@ Item {
         visible: sidebarLeftBackground.angelEverywhere
             && !Appearance.gameModeMinimal
     }
+
+    IslandPanel {
+        anchors.fill: sidebarLeftBackground
+        visible: sidebarLeftBackground.islandStyle
+        radius: sidebarLeftBackground.radius
+        glassEnabled: true
+        screen: root.panelScreen ?? root.QsWindow?.window?.screen ?? null
+        glassScreenX: Appearance.sizes.hyprlandGapsOut
+        glassScreenY: Appearance.sizes.hyprlandGapsOut
+        glassScreenWidth: root.screenWidth
+        glassScreenHeight: root.screenHeight
+    }
+
     Rectangle {
         id: sidebarLeftBackground
 
@@ -235,6 +248,7 @@ Item {
             (Config.options?.sidebar?.style ?? "panel") === "island" ? "island" : "")
         readonly property bool islandStyle: surfaceDialect === "island"
         readonly property bool zzzEverywhere: surfaceDialect === "zzz"
+        readonly property bool regaliaEverywhere: surfaceDialect === "regalia"
         readonly property bool angelEverywhere: surfaceDialect === "angel"
         readonly property bool auroraEverywhere: surfaceDialect === "aurora" || angelEverywhere
         readonly property bool inirEverywhere: surfaceDialect === "inir"
@@ -264,15 +278,18 @@ Item {
 
         color: (gameModeMinimal || islandStyle) ? "transparent"
              : zzzEverywhere ? Appearance.zzz.chrome
+             : regaliaEverywhere ? "transparent"
              : inirEverywhere ? (cardStyle ? Appearance.inir.colLayer1 : Appearance.inir.colLayer0)
              : auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
              : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
-        border.width: (gameModeMinimal || islandStyle) ? 0 : zzzEverywhere ? 1 : (angelEverywhere ? Appearance.angel.panelBorderWidth : 1)
-        border.color: zzzEverywhere ? Appearance.zzz.hairline
+        border.width: (gameModeMinimal || islandStyle || regaliaEverywhere) ? 0 : zzzEverywhere ? 1 : (angelEverywhere ? Appearance.angel.panelBorderWidth : 1)
+        border.color: regaliaEverywhere ? "transparent"
+            : zzzEverywhere ? Appearance.zzz.hairline
             : angelEverywhere ? Appearance.angel.colPanelBorder
             : inirEverywhere ? Appearance.inir.colBorder
             : Appearance.colors.colLayer0Border
         radius: zzzEverywhere ? Appearance.zzz.panelRadius
+            : regaliaEverywhere ? Appearance.regalia.panelRadius
             : angelEverywhere ? Appearance.angel.roundingNormal
             : inirEverywhere ? Appearance.inir.roundingNormal
             : cardStyle ? Appearance.rounding.normal : (Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1)
@@ -294,6 +311,17 @@ Item {
             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
 
+        RegaliaPlate {
+            anchors.fill: parent
+            visible: sidebarLeftBackground.regaliaEverywhere
+            fillColor: sidebarLeftBackground.cardStyle ? Appearance.regalia.chassis1 : Appearance.regalia.bg0
+            radius: sidebarLeftBackground.radius
+            inset: Appearance.regalia.panelInset
+            elevated: sidebarLeftBackground.cardStyle
+            deepFrame: !sidebarLeftBackground.cardStyle
+            glassEnabled: true
+        }
+
         clip: true
 
         // Mask to the rounded panel shape in ZZZ so NO child (backdrop grid,
@@ -308,20 +336,6 @@ Item {
                 height: sidebarLeftBackground.height
                 radius: sidebarLeftBackground.radius
             }
-        }
-
-        // Ricelin island face. Tonal separation replaces the redundant outer
-        // blur shadow; Angel keeps its signature stepped shadow above.
-        IslandPanel {
-            glassEnabled: true
-            glassScreenX: Appearance.sizes.hyprlandGapsOut
-            glassScreenY: Appearance.sizes.hyprlandGapsOut
-            glassScreenWidth: root.screenWidth ?? 1920
-            glassScreenHeight: root.screenHeight ?? 1080
-            anchors.fill: parent
-            visible: sidebarLeftBackground.islandStyle && !sidebarLeftBackground.gameModeMinimal
-            radius: sidebarLeftBackground.radius
-            shadow: false
         }
 
         Image {
@@ -572,7 +586,14 @@ Item {
         Component { id: translatorComp; Translator {} }
         Component { id: animeComp; Anime {} }
         Component { id: animeScheduleComp; AnimeScheduleView {} }
-        Component { id: wallhavenComp; WallhavenView {} }
+        Component {
+            id: wallhavenComp
+            WallhavenView {
+                screenWidth: root.screenWidth
+                screenHeight: root.screenHeight
+                panelScreen: root.panelScreen
+            }
+        }
         Component { id: newsComp; NewsView {} }
         Component { id: ytMusicComp; InnerTuneView {} }
         Component { id: toolsComp; ToolsView {} }

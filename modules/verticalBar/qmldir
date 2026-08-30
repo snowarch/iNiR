@@ -1,0 +1,9 @@
+module qs.modules.verticalBar
+BatteryIndicator 1.0 BatteryIndicator.qml
+Resource 1.0 Resource.qml
+Resources 1.0 Resources.qml
+VerticalBarContent 1.0 VerticalBarContent.qml
+VerticalBar 1.0 VerticalBar.qml
+VerticalClockWidget 1.0 VerticalClockWidget.qml
+VerticalDateWidget 1.0 VerticalDateWidget.qml
+VerticalMedia 1.0 VerticalMedia.qml

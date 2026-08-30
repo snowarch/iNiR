@@ -26,14 +26,17 @@ Item {
         y: root.position === "top" ? root.implicitHeight - implicitHeight
          : root.position === "bottom" ? 0
          : (root.implicitHeight - implicitHeight) / 2
-        color: Appearance.angelEverywhere ? Appearance.angel.colGlassTooltip
+        color: Appearance.regaliaEverywhere ? "transparent"
+             : Appearance.angelEverywhere ? Appearance.angel.colGlassTooltip
              : Appearance.inirEverywhere ? Appearance.inir.colLayer2
              : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipSurface
              : Appearance.colors.colLayer3
-        radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+        radius: Appearance.regaliaEverywhere ? Appearance.regalia.roundSmall
+             : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
              : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
              : Appearance.rounding.verysmall
-        border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : 1
+        border.width: Appearance.regaliaEverywhere ? 0
+             : Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : 1
         border.color: Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
                     : Appearance.inirEverywhere ? Appearance.inir.colBorder
                     : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder
@@ -65,6 +68,15 @@ Item {
             NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
 
+        RegaliaPlate {
+            anchors.fill: parent
+            visible: Appearance.regaliaEverywhere
+            fillColor: Appearance.regalia.bg3
+            radius: backgroundRectangle.radius
+            inset: Appearance.regalia.controlInset
+            elevated: true
+        }
+
         AngelPartialBorder {
             targetRadius: backgroundRectangle.radius
             coverage: 0.45
@@ -76,7 +88,8 @@ Item {
             text: root.text
             font.pixelSize: Appearance.font.pixelSize.smaller
             font.hintingPreference: Font.PreferNoHinting // Prevent shaky text
-            color: Appearance.angelEverywhere ? Appearance.angel.colText
+            color: Appearance.regaliaEverywhere ? Appearance.regalia.onColor
+                : Appearance.angelEverywhere ? Appearance.angel.colText
                 : Appearance.inirEverywhere ? Appearance.inir.colText
                 : Appearance.colors.colOnLayer3
             wrapMode: Text.Wrap

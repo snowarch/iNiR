@@ -11,7 +11,7 @@ ColumnLayout {
     id: root
     required property bool isSink
     required property bool dialogShown
-    readonly property list<var> appPwNodes: isSink ? Audio.outputAppNodes : Audio.inputAppNodes
+    readonly property list<var> appPwNodes: isSink ? MprisController.mixerAppNodes : Audio.inputAppNodes
     readonly property list<var> devices: isSink ? Audio.outputDevices : Audio.inputDevices
     readonly property bool hasApps: appPwNodes.length > 0
     readonly property var currentDevice: isSink ? Audio.defaultSink : Audio.source

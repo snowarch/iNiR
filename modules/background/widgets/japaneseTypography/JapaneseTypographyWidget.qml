@@ -398,6 +398,7 @@ AbstractBackgroundWidget {
         surfaceColor: root.widgetPlateColor
         colorMode: root.colorMode
         surfaceAccent: root.widgetAccent
+        surfaceFill: root.widgetPlateColor
         surfaceUseBlur: root.effectiveBlur
         screenX: root.x
         screenY: root.y

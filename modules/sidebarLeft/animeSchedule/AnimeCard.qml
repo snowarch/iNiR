@@ -46,7 +46,7 @@ RippleButton {
     }
     
     // Right click -> context menu
-    altAction: () => contextMenu.active = true
+    altAction: () => contextMenu.requestOpen()
     
     function truncateSynopsis(text, maxLen) {
         if (!text) return ""

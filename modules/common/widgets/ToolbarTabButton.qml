@@ -13,10 +13,12 @@ RippleButton {
     property bool showLabel: true
     horizontalPadding: 10
 
-    implicitHeight: Appearance.zzzEverywhere ? 32 : (Appearance.inirEverywhere || Appearance.angelEverywhere) ? 32 : 40
+    implicitHeight: Appearance.regaliaEverywhere ? Appearance.regalia.compactControlHeight
+        : Appearance.zzzEverywhere ? 32 : (Appearance.inirEverywhere || Appearance.angelEverywhere) ? 32 : 40
     readonly property real _iconOnlyImplicitWidth: icon.implicitWidth + horizontalPadding * 2
     implicitWidth: root.showLabel ? (implicitContentWidth + horizontalPadding * 2) : root._iconOnlyImplicitWidth
-    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+    buttonRadius: Appearance.regaliaEverywhere ? Appearance.regalia.roundSmall
+        : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : height / 2
 
@@ -26,12 +28,15 @@ RippleButton {
     // background, which means an icon-only tab morphs to cookie6 and a labelled
     // one becomes a scalloped pill — one silhouette, whatever the tab's width.
     cookieMorphing: Appearance.cookieEverywhere
-    toggled: Appearance.cookieEverywhere && root.current
-    colBackgroundToggled: Appearance.colors.colPrimaryContainer
-    colBackgroundToggledHover: Appearance.colors.colPrimaryContainer
+    toggled: (Appearance.regaliaEverywhere || Appearance.cookieEverywhere) && root.current
+    colBackgroundToggled: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlate
+        : Appearance.colors.colPrimaryContainer
+    colBackgroundToggledHover: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateHover
+        : Appearance.colors.colPrimaryContainer
 
     colBackground: "transparent"
     colBackgroundHover: current ? "transparent"
+        : Appearance.regaliaEverywhere ? Appearance.regalia.controlPlateHover
         : Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.contrastPlate, 0.14)
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : Appearance.inirEverywhere ? ColorUtils.transparentize(Appearance.inir.colText, 0.92)
@@ -58,7 +63,9 @@ RippleButton {
             iconSize: 22
             text: root.materialSymbol
 
-            color: Appearance.zzzEverywhere
+            color: Appearance.regaliaEverywhere
+                ? (root.current ? Appearance.regalia.primaryPlateInk : Appearance.regalia.onMuted)
+                : Appearance.zzzEverywhere
                 ? (root.current ? Appearance.zzz.accent : Appearance.zzz.inkMuted)
                 : Appearance.cookieEverywhere && root.current
                 ? Appearance.colors.colOnPrimaryContainer
@@ -94,7 +101,9 @@ RippleButton {
                 text: Appearance.zzzEverywhere ? root.text.toUpperCase() : root.text
                 font.family: Appearance.zzzEverywhere ? Appearance.font.family.title : Appearance.font.family.main
                 font.weight: Appearance.zzzEverywhere ? (root.current ? Font.Black : Font.Bold) : Font.Normal
-                color: Appearance.zzzEverywhere
+                color: Appearance.regaliaEverywhere
+                    ? (root.current ? Appearance.regalia.primaryPlateInk : Appearance.regalia.onMuted)
+                    : Appearance.zzzEverywhere
                     ? (root.current ? Appearance.zzz.accent : Appearance.zzz.inkMuted)
                     // The label sits on the face too, so it takes the face's ink.
                     // It used to stay colOnSurface and read as unselected text on a

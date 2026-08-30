@@ -19,11 +19,24 @@ Button {
     property var fallbackTags: []
     property var rowHeight
     property bool aspectCrop: false
+    property bool lazyTagFetch: false
     property bool manualDownload: false
     property string previewDownloadPath
     property string downloadPath
     property string nsfwPath
-    property string fileName: decodeURIComponent((imageData.file_url).substring((imageData.file_url).lastIndexOf('/') + 1))
+    readonly property string _fileUrl: imageData?.file_url ?? imageData?.sample_url ?? imageData?.preview_url ?? ""
+    property string fileName: {
+        if (root._fileUrl.length > 0) {
+            const cleanUrl = root._fileUrl.split("?")[0]
+            const slashIndex = cleanUrl.lastIndexOf("/")
+            const candidate = decodeURIComponent(cleanUrl.substring(slashIndex + 1))
+            if (candidate.length > 0)
+                return candidate
+        }
+        const fallbackId = String(root.imageData?.id ?? "preview")
+        const fallbackExt = String(root.imageData?.file_ext ?? "jpg")
+        return fallbackId + "." + fallbackExt
+    }
     property string filePath: `${root.previewDownloadPath}/${root.fileName}`
     property int maxTagStringLineLength: 50
     property real imageRadius: Appearance.rounding.small
@@ -41,7 +54,7 @@ Button {
         interval: 450
         repeat: false
         onTriggered: {
-            if (!root.aspectCrop)
+            if (!root.lazyTagFetch)
                 return
             if (!root.imageData || !root.imageData.id)
                 return
@@ -57,15 +70,13 @@ Button {
             return root.imageData.tags
         if (root.fallbackTags && root.fallbackTags.length > 0)
             return root.fallbackTags
-        if (root.aspectCrop && root.tagsRequested)
-            return Translation.tr("Loading tags…")
         return ""
     }
 
     hoverEnabled: true
 
     onHoveredChanged: {
-        if (!root.aspectCrop)
+        if (!root.lazyTagFetch)
             return
         if (root.hovered) {
             // Only start the timer if tags are not already present.
@@ -95,7 +106,7 @@ Button {
     StyledToolTip {
         // Scrolling moves the pointer across many thumbnails. Require real
         // hover intent for Wallhaven instead of flashing every available tag.
-        delay: root.aspectCrop ? 750 : 16
+        delay: root.lazyTagFetch ? 750 : 16
         extraVisibleCondition: root.enableTooltip && root.imageData && root._tagText.length > 0
         alternativeVisibleCondition: root.enableTooltip && (root.buttonHovered || root.hovered)
         text: `${StringUtils.wordWrap(root._tagText, root.maxTagStringLineLength)}`
@@ -121,7 +132,7 @@ Button {
             width: root.rowHeight * modelData.aspect_ratio
             height: root.rowHeight
             fillMode: root.aspectCrop ? Image.PreserveAspectCrop : Image.PreserveAspectFit
-            source: modelData.preview_url
+            source: root.manualDownload ? "" : modelData.preview_url
             sourceSize.width: root.rowHeight * modelData.aspect_ratio
             sourceSize.height: root.rowHeight
 
@@ -162,7 +173,7 @@ Button {
                     contextMenu.close()
                 }
 
-                contextMenu.active = true
+                contextMenu.requestOpen()
                 Qt.callLater(() => {
                     contextMenu.updateAnchor()
                 })
@@ -174,19 +185,21 @@ Button {
             id: menuButton
             anchors.top: parent.top
             anchors.right: parent.right
-            property real buttonSize: 26
+            property real buttonSize: 24
             anchors.margins: 6
             implicitHeight: buttonSize
             implicitWidth: buttonSize
+            visible: root.hovered || root.buttonHovered || contextMenu.active
 
             buttonRadius: buttonSize / 2
-            colBackground: ColorUtils.transparentize(Appearance.colors.colLayer1, 0.3)
-            colBackgroundHover: ColorUtils.transparentize(ColorUtils.mix(Appearance.colors.colLayer1, Appearance.colors.colOnSurface, 0.8), 0.2)
-            colRipple: ColorUtils.transparentize(ColorUtils.mix(Appearance.colors.colLayer1, Appearance.colors.colOnSurface, 0.6), 0.1)
+            rippleEnabled: false
+            colBackground: ColorUtils.transparentize(Appearance.colors.colLayer1, 0.38)
+            colBackgroundHover: colBackground
+            colRipple: colBackground
 
             contentItem: MaterialSymbol {
                 horizontalAlignment: Text.AlignHCenter
-                iconSize: Appearance.font.pixelSize.large
+                iconSize: Appearance.font.pixelSize.normal
                 color: Appearance.colors.colOnSurface
                 text: "more_vert"
             }
@@ -200,7 +213,7 @@ Button {
                     contextMenu.close()
                 }
 
-                contextMenu.active = true
+                contextMenu.requestOpen()
                 Qt.callLater(() => {
                     contextMenu.updateAnchor()
                 })

@@ -11,6 +11,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
 import QtQuick
+import "brightnessPolicy.js" as BrightnessPolicy
 
 /**
  * For managing brightness of monitors. Supports both brightnessctl and ddcutil.
@@ -24,21 +25,34 @@ Singleton {
     property string backlightDevice: ""
     property bool backlightDetectionReady: false
     property int _bestBacklightMax: 0
+    // last >0 level per screen.name; survives monitor recreation after dpms
+    property var lastValidBrightness: ({})
+    property bool asleep: false
 
-    // Rebuilt explicitly rather than bound to Quickshell.screens: createObject()
-    // parents each monitor to root, so a binding would strand a whole generation
-    // of BrightnessMonitors on every screen change (hotplug, DPMS, mode switch).
-    // Stranded ones are not inert — each still owns a Process and a Timer and
-    // still reacts to ddcMonitors, re-spawning ddcutil on every refresh.
-    function _rebuildMonitors(): void {
+    // Reconcile against the live screen list rather than binding to
+    // Quickshell.screens: createObject() parents each monitor to root, so a
+    // binding would strand a whole generation of BrightnessMonitors on every
+    // screen change (hotplug, DPMS, mode switch). Still-connected screens keep
+    // their existing BrightnessMonitor (and its running Timers/Processes);
+    // disconnected ones are destroyed so they don't react to a dead screen.
+    function _syncMonitors(): void {
         // Array.from is load-bearing: list<T> is a live view of the property, not
         // a snapshot, so holding it directly would alias the *new* list after the
-        // assignment below and destroy the monitors we just built.
-        const stale = Array.from(root.monitors);
-        root.monitors = Quickshell.screens.map(screen => monitorComp.createObject(root, {
-            screen
-        }));
-        stale.forEach(m => m.destroy());
+        // assignment below and destroy the monitors we just built/kept.
+        const prev = Array.from(root.monitors);
+        const next = Quickshell.screens.map(screen => {
+            const existing = prev.find(m => m.screen === screen)
+                ?? prev.find(m => m.screen?.name && m.screen.name === screen?.name);
+            if (existing) {
+                existing.screen = screen;
+                return existing;
+            }
+            return monitorComp.createObject(root, { screen });
+        });
+        root.monitors = next;
+        for (const m of prev) {
+            if (!next.includes(m)) m.destroy();
+        }
     }
 
     function _detectBacklight(): void {
@@ -49,15 +63,27 @@ Singleton {
         backlightDetectProc.running = true
     }
 
+    function sleepBegin(): void {
+        root.asleep = true
+    }
+
+    function restoreAfterWake(): void {
+        root.asleep = false
+        for (let i = 0; i < root.monitors.length; ++i)
+            root.monitors[i].restoreLastGood();
+    }
+
     Component.onCompleted: {
-        root._rebuildMonitors()
+        root._syncMonitors()
         root._detectBacklight()
     }
 
     Connections {
         target: Quickshell
         function onScreensChanged(): void {
-            root._rebuildMonitors();
+            if (root.asleep)
+                return
+            root._syncMonitors();
             root._detectBacklight();
         }
     }
@@ -84,9 +110,13 @@ Singleton {
 
     reloadableId: "brightness"
 
+    property var _ddcNext: []
+
     onMonitorsChanged: {
-        ddcMonitors = [];
-        ddcProc.running = true;
+        if (root.asleep)
+            return
+        ddcProc.running = false
+        ddcProc.running = true
     }
 
     Process {
@@ -130,14 +160,23 @@ Singleton {
             onRead: data => {
                 if (data.startsWith("Display ")) {
                     const lines = data.split("\n").map(l => l.trim());
-                    root.ddcMonitors.push({
+                    root._ddcNext.push({
                         model: lines.find(l => l.startsWith("Monitor:")).split(":")[2],
                         busNum: lines.find(l => l.startsWith("I2C bus:")).split("/dev/i2c-")[1]
                     });
                 }
             }
         }
-        onExited: root.ddcMonitorsChanged()
+        onRunningChanged: {
+            if (running)
+                root._ddcNext = []
+        }
+        onExited: {
+            if (root._ddcNext.length > 0)
+                root.ddcMonitors = root._ddcNext
+            root._ddcNext = []
+            root.ddcMonitorsChanged()
+        }
     }
 
     Process {
@@ -149,11 +188,11 @@ Singleton {
 
         required property ShellScreen screen
         readonly property bool isDdc: {
-            const match = root.ddcMonitors.find(m => screen.model?.includes(m.model) && !root.monitors.slice(0, root.monitors.indexOf(this)).some(mon => mon.busNum === m.busNum));
+            const match = root.ddcMonitors.find(m => screen?.model?.includes(m.model) && !root.monitors.slice(0, root.monitors.indexOf(this)).some(mon => mon.busNum === m.busNum));
             return !!match;
         }
         readonly property string busNum: {
-            const match = root.ddcMonitors.find(m => screen.model?.includes(m.model) && !root.monitors.slice(0, root.monitors.indexOf(this)).some(mon => mon.busNum === m.busNum));
+            const match = root.ddcMonitors.find(m => screen?.model?.includes(m.model) && !root.monitors.slice(0, root.monitors.indexOf(this)).some(mon => mon.busNum === m.busNum));
             return match?.busNum ?? "";
         }
         property int rawMaxBrightness: 100
@@ -184,6 +223,26 @@ Singleton {
                 setTimer.start()
         }
 
+        function restoreLastGood(): void {
+            const screenName = monitor.screen?.name ?? ""
+            const value = BrightnessPolicy.pickRestoreValue(
+                root.lastValidBrightness[screenName],
+                monitor.brightness
+            )
+            if (!Number.isFinite(value)) {
+                initialize()
+                return
+            }
+            if (screenName)
+                root.lastValidBrightness[screenName] = value
+            monitor.ready = false
+            monitor.brightness = value
+            monitor.ready = true
+            syncBrightness()
+            if (monitor.isDdc)
+                ddcRetryTimer.restart()
+        }
+
         function initialize() {
             monitor.ready = false;
             if (isDdc) {
@@ -199,7 +258,10 @@ Singleton {
                     "_", root.backlightDevice
                 ]
             } else {
-                monitor.brightness = NaN
+                const screenName = monitor.screen?.name ?? ""
+                const lastGood = root.lastValidBrightness[screenName]
+                const resolved = BrightnessPolicy.resolveHardwareBrightness(Number.NaN, 0, lastGood)
+                monitor.brightness = Number.isFinite(resolved.value) ? resolved.value : Number.NaN
                 monitor.ready = true
                 return
             }
@@ -212,17 +274,44 @@ Singleton {
                     const parts = data.trim().split(/\s+/)
                     const current = Number(parts[parts.length - 2])
                     const max = Number(parts[parts.length - 1])
-                    if (!Number.isFinite(current) || !Number.isFinite(max)
-                            || max <= 0) {
-                        monitor.brightness = NaN
-                        monitor.ready = true
-                        return
+                    const screenName = monitor.screen?.name ?? ""
+                    const lastGood = root.lastValidBrightness[screenName]
+                    const resolved = BrightnessPolicy.resolveHardwareBrightness(current, max, lastGood)
+                    if (Number.isFinite(resolved.rawMax))
+                        monitor.rawMaxBrightness = resolved.rawMax
+                    if (Number.isFinite(resolved.value)) {
+                        monitor.brightness = resolved.value
+                        if (screenName && resolved.value >= 0.01)
+                            root.lastValidBrightness[screenName] = resolved.value
                     }
-                    monitor.rawMaxBrightness = max
-                    monitor.brightness = current / max
-                    monitor.ready = true;
+                    monitor.ready = true
+                    if (resolved.restore)
+                        monitor.syncBrightness()
                 }
             }
+            onExited: {
+                if (monitor.ready)
+                    return
+                const screenName = monitor.screen?.name ?? ""
+                const value = BrightnessPolicy.pickRestoreValue(
+                    root.lastValidBrightness[screenName],
+                    monitor.brightness
+                )
+                if (Number.isFinite(value)) {
+                    if (screenName)
+                        root.lastValidBrightness[screenName] = value
+                    monitor.brightness = value
+                    monitor.ready = true
+                    syncBrightness()
+                    return
+                }
+                monitor.ready = true
+            }
+        }
+
+        property var ddcRetryTimer: Timer {
+            interval: 800
+            onTriggered: monitor.syncBrightness()
         }
 
         // Coalesce animation frames. DDC needs a longer debounce; backlight
@@ -239,21 +328,25 @@ Singleton {
         }
 
         function syncBrightness() {
-            const brightnessValue = Math.max(monitor.multipliedBrightness, 0)
+            const brightnessValue = monitor.multipliedBrightness
+            if (!Number.isFinite(brightnessValue) || brightnessValue < 0.01)
+                return
             const rawValueRounded = Math.max(Math.floor(brightnessValue * monitor.rawMaxBrightness), 1);
             if (isDdc) {
-                setProc.command = ["ddcutil", "-b", busNum, "setvcp", "10", rawValueRounded]
+                if (!busNum)
+                    return
+                Quickshell.execDetached(["ddcutil", "-b", busNum, "setvcp", "10", `${rawValueRounded}`]);
             } else if (root.backlightDevice.length > 0) {
-                setProc.command = ["brightnessctl", "-d", root.backlightDevice,
-                    "s", rawValueRounded, "--quiet"]
-            } else {
-                return
+                Quickshell.execDetached(["brightnessctl", "-d", root.backlightDevice,
+                    "s", `${rawValueRounded}`, "--quiet"]);
             }
-            setProc.startDetached();
         }
 
         function setBrightness(value: real): void {
             value = Math.max(0, Math.min(1, value));
+            const screenName = monitor.screen?.name ?? ""
+            if (screenName && value >= 0.01)
+                root.lastValidBrightness[screenName] = value
             monitor.brightness = value;
         }
 
@@ -361,6 +454,14 @@ Singleton {
 
         function decrement(): void {
             root.decreaseBrightness();
+        }
+
+        function sleepBegin(): void {
+            root.sleepBegin();
+        }
+
+        function restoreAfterWake(): void {
+            root.restoreAfterWake();
         }
     }
 

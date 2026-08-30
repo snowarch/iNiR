@@ -160,18 +160,21 @@ PopupWindow {
                 rightMargin: root.isRight ? sourceEdgeMargin : (root.ambientShadowWidth + root.visualMargin)
             }
 
-            fallbackColor: Appearance.zzzEverywhere ? Appearance.zzz.bg1 : Appearance.colors.colSurfaceContainer
+            fallbackColor: Appearance.regaliaEverywhere ? "transparent"
+                : Appearance.zzzEverywhere ? Appearance.zzz.bg1 : Appearance.colors.colSurfaceContainer
             inirColor: Appearance.inir?.colLayer2 ?? Appearance.colors.colSurfaceContainer
             auroraTransparency: Appearance.aurora?.popupTransparentize ?? 0.1
-            radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+            radius: Appearance.regaliaEverywhere ? Appearance.regalia.roundLarge
+                : Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
                 : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
                 : Appearance.inirEverywhere ? (Appearance.inir?.roundingNormal ?? 12) : Appearance.rounding.normal
             Behavior on radius {
                 enabled: Appearance.animationsEnabled
                 NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
             }
-            border.width: 1
-            border.color: Appearance.zzzEverywhere ? Appearance.zzz.borderColor
+            border.width: Appearance.regaliaEverywhere ? 0 : 1
+            border.color: Appearance.regaliaEverywhere ? "transparent"
+                : Appearance.zzzEverywhere ? Appearance.zzz.borderColor
                 : Appearance.angelEverywhere ? Appearance.angel.colBorder
                 : Appearance.inirEverywhere
                 ? (Appearance.inir?.colBorder ?? "transparent")
@@ -181,6 +184,16 @@ PopupWindow {
             Behavior on border.color {
                 enabled: Appearance.animationsEnabled
                 ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
+
+            RegaliaPlate {
+                anchors.fill: parent
+                visible: Appearance.regaliaEverywhere
+                fillColor: Appearance.regalia.bg2
+                radius: contentItem.radius
+                inset: Appearance.regalia.surfaceInset
+                elevated: true
+                glassEnabled: true
             }
 
             layer.enabled: true

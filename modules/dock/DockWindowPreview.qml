@@ -36,12 +36,22 @@ Button {
 
     background: Rectangle {
         id: background
-        radius: Appearance.inirEverywhere ? (Appearance.inir?.roundingSmall ?? 8) : Appearance.rounding.small
-        color: root.down 
-            ? ColorUtils.transparentize(Appearance.inirEverywhere ? Appearance.inir?.colPrimary ?? Appearance.colors.colPrimary : Appearance.colors.colPrimary, 0.7)
-            : (root.hovered 
-                ? ColorUtils.transparentize(Appearance.inirEverywhere ? Appearance.inir?.colLayer2Hover ?? Appearance.colors.colSurfaceContainerHigh : Appearance.colors.colSurfaceContainerHigh, 0.5)
-                : "transparent")
+        radius: Appearance.regaliaEverywhere ? Appearance.regalia.roundSmall
+            : Appearance.inirEverywhere ? (Appearance.inir?.roundingSmall ?? 8) : Appearance.rounding.small
+        color: Appearance.regaliaEverywhere ? "transparent"
+            : root.down
+                ? ColorUtils.transparentize(Appearance.inirEverywhere ? Appearance.inir?.colPrimary ?? Appearance.colors.colPrimary : Appearance.colors.colPrimary, 0.7)
+                : (root.hovered
+                    ? ColorUtils.transparentize(Appearance.inirEverywhere ? Appearance.inir?.colLayer2Hover ?? Appearance.colors.colSurfaceContainerHigh : Appearance.colors.colSurfaceContainerHigh, 0.5)
+                    : "transparent")
+        RegaliaControlFace {
+            anchors.fill: parent
+            visible: Appearance.regaliaEverywhere && (root.hovered || root.down)
+            fillColor: root.down ? Appearance.regalia.controlPlateActive
+                : Appearance.regalia.controlPlateHover
+            radius: background.radius
+        }
+
         // ZZZ console-plate identity: a hairline edge on interaction.
         border.width: Appearance.zzzEverywhere && (root.hovered || root.down) ? Appearance.zzz.borderThick : 0
         border.color: Appearance.zzz.hairlineStrong
@@ -66,7 +76,7 @@ Button {
                 id: appIcon
                 Layout.alignment: Qt.AlignVCenter
                 source: {
-                    const appId = root.toplevel?.appId ?? "";
+                    const appId = AppSearch.resolveWindowIdentity(root.toplevel);
                     const de = AppSearch.lookupDesktopEntry(appId);
                     const icon = de?.icon || AppSearch.guessIcon(appId);
                     const resolved = IconThemeService.smartIconName(icon, appId);
@@ -155,10 +165,11 @@ Button {
             Rectangle {
                 id: shimmerBg
                 anchors.fill: parent
-                radius: Appearance.rounding.small
-                color: Appearance.inirEverywhere 
-                    ? (Appearance.inir?.colLayer1 ?? Appearance.colors.colSurfaceContainerLow)
-                    : Appearance.colors.colSurfaceContainerLow
+                radius: Appearance.regaliaEverywhere ? Appearance.regalia.roundSmall : Appearance.rounding.small
+                color: Appearance.regaliaEverywhere ? Appearance.regalia.bg1
+                    : Appearance.inirEverywhere
+                        ? (Appearance.inir?.colLayer1 ?? Appearance.colors.colSurfaceContainerLow)
+                        : Appearance.colors.colSurfaceContainerLow
                 visible: windowPreview.status !== Image.Ready
 
                 Rectangle {

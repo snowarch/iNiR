@@ -200,7 +200,7 @@ Item {
                 text: Translation.tr("BLUETOOTH")
                 color: PillTheme.subtle
                 font.family: PillTheme.font
-                font.pixelSize: 10 * root.s
+                font.pixelSize: 11.5 * root.s
                 font.weight: Font.DemiBold
                 font.capitalization: Font.AllUppercase
                 font.letterSpacing: 1.6 * root.s
@@ -218,7 +218,7 @@ Item {
                 text: root.discovering ? Translation.tr("Scanning…") : Translation.tr("Scan")
                 color: root.discovering ? PillTheme.vermLit : PillTheme.dim
                 font.family: PillTheme.font
-                font.pixelSize: 9.5 * root.s
+                font.pixelSize: 10.5 * root.s
                 font.weight: Font.DemiBold
 
                 MouseArea {
@@ -366,7 +366,7 @@ Item {
                                     text: root.metaFor(devItem.modelData)
                                     color: PillTheme.faint
                                     font.family: PillTheme.font
-                                    font.pixelSize: 9.5 * root.s
+                                    font.pixelSize: 10.5 * root.s
                                     font.weight: Font.Medium
                                     elide: Text.ElideRight
                                 }
@@ -410,8 +410,8 @@ Item {
                                     color: pairArea.containsMouse ? PillTheme.frameBg : PillTheme.tileBg
                                     border.width: 1
                                     border.color: pairArea.containsMouse ? PillTheme.vermDim : PillTheme.border
-                                    height: 18 * root.s
-                                    width: pairText.implicitWidth + 16 * root.s
+                                    height: 26 * root.s
+                                    width: pairText.implicitWidth + 20 * root.s
                                     Behavior on color { ColorAnimation { duration: PillMotion.fast } }
                                     Behavior on border.color { ColorAnimation { duration: PillMotion.fast } }
 
@@ -421,7 +421,7 @@ Item {
                                         text: Translation.tr("Pair")
                                         color: pairArea.containsMouse ? PillTheme.cream : PillTheme.dim
                                         font.family: PillTheme.font
-                                        font.pixelSize: 9.5 * root.s
+                                        font.pixelSize: 10.5 * root.s
                                         font.weight: Font.DemiBold
                                     }
 
@@ -439,7 +439,7 @@ Item {
                         Item {
                             visible: devItem.confirming
                             width: parent.width
-                            height: 30 * root.s
+                            height: 38 * root.s
 
                             Text {
                                 anchors.left: parent.left
@@ -450,7 +450,7 @@ Item {
                                 text: devItem.isConnected ? Translation.tr("Connected") : Translation.tr("Paired")
                                 color: PillTheme.faint
                                 font.family: PillTheme.font
-                                font.pixelSize: 9.5 * root.s
+                                font.pixelSize: 10.5 * root.s
                                 font.weight: Font.Medium
                                 elide: Text.ElideRight
                             }
@@ -464,8 +464,8 @@ Item {
 
                                 Rectangle {
                                     anchors.verticalCenter: parent.verticalCenter
-                                    width: primaryLabel.implicitWidth + 20 * root.s
-                                    height: 22 * root.s
+                                    width: primaryLabel.implicitWidth + 22 * root.s
+                                    height: 28 * root.s
                                     radius: 7 * root.s
                                     color: primaryArea.containsMouse ? PillTheme.tileBg : "transparent"
                                     border.width: 1
@@ -495,8 +495,8 @@ Item {
 
                                 Rectangle {
                                     anchors.verticalCenter: parent.verticalCenter
-                                    width: forgetLabel.implicitWidth + 20 * root.s
-                                    height: 22 * root.s
+                                    width: forgetLabel.implicitWidth + 22 * root.s
+                                    height: 28 * root.s
                                     radius: 7 * root.s
                                     color: forgetArea.containsMouse
                                         ? Qt.rgba(PillTheme.verm.r, PillTheme.verm.g, PillTheme.verm.b, 0.2)
@@ -531,7 +531,7 @@ Item {
                             text: Translation.tr("Pairing failed")
                             color: PillTheme.vermLit
                             font.family: PillTheme.font
-                            font.pixelSize: 9.5 * root.s
+                            font.pixelSize: 10.5 * root.s
                             leftPadding: 42 * root.s
                         }
                     }

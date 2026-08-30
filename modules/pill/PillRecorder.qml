@@ -83,7 +83,7 @@ PillSurface {
                 text: Translation.tr("RECORD")
                 color: PillTheme.subtle
                 font.family: PillTheme.font
-                font.pixelSize: 10 * root.s
+                font.pixelSize: 11.5 * root.s
                 font.weight: Font.DemiBold
                 font.capitalization: Font.AllUppercase
                 font.letterSpacing: 1.6 * root.s
@@ -217,8 +217,8 @@ PillSurface {
             Rectangle {
                 id: soundChip
                 anchors.verticalCenter: parent.verticalCenter
-                width: 26 * root.s
-                height: 26 * root.s
+                width: 34 * root.s
+                height: 34 * root.s
                 radius: 8 * root.s
                 color: root.withSound ? PillTheme.frameBg : "transparent"
                 border.width: 1
@@ -226,8 +226,8 @@ PillSurface {
 
                 GlyphIcon {
                     anchors.centerIn: parent
-                    width: 15 * root.s
-                    height: 15 * root.s
+                    width: 18 * root.s
+                    height: 18 * root.s
                     name: root.withSound ? "speaker" : "speaker-off"
                     color: root.withSound ? PillTheme.vermLit : PillTheme.iconDim
                     stroke: 1.7
@@ -277,7 +277,7 @@ PillSurface {
             anchors.topMargin: 10 * root.s
             anchors.left: parent.left
             anchors.right: parent.right
-            height: 30 * root.s
+            height: 36 * root.s
             radius: 9 * root.s
             color: stopArea.containsMouse ? Qt.alpha(PillTheme.verm, 0.18) : PillTheme.frameBg
             border.width: 1

@@ -1,17 +1,14 @@
 import QtQuick
 import QtQuick.Effects
+import Quickshell
 import Quickshell.Services.Pipewire
 import qs.services
 import qs.modules.common
 
 /**
- * Mixer surface: header with a night-light chip and a row of vertical ink-faders
- * wired to real hardware — external monitor and backlight brightness through
- * iNiR's Brightness service, volume and mic through Pipewire. Fills the lower
- * body of the pill.
- *
- * Upstream also carried a digital-vibrance fader; that needs nvibrant (nvidia
- * only), which iNiR does not depend on, so the fader is gone rather than dead.
+ * Mixer surface: application streams are the primary view, with a large master
+ * output thread and one direct volume thread per PipeWire stream. System keeps
+ * the hardware brightness, output and microphone faders in a separate view.
  */
 PillSurface {
     id: root
@@ -23,6 +20,14 @@ PillSurface {
 
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property var source: Pipewire.defaultAudioSource
+    readonly property var appNodes: MprisController.mixerAppNodes
+    readonly property int appFaderLimit: Math.max(3, Math.min(8, Config.options?.bar?.pill?.mixerAppRows ?? 5))
+    readonly property int visibleAppFaders: Math.max(1, Math.min(appFaderLimit, appNodes.length || 1))
+    property string view: "apps"
+    readonly property real desiredWidth: view === "apps"
+        ? Math.min(760, Math.max(520, 132 + visibleAppFaders * 100)) * s
+        : Math.max(520, 104 * Math.max(4, faderCount)) * s
+    readonly property real desiredHeight: view === "apps" ? 316 * s : 300 * s
 
     /**
      * Output devices the user can make default: real sinks only, never the
@@ -66,7 +71,13 @@ PillSurface {
         return node.description || node.nickname || node.name || "";
     }
 
-    /** Which device dropdown is open: "out", "in", or "" for none. */
+    function stepVolume(audio, delta) {
+        if (!audio)
+            return;
+        audio.volume = Math.max(0, Math.min(1, audio.volume + delta));
+    }
+
+    /** Which device picker is open: "out", "in", or "" for none. */
     property string openPicker: ""
 
     property int focusIndex: -1
@@ -103,15 +114,23 @@ PillSurface {
         return f.mapToItem(root, f.tickCenter.x, f.tickCenter.y);
     }
 
-    ameForm: "tick"
-    amePoint: focusTickPoint
+    readonly property point appVolumePoint: {
+        void root.width;
+        void root.height;
+        void masterTrack.height;
+        const volume = Math.max(0, Math.min(1, root.sink?.audio?.volume ?? 0));
+        return masterTrack.mapToItem(root, masterTrack.width / 2, (1 - volume) * masterTrack.height);
+    }
+
+    ameForm: view === "apps" ? "seam" : "tick"
+    amePoint: view === "apps" ? appVolumePoint : focusTickPoint
 
     /**
      * Pointer-driven fader targeting. MouseArea hover is flaky on this
      * layer-shell surface, so a non-blocking HoverHandler is the only hover
      * source. Its pointer x maps to a fader column and drives keyboard focus.
      */
-    readonly property int hoverIndex: surfaceHovered && width > 0 && faders.length > 0
+    readonly property int hoverIndex: view === "system" && surfaceHovered && width > 0 && faders.length > 0
         && hoverTracker.point.position.y >= faderRow.y
         ? Math.max(0, Math.min(faders.length - 1, Math.floor(hoverTracker.point.position.x / (width / faders.length))))
         : -1
@@ -133,7 +152,9 @@ PillSurface {
 
     onActiveChanged: {
         focusIndex = active ? 0 : -1;
-        if (!active)
+        if (active)
+            view = "apps";
+        else
             openPicker = "";
     }
 
@@ -142,7 +163,7 @@ PillSurface {
      * handled the step.
      */
     function stepFocused(deltaPct) {
-        if (focusIndex < 0)
+        if (view !== "system" || focusIndex < 0)
             return false;
         faders[focusIndex].step(deltaPct);
         keyLatch.restart();
@@ -154,6 +175,8 @@ PillSurface {
      * (right) or -1 (left); a fresh focus lands on the first or last fader.
      */
     function moveFocus(dir) {
+        if (view !== "system")
+            return;
         focusIndex = focusIndex < 0 ? (dir > 0 ? 0 : faders.length - 1)
                                     : (focusIndex + dir + faders.length) % faders.length;
         keyLatch.restart();
@@ -161,47 +184,6 @@ PillSurface {
 
     PwObjectTracker {
         objects: [root.sink, root.source].concat(root.outputSinks).concat(root.inputSources).filter(Boolean)
-    }
-
-    component IconChip: Rectangle {
-        id: chip
-        property string glyph: ""
-        property bool on: false
-        property string tipTitle: ""
-        property string tipDesc: ""
-        signal toggled()
-
-        width: 26 * root.s
-        height: 26 * root.s
-        radius: 8 * root.s
-        color: chip.on ? PillTheme.frameBg : "transparent"
-        border.width: 1
-        border.color: chip.on ? PillTheme.frameBorder : PillTheme.border
-
-        GlyphIcon {
-            anchors.centerIn: parent
-            width: 15 * root.s
-            height: 15 * root.s
-            name: chip.glyph
-            color: chip.on ? PillTheme.vermLit : PillTheme.iconDim
-            stroke: 1.7
-        }
-        HoverHandler {
-            id: chipHover
-        }
-        MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            onClicked: chip.toggled()
-        }
-
-        Tooltip {
-            s: root.s
-            placement: "below"
-            title: chip.tipTitle
-            desc: chip.tipDesc
-            show: chipHover.hovered
-        }
     }
 
     /**
@@ -216,9 +198,9 @@ PillSurface {
         property string tip: ""
         signal toggled()
 
-        width: 26 * root.s
-        height: 26 * root.s
-        radius: 8 * root.s
+        width: 34 * root.s
+        height: 34 * root.s
+        radius: 11 * root.s
         color: dchip.open ? Qt.alpha(PillTheme.onGlow, 0.14)
             : (dchipHover.hovered ? PillTheme.frameBg : "transparent")
         border.width: 1
@@ -227,8 +209,8 @@ PillSurface {
 
         GlyphIcon {
             anchors.centerIn: parent
-            width: 15 * root.s
-            height: 15 * root.s
+            width: 18 * root.s
+            height: 18 * root.s
             name: dchip.glyph
             color: dchip.open ? PillTheme.vermLit : PillTheme.iconDim
             stroke: 1.7
@@ -256,7 +238,7 @@ PillSurface {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        height: 24 * root.s
+        height: 36 * root.s
 
         Row {
             anchors.left: parent.left
@@ -269,69 +251,32 @@ PillSurface {
                 color: PillTheme.cream
                 font.family: PillTheme.fontJp
                 font.weight: Font.Medium
-                font.pixelSize: 16 * root.s
+                font.pixelSize: 18 * root.s
             }
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: Translation.tr("MIXER")
                 color: PillTheme.subtle
                 font.family: PillTheme.font
-                font.pixelSize: 10 * root.s
+                font.pixelSize: 12 * root.s
                 font.weight: Font.DemiBold
                 font.capitalization: Font.AllUppercase
                 font.letterSpacing: 1.6 * root.s
             }
         }
 
-        Row {
+        SettingsSeg {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 6 * root.s
-            DevicePickerChip {
-                glyph: "speaker"
-                open: root.openPicker === "out"
-                tip: "Output device"
-                onToggled: root.openPicker = root.openPicker === "out" ? "" : "out"
-            }
-            DevicePickerChip {
-                glyph: "mic"
-                open: root.openPicker === "in"
-                tip: "Input device"
-                onToggled: root.openPicker = root.openPicker === "in" ? "" : "in"
-            }
-            IconChip {
-                glyph: "dnd"
-                on: Notifications.manualDndActive
-                tipTitle: Translation.tr("Do not disturb")
-                tipDesc: Notifications.manualDndActive
-                    ? Translation.tr("Silence notifications")
-                    : Notifications.quietHoursActive
-                        ? Translation.tr("Quiet hours")
-                        : Translation.tr("Silence notifications")
-                onToggled: Notifications.toggleSilent()
-            }
-            IconChip {
-                glyph: "awake"
-                on: Idle.inhibit
-                tipTitle: Translation.tr("Keep awake")
-                tipDesc: Translation.tr("Block sleep & screen-off")
-                onToggled: Idle.toggleInhibit()
-            }
-            IconChip {
-                glyph: "sun"
-                on: Hyprsunset.active
-                tipTitle: Translation.tr("Night light")
-                tipDesc: Translation.tr("Warm the screen")
-                onToggled: Hyprsunset.toggle(!Hyprsunset.active)
-            }
-            IconChip {
-                glyph: "gamepad"
-                on: GameMode.active
-                tipTitle: Translation.tr("Game mode")
-                tipDesc: Notifications.gameModeSuppressionActive
-                    ? Translation.tr("Hide notification popups while Game Mode is active")
-                    : Translation.tr("Strip effects, quiet the desktop")
-                onToggled: GameMode.toggle()
+            s: root.s
+            value: root.view
+            options: [
+                { label: Translation.tr("Applications"), value: "apps" },
+                { label: Translation.tr("System"), value: "system" }
+            ]
+            onPicked: (value) => {
+                root.view = value;
+                root.openPicker = "";
             }
         }
     }
@@ -366,7 +311,7 @@ PillSurface {
         anchors.top: divider.bottom
         anchors.topMargin: 6 * root.s
         anchors.right: parent.right
-        width: 300 * root.s
+        width: 360 * root.s
         height: panel.height
 
         /**
@@ -393,7 +338,7 @@ PillSurface {
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.right: parent.right
-            height: Math.min(menu.model.length * 24 * root.s + 4 * root.s, 150 * root.s)
+            height: Math.min(menu.model.length * 36 * root.s + 4 * root.s, 184 * root.s)
             clip: true
             radius: 9 * root.s
             gradient: Gradient {
@@ -416,8 +361,8 @@ PillSurface {
                     readonly property bool current: menu.current === modelData
 
                     width: ListView.view.width
-                    height: 24 * root.s
-                    radius: 7 * root.s
+                    height: 36 * root.s
+                    radius: 9 * root.s
                     color: devRowHover.hovered ? PillTheme.frameBg
                         : (devRow.current ? Qt.alpha(PillTheme.onGlow, 0.16) : "transparent")
 
@@ -433,7 +378,7 @@ PillSurface {
                         elide: Text.ElideRight
                         color: devRow.current ? PillTheme.cream : PillTheme.subtle
                         font.family: PillTheme.font
-                        font.pixelSize: 10.5 * root.s
+                        font.pixelSize: 12 * root.s
                         font.weight: devRow.current ? Font.Bold : Font.Medium
                     }
 
@@ -464,14 +409,334 @@ PillSurface {
         onPick: (node) => Pipewire.preferredDefaultAudioSource = node
     }
 
-    Row {
-        id: faderRow
+    Item {
+        id: appView
+        visible: root.view === "apps"
         anchors.top: divider.bottom
-        anchors.topMargin: 10 * root.s
+        anchors.topMargin: 12 * root.s
         anchors.left: parent.left
         anchors.right: parent.right
-        height: 142 * root.s
+        anchors.bottom: parent.bottom
+
+        Item {
+            id: masterFader
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            width: 104 * root.s
+
+            Text {
+                anchors.top: parent.top
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: Translation.tr("Output")
+                color: PillTheme.subtle
+                font.family: PillTheme.font
+                font.pixelSize: 11 * root.s
+                font.weight: Font.DemiBold
+                font.capitalization: Font.AllUppercase
+                font.letterSpacing: 1.1 * root.s
+            }
+
+            Text {
+                id: masterPct
+                anchors.top: parent.top
+                anchors.topMargin: 26 * root.s
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: root.sink?.audio?.muted ? Translation.tr("off") : Math.round((root.sink?.audio?.volume ?? 0) * 100) + "%"
+                color: PillTheme.cream
+                font.family: PillTheme.font
+                font.pixelSize: 14 * root.s
+                font.weight: Font.DemiBold
+                font.features: ({ "tnum": 1 })
+            }
+
+            Rectangle {
+                id: masterTrack
+                anchors.top: masterPct.bottom
+                anchors.topMargin: 12 * root.s
+                anchors.bottom: masterIcon.top
+                anchors.bottomMargin: 13 * root.s
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: 8 * root.s
+                radius: width / 2
+                color: PillTheme.threadBg
+
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    height: parent.height * Math.max(0, Math.min(1, root.sink?.audio?.volume ?? 0))
+                    radius: parent.radius
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: PillTheme.vermLit }
+                        GradientStop { position: 1.0; color: PillTheme.vermBurn }
+                    }
+                }
+
+                Rectangle {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    y: Math.max(0, Math.min(parent.height - height,
+                        (1 - Math.max(0, Math.min(1, root.sink?.audio?.volume ?? 0))) * parent.height - height / 2))
+                    width: 20 * root.s
+                    height: 3 * root.s
+                    radius: 2 * root.s
+                    color: PillTheme.tickRest
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    anchors.margins: -12 * root.s
+                    cursorShape: Qt.PointingHandCursor
+                    function apply(mouseY) {
+                        if (!root.sink?.audio)
+                            return;
+                        const localY = mouseY + 12 * root.s;
+                        root.sink.audio.volume = 1 - Math.max(0, Math.min(1, localY / masterTrack.height));
+                    }
+                    onPressed: (mouse) => apply(mouse.y)
+                    onPositionChanged: (mouse) => { if (pressed) apply(mouse.y); }
+                    onWheel: (event) => {
+                        root.stepVolume(root.sink?.audio, event.angleDelta.y > 0 ? 0.05 : -0.05);
+                        event.accepted = true;
+                    }
+                }
+            }
+
+            GlyphIcon {
+                id: masterIcon
+                anchors.bottom: masterDevice.top
+                anchors.bottomMargin: 5 * root.s
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: 25 * root.s
+                height: 25 * root.s
+                name: root.sink?.audio?.muted ? "speaker-off" : "speaker"
+                color: masterMute.containsMouse ? PillTheme.cream : PillTheme.vermLit
+                stroke: 1.8
+            }
+
+            MouseArea {
+                id: masterMute
+                anchors.centerIn: masterIcon
+                width: 44 * root.s
+                height: 44 * root.s
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: if (root.sink?.audio) root.sink.audio.muted = !root.sink.audio.muted
+                onWheel: (event) => {
+                    root.stepVolume(root.sink?.audio, event.angleDelta.y > 0 ? 0.05 : -0.05);
+                    event.accepted = true;
+                }
+            }
+
+            Text {
+                id: masterDevice
+                anchors.bottom: parent.bottom
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: parent.width - 10 * root.s
+                horizontalAlignment: Text.AlignHCenter
+                text: root.deviceLabel(root.sink)
+                color: PillTheme.faint
+                font.family: PillTheme.font
+                font.pixelSize: 10.5 * root.s
+                elide: Text.ElideRight
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                acceptedButtons: Qt.NoButton
+                onWheel: (event) => {
+                    root.stepVolume(root.sink?.audio, event.angleDelta.y > 0 ? 0.05 : -0.05);
+                    event.accepted = true;
+                }
+            }
+        }
+
+        Rectangle {
+            id: appDivider
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.left: masterFader.right
+            width: 1
+            color: PillTheme.hair
+        }
+
+        Flickable {
+            id: appFlick
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.left: appDivider.right
+            anchors.leftMargin: 12 * root.s
+            anchors.right: parent.right
+            clip: true
+            contentWidth: appRail.width
+            contentHeight: height
+            flickableDirection: Flickable.HorizontalFlick
+            boundsBehavior: Flickable.StopAtBounds
+
+            WheelHandler {
+                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                onWheel: (event) => {
+                    const delta = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x;
+                    const maxX = Math.max(0, appFlick.contentWidth - appFlick.width);
+                    appFlick.contentX = Math.max(0, Math.min(maxX, appFlick.contentX - delta));
+                }
+            }
+
+            Row {
+                id: appRail
+                height: appFlick.height
+                spacing: 8 * root.s
+
+                Repeater {
+                    model: root.appNodes
+
+                    delegate: Item {
+                        id: appFader
+                        required property var modelData
+                        width: 92 * root.s
+                        height: appRail.height
+                        readonly property real volume: appFader.modelData?.audio?.volume ?? 0
+                        readonly property string iconName: MprisController.streamIconName(appFader.modelData)
+
+                        PwObjectTracker { objects: [appFader.modelData] }
+
+                        Image {
+                            id: appIcon
+                            anchors.top: parent.top
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            width: 30 * root.s
+                            height: 30 * root.s
+                            sourceSize.width: width
+                            sourceSize.height: height
+                            source: Quickshell.iconPath(appFader.iconName, "image-missing")
+                            opacity: appFader.modelData?.audio?.muted ? 0.45 : 1
+                        }
+
+                        MouseArea {
+                            id: appMute
+                            anchors.centerIn: appIcon
+                            width: 46 * root.s
+                            height: 46 * root.s
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: if (appFader.modelData?.audio) appFader.modelData.audio.muted = !appFader.modelData.audio.muted
+                            onWheel: (event) => {
+                                root.stepVolume(appFader.modelData?.audio, event.angleDelta.y > 0 ? 0.05 : -0.05);
+                                event.accepted = true;
+                            }
+                        }
+
+                        Text {
+                            id: appPct
+                            anchors.top: appIcon.bottom
+                            anchors.topMargin: 8 * root.s
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: appFader.modelData?.audio?.muted ? Translation.tr("off") : Math.round(appFader.volume * 100) + "%"
+                            color: PillTheme.subtle
+                            font.family: PillTheme.font
+                            font.pixelSize: 11 * root.s
+                            font.weight: Font.DemiBold
+                            font.features: ({ "tnum": 1 })
+                        }
+
+                        Rectangle {
+                            id: appTrack
+                            anchors.top: appPct.bottom
+                            anchors.topMargin: 10 * root.s
+                            anchors.bottom: appName.top
+                            anchors.bottomMargin: 10 * root.s
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            width: 8 * root.s
+                            radius: width / 2
+                            color: PillTheme.threadBg
+
+                            Rectangle {
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.bottom: parent.bottom
+                                height: parent.height * Math.max(0, Math.min(1, appFader.volume))
+                                radius: parent.radius
+                                gradient: Gradient {
+                                    GradientStop { position: 0.0; color: appFader.modelData?.audio?.muted ? PillTheme.vermDim : PillTheme.vermLit }
+                                    GradientStop { position: 1.0; color: appFader.modelData?.audio?.muted ? PillTheme.vermDimDeep : PillTheme.vermBurn }
+                                }
+                            }
+
+                            Rectangle {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                y: Math.max(0, Math.min(parent.height - height,
+                                    (1 - Math.max(0, Math.min(1, appFader.volume))) * parent.height - height / 2))
+                                width: 20 * root.s
+                                height: 3 * root.s
+                                radius: 2 * root.s
+                                color: PillTheme.tickRest
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                anchors.margins: -12 * root.s
+                                cursorShape: Qt.PointingHandCursor
+                                function apply(mouseY) {
+                                    if (!appFader.modelData?.audio)
+                                        return;
+                                    const localY = mouseY + 12 * root.s;
+                                    appFader.modelData.audio.volume = 1 - Math.max(0, Math.min(1, localY / appTrack.height));
+                                }
+                                onPressed: (mouse) => apply(mouse.y)
+                                onPositionChanged: (mouse) => { if (pressed) apply(mouse.y); }
+                                onWheel: (event) => {
+                                    root.stepVolume(appFader.modelData?.audio, event.angleDelta.y > 0 ? 0.05 : -0.05);
+                                    event.accepted = true;
+                                }
+                            }
+                        }
+
+                        Text {
+                            id: appName
+                            anchors.bottom: parent.bottom
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            width: parent.width - 8 * root.s
+                            horizontalAlignment: Text.AlignHCenter
+                            text: MprisController.compactStreamDisplayName(appFader.modelData, 18)
+                            color: PillTheme.cream
+                            font.family: PillTheme.font
+                            font.pixelSize: 10.5 * root.s
+                            font.weight: Font.Medium
+                            elide: Text.ElideRight
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            acceptedButtons: Qt.NoButton
+                            onWheel: (event) => {
+                                root.stepVolume(appFader.modelData?.audio, event.angleDelta.y > 0 ? 0.05 : -0.05);
+                                event.accepted = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            Text {
+                anchors.centerIn: parent
+                visible: root.appNodes.length === 0
+                text: Translation.tr("No apps playing audio")
+                color: PillTheme.subtle
+                font.family: PillTheme.font
+                font.pixelSize: 13 * root.s
+            }
+        }
+    }
+
+    Row {
+        id: faderRow
+        anchors.top: systemDeviceRow.bottom
+        anchors.topMargin: 12 * root.s
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: 162 * root.s
         spacing: 0
+        visible: root.view === "system"
 
         readonly property real colW: width / Math.max(1, root.faderCount)
 
@@ -557,10 +822,55 @@ PillSurface {
         }
     }
 
+    Row {
+        id: systemDeviceRow
+        visible: root.view === "system"
+        anchors.top: divider.bottom
+        anchors.topMargin: 10 * root.s
+        anchors.horizontalCenter: parent.horizontalCenter
+        spacing: 18 * root.s
+
+        Row {
+            spacing: 8 * root.s
+            DevicePickerChip {
+                glyph: "speaker"
+                open: root.openPicker === "out"
+                tip: Translation.tr("Output device")
+                onToggled: root.openPicker = root.openPicker === "out" ? "" : "out"
+            }
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: Translation.tr("Output")
+                color: PillTheme.subtle
+                font.family: PillTheme.font
+                font.pixelSize: 12 * root.s
+                font.weight: Font.Medium
+            }
+        }
+        Row {
+            spacing: 8 * root.s
+            DevicePickerChip {
+                glyph: "mic"
+                open: root.openPicker === "in"
+                tip: Translation.tr("Input device")
+                onToggled: root.openPicker = root.openPicker === "in" ? "" : "in"
+            }
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: Translation.tr("Input")
+                color: PillTheme.subtle
+                font.family: PillTheme.font
+                font.pixelSize: 12 * root.s
+                font.weight: Font.Medium
+            }
+        }
+    }
+
     MouseArea {
         id: wheelArea
         anchors.fill: parent
         acceptedButtons: Qt.NoButton
+        enabled: root.view === "system"
         property real acc: 0
         onWheel: (event) => {
             acc += event.angleDelta.y / 120;

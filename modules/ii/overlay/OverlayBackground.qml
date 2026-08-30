@@ -1,12 +1,15 @@
 import QtQuick
 import qs.modules.common
+import qs.modules.common.functions
 
 Rectangle {
-    id: contentItem
+    id: root
     anchors.fill: parent
-    // Overlay no tiene blur de wallpaper, usar colores sólidos en aurora
-    color: Appearance.angelEverywhere ? Appearance.angel.colGlassPanel
-         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
-         : Appearance.auroraEverywhere ? Appearance.colors.colLayer2Base
-         : Appearance.colors.colSurfaceContainer
+    readonly property color surfaceColor: Appearance.angelEverywhere ? Appearance.angel.colGlassPanel
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+        : Appearance.auroraEverywhere ? Appearance.colors.colLayer2Base
+        : Appearance.colors.colSurfaceContainer
+    color: ColorUtils.applyAlpha(
+        root.surfaceColor,
+        Config.options?.overlay?.backgroundOpacity ?? 1)
 }

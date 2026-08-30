@@ -70,7 +70,7 @@ PillSurface {
                     text: Translation.tr("BATTERY")
                     color: PillTheme.subtle
                     font.family: PillTheme.font
-                    font.pixelSize: 10 * root.s
+                    font.pixelSize: 11.5 * root.s
                     font.weight: Font.DemiBold
                     font.capitalization: Font.AllUppercase
                     font.letterSpacing: 1.6 * root.s
@@ -83,7 +83,7 @@ PillSurface {
                 text: PillBattery.stateLabel
                 color: PillBattery.charging ? PillTheme.flameGlow : PillTheme.dim
                 font.family: PillTheme.font
-                font.pixelSize: 9.5 * root.s
+                font.pixelSize: 10.5 * root.s
                 font.weight: Font.Bold
                 font.capitalization: Font.AllUppercase
                 font.letterSpacing: 1.1 * root.s
@@ -125,8 +125,8 @@ PillSurface {
         Rectangle {
             id: meter
             width: parent.width
-            height: 3 * root.s
-            radius: 1.5 * root.s
+            height: 5 * root.s
+            radius: height / 2
             color: PillTheme.threadBg
 
             Rectangle {
@@ -162,7 +162,7 @@ PillSurface {
                     text: stat.label
                     color: PillTheme.faint
                     font.family: PillTheme.font
-                    font.pixelSize: 10 * root.s
+                    font.pixelSize: 11 * root.s
                     font.weight: Font.Medium
                     font.capitalization: Font.AllUppercase
                     font.letterSpacing: 0.8 * root.s

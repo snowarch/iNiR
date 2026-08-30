@@ -13,20 +13,34 @@ import Quickshell.Wayland
 Item {
     id: root
     required property var panelWindow
+    property bool orbitMode: false
 
     readonly property var overviewOptions: Config.options?.overview ?? {}
-    readonly property int overviewRows: overviewOptions.rows ?? 3
-    readonly property int overviewColumns: overviewOptions.columns ?? 1
-    readonly property real overviewScale: overviewOptions.scale ?? 0.17
-    readonly property real overviewMaxPanelWidthRatio: overviewOptions.maxPanelWidthRatio ?? 1.0
-    readonly property int overviewWorkspaceSpacing: overviewOptions.workspaceSpacing ?? 5
+    readonly property var orbitOptions: Config.options?.orbit ?? {}
+    readonly property int overviewRows: orbitMode ? 1 : (overviewOptions.rows ?? 3)
+    readonly property int overviewColumns: orbitMode
+        ? Math.max(1, Math.min(5, orbitOptions.workspaceCount ?? 3))
+        : (overviewOptions.columns ?? 1)
+    readonly property real overviewScale: orbitMode
+        ? Math.max(0.16, Math.min(0.42, (orbitOptions.workspaceScalePercent ?? 27) / 100))
+        : (overviewOptions.scale ?? 0.17)
+    readonly property real overviewMaxPanelWidthRatio: orbitMode
+        ? Math.max(0.6, Math.min(1.0, (orbitOptions.maxPanelWidthPercent ?? 92) / 100))
+        : (overviewOptions.maxPanelWidthRatio ?? 1.0)
+    readonly property int overviewWorkspaceSpacing: orbitMode
+        ? (orbitOptions.workspaceSpacing ?? 18)
+        : (overviewOptions.workspaceSpacing ?? 5)
     readonly property int overviewWindowTileMargin: overviewOptions.windowTileMargin ?? 6
     readonly property int overviewScrollWorkspaceSteps: overviewOptions.scrollWorkspaceSteps ?? 2
 
     readonly property bool overviewFocusAnimEnabled: overviewOptions.focusAnimationEnable ?? true
     readonly property int overviewFocusAnimDurationMs: overviewOptions.focusAnimationDurationMs ?? 180
-    readonly property bool overviewKeepOpenOnWindowClick: overviewOptions.keepOverviewOpenOnWindowClick ?? true
-    readonly property bool overviewShowWorkspaceNumbers: overviewOptions.showWorkspaceNumbers ?? true
+    readonly property bool overviewKeepOpenOnWindowClick: orbitMode
+        ? !(orbitOptions.closeOnSelect ?? true)
+        : (overviewOptions.keepOverviewOpenOnWindowClick ?? true)
+    readonly property bool overviewShowWorkspaceNumbers: orbitMode
+        ? (orbitOptions.showWorkspaceNumbers ?? true)
+        : (overviewOptions.showWorkspaceNumbers ?? true)
 
     readonly property string wallpaperPathRaw: Config.options?.background?.wallpaperPath ?? ""
     readonly property string wallpaperThumbnailPath: Config.options?.background?.thumbnailPath ?? wallpaperPathRaw
@@ -34,7 +48,8 @@ Item {
     readonly property int workspacesShown: root.overviewRows * root.overviewColumns
     readonly property string outputName: panelWindow?.screen?.name ?? ""
     readonly property var workspacesForOutput: NiriService.allWorkspaces
-        .filter(workspace => workspace.output === root.outputName)
+        .filter(workspace => workspace.output === root.outputName
+            && (!root.orbitMode || !root.isStashWorkspace(workspace.id)))
         .sort((a, b) => a.idx - b.idx)
     readonly property var outputWorkspaceNumbers: workspacesForOutput.map(workspace => workspace.idx)
     readonly property int currentWorkspaceNumber: {
@@ -111,7 +126,7 @@ Item {
     }
 
     property real workspaceNumberMargin: 80
-    property real workspaceNumberSize: 250
+    property real workspaceNumberSize: root.orbitMode ? 120 : 250
     property int workspaceZ: 0
     property int windowZ: 1
     property int windowDraggingZ: 99999
@@ -125,10 +140,21 @@ Item {
 
     // Contador para suavizar el scroll de cambio de workspace
     property int wheelStepCounter: 0
-    property int wheelStepsRequired: Math.max(1, root.overviewScrollWorkspaceSteps)
+    property int wheelStepsRequired: Math.max(1, root.orbitMode
+        ? (root.orbitOptions.scrollSteps ?? 1)
+        : root.overviewScrollWorkspaceSteps)
 
     property int draggingFromWorkspace: -1
     property int draggingTargetWorkspace: -1
+    readonly property int stashTargetWorkspace: -2
+    readonly property bool dragActive: draggingFromWorkspace !== -1
+    property bool stashDropHovered: false
+    property int keyboardWindowIndex: -1
+    readonly property var keyboardWindows: windowSpace.windowItems.filter(item =>
+        item.workspaceSlot === root.currentWorkspaceSlot)
+    readonly property int keyboardWindowId: keyboardWindowIndex >= 0
+        && keyboardWindowIndex < keyboardWindows.length
+        ? keyboardWindows[keyboardWindowIndex].id : -1
 
     implicitWidth: overviewBackground.implicitWidth + Appearance.sizes.elevationMargin * 2
     implicitHeight: overviewBackground.implicitHeight + Appearance.sizes.elevationMargin * 2
@@ -139,6 +165,7 @@ Item {
         onTriggered: {
             root.draggingFromWorkspace = -1
             root.draggingTargetWorkspace = -1
+            root.stashDropHovered = false
         }
     }
 
@@ -156,6 +183,33 @@ Item {
         contextWindowData = null
     }
 
+    function isStashWorkspace(workspaceId): bool {
+        const windows = (NiriService.windows ?? []).filter(window => window.workspace_id === workspaceId)
+        return windows.length > 0 && windows.every(window => MinimizedWindows.isMinimized(window.id))
+    }
+
+    function focusNextWindow(): void {
+        const count = keyboardWindows.length
+        if (count === 0) return
+        keyboardWindowIndex = keyboardWindowIndex < 0 ? 0 : (keyboardWindowIndex + 1) % count
+    }
+
+    function focusPreviousWindow(): void {
+        const count = keyboardWindows.length
+        if (count === 0) return
+        keyboardWindowIndex = keyboardWindowIndex < 0 ? count - 1
+            : (keyboardWindowIndex - 1 + count) % count
+    }
+
+    function activateKeyboardWindow(): void {
+        if (keyboardWindowId < 0) return
+        NiriService.focusWindow(keyboardWindowId)
+        if (root.orbitOptions.closeOnSelect ?? true)
+            GlobalStates.closeOverview()
+    }
+
+    onCurrentWorkspaceSlotChanged: keyboardWindowIndex = -1
+
     Connections {
         target: GlobalStates
         function onOverviewOpenChanged() {
@@ -171,6 +225,7 @@ Item {
 
     // Scroll del mouse para subir/bajar de workspace en Niri
     WheelHandler {
+        enabled: !root.orbitMode || (root.orbitOptions.scrollNavigation ?? true)
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
         onWheel: (event) => {
             let deltaY = event.angleDelta.y
@@ -214,7 +269,7 @@ Item {
 
     Rectangle {
         id: overviewBackground
-        property real padding: 10
+        property real padding: root.orbitMode ? 16 : 10
         anchors.fill: parent
         anchors.margins: Appearance.sizes.elevationMargin
 
@@ -495,6 +550,7 @@ Item {
 
                 const collected = []
                 const counters = {}
+                const countsPerWorkspace = {}
                 const maxPerWorkspace = {}
 
                 for (let i = 0; i < wins.length; ++i) {
@@ -512,6 +568,7 @@ Item {
                     const row = pos.length >= 2 && pos[1] ? pos[1] : 1
 
                     const keyWs = wsNumber.toString()
+                    countsPerWorkspace[keyWs] = (countsPerWorkspace[keyWs] || 0) + 1
                     const info = maxPerWorkspace[keyWs] || { maxCol: 1, maxRow: 1 }
                     info.maxCol = Math.max(info.maxCol, col)
                     info.maxRow = Math.max(info.maxRow, row)
@@ -536,6 +593,7 @@ Item {
                         "workspaceNumber": entry.workspaceNumber,
                         "workspaceSlot": entry.workspaceSlot,
                         "indexInWorkspace": count,
+                        "windowCount": countsPerWorkspace[wsKey] || 1,
                         "maxCol": gridInfo.maxCol,
                         "maxRow": gridInfo.maxRow
                     })
@@ -567,13 +625,16 @@ Item {
                 function onOverviewOpenChanged() {
                     if (GlobalStates.overviewOpen) {
                         windowSpace.rebuildWindowItems()
-                        // Capture window previews
                         WindowPreviewService.captureForTaskView()
                     }
                 }
             }
             
-            Component.onCompleted: rebuildWindowItems()
+            Component.onCompleted: {
+                rebuildWindowItems()
+                if (GlobalStates.overviewOpen)
+                    WindowPreviewService.captureForTaskView()
+            }
 
             Repeater {
                 model: ScriptModel {
@@ -588,6 +649,7 @@ Item {
                     readonly property int workspaceNumber: modelData.workspaceNumber
                     readonly property int workspaceSlot: modelData.workspaceSlot
                     readonly property int indexInWorkspace: modelData.indexInWorkspace
+                    readonly property int windowCount: modelData.windowCount || 1
 
                     readonly property int workspaceMaxCol: modelData.maxCol || 1
                     readonly property int workspaceMaxRow: modelData.maxRow || 1
@@ -603,12 +665,25 @@ Item {
                     readonly property int layoutCol: layoutPos.length >= 1 && layoutPos[0] ? layoutPos[0] : 1
                     readonly property int layoutRow: layoutPos.length >= 2 && layoutPos[1] ? layoutPos[1] : 1
 
-                    readonly property real tileWidth: root.workspaceImplicitWidth / workspaceMaxCol
-                    readonly property real tileHeight: root.workspaceImplicitHeight / workspaceMaxRow
-                    readonly property real tileMargin: root.overviewWindowTileMargin * root.scale
+                    readonly property int taskGridColumns: windowCount <= 1 ? 1
+                        : windowCount <= 4 ? 2 : Math.ceil(Math.sqrt(windowCount))
+                    readonly property int taskGridRows: Math.ceil(windowCount / taskGridColumns)
+                    readonly property bool useBalancedGrid: root.orbitMode
+                        && (root.orbitOptions.balancedGrid ?? true)
+                    readonly property real tileWidth: root.workspaceImplicitWidth
+                        / (useBalancedGrid ? taskGridColumns : workspaceMaxCol)
+                    readonly property real tileHeight: root.workspaceImplicitHeight
+                        / (useBalancedGrid ? taskGridRows : workspaceMaxRow)
+                    readonly property real tileMargin: root.orbitMode
+                        ? (root.orbitOptions.windowGap ?? 4)
+                        : root.overviewWindowTileMargin * root.scale
 
-                    readonly property real baseX: xOffset + (layoutCol - 1) * tileWidth
-                    readonly property real baseY: yOffset + (layoutRow - 1) * tileHeight
+                    readonly property real baseX: xOffset + (useBalancedGrid
+                        ? (indexInWorkspace % taskGridColumns) * tileWidth
+                        : (layoutCol - 1) * tileWidth)
+                    readonly property real baseY: yOffset + (useBalancedGrid
+                        ? Math.floor(indexInWorkspace / taskGridColumns) * tileHeight
+                        : (layoutRow - 1) * tileHeight)
 
                     x: baseX + tileMargin
                     y: baseY + tileMargin
@@ -651,9 +726,21 @@ Item {
 
                     property bool hovered: false
                     property bool pressed: false
+                    readonly property bool isKeyboardSelected: root.orbitMode
+                        && root.keyboardWindowId === windowData.id
                     readonly property bool isFocused: !!windowData && (windowData.is_focused
                                                                          || (NiriService.activeWindow
                                                                              && NiriService.activeWindow.id === windowData.id))
+                    scale: isKeyboardSelected ? 1.025 : 1
+
+                    Behavior on scale {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation {
+                            duration: Appearance.animation.elementMoveFast.duration
+                            easing.type: Appearance.animation.elementMoveFast.type
+                            easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                        }
+                    }
 
                     // Window item radius adapts to angel theme editor rounding values
                     readonly property real windowRadius: Appearance.angelEverywhere 
@@ -663,9 +750,11 @@ Item {
                     Rectangle {
                         anchors.fill: parent
                         radius: windowItem.windowRadius
-                        color: "transparent"
-                        border.width: windowItem.isFocused ? 2 : 0
-                        border.color: windowItem.isFocused ? Appearance.colors.colLayer2Active : "transparent"
+                        color: root.orbitMode ? Appearance.colors.colLayer1Base : "transparent"
+                        border.width: windowItem.isFocused || windowItem.isKeyboardSelected ? 2 : 0
+                        border.color: windowItem.isKeyboardSelected
+                            ? Appearance.colors.colPrimary
+                            : windowItem.isFocused ? Appearance.colors.colLayer2Active : "transparent"
 
                         // Fondo de hover/pressed (sin contenido de ventana)
                         Rectangle {
@@ -683,7 +772,7 @@ Item {
                         }
 
                         // Window preview image
-                        readonly property bool showPreviews: Config.options?.overview?.showPreviews !== false
+                        readonly property bool showPreviews: root.orbitMode || Config.options?.overview?.showPreviews !== false
                         Image {
                             id: windowPreview
                             anchors.fill: parent
@@ -691,7 +780,7 @@ Item {
                             property string previewUrl: ""
                             source: parent.showPreviews ? previewUrl : ""
                             asynchronous: true
-                            fillMode: Image.PreserveAspectCrop
+                            fillMode: root.orbitMode ? Image.PreserveAspectFit : Image.PreserveAspectCrop
                             smooth: true
                             mipmap: true
                             visible: parent.showPreviews && status === Image.Ready
@@ -746,7 +835,7 @@ Item {
                             source: AppSearch.getIconSource(windowData.app_id || windowData.appId || "")
                             asynchronous: true
                             fillMode: Image.PreserveAspectFit
-                            opacity: windowPreview.visible ? 0.6 : 1.0
+                            opacity: windowPreview.visible ? (root.orbitMode ? 0 : 0.6) : 1.0
                             Behavior on opacity {
                                 enabled: Appearance.animationsEnabled
                                 NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic }
@@ -802,6 +891,7 @@ Item {
                                     windowItem.Drag.active = false
                                     root.draggingFromWorkspace = -1
                                     root.draggingTargetWorkspace = -1
+                                    root.stashDropHovered = false
                                     return
                                 }
 
@@ -811,9 +901,14 @@ Item {
                                 windowItem.Drag.active = false
                                 dragCleanupTimer.restart()
 
-                                const movedToOtherWorkspace = (targetWorkspace !== -1 && targetWorkspace !== fromWorkspace)
+                                const stashRequested = targetWorkspace === root.stashTargetWorkspace
+                                const movedToOtherWorkspace = targetWorkspace >= 0 && targetWorkspace !== fromWorkspace
 
-                                if (movedToOtherWorkspace) {
+                                if (stashRequested) {
+                                    MinimizedWindows.minimize(windowData.id)
+                                    windowItem.x = Qt.binding(function() { return windowItem.baseX + windowItem.tileMargin })
+                                    windowItem.y = Qt.binding(function() { return windowItem.baseY + windowItem.tileMargin })
+                                } else if (movedToOtherWorkspace) {
                                     // Drop válido en otro workspace: mover ventana allí
                                     NiriService.moveWindowToWorkspaceById(windowData.id, targetWorkspace, true)
                                     // Force immediate rebuild after move
@@ -904,6 +999,71 @@ Item {
                             NiriService.closeWindow(root.contextWindowData.id)
                             root.closeWindowContext()
                         }
+                    }
+                }
+            }
+
+            PanelSurface {
+                id: stashDropTarget
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 12
+                width: 156
+                height: 42
+                z: root.windowDraggingZ + 10
+                island: true
+                elevation: 3
+                visible: root.orbitMode && (root.orbitOptions.showStash ?? true) && root.dragActive
+                opacity: visible ? 1 : 0
+                scale: root.stashDropHovered ? 1.05 : 1
+
+                Behavior on opacity {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation {
+                        duration: Appearance.animation.elementMoveFast.duration
+                        easing.type: Appearance.animation.elementMoveFast.type
+                        easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                    }
+                }
+                Behavior on scale {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation {
+                        duration: Appearance.animation.elementMoveFast.duration
+                        easing.type: Appearance.animation.elementMoveFast.type
+                        easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                    }
+                }
+
+                RowLayout {
+                    anchors.centerIn: parent
+                    spacing: 7
+
+                    MaterialSymbol {
+                        text: "inventory_2"
+                        iconSize: Appearance.font.pixelSize.normal
+                        color: root.stashDropHovered
+                            ? Appearance.colors.colPrimary
+                            : Appearance.colors.colOnLayer2
+                    }
+                    StyledText {
+                        text: Translation.tr("Stash")
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        color: root.stashDropHovered
+                            ? Appearance.colors.colPrimary
+                            : Appearance.colors.colOnLayer2
+                    }
+                }
+
+                DropArea {
+                    anchors.fill: parent
+                    onEntered: {
+                        root.stashDropHovered = true
+                        root.draggingTargetWorkspace = root.stashTargetWorkspace
+                    }
+                    onExited: {
+                        root.stashDropHovered = false
+                        if (root.draggingTargetWorkspace === root.stashTargetWorkspace)
+                            root.draggingTargetWorkspace = -1
                     }
                 }
             }

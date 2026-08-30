@@ -85,6 +85,8 @@ Singleton {
         onExited: {
             _log("[WindowPreviewService] Loaded", Object.keys(root.previewCache).length, "cached previews")
             root.cleanupOrphans()
+            root.previewCache = Object.assign({}, root.previewCache)
+            root.captureComplete()
         }
     }
     

@@ -76,7 +76,7 @@ Scope {
         sourceComponent: PanelWindow {
             id: overlayWindow
             // Visible when overlay is open OR when there are pinned widgets to show
-            visible: GlobalStates.overlayOpen || OverlayContext.hasPinnedWidgets
+            visible: GlobalStates.overlayOpen || OverlayContext.hasPinnedWidgets || OverlayContext.nativeDialogOpen
             exclusionMode: ExclusionMode.Ignore
             WlrLayershell.namespace: "quickshell:overlay"
             // Native dialogs are ordinary toplevel windows. Yield the layer-shell

@@ -654,6 +654,8 @@ ColumnLayout {
     readonly property var presetCategories: [
         { name: "Angel (Dark)", colors: ThemePresets.angelColors },
         { name: "Angel (Light)", colors: ThemePresets.angelLightColors },
+        { name: "Regalia", colors: ThemePresets.regaliaColors },
+        { name: "Regalia Ivory", colors: ThemePresets.regaliaIvoryColors },
         { name: "Gruvbox Material", colors: ThemePresets.gruvboxMaterialColors },
         { name: "Catppuccin Mocha", colors: ThemePresets.catppuccinMochaColors },
         { name: "Catppuccin Latte", colors: ThemePresets.catppuccinLatteColors },

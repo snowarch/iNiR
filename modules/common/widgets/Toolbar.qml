@@ -47,7 +47,7 @@ Item {
     GlassBackground {
         id: background
         anchors.fill: parent
-        visible: !root.transparent
+        visible: !root.transparent && !Appearance.regaliaEverywhere
         fallbackColor: Appearance.zzzEverywhere ? "transparent" : Appearance.colors.colSurfaceContainer
         inirColor: Appearance.inir.colLayer2
         auroraTransparency: Appearance.aurora.overlayTransparentize
@@ -71,7 +71,8 @@ Item {
         }
         implicitHeight: 56
         implicitWidth: toolbarLayout.implicitWidth + root.padding * 2
-        radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+        radius: Appearance.regaliaEverywhere ? Appearance.regalia.roundNormal
+            : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
             : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
             : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : (height / 2)
         Behavior on radius {
@@ -86,6 +87,14 @@ Item {
             edgeMargin: Appearance.zzz.borderThick
             cornerRadius: background.radius
         }
+    }
+
+    RegaliaPlate {
+        anchors.fill: background
+        visible: Appearance.regaliaEverywhere && !root.transparent
+        fillColor: Appearance.regalia.bg2
+        radius: background.radius
+        inset: Appearance.regalia.controlInset
     }
 
     RowLayout {

@@ -7,11 +7,14 @@ import QtQuick.Layouts
 RippleButton {
     id: root
     required property ListView target
+    property bool compact: false
 
     anchors {
         bottom: parent.bottom
-        horizontalCenter: parent.horizontalCenter
-        bottomMargin: 10
+        horizontalCenter: root.compact ? undefined : parent.horizontalCenter
+        right: root.compact ? parent.right : undefined
+        rightMargin: root.compact ? 8 : 0
+        bottomMargin: root.compact ? 8 : 10
     }
 
     opacity: !target.atYEnd ? 1 : 0
@@ -26,34 +29,53 @@ RippleButton {
         animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
     }
 
-    implicitWidth: contentItem.implicitWidth + 8 * 2
-    implicitHeight: contentItem.implicitHeight + 4 * 2
+    implicitWidth: root.compact ? 32 : contentItem.implicitWidth + 8 * 2
+    implicitHeight: root.compact ? 32 : contentItem.implicitHeight + 4 * 2
+    rippleEnabled: !root.compact
 
-    colBackground: Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colSecondary
-    colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colPrimaryHover : Appearance.colors.colSecondaryHover
-    colRipple: Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive : Appearance.colors.colSecondaryActive
-    buttonRadius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.verysmall
+    colBackground: root.compact ? Appearance.colors.colLayer1
+        : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colSecondary
+    colBackgroundHover: root.compact ? Appearance.colors.colLayer1
+        : Appearance.inirEverywhere ? Appearance.inir.colPrimaryHover : Appearance.colors.colSecondaryHover
+    colRipple: root.compact ? Appearance.colors.colLayer1Active
+        : Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive : Appearance.colors.colSecondaryActive
+    buttonRadius: root.compact ? Appearance.rounding.small
+        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.verysmall
 
     downAction: () => {
         target.positionViewAtEnd()
     }
 
-    contentItem: Row {
-        id: contentItem
-        spacing: 4
+    contentItem: Item {
+        implicitWidth: root.compact ? 18 : fullContent.implicitWidth
+        implicitHeight: root.compact ? 18 : fullContent.implicitHeight
+
         MaterialSymbol {
-            anchors.verticalCenter: parent.verticalCenter
+            visible: root.compact
+            anchors.centerIn: parent
             text: "arrow_downward"
-            font.pixelSize: Appearance.font.pixelSize.larger
-            color: Appearance.inirEverywhere ? Appearance.inir.colOnPrimary : Appearance.colors.colOnSecondary
-            verticalAlignment: Text.AlignVCenter
+            iconSize: 18
+            color: Appearance.colors.colOnLayer1
         }
-        StyledText {
-            anchors.verticalCenter: parent.verticalCenter
-            text: Translation.tr("Scroll to Bottom")
-            font.pixelSize: Appearance.font.pixelSize.smallie
-            color: Appearance.inirEverywhere ? Appearance.inir.colOnPrimary : Appearance.colors.colOnSecondary
-            verticalAlignment: Text.AlignVCenter
+
+        Row {
+            id: fullContent
+            visible: !root.compact
+            anchors.centerIn: parent
+            spacing: 4
+            MaterialSymbol {
+                anchors.verticalCenter: parent.verticalCenter
+                text: "arrow_downward"
+                iconSize: Appearance.font.pixelSize.larger
+                color: Appearance.inirEverywhere ? Appearance.inir.colOnPrimary : Appearance.colors.colOnSecondary
+            }
+            StyledText {
+                anchors.verticalCenter: parent.verticalCenter
+                text: Translation.tr("Scroll to Bottom")
+                font.pixelSize: Appearance.font.pixelSize.smallie
+                color: Appearance.inirEverywhere ? Appearance.inir.colOnPrimary : Appearance.colors.colOnSecondary
+                verticalAlignment: Text.AlignVCenter
+            }
         }
     }
 }

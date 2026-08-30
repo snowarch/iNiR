@@ -43,6 +43,7 @@ Item {
         ? root.surfaceDialect : Appearance.surfaceDialectFor("")
     readonly property bool _zzz: root._dialect === "zzz"
     readonly property bool _angel: root._dialect === "angel"
+    readonly property bool _regalia: root._dialect === "regalia"
     readonly property bool _inir: root._dialect === "inir"
     readonly property bool _aurora: root._dialect === "aurora" || root._angel
     readonly property bool _cookie: root._dialect === "cookie"
@@ -111,7 +112,8 @@ Item {
 
     readonly property real _contentPadding: 12
     readonly property real _bannerInset: root._zzz || root._cookie ? 6
-        : root._island ? 4 : 0
+        : root._island ? 4
+        : root._regalia ? Appearance.regalia.surfaceInset : 0
     readonly property real _bannerHeight: root._bannerAllowed
         ? Math.max(80, Math.min(94, root.width * 0.22)) : 0
     readonly property real _avatarSize: Math.max(50, Math.min(56, root.width * 0.14))
@@ -173,7 +175,8 @@ Item {
             anchors.topMargin: root._bannerInset
             anchors.leftMargin: root._bannerInset
             anchors.rightMargin: root._bannerInset
-            height: Math.max(0, root._bannerHeight - root._bannerInset)
+            height: Math.max(0, root._bannerHeight
+                - root._bannerInset * (root._regalia ? 2 : 1))
             active: root._bannerAllowed
             visible: active
             sourceComponent: bannerComponent

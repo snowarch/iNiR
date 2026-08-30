@@ -78,13 +78,14 @@ Scope {
                 // would draw the bar over fullscreen content (GameMode only
                 // detects games, not videos).
                 implicitWidth: Appearance.sizes.verticalBarWidth + Appearance.rounding.screenRounding
+                Item { id: emptyMask; width: 0; height: 0 }
                 mask: Region {
                     item: hoverMaskRegion
                 }
                 color: "transparent"
 
                 BackgroundEffect.blurRegion: Region {
-                    item: barContent.nativeBlurActive ? barContent.backgroundItem : null
+                    item: barContent.nativeBlurActive ? barContent.backgroundItem : emptyMask
                     radius: barContent.backgroundItem.radius
                 }
 
@@ -187,6 +188,7 @@ Scope {
                         }
                         width: Appearance.rounding.screenRounding
                         active: showBarBackground && (Config.options?.bar?.cornerStyle ?? 0) === 0 && !Appearance.zzzEverywhere
+                            && !(Config.options?.bar?.appearanceStyle === "islands")
 
                         states: State {
                             name: "right"

@@ -14,54 +14,65 @@ ComboBox {
     property string settingsSearchDescription: ""
     property list<string> settingsSearchKeywords: []
 
-    property real baseHeight: 38
-    property real radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+    property real baseHeight: Appearance.regaliaEverywhere ? Appearance.regalia.controlHeight : 38
+    property real radius: Appearance.regaliaEverywhere ? Appearance.regalia.roundSmall
+        : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
         : Appearance.rounding.small
 
     hoverEnabled: true
     opacity: root.enabled ? 1 : 0.4
 
-    readonly property color _bgColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+    readonly property color _bgColor: Appearance.regaliaEverywhere ? Appearance.regalia.controlPlate
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer2
-    readonly property color _bgHoverColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+    readonly property color _bgHoverColor: Appearance.regaliaEverywhere ? Appearance.regalia.controlPlateHover
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
         : Appearance.colors.colLayer2Hover
-    readonly property color _bgActiveColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+    readonly property color _bgActiveColor: Appearance.regaliaEverywhere ? Appearance.regalia.controlPlateActive
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
         : Appearance.colors.colLayer2Active
-    readonly property color _textColor: Appearance.angelEverywhere ? Appearance.angel.colText
+    readonly property color _textColor: Appearance.regaliaEverywhere ? Appearance.regalia.onColor
+        : Appearance.angelEverywhere ? Appearance.angel.colText
         : Appearance.inirEverywhere ? Appearance.inir.colText
         : Appearance.colors.colOnLayer2
-    readonly property color _subtextColor: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+    readonly property color _subtextColor: Appearance.regaliaEverywhere ? Appearance.regalia.onMuted
+        : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
         : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
         : Appearance.colors.colSubtext
     readonly property color _borderColor: Appearance.angelEverywhere ? Appearance.angel.colBorder
         : Appearance.inirEverywhere ? Appearance.inir.colBorder
         : "transparent"
     readonly property real _borderWidth: (Appearance.angelEverywhere || Appearance.inirEverywhere) ? 1 : 0
-    readonly property color _popupColor: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+    readonly property color _popupColor: Appearance.regaliaEverywhere ? Appearance.regalia.bg2
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2
         : Appearance.colors.colLayer3Base
-    readonly property color _popupBorderColor: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+    readonly property color _popupBorderColor: Appearance.regaliaEverywhere ? "transparent"
+        : Appearance.angelEverywhere ? Appearance.angel.colCardBorder
         : Appearance.inirEverywhere ? Appearance.inir.colBorder
         : Appearance.auroraEverywhere ? Appearance.aurora.colPopupBorder
         : Appearance.colors.colLayer0Border
     // Dropdown row hover/selected — matched to _popupColor's own layer (Layer3, or
     // inir's Layer2). The angel/aurora "glass card" tokens used here previously were
     // tuned for card surfaces, not this opaque popup, and read as barely-there.
-    readonly property color _popupHoverColor: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+    readonly property color _popupHoverColor: Appearance.regaliaEverywhere ? Appearance.regalia.controlPlateHover
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
         : Appearance.colors.colLayer3Hover
-    readonly property color _selectedColor: Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainer
+    readonly property color _selectedColor: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlate
+        : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainer
         : Appearance.colors.colPrimaryContainer
 
     background: Rectangle {
         implicitHeight: root.baseHeight
         radius: root.radius
-        color: root.down ? root._bgActiveColor
+        color: Appearance.regaliaEverywhere ? "transparent"
+            : root.down ? root._bgActiveColor
             : root.hovered ? root._bgHoverColor
             : root._bgColor
         border.width: root._borderWidth
@@ -70,6 +81,16 @@ ComboBox {
                 : Appearance.inirEverywhere ? Appearance.inir.colBorderFocus
                 : root._borderColor)
             : root._borderColor
+
+        RegaliaControlFace {
+            anchors.fill: parent
+            visible: Appearance.regaliaEverywhere
+            fillColor: root._bgColor
+            radius: root.radius
+            hovered: root.hovered
+            pressed: root.down
+            focused: root.activeFocus
+        }
 
         Behavior on color {
             animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -84,7 +105,7 @@ ComboBox {
 
         StyledText {
             Layout.fillWidth: true
-            Layout.leftMargin: 12
+            Layout.leftMargin: Appearance.regaliaEverywhere ? Appearance.regalia.controlPaddingHorizontal : 12
             text: root.displayText
             color: root._textColor
             font.pixelSize: Appearance.font.pixelSize.small
@@ -93,7 +114,7 @@ ComboBox {
         }
 
         MaterialSymbol {
-            Layout.rightMargin: 8
+            Layout.rightMargin: Appearance.regaliaEverywhere ? Appearance.regalia.controlPaddingHorizontal : 8
             text: "expand_more"
             iconSize: Appearance.font.pixelSize.normal
             color: root._subtextColor
@@ -161,9 +182,18 @@ ComboBox {
         background: Rectangle {
             id: popupBg
             radius: root.radius
-            color: root._popupColor
-            border.width: 1
+            color: Appearance.regaliaEverywhere ? "transparent" : root._popupColor
+            border.width: Appearance.regaliaEverywhere ? 0 : 1
             border.color: root._popupBorderColor
+
+            RegaliaPlate {
+                anchors.fill: parent
+                visible: Appearance.regaliaEverywhere
+                fillColor: root._popupColor
+                radius: popupBg.radius
+                elevated: true
+            }
+
             Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
             Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
             Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
@@ -189,18 +219,30 @@ ComboBox {
         required property int index
         required property var modelData
 
-        width: root.width - 8
-        height: 36
+        width: root.width - (Appearance.regaliaEverywhere ? Appearance.regalia.controlGap : 8)
+        height: Appearance.regaliaEverywhere ? Appearance.regalia.controlHeight : 36
         highlighted: root.highlightedIndex === index
         hoverEnabled: true
 
         background: Rectangle {
-            radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+            radius: Appearance.regaliaEverywhere ? Appearance.regalia.roundSmall
+                : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
                 : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
                 : Appearance.rounding.unsharpenmore
-            color: delegateItem.index === root.currentIndex ? root._selectedColor
+            color: Appearance.regaliaEverywhere ? "transparent"
+                : delegateItem.index === root.currentIndex ? root._selectedColor
                 : delegateItem.hovered ? root._popupHoverColor
                 : "transparent"
+
+            RegaliaControlFace {
+                anchors.fill: parent
+                visible: Appearance.regaliaEverywhere
+                fillColor: delegateItem.index === root.currentIndex
+                    ? root._selectedColor : Appearance.regalia.controlPlate
+                radius: parent.radius
+                hovered: delegateItem.hovered
+                selected: delegateItem.index === root.currentIndex
+            }
 
             Behavior on color {
                 animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -216,7 +258,7 @@ ComboBox {
 
             StyledText {
                 Layout.fillWidth: true
-                Layout.leftMargin: 12
+                Layout.leftMargin: Appearance.regaliaEverywhere ? Appearance.regalia.controlPaddingHorizontal : 12
                 text: {
                     if (typeof delegateItem.modelData === "object" && delegateItem.modelData !== null) {
                         return delegateItem.modelData[root.textRole] ?? delegateItem.modelData.toString()
@@ -224,16 +266,18 @@ ComboBox {
                     return delegateItem.modelData?.toString() ?? ""
                 }
                 font.pixelSize: Appearance.font.pixelSize.small
-                color: root._textColor
+                color: Appearance.regaliaEverywhere && delegateItem.index === root.currentIndex
+                    ? Appearance.regalia.primaryPlateInk : root._textColor
                 elide: Text.ElideRight
                 verticalAlignment: Text.AlignVCenter
             }
 
             MaterialSymbol {
-                Layout.rightMargin: 8
+                Layout.rightMargin: Appearance.regaliaEverywhere ? Appearance.regalia.controlPaddingHorizontal : 8
                 text: "check"
                 iconSize: Appearance.font.pixelSize.small
-                color: root._textColor
+                color: Appearance.regaliaEverywhere && delegateItem.index === root.currentIndex
+                    ? Appearance.regalia.primaryPlateInk : root._textColor
                 visible: delegateItem.index === root.currentIndex
             }
         }

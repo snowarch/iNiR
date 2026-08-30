@@ -78,6 +78,21 @@ Singleton {
         return targetSection;
     }
 
+    function activateTaskSectionForControl(control) {
+        var taskSection = "";
+        var owner = null;
+        var p = control;
+        while (p) {
+            if (!taskSection && p.hasOwnProperty("settingsTaskSection"))
+                taskSection = p.settingsTaskSection || "";
+            if (taskSection && !owner && p.hasOwnProperty("activeSection"))
+                owner = p;
+            p = p.parent;
+        }
+        if (taskSection && owner)
+            owner.activeSection = taskSection;
+    }
+
     // Genera keywords automáticos a partir del texto
     function _generateKeywords(label: string, section: string, description: string): list<string> {
         var text = (label + " " + section + " " + description).toLowerCase();

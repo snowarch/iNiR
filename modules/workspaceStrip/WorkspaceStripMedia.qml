@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Qt5Compat.GraphicalEffects as GE
+import Quickshell
 import Quickshell.Services.Mpris
 import qs.services
 import qs.modules.common
@@ -91,11 +92,9 @@ PanelSurface {
         anchors.fill: parent
         visible: media.islandChrome
         z: -1
+        radius: media._radius
         glassEnabled: true
-        glassScreenX: media.backdropScreenX
-        glassScreenY: media.backdropScreenY
-        glassScreenWidth: media.backdropScreenWidth
-        glassScreenHeight: media.backdropScreenHeight
+        screen: media.QsWindow?.window?.screen ?? null
     }
 
     // Keep position fresh while playing (MPRIS doesn't push position ticks).

@@ -8,6 +8,21 @@ ContentPage {
     id: root
     settingsPageIndex: 25
     settingsPageName: Translation.tr("Effects")
+    property string activeSection: "glass"
+
+    SettingsTaskNavigator {
+        icon: "blur_on"
+        title: Translation.tr("Effects")
+        description: Translation.tr("Choose the rendering policy first, then override only the areas that need different behavior.")
+        summary: Translation.tr("Glass · per-area policy · motion")
+        currentValue: root.activeSection
+        onSelected: value => root.activeSection = value
+        options: [
+            { displayName: Translation.tr("Glass"), icon: "blur_on", value: "glass" },
+            { displayName: Translation.tr("Areas"), icon: "tune", value: "areas" },
+            { displayName: Translation.tr("Motion"), icon: "animation", value: "motion" }
+        ]
+    }
 
     readonly property var backendOptions: [
         { displayName: Translation.tr("Style default"), value: "auto" },
@@ -24,6 +39,8 @@ ContentPage {
     ]
 
     SettingsCardSection {
+        settingsTaskSection: "glass"
+        visible: root.activeSection === "glass"
         expanded: true
         icon: "blur_on"
         title: Translation.tr("Blur and glass")
@@ -52,6 +69,8 @@ ContentPage {
     }
 
     SettingsCardSection {
+        settingsTaskSection: "areas"
+        visible: root.activeSection === "areas"
         expanded: true
         icon: "tune"
         title: Translation.tr("Per-area overrides")
@@ -78,6 +97,8 @@ ContentPage {
     }
 
     SettingsCardSection {
+        settingsTaskSection: "motion"
+        visible: root.activeSection === "motion"
         expanded: true
         icon: "animation"
         title: Translation.tr("Motion and power")

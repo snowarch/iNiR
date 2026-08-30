@@ -148,7 +148,6 @@ WBarAttachedPanelContent {
                             }
                             onClicked: {
                                 MprisController.previous()
-                                GlobalStates.showMediaAction("previous")
                             }
                         }
 
@@ -180,7 +179,6 @@ WBarAttachedPanelContent {
                             }
                             onClicked: {
                                 MprisController.next()
-                                GlobalStates.showMediaAction("next")
                             }
                         }
 

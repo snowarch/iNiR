@@ -226,7 +226,7 @@ RippleButton {
         taskbarRoot.closeAllContextMenus()
         taskbarRoot.contextMenuOpen = true
         hoverDelayTimer.stop()
-        contextMenu.active = true
+        contextMenu.requestOpen()
     }
 
     Connections {

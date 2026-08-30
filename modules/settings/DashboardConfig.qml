@@ -11,6 +11,22 @@ ContentPage {
     settingsPageName: Translation.tr("Dashboard")
 
     property bool isIiActive: Config.options?.panelFamily !== "waffle"
+    property string activeSection: "general"
+
+    SettingsTaskNavigator {
+        visible: root.isIiActive
+        icon: "space_dashboard"
+        title: Translation.tr("Dashboard")
+        description: Translation.tr("Set the dashboard behavior first, then tune its visual density or arrange its cards.")
+        summary: Translation.tr("Behavior · appearance · layout")
+        currentValue: root.activeSection
+        onSelected: value => root.activeSection = value
+        options: [
+            { displayName: Translation.tr("General"), icon: "tune", value: "general" },
+            { displayName: Translation.tr("Appearance"), icon: "palette", value: "appearance" },
+            { displayName: Translation.tr("Layout"), icon: "widgets", value: "layout" }
+        ]
+    }
 
     SettingsCardSection {
         visible: !root.isIiActive
@@ -30,7 +46,8 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
+        settingsTaskSection: "general"
+        visible: root.isIiActive && root.activeSection === "general"
         expanded: true
         icon: "space_dashboard"
         title: Translation.tr("General")
@@ -127,7 +144,8 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
+        settingsTaskSection: "appearance"
+        visible: root.isIiActive && root.activeSection === "appearance"
         expanded: true
         icon: "palette"
         title: Translation.tr("Appearance")
@@ -162,7 +180,8 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
+        settingsTaskSection: "layout"
+        visible: root.isIiActive && root.activeSection === "layout"
         expanded: true
         icon: "widgets"
         title: Translation.tr("Widgets & layout")

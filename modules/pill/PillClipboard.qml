@@ -224,7 +224,7 @@ PillSurface {
             id: row
             required property int index
             width: list.width
-            height: (isImage ? 44 : 28) * root.s
+            height: (isImage ? 52 : 36) * root.s
 
             readonly property string entry: root.results[index] ?? ""
             readonly property bool isImage: Cliphist.entryIsImage(entry)
@@ -270,8 +270,8 @@ PillSurface {
                     id: thumbTile
                     anchors.verticalCenter: parent.verticalCenter
                     visible: row.isImage
-                    width: visible ? 52 * root.s : 0
-                    height: 32 * root.s
+                    width: visible ? 56 * root.s : 0
+                    height: 36 * root.s
                     radius: 6 * root.s
                     color: PillTheme.tileBg
                     border.width: 1
@@ -334,7 +334,7 @@ PillSurface {
                         opacity: rowHover.hovered ? 1 : 0
                         text: "✕"
                         color: dismissArea.containsMouse ? PillTheme.cream : PillTheme.dim
-                        font.pixelSize: 10 * root.s
+                        font.pixelSize: 11 * root.s
                         Behavior on opacity { NumberAnimation { duration: PillMotion.fast } }
 
                         MouseArea {

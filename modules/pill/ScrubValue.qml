@@ -212,7 +212,7 @@ Item {
                     text: root.unit
                     color: PillTheme.faint
                     font.family: PillTheme.font
-                    font.pixelSize: 9.5 * root.s
+                    font.pixelSize: 10.5 * root.s
                     font.weight: Font.Medium
                 }
             }

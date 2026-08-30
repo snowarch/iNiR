@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls
+import Quickshell
 import Quickshell.Widgets
 import Qt5Compat.GraphicalEffects as GE
 import qs.services
@@ -82,11 +83,9 @@ PanelSurface {
         anchors.fill: parent
         visible: detail.islandChrome
         z: -1
+        radius: detail._radius
         glassEnabled: true
-        glassScreenX: detail.backdropScreenX
-        glassScreenY: detail.backdropScreenY
-        glassScreenWidth: detail.backdropScreenWidth
-        glassScreenHeight: detail.backdropScreenHeight
+        screen: detail.QsWindow?.window?.screen ?? null
     }
 
     MouseArea {

@@ -206,8 +206,11 @@ Scope {
 
         for (let i = 0; i < windows.length; i++) {
             const w = windows[i]
-            const appId = w.app_id || ""
+            const appId = AppSearch.resolveWindowIdentity(w)
             let appName = appId
+            const resolvedEntry = AppSearch.lookupDesktopEntry(appId)
+            if (resolvedEntry?.name)
+                appName = resolvedEntry.name
             if (appName && appName.indexOf(".") !== -1) {
                 const parts = appName.split(".")
                 appName = parts[parts.length - 1]
@@ -533,13 +536,14 @@ Scope {
                 visible: !root.compactStyle && !root.listStyle && !root.skewStyle
                 z: 0
                 anchors.fill: parent
-                radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+                radius: Appearance.regaliaEverywhere ? Appearance.regalia.panelRadius
+                    : Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
                     : Appearance.angelEverywhere ? Appearance.angel.roundingLarge
                     : Appearance.inirEverywhere ? Appearance.inir.roundingLarge
                     : (Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1)
                 Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
                 color: {
-                    if (Appearance.zzzEverywhere)
+                    if (Appearance.zzzEverywhere || Appearance.regaliaEverywhere)
                         return "transparent"
                     if (Appearance.angelEverywhere)
                         return Appearance.angel.colGlassPopup
@@ -552,7 +556,8 @@ Scope {
                     const base = ColorUtils.mix(Appearance.colors.colLayer0, Qt.rgba(0, 0, 0, 1), 0.35)
                     return ColorUtils.applyAlpha(base, root.altBackgroundOpacity)
                 }
-                border.width: Appearance.zzzEverywhere ? 0
+                border.width: Appearance.regaliaEverywhere ? 0
+                    : Appearance.zzzEverywhere ? 0
                     : Appearance.angelEverywhere ? Appearance.angel.panelBorderWidth
                     : Appearance.inirEverywhere || Appearance.auroraEverywhere ? 1 : (root.altUseM3Layout ? 1 : 0)
                 border.color: Appearance.zzzEverywhere ? Appearance.zzz.borderColor
@@ -563,6 +568,16 @@ Scope {
                 Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                 Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                 Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+            }
+
+            RegaliaPlate {
+                anchors.fill: panelBackground
+                visible: Appearance.regaliaEverywhere && panelBackground.visible
+                fillColor: Appearance.regalia.bg1
+                radius: panelBackground.radius
+                inset: Appearance.regalia.surfaceInset
+                elevated: true
+                glassEnabled: true
             }
 
             ZzzPlate {
@@ -587,17 +602,19 @@ Scope {
                 id: compactBackground
                 visible: root.compactStyle
                 anchors.fill: parent
-                radius: Appearance.zzzEverywhere ? Appearance.zzz.cardRadius
+                radius: Appearance.regaliaEverywhere ? Appearance.regalia.roundLarge
+                    : Appearance.zzzEverywhere ? Appearance.zzz.cardRadius
                     : Appearance.angelEverywhere ? Appearance.angel.roundingLarge
                     : Appearance.inirEverywhere ? Appearance.inir.roundingLarge : Appearance.rounding.large
-                color: Appearance.zzzEverywhere ? "transparent"
+                color: Appearance.zzzEverywhere || Appearance.regaliaEverywhere ? "transparent"
                     : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                     : Appearance.inirEverywhere ? Appearance.inir.colLayer2 
                     : Appearance.auroraEverywhere ? Appearance.colors.colLayer1Base 
                     : Appearance.colors.colSurfaceContainerHigh
                 Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
                 Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
-                border.width: Appearance.zzzEverywhere ? 0
+                border.width: Appearance.regaliaEverywhere ? 0
+                    : Appearance.zzzEverywhere ? 0
                     : Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
                     : Appearance.inirEverywhere || Appearance.auroraEverywhere ? 1 : 0
                 border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
@@ -607,6 +624,16 @@ Scope {
                     : "transparent"
                 Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                 Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+            }
+
+            RegaliaPlate {
+                anchors.fill: compactBackground
+                visible: Appearance.regaliaEverywhere && compactBackground.visible
+                fillColor: Appearance.regalia.bg2
+                radius: compactBackground.radius
+                inset: Appearance.regalia.controlInset
+                elevated: true
+                glassEnabled: true
             }
 
             StyledRectangularShadow {
@@ -1906,9 +1933,9 @@ Scope {
             const wins = NiriService.windows || []
             for (let i = 0; i < wins.length; i++) {
                 const w = wins[i]
-                const key = w.app_id || ""
+                const key = AppSearch.resolveWindowIdentity(w)
                 if (key && root.iconCache[key] === undefined) {
-                    root.getCachedIcon(w.app_id, "", w.title)
+                    root.getCachedIcon(key, "", w.title)
                 }
             }
         }

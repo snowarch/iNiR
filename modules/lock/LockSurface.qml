@@ -1261,16 +1261,18 @@ MouseArea {
                         mipmap: true
                         sourceSize.width: avatarCircle.width * 2
                         sourceSize.height: avatarCircle.height * 2
-                        visible: status === Image.Ready
-                        
-                        layer.enabled: Appearance.effectsEnabled
-                        layer.effect: OpacityMask {
-                            maskSource: Rectangle {
-                                width: avatarCircle.width
-                                height: avatarCircle.height
-                                radius: width / 2
-                            }
+                        visible: false
+                    }
+
+                    OpacityMask {
+                        anchors.fill: avatarCircle
+                        source: avatarImage
+                        maskSource: Rectangle {
+                            width: avatarCircle.width
+                            height: avatarCircle.height
+                            radius: avatarCircle.radius
                         }
+                        visible: avatarImage.status === Image.Ready
                     }
 
                     QtObject {

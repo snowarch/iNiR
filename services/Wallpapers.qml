@@ -93,6 +93,55 @@ Singleton {
     readonly property bool useBackdropWallpaper: isWaffleFamily
         ? ((Config.options?.waffles?.background?.backdrop?.enable ?? false) && (Config.options?.waffles?.background?.backdrop?.hideWallpaper ?? false))
         : ((Config.options?.background?.backdrop?.enable ?? false) && (Config.options?.background?.backdrop?.hideWallpaper ?? false))
+    readonly property bool backdropOnlyShadowOverrideWanted: Config.ready && CompositorService.isNiri && useBackdropWallpaper
+    property bool _backdropShadowSyncQueued: false
+
+    function _scheduleBackdropShadowSync(): void {
+        if (!Config.ready || !CompositorService.isNiri)
+            return
+        backdropShadowSyncTimer.restart()
+    }
+
+    onBackdropOnlyShadowOverrideWantedChanged: root._scheduleBackdropShadowSync()
+
+    Connections {
+        target: Config
+        function onReadyChanged(): void {
+            if (Config.ready)
+                root._scheduleBackdropShadowSync()
+        }
+    }
+
+    Timer {
+        id: backdropShadowSyncTimer
+        interval: 80
+        repeat: false
+        onTriggered: {
+            if (backdropShadowSyncProcess.running) {
+                root._backdropShadowSyncQueued = true
+                return
+            }
+            backdropShadowSyncProcess.command = [
+                "/usr/bin/python3",
+                Quickshell.shellPath("scripts/niri-config.py"),
+                "sync-backdrop-overview-shadow",
+                root.backdropOnlyShadowOverrideWanted ? "on" : "off"
+            ]
+            backdropShadowSyncProcess.running = true
+        }
+    }
+
+    Process {
+        id: backdropShadowSyncProcess
+        onExited: (exitCode) => {
+            if (exitCode !== 0)
+                console.warn("Wallpapers: failed to sync Niri backdrop overview shadow")
+            if (root._backdropShadowSyncQueued) {
+                root._backdropShadowSyncQueued = false
+                backdropShadowSyncTimer.restart()
+            }
+        }
+    }
 
     // Resolve the "main" wallpaper path — multi-monitor aware
     // When multi-monitor is enabled, uses the focused monitor's wallpaper

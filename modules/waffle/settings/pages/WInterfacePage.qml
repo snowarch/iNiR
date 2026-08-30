@@ -527,7 +527,7 @@ WSettingsPage {
         WSettingsSwitch {
             label: Translation.tr("Media OSD")
             icon: "music-note-2"
-            description: Translation.tr("Show now playing feedback when media shortcuts are pressed")
+            description: Translation.tr("Show feedback for explicit media controls. Pill also announces automatic track changes outside games.")
             checked: Config.options?.osd?.mediaEnabled ?? true
             onCheckedChanged: Config.setNestedValue("osd.mediaEnabled", checked)
         }
@@ -773,12 +773,21 @@ WSettingsPage {
         }
 
         WSettingsTextField {
-            label: Translation.tr("Save path")
+            label: Translation.tr("Recordings folder")
             icon: "folder"
             description: Translation.tr("Leave empty to use the Videos folder")
             placeholderText: Translation.tr("e.g. /home/you/Videos/Recordings")
             text: Config.options?.screenRecord?.savePath ?? ""
             onTextEdited: newText => root.setRecordingConfig("screenRecord.savePath", newText)
+        }
+
+        WSettingsTextField {
+            label: Translation.tr("Screenshots folder")
+            icon: "image"
+            description: Translation.tr("Leave empty to use Pictures/Screenshots")
+            placeholderText: Translation.tr("e.g. /home/you/Pictures/Screenshots")
+            text: Config.options?.regionSelector?.savePath ?? ""
+            onTextEdited: newText => Config.setNestedValue("regionSelector.savePath", newText)
         }
 
         WSettingsTextField {

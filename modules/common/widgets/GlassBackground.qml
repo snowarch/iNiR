@@ -15,6 +15,7 @@ Rectangle {
     property color inirColor: Appearance.inir.colLayer1
     property real auroraTransparency: Appearance.aurora.popupTransparentize
     property bool wallpaperBackdropEnabled: true
+    property string wallpaperUrl: WallpaperListener.wallpaperUrlForScreen(root.QsWindow?.window?.screen ?? null)
     
     // Screen-relative position for blur alignment (set by parent)
     property real screenX: 0
@@ -30,9 +31,11 @@ Rectangle {
     // for a backdrop outside aurora — island glass, or a backdrop the user turned
     // on explicitly — silently got nothing. The effects gate still applies.
     property bool forceBackdrop: false
+    property bool forceNeutralMaterial: false
     // Blur radius as a fraction of blurMax. 1 is the house default every existing
     // caller inherits; lower values are for surfaces that expose it to the user.
     property real blurStrength: 1
+    property real saturationStrength: 0.2
     readonly property bool useWallpaperBackdrop: root.forceBackdrop
         ? Appearance.effectsEnabled
         : (Appearance.blurBackendFor("panels", Appearance.blurTopology.unsupported) === "wallpaper"
@@ -70,7 +73,7 @@ Rectangle {
         width: root.screenWidth
         height: root.screenHeight
         visible: root.useWallpaperBackdrop && status === Image.Ready
-        source: root.useWallpaperBackdrop ? Wallpapers.effectiveWallpaperUrl : ""
+        source: root.useWallpaperBackdrop ? root.wallpaperUrl : ""
         fillMode: Image.PreserveAspectCrop
         // All GlassBackground instances share the same wallpaper URL and sourceSize,
         // so Qt's QPixmapCache serves a single decoded pixmap to all of them.
@@ -86,9 +89,9 @@ Rectangle {
         layer.effect: MultiEffect {
             source: blurredWallpaper
             anchors.fill: source
-            saturation: root.angelEverywhere
+            saturation: root.angelEverywhere && !root.forceNeutralMaterial
                 ? (Appearance.angel.blurSaturation * Appearance.angel.colorStrength)
-                : (Appearance.effectsEnabled ? 0.2 : 0)
+                : (Appearance.effectsEnabled ? root.saturationStrength : 0)
             blurEnabled: Appearance.effectsEnabled
             blurMax: 64
             blur: Appearance.effectsEnabled
@@ -100,7 +103,7 @@ Rectangle {
     Rectangle {
         anchors.fill: parent
         visible: root.useWallpaperBackdrop
-        color: root.angelEverywhere
+        color: root.angelEverywhere && !root.forceNeutralMaterial
             ? ColorUtils.transparentize(Appearance.colors.colLayer0Base, Appearance.angel.overlayOpacity)
             : ColorUtils.transparentize(Appearance.colors.colLayer0Base, root.auroraTransparency)
     }
@@ -111,12 +114,13 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         height: Appearance.angel.insetGlowHeight
-        visible: root.angelEverywhere
+        visible: root.angelEverywhere && !root.forceNeutralMaterial
         color: Appearance.angel.colInsetGlow
     }
 
     // Partial border — elegant half-borders, angel only
     AngelPartialBorder {
+        visible: root.angelEverywhere && !root.forceNeutralMaterial
         targetRadius: root.radius
         hovered: root.hovered
     }

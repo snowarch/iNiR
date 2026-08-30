@@ -10,6 +10,23 @@ ContentPage {
     settingsPageIndex: 15
     settingsPageName: Translation.tr("Monitors")
 
+    property string activeSection: "outputs"
+
+    SettingsTaskNavigator {
+        icon: "settings_input_component"
+        title: Translation.tr("Monitors")
+        description: Translation.tr("Choose which monitor shows each shell surface: outputs, ii surfaces, desktop widgets and shared popups.")
+        summary: Translation.tr("Outputs · Surfaces · Widgets · Popups")
+        currentValue: root.activeSection
+        onSelected: value => root.activeSection = value
+        options: [
+            { displayName: Translation.tr("Outputs"), icon: "monitor", value: "outputs" },
+            { displayName: Translation.tr("ii surfaces"), icon: "web_asset", value: "surfaces" },
+            { displayName: Translation.tr("Desktop widgets"), icon: "widgets", value: "widgets" },
+            { displayName: Translation.tr("Popups"), icon: "notifications", value: "popups" }
+        ]
+    }
+
     readonly property var iiSurfaces: [
         { title: Translation.tr("Bar"), description: Translation.tr("Top workspace bar, or the vertical bar when that mode is enabled"), icon: "web_asset", path: "bar.screenList" },
         { title: Translation.tr("Dock"), description: Translation.tr("Application dock and its hover reveal area"), icon: "call_to_action", path: "dock.screenList" },
@@ -548,6 +565,8 @@ ContentPage {
     }
 
     SettingsCardSection {
+        settingsTaskSection: "outputs"
+        visible: root.activeSection === "outputs"
         expanded: true
         icon: "settings_input_component"
         title: Translation.tr("Shell visibility")
@@ -591,6 +610,8 @@ ContentPage {
     }
 
     SettingsCardSection {
+        settingsTaskSection: "outputs"
+        visible: root.activeSection === "outputs"
         expanded: true
         icon: "preview"
         title: Translation.tr("Overview placement")
@@ -609,6 +630,8 @@ ContentPage {
     }
 
     SettingsCardSection {
+        settingsTaskSection: "surfaces"
+        visible: root.activeSection === "surfaces"
         expanded: true
         icon: "web_asset"
         title: Translation.tr("Material shell surfaces")
@@ -635,7 +658,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "widgets"
+        visible: root.activeSection === "widgets"
+        expanded: true
         icon: "widgets"
         title: Translation.tr("Desktop widgets")
 
@@ -662,7 +687,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "popups"
+        visible: root.activeSection === "popups"
+        expanded: true
         icon: "notifications"
         title: Translation.tr("Popups")
 

@@ -15,7 +15,7 @@ PanelSurface {
     Layout.fillWidth: true
     implicitHeight: statsRow.implicitHeight + 12
     elevation: 1
-    radiusOverride: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
+    radiusOverride: islandSkin ? -1 : (Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small)
 
     readonly property bool compactMode: Config.options?.controlPanel?.compactMode ?? true
     // zzz: el placa tiene esquinas redondeadas (panelRadius); el contenido debe
@@ -29,7 +29,7 @@ PanelSurface {
     readonly property bool inirEverywhere: Appearance.inirEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
 
-    AngelPartialBorder { targetRadius: root.radiusOverride; coverage: 0.45; visible: Appearance.angelEverywhere }
+    AngelPartialBorder { targetRadius: root.radiusOverride; coverage: 0.45; visible: Appearance.angelEverywhere && !root.islandSkin }
 
     RowLayout {
         id: statsRow

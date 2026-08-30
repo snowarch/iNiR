@@ -201,8 +201,8 @@ PillSurface {
         readonly property var n: entry.n
 
         width: parent ? parent.width : 0
-        height: 26 * root.s
-        radius: 7 * root.s
+        height: 34 * root.s
+        radius: 9 * root.s
         color: nrowHover.hovered ? PillTheme.frameBg : "transparent"
 
         HoverHandler {
@@ -235,9 +235,9 @@ PillSurface {
             anchors.left: parent.left
             anchors.leftMargin: 8 * root.s
             anchors.verticalCenter: parent.verticalCenter
-            width: 16 * root.s
-            height: 16 * root.s
-            radius: 5 * root.s
+            width: 20 * root.s
+            height: 20 * root.s
+            radius: 6 * root.s
             color: PillTheme.tileBg
             border.width: 1
             border.color: PillTheme.border
@@ -294,7 +294,7 @@ PillSurface {
                 text: "×" + nrow.entry.count
                 color: nrow.critical ? PillTheme.vermLit : PillTheme.vermDim
                 font.family: PillTheme.font
-                font.pixelSize: 9 * root.s
+                font.pixelSize: 10 * root.s
                 font.weight: Font.Bold
             }
 
@@ -311,7 +311,7 @@ PillSurface {
                     text: PillNotifs.ageLabel(nrow.n)
                     color: PillTheme.faint
                     font.family: PillTheme.font
-                    font.pixelSize: 9 * root.s
+                    font.pixelSize: 10 * root.s
                     Behavior on opacity { NumberAnimation { duration: PillMotion.fast } }
                 }
 
@@ -319,8 +319,8 @@ PillSurface {
                     id: nrowX
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 11 * root.s
-                    height: 11 * root.s
+                    width: 14 * root.s
+                    height: 14 * root.s
                     opacity: nrowHover.hovered ? 1 : 0
                     name: "close"
                     color: nrowXArea.containsMouse ? PillTheme.cream : PillTheme.dim
@@ -381,7 +381,7 @@ PillSurface {
                         text: Translation.tr("LINK")
                         color: PillTheme.subtle
                         font.family: PillTheme.font
-                        font.pixelSize: 10 * root.s
+                        font.pixelSize: 11.5 * root.s
                         font.weight: Font.DemiBold
                         font.capitalization: Font.AllUppercase
                         font.letterSpacing: 1.6 * root.s
@@ -412,7 +412,7 @@ PillSurface {
                         text: PillNotifs.unread + " NEW"
                         color: PillTheme.dim
                         font.family: PillTheme.font
-                        font.pixelSize: 9.5 * root.s
+                        font.pixelSize: 10.5 * root.s
                         font.weight: Font.Bold
                         font.letterSpacing: 1.4 * root.s
                     }
@@ -641,9 +641,9 @@ PillSurface {
                         text: PillTheme.showGlyphs ? "INBOX" : "Notifications"
                         color: PillTheme.faint
                         font.family: PillTheme.font
-                        font.pixelSize: 9 * root.s
+                        font.pixelSize: 10.5 * root.s
                         font.weight: Font.Bold
-                        font.letterSpacing: PillTheme.showGlyphs ? 1.8 * root.s : 0.8 * root.s
+                        font.letterSpacing: PillTheme.showGlyphs ? 1.6 * root.s : 0.6 * root.s
                     }
                 }
 
@@ -660,7 +660,7 @@ PillSurface {
                         text: PillTheme.glyph("clear")
                         color: clearArea.containsMouse ? PillTheme.vermLit : PillTheme.vermDim
                         font.family: PillTheme.fontJp
-                        font.pixelSize: 9 * root.s
+                        font.pixelSize: 10.5 * root.s
                         font.weight: Font.Bold
                     }
                     GlyphIcon {
@@ -677,9 +677,9 @@ PillSurface {
                         text: Translation.tr("CLEAR")
                         color: clearArea.containsMouse ? PillTheme.vermLit : PillTheme.vermDim
                         font.family: PillTheme.font
-                        font.pixelSize: 9 * root.s
+                        font.pixelSize: 10.5 * root.s
                         font.weight: Font.Bold
-                        font.letterSpacing: 1.4 * root.s
+                        font.letterSpacing: 1.2 * root.s
                     }
                 }
 
@@ -736,8 +736,8 @@ PillSurface {
                                 Rectangle {
                                     id: groupHead
                                     width: parent.width
-                                    height: 32 * root.s
-                                    radius: 8 * root.s
+                                    height: 38 * root.s
+                                    radius: 9 * root.s
                                     color: headHover.hovered ? PillTheme.frameBg : "transparent"
 
                                     HoverHandler {
@@ -795,7 +795,7 @@ PillSurface {
                                         text: group.modelData.app
                                         color: PillTheme.subtle
                                         font.family: PillTheme.font
-                                        font.pixelSize: 9 * root.s
+                                        font.pixelSize: 10.5 * root.s
                                         font.weight: Font.Bold
                                         font.capitalization: Font.AllUppercase
                                         font.letterSpacing: 1.2 * root.s
@@ -810,7 +810,7 @@ PillSurface {
                                         text: "· " + group.modelData.count
                                         color: PillTheme.faint
                                         font.family: PillTheme.font
-                                        font.pixelSize: 9 * root.s
+                                        font.pixelSize: 10.5 * root.s
                                     }
 
                                     Text {
@@ -835,8 +835,8 @@ PillSurface {
                                         anchors.right: parent.right
                                         anchors.rightMargin: 8 * root.s
                                         anchors.verticalCenter: parent.verticalCenter
-                                        width: 11 * root.s
-                                        height: 11 * root.s
+                                        width: 14 * root.s
+                                        height: 14 * root.s
                                         name: group.expanded ? "chevron-down" : "chevron-right"
                                         color: PillTheme.faint
                                         stroke: 2
@@ -847,8 +847,8 @@ PillSurface {
                                         anchors.right: headChev.left
                                         anchors.rightMargin: 7 * root.s
                                         anchors.verticalCenter: parent.verticalCenter
-                                        width: 11 * root.s
-                                        height: 11 * root.s
+                                        width: 14 * root.s
+                                        height: 14 * root.s
                                         opacity: headHover.hovered ? 1 : 0
                                         name: "close"
                                         color: headXArea.containsMouse ? PillTheme.cream : PillTheme.dim
@@ -915,9 +915,9 @@ PillSurface {
                     text: PillTheme.showGlyphs ? "SILENCE" : "No notifications to display"
                     color: PillTheme.faint
                     font.family: PillTheme.font
-                    font.pixelSize: 9 * root.s
+                    font.pixelSize: 10.5 * root.s
                     font.weight: Font.Bold
-                    font.letterSpacing: PillTheme.showGlyphs ? 2.2 * root.s : 0.8 * root.s
+                    font.letterSpacing: PillTheme.showGlyphs ? 1.8 * root.s : 0.6 * root.s
                 }
             }
         }

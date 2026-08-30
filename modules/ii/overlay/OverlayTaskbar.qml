@@ -19,16 +19,19 @@ Rectangle {
     opacity: GlobalStates.overlayOpen ? 1 : 0
     implicitWidth: contentRow.implicitWidth + (padding * 2)
     implicitHeight: contentRow.implicitHeight + (padding * 2)
-    color: Appearance.angelEverywhere ? "transparent"
+    color: Appearance.angelEverywhere || Appearance.regaliaEverywhere ? "transparent"
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
         : Appearance.colors.colSurfaceContainer
-    radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+    radius: Appearance.regaliaEverywhere ? Appearance.regalia.roundLarge
+        : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
         : Appearance.rounding.large
-    border.color: Appearance.angelEverywhere ? Appearance.angel.colBorder
+    border.color: Appearance.regaliaEverywhere ? "transparent"
+        : Appearance.angelEverywhere ? Appearance.angel.colBorder
         : Appearance.inirEverywhere ? Appearance.inir.colBorder
         : Appearance.colors.colOutlineVariant
-    border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : 1
+    border.width: Appearance.regaliaEverywhere ? 0
+        : Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : 1
     clip: true
 
     layer.enabled: Appearance.angelEverywhere
@@ -68,6 +71,16 @@ Rectangle {
         anchors.fill: parent
         visible: Appearance.angelEverywhere
         color: ColorUtils.transparentize(Appearance.colors.colLayer0Base, Appearance.angel.overlayOpacity)
+    }
+
+    RegaliaPlate {
+        anchors.fill: parent
+        visible: Appearance.regaliaEverywhere
+        fillColor: Appearance.regalia.bg2
+        radius: root.radius
+        inset: Appearance.regalia.controlInset
+        elevated: true
+        glassEnabled: true
     }
 
     AngelPartialBorder {
@@ -183,11 +196,14 @@ Rectangle {
         }
         implicitWidth: implicitHeight
 
-        colBackgroundToggled: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+        colBackgroundToggled: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlate
+            : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
             : Appearance.colors.colSecondaryContainer
-        colBackgroundToggledHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+        colBackgroundToggledHover: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateHover
+            : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
             : Appearance.colors.colSecondaryContainerHover
-        colRippleToggled: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+        colRippleToggled: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateActive
+            : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
             : Appearance.colors.colSecondaryContainerActive
 
         buttonRadius: root.radius - (root.height - height) / 2
@@ -204,8 +220,10 @@ Rectangle {
                 color: widgetButton.identifier === "recorder" && RecorderStatus.isRecording
                         ? Appearance.colors.colError
                         : (widgetButton.toggled
-                            ? (Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.colors.colOnSecondaryContainer)
-                            : (Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnSurfaceVariant))
+                            ? (Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateInk
+                                : Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.colors.colOnSecondaryContainer)
+                            : (Appearance.regaliaEverywhere ? Appearance.regalia.onMuted
+                                : Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnSurfaceVariant))
             }
         }
 

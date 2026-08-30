@@ -1,5 +1,7 @@
 module qs.modules.settings
 singleton SettingsPageRegistry 1.0 SettingsPageRegistry.qml
+singleton SettingsArrangement 1.0 SettingsArrangement.qml
+singleton SettingsChromeLayout 1.0 SettingsChromeLayout.qml
 QuickWallpaperItem 1.0 QuickWallpaperItem.qml
 ThemePresetCard 1.0 ThemePresetCard.qml
 ColorPickerRow 1.0 ColorPickerRow.qml
@@ -12,4 +14,9 @@ SidebarsConfig 1.0 SidebarsConfig.qml
 SettingsOverlay 1.0 SettingsOverlay.qml
 SettingsFocus 1.0 SettingsFocus.qml
 SettingsPageHost 1.0 SettingsPageHost.qml
+SettingsNavEditPane 1.0 SettingsNavEditPane.qml
+SettingsChromeEditFrame 1.0 SettingsChromeEditFrame.qml
 SettingsNativeDialogGuard 1.0 SettingsNativeDialogGuard.qml
+PillOptionsEditor 1.0 PillOptionsEditor.qml
+RicelinIslandEditor 1.0 RicelinIslandEditor.qml
+OrbitShelfEditor 1.0 OrbitShelfEditor.qml

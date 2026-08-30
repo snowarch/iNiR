@@ -330,7 +330,7 @@ Item {
                         colBackgroundHover: root.colLayer2
                         enabled: YtMusic.canGoPrevious
                         opacity: enabled ? 1.0 : 0.35
-                        onClicked: YtMusic.playPrevious()
+                        onClicked: MprisController.previousForPlayer(YtMusic.mpvPlayer)
                         contentItem: MaterialSymbol { anchors.centerIn: parent; text: "skip_previous"; iconSize: 18; fill: 1; color: root.colText }
                     }
 
@@ -358,7 +358,7 @@ Item {
                         colBackgroundHover: root.colLayer2
                         enabled: YtMusic.canGoNext
                         opacity: enabled ? 1.0 : 0.35
-                        onClicked: YtMusic.playNext()
+                        onClicked: MprisController.nextForPlayer(YtMusic.mpvPlayer)
                         contentItem: MaterialSymbol { anchors.centerIn: parent; text: "skip_next"; iconSize: 18; fill: 1; color: root.colText }
                     }
 

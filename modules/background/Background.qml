@@ -189,7 +189,7 @@ Scope {
                 "worldClock", "userCard"];
             if (!knownWidgets.includes(widgetName))
                 return "unknown widget: " + widgetName;
-            Config.setNestedValue("background.widgets." + widgetName + ".enable", enabled);
+            DesktopWidgetLayout.setGloballyEnabled(widgetName, enabled);
             return widgetName + (enabled ? " enabled" : " disabled");
         }
 
@@ -708,10 +708,17 @@ Scope {
             bgRoot._parallaxTransitionReason = String(reason ?? "")
             parallaxResumeAnimation.stop()
             parallaxTransitionPauseTimer.stop()
+            parallaxTransitionWatchdog.stop()
 
             if (!waitForCrossfader) {
                 parallaxTransitionPauseTimer.interval = bgRoot._wallpaperTransitionDurationMs + bgRoot.parallaxTransitionSettleMs
                 parallaxTransitionPauseTimer.restart()
+            } else {
+                parallaxTransitionWatchdog.interval = Math.max(
+                    1000,
+                    bgRoot._wallpaperTransitionDurationMs + bgRoot.parallaxTransitionSettleMs + 500
+                )
+                parallaxTransitionWatchdog.restart()
             }
         }
 
@@ -719,6 +726,7 @@ Scope {
             if (!bgRoot.parallaxTransitionActive)
                 return
             bgRoot._parallaxWaitingCrossfader = false
+            parallaxTransitionWatchdog.stop()
             parallaxTransitionPauseTimer.interval = bgRoot.parallaxTransitionSettleMs
             parallaxTransitionPauseTimer.restart()
         }
@@ -967,10 +975,31 @@ Scope {
             interval: bgRoot._wallpaperTransitionDurationMs + bgRoot.parallaxTransitionSettleMs
             repeat: false
             onTriggered: {
+                parallaxTransitionWatchdog.stop()
                 bgRoot._parallaxWaitingCrossfader = false
                 bgRoot._parallaxTransitionReason = ""
                 bgRoot.parallaxTransitionActive = false
                 parallaxResumeAnimation.restart()
+            }
+        }
+
+        Timer {
+            id: parallaxTransitionWatchdog
+            repeat: false
+            onTriggered: {
+                if (!bgRoot.parallaxTransitionActive || !bgRoot._parallaxWaitingCrossfader)
+                    return
+                bgRoot.settleParallaxAfterTransition()
+            }
+        }
+
+        Connections {
+            target: AwwwBackend
+            function onActiveChanged(): void {
+                if (!AwwwBackend.active)
+                    return
+                if (bgRoot._parallaxWaitingCrossfader && bgRoot._parallaxTransitionReason === "wallpaper")
+                    bgRoot.settleParallaxAfterTransition()
             }
         }
 
@@ -1545,7 +1574,7 @@ Scope {
                     if (desktopItemContextMenu.active) desktopItemContextMenu.close()
                     desktopMenuAnchor.x = mouse.x
                     desktopMenuAnchor.y = mouse.y
-                    desktopContextMenu.active = true
+                    desktopContextMenu.requestOpen()
                 }
             }
 
@@ -1713,7 +1742,7 @@ Scope {
                             desktopMenuAnchor.x = position.x
                             desktopMenuAnchor.y = position.y
                             desktopItemContextMenu.model = menuModel
-                            desktopItemContextMenu.active = true
+                            desktopItemContextMenu.requestOpen()
                         }
                         onContextMenuCloseRequested: {
                             if (desktopItemContextMenu.active)
@@ -2452,8 +2481,8 @@ Scope {
                                     colBackgroundToggled: CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.16)
                                     colBackgroundToggledHover: CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.24)
                                     colRipple: CF.ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.12)
-                                    releaseAction: () => DesktopWidgetLayout.setEnabled(
-                                        bgRoot.screenName, quickWidgetButton.modelData.key,
+                                    releaseAction: () => DesktopWidgetLayout.setGloballyEnabled(
+                                        quickWidgetButton.modelData.key,
                                         !quickWidgetButton.widgetEnabled)
                                     cancelAction: () => {}
                                     contentItem: MaterialSymbol {
@@ -2483,8 +2512,8 @@ Scope {
                                     colBackgroundToggled: CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.16)
                                     colBackgroundToggledHover: CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.24)
                                     colRipple: CF.ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.12)
-                                    releaseAction: () => DesktopWidgetLayout.setEnabled(
-                                        bgRoot.screenName, "custom." + customWidgetButton.modelData.id,
+                                    releaseAction: () => DesktopWidgetLayout.setGloballyEnabled(
+                                        "custom." + customWidgetButton.modelData.id,
                                         !customWidgetButton.widgetEnabled)
                                     cancelAction: () => {}
                                     contentItem: MaterialSymbol {

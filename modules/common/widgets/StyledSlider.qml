@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.common.functions
 import qs.services
 import QtQuick
 import QtQuick.Controls
@@ -35,44 +36,52 @@ Slider {
 
     property var configuration: StyledSlider.Configuration.S
 
-    property real handleDefaultWidth: Appearance.zzzEverywhere ? 0 : 3
-    property real handlePressedWidth: Appearance.zzzEverywhere ? 0 : 1.5
-    property color highlightColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+    property real handleDefaultWidth: Appearance.regaliaEverywhere ? 15 : Appearance.zzzEverywhere ? 0 : 3
+    property real handlePressedWidth: Appearance.regaliaEverywhere ? 13 : Appearance.zzzEverywhere ? 0 : 1.5
+    property color highlightColor: Appearance.regaliaEverywhere ? Appearance.regalia.hardwarePrimary
+        : Appearance.angelEverywhere ? Appearance.angel.colPrimary
         : Appearance.inirEverywhere ? Appearance.inir.colPrimary
         : Appearance.zzzEverywhere ? Appearance.zzz.accentSoft : Appearance.colors.colPrimary
-    property color trackColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+    property color trackColor: Appearance.regaliaEverywhere ? Appearance.regalia.controlPlate
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2
         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
         : Appearance.zzzEverywhere ? Appearance.zzz.metricTrack
         : Appearance.colors.colSecondaryContainer
-    property color handleColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+    property color handleColor: Appearance.regaliaEverywhere ? Appearance.regalia.hardwarePrimary
+        : Appearance.angelEverywhere ? Appearance.angel.colPrimary
         : Appearance.inirEverywhere ? Appearance.inir.colPrimary
         : Appearance.zzzEverywhere ? "transparent" : Appearance.colors.colPrimary
-    property color dotColor: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+    property color dotColor: Appearance.regaliaEverywhere ? Appearance.regalia.onMuted
+        : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
         : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
         : Appearance.zzzEverywhere ? Appearance.zzz.onMuted : Appearance.colors.colOnSecondaryContainer
-    property color dotColorHighlighted: Appearance.angelEverywhere ? Appearance.angel.colOnPrimary
+    property color dotColorHighlighted: Appearance.regaliaEverywhere ? Appearance.regalia.hardwarePrimaryInk
+        : Appearance.angelEverywhere ? Appearance.angel.colOnPrimary
         : Appearance.inirEverywhere ? Appearance.inir.colOnPrimary
         : Appearance.zzzEverywhere ? Appearance.zzz.onColor : Appearance.colors.colOnPrimary
     property real unsharpenRadius: Appearance.rounding.unsharpen
-    property real trackWidth: configuration
-    property real trackRadius: trackWidth >= StyledSlider.Configuration.XL ? 21
+    property real trackWidth: Appearance.regaliaEverywhere ? Math.min(7, configuration) : configuration
+    property real trackRadius: Appearance.regaliaEverywhere ? Appearance.regalia.roundVerySmall
+        : trackWidth >= StyledSlider.Configuration.XL ? 21
         : trackWidth >= StyledSlider.Configuration.L ? 12
         : trackWidth >= StyledSlider.Configuration.M ? 9
         : trackWidth >= StyledSlider.Configuration.S ? 6
         : height / 2
-    property real handleHeight: (configuration === StyledSlider.Configuration.Wavy) ? 24 : Math.max(33, trackWidth + 9)
+    property real handleHeight: Appearance.regaliaEverywhere ? 15
+        : (configuration === StyledSlider.Configuration.Wavy) ? 24 : Math.max(33, trackWidth + 9)
     property real handleWidth: root.pressed ? handlePressedWidth : handleDefaultWidth
     property real handleMargins: 4
     property real trackDotSize: 3
     property string tooltipContent: `${Math.round(value * 100)}%`
     property bool scrollable: false
     property bool _userInteracting: false
-    property bool wavy: configuration === StyledSlider.Configuration.Wavy
+    property bool wavy: !Appearance.regaliaEverywhere && configuration === StyledSlider.Configuration.Wavy
     property bool animateWave: true
     property real waveAmplitudeMultiplier: wavy ? 0.5 : 0
     property real waveFrequency: 6
-    readonly property bool usesWaveTrack: wavy || configuration === StyledSlider.Configuration.Wavy
+    readonly property bool usesWaveTrack: !Appearance.regaliaEverywhere
+        && (wavy || configuration === StyledSlider.Configuration.Wavy)
 
     Behavior on waveAmplitudeMultiplier {
         enabled: Appearance.animationsEnabled
@@ -219,7 +228,7 @@ Slider {
         anchors.verticalCenter: parent.verticalCenter
         width: parent.width
         implicitHeight: trackWidth
-        
+
         // Fill left
         Loader {
             anchors {
@@ -235,6 +244,20 @@ Slider {
                 bottomLeftRadius: root.trackRadius
                 topRightRadius: root.unsharpenRadius
                 bottomRightRadius: root.unsharpenRadius
+                gradient: Gradient {
+                    GradientStop {
+                        position: 0
+                        color: Appearance.regaliaEverywhere
+                            ? ColorUtils.mix(root.highlightColor, Appearance.regalia.hardwarePrimaryInk, 0.91)
+                            : root.highlightColor
+                    }
+                    GradientStop {
+                        position: 1
+                        color: Appearance.regaliaEverywhere
+                            ? ColorUtils.mix(root.highlightColor, Appearance.m3colors.m3shadow, 0.90)
+                            : root.highlightColor
+                    }
+                }
             }
         }
 
@@ -270,6 +293,20 @@ Slider {
             bottomRightRadius: root.trackRadius
             topLeftRadius: root.unsharpenRadius
             bottomLeftRadius: root.unsharpenRadius
+            gradient: Gradient {
+                GradientStop {
+                    position: 0
+                    color: Appearance.regaliaEverywhere
+                        ? ColorUtils.mix(root.trackColor, Appearance.regalia.onColor, 0.965)
+                        : root.trackColor
+                }
+                GradientStop {
+                    position: 1
+                    color: Appearance.regaliaEverywhere
+                        ? ColorUtils.mix(root.trackColor, Appearance.m3colors.m3shadow, 0.90)
+                        : root.trackColor
+                }
+            }
         }
 
         // Stop indicators
@@ -290,8 +327,24 @@ Slider {
         implicitHeight: root.handleHeight
         x: root.handleMargins + (root.visualPosition * root.effectiveDraggingWidth) - (implicitWidth / 2)
         anchors.verticalCenter: parent.verticalCenter
-        radius: Math.min(width, height) / 2
+        radius: Appearance.regaliaEverywhere ? 4 : Math.min(width, height) / 2
         color: root.handleColor
+        border.width: 0
+        gradient: Gradient {
+            GradientStop {
+                position: 0
+                color: Appearance.regaliaEverywhere
+                    ? ColorUtils.mix(root.handleColor, Appearance.regalia.hardwarePrimaryInk, 0.88)
+                    : root.handleColor
+            }
+            GradientStop { position: 0.5; color: root.handleColor }
+            GradientStop {
+                position: 1
+                color: Appearance.regaliaEverywhere
+                    ? ColorUtils.mix(root.handleColor, Appearance.m3colors.m3shadow, 0.86)
+                    : root.handleColor
+            }
+        }
 
         Behavior on implicitWidth {
             enabled: Appearance.animationsEnabled

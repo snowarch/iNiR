@@ -13,6 +13,7 @@ MaterialShape {
     property real padding: 6
 
     color: Appearance.zzzEverywhere ? ColorUtils.transparentize(Appearance.zzz.paperAlt, 0.10)
+        : Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlate
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2
         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
@@ -22,6 +23,7 @@ MaterialShape {
         ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
     }
     colSymbol: Appearance.zzzEverywhere ? Appearance.zzz.accent
+        : Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateInk
         : Appearance.angelEverywhere ? Appearance.angel.colText
         : Appearance.inirEverywhere ? Appearance.inir.colText
         : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer1

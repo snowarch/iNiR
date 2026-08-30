@@ -248,10 +248,12 @@ Singleton {
             if (appearanceStyle === "pill" && !barVertical) {
                 const screen = Quickshell.screens.find(item => (item?.name ?? "") === outputName)
                     ?? Quickshell.screens[0]
-                const scale = ((screen?.height ?? 1080) / 1080)
-                    * (Config.options?.bar?.pill?.scale ?? 1)
+                const shortEdge = Math.min(screen?.width ?? 1920, screen?.height ?? 1080)
+                const resolutionScale = Math.max(0.78, Math.min(1.6, shortEdge / 1080))
+                const scale = resolutionScale * 1.1 * (Config.options?.bar?.pill?.scale ?? 1)
                 const restHeight = (Config.options?.bar?.pill?.barMode ?? false)
-                    ? 58 * scale : 38 * scale
+                    ? Math.max(58, Config.options?.bar?.pill?.expandedHeight ?? 66) * scale
+                    : Math.max(38, Config.options?.bar?.pill?.restHeight ?? 44) * scale
                 const topGap = 8 * (Config.options?.bar?.pill?.topGap ?? 1) * scale
                 const appGap = Config.options?.bar?.pill?.appGap ?? 1
                 thickness = Math.max(0, restHeight + topGap - 12 * (1 - appGap) * scale)

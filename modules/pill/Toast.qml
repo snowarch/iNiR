@@ -24,7 +24,8 @@ Item {
 
     /** iNiR exposes urgency as a string, not the Quickshell enum. */
     readonly property bool critical: String(notif.urgency) === "Critical"
-    readonly property var acts: (notif.actions ?? []).filter(a => a.text.length > 0)
+    readonly property var acts: (notif.actions ?? [])
+        .filter(action => String(action?.text ?? "").trim().length > 0)
     readonly property string iconSource: PillNotifs.iconFor(notif)
     readonly property string imageValue: String(notif.image ?? "")
     readonly property bool imageIsIconHint: imageValue.startsWith("image://icon/")
@@ -135,7 +136,7 @@ Item {
             text: (root.notif.appName && root.notif.appName.length) ? root.notif.appName : "System"
             color: PillTheme.dim
             font.family: PillTheme.font
-            font.pixelSize: 8.5 * root.s
+            font.pixelSize: 10 * root.s
             font.weight: Font.DemiBold
             font.capitalization: Font.AllUppercase
             font.letterSpacing: 1.4 * root.s
@@ -174,7 +175,7 @@ Item {
                 text: root.notif.summary
                 color: PillTheme.cream
                 font.family: PillTheme.font
-                font.pixelSize: (root.compact ? 9.5 : 11.5) * root.s
+                font.pixelSize: (root.compact ? 10.5 : 12) * root.s
                 font.weight: Font.DemiBold
                 maximumLineCount: 1
                 elide: Text.ElideRight
@@ -207,8 +208,8 @@ Item {
                     required property var modelData
                     required property int index
 
-                    height: 20 * root.s
-                    width: actText.implicitWidth + 18 * root.s
+                    height: 28 * root.s
+                    width: actText.implicitWidth + 22 * root.s
                     radius: 999
                     color: PillTheme.tileBg
                     border.width: 1
@@ -220,7 +221,7 @@ Item {
                         text: actPill.modelData.text
                         color: actPill.index === 0 ? PillTheme.vermLit : PillTheme.dim
                         font.family: PillTheme.font
-                        font.pixelSize: 9.5 * root.s
+                        font.pixelSize: 10.5 * root.s
                         font.weight: Font.DemiBold
                     }
 

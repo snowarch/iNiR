@@ -154,7 +154,7 @@ PillSurface {
                 text: dial.label
                 color: PillTheme.faint
                 font.family: PillTheme.font
-                font.pixelSize: 8.5 * root.s
+                font.pixelSize: 10 * root.s
                 font.weight: Font.Bold
                 font.capitalization: Font.AllUppercase
                 font.letterSpacing: 1 * root.s
@@ -204,7 +204,7 @@ PillSurface {
                     text: Translation.tr("SYSTEM")
                     color: PillTheme.subtle
                     font.family: PillTheme.font
-                    font.pixelSize: 10 * root.s
+                    font.pixelSize: 11.5 * root.s
                     font.weight: Font.DemiBold
                     font.capitalization: Font.AllUppercase
                     font.letterSpacing: 1.8 * root.s
@@ -217,7 +217,7 @@ PillSurface {
                 text: PillSysmon.uptime
                 color: PillTheme.dim
                 font.family: PillTheme.font
-                font.pixelSize: 9.5 * root.s
+                font.pixelSize: 10.5 * root.s
                 font.weight: Font.Bold
                 font.capitalization: Font.AllUppercase
                 font.letterSpacing: 1.1 * root.s
@@ -318,7 +318,7 @@ PillSurface {
                                 : "VRAM · GB"
                             color: PillTheme.faint
                             font.family: PillTheme.font
-                            font.pixelSize: 8.5 * root.s
+                            font.pixelSize: 10 * root.s
                             font.weight: Font.Bold
                             font.capitalization: Font.AllUppercase
                             font.letterSpacing: 1 * root.s

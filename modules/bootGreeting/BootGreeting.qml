@@ -43,6 +43,8 @@ Scope {
     Component.onCompleted: {
         if (wallpaperIsVideo)
             Wallpapers.ensureVideoFirstFrame(wallpaperPath)
+        if (GlobalStates.bootGreetingOpen)
+            root.beginEntrance()
     }
     onWallpaperPathChanged: {
         if (wallpaperIsVideo)
@@ -75,19 +77,25 @@ Scope {
         onTriggered: root.dismiss()
     }
 
-    // Begin entrance when greeting opens
+    function beginEntrance(): void {
+        if (root._panelVisible && root._visible)
+            return
+        root._panelVisible = true
+        root._visible = true
+        root._cascade = 0
+        root._dismissing = false
+        // Start cascade after a brief frame to let the scrim morph in.
+        Qt.callLater(() => cascadeTimer.start())
+        autoDismissTimer.start()
+    }
+
+    // Begin entrance when greeting opens. Component.onCompleted mirrors this
+    // state so an async loader cannot miss an earlier bootGreetingOpen change.
     Connections {
         target: GlobalStates
         function onBootGreetingOpenChanged() {
-            if (GlobalStates.bootGreetingOpen) {
-                root._panelVisible = true
-                root._visible = true
-                root._cascade = 0
-                root._dismissing = false
-                // Start cascade after a brief frame to let the scrim morph in
-                Qt.callLater(() => cascadeTimer.start())
-                autoDismissTimer.start()
-            }
+            if (GlobalStates.bootGreetingOpen)
+                root.beginEntrance()
         }
     }
 

@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Effects
 import Quickshell.Widgets
+import qs.services
 import qs.modules.common
 
 /**
@@ -75,6 +76,19 @@ PillSurface {
     ameForm: "seam"
     amePoint: Qt.point(seamHeadX, seamHeadY)
 
+    WheelHandler {
+        enabled: root.active && !root.picking && MprisController.canChangeVolume
+        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+        onWheel: (event) => {
+            const current = MprisController.getVolume();
+            const next = event.angleDelta.y > 0
+                ? Math.min(1, current + 0.05)
+                : Math.max(0, current - 0.05);
+            MprisController.setVolume(next);
+            event.accepted = true;
+        }
+    }
+
     function fmt(sec) {
         if (!(sec > 0))
             return "0:00";
@@ -112,8 +126,8 @@ PillSurface {
         signal activated()
 
         anchors.verticalCenter: parent.verticalCenter
-        implicitWidth: PillTheme.showGlyphs ? kanjiLabel.implicitWidth : 15 * root.s
-        implicitHeight: PillTheme.showGlyphs ? kanjiLabel.implicitHeight : 15 * root.s
+        implicitWidth: Math.max(28 * root.s, PillTheme.showGlyphs ? kanjiLabel.implicitWidth : 15 * root.s)
+        implicitHeight: Math.max(28 * root.s, PillTheme.showGlyphs ? kanjiLabel.implicitHeight : 15 * root.s)
         opacity: skip.can ? 1 : 0.4
         Behavior on opacity { NumberAnimation { duration: PillMotion.fast } }
 
@@ -310,7 +324,7 @@ PillSurface {
                 text: root.serviceLabel
                 color: PillTheme.dim
                 font.family: PillTheme.font
-                font.pixelSize: 9.5 * root.s
+                font.pixelSize: 10.5 * root.s
             }
 
             Rectangle {
@@ -318,8 +332,8 @@ PillSurface {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
                 visible: root.canPick
-                height: 18 * root.s
-                width: bubbleRow.width + 14 * root.s
+                height: 22 * root.s
+                width: bubbleRow.width + 16 * root.s
                 radius: height / 2
                 color: Qt.alpha(PillTheme.verm, 0.16)
                 border.width: 1
@@ -339,8 +353,8 @@ PillSurface {
                     spacing: 5 * root.s
                     ArtDot {
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 12 * root.s
-                        height: 12 * root.s
+                        width: 14 * root.s
+                        height: 14 * root.s
                         url: PillPlayers.artUrlFor(root.player)
                     }
                     Text {
@@ -348,14 +362,14 @@ PillSurface {
                         text: root.serviceLabel
                         color: PillTheme.cream
                         font.family: PillTheme.font
-                        font.pixelSize: 10 * root.s
+                        font.pixelSize: 11 * root.s
                         font.weight: Font.DemiBold
                     }
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
                         text: "▾"
                         color: PillTheme.vermLit
-                        font.pixelSize: 8 * root.s
+                        font.pixelSize: 10 * root.s
                     }
                 }
 
@@ -377,7 +391,7 @@ PillSurface {
                 elide: Text.ElideRight
                 color: PillTheme.dim
                 font.family: PillTheme.font
-                font.pixelSize: 9.5 * root.s
+                font.pixelSize: 10.5 * root.s
                 font.features: { "tnum": 1 }
             }
         }
@@ -446,7 +460,7 @@ PillSurface {
                                     text: PillPlayers.nowPlayingFor(bub.modelData)
                                     color: bub.isActive ? PillTheme.subtle : PillTheme.faint
                                     font.family: PillTheme.font
-                                    font.pixelSize: 8.5 * root.s
+                                    font.pixelSize: 10.5 * root.s
                                     elide: Text.ElideRight
                                     width: Math.min(implicitWidth, 150 * root.s)
                                 }
@@ -483,14 +497,14 @@ PillSurface {
             kanjiText: "前"
             icon: "prev"
             can: root.hasPlayer && root.player.canGoPrevious
-            onActivated: if (root.player) root.player.previous()
+            onActivated: if (root.player) MprisController.previousForPlayer(root.player)
         }
 
         Rectangle {
             id: seal
             anchors.verticalCenter: parent.verticalCenter
-            width: 30 * root.s
-            height: 30 * root.s
+            width: 34 * root.s
+            height: 34 * root.s
             radius: 7 * root.s
             rotation: -1.5
             scale: 1 + 0.08 * root.sealPulse
@@ -542,7 +556,7 @@ PillSurface {
             kanjiText: "次"
             icon: "next"
             can: root.hasPlayer && root.player.canGoNext
-            onActivated: if (root.player) root.player.next()
+            onActivated: if (root.player) MprisController.nextForPlayer(root.player)
         }
     }
 

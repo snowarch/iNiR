@@ -42,13 +42,13 @@ PillSurface {
     readonly property int monthLen: daysInMonth(viewYear, viewMonth)
     readonly property int rows: Math.ceil((offset + monthLen) / 7)
 
-    readonly property real cellH: 24 * s
-    readonly property real rowGap: 2 * s
+    readonly property real cellH: 34 * s
+    readonly property real rowGap: 4 * s
 
-    readonly property real gridW: 282 * s
-    readonly property real weatherW: 152 * s
-    readonly property real editorW: 196 * s
-    readonly property real gutter: 16 * s
+    readonly property real gridW: 350 * s
+    readonly property real weatherW: 196 * s
+    readonly property real editorW: 238 * s
+    readonly property real gutter: 22 * s
 
     readonly property bool weatherShown: PillWeather.ready
     readonly property bool editorShown: selectedDate.length > 0
@@ -238,13 +238,13 @@ PillSurface {
 
         Column {
             id: wxCol
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.rightMargin: 6 * root.s
-            spacing: 9 * root.s
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width - 20 * root.s
+            spacing: 11 * root.s
 
             Row {
+                anchors.horizontalCenter: parent.horizontalCenter
                 spacing: 9 * root.s
 
                 GlyphIcon {
@@ -262,7 +262,7 @@ PillSurface {
                         text: PillWeather.tempNow + "°"
                         color: PillTheme.cream
                         font.family: PillTheme.font
-                        font.pixelSize: 26 * root.s
+                        font.pixelSize: 30 * root.s
                         font.weight: Font.DemiBold
                         font.features: { "tnum": 1 }
                     }
@@ -270,7 +270,7 @@ PillSurface {
                         text: PillWeather.labelFor(PillWeather.codeNow)
                         color: PillTheme.subtle
                         font.family: PillTheme.font
-                        font.pixelSize: 10 * root.s
+                        font.pixelSize: 11.5 * root.s
                         font.weight: Font.Medium
                     }
                 }
@@ -290,7 +290,7 @@ PillSurface {
                     id: cityBox
                     anchors.verticalCenter: parent.verticalCenter
                     width: parent.width - humidityRow.width - 8 * root.s
-                    height: 14 * root.s
+                    height: 24 * root.s
 
                     property bool editing: false
 
@@ -303,7 +303,7 @@ PillSurface {
                         text: PillWeather.city.length > 0 ? PillWeather.city : "set town"
                         color: cityArea.containsMouse ? PillTheme.subtle : PillTheme.dim
                         font.family: PillTheme.font
-                        font.pixelSize: 9 * root.s
+                        font.pixelSize: 10.5 * root.s
                         font.weight: Font.Medium
                         font.capitalization: Font.AllUppercase
                         font.letterSpacing: 0.8 * root.s
@@ -333,7 +333,7 @@ PillSurface {
                         verticalAlignment: TextInput.AlignVCenter
                         color: PillTheme.cream
                         font.family: PillTheme.font
-                        font.pixelSize: 9 * root.s
+                        font.pixelSize: 10.5 * root.s
                         font.weight: Font.Medium
                         font.capitalization: Font.AllUppercase
                         font.letterSpacing: 0.8 * root.s
@@ -356,8 +356,8 @@ PillSurface {
 
                     GlyphIcon {
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 11 * root.s
-                        height: 11 * root.s
+                        width: 13 * root.s
+                        height: 13 * root.s
                         name: "droplet"
                         color: PillTheme.faint
                         stroke: 1.6
@@ -367,7 +367,7 @@ PillSurface {
                         text: PillWeather.humidity + "%"
                         color: PillTheme.faint
                         font.family: PillTheme.font
-                        font.pixelSize: 9.5 * root.s
+                        font.pixelSize: 10.5 * root.s
                         font.weight: Font.Medium
                         font.features: { "tnum": 1 }
                     }
@@ -397,15 +397,15 @@ PillSurface {
                             text: dayCol.modelData.day
                             color: PillTheme.faint
                             font.family: PillTheme.font
-                            font.pixelSize: 9 * root.s
+                            font.pixelSize: 10.5 * root.s
                             font.weight: Font.DemiBold
                             font.capitalization: Font.AllUppercase
                             font.letterSpacing: 0.5 * root.s
                         }
                         GlyphIcon {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            width: 15 * root.s
-                            height: 15 * root.s
+                            width: 18 * root.s
+                            height: 18 * root.s
                             name: PillWeather.glyphFor(dayCol.modelData.code, true)
                             color: PillTheme.subtle
                             stroke: 1.7
@@ -415,7 +415,7 @@ PillSurface {
                             text: dayCol.modelData.temp + "°"
                             color: PillTheme.cream
                             font.family: PillTheme.font
-                            font.pixelSize: 11 * root.s
+                            font.pixelSize: 12.5 * root.s
                             font.weight: Font.Medium
                             font.features: { "tnum": 1 }
                         }
@@ -444,7 +444,7 @@ PillSurface {
                                 text: dayCol.modelData.lo + "°"
                                 color: PillTheme.faint
                                 font.family: PillTheme.font
-                                font.pixelSize: 8.5 * root.s
+                                font.pixelSize: 10.5 * root.s
                                 font.weight: Font.Medium
                                 font.features: { "tnum": 1 }
                             }
@@ -504,7 +504,7 @@ PillSurface {
                         + " " + root.viewYear
                     color: PillTheme.subtle
                     font.family: PillTheme.font
-                    font.pixelSize: 11 * root.s
+                    font.pixelSize: 13 * root.s
                     font.weight: Font.DemiBold
                     font.capitalization: Font.AllUppercase
                     font.letterSpacing: 1.0 * root.s
@@ -522,8 +522,8 @@ PillSurface {
                     Rectangle {
                         id: nav
                         required property int modelData
-                        width: 22 * root.s
-                        height: 22 * root.s
+                        width: 28 * root.s
+                        height: 28 * root.s
                         radius: PillMotion.rSmall * root.s
                         color: navArea.containsMouse ? PillTheme.frameBg : "transparent"
                         border.width: navArea.containsMouse ? 1 : 0
@@ -582,7 +582,7 @@ PillSurface {
                         text: root.loc.standaloneDayName((wd.index + 1) % 7, Locale.NarrowFormat)
                         color: wd.weekend ? PillTheme.faint : PillTheme.dim
                         font.family: PillTheme.font
-                        font.pixelSize: 9 * root.s
+                        font.pixelSize: 10.5 * root.s
                         font.weight: Font.Medium
                         font.letterSpacing: 0.5 * root.s
                     }
@@ -624,8 +624,8 @@ PillSurface {
 
                     Rectangle {
                         anchors.centerIn: parent
-                        width: 22 * root.s
-                        height: 22 * root.s
+                        width: 28 * root.s
+                        height: 28 * root.s
                         radius: PillMotion.rSmall * root.s
                         color: cellArea.containsMouse && cell.inMonth && !cell.current
                             ? PillTheme.frameBg : "transparent"
@@ -633,8 +633,8 @@ PillSurface {
 
                     Rectangle {
                         anchors.centerIn: parent
-                        width: 24 * root.s
-                        height: 24 * root.s
+                        width: 28 * root.s
+                        height: 28 * root.s
                         radius: PillMotion.rSmall * root.s
                         visible: cell.current || cell.sel
                         color: cell.sel && !cell.current ? Qt.alpha(PillTheme.vermLit, 0.12) : PillTheme.frameBg
@@ -653,7 +653,7 @@ PillSurface {
                             : PillTheme.ghost
                         opacity: cell.inMonth && !cell.current && !cell.weekend && !cell.hasEvent ? 0.85 : 1.0
                         font.family: PillTheme.font
-                        font.pixelSize: 11 * root.s
+                        font.pixelSize: 13 * root.s
                         font.weight: cell.current || cell.hasEvent ? Font.DemiBold : Font.Normal
                         font.features: { "tnum": 1 }
                     }
@@ -691,7 +691,7 @@ PillSurface {
             text: Translation.tr("click the end day")
             color: PillTheme.flameGlow
             font.family: PillTheme.font
-            font.pixelSize: 9 * root.s
+            font.pixelSize: 10.5 * root.s
             font.weight: Font.DemiBold
             font.letterSpacing: 0.4 * root.s
         }
@@ -911,7 +911,7 @@ PillSurface {
                                         width: parent.width
                                         color: PillTheme.flameGlow
                                         font.family: PillTheme.font
-                                        font.pixelSize: 9 * root.s
+                                        font.pixelSize: 10 * root.s
                                         font.weight: Font.DemiBold
                                         font.features: { "tnum": 1 }
                                         wrapMode: Text.Wrap

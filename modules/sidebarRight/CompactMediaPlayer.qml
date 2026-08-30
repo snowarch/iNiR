@@ -375,7 +375,7 @@ Item {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
                         playerSwitcherMenu.anchorItem = artContainer
-                        playerSwitcherMenu.active = true
+                        playerSwitcherMenu.requestOpen()
                     }
                 }
             }
@@ -694,7 +694,7 @@ Item {
         id: playerSwitcherMenu
 
         model: (MprisController.displayPlayers ?? []).map((player, index) => ({
-            text: player?.identity ?? "",
+            text: MprisController.playerDisplayName(player),
             iconName: "",
             checkable: true,
             checked: MprisController.activePlayer === player,

@@ -1,8 +1,11 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Layouts
 
 import qs.modules.common
+import qs.modules.common.widgets
+import qs.services
 
 Item {
     id: root
@@ -10,9 +13,10 @@ Item {
     required property var pages
     required property int requestedIndex
     property bool loadEnabled: true
-    property int cacheLimit: 5
+    property int cacheLimit: 2
 
     readonly property int currentIndex: _currentIndex
+    readonly property bool error: _errorIndex === requestedIndex
     readonly property Item currentItem: {
         void(_statusRevision)
         const loader = _loaderFor(_currentIndex)
@@ -34,6 +38,7 @@ Item {
     property var _retainedIndices: []
     property var _lruIndices: []
     property int _statusRevision: 0
+    property int _errorIndex: -1
 
     clip: _transitionRunning
 
@@ -112,6 +117,7 @@ Item {
         _pendingIndex = -1
         _retainedIndices = []
         _lruIndices = []
+        _errorIndex = -1
         _syncResidency()
         _statusRevision++
     }
@@ -125,6 +131,7 @@ Item {
 
         if (_currentIndex < 0) {
             _currentIndex = requestedIndex
+            _errorIndex = -1
             const loader = _loaderFor(_currentIndex)
             if (loader) {
                 loader.opacity = 1
@@ -136,6 +143,10 @@ Item {
         }
 
         if (requestedIndex === _currentIndex) {
+            if (_errorIndex === requestedIndex) {
+                _errorIndex = -1
+                _retain(_currentIndex)
+            }
             _retain(_currentIndex)
             _trimCache()
             return
@@ -151,6 +162,7 @@ Item {
 
         _direction = requestedIndex >= _currentIndex ? 1 : -1
         _pendingIndex = requestedIndex
+        _errorIndex = -1
 
         const pendingLoader = _loaderFor(_pendingIndex)
         if (pendingLoader) {
@@ -158,9 +170,8 @@ Item {
             pendingLoader.x = _direction * Appearance.sizes.spacingMedium * 2
         }
 
-        // The selected page loads synchronously. Asynchronous incubation made
-        // large pages feel much slower and was repeatedly cancelled by normal
-        // navigation. Recently visited pages remain instantiated in a small LRU.
+        // Pending pages incubate while the current page stays visible. The LRU
+        // keeps completed revisits cheap without blocking navigation on creation.
         _retain(_pendingIndex)
 
         Qt.callLater(function() {
@@ -173,7 +184,21 @@ Item {
     function _handleStatus(index, status) {
         _statusRevision++
 
+        if (status === Loader.Error && (index === _currentIndex || index === _pendingIndex)) {
+            console.warn("SettingsPageHost: failed to load page", index, _sourceFor(index))
+            _errorIndex = index
+            if (index === _pendingIndex)
+                _pendingIndex = -1
+
+            _retainedIndices = _retainedIndices.filter(value => value !== index)
+            _lruIndices = _lruIndices.filter(value => value !== index)
+            _syncResidency()
+            return
+        }
+
         if (index === _currentIndex && _pendingIndex < 0 && status === Loader.Ready) {
+            if (_errorIndex === index)
+                _errorIndex = -1
             const currentLoader = _loaderFor(index)
             if (currentLoader) {
                 currentLoader.opacity = 1
@@ -184,13 +209,6 @@ Item {
 
         if (index !== _pendingIndex || _transitionRunning)
             return
-
-        if (status === Loader.Error) {
-            console.warn("SettingsPageHost: failed to load page", _pendingIndex)
-            _pendingIndex = -1
-            _trimCache()
-            return
-        }
 
         if (status !== Loader.Ready)
             return
@@ -275,7 +293,7 @@ Item {
             // Imperative residency avoids a Loader construction feedback cycle.
             active: false
             source: root._sourceFor(index)
-            asynchronous: index !== root._currentIndex && index !== root._pendingIndex
+            asynchronous: index !== root._currentIndex
             visible: active && (index === root._currentIndex || index === root._pendingIndex)
             enabled: index === root._currentIndex
                 && root._pendingIndex < 0
@@ -296,6 +314,56 @@ Item {
         onItemAdded: (index, item) => {
             item.active = root.loadEnabled
                 && root._retainedIndices.indexOf(index) >= 0
+        }
+    }
+
+    Rectangle {
+        anchors.fill: parent
+        visible: root.error
+        color: SettingsMaterialPreset.cardColor
+        z: 20
+
+        MouseArea {
+            anchors.fill: parent
+        }
+
+        ColumnLayout {
+            anchors.centerIn: parent
+            width: Math.min(parent.width - 48, 420)
+            spacing: Appearance.sizes.spacingSmall
+
+            MaterialSymbol {
+                Layout.alignment: Qt.AlignHCenter
+                text: "error"
+                iconSize: Appearance.font.pixelSize.hugeass
+                color: Appearance.colors.colError
+            }
+
+            StyledText {
+                Layout.fillWidth: true
+                text: Translation.tr("This settings page could not be loaded.")
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.WordWrap
+                font.pixelSize: Appearance.font.pixelSize.normal
+                font.weight: Font.DemiBold
+                color: Appearance.colors.colOnLayer1
+            }
+
+            StyledText {
+                Layout.fillWidth: true
+                text: Translation.tr("Check iNiR logs for the QML error, then retry after correcting it.")
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.WordWrap
+                font.pixelSize: Appearance.font.pixelSize.small
+                color: Appearance.colors.colSubtext
+            }
+
+            RippleButtonWithIcon {
+                Layout.alignment: Qt.AlignHCenter
+                materialIcon: "refresh"
+                mainText: Translation.tr("Retry")
+                onClicked: root._requestPage()
+            }
         }
     }
 

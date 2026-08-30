@@ -422,7 +422,8 @@ Scope {
             anchors.centerIn: parent
             width: panelWidth
             height: Math.min(contentColumn.implicitHeight, panelMaxHeight)
-            fallbackColor: Appearance.zzzEverywhere ? Appearance.zzz.paper : Appearance.colors.colLayer1
+            fallbackColor: Appearance.zzzEverywhere ? Appearance.zzz.paper
+                : Appearance.regaliaEverywhere ? "transparent" : Appearance.colors.colLayer1
             inirColor: Appearance.inir.colLayer1
             auroraTransparency: Appearance.angelEverywhere
                 ? Appearance.angel.panelTransparentize
@@ -431,7 +432,8 @@ Scope {
             screenY: (window.screen?.height ?? 1080) / 2 - height / 2
             screenWidth: window.screen?.width ?? 1920
             screenHeight: window.screen?.height ?? 1080
-            border.width: Appearance.zzzEverywhere ? 1
+            border.width: Appearance.regaliaEverywhere ? 0
+                : Appearance.zzzEverywhere ? 1
                 : Appearance.angelEverywhere ? Appearance.angel.panelBorderWidth
                 : Appearance.auroraEverywhere ? 1 : 1
             Behavior on border.width {
@@ -447,12 +449,23 @@ Scope {
                 enabled: Appearance.animationsEnabled
                 ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
             }
-            radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+            radius: Appearance.regaliaEverywhere ? Appearance.regalia.panelRadius
+                : Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
                 : Appearance.angelEverywhere ? Appearance.angel.roundingLarge
                 : Appearance.inirEverywhere ? Appearance.inir.roundingLarge : Appearance.rounding.screenRounding
             Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
             Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
             
+            RegaliaPlate {
+                anchors.fill: parent
+                visible: Appearance.regaliaEverywhere
+                fillColor: Appearance.regalia.bg1
+                radius: panelBackground.radius
+                inset: Appearance.regalia.surfaceInset
+                elevated: true
+                glassEnabled: true
+            }
+
             // Entry animation
             opacity: root._presentedOpen ? 1 : 0
             scale: root._presentedOpen ? 1 : 0.95

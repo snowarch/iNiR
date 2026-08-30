@@ -182,7 +182,7 @@ PillSurface {
         anchors.topMargin: 6 * root.s
         anchors.left: parent.left
         anchors.right: parent.right
-        height: visible ? 44 * root.s : 0
+        height: visible ? 52 * root.s : 0
 
         Rectangle {
             anchors.fill: parent
@@ -215,7 +215,7 @@ PillSurface {
                     text: "= " + root.calc.display
                     color: PillTheme.bright
                     font.family: PillTheme.font
-                    font.pixelSize: 15 * root.s
+                    font.pixelSize: 17 * root.s
                     font.weight: Font.DemiBold
                     elide: Text.ElideRight
                 }
@@ -224,7 +224,7 @@ PillSurface {
                     text: root.query
                     color: PillTheme.faint
                     font.family: PillTheme.font
-                    font.pixelSize: 10.5 * root.s
+                    font.pixelSize: 11.5 * root.s
                     elide: Text.ElideRight
                 }
             }
@@ -236,7 +236,7 @@ PillSurface {
                 text: root.calcCopied ? Translation.tr("copied") : "↵ " + Translation.tr("copy")
                 color: root.calcCopied ? PillTheme.dim : PillTheme.vermLit
                 font.family: PillTheme.font
-                font.pixelSize: 11 * root.s
+                font.pixelSize: 12 * root.s
             }
         }
     }
@@ -247,7 +247,7 @@ PillSurface {
         text: root.query.length ? Translation.tr("No matches") : Translation.tr("No apps found")
         color: PillTheme.faint
         font.family: PillTheme.font
-        font.pixelSize: 10.5 * root.s
+        font.pixelSize: 12 * root.s
     }
 
     ListView {
@@ -266,7 +266,7 @@ PillSurface {
             id: appRow
             required property int index
             width: list.width
-            height: 38 * root.s
+            height: 48 * root.s
 
             readonly property var entry: root.results[index]
             readonly property bool selected: index === root.selectedIndex
@@ -316,9 +316,9 @@ PillSurface {
                 Rectangle {
                     id: iconBg
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 22 * root.s
-                    height: 22 * root.s
-                    radius: 5 * root.s
+                    width: 28 * root.s
+                    height: 28 * root.s
+                    radius: 7 * root.s
                     color: Qt.alpha(PillTheme.cream, 0.05)
                     visible: !(icon.status === Image.Ready && icon.source != "")
                 }
@@ -342,9 +342,9 @@ PillSurface {
                     text: "↵"
                     color: PillTheme.vermLit
                     font.family: PillTheme.font
-                    font.pixelSize: 12 * root.s
+                    font.pixelSize: 13 * root.s
                     visible: appRow.selected
-                    width: visible ? implicitWidth + 6 * root.s : 0
+                    width: visible ? 18 * root.s : 0
                     horizontalAlignment: Text.AlignRight
                 }
 
@@ -366,7 +366,7 @@ PillSurface {
                         text: appRow.entry ? appRow.entry.name : ""
                         color: PillTheme.cream
                         font.family: PillTheme.font
-                        font.pixelSize: 13 * root.s
+                        font.pixelSize: 14 * root.s
                         font.weight: appRow.selected ? Font.DemiBold : Font.Normal
                         elide: Text.ElideRight
                     }
@@ -376,7 +376,7 @@ PillSurface {
                         text: appRow.secondary
                         color: appRow.selected ? PillTheme.dim : PillTheme.faint
                         font.family: PillTheme.font
-                        font.pixelSize: 10.5 * root.s
+                        font.pixelSize: 11.5 * root.s
                         elide: Text.ElideRight
                     }
                 }

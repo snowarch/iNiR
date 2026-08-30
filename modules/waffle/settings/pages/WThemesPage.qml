@@ -595,6 +595,10 @@ WSettingsPage {
                     displayName: Translation.tr("Angel")
                 },
                 {
+                    value: "regalia",
+                    displayName: Translation.tr("Regalia")
+                },
+                {
                     value: "zzz",
                     displayName: Translation.tr("ZZZ")
                 },
@@ -775,7 +779,26 @@ WSettingsPage {
             icon: "music-note-2"
             description: Translation.tr("Generate and apply Spicetify theme from wallpaper colors")
             checked: Config.options?.appearance?.wallpaperTheming?.enableSpicetify ?? false
-            onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.enableSpicetify", checked)
+            onCheckedChanged: {
+                Config.setNestedValue("appearance.wallpaperTheming.enableSpicetify", checked)
+                Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--noswitch"])
+            }
+        }
+
+        WSettingsDropdown {
+            visible: Config.options?.appearance?.wallpaperTheming?.enableSpicetify ?? false
+            label: Translation.tr("Spotify theme")
+            icon: "terminal"
+            description: Translation.tr("Choose the Spicetify layout while keeping iNiR wallpaper colors")
+            currentValue: Config.options?.appearance?.wallpaperTheming?.spicetifyTheme ?? "Inir"
+            options: [
+                { value: "Inir", displayName: Translation.tr("Sleek") },
+                { value: "InirTUI", displayName: Translation.tr("Text (TUI)") }
+            ]
+            onSelected: newValue => {
+                Config.setNestedValue("appearance.wallpaperTheming.spicetifyTheme", newValue)
+                Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--noswitch"])
+            }
         }
 
         WSettingsSwitch {

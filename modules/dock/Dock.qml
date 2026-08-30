@@ -33,12 +33,14 @@ Scope {
     readonly property bool isMacosStyle:  Config.options?.dock?.style === "macos"
     readonly property bool isIslandStyle: Config.options?.dock?.style === "island"
     readonly property bool isM3Style:     Config.options?.dock?.style === "m3"
+    readonly property bool isPanelStyle:  Config.options?.dock?.style === "panel"
     // Island is a complete Ricelin material. Pill and macOS are layout modes
     // that still inherit the selected global worldview (except ZZZ, whose shelf
     // intentionally wins as before).
     readonly property string surfaceDialect: Appearance.surfaceDialectFor(
         root.isIslandStyle ? "island" : "")
     readonly property bool zzzEverywhere: !root.isM3Style && root.surfaceDialect === "zzz"
+    readonly property bool regaliaEverywhere: !root.isM3Style && root.surfaceDialect === "regalia"
 
     // Track bar position to force dock recreation when bar changes
     readonly property bool barIsVertical: Config.options?.bar?.bottom !== undefined
@@ -284,17 +286,10 @@ Scope {
                                 anchors.bottomMargin: root.position === "bottom" ? Appearance.sizes.hyprlandGapsOut : (root.isVertical ? 0 : Appearance.sizes.elevationMargin)
                                 anchors.leftMargin: root.isLeft ? Appearance.sizes.hyprlandGapsOut : (root.isVertical ? Appearance.sizes.elevationMargin : 0)
                                 anchors.rightMargin: root.position === "right" ? Appearance.sizes.hyprlandGapsOut : (root.isVertical ? Appearance.sizes.elevationMargin : 0)
-                                visible: (Config.options?.dock?.showBackground ?? true) && !Appearance.gameModeMinimal && root.isIslandStyle
+                                visible: (Config.options?.dock?.showBackground ?? true) && root.isIslandStyle
                                 glassEnabled: true
                                 nativeBlurActive: dockRoot.nativeBlurActive
-                                glassScreenWidth: dockRoot.screen?.width ?? 1920
-                                glassScreenHeight: dockRoot.screen?.height ?? 1080
-                                glassScreenX: root.isVertical
-                                    ? (root.isLeft ? Appearance.sizes.hyprlandGapsOut : glassScreenWidth - width - Appearance.sizes.hyprlandGapsOut)
-                                    : (glassScreenWidth - width) / 2
-                                glassScreenY: root.isVertical
-                                    ? (glassScreenHeight - height) / 2
-                                    : (root.isTop ? Appearance.sizes.hyprlandGapsOut : glassScreenHeight - height - Appearance.sizes.hyprlandGapsOut)
+                                screen: dockRoot.screen
                                 // Docked panels round a touch harder than the bar;
                                 // still follows the shared island skin knob.
                                 radius: (Config.options?.appearance?.island?.radius ?? 18) + 4
@@ -306,6 +301,7 @@ Scope {
                                     readonly property bool zzzGlassActive: root.zzzEverywhere
                                         && Appearance.effectsEnabled
                                         && (Config.options?.appearance?.zzz?.glass ?? true)
+                                    readonly property bool regaliaEverywhere: !root.isM3Style && root.surfaceDialect === "regalia"
                                     readonly property bool angelEverywhere: !root.isM3Style && root.surfaceDialect === "angel"
                                     readonly property bool auroraEverywhere: !root.isM3Style && (root.surfaceDialect === "aurora" || angelEverywhere)
                                     readonly property bool inirEverywhere: !root.isM3Style && root.surfaceDialect === "inir"
@@ -343,22 +339,24 @@ Scope {
                                 visible: (Config.options?.dock?.showBackground ?? true) && !gameModeMinimal && ((root.zzzEverywhere && !root.isIslandStyle) || (!root.isPillStyle && !root.isMacosStyle && !root.isIslandStyle))
                                 // ZZZ: the visible shelf is the chamfered ZzzPlate below.
                                 color: root.isM3Style ? Appearance.colors.colLayer0
-                                    : root.zzzEverywhere ? "transparent"
+                                    : root.zzzEverywhere || regaliaEverywhere ? "transparent"
                                     : auroraEverywhere ? ColorUtils.applyAlpha(
                                         (blendedColors?.colLayer0 ?? Appearance.colors.colLayer0),
                                         dockRoot.nativeBlurActive ? 0.46 : 1)
                                     : inirEverywhere ? Appearance.inir.colLayer1
                                     : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
                                 border.width: root.isM3Style ? 1
-                                    : root.zzzEverywhere ? 0
+                                    : root.zzzEverywhere || regaliaEverywhere ? 0
                                     : angelEverywhere ? Appearance.angel.panelBorderWidth : 1
                                 border.color: root.isM3Style ? Appearance.colors.colLayer0Border
-                                    : root.zzzEverywhere ? "transparent"
+                                    : root.zzzEverywhere || regaliaEverywhere ? "transparent"
                                     : angelEverywhere ? Appearance.angel.colPanelBorder
                                     : inirEverywhere ? Appearance.inir.colBorder
                                     : Appearance.colors.colLayer0Border
                                 radius: root.isM3Style ? Appearance.rounding.normal + 6
                                     : root.zzzEverywhere ? Appearance.zzz.panelRadius
+                                    : regaliaEverywhere && root.isPanelStyle ? Appearance.regalia.roundLarge
+                                    : regaliaEverywhere ? Appearance.regalia.panelRadius
                                     : angelEverywhere ? Appearance.angel.roundingNormal
                                     : inirEverywhere ? Appearance.inir.roundingNormal
                                     : cardStyle ? Appearance.rounding.normal : Appearance.rounding.large
@@ -368,6 +366,16 @@ Scope {
                                 Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                                 Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                                 Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+
+                                RegaliaPlate {
+                                    anchors.fill: parent
+                                    visible: root.isPanelStyle && dockVisualBackground.regaliaEverywhere
+                                    fillColor: Appearance.regalia.barSurfaceFloating
+                                    radius: dockVisualBackground.radius
+                                    inset: Appearance.regalia.surfaceInset
+                                    deepFrame: true
+                                    glassEnabled: true
+                                }
 
                                 ZzzPlate {
                                     anchors.fill: parent

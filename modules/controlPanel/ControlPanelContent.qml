@@ -19,6 +19,7 @@ Item {
     property int screenWidth: 1920
     property int screenHeight: 1080
     readonly property bool compactMode: Config.options?.controlPanel?.compactMode ?? true
+    readonly property bool islandStyle: (Config.options?.controlPanel?.style ?? "panel") === "island"
     readonly property bool showMediaSection: Config.options?.controlPanel?.showMediaSection ?? true
     readonly property bool showWeatherSection: Config.options?.controlPanel?.showWeatherSection ?? true
     readonly property bool showWallpaperSection: Config.options?.controlPanel?.showWallpaperSection ?? true
@@ -45,7 +46,7 @@ Item {
         id: _cascadeConnections
         target: GlobalStates
         function onControlPanelOpenChanged() {
-            if (GlobalStates.controlPanelOpen) {
+            if (GlobalStates.controlPanelOpen && !root.regaliaEverywhere) {
                 root._entranceCascade = -1
                 _entranceCascadeTimer.start()
             }
@@ -53,12 +54,13 @@ Item {
     }
     
     readonly property bool zzzEverywhere: Appearance.zzzEverywhere
+    readonly property bool regaliaEverywhere: Appearance.regaliaEverywhere
     readonly property bool inirEverywhere: Appearance.inirEverywhere
     readonly property bool angelEverywhere: Appearance.angelEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
     
     readonly property string wallpaperUrl: Wallpapers.effectiveWallpaperUrl
-    readonly property bool useWallpaperBackdrop: root.auroraEverywhere && !root.inirEverywhere && !Appearance.gameModeMinimal && root.wallpaperUrl.length > 0
+    readonly property bool useWallpaperBackdrop: !root.islandStyle && root.auroraEverywhere && !root.inirEverywhere && !Appearance.gameModeMinimal && root.wallpaperUrl.length > 0
     
     ColorQuantizer {
         id: wallpaperColorQuantizer
@@ -75,7 +77,14 @@ Item {
     // Shadow
     StyledRectangularShadow {
         target: background
-        visible: !root.zzzEverywhere && (Appearance.angelEverywhere || (!root.inirEverywhere && !root.auroraEverywhere)) && !Appearance.gameModeMinimal
+        visible: !root.islandStyle && !root.zzzEverywhere && (Appearance.angelEverywhere || (!root.inirEverywhere && !root.auroraEverywhere)) && !Appearance.gameModeMinimal
+    }
+
+    RicelinSurface {
+        anchors.fill: background
+        visible: root.islandStyle
+        glassEnabled: true
+        screen: root.QsWindow?.window?.screen ?? null
     }
 
     Rectangle {
@@ -85,7 +94,9 @@ Item {
         anchors.top: parent.top
         implicitHeight: flickable.contentHeight + (root.compactMode ? 20 : 24)
 
-        color: root.zzzEverywhere ? Appearance.zzz.bg0
+        color: root.islandStyle ? "transparent"
+             : root.zzzEverywhere ? Appearance.zzz.bg0
+             : root.regaliaEverywhere ? "transparent"
              : root.inirEverywhere ? Appearance.inir.colLayer0
              : root.auroraEverywhere ? ColorUtils.applyAlpha((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
              : Appearance.colors.colLayer0
@@ -93,13 +104,15 @@ Item {
             enabled: Appearance.animationsEnabled
             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
-        radius: root.zzzEverywhere ? 0
+        radius: root.islandStyle ? (Config.options?.appearance?.island?.radius ?? 18)
+            : root.zzzEverywhere ? 0
+            : root.regaliaEverywhere ? Appearance.regalia.panelRadius
             : root.angelEverywhere ? Appearance.angel.roundingLarge
             : root.inirEverywhere ? Appearance.inir.roundingLarge
             : Appearance.rounding.large
 
-        border.width: root.zzzEverywhere ? 0 : (root.inirEverywhere ? 1 : (root.auroraEverywhere ? 1 : 1))
-        border.color: root.zzzEverywhere ? "transparent"
+        border.width: root.islandStyle || root.regaliaEverywhere || root.zzzEverywhere ? 0 : (root.inirEverywhere ? 1 : (root.auroraEverywhere ? 1 : 1))
+        border.color: root.zzzEverywhere || root.regaliaEverywhere ? "transparent"
                     : root.angelEverywhere ? Appearance.angel.colBorder
                     : root.inirEverywhere ? Appearance.inir.colBorder
                     : root.auroraEverywhere ? Appearance.aurora.colTooltipBorder
@@ -116,6 +129,17 @@ Item {
         Behavior on border.color {
             enabled: Appearance.animationsEnabled
             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+
+        RegaliaPlate {
+            anchors.fill: parent
+            visible: root.regaliaEverywhere && !root.islandStyle
+            fillColor: Appearance.regalia.bg0
+            radius: background.radius
+            inset: Appearance.regalia.panelInset
+            deepFrame: true
+            elevated: true
+            glassEnabled: true
         }
         
         clip: true
@@ -183,13 +207,14 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             height: Appearance.angel.insetGlowHeight
-            visible: root.angelEverywhere
+            visible: root.angelEverywhere && !root.islandStyle
             color: Appearance.angel.colInsetGlow
             z: 10
         }
 
         ZzzPanelBackdrop {
             anchors.fill: parent
+            visible: root.zzzEverywhere && !root.islandStyle
             label: "CONTROL"
             index: "CP"
             ghostText: "CTRL"
@@ -225,22 +250,23 @@ Item {
 
                 // Header with User Profile
                 ProfileHeader {
-                    opacity: root._entranceCascade >= 0 ? 1 : 0
-                    Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
+                    opacity: root.regaliaEverywhere || root._entranceCascade >= 0 ? 1 : 0
+                    Behavior on opacity { enabled: Appearance.animationsEnabled && !root.regaliaEverywhere; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
                 }
 
                 // Date/Time header
                 DateTimeHeader {
-                    opacity: root._entranceCascade >= 1 ? 1 : 0
-                    Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
+                    opacity: root.regaliaEverywhere || root._entranceCascade >= 1 ? 1 : 0
+                    Behavior on opacity { enabled: Appearance.animationsEnabled && !root.regaliaEverywhere; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
                 }
 
                 // Media Section
                 Loader {
                     Layout.fillWidth: true
                     active: root.showMediaSection
-                    opacity: root._entranceCascade >= 2 ? 1 : 0
-                    Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
+                    asynchronous: true
+                    opacity: root.regaliaEverywhere || root._entranceCascade >= 2 ? 1 : 0
+                    Behavior on opacity { enabled: Appearance.animationsEnabled && !root.regaliaEverywhere; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
                     sourceComponent: Component { MediaSection {} }
                 }
 
@@ -248,8 +274,9 @@ Item {
                 Loader {
                     Layout.fillWidth: true
                     active: root.showWallpaperSection
-                    opacity: root._entranceCascade >= 3 ? 1 : 0
-                    Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
+                    asynchronous: true
+                    opacity: root.regaliaEverywhere || root._entranceCascade >= 3 ? 1 : 0
+                    Behavior on opacity { enabled: Appearance.animationsEnabled && !root.regaliaEverywhere; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
                     sourceComponent: Component { WallpaperSection {} }
                 }
 
@@ -257,8 +284,9 @@ Item {
                 Loader {
                     Layout.fillWidth: true
                     active: root.showWeatherSection
-                    opacity: root._entranceCascade >= 4 ? 1 : 0
-                    Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
+                    asynchronous: true
+                    opacity: root.regaliaEverywhere || root._entranceCascade >= 4 ? 1 : 0
+                    Behavior on opacity { enabled: Appearance.animationsEnabled && !root.regaliaEverywhere; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
                     sourceComponent: Component { WeatherSection {} }
                 }
 
@@ -266,8 +294,9 @@ Item {
                 Loader {
                     Layout.fillWidth: true
                     active: root.showSystemSection
-                    opacity: root._entranceCascade >= 5 ? 1 : 0
-                    Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
+                    asynchronous: true
+                    opacity: root.regaliaEverywhere || root._entranceCascade >= 5 ? 1 : 0
+                    Behavior on opacity { enabled: Appearance.animationsEnabled && !root.regaliaEverywhere; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
                     sourceComponent: Component { SystemSection {} }
                 }
 
@@ -275,8 +304,9 @@ Item {
                 Loader {
                     Layout.fillWidth: true
                     active: root.showSlidersSection
-                    opacity: root._entranceCascade >= 6 ? 1 : 0
-                    Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
+                    asynchronous: true
+                    opacity: root.regaliaEverywhere || root._entranceCascade >= 6 ? 1 : 0
+                    Behavior on opacity { enabled: Appearance.animationsEnabled && !root.regaliaEverywhere; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
                     sourceComponent: Component { SlidersSection {} }
                 }
 
@@ -284,8 +314,9 @@ Item {
                 Loader {
                     Layout.fillWidth: true
                     active: root.showQuickActionsSection
-                    opacity: root._entranceCascade >= 7 ? 1 : 0
-                    Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
+                    asynchronous: true
+                    opacity: root.regaliaEverywhere || root._entranceCascade >= 7 ? 1 : 0
+                    Behavior on opacity { enabled: Appearance.animationsEnabled && !root.regaliaEverywhere; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
                     sourceComponent: Component { QuickActionsSection {} }
                 }
 
@@ -309,7 +340,7 @@ Item {
     // clips the stroke's outer half and it renders as broken dots.
     ZzzPlate {
         anchors.fill: background
-        visible: root.zzzEverywhere
+        visible: root.zzzEverywhere && !root.islandStyle
         fillColor: "transparent"
         strokeColor: Appearance.zzz.hairline
         strokeWidth: 1
