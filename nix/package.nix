@@ -3,6 +3,8 @@
 let
   lib = pkgs.lib;
 
+  mascotPack = import ./mascot-pack.nix { inherit pkgs; };
+
   optionalTop = name:
     lib.optional (builtins.hasAttr name pkgs) (builtins.getAttr name pkgs);
 
@@ -155,6 +157,11 @@ pkgs.stdenvNoCC.mkDerivation {
       [ -n "$dir" ] || continue
       cp -R "$dir" "$runtime/$dir"
     done < sdata/runtime-payload-dirs.txt
+
+    # Embed the mascot art pack so the default package ships the sprite
+    # GIF/PNG poses the MascotCompanion loads, instead of only the manifest.
+    mkdir -p "$runtime/assets/images/mascot"
+    tar xf ${mascotPack.src} -C "$runtime/assets/images/mascot/"
 
     # Copy root-level QML entry points (shell.qml, settings.qml, etc.)
     # which aren't listed in runtime-root-files.txt.

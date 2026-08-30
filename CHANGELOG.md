@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Mascot sprites in the Nix package**: the default package now embeds the mascot art pack, so the sprite GIF/PNG poses load instead of only the manifest. Previously only `manifest.json` was shipped and every pose failed with "Error Reading Animated Image File", leaving the mascot invisible.
+
 ## [2.29.3] - 2026-08-25
 
 A polish release for Pill controls and surfaces, settings navigation, TUI app themes, and several runtime fixes including privileged graphical apps and audio feedback stability.
