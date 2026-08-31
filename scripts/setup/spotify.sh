@@ -11,12 +11,15 @@
 #               Follows the official Spicetify docs for Linux setup:
 #               https://spicetify.app/docs/getting-started
 #
-#               Removes incompatible installs (Flatpak, Snap, spotify-launcher,
-#               and conflicting spicetify-cli-git package), configures paths
-#               and permissions, repairs missing Spicetify v2.44+ wrapper assets,
-#               generates prefs if needed, applies Spicetify backup with
-#               progressive recovery, installs Marketplace, automatically
-#               enables Spicetify theming in iNiR config, and applies the theme.
+#               Detects incompatible installs (Flatpak, Snap, spotify-launcher,
+#               and conflicting spicetify-cli-git package) and asks before any
+#               removal. It leaves declined conflicts untouched and explains
+#               why setup cannot continue until they are resolved. It then
+#               configures paths and permissions, repairs missing Spicetify
+#               v2.44+ wrapper assets, generates prefs if needed, applies
+#               Spicetify backup with progressive recovery, installs Marketplace,
+#               automatically enables Spicetify theming in iNiR config, and
+#               applies the theme.
 # Other distros: falls back to the Flatpak build of Spotify. Spicetify is
 #                skipped because it cannot patch the Flatpak install reliably.
 #
@@ -297,43 +300,160 @@ _enable_spicetify_theming() {
 }
 
 # ------------------------------------------------------------------------------
-# Phase 1 — Remove incompatible installs
+# Phase 1 — Check and optionally remove incompatible installs
 # ------------------------------------------------------------------------------
 # Spicetify can only patch the official AUR package at /opt/spotify.
-# Conflicting package formats (Flatpak, Snap, launcher) must be removed first.
+# Conflicting package formats are detected first. Every removal requires an
+# explicit confirmation; declining any removal leaves the existing installs
+# untouched and stops setup before package installation begins.
 # ------------------------------------------------------------------------------
+_confirm_removal() {
+    local description="$1"
+    local answer
+
+    printf '\n  · Detected %s.\n' "$description"
+    printf '    Remove it before continuing with the AUR setup? [y/N] '
+    if ! read -r answer; then
+        printf '\n    No confirmation received; leaving it installed.\n' >&2
+        return 1
+    fi
+    [[ "$answer" =~ ^[Yy]([Ee][Ss])?$ ]]
+}
+
+_arch_package_installed() {
+    have_cmd pacman && pacman -Q "$1" >/dev/null 2>&1
+}
+
 _remove_incompatible() {
-    local helper
-    helper="$(ensure_aur_helper)"
+    local flatpak_installed=false
+    local snap_installed=false
+    local launcher_package_installed=false
+    local launcher_command_present=false
+    local launcher_data_present=false
+    local spicetify_git_installed=false
+    local helper=""
+    local -a refused=()
+    local -a manual_conflicts=()
 
-    # Flatpak Spotify
-    if have_cmd flatpak; then
-        if flatpak list --app 2>/dev/null | grep -q "com.spotify.Client"; then
-            echo "  · Removing Flatpak Spotify…"
-            flatpak uninstall -y --user com.spotify.Client 2>/dev/null || \
-                flatpak uninstall -y com.spotify.Client 2>/dev/null || true
-        fi
+    # Detect everything before asking or removing anything, avoiding partial
+    # cleanup when the user declines one of several conflicts.
+    if have_cmd flatpak && _run_may_fail flatpak info com.spotify.Client >/dev/null 2>&1; then
+        flatpak_installed=true
     fi
-
-    # Snap Spotify
-    if have_cmd snap; then
-        if snap list spotify >/dev/null 2>&1; then
-            echo "  · Removing Snap Spotify…"
-            sudo snap remove spotify >/dev/null 2>&1 || true
-        fi
+    if have_cmd snap && _run_may_fail snap list spotify >/dev/null 2>&1; then
+        snap_installed=true
     fi
-
-    # spotify-launcher (AUR)
+    if _arch_package_installed spotify-launcher; then
+        launcher_package_installed=true
+    fi
     if have_cmd spotify-launcher; then
-        echo "  · Removing spotify-launcher…"
-        "$helper" -Rns --noconfirm spotify-launcher 2>/dev/null || true
-        rm -rf "$HOME/.local/share/spotify-launcher" 2>/dev/null || true
+        launcher_command_present=true
+    fi
+    if [[ -d "$HOME/.local/share/spotify-launcher" ]]; then
+        launcher_data_present=true
+    fi
+    if _arch_package_installed spicetify-cli-git; then
+        spicetify_git_installed=true
     fi
 
-    # Conflicting spicetify packages (prevent interactive "Remove X? [y/N]" prompt)
-    if "$helper" -Q spicetify-cli-git >/dev/null 2>&1; then
-        echo "  · Removing spicetify-cli-git (conflicts with spicetify-cli)…"
-        "$helper" -Rns --noconfirm spicetify-cli-git 2>/dev/null || true
+    if ! $flatpak_installed && ! $snap_installed &&
+        ! $launcher_package_installed && ! $launcher_command_present &&
+        ! $launcher_data_present &&
+        ! $spicetify_git_installed; then
+        return 0
+    fi
+
+    # A binary or data directory without a package owner may come from a
+    # manual install. Do not guess how to remove user-managed files.
+    if ! $launcher_package_installed; then
+        if $launcher_command_present; then
+            manual_conflicts+=("spotify-launcher executable on PATH")
+        fi
+        if $launcher_data_present; then
+            manual_conflicts+=("spotify-launcher data at $HOME/.local/share/spotify-launcher")
+        fi
+    fi
+    if (( ${#manual_conflicts[@]} )); then
+        echo >&2
+        echo "  · Found spotify-launcher files without a removable package owner." >&2
+        echo "  · Leaving them untouched; remove them manually if they belong to an old install:" >&2
+        printf '    - %s\n' "${manual_conflicts[@]}" >&2
+        echo "  · Setup cannot continue until this conflict is resolved." >&2
+        return 1
+    fi
+
+    if $flatpak_installed && ! _confirm_removal "Flatpak Spotify (com.spotify.Client)"; then
+        refused+=("Flatpak Spotify")
+    fi
+    if $snap_installed && ! _confirm_removal "Snap Spotify"; then
+        refused+=("Snap Spotify")
+    fi
+    if $launcher_package_installed &&
+        ! _confirm_removal "the spotify-launcher AUR package"; then
+        refused+=("spotify-launcher")
+    fi
+    if $spicetify_git_installed &&
+        ! _confirm_removal "the conflicting spicetify-cli-git package"; then
+        refused+=("spicetify-cli-git")
+    fi
+
+    if (( ${#refused[@]} )); then
+        echo >&2
+        echo "  · Existing installations were left unchanged." >&2
+        echo "  · Resolve these conflicts manually, or rerun and approve their removal:" >&2
+        printf '    - %s\n' "${refused[@]}" >&2
+        echo "  · Setup cannot continue alongside these installations." >&2
+        return 1
+    fi
+
+    if $launcher_package_installed || $spicetify_git_installed; then
+        helper="$(ensure_aur_helper)"
+    fi
+
+    if $flatpak_installed; then
+        echo "  · Removing Flatpak Spotify…"
+        _run_may_fail flatpak uninstall -y --user com.spotify.Client >/dev/null 2>&1 || true
+        _run_may_fail flatpak uninstall -y --system com.spotify.Client >/dev/null 2>&1 || true
+        if _run_may_fail flatpak info com.spotify.Client >/dev/null 2>&1; then
+            echo "  · Could not remove Flatpak Spotify; leaving it installed." >&2
+            return 1
+        fi
+    fi
+
+    if $snap_installed; then
+        echo "  · Removing Snap Spotify…"
+        if ! _run_may_fail sudo snap remove spotify >/dev/null 2>&1 ||
+            _run_may_fail snap list spotify >/dev/null 2>&1; then
+            echo "  · Could not remove Snap Spotify; leaving it installed." >&2
+            return 1
+        fi
+    fi
+
+    if $launcher_package_installed; then
+        echo "  · Removing spotify-launcher…"
+        if ! _run_may_fail "$helper" -Rns --noconfirm spotify-launcher >/dev/null 2>&1 ||
+            _arch_package_installed spotify-launcher; then
+            echo "  · Could not remove spotify-launcher; leaving it installed." >&2
+            return 1
+        fi
+    fi
+
+    if $launcher_data_present; then
+        echo "  · Leaving spotify-launcher data untouched at $HOME/.local/share/spotify-launcher."
+    fi
+
+    if $launcher_command_present && have_cmd spotify-launcher; then
+        echo "  · A spotify-launcher executable is still on PATH after package removal." >&2
+        return 1
+    fi
+
+    if $spicetify_git_installed; then
+        echo "  · Removing spicetify-cli-git…"
+        if ! _run_may_fail "$helper" -Rns --noconfirm spicetify-cli-git >/dev/null 2>&1 ||
+            _arch_package_installed spicetify-cli-git; then
+            echo "  · Could not remove spicetify-cli-git; leaving it installed." >&2
+            return 1
+        fi
     fi
 }
 
@@ -500,8 +620,10 @@ setup_init "spotify" "Setup Spotify + Spicetify"
 if is_arch_like; then
     TOTAL=6
 
-    setup_progress 1 $TOTAL "Removing incompatible Spotify installs"
-    _remove_incompatible
+    setup_progress 1 $TOTAL "Checking for incompatible Spotify installs"
+    if ! _remove_incompatible; then
+        _die "Could not resolve existing Spotify installation conflicts. Review the message above and rerun setup."
+    fi
 
     setup_progress 2 $TOTAL "Installing Spotify (AUR) and Spicetify CLI"
     _install_packages
