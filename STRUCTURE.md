@@ -95,7 +95,7 @@ inir/
 
 **modules/ii/:**
 - Purpose: ii-family-specific overlay and sidebarRight components
-- Contains: Overlay system (crosshair, discord, floatingImage, fpsLimiter, notes, recorder, volumeMixer), sidebarRight integration
+- Contains: Overlay system (crosshair, discord, floatingImage, fpsLimiter, gamePerformance, notes, recorder, volumeMixer), sidebarRight integration
 - Key files: `modules/ii/overlay/Overlay.qml`, `modules/ii/sidebarRight/`
 
 **modules/background/:**

@@ -74,6 +74,8 @@ optdepends=(
   'kvantum: Qt style engine'
   'libqalculate: calculator widget backend'
   'mission-center: graphical system monitor (default task manager)'
+  'mangohud: live FPS and frametime telemetry for the Game Performance overlay'
+  'lib32-mangohud: MangoHud support for 32-bit games'
   'mpv: media playback and YouTube Music support'
   'mpv-mpris: richer mpv media session integration'
   'nautilus: default file manager integration'
@@ -147,6 +149,7 @@ package() {
   install -Dm644 "$srcroot/README.md" "$docroot/README.md"
   install -Dm644 "$srcroot/docs/SETUP.md" "$docroot/SETUP.md"
   install -Dm644 "$srcroot/docs/IPC.md" "$docroot/IPC.md"
+  install -Dm644 "$srcroot/docs/GAME_PERFORMANCE.md" "$docroot/GAME_PERFORMANCE.md"
 
   cat > "$shellroot/version.json" <<EOF
 {
