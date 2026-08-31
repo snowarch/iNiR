@@ -978,6 +978,13 @@ Singleton {
         },
         {
             pageIndex: 5, pageName: root.pages[5].name,
+            section: Translation.tr("Visual Effects"),
+            label: Translation.tr("Game Performance opacity"),
+            description: Translation.tr("Background opacity of the Game Performance readout"),
+            keywords: ["game", "performance", "fps", "opacity", "background", "transparent"]
+        },
+        {
+            pageIndex: 5, pageName: root.pages[5].name,
             section: Translation.tr("Alt-Tab switcher (Material ii)"),
             label: Translation.tr("Alt+Tab Switcher"),
             description: Translation.tr("Window switcher preset and behavior"),

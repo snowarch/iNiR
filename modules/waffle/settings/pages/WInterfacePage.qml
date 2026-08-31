@@ -53,6 +53,14 @@ WSettingsPage {
         GlobalStates.settingsOverlayOpen = false
         GlobalStates.overlayOpen = true
     }
+
+    function gamePerformanceBackgroundOpacity(): real {
+        const localValue = Number(Config.options?.overlay?.gamePerformance?.backgroundOpacity ?? -1)
+        const globalValue = Number(Config.options?.overlay?.backgroundOpacity ?? 0.9)
+        const value = isFinite(localValue) && localValue >= 0 ? localValue : globalValue
+        return Math.max(0, Math.min(1, isFinite(value) ? value : 0.9))
+    }
+
     readonly property var recordingAudioModeOptions: [
         { value: "none", displayName: Translation.tr("No audio") },
         { value: "system", displayName: Translation.tr("System audio") },
@@ -492,6 +500,16 @@ WSettingsPage {
             from: 20; to: 100; stepSize: 5
             value: Math.round((Config.options?.overlay?.backgroundOpacity ?? 0.9) * 100)
             onValueChanged: Config.setNestedValue("overlay.backgroundOpacity", value / 100)
+        }
+
+        WSettingsSpinBox {
+            label: Translation.tr("Game Performance background opacity (%)")
+            icon: "monitor_heart"
+            suffix: "%"
+            from: 0; to: 100; stepSize: 5
+            value: Math.round(root.gamePerformanceBackgroundOpacity() * 100)
+            onValueChanged: Config.setNestedValue(
+                "overlay.gamePerformance.backgroundOpacity", value / 100)
         }
 
         WSettingsSwitch {

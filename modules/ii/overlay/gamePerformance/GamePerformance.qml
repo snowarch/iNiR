@@ -12,13 +12,15 @@ StyledOverlayWidget {
     id: root
 
     title: Translation.tr("Game Performance")
-    minimumWidth: root.detailedView ? 620 : root.compactView ? 390 : 460
+    panelOpacityOverride: root.gamePerformanceBackgroundOpacity
+    minimumWidth: root.detailedView ? 620 : root.compactView ? 390 : 360
     minimumHeight: root.detailedView
         ? (GamePerformanceService.gameDetected ? 980 : 720)
-        : root.compactView ? 220 : 360
+        : root.compactView ? 220 : 210
 
     property bool _holdingTelemetry: false
     readonly property string viewMode: {
+        // Keep the old persisted "simple" value as the minimal presentation.
         const stored = String(root.persistentStateEntry?.viewMode ?? "")
         if (stored === "simple" || stored === "compact" || stored === "detailed")
             return stored
@@ -26,6 +28,13 @@ StyledOverlayWidget {
     }
     readonly property bool compactView: root.viewMode === "compact"
     readonly property bool detailedView: root.viewMode === "detailed"
+    readonly property bool minimalView: root.viewMode === "simple"
+    readonly property real gamePerformanceBackgroundOpacity: {
+        const localValue = Number(Config.options?.overlay?.gamePerformance?.backgroundOpacity ?? -1)
+        const globalValue = Number(Config.options?.overlay?.backgroundOpacity ?? 0.9)
+        const value = isFinite(localValue) && localValue >= 0 ? localValue : globalValue
+        return Math.max(0, Math.min(1, isFinite(value) ? value : 0.9))
+    }
 
     function syncTelemetry(): void {
         const shouldHold = root.visible
@@ -51,8 +60,8 @@ StyledOverlayWidget {
             root.persistentStateEntry.height = GamePerformanceService.gameDetected ? 980 : 720
             break
         default:
-            root.persistentStateEntry.width = 460
-            root.persistentStateEntry.height = 360
+            root.persistentStateEntry.width = 360
+            root.persistentStateEntry.height = 210
             break
         }
     }
@@ -80,7 +89,7 @@ StyledOverlayWidget {
     function viewButtonTooltip(): string {
         switch (root.viewMode) {
         case "compact": return Translation.tr("Switch to detailed view")
-        case "detailed": return Translation.tr("Switch to simple view")
+        case "detailed": return Translation.tr("Switch to minimal view")
         default: return Translation.tr("Switch to compact view")
         }
     }
@@ -145,6 +154,22 @@ StyledOverlayWidget {
         return Math.round(total / values.length) + "% avg"
     }
 
+    function coreLoadText(): string {
+        const values = GamePerformanceService.cpuCoreLoads.filter(value => value >= 0)
+        if (values.length === 0) return "--"
+        let total = 0
+        for (const value of values) total += value
+        return Math.round(total / values.length) + "%"
+    }
+
+    function degreeText(value: real): string {
+        return value > 0 ? Math.round(value) + String.fromCharCode(176) : "--"
+    }
+
+    function minimalFpsText(value: real): string {
+        return value >= 0 ? Math.round(value) + "F" : "--"
+    }
+
     function vramDetailText(): string {
         return GamePerformanceService.vramTotalGb > 0
             ? root.gbText(GamePerformanceService.vramTotalGb) + " total"
@@ -182,6 +207,9 @@ StyledOverlayWidget {
     contentItem: OverlayBackground {
         id: surface
         radius: root.contentRadius
+        surfaceOpacity: root.gamePerformanceBackgroundOpacity
+        useSurfaceColorOverride: root.minimalView
+        surfaceColorOverride: "#080b0d"
         property real padding: 12
         implicitWidth: body.implicitWidth + padding * 2
         implicitHeight: body.implicitHeight + padding * 2
@@ -193,6 +221,7 @@ StyledOverlayWidget {
             spacing: 9
 
             RowLayout {
+                visible: !root.minimalView
                 Layout.fillWidth: true
                 spacing: 9
 
@@ -255,8 +284,40 @@ StyledOverlayWidget {
                 }
             }
 
+            ColumnLayout {
+                visible: root.minimalView
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                spacing: 1
+
+                MinimalMetric {
+                    label: "GPU"
+                    value: root.percentText(GamePerformanceService.gpuLoad)
+                    detail: root.degreeText(GamePerformanceService.gpuTemp)
+                    accent: "#00dc98"
+                }
+                MinimalMetric {
+                    label: "CPU"
+                    value: root.percentText(GamePerformanceService.cpuLoad)
+                    detail: root.degreeText(GamePerformanceService.cpuTemp)
+                    accent: "#00a9e8"
+                }
+                MinimalMetric {
+                    label: "THR."
+                    value: root.coreLoadText()
+                    detail: root.degreeText(GamePerformanceService.cpuTemp)
+                    accent: "#b34dff"
+                }
+                MinimalMetric {
+                    label: "FPS"
+                    value: root.minimalFpsText(GamePerformanceService.fps)
+                    detail: root.minimalFpsText(GamePerformanceService.averageFps)
+                    accent: "#ff4147"
+                }
+            }
+
             Rectangle {
-                visible: !root.compactView
+                visible: !root.compactView && !root.minimalView
                 Layout.fillWidth: true
                 implicitHeight: GamePerformanceService.gameDetected
                     ? (GamePerformanceService.telemetryAvailable ? 204 : 258) : 76
@@ -651,7 +712,7 @@ StyledOverlayWidget {
             }
 
             StyledText {
-                visible: GamePerformanceService.telemetryAvailable
+                visible: GamePerformanceService.telemetryAvailable && !root.minimalView
                 Layout.fillWidth: true
                 text: Translation.tr("PID %1 | %2 | %3")
                     .arg(GamePerformanceService.gamePid)
@@ -687,6 +748,44 @@ StyledOverlayWidget {
             color: Appearance.colors.colSubtext
             font.pixelSize: Appearance.font.pixelSize.smallest
             elide: Text.ElideRight
+        }
+    }
+
+    component MinimalMetric: RowLayout {
+        id: metric
+        required property string label
+        required property string value
+        required property string detail
+        required property color accent
+        Layout.fillWidth: true
+        Layout.preferredHeight: 34
+        spacing: 9
+
+        StyledText {
+            Layout.preferredWidth: 76
+            text: metric.label
+            color: metric.accent
+            font.family: Appearance.font.family.monospace
+            font.pixelSize: 27
+            font.weight: Font.Bold
+        }
+        StyledText {
+            Layout.preferredWidth: 94
+            text: metric.value
+            horizontalAlignment: Text.AlignRight
+            color: Appearance.colors.colOnSurface
+            font.family: Appearance.font.family.monospace
+            font.pixelSize: 27
+            font.weight: Font.Medium
+        }
+        StyledText {
+            Layout.fillWidth: true
+            text: metric.detail
+            horizontalAlignment: Text.AlignRight
+            color: Appearance.colors.colOnSurface
+            font.family: Appearance.font.family.monospace
+            font.pixelSize: 27
+            font.weight: Font.Medium
         }
     }
 

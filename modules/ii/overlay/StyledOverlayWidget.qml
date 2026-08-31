@@ -90,7 +90,13 @@ AbstractOverlayWidget {
     // Opacidad global del widget de overlay:
     // - backgroundOpacity controla cuán sólido es el panel cuando el overlay está abierto o el widget no es clickthrough
     // - clickthroughOpacity sigue aplicándose como factor extra cuando el widget está anclado y en modo atraversable
-    readonly property real panelBaseOpacity: Config.options?.overlay?.backgroundOpacity ?? 1.0
+    property real panelOpacityOverride: -1
+    readonly property real panelBaseOpacity: {
+        const override = Number(root.panelOpacityOverride)
+        const fallback = Number(Config.options?.overlay?.backgroundOpacity ?? 1.0)
+        const value = isFinite(override) && override >= 0 ? override : fallback
+        return Math.max(0, Math.min(1, isFinite(value) ? value : 1.0))
+    }
     opacity: (GlobalStates.overlayOpen || !clickthrough)
              ? 1
              : (Config.options?.overlay?.clickthroughOpacity ?? 0.8)

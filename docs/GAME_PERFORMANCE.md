@@ -90,13 +90,21 @@ live CSV sample while the game is running and stops accepting it when the sample
 becomes stale. If MangoHud is not installed or logging is not active, the widget
 displays a clear status instead of inventing an FPS value.
 
-The widget starts in simple view. Click its view button to cycle through the
-persistent simple, compact, and detailed views. Compact view is intended to
-match the Steam performance overlay: it shows only numeric FPS, frametime, CPU,
-GPU, VRAM, average, minimum, and maximum values without graphs. Detailed view
-adds FPS and frametime graphs, frame-pacing statistics, CPU core bars and
-frequency, GPU clocks, power, voltage, RAM, swap, disk usage, resolution,
-graphics API, Wine/Proton, FEX, driver, and MangoHud metadata.
+The widget starts in minimal view. It is a four-line readout for GPU, CPU,
+average thread load, and FPS, with colored labels and no graph or card chrome.
+Click its view button to cycle through the persistent minimal, compact, and
+detailed views. Compact view is intended to match the Steam performance
+overlay: it shows only numeric FPS, frametime, CPU, GPU, VRAM, average, minimum,
+and maximum values without graphs. Detailed view adds FPS and frametime graphs,
+frame-pacing statistics, CPU core bars and frequency, GPU clocks, power, voltage,
+RAM, swap, disk usage, resolution, graphics API, Wine/Proton, FEX, driver, and
+MangoHud metadata.
+
+The Game Performance surface inherits `overlay.backgroundOpacity` by default.
+Set `overlay.gamePerformance.backgroundOpacity` in the settings UI to override
+it for this widget only. Values range from `0` (transparent) to `1` (opaque);
+the setting is available under Settings -> Panels -> Floating tools -> Background
+& dim in both panel families.
 
 MangoHud's CSV format varies by driver and version. The overlay displays `--`
 when a requested field is not exported. API, Wine/Proton, FEX, and resolution
