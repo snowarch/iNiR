@@ -167,6 +167,16 @@ Singleton {
                     property real height: 200
                     property int tabIndex: 0
                 }
+                property JsonObject gamePerformance: JsonObject {
+                    property bool pinned: false
+                    property bool clickthrough: true
+                    property bool detailed: false
+                    property string viewMode: ""
+                    property real x: 1050
+                    property real y: 170
+                    property real width: 420
+                    property real height: 330
+                }
                 property JsonObject volumeMixer: JsonObject {
                     property bool pinned: false
                     property bool clickthrough: false

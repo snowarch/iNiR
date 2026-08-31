@@ -2539,6 +2539,11 @@ Singleton {
                     property string imageSource: "https://media.tenor.com/H5U5bJzj3oAAAAAi/kukuru.gif"
                     property real scale: 0.5
                 }
+                property JsonObject gamePerformance: JsonObject {
+                    property bool transparentBackground: false
+                    // -1 inherits overlay.backgroundOpacity.
+                    property real backgroundOpacity: -1
+                }
             }
 
             property JsonObject overview: JsonObject {

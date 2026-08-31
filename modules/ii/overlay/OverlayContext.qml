@@ -11,6 +11,7 @@ Singleton {
         { identifier: "floatingImage", materialSymbol: "imagesmode" },
         { identifier: "recorder", materialSymbol: "screen_record" },
         { identifier: "resources", materialSymbol: "browse_activity" },
+        { identifier: "gamePerformance", materialSymbol: "monitor_heart" },
         { identifier: "notes", materialSymbol: "note_stack" },
         { identifier: "discord", materialSymbol: "forum" },
         { identifier: "volumeMixer", materialSymbol: "volume_up" },

@@ -33,6 +33,7 @@
 | **Brightness** | Monitor brightness via brightnessctl (laptop) and ddcutil (external monitors). Per-screen control. IPC target: `brightness`. |
 | **PowerProfilePersistence** | Restores the user's power profile on startup. |
 | **GameMode** | Fullscreen detection with auto/manual activation. Suppresses animations, notifications, blur when gaming. IPC target: `gamemode`. |
+| **GamePerformanceService** | Focused-game detection and optional MangoHud CSV telemetry, with ResourceUsage fallback for system metrics. |
 | **Idle** | Idle management via swayidle. Screen-off, lock, and suspend timeouts. Set `idle.onBattery.enable` to apply a separate, shorter set of timeouts while a laptop runs unplugged. |
 | **ResourceUsage** | CPU, RAM, GPU, temperature, disk polling. History arrays for graphs. Auto-stop timer (15s) when no consumers active. |
 | **ScreenTime** | Optional focused-app usage tracking. Local JSON storage, daily totals, hourly buckets, 3/14 day range aggregation. Disabled unless `sidebar.screenTime.enable` is true. |

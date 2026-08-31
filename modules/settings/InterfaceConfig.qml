@@ -56,6 +56,13 @@ ContentPage {
         GlobalStates.overlayOpen = true
     }
 
+    function gamePerformanceBackgroundOpacity(): real {
+        const localValue = Number(Config.options?.overlay?.gamePerformance?.backgroundOpacity ?? -1)
+        const globalValue = Number(Config.options?.overlay?.backgroundOpacity ?? 0.9)
+        const value = isFinite(localValue) && localValue >= 0 ? localValue : globalValue
+        return Math.max(0, Math.min(1, isFinite(value) ? value : 0.9))
+    }
+
     SettingsCardSection {
         settingsTaskSection: "tools"
         visible: root.activeSection === "tools"
@@ -122,6 +129,32 @@ ContentPage {
                     onValueChanged: Config.setNestedValue("overlay.backgroundOpacity", value / 100)
                     StyledToolTip {
                         text: Translation.tr("Opacity of the overlay panel background")
+                    }
+                }
+
+                ConfigSpinBox {
+                    icon: "monitor_heart"
+                    text: Translation.tr("Game Performance background opacity (%)")
+                    value: Math.round(root.gamePerformanceBackgroundOpacity() * 100)
+                    from: 0
+                    to: 100
+                    stepSize: 5
+                    enabled: !(Config.options?.overlay?.gamePerformance?.transparentBackground ?? false)
+                    onValueChanged: Config.setNestedValue(
+                        "overlay.gamePerformance.backgroundOpacity", value / 100)
+                    StyledToolTip {
+                        text: Translation.tr("Opacity of the Game Performance panel; set 0 for a transparent readout")
+                    }
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "opacity"
+                    text: Translation.tr("Transparent Game Performance background")
+                    checked: Config.options?.overlay?.gamePerformance?.transparentBackground ?? false
+                    onCheckedChanged: Config.setNestedValue(
+                        "overlay.gamePerformance.transparentBackground", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Set panel opacity to 0%; metrics remain visible")
                     }
                 }
             }

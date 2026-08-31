@@ -590,7 +590,12 @@ Singleton {
                 const nextWindows = sortWindowsByLayout(_pendingWindows)
                 const orderChanged = _windowOrderDirty
                 windows = nextWindows
-                activeWindow = nextWindows.find(window => window.is_focused) ?? null
+                const focusedWindow = nextWindows.find(window => window.is_focused) ?? null
+                activeWindow = focusedWindow
+                if (focusedWindow && mruWindowIds[0] !== focusedWindow.id) {
+                    mruWindowIds = [focusedWindow.id,
+                        ...mruWindowIds.filter(id => id !== focusedWindow.id)]
+                }
                 _windowsDirty = false
                 _windowOrderDirty = false
                 if (orderChanged)

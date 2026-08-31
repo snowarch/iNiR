@@ -233,6 +233,7 @@ Rectangle {
                   : widgetButton.identifier === "floatingImage" ? Translation.tr("Floating image")
                   : widgetButton.identifier === "recorder" ? Translation.tr("Recorder")
                   : widgetButton.identifier === "resources" ? Translation.tr("Resources")
+                  : widgetButton.identifier === "gamePerformance" ? Translation.tr("Game performance")
                   : widgetButton.identifier === "notes" ? Translation.tr("Notes")
                   : widgetButton.identifier === "discord" ? Translation.tr("Discord control")
                   : widgetButton.identifier === "volumeMixer" ? Translation.tr("Volume mixer")

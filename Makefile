@@ -71,6 +71,7 @@ install-docs:
 	@install -Dm644 README.md $(DOC_DIR)/README.md
 	@install -Dm644 docs/SETUP.md $(DOC_DIR)/SETUP.md
 	@install -Dm644 docs/IPC.md $(DOC_DIR)/IPC.md
+	@install -Dm644 docs/GAME_PERFORMANCE.md $(DOC_DIR)/GAME_PERFORMANCE.md
 
 install: build install-bin install-shell install-systemd install-icon install-desktop install-docs
 

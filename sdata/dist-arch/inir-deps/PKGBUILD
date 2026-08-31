@@ -6,7 +6,7 @@
 # Safe to remove with: sudo pacman -R inir-deps
 
 pkgname=inir-deps
-pkgver=2.29.2
+pkgver=2.29.3
 pkgrel=1
 pkgdesc='iNiR desktop shell - dependency tracker (meta-package)'
 url='https://github.com/snowarch/inir'
@@ -172,6 +172,8 @@ optdepends=(
   'ttf-oxanium: display font'
   'adw-gtk-theme: GTK theme for Material colors'
   'millennium-bin: Steam theming via Millennium (requires steam)'
+  'mangohud: live FPS and frametime telemetry for the Game Performance overlay'
+  'lib32-mangohud: MangoHud support for 32-bit games'
   'capitaine-cursors: cursor theme'
   'whitesur-icon-theme: macOS-style icons'
   'qt6-avif-image-plugin: AVIF wallpaper support'

@@ -64,6 +64,7 @@ let
     ++ optionalTop "kitty"
     ++ optionalTop "libqalculate"
     ++ optionalTop "mpv"
+    ++ optionalTop "mangohud"
     ++ optionalTop "nautilus"
     ++ optionalTop "networkmanager"
     ++ optionalTop "socat"
