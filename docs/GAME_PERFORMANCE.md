@@ -92,19 +92,25 @@ displays a clear status instead of inventing an FPS value.
 
 The widget starts in minimal view. It is a four-line readout for GPU, CPU,
 average thread load, and FPS, with colored labels and no graph or card chrome.
-Click its view button to cycle through the persistent minimal, compact, and
-detailed views. Compact view is intended to match the Steam performance
-overlay: it shows only numeric FPS, frametime, CPU, GPU, VRAM, average, minimum,
-and maximum values without graphs. Detailed view adds FPS and frametime graphs,
-frame-pacing statistics, CPU core bars and frequency, GPU clocks, power, voltage,
-RAM, swap, disk usage, resolution, graphics API, Wine/Proton, FEX, driver, and
-MangoHud metadata.
+Its surface follows the active theme palette, while the reference green, blue,
+purple, and red accents are blended 60/40 with the theme's semantic colors.
+Click its view button to cycle through the persistent minimal, simple, compact,
+and detailed views using the titlebar view button. Simple view restores the
+graph-and-summary presentation;
+compact view is intended to match the Steam performance overlay and shows only
+numeric FPS, frametime, CPU, GPU, VRAM, average, minimum, and maximum values
+without graphs. Detailed view adds FPS and frametime graphs, frame-pacing
+statistics, CPU core bars and frequency, GPU clocks, power, voltage, RAM, swap,
+disk usage, resolution, graphics API, Wine/Proton, FEX, driver, and MangoHud
+metadata.
 
 The Game Performance surface inherits `overlay.backgroundOpacity` by default.
 Set `overlay.gamePerformance.backgroundOpacity` in the settings UI to override
 it for this widget only. Values range from `0` (transparent) to `1` (opaque);
 the setting is available under Settings -> Panels -> Floating tools -> Background
-& dim in both panel families.
+& dim in both panel families. The `Transparent Game Performance background`
+toggle is a shortcut for a fully transparent panel and takes precedence over
+the numeric opacity value.
 
 MangoHud's CSV format varies by driver and version. The overlay displays `--`
 when a requested field is not exported. API, Wine/Proton, FEX, and resolution

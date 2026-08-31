@@ -2540,6 +2540,7 @@ Singleton {
                     property real scale: 0.5
                 }
                 property JsonObject gamePerformance: JsonObject {
+                    property bool transparentBackground: false
                     // -1 inherits overlay.backgroundOpacity.
                     property real backgroundOpacity: -1
                 }

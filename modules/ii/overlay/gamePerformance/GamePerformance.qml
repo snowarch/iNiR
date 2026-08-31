@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import qs
 import qs.services
 import qs.modules.common
+import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.ii.overlay
 
@@ -13,24 +14,41 @@ StyledOverlayWidget {
 
     title: Translation.tr("Game Performance")
     panelOpacityOverride: root.gamePerformanceBackgroundOpacity
-    minimumWidth: root.detailedView ? 620 : root.compactView ? 390 : 360
+    titlebarActionSymbol: root.viewButtonIcon()
+    titlebarActionTooltip: root.viewButtonTooltip()
+    onTitlebarActionClicked: root.cycleViewMode()
+    minimumWidth: root.detailedView ? 620 : root.simpleView ? 460
+        : root.compactView ? 390 : 360
     minimumHeight: root.detailedView
         ? (GamePerformanceService.gameDetected ? 980 : 720)
-        : root.compactView ? 220 : 210
+        : root.simpleView ? 360 : root.compactView ? 220 : 210
 
     property bool _holdingTelemetry: false
     readonly property string viewMode: {
-        // Keep the old persisted "simple" value as the minimal presentation.
+        // Keep persisted mode names stable while adding the minimal readout.
         const stored = String(root.persistentStateEntry?.viewMode ?? "")
-        if (stored === "simple" || stored === "compact" || stored === "detailed")
+        if (stored === "minimal" || stored === "simple"
+            || stored === "compact" || stored === "detailed")
             return stored
-        return root.persistentStateEntry?.detailed ? "detailed" : "simple"
+        return root.persistentStateEntry?.detailed ? "detailed" : "minimal"
     }
+    readonly property bool minimalView: root.viewMode === "minimal"
+    readonly property bool simpleView: root.viewMode === "simple"
     readonly property bool compactView: root.viewMode === "compact"
     readonly property bool detailedView: root.viewMode === "detailed"
-    readonly property bool minimalView: root.viewMode === "simple"
+    // Keep the reference HUD hues while giving the active theme a visible voice.
+    readonly property color minimalGpuAccent: ColorUtils.mix(
+        Qt.rgba(0, 0.862745, 0.596078, 1), Appearance.colors.colPrimary, 0.60)
+    readonly property color minimalCpuAccent: ColorUtils.mix(
+        Qt.rgba(0, 0.662745, 0.909804, 1), Appearance.colors.colSecondary, 0.60)
+    readonly property color minimalThreadAccent: ColorUtils.mix(
+        Qt.rgba(0.701961, 0.301961, 1, 1), Appearance.colors.colTertiary, 0.60)
+    readonly property color minimalFpsAccent: ColorUtils.mix(
+        Qt.rgba(1, 0.254902, 0.278431, 1), Appearance.colors.colError, 0.60)
     readonly property real gamePerformanceBackgroundOpacity: {
-        const localValue = Number(Config.options?.overlay?.gamePerformance?.backgroundOpacity ?? -1)
+        const gamePerformance = Config.options?.overlay?.gamePerformance ?? ({})
+        if (gamePerformance.transparentBackground === true) return 0
+        const localValue = Number(gamePerformance.backgroundOpacity ?? -1)
         const globalValue = Number(Config.options?.overlay?.backgroundOpacity ?? 0.9)
         const value = isFinite(localValue) && localValue >= 0 ? localValue : globalValue
         return Math.max(0, Math.min(1, isFinite(value) ? value : 0.9))
@@ -48,9 +66,17 @@ StyledOverlayWidget {
     }
 
     function syncModeGeometry(): void {
-        if (!root.persistentStateEntry) return
+        if (!Persistent.ready || !root.persistentStateEntry) return
 
         switch (root.viewMode) {
+        case "minimal":
+            root.persistentStateEntry.width = 360
+            root.persistentStateEntry.height = 210
+            break
+        case "simple":
+            root.persistentStateEntry.width = 460
+            root.persistentStateEntry.height = 360
+            break
         case "compact":
             root.persistentStateEntry.width = 390
             root.persistentStateEntry.height = 220
@@ -73,13 +99,15 @@ StyledOverlayWidget {
     }
 
     function cycleViewMode(): void {
-        const modes = ["simple", "compact", "detailed"]
+        const modes = ["minimal", "simple", "compact", "detailed"]
         const currentIndex = modes.indexOf(root.viewMode)
         root.setViewMode(modes[(currentIndex + 1) % modes.length])
     }
 
     function viewButtonIcon(): string {
         switch (root.viewMode) {
+        case "minimal": return "view_compact"
+        case "simple": return "show_chart"
         case "compact": return "analytics"
         case "detailed": return "view_list"
         default: return "view_compact"
@@ -88,9 +116,11 @@ StyledOverlayWidget {
 
     function viewButtonTooltip(): string {
         switch (root.viewMode) {
+        case "minimal": return Translation.tr("Switch to simple view")
+        case "simple": return Translation.tr("Switch to compact view")
         case "compact": return Translation.tr("Switch to detailed view")
         case "detailed": return Translation.tr("Switch to minimal view")
-        default: return Translation.tr("Switch to compact view")
+        default: return Translation.tr("Switch to minimal view")
         }
     }
 
@@ -189,7 +219,7 @@ StyledOverlayWidget {
 
     Component.onCompleted: {
         root.syncTelemetry()
-        Qt.callLater(root.syncModeGeometry)
+        if (Persistent.ready) Qt.callLater(root.syncModeGeometry)
     }
     onVisibleChanged: root.syncTelemetry()
     Component.onDestruction: if (root._holdingTelemetry) {
@@ -204,12 +234,17 @@ StyledOverlayWidget {
         }
     }
 
+    Connections {
+        target: Persistent
+        function onReadyChanged(): void {
+            if (Persistent.ready) root.syncModeGeometry()
+        }
+    }
+
     contentItem: OverlayBackground {
         id: surface
         radius: root.contentRadius
         surfaceOpacity: root.gamePerformanceBackgroundOpacity
-        useSurfaceColorOverride: root.minimalView
-        surfaceColorOverride: "#080b0d"
         property real padding: 12
         implicitWidth: body.implicitWidth + padding * 2
         implicitHeight: body.implicitHeight + padding * 2
@@ -253,19 +288,6 @@ StyledOverlayWidget {
                     }
                 }
 
-                IconToolbarButton {
-                    text: root.viewButtonIcon()
-                    toggled: root.viewMode !== "simple"
-                    Layout.preferredWidth: 30
-                    Layout.preferredHeight: 30
-                    Layout.alignment: Qt.AlignVCenter
-                    onClicked: root.cycleViewMode()
-
-                    StyledToolTip {
-                        text: root.viewButtonTooltip()
-                    }
-                }
-
                 Rectangle {
                     visible: GameMode.active
                     radius: height / 2
@@ -294,30 +316,30 @@ StyledOverlayWidget {
                     label: "GPU"
                     value: root.percentText(GamePerformanceService.gpuLoad)
                     detail: root.degreeText(GamePerformanceService.gpuTemp)
-                    accent: "#00dc98"
+                    accent: root.minimalGpuAccent
                 }
                 MinimalMetric {
                     label: "CPU"
                     value: root.percentText(GamePerformanceService.cpuLoad)
                     detail: root.degreeText(GamePerformanceService.cpuTemp)
-                    accent: "#00a9e8"
+                    accent: root.minimalCpuAccent
                 }
                 MinimalMetric {
                     label: "THR."
                     value: root.coreLoadText()
                     detail: root.degreeText(GamePerformanceService.cpuTemp)
-                    accent: "#b34dff"
+                    accent: root.minimalThreadAccent
                 }
                 MinimalMetric {
                     label: "FPS"
                     value: root.minimalFpsText(GamePerformanceService.fps)
                     detail: root.minimalFpsText(GamePerformanceService.averageFps)
-                    accent: "#ff4147"
+                    accent: root.minimalFpsAccent
                 }
             }
 
             Rectangle {
-                visible: !root.compactView && !root.minimalView
+                visible: root.simpleView || root.detailedView
                 Layout.fillWidth: true
                 implicitHeight: GamePerformanceService.gameDetected
                     ? (GamePerformanceService.telemetryAvailable ? 204 : 258) : 76

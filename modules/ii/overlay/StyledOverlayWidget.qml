@@ -27,6 +27,9 @@ AbstractOverlayWidget {
     property bool fancyBorders: true
     property bool showCenterButton: false
     property bool showClickabilityButton: true
+    property string titlebarActionSymbol: ""
+    property string titlebarActionTooltip: ""
+    signal titlebarActionClicked()
 
     // Defaults n stuff
     required property var modelData
@@ -330,6 +333,15 @@ AbstractOverlayWidget {
                         Layout.fillWidth: true
                         text: root.title
                         elide: Text.ElideRight
+                    }
+
+                    TitlebarButton {
+                        visible: root.titlebarActionSymbol.length > 0
+                        materialSymbol: root.titlebarActionSymbol
+                        onClicked: root.titlebarActionClicked()
+                        StyledToolTip {
+                            text: root.titlebarActionTooltip
+                        }
                     }
 
                     TitlebarButton {
