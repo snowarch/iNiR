@@ -10,7 +10,7 @@ import qs.modules.common.functions
 import qs.modules.common.models
 
 /**
- * Searchable development environments backed by scripts/setup/development.sh.
+ * Searchable development environments backed by a private setup helper.
  *
  * The search consumers use this service for metadata and callbacks, while the
  * setup script remains the single source of truth for privileged operations.
@@ -23,8 +23,9 @@ Singleton {
     property int statusRevision: 0
     property bool loading: true
     property bool checking: false
+    property bool statusReady: false
 
-    readonly property string scriptPath: `${Directories.scriptsPath}/setup/development.sh`
+    readonly property string scriptPath: `${Directories.scriptsPath}/setup/_development.sh`
 
     FileView {
         id: manifestFile
@@ -50,6 +51,11 @@ Singleton {
         }
         onExited: {
             root.checking = false
+            if (!root.statusReady) {
+                root.statuses = ({})
+                root.statusRevision += 1
+                root.statusReady = true
+            }
         }
     }
 
@@ -76,11 +82,13 @@ Singleton {
         }
         root.statuses = next
         root.statusRevision += 1
+        root.statusReady = true
     }
 
     function refresh(): void {
         if (root.loading || root.checking || root.environments.length === 0) return
         statusProcess.command = ["/usr/bin/bash", root.scriptPath, "status"]
+        root.statusReady = false
         root.checking = true
         statusProcess.running = true
     }
@@ -129,29 +137,37 @@ Singleton {
             ].join(" ").toLowerCase()
             if (!tokens.every(token => searchable.includes(token))) continue
 
-            const installed = root.statuses[environment.id] === "installed"
+            const state = root.statuses[environment.id] ?? "unknown"
+            const canMutate = root.statusReady && (state === "installed" || state === "missing")
+            const installed = state === "installed"
             const operation = installed ? "remove" : "install"
             const verb = installed ? Translation.tr("Remove") : Translation.tr("Install")
-            const actionName = `${verb} ${environment.name}`
+            const actionName = canMutate ? `${verb} ${environment.name}` : environment.name
+            const stateDescription = state === "unsupported"
+                ? Translation.tr("Install/remove actions are unavailable on this system")
+                : state === "unknown" && root.statusReady
+                    ? Translation.tr("Installation actions are unavailable")
+                    : ""
             const id = environment.id
-            results.push({
-                key: `development_${operation}_${id}`,
+            const result = {
+                key: `development_${canMutate ? operation : "info"}_${id}`,
                 id: id,
                 name: actionName,
-                description: `${environment.group} - ${environment.description}`,
+                description: `${environment.group} - ${environment.description}${stateDescription ? ` - ${stateDescription}` : ""}`,
                 comment: `${Translation.tr("Development")} > ${environment.group}`,
                 type: Translation.tr("Development"),
                 icon: environment.icon ?? "code",
                 iconName: environment.icon ?? "code",
                 materialSymbol: environment.icon ?? "code",
                 iconType: LauncherSearchResult.IconType.Material,
-                verb: verb,
-                clickActionName: verb,
-                execute: () => {
+                verb: canMutate ? verb : "",
+                clickActionName: canMutate ? verb : ""
+            }
+            if (canMutate) result.execute = () => {
                     if (operation === "remove") root.remove(id)
                     else root.install(id)
                 }
-            })
+            results.push(result)
         }
         return results
     }

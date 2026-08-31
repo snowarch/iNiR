@@ -27,6 +27,7 @@ RippleButton {
     property bool blurImage: entry?.blurImage ?? false
     property string blurImageText: entry?.blurImageText ?? "Image hidden"
     property bool compactClipboardPreview: entry?.compactClipboardPreview ?? false
+    readonly property bool actionable: typeof root.entry?.execute === "function"
     readonly property string desktopEntryId: String(root.entry?.desktopEntryId ?? "")
     readonly property bool draggableApplication: root.desktopEntryId.length > 0
     property bool suppressClick: false
@@ -165,6 +166,7 @@ RippleButton {
     }
 
     onClicked: {
+        if (!root.actionable) return
         if (root.suppressClick) {
             root.suppressClick = false
             return

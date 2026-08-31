@@ -3,7 +3,7 @@
     "id": "rails",
     "name": "Ruby on Rails",
     "group": "Ruby",
-    "description": "Install Ruby on Rails with mise and Bundler defaults",
+    "description": "Ruby on Rails language and framework with Bundler defaults",
     "icon": "code",
     "tags": ["ruby", "rails", "gem", "framework"]
   },
@@ -11,7 +11,7 @@
     "id": "node",
     "name": "Node.js",
     "group": "JavaScript",
-    "description": "Install the Node.js JavaScript runtime",
+    "description": "Node.js JavaScript runtime and package ecosystem",
     "icon": "javascript",
     "tags": ["javascript", "node", "npm", "runtime"]
   },
@@ -19,7 +19,7 @@
     "id": "bun",
     "name": "Bun",
     "group": "JavaScript",
-    "description": "Install the Bun JavaScript runtime and package manager",
+    "description": "Bun JavaScript runtime and package manager",
     "icon": "javascript",
     "tags": ["javascript", "bun", "runtime", "package manager"]
   },
@@ -27,7 +27,7 @@
     "id": "deno",
     "name": "Deno",
     "group": "JavaScript",
-    "description": "Install the Deno JavaScript and TypeScript runtime",
+    "description": "Deno JavaScript and TypeScript runtime",
     "icon": "javascript",
     "tags": ["javascript", "typescript", "deno", "runtime"]
   },
@@ -35,7 +35,7 @@
     "id": "go",
     "name": "Go",
     "group": "Languages",
-    "description": "Install the Go programming language",
+    "description": "Go programming language and toolchain",
     "icon": "code",
     "tags": ["golang", "language", "compiler"]
   },
@@ -43,7 +43,7 @@
     "id": "php",
     "name": "PHP",
     "group": "PHP",
-    "description": "Install PHP, Composer, SQLite, and Xdebug",
+    "description": "PHP, Composer, SQLite, and Xdebug development tools",
     "icon": "code",
     "tags": ["php", "composer", "xdebug", "web"]
   },
@@ -51,7 +51,7 @@
     "id": "laravel",
     "name": "Laravel",
     "group": "PHP",
-    "description": "Install PHP, Node.js, and the Laravel installer",
+    "description": "PHP, Node.js, and the Laravel application installer",
     "icon": "code",
     "tags": ["php", "laravel", "composer", "framework"]
   },
@@ -59,7 +59,7 @@
     "id": "symfony",
     "name": "Symfony",
     "group": "PHP",
-    "description": "Install PHP and the Symfony CLI",
+    "description": "PHP and the Symfony application CLI",
     "icon": "code",
     "tags": ["php", "symfony", "framework", "web"]
   },
@@ -67,7 +67,7 @@
     "id": "python",
     "name": "Python",
     "group": "Languages",
-    "description": "Install Python with the uv package manager",
+    "description": "Python language with the uv package manager",
     "icon": "code",
     "tags": ["python", "uv", "language", "pip"]
   },
@@ -75,7 +75,7 @@
     "id": "elixir",
     "name": "Elixir",
     "group": "Elixir",
-    "description": "Install Erlang, Elixir, and Hex",
+    "description": "Erlang, Elixir, and Hex development tools",
     "icon": "code",
     "tags": ["elixir", "erlang", "hex", "language"]
   },
@@ -83,7 +83,7 @@
     "id": "phoenix",
     "name": "Phoenix",
     "group": "Elixir",
-    "description": "Install Elixir, Erlang, Hex, Rebar, and Phoenix",
+    "description": "Elixir, Erlang, Hex, Rebar, and Phoenix framework tools",
     "icon": "code",
     "tags": ["elixir", "erlang", "phoenix", "framework"]
   },
@@ -91,7 +91,7 @@
     "id": "rust",
     "name": "Rust",
     "group": "Languages",
-    "description": "Install Rust with rustup",
+    "description": "Rust language and rustup toolchain",
     "icon": "code",
     "tags": ["rust", "cargo", "rustup", "language"]
   },
@@ -99,7 +99,7 @@
     "id": "java",
     "name": "Java",
     "group": "Languages",
-    "description": "Install the Java runtime and development environment",
+    "description": "Java runtime and development toolchain",
     "icon": "code",
     "tags": ["java", "jdk", "language"]
   },
@@ -107,7 +107,7 @@
     "id": "zig",
     "name": "Zig",
     "group": "Languages",
-    "description": "Install Zig and the ZLS language server",
+    "description": "Zig compiler and ZLS language server",
     "icon": "code",
     "tags": ["zig", "zls", "language", "compiler"]
   },
@@ -115,7 +115,7 @@
     "id": "dotnet",
     "name": ".NET",
     "group": "Languages",
-    "description": "Install the .NET SDK",
+    "description": ".NET SDK and development toolchain",
     "icon": "code",
     "tags": ["dotnet", "csharp", "c#", "language"]
   },
@@ -123,7 +123,7 @@
     "id": "ocaml",
     "name": "OCaml",
     "group": "Languages",
-    "description": "Install OCaml, opam, LSP, odoc, and formatting tools",
+    "description": "OCaml, opam, LSP, documentation, and formatting tools",
     "icon": "code",
     "tags": ["ocaml", "opam", "language", "lsp"]
   },
@@ -131,7 +131,7 @@
     "id": "clojure",
     "name": "Clojure",
     "group": "Languages",
-    "description": "Install Clojure with rlwrap",
+    "description": "Clojure language with rlwrap",
     "icon": "code",
     "tags": ["clojure", "jvm", "language", "lisp"]
   },
@@ -139,7 +139,7 @@
     "id": "scala",
     "name": "Scala",
     "group": "Languages",
-    "description": "Install Java, Scala, and Scala CLI",
+    "description": "Java, Scala, and Scala CLI development tools",
     "icon": "code",
     "tags": ["scala", "java", "jvm", "language"]
   },
@@ -147,7 +147,7 @@
     "id": "docker-dbs",
     "name": "Docker Databases",
     "group": "Docker",
-    "description": "Install MySQL, PostgreSQL, Redis, MongoDB, MariaDB, or MSSQL containers",
+    "description": "MySQL, PostgreSQL, Redis, MongoDB, MariaDB, or MSSQL containers",
     "icon": "deployed_code",
     "tags": ["docker", "database", "mysql", "postgres", "redis", "mongodb"]
   }

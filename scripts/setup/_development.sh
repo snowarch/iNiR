@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
-# scripts/setup/development.sh
-# /setup-development — install or remove development environments.
+# scripts/setup/_development.sh
+# Internal backend for development-environment discovery and mutation.
 #
-# @meta name: Development Environments
-# @meta description: Install or remove languages, runtimes, frameworks, and Docker databases
-# @meta icon: code
-# @meta keywords: development language runtime framework mise ruby node bun deno go php python elixir rust java zig dotnet ocaml clojure scala docker database
+# Search metadata lives in defaults/dev-environments.json. This file is
+# intentionally private so it is not exposed as a generic /setup action.
 
 set -Eeuo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -39,7 +37,8 @@ declare -A ENV_LABELS=(
 )
 
 usage() {
-    printf 'Usage: %s [status|install|remove] [environment]\n' "${BASH_SOURCE[0]}"
+    printf 'Usage: %s status | %s install <environment> | %s remove <environment>\n' \
+        "${BASH_SOURCE[0]}" "${BASH_SOURCE[0]}" "${BASH_SOURCE[0]}"
     printf 'Environments: %s\n' "${ENV_IDS[*]}"
 }
 
@@ -174,50 +173,6 @@ install_php() {
     for ext in "${extensions_to_enable[@]}"; do
         sudo sed -i "s/^;extension=${ext}/extension=${ext}/" "$php_ini_path"
     done
-}
-
-choose_from_ids() {
-    local header="$1"
-    shift
-    local ids=("$@")
-    local i choice
-
-    if have_cmd gum; then
-        local options=()
-        for i in "${ids[@]}"; do
-            options+=("$i|${ENV_LABELS[$i]}")
-        done
-        choice="$(printf '%s\n' "${options[@]}" | gum choose --header "$header" || true)"
-        [[ -n "$choice" ]] || return 1
-        printf '%s\n' "${choice%%|*}"
-        return 0
-    fi
-
-    printf '\n%s\n' "$header" >&2
-    for i in "${!ids[@]}"; do
-        printf '  %d) %s\n' "$((i + 1))" "${ENV_LABELS[${ids[$i]}]}" >&2
-    done
-    printf '  0) Cancel\n' >&2
-    while true; do
-        read -r -p 'Enter choice: ' choice
-        [[ "$choice" == 0 ]] && return 1
-        if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice >= 1 && choice <= ${#ids[@]} )); then
-            printf '%s\n' "${ids[$((choice - 1))]}"
-            return 0
-        fi
-    done
-}
-
-select_operation_and_environment() {
-    local operation id
-    if have_cmd gum; then
-        operation="$(printf '%s\n' install remove | gum choose --header 'Select development action' || true)"
-    else
-        operation="install"
-    fi
-    [[ -n "$operation" ]] || return 1
-    id="$(choose_from_ids 'Select development environment' "${ENV_IDS[@]}")" || return 1
-    printf '%s\t%s\n' "$operation" "$id"
 }
 
 install_docker_databases() {
@@ -421,12 +376,6 @@ remove_environment() {
 main() {
     local operation="${1:-}"
     local id="${2:-}"
-
-    if [[ -z "$operation" ]]; then
-        local selection
-        selection="$(select_operation_and_environment)" || exit 0
-        IFS=$'\t' read -r operation id <<< "$selection"
-    fi
 
     case "$operation" in
         status)

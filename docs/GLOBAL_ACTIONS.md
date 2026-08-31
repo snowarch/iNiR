@@ -64,11 +64,11 @@ You can disable the whole category by setting `search.globalActions.enableSetup`
 
 ## Development environments
 
-Search for a language, runtime, framework, or database by name in an unprefixed search. Results show the current state and open a terminal action to install or remove the selected environment.
+Search for a language, runtime, framework, or database by name in an unprefixed search. Results remain available as discovery entries everywhere; install and remove actions are shown only where the current platform supports them.
 
-Supported entries include Ruby/Rails, Node.js, Bun, Deno, Go, PHP, Laravel, Symfony, Python, Elixir, Phoenix, Rust, Java, Zig, .NET, OCaml, Clojure, Scala, and Docker databases. The setup backend currently targets Arch-based systems and keeps the package/runtime recipes in `scripts/setup/development.sh`.
+Supported entries include Ruby/Rails, Node.js, Bun, Deno, Go, PHP, Laravel, Symfony, Python, Elixir, Phoenix, Rust, Java, Zig, .NET, OCaml, Clojure, Scala, and Docker databases. The search metadata is maintained in `defaults/dev-environments.json`; the private mutation helper is `scripts/setup/_development.sh`.
 
-The metadata is maintained in [`defaults/dev-environments.json`](https://github.com/snowarch/inir/blob/main/defaults/dev-environments.json). Prefix searches remain routed to their existing providers.
+Prefix searches remain routed to their existing providers. Unsupported systems still receive the discovery result, but no broken install/remove callback is attached.
 
 For Bun and Deno, Remove also handles an exact Arch package (`bun`, `bun-bin`, or `deno`) when the command resolves to `/usr/bin`; unrelated system packages are not removed.
 
