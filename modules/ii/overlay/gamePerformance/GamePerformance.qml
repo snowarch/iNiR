@@ -407,7 +407,6 @@ StyledOverlayWidget {
                             PerformanceStat { label: Translation.tr("AVG"); value: root.fpsText(GamePerformanceService.averageFps) }
                             PerformanceStat { label: Translation.tr("MIN"); value: root.fpsText(GamePerformanceService.minimumFps) }
                             PerformanceStat { label: Translation.tr("MAX"); value: root.fpsText(GamePerformanceService.maximumFps) }
-                            PerformanceStat { label: Translation.tr("1% LOW"); value: root.fpsText(GamePerformanceService.onePercentLow) }
                         }
                     }
 

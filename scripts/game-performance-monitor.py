@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Read one live MangoHud log sample for a game process tree.
+"""Stream live MangoHud log samples for a compositor-selected process tree.
 
 MangoHud writes its CSV log from inside the instrumented game process. The
 shell cannot read frame timing from the compositor, so this helper finds the
 CSV file held open by the focused game's process tree, then falls back to
 configured log directories for XWayland clients whose compositor PID is the
-shared XWayland server. It returns the latest complete row as JSON.
+shared XWayland server. Discovery and static metadata are cached while the
+selected target remains active; each output line is the latest sample as JSON.
 """
 
 from __future__ import annotations
@@ -49,6 +50,18 @@ METADATA_FIELDS = {
     "cpuscheduler": "cpuScheduler",
 }
 MAX_FRESH_LOG_AGE_MS = 3000
+DEFAULT_DISCOVERY_INTERVAL_MS = 2000
+IGNORED_IDENTITY_TOKENS = {
+    "app",
+    "com",
+    "game",
+    "gamescope",
+    "net",
+    "org",
+    "proton",
+    "steam",
+    "wine",
+}
 
 
 def _parse_csv_line(line: str) -> list[str]:
@@ -235,8 +248,12 @@ def _latest_row(path: Path, header: list[str]) -> list[str]:
     return []
 
 
-def _read_log(path: Path) -> dict[str, object]:
-    header = _header_for_log(path)
+def _read_log(
+    path: Path,
+    header: list[str] | None = None,
+    static_metadata: dict[str, object] | None = None,
+) -> dict[str, object]:
+    header = header if header is not None else _header_for_log(path)
     if not header:
         return {"available": False}
 
@@ -253,8 +270,11 @@ def _read_log(path: Path) -> dict[str, object]:
             continue
         values[field] = _number(row[index] if index < len(row) else None)
 
-    values.update(_metadata_for_log(path))
-    values["mangoHudVersion"] = _mangohud_version(path)
+    if static_metadata is None:
+        values.update(_metadata_for_log(path))
+        values["mangoHudVersion"] = _mangohud_version(path)
+    else:
+        values.update(static_metadata)
 
     try:
         stat = path.stat()
@@ -273,6 +293,17 @@ def _process_command(pid: int) -> str:
     return " ".join(
         part.decode("utf-8", errors="replace") for part in raw.split(b"\0") if part
     )
+
+
+def _is_xwayland_process(pid: int) -> bool:
+    try:
+        name = Path(f"/proc/{pid}/comm").read_text(encoding="ascii").strip().lower()
+    except (OSError, UnicodeError):
+        name = ""
+    command = _process_command(pid).lower()
+    return name.startswith("xwayland") or re.search(
+        r"(?:^|/)xwayland(?:-satellite)?(?:\s|$)", command
+    ) is not None
 
 
 def _process_maps(pid: int) -> str:
@@ -392,66 +423,193 @@ def _newest_path(paths: list[Path]) -> Path | None:
     return newest
 
 
-def snapshot(
-    pid: int,
-    log_file: str | None,
-    log_directories: list[str],
-) -> dict[str, object]:
-    payload: dict[str, object] = {
-        "pid": pid,
-        "available": False,
-        "logAgeMs": -1,
+def _identity_tokens(*values: str) -> set[str]:
+    return {
+        token
+        for value in values
+        for token in re.findall(r"[a-z0-9]+", value.lower())
+        if len(token) >= 3
+        and any(character.isalpha() for character in token)
+        and token not in IGNORED_IDENTITY_TOKENS
     }
 
-    process_owned = False
-    if log_file:
-        candidates = [Path(log_file)]
-    else:
-        process_candidates = _unique_paths(_open_log_files(pid))
-        if process_candidates:
-            candidates = process_candidates
-            process_owned = True
-        else:
-            directory_candidates = _unique_paths(
-                candidate
-                for directory in log_directories
-                for candidate in _directory_log_files(directory)
-            )
-            fresh_candidates = _fresh_paths(directory_candidates, time.time())
-            fresh_samples: list[tuple[Path, dict[str, object]]] = []
-            for candidate in fresh_candidates:
-                sample = _read_log(candidate)
-                if sample.get("available") is True:
-                    fresh_samples.append((candidate, sample))
-            if len(fresh_samples) == 1:
-                candidate, sample = fresh_samples[0]
-                payload.update(sample)
-                _attach_process_details(payload, candidate, pid)
-                return payload
-            if len(fresh_samples) > 1:
-                payload["ambiguous"] = True
-                return payload
-            candidates = directory_candidates
 
-    newest = _newest_path(candidates)
-    if newest is not None:
-        payload.update(_read_log(newest))
-        _attach_process_details(payload, newest, pid, scan_owners=not process_owned)
-    return payload
+class TelemetryMonitor:
+    """Cache log discovery and target metadata across periodic samples."""
+
+    def __init__(
+        self,
+        pid: int,
+        target_key: str,
+        target_app_id: str,
+        target_name: str,
+        allow_directory_fallback: bool,
+        allow_title_match: bool,
+        log_file: str | None,
+        log_directories: list[str],
+        discovery_interval_ms: int = DEFAULT_DISCOVERY_INTERVAL_MS,
+    ) -> None:
+        self.pid = pid
+        self.target_key = target_key
+        self.target_identity = _identity_tokens(
+            target_app_id,
+            target_name if allow_title_match else "",
+        )
+        self.allow_directory_fallback = allow_directory_fallback
+        self.log_file = log_file
+        self.log_directories = log_directories
+        self.discovery_interval = max(0.1, discovery_interval_ms / 1000)
+        self.path: Path | None = None
+        self.header: list[str] = []
+        self.static_metadata: dict[str, object] = {}
+        self.process_details: dict[str, object] = {}
+        self.last_discovery = 0.0
+        self.ambiguous = False
+
+    def _payload(self) -> dict[str, object]:
+        return {
+            "pid": self.pid,
+            "targetKey": self.target_key,
+            "available": False,
+            "logAgeMs": -1,
+        }
+
+    def _clear_path(self) -> None:
+        self.path = None
+        self.header = []
+        self.static_metadata = {}
+        self.process_details = {}
+
+    def _cache_path(self, path: Path, process_owned: bool) -> bool:
+        header = _header_for_log(path)
+        if not header:
+            return False
+
+        metadata: dict[str, object] = _metadata_for_log(path)
+        metadata["mangoHudVersion"] = _mangohud_version(path)
+        details: dict[str, object] = {}
+        _attach_process_details(
+            details,
+            path,
+            self.pid,
+            scan_owners=not process_owned,
+        )
+        self.path = path
+        self.header = header
+        self.static_metadata = metadata
+        self.process_details = details
+        return True
+
+    def _discover(self, now: float) -> None:
+        self.last_discovery = now
+        self.ambiguous = False
+
+        if self.log_file:
+            self._cache_path(Path(self.log_file), process_owned=False)
+            return
+
+        process_candidates = _unique_paths(_open_log_files(self.pid))
+        newest_process_log = _newest_path(process_candidates)
+        if newest_process_log is not None and self._cache_path(
+            newest_process_log, process_owned=True
+        ):
+            return
+
+        if not self.allow_directory_fallback or not _is_xwayland_process(self.pid):
+            return
+
+        directory_candidates = _unique_paths(
+            candidate
+            for directory in self.log_directories
+            for candidate in _directory_log_files(directory)
+        )
+        directory_candidates = [
+            candidate
+            for candidate in directory_candidates
+            if any(
+                token in re.sub(r"[^a-z0-9]", "", candidate.stem.lower())
+                for token in self.target_identity
+            )
+        ]
+        fresh_candidates = _fresh_paths(directory_candidates, now)
+        valid_candidates = [
+            candidate for candidate in fresh_candidates if _header_for_log(candidate)
+        ]
+        if len(valid_candidates) == 1:
+            self._cache_path(valid_candidates[0], process_owned=False)
+        elif len(valid_candidates) > 1:
+            self.ambiguous = True
+
+    def snapshot(self) -> dict[str, object]:
+        now = time.time()
+        if self.path is None and now - self.last_discovery >= self.discovery_interval:
+            self._discover(now)
+
+        payload = self._payload()
+        if self.ambiguous:
+            payload["ambiguous"] = True
+        if self.path is None:
+            return payload
+
+        sample = _read_log(self.path, self.header, self.static_metadata)
+        sample.update(self.process_details)
+        payload.update(sample)
+        age = payload.get("logAgeMs", -1)
+        if (
+            payload.get("available") is not True
+            or not isinstance(age, int)
+            or age > MAX_FRESH_LOG_AGE_MS
+        ):
+            self._clear_path()
+        return payload
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pid", type=int, required=True)
+    parser.add_argument("--target-key", default="")
+    parser.add_argument("--target-app-id", default="")
+    parser.add_argument("--target-name", default="")
+    parser.add_argument("--allow-directory-fallback", action="store_true")
+    parser.add_argument("--allow-title-match", action="store_true")
     parser.add_argument("--log-file")
     parser.add_argument("--log-dir", action="append", default=[])
+    parser.add_argument("--watch", action="store_true")
+    parser.add_argument("--interval-ms", type=int, default=500)
+    parser.add_argument(
+        "--discovery-interval-ms",
+        type=int,
+        default=DEFAULT_DISCOVERY_INTERVAL_MS,
+    )
     args = parser.parse_args()
 
-    try:
-        result = snapshot(args.pid, args.log_file, args.log_dir)
-    except Exception as error:  # Keep the QML stream valid if procfs changes mid-read.
-        result = {"pid": args.pid, "available": False, "error": str(error)}
-    print(json.dumps(result, separators=(",", ":")), flush=True)
+    monitor = TelemetryMonitor(
+        args.pid,
+        args.target_key,
+        args.target_app_id,
+        args.target_name,
+        args.allow_directory_fallback,
+        args.allow_title_match,
+        args.log_file,
+        args.log_dir,
+        args.discovery_interval_ms,
+    )
+    interval = max(0.05, args.interval_ms / 1000)
+    while True:
+        started = time.monotonic()
+        try:
+            result = monitor.snapshot()
+        except Exception as error:  # Keep the QML stream valid if procfs changes mid-read.
+            result = {
+                "pid": args.pid,
+                "targetKey": args.target_key,
+                "available": False,
+                "error": str(error),
+            }
+        print(json.dumps(result, separators=(",", ":")), flush=True)
+        if not args.watch:
+            break
+        time.sleep(max(0, interval - (time.monotonic() - started)))
     return 0
 
 

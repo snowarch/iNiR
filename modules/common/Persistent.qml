@@ -18,21 +18,6 @@ Singleton {
     onReadyChanged: {
         root.previousHyprlandInstanceSignature = root.states.hyprlandInstanceSignature
         root.states.hyprlandInstanceSignature = Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE") || ""
-        root._migrateOverlayWidgetDefaults()
-    }
-
-    // Add newly shipped default widgets once, while preserving a user's later
-    // choice to remove them from the overlay.
-    function _migrateOverlayWidgetDefaults(): void {
-        if (!root.ready || root.states.overlay.gamePerformanceDefaultApplied)
-            return
-
-        const openWidgets = [...(root.states.overlay.open ?? [])]
-        if (!openWidgets.includes("gamePerformance")) {
-            openWidgets.push("gamePerformance")
-            root.states.overlay.open = openWidgets
-        }
-        root.states.overlay.gamePerformanceDefaultApplied = true
     }
 
     // writeAdapter() is async; suppress reloads triggered by our own write
@@ -140,8 +125,7 @@ Singleton {
             }
 
             property JsonObject overlay: JsonObject {
-                property list<string> open: ["crosshair", "recorder", "volumeMixer", "resources", "gamePerformance"]
-                property bool gamePerformanceDefaultApplied: false
+                property list<string> open: ["crosshair", "recorder", "volumeMixer", "resources"]
                 property JsonObject crosshair: JsonObject {
                     property bool pinned: false
                     property bool clickthrough: true

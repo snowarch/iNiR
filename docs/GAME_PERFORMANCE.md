@@ -1,6 +1,7 @@
 # Game Performance Overlay
 
-The `gamePerformance` widget is enabled by default in the `Super+G` overlay. It
+The `gamePerformance` widget is available in the `Super+G` overlay. Open the
+overlay and select the Game performance button in its taskbar to add it. It
 shows the focused game's identity, system CPU/GPU/RAM telemetry, and
 FPS/frametime history when MangoHud logging is active.
 
@@ -89,6 +90,12 @@ above keeps that path active without drawing a second HUD. The overlay reads the
 live CSV sample while the game is running and stops accepting it when the sample
 becomes stale. If MangoHud is not installed or logging is not active, the widget
 displays a clear status instead of inventing an FPS value.
+
+The widget reacts to compositor window events instead of polling focus. While
+it is open, one monitor process follows the selected window's PID and samples
+the active MangoHud log every 500 ms; log and process discovery are cached until
+the target changes or its log becomes stale. A fresh MangoHud log can identify
+games whose window title or app ID does not match the fallback game patterns.
 
 The widget starts in minimal view. It is a four-line readout for GPU, CPU,
 average thread load, and FPS, with colored labels and no graph or card chrome.

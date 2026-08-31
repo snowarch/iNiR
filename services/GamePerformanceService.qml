@@ -51,14 +51,6 @@ Singleton {
     property string _mangoCpuName: ""
     property string _mangoGpuName: ""
     property string _mangoGpuDriver: ""
-    property real _systemVramUsedGb: -1
-    property real _systemVramTotalGb: -1
-    property real _systemGpuLoad: -1
-    property real _systemGpuTemp: -1
-    property real _systemGpuPower: -1
-    property real _systemGpuCoreClockMhz: -1
-    property real _systemGpuMemoryClockMhz: -1
-    property real _systemCpuFrequencyMhz: -1
     property string _rigCpuName: ""
     property int _rigCpuCores: 0
     property string _rigGpuName: ""
@@ -70,9 +62,8 @@ Singleton {
     property int _lastSampleAgeMs: -1
     property string _lastSampleId: ""
     property string _gameTargetKey: ""
+    property bool _allowDirectoryTitleMatch: false
     property string gameResolution: ""
-    property list<real> _cpuCoreLoads: []
-    property var _previousCoreStats: ({})
     property var _lastGameWindow: null
 
     property list<real> fpsHistory: []
@@ -85,30 +76,32 @@ Singleton {
         ? _mangoCpuLoad : ResourceUsage.cpuUsage * 100
     readonly property real cpuPower: _mangoCpuPower > 0 ? _mangoCpuPower : -1
     readonly property real cpuFrequencyMhz: _mangoCpuFrequencyMhz > 0
-        ? _mangoCpuFrequencyMhz : _systemCpuFrequencyMhz
-    readonly property list<real> cpuCoreLoads: _cpuCoreLoads
-    readonly property int cpuCoreCount: _rigCpuCores > 0 ? _rigCpuCores : _cpuCoreLoads.length
-    readonly property real gpuLoad: _preferSystemMetric(_mangoGpuLoad, _systemGpuLoad) >= 0
-        ? _preferSystemMetric(_mangoGpuLoad, _systemGpuLoad) : ResourceUsage.gpuUsage * 100
+        ? _mangoCpuFrequencyMhz : ResourceUsage.cpuFrequencyMhz
+    readonly property list<real> cpuCoreLoads:
+        ResourceUsage.cpuCoreUsage.map(value => value >= 0 ? value * 100 : -1)
+    readonly property int cpuCoreCount: _rigCpuCores > 0
+        ? _rigCpuCores : ResourceUsage.cpuCoreUsage.length
+    readonly property real gpuLoad: _preferSystemMetric(_mangoGpuLoad,
+        ResourceUsage.gpuUsage * 100)
     readonly property real cpuTemp: _mangoCpuTemp > 0
         ? _mangoCpuTemp : (ResourceUsage.cpuTemp > 0 ? ResourceUsage.cpuTemp : -1)
-    readonly property real gpuTemp: _preferSystemMetric(_mangoGpuTemp, _systemGpuTemp) >= 0
-        ? _preferSystemMetric(_mangoGpuTemp, _systemGpuTemp)
-        : (ResourceUsage.gpuTemp > 0 ? ResourceUsage.gpuTemp : -1)
+    readonly property real gpuTemp: _preferSystemMetric(_mangoGpuTemp,
+        ResourceUsage.gpuTemp > 0 ? ResourceUsage.gpuTemp : -1)
     readonly property real gpuCoreClockMhz: _preferSystemMetric(_mangoGpuCoreClockMhz,
-        _systemGpuCoreClockMhz)
+        ResourceUsage.gpuCoreClockMhz)
     readonly property real gpuMemoryClockMhz: _preferSystemMetric(_mangoGpuMemoryClockMhz,
-        _systemGpuMemoryClockMhz)
-    readonly property real gpuPower: _preferSystemMetric(_mangoGpuPower, _systemGpuPower)
+        ResourceUsage.gpuMemoryClockMhz)
+    readonly property real gpuPower: _preferSystemMetric(_mangoGpuPower,
+        ResourceUsage.gpuPower)
     readonly property real gpuVoltage: _mangoGpuVoltage > 0 ? _mangoGpuVoltage : -1
     readonly property real ramUsedGb: _validMetric(_mangoRamUsedGb)
         ? _mangoRamUsedGb : ResourceUsage.memoryUsed / (1024 * 1024)
     readonly property real ramTotalGb: ResourceUsage.memoryTotal > 0
         ? ResourceUsage.memoryTotal / (1024 * 1024) : _rigRamTotalGb
-    readonly property real vramUsedGb: _validMetric(_systemVramUsedGb)
-        ? _systemVramUsedGb : _mangoVramUsedGb
-    readonly property real vramTotalGb: _validMetric(_systemVramTotalGb)
-        ? _systemVramTotalGb : _rigVramTotalGb
+    readonly property real vramUsedGb: _validMetric(ResourceUsage.gpuMemoryUsedGb)
+        ? ResourceUsage.gpuMemoryUsedGb : _mangoVramUsedGb
+    readonly property real vramTotalGb: _validMetric(ResourceUsage.gpuMemoryTotalGb)
+        ? ResourceUsage.gpuMemoryTotalGb : _rigVramTotalGb
     readonly property real vramUsagePercent: _validMetric(root.vramUsedGb)
         && root.vramTotalGb > 0
         ? Math.min(100, root.vramUsedGb / root.vramTotalGb * 100) : -1
@@ -147,14 +140,6 @@ Singleton {
         let total = 0
         for (const value of root.fpsHistory) total += value
         return total / root.fpsHistory.length
-    }
-    readonly property real onePercentLow: {
-        if (root.fpsHistory.length === 0) return -1
-        const values = [...root.fpsHistory].sort((a, b) => a - b)
-        const count = Math.max(1, Math.ceil(values.length * 0.01))
-        let total = 0
-        for (let i = 0; i < count; i++) total += values[i]
-        return total / count
     }
     readonly property real minimumFps: root.fpsHistory.length > 0
         ? Math.min(...root.fpsHistory) : -1
@@ -229,7 +214,7 @@ Singleton {
         if (root._consumers !== 0) return
         ResourceUsage.releaseKeepAlive()
         if (telemetryProcess.running) telemetryProcess.running = false
-        if (systemVramProcess.running) systemVramProcess.running = false
+        telemetryRestartTimer.stop()
         root._resetTelemetry()
         root.gameDetected = false
         root.gameName = ""
@@ -237,24 +222,25 @@ Singleton {
         root.gamePid = 0
         root.gameResolution = ""
         root._gameTargetKey = ""
-        root._cpuCoreLoads = []
-        root._previousCoreStats = ({})
+        root._allowDirectoryTitleMatch = false
         root._lastGameWindow = null
     }
 
     function _focusedWindow(): var {
         if (CompositorService.isNiri) {
             const windows = NiriService.windows
-            let focused = null
-            if (Array.isArray(windows)) {
-                focused = windows.find(window => window.is_focused) ?? null
-            }
+            if (!Array.isArray(windows)) return null
+            const focused = windows.find(window => window.is_focused) ?? null
+            if (focused) return focused
             const active = NiriService.activeWindow
-            const toplevel = ToplevelManager.activeToplevel
-            const likelyGame = [focused, active, toplevel]
-                .find(window => window && root._isLikelyGame(window))
-            if (likelyGame) return likelyGame
-            return focused ?? active ?? toplevel
+            const activeId = active?.id
+            if (activeId !== undefined && activeId !== null) {
+                const activeWindow = windows.find(window => window.id === activeId) ?? null
+                if (activeWindow) return activeWindow
+            }
+            const previousId = NiriService.mruWindowIds?.[0]
+            return !GlobalStates.overlayOpen || previousId === undefined || previousId === null
+                ? null : windows.find(window => window.id === previousId) ?? null
         }
 
         if (CompositorService.isHyprland) {
@@ -269,12 +255,33 @@ Singleton {
         return ToplevelManager.activeToplevel
     }
 
+    function _preservedWindow(): var {
+        const previous = root._lastGameWindow
+        if (!previous) return null
+
+        if (CompositorService.isNiri && Array.isArray(NiriService.windows)) {
+            const id = previous?.id
+            return NiriService.windows.find(window => window.id === id) ?? null
+        }
+        if (CompositorService.isHyprland && Array.isArray(HyprlandData.windowList)) {
+            const address = String(previous?.address ?? "")
+            return HyprlandData.windowList.find(window => window.address === address) ?? null
+        }
+        return previous
+    }
+
     function _isLikelyGame(window: var): bool {
         const appId = String(window?.app_id ?? window?.appId
             ?? window?.class ?? window?.initialClass ?? "").toLowerCase()
         const title = String(window?.title ?? window?.initialTitle ?? "").toLowerCase()
         const identity = `${appId} ${title}`
         return /(steam_app_|steam_proton|proton|wine|lutris|heroic|gamescope|godot|unity|unreal|minecraft|counter[- ]strike|overwatch|warframe|dirt|rally)/.test(identity)
+    }
+
+    function _allowsDirectoryTitleMatch(window: var): bool {
+        const appId = String(window?.app_id ?? window?.appId
+            ?? window?.class ?? window?.initialClass ?? "").toLowerCase()
+        return /(steam_app_|steam_proton|proton|wine|lutris|heroic|gamescope)/.test(appId)
     }
 
     function _windowAppId(window: var): string {
@@ -325,40 +332,63 @@ Singleton {
         if (root._consumers === 0) return
 
         const focusedWindow = root._focusedWindow()
-        const window = GlobalStates.overlayOpen && !focusedWindow && root._lastGameWindow
-            ? root._lastGameWindow : focusedWindow
+        const window = GlobalStates.overlayOpen && !focusedWindow
+            ? root._preservedWindow() : focusedWindow
         const appId = root._windowAppId(window)
         const pid = root._windowPid(window)
-        const detected = !!window && pid > 0 && root._isLikelyGame(window)
+        const hasCandidate = !!window && pid > 0
 
-        if (!detected) {
-            if (focusedWindow || !GlobalStates.overlayOpen) root._lastGameWindow = null
+        if (!hasCandidate) {
+            root._lastGameWindow = null
             root.gameDetected = false
             root.gameName = ""
             root.gameAppId = ""
             root.gamePid = 0
             root.gameResolution = ""
             root._gameTargetKey = ""
+            root._allowDirectoryTitleMatch = false
             root._resetTelemetry()
             if (telemetryProcess.running) telemetryProcess.running = false
+            telemetryRestartTimer.stop()
             return
         }
 
         const targetKey = root._windowTargetKey(window, appId, pid)
-        if (targetKey !== root._gameTargetKey) {
-            root._gameTargetKey = targetKey
-            root.gamePid = pid
-            root._resetTelemetry()
-            if (telemetryProcess.running) telemetryProcess.running = false
-        }
-
-        root.gameDetected = true
+        const gameName = root._displayName(window, appId)
+        const allowTitleMatch = root._allowsDirectoryTitleMatch(window)
+        const discoveryChanged = appId !== root.gameAppId
+            || allowTitleMatch && gameName !== root.gameName
+            || allowTitleMatch !== root._allowDirectoryTitleMatch
+        const monitorTargetChanged = targetKey !== root._gameTargetKey
+            || (discoveryChanged && !root.telemetryAvailable)
+        root._gameTargetKey = targetKey
+        root._allowDirectoryTitleMatch = allowTitleMatch
         root.gameAppId = appId
-        root.gameName = root._displayName(window, appId)
+        root.gameName = gameName
         root.gameResolution = root._windowResolution(window)
         root._lastGameWindow = window
 
-        if (!telemetryProcess.running) telemetryProcess.running = true
+        if (monitorTargetChanged) {
+            root.gamePid = pid
+            root._resetTelemetry()
+            root.gameDetected = root._isLikelyGame(window)
+            root._restartTelemetryMonitor()
+        } else if (root._isLikelyGame(window)) {
+            root.gameDetected = true
+        }
+
+        if (!telemetryProcess.running && !telemetryRestartTimer.running)
+            telemetryProcess.running = true
+    }
+
+    function _restartTelemetryMonitor(): void {
+        telemetryRestartTimer.stop()
+        if (telemetryProcess.running) {
+            telemetryRestartTimer.restart()
+            telemetryProcess.running = false
+        } else if (root._consumers > 0 && root.gamePid > 0) {
+            telemetryProcess.running = true
+        }
     }
 
     function _resetTelemetry(): void {
@@ -446,100 +476,6 @@ Singleton {
         root._rigDistroName = fields[7] ?? ""
     }
 
-    function _refreshSystemVram(): void {
-        if (root._consumers > 0 && !systemVramProcess.running)
-            systemVramProcess.running = true
-    }
-
-    function _resetSystemGpuMetrics(): void {
-        root._systemVramUsedGb = -1
-        root._systemVramTotalGb = -1
-        root._systemGpuLoad = -1
-        root._systemGpuTemp = -1
-        root._systemGpuPower = -1
-        root._systemGpuCoreClockMhz = -1
-        root._systemGpuMemoryClockMhz = -1
-    }
-
-    function _consumeSystemVram(output: string): void {
-        const line = output.trim().split("\n")
-            .map(value => value.trim())
-            .find(value => value.length > 0) ?? ""
-        if (line.length === 0) {
-            root._resetSystemGpuMetrics()
-            return
-        }
-
-        const amdBytes = line.startsWith("amd:")
-        const values = (amdBytes ? line.slice(4) : line)
-            .split(",")
-            .map(value => Number(value.trim()))
-        if (values.length < 2 || !root._validMetric(values[0])
-            || !root._validMetric(values[1])) {
-            root._resetSystemGpuMetrics()
-            return
-        }
-
-        const divisor = amdBytes ? 1024 * 1024 * 1024 : 1024
-        root._systemVramUsedGb = values[0] / divisor
-        root._systemVramTotalGb = values[1] / divisor
-        if (amdBytes) {
-            root._systemGpuLoad = -1
-            root._systemGpuTemp = -1
-            root._systemGpuPower = -1
-            root._systemGpuCoreClockMhz = -1
-            root._systemGpuMemoryClockMhz = -1
-            return
-        }
-
-        root._systemGpuPower = values.length > 2 && root._validMetric(values[2])
-            ? values[2] : -1
-        root._systemGpuCoreClockMhz = values.length > 3 && root._validMetric(values[3])
-            ? values[3] : -1
-        root._systemGpuMemoryClockMhz = values.length > 4 && root._validMetric(values[4])
-            ? values[4] : -1
-        root._systemGpuLoad = values.length > 5 && root._validMetric(values[5])
-            ? values[5] : -1
-        root._systemGpuTemp = values.length > 6 && root._validMetric(values[6])
-            ? values[6] : -1
-    }
-
-    function _pollCpuCoreLoads(): void {
-        cpuStatFile.reload()
-        cpuInfoFile.reload()
-        const frequency = Number(cpuInfoFile.text().match(/^cpu MHz\s*:\s*([\d.]+)/m)?.[1] ?? -1)
-        root._systemCpuFrequencyMhz = frequency > 0 ? frequency : -1
-        const previous = root._previousCoreStats
-        const nextStats = ({})
-        const nextLoads = []
-
-        for (const line of cpuStatFile.text().split("\n")) {
-            const match = line.match(/^cpu(\d+)\s+(.+)$/)
-            if (!match) continue
-            const index = Number(match[1])
-            const stats = match[2].trim().split(/\s+/).map(Number)
-            if (stats.length < 5 || stats.some(value => !isFinite(value))) continue
-
-            const total = stats.reduce((sum, value) => sum + value, 0)
-            const idle = stats[3] + stats[4]
-            const old = previous[index]
-            let load = -1
-            if (old) {
-                const totalDelta = total - old.total
-                const idleDelta = idle - old.idle
-                if (totalDelta > 0)
-                    load = Math.max(0, Math.min(100,
-                        (totalDelta - idleDelta) / totalDelta * 100))
-            }
-            nextStats[index] = { total, idle }
-            nextLoads.push({ index, load })
-        }
-
-        nextLoads.sort((a, b) => a.index - b.index)
-        root._previousCoreStats = nextStats
-        root._cpuCoreLoads = nextLoads.map(core => core.load)
-    }
-
     function _appendTelemetrySample(fps: real, frametime: real, sampleId: string): void {
         if (!root._validMetric(fps) || !root._validMetric(frametime)
             || sampleId.length > 0 && sampleId === root._lastSampleId)
@@ -569,10 +505,10 @@ Singleton {
             return
         }
 
-        if (Number(payload?.pid ?? 0) !== root.gamePid) {
-            root._markTelemetryUnavailable()
+        if (Number(payload?.pid ?? 0) !== root.gamePid
+            || String(payload?.targetKey ?? "") !== root._gameTargetKey)
             return
-        }
+        telemetryWatchdog.restart()
         const fps = root._payloadMetric(payload, "fps")
         const frametime = root._payloadMetric(payload, "frametime")
         const age = root._payloadMetric(payload, "logAgeMs")
@@ -585,6 +521,7 @@ Singleton {
             return
         }
 
+        root.gameDetected = true
         root._mangoFps = fps
         root._mangoFrametime = frametime
         root._lastSampleAgeMs = age
@@ -612,39 +549,34 @@ Singleton {
         root._appendTelemetrySample(fps, frametime, String(payload?.sampleId ?? ""))
     }
 
-    Timer {
-        id: refreshTimer
-        interval: 500
-        running: root._consumers > 0
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: root._refreshTarget()
+    Connections {
+        target: NiriService
+        enabled: root._consumers > 0 && CompositorService.isNiri
+
+        function onActiveWindowChanged(): void { root._refreshTarget() }
+        function onWindowsChanged(): void { root._refreshTarget() }
     }
 
-    Timer {
-        interval: 5000
-        running: root._consumers > 0
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: root._refreshSystemVram()
+    Connections {
+        target: HyprlandData
+        enabled: root._consumers > 0 && CompositorService.isHyprland
+
+        function onWindowListChanged(): void { root._refreshTarget() }
     }
 
-    Timer {
-        interval: 500
-        running: root._consumers > 0
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: root._pollCpuCoreLoads()
+    Connections {
+        target: ToplevelManager
+        enabled: root._consumers > 0 && !CompositorService.isNiri
+            && !CompositorService.isHyprland
+
+        function onActiveToplevelChanged(): void { root._refreshTarget() }
     }
 
-    FileView {
-        id: cpuStatFile
-        path: "/proc/stat"
-    }
+    Connections {
+        target: GlobalStates
+        enabled: root._consumers > 0
 
-    FileView {
-        id: cpuInfoFile
-        path: "/proc/cpuinfo"
+        function onOverlayOpenChanged(): void { root._refreshTarget() }
     }
 
     Process {
@@ -674,55 +606,64 @@ Singleton {
     }
 
     Process {
-        id: systemVramProcess
-        command: ["/usr/bin/bash", "-c", `
-            if command -v nvidia-smi >/dev/null 2>&1; then
-                nvidia-smi --query-gpu=memory.used,memory.total,power.draw,clocks.gr,clocks.mem,utilization.gpu,temperature.gpu --format=csv,noheader,nounits 2>/dev/null | head -n 1
-                exit 0
-            fi
-            for device in /sys/class/drm/card*/device; do
-                used="$device/mem_info_vram_used"
-                total="$device/mem_info_vram_total"
-                if [ -r "$used" ] && [ -r "$total" ]; then
-                    printf "amd:%s,%s\\n" "$(cat "$used")" "$(cat "$total")"
-                    exit 0
-                fi
-            done
-        `]
-        running: false
-        stdout: StdioCollector {
-            id: systemVramCollector
-            onStreamFinished: root._consumeSystemVram(systemVramCollector.text)
-        }
-    }
-
-    Process {
         id: mangoHudProbe
         command: ["/usr/bin/bash", "-c", "command -v mangohud >/dev/null 2>&1"]
         running: false
         onExited: (exitCode, exitStatus) => root.mangoHudInstalled = exitCode === 0
     }
 
-    Timer {
-        interval: 5000
-        running: root._consumers > 0 && !root.mangoHudInstalled
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: if (!mangoHudProbe.running) mangoHudProbe.running = true
-    }
-
     Process {
         id: telemetryProcess
-        command: [
-            "/usr/bin/python3", root.monitorScript,
-            "--pid", String(root.gamePid),
-            "--log-dir", root.mangoHudLogDirectory,
-            "--log-dir", Directories.homePath
-        ]
+        command: {
+            const result = [
+                "/usr/bin/python3", root.monitorScript,
+                "--pid", String(root.gamePid),
+                "--target-key", root._gameTargetKey,
+                "--target-app-id", root.gameAppId,
+                "--target-name", root.gameName,
+                "--watch",
+                "--interval-ms", "500",
+                "--log-dir", root.mangoHudLogDirectory,
+                "--log-dir", Directories.homePath
+            ]
+            result.push("--allow-directory-fallback")
+            if (root._allowDirectoryTitleMatch)
+                result.push("--allow-title-match")
+            return result
+        }
         running: false
-        stdout: StdioCollector {
-            id: telemetryCollector
-            onStreamFinished: root._consumeTelemetry(telemetryCollector.text)
+        stdout: SplitParser {
+            onRead: line => root._consumeTelemetry(line)
+        }
+        onRunningChanged: {
+            if (telemetryProcess.running)
+                telemetryWatchdog.restart()
+            else
+                telemetryWatchdog.stop()
+        }
+        onExited: {
+            if (root._consumers > 0 && root.gamePid > 0) {
+                root._markTelemetryUnavailable()
+                telemetryRestartTimer.restart()
+            }
+        }
+    }
+
+    Timer {
+        id: telemetryWatchdog
+        interval: 3500
+        onTriggered: {
+            root._markTelemetryUnavailable()
+            root._restartTelemetryMonitor()
+        }
+    }
+
+    Timer {
+        id: telemetryRestartTimer
+        interval: 500
+        onTriggered: {
+            if (root._consumers > 0 && root.gamePid > 0 && !telemetryProcess.running)
+                telemetryProcess.running = true
         }
     }
 }
