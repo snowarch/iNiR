@@ -3,9 +3,10 @@
 let
   common = import ./module-common.nix { inherit lib pkgs; };
   cfg = config.programs.inir;
+  finalPackage = common.resolvePackage cfg;
   wantedUnit = common.compositorUnit cfg.service.compositor;
   env = common.serviceEnvironment cfg // {
-    PATH = lib.makeBinPath ([ cfg.package ] ++ cfg.extraPackages);
+    PATH = lib.makeBinPath ([ finalPackage ] ++ cfg.extraPackages);
   };
 in
 {
@@ -20,10 +21,10 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    home.packages = [ cfg.package ];
+    home.packages = [ finalPackage ];
 
     xdg.configFile = lib.mkIf cfg.configSymlink.enable {
-      "quickshell/inir".source = "${cfg.package}/share/quickshell/inir";
+      "quickshell/inir".source = "${finalPackage}/share/quickshell/inir";
     };
 
     systemd.user.services.inir = lib.mkIf cfg.service.enable {
@@ -39,8 +40,8 @@ in
       Service = {
         Type = "simple";
         Environment = lib.mapAttrsToList (name: value: "${name}=${value}") env;
-        ExecStart = "${lib.getExe cfg.package} run --session";
-        ExecStopPost = "-${lib.getExe cfg.package} cleanup-orphans";
+        ExecStart = "${lib.getExe finalPackage} run --session";
+        ExecStopPost = "-${lib.getExe finalPackage} cleanup-orphans";
         SuccessExitStatus = 143;
         KillMode = "process";
         KillSignal = "SIGTERM";
