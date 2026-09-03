@@ -182,7 +182,7 @@ pkgs.stdenvNoCC.mkDerivation {
     # /usr/bin. NixOS does not provide that layout. Patch only the packaged
     # copy and keep shebang lines intact.
     find "$runtime/modules" "$runtime/services" "$runtime/defaults" "$runtime/scripts" \
-      -type f \( -name '*.qml' -o -name '*.js' -o -name '*.sh' -o -name '*.py' \) \
+      -type f \( -name '*.qml' -o -name '*.js' -o -name '*.sh' -o -name '*.fish' -o -name '*.py' \) \
       -exec sed -i '1!s#/usr/bin/##g' {} +
 
     makeWrapper "$runtime/scripts/inir" "$out/bin/inir" \
