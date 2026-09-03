@@ -1220,6 +1220,7 @@ ContentPage {
                     { tz: "Africa/Nairobi",                    off: 180 },
                     { tz: "Asia/Jerusalem",                    off: 120 },
                     { tz: "Asia/Tehran",                       off: 210 },
+                    { tz: "Asia/Qatar",                        off: 180 },
                     { tz: "Asia/Dubai",                        off: 240 },
                     { tz: "Asia/Karachi",                      off: 300 },
                     { tz: "Asia/Kolkata",                      off: 330 },
